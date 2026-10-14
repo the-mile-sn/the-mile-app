@@ -129,3 +129,13 @@ body.player-theme .wordmark{width:102px;height:24px;background-size:136px 136px}
   .player-form-actions button{min-height:38px!important;padding:7px 9px!important;font-size:12px!important}
   .player-row-icon svg.solid-icon{width:29px!important;height:29px!important}
 }
+
+/* Micro refinements after mobile review */
+body.player-theme .wordmark{width:90px;height:22px;background-size:120px 120px}
+.player-form-actions{margin-bottom:24px!important}
+.player-row-icon svg.solid-icon{width:32px!important;height:32px!important}
+@media(max-width:650px){
+  body.player-theme .wordmark{width:86px;height:21px;background-size:115px 115px}
+  .player-form-actions{margin-bottom:24px!important}
+  .player-row-icon svg.solid-icon{width:33px!important;height:33px!important}
+}
