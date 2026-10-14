@@ -65,7 +65,7 @@ function boolChecked(v){ return v ? 'checked' : ''; }
 
 function playerIcon(name){
   const icons={
-    nutrition:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path class="cutout" d="M14.5 3.5V8H19M9 12h7M9 15h7"/></svg>',
+    nutrition:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.7L19 7.8v12.7H6z"/><path d="M14.7 3.5v4.3H19z" opacity=".72"/></svg>',
     menus:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.7c3.1-1.1 6-.7 8.5 1.1v12c-2.5-1.8-5.4-2.2-8.5-1.1zM20.5 5.7c-3.1-1.1-6-.7-8.5 1.1v12c2.5-1.8 5.4-2.2 8.5-1.1z"/></svg>',
     other:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 7.2h6.4l1.8 2h10.2v10.1H2.8z"/><path d="M2.8 7.2V5.1h5.4l1.7 2.1z"/></svg>',
     anthropometry:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="14" width="3.5" height="6" rx=".8"/><rect x="10.2" y="9" width="3.5" height="11" rx=".8"/><rect x="16.4" y="4" width="3.5" height="16" rx=".8"/></svg>',
