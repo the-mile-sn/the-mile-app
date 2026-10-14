@@ -9,6 +9,7 @@ const ui = {
 
 let lang = localStorage.getItem('mile-language') === 'en' ? 'en' : 'pt';
 let user = null, csrf = null, selected = null, folder = null, players = [], admins = [], docs = [], mode = '';
+let loginMode = 'login';
 let activationToken = new URLSearchParams(location.search).get('activate');
 let installPrompt = null;
 if (activationToken) history.replaceState(null, '', location.pathname);
@@ -26,7 +27,7 @@ const words = {
     edit:'Editar dados',update:'Guardar alterações',deletePlayer:'Eliminar jogador',deletePlayerConfirm:'Eliminar este jogador e todos os seus documentos? Esta ação não pode ser anulada.',
     playerDetails:'Dados do jogador',birthDate:'Data de nascimento',sex:'Sexo',male:'Masculino',female:'Feminino',height:'Altura (cm)',weight:'Peso atual (kg)',photo:'Foto',menus:'Menus',anthropometry:'Avaliações antropométricas',
     enabled:'Ativo',disabled:'Inativo',resetPassword:'Alterar password',changePassword:'Alterar palavra-passe',passwordChanged:'Palavra-passe alterada.',profile:'Perfil do jogador',
-    registerWeight:'Registar peso',postGame:'Pós-jogo',formsUnavailable:'Formulário ainda não configurado.',forgot:'Esqueci-me da palavra-passe',forgotText:'Contacta Filipe Sousa ou Raquel Gomes para redefinir o acesso.',
+    registerWeight:'Registar peso',postGame:'Pós-jogo',formsUnavailable:'Formulário ainda não configurado.',forgot:'Esqueci-me da palavra-passe',forgotText:'Contacta Filipe Sousa ou Raquel Gomes para redefinir o acesso.',changeAccess:'Alterar palavra-passe',backToLogin:'Voltar ao início de sessão',
     activate:'Definir palavra-passe',activateSub:'Escolhe uma palavra-passe.',confirm:'Confirmar palavra-passe',
     errors:{credentials:'Username/email ou palavra-passe incorretos.',login_required:'A sessão terminou. Entra novamente.',csrf:'Atualiza a página e tenta novamente.',origin:'Pedido não permitido.',
       password_length:'Usa pelo menos 8 caracteres.',password_change:'Verifica a palavra-passe atual e usa pelo menos 8 caracteres na nova.',activation:'O link expirou ou já foi utilizado.',
@@ -46,7 +47,7 @@ const words = {
     edit:'Edit details',update:'Save changes',deletePlayer:'Delete player',deletePlayerConfirm:'Delete this player and all their documents? This cannot be undone.',
     playerDetails:'Player details',birthDate:'Date of birth',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Current weight (kg)',photo:'Photo',menus:'Menus',anthropometry:'Anthropometric assessments',
     enabled:'Enabled',disabled:'Disabled',resetPassword:'Change password',changePassword:'Change password',passwordChanged:'Password changed.',profile:'Player profile',
-    registerWeight:'Register weight',postGame:'Post-game',formsUnavailable:'Form not configured yet.',forgot:'Forgot password',forgotText:'Contact Filipe Sousa or Raquel Gomes to reset access.',
+    registerWeight:'Register weight',postGame:'Post-game',formsUnavailable:'Form not configured yet.',forgot:'Forgot password',forgotText:'Contact Filipe Sousa or Raquel Gomes to reset access.',changeAccess:'Change password',backToLogin:'Back to sign in',
     activate:'Set password',activateSub:'Choose a password.',confirm:'Confirm password',
     errors:{credentials:'Incorrect username/email or password.',login_required:'Your session has ended. Sign in again.',csrf:'Refresh this page and try again.',origin:'Request not allowed.',
       password_length:'Use at least 8 characters.',password_change:'Check the current password and use at least 8 characters for the new one.',activation:'This link has expired or has already been used.',
@@ -154,7 +155,7 @@ function renderPlayer(w){
     <div class="topline"><h1>${esc(title)}</h1>${isAdmin&&folder!==null&&mode!=='upload'?'<button class="primary" id="upload">'+w.upload+'</button>':''}</div>
     ${folder===null?`
       <section class="profile-card">${owner.has_photo?`<img src="/api/players/${owner.id}/photo" alt="">`:''}<div><strong>${esc(owner.name)}</strong><p>@${esc(owner.username)}</p></div></section>
-      ${!isAdmin?`<div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button><button class="secondary" id="change-password">${w.changePassword}</button></div>`:''}
+      ${!isAdmin?`<div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button></div>`:''}
       <p class="subtitle">${w.sub}</p><div class="folders">${af.map(f=>{const c=docs.filter(d=>d.folder===f).length;return `<button class="folder" data-folder="${f}"><span class="folder-icon"></span><div><strong>${w.folders[f]}</strong><small>${c} ${c===1?w.document:w.documents}</small></div></button>`;}).join('')}</div>
       ${isAdmin?`<div class="player-control"><div><span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span><p>${w.birthDate}: ${esc(owner.birth_date)} · ${w.sex}: ${owner.sex==='M'?w.male:w.female} · ${w.height}: ${esc(owner.height)} · ${w.weight}: ${esc(owner.weight)}</p></div><div class="actions player-actions"><button class="secondary" id="edit">${w.edit}</button><button class="secondary" id="change-password">${w.resetPassword}</button><button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button><button class="secondary danger" id="delete-player">${w.deletePlayer}</button></div></div>`:''}
     `:
@@ -163,7 +164,7 @@ function renderPlayer(w){
 
   bind('back',async()=>{if(mode){mode='';render();}else if(folder!==null){folder=null;render();}else{selected=null;await refresh();}});
   ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;mode='';render();});
-  bind('upload',()=>{mode='upload';render();});bind('cancel',()=>{mode='';render();});bind('edit',()=>{mode='edit';render();});bind('change-password',()=>{mode='password';render();});
+  bind('upload',()=>{mode='upload';render();});bind('cancel',()=>{mode='';render();});bind('edit',()=>{mode='edit';render();});if(isAdmin)bind('change-password',()=>{mode='password';render();});
   bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
   bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
   bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
