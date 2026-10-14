@@ -114,3 +114,18 @@ body.player-theme footer{display:none}
     stroke-width:1.7;
   }
 }
+
+/* Final player polish */
+body.player-theme header{box-shadow:none!important;border-bottom:0!important}
+body.player-theme .wordmark{width:102px;height:24px;background-size:136px 136px}
+.player-form-actions{width:min(270px,100%)!important;gap:8px!important}
+.player-form-actions button{min-height:40px!important;padding:8px 10px!important;border-radius:14px!important;font-size:12px!important}
+.player-row-icon svg.solid-icon{width:28px!important;height:28px!important;fill:currentColor!important;stroke:none!important}
+.player-row-icon svg.solid-icon .cutout{fill:none!important;stroke:#000!important;stroke-width:1.5!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+@media(max-width:650px){
+  body.player-theme header{box-shadow:none!important;border-bottom:0!important}
+  body.player-theme .wordmark{width:98px;height:23px;background-size:131px 131px}
+  .player-form-actions{width:min(260px,100%)!important}
+  .player-form-actions button{min-height:38px!important;padding:7px 9px!important;font-size:12px!important}
+  .player-row-icon svg.solid-icon{width:29px!important;height:29px!important}
+}
