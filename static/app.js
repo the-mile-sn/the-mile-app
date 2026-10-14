@@ -63,6 +63,26 @@ function statusLabel(p,w){ return p.active ? w.active : w.inactive; }
 function statusClass(p){ return p.active ? 'active' : 'inactive'; }
 function boolChecked(v){ return v ? 'checked' : ''; }
 
+function playerIcon(name){
+  const icons={
+    folder:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l1.7 2H20.5v9.5H3.5z"/><path d="M3.5 7.5V5.5h5l1.5 2"/></svg>',
+    document:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4V20.5H6z"/><path d="M14 3.5v4h4"/><path d="M9 12h6M9 15.5h6"/></svg>',
+    refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 8A7 7 0 1 0 19 14"/><path d="M18.2 4.5V8h-3.5"/></svg>',
+    logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
+    chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+    arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'
+  };
+  return icons[name]||'';
+}
+function formatRenewal(value){
+  if(!value)return '';
+  const p=String(value).split('-');
+  return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : value;
+}
+function playerFolderIcon(folder){
+  return folder==='other'||folder==='anthropometry' ? playerIcon('document') : playerIcon('folder');
+}
+
 async function api(path,{method='GET',body=null,binary=false}={}){
   const options={method,credentials:'same-origin',headers:{}};
   if(method!=='GET'&&csrf) options.headers['X-CSRF-Token']=csrf;
@@ -139,6 +159,55 @@ function availableFolders(owner){
 
 function renderPlayer(w){
   const isAdmin=user.role==='admin',owner=isAdmin?selected:user;
+
+  if(!isAdmin){
+    if(mode==='password'){
+      ui.root.innerHTML=`<section class="player-shell player-password"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
+      bind('back',()=>{mode='';render();});
+      submit(async f=>{await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});mode='';notify('The Mile',w.passwordChanged);render();});
+      return;
+    }
+
+    if(folder!==null){
+      const items=docs.filter(d=>d.folder===folder);
+      ui.root.innerHTML=`<section class="player-shell"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-list-card">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong><small>PDF</small></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
+      bind('back',()=>{folder=null;render();});
+      return;
+    }
+
+    const af=availableFolders(owner);
+    ui.root.innerHTML=`<section class="player-shell">
+      <div class="player-profile">
+        ${owner.has_photo?`<img class="player-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
+        <h1>${esc(owner.name)}</h1>
+      </div>
+
+      <div class="player-form-actions">
+        <button id="weight-form" type="button">${w.registerWeight}</button>
+        <button id="game-form" type="button">${w.postGame}</button>
+      </div>
+
+      <section class="player-plan-card">
+        <span class="player-plan-icon">${playerIcon('refresh')}</span>
+        <div><strong>${esc(owner.plan_name||'')}</strong><small>${lang==='pt'?'Renova a ':'Renews on '}${esc(formatRenewal(owner.renewal_date))}</small></div>
+      </section>
+
+      <section class="player-list-card">
+        ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row" data-folder="${f}"><span class="player-row-icon">${playerFolderIcon(f)}</span><span class="player-row-copy"><strong>${esc(w.folders[f])}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
+      </section>
+
+      <button class="player-logout-card" id="player-logout" type="button"><span class="player-row-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span><span class="player-chevron">${playerIcon('chevron')}</span></button>
+
+      <button class="player-password-link" id="change-password" type="button">${w.changePassword}</button>
+    </section>`;
+
+    ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;render();});
+    bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
+    bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
+    bind('change-password',()=>{mode='password';render();});
+    bind('player-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
+    return;
+  }
   if(isAdmin&&mode==='edit'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><p class="eyebrow">${w.playerDetails}</p><h1>${esc(owner.name)}</h1>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
@@ -179,7 +248,7 @@ function renderPlayer(w){
 }
 
 function render(){
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user;ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');ui.lang.textContent=(user&&user.role==='player')?(lang==='pt'?'PT':'EN'):(lang==='pt'?'EN':'PT');ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
