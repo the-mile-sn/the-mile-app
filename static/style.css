@@ -27,3 +27,6 @@ html{min-height:100%;background:#000}body{min-height:100dvh;background:#f3f3f3;-
   .row .actions{grid-template-columns:1fr}
   .row .actions .primary{background:#111;color:#fff;border-color:#111}
 }
+
+.profile-card{display:flex;align-items:center;gap:16px;margin:0 0 18px}.profile-card img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid #ddd}.profile-card strong{display:block;font-size:18px;font-weight:500}.profile-card p{margin:5px 0 0;color:#777;font-size:13px}.quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 24px}.quick-actions .secondary{margin:0}.inline-form input[type="checkbox"]{width:auto;margin-right:6px}
+@media(max-width:650px){.profile-card img{width:64px;height:64px}.quick-actions{display:grid;grid-template-columns:1fr 1fr}.quick-actions button:last-child{grid-column:1/-1}}
