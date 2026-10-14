@@ -25,7 +25,7 @@ const words = {
     deactivate:'Desativar',reactivate:'Reativar',statusConfirm:'Alterar o acesso deste jogador?',search:'Procurar jogador',administrators:'Administradores',noMatches:'Nenhum jogador encontrado.',
     adminSub:'Contas com acesso total à administração.',generateLink:'Gerar link',current:'Tu',overview:'Visão geral',totalPlayers:'Jogadores',activePlayers:'Ativos',inactivePlayers:'Desativados',totalDocuments:'Documentos',
     edit:'Editar dados',update:'Guardar alterações',deletePlayer:'Eliminar jogador',deletePlayerConfirm:'Eliminar este jogador e todos os seus documentos? Esta ação não pode ser anulada.',
-    playerDetails:'Dados do jogador',birthDate:'Data de nascimento',sex:'Sexo',male:'Masculino',female:'Feminino',height:'Altura (cm)',weight:'Peso atual (kg)',photo:'Foto',menus:'Menus',anthropometry:'Avaliações antropométricas',
+    playerDetails:'Dados do jogador',birthDate:'Data de nascimento',sex:'Sexo',male:'Masculino',female:'Feminino',height:'Altura (cm)',weight:'Peso atual (kg)',photo:'Foto',planName:'Plano',renewalDate:'Data de renovação',menus:'Menus',anthropometry:'Avaliações antropométricas',
     enabled:'Ativo',disabled:'Inativo',resetPassword:'Alterar password',changePassword:'Alterar palavra-passe',passwordChanged:'Palavra-passe alterada.',profile:'Perfil do jogador',
     registerWeight:'Registar peso',postGame:'Pós-jogo',formsUnavailable:'Formulário ainda não configurado.',forgot:'Esqueci-me da palavra-passe',forgotText:'Contacta Filipe Sousa ou Raquel Gomes para redefinir o acesso.',changeAccess:'Alterar palavra-passe',backToLogin:'Voltar ao início de sessão',
     activate:'Definir palavra-passe',activateSub:'Escolhe uma palavra-passe.',confirm:'Confirmar palavra-passe',
@@ -45,7 +45,7 @@ const words = {
     deactivate:'Deactivate',reactivate:'Reactivate',statusConfirm:'Change this player’s access?',search:'Find player',administrators:'Administrators',noMatches:'No players found.',
     adminSub:'Accounts with full administration access.',generateLink:'Generate link',current:'You',overview:'Overview',totalPlayers:'Players',activePlayers:'Active',inactivePlayers:'Inactive',totalDocuments:'Documents',
     edit:'Edit details',update:'Save changes',deletePlayer:'Delete player',deletePlayerConfirm:'Delete this player and all their documents? This cannot be undone.',
-    playerDetails:'Player details',birthDate:'Date of birth',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Current weight (kg)',photo:'Photo',menus:'Menus',anthropometry:'Anthropometric assessments',
+    playerDetails:'Player details',birthDate:'Date of birth',sex:'Sex',male:'Male',female:'Female',height:'Height (cm)',weight:'Current weight (kg)',photo:'Photo',planName:'Plan',renewalDate:'Renewal date',menus:'Menus',anthropometry:'Anthropometric assessments',
     enabled:'Enabled',disabled:'Disabled',resetPassword:'Change password',changePassword:'Change password',passwordChanged:'Password changed.',profile:'Player profile',
     registerWeight:'Register weight',postGame:'Post-game',formsUnavailable:'Form not configured yet.',forgot:'Forgot password',forgotText:'Contact Filipe Sousa or Raquel Gomes to reset access.',changeAccess:'Change password',backToLogin:'Back to sign in',
     activate:'Set password',activateSub:'Choose a password.',confirm:'Confirm password',
@@ -99,6 +99,8 @@ function playerForm(w,p=null){
     <label>${w.sex}</label><select name="sex" required><option value="M" ${p?.sex==='M'?'selected':''}>${w.male}</option><option value="F" ${p?.sex==='F'?'selected':''}>${w.female}</option></select>
     <label>${w.height}</label><input name="height" type="number" min="50" max="250" step="0.1" value="${esc(p?.height??'')}" required>
     <label>${w.weight}</label><input name="weight" type="number" min="20" max="300" step="0.1" value="${esc(p?.weight??'')}" required>
+    <label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p?.plan_name||'')}" required>
+    <label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p?.renewal_date||'')}" required>
     <label><input name="menus_enabled" type="checkbox" style="width:auto" ${boolChecked(p?.menus_enabled)}> ${w.menus}</label>
     <label><input name="anthropometry_enabled" type="checkbox" style="width:auto" ${boolChecked(p?.anthropometry_enabled)}> ${w.anthropometry}</label>
     <p class="error" role="alert"></p><div class="actions"><button class="primary" type="submit">${p?w.update:w.create}</button><button class="secondary" type="button" id="cancel">${w.cancel}</button></div>
@@ -106,7 +108,7 @@ function playerForm(w,p=null){
 }
 async function payloadFromForm(f){
   return {name:f.get('name'),username:String(f.get('username')||'').toLowerCase(),password:f.get('password')||'',photo:await fileToDataURL(f.get('photo')),
-    birth_date:f.get('birth_date'),sex:f.get('sex'),height:Number(f.get('height')),weight:Number(f.get('weight')),
+    birth_date:f.get('birth_date'),sex:f.get('sex'),height:Number(f.get('height')),weight:Number(f.get('weight')),plan_name:f.get('plan_name'),renewal_date:f.get('renewal_date'),
     menus_enabled:f.get('menus_enabled')==='on',anthropometry_enabled:f.get('anthropometry_enabled')==='on'};
 }
 
@@ -157,7 +159,7 @@ function renderPlayer(w){
       <section class="profile-card">${owner.has_photo?`<img src="/api/players/${owner.id}/photo" alt="">`:''}<div><strong>${esc(owner.name)}</strong><p>@${esc(owner.username)}</p></div></section>
       ${!isAdmin?`<div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button></div>`:''}
       <p class="subtitle">${w.sub}</p><div class="folders">${af.map(f=>{const c=docs.filter(d=>d.folder===f).length;return `<button class="folder" data-folder="${f}"><span class="folder-icon"></span><div><strong>${w.folders[f]}</strong><small>${c} ${c===1?w.document:w.documents}</small></div></button>`;}).join('')}</div>
-      ${isAdmin?`<div class="player-control"><div><span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span><p>${w.birthDate}: ${esc(owner.birth_date)} · ${w.sex}: ${owner.sex==='M'?w.male:w.female} · ${w.height}: ${esc(owner.height)} · ${w.weight}: ${esc(owner.weight)}</p></div><div class="actions player-actions"><button class="secondary" id="edit">${w.edit}</button><button class="secondary" id="change-password">${w.resetPassword}</button><button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button><button class="secondary danger" id="delete-player">${w.deletePlayer}</button></div></div>`:''}
+      ${isAdmin?`<div class="player-control"><div><span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span><p>${w.birthDate}: ${esc(owner.birth_date)} · ${w.sex}: ${owner.sex==='M'?w.male:w.female} · ${w.height}: ${esc(owner.height)} · ${w.weight}: ${esc(owner.weight)} · ${w.planName}: ${esc(owner.plan_name)} · ${w.renewalDate}: ${esc(owner.renewal_date)}</p></div><div class="actions player-actions"><button class="secondary" id="edit">${w.edit}</button><button class="secondary" id="change-password">${w.resetPassword}</button><button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button><button class="secondary danger" id="delete-player">${w.deletePlayer}</button></div></div>`:''}
     `:
     mode==='upload'?`<form class="inline-form"><label>${w.documentTitle}</label><input name="title" maxlength="180" required><label>${w.file}</label><input name="pdf" type="file" accept="application/pdf,.pdf" required><p class="note">${w.pdfNote}</p><p class="error"></p><div class="actions"><button class="primary" type="submit">${w.save}</button><button class="secondary" id="cancel" type="button">${w.cancel}</button></div></form>`:
     docs.filter(d=>d.folder===folder).map(d=>`<div class="row"><div><strong>${esc(d.title)}</strong><p>PDF · ${new Intl.DateTimeFormat(lang==='pt'?'pt-PT':'en-GB').format(new Date(d.updated*1000))}</p></div><div class="actions"><a class="primary download" href="/api/documents/${d.id}">${w.open}</a>${isAdmin?`<button class="secondary" data-title="${d.id}">${w.editTitle}</button><button class="secondary" data-replace="${d.id}">${w.replace}</button><button class="secondary danger" data-delete="${d.id}">${w.remove}</button>`:''}</div></div>`).join('')||`<p class="empty">${w.empty}</p>`}`;
