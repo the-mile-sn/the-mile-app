@@ -180,9 +180,15 @@ function render(){
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user;ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
-    ui.root.innerHTML=`<div class="login"><p class="eyebrow">The Mile</p><h1>${activating?w.activate:w.enter}</h1><p class="subtitle">${activating?w.activateSub:w.loginSub}</p><form>${!activating?`<label>${w.username}</label><input name="identifier" autocomplete="username" required>`:''}<label>${w.password}</label><input name="password" type="password" autocomplete="${activating?'new-password':'current-password'}" minlength="${activating?12:1}" required>${activating?`<label>${w.confirm}</label><input name="confirm" type="password" minlength="12" required>`:''}<p class="error"></p><button class="primary" type="submit">${activating?w.save:w.enter}</button></form>${!activating?`<button id="forgot" class="subtle">${w.forgot}</button>`:''}</div>`;
+    if(!activating && loginMode==='change'){
+      ui.root.innerHTML=`<div class="login"><p class="eyebrow">The Mile</p><h1>${w.changeAccess}</h1><p class="subtitle">${w.loginSub}</p><form><label>${w.username}</label><input name="identifier" autocomplete="username" required><label>${w.currentPassword}</label><input name="current_password" type="password" autocomplete="current-password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" maxlength="256" required><p class="error"></p><button class="primary" type="submit">${w.save}</button></form><button id="back-login" class="subtle">${w.backToLogin}</button></div>`;
+      submit(async f=>{await api('/change-password',{method:'POST',body:{identifier:f.get('identifier'),current_password:f.get('current_password'),new_password:f.get('new_password')}});loginMode='login';notify('The Mile',w.passwordChanged);render();});
+      bind('back-login',()=>{loginMode='login';render();});
+      return;
+    }
+    ui.root.innerHTML=`<div class="login"><p class="eyebrow">The Mile</p><h1>${activating?w.activate:w.enter}</h1><p class="subtitle">${activating?w.activateSub:w.loginSub}</p><form>${!activating?`<label>${w.username}</label><input name="identifier" autocomplete="username" required>`:''}<label>${w.password}</label><input name="password" type="password" autocomplete="${activating?'new-password':'current-password'}" minlength="${activating?12:1}" required>${activating?`<label>${w.confirm}</label><input name="confirm" type="password" minlength="12" required>`:''}<p class="error"></p><button class="primary" type="submit">${activating?w.save:w.enter}</button></form>${!activating?`<div class="login-links"><button id="change-access" class="subtle">${w.changeAccess}</button><button id="forgot" class="subtle">${w.forgot}</button></div>`:''}</div>`;
     submit(async f=>{if(activating&&f.get('password')!==f.get('confirm'))throw Error('password_mismatch');await api(activating?'/activate':'/login',{method:'POST',body:{identifier:f.get('identifier'),password:f.get('password'),token:activationToken}});activationToken=null;await refresh();});
-    bind('forgot',()=>notify('The Mile',w.forgotText));return;
+    bind('change-access',()=>{loginMode='change';render();});bind('forgot',()=>notify('The Mile',w.forgotText));return;
   }
   if(user.role==='admin'&&!selected){renderDashboard(w);return;} renderPlayer(w);
 }
