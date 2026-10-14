@@ -301,7 +301,7 @@ def application(env, start_response):
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
 
-            if path == '/api/me' && method == 'GET':
+            if path == '/api/me' and method == 'GET':
                 if not user:
                     return respond(200, {'user': None, 'csrf': None})
                 if user['role'] == 'player':
