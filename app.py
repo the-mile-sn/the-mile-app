@@ -34,9 +34,9 @@ MAX_JSON = 5 * 1024 * 1024
 MAX_PHOTO = 3 * 1024 * 1024
 FOLDERS = ('nutrition', 'menus', 'other', 'anthropometry')
 ADMINS = (('Filipe Sousa', 'filipesousa@themile.pt'), ('Raquel Gomes', 'raquelgomes@themile.pt'))
-WEIGHT_FORM_M = os.environ.get('MILE_WEIGHT_FORM_M', '').strip()
-WEIGHT_FORM_F = os.environ.get('MILE_WEIGHT_FORM_F', '').strip()
-GAME_FORM = os.environ.get('MILE_GAME_FORM', '').strip()
+WEIGHT_FORM_M = os.environ.get('MILE_WEIGHT_FORM_M', 'https://forms.gle/iRhSJ8zkqgUy2eye7').strip()
+WEIGHT_FORM_F = os.environ.get('MILE_WEIGHT_FORM_F', 'https://forms.gle/AAc9xFmZE4vrYLbw9').strip()
+GAME_FORM = os.environ.get('MILE_GAME_FORM', 'https://forms.gle/NFmz3rLNJmC44VGC8').strip()
 USERNAME_RE = re.compile(r'^[a-z]+$')
 
 
@@ -340,6 +340,24 @@ def application(env, start_response):
                 c.execute('DELETE FROM attempts WHERE key=?', (limit_key,))
                 c.commit()
                 headers.append(('Set-Cookie', f'mile_session={session_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=43200' + ('; Secure' if SECURE else '')))
+                return respond(200, {'ok': True})
+
+            if path == '/api/change-password' and method == 'POST':
+                body = read_json(env)
+                limit_key = digest(env.get('REMOTE_ADDR', '') + ':' + path)
+                rate_limit(c, limit_key, now)
+                identifier = str(body.get('identifier', '')).strip().lower()
+                current = body.get('current_password', '')
+                new = body.get('new_password', '')
+                if not isinstance(current, str) or not isinstance(new, str) or len(new) < 8 or len(new) > 256:
+                    raise Problem(400, 'password_change')
+                target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
+                if not target or not password_valid(current, target['password']):
+                    raise Problem(400, 'password_change')
+                c.execute('UPDATE users SET password=? WHERE id=?', (password_hash(new), target['id']))
+                c.execute('DELETE FROM sessions WHERE user_id=?', (target['id'],))
+                c.execute('DELETE FROM attempts WHERE key=?', (limit_key,))
+                c.commit()
                 return respond(200, {'ok': True})
 
             if not user:
