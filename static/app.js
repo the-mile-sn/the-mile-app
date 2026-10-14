@@ -65,7 +65,10 @@ function boolChecked(v){ return v ? 'checked' : ''; }
 
 function playerIcon(name){
   const icons={
-    folder:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l1.7 2H20.5v9.5H3.5z"/><path d="M3.5 7.5V5.5h5l1.5 2"/></svg>',
+    nutrition:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5h8l2 2V19.5H7z"/><path d="M15 4.5v3h3"/><path d="M10 11h4M10 14h4"/></svg>',
+    menus:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6.5c2.5-.9 5-.7 7.5.8v11c-2.5-1.5-5-1.7-7.5-.8z"/><path d="M19.5 6.5c-2.5-.9-5-.7-7.5.8v11c2.5-1.5 5-1.7 7.5-.8z"/></svg>',
+    other:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8h6l1.7 2H20.5v8.5H3.5z"/><path d="M3.5 8V6h5l1.5 2"/></svg>',
+    anthropometry:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18.5V14h3v4.5zM10.5 18.5V10h3v8.5zM16 18.5V6h3v12.5z"/></svg>',
     document:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4V20.5H6z"/><path d="M14 3.5v4h4"/><path d="M9 12h6M9 15.5h6"/></svg>',
     refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 8A7 7 0 1 0 19 14"/><path d="M18.2 4.5V8h-3.5"/></svg>',
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
@@ -80,7 +83,7 @@ function formatRenewal(value){
   return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : value;
 }
 function playerFolderIcon(folder){
-  return folder==='other'||folder==='anthropometry' ? playerIcon('document') : playerIcon('folder');
+  return playerIcon(folder);
 }
 
 async function api(path,{method='GET',body=null,binary=false}={}){
