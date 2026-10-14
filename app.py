@@ -110,6 +110,8 @@ def initialize():
             ALTER TABLE users ADD COLUMN IF NOT EXISTS anthropometry_enabled INTEGER NOT NULL DEFAULT 0;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS photo BYTEA;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_mime TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_name TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS renewal_date TEXT;
             CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL;
             ''')
         else:
@@ -131,6 +133,8 @@ def initialize():
                 'anthropometry_enabled': 'INTEGER NOT NULL DEFAULT 0',
                 'photo': 'BLOB',
                 'photo_mime': 'TEXT',
+                'plan_name': 'TEXT',
+                'renewal_date': 'TEXT',
             }
             for column, spec in additions.items():
                 if column not in existing:
@@ -188,6 +192,8 @@ def clean_player_payload(body, require_password=False, require_photo=False):
     password = body.get('password', '')
     birth_date = str(body.get('birth_date', '')).strip()
     sex = str(body.get('sex', '')).strip().upper()
+    plan_name = str(body.get('plan_name', '')).strip()
+    renewal_date = str(body.get('renewal_date', '')).strip()
     try:
         height = float(body.get('height'))
         weight = float(body.get('weight'))
@@ -196,6 +202,8 @@ def clean_player_payload(body, require_password=False, require_photo=False):
     if not name or len(name) > 120 or not USERNAME_RE.fullmatch(username):
         raise Problem(400, 'user_fields')
     if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', birth_date) or sex not in ('M', 'F'):
+        raise Problem(400, 'user_fields')
+    if not plan_name or len(plan_name) > 80 or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', renewal_date):
         raise Problem(400, 'user_fields')
     if not (50 <= height <= 250) or not (20 <= weight <= 300):
         raise Problem(400, 'user_fields')
@@ -215,7 +223,7 @@ def clean_player_payload(body, require_password=False, require_photo=False):
         raise Problem(400, 'photo')
     return {
         'name': name, 'username': username, 'password': password, 'birth_date': birth_date,
-        'sex': sex, 'height': height, 'weight': weight,
+        'sex': sex, 'height': height, 'weight': weight, 'plan_name': plan_name, 'renewal_date': renewal_date,
         'menus_enabled': int(menus_enabled), 'anthropometry_enabled': int(anthropometry_enabled),
         'photo': photo, 'photo_mime': photo_mime,
     }
@@ -231,6 +239,7 @@ def player_dict(row, include_private=True):
     if include_private:
         data.update({
             'birth_date': row['birth_date'], 'sex': row['sex'], 'height': row['height'], 'weight': row['weight'],
+            'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'],
         })
     return data
 
@@ -396,10 +405,10 @@ def application(env, start_response):
                     p = clean_player_payload(body, require_password=True, require_photo=True)
                     uid = secrets.token_hex(16)
                     internal_email = f"{p['username']}@players.themile.local"
-                    c.execute("""INSERT INTO users(id,name,email,username,role,password,active,birth_date,sex,height,weight,menus_enabled,anthropometry_enabled,photo,photo_mime)
-                                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    c.execute("""INSERT INTO users(id,name,email,username,role,password,active,birth_date,sex,height,weight,menus_enabled,anthropometry_enabled,photo,photo_mime,plan_name,renewal_date)
+                                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                               (uid, p['name'], internal_email, p['username'], 'player', password_hash(p['password']), 1,
-                               p['birth_date'], p['sex'], p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['photo'], p['photo_mime']))
+                               p['birth_date'], p['sex'], p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['photo'], p['photo_mime'], p['plan_name'], p['renewal_date']))
                     c.commit()
                     return respond(201, {'id': uid})
 
@@ -449,8 +458,8 @@ def application(env, start_response):
                     body = read_json(env)
                     p = clean_player_payload(body)
                     fields = [p['name'], f"{p['username']}@players.themile.local", p['username'], p['birth_date'], p['sex'],
-                              p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled']]
-                    sql = 'UPDATE users SET name=?,email=?,username=?,birth_date=?,sex=?,height=?,weight=?,menus_enabled=?,anthropometry_enabled=?'
+                              p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['plan_name'], p['renewal_date']]
+                    sql = 'UPDATE users SET name=?,email=?,username=?,birth_date=?,sex=?,height=?,weight=?,menus_enabled=?,anthropometry_enabled=?,plan_name=?,renewal_date=?'
                     if p['password']:
                         sql += ',password=?'
                         fields.append(password_hash(p['password']))
