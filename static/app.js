@@ -192,7 +192,11 @@ function renderPlayer(w){
 
       <section class="player-plan-card">
         <span class="player-plan-icon">${playerIcon('refresh')}</span>
-        <div><strong>${esc(owner.plan_name||'')}</strong><small>${lang==='pt'?'Renova a ':'Renews on '}${esc(formatRenewal(owner.renewal_date))}</small></div>
+        <div class="player-plan-copy">
+          <span class="player-plan-label">${lang==='pt'?'Plano atual':'Current plan'}</span>
+          <strong>${esc(owner.plan_name||'')}</strong>
+          <small>${lang==='pt'?'Renova a ':'Renews on '}${esc(formatRenewal(owner.renewal_date))}</small>
+        </div>
       </section>
 
       <section class="player-list-card">
