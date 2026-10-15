@@ -176,3 +176,9 @@ body.player-theme .wordmark{width:90px;height:22px;background-size:120px 120px}
   .player-form-actions{margin-top:4px}
   .player-account-links{margin-top:54px}
 }
+
+/* Lower account footer for more breathing room */
+.player-account-links{margin-top:78px}
+@media(max-width:650px){
+  .player-account-links{margin-top:86px}
+}
