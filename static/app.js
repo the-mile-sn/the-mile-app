@@ -199,9 +199,10 @@ function renderPlayer(w){
         ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row" data-folder="${f}"><span class="player-row-icon">${playerFolderIcon(f)}</span><span class="player-row-copy"><strong>${esc(w.folders[f])}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
       </section>
 
-      <button class="player-logout-card" id="player-logout" type="button"><span class="player-row-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span><span class="player-chevron">${playerIcon('chevron')}</span></button>
-
-      <button class="player-password-link" id="change-password" type="button">${w.changePassword}</button>
+      <div class="player-account-links">
+        <button class="player-password-link" id="change-password" type="button">${w.changePassword}</button>
+        <button class="player-password-link player-logout-link" id="player-logout" type="button">${lang==='pt'?'Terminar sessão':'Sign out'}</button>
+      </div>
     </section>`;
 
     ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;render();});
