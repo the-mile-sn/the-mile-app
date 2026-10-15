@@ -157,3 +157,22 @@ body.player-theme .wordmark{width:90px;height:22px;background-size:120px 120px}
   .player-account-links{margin-top:30px}
   .player-account-links .player-password-link{padding:5px 8px;min-height:auto}
 }
+
+/* Inline plan summary below player name */
+.player-plan-inline{margin-top:10px;text-align:center;line-height:1.35}
+.player-plan-inline span{display:block;color:#d7d7da;font-size:12px}
+.player-plan-inline span strong{font-weight:400;color:#fff}
+.player-plan-inline small{display:block;color:#939397;font-size:11px;margin-top:3px}
+.player-profile{padding-bottom:14px}
+.player-form-actions{margin-top:4px}
+.player-account-links{margin-top:50px}
+.player-account-links .player-password-link{padding:5px 8px;min-height:auto}
+.player-logout-link{margin-top:4px}
+@media(max-width:650px){
+  .player-plan-inline{margin-top:9px}
+  .player-plan-inline span{font-size:12px}
+  .player-plan-inline small{font-size:11px}
+  .player-profile{padding-bottom:14px}
+  .player-form-actions{margin-top:4px}
+  .player-account-links{margin-top:54px}
+}
