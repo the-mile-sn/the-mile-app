@@ -183,21 +183,16 @@ function renderPlayer(w){
       <div class="player-profile">
         ${owner.has_photo?`<img class="player-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
         <h1>${esc(owner.name)}</h1>
+        <div class="player-plan-inline">
+          <span>${lang==='pt'?'Plano atual: ':'Current plan: '}<strong>${esc(owner.plan_name||'')}</strong></span>
+          <small>${lang==='pt'?'Renova a ':'Renews on '}${esc(formatRenewal(owner.renewal_date))}</small>
+        </div>
       </div>
 
       <div class="player-form-actions">
         <button id="weight-form" type="button">${w.registerWeight}</button>
         <button id="game-form" type="button">${w.postGame}</button>
       </div>
-
-      <section class="player-plan-card">
-        <span class="player-plan-icon">${playerIcon('refresh')}</span>
-        <div class="player-plan-copy">
-          <span class="player-plan-label">${lang==='pt'?'Plano atual':'Current plan'}</span>
-          <strong>${esc(owner.plan_name||'')}</strong>
-          <small>${lang==='pt'?'Renova a ':'Renews on '}${esc(formatRenewal(owner.renewal_date))}</small>
-        </div>
-      </section>
 
       <section class="player-list-card">
         ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row" data-folder="${f}"><span class="player-row-icon">${playerFolderIcon(f)}</span><span class="player-row-copy"><strong>${esc(w.folders[f])}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
