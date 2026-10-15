@@ -37,7 +37,7 @@ html{min-height:100%;background:#000}body{min-height:100dvh;background:#f3f3f3;-
 
 
 /* Player interface redesign */
-body.player-theme{background:#000;color:#fff;font-family:Inter,Arial,Helvetica,sans-serif;letter-spacing:-0.02em}
+body.player-theme{background:#000;color:#fff;font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:-0.02em}
 body.player-theme .app{background:#000;border-color:#000}
 body.player-theme header{background:#000;border-bottom:0;padding-bottom:8px}
 body.player-theme .header-actions #install,
