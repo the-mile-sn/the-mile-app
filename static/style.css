@@ -771,3 +771,32 @@ body.player-internal main{
 html.skip-launch-splash .app-splash{
   display:none!important
 }
+
+
+/* Interactive swipe-back transition v17 */
+body.player-theme{
+  overscroll-behavior-x:none
+}
+.player-shell.swipe-back-active{
+  will-change:transform,opacity;
+  position:relative;
+  z-index:2
+}
+body.player-theme main{
+  position:relative;
+  overflow-x:hidden
+}
+body.player-theme main::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:#000;
+  opacity:calc(.16 - (var(--swipe-progress,0) * .16));
+  z-index:1
+}
+body.player-theme .player-shell{
+  position:relative;
+  z-index:2;
+  background:#000
+}
