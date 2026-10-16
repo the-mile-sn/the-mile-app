@@ -1,6 +1,6 @@
 'use strict';
-const CACHE = 'the-mile-shell-v18';
-const SHELL = ['/', '/style.css?v=54', '/app.js?v=54', '/logo.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+const CACHE = 'the-mile-shell-v19';
+const SHELL = ['/', '/style.css?v=55', '/app.js?v=55', '/logo.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
