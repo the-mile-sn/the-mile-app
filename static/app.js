@@ -120,6 +120,25 @@ async function api(path,{method='GET',body=null,binary=false}={}){
 function notify(title,text){ document.getElementById('notice-title').textContent=title; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; document.getElementById('notice').showModal(); }
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
+function enablePlayerSwipeBack(backFn){
+  const shell=ui.root.querySelector('.player-shell');
+  if(!shell)return;
+  let startX=0,startY=0,armed=false;
+  shell.addEventListener('touchstart',e=>{
+    const t=e.touches[0];
+    armed=t.clientX<=28;
+    startX=t.clientX;
+    startY=t.clientY;
+  },{passive:true});
+  shell.addEventListener('touchend',e=>{
+    if(!armed)return;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-startX;
+    const dy=Math.abs(t.clientY-startY);
+    armed=false;
+    if(dx>72 && dy<64)backFn();
+  },{passive:true});
+}
 function submit(fn){ const form=ui.root.querySelector('form'); if(!form)return; form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button[type="submit"]');if(b)b.disabled=true;const er=form.querySelector('.error');if(er)er.textContent='';try{await fn(new FormData(form));}catch(x){error(x);}finally{if(b)b.disabled=false;}}; }
 
 function fileToDataURL(file){
@@ -188,14 +207,16 @@ function renderPlayer(w){
     if(mode==='password'){
       ui.root.innerHTML=`<section class="player-shell player-password"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
       bind('back',()=>{mode='';render();});
+      enablePlayerSwipeBack(()=>{mode='';render();});
       submit(async f=>{await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});mode='';notify('The Mile',w.passwordChanged);render();});
       return;
     }
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`<section class="player-shell"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-list-card">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong><small>PDF</small></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
       bind('back',()=>{folder=null;render();});
+      enablePlayerSwipeBack(()=>{folder=null;render();});
       return;
     }
 
@@ -296,7 +317,7 @@ function renderPlayer(w){
 }
 
 function render(){
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
