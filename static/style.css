@@ -405,3 +405,30 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
   .player-quick-icon .soccer-icon{width:44px;height:44px}
   .player-quick-label{width:78px;min-height:32px}
 }
+
+/* Folder title readability + football cleanup v9 */
+.player-folder-title{
+  font-family:'Inter Tight','Inter',Arial,Helvetica,sans-serif;
+  font-size:26px;
+  font-weight:500;
+  line-height:1.18;
+  letter-spacing:0;
+  margin-bottom:22px
+}
+.player-quick-icon .soccer-icon{
+  width:46px;
+  height:46px;
+  stroke-width:1.3
+}
+.player-quick-icon .soccer-icon .ball-panel{
+  fill:currentColor;
+  stroke:none
+}
+@media(max-width:650px){
+  .player-folder-title{
+    font-size:25px;
+    line-height:1.2;
+    letter-spacing:0;
+    margin-bottom:22px
+  }
+}
