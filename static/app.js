@@ -74,10 +74,10 @@ function playerIcon(name){
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
-    calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="5.5" width="15" height="14" rx="3"/><path d="M8 3.8v3.6M16 3.8v3.6M4.8 9.3h14.4"/></svg>',
-    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.8" y="4.6" width="16.4" height="14.8" rx="3.8"/><path d="M8 10.5a4 4 0 0 1 8 0"/><path d="M12 10.5l2.4-2.2"/><circle cx="12" cy="10.5" r=".7"/></svg>',
-    ball:'<svg class="soccer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.8"/><path class="ball-panel" d="M12 7.2l3.15 2.28-1.2 3.7h-3.9l-1.2-3.7z"/><path d="M12 3.2v4M20.35 9.25l-5.2.23M17.25 18.75l-3.3-5.57M6.75 18.75l3.3-5.57M3.65 9.25l5.2.23"/><path class="ball-panel" d="M5.3 7.25l1.95-1.7 2.05 1.15-.45 2.78-2.45.85zM18.7 7.25l-1.95-1.7-2.05 1.15.45 2.78 2.45.85zM7.2 17.55l-.2-2.62 2.35-1.42 2 1.78-1.08 2.45zM16.8 17.55l.2-2.62-2.35-1.42-2 1.78 1.08 2.45z"/></svg>',
-    bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.3 16.8h11.4c-1-1.2-1.5-2.6-1.5-4.1V10a4.2 4.2 0 0 0-8.4 0v2.7c0 1.5-.5 2.9-1.5 4.1z"/><path d="M9.8 18.7c.5.9 1.2 1.4 2.2 1.4s1.7-.5 2.2-1.4"/></svg>'
+    calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.2" width="16" height="14.8" rx="3.6"/><path d="M8 3.7v3.4M16 3.7v3.4M4.5 9.2h15"/></svg>',
+    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.7" y="4.4" width="16.6" height="15.2" rx="4"/><path d="M7.8 11.2a4.2 4.2 0 0 1 8.4 0"/><path d="M12 11.2l2-1.9"/><circle cx="12" cy="11.2" r=".65"/></svg>',
+    ball:'<svg class="soccer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="ball-panel" d="M12 7.4l3.05 2.2-1.16 3.58h-3.78L8.95 9.6z"/><path d="M12 3l0 4.4M20.55 9.2l-5.5.4M17.5 19l-3.61-5.82M6.5 19l3.61-5.82M3.45 9.2l5.5.4"/><path d="M5.4 6.6l3.55 3M18.6 6.6l-3.55 3M5.25 16.65l4.86-3.47M18.75 16.65l-4.86-3.47"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.9 17h12.2c-1.1-1.3-1.7-2.8-1.7-4.5V9.9a4.4 4.4 0 0 0-8.8 0v2.6c0 1.7-.6 3.2-1.7 4.5z"/><path d="M9.8 19c.5.9 1.25 1.4 2.2 1.4s1.7-.5 2.2-1.4"/></svg>'
   };
   return icons[name]||'';
 }
@@ -208,19 +208,19 @@ function renderPlayer(w){
       <nav class="player-quick-actions" aria-label="${lang==='pt'?'Ações rápidas':'Quick actions'}">
         <button class="player-quick-action" id="weekly-plan" type="button">
           <span class="player-quick-icon">${playerIcon('calendar')}</span>
-          <span>${lang==='pt'?'Plano semanal':'Weekly plan'}</span>
+          <span class="player-quick-label">${lang==='pt'?'Plano semanal':'Weekly plan'}</span>
         </button>
         <button class="player-quick-action" id="weight-form" type="button">
           <span class="player-quick-icon">${playerIcon('scale')}</span>
-          <span>${w.registerWeight}</span>
+          <span class="player-quick-label">${w.registerWeight}</span>
         </button>
         <button class="player-quick-action" id="game-form" type="button">
           <span class="player-quick-icon">${playerIcon('ball')}</span>
-          <span>${w.postGame}</span>
+          <span class="player-quick-label">${w.postGame}</span>
         </button>
         <button class="player-quick-action" id="reminders" type="button">
           <span class="player-quick-icon">${playerIcon('bell')}</span>
-          <span>${lang==='pt'?'Lembretes':'Reminders'}</span>
+          <span class="player-quick-label">${lang==='pt'?'Lembretes':'Reminders'}</span>
         </button>
       </nav>
 
