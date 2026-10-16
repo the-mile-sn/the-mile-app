@@ -22,8 +22,17 @@
     body{min-height:100dvh}
     .app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#000;min-height:100dvh}
   </style>
-  <link rel="stylesheet" href="/style.css?v=63">
-  <script defer src="/app.js?v=67"></script>
+  <script>
+    try{
+      if(sessionStorage.getItem('mile-launch-seen')==='1'){
+        document.documentElement.classList.add('skip-launch-splash');
+      }else{
+        sessionStorage.setItem('mile-launch-seen','1');
+      }
+    }catch(e){}
+  </script>
+  <link rel="stylesheet" href="/style.css?v=64">
+  <script defer src="/app.js?v=68"></script>
 </head>
 <body>
 <div id="splash" class="app-splash" aria-hidden="true"><div class="splash-wordmark" role="img" aria-label="The Mile"></div></div>
