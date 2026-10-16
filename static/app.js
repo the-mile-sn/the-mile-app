@@ -121,21 +121,83 @@ function notify(title,text){ document.getElementById('notice-title').textContent
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
 function enablePlayerSwipeBack(backFn){
-  let startX=0,startY=0,armed=false;
+  const shell=ui.root.querySelector('.player-shell');
+  if(!shell)return;
+
+  let startX=0,startY=0,lastX=0,dragging=false,tracking=false;
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+
   document.body.ontouchstart=e=>{
     if(!e.touches||!e.touches[0])return;
     const t=e.touches[0];
-    armed=true;
-    startX=t.clientX;
+    startX=lastX=t.clientX;
     startY=t.clientY;
+    tracking=true;
+    dragging=false;
+    shell.classList.remove('swipe-back-commit','swipe-back-cancel');
+    shell.style.transition='none';
   };
-  document.body.ontouchend=e=>{
-    if(!armed||!e.changedTouches||!e.changedTouches[0])return;
-    const t=e.changedTouches[0];
+
+  document.body.ontouchmove=e=>{
+    if(!tracking||!e.touches||!e.touches[0])return;
+    const t=e.touches[0];
     const dx=t.clientX-startX;
     const dy=Math.abs(t.clientY-startY);
-    armed=false;
-    if(dx>64 && dx>dy*1.35)backFn();
+
+    if(!dragging){
+      if(dx<=8)return;
+      if(dx<dy*1.15){tracking=false;return;}
+      dragging=true;
+      shell.classList.add('swipe-back-active');
+    }
+
+    if(dx<0)return;
+    lastX=t.clientX;
+    const width=Math.max(window.innerWidth,1);
+    const x=clamp(dx,0,width);
+    const progress=clamp(x/width,0,1);
+
+    shell.style.transform=`translate3d(${x}px,0,0)`;
+    shell.style.opacity=String(1-progress*.08);
+    document.documentElement.style.setProperty('--swipe-progress',String(progress));
+
+    if(e.cancelable)e.preventDefault();
+  };
+
+  document.body.ontouchend=e=>{
+    if(!tracking&&!dragging)return;
+    const end=e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:null;
+    const dx=end?end.clientX-startX:lastX-startX;
+    const dy=end?Math.abs(end.clientY-startY):0;
+    const width=Math.max(window.innerWidth,1);
+    const shouldCommit=dragging && dx>Math.max(72,width*.24) && dx>dy*1.15;
+
+    tracking=false;
+    shell.style.transition='transform .22s cubic-bezier(.22,.61,.36,1), opacity .22s ease';
+
+    if(shouldCommit){
+      shell.classList.add('swipe-back-commit');
+      shell.style.transform=`translate3d(${width}px,0,0)`;
+      shell.style.opacity='0.94';
+      setTimeout(()=>{
+        document.documentElement.style.removeProperty('--swipe-progress');
+        backFn();
+      },210);
+    }else{
+      shell.classList.add('swipe-back-cancel');
+      shell.style.transform='translate3d(0,0,0)';
+      shell.style.opacity='1';
+      document.documentElement.style.setProperty('--swipe-progress','0');
+      setTimeout(()=>{
+        shell.classList.remove('swipe-back-active','swipe-back-cancel');
+        shell.style.transition='';
+        shell.style.transform='';
+        shell.style.opacity='';
+        document.documentElement.style.removeProperty('--swipe-progress');
+      },230);
+    }
+
+    dragging=false;
   };
 }
 function submit(fn){ const form=ui.root.querySelector('form'); if(!form)return; form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button[type="submit"]');if(b)b.disabled=true;const er=form.querySelector('.error');if(er)er.textContent='';try{await fn(new FormData(form));}catch(x){error(x);}finally{if(b)b.disabled=false;}}; }
@@ -316,7 +378,7 @@ function renderPlayer(w){
 }
 
 function render(){
-  document.body.ontouchstart=null;document.body.ontouchend=null;
+  document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
