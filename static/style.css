@@ -915,3 +915,25 @@ body.player-internal .player-folder-title{
     padding-top:20px
   }
 }
+
+
+/* User-provided quick action icons v23 */
+.player-quick-icon .quick-raster-icon{
+  display:block;
+  object-fit:contain;
+  width:44px;
+  height:44px
+}
+.player-quick-icon .scale-raster-icon{
+  width:43px;
+  height:43px
+}
+.player-quick-icon .ball-raster-icon{
+  width:45px;
+  height:45px
+}
+@media(max-width:650px){
+  .player-quick-icon .quick-raster-icon{width:42px;height:42px}
+  .player-quick-icon .scale-raster-icon{width:41px;height:41px}
+  .player-quick-icon .ball-raster-icon{width:43px;height:43px}
+}
