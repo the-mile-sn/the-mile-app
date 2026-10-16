@@ -432,3 +432,13 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
     margin-bottom:22px
   }
 }
+
+/* Player account footer position v10 */
+.player-home-v4 .player-account-links{
+  margin-top:86px
+}
+@media(max-width:650px){
+  .player-home-v4 .player-account-links{
+    margin-top:90px
+  }
+}
