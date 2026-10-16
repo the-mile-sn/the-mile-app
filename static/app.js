@@ -121,23 +121,22 @@ function notify(title,text){ document.getElementById('notice-title').textContent
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
 function enablePlayerSwipeBack(backFn){
-  const shell=ui.root.querySelector('.player-shell');
-  if(!shell)return;
   let startX=0,startY=0,armed=false;
-  shell.addEventListener('touchstart',e=>{
+  document.body.ontouchstart=e=>{
+    if(!e.touches||!e.touches[0])return;
     const t=e.touches[0];
-    armed=t.clientX<=28;
+    armed=t.clientX<=44;
     startX=t.clientX;
     startY=t.clientY;
-  },{passive:true});
-  shell.addEventListener('touchend',e=>{
-    if(!armed)return;
+  };
+  document.body.ontouchend=e=>{
+    if(!armed||!e.changedTouches||!e.changedTouches[0])return;
     const t=e.changedTouches[0];
     const dx=t.clientX-startX;
     const dy=Math.abs(t.clientY-startY);
     armed=false;
-    if(dx>72 && dy<64)backFn();
-  },{passive:true});
+    if(dx>56 && dy<90)backFn();
+  };
 }
 function submit(fn){ const form=ui.root.querySelector('form'); if(!form)return; form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button[type="submit"]');if(b)b.disabled=true;const er=form.querySelector('.error');if(er)er.textContent='';try{await fn(new FormData(form));}catch(x){error(x);}finally{if(b)b.disabled=false;}}; }
 
@@ -317,6 +316,7 @@ function renderPlayer(w){
 }
 
 function render(){
+  document.body.ontouchstart=null;document.body.ontouchend=null;
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
