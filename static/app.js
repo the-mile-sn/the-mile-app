@@ -150,6 +150,7 @@ function enablePlayerSwipeBack(backFn){
       if(dx<dy*1.15){tracking=false;return;}
       dragging=true;
       shell.classList.add('swipe-back-active');
+      document.body.classList.add('swipe-revealing');
     }
 
     if(dx<0)return;
@@ -182,6 +183,7 @@ function enablePlayerSwipeBack(backFn){
       shell.style.opacity='0.94';
       setTimeout(()=>{
         document.documentElement.style.removeProperty('--swipe-progress');
+        document.body.classList.remove('swipe-revealing');
         backFn();
       },210);
     }else{
@@ -195,6 +197,7 @@ function enablePlayerSwipeBack(backFn){
         shell.style.transform='';
         shell.style.opacity='';
         document.documentElement.style.removeProperty('--swipe-progress');
+        document.body.classList.remove('swipe-revealing');
       },230);
     }
 
@@ -216,6 +219,7 @@ function enablePlayerSwipeBack(backFn){
       shell.style.transform='';
       shell.style.opacity='';
       document.documentElement.style.removeProperty('--swipe-progress');
+      document.body.classList.remove('swipe-revealing');
     },190);
   };
 }
@@ -402,7 +406,7 @@ function renderPlayer(w){
 }
 
 function render(){
-  document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;
+  document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
