@@ -274,3 +274,63 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
   .player-menu-row-clean{min-height:72px}
   .player-home-v4 .player-account-links{margin-top:88px}
 }
+
+/* Player premium spacing + scale refinements v6 */
+.player-profile-card{margin-bottom:42px}
+.player-quick-actions{gap:14px;margin-bottom:48px}
+.player-quick-icon{
+  width:76px;
+  height:76px;
+  background:rgba(245,245,247,.085);
+  border-color:rgba(245,245,247,.085)
+}
+.player-quick-icon svg{
+  width:35px;
+  height:35px;
+  stroke-width:1.45
+}
+.player-quick-action{
+  gap:11px;
+  font-size:13px;
+  line-height:1.22
+}
+.player-documents-card{
+  background:rgba(245,245,247,.085)
+}
+.player-menu-row-clean{
+  min-height:78px;
+  padding-left:22px;
+  padding-right:18px
+}
+.player-menu-row-clean .player-row-copy strong{
+  font-size:16px;
+  line-height:1.2
+}
+.player-menu-row-clean .player-row-copy small{
+  font-size:12.5px;
+  margin-top:5px
+}
+.player-menu-row-clean:not(:last-child)::after{
+  left:38px;
+  right:54px;
+  background:rgba(245,245,247,.07)
+}
+.player-menu-row-clean .player-chevron{
+  color:#85858a
+}
+.player-menu-row-clean .player-chevron svg{
+  width:19px;
+  height:19px;
+  stroke-width:1.45
+}
+.player-home-v4 .player-account-links{margin-top:110px}
+@media(max-width:650px){
+  .player-profile-card{margin-bottom:40px}
+  .player-quick-actions{gap:10px;margin-bottom:46px}
+  .player-quick-icon{width:72px;height:72px}
+  .player-quick-icon svg{width:34px;height:34px}
+  .player-quick-action{font-size:12.5px}
+  .player-menu-row-clean{min-height:78px}
+  .player-menu-row-clean .player-row-copy strong{font-size:16px}
+  .player-home-v4 .player-account-links{margin-top:118px}
+}
