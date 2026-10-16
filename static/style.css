@@ -623,7 +623,7 @@ body.login-theme footer{
   background:#000;
   opacity:1;
   visibility:visible;
-  transition:opacity .8s ease,visibility .8s ease
+  transition:opacity .6s ease,visibility .6s ease
 }
 .app-splash.is-hidden{
   opacity:0;
@@ -635,7 +635,7 @@ body.login-theme footer{
   background:url('/logo.png') center/235px 235px no-repeat;
   opacity:0;
   transform:scale(.985);
-  animation:mileSplashIn .9s ease forwards
+  animation:mileSplashIn .6s ease forwards
 }
 @keyframes mileSplashIn{
   to{opacity:1;transform:scale(1)}
