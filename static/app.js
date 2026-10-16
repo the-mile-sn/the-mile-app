@@ -285,7 +285,7 @@ function renderPlayer(w){
 }
 
 function render(){
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
@@ -294,9 +294,11 @@ function render(){
       bind('back-login',()=>{loginMode='login';render();});
       return;
     }
-    ui.root.innerHTML=`<div class="login"><p class="eyebrow">The Mile</p><h1>${activating?w.activate:w.enter}</h1><p class="subtitle">${activating?w.activateSub:w.loginSub}</p><form>${!activating?`<label>${w.username}</label><input name="identifier" autocomplete="username" required>`:''}<label>${w.password}</label><input name="password" type="password" autocomplete="${activating?'new-password':'current-password'}" minlength="${activating?12:1}" required>${activating?`<label>${w.confirm}</label><input name="confirm" type="password" minlength="12" required>`:''}<p class="error"></p><button class="primary" type="submit">${activating?w.save:w.enter}</button></form>${!activating?`<div class="login-links"><button id="change-access" class="subtle">${w.changeAccess}</button><button id="forgot" class="subtle">${w.forgot}</button></div>`:''}</div>`;
+    ui.root.innerHTML=activating
+      ? `<div class="login"><p class="eyebrow">The Mile</p><h1>${w.activate}</h1><p class="subtitle">${w.activateSub}</p><form><label>${w.password}</label><input name="password" type="password" autocomplete="new-password" minlength="12" required><label>${w.confirm}</label><input name="confirm" type="password" minlength="12" required><p class="error"></p><button class="primary" type="submit">${w.save}</button></form></div>`
+      : `<div class="login login-home"><div class="login-heading"><h1>${w.enter}</h1><p>${lang==='pt'?'Área privada':'Private area'}</p></div><form><label>${lang==='pt'?'Email ou username':'Email or username'}</label><input name="identifier" autocomplete="username" required><label>${w.password}</label><input name="password" type="password" autocomplete="current-password" required><p class="error"></p><button class="login-primary" type="submit">${w.enter}</button></form><button id="forgot" class="login-forgot" type="button">${w.forgot}</button></div>`;
     submit(async f=>{if(activating&&f.get('password')!==f.get('confirm'))throw Error('password_mismatch');await api(activating?'/activate':'/login',{method:'POST',body:{identifier:f.get('identifier'),password:f.get('password'),token:activationToken}});activationToken=null;await refresh();});
-    bind('change-access',()=>{loginMode='change';render();});bind('forgot',()=>notify('The Mile',w.forgotText));return;
+    bind('forgot',()=>notify('The Mile',w.forgotText));return;
   }
   if(user.role==='admin'&&!selected){renderDashboard(w);return;} renderPlayer(w);
 }
