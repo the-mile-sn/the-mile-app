@@ -611,3 +611,52 @@ body.login-theme footer{
     min-height:52px
   }
 }
+
+/* Branded app launch + simplified login v14 */
+.app-splash{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+  opacity:1;
+  visibility:visible;
+  transition:opacity .34s ease,visibility .34s ease
+}
+.app-splash.is-hidden{
+  opacity:0;
+  visibility:hidden
+}
+.splash-wordmark{
+  width:176px;
+  height:44px;
+  background:url('/logo.png') center/235px 235px no-repeat;
+  opacity:0;
+  transform:scale(.985);
+  animation:mileSplashIn .46s ease forwards
+}
+@keyframes mileSplashIn{
+  to{opacity:1;transform:scale(1)}
+}
+.login-home .login-heading{
+  margin-bottom:38px
+}
+.login-home .login-heading h1{
+  font-size:32px;
+  line-height:1.1
+}
+@media(max-width:650px){
+  .splash-wordmark{
+    width:164px;
+    height:41px;
+    background-size:219px 219px
+  }
+  .login-home .login-heading{
+    margin-bottom:34px
+  }
+  .login-home .login-heading h1{
+    font-size:30px
+  }
+}
