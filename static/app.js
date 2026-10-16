@@ -10,7 +10,6 @@ const ui = {
 let lang = localStorage.getItem('mile-language') === 'en' ? 'en' : 'pt';
 let user = null, csrf = null, selected = null, folder = null, players = [], admins = [], docs = [], mode = '';
 let loginMode = 'login';
-let playerHomeSnapshot = '';
 let activationToken = new URLSearchParams(location.search).get('activate');
 let installPrompt = null;
 const splashStartedAt = performance.now();
@@ -150,7 +149,6 @@ function enablePlayerSwipeBack(backFn){
       if(dx<dy*1.15){tracking=false;return;}
       dragging=true;
       shell.classList.add('swipe-back-active');
-      document.body.classList.add('swipe-revealing');
     }
 
     if(dx<0)return;
@@ -183,7 +181,6 @@ function enablePlayerSwipeBack(backFn){
       shell.style.opacity='0.94';
       setTimeout(()=>{
         document.documentElement.style.removeProperty('--swipe-progress');
-        document.body.classList.remove('swipe-revealing');
         backFn();
       },210);
     }else{
@@ -197,7 +194,6 @@ function enablePlayerSwipeBack(backFn){
         shell.style.transform='';
         shell.style.opacity='';
         document.documentElement.style.removeProperty('--swipe-progress');
-        document.body.classList.remove('swipe-revealing');
       },230);
     }
 
@@ -219,7 +215,6 @@ function enablePlayerSwipeBack(backFn){
       shell.style.transform='';
       shell.style.opacity='';
       document.documentElement.style.removeProperty('--swipe-progress');
-      document.body.classList.remove('swipe-revealing');
     },190);
   };
 }
@@ -298,7 +293,7 @@ function renderPlayer(w){
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`${playerHomeSnapshot?`<div class="player-swipe-underlay" aria-hidden="true">${playerHomeSnapshot}</div>`:''}<section class="player-shell player-folder-screen"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
       bind('back',()=>{folder=null;render();});
       enablePlayerSwipeBack(()=>{folder=null;render();});
       return;
@@ -351,11 +346,6 @@ function renderPlayer(w){
         <button class="player-password-link player-logout-link" id="player-logout" type="button">${lang==='pt'?'Terminar sessão':'Sign out'}</button>
       </div>
     </section>`;
-
-    playerHomeSnapshot=ui.root.innerHTML
-      .replace(/\sid="[^"]*"/g,'')
-      .replace(/\sdata-folder="[^"]*"/g,'')
-      .replace(/href="[^"]*"/g,'href="#"');
 
     ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;render();});
     bind('weekly-plan',()=>{if(weekly)window.open('/api/documents/'+weekly.id,'_blank','noopener');else{folder='nutrition';render();}});
