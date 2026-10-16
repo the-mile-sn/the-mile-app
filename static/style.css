@@ -471,3 +471,143 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
   .player-quick-actions{margin-bottom:36px}
   .player-menu-row-clean{min-height:70px}
 }
+
+/* Unified login experience v13 */
+body.login-theme{
+  background:#000;
+  color:#fff;
+  font-family:'Inter',Arial,Helvetica,sans-serif;
+  letter-spacing:0
+}
+body.login-theme .app{
+  background:#000;
+  border-color:#000;
+  min-height:100dvh;
+  margin:0;
+  max-width:none;
+  border-radius:0
+}
+body.login-theme header{
+  background:#000;
+  border-bottom:0;
+  box-shadow:none;
+  padding-bottom:8px
+}
+body.login-theme .wordmark{
+  width:90px;
+  height:22px;
+  background-size:120px 120px
+}
+body.login-theme .header-actions #install,
+body.login-theme .header-actions #logout{
+  display:none!important
+}
+body.login-theme .header-actions #language{
+  border:0;
+  background:transparent;
+  color:#939397;
+  font-size:12px;
+  padding:6px 0;
+  min-height:auto
+}
+body.login-theme main{
+  background:#000;
+  padding-top:54px;
+  min-height:0
+}
+body.login-theme footer{
+  display:none
+}
+.login-home{
+  max-width:430px;
+  margin:0 auto
+}
+.login-home .login-heading{
+  margin-bottom:42px
+}
+.login-home .login-heading h1{
+  margin:0;
+  color:#fff;
+  font-family:'Inter Tight','Inter',Arial,Helvetica,sans-serif;
+  font-size:36px;
+  font-weight:500;
+  line-height:1.08;
+  letter-spacing:-.025em
+}
+.login-home .login-heading p{
+  margin:8px 0 0;
+  color:#939397;
+  font-size:14px
+}
+.login-home form label{
+  color:#d7d7da;
+  font-size:13px;
+  margin:0 0 9px
+}
+.login-home form input{
+  background:rgba(245,245,247,.085);
+  border:1px solid rgba(245,245,247,.12);
+  border-radius:16px;
+  color:#fff;
+  min-height:54px;
+  padding:14px 16px;
+  font-size:16px;
+  margin-bottom:22px
+}
+.login-home form input:focus{
+  border-color:rgba(255,255,255,.32)
+}
+.login-home .error{
+  margin:0 0 12px;
+  color:#f3a24d;
+  font-size:12px
+}
+.login-primary{
+  width:100%;
+  min-height:52px;
+  border:0;
+  border-radius:16px;
+  background:#fff;
+  color:#000;
+  font-family:'Inter Tight','Inter',Arial,Helvetica,sans-serif;
+  font-size:14px;
+  font-weight:500;
+  margin-top:2px
+}
+.login-forgot{
+  display:block;
+  margin:18px auto 0;
+  border:0;
+  background:transparent;
+  color:#939397;
+  font-size:12px;
+  padding:8px
+}
+@media(max-width:650px){
+  body.login-theme header{
+    padding-top:max(34px,calc(env(safe-area-inset-top) + 14px));
+    padding-left:22px;
+    padding-right:22px;
+    padding-bottom:8px
+  }
+  body.login-theme .wordmark{
+    width:86px;
+    height:21px;
+    background-size:115px 115px
+  }
+  body.login-theme main{
+    padding:50px 22px max(34px,env(safe-area-inset-bottom))
+  }
+  .login-home{
+    max-width:none
+  }
+  .login-home .login-heading{
+    margin-bottom:38px
+  }
+  .login-home .login-heading h1{
+    font-size:34px
+  }
+  .login-home form input{
+    min-height:52px
+  }
+}
