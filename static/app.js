@@ -73,7 +73,11 @@ function playerIcon(name){
     refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 8A7 7 0 1 0 19 14"/><path d="M18.2 4.5V8h-3.5"/></svg>',
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
-    arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'
+    arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+    calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v14H5z"/><path d="M8 3.5v4M16 3.5v4M5 9h14"/></svg>',
+    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="5" width="15" height="14" rx="2.5"/><path d="M9 10.5a3 3 0 0 1 6 0"/><path d="M12 10.5l1.7-1.8"/></svg>',
+    ball:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.2l3.2 2.3-1.2 3.8h-4l-1.2-3.8zM12 3.5v4.7M19.8 9l-4.6 1.5M16.8 18.8L14 14.3M7.2 18.8L10 14.3M4.2 9l4.6 1.5"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 16.5h11l-1.2-2V10a4.3 4.3 0 0 0-8.6 0v4.5z"/><path d="M10 18.5a2.2 2.2 0 0 0 4 0"/></svg>'
   };
   return icons[name]||'';
 }
@@ -84,6 +88,12 @@ function formatRenewal(value){
 }
 function playerFolderIcon(folder){
   return playerIcon(folder);
+}
+function planExpired(value){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return false;
+  const [y,m,d]=String(value).split('-').map(Number),now=new Date();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  return new Date(y,m-1,d)<today;
 }
 
 async function api(path,{method='GET',body=null,binary=false}={}){
@@ -179,23 +189,46 @@ function renderPlayer(w){
     }
 
     const af=availableFolders(owner);
-    ui.root.innerHTML=`<section class="player-shell">
-      <div class="player-profile">
-        ${owner.has_photo?`<img class="player-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
-        <h1>${esc(owner.name)}</h1>
-        <div class="player-plan-inline">
-          <span>${lang==='pt'?'Plano atual: ':'Current plan: '}<strong>${esc(owner.plan_name||'')}</strong></span>
-          <small>${lang==='pt'?'Renova a ':'Renews on '}${esc(formatRenewal(owner.renewal_date))}</small>
+    const expired=planExpired(owner.renewal_date);
+    const weekly=docs.filter(d=>d.folder==='nutrition').sort((a,b)=>Number(b.updated||0)-Number(a.updated||0))[0]||null;
+    const planStatus=expired?(lang==='pt'?'Plano expirado':'Plan expired'):`${lang==='pt'?'Plano ':'Plan '}${esc(owner.plan_name||'')}`;
+    const renewalText=expired?(lang==='pt'?'Expirou a ':'Expired on '):(lang==='pt'?'Renova a ':'Renews on ');
+    const folderName=f=>f==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[f];
+
+    ui.root.innerHTML=`<section class="player-shell player-home-v4">
+      <section class="player-profile-card">
+        ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
+        <div class="player-profile-card-copy">
+          <h1>${esc(owner.name)}</h1>
+          <strong class="player-plan-state ${expired?'expired':''}">${planStatus}</strong>
+          <small>${renewalText}${esc(formatRenewal(owner.renewal_date))}</small>
         </div>
-      </div>
+      </section>
 
-      <div class="player-form-actions">
-        <button id="weight-form" type="button">${w.registerWeight}</button>
-        <button id="game-form" type="button">${w.postGame}</button>
-      </div>
+      <nav class="player-quick-actions" aria-label="${lang==='pt'?'Ações rápidas':'Quick actions'}">
+        <button class="player-quick-action" id="weekly-plan" type="button">
+          <span class="player-quick-icon">${playerIcon('calendar')}</span>
+          <span>${lang==='pt'?'Plano semanal':'Weekly plan'}</span>
+        </button>
+        <button class="player-quick-action" id="weight-form" type="button">
+          <span class="player-quick-icon">${playerIcon('scale')}</span>
+          <span>${w.registerWeight}</span>
+        </button>
+        <button class="player-quick-action" id="game-form" type="button">
+          <span class="player-quick-icon">${playerIcon('ball')}</span>
+          <span>${w.postGame}</span>
+        </button>
+        <button class="player-quick-action" id="reminders" type="button">
+          <span class="player-quick-icon">${playerIcon('bell')}</span>
+          <span>${lang==='pt'?'Lembretes':'Reminders'}</span>
+        </button>
+      </nav>
 
-      <section class="player-list-card">
-        ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row" data-folder="${f}"><span class="player-row-icon">${playerFolderIcon(f)}</span><span class="player-row-copy"><strong>${esc(w.folders[f])}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
+      <section class="player-documents-section">
+        <h2>${lang==='pt'?'Documentos':'Documents'}</h2>
+        <div class="player-list-card player-documents-card">
+          ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row player-menu-row-clean" data-folder="${f}"><span class="player-row-copy"><strong>${esc(folderName(f))}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
+        </div>
       </section>
 
       <div class="player-account-links">
@@ -205,8 +238,10 @@ function renderPlayer(w){
     </section>`;
 
     ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;render();});
+    bind('weekly-plan',()=>{if(weekly)window.open('/api/documents/'+weekly.id,'_blank','noopener');else{folder='nutrition';render();}});
     bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
     bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
+    bind('reminders',()=>notify(lang==='pt'?'Lembretes':'Reminders',lang==='pt'?'Esta área ficará disponível quando ativarmos os lembretes do jogador.':'This area will be available when player reminders are enabled.'));
     bind('change-password',()=>{mode='password';render();});
     bind('player-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
     return;
