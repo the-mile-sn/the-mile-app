@@ -334,3 +334,32 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
   .player-menu-row-clean .player-row-copy strong{font-size:16px}
   .player-home-v4 .player-account-links{margin-top:118px}
 }
+
+/* Player finishing refinements v7 */
+.player-quick-icon svg{
+  width:38px;
+  height:38px;
+  stroke-width:1.35
+}
+.player-quick-icon .ball-panel{
+  fill:currentColor;
+  stroke:none
+}
+.player-menu-row-clean{
+  padding-left:26px;
+  padding-right:24px
+}
+.player-menu-row-clean:not(:last-child)::after{
+  left:26px;
+  right:24px;
+  background:rgba(245,245,247,.055)
+}
+.player-home-v4 .player-account-links #change-password{
+  transform:translateY(6px)
+}
+@media(max-width:650px){
+  .player-quick-icon svg{width:37px;height:37px}
+  .player-menu-row-clean{padding-left:26px;padding-right:24px}
+  .player-menu-row-clean:not(:last-child)::after{left:26px;right:24px}
+  .player-home-v4 .player-account-links #change-password{transform:translateY(6px)}
+}
