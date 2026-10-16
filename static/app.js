@@ -165,7 +165,7 @@ function enablePlayerSwipeBack(backFn){
     if(e.cancelable)e.preventDefault();
   };
 
-  document.body.ontouchend=e=>{
+  const finishSwipe=e=>{
     if(!tracking&&!dragging)return;
     const end=e.changedTouches&&e.changedTouches[0]?e.changedTouches[0]:null;
     const dx=end?end.clientX-startX:lastX-startX;
@@ -199,6 +199,24 @@ function enablePlayerSwipeBack(backFn){
     }
 
     dragging=false;
+  };
+
+  document.body.ontouchend=finishSwipe;
+  document.body.ontouchcancel=()=>{
+    if(!tracking&&!dragging)return;
+    tracking=false;
+    dragging=false;
+    shell.style.transition='transform .18s ease, opacity .18s ease';
+    shell.style.transform='translate3d(0,0,0)';
+    shell.style.opacity='1';
+    document.documentElement.style.setProperty('--swipe-progress','0');
+    setTimeout(()=>{
+      shell.classList.remove('swipe-back-active','swipe-back-cancel','swipe-back-commit');
+      shell.style.transition='';
+      shell.style.transform='';
+      shell.style.opacity='';
+      document.documentElement.style.removeProperty('--swipe-progress');
+    },190);
   };
 }
 function submit(fn){ const form=ui.root.querySelector('form'); if(!form)return; form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button[type="submit"]');if(b)b.disabled=true;const er=form.querySelector('.error');if(er)er.textContent='';try{await fn(new FormData(form));}catch(x){error(x);}finally{if(b)b.disabled=false;}}; }
@@ -384,7 +402,7 @@ function renderPlayer(w){
 }
 
 function render(){
-  document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;
+  document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   if(!user||activationToken){
     const activating=!!activationToken;
