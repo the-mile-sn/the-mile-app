@@ -861,3 +861,57 @@ body.swipe-revealing .player-swipe-underlay{
 body.swipe-revealing .player-swipe-underlay{
   display:none!important
 }
+
+
+/* Internal header navigation v22 */
+#header-back{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:0;
+  background:transparent;
+  color:#98989d;
+  padding:6px 0;
+  min-height:36px;
+  font:inherit;
+  font-size:14px
+}
+#header-back[hidden]{
+  display:none!important
+}
+#header-back svg{
+  width:19px;
+  height:19px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.45;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+body.player-internal header{
+  min-height:58px;
+  align-items:flex-end
+}
+body.player-internal header .wordmark,
+body.player-internal header .header-actions{
+  display:none!important
+}
+body.player-internal main{
+  padding-top:22px
+}
+body.player-internal .player-password h1,
+body.player-internal .player-folder-title{
+  margin-top:0
+}
+@media(max-width:650px){
+  body.player-internal header{
+    padding-top:max(34px,calc(env(safe-area-inset-top) + 14px));
+    padding-left:22px;
+    padding-right:22px;
+    padding-bottom:8px;
+    min-height:auto
+  }
+  body.player-internal main{
+    padding-top:20px
+  }
+}
