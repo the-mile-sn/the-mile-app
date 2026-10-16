@@ -87,8 +87,8 @@ function playerIcon(name){
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
     calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.2" width="16" height="14.8" rx="3.6"/><path d="M8 3.7v3.4M16 3.7v3.4M4.5 9.2h15"/></svg>',
-    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.7" y="4.4" width="16.6" height="15.2" rx="4"/><path d="M7.8 11.2a4.2 4.2 0 0 1 8.4 0"/><path d="M12 11.2l2-1.9"/><circle cx="12" cy="11.2" r=".65"/></svg>',
-    ball:'<svg class="soccer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="ball-panel" d="M12 7.3l3.05 2.2-1.16 3.58h-3.78L8.95 9.5z"/><path d="M12 3v4.3M20.55 9.25l-5.5.25M17.45 19l-3.56-5.92M6.55 19l3.56-5.92M3.45 9.25l5.5.25"/></svg>',
+    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.7" y="4.4" width="16.6" height="15.2" rx="4"/><path d="M8.4 9.1v1.5M12 8.4v1.8M15.6 9.1v1.5"/><path d="M12 12.2l1.8-2.1"/></svg>',
+    ball:'<svg class="soccer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="ball-panel" d="M10.05 8.15l3.25-.35 2.05 2.55-1.25 3.05-3.25.45-2.05-2.55z"/><path d="M10.15 8.2L7.1 5.8M13.35 7.85l1.55-3.55M15.35 10.35l4.05-.55M14.1 13.4l2.35 3.15M10.85 13.85l-2.2 3.4M8.8 11.3l-3.95-.8M7.1 5.8l-1.85 3.65M14.9 4.3l3.45 2.25M19.4 9.8l.15 3.95M16.45 16.55l-3.15 3.25M8.65 17.25l-3.1-2.1"/></svg>',
     bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.9 17h12.2c-1.1-1.3-1.7-2.8-1.7-4.5V9.9a4.4 4.4 0 0 0-8.8 0v2.6c0 1.7-.6 3.2-1.7 4.5z"/><path d="M9.8 19c.5.9 1.25 1.4 2.2 1.4s1.7-.5 2.2-1.4"/></svg>'
   };
   return icons[name]||'';
@@ -403,7 +403,7 @@ function renderPlayer(w){
 
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&!(user.role==='player'&&folder===null&&mode==='');ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password');
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
