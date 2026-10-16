@@ -852,3 +852,12 @@ body.swipe-revealing .player-swipe-underlay{
   visibility:visible;
   opacity:calc(.82 + (var(--swipe-progress,0) * .18))!important
 }
+
+
+/* Stable swipe-back: disable duplicated home preview v21 */
+.player-swipe-underlay{
+  display:none!important
+}
+body.swipe-revealing .player-swipe-underlay{
+  display:none!important
+}
