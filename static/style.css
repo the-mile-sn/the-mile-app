@@ -455,3 +455,19 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
   .player-quick-action{font-size:12px}
   .player-quick-icon .soccer-icon{width:40px;height:40px}
 }
+
+/* Player vertical rhythm refinement v12 */
+.player-profile-card{
+  margin-bottom:34px
+}
+.player-quick-actions{
+  margin-bottom:38px
+}
+.player-menu-row-clean{
+  min-height:70px
+}
+@media(max-width:650px){
+  .player-profile-card{margin-bottom:32px}
+  .player-quick-actions{margin-bottom:36px}
+  .player-menu-row-clean{min-height:70px}
+}
