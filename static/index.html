@@ -24,19 +24,16 @@
   </style>
   <script>
     try{
-      const nav=performance.getEntriesByType('navigation')[0];
-      const returning=history.state&&history.state.mileApp===true;
-      const backForward=nav&&nav.type==='back_forward';
-      if(returning||backForward||sessionStorage.getItem('mile-launch-seen')==='1'){
+      const seen=sessionStorage.getItem('mile-launch-seen')==='1';
+      if(seen){
         document.documentElement.classList.add('skip-launch-splash');
       }else{
         sessionStorage.setItem('mile-launch-seen','1');
-        history.replaceState(Object.assign({},history.state||{},{mileApp:true}),'',location.href);
       }
     }catch(e){}
   </script>
-  <link rel="stylesheet" href="/style.css?v=68">
-  <script defer src="/app.js?v=72"></script>
+  <link rel="stylesheet" href="/style.css?v=69">
+  <script defer src="/app.js?v=73"></script>
 </head>
 <body>
 <div id="splash" class="app-splash" aria-hidden="true"><div class="splash-wordmark" role="img" aria-label="The Mile"></div></div>
