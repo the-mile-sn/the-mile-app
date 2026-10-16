@@ -4,7 +4,8 @@ const ui = {
   root: document.getElementById('content'),
   lang: document.getElementById('language'),
   logout: document.getElementById('logout'),
-  install: document.getElementById('install')
+  install: document.getElementById('install'),
+  headerBack: document.getElementById('header-back')
 };
 
 let lang = localStorage.getItem('mile-language') === 'en' ? 'en' : 'pt';
@@ -291,8 +292,7 @@ function renderPlayer(w){
 
   if(!isAdmin){
     if(mode==='password'){
-      ui.root.innerHTML=`<section class="player-shell player-password"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
-      bind('back',()=>{mode='';render();});
+      ui.root.innerHTML=`<section class="player-shell player-password"><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
       enablePlayerSwipeBack(()=>{mode='';render();});
       submit(async f=>{await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});mode='';notify('The Mile',w.passwordChanged);render();});
       return;
@@ -300,8 +300,7 @@ function renderPlayer(w){
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
-      bind('back',()=>{folder=null;render();});
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
       enablePlayerSwipeBack(()=>{folder=null;render();},{interactive:false});
       return;
     }
@@ -405,6 +404,10 @@ function renderPlayer(w){
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password');
+  ui.headerBack.hidden=!internalPlayer;
+  ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
+  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null)folder=null;else if(mode==='password')mode='';render();}:null;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
