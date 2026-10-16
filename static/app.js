@@ -76,7 +76,7 @@ function playerIcon(name){
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
     calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.2" width="16" height="14.8" rx="3.6"/><path d="M8 3.7v3.4M16 3.7v3.4M4.5 9.2h15"/></svg>',
     scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.7" y="4.4" width="16.6" height="15.2" rx="4"/><path d="M7.8 11.2a4.2 4.2 0 0 1 8.4 0"/><path d="M12 11.2l2-1.9"/><circle cx="12" cy="11.2" r=".65"/></svg>',
-    ball:'<svg class="soccer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="ball-panel" d="M12 7.3l3.05 2.2-1.16 3.58h-3.78L8.95 9.5z"/><path d="M12 3v4.3M20.55 9.25l-5.5.25M17.45 19l-3.56-5.92M6.55 19l3.56-5.92M3.45 9.25l5.5.25"/></svg>'
+    ball:'<svg class="soccer-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="ball-panel" d="M12 7.3l3.05 2.2-1.16 3.58h-3.78L8.95 9.5z"/><path d="M12 3v4.3M20.55 9.25l-5.5.25M17.45 19l-3.56-5.92M6.55 19l3.56-5.92M3.45 9.25l5.5.25"/></svg>',
     bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.9 17h12.2c-1.1-1.3-1.7-2.8-1.7-4.5V9.9a4.4 4.4 0 0 0-8.8 0v2.6c0 1.7-.6 3.2-1.7 4.5z"/><path d="M9.8 19c.5.9 1.25 1.4 2.2 1.4s1.7-.5 2.2-1.4"/></svg>'
   };
   return icons[name]||'';
