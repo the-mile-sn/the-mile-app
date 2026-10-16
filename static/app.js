@@ -18,7 +18,7 @@ if (activationToken) history.replaceState(null, '', location.pathname);
 function dismissSplash(){
   const splash=document.getElementById('splash');
   if(!splash)return;
-  const delay=Math.max(0,2900-(performance.now()-splashStartedAt));
+  const delay=Math.max(0,2800-(performance.now()-splashStartedAt));
   setTimeout(()=>{
     splash.classList.add('is-hidden');
     setTimeout(()=>splash.remove(),820);
