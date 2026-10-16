@@ -841,3 +841,14 @@ body.player-theme main{
   min-height:100%;
   background:#000
 }
+
+
+/* Hide swipe underlay until the gesture actually starts v20 */
+.player-swipe-underlay{
+  opacity:0!important;
+  visibility:hidden
+}
+body.swipe-revealing .player-swipe-underlay{
+  visibility:visible;
+  opacity:calc(.82 + (var(--swipe-progress,0) * .18))!important
+}
