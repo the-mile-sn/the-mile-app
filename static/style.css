@@ -442,3 +442,16 @@ body.player-theme{font-family:'Inter',Arial,Helvetica,sans-serif;letter-spacing:
     margin-top:90px
   }
 }
+
+/* Quick action balance v11 */
+.player-quick-action{
+  font-size:12.5px
+}
+.player-quick-icon .soccer-icon{
+  width:42px;
+  height:42px
+}
+@media(max-width:650px){
+  .player-quick-action{font-size:12px}
+  .player-quick-icon .soccer-icon{width:40px;height:40px}
+}
