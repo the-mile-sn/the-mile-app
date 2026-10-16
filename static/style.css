@@ -819,3 +819,25 @@ body.player-theme main{
 body.player-theme .player-folder-screen{
   background:#000
 }
+
+
+/* Fix swipe-underlay containment v19 */
+body.player-theme main{
+  overflow-x:clip;
+  position:relative
+}
+.player-folder-screen{
+  min-height:calc(100dvh - 110px);
+  background:#000
+}
+.player-swipe-underlay{
+  overflow:hidden;
+  min-height:100%;
+  max-height:100%;
+  contain:paint;
+  clip-path:inset(0)
+}
+.player-swipe-underlay > .player-shell{
+  min-height:100%;
+  background:#000
+}
