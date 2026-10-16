@@ -120,7 +120,7 @@ async function api(path,{method='GET',body=null,binary=false}={}){
 function notify(title,text){ document.getElementById('notice-title').textContent=title; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; document.getElementById('notice').showModal(); }
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
-function enablePlayerSwipeBack(backFn){
+function enablePlayerSwipeBack(backFn,{interactive=true}={}){
   const shell=ui.root.querySelector('.player-shell');
   if(!shell)return;
 
@@ -148,20 +148,21 @@ function enablePlayerSwipeBack(backFn){
       if(dx<=8)return;
       if(dx<dy*1.15){tracking=false;return;}
       dragging=true;
-      shell.classList.add('swipe-back-active');
+      if(interactive) shell.classList.add('swipe-back-active');
     }
 
     if(dx<0)return;
     lastX=t.clientX;
-    const width=Math.max(window.innerWidth,1);
-    const x=clamp(dx,0,width);
-    const progress=clamp(x/width,0,1);
 
-    shell.style.transform=`translate3d(${x}px,0,0)`;
-    shell.style.opacity=String(1-progress*.08);
-    document.documentElement.style.setProperty('--swipe-progress',String(progress));
-
-    if(e.cancelable)e.preventDefault();
+    if(interactive){
+      const width=Math.max(window.innerWidth,1);
+      const x=clamp(dx,0,width);
+      const progress=clamp(x/width,0,1);
+      shell.style.transform=`translate3d(${x}px,0,0)`;
+      shell.style.opacity=String(1-progress*.08);
+      document.documentElement.style.setProperty('--swipe-progress',String(progress));
+      if(e.cancelable)e.preventDefault();
+    }
   };
 
   const finishSwipe=e=>{
@@ -173,6 +174,12 @@ function enablePlayerSwipeBack(backFn){
     const shouldCommit=dragging && dx>Math.max(72,width*.24) && dx>dy*1.15;
 
     tracking=false;
+    if(!interactive){
+      if(shouldCommit) backFn();
+      dragging=false;
+      return;
+    }
+
     shell.style.transition='transform .22s cubic-bezier(.22,.61,.36,1), opacity .22s ease';
 
     if(shouldCommit){
@@ -295,7 +302,7 @@ function renderPlayer(w){
       const items=docs.filter(d=>d.folder===folder);
       ui.root.innerHTML=`<section class="player-shell player-folder-screen"><button class="player-back" id="back">${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span></button><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
       bind('back',()=>{folder=null;render();});
-      enablePlayerSwipeBack(()=>{folder=null;render();});
+      enablePlayerSwipeBack(()=>{folder=null;render();},{interactive:false});
       return;
     }
 
