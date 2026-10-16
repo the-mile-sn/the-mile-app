@@ -75,8 +75,8 @@ function playerIcon(name){
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
     calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="5.5" width="15" height="14" rx="3"/><path d="M8 3.8v3.6M16 3.8v3.6M4.8 9.3h14.4"/></svg>',
-    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.3" y="5" width="15.4" height="14" rx="3.2"/><path d="M8.8 10.7a3.2 3.2 0 0 1 6.4 0"/><path d="M12 10.7l2-1.8"/></svg>',
-    ball:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.1l3 2.2-1.1 3.5h-3.8L9 10.3zM12 3.6v4.5M19.4 9.2l-4.4 1.4M16.7 18.6l-2.8-4.8M7.3 18.6l2.8-4.8M4.6 9.2L9 10.6"/></svg>',
+    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.8" y="4.6" width="16.4" height="14.8" rx="3.8"/><path d="M8 10.5a4 4 0 0 1 8 0"/><path d="M12 10.5l2.4-2.2"/><circle cx="12" cy="10.5" r=".7"/></svg>',
+    ball:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.7"/><path d="M12 7.7l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 3.3l-2 4.6M20.2 9.3l-4.9 1M17.2 18.8l-3.1-4.6M6.8 18.8l3.1-4.6M3.8 9.3l4.9 1"/><path d="M8.6 10.2L5.4 13M15.4 10.2l3.2 2.8"/></svg>',
     bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.3 16.8h11.4c-1-1.2-1.5-2.6-1.5-4.1V10a4.2 4.2 0 0 0-8.4 0v2.7c0 1.5-.5 2.9-1.5 4.1z"/><path d="M9.8 18.7c.5.9 1.2 1.4 2.2 1.4s1.7-.5 2.2-1.4"/></svg>'
   };
   return icons[name]||'';
