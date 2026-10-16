@@ -74,10 +74,10 @@ function playerIcon(name){
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
-    calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v14H5z"/><path d="M8 3.5v4M16 3.5v4M5 9h14"/></svg>',
-    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="5" width="15" height="14" rx="2.5"/><path d="M9 10.5a3 3 0 0 1 6 0"/><path d="M12 10.5l1.7-1.8"/></svg>',
-    ball:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.2l3.2 2.3-1.2 3.8h-4l-1.2-3.8zM12 3.5v4.7M19.8 9l-4.6 1.5M16.8 18.8L14 14.3M7.2 18.8L10 14.3M4.2 9l4.6 1.5"/></svg>',
-    bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 16.5h11l-1.2-2V10a4.3 4.3 0 0 0-8.6 0v4.5z"/><path d="M10 18.5a2.2 2.2 0 0 0 4 0"/></svg>'
+    calendar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="5.5" width="15" height="14" rx="3"/><path d="M8 3.8v3.6M16 3.8v3.6M4.8 9.3h14.4"/></svg>',
+    scale:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.3" y="5" width="15.4" height="14" rx="3.2"/><path d="M8.8 10.7a3.2 3.2 0 0 1 6.4 0"/><path d="M12 10.7l2-1.8"/></svg>',
+    ball:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 8.1l3 2.2-1.1 3.5h-3.8L9 10.3zM12 3.6v4.5M19.4 9.2l-4.4 1.4M16.7 18.6l-2.8-4.8M7.3 18.6l2.8-4.8M4.6 9.2L9 10.6"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.3 16.8h11.4c-1-1.2-1.5-2.6-1.5-4.1V10a4.2 4.2 0 0 0-8.4 0v2.7c0 1.5-.5 2.9-1.5 4.1z"/><path d="M9.8 18.7c.5.9 1.2 1.4 2.2 1.4s1.7-.5 2.2-1.4"/></svg>'
   };
   return icons[name]||'';
 }
@@ -225,7 +225,6 @@ function renderPlayer(w){
       </nav>
 
       <section class="player-documents-section">
-        <h2>${lang==='pt'?'Documentos':'Documents'}</h2>
         <div class="player-list-card player-documents-card">
           ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row player-menu-row-clean" data-folder="${f}"><span class="player-row-copy"><strong>${esc(folderName(f))}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
         </div>
