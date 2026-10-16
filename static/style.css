@@ -182,3 +182,36 @@ body.player-theme .wordmark{width:90px;height:22px;background-size:120px 120px}
 @media(max-width:650px){
   .player-account-links{margin-top:86px}
 }
+
+/* Player home v4 */
+.player-home-v4{padding-bottom:44px}
+.player-profile-card{display:flex;align-items:center;gap:18px;padding:20px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:rgba(245,245,247,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);margin-bottom:22px}
+.player-profile-card-avatar{width:112px;height:112px;border-radius:50%;object-fit:cover;flex:0 0 auto}
+.player-profile-card-copy{min-width:0}
+.player-profile-card-copy h1{font-size:27px;font-weight:500;letter-spacing:-.02em;margin:0 0 12px;color:#fff}
+.player-plan-state{display:block;color:#e9e9ec;font-size:16px;font-weight:400;margin-bottom:4px}
+.player-plan-state.expired{color:#f3a24d}
+.player-profile-card-copy small{display:block;color:#939397;font-size:13px}
+.player-quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 24px}
+.player-quick-action{border:0;background:transparent;color:#fff;padding:0;display:flex;flex-direction:column;align-items:center;gap:9px;font-size:12px;line-height:1.2;text-align:center}
+.player-quick-icon{width:62px;height:62px;border-radius:50%;background:rgba(245,245,247,.12);border:1px solid rgba(245,245,247,.08);display:flex;align-items:center;justify-content:center}
+.player-quick-icon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.player-documents-section h2{font-size:18px;font-weight:500;color:#fff;margin:0 0 10px;padding-left:2px}
+.player-documents-card{margin-bottom:0}
+.player-menu-row-clean{grid-template-columns:1fr 22px;padding-left:20px;padding-right:16px}
+.player-menu-row-clean .player-row-copy strong{font-size:14px}
+.player-menu-row-clean .player-row-copy small{font-size:12px}
+.player-home-v4 .player-account-links{margin-top:72px}
+@media(max-width:650px){
+  .player-profile-card{padding:18px;gap:16px;border-radius:22px;margin-bottom:20px}
+  .player-profile-card-avatar{width:102px;height:102px}
+  .player-profile-card-copy h1{font-size:25px;margin-bottom:10px}
+  .player-plan-state{font-size:15px}
+  .player-profile-card-copy small{font-size:12px}
+  .player-quick-actions{gap:8px;margin-bottom:22px}
+  .player-quick-icon{width:58px;height:58px}
+  .player-quick-icon svg{width:26px;height:26px}
+  .player-quick-action{font-size:11px}
+  .player-documents-section h2{font-size:17px}
+  .player-home-v4 .player-account-links{margin-top:78px}
+}
