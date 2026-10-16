@@ -800,3 +800,22 @@ body.player-theme .player-shell{
   z-index:2;
   background:#000
 }
+
+
+/* Swipe-back underlay v18 */
+.player-swipe-underlay{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:#000;
+  opacity:calc(.82 + (var(--swipe-progress,0) * .18));
+  transform:translate3d(calc(-18px + (var(--swipe-progress,0) * 18px)),0,0);
+  transition:none
+}
+body.player-theme main{
+  isolation:isolate
+}
+body.player-theme .player-folder-screen{
+  background:#000
+}
