@@ -1687,3 +1687,17 @@ body:not(.player-theme) footer{display:none}
     justify-content:flex-start;
   }
 }
+
+
+/* Admin identity and plan badge refinement v41 */
+.admin-player-copy h1{
+  margin-bottom:14px;
+}
+.admin-plan-badge.plan-elite{
+  background:#dfe7f3;
+  color:#1f3f66;
+}
+.admin-plan-badge.plan-pro{
+  background:#e6f3ff;
+  color:#4d8fc7;
+}
