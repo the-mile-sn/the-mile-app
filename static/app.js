@@ -449,18 +449,17 @@ function renderPlayer(w){
             <h1>${esc(owner.name)}</h1>
             <p class="admin-player-username">@${esc(owner.username)}</p>
             <div class="admin-player-badges">
-              <span class="admin-info-badge">${w.planName}: ${esc(owner.plan_name)}</span>
-              <span class="admin-info-badge">${lang==='pt'?'Renova a':'Renews on'} ${esc(formatRenewal(owner.renewal_date))}</span>
+              <span class="admin-info-badge">${esc(owner.plan_name)}</span>
+              <span class="admin-info-badge ${planExpired(owner.renewal_date)?'expired':''}">${planExpired(owner.renewal_date)?(lang==='pt'?'Expirou a':'Expired on'):(lang==='pt'?'Renova a':'Renews on')} ${esc(formatRenewal(owner.renewal_date))}</span>
             </div>
           </div>
         </div>
-        <button class="admin-details-shortcut" id="details" type="button">
-          <span>${lang==='pt'?'Detalhes':'Details'}</span>
-          <small>${lang==='pt'?'Dados do atleta':'Player data'}</small>
-        </button>
+        <div class="admin-player-primary-actions">
+          <button class="secondary" id="edit" type="button">${w.edit}</button>
+          <button class="secondary" id="details" type="button">${lang==='pt'?'Ver dados':'View data'}</button>
+        </div>
       </section>
       <div class="actions player-actions admin-player-actions">
-        <button class="secondary" id="edit">${w.edit}</button>
         <button class="secondary" id="change-password">${w.resetPassword}</button>
         <button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button>
         <button class="secondary danger" id="delete-player">${w.deletePlayer}</button>
@@ -536,7 +535,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=69').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=70').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
