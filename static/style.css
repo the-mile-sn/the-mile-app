@@ -1598,3 +1598,52 @@ body:not(.player-theme) footer{display:none}
     grid-template-columns:1fr;
   }
 }
+
+
+/* Back office player hierarchy refinement v39 */
+.admin-player-hero{
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+}
+.admin-player-copy h1{
+  margin-bottom:8px;
+  letter-spacing:-.8px;
+}
+.admin-player-username{
+  margin-top:0;
+  margin-bottom:0;
+  letter-spacing:.01em;
+}
+.admin-player-badges{
+  margin-top:16px;
+}
+.admin-info-badge.expired{
+  background:#fff1e6;
+  color:#c96a18;
+}
+.admin-player-primary-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+}
+.admin-player-primary-actions .secondary{
+  min-width:92px;
+}
+.admin-player-actions{
+  justify-content:flex-end;
+  margin-top:-4px;
+  margin-bottom:26px;
+}
+@media(max-width:650px){
+  .admin-player-hero{
+    grid-template-columns:1fr;
+  }
+  .admin-player-primary-actions{
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+  .admin-player-actions{
+    justify-content:flex-start;
+  }
+}
