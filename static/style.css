@@ -1647,3 +1647,43 @@ body:not(.player-theme) footer{display:none}
     justify-content:flex-start;
   }
 }
+
+
+/* Admin player management refinement v40 */
+.admin-player-identity img{
+  width:108px;
+  height:108px;
+}
+.admin-player-primary-actions .secondary{
+  min-width:108px;
+}
+.admin-details-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+.admin-details-heading h1{
+  margin-bottom:0;
+}
+.admin-account-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:28px;
+  padding-top:22px;
+  border-top:1px solid #e5e5e5;
+}
+@media(max-width:650px){
+  .admin-player-identity img{
+    width:88px;
+    height:88px;
+  }
+  .admin-details-heading{
+    align-items:center;
+  }
+  .admin-account-actions{
+    justify-content:flex-start;
+  }
+}
