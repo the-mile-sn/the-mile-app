@@ -1328,3 +1328,24 @@ body.player-theme #notice .primary:active{
     margin-bottom:6px;
   }
 }
+
+
+/* Player profile spacing refinement v33 */
+.player-profile-plan{
+  padding-left:24px;
+}
+.player-profile-action{
+  min-height:56px;
+  padding-top:0;
+  padding-bottom:0;
+}
+@media(max-width:650px){
+  .player-profile-plan{
+    padding-left:24px;
+  }
+  .player-profile-action{
+    min-height:56px;
+    padding-top:0;
+    padding-bottom:0;
+  }
+}
