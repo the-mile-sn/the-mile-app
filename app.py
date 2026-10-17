@@ -10,6 +10,8 @@ import re
 import secrets
 import sqlite3
 import time
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
@@ -32,7 +34,7 @@ SECURE = BASE_URL.startswith('https://')
 MAX_PDF = 20 * 1024 * 1024
 MAX_JSON = 5 * 1024 * 1024
 MAX_PHOTO = 3 * 1024 * 1024
-FOLDERS = ('nutrition', 'menus', 'other', 'anthropometry', 'weekly')
+FOLDERS = ('nutrition', 'menus', 'other', 'anthropometry', 'weekly', 'weekly_next')
 ADMINS = (('Filipe Sousa', 'filipesousa@themile.pt'), ('Raquel Gomes', 'raquelgomes@themile.pt'))
 WEIGHT_FORM_M = os.environ.get('MILE_WEIGHT_FORM_M', 'https://forms.gle/iRhSJ8zkqgUy2eye7').strip()
 WEIGHT_FORM_F = os.environ.get('MILE_WEIGHT_FORM_F', 'https://forms.gle/AAc9xFmZE4vrYLbw9').strip()
@@ -113,6 +115,7 @@ def initialize():
             ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_name TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS renewal_date TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_status TEXT NOT NULL DEFAULT 'waiting';
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_next_activate_at BIGINT;
             CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL;
             ''')
         else:
@@ -137,6 +140,7 @@ def initialize():
                 'plan_name': 'TEXT',
                 'renewal_date': 'TEXT',
                 'weekly_status': "TEXT NOT NULL DEFAULT 'waiting'",
+                'weekly_next_activate_at': 'INTEGER',
             }
             for column, spec in additions.items():
                 if column not in existing:
@@ -242,8 +246,47 @@ def player_dict(row, include_private=True):
         data.update({
             'birth_date': row['birth_date'], 'sex': row['sex'], 'height': row['height'], 'weight': row['weight'],
             'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'], 'weekly_status': row['weekly_status'],
+            'weekly_next_activate_at': row['weekly_next_activate_at'],
         })
     return data
+
+
+
+def next_weekly_activation(now=None):
+    tz = ZoneInfo('Europe/Lisbon')
+    current = datetime.now(tz) if now is None else datetime.fromtimestamp(now, tz)
+    days = (7 - current.weekday()) % 7
+    target_date = current.date() + timedelta(days=days)
+    target = datetime(target_date.year, target_date.month, target_date.day, 0, 1, tzinfo=tz)
+    if target <= current:
+        target += timedelta(days=7)
+    return int(target.timestamp())
+
+
+def activate_due_weekly(c, uid=None, now=None):
+    now = int(time.time()) if now is None else int(now)
+    if uid:
+        users = c.execute("SELECT id,weekly_next_activate_at FROM users WHERE id=? AND role='player'", (uid,)).fetchall()
+    else:
+        users = c.execute("SELECT id,weekly_next_activate_at FROM users WHERE role='player' AND weekly_next_activate_at IS NOT NULL AND weekly_next_activate_at<=?", (now,)).fetchall()
+    changed = False
+    for row in users:
+        activate_at = row['weekly_next_activate_at']
+        if not activate_at or int(activate_at) > now:
+            continue
+        nxt = c.execute("SELECT id FROM documents WHERE user_id=? AND folder='weekly_next' ORDER BY updated DESC LIMIT 1", (row['id'],)).fetchone()
+        if not nxt:
+            c.execute("UPDATE users SET weekly_next_activate_at=NULL WHERE id=?", (row['id'],))
+            changed = True
+            continue
+        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (row['id'],))
+        c.execute("UPDATE documents SET folder='weekly',updated=? WHERE id=?", (now, nxt['id']))
+        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly_next' AND id<>?", (row['id'], nxt['id']))
+        c.execute("UPDATE users SET weekly_status='available',weekly_next_activate_at=NULL WHERE id=?", (row['id'],))
+        changed = True
+    if changed:
+        c.commit()
+    return changed
 
 
 def folder_allowed(player, folder):
@@ -300,6 +343,8 @@ def application(env, start_response):
         with connect() as c:
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
+            if user and user['role'] == 'player' and activate_due_weekly(c, user['id'], now):
+                user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
 
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
@@ -394,6 +439,7 @@ def application(env, start_response):
             if path == '/api/players':
                 admin(user)
                 if method == 'GET':
+                    activate_due_weekly(c, None, now)
                     rows = c.execute("""SELECT u.*,(SELECT count(*) FROM documents d WHERE d.user_id=u.id) documents
                                       FROM users u WHERE role='player' ORDER BY u.name""").fetchall()
                     players = []
@@ -514,12 +560,23 @@ def application(env, start_response):
                         c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
                     c.commit()
                     return respond(200, {'ok': True})
+                if action == 'weekly-launch':
+                    nxt = c.execute("SELECT id FROM documents WHERE user_id=? AND folder='weekly_next' ORDER BY updated DESC LIMIT 1", (uid,)).fetchone()
+                    if not nxt:
+                        raise Problem(404, 'not_found')
+                    c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
+                    c.execute("UPDATE documents SET folder='weekly',updated=? WHERE id=?", (now, nxt['id']))
+                    c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly_next' AND id<>?", (uid, nxt['id']))
+                    c.execute("UPDATE users SET weekly_status='available',weekly_next_activate_at=NULL WHERE id=?", (uid,))
+                    c.commit()
+                    return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
 
             if path == '/api/documents':
                 qs = parse_qs(env.get('QUERY_STRING', ''))
                 uid = qs.get('player', [user['id']])[0]
                 authorize_owner(user, uid)
+                activate_due_weekly(c, uid, now)
                 owner = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
                 if not owner:
                     raise Problem(404, 'not_found')
@@ -539,6 +596,9 @@ def application(env, start_response):
                     if folder == 'weekly':
                         c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
                         c.execute("UPDATE users SET weekly_status='available' WHERE id=?", (uid,))
+                    if folder == 'weekly_next':
+                        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly_next'", (uid,))
+                        c.execute("UPDATE users SET weekly_next_activate_at=? WHERE id=?", (next_weekly_activation(now), uid))
                     did = secrets.token_hex(16)
                     c.execute('INSERT INTO documents(id,user_id,folder,title,size,updated,uploaded_by,data) VALUES(?,?,?,?,?,?,?,?)',
                               (did, uid, folder, title, len(blob), now, user['id'], blob))
