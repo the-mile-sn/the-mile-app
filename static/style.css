@@ -1389,3 +1389,43 @@ body.player-theme #notice .primary:active{
   transform:scale(.985);
   background:rgba(245,245,247,.16);
 }
+
+
+/* Reliable player press states v35 */
+.player-quick-action,
+.player-profile-card,
+.player-menu-row-clean,
+.player-doc-row,
+.player-profile-plan,
+.player-profile-action{
+  -webkit-tap-highlight-color:transparent;
+}
+.player-quick-icon,
+.player-profile-card,
+.player-menu-row-clean,
+.player-doc-row,
+.player-profile-plan,
+.player-profile-action{
+  transition:transform 130ms ease,background-color 130ms ease,opacity 130ms ease;
+}
+.player-quick-action.is-pressed .player-quick-icon{
+  transform:scale(.93);
+  background:rgba(245,245,247,.21);
+}
+.player-profile-card.is-pressed{
+  transform:scale(.985);
+  background:rgba(245,245,247,.15);
+}
+.player-menu-row-clean.is-pressed{
+  transform:scale(.99);
+  background:rgba(245,245,247,.16);
+}
+.player-doc-row.is-pressed{
+  transform:scale(.985);
+  background:rgba(245,245,247,.18);
+}
+.player-profile-plan.is-pressed,
+.player-profile-action.is-pressed{
+  transform:scale(.985);
+  background:rgba(245,245,247,.16);
+}
