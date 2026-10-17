@@ -122,6 +122,21 @@ async function api(path,{method='GET',body=null,binary=false}={}){
 function notify(title,text){ const n=document.getElementById('notice'); const nt=document.getElementById('notice-title'); nt.textContent=title; nt.hidden=!!user&&user.role==='player'; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; n.showModal(); }
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
+function enablePressFeedback(root=document){
+  root.querySelectorAll('.player-quick-action,.player-profile-card,.player-menu-row-clean,.player-doc-row,.player-profile-plan,.player-profile-action').forEach(el=>{
+    if(el.dataset.pressBound==='1')return;
+    el.dataset.pressBound='1';
+    const press=()=>el.classList.add('is-pressed');
+    const release=()=>el.classList.remove('is-pressed');
+    el.addEventListener('touchstart',press,{passive:true});
+    el.addEventListener('touchend',release,{passive:true});
+    el.addEventListener('touchcancel',release,{passive:true});
+    el.addEventListener('pointerdown',press);
+    el.addEventListener('pointerup',release);
+    el.addEventListener('pointercancel',release);
+    el.addEventListener('pointerleave',release);
+  });
+}
 function enablePlayerSwipeBack(backFn,{interactive=true}={}){
   const shell=ui.root.querySelector('.player-shell');
   if(!shell)return;
@@ -481,5 +496,9 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=67').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=68').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
+
+const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
+pressFeedbackObserver.observe(ui.root,{childList:true,subtree:true});
+enablePressFeedback(ui.root);
