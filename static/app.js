@@ -412,16 +412,30 @@ function renderPlayer(w){
   if(isAdmin&&mode==='details'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>
       <div class="admin-details-page">
-        <p class="eyebrow">${w.playerDetails}</p>
-        <h1>${esc(owner.name)}</h1>
+        <div class="admin-details-heading">
+          <div>
+            <p class="eyebrow">${lang==='pt'?'Gerir atleta':'Manage player'}</p>
+            <h1>${esc(owner.name)}</h1>
+          </div>
+          <button class="secondary" id="edit" type="button">${w.edit}</button>
+        </div>
         <div class="admin-details-card">
           <div><span>${w.birthDate}</span><strong>${esc(owner.birth_date)}</strong></div>
           <div><span>${w.sex}</span><strong>${owner.sex==='M'?w.male:w.female}</strong></div>
           <div><span>${w.height}</span><strong>${esc(owner.height)}</strong></div>
           <div><span>${w.weight}</span><strong>${esc(owner.weight)}</strong></div>
         </div>
+        <div class="admin-account-actions">
+          <button class="secondary" id="change-password">${w.resetPassword}</button>
+          <button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button>
+          <button class="secondary danger" id="delete-player">${w.deletePlayer}</button>
+        </div>
       </div>`;
     bind('back',()=>{mode='';render();});
+    bind('edit',()=>{mode='edit';render();});
+    bind('change-password',()=>{mode='password';render();});
+    bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
+    bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
     return;
   }
   if(isAdmin&&mode==='edit'){
@@ -455,15 +469,9 @@ function renderPlayer(w){
           </div>
         </div>
         <div class="admin-player-primary-actions">
-          <button class="secondary" id="edit" type="button">${w.edit}</button>
-          <button class="secondary" id="details" type="button">${lang==='pt'?'Ver dados':'View data'}</button>
+          <button class="secondary" id="details" type="button">${lang==='pt'?'Gerir atleta':'Manage player'}</button>
         </div>
       </section>
-      <div class="actions player-actions admin-player-actions">
-        <button class="secondary" id="change-password">${w.resetPassword}</button>
-        <button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button>
-        <button class="secondary danger" id="delete-player">${w.deletePlayer}</button>
-      </div>
       `:`
       <section class="profile-card">${owner.has_photo?`<img src="/api/players/${owner.id}/photo" alt="">`:''}<div><strong>${esc(owner.name)}</strong><p>@${esc(owner.username)}</p></div></section>
       <div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button></div>
@@ -535,7 +543,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=70').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=71').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
