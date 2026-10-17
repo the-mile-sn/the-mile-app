@@ -409,6 +409,21 @@ function renderPlayer(w){
     bind('reminders',()=>notify(lang==='pt'?'Lembretes':'Reminders',lang==='pt'?'Esta área ficará disponível quando ativarmos os lembretes do jogador.':'This area will be available when player reminders are enabled.'));
     return;
   }
+  if(isAdmin&&mode==='details'){
+    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>
+      <div class="admin-details-page">
+        <p class="eyebrow">${w.playerDetails}</p>
+        <h1>${esc(owner.name)}</h1>
+        <div class="admin-details-card">
+          <div><span>${w.birthDate}</span><strong>${esc(owner.birth_date)}</strong></div>
+          <div><span>${w.sex}</span><strong>${owner.sex==='M'?w.male:w.female}</strong></div>
+          <div><span>${w.height}</span><strong>${esc(owner.height)}</strong></div>
+          <div><span>${w.weight}</span><strong>${esc(owner.weight)}</strong></div>
+        </div>
+      </div>`;
+    bind('back',()=>{mode='';render();});
+    return;
+  }
   if(isAdmin&&mode==='edit'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><p class="eyebrow">${w.playerDetails}</p><h1>${esc(owner.name)}</h1>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
@@ -421,15 +436,40 @@ function renderPlayer(w){
   }
 
   const af=availableFolders(owner);
-  const title=folder===null?(isAdmin?owner.name:w.hello+' '+owner.name.split(' ')[0]+'.'):w.folders[folder];
+  const title=folder===null?(isAdmin?'':w.hello+' '+owner.name.split(' ')[0]+'.'):w.folders[folder];
   ui.root.innerHTML=`${isAdmin||folder!==null?'<button class="back" id="back">'+w.back+'</button>':''}
-    ${folder===null?`<p class="eyebrow">${isAdmin?'@'+esc(owner.username):w.private}</p>`:''}
-    <div class="topline"><h1>${esc(title)}</h1>${isAdmin&&folder!==null&&mode!=='upload'?'<button class="primary" id="upload">'+w.upload+'</button>':''}</div>
+    ${folder!==null?`<div class="topline"><h1>${esc(title)}</h1>${isAdmin&&mode!=='upload'?'<button class="primary" id="upload">'+w.upload+'</button>':''}</div>`:''}
     ${folder===null?`
+      ${isAdmin?`
+      <section class="admin-player-hero">
+        <div class="admin-player-identity">
+          ${owner.has_photo?`<img src="/api/players/${owner.id}/photo" alt="">`:''}
+          <div class="admin-player-copy">
+            <span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span>
+            <h1>${esc(owner.name)}</h1>
+            <p class="admin-player-username">@${esc(owner.username)}</p>
+            <div class="admin-player-badges">
+              <span class="admin-info-badge">${w.planName}: ${esc(owner.plan_name)}</span>
+              <span class="admin-info-badge">${lang==='pt'?'Renova a':'Renews on'} ${esc(formatRenewal(owner.renewal_date))}</span>
+            </div>
+          </div>
+        </div>
+        <button class="admin-details-shortcut" id="details" type="button">
+          <span>${lang==='pt'?'Detalhes':'Details'}</span>
+          <small>${lang==='pt'?'Dados do atleta':'Player data'}</small>
+        </button>
+      </section>
+      <div class="actions player-actions admin-player-actions">
+        <button class="secondary" id="edit">${w.edit}</button>
+        <button class="secondary" id="change-password">${w.resetPassword}</button>
+        <button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button>
+        <button class="secondary danger" id="delete-player">${w.deletePlayer}</button>
+      </div>
+      `:`
       <section class="profile-card">${owner.has_photo?`<img src="/api/players/${owner.id}/photo" alt="">`:''}<div><strong>${esc(owner.name)}</strong><p>@${esc(owner.username)}</p></div></section>
-      ${!isAdmin?`<div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button></div>`:''}
-      <p class="subtitle">${w.sub}</p><div class="folders">${af.map(f=>{const c=docs.filter(d=>d.folder===f).length;return `<button class="folder" data-folder="${f}"><span class="folder-icon"></span><div><strong>${w.folders[f]}</strong><small>${c} ${c===1?w.document:w.documents}</small></div></button>`;}).join('')}</div>
-      ${isAdmin?`<div class="player-control"><div><span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span><p>${w.birthDate}: ${esc(owner.birth_date)} · ${w.sex}: ${owner.sex==='M'?w.male:w.female} · ${w.height}: ${esc(owner.height)} · ${w.weight}: ${esc(owner.weight)} · ${w.planName}: ${esc(owner.plan_name)} · ${w.renewalDate}: ${esc(owner.renewal_date)}</p></div><div class="actions player-actions"><button class="secondary" id="edit">${w.edit}</button><button class="secondary" id="change-password">${w.resetPassword}</button><button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button><button class="secondary danger" id="delete-player">${w.deletePlayer}</button></div></div>`:''}
+      <div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button></div>
+      `}
+      <div class="folders admin-player-folders">${af.map(f=>{const n=docs.filter(d=>d.folder===f).length;return `<button class="folder" data-folder="${f}"><span class="folder-icon"></span><div><strong>${w.folders[f]}</strong><small>${n} ${n===1?w.document:w.documents}</small></div></button>`;}).join('')}</div>
     `:
     mode==='upload'?`<form class="inline-form"><label>${w.documentTitle}</label><input name="title" maxlength="180" required><label>${w.file}</label><input name="pdf" type="file" accept="application/pdf,.pdf" required><p class="note">${w.pdfNote}</p><p class="error"></p><div class="actions"><button class="primary" type="submit">${w.save}</button><button class="secondary" id="cancel" type="button">${w.cancel}</button></div></form>`:
     `${isAdmin&&folder==='weekly'?`<div class="player-control weekly-plan-admin"><div><strong>${lang==='pt'?'Estado do plano semanal':'Weekly plan status'}</strong><p>${owner.weekly_status==='available'?(lang==='pt'?'Disponível':'Available'):owner.weekly_status==='updating'?(lang==='pt'?'Em atualização':'Updating'):(lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan')}</p></div><div class="actions"><select id="weekly-status"><option value="available" ${owner.weekly_status==='available'?'selected':''}>${lang==='pt'?'Disponível':'Available'}</option><option value="waiting" ${owner.weekly_status==='waiting'?'selected':''}>${lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan'}</option><option value="updating" ${owner.weekly_status==='updating'?'selected':''}>${lang==='pt'?'Em atualização':'Updating'}</option></select></div></div>`:''}
@@ -437,7 +477,7 @@ function renderPlayer(w){
 
   bind('back',async()=>{if(mode){mode='';render();}else if(folder!==null){folder=null;render();}else{selected=null;await refresh();}});
   ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;mode='';render();});
-  bind('upload',()=>{mode='upload';render();});bind('cancel',()=>{mode='';render();});bind('edit',()=>{mode='edit';render();});if(isAdmin)bind('change-password',()=>{mode='password';render();});
+  bind('upload',()=>{mode='upload';render();});bind('cancel',()=>{mode='';render();});bind('details',()=>{mode='details';render();});bind('edit',()=>{mode='edit';render();});if(isAdmin)bind('change-password',()=>{mode='password';render();});
   bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
   bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
   bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
@@ -496,7 +536,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=68').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=69').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
