@@ -32,7 +32,7 @@ SECURE = BASE_URL.startswith('https://')
 MAX_PDF = 20 * 1024 * 1024
 MAX_JSON = 5 * 1024 * 1024
 MAX_PHOTO = 3 * 1024 * 1024
-FOLDERS = ('nutrition', 'menus', 'other', 'anthropometry')
+FOLDERS = ('nutrition', 'menus', 'other', 'anthropometry', 'weekly')
 ADMINS = (('Filipe Sousa', 'filipesousa@themile.pt'), ('Raquel Gomes', 'raquelgomes@themile.pt'))
 WEIGHT_FORM_M = os.environ.get('MILE_WEIGHT_FORM_M', 'https://forms.gle/iRhSJ8zkqgUy2eye7').strip()
 WEIGHT_FORM_F = os.environ.get('MILE_WEIGHT_FORM_F', 'https://forms.gle/AAc9xFmZE4vrYLbw9').strip()
@@ -245,7 +245,7 @@ def player_dict(row, include_private=True):
 
 
 def folder_allowed(player, folder):
-    if folder in ('nutrition', 'other'):
+    if folder in ('nutrition', 'other', 'weekly'):
         return True
     if folder == 'menus':
         return bool(player['menus_enabled'])
@@ -525,6 +525,8 @@ def application(env, start_response):
                     blob = read_body(env, MAX_PDF)
                     if not blob.startswith(b'%PDF-') or b'%%EOF' not in blob[-4096:]:
                         raise Problem(400, 'pdf_only')
+                    if folder == 'weekly':
+                        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
                     did = secrets.token_hex(16)
                     c.execute('INSERT INTO documents(id,user_id,folder,title,size,updated,uploaded_by,data) VALUES(?,?,?,?,?,?,?,?)',
                               (did, uid, folder, title, len(blob), now, user['id'], blob))
