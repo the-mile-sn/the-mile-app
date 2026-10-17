@@ -1977,3 +1977,17 @@ body:not(.player-theme) footer{display:none}
     min-height:56px;
   }
 }
+
+
+/* Weekly status semantic colors v46 */
+.weekly-status-option.is-selected.available{
+  border-color:#5d9b68;
+  background:#f8fcf8;
+  color:#2f6d3a;
+}
+.weekly-status-option.is-selected.waiting,
+.weekly-status-option.is-selected.updating{
+  border-color:#d9b44a;
+  background:#fffaf0;
+  color:#9a6b00;
+}
