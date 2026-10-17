@@ -112,6 +112,7 @@ def initialize():
             ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_mime TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_name TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS renewal_date TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_status TEXT NOT NULL DEFAULT 'waiting';
             CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL;
             ''')
         else:
@@ -135,6 +136,7 @@ def initialize():
                 'photo_mime': 'TEXT',
                 'plan_name': 'TEXT',
                 'renewal_date': 'TEXT',
+                'weekly_status': "TEXT NOT NULL DEFAULT 'waiting'",
             }
             for column, spec in additions.items():
                 if column not in existing:
@@ -239,7 +241,7 @@ def player_dict(row, include_private=True):
     if include_private:
         data.update({
             'birth_date': row['birth_date'], 'sex': row['sex'], 'height': row['height'], 'weight': row['weight'],
-            'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'],
+            'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'], 'weekly_status': row['weekly_status'],
         })
     return data
 
@@ -505,6 +507,23 @@ def application(env, start_response):
                     return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
 
+            if path.startswith('/api/players/') and path.endswith('/weekly-status'):
+                admin(user)
+                uid = path.split('/')[3]
+                owner = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                if not owner:
+                    raise Problem(404, 'not_found')
+                if method != 'POST':
+                    raise Problem(404, 'not_found')
+                status = str(read_json(env).get('status', '')).strip()
+                if status not in ('available', 'waiting', 'updating'):
+                    raise Problem(400, 'weekly_status')
+                c.execute('UPDATE users SET weekly_status=? WHERE id=?', (status, uid))
+                if status != 'available':
+                    c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
+                c.commit()
+                return respond(200, {'ok': True})
+
             if path == '/api/documents':
                 qs = parse_qs(env.get('QUERY_STRING', ''))
                 uid = qs.get('player', [user['id']])[0]
@@ -527,6 +546,7 @@ def application(env, start_response):
                         raise Problem(400, 'pdf_only')
                     if folder == 'weekly':
                         c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
+                        c.execute("UPDATE users SET weekly_status='available' WHERE id=?", (uid,))
                     did = secrets.token_hex(16)
                     c.execute('INSERT INTO documents(id,user_id,folder,title,size,updated,uploaded_by,data) VALUES(?,?,?,?,?,?,?,?)',
                               (did, uid, folder, title, len(blob), now, user['id'], blob))
