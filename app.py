@@ -505,24 +505,16 @@ def application(env, start_response):
                     c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
                     c.commit()
                     return respond(200, {'ok': True})
+                if action == 'weekly-status':
+                    status = str(read_json(env).get('status', '')).strip()
+                    if status not in ('available', 'waiting', 'updating'):
+                        raise Problem(400, 'weekly_status')
+                    c.execute('UPDATE users SET weekly_status=? WHERE id=?', (status, uid))
+                    if status != 'available':
+                        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
+                    c.commit()
+                    return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
-
-            if path.startswith('/api/players/') and path.endswith('/weekly-status'):
-                admin(user)
-                uid = path.split('/')[3]
-                owner = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
-                if not owner:
-                    raise Problem(404, 'not_found')
-                if method != 'POST':
-                    raise Problem(404, 'not_found')
-                status = str(read_json(env).get('status', '')).strip()
-                if status not in ('available', 'waiting', 'updating'):
-                    raise Problem(400, 'weekly_status')
-                c.execute('UPDATE users SET weekly_status=? WHERE id=?', (status, uid))
-                if status != 'available':
-                    c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (uid,))
-                c.commit()
-                return respond(200, {'ok': True})
 
             if path == '/api/documents':
                 qs = parse_qs(env.get('QUERY_STRING', ''))
