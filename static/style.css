@@ -937,3 +937,27 @@ body.player-internal .player-folder-title{
   .player-quick-icon .scale-raster-icon{width:41px;height:41px}
   .player-quick-icon .ball-raster-icon{width:43px;height:43px}
 }
+
+
+/* Quick action icon balance v24 */
+.player-quick-icon svg:not(.scale-icon):not(.ball-icon){
+  stroke-width:1.05
+}
+.player-quick-icon .scale-icon{
+  width:46px;
+  height:46px
+}
+.player-quick-icon .ball-icon{
+  width:47px;
+  height:47px
+}
+@media(max-width:650px){
+  .player-quick-icon .scale-icon{
+    width:44px;
+    height:44px
+  }
+  .player-quick-icon .ball-icon{
+    width:45px;
+    height:45px
+  }
+}
