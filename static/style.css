@@ -1274,3 +1274,34 @@ body.player-theme #notice .primary:active{
     padding:0 20px;
   }
 }
+
+
+/* Player plan and account action refinement v31 */
+.player-profile-plan-copy strong{
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:7px;
+}
+.player-profile-action,
+.player-profile-action-danger{
+  color:#c9c9cd;
+}
+.player-profile-action-icon,
+.player-profile-action-danger .player-profile-action-icon{
+  color:#b9b9be;
+}
+.player-profile-action-icon svg{
+  width:25px;
+  height:25px;
+}
+@media(max-width:650px){
+  .player-profile-plan-copy strong{
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:7px;
+  }
+  .player-profile-action-icon svg{
+    width:26px;
+    height:26px;
+  }
+}
