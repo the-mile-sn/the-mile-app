@@ -394,6 +394,7 @@ function renderPlayer(w){
   <div>
     <strong>${lang==='pt'?'Plano semanal':'Weekly plan'}</strong>
     <p>${owner.weekly_status==='available'?(lang==='pt'?'Disponível':'Available'):owner.weekly_status==='updating'?(lang==='pt'?'Em atualização':'Updating'):(lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan')}</p>
+    ${docs.some(d=>d.folder==='weekly_next')?`<p>${lang==='pt'?'Próximo plano agendado para segunda-feira às 00:01':'Next plan scheduled for Monday at 00:01'}</p>`:''}
   </div>
   <div class="actions">
     <select id="weekly-status">
@@ -401,7 +402,9 @@ function renderPlayer(w){
       <option value="waiting" ${owner.weekly_status==='waiting'?'selected':''}>${lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan'}</option>
       <option value="updating" ${owner.weekly_status==='updating'?'selected':''}>${lang==='pt'?'Em atualização':'Updating'}</option>
     </select>
-    <button class="secondary" id="weekly-upload" type="button">${docs.some(d=>d.folder==='weekly')?(lang==='pt'?'Substituir PDF':'Replace PDF'):(lang==='pt'?'Carregar PDF':'Upload PDF')}</button>
+    <button class="secondary" id="weekly-upload" type="button">${docs.some(d=>d.folder==='weekly')?(lang==='pt'?'Substituir PDF atual':'Replace current PDF'):(lang==='pt'?'Carregar PDF atual':'Upload current PDF')}</button>
+    <button class="secondary" id="weekly-next-upload" type="button">${docs.some(d=>d.folder==='weekly_next')?(lang==='pt'?'Substituir próximo plano':'Replace next plan'):(lang==='pt'?'Carregar próximo plano':'Upload next plan')}</button>
+    ${docs.some(d=>d.folder==='weekly_next')?`<button class="secondary" id="weekly-launch" type="button">${lang==='pt'?'Lançar plano':'Launch plan'}</button>`:''}
   </div>
 </div>`:''}
     `:
@@ -416,6 +419,8 @@ function renderPlayer(w){
   bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
   bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
   bind('weekly-upload',()=>{const i=document.createElement('input');i.type='file';i.accept='application/pdf,.pdf';i.onchange=async()=>{const f=i.files&&i.files[0];if(!f)return;if(f.size>20*1024*1024){error(Error('file_size'));return;}await api('/documents?player='+encodeURIComponent(owner.id)+'&folder=weekly&title='+encodeURIComponent(lang==='pt'?'Plano semanal':'Weekly plan'),{method:'POST',body:f,binary:true});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;render();};i.click();});
+  bind('weekly-next-upload',()=>{const i=document.createElement('input');i.type='file';i.accept='application/pdf,.pdf';i.onchange=async()=>{const f=i.files&&i.files[0];if(!f)return;if(f.size>20*1024*1024){error(Error('file_size'));return;}await api('/documents?player='+encodeURIComponent(owner.id)+'&folder=weekly_next&title='+encodeURIComponent(lang==='pt'?'Próximo plano semanal':'Next weekly plan'),{method:'POST',body:f,binary:true});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;const p=(await api('/players')).players.find(x=>x.id===owner.id);if(p)selected=p;render();};i.click();});
+  bind('weekly-launch',async()=>{await api('/players/'+owner.id+'/weekly-launch',{method:'POST',body:{}});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;const p=(await api('/players')).players.find(x=>x.id===owner.id);if(p)selected=p;render();});
   const weeklyStatus=document.getElementById('weekly-status');
   if(weeklyStatus)weeklyStatus.onchange=async()=>{
     await api('/players/'+owner.id+'/weekly-status',{method:'POST',body:{status:weeklyStatus.value}});
