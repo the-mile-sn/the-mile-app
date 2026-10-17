@@ -256,20 +256,84 @@ async function refresh(){
 async function openPlayer(id){ selected=players.find(p=>p.id===id); docs=(await api('/documents?player='+encodeURIComponent(id))).documents; folder=null;mode='';render(); }
 
 function playerForm(w,p=null){
-  return `<form class="inline-form">
-    <label>${w.name}</label><input name="name" maxlength="120" value="${esc(p?.name||'')}" required>
-    <label>${w.username}</label><input name="username" pattern="[a-z]+" autocomplete="off" value="${esc(p?.username||'')}" required>
-    <label>${p?w.newPassword:w.password}</label><input name="password" type="password" minlength="8" maxlength="256" ${p?'':'required'}>
-    <label>${w.photo}</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" ${p?'':'required'}>
-    <label>${w.birthDate}</label><input name="birth_date" type="date" value="${esc(p?.birth_date||'')}" required>
-    <label>${w.sex}</label><select name="sex" required><option value="M" ${p?.sex==='M'?'selected':''}>${w.male}</option><option value="F" ${p?.sex==='F'?'selected':''}>${w.female}</option></select>
-    <label>${w.height}</label><input name="height" type="number" min="50" max="250" step="0.1" value="${esc(p?.height??'')}" required>
-    <label>${w.weight}</label><input name="weight" type="number" min="20" max="300" step="0.1" value="${esc(p?.weight??'')}" required>
-    <label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p?.plan_name||'')}" required>
-    <label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p?.renewal_date||'')}" required>
-    <label><input name="menus_enabled" type="checkbox" style="width:auto" ${boolChecked(p?.menus_enabled)}> ${w.menus}</label>
-    <label><input name="anthropometry_enabled" type="checkbox" style="width:auto" ${boolChecked(p?.anthropometry_enabled)}> ${w.anthropometry}</label>
-    <p class="error" role="alert"></p><div class="actions"><button class="primary" type="submit">${p?w.update:w.create}</button><button class="secondary" type="button" id="cancel">${w.cancel}</button></div>
+  if(!p){
+    return `<form class="inline-form">
+      <label>${w.name}</label><input name="name" maxlength="120" required>
+      <label>${w.username}</label><input name="username" pattern="[a-z]+" autocomplete="off" required>
+      <label>${w.password}</label><input name="password" type="password" minlength="8" maxlength="256" required>
+      <label>${w.photo}</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+      <label>${w.birthDate}</label><input name="birth_date" type="date" required>
+      <label>${w.sex}</label><select name="sex" required><option value="M">${w.male}</option><option value="F">${w.female}</option></select>
+      <label>${w.height}</label><input name="height" type="number" min="50" max="250" step="0.1" required>
+      <label>${w.weight}</label><input name="weight" type="number" min="20" max="300" step="0.1" required>
+      <label>${w.planName}</label><input name="plan_name" maxlength="80" required>
+      <label>${w.renewalDate}</label><input name="renewal_date" type="date" required>
+      <label><input name="menus_enabled" type="checkbox" style="width:auto"> ${w.menus}</label>
+      <label><input name="anthropometry_enabled" type="checkbox" style="width:auto"> ${w.anthropometry}</label>
+      <p class="error" role="alert"></p><div class="actions"><button class="primary" type="submit">${w.create}</button><button class="secondary" type="button" id="cancel">${w.cancel}</button></div>
+    </form>`;
+  }
+
+  return `<form class="admin-edit-form">
+    <section class="admin-edit-section">
+      <div class="admin-edit-section-head">
+        <h2>${lang==='pt'?'Início de sessão':'Sign in'}</h2>
+        <p>${lang==='pt'?'Dados usados para aceder à conta.':'Account sign-in details.'}</p>
+      </div>
+      <div class="admin-edit-card">
+        <label>${w.username}</label>
+        <input name="username" pattern="[a-z]+" autocomplete="off" value="${esc(p.username||'')}" required>
+      </div>
+    </section>
+
+    <section class="admin-edit-section">
+      <div class="admin-edit-section-head">
+        <h2>${lang==='pt'?'Dados individuais':'Personal details'}</h2>
+      </div>
+      <div class="admin-edit-card admin-edit-grid">
+        <div><label>${w.name}</label><input name="name" maxlength="120" value="${esc(p.name||'')}" required></div>
+        <div><label>${w.photo}</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></div>
+        <div><label>${w.birthDate}</label><input name="birth_date" type="date" value="${esc(p.birth_date||'')}" required></div>
+        <div><label>${w.sex}</label><select name="sex" required><option value="M" ${p.sex==='M'?'selected':''}>${w.male}</option><option value="F" ${p.sex==='F'?'selected':''}>${w.female}</option></select></div>
+        <div><label>${w.height}</label><input name="height" type="number" min="50" max="250" step="0.1" value="${esc(p.height??'')}" required></div>
+        <div><label>${w.weight}</label><input name="weight" type="number" min="20" max="300" step="0.1" value="${esc(p.weight??'')}" required></div>
+      </div>
+    </section>
+
+    <section class="admin-edit-section">
+      <div class="admin-edit-section-head">
+        <h2>${lang==='pt'?'Plano e renovação':'Plan and renewal'}</h2>
+      </div>
+      <div class="admin-edit-card admin-edit-grid admin-edit-plan">
+        <div><label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p.plan_name||'')}" required></div>
+        <div><label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p.renewal_date||'')}" required></div>
+      </div>
+    </section>
+
+    <section class="admin-edit-section">
+      <div class="admin-edit-section-head">
+        <h2>${lang==='pt'?'Pastas personalizadas':'Custom folders'}</h2>
+        <p>${lang==='pt'?'Seleciona as áreas adicionais disponíveis para este atleta.':'Choose the additional areas available to this player.'}</p>
+      </div>
+      <div class="admin-folder-options">
+        <label class="admin-folder-option">
+          <input name="menus_enabled" type="checkbox" ${boolChecked(p.menus_enabled)}>
+          <span class="admin-folder-option-icon"></span>
+          <span><strong>${w.menus}</strong><small>${lang==='pt'?'Disponível na área do atleta':'Available in player area'}</small></span>
+        </label>
+        <label class="admin-folder-option">
+          <input name="anthropometry_enabled" type="checkbox" ${boolChecked(p.anthropometry_enabled)}>
+          <span class="admin-folder-option-icon"></span>
+          <span><strong>${w.anthropometry}</strong><small>${lang==='pt'?'Disponível na área do atleta':'Available in player area'}</small></span>
+        </label>
+      </div>
+    </section>
+
+    <p class="error" role="alert"></p>
+    <div class="actions admin-edit-actions">
+      <button class="primary" type="submit">${w.update}</button>
+      <button class="secondary" type="button" id="cancel">${w.cancel}</button>
+    </div>
   </form>`;
 }
 async function payloadFromForm(f){
@@ -437,7 +501,7 @@ function renderPlayer(w){
     return;
   }
   if(isAdmin&&mode==='edit'){
-    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><p class="eyebrow">${w.playerDetails}</p><h1>${esc(owner.name)}</h1>${playerForm(w,owner)}`;
+    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
     submit(async f=>{await api('/players/'+owner.id,{method:'PUT',body:await payloadFromForm(f)});selected=null;mode='';await refresh();});return;
   }
@@ -540,7 +604,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=73').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=74').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
