@@ -1743,3 +1743,131 @@ body:not(.player-theme) footer{display:none}
     padding:16px 17px;
   }
 }
+
+
+/* Segmented admin athlete form v43 */
+.admin-edit-form{
+  max-width:760px;
+}
+.admin-edit-section{
+  margin-bottom:24px;
+}
+.admin-edit-section-head{
+  margin-bottom:10px;
+}
+.admin-edit-section-head h2{
+  font-size:16px;
+  font-weight:500;
+  margin:0;
+}
+.admin-edit-section-head p{
+  margin:5px 0 0;
+  color:#777;
+  font-size:12px;
+  line-height:1.45;
+}
+.admin-edit-card{
+  background:#fff;
+  border:1px solid #e2e2e2;
+  border-radius:12px;
+  padding:20px;
+}
+.admin-edit-card label{
+  margin-top:0;
+}
+.admin-edit-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+.admin-edit-grid>div label{
+  margin:0 0 7px;
+}
+.admin-edit-grid input,
+.admin-edit-grid select{
+  width:100%;
+}
+.admin-edit-plan{
+  grid-template-columns:1fr 1fr;
+}
+.admin-folder-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.admin-folder-option{
+  position:relative;
+  margin:0;
+  min-height:94px;
+  padding:18px;
+  border:1.5px solid #dedede;
+  border-radius:12px;
+  background:#fff;
+  display:grid;
+  grid-template-columns:28px 1fr;
+  align-items:center;
+  gap:14px;
+  cursor:pointer;
+  transition:border-color 140ms ease,background-color 140ms ease,box-shadow 140ms ease;
+}
+.admin-folder-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.admin-folder-option-icon{
+  width:25px;
+  height:19px;
+  border:1.5px solid #555;
+  border-radius:3px;
+  position:relative;
+}
+.admin-folder-option-icon:before{
+  content:'';
+  position:absolute;
+  top:-6px;
+  left:-1.5px;
+  width:12px;
+  height:6px;
+  border:1.5px solid #555;
+  border-bottom:0;
+  border-radius:3px 3px 0 0;
+}
+.admin-folder-option strong{
+  display:block;
+  font-size:14px;
+  font-weight:500;
+}
+.admin-folder-option small{
+  display:block;
+  margin-top:5px;
+  color:#777;
+  font-size:11px;
+}
+.admin-folder-option:has(input:checked){
+  border-color:#5d9b68;
+  background:#f8fcf8;
+  box-shadow:0 0 0 1px rgba(93,155,104,.08);
+}
+.admin-folder-option:has(input:checked) .admin-folder-option-icon,
+.admin-folder-option:has(input:checked) .admin-folder-option-icon:before{
+  border-color:#4f8b5a;
+}
+.admin-edit-actions{
+  margin-top:4px;
+  padding-bottom:8px;
+}
+@media(max-width:650px){
+  .admin-edit-grid,
+  .admin-edit-plan,
+  .admin-folder-options{
+    grid-template-columns:1fr;
+  }
+  .admin-edit-card{
+    padding:17px;
+  }
+  .admin-folder-option{
+    min-height:82px;
+    padding:16px;
+  }
+}
