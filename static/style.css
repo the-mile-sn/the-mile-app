@@ -980,3 +980,40 @@ body.player-internal .player-folder-title{
     height:50px
   }
 }
+
+
+/* Final icon polish v26 */
+.player-quick-action:nth-child(1) .player-quick-icon svg{
+  stroke-width:.90
+}
+.player-quick-action:nth-child(4) .player-quick-icon svg{
+  stroke-width:.96
+}
+.player-quick-icon .scale-icon{
+  width:49px;
+  height:49px
+}
+.player-quick-icon .ball-icon{
+  width:55px;
+  height:55px
+}
+.player-doc-list .player-row-icon .soft-document-icon{
+  width:29px;
+  height:29px;
+  stroke-width:1.12
+}
+@media(max-width:650px){
+  .player-quick-icon .scale-icon{
+    width:47px;
+    height:47px
+  }
+  .player-quick-icon .ball-icon{
+    width:53px;
+    height:53px
+  }
+  .player-doc-list .player-row-icon .soft-document-icon{
+    width:28px;
+    height:28px;
+    stroke-width:1.08
+  }
+}
