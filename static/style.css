@@ -1871,3 +1871,63 @@ body:not(.player-theme) footer{display:none}
     padding:16px;
   }
 }
+
+
+/* Admin edit flow refinement v44 */
+.admin-sex-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.admin-sex-option{
+  position:relative;
+  margin:0;
+  min-height:48px;
+  border:1.5px solid #dedede;
+  border-radius:10px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:border-color 140ms ease,background-color 140ms ease,color 140ms ease;
+}
+.admin-sex-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.admin-sex-option span{
+  font-size:14px;
+  color:#333;
+}
+.admin-sex-option:has(input:checked){
+  border-color:#5d9b68;
+  background:#f8fcf8;
+}
+.admin-sex-option:has(input:checked) span{
+  color:#2f6d3a;
+}
+.admin-folder-option{
+  min-height:82px;
+}
+.admin-folder-option span:last-child strong{
+  margin:0;
+}
+.admin-edit-account-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:30px;
+  padding-top:22px;
+  border-top:1px solid #e5e5e5;
+}
+@media(max-width:650px){
+  .admin-sex-options{
+    grid-template-columns:1fr 1fr;
+  }
+  .admin-edit-account-actions{
+    justify-content:flex-start;
+  }
+}
