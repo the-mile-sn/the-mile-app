@@ -1458,3 +1458,143 @@ body.player-theme #notice .primary:active{
 .player-menu-row-clean.is-pressed .player-chevron{
   color:#b8b8bd;
 }
+
+
+/* Back office player overview v38 */
+body:not(.player-theme) .wordmark{
+  width:132px;
+  height:28px;
+  background-size:176px 176px;
+}
+body:not(.player-theme) footer{display:none}
+.admin-player-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 190px;
+  gap:24px;
+  align-items:center;
+  margin:6px 0 24px;
+}
+.admin-player-identity{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  min-width:0;
+}
+.admin-player-identity img{
+  width:86px;
+  height:86px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid #ddd;
+  flex:0 0 auto;
+}
+.admin-player-copy{min-width:0}
+.admin-player-copy .badge{
+  display:inline-block;
+  margin:0 0 8px;
+}
+.admin-player-copy h1{
+  font-size:30px;
+  margin:0 0 4px;
+}
+.admin-player-username{
+  margin:0;
+  color:#777;
+  font-size:13px;
+}
+.admin-player-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:13px;
+}
+.admin-info-badge{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#f0f0f0;
+  color:#444;
+  font-size:11px;
+  line-height:1.2;
+}
+.admin-details-shortcut{
+  border:1px solid #e1e1e1;
+  border-radius:12px;
+  background:#fff;
+  padding:18px 16px;
+  text-align:left;
+  min-height:78px;
+}
+.admin-details-shortcut:hover{border-color:#777}
+.admin-details-shortcut span{
+  display:block;
+  font-size:14px;
+  font-weight:500;
+  color:#222;
+}
+.admin-details-shortcut small{
+  display:block;
+  margin-top:6px;
+  color:#777;
+  font-size:11px;
+}
+.admin-player-actions{
+  margin:0 0 26px;
+}
+.admin-player-folders{
+  margin-top:0;
+}
+.admin-details-page{max-width:680px}
+.admin-details-card{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:1px;
+  margin-top:22px;
+  background:#e6e6e6;
+  border:1px solid #e6e6e6;
+  border-radius:12px;
+  overflow:hidden;
+}
+.admin-details-card>div{
+  background:#fff;
+  padding:18px;
+}
+.admin-details-card span{
+  display:block;
+  color:#777;
+  font-size:11px;
+  margin-bottom:6px;
+}
+.admin-details-card strong{
+  font-size:14px;
+  font-weight:500;
+}
+@media(max-width:650px){
+  body:not(.player-theme) .wordmark{
+    width:104px;
+    height:24px;
+    background-size:139px 139px;
+  }
+  .admin-player-hero{
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+  .admin-player-identity{
+    align-items:flex-start;
+  }
+  .admin-player-identity img{
+    width:72px;
+    height:72px;
+  }
+  .admin-player-copy h1{font-size:25px}
+  .admin-details-shortcut{
+    width:100%;
+    min-height:64px;
+    padding:14px 15px;
+  }
+  .admin-details-card{
+    grid-template-columns:1fr;
+  }
+}
