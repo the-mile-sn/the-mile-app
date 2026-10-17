@@ -1701,3 +1701,45 @@ body:not(.player-theme) footer{display:none}
   background:#e6f3ff;
   color:#4d8fc7;
 }
+
+
+/* Admin player details cards v42 */
+.admin-details-heading{
+  align-items:center;
+  margin-bottom:20px;
+}
+.admin-details-name{
+  font-size:24px;
+  margin:0;
+  letter-spacing:-.5px;
+}
+.admin-details-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.admin-detail-row{
+  background:#fff;
+  border:1px solid #e2e2e2;
+  border-radius:12px;
+  padding:18px 20px;
+}
+.admin-detail-row strong{
+  display:block;
+  font-size:14px;
+  font-weight:500;
+  margin-bottom:6px;
+}
+.admin-detail-row small{
+  display:block;
+  color:#777;
+  font-size:12px;
+}
+@media(max-width:650px){
+  .admin-details-name{
+    font-size:22px;
+  }
+  .admin-detail-row{
+    padding:16px 17px;
+  }
+}
