@@ -420,6 +420,7 @@ function renderPlayer(w){
           <button class="secondary" id="edit" type="button">${w.edit}</button>
         </div>
         <div class="admin-details-card">
+          <div><span>${w.username}</span><strong>@${esc(owner.username)}</strong></div>
           <div><span>${w.birthDate}</span><strong>${esc(owner.birth_date)}</strong></div>
           <div><span>${w.sex}</span><strong>${owner.sex==='M'?w.male:w.female}</strong></div>
           <div><span>${w.height}</span><strong>${esc(owner.height)}</strong></div>
@@ -461,9 +462,8 @@ function renderPlayer(w){
           <div class="admin-player-copy">
             <span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span>
             <h1>${esc(owner.name)}</h1>
-            <p class="admin-player-username">@${esc(owner.username)}</p>
             <div class="admin-player-badges">
-              <span class="admin-info-badge">${esc(owner.plan_name)}</span>
+              <span class="admin-info-badge admin-plan-badge ${String(owner.plan_name||'').trim().toLowerCase()==='elite'?'plan-elite':String(owner.plan_name||'').trim().toLowerCase()==='pro'?'plan-pro':''}">${esc(owner.plan_name)}</span>
               <span class="admin-info-badge ${planExpired(owner.renewal_date)?'expired':''}">${planExpired(owner.renewal_date)?(lang==='pt'?'Expirou a':'Expired on'):(lang==='pt'?'Renova a':'Renews on')} ${esc(formatRenewal(owner.renewal_date))}</span>
             </div>
           </div>
@@ -543,7 +543,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=71').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=72').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
