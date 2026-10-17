@@ -300,7 +300,7 @@ function renderPlayer(w){
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
       enablePlayerSwipeBack(()=>{folder=null;render();},{interactive:false});
       return;
     }
@@ -457,5 +457,5 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=61').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=62').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
