@@ -118,7 +118,7 @@ async function api(path,{method='GET',body=null,binary=false}={}){
   return data;
 }
 
-function notify(title,text){ document.getElementById('notice-title').textContent=title; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; document.getElementById('notice').showModal(); }
+function notify(title,text){ const n=document.getElementById('notice'); const nt=document.getElementById('notice-title'); nt.textContent=title; nt.hidden=!!user&&user.role==='player'; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; n.showModal(); }
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
 function enablePlayerSwipeBack(backFn,{interactive=true}={}){
