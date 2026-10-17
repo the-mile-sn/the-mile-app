@@ -1305,3 +1305,26 @@ body.player-theme #notice .primary:active{
     height:26px;
   }
 }
+
+
+/* Player plan card sizing refinement v32 */
+.player-profile-plan{
+  min-height:82px;
+  padding:17px 18px;
+}
+.player-profile-plan-copy strong{
+  font-size:17px;
+  font-weight:500;
+  margin-bottom:6px;
+}
+@media(max-width:650px){
+  .player-profile-plan{
+    min-height:84px;
+    padding:17px 18px;
+  }
+  .player-profile-plan-copy strong{
+    font-size:17px;
+    font-weight:500;
+    margin-bottom:6px;
+  }
+}
