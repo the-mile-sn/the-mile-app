@@ -310,8 +310,8 @@ function renderPlayer(w){
 
         <div class="player-profile-plan">
           <div class="player-profile-plan-copy">
-            <small>${lang==='pt'?'Plano atual':'Current plan'}</small>
             <strong>${esc(owner.plan_name||'')}</strong>
+            <small>${lang==='pt'?'Ver benefícios do plano':'View plan benefits'}</small>
           </div>
           <span class="player-profile-plan-chevron">${playerIcon('chevron')}</span>
         </div>
@@ -481,5 +481,5 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=66').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=67').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
