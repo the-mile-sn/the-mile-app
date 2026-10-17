@@ -1143,3 +1143,80 @@ body.player-theme #notice .primary:active{
   .player-profile-screen-avatar{width:132px;height:132px}
   .player-profile-screen-head h1{font-size:27px}
 }
+
+
+/* Player profile refinements v29 */
+.player-profile-username{
+  margin:7px 0 0;
+  color:#8f8f95;
+  font-size:13px;
+  line-height:1.2
+}
+.player-profile-plan{
+  display:grid;
+  grid-template-columns:1fr 20px;
+  align-items:center;
+  gap:12px;
+  min-height:74px;
+  padding:16px 18px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:20px;
+  background:rgba(245,245,247,.10);
+  margin:2px 0 22px
+}
+.player-profile-plan-copy small{
+  display:block;
+  color:#8f8f95;
+  font-size:12px;
+  margin-bottom:5px
+}
+.player-profile-plan-copy strong{
+  display:block;
+  color:#f5f5f7;
+  font-family:'Inter Tight','Inter',Arial,Helvetica,sans-serif;
+  font-size:16px;
+  font-weight:500;
+  letter-spacing:-.01em
+}
+.player-profile-plan-chevron{
+  color:#85858a;
+  display:flex;
+  align-items:center;
+  justify-content:center
+}
+.player-profile-plan-chevron svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.35;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+.player-profile-actions{
+  margin-top:0
+}
+.player-profile-action{
+  display:grid;
+  grid-template-columns:28px 1fr;
+  align-items:center;
+  gap:12px
+}
+.player-profile-action-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#e6e6e9
+}
+.player-profile-action-icon svg{
+  width:21px;
+  height:21px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.45;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+.player-profile-action-danger .player-profile-action-icon{
+  color:#b9b9be
+}
