@@ -531,7 +531,7 @@ function renderPlayer(w){
       <div class="folders admin-player-folders">${af.map(f=>{const n=docs.filter(d=>d.folder===f).length;return `<button class="folder" data-folder="${f}"><span class="folder-icon"></span><div><strong>${w.folders[f]}</strong><small>${n} ${n===1?w.document:w.documents}</small></div></button>`;}).join('')}</div>
     `:
     mode==='upload'?`<form class="inline-form"><label>${w.documentTitle}</label><input name="title" maxlength="180" required><label>${w.file}</label><input name="pdf" type="file" accept="application/pdf,.pdf" required><p class="note">${w.pdfNote}</p><p class="error"></p><div class="actions"><button class="primary" type="submit">${w.save}</button><button class="secondary" id="cancel" type="button">${w.cancel}</button></div></form>`:
-    `${isAdmin&&folder==='weekly'?`<div class="player-control weekly-plan-admin"><div><strong>${lang==='pt'?'Estado do plano semanal':'Weekly plan status'}</strong><p>${owner.weekly_status==='available'?(lang==='pt'?'Disponível':'Available'):owner.weekly_status==='updating'?(lang==='pt'?'Em atualização':'Updating'):(lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan')}</p></div><div class="actions"><select id="weekly-status"><option value="available" ${owner.weekly_status==='available'?'selected':''}>${lang==='pt'?'Disponível':'Available'}</option><option value="waiting" ${owner.weekly_status==='waiting'?'selected':''}>${lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan'}</option><option value="updating" ${owner.weekly_status==='updating'?'selected':''}>${lang==='pt'?'Em atualização':'Updating'}</option></select></div></div>`:''}
+    `${isAdmin&&folder==='weekly'?`<section class="weekly-status-section"><h2>${lang==='pt'?'Estado do plano semanal':'Weekly plan status'}</h2><div class="weekly-status-options"><button type="button" class="weekly-status-option ${owner.weekly_status==='available'?'is-selected':''}" data-weekly-status="available"><strong>${lang==='pt'?'Disponível':'Available'}</strong></button><button type="button" class="weekly-status-option ${owner.weekly_status==='waiting'?'is-selected':''}" data-weekly-status="waiting"><strong>${lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan'}</strong></button><button type="button" class="weekly-status-option ${owner.weekly_status==='updating'?'is-selected':''}" data-weekly-status="updating"><strong>${lang==='pt'?'Em atualização':'Updating'}</strong></button></div></section>`:''}
     ${docs.filter(d=>d.folder===folder).map(d=>`<div class="row"><div><strong>${esc(d.title)}</strong><p>PDF · ${new Intl.DateTimeFormat(lang==='pt'?'pt-PT':'en-GB').format(new Date(d.updated*1000))}${folder==='weekly'&&owner.current_weekly_document_id===d.id?(lang==='pt'?' · Atual':' · Current'):''}</p></div><div class="actions"><a class="primary download" href="/api/documents/${d.id}">${w.open}</a>${isAdmin?`<button class="secondary" data-title="${d.id}">${w.editTitle}</button><button class="secondary" data-replace="${d.id}">${w.replace}</button>${folder==='weekly'?(owner.current_weekly_document_id===d.id?`<button class="secondary" disabled>${lang==='pt'?'Atual':'Current'}</button>`:`<button class="secondary" data-weekly-current="${d.id}">${lang==='pt'?'Definir como atual':'Set as current'}</button>`):''}<button class="secondary danger" data-delete="${d.id}">${w.remove}</button>`:''}</div></div>`).join('')||`<p class="empty">${w.empty}</p>`}`}`;
 
   bind('back',async()=>{if(mode){mode='';render();}else if(folder!==null){folder=null;render();}else{selected=null;await refresh();}});
@@ -541,14 +541,15 @@ function renderPlayer(w){
   bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
   bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
   bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
-  const weeklyStatus=document.getElementById('weekly-status');
-  if(weeklyStatus)weeklyStatus.onchange=async()=>{
-    await api('/players/'+owner.id+'/weekly-status',{method:'POST',body:{status:weeklyStatus.value}});
+  ui.root.querySelectorAll('[data-weekly-status]').forEach(b=>b.onclick=async()=>{
+    const status=b.dataset.weeklyStatus;
+    if(status===owner.weekly_status)return;
+    await api('/players/'+owner.id+'/weekly-status',{method:'POST',body:{status}});
     const p=(await api('/players')).players.find(x=>x.id===owner.id);
     if(p){selected=p;}
     docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;
     render();
-  };
+  });
   ui.root.querySelectorAll('[data-weekly-current]').forEach(b=>b.onclick=async()=>{
     await api('/players/'+owner.id+'/weekly-current',{method:'POST',body:{document_id:b.dataset.weeklyCurrent}});
     const p=(await api('/players')).players.find(x=>x.id===owner.id);
@@ -595,7 +596,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=75').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=76').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
