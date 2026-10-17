@@ -1931,3 +1931,49 @@ body:not(.player-theme) footer{display:none}
     justify-content:flex-start;
   }
 }
+
+
+/* Weekly plan status cards v45 */
+.weekly-status-section{
+  margin:8px 0 26px;
+}
+.weekly-status-section h2{
+  font-size:16px;
+  font-weight:500;
+  margin:0 0 10px;
+}
+.weekly-status-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.weekly-status-option{
+  min-height:64px;
+  border:1.5px solid #dedede;
+  border-radius:12px;
+  background:#fff;
+  color:#222;
+  padding:14px 16px;
+  text-align:left;
+  transition:border-color 140ms ease,background-color 140ms ease,color 140ms ease;
+}
+.weekly-status-option strong{
+  font-size:13px;
+  font-weight:500;
+}
+.weekly-status-option:hover{
+  border-color:#bdbdbd;
+}
+.weekly-status-option.is-selected{
+  border-color:#5d9b68;
+  background:#f8fcf8;
+  color:#2f6d3a;
+}
+@media(max-width:650px){
+  .weekly-status-options{
+    grid-template-columns:1fr;
+  }
+  .weekly-status-option{
+    min-height:56px;
+  }
+}
