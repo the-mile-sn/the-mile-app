@@ -1436,3 +1436,25 @@ body.player-theme #notice .primary:active{
   transform:scale(.995);
   background:rgba(245,245,247,.115);
 }
+
+
+/* Minimal folder-row press feedback v37 */
+.player-menu-row-clean,
+.player-menu-row-clean .player-row-copy strong,
+.player-menu-row-clean .player-row-copy small,
+.player-menu-row-clean .player-chevron{
+  transition:background-color 130ms ease,color 130ms ease;
+}
+.player-menu-row-clean.is-pressed{
+  transform:none;
+  background:rgba(245,245,247,.035);
+}
+.player-menu-row-clean.is-pressed .player-row-copy strong{
+  color:#fff;
+}
+.player-menu-row-clean.is-pressed .player-row-copy small{
+  color:#a8a8ad;
+}
+.player-menu-row-clean.is-pressed .player-chevron{
+  color:#b8b8bd;
+}
