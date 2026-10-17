@@ -1220,3 +1220,57 @@ body.player-theme #notice .primary:active{
 .player-profile-action-danger .player-profile-action-icon{
   color:#b9b9be
 }
+
+
+/* Player profile card refinement v30 */
+.player-profile-plan,
+.player-profile-action{
+  border:0;
+  background:rgba(245,245,247,.10);
+}
+.player-profile-plan{
+  min-height:92px;
+  padding:20px 20px;
+  margin-bottom:24px;
+}
+.player-profile-plan-copy strong{
+  font-size:20px;
+  line-height:1.15;
+  margin-bottom:11px;
+}
+.player-profile-plan-copy small{
+  font-size:13px;
+  line-height:1.25;
+  margin:0;
+  color:#9a9aa0;
+}
+.player-profile-actions{
+  gap:12px;
+}
+.player-profile-action{
+  min-height:64px;
+  padding:0 20px;
+  border-radius:20px;
+  font-size:15px;
+}
+.player-profile-action-icon svg{
+  width:22px;
+  height:22px;
+}
+@media(max-width:650px){
+  .player-profile-plan{
+    min-height:94px;
+    padding:20px;
+  }
+  .player-profile-plan-copy strong{
+    font-size:21px;
+    margin-bottom:12px;
+  }
+  .player-profile-plan-copy small{
+    font-size:13px;
+  }
+  .player-profile-action{
+    min-height:66px;
+    padding:0 20px;
+  }
+}
