@@ -278,7 +278,6 @@ function playerForm(w,p=null){
     <section class="admin-edit-section">
       <div class="admin-edit-section-head">
         <h2>${lang==='pt'?'Início de sessão':'Sign in'}</h2>
-        <p>${lang==='pt'?'Dados usados para aceder à conta.':'Account sign-in details.'}</p>
       </div>
       <div class="admin-edit-card">
         <label>${w.username}</label>
@@ -294,7 +293,19 @@ function playerForm(w,p=null){
         <div><label>${w.name}</label><input name="name" maxlength="120" value="${esc(p.name||'')}" required></div>
         <div><label>${w.photo}</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></div>
         <div><label>${w.birthDate}</label><input name="birth_date" type="date" value="${esc(p.birth_date||'')}" required></div>
-        <div><label>${w.sex}</label><select name="sex" required><option value="M" ${p.sex==='M'?'selected':''}>${w.male}</option><option value="F" ${p.sex==='F'?'selected':''}>${w.female}</option></select></div>
+        <div>
+          <label>${w.sex}</label>
+          <div class="admin-sex-options">
+            <label class="admin-sex-option">
+              <input name="sex" type="radio" value="F" ${p.sex==='F'?'checked':''} required>
+              <span>${w.female}</span>
+            </label>
+            <label class="admin-sex-option">
+              <input name="sex" type="radio" value="M" ${p.sex==='M'?'checked':''} required>
+              <span>${w.male}</span>
+            </label>
+          </div>
+        </div>
         <div><label>${w.height}</label><input name="height" type="number" min="50" max="250" step="0.1" value="${esc(p.height??'')}" required></div>
         <div><label>${w.weight}</label><input name="weight" type="number" min="20" max="300" step="0.1" value="${esc(p.weight??'')}" required></div>
       </div>
@@ -313,18 +324,17 @@ function playerForm(w,p=null){
     <section class="admin-edit-section">
       <div class="admin-edit-section-head">
         <h2>${lang==='pt'?'Pastas personalizadas':'Custom folders'}</h2>
-        <p>${lang==='pt'?'Seleciona as áreas adicionais disponíveis para este atleta.':'Choose the additional areas available to this player.'}</p>
       </div>
       <div class="admin-folder-options">
         <label class="admin-folder-option">
           <input name="menus_enabled" type="checkbox" ${boolChecked(p.menus_enabled)}>
           <span class="admin-folder-option-icon"></span>
-          <span><strong>${w.menus}</strong><small>${lang==='pt'?'Disponível na área do atleta':'Available in player area'}</small></span>
+          <span><strong>${w.menus}</strong></span>
         </label>
         <label class="admin-folder-option">
           <input name="anthropometry_enabled" type="checkbox" ${boolChecked(p.anthropometry_enabled)}>
           <span class="admin-folder-option-icon"></span>
-          <span><strong>${w.anthropometry}</strong><small>${lang==='pt'?'Disponível na área do atleta':'Available in player area'}</small></span>
+          <span><strong>${w.anthropometry}</strong></span>
         </label>
       </div>
     </section>
@@ -333,6 +343,11 @@ function playerForm(w,p=null){
     <div class="actions admin-edit-actions">
       <button class="primary" type="submit">${w.update}</button>
       <button class="secondary" type="button" id="cancel">${w.cancel}</button>
+    </div>
+    <div class="admin-edit-account-actions">
+      <button class="secondary" type="button" id="change-password">${w.resetPassword}</button>
+      <button class="secondary" type="button" id="status">${p.active?w.deactivate:w.reactivate}</button>
+      <button class="secondary danger" type="button" id="delete-player">${w.deletePlayer}</button>
     </div>
   </form>`;
 }
@@ -473,36 +488,12 @@ function renderPlayer(w){
     bind('reminders',()=>notify(lang==='pt'?'Lembretes':'Reminders',lang==='pt'?'Esta área ficará disponível quando ativarmos os lembretes do jogador.':'This area will be available when player reminders are enabled.'));
     return;
   }
-  if(isAdmin&&mode==='details'){
-    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>
-      <div class="admin-details-page">
-        <div class="admin-details-heading">
-          <h1 class="admin-details-name">${esc(owner.name)}</h1>
-          <button class="secondary" id="edit" type="button">${w.edit}</button>
-        </div>
-        <div class="admin-details-list">
-          <div class="admin-detail-row"><strong>${w.username}</strong><small>@${esc(owner.username)}</small></div>
-          <div class="admin-detail-row"><strong>${w.birthDate}</strong><small>${esc(formatRenewal(owner.birth_date))}</small></div>
-          <div class="admin-detail-row"><strong>${w.sex}</strong><small>${owner.sex==='M'?w.male:w.female}</small></div>
-          <div class="admin-detail-row"><strong>${lang==='pt'?'Altura':'Height'}</strong><small>${esc(owner.height)} cm</small></div>
-          <div class="admin-detail-row"><strong>${lang==='pt'?'Peso atual':'Current weight'}</strong><small>${esc(owner.weight)} kg</small></div>
-        </div>
-        <div class="admin-account-actions">
-          <button class="secondary" id="change-password">${w.resetPassword}</button>
-          <button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button>
-          <button class="secondary danger" id="delete-player">${w.deletePlayer}</button>
-        </div>
-      </div>`;
-    bind('back',()=>{mode='';render();});
-    bind('edit',()=>{mode='edit';render();});
-    bind('change-password',()=>{mode='password';render();});
-    bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
-    bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
-    return;
-  }
   if(isAdmin&&mode==='edit'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
+    bind('change-password',()=>{mode='password';render();});
+    bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
+    bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
     submit(async f=>{await api('/players/'+owner.id,{method:'PUT',body:await payloadFromForm(f)});selected=null;mode='';await refresh();});return;
   }
   if(mode==='password'){
@@ -530,7 +521,7 @@ function renderPlayer(w){
           </div>
         </div>
         <div class="admin-player-primary-actions">
-          <button class="secondary" id="details" type="button">${lang==='pt'?'Gerir atleta':'Manage player'}</button>
+          <button class="secondary" id="edit" type="button">${w.edit}</button>
         </div>
       </section>
       `:`
@@ -545,7 +536,7 @@ function renderPlayer(w){
 
   bind('back',async()=>{if(mode){mode='';render();}else if(folder!==null){folder=null;render();}else{selected=null;await refresh();}});
   ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;mode='';render();});
-  bind('upload',()=>{mode='upload';render();});bind('cancel',()=>{mode='';render();});bind('details',()=>{mode='details';render();});bind('edit',()=>{mode='edit';render();});if(isAdmin)bind('change-password',()=>{mode='password';render();});
+  bind('upload',()=>{mode='upload';render();});bind('cancel',()=>{mode='';render();});bind('edit',()=>{mode='edit';render();});if(isAdmin)bind('change-password',()=>{mode='password';render();});
   bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
   bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
   bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
@@ -604,7 +595,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=74').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=75').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
