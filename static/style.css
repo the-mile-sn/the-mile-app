@@ -1349,3 +1349,43 @@ body.player-theme #notice .primary:active{
     padding-bottom:0;
   }
 }
+
+
+/* Player press micro-interactions v34 */
+.player-quick-action,
+.player-profile-card,
+.player-profile-plan,
+.player-menu-row-clean,
+.player-doc-row,
+.player-profile-action{
+  -webkit-tap-highlight-color:transparent;
+}
+.player-quick-icon,
+.player-profile-card,
+.player-profile-plan,
+.player-menu-row-clean,
+.player-doc-row,
+.player-profile-action{
+  transition:transform 130ms ease, background-color 130ms ease, opacity 130ms ease;
+}
+.player-quick-action:active .player-quick-icon{
+  transform:scale(.94);
+  background:rgba(245,245,247,.18);
+}
+.player-profile-card:active,
+.player-profile-plan:active{
+  transform:scale(.985);
+  background:rgba(245,245,247,.14);
+}
+.player-menu-row-clean:active{
+  transform:scale(.99);
+  background:rgba(245,245,247,.13);
+}
+.player-doc-row:active{
+  transform:scale(.985);
+  background:rgba(245,245,247,.18);
+}
+.player-profile-action:active{
+  transform:scale(.985);
+  background:rgba(245,245,247,.16);
+}
