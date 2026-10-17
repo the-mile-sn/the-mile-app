@@ -1429,3 +1429,10 @@ body.player-theme #notice .primary:active{
   transform:scale(.985);
   background:rgba(245,245,247,.16);
 }
+
+
+/* Softer folder-card press feedback v36 */
+.player-menu-row-clean.is-pressed{
+  transform:scale(.995);
+  background:rgba(245,245,247,.115);
+}
