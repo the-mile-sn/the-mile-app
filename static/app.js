@@ -83,6 +83,7 @@ function playerIcon(name){
     anthropometry:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="14" width="3.5" height="6" rx=".8"/><rect x="10.2" y="9" width="3.5" height="11" rx=".8"/><rect x="16.4" y="4" width="3.5" height="16" rx=".8"/></svg>',
     document:'<svg class="soft-document-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 3.8h6.5c.7 0 1.3.25 1.8.75l2.55 2.55c.5.5.75 1.1.75 1.8v9.5c0 1.05-.85 1.9-1.9 1.9H7.6c-1.05 0-1.9-.85-1.9-1.9V5.7c0-1.05.85-1.9 1.9-1.9z"/><path d="M14.4 4.1v3.7c0 .65.55 1.2 1.2 1.2h3.25"/><path d="M9.1 13h5.8M9.1 16.2h4.4"/></svg>',
     refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 8A7 7 0 1 0 19 14"/><path d="M18.2 4.5V8h-3.5"/></svg>',
+    key:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.2" cy="12" r="3.2"/><path d="M11.4 12H20M16.6 12v2.3M19 12v1.5"/></svg>',
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -304,10 +305,20 @@ function renderPlayer(w){
         <div class="player-profile-screen-head">
           ${owner.has_photo?`<img class="player-profile-screen-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
           <h1>${esc(owner.name)}</h1>
+          <p class="player-profile-username">@${esc(owner.username)}</p>
         </div>
+
+        <div class="player-profile-plan">
+          <div class="player-profile-plan-copy">
+            <small>${lang==='pt'?'Plano atual':'Current plan'}</small>
+            <strong>${esc(owner.plan_name||'')}</strong>
+          </div>
+          <span class="player-profile-plan-chevron">${playerIcon('chevron')}</span>
+        </div>
+
         <div class="player-profile-actions">
-          <button class="player-profile-action" id="profile-change-password" type="button">${w.changePassword}</button>
-          <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button">${lang==='pt'?'Terminar sessão':'Sign out'}</button>
+          <button class="player-profile-action" id="profile-change-password" type="button"><span class="player-profile-action-icon">${playerIcon('key')}</span><span>${w.changePassword}</span></button>
+          <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button"><span class="player-profile-action-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span></button>
         </div>
       </section>`;
       enablePlayerSwipeBack(()=>{mode='';render();},{interactive:false});
@@ -470,5 +481,5 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=65').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=66').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
