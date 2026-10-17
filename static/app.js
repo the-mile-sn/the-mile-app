@@ -291,10 +291,28 @@ function renderPlayer(w){
   const isAdmin=user.role==='admin',owner=isAdmin?selected:user;
 
   if(!isAdmin){
-    if(mode==='password'){
+    if(mode==='password'||mode==='profile-password'){
+      const passwordFromProfile=mode==='profile-password';
       ui.root.innerHTML=`<section class="player-shell player-password"><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
-      enablePlayerSwipeBack(()=>{mode='';render();});
-      submit(async f=>{await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});mode='';notify('The Mile',w.passwordChanged);render();});
+      enablePlayerSwipeBack(()=>{mode=passwordFromProfile?'profile':'';render();});
+      submit(async f=>{await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});mode=passwordFromProfile?'profile':'';notify('The Mile',w.passwordChanged);render();});
+      return;
+    }
+
+    if(mode==='profile'){
+      ui.root.innerHTML=`<section class="player-shell player-profile-screen">
+        <div class="player-profile-screen-head">
+          ${owner.has_photo?`<img class="player-profile-screen-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
+          <h1>${esc(owner.name)}</h1>
+        </div>
+        <div class="player-profile-actions">
+          <button class="player-profile-action" id="profile-change-password" type="button">${w.changePassword}</button>
+          <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button">${lang==='pt'?'Terminar sessão':'Sign out'}</button>
+        </div>
+      </section>`;
+      enablePlayerSwipeBack(()=>{mode='';render();},{interactive:false});
+      bind('profile-change-password',()=>{mode='profile-password';render();});
+      bind('profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
       return;
     }
 
@@ -313,14 +331,14 @@ function renderPlayer(w){
     const folderName=f=>w.folders[f];
 
     ui.root.innerHTML=`<section class="player-shell player-home-v4">
-      <section class="player-profile-card">
+      <button class="player-profile-card" id="profile-card" type="button">
         ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
         <div class="player-profile-card-copy">
           <h1>${esc(owner.name)}</h1>
           <strong class="player-plan-state ${expired?'expired':''}">${planStatus}</strong>
           <small>${renewalText}${esc(formatRenewal(owner.renewal_date))}</small>
         </div>
-      </section>
+      </button>
 
       <nav class="player-quick-actions" aria-label="${lang==='pt'?'Ações rápidas':'Quick actions'}">
         <button class="player-quick-action" id="weekly-plan" type="button">
@@ -347,12 +365,9 @@ function renderPlayer(w){
         </div>
       </section>
 
-      <div class="player-account-links">
-        <button class="player-password-link" id="change-password" type="button">${w.changePassword}</button>
-        <button class="player-password-link player-logout-link" id="player-logout" type="button">${lang==='pt'?'Terminar sessão':'Sign out'}</button>
-      </div>
     </section>`;
 
+    bind('profile-card',()=>{mode='profile';render();});
     ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;render();});
     bind('weekly-plan',()=>{
       if(owner.weekly_status==='available'&&weekly){
@@ -366,8 +381,6 @@ function renderPlayer(w){
     bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
     bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
     bind('reminders',()=>notify(lang==='pt'?'Lembretes':'Reminders',lang==='pt'?'Esta área ficará disponível quando ativarmos os lembretes do jogador.':'This area will be available when player reminders are enabled.'));
-    bind('change-password',()=>{mode='password';render();});
-    bind('player-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
     return;
   }
   if(isAdmin&&mode==='edit'){
@@ -428,11 +441,11 @@ function renderPlayer(w){
 
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&!(user.role==='player'&&folder===null&&mode==='');ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
-  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password');
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&!(user.role==='player'&&folder===null&&mode==='');ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password');
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
-  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null)folder=null;else if(mode==='password')mode='';render();}:null;
+  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null)folder=null;else if(mode==='profile-password')mode='profile';else if(mode==='password'||mode==='profile')mode='';render();}:null;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
@@ -457,5 +470,5 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=64').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=65').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
