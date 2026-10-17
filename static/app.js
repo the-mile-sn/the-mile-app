@@ -28,7 +28,7 @@ function dismissSplash(){
 
 const words = {
   pt: {
-    private:'Área privada', hello:'Olá,', sub:'Os teus documentos, num só lugar.', folders:{nutrition:'Planos nutricionais',menus:'Menus',other:'Outros documentos',anthropometry:'Avaliações antropométricas'},
+    private:'Área privada', hello:'Olá,', sub:'Os teus documentos, num só lugar.', folders:{weekly:'Planos semanais',nutrition:'Planos alimentares',menus:'Menus',other:'Outros documentos',anthropometry:'Avaliações antropométricas'},
     document:'documento',documents:'documentos',open:'Abrir',documentTitle:'Título apresentado ao jogador',editTitle:'Editar título',titlePrompt:'Título apresentado ao jogador:',back:'← Voltar',
     players:'Jogadores',management:'Administração',manageSub:'Gere acessos, jogadores e documentos a partir de um único painel.',newPlayer:'+ Criar jogador',manage:'Gerir',upload:'+ Carregar PDF',
     name:'Nome',username:'Username',password:'Palavra-passe',newPassword:'Nova palavra-passe',currentPassword:'Palavra-passe atual',enter:'Entrar',loginSub:'Acede à tua área privada.',create:'Criar conta',
@@ -48,7 +48,7 @@ const words = {
       password_mismatch:'As palavras-passe não coincidem.',generic:'Não foi possível concluir. Tenta novamente.'}
   },
   en: {
-    private:'Private area', hello:'Hello,', sub:'Your documents, all in one place.', folders:{nutrition:'Nutrition plans',menus:'Menus',other:'Other documents',anthropometry:'Anthropometric assessments'},
+    private:'Private area', hello:'Hello,', sub:'Your documents, all in one place.', folders:{weekly:'Weekly plans',nutrition:'Meal plans',menus:'Menus',other:'Other documents',anthropometry:'Anthropometric assessments'},
     document:'document',documents:'documents',open:'Open',documentTitle:'Title shown to the player',editTitle:'Edit title',titlePrompt:'Title shown to the player:',back:'← Back',
     players:'Players',management:'Administration',manageSub:'Manage access, players and documents from one dashboard.',newPlayer:'+ Add player',manage:'Manage',upload:'+ Upload PDF',
     name:'Name',username:'Username',password:'Password',newPassword:'New password',currentPassword:'Current password',enter:'Sign in',loginSub:'Access your private area.',create:'Create account',
@@ -284,7 +284,7 @@ function renderDashboard(w){
 }
 
 function availableFolders(owner){
-  const f=['nutrition','other']; if(owner.menus_enabled)f.splice(1,0,'menus'); if(owner.anthropometry_enabled)f.push('anthropometry'); return f;
+  const f=['weekly','nutrition','other']; if(owner.menus_enabled)f.splice(2,0,'menus'); if(owner.anthropometry_enabled)f.push('anthropometry'); return f;
 }
 
 function renderPlayer(w){
@@ -300,17 +300,17 @@ function renderPlayer(w){
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(folder==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
       enablePlayerSwipeBack(()=>{folder=null;render();},{interactive:false});
       return;
     }
 
     const af=availableFolders(owner);
     const expired=planExpired(owner.renewal_date);
-    const weekly=docs.find(d=>d.folder==='weekly')||null;
+    const weekly=docs.find(d=>d.id===owner.current_weekly_document_id&&d.folder==='weekly')||null;
     const planStatus=expired?(lang==='pt'?'Plano expirado':'Plan expired'):`${lang==='pt'?'Plano ':'Plan '}${esc(owner.plan_name||'')}`;
     const renewalText=expired?(lang==='pt'?'Expirou a ':'Expired on '):(lang==='pt'?'Renova a ':'Renews on ');
-    const folderName=f=>f==='nutrition'?(lang==='pt'?'Planos alimentares':'Meal plans'):w.folders[f];
+    const folderName=f=>w.folders[f];
 
     ui.root.innerHTML=`<section class="player-shell player-home-v4">
       <section class="player-profile-card">
@@ -390,26 +390,11 @@ function renderPlayer(w){
       <section class="profile-card">${owner.has_photo?`<img src="/api/players/${owner.id}/photo" alt="">`:''}<div><strong>${esc(owner.name)}</strong><p>@${esc(owner.username)}</p></div></section>
       ${!isAdmin?`<div class="quick-actions"><button class="secondary" id="weight-form">${w.registerWeight}</button><button class="secondary" id="game-form">${w.postGame}</button></div>`:''}
       <p class="subtitle">${w.sub}</p><div class="folders">${af.map(f=>{const c=docs.filter(d=>d.folder===f).length;return `<button class="folder" data-folder="${f}"><span class="folder-icon"></span><div><strong>${w.folders[f]}</strong><small>${c} ${c===1?w.document:w.documents}</small></div></button>`;}).join('')}</div>
-      ${isAdmin?`<div class="player-control"><div><span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span><p>${w.birthDate}: ${esc(owner.birth_date)} · ${w.sex}: ${owner.sex==='M'?w.male:w.female} · ${w.height}: ${esc(owner.height)} · ${w.weight}: ${esc(owner.weight)} · ${w.planName}: ${esc(owner.plan_name)} · ${w.renewalDate}: ${esc(owner.renewal_date)}</p></div><div class="actions player-actions"><button class="secondary" id="edit">${w.edit}</button><button class="secondary" id="change-password">${w.resetPassword}</button><button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button><button class="secondary danger" id="delete-player">${w.deletePlayer}</button></div></div><div class="player-control weekly-plan-admin">
-  <div>
-    <strong>${lang==='pt'?'Plano semanal':'Weekly plan'}</strong>
-    <p>${owner.weekly_status==='available'?(lang==='pt'?'Disponível':'Available'):owner.weekly_status==='updating'?(lang==='pt'?'Em atualização':'Updating'):(lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan')}</p>
-    ${docs.some(d=>d.folder==='weekly_next')?`<p>${lang==='pt'?'Próximo plano agendado para segunda-feira às 00:01':'Next plan scheduled for Monday at 00:01'}</p>`:''}
-  </div>
-  <div class="actions">
-    <select id="weekly-status">
-      <option value="available" ${owner.weekly_status==='available'?'selected':''}>${lang==='pt'?'Disponível':'Available'}</option>
-      <option value="waiting" ${owner.weekly_status==='waiting'?'selected':''}>${lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan'}</option>
-      <option value="updating" ${owner.weekly_status==='updating'?'selected':''}>${lang==='pt'?'Em atualização':'Updating'}</option>
-    </select>
-    <button class="secondary" id="weekly-upload" type="button">${docs.some(d=>d.folder==='weekly')?(lang==='pt'?'Substituir PDF atual':'Replace current PDF'):(lang==='pt'?'Carregar PDF atual':'Upload current PDF')}</button>
-    <button class="secondary" id="weekly-next-upload" type="button">${docs.some(d=>d.folder==='weekly_next')?(lang==='pt'?'Substituir próximo plano':'Replace next plan'):(lang==='pt'?'Carregar próximo plano':'Upload next plan')}</button>
-    ${docs.some(d=>d.folder==='weekly_next')?`<button class="secondary" id="weekly-launch" type="button">${lang==='pt'?'Lançar plano':'Launch plan'}</button>`:''}
-  </div>
-</div>`:''}
+      ${isAdmin?`<div class="player-control"><div><span class="badge ${statusClass(owner)}">${statusLabel(owner,w)}</span><p>${w.birthDate}: ${esc(owner.birth_date)} · ${w.sex}: ${owner.sex==='M'?w.male:w.female} · ${w.height}: ${esc(owner.height)} · ${w.weight}: ${esc(owner.weight)} · ${w.planName}: ${esc(owner.plan_name)} · ${w.renewalDate}: ${esc(owner.renewal_date)}</p></div><div class="actions player-actions"><button class="secondary" id="edit">${w.edit}</button><button class="secondary" id="change-password">${w.resetPassword}</button><button class="secondary" id="status">${owner.active?w.deactivate:w.reactivate}</button><button class="secondary danger" id="delete-player">${w.deletePlayer}</button></div></div>`:''}
     `:
     mode==='upload'?`<form class="inline-form"><label>${w.documentTitle}</label><input name="title" maxlength="180" required><label>${w.file}</label><input name="pdf" type="file" accept="application/pdf,.pdf" required><p class="note">${w.pdfNote}</p><p class="error"></p><div class="actions"><button class="primary" type="submit">${w.save}</button><button class="secondary" id="cancel" type="button">${w.cancel}</button></div></form>`:
-    docs.filter(d=>d.folder===folder).map(d=>`<div class="row"><div><strong>${esc(d.title)}</strong><p>PDF · ${new Intl.DateTimeFormat(lang==='pt'?'pt-PT':'en-GB').format(new Date(d.updated*1000))}</p></div><div class="actions"><a class="primary download" href="/api/documents/${d.id}">${w.open}</a>${isAdmin?`<button class="secondary" data-title="${d.id}">${w.editTitle}</button><button class="secondary" data-replace="${d.id}">${w.replace}</button><button class="secondary danger" data-delete="${d.id}">${w.remove}</button>`:''}</div></div>`).join('')||`<p class="empty">${w.empty}</p>`}`;
+    ${isAdmin&&folder==='weekly'?`<div class="player-control weekly-plan-admin"><div><strong>${lang==='pt'?'Estado do plano semanal':'Weekly plan status'}</strong><p>${owner.weekly_status==='available'?(lang==='pt'?'Disponível':'Available'):owner.weekly_status==='updating'?(lang==='pt'?'Em atualização':'Updating'):(lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan')}</p></div><div class="actions"><select id="weekly-status"><option value="available" ${owner.weekly_status==='available'?'selected':''}>${lang==='pt'?'Disponível':'Available'}</option><option value="waiting" ${owner.weekly_status==='waiting'?'selected':''}>${lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan'}</option><option value="updating" ${owner.weekly_status==='updating'?'selected':''}>${lang==='pt'?'Em atualização':'Updating'}</option></select></div></div>`:''}
+    ${docs.filter(d=>d.folder===folder).map(d=>`<div class="row"><div><strong>${esc(d.title)}</strong><p>PDF · ${new Intl.DateTimeFormat(lang==='pt'?'pt-PT':'en-GB').format(new Date(d.updated*1000))}${folder==='weekly'&&owner.current_weekly_document_id===d.id?(lang==='pt'?' · Atual':' · Current'):''}</p></div><div class="actions"><a class="primary download" href="/api/documents/${d.id}">${w.open}</a>${isAdmin?`<button class="secondary" data-title="${d.id}">${w.editTitle}</button>${folder==='weekly'?(owner.current_weekly_document_id===d.id?`<button class="secondary" disabled>${lang==='pt'?'Atual':'Current'}</button>`:`<button class="secondary" data-weekly-current="${d.id}">${lang==='pt'?'Definir como atual':'Set as current'}</button>`):`<button class="secondary" data-replace="${d.id}">${w.replace}</button>`}<button class="secondary danger" data-delete="${d.id}">${w.remove}</button>`:''}</div></div>`).join('')||`<p class="empty">${w.empty}</p>`}`;
 
   bind('back',async()=>{if(mode){mode='';render();}else if(folder!==null){folder=null;render();}else{selected=null;await refresh();}});
   ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;mode='';render();});
@@ -418,9 +403,6 @@ function renderPlayer(w){
   bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
   bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
   bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
-  bind('weekly-upload',()=>{const i=document.createElement('input');i.type='file';i.accept='application/pdf,.pdf';i.onchange=async()=>{const f=i.files&&i.files[0];if(!f)return;if(f.size>20*1024*1024){error(Error('file_size'));return;}await api('/documents?player='+encodeURIComponent(owner.id)+'&folder=weekly&title='+encodeURIComponent(lang==='pt'?'Plano semanal':'Weekly plan'),{method:'POST',body:f,binary:true});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;render();};i.click();});
-  bind('weekly-next-upload',()=>{const i=document.createElement('input');i.type='file';i.accept='application/pdf,.pdf';i.onchange=async()=>{const f=i.files&&i.files[0];if(!f)return;if(f.size>20*1024*1024){error(Error('file_size'));return;}await api('/documents?player='+encodeURIComponent(owner.id)+'&folder=weekly_next&title='+encodeURIComponent(lang==='pt'?'Próximo plano semanal':'Next weekly plan'),{method:'POST',body:f,binary:true});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;const p=(await api('/players')).players.find(x=>x.id===owner.id);if(p)selected=p;render();};i.click();});
-  bind('weekly-launch',async()=>{await api('/players/'+owner.id+'/weekly-launch',{method:'POST',body:{}});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;const p=(await api('/players')).players.find(x=>x.id===owner.id);if(p)selected=p;render();});
   const weeklyStatus=document.getElementById('weekly-status');
   if(weeklyStatus)weeklyStatus.onchange=async()=>{
     await api('/players/'+owner.id+'/weekly-status',{method:'POST',body:{status:weeklyStatus.value}});
@@ -429,6 +411,13 @@ function renderPlayer(w){
     docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;
     render();
   };
+  ui.root.querySelectorAll('[data-weekly-current]').forEach(b=>b.onclick=async()=>{
+    await api('/players/'+owner.id+'/weekly-current',{method:'POST',body:{document_id:b.dataset.weeklyCurrent}});
+    const p=(await api('/players')).players.find(x=>x.id===owner.id);
+    if(p)selected=p;
+    docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;
+    render();
+  });
 
 
   if(mode==='upload')submit(async f=>{const file=f.get('pdf');if(!file||!file.size)throw Error('pdf_only');if(file.size>20*1024*1024)throw Error('file_size');await api('/documents?player='+encodeURIComponent(owner.id)+'&folder='+folder+'&title='+encodeURIComponent(String(f.get('title')||'').trim()),{method:'POST',body:file,binary:true});docs=(await api('/documents?player='+encodeURIComponent(owner.id))).documents;mode='';render();});
