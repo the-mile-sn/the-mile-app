@@ -84,6 +84,7 @@ function playerIcon(name){
     document:'<svg class="soft-document-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 3.8h6.5c.7 0 1.3.25 1.8.75l2.55 2.55c.5.5.75 1.1.75 1.8v9.5c0 1.05-.85 1.9-1.9 1.9H7.6c-1.05 0-1.9-.85-1.9-1.9V5.7c0-1.05.85-1.9 1.9-1.9z"/><path d="M14.4 4.1v3.7c0 .65.55 1.2 1.2 1.2h3.25"/><path d="M9.1 13h5.8M9.1 16.2h4.4"/></svg>',
     refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 8A7 7 0 1 0 19 14"/><path d="M18.2 4.5V8h-3.5"/></svg>',
     key:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.2" cy="12" r="3.2"/><path d="M11.4 12H20M16.6 12v2.3M19 12v1.5"/></svg>',
+    person:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.7-3.4 3.1-5.4 6.5-5.4s5.8 2 6.5 5.4"/></svg>',
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     arrow:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -360,23 +361,26 @@ async function payloadFromForm(f){
 function renderDashboard(w){
   if(mode==='admin-profile'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>
-      <section class="admin-profile-page">
-        <div class="admin-profile-head">
-          <div>
-            <h1>${lang==='pt'?'Perfil de administrador':'Administrator profile'}</h1>
-            <p>${esc(user.name)}</p>
-          </div>
+      <section class="admin-account-page">
+        <div class="admin-account-head">
+          <span class="admin-account-avatar">${playerIcon('person')}</span>
+          <h1>${esc(user.name)}</h1>
+          <p>${esc(user.email)}</p>
         </div>
-        <div class="admin-profile-card">
-          <div><span>${lang==='pt'?'Nome':'Name'}</span><strong>${esc(user.name)}</strong></div>
-          <div><span>Email</span><strong>${esc(user.email)}</strong></div>
-        </div>
-        <div class="admin-profile-actions">
-          <button class="secondary" id="admin-profile-password" type="button">${w.changePassword}</button>
+        <div class="admin-account-actions">
+          <button class="admin-account-action" id="admin-profile-password" type="button">
+            <span class="admin-account-action-icon">${playerIcon('key')}</span>
+            <span>${w.changePassword}</span>
+          </button>
+          <button class="admin-account-action" id="admin-profile-logout" type="button">
+            <span class="admin-account-action-icon">${playerIcon('logout')}</span>
+            <span>${lang==='pt'?'Terminar sessão':'Sign out'}</span>
+          </button>
         </div>
       </section>`;
     bind('back',()=>{mode='';render();});
     bind('admin-profile-password',()=>{mode='admin-profile-password';render();});
+    bind('admin-profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;selected=null;folder=null;mode='';players=[];admins=[];docs=[];render();});
     return;
   }
 
@@ -410,23 +414,44 @@ function renderDashboard(w){
   }
 
   const active=players.filter(p=>p.active).length;
-  const inactive=players.length-active;
-  const totalDocs=players.reduce((n,p)=>n+Number(p.documents||0),0);
+  const pendingPlans=players.filter(p=>p.weekly_status==='waiting'||p.weekly_status==='updating').length;
 
-  const todayIso=()=>{
-    const d=new Date();
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  };
-  const today=todayIso();
+  const localDate=(date=new Date())=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+  const todayDate=new Date();
+  todayDate.setHours(0,0,0,0);
+  const today=localDate(todayDate);
+  const in14=new Date(todayDate); in14.setDate(in14.getDate()+14);
+  const in14Iso=localDate(in14);
+  const upcomingRenewals=players.filter(p=>p.renewal_date&&p.renewal_date>=today&&p.renewal_date<=in14Iso).length;
   const attention=[];
+
   players.forEach(p=>{
     if(p.weekly_status==='waiting'){
       attention.push({id:p.id,title:p.name,text:lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan',tone:'waiting'});
     }else if(p.weekly_status==='updating'){
       attention.push({id:p.id,title:p.name,text:lang==='pt'?'Plano semanal em atualização':'Weekly plan being updated',tone:'updating'});
     }
-    if(p.renewal_date && p.renewal_date<=today){
-      attention.push({id:p.id,title:p.name,text:p.renewal_date===today?(lang==='pt'?'Renovação hoje':'Renewal today'):(lang==='pt'?'Renovação expirada':'Renewal expired'),tone:'renewal'});
+
+    if(p.renewal_date){
+      if(p.renewal_date<today){
+        attention.push({id:p.id,title:p.name,text:lang==='pt'?'Renovação expirada':'Renewal expired',tone:'renewal'});
+      }else if(p.renewal_date===today){
+        attention.push({id:p.id,title:p.name,text:lang==='pt'?'Renovação hoje':'Renewal today',tone:'renewal'});
+      }else if(p.renewal_date<=in14Iso){
+        attention.push({id:p.id,title:p.name,text:(lang==='pt'?'Renovação a ':'Renewal on ')+formatRenewal(p.renewal_date),tone:'renewal'});
+      }
+    }
+
+    if(p.birth_date){
+      const parts=String(p.birth_date).split('-');
+      if(parts.length===3){
+        let b=new Date(todayDate.getFullYear(),Number(parts[1])-1,Number(parts[2]));
+        if(b<todayDate)b=new Date(todayDate.getFullYear()+1,Number(parts[1])-1,Number(parts[2]));
+        const diff=Math.round((b-todayDate)/86400000);
+        if(diff>=0&&diff<=14){
+          attention.push({id:p.id,title:p.name,text:diff===0?(lang==='pt'?'Aniversário hoje':'Birthday today'):(lang==='pt'?'Aniversário a ':'Birthday on ')+new Intl.DateTimeFormat(lang==='pt'?'pt-PT':'en-GB',{day:'2-digit',month:'2-digit'}).format(b),tone:'birthday'});
+        }
+      }
     }
   });
 
@@ -434,15 +459,14 @@ function renderDashboard(w){
     <div class="dashboard-head">
       <h1>${lang==='pt'?'Painel de trabalho':'Work dashboard'}</h1>
       <div class="dashboard-head-actions">
-        <button class="secondary" id="admin-profile" type="button">${lang==='pt'?'Perfil':'Profile'}</button>
         <button class="primary" id="create">${w.newPlayer}</button>
       </div>
     </div>
 
     <section class="dashboard-today">
-      <div class="dashboard-section-head"><h2>${lang==='pt'?'Hoje':'Today'}</h2></div>
+      <div class="dashboard-section-head"><h2>${lang==='pt'?'Eventos importantes':'Important events'}</h2></div>
       <div class="dashboard-today-list">
-        ${attention.length?attention.slice(0,6).map(a=>`<button class="dashboard-attention-card ${a.tone}" data-player="${a.id}" type="button"><strong>${esc(a.title)}</strong><small>${esc(a.text)}</small></button>`).join(''):`<div class="dashboard-empty-today">${lang==='pt'?'Sem ações pendentes para hoje.':'No pending actions for today.'}</div>`}
+        ${attention.length?attention.slice(0,8).map(a=>`<button class="dashboard-attention-card ${a.tone}" data-player="${a.id}" type="button"><strong>${esc(a.title)}</strong><small>${esc(a.text)}</small></button>`).join(''):`<div class="dashboard-empty-today">${lang==='pt'?'Sem eventos importantes de momento.':'No important events right now.'}</div>`}
       </div>
     </section>
 
@@ -456,11 +480,10 @@ function renderDashboard(w){
 
     <section class="dashboard-overview-section">
       <div class="dashboard-section-head"><h2>${lang==='pt'?'Visão geral':'Overview'}</h2></div>
-      <section class="overview"><div class="metric"><strong>${players.length}</strong><span>${w.totalPlayers}</span></div><div class="metric"><strong>${active}</strong><span>${w.activePlayers}</span></div><div class="metric"><strong>${inactive}</strong><span>${w.inactivePlayers}</span></div><div class="metric"><strong>${totalDocs}</strong><span>${w.totalDocuments}</span></div></section>
+      <section class="overview dashboard-overview"><div class="metric"><strong>${active}</strong><span>${lang==='pt'?'Atletas ativos':'Active players'}</span></div><div class="metric"><strong>${pendingPlans}</strong><span>${lang==='pt'?'Planos pendentes':'Pending plans'}</span></div><div class="metric"><strong>${upcomingRenewals}</strong><span>${lang==='pt'?'Renovações próximas':'Upcoming renewals'}</span></div></section>
     </section>`;
 
   bind('create',()=>{mode='create';render();});
-  bind('admin-profile',()=>{mode='admin-profile';render();});
 
   ui.root.querySelectorAll('.dashboard-attention-card[data-player]').forEach(b=>b.onclick=()=>openPlayer(b.dataset.player).catch(error));
 
@@ -665,7 +688,7 @@ function renderPlayer(w){
 
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&!(user.role==='player'&&folder===null&&mode==='');ui.logout.hidden=!user||user.role==='player';ui.logout.textContent=w.logout;ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&!(user.role==='player'&&folder===null&&mode==='');ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password');
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
@@ -688,13 +711,13 @@ function render(){
 }
 
 ui.lang.onclick=()=>{lang=lang==='pt'?'en':'pt';localStorage.setItem('mile-language',lang);render();};
-ui.logout.onclick=async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;selected=null;folder=null;mode='';players=[];admins=[];docs=[];render();};
+ui.logout.onclick=async()=>{if(user&&user.role==='admin'){selected=null;folder=null;mode='admin-profile';render();return;}await api('/logout',{method:'POST',body:{}});user=null;csrf=null;selected=null;folder=null;mode='';players=[];admins=[];docs=[];render();};
 function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
 function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=78').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=79').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
