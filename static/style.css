@@ -2646,3 +2646,7 @@ body.player-theme .player-quick-label{margin-top:2px;min-height:30px;display:fle
 .notification-recipient-card.is-selected{background:#eaf5ed;border-color:#70b384;color:#175c32}
 body.player-theme #notification-bell.has-unread{position:relative}
 body.player-theme #notification-bell.has-unread::after{content:"";position:absolute;right:7px;top:6px;width:7px;height:7px;border-radius:50%;background:#b8b8c0;border:2px solid #050505}
+
+/* Numeric unread notification indicator */
+body.player-theme #notification-bell.has-unread::after{content:attr(data-unread);position:absolute;top:1px;right:0;min-width:17px;height:17px;box-sizing:border-box;padding:0 4px;border:1.5px solid #050505;border-radius:11px;background:#777780;color:#fff;font-size:10px;font-weight:700;line-height:15px;text-align:center;white-space:nowrap}
+.notification-send-form select[name="category"]{display:block;appearance:auto;-webkit-appearance:menulist;box-sizing:border-box;width:100%;max-width:none;min-height:55px;height:55px;padding:10px 14px;font-size:17px;border:1px solid #d6d6d6;border-radius:10px;background-color:#fff}
