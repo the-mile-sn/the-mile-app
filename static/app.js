@@ -613,6 +613,11 @@ function renderPlayer(w){
         await api('/notifications/'+encodeURIComponent(n.id)+'/read',{method:'POST',body:{}});
         n.read_at=n.read_at||Math.floor(Date.now()/1000);
         if(n.folder){folder=n.folder;folderOrigin='documents';mode='';}
+        else if(n.category==='weight'||n.category==='game'){
+          const url=n.category==='weight'?user.weight_form_url:user.game_form_url;
+          if(url)window.open(url,'_blank','noopener');
+          else notify('The Mile',w.formsUnavailable);
+        }
         render();
       });
       enablePlayerSwipeBack(()=>{mode='';render();},{interactive:false});
@@ -678,7 +683,7 @@ function renderPlayer(w){
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
       const unreadDocs=new Set(notifications.filter(n=>n.document_id&&!n.document_opened_at).map(n=>n.document_id));
-      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong class="${unreadDocs.has(d.id)?'document-unread':''}">${esc(d.title)}</strong></span><span class="player-doc-trailing">${unreadDocs.has(d.id)?'<span class="document-new-dot" aria-label="Novo documento"></span>':''}<span class="player-chevron">${playerIcon('chevron')}</span></span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>${playerBottomNav('documents')}`;
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener">${unreadDocs.has(d.id)?'<span class="document-new-dot" aria-label="Novo documento"></span>':''}<span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong class="${unreadDocs.has(d.id)?'document-unread':''}">${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>${playerBottomNav('documents')}`;
       bindPlayerBottomNav();
       ui.root.querySelectorAll('.player-doc-row').forEach(a=>a.addEventListener('click',()=>{
         const id=a.href.split('/').pop();
