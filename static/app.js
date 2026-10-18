@@ -478,7 +478,7 @@ function renderDashboard(w){
     <div class="dashboard-head">
       <h1>${lang==='pt'?'Painel de trabalho':'Work dashboard'}</h1>
     </div>
-    <button class="secondary" onclick="" id="admin-notifications" type="button">${lang==='pt'?'Enviar notificações':'Send notifications'}</button>
+    <button class="secondary" id="admin-notifications" type="button">${lang==='pt'?'Enviar notificações':'Send notifications'}</button>
 
     <section class="dashboard-today">
       <div class="dashboard-section-head"><h2>${lang==='pt'?'Hoje':'Today'}</h2></div>
@@ -506,6 +506,7 @@ function renderDashboard(w){
     </section>`;
 
   bind('create',()=>{mode='create';render();});
+  bind('admin-notifications',()=>{mode='notifications-admin';render();});
 
   ui.root.querySelectorAll('.dashboard-attention-card[data-player]').forEach(b=>b.onclick=()=>openPlayer(b.dataset.player).catch(error));
 
