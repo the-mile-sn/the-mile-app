@@ -412,20 +412,31 @@ function renderDashboard(w){
 
   if(mode==='notifications-admin'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><h1>${lang==='pt'?'Enviar notificação':'Send notification'}</h1>
-      <form class="inline-form" id="notification-send">
+      <form class="inline-form notification-send-form" id="notification-send">
         <label>${lang==='pt'?'Tipo':'Type'}</label><select name="category"><option value="manual">Mensagem</option><option value="weight">Registo de peso</option><option value="game">Pós-jogo</option></select>
-        <label>${lang==='pt'?'Jogadores':'Players'}</label><div class="notification-recipient-list">${players.filter(p=>p.active).map(p=>`<label><input type="checkbox" name="recipient" value="${esc(p.id)}"> ${esc(p.name)}</label>`).join('')}</div>
+        <label>${lang==='pt'?'Jogadores':'Players'}</label><div class="notification-recipient-list">${players.filter(p=>p.active).map(p=>`<label class="notification-recipient-card"><input type="checkbox" name="recipient" value="${esc(p.id)}"><span>${esc(p.name)}</span></label>`).join('')}</div>
         <label>${lang==='pt'?'Título':'Title'}</label><input name="title" maxlength="120" required>
-        <label>${lang==='pt'?'Mensagem':'Message'}</label><textarea name="message" maxlength="1000" required></textarea>
+        <label>${lang==='pt'?'Mensagem':'Message'}</label><textarea name="message" rows="5" maxlength="1000" required></textarea>
         <p class="error"></p><button class="primary" type="submit">${lang==='pt'?'Enviar notificação':'Send notification'}</button>
       </form>`;
     bind('back',()=>{mode='';render();});
     const form=ui.root.querySelector('#notification-send');
+    const titleField=form.querySelector('[name=title]');
+    const messageField=form.querySelector('[name=message]');
     form.querySelector('[name=category]').onchange=()=>{
       const kind=form.querySelector('[name=category]').value;
-      if(kind==='weight'){form.querySelector('[name=title]').value='Registo de peso';form.querySelector('[name=message]').value='Não te esqueças de realizar o teu registo de peso diário.';}
-      if(kind==='game'){form.querySelector('[name=title]').value='Questionário pós-jogo';form.querySelector('[name=message]').value='Se participaste num jogo, não te esqueças de preencher o questionário pós-jogo.';}
+      const templates={
+        weight:['Registo de peso','Não te esqueças de realizar o teu registo de peso diário.'],
+        game:['Questionário pós-jogo','Se participaste num jogo, não te esqueças de preencher o questionário pós-jogo.']
+      };
+      titleField.value=templates[kind]?.[0]||'';
+      messageField.value=templates[kind]?.[1]||'';
     };
+    form.querySelectorAll('.notification-recipient-card input').forEach(input=>{
+      const update=()=>input.closest('.notification-recipient-card').classList.toggle('is-selected',input.checked);
+      input.addEventListener('change',update);
+      update();
+    });
     form.onsubmit=async e=>{
       e.preventDefault();
       const recipients=[...form.querySelectorAll('input[name=recipient]:checked')].map(x=>x.value);
@@ -478,7 +489,6 @@ function renderDashboard(w){
     <div class="dashboard-head">
       <h1>${lang==='pt'?'Painel de trabalho':'Work dashboard'}</h1>
     </div>
-    <button class="secondary" id="admin-notifications" type="button">${lang==='pt'?'Enviar notificações':'Send notifications'}</button>
 
     <section class="dashboard-today">
       <div class="dashboard-section-head"><h2>${lang==='pt'?'Hoje':'Today'}</h2></div>
@@ -493,7 +503,7 @@ function renderDashboard(w){
         ${players.length?`<input id="search" class="dashboard-search" type="search" placeholder="${w.search}">`:''}
       </div>
       ${players.length?`<div id="player-list"></div>`:`<p class="empty">${w.noPlayers}</p>`}
-      <div class="dashboard-create-row"><button class="primary" id="create">${w.newPlayer}</button></div>
+      <div class="dashboard-create-row"><button class="secondary admin-notification-create" id="admin-notifications" type="button"><span class="admin-notification-create-icon">${playerIcon('bell')}</span>${lang==='pt'?'Enviar notificações':'Send notifications'}</button><button class="primary" id="create">${w.newPlayer}</button></div>
     </section>
 
     <section class="dashboard-overview-section">
@@ -820,6 +830,7 @@ function render(){
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'||mode==='notifications');
   ui.notificationBell.hidden=!(user&&user.role==='player')||mode==='notifications';
+  ui.notificationBell.classList.toggle('has-unread',!!user&&user.role==='player'&&notifications.some(n=>!n.read_at));
   ui.notificationBell.setAttribute('aria-label',lang==='pt'?'Notificações':'Notifications');
   ui.notificationBell.onclick=async()=>{folder=null;mode='notifications';try{notifications=(await api('/notifications')).notifications;}catch(e){error(e);}render();};
   ui.headerBack.hidden=!internalPlayer;
