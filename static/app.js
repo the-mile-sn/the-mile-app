@@ -247,7 +247,7 @@ function enablePlayerSwipeBack(backFn,{interactive=true}={}){
     },190);
   };
 }
-function submit(fn){ const form=ui.root.querySelector('form'); if(!form)return; form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button[type="submit"]');if(b)b.disabled=true;const er=form.querySelector('.error');if(er)er.textContent='';try{await fn(new FormData(form));}catch(x){error(x);}finally{if(b)b.disabled=false;}}; }
+function submit(fn){ const form=ui.root.querySelector('form'); if(!form)return; form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('button[type="submit"]');if(b)b.disabled=true;const er=form.querySelector('.error');if(er)er.textContent='';try{const data=new FormData(form);if(e.submitter?.name)data.set(e.submitter.name,e.submitter.value);await fn(data);}catch(x){error(x);}finally{if(b)b.disabled=false;}}; }
 
 function fileToDataURL(file){
   return new Promise((resolve,reject)=>{ if(!file||!file.size){resolve('');return;} if(file.size>3*1024*1024){reject(Error('photo'));return;} const rd=new FileReader(); rd.onload=()=>resolve(rd.result); rd.onerror=()=>reject(Error('photo')); rd.readAsDataURL(file); });
