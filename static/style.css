@@ -2650,3 +2650,8 @@ body.player-theme #notification-bell.has-unread::after{content:"";position:absol
 /* Numeric unread notification indicator */
 body.player-theme #notification-bell.has-unread::after{content:attr(data-unread);position:absolute;top:1px;right:0;min-width:17px;height:17px;box-sizing:border-box;padding:0 4px;border:1.5px solid #050505;border-radius:11px;background:#777780;color:#fff;font-size:10px;font-weight:700;line-height:15px;text-align:center;white-space:nowrap}
 .notification-send-form select[name="category"]{display:block;appearance:auto;-webkit-appearance:menulist;box-sizing:border-box;width:100%;max-width:none;min-height:55px;height:55px;padding:10px 14px;font-size:17px;border:1px solid #d6d6d6;border-radius:10px;background-color:#fff}
+
+/* New-document marker aligned with right-hand chevron */
+body.player-theme .player-doc-trailing{display:inline-flex;align-items:center;justify-content:flex-end;gap:12px;flex-shrink:0;margin-left:auto}
+body.player-theme .player-doc-trailing .document-new-dot{display:block;margin:0;width:7px;height:7px}
+body.player-theme .player-doc-trailing .player-chevron{display:inline-flex;align-items:center;justify-content:center}
