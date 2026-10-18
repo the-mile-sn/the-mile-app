@@ -516,6 +516,31 @@ function bindPlayerBottomNav(){
   bind('tab-profile',()=>{folder=null;mode='profile';render();});
 }
 
+function enablePlayerTabSwipe(active){
+  const shell=ui.root.querySelector('.player-shell');
+  if(!shell)return;
+  const tabs=['home','documents','profile'];
+  let x=0,y=0,tracking=false;
+  shell.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
+    if(e.target.closest('input,textarea,select,a,[contenteditable="true"],.player-bottom-nav'))return;
+    x=e.touches[0].clientX;y=e.touches[0].clientY;tracking=true;
+  },{passive:true});
+  shell.addEventListener('touchend',e=>{
+    if(!tracking||!e.changedTouches.length)return;
+    tracking=false;
+    const dx=e.changedTouches[0].clientX-x;
+    const dy=e.changedTouches[0].clientY-y;
+    if(Math.abs(dx)<76||Math.abs(dx)<Math.abs(dy)*1.4)return;
+    const index=tabs.indexOf(active);
+    const next=index+(dx<0?1:-1);
+    if(next<0||next>=tabs.length)return;
+    folder=null;folderOrigin=next===1?'documents':'home';
+    mode=tabs[next]==='home'?'':tabs[next];render();
+  },{passive:true});
+  shell.addEventListener('touchcancel',()=>{tracking=false},{passive:true});
+}
+
 function renderPlayer(w){
   const isAdmin=user.role==='admin',owner=isAdmin?selected:user;
 
@@ -539,7 +564,7 @@ function renderPlayer(w){
       return;
     }
 
-    if(mode==='documents'){
+    if(mode==='documents' && folder===null){
       const af=availableFolders(owner);
       ui.root.innerHTML=`<section class="player-shell player-documents-screen">
         <h1 class="player-folder-title">${lang==='pt'?'Documentos':'Documents'}</h1>
@@ -550,8 +575,9 @@ function renderPlayer(w){
         </section>
       </section>
       ${playerBottomNav('documents')}`;
-      ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folderOrigin='documents';folder=b.dataset.folder;render();});
+      ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folderOrigin='documents';folder=b.dataset.folder;mode='';render();});
       bindPlayerBottomNav();
+      enablePlayerTabSwipe('documents');
       return;
     }
 
@@ -583,6 +609,7 @@ function renderPlayer(w){
       bind('profile-lang-en',()=>{lang='en';localStorage.setItem('mile-language',lang);render();});
       bind('profile-change-password',()=>{mode='profile-password';render();});
       bind('profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
+      enablePlayerTabSwipe('profile');
       return;
     }
 
@@ -649,6 +676,7 @@ function renderPlayer(w){
     });
     bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
     bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
+    enablePlayerTabSwipe('home');
     return;
   }
   if(isAdmin&&mode==='edit'){
