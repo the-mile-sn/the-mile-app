@@ -79,6 +79,7 @@ function boolChecked(v){ return v ? 'checked' : ''; }
 
 function playerIcon(name){
   const icons={
+    lock:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
     nutrition:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.7L19 7.8v12.7H6z"/><path d="M14.7 3.5v4.3H19z" opacity=".72"/></svg>',
     menus:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.7c3.1-1.1 6-.7 8.5 1.1v12c-2.5-1.8-5.4-2.2-8.5-1.1zM20.5 5.7c-3.1-1.1-6-.7-8.5 1.1v12c2.5-1.8 5.4-2.2 8.5-1.1z"/></svg>',
     other:'<svg class="solid-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 7.2h6.4l1.8 2h10.2v10.1H2.8z"/><path d="M2.8 7.2V5.1h5.4l1.7 2.1z"/></svg>',
@@ -544,7 +545,7 @@ function playerBottomNav(active){
       <span>${lang==='pt'?'Início':'Home'}</span>
     </button>
     <button id="tab-documents" type="button" ${user?.access_expired?'disabled aria-label="Documentos bloqueados"':''} class="player-bottom-item ${active==='documents'?'is-active':''} ${user?.access_expired?'is-locked':''}">
-      <span class="player-bottom-icon">${user?.access_expired?playerIcon('key'):playerIcon('files')}</span>
+      <span class="player-bottom-icon">${user?.access_expired?playerIcon('lock'):playerIcon('files')}</span>
       <span>${lang==='pt'?'Documentos':'Documents'}</span>
     </button>
     <button id="tab-profile" type="button" class="player-bottom-item ${active==='profile'?'is-active':''}">
@@ -612,7 +613,7 @@ function renderPlayer(w){
           ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
           <div class="player-profile-card-copy"><h1>${esc(owner.name)}</h1><strong>${esc(owner.plan_name||'')}</strong><small>${lang==='pt'?'Acompanhamento expirado':'Coaching expired'}</small></div>
         </button>
-        <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('key')}</span><strong>${lang==='pt'?'Acesso temporariamente bloqueado':'Access temporarily restricted'}</strong><p>${lang==='pt'?'Contacta a equipa The Mile para recuperares o acesso completo.':'Contact The Mile team to restore full access.'}</p></div>
+        <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('lock')}</span><p>${lang==='pt'?'Contacta a equipa The Mile para recuperar o acesso.':'Contact The Mile team to restore access.'}</p></div>
       </section>${playerBottomNav('home')}`;
       bind('profile-card',()=>{mode='profile';render();});
       bindPlayerBottomNav();
