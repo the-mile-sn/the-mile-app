@@ -2526,3 +2526,67 @@ body.player-theme main{
     border-radius:24px;
   }
 }
+
+
+/* Compact quick actions v53 */
+.player-quick-actions{
+  justify-content:space-between;
+  gap:14px;
+}
+.player-quick-action{
+  flex:1 1 0;
+  min-width:0;
+}
+.player-quick-icon{
+  width:74px;
+  height:74px;
+  border-radius:50%;
+  background:#1c1c1e;
+  border:1px solid rgba(255,255,255,.10);
+}
+.player-quick-icon svg,
+.player-quick-icon .quick-raster-icon{
+  width:50px;
+  height:50px;
+}
+.player-quick-icon .scale-icon{
+  width:54px;
+  height:54px;
+}
+.player-quick-icon .ball-icon{
+  width:57px;
+  height:57px;
+}
+.player-quick-label{
+  margin-top:8px;
+}
+.player-quick-action.is-pressed .player-quick-icon,
+.player-quick-action:active .player-quick-icon{
+  transform:scale(.94);
+  background:#2a2a2d;
+}
+@media(max-width:650px){
+  .player-quick-actions{
+    gap:12px;
+  }
+  .player-quick-icon{
+    width:70px;
+    height:70px;
+  }
+  .player-quick-icon svg,
+  .player-quick-icon .quick-raster-icon{
+    width:47px;
+    height:47px;
+  }
+  .player-quick-icon .scale-icon{
+    width:51px;
+    height:51px;
+  }
+  .player-quick-icon .ball-icon{
+    width:54px;
+    height:54px;
+  }
+  .player-quick-label{
+    margin-top:7px;
+  }
+}
