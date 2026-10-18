@@ -2683,3 +2683,7 @@ body.player-theme .player-expired-card{gap:18px}
 body.player-theme .player-expired-lock{color:#96969e}
 body.player-theme .player-expired-lock svg{width:32px;height:32px;fill:none;stroke:currentColor}
 body.player-theme .player-expired-card p{color:#d0d0d5;font-size:15px;line-height:1.55}
+
+/* Quiet single-lock expired state */
+body.player-theme .player-expired-card{min-height:390px;justify-content:center;padding:35px 20px}
+body.player-theme .player-expired-lock svg{width:44px;height:44px;stroke-width:1.45}
