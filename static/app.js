@@ -11,6 +11,7 @@ const ui = {
 
 let lang = localStorage.getItem('mile-language') === 'en' ? 'en' : 'pt';
 let user = null, csrf = null, selected = null, folder = null, players = [], admins = [], docs = [], mode = '', folderOrigin = 'home';
+let notifications = [];
 let loginMode = 'login';
 let activationToken = new URLSearchParams(location.search).get('activate');
 let installPrompt = null;
@@ -254,7 +255,7 @@ function fileToDataURL(file){
 
 async function refresh(){
   const session=await api('/me'); user=session.user; csrf=session.csrf;
-  if(user){ if(user.role==='admin'){const [p,a]=await Promise.all([api('/players'),api('/admins')]);players=p.players;admins=a.admins;} else docs=(await api('/documents')).documents; }
+  if(user){ if(user.role==='admin'){const [p,a]=await Promise.all([api('/players'),api('/admins')]);players=p.players;admins=a.admins;} else {const [d,n]=await Promise.all([api('/documents'),api('/notifications')]);docs=d.documents;notifications=n.notifications;} }
   render();
 }
 async function openPlayer(id){ selected=players.find(p=>p.id===id); docs=(await api('/documents?player='+encodeURIComponent(id))).documents; folder=null;mode='';render(); }
@@ -409,6 +410,36 @@ function renderDashboard(w){
     return;
   }
 
+  if(mode==='notifications-admin'){
+    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><h1>${lang==='pt'?'Enviar notificação':'Send notification'}</h1>
+      <form class="inline-form" id="notification-send">
+        <label>${lang==='pt'?'Tipo':'Type'}</label><select name="category"><option value="manual">Mensagem</option><option value="weight">Registo de peso</option><option value="game">Pós-jogo</option></select>
+        <label>${lang==='pt'?'Jogadores':'Players'}</label><div class="notification-recipient-list">${players.filter(p=>p.active).map(p=>`<label><input type="checkbox" name="recipient" value="${esc(p.id)}"> ${esc(p.name)}</label>`).join('')}</div>
+        <label>${lang==='pt'?'Título':'Title'}</label><input name="title" maxlength="120" required>
+        <label>${lang==='pt'?'Mensagem':'Message'}</label><textarea name="message" maxlength="1000" required></textarea>
+        <p class="error"></p><button class="primary" type="submit">${lang==='pt'?'Enviar notificação':'Send notification'}</button>
+      </form>`;
+    bind('back',()=>{mode='';render();});
+    const form=ui.root.querySelector('#notification-send');
+    form.querySelector('[name=category]').onchange=()=>{
+      const kind=form.querySelector('[name=category]').value;
+      if(kind==='weight'){form.querySelector('[name=title]').value='Registo de peso';form.querySelector('[name=message]').value='Não te esqueças de realizar o teu registo de peso diário.';}
+      if(kind==='game'){form.querySelector('[name=title]').value='Questionário pós-jogo';form.querySelector('[name=message]').value='Se participaste num jogo, não te esqueças de preencher o questionário pós-jogo.';}
+    };
+    form.onsubmit=async e=>{
+      e.preventDefault();
+      const recipients=[...form.querySelectorAll('input[name=recipient]:checked')].map(x=>x.value);
+      if(!recipients.length){notify('The Mile',lang==='pt'?'Seleciona pelo menos um jogador.':'Select a player.');return;}
+      if(!confirm(lang==='pt'?'Enviar esta notificação aos jogadores selecionados?':'Send to selected players?'))return;
+      try{
+        const result=await api('/notifications',{method:'POST',body:{recipients,category:form.querySelector('[name=category]').value,title:form.querySelector('[name=title]').value,message:form.querySelector('[name=message]').value}});
+        notify('The Mile',lang==='pt'?`Enviado a ${result.sent} jogador(es).`:`Sent to ${result.sent} players.`);
+        mode='';render();
+      }catch(err){error(err);}
+    };
+    return;
+  }
+
   if(mode==='create'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><h1>${w.newPlayer.slice(2)}</h1>${playerForm(w)}`;
     bind('back',()=>{mode='';render();}); bind('cancel',()=>{mode='';render();});
@@ -447,6 +478,7 @@ function renderDashboard(w){
     <div class="dashboard-head">
       <h1>${lang==='pt'?'Painel de trabalho':'Work dashboard'}</h1>
     </div>
+    <button class="secondary" onclick="" id="admin-notifications" type="button">${lang==='pt'?'Enviar notificações':'Send notifications'}</button>
 
     <section class="dashboard-today">
       <div class="dashboard-section-head"><h2>${lang==='pt'?'Hoje':'Today'}</h2></div>
@@ -561,13 +593,17 @@ function renderPlayer(w){
 
   if(!isAdmin){
     if(mode==='notifications'){
-      ui.root.innerHTML=`<section class="player-shell player-notifications-screen">
-        <h1>${lang==='pt'?'Notificações':'Notifications'}</h1>
-        <div class="player-notifications-empty">
-          <span class="player-notifications-icon">${playerIcon('bell')}</span>
-          <strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong>
-        </div>
+      ui.root.innerHTML=`<section class="player-shell player-notifications-screen"><h1>${lang==='pt'?'Notificações':'Notifications'}</h1>
+        ${notifications.length?'<div class="player-notifications-list">'+notifications.map(n=>`<button class="player-notification-row ${n.read_at?'':'is-unread'}" data-notification="${esc(n.id)}"><strong>${esc(n.title)}</strong><small>${esc(n.message)}</small></button>`).join('')+'</div>':`<div class="player-notifications-empty"><span class="player-notifications-icon">${playerIcon('bell')}</span><strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong></div>`}
       </section>`;
+      ui.root.querySelectorAll('[data-notification]').forEach(b=>b.onclick=async()=>{
+        const n=notifications.find(item=>item.id===b.dataset.notification);
+        if(!n)return;
+        await api('/notifications/'+encodeURIComponent(n.id)+'/read',{method:'POST',body:{}});
+        n.read_at=n.read_at||Math.floor(Date.now()/1000);
+        if(n.folder){folder=n.folder;folderOrigin='documents';mode='';}
+        render();
+      });
       enablePlayerSwipeBack(()=>{mode='';render();},{interactive:false});
       return;
     }
@@ -777,7 +813,7 @@ function render(){
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'||mode==='notifications');
   ui.notificationBell.hidden=!(user&&user.role==='player')||mode==='notifications';
   ui.notificationBell.setAttribute('aria-label',lang==='pt'?'Notificações':'Notifications');
-  ui.notificationBell.onclick=()=>{folder=null;mode='notifications';render();};
+  ui.notificationBell.onclick=async()=>{folder=null;mode='notifications';try{notifications=(await api('/notifications')).notifications;}catch(e){error(e);}render();};
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
   ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null){folder=null;mode=folderOrigin==='documents'?'documents':'';}else if(mode==='profile-password')mode='profile';else if(mode==='notifications')mode='';else if(mode==='password')mode='';render();}:null;
