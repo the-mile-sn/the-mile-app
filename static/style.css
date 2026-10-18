@@ -2677,3 +2677,9 @@ body.player-theme .player-expired-lock svg{width:29px;height:29px}
 body.player-theme .player-expired-card strong{color:#f1f1f4;font-size:17px;font-weight:600}
 body.player-theme .player-expired-card p{max-width:310px;margin:0;color:#a3a3aa;font-size:13px;line-height:1.5}
 .badge.expired{background:#f8eee3;color:#a36529;border-color:#ebd3b8}
+
+/* Minimal expired-access messaging */
+body.player-theme .player-expired-card{gap:18px}
+body.player-theme .player-expired-lock{color:#96969e}
+body.player-theme .player-expired-lock svg{width:32px;height:32px;fill:none;stroke:currentColor}
+body.player-theme .player-expired-card p{color:#d0d0d5;font-size:15px;line-height:1.55}
