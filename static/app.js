@@ -422,35 +422,22 @@ function renderDashboard(w){
   const today=localDate(todayDate);
   const in14=new Date(todayDate); in14.setDate(in14.getDate()+14);
   const in14Iso=localDate(in14);
-  const upcomingRenewals=players.filter(p=>p.renewal_date&&p.renewal_date>=today&&p.renewal_date<=in14Iso).length;
+
+  const pendingPlayers=players.filter(p=>p.weekly_status==='waiting'||p.weekly_status==='updating');
+  const upcomingRenewalPlayers=players
+    .filter(p=>p.renewal_date&&p.renewal_date>today&&p.renewal_date<=in14Iso)
+    .sort((a,b)=>String(a.renewal_date).localeCompare(String(b.renewal_date)));
+
   const attention=[];
-
   players.forEach(p=>{
-    if(p.weekly_status==='waiting'){
-      attention.push({id:p.id,title:p.name,text:lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan',tone:'waiting'});
-    }else if(p.weekly_status==='updating'){
-      attention.push({id:p.id,title:p.name,text:lang==='pt'?'Plano semanal em atualização':'Weekly plan being updated',tone:'updating'});
-    }
-
-    if(p.renewal_date){
-      if(p.renewal_date<today){
-        attention.push({id:p.id,title:p.name,text:lang==='pt'?'Renovação expirada':'Renewal expired',tone:'renewal'});
-      }else if(p.renewal_date===today){
-        attention.push({id:p.id,title:p.name,text:lang==='pt'?'Renovação hoje':'Renewal today',tone:'renewal'});
-      }else if(p.renewal_date<=in14Iso){
-        attention.push({id:p.id,title:p.name,text:(lang==='pt'?'Renovação a ':'Renewal on ')+formatRenewal(p.renewal_date),tone:'renewal'});
-      }
+    if(p.renewal_date===today){
+      attention.push({id:p.id,title:p.name,text:lang==='pt'?'Renovação hoje':'Renewal today',tone:'renewal'});
     }
 
     if(p.birth_date){
       const parts=String(p.birth_date).split('-');
-      if(parts.length===3){
-        let b=new Date(todayDate.getFullYear(),Number(parts[1])-1,Number(parts[2]));
-        if(b<todayDate)b=new Date(todayDate.getFullYear()+1,Number(parts[1])-1,Number(parts[2]));
-        const diff=Math.round((b-todayDate)/86400000);
-        if(diff>=0&&diff<=14){
-          attention.push({id:p.id,title:p.name,text:diff===0?(lang==='pt'?'Aniversário hoje':'Birthday today'):(lang==='pt'?'Aniversário a ':'Birthday on ')+new Intl.DateTimeFormat(lang==='pt'?'pt-PT':'en-GB',{day:'2-digit',month:'2-digit'}).format(b),tone:'birthday'});
-        }
+      if(parts.length===3&&Number(parts[1])===todayDate.getMonth()+1&&Number(parts[2])===todayDate.getDate()){
+        attention.push({id:p.id,title:p.name,text:lang==='pt'?'Aniversário hoje':'Birthday today',tone:'birthday'});
       }
     }
   });
@@ -464,9 +451,9 @@ function renderDashboard(w){
     </div>
 
     <section class="dashboard-today">
-      <div class="dashboard-section-head"><h2>${lang==='pt'?'Eventos importantes':'Important events'}</h2></div>
+      <div class="dashboard-section-head"><h2>${lang==='pt'?'Hoje':'Today'}</h2></div>
       <div class="dashboard-today-list">
-        ${attention.length?attention.slice(0,8).map(a=>`<button class="dashboard-attention-card ${a.tone}" data-player="${a.id}" type="button"><strong>${esc(a.title)}</strong><small>${esc(a.text)}</small></button>`).join(''):`<div class="dashboard-empty-today">${lang==='pt'?'Sem eventos importantes de momento.':'No important events right now.'}</div>`}
+        ${attention.length?attention.slice(0,8).map(a=>`<button class="dashboard-attention-card ${a.tone}" data-player="${a.id}" type="button"><strong>${esc(a.title)}</strong><small>${esc(a.text)}</small></button>`).join(''):`<div class="dashboard-empty-today">${lang==='pt'?'Sem eventos importantes hoje.':'No important events today.'}</div>`}
       </div>
     </section>
 
@@ -480,7 +467,11 @@ function renderDashboard(w){
 
     <section class="dashboard-overview-section">
       <div class="dashboard-section-head"><h2>${lang==='pt'?'Visão geral':'Overview'}</h2></div>
-      <section class="overview dashboard-overview"><div class="metric"><strong>${active}</strong><span>${lang==='pt'?'Atletas ativos':'Active players'}</span></div><div class="metric"><strong>${pendingPlans}</strong><span>${lang==='pt'?'Planos pendentes':'Pending plans'}</span></div><div class="metric"><strong>${upcomingRenewals}</strong><span>${lang==='pt'?'Renovações próximas':'Upcoming renewals'}</span></div></section>
+      <section class="overview dashboard-overview">
+        <div class="metric"><strong>${active}</strong><span>${lang==='pt'?'Atletas ativos':'Active players'}</span></div>
+        <div class="metric"><strong>${pendingPlayers.length}</strong><span>${lang==='pt'?'Planos pendentes':'Pending plans'}</span><small>${pendingPlayers.slice(0,3).map(p=>esc(p.name)).join(' · ')||'—'}</small></div>
+        <div class="metric dashboard-renewals"><span>${lang==='pt'?'Renovações próximas':'Upcoming renewals'}</span><div class="dashboard-renewal-list">${upcomingRenewalPlayers.length?upcomingRenewalPlayers.slice(0,4).map(p=>`<small><strong>${esc(p.name)}</strong> · ${esc(formatRenewal(p.renewal_date))}</small>`).join(''):'<small>—</small>'}</div></div>
+      </section>
     </section>`;
 
   bind('create',()=>{mode='create';render();});
@@ -717,7 +708,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=79').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=80').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
