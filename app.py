@@ -542,9 +542,19 @@ def application(env, start_response):
                 if method == 'PUT':
                     body = read_json(env)
                     p = clean_player_payload(body)
+                    access_until = body.get('access_until')
+                    if access_until in (None, ''):
+                        access_until = None
+                    else:
+                        if not isinstance(access_until, str):
+                            raise Problem(400, 'invalid_request')
+                        try:
+                            access_until = datetime.strptime(access_until, '%Y-%m-%d').date().isoformat()
+                        except ValueError:
+                            raise Problem(400, 'invalid_request')
                     fields = [p['name'], f"{p['username']}@players.themile.local", p['username'], p['birth_date'], p['sex'],
-                              p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['plan_name'], p['renewal_date']]
-                    sql = 'UPDATE users SET name=?,email=?,username=?,birth_date=?,sex=?,height=?,weight=?,menus_enabled=?,anthropometry_enabled=?,plan_name=?,renewal_date=?'
+                              p['height'], p['weight'], p['menus_enabled'], p['anthropometry_enabled'], p['plan_name'], p['renewal_date'], access_until]
+                    sql = 'UPDATE users SET name=?,email=?,username=?,birth_date=?,sex=?,height=?,weight=?,menus_enabled=?,anthropometry_enabled=?,plan_name=?,renewal_date=?,access_until=?'
                     if p['password']:
                         sql += ',password=?'
                         fields.append(password_hash(p['password']))
