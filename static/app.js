@@ -323,7 +323,7 @@ function playerForm(w,p=null){
       <div class="admin-edit-card admin-edit-grid admin-edit-plan">
         <div><label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p.plan_name||'')}" required></div>
         <div><label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p.renewal_date||'')}" required></div>
-        <div><label>${lang==='pt'?'Acesso até':'Access until'}</label><input type="text" value="${esc(p.access_until||'—')}" readonly><small>${lang==='pt'?'Em branco: renovação + 7 dias de tolerância':'Blank: renewal + 7 days grace period'}</small></div>
+        <div><label>${lang==='pt'?'Acesso até':'Access until'}</label><input name="access_until" type="date" value="${esc(p.access_until||'')}"><small>${lang==='pt'?'Em branco: renovação + 7 dias de tolerância':'Blank: renewal + 7 days grace period'}</small></div><div class="access-extension-controls"><button class="secondary" type="button" id="extend-access">${lang==='pt'?'Prolongar acesso':'Extend access'}</button></div>
       </div>
     </section>
 
@@ -352,7 +352,6 @@ function playerForm(w,p=null){
     </div>
     <div class="admin-edit-account-actions">
       <button class="secondary" type="button" id="change-password">${w.resetPassword}</button>
-      <button class="secondary" type="button" id="extend-access">${lang==='pt'?'Prolongar acesso':'Extend access'}</button>
       <button class="secondary" type="button" id="status">${p.active?w.deactivate:w.reactivate}</button>
       <button class="secondary danger" type="button" id="delete-player">${w.deletePlayer}</button>
     </div>
@@ -360,7 +359,7 @@ function playerForm(w,p=null){
 }
 async function payloadFromForm(f){
   return {name:f.get('name'),username:String(f.get('username')||'').toLowerCase(),password:f.get('password')||'',photo:await fileToDataURL(f.get('photo')),
-    birth_date:f.get('birth_date'),sex:f.get('sex'),height:Number(f.get('height')),weight:Number(f.get('weight')),plan_name:f.get('plan_name'),renewal_date:f.get('renewal_date'),
+    birth_date:f.get('birth_date'),sex:f.get('sex'),height:Number(f.get('height')),weight:Number(f.get('weight')),plan_name:f.get('plan_name'),renewal_date:f.get('renewal_date'),access_until:f.get('access_until')||null,
     menus_enabled:f.get('menus_enabled')==='on',anthropometry_enabled:f.get('anthropometry_enabled')==='on'};
 }
 
