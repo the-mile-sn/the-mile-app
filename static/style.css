@@ -2385,3 +2385,38 @@ body:not(.player-theme) .header-actions #logout:hover{
     max-width:none;
   }
 }
+
+
+/* Dashboard final alignment refinements v51 */
+.dashboard-players-head{
+  align-items:center;
+}
+.dashboard-create-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:16px;
+}
+.dashboard-create-row .primary{
+  font-size:14px;
+  padding:13px 18px;
+}
+body:not(.player-theme) .header-actions #logout svg{
+  width:24px;
+  height:24px;
+}
+.dashboard-renewals>strong{
+  display:block;
+  font-size:27px;
+  margin-bottom:4px;
+}
+@media(max-width:650px){
+  .dashboard-players-head{
+    align-items:stretch;
+  }
+  .dashboard-create-row{
+    justify-content:stretch;
+  }
+  .dashboard-create-row .primary{
+    width:100%;
+  }
+}
