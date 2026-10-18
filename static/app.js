@@ -358,23 +358,121 @@ async function payloadFromForm(f){
 }
 
 function renderDashboard(w){
+  if(mode==='admin-profile'){
+    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>
+      <section class="admin-profile-page">
+        <div class="admin-profile-head">
+          <div>
+            <h1>${lang==='pt'?'Perfil de administrador':'Administrator profile'}</h1>
+            <p>${esc(user.name)}</p>
+          </div>
+        </div>
+        <div class="admin-profile-card">
+          <div><span>${lang==='pt'?'Nome':'Name'}</span><strong>${esc(user.name)}</strong></div>
+          <div><span>Email</span><strong>${esc(user.email)}</strong></div>
+        </div>
+        <div class="admin-profile-actions">
+          <button class="secondary" id="admin-profile-password" type="button">${w.changePassword}</button>
+        </div>
+      </section>`;
+    bind('back',()=>{mode='';render();});
+    bind('admin-profile-password',()=>{mode='admin-profile-password';render();});
+    return;
+  }
+
+  if(mode==='admin-profile-password'){
+    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>
+      <div class="admin-profile-page">
+        <h1>${w.changePassword}</h1>
+        <form class="inline-form">
+          <label>${w.currentPassword}</label><input name="current_password" type="password" required>
+          <label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" maxlength="256" required>
+          <p class="error"></p>
+          <div class="actions"><button class="primary" type="submit">${w.save}</button><button class="secondary" type="button" id="cancel">${w.cancel}</button></div>
+        </form>
+      </div>`;
+    bind('back',()=>{mode='admin-profile';render();});
+    bind('cancel',()=>{mode='admin-profile';render();});
+    submit(async f=>{
+      await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});
+      mode='admin-profile';
+      notify('The Mile',w.passwordChanged);
+      render();
+    });
+    return;
+  }
+
   if(mode==='create'){
-    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><p class="eyebrow">${w.management}</p><h1>${w.newPlayer.slice(2)}</h1>${playerForm(w)}`;
+    ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><h1>${w.newPlayer.slice(2)}</h1>${playerForm(w)}`;
     bind('back',()=>{mode='';render();}); bind('cancel',()=>{mode='';render();});
     submit(async f=>{await api('/players',{method:'POST',body:await payloadFromForm(f)});mode='';await refresh();});
     return;
   }
-  const active=players.filter(p=>p.active).length,inactive=players.length-active,totalDocs=players.reduce((n,p)=>n+Number(p.documents||0),0);
-  ui.root.innerHTML=`<p class="eyebrow">${w.management} · ${esc(user.name)}</p>
-    <div class="topline"><div><h1>${w.players}</h1><p class="subtitle compact">${w.manageSub}</p></div><button class="primary" id="create">${w.newPlayer}</button></div>
-    <section class="overview"><div class="metric"><strong>${players.length}</strong><span>${w.totalPlayers}</span></div><div class="metric"><strong>${active}</strong><span>${w.activePlayers}</span></div><div class="metric"><strong>${inactive}</strong><span>${w.inactivePlayers}</span></div><div class="metric"><strong>${totalDocs}</strong><span>${w.totalDocuments}</span></div></section>
-    <section class="panel-section"><h2>${w.players}</h2>${players.length?`<label>${w.search}</label><input id="search" type="search"><div id="player-list"></div>`:`<p class="empty">${w.noPlayers}</p>`}</section>
-    <section class="panel-section administrators"><h2>${w.administrators}</h2><div>${admins.map(a=>`<div class="row"><div><strong>${esc(a.name)}</strong><p>${esc(a.email)}</p></div></div>`).join('')}</div></section>`;
+
+  const active=players.filter(p=>p.active).length;
+  const inactive=players.length-active;
+  const totalDocs=players.reduce((n,p)=>n+Number(p.documents||0),0);
+
+  const todayIso=()=>{
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  };
+  const today=todayIso();
+  const attention=[];
+  players.forEach(p=>{
+    if(p.weekly_status==='waiting'){
+      attention.push({id:p.id,title:p.name,text:lang==='pt'?'A aguardar plano de treinos':'Waiting for training plan',tone:'waiting'});
+    }else if(p.weekly_status==='updating'){
+      attention.push({id:p.id,title:p.name,text:lang==='pt'?'Plano semanal em atualização':'Weekly plan being updated',tone:'updating'});
+    }
+    if(p.renewal_date && p.renewal_date<=today){
+      attention.push({id:p.id,title:p.name,text:p.renewal_date===today?(lang==='pt'?'Renovação hoje':'Renewal today'):(lang==='pt'?'Renovação expirada':'Renewal expired'),tone:'renewal'});
+    }
+  });
+
+  ui.root.innerHTML=`
+    <div class="dashboard-head">
+      <h1>${lang==='pt'?'Painel de trabalho':'Work dashboard'}</h1>
+      <div class="dashboard-head-actions">
+        <button class="secondary" id="admin-profile" type="button">${lang==='pt'?'Perfil':'Profile'}</button>
+        <button class="primary" id="create">${w.newPlayer}</button>
+      </div>
+    </div>
+
+    <section class="dashboard-today">
+      <div class="dashboard-section-head"><h2>${lang==='pt'?'Hoje':'Today'}</h2></div>
+      <div class="dashboard-today-list">
+        ${attention.length?attention.slice(0,6).map(a=>`<button class="dashboard-attention-card ${a.tone}" data-player="${a.id}" type="button"><strong>${esc(a.title)}</strong><small>${esc(a.text)}</small></button>`).join(''):`<div class="dashboard-empty-today">${lang==='pt'?'Sem ações pendentes para hoje.':'No pending actions for today.'}</div>`}
+      </div>
+    </section>
+
+    <section class="panel-section dashboard-players">
+      <div class="dashboard-section-head dashboard-players-head">
+        <h2>${w.players}</h2>
+        ${players.length?`<input id="search" class="dashboard-search" type="search" placeholder="${w.search}">`:''}
+      </div>
+      ${players.length?`<div id="player-list"></div>`:`<p class="empty">${w.noPlayers}</p>`}
+    </section>
+
+    <section class="dashboard-overview-section">
+      <div class="dashboard-section-head"><h2>${lang==='pt'?'Visão geral':'Overview'}</h2></div>
+      <section class="overview"><div class="metric"><strong>${players.length}</strong><span>${w.totalPlayers}</span></div><div class="metric"><strong>${active}</strong><span>${w.activePlayers}</span></div><div class="metric"><strong>${inactive}</strong><span>${w.inactivePlayers}</span></div><div class="metric"><strong>${totalDocs}</strong><span>${w.totalDocuments}</span></div></section>
+    </section>`;
+
   bind('create',()=>{mode='create';render();});
+  bind('admin-profile',()=>{mode='admin-profile';render();});
+
+  ui.root.querySelectorAll('.dashboard-attention-card[data-player]').forEach(b=>b.onclick=()=>openPlayer(b.dataset.player).catch(error));
+
   if(players.length){
     const list=document.getElementById('player-list');
-    const show=(q='')=>{const f=players.filter(p=>(p.name+' '+p.username).toLowerCase().includes(q.toLowerCase()));list.innerHTML=f.map(p=>`<div class="row player-row"><div><strong>${esc(p.name)}</strong><p>@${esc(p.username)}</p><div class="row-meta"><span class="badge ${statusClass(p)}">${statusLabel(p,w)}</span><span>${p.documents} ${w.documents}</span></div></div><button class="secondary" data-player="${p.id}">${w.manage}</button></div>`).join('')||`<p class="empty">${w.noMatches}</p>`;list.querySelectorAll('[data-player]').forEach(b=>b.onclick=()=>openPlayer(b.dataset.player).catch(error));};
-    show();document.getElementById('search').oninput=e=>show(e.target.value);
+    const show=(q='')=>{
+      const f=players.filter(p=>(p.name+' '+p.username).toLowerCase().includes(q.toLowerCase()));
+      list.innerHTML=f.map(p=>`<div class="row player-row"><div><strong>${esc(p.name)}</strong><p>@${esc(p.username)}</p><div class="row-meta"><span class="badge ${statusClass(p)}">${statusLabel(p,w)}</span><span>${p.documents} ${w.documents}</span></div></div><button class="secondary" data-player="${p.id}">${w.manage}</button></div>`).join('')||`<p class="empty">${w.noMatches}</p>`;
+      list.querySelectorAll('[data-player]').forEach(b=>b.onclick=()=>openPlayer(b.dataset.player).catch(error));
+    };
+    show();
+    document.getElementById('search').oninput=e=>show(e.target.value);
   }
 }
 
@@ -596,7 +694,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=77').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=78').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
