@@ -517,28 +517,43 @@ function bindPlayerBottomNav(){
 }
 
 function enablePlayerTabSwipe(active){
-  const shell=ui.root.querySelector('.player-shell');
-  if(!shell)return;
+  const area=ui.root;
   const tabs=['home','documents','profile'];
-  let x=0,y=0,tracking=false;
-  shell.addEventListener('touchstart',e=>{
+  let x=0,y=0,lastX=0,lastY=0,tracking=false,direction='';
+  area.addEventListener('touchstart',e=>{
+    tracking=false;direction='';
     if(e.touches.length!==1)return;
     if(e.target.closest('input,textarea,select,a,[contenteditable="true"],.player-bottom-nav'))return;
-    x=e.touches[0].clientX;y=e.touches[0].clientY;tracking=true;
+    x=lastX=e.touches[0].clientX;
+    y=lastY=e.touches[0].clientY;
+    tracking=true;
   },{passive:true});
-  shell.addEventListener('touchend',e=>{
-    if(!tracking||!e.changedTouches.length)return;
+  area.addEventListener('touchmove',e=>{
+    if(!tracking||e.touches.length!==1)return;
+    const t=e.touches[0];
+    lastX=t.clientX;lastY=t.clientY;
+    const dx=lastX-x,dy=lastY-y;
+    if(!direction){
+      if(Math.hypot(dx,dy)<12)return;
+      if(Math.abs(dx)>Math.abs(dy)*1.4)direction='horizontal';
+      else if(Math.abs(dy)>Math.abs(dx)*1.1){direction='vertical';tracking=false;}
+      else return;
+    }
+    if(direction==='horizontal'&&e.cancelable)e.preventDefault();
+  },{passive:false});
+  area.addEventListener('touchend',e=>{
+    if(!tracking)return;
     tracking=false;
-    const dx=e.changedTouches[0].clientX-x;
-    const dy=e.changedTouches[0].clientY-y;
-    if(Math.abs(dx)<46||Math.abs(dx)<Math.abs(dy)*1.22)return;
-    const index=tabs.indexOf(active);
-    const next=index+(dx<0?1:-1);
+    const t=e.changedTouches[0];
+    if(t){lastX=t.clientX;lastY=t.clientY;}
+    const dx=lastX-x,dy=lastY-y;
+    if(direction!=='horizontal'||Math.abs(dx)<46||Math.abs(dx)<Math.abs(dy)*1.4)return;
+    const next=tabs.indexOf(active)+(dx<0?1:-1);
     if(next<0||next>=tabs.length)return;
     folder=null;folderOrigin=next===1?'documents':'home';
     mode=tabs[next]==='home'?'':tabs[next];render();
   },{passive:true});
-  shell.addEventListener('touchcancel',()=>{tracking=false},{passive:true});
+  area.addEventListener('touchcancel',()=>{tracking=false;direction='';},{passive:true});
 }
 
 function renderPlayer(w){
