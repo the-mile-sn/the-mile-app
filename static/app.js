@@ -5,7 +5,8 @@ const ui = {
   lang: document.getElementById('language'),
   logout: document.getElementById('logout'),
   install: document.getElementById('install'),
-  headerBack: document.getElementById('header-back')
+  headerBack: document.getElementById('header-back'),
+  notificationBell: document.getElementById('notification-bell')
 };
 
 let lang = localStorage.getItem('mile-language') === 'en' ? 'en' : 'pt';
@@ -609,10 +610,6 @@ function renderPlayer(w){
           <span class="player-quick-icon">${playerIcon('ball')}</span>
           <span class="player-quick-label">${w.postGame}</span>
         </button>
-        <button class="player-quick-action" id="reminders" type="button">
-          <span class="player-quick-icon">${playerIcon('bell')}</span>
-          <span class="player-quick-label">${lang==='pt'?'Lembretes':'Reminders'}</span>
-        </button>
       </nav>
 
       <section class="player-documents-section">
@@ -638,7 +635,6 @@ function renderPlayer(w){
     });
     bind('weight-form',()=>{if(user.weight_form_url)window.open(user.weight_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
     bind('game-form',()=>{if(user.game_form_url)window.open(user.game_form_url,'_blank','noopener');else notify('The Mile',w.formsUnavailable);});
-    bind('reminders',()=>notify(lang==='pt'?'Lembretes':'Reminders',lang==='pt'?'Esta área ficará disponível quando ativarmos os lembretes do jogador.':'This area will be available when player reminders are enabled.'));
     return;
   }
   if(isAdmin&&mode==='edit'){
@@ -722,6 +718,9 @@ function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&user.role!=='player';ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password');
+  ui.notificationBell.hidden=!(user&&user.role==='player');
+  ui.notificationBell.setAttribute('aria-label',lang==='pt'?'Notificações':'Notifications');
+  ui.notificationBell.onclick=()=>notify(lang==='pt'?'Notificações':'Notifications',lang==='pt'?'Sem notificações':'No notifications');
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
   ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null){folder=null;mode=folderOrigin==='documents'?'documents':'';}else if(mode==='profile-password')mode='profile';else if(mode==='password')mode='';render();}:null;
