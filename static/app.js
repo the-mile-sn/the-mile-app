@@ -414,8 +414,6 @@ function renderDashboard(w){
   }
 
   const active=players.filter(p=>p.active).length;
-  const pendingPlans=players.filter(p=>p.weekly_status==='waiting'||p.weekly_status==='updating').length;
-
   const localDate=(date=new Date())=>date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
   const todayDate=new Date();
   todayDate.setHours(0,0,0,0);
@@ -445,9 +443,6 @@ function renderDashboard(w){
   ui.root.innerHTML=`
     <div class="dashboard-head">
       <h1>${lang==='pt'?'Painel de trabalho':'Work dashboard'}</h1>
-      <div class="dashboard-head-actions">
-        <button class="primary" id="create">${w.newPlayer}</button>
-      </div>
     </div>
 
     <section class="dashboard-today">
@@ -460,7 +455,10 @@ function renderDashboard(w){
     <section class="panel-section dashboard-players">
       <div class="dashboard-section-head dashboard-players-head">
         <h2>${w.players}</h2>
-        ${players.length?`<input id="search" class="dashboard-search" type="search" placeholder="${w.search}">`:''}
+        <div class="dashboard-player-tools">
+          <button class="primary" id="create">${w.newPlayer}</button>
+          ${players.length?`<input id="search" class="dashboard-search" type="search" placeholder="${w.search}">`:''}
+        </div>
       </div>
       ${players.length?`<div id="player-list"></div>`:`<p class="empty">${w.noPlayers}</p>`}
     </section>
@@ -468,9 +466,9 @@ function renderDashboard(w){
     <section class="dashboard-overview-section">
       <div class="dashboard-section-head"><h2>${lang==='pt'?'Visão geral':'Overview'}</h2></div>
       <section class="overview dashboard-overview">
-        <div class="metric"><strong>${active}</strong><span>${lang==='pt'?'Atletas ativos':'Active players'}</span></div>
-        <div class="metric"><strong>${pendingPlayers.length}</strong><span>${lang==='pt'?'Planos pendentes':'Pending plans'}</span><small>${pendingPlayers.slice(0,3).map(p=>esc(p.name)).join(' · ')||'—'}</small></div>
-        <div class="metric dashboard-renewals"><span>${lang==='pt'?'Renovações próximas':'Upcoming renewals'}</span><div class="dashboard-renewal-list">${upcomingRenewalPlayers.length?upcomingRenewalPlayers.slice(0,4).map(p=>`<small><strong>${esc(p.name)}</strong> · ${esc(formatRenewal(p.renewal_date))}</small>`).join(''):'<small>—</small>'}</div></div>
+        <div class="metric metric-active"><strong>${active}</strong><span>${lang==='pt'?'Atletas ativos':'Active players'}</span></div>
+        <div class="metric metric-pending"><strong>${pendingPlayers.length}</strong><span>${lang==='pt'?'Planos pendentes':'Pending plans'}</span><small>${pendingPlayers.slice(0,3).map(p=>esc(p.name)).join(' · ')||'—'}</small></div>
+        <div class="metric dashboard-renewals metric-renewals"><span>${lang==='pt'?'Renovações próximas':'Upcoming renewals'}</span><div class="dashboard-renewal-list">${upcomingRenewalPlayers.length?upcomingRenewalPlayers.slice(0,4).map(p=>`<small><strong>${esc(p.name)}</strong> · ${esc(formatRenewal(p.renewal_date))}</small>`).join(''):'<small>—</small>'}</div></div>
       </section>
     </section>`;
 
@@ -708,7 +706,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=80').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=81').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
