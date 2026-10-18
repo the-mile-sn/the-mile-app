@@ -604,6 +604,20 @@ function renderPlayer(w){
   const isAdmin=user.role==='admin',owner=isAdmin?selected:user;
 
   if(!isAdmin){
+    if(owner.access_expired && !['notifications','profile','profile-password','password'].includes(mode)){
+      folder=null;
+      mode='';
+      ui.root.innerHTML=`<section class="player-shell player-home-v4 player-expired-home">
+        <button class="player-profile-card" id="profile-card" type="button">
+          ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
+          <div class="player-profile-card-copy"><h1>${esc(owner.name)}</h1><strong>${esc(owner.plan_name||'')}</strong><small>${lang==='pt'?'Acompanhamento expirado':'Coaching expired'}</small></div>
+        </button>
+        <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('key')}</span><strong>${lang==='pt'?'Acesso temporariamente bloqueado':'Access temporarily restricted'}</strong><p>${lang==='pt'?'Contacta a equipa The Mile para recuperares o acesso completo.':'Contact The Mile team to restore full access.'}</p></div>
+      </section>${playerBottomNav('home')}`;
+      bind('profile-card',()=>{mode='profile';render();});
+      bindPlayerBottomNav();
+      return;
+    }
     if(mode==='notifications'){
       ui.root.innerHTML=`<section class="player-shell player-notifications-screen"><h1>${lang==='pt'?'Notificações':'Notifications'}</h1>
         ${notifications.length?'<div class="player-notifications-list">'+notifications.map(n=>`<button class="player-notification-row ${n.read_at?'':'is-unread'}" data-notification="${esc(n.id)}"><strong>${esc(n.title)}</strong><small>${esc(n.message)}</small></button>`).join('')+'</div>':`<div class="player-notifications-empty"><span class="player-notifications-icon">${playerIcon('bell')}</span><strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong></div>`}
@@ -613,8 +627,8 @@ function renderPlayer(w){
         if(!n)return;
         await api('/notifications/'+encodeURIComponent(n.id)+'/read',{method:'POST',body:{}});
         n.read_at=n.read_at||Math.floor(Date.now()/1000);
-        if(n.folder){folder=n.folder;folderOrigin='documents';mode='';}
-        else if(n.category==='weight'||n.category==='game'){
+        if(n.folder&&!user.access_expired){folder=n.folder;folderOrigin='documents';mode='';}
+        else if(!user.access_expired&&(n.category==='weight'||n.category==='game')){
           const url=n.category==='weight'?user.weight_form_url:user.game_form_url;
           if(url)window.open(url,'_blank','noopener');
           else notify('The Mile',w.formsUnavailable);
