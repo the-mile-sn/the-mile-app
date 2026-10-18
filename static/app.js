@@ -261,6 +261,14 @@ async function refresh(){
 }
 async function openPlayer(id){ selected=players.find(p=>p.id===id); docs=(await api('/documents?player='+encodeURIComponent(id))).documents; folder=null;mode='';render(); }
 
+function renewalGraceDate(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||''))return '';
+  const dt=new Date(iso+'T12:00:00Z');
+  if(Number.isNaN(dt.getTime()))return '';
+  dt.setUTCDate(dt.getUTCDate()+7);
+  return dt.toISOString().slice(0,10);
+}
+
 function playerForm(w,p=null){
   if(!p){
     return `<form class="inline-form">
@@ -324,7 +332,7 @@ function playerForm(w,p=null){
       <div class="admin-edit-card admin-edit-grid admin-edit-plan">
         <div><label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p.plan_name||'')}" required></div>
         <div><label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p.renewal_date||'')}" required></div>
-        <div><label>${lang==='pt'?'Acesso até':'Access until'}</label><input name="access_until" type="date" value="${esc(p.access_until||'')}"><small>${lang==='pt'?'Em branco: renovação + 7 dias de tolerância':'Blank: renewal + 7 days grace period'}</small></div><div class="access-extension-controls"><button class="secondary" type="button" id="extend-access">${lang==='pt'?'Prolongar acesso':'Extend access'}</button></div>
+        <div><label>${lang==='pt'?'Acesso até':'Access until'}</label><input name="access_until" type="date" data-default="${p.access_until?'0':'1'}" value="${esc(p.access_until||renewalGraceDate(p.renewal_date))}"></div><div class="access-extension-controls"><button class="secondary" type="button" id="extend-access">${lang==='pt'?'Prolongar acesso':'Extend access'}</button></div>
       </div>
     </section>
 
@@ -613,7 +621,7 @@ function renderPlayer(w){
           ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
           <div class="player-profile-card-copy"><h1>${esc(owner.name)}</h1><strong class="player-plan-state expired">${lang==='pt'?'Plano expirado':'Plan expired'}</strong><small>${lang==='pt'?'Expirou a ':'Expired on '}${esc(formatRenewal(owner.renewal_date))}</small></div>
         </button>
-        <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('lock')}</span><p>${lang==='pt'?'Contacta a equipa The Mile para recuperar o acesso.':'Contact The Mile team to restore access.'}</p></div>
+        <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('lock')}</span></div>
       </section>${playerBottomNav('home')}`;
       bind('profile-card',()=>{mode='profile';render();});
       bindPlayerBottomNav();
@@ -773,6 +781,14 @@ function renderPlayer(w){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
     bind('change-password',()=>{mode='password';render();});
+    const renewalField=ui.root.querySelector('[name="renewal_date"]');
+    const accessField=ui.root.querySelector('[name="access_until"]');
+    if(renewalField&&accessField){
+      renewalField.addEventListener('input',()=>{
+        if(accessField.dataset.default==='1')accessField.value=renewalGraceDate(renewalField.value);
+      });
+      accessField.addEventListener('input',()=>{accessField.dataset.default='0';});
+    }
     bind('extend-access',async()=>{
       const days=prompt(lang==='pt'?'Quantos dias queres acrescentar? (3, 7, 15 ou 30)':'Add how many days? (3, 7, 15 or 30)','7');
       if(days===null)return;
