@@ -323,6 +323,7 @@ function playerForm(w,p=null){
       <div class="admin-edit-card admin-edit-grid admin-edit-plan">
         <div><label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p.plan_name||'')}" required></div>
         <div><label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p.renewal_date||'')}" required></div>
+        <div><label>${lang==='pt'?'Acesso até':'Access until'}</label><input type="text" value="${esc(p.access_until||'—')}" readonly><small>${lang==='pt'?'Em branco: renovação + 7 dias de tolerância':'Blank: renewal + 7 days grace period'}</small></div>
       </div>
     </section>
 
@@ -351,6 +352,7 @@ function playerForm(w,p=null){
     </div>
     <div class="admin-edit-account-actions">
       <button class="secondary" type="button" id="change-password">${w.resetPassword}</button>
+      <button class="secondary" type="button" id="extend-access">${lang==='pt'?'Prolongar acesso':'Extend access'}</button>
       <button class="secondary" type="button" id="status">${p.active?w.deactivate:w.reactivate}</button>
       <button class="secondary danger" type="button" id="delete-player">${w.deletePlayer}</button>
     </div>
