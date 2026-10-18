@@ -611,7 +611,7 @@ function renderPlayer(w){
       ui.root.innerHTML=`<section class="player-shell player-home-v4 player-expired-home">
         <button class="player-profile-card" id="profile-card" type="button">
           ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
-          <div class="player-profile-card-copy"><h1>${esc(owner.name)}</h1><strong>${esc(owner.plan_name||'')}</strong><small>${lang==='pt'?'Acompanhamento expirado':'Coaching expired'}</small></div>
+          <div class="player-profile-card-copy"><h1>${esc(owner.name)}</h1><strong class="player-plan-state expired">${lang==='pt'?'Plano expirado':'Plan expired'}</strong><small>${lang==='pt'?'Expirou a ':'Expired on '}${esc(formatRenewal(owner.renewal_date))}</small></div>
         </button>
         <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('lock')}</span><p>${lang==='pt'?'Contacta a equipa The Mile para recuperar o acesso.':'Contact The Mile team to restore access.'}</p></div>
       </section>${playerBottomNav('home')}`;
