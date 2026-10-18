@@ -543,8 +543,8 @@ function playerBottomNav(active){
       <span class="player-bottom-icon">${playerIcon('home')}</span>
       <span>${lang==='pt'?'Início':'Home'}</span>
     </button>
-    <button id="tab-documents" type="button" class="player-bottom-item ${active==='documents'?'is-active':''}">
-      <span class="player-bottom-icon">${playerIcon('files')}</span>
+    <button id="tab-documents" type="button" ${user?.access_expired?'disabled aria-label="Documentos bloqueados"':''} class="player-bottom-item ${active==='documents'?'is-active':''} ${user?.access_expired?'is-locked':''}">
+      <span class="player-bottom-icon">${user?.access_expired?playerIcon('key'):playerIcon('files')}</span>
       <span>${lang==='pt'?'Documentos':'Documents'}</span>
     </button>
     <button id="tab-profile" type="button" class="player-bottom-item ${active==='profile'?'is-active':''}">
