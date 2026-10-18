@@ -266,7 +266,7 @@ def access_valid(row):
 def player_dict(row, include_private=True):
     data = {
         'id': row['id'], 'name': row['name'], 'username': row['username'], 'role': row['role'],
-        'active': bool(row['active']), 'menus_enabled': bool(row['menus_enabled']),
+        'active': bool(row['active']), 'access_expired': not access_valid(row), 'menus_enabled': bool(row['menus_enabled']),
         'anthropometry_enabled': bool(row['anthropometry_enabled']),
         'has_photo': bool(row['photo_mime']),
     }
@@ -372,8 +372,6 @@ def application(env, start_response):
         with connect() as c:
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
-            if user and not access_valid(user):
-                user = None
 
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
@@ -407,8 +405,6 @@ def application(env, start_response):
                 if path == '/api/login':
                     identifier = str(body.get('identifier', body.get('email', ''))).strip().lower()
                     u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
-                    if u and not access_valid(u):
-                        raise Problem(403, 'access_expired')
                     if not password_valid(password, u['password'] if u else None):
                         raise Problem(401, 'credentials')
                 else:
@@ -686,6 +682,8 @@ def application(env, start_response):
                     return respond(200, {'ok':True})
 
             if path == '/api/documents':
+                if user and user['role']=='player' and not access_valid(user):
+                    raise Problem(403, 'access_expired')
                 qs = parse_qs(env.get('QUERY_STRING', ''))
                 uid = qs.get('player', [user['id']])[0]
                 authorize_owner(user, uid)
@@ -716,6 +714,8 @@ def application(env, start_response):
                     return respond(201, {'id': did})
 
             if path.startswith('/api/documents/'):
+                if user and user['role']=='player' and not access_valid(user):
+                    raise Problem(403, 'access_expired')
                 did = path.split('/')[-1]
                 d = c.execute('SELECT * FROM documents WHERE id=?', (did,)).fetchone()
                 if not d:
