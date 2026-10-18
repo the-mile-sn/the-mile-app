@@ -759,6 +759,18 @@ function renderPlayer(w){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
     bind('change-password',()=>{mode='password';render();});
+    bind('extend-access',async()=>{
+      const days=prompt(lang==='pt'?'Quantos dias queres acrescentar? (3, 7, 15 ou 30)':'Add how many days? (3, 7, 15 or 30)','7');
+      if(days===null)return;
+      const amount=Number(days);
+      if(![3,7,15,30].includes(amount)){notify('The Mile',lang==='pt'?'Escolhe 3, 7, 15 ou 30 dias.':'Choose 3, 7, 15 or 30 days.');return;}
+      try{
+        const result=await api('/players/'+owner.id+'/access-extension',{method:'POST',body:{days:amount}});
+        owner.access_until=result.access_until;
+        const updated=players.find(p=>p.id===owner.id);if(updated)updated.access_until=result.access_until;
+        render();
+      }catch(e){error(e);}
+    });
     bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
     bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
     submit(async f=>{await api('/players/'+owner.id,{method:'PUT',body:await payloadFromForm(f)});selected=null;mode='';await refresh();});return;
