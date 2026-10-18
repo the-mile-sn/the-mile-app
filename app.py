@@ -651,6 +651,10 @@ def application(env, start_response):
                     did = secrets.token_hex(16)
                     c.execute('INSERT INTO documents(id,user_id,folder,title,size,updated,uploaded_by,data) VALUES(?,?,?,?,?,?,?,?)',
                               (did, uid, folder, title, len(blob), now, user['id'], blob))
+                    if qs.get('notify', ['0'])[0] == '1':
+                        labels = {'weekly':'Plano semanal', 'nutrition':'Plano alimentar', 'menus':'Menu', 'other':'Documento', 'anthropometry':'Avaliação antropométrica'}
+                        c.execute('INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,?,?,?,NULL,NULL,?)',
+                                  (secrets.token_hex(16),uid,'Novo documento disponível',labels.get(folder,'Documento') + ': ' + title,'document',did,folder,now,user['id']))
                     c.commit()
                     return respond(201, {'id': did})
 
