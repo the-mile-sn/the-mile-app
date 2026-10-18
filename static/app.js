@@ -803,7 +803,7 @@ function renderPlayer(w){
     });
     bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
     bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
-    submit(async f=>{await api('/players/'+owner.id,{method:'PUT',body:await payloadFromForm(f)});selected=null;mode='';await refresh();});return;
+    submit(async f=>{if(accessField?.dataset.default==='1')f.set('access_until','');await api('/players/'+owner.id,{method:'PUT',body:await payloadFromForm(f)});selected=null;mode='';await refresh();});return;
   }
   if(mode==='password'){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button><h1>${w.changePassword}</h1><form class="inline-form">${isAdmin?'':`<label>${w.currentPassword}</label><input name="current_password" type="password" required>`}<label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><div class="actions"><button class="primary" type="submit">${w.save}</button><button class="secondary" type="button" id="cancel">${w.cancel}</button></div></form>`;
