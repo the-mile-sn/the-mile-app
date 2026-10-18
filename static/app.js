@@ -73,8 +73,8 @@ const words = {
 
 function t(){ return words[lang]; }
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function statusLabel(p,w){ return p.active ? w.active : w.inactive; }
-function statusClass(p){ return p.active ? 'active' : 'inactive'; }
+function statusLabel(p,w){ return !p.active?(lang==='pt'?'Desativado':'Disabled'):p.access_expired?(lang==='pt'?'Expirado':'Expired'):w.active; }
+function statusClass(p){ return !p.active?'inactive':p.access_expired?'expired':'active'; }
 function boolChecked(v){ return v ? 'checked' : ''; }
 
 function playerIcon(name){
@@ -255,7 +255,7 @@ function fileToDataURL(file){
 
 async function refresh(){
   const session=await api('/me'); user=session.user; csrf=session.csrf;
-  if(user){ if(user.role==='admin'){const [p,a]=await Promise.all([api('/players'),api('/admins')]);players=p.players;admins=a.admins;} else {const [d,n]=await Promise.all([api('/documents'),api('/notifications')]);docs=d.documents;notifications=n.notifications;} }
+  if(user){ if(user.role==='admin'){const [p,a]=await Promise.all([api('/players'),api('/admins')]);players=p.players;admins=a.admins;} else {const n=await api('/notifications');notifications=n.notifications;docs=user.access_expired?[]:(await api('/documents')).documents;} }
   render();
 }
 async function openPlayer(id){ selected=players.find(p=>p.id===id); docs=(await api('/documents?player='+encodeURIComponent(id))).documents; folder=null;mode='';render(); }
