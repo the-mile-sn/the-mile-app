@@ -520,6 +520,17 @@ function renderPlayer(w){
   const isAdmin=user.role==='admin',owner=isAdmin?selected:user;
 
   if(!isAdmin){
+    if(mode==='notifications'){
+      ui.root.innerHTML=`<section class="player-shell player-notifications-screen">
+        <h1>${lang==='pt'?'Notificações':'Notifications'}</h1>
+        <div class="player-notifications-empty">
+          <span class="player-notifications-icon">${playerIcon('bell')}</span>
+          <strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong>
+          <p>${lang==='pt'?'Quando houver novidades no teu acompanhamento, vão aparecer aqui.':'Updates about your coaching will appear here.'}</p>
+        </div>
+      </section>`;
+      return;
+    }
     if(mode==='password'||mode==='profile-password'){
       const passwordFromProfile=mode==='profile-password';
       ui.root.innerHTML=`<section class="player-shell player-password"><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
@@ -720,13 +731,13 @@ function renderPlayer(w){
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
-  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password');
-  ui.notificationBell.hidden=!(user&&user.role==='player');
+  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'||mode==='notifications');
+  ui.notificationBell.hidden=!(user&&user.role==='player')||mode==='notifications';
   ui.notificationBell.setAttribute('aria-label',lang==='pt'?'Notificações':'Notifications');
-  ui.notificationBell.onclick=()=>notify(lang==='pt'?'Notificações':'Notifications',lang==='pt'?'Sem notificações':'No notifications');
+  ui.notificationBell.onclick=()=>{folder=null;mode='notifications';render();};
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
-  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null){folder=null;mode=folderOrigin==='documents'?'documents':'';}else if(mode==='profile-password')mode='profile';else if(mode==='password')mode='';render();}:null;
+  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null){folder=null;mode=folderOrigin==='documents'?'documents':'';}else if(mode==='profile-password')mode='profile';else if(mode==='notifications')mode='';else if(mode==='password')mode='';render();}:null;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
