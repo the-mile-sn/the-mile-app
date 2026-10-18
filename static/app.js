@@ -166,8 +166,8 @@ function enablePlayerSwipeBack(backFn,{interactive=true}={}){
     const dy=Math.abs(t.clientY-startY);
 
     if(!dragging){
-      if(dx<=8)return;
-      if(dx<dy*1.15){tracking=false;return;}
+      if(dx<=5)return;
+      if(dx<dy*1.10){tracking=false;return;}
       dragging=true;
       if(interactive) shell.classList.add('swipe-back-active');
     }
@@ -192,7 +192,7 @@ function enablePlayerSwipeBack(backFn,{interactive=true}={}){
     const dx=end?end.clientX-startX:lastX-startX;
     const dy=end?Math.abs(end.clientY-startY):0;
     const width=Math.max(window.innerWidth,1);
-    const shouldCommit=dragging && dx>Math.max(72,width*.24) && dx>dy*1.15;
+    const shouldCommit=dragging && dx>Math.max(44,width*.13) && dx>dy*1.10;
 
     tracking=false;
     if(!interactive){
@@ -531,7 +531,7 @@ function enablePlayerTabSwipe(active){
     tracking=false;
     const dx=e.changedTouches[0].clientX-x;
     const dy=e.changedTouches[0].clientY-y;
-    if(Math.abs(dx)<76||Math.abs(dx)<Math.abs(dy)*1.4)return;
+    if(Math.abs(dx)<46||Math.abs(dx)<Math.abs(dy)*1.22)return;
     const index=tabs.indexOf(active);
     const next=index+(dx<0?1:-1);
     if(next<0||next>=tabs.length)return;
