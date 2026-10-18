@@ -248,6 +248,21 @@ def clean_player_payload(body, require_password=False, require_photo=False):
     }
 
 
+def access_valid(row):
+    if row['role'] != 'player':
+        return True
+    reference = row['access_until'] or row['renewal_date']
+    if not reference:
+        return True
+    try:
+        deadline = datetime.strptime(reference, '%Y-%m-%d').date()
+        if not row['access_until']:
+            deadline += timedelta(days=7)
+    except (TypeError, ValueError):
+        return False
+    return datetime.now(ZoneInfo('Europe/Lisbon')).date() <= deadline
+
+
 def player_dict(row, include_private=True):
     data = {
         'id': row['id'], 'name': row['name'], 'username': row['username'], 'role': row['role'],
@@ -357,6 +372,8 @@ def application(env, start_response):
         with connect() as c:
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
+            if user and not access_valid(user):
+                user = None
 
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
@@ -390,6 +407,8 @@ def application(env, start_response):
                 if path == '/api/login':
                     identifier = str(body.get('identifier', body.get('email', ''))).strip().lower()
                     u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
+                    if u and not access_valid(u):
+                        raise Problem(403, 'access_expired')
                     if not password_valid(password, u['password'] if u else None):
                         raise Problem(401, 'credentials')
                 else:
