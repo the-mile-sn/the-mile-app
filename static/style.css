@@ -2303,3 +2303,85 @@ body:not(.player-theme) .header-actions #logout:hover{
   font-weight:500;
   color:#222;
 }
+
+
+/* Dashboard hierarchy and readability v50 */
+.dashboard-head{
+  margin-bottom:30px;
+}
+.dashboard-player-tools{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+.dashboard-player-tools .primary{
+  font-size:14px;
+  padding:13px 18px;
+}
+.dashboard-search{
+  width:270px;
+  font-size:14px;
+  padding:11px 13px;
+}
+.dashboard-attention-card strong{
+  font-size:15px;
+}
+.dashboard-attention-card small,
+.dashboard-empty-today{
+  font-size:12.5px;
+}
+.dashboard-players .player-row>div>strong{
+  font-size:15px;
+}
+.dashboard-players .player-row>div>p{
+  font-size:13px;
+}
+.dashboard-players .row-meta{
+  font-size:12px;
+}
+.dashboard-players .player-row>.secondary{
+  font-size:14px;
+  padding:11px 16px;
+}
+.dashboard-overview .metric{
+  min-height:126px;
+  padding:20px;
+  border-width:1px;
+  border-style:solid;
+}
+.dashboard-overview .metric>strong{
+  font-size:27px;
+}
+.dashboard-overview .metric>span,
+.dashboard-renewals>span{
+  font-size:12.5px;
+}
+.dashboard-overview .metric small,
+.dashboard-renewal-list small,
+.dashboard-renewal-list small strong{
+  font-size:12px;
+}
+.dashboard-overview .metric-active{
+  background:#f7fbf7;
+  border-color:#cddfce;
+}
+.dashboard-overview .metric-pending{
+  background:#fffaf0;
+  border-color:#e5d18c;
+}
+.dashboard-overview .metric-renewals{
+  background:#f5f8fc;
+  border-color:#cbd9ea;
+}
+@media(max-width:650px){
+  .dashboard-player-tools{
+    width:100%;
+    align-items:stretch;
+  }
+  .dashboard-player-tools .primary,
+  .dashboard-search{
+    width:100%;
+    max-width:none;
+  }
+}
