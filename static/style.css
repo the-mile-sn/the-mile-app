@@ -2693,3 +2693,9 @@ body.player-theme .player-expired-home .player-expired-card{box-sizing:border-bo
 body.player-theme .player-expired-home .player-expired-actions{height:150px;margin-top:24px}
 body.player-theme .player-expired-home .player-expired-documents{height:295px;margin-top:24px}
 body.player-theme .player-expired-home .player-expired-lock svg{width:38px;height:38px;stroke-width:1.5}
+
+/* Fixed distinct heights for expired home; never stretch both cards equally */
+body.player-theme .player-expired-home .player-expired-actions{height:112px;min-height:112px;max-height:112px;flex:0 0 112px}
+body.player-theme .player-expired-home .player-expired-documents{height:350px;min-height:350px;max-height:350px;flex:0 0 350px}
+body.player-theme .player-expired-home .player-expired-actions,
+body.player-theme .player-expired-home .player-expired-documents{width:100%;align-self:stretch}
