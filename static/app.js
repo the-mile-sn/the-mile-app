@@ -621,7 +621,8 @@ function renderPlayer(w){
           ${owner.has_photo?`<img class="player-profile-card-avatar" src="/api/players/${owner.id}/photo" alt="">`:''}
           <div class="player-profile-card-copy"><h1>${esc(owner.name)}</h1><strong class="player-plan-state expired">${lang==='pt'?'Plano expirado':'Plan expired'}</strong><small>${lang==='pt'?'Expirou a ':'Expired on '}${esc(formatRenewal(owner.renewal_date))}</small></div>
         </button>
-        <div class="player-expired-card"><span class="player-expired-lock">${playerIcon('lock')}</span></div>
+        <div class="player-expired-card player-expired-actions" aria-label="${lang==='pt'?'Ações rápidas bloqueadas':'Quick actions locked'}"><span class="player-expired-lock">${playerIcon('lock')}</span></div>
+        <div class="player-expired-card player-expired-documents" aria-label="${lang==='pt'?'Documentos bloqueados':'Documents locked'}"><span class="player-expired-lock">${playerIcon('lock')}</span></div>
       </section>${playerBottomNav('home')}`;
       bind('profile-card',()=>{mode='profile';render();});
       bindPlayerBottomNav();
