@@ -103,6 +103,9 @@ def initialize():
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size BIGINT NOT NULL, updated BIGINT NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BYTEA NOT NULL);
             CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_time BIGINT NOT NULL);
+            CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), title TEXT NOT NULL, message TEXT NOT NULL, category TEXT NOT NULL, document_id TEXT, folder TEXT, created BIGINT NOT NULL, read_at BIGINT, document_opened_at BIGINT, created_by TEXT REFERENCES users(id));
+            CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications(user_id,created DESC);
+
             ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS sex TEXT;
@@ -126,6 +129,9 @@ def initialize():
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size INTEGER NOT NULL, updated INTEGER NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BLOB NOT NULL);
             CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_time INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), title TEXT NOT NULL, message TEXT NOT NULL, category TEXT NOT NULL, document_id TEXT, folder TEXT, created INTEGER NOT NULL, read_at INTEGER, document_opened_at INTEGER, created_by TEXT REFERENCES users(id));
+            CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications(user_id,created DESC);
+
             ''')
             existing = {r['name'] for r in c.execute('PRAGMA table_info(users)').fetchall()}
             additions = {
@@ -571,6 +577,57 @@ def application(env, start_response):
                     return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
 
+            if path == '/api/notifications':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                if method == 'GET':
+                    if user['role'] == 'player':
+                        rows = c.execute('SELECT id,title,message,category,document_id,folder,created,read_at,document_opened_at FROM notifications WHERE user_id=? ORDER BY created DESC LIMIT 150', (user['id'],)).fetchall()
+                    else:
+                        rows = c.execute('SELECT id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at FROM notifications ORDER BY created DESC LIMIT 200').fetchall()
+                    return respond(200, {'notifications': [dict(r) for r in rows]})
+                if method == 'POST':
+                    admin(user)
+                    payload = read_json(env)
+                    title = str(payload.get('title', '')).strip()
+                    message = str(payload.get('message', '')).strip()
+                    category = str(payload.get('category', 'manual')).strip()
+                    recipients = payload.get('recipients', [])
+                    document_id = payload.get('document_id')
+                    if (not title or len(title)>120 or not message or len(message)>1000
+                            or category not in ('manual','weight','game','document','renewal')
+                            or not isinstance(recipients,list) or not 1<=len(recipients)<=200
+                            or not all(isinstance(x,str) for x in recipients)
+                            or len(set(recipients))!=len(recipients)):
+                        raise Problem(400, 'invalid_request')
+                    valid = c.execute("SELECT id FROM users WHERE role='player' AND active=1").fetchall()
+                    allowed = {r['id'] for r in valid}
+                    if not set(recipients).issubset(allowed):
+                        raise Problem(400, 'invalid_request')
+                    folder_target = None
+                    if document_id:
+                        if len(recipients)!=1:
+                            raise Problem(400, 'invalid_request')
+                        d = c.execute('SELECT user_id,folder FROM documents WHERE id=?', (document_id,)).fetchone()
+                        if not d or d['user_id']!=recipients[0]:
+                            raise Problem(400, 'invalid_request')
+                        folder_target = d['folder']
+                    for uid in recipients:
+                        c.execute('INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,?,?,?,NULL,NULL,?)',
+                                  (secrets.token_hex(16),uid,title,message,category,document_id,folder_target,now,user['id']))
+                    c.commit()
+                    return respond(201, {'ok':True,'sent':len(recipients)})
+
+            if path.startswith('/api/notifications/'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                parts = path.strip('/').split('/')
+                if len(parts)==4 and parts[1]=='notifications' and parts[3]=='read' and method=='POST':
+                    nid=parts[2]
+                    c.execute('UPDATE notifications SET read_at=COALESCE(read_at,?) WHERE id=? AND user_id=?', (now,nid,user['id']))
+                    c.commit()
+                    return respond(200, {'ok':True})
+
             if path == '/api/documents':
                 qs = parse_qs(env.get('QUERY_STRING', ''))
                 uid = qs.get('player', [user['id']])[0]
@@ -624,6 +681,9 @@ def application(env, start_response):
                     c.commit()
                     return respond(200, {'ok': True})
                 if method == 'GET':
+                    if user['role']=='player':
+                        c.execute('UPDATE notifications SET document_opened_at=COALESCE(document_opened_at,?) WHERE user_id=? AND document_id=?', (now,user['id'],did))
+                        c.commit()
                     headers.append(('Content-Disposition', "inline; filename=document.pdf; filename*=UTF-8''" + quote((d['title'] if d['title'].lower().endswith('.pdf') else d['title'] + '.pdf'), safe='')))
                     return respond(200, bytes(d['data']), 'application/pdf')
                 if method == 'DELETE':
