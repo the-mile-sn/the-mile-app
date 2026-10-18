@@ -667,8 +667,15 @@ function renderPlayer(w){
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>${playerBottomNav('documents')}`;
+      const unreadDocs=new Set(notifications.filter(n=>n.document_id&&!n.document_opened_at).map(n=>n.document_id));
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong class="${unreadDocs.has(d.id)?'document-unread':''}">${esc(d.title)}</strong>${unreadDocs.has(d.id)?'<span class="document-new-dot" aria-label="Novo documento"></span>':''}</span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>${playerBottomNav('documents')}`;
       bindPlayerBottomNav();
+      ui.root.querySelectorAll('.player-doc-row').forEach(a=>a.addEventListener('click',()=>{
+        const id=a.href.split('/').pop();
+        notifications.forEach(n=>{if(n.document_id===id)n.document_opened_at=Math.floor(Date.now()/1000);});
+        a.querySelector('.document-new-dot')?.remove();
+        a.querySelector('.document-unread')?.classList.remove('document-unread');
+      }));
       enablePlayerSwipeBack(()=>{folder=null;mode=folderOrigin==='documents'?'documents':'';render();},{interactive:false});
       return;
     }
