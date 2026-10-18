@@ -526,9 +526,9 @@ function renderPlayer(w){
         <div class="player-notifications-empty">
           <span class="player-notifications-icon">${playerIcon('bell')}</span>
           <strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong>
-          <p>${lang==='pt'?'Quando houver novidades no teu acompanhamento, vão aparecer aqui.':'Updates about your coaching will appear here.'}</p>
         </div>
       </section>`;
+      enablePlayerSwipeBack(()=>{mode='';render();},{interactive:false});
       return;
     }
     if(mode==='password'||mode==='profile-password'){
