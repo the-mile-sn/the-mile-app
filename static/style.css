@@ -2146,3 +2146,115 @@ body:not(.player-theme) footer{display:none}
     grid-template-columns:1fr;
   }
 }
+
+
+/* Dashboard events and admin account v48 */
+body:not(.player-theme) .header-actions #logout{
+  width:40px;
+  height:40px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+body:not(.player-theme) .header-actions #logout svg{
+  width:20px;
+  height:20px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.dashboard-overview-section{
+  border-top:0;
+  padding-top:0;
+}
+.dashboard-overview{
+  grid-template-columns:repeat(3,1fr);
+}
+.dashboard-attention-card.birthday{
+  border-color:#c7d6ea;
+  background:#f7faff;
+}
+.admin-account-page{
+  max-width:520px;
+}
+.admin-account-head{
+  text-align:center;
+  padding:18px 0 28px;
+}
+.admin-account-avatar{
+  width:104px;
+  height:104px;
+  border-radius:50%;
+  margin:0 auto 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#ededed;
+  color:#555;
+}
+.admin-account-avatar svg{
+  width:46px;
+  height:46px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.25;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.admin-account-head h1{
+  margin:0 0 7px;
+  font-size:28px;
+}
+.admin-account-head p{
+  margin:0;
+  color:#777;
+  font-size:13px;
+}
+.admin-account-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.admin-account-action{
+  min-height:58px;
+  border:0;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px #e3e3e3;
+  color:#333;
+  display:grid;
+  grid-template-columns:28px 1fr;
+  align-items:center;
+  gap:12px;
+  padding:0 18px;
+  text-align:left;
+}
+.admin-account-action:hover{
+  background:#f7f7f7;
+}
+.admin-account-action-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#666;
+}
+.admin-account-action-icon svg{
+  width:21px;
+  height:21px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+@media(max-width:650px){
+  .dashboard-overview{
+    grid-template-columns:1fr;
+  }
+  .admin-account-page{
+    max-width:none;
+  }
+}
