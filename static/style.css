@@ -2590,3 +2590,12 @@ body.player-theme main{
     margin-top:7px;
   }
 }
+
+/* Smaller, less transparent actions; original icons unchanged */
+body.player-theme .player-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:30px}
+body.player-theme .player-quick-icon{width:64px;height:64px;background:rgba(245,245,247,.27);border:1px solid rgba(245,245,247,.17)}
+body.player-theme .player-quick-action:active .player-quick-icon,
+body.player-theme .player-quick-action.is-pressed .player-quick-icon{background:rgba(245,245,247,.36)}
+#notification-bell{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:0;background:transparent;color:#fff;padding:8px;border-radius:50%;cursor:pointer}
+#notification-bell svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#notification-bell:active{background:rgba(255,255,255,.14);transform:scale(.95)}
