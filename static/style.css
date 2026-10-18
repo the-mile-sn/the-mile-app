@@ -2655,3 +2655,7 @@ body.player-theme #notification-bell.has-unread::after{content:attr(data-unread)
 body.player-theme .player-doc-trailing{display:inline-flex;align-items:center;justify-content:flex-end;gap:12px;flex-shrink:0;margin-left:auto}
 body.player-theme .player-doc-trailing .document-new-dot{display:block;margin:0;width:7px;height:7px}
 body.player-theme .player-doc-trailing .player-chevron{display:inline-flex;align-items:center;justify-content:center}
+
+/* New-document indicator: left of file icon, chevron stays aligned */
+body.player-theme .player-doc-row{position:relative;padding-left:30px}
+body.player-theme .player-doc-row > .document-new-dot{position:absolute;left:12px;top:50%;transform:translateY(-50%);margin:0;width:7px;height:7px}
