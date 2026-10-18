@@ -561,12 +561,15 @@ function renderPlayer(w){
         </div>
 
         <div class="player-profile-actions">
+          <div class="player-language-setting"><span>${lang==='pt'?'Idioma predefinido':'Default language'}</span><div class="player-language-options" role="group" aria-label="${lang==='pt'?'Idioma da aplicação':'Application language'}"><button type="button" id="profile-lang-pt" class="${lang==='pt'?'is-active':''}" aria-pressed="${lang==='pt'}">PT</button><button type="button" id="profile-lang-en" class="${lang==='en'?'is-active':''}" aria-pressed="${lang==='en'}">EN</button></div></div>
           <button class="player-profile-action" id="profile-change-password" type="button"><span class="player-profile-action-icon">${playerIcon('key')}</span><span>${w.changePassword}</span></button>
           <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button"><span class="player-profile-action-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span></button>
         </div>
       </section>
       ${playerBottomNav('profile')}`;
       bindPlayerBottomNav();
+      bind('profile-lang-pt',()=>{lang='pt';localStorage.setItem('mile-language',lang);render();});
+      bind('profile-lang-en',()=>{lang='en';localStorage.setItem('mile-language',lang);render();});
       bind('profile-change-password',()=>{mode='profile-password';render();});
       bind('profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
       return;
@@ -716,7 +719,7 @@ function renderPlayer(w){
 
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&user.role!=='player';ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password');
   ui.notificationBell.hidden=!(user&&user.role==='player');
   ui.notificationBell.setAttribute('aria-label',lang==='pt'?'Notificações':'Notifications');
