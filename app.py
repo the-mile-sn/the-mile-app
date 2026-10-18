@@ -120,6 +120,7 @@ def initialize():
             ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_status TEXT NOT NULL DEFAULT 'waiting';
             ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_next_activate_at BIGINT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS current_weekly_document_id TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS access_until TEXT;
             CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL;
             ''')
         else:
@@ -149,6 +150,7 @@ def initialize():
                 'weekly_status': "TEXT NOT NULL DEFAULT 'waiting'",
                 'weekly_next_activate_at': 'INTEGER',
                 'current_weekly_document_id': 'TEXT',
+                'access_until': 'TEXT',
             }
             for column, spec in additions.items():
                 if column not in existing:
@@ -256,7 +258,7 @@ def player_dict(row, include_private=True):
     if include_private:
         data.update({
             'birth_date': row['birth_date'], 'sex': row['sex'], 'height': row['height'], 'weight': row['weight'],
-            'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'], 'weekly_status': row['weekly_status'],
+            'plan_name': row['plan_name'], 'renewal_date': row['renewal_date'], 'access_until': row['access_until'], 'weekly_status': row['weekly_status'],
             'weekly_next_activate_at': row['weekly_next_activate_at'], 'current_weekly_document_id': row['current_weekly_document_id'],
         })
     return data
@@ -501,6 +503,32 @@ def application(env, start_response):
                 if not target['photo']:
                     raise Problem(404, 'not_found')
                 return respond(200, bytes(target['photo']), target['photo_mime'] or 'image/jpeg')
+
+            if path.startswith('/api/players/') and path.endswith('/access-extension') and method == 'POST':
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 5:
+                    raise Problem(404, 'not_found')
+                target = c.execute("SELECT id,renewal_date,access_until FROM users WHERE id=? AND role='player'", (parts[3],)).fetchone()
+                if not target:
+                    raise Problem(404, 'not_found')
+                body = read_json(env)
+                try:
+                    extra = int(body.get('days', 0))
+                except (ValueError, TypeError):
+                    raise Problem(400, 'invalid_request')
+                if extra not in (3, 7, 15, 30):
+                    raise Problem(400, 'invalid_request')
+                today = datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                base_text = target['access_until'] or target['renewal_date']
+                try:
+                    base = datetime.strptime(base_text, '%Y-%m-%d').date() + timedelta(days=7 if not target['access_until'] else 0)
+                except (TypeError, ValueError):
+                    raise Problem(400, 'invalid_request')
+                until = max(today, base) + timedelta(days=extra)
+                c.execute('UPDATE users SET access_until=? WHERE id=?', (until.isoformat(), target['id']))
+                c.commit()
+                return respond(200, {'ok': True, 'access_until': until.isoformat()})
 
             if path.startswith('/api/players/') and method in ('PUT', 'DELETE'):
                 admin(user)
