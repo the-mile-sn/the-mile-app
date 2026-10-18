@@ -427,7 +427,7 @@ function renderDashboard(w){
       const kind=form.querySelector('[name=category]').value;
       const templates={
         weight:['Registo de peso','Não te esqueças de realizar o teu registo de peso diário.'],
-        game:['Questionário pós-jogo','Se participaste num jogo, não te esqueças de preencher o questionário pós-jogo.']
+        game:['Questionário pós-jogo','Não te esqueças de preencher o questionário pós-jogo.']
       };
       titleField.value=templates[kind]?.[0]||'';
       messageField.value=templates[kind]?.[1]||'';
