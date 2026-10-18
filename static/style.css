@@ -2668,3 +2668,12 @@ body.player-theme .player-doc-row > .player-chevron{justify-self:end}
 /* Centre access-extension action vertically beside access date */
 .admin-edit-plan .access-extension-controls{display:flex;align-items:center;justify-content:center;min-height:100%;padding-top:22px}
 .admin-edit-plan .access-extension-controls button{min-height:48px}
+
+/* Restricted player access: preserve profile and navigation */
+body.player-theme .player-expired-home .player-profile-card{opacity:.83}
+body.player-theme .player-expired-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:220px;margin-top:28px;padding:28px 22px;border:1px solid rgba(255,255,255,.13);border-radius:24px;background:rgba(255,255,255,.07);text-align:center}
+body.player-theme .player-expired-lock{display:flex;align-items:center;justify-content:center;color:#99999f}
+body.player-theme .player-expired-lock svg{width:29px;height:29px}
+body.player-theme .player-expired-card strong{color:#f1f1f4;font-size:17px;font-weight:600}
+body.player-theme .player-expired-card p{max-width:310px;margin:0;color:#a3a3aa;font-size:13px;line-height:1.5}
+.badge.expired{background:#f8eee3;color:#a36529;border-color:#ebd3b8}
