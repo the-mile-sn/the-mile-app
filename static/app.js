@@ -9,7 +9,7 @@ const ui = {
 };
 
 let lang = localStorage.getItem('mile-language') === 'en' ? 'en' : 'pt';
-let user = null, csrf = null, selected = null, folder = null, players = [], admins = [], docs = [], mode = '';
+let user = null, csrf = null, selected = null, folder = null, players = [], admins = [], docs = [], mode = '', folderOrigin = 'home';
 let loginMode = 'login';
 let activationToken = new URLSearchParams(location.search).get('activate');
 let installPrompt = null;
@@ -84,6 +84,8 @@ function playerIcon(name){
     document:'<svg class="soft-document-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 3.8h6.5c.7 0 1.3.25 1.8.75l2.55 2.55c.5.5.75 1.1.75 1.8v9.5c0 1.05-.85 1.9-1.9 1.9H7.6c-1.05 0-1.9-.85-1.9-1.9V5.7c0-1.05.85-1.9 1.9-1.9z"/><path d="M14.4 4.1v3.7c0 .65.55 1.2 1.2 1.2h3.25"/><path d="M9.1 13h5.8M9.1 16.2h4.4"/></svg>',
     refresh:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 8A7 7 0 1 0 19 14"/><path d="M18.2 4.5V8h-3.5"/></svg>',
     key:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.2" cy="12" r="3.2"/><path d="M11.4 12H20M16.6 12v2.3M19 12v1.5"/></svg>',
+    home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 10.2 12 4l7.5 6.2v8.3a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M9.2 20v-5.5h5.6V20"/></svg>',
+    files:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.8 7.3h6l1.8 2h8.6v9.2a1.5 1.5 0 0 1-1.5 1.5H5.3a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.8 7.3V5.6A1.6 1.6 0 0 1 5.4 4h4.1l1.6 1.8"/></svg>',
     person:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c.7-3.4 3.1-5.4 6.5-5.4s5.8 2 6.5 5.4"/></svg>',
     logout:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5.5v14H10"/><path d="M13 8l4 4-4 4M8 12h9"/></svg>',
     chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
@@ -490,6 +492,29 @@ function availableFolders(owner){
   const f=['weekly','nutrition','other']; if(owner.menus_enabled)f.splice(2,0,'menus'); if(owner.anthropometry_enabled)f.push('anthropometry'); return f;
 }
 
+function playerBottomNav(active){
+  return `<nav class="player-bottom-nav" aria-label="${lang==='pt'?'Navegação principal':'Main navigation'}">
+    <button id="tab-home" type="button" class="player-bottom-item ${active==='home'?'is-active':''}">
+      <span class="player-bottom-icon">${playerIcon('home')}</span>
+      <span>${lang==='pt'?'Início':'Home'}</span>
+    </button>
+    <button id="tab-documents" type="button" class="player-bottom-item ${active==='documents'?'is-active':''}">
+      <span class="player-bottom-icon">${playerIcon('files')}</span>
+      <span>${lang==='pt'?'Documentos':'Documents'}</span>
+    </button>
+    <button id="tab-profile" type="button" class="player-bottom-item ${active==='profile'?'is-active':''}">
+      <span class="player-bottom-icon">${playerIcon('person')}</span>
+      <span>${lang==='pt'?'Perfil':'Profile'}</span>
+    </button>
+  </nav>`;
+}
+
+function bindPlayerBottomNav(){
+  bind('tab-home',()=>{folder=null;folderOrigin='home';mode='';render();});
+  bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();});
+  bind('tab-profile',()=>{folder=null;mode='profile';render();});
+}
+
 function renderPlayer(w){
   const isAdmin=user.role==='admin',owner=isAdmin?selected:user;
 
@@ -499,6 +524,22 @@ function renderPlayer(w){
       ui.root.innerHTML=`<section class="player-shell player-password"><h1>${w.changePassword}</h1><form class="player-password-form"><label>${w.currentPassword}</label><input name="current_password" type="password" required><label>${w.newPassword}</label><input name="new_password" type="password" minlength="8" required><p class="error"></p><button class="player-solid" type="submit">${w.save}</button></form></section>`;
       enablePlayerSwipeBack(()=>{mode=passwordFromProfile?'profile':'';render();});
       submit(async f=>{await api('/password',{method:'POST',body:{current_password:f.get('current_password'),new_password:f.get('new_password')}});mode=passwordFromProfile?'profile':'';notify('The Mile',w.passwordChanged);render();});
+      return;
+    }
+
+    if(mode==='documents'){
+      const af=availableFolders(owner);
+      ui.root.innerHTML=`<section class="player-shell player-documents-screen">
+        <h1 class="player-folder-title">${lang==='pt'?'Documentos':'Documents'}</h1>
+        <section class="player-documents-section">
+          <div class="player-list-card player-documents-card">
+            ${af.map(f=>{const count=docs.filter(d=>d.folder===f).length;return `<button class="player-menu-row player-menu-row-clean" data-folder="${f}"><span class="player-row-copy"><strong>${esc(w.folders[f])}</strong><small>${count} ${count===1?w.document:w.documents}</small></span><span class="player-chevron">${playerIcon('chevron')}</span></button>`;}).join('')}
+          </div>
+        </section>
+      </section>
+      ${playerBottomNav('documents')}`;
+      ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folderOrigin='documents';folder=b.dataset.folder;render();});
+      bindPlayerBottomNav();
       return;
     }
 
@@ -522,8 +563,9 @@ function renderPlayer(w){
           <button class="player-profile-action" id="profile-change-password" type="button"><span class="player-profile-action-icon">${playerIcon('key')}</span><span>${w.changePassword}</span></button>
           <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button"><span class="player-profile-action-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span></button>
         </div>
-      </section>`;
-      enablePlayerSwipeBack(()=>{mode='';render();},{interactive:false});
+      </section>
+      ${playerBottomNav('profile')}`;
+      bindPlayerBottomNav();
       bind('profile-change-password',()=>{mode='profile-password';render();});
       bind('profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
       return;
@@ -531,8 +573,9 @@ function renderPlayer(w){
 
     if(folder!==null){
       const items=docs.filter(d=>d.folder===folder);
-      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>`;
-      enablePlayerSwipeBack(()=>{folder=null;render();},{interactive:false});
+      ui.root.innerHTML=`<section class="player-shell player-folder-screen"><h1 class="player-folder-title">${esc(w.folders[folder])}</h1><div class="player-doc-list">${items.length?items.map(d=>`<a class="player-doc-row" href="/api/documents/${d.id}" target="_blank" rel="noopener"><span class="player-row-icon">${playerIcon('document')}</span><span class="player-row-copy"><strong>${esc(d.title)}</strong></span><span class="player-chevron">${playerIcon('chevron')}</span></a>`).join(''):`<p class="player-empty">${w.empty}</p>`}</div></section>${playerBottomNav('documents')}`;
+      bindPlayerBottomNav();
+      enablePlayerSwipeBack(()=>{folder=null;mode=folderOrigin==='documents'?'documents':'';render();},{interactive:false});
       return;
     }
 
@@ -578,10 +621,12 @@ function renderPlayer(w){
         </div>
       </section>
 
-    </section>`;
+    </section>
+    ${playerBottomNav('home')}`;
 
+    bindPlayerBottomNav();
     bind('profile-card',()=>{mode='profile';render();});
-    ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folder=b.dataset.folder;render();});
+    ui.root.querySelectorAll('[data-folder]').forEach(b=>b.onclick=()=>{folderOrigin='home';folder=b.dataset.folder;render();});
     bind('weekly-plan',()=>{
       if(owner.weekly_status==='available'&&weekly){
         window.open('/api/documents/'+weekly.id,'_blank','noopener');
@@ -675,11 +720,11 @@ function renderPlayer(w){
 
 function render(){
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
-  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&!(user.role==='player'&&folder===null&&mode==='');ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
-  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile'||mode==='profile-password');
+  const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user&&user.role!=='player';ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
+  const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password');
   ui.headerBack.hidden=!internalPlayer;
   ui.headerBack.innerHTML=`${playerIcon('arrow')}<span>${w.back.replace('← ','')}</span>`;
-  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null)folder=null;else if(mode==='profile-password')mode='profile';else if(mode==='password'||mode==='profile')mode='';render();}:null;
+  ui.headerBack.onclick=internalPlayer?()=>{if(folder!==null){folder=null;mode=folderOrigin==='documents'?'documents':'';}else if(mode==='profile-password')mode='profile';else if(mode==='password')mode='';render();}:null;
   if(!user||activationToken){
     const activating=!!activationToken;
     if(!activating && loginMode==='change'){
@@ -704,7 +749,7 @@ function isiOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function updateInstallButton(){ui.install.hidden=isStandalone()||(!installPrompt&&!isiOS());}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;updateInstallButton();});
 ui.install.onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;updateInstallButton();}else notify('The Mile',lang==='pt'?'No iPhone, usa Partilhar → Adicionar ao ecrã principal.':'On iPhone, use Share → Add to Home Screen.');};
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=82').catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=83').catch(()=>{}));
 updateInstallButton();refresh().catch(e=>{render();error(e);}).finally(dismissSplash);
 
 const pressFeedbackObserver=new MutationObserver(()=>enablePressFeedback(ui.root));
