@@ -2912,3 +2912,7 @@ body.player-theme .player-documents-screen .player-documents-card .player-menu-r
 }
 body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy strong{line-height:1.18}
 body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy small{margin-top:2px;line-height:1.2}
+
+/* Splash-only black overscan: no viewport or bottom navigation positioning changes. */
+html .app-splash{background:#000}
+html .app-splash::before{content:"";position:absolute;top:-1px;right:0;bottom:calc(-1 * max(120px, env(safe-area-inset-bottom, 0px)));left:0;background:#000;pointer-events:none;z-index:-1}
