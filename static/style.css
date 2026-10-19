@@ -2851,3 +2851,8 @@ body.player-theme .player-profile-card{
 html{background-color:#000}
 html .app-splash{background:#000}
 html .app-splash::before{content:"";position:absolute;top:-1px;right:0;bottom:calc(-1 * max(120px, env(safe-area-inset-bottom, 0px)));left:0;background:#000;pointer-events:none;z-index:-1}
+
+/* White launch canvas with black mark; normal app remains dark */
+html .app-splash{background:#fff}
+html .app-splash::before{background:#fff}
+html .app-splash .splash-wordmark{filter:brightness(0)}
