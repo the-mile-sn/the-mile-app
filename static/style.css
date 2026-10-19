@@ -2793,3 +2793,43 @@ body.player-theme .player-home-v4 .player-quick-action:active .player-quick-icon
 body.player-theme .player-home-v4 .player-quick-action.is-pressed .player-quick-icon{
   background:#39393c;
 }
+
+/* Quick actions: reference-sized circular controls, preserve 3-column layout */
+body.player-theme .player-home-v4 .player-quick-icon{
+  width:46px;
+  height:46px;
+  min-width:46px;
+  min-height:46px;
+  flex:0 0 46px;
+  border-radius:50%;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+body.player-theme .player-home-v4 .player-quick-icon svg,
+body.player-theme .player-home-v4 .player-quick-icon .quick-raster-icon{
+  width:26px;
+  height:26px;
+  max-width:26px;
+  max-height:26px;
+  margin:0;
+}
+body.player-theme .player-home-v4 .player-quick-icon .scale-icon{
+  width:28px;
+  height:28px;
+  max-width:28px;
+  max-height:28px;
+}
+body.player-theme .player-home-v4 .player-quick-icon .ball-icon,
+body.player-theme .player-home-v4 .player-quick-icon .soccer-icon{
+  width:29px;
+  height:29px;
+  max-width:29px;
+  max-height:29px;
+}
+body.player-theme .player-home-v4 .player-quick-label{
+  font-size:13.5px;
+  margin-top:5px;
+  line-height:1.22;
+}
