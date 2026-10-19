@@ -2735,7 +2735,7 @@ body.player-theme .player-bottom-icon svg{
 /* Optical centering for the Home icon + label in the active pill */
 body.player-theme #tab-home{text-align:center}
 body.player-theme #tab-home > .player-bottom-icon,
-body.player-theme #tab-home > span:last-child{position:relative;left:3px}
+body.player-theme #tab-home > span:last-child{position:relative;left:-5px}
 
 /* Unified brand typography: Inter Tight Regular, native SF Pro fallback */
 body.player-theme,body.login-theme{font-family:'Inter Tight','SF Pro Text','SF Pro Display',-apple-system,BlinkMacSystemFont,Arial,sans-serif;font-weight:400}
