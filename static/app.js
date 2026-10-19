@@ -563,7 +563,41 @@ function playerBottomNav(active){
   </nav>`;
 }
 
+// iOS standalone can change its visual viewport after the first paint.
+// Pin the navigation to the visible viewport on initial load and every resize.
+function syncPlayerBottomPosition(){
+  const nav=document.querySelector('body.player-theme .player-bottom-nav');
+  if(!nav)return;
+  const viewport=window.visualViewport;
+  if(!viewport){nav.style.removeProperty('top');nav.style.removeProperty('bottom');return;}
+  if(!nav.dataset.mileBottomGap){
+    nav.dataset.mileBottomGap=String(parseFloat(getComputedStyle(nav).bottom)||14);
+  }
+  const gap=Number(nav.dataset.mileBottomGap);
+  const height=nav.getBoundingClientRect().height;
+  if(!height)return;
+  const top=Math.round(viewport.offsetTop+viewport.height-height-gap);
+  nav.style.setProperty('top',top+'px');
+  nav.style.setProperty('bottom','auto');
+}
+function schedulePlayerBottomPosition(){
+  requestAnimationFrame(syncPlayerBottomPosition);
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',schedulePlayerBottomPosition,{passive:true});
+  window.visualViewport.addEventListener('scroll',schedulePlayerBottomPosition,{passive:true});
+}
+window.addEventListener('resize',schedulePlayerBottomPosition,{passive:true});
+window.addEventListener('pageshow',()=>{
+  schedulePlayerBottomPosition();
+  setTimeout(schedulePlayerBottomPosition,200);
+  setTimeout(schedulePlayerBottomPosition,700);
+});
+
 function bindPlayerBottomNav(){
+  schedulePlayerBottomPosition();
+  setTimeout(schedulePlayerBottomPosition,120);
+  setTimeout(schedulePlayerBottomPosition,450);
   bind('tab-home',()=>{folder=null;folderOrigin='home';mode='';render();});
   bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();});
   bind('tab-profile',()=>{folder=null;mode='profile';render();});
