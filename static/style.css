@@ -2741,3 +2741,55 @@ body.player-theme #tab-home > span:last-child{position:relative;left:3px}
 body.player-theme,body.login-theme{font-family:'Inter Tight','SF Pro Text','SF Pro Display',-apple-system,BlinkMacSystemFont,Arial,sans-serif;font-weight:400}
 body.player-theme button,body.player-theme input,body.player-theme textarea,body.player-theme select,
 body.login-theme button,body.login-theme input,body.login-theme textarea,body.login-theme select{font-family:inherit}
+
+/* Home hierarchy: compact folder text, stronger quick actions (reference v2) */
+body.player-theme .player-home-v4 .player-quick-label{
+  font-size:14px;
+  line-height:1.22;
+  font-weight:400;
+  min-height:35px;
+  margin-top:5px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  text-align:center;
+}
+body.player-theme .player-home-v4 .player-menu-row-clean .player-row-copy strong{
+  font-size:13.5px;
+  line-height:1.25;
+  font-weight:400;
+}
+body.player-theme .player-home-v4 .player-menu-row-clean .player-row-copy small{
+  font-size:11.5px;
+}
+body.player-theme .player-home-v4 .player-quick-icon{
+  width:64px;
+  height:64px;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto;
+  background:#2d2d2f;
+  border:1px solid rgba(255,255,255,.08);
+}
+body.player-theme .player-home-v4 .player-quick-icon svg,
+body.player-theme .player-home-v4 .player-quick-icon .quick-raster-icon{
+  display:block;
+  width:36px;
+  height:36px;
+  margin:auto;
+}
+body.player-theme .player-home-v4 .player-quick-icon .scale-icon{
+  width:38px;
+  height:38px;
+}
+body.player-theme .player-home-v4 .player-quick-icon .ball-icon,
+body.player-theme .player-home-v4 .player-quick-icon .soccer-icon{
+  width:39px;
+  height:39px;
+}
+body.player-theme .player-home-v4 .player-quick-action:active .player-quick-icon,
+body.player-theme .player-home-v4 .player-quick-action.is-pressed .player-quick-icon{
+  background:#39393c;
+}
