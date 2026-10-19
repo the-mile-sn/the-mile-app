@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'the-mile-shell-v112';
+const CACHE = 'the-mile-shell-v113';
 const SHELL = ['/', '/style.css?v=141', '/app.js?v=148', '/logo.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/pdf-open.html', '/pdf-open.css', '/pdf-open.js', '/icons/football.svg', '/icons/weight.svg'];
 
 self.addEventListener('install', event => {
