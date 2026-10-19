@@ -2849,7 +2849,7 @@ body.player-theme .player-profile-card{
 
 /* iOS standalone: black root, including the area behind the home indicator. */
 html,body{background-color:#000}
-body{min-height:100vh;min-height:100dvh;overscroll-behavior:none}
+body{min-height:100%}
 html .app-splash{background:#000;width:100%;height:100vh;height:100dvh}
 html .app-splash::before{content:"";position:fixed;inset:0;background:#000;z-index:-1;pointer-events:none}
 /* Do not overlay a fixed pseudo-element above the app: tabs must remain tappable. */
