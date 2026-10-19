@@ -2731,3 +2731,8 @@ body.player-theme .player-bottom-icon svg{
   width:24px;
   height:24px;
 }
+
+/* Optical centering for the Home icon + label in the active pill */
+body.player-theme #tab-home{text-align:center}
+body.player-theme #tab-home > .player-bottom-icon,
+body.player-theme #tab-home > span:last-child{position:relative;left:3px}
