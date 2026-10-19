@@ -567,6 +567,7 @@ function playerBottomNav(active){
 // Pin the navigation to the visible viewport on initial load and every resize.
 // Temporary read-only PWA viewport diagnostics. No changes to nav layout.
 let mileNavFirstSample=null;
+let mileNavAfterDocuments=null;
 let mileNavTapCount=0;
 let mileNavLastTap=0;
 function mileNavMeasure(){
@@ -600,7 +601,7 @@ function mileNavDiagnosticsClick(event){
     const initial=mileNavFirstSample || {notCaptured:true};
     setTimeout(()=>{
       const later=mileNavMeasure();
-      const message='The Mile - diagnostico iOS\\nINICIAL: '+JSON.stringify(initial)+'\\nAGORA: '+JSON.stringify(later);
+      const message='The Mile - diagnostico iOS\\nINICIAL: '+JSON.stringify(initial)+'\\nDEPOIS DOCUMENTOS: '+JSON.stringify(mileNavAfterDocuments||{notCaptured:true})+'\\nAGORA: '+JSON.stringify(later);
       window.alert(message);
     },180);
   }
@@ -616,7 +617,7 @@ function bindPlayerBottomNav(){
     if(!mileNavFirstSample)requestAnimationFrame(()=>{if(!mileNavFirstSample)mileNavFirstSample=mileNavMeasure();});
   }
   bind('tab-home',()=>{folder=null;folderOrigin='home';mode='';render();});
-  bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();});
+  bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();setTimeout(()=>{mileNavAfterDocuments=mileNavMeasure();},250);});
   bind('tab-profile',()=>{folder=null;mode='profile';render();});
 }
 
