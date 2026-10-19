@@ -23,8 +23,18 @@ function dismissSplash(){
   if(!splash)return;
   const delay=Math.max(0,1600-(performance.now()-splashStartedAt));
   setTimeout(()=>{
+    // iOS standalone may calculate its first fixed-position layout before
+    // its visual viewport has settled. Rebuild the initial player view once,
+    // underneath the still-visible splash, just as switching tabs does.
+    if(user && user.role!=='admin' && document.querySelector('.player-bottom-nav')){
+      render();
+      schedulePlayerBottomPosition();
+    }
     splash.classList.add('is-hidden');
-    setTimeout(()=>splash.remove(),620);
+    setTimeout(()=>{
+      splash.remove();
+      schedulePlayerBottomPosition();
+    },620);
   },delay);
 }
 
