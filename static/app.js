@@ -568,16 +568,33 @@ function playerBottomNav(active){
 function syncPlayerBottomPosition(){
   const nav=document.querySelector('body.player-theme .player-bottom-nav');
   if(!nav)return;
-  const viewport=window.visualViewport;
-  if(!viewport){nav.style.removeProperty('top');nav.style.removeProperty('bottom');return;}
+  const vv=window.visualViewport;
+  const isWebApp=window.navigator.standalone===true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if(!isWebApp){
+    nav.style.removeProperty('top');
+    nav.style.removeProperty('bottom');
+    return;
+  }
   if(!nav.dataset.mileBottomGap){
     nav.dataset.mileBottomGap=String(parseFloat(getComputedStyle(nav).bottom)||14);
   }
   const gap=Number(nav.dataset.mileBottomGap);
   const height=nav.getBoundingClientRect().height;
   if(!height)return;
-  const top=Math.round(viewport.offsetTop+viewport.height-height-gap);
-  nav.style.setProperty('top',top+'px');
+  const focused=document.activeElement;
+  const keyboardOpen=focused&&focused.matches('input,textarea,[contenteditable="true"]');
+  // iOS sometimes reports a temporarily shortened visual viewport on launch.
+  // In a portrait home-screen web app the full device height is a safer floor.
+  const ends=[window.innerHeight,document.documentElement.clientHeight];
+  if(vv)ends.push(vv.offsetTop+vv.height);
+  if(!keyboardOpen && window.innerHeight>=window.innerWidth){
+    ends.push(window.screen.height);
+  }
+  const visibleBottom=keyboardOpen && vv
+    ?vv.offsetTop+vv.height
+    :Math.max(...ends.filter(Number.isFinite));
+  nav.style.setProperty('top',Math.round(visibleBottom-height-gap)+'px');
   nav.style.setProperty('bottom','auto');
 }
 function schedulePlayerBottomPosition(){
