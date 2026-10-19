@@ -2833,3 +2833,6 @@ body.player-theme .player-home-v4 .player-quick-label{
   margin-top:5px;
   line-height:1.22;
 }
+
+/* Player profile photo card: solid fill without outline */
+body.player-theme .player-profile-card{border:none;box-shadow:none;outline:none}
