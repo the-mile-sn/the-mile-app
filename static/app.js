@@ -565,59 +565,15 @@ function playerBottomNav(active){
 
 // iOS standalone can change its visual viewport after the first paint.
 // Pin the navigation to the visible viewport on initial load and every resize.
-// Temporary read-only PWA viewport diagnostics. No changes to nav layout.
-let mileNavFirstSample=null;
-let mileNavAfterDocuments=null;
-let mileNavTapCount=0;
-let mileNavLastTap=0;
-function mileNavMeasure(){
-  const nav=document.querySelector('body > .player-bottom-nav');
-  const rect=nav?.getBoundingClientRect();
-  const vv=window.visualViewport;
-  const metrics={
-    innerH:window.innerHeight,
-    clientH:document.documentElement.clientHeight,
-    screenH:screen.height,
-    outerH:window.outerHeight,
-    visualH:vv?.height??null,
-    visualTop:vv?.offsetTop??null,
-    visualPageTop:vv?.pageTop??null,
-    navTop:rect?Math.round(rect.top):null,
-    navBottom:rect?Math.round(rect.bottom):null,
-    cssBottom:nav?getComputedStyle(nav).bottom:null,
-    cssTop:nav?getComputedStyle(nav).top:null,
-    safeGap:nav?Math.round(window.innerHeight-rect.bottom):null
-  };
-  return metrics;
-}
-function mileNavDiagnosticsClick(event){
-  if(!event.target.closest('#tab-home'))return;
-  const now=Date.now();
-  if(now-mileNavLastTap>8000)mileNavTapCount=0;
-  mileNavLastTap=now;
-  mileNavTapCount++;
-  if(mileNavTapCount===5){
-    mileNavTapCount=0;
-    const initial=mileNavFirstSample || {notCaptured:true};
-    setTimeout(()=>{
-      const later=mileNavMeasure();
-      const message='The Mile - diagnostico iOS\\nINICIAL: '+JSON.stringify(initial)+'\\nDEPOIS DOCUMENTOS: '+JSON.stringify(mileNavAfterDocuments||{notCaptured:true})+'\\nAGORA: '+JSON.stringify(later);
-      window.alert(message);
-    },180);
-  }
-}
-document.addEventListener('click',mileNavDiagnosticsClick,true);
-
 function bindPlayerBottomNav(){
   // Keep fixed navigation outside the animated/clipped main content.
   const nav=ui.root.querySelector('.player-bottom-nav');
   if(nav){
     document.querySelectorAll('body > .player-bottom-nav').forEach(old=>old.remove());
     document.body.appendChild(nav);
-    if(!mileNavFirstSample)requestAnimationFrame(()=>{if(!mileNavFirstSample)mileNavFirstSample=mileNavMeasure();});
   }
   bind('tab-home',()=>{folder=null;folderOrigin='home';mode='';render();});
-  bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();setTimeout(()=>{mileNavAfterDocuments=mileNavMeasure();},250);});
+  bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();});
   bind('tab-profile',()=>{folder=null;mode='profile';render();});
 }
 
