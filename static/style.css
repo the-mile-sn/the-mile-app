@@ -2902,3 +2902,8 @@ body.player-theme .player-shell{
   body.player-theme .player-profile-card,
   body.player-theme .player-documents-card .player-menu-row-clean{transition:none}
 }
+
+/* Documents screen typography: compact iOS-like scale, preserve card spacing. */
+body.player-theme .player-documents-screen .player-folder-title{font-size:22px}
+body.player-theme .player-documents-screen .player-documents-card .player-row-copy strong{font-size:15px}
+body.player-theme .player-documents-screen .player-documents-card .player-row-copy small{font-size:12px}
