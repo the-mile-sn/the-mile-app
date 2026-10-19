@@ -28,12 +28,12 @@ function dismissSplash(){
     // underneath the still-visible splash, just as switching tabs does.
     if(user && user.role!=='admin' && document.querySelector('.player-bottom-nav')){
       render();
-      schedulePlayerBottomPosition();
+
     }
     splash.classList.add('is-hidden');
     setTimeout(()=>{
       splash.remove();
-      schedulePlayerBottomPosition();
+
     },620);
   },delay);
 }
@@ -575,56 +575,13 @@ function playerBottomNav(active){
 
 // iOS standalone can change its visual viewport after the first paint.
 // Pin the navigation to the visible viewport on initial load and every resize.
-function syncPlayerBottomPosition(){
-  const nav=document.querySelector('body.player-theme .player-bottom-nav');
-  if(!nav)return;
-  const vv=window.visualViewport;
-  const isWebApp=window.navigator.standalone===true ||
-    window.matchMedia('(display-mode: standalone)').matches;
-  if(!isWebApp){
-    nav.style.removeProperty('top');
-    nav.style.removeProperty('bottom');
-    return;
-  }
-  if(!nav.dataset.mileBottomGap){
-    nav.dataset.mileBottomGap=String(parseFloat(getComputedStyle(nav).bottom)||14);
-  }
-  const gap=Number(nav.dataset.mileBottomGap);
-  const height=nav.getBoundingClientRect().height;
-  if(!height)return;
-  const focused=document.activeElement;
-  const keyboardOpen=focused&&focused.matches('input,textarea,[contenteditable="true"]');
-  // The screen's physical height can extend below the iOS web app's
-  // paintable viewport. Never position the navigation outside that area.
-  const layoutBottom=window.innerHeight;
-  const visualBottom=vv?vv.offsetTop+vv.height:layoutBottom;
-  // At PWA startup WebKit may leave a short-lived black area below the
-  // reported visual viewport. Use the layout viewport when it is taller,
-  // but never move more than 18 CSS px into that unconfirmed area.
-  const delta=Math.max(0,layoutBottom-visualBottom);
-  const stableBottom=Math.min(layoutBottom,visualBottom+Math.min(delta,18));
-  const top=Math.max(0,Math.round(stableBottom-height-gap));
-  nav.style.setProperty('top',top+'px');
-  nav.style.setProperty('bottom','auto');
-}
-function schedulePlayerBottomPosition(){
-  requestAnimationFrame(syncPlayerBottomPosition);
-}
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',schedulePlayerBottomPosition,{passive:true});
-  window.visualViewport.addEventListener('scroll',schedulePlayerBottomPosition,{passive:true});
-}
-window.addEventListener('resize',schedulePlayerBottomPosition,{passive:true});
-window.addEventListener('pageshow',()=>{
-  schedulePlayerBottomPosition();
-  setTimeout(schedulePlayerBottomPosition,200);
-  setTimeout(schedulePlayerBottomPosition,700);
-});
-
 function bindPlayerBottomNav(){
-  schedulePlayerBottomPosition();
-  setTimeout(schedulePlayerBottomPosition,120);
-  setTimeout(schedulePlayerBottomPosition,450);
+  // Keep fixed navigation outside the animated/clipped main content.
+  const nav=ui.root.querySelector('.player-bottom-nav');
+  if(nav){
+    document.querySelectorAll('body > .player-bottom-nav').forEach(old=>old.remove());
+    document.body.appendChild(nav);
+  }
   bind('tab-home',()=>{folder=null;folderOrigin='home';mode='';render();});
   bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();});
   bind('tab-profile',()=>{folder=null;mode='profile';render();});
@@ -937,6 +894,7 @@ function renderPlayer(w){
 }
 
 function render(){
+  document.querySelectorAll('body > .player-bottom-nav').forEach(nav=>nav.remove());
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'||mode==='notifications');
