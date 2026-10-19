@@ -588,8 +588,12 @@ function syncPlayerBottomPosition(){
   // paintable viewport. Never position the navigation outside that area.
   const layoutBottom=window.innerHeight;
   const visualBottom=vv?vv.offsetTop+vv.height:layoutBottom;
-  const paintableBottom=Math.min(layoutBottom,visualBottom);
-  const top=Math.max(0,Math.round(paintableBottom-height-gap));
+  // At PWA startup WebKit may leave a short-lived black area below the
+  // reported visual viewport. Use the layout viewport when it is taller,
+  // but never move more than 18 CSS px into that unconfirmed area.
+  const delta=Math.max(0,layoutBottom-visualBottom);
+  const stableBottom=Math.min(layoutBottom,visualBottom+Math.min(delta,18));
+  const top=Math.max(0,Math.round(stableBottom-height-gap));
   nav.style.setProperty('top',top+'px');
   nav.style.setProperty('bottom','auto');
 }
