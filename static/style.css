@@ -2846,3 +2846,8 @@ body.player-theme .player-profile-card{
   backdrop-filter:none;
   -webkit-backdrop-filter:none;
 }
+
+/* iOS PWA launch: extend black canvas beneath the home-indicator safe area */
+html{background-color:#000}
+html .app-splash{background:#000}
+html .app-splash::before{content:"";position:absolute;top:-1px;right:0;bottom:calc(-1 * max(120px, env(safe-area-inset-bottom, 0px)));left:0;background:#000;pointer-events:none;z-index:-1}
