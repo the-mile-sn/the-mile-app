@@ -33,7 +33,7 @@ def shift_native_splash_down(png, shift=68):
     def chunk(tag, data):
         return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', binascii.crc32(tag + data) & 0xffffffff)
 
-    if png[:8] != b'\\x89PNG\\r\\n\\x1a\\n':
+    if png[:8] != b'\x89PNG\r\n\x1a\n':
         return png
     pos = 8
     header = None
@@ -86,7 +86,7 @@ def shift_native_splash_down(png, shift=68):
         previous = scan
     shift = min(max(shift, 0), height)
     black = bytes(stride)
-    output = b''.join(b'\\x00' + row for row in ([black] * shift + rows[:height - shift]))
+    output = b''.join(b'\x00' + row for row in ([black] * shift + rows[:height - shift]))
     return png[:8] + chunk(b'IHDR', header) + chunk(b'IDAT', zlib.compress(output, 9)) + chunk(b'IEND', b'')
 
 
