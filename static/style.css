@@ -2918,3 +2918,6 @@ body.player-theme .player-documents-screen .player-documents-card .player-menu-r
 }
 body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy strong{line-height:1.18}
 body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy small{margin-top:2px;line-height:1.2}
+
+/* Navigation lives directly under body, outside swipe clipping and animations. */
+body.player-theme > .player-bottom-nav{position:fixed;top:auto!important;bottom:max(14px,calc(env(safe-area-inset-bottom) + 8px));z-index:100;}
