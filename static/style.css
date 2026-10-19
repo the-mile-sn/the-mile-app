@@ -2847,7 +2847,9 @@ body.player-theme .player-profile-card{
   -webkit-backdrop-filter:none;
 }
 
-/* iOS PWA launch: extend black canvas beneath the home-indicator safe area */
-html{background-color:#000}
-html .app-splash{background:#000}
-html .app-splash::before{content:"";position:absolute;top:-1px;right:0;bottom:calc(-1 * max(120px, env(safe-area-inset-bottom, 0px)));left:0;background:#000;pointer-events:none;z-index:-1}
+/* iOS standalone: black root, including the area behind the home indicator. */
+html,body{background-color:#000}
+body{min-height:100vh;min-height:100dvh;overscroll-behavior:none}
+html .app-splash{background:#000;width:100%;height:100vh;height:100dvh}
+html .app-splash::before{content:"";position:fixed;inset:0;background:#000;z-index:-1;pointer-events:none}
+/* Do not overlay a fixed pseudo-element above the app: tabs must remain tappable. */
