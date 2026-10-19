@@ -2907,3 +2907,14 @@ body.player-theme .player-shell{
 body.player-theme .player-documents-screen .player-folder-title{font-size:22px}
 body.player-theme .player-documents-screen .player-documents-card .player-row-copy strong{font-size:15px}
 body.player-theme .player-documents-screen .player-documents-card .player-row-copy small{font-size:12px}
+
+/* Compact document lists to native iOS row density without altering other cards. */
+body.player-theme .player-home-v4 .player-documents-card .player-menu-row-clean,
+body.player-theme .player-documents-screen .player-documents-card .player-menu-row-clean{
+  box-sizing:border-box;
+  min-height:58px;
+  padding-top:9px;
+  padding-bottom:9px;
+}
+body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy strong{line-height:1.18}
+body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy small{margin-top:2px;line-height:1.2}
