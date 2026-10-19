@@ -566,12 +566,6 @@ function playerBottomNav(active){
 // iOS standalone can change its visual viewport after the first paint.
 // Pin the navigation to the visible viewport on initial load and every resize.
 function bindPlayerBottomNav(){
-  // Keep fixed navigation outside the animated/clipped main content.
-  const nav=ui.root.querySelector('.player-bottom-nav');
-  if(nav){
-    document.querySelectorAll('body > .player-bottom-nav').forEach(old=>old.remove());
-    document.body.appendChild(nav);
-  }
   bind('tab-home',()=>{folder=null;folderOrigin='home';mode='';render();});
   bind('tab-documents',()=>{folder=null;folderOrigin='documents';mode='documents';render();});
   bind('tab-profile',()=>{folder=null;mode='profile';render();});
@@ -884,7 +878,6 @@ function renderPlayer(w){
 }
 
 function render(){
-  document.querySelectorAll('body > .player-bottom-nav').forEach(nav=>nav.remove());
   document.body.ontouchstart=null;document.body.ontouchmove=null;document.body.ontouchend=null;document.body.ontouchcancel=null;document.body.classList.remove('swipe-revealing');
   const w=t();document.documentElement.lang=lang==='pt'?'pt-PT':'en';document.body.classList.toggle('player-theme',!!user&&user.role==='player');document.body.classList.toggle('player-internal',!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'));document.body.classList.toggle('login-theme',!user&&!activationToken&&loginMode==='login');ui.lang.textContent=lang==='pt'?'EN':'PT';ui.lang.hidden=!!user;ui.logout.hidden=!user||user.role==='player';if(user&&user.role==='admin'){ui.logout.innerHTML=playerIcon('person');ui.logout.setAttribute('aria-label',lang==='pt'?'Conta':'Account');ui.logout.title=lang==='pt'?'Conta':'Account';}else{ui.logout.textContent=w.logout;}ui.install.textContent=w.install;document.getElementById('tagline').textContent=w.foot;
   const internalPlayer=!!user&&user.role==='player'&&(folder!==null||mode==='password'||mode==='profile-password'||mode==='notifications');
