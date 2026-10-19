@@ -584,17 +584,13 @@ function syncPlayerBottomPosition(){
   if(!height)return;
   const focused=document.activeElement;
   const keyboardOpen=focused&&focused.matches('input,textarea,[contenteditable="true"]');
-  // iOS sometimes reports a temporarily shortened visual viewport on launch.
-  // In a portrait home-screen web app the full device height is a safer floor.
-  const ends=[window.innerHeight,document.documentElement.clientHeight];
-  if(vv)ends.push(vv.offsetTop+vv.height);
-  if(!keyboardOpen && window.innerHeight>=window.innerWidth){
-    ends.push(window.screen.height);
-  }
-  const visibleBottom=keyboardOpen && vv
-    ?vv.offsetTop+vv.height
-    :Math.max(...ends.filter(Number.isFinite));
-  nav.style.setProperty('top',Math.round(visibleBottom-height-gap)+'px');
+  // The screen's physical height can extend below the iOS web app's
+  // paintable viewport. Never position the navigation outside that area.
+  const layoutBottom=window.innerHeight;
+  const visualBottom=vv?vv.offsetTop+vv.height:layoutBottom;
+  const paintableBottom=Math.min(layoutBottom,visualBottom);
+  const top=Math.max(0,Math.round(paintableBottom-height-gap));
+  nav.style.setProperty('top',top+'px');
   nav.style.setProperty('bottom','auto');
 }
 function schedulePlayerBottomPosition(){
