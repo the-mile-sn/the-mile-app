@@ -2854,5 +2854,3 @@ html .app-splash{background:#000;width:100%;height:100vh;height:100dvh}
 html .app-splash::before{content:"";position:fixed;inset:0;background:#000;z-index:-1;pointer-events:none}
 /* Do not overlay a fixed pseudo-element above the app: tabs must remain tappable. */
 
-/* Match the web splash wordmark to the iOS native launch image (68 physical px at 3x). */
-html .app-splash .splash-wordmark{position:relative;top:-22.6667px}
