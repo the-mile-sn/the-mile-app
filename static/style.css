@@ -2921,3 +2921,14 @@ body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy
 
 /* Navigation lives directly under body, outside swipe clipping and animations. */
 body.player-theme > .player-bottom-nav{position:fixed;top:auto!important;bottom:max(14px,calc(env(safe-area-inset-bottom) + 8px));z-index:100;}
+
+/* Standalone iOS PWA: 100dvh and visualViewport can start too short.
+   100vh supplies a stable full-screen anchor before the first interaction. */
+html.mile-standalone body.player-theme > .player-bottom-nav{
+  position:fixed;
+  box-sizing:border-box;
+  height:70px;
+  min-height:70px;
+  top:calc(100vh - 70px - max(14px, env(safe-area-inset-bottom, 0px) + 8px)) !important;
+  bottom:auto !important;
+}
