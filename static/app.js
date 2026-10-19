@@ -21,10 +21,19 @@ if (activationToken) history.replaceState(null, '', location.pathname);
 function dismissSplash(){
   const splash=document.getElementById('splash');
   if(!splash)return;
-  const delay=Math.max(0,1600-(performance.now()-splashStartedAt));
+  const movie=document.getElementById('splash-video');
+  const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const skip=document.documentElement.classList.contains('skip-launch-splash');
+  const duration=(reducedMotion||skip)?0:2400;
+  const delay=Math.max(0,duration-(performance.now()-splashStartedAt));
+  if(movie){
+    movie.addEventListener('error',()=>splash.classList.add('video-failed'),{once:true});
+    if(movie.error)splash.classList.add('video-failed');
+    if(reducedMotion)movie.pause();
+  }
   setTimeout(()=>{
     splash.classList.add('is-hidden');
-    setTimeout(()=>splash.remove(),620);
+    setTimeout(()=>{movie?.pause();splash.remove();},620);
   },delay);
 }
 
