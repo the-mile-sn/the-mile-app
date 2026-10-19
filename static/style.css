@@ -2699,3 +2699,35 @@ body.player-theme .player-expired-home .player-expired-actions{height:112px;min-
 body.player-theme .player-expired-home .player-expired-documents{height:350px;min-height:350px;max-height:350px;flex:0 0 350px}
 body.player-theme .player-expired-home .player-expired-actions,
 body.player-theme .player-expired-home .player-expired-documents{width:100%;align-self:stretch}
+
+/* Bottom navigation: rounded pill proportions inspired by reference */
+body.player-theme .player-bottom-nav{
+  width:min(390px,calc(100% - 30px));
+  min-height:70px;
+  box-sizing:border-box;
+  padding:6px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:4px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(23,23,24,.94);
+}
+body.player-theme .player-bottom-item{
+  min-height:56px;
+  padding:6px 6px 5px;
+  border-radius:999px;
+  gap:4px;
+  font-size:11px;
+  line-height:1.1;
+}
+body.player-theme .player-bottom-item.is-active{
+  background:rgba(255,255,255,.105);
+}
+body.player-theme .player-bottom-icon{
+  width:25px;
+  height:25px;
+}
+body.player-theme .player-bottom-icon svg{
+  width:24px;
+  height:24px;
+}
