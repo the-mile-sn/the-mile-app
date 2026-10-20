@@ -810,7 +810,7 @@ def application(env, start_response):
                     if (not isinstance(endpoint,str) or len(endpoint)>1800 or not endpoint.startswith('https://') or
                         not isinstance(keys,dict) or not all(isinstance(keys.get(k),str) and 10<=len(keys[k])<=300 for k in ('p256dh','auth'))):
                         raise Problem(400,'invalid_request')
-                    c.execute("DELETE FROM push_subscriptions WHERE endpoint=?", (endpoint,))
+                    c.execute("DELETE FROM push_subscriptions WHERE user_id=? OR endpoint=?", (user['id'],endpoint))
                     c.execute("INSERT INTO push_subscriptions(endpoint,user_id,p256dh,auth,created) VALUES(?,?,?,?,?)",(endpoint,user['id'],keys['p256dh'],keys['auth'],now))
                     c.commit()
                     return respond(200, {'ok':True})
