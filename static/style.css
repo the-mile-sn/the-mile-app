@@ -2977,9 +2977,15 @@ body.player-theme .player-profile-action-icon{
 }
 
 /* Optical balance: slightly enlarge only the existing post-game icon. */
-body.player-theme .player-home-v4 #game-form .player-quick-icon .soccer-icon{
-  width:32px;
-  height:32px;
-  max-width:32px;
-  max-height:32px;
+/* The original football artwork occupies only ~60% of its 810px viewBox.
+   Give it a larger SVG box so its visible diameter matches the other quick icons. */
+body.player-theme .player-home-v4 #game-form .player-quick-icon svg.ball-icon{
+  width:48px;
+  height:48px;
+  max-width:48px;
+  max-height:48px;
+}
+/* Match plan/renewal text rhythm to document title/count rows. */
+body.player-theme .player-home-v4 .player-profile-card-copy .player-plan-state{
+  margin-bottom:2px;
 }
