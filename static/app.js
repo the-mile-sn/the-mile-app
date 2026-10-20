@@ -128,6 +128,27 @@ async function api(path,{method='GET',body=null,binary=false}={}){
   return data;
 }
 
+function pushKeyBytes(key){
+  const value=atob(key.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-key.length%4)%4));
+  return Uint8Array.from(value,character=>character.charCodeAt(0));
+}
+async function pushCapability(){
+  if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window))return false;
+  if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches)return false;
+  return true;
+}
+async function enablePlayerPush(){
+  if(!(await pushCapability())){notify('The Mile',lang==='pt'?'No iPhone, adiciona primeiro a The Mile ao ecrã principal.':'On iPhone, add The Mile to your Home Screen first.');return;}
+  const data=await api('/push/config');
+  if(!data.publicKey){notify('The Mile',lang==='pt'?'Notificações ainda em configuração.':'Notifications are being configured.');return;}
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){notify('The Mile',lang==='pt'?'Permissão de notificações não concedida.':'Notification permission was not granted.');return;}
+  const registration=await navigator.serviceWorker.ready;
+  let subscription=await registration.pushManager.getSubscription();
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(data.publicKey)});
+  await api('/push/subscription',{method:'POST',body:subscription.toJSON()});
+  notify('The Mile',lang==='pt'?'Notificações ativadas neste dispositivo.':'Notifications enabled on this device.');
+}
 function notify(title,text){ const n=document.getElementById('notice'); const nt=document.getElementById('notice-title'); nt.textContent=title; nt.hidden=!!user&&user.role==='player'; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; n.showModal(); }
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
@@ -696,6 +717,7 @@ function renderPlayer(w){
 
         <div class="player-profile-actions">
           <div class="player-language-setting"><span class="player-language-label"><span class="player-language-icon">${playerIcon('globe')}</span><span>${lang==='pt'?'Idioma predefinido':'Default language'}</span></span><div class="player-language-options" role="group" aria-label="${lang==='pt'?'Idioma da aplicação':'Application language'}"><button type="button" id="profile-lang-pt" class="${lang==='pt'?'is-active':''}" aria-pressed="${lang==='pt'}">PT</button><button type="button" id="profile-lang-en" class="${lang==='en'?'is-active':''}" aria-pressed="${lang==='en'}">EN</button></div></div>
+          <button class="player-profile-action" id="profile-enable-push" type="button"><span class="player-profile-action-icon">${playerIcon('bell')}</span><span>${lang==='pt'?'Ativar notificações':'Enable notifications'}</span></button>
           <button class="player-profile-action" id="profile-change-password" type="button"><span class="player-profile-action-icon">${playerIcon('key')}</span><span>${w.changePassword}</span></button>
           <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button"><span class="player-profile-action-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span></button>
         </div>
@@ -704,6 +726,7 @@ function renderPlayer(w){
       bindPlayerBottomNav();
       bind('profile-lang-pt',()=>{lang='pt';localStorage.setItem('mile-language',lang);render();});
       bind('profile-lang-en',()=>{lang='en';localStorage.setItem('mile-language',lang);render();});
+      bind('profile-enable-push',enablePlayerPush);
       bind('profile-change-password',()=>{mode='profile-password';render();});
       bind('profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
       enablePlayerTabSwipe('profile');
