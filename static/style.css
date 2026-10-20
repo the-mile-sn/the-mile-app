@@ -2916,3 +2916,34 @@ body.player-theme .player-documents-card .player-menu-row-clean .player-row-copy
 /* Splash-only black overscan: no viewport or bottom navigation positioning changes. */
 html .app-splash{background:#000}
 html .app-splash::before{content:"";position:absolute;top:-1px;right:0;bottom:calc(-1 * max(120px, env(safe-area-inset-bottom, 0px)));left:0;background:#000;pointer-events:none;z-index:-1}
+
+/* Profile-only visual polish. Match the existing account-action card corners. */
+body.player-theme .player-profile-plan,
+body.player-theme .player-language-setting{
+  border-radius:20px;
+}
+body.player-theme .player-language-label{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+body.player-theme .player-language-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+  width:22px;
+  height:22px;
+  color:#c9c9cd;
+}
+body.player-theme .player-language-icon svg{
+  width:22px;
+  height:22px;
+}
+body.player-theme .player-language-options{
+  border-radius:16px;
+}
+body.player-theme .player-language-options button{
+  border-radius:13px;
+}
