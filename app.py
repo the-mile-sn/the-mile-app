@@ -318,6 +318,37 @@ def clean_player_payload(body, require_password=False, require_photo=False):
 
 
 
+def send_player_push(c, user_id, title, message, notification_id):
+    """Deliver a push to each subscribed device without affecting in-app storage."""
+    private = os.environ.get('MILE_VAPID_PRIVATE_KEY_B64', '')
+    if not private:
+        return
+    try:
+        from pywebpush import webpush, WebPushException
+        private_key = base64.b64decode(private).decode('ascii')
+        subscriptions = c.execute(
+            "SELECT endpoint,p256dh,auth FROM push_subscriptions WHERE user_id=?", (user_id,)).fetchall()
+        for sub in subscriptions:
+            try:
+                webpush(
+                    subscription_info={'endpoint':sub['endpoint'],'keys':{'p256dh':sub['p256dh'],'auth':sub['auth']}},
+                    data=json.dumps({'title':title,'body':message,'id':notification_id},ensure_ascii=False),
+                    vapid_private_key=private_key,
+                    vapid_claims={'sub':'mailto:themile.sn@gmail.com'},
+                    timeout=8)
+            except WebPushException as exc:
+                status = getattr(getattr(exc,'response',None),'status_code',None)
+                if status in (404,410):
+                    c.execute("DELETE FROM push_subscriptions WHERE endpoint=?",(sub['endpoint'],))
+                else:
+                    logging.warning('Push delivery failed (status %s)',status)
+            except Exception:
+                logging.exception('Push delivery failure')
+        c.commit()
+    except Exception:
+        logging.exception('Push dispatch unavailable')
+
+
 def create_due_renewal_notifications(c, today=None):
     """Create idempotent in-app renewal reminders based on Lisbon calendar days."""
     today = today or datetime.now(ZoneInfo('Europe/Lisbon')).date()
@@ -342,9 +373,14 @@ def create_due_renewal_notifications(c, today=None):
             continue
         identity = 'renewal:' + player['id'] + ':' + player['renewal_date'] + ':' + stage
         nid = hashlib.sha256(identity.encode('utf-8')).hexdigest()[:32]
-        result = c.execute(
+        exists = c.execute("SELECT id FROM notifications WHERE id=?", (nid,)).fetchone()
+        if exists:
+            continue
+        c.execute(
             "INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,NULL,NULL,?,NULL,NULL,NULL) ON CONFLICT(id) DO NOTHING",
             (nid, player['id'], title, message, 'renewal', now))
+        c.commit()
+        send_player_push(c, player['id'], title, message, nid)
         created += 1
     c.commit()
     return created
@@ -815,10 +851,15 @@ def application(env, start_response):
                         if not d or d['user_id']!=recipients[0]:
                             raise Problem(400, 'invalid_request')
                         folder_target = d['folder']
+                    created_push=[]
                     for uid in recipients:
+                        nid=secrets.token_hex(16)
                         c.execute('INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,?,?,?,NULL,NULL,?)',
-                                  (secrets.token_hex(16),uid,title,message,category,document_id,folder_target,now,user['id']))
+                                  (nid,uid,title,message,category,document_id,folder_target,now,user['id']))
+                        created_push.append((uid,nid))
                     c.commit()
+                    for uid,nid in created_push:
+                        send_player_push(c,uid,title,message,nid)
                     return respond(201, {'ok':True,'sent':len(recipients)})
 
             if path.startswith('/api/notifications/'):
