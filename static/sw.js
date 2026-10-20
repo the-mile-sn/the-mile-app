@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'the-mile-shell-v119';
+const CACHE = 'the-mile-shell-v120';
 const SHELL = ['/', '/style.css?v=145', '/app.js?v=150', '/logo.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/pdf-open.html', '/pdf-open.css', '/pdf-open.js'];
 
 self.addEventListener('install', event => {
@@ -51,10 +51,19 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients => {
-    for (const client of clients) {
-      if (new URL(client.url).origin === self.location.origin) return client.focus();
+  const destination = new URL('/?view=notifications', self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({type:'window', includeUncontrolled:true});
+    for (const client of windows) {
+      if (new URL(client.url).origin === self.location.origin) {
+        try {
+          const target = await client.navigate(destination);
+          if (target) return target.focus();
+        } catch (_) {
+          try { return client.focus(); } catch (_) {}
+        }
+      }
     }
-    return self.clients.openWindow('/');
-  }));
+    return self.clients.openWindow(destination);
+  })());
 });
