@@ -156,7 +156,17 @@ async function enablePlayerPush(){
   if(permission!=='granted'){notify('The Mile',lang==='pt'?'Permissão de notificações não concedida.':'Notification permission was not granted.');return;}
   const registration=await navigator.serviceWorker.ready;
   let subscription=await registration.pushManager.getSubscription();
-  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushKeyBytes(data.publicKey)});
+  const desiredKey=pushKeyBytes(data.publicKey);
+  if(subscription){
+    const existingKey=subscription.options?.applicationServerKey;
+    const matches=existingKey&&Array.from(new Uint8Array(existingKey)).join(',')===Array.from(desiredKey).join(',');
+    if(!matches){
+      await api('/push/subscription',{method:'DELETE',body:{endpoint:subscription.endpoint}});
+      await subscription.unsubscribe();
+      subscription=null;
+    }
+  }
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:desiredKey});
   await api('/push/subscription',{method:'POST',body:subscription.toJSON()});
   notify('The Mile',lang==='pt'?'Notificações ativadas neste dispositivo.':'Notifications enabled on this device.');
 }
