@@ -188,7 +188,7 @@ function notify(title,text){ const n=document.getElementById('notice'); const nt
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
 function bind(id,fn){ const el=document.getElementById(id); if(el)el.onclick=()=>Promise.resolve().then(fn).catch(error); }
 function enablePressFeedback(root=document){
-  root.querySelectorAll('.player-quick-action,.player-profile-card,.player-menu-row-clean,.player-doc-row,.player-profile-plan,.player-profile-action').forEach(el=>{
+  root.querySelectorAll('.player-quick-action,.player-profile-card,.player-menu-row-clean,.player-doc-row,.player-profile-plan,.player-profile-action:not(.player-profile-push-card)').forEach(el=>{
     if(el.dataset.pressBound==='1')return;
     el.dataset.pressBound='1';
     const press=()=>el.classList.add('is-pressed');
