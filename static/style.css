@@ -2947,3 +2947,31 @@ body.player-theme .player-language-options{
 body.player-theme .player-language-options button{
   border-radius:13px;
 }
+
+/* Align the three Profile icons and text to one shared grid. */
+body.player-theme .player-language-setting{
+  padding-left:20px;
+}
+body.player-theme .player-language-label{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  align-items:center;
+  gap:12px;
+}
+body.player-theme .player-language-icon{
+  width:28px;
+  height:28px;
+}
+body.player-theme .player-language-icon svg{
+  width:26px;
+  height:26px;
+}
+body.player-theme .player-profile-action{
+  grid-template-columns:28px minmax(0,1fr);
+  align-items:center;
+  column-gap:12px;
+}
+body.player-theme .player-profile-action-icon{
+  width:28px;
+  height:28px;
+}
