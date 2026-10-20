@@ -3005,11 +3005,11 @@ body.player-theme .player-notifications-screen .player-notification-row.is-unrea
 body.player-theme .player-expired-home .player-expired-actions,
 body.player-theme .player-expired-home .player-expired-documents{border:0!important;background:#171719!important;box-shadow:none!important}
 
-/* The Mile profile notification switch */
-body.player-theme .player-profile-push-card{display:grid;grid-template-columns:28px minmax(0,1fr) 48px;align-items:center;column-gap:12px;cursor:default}
-body.player-theme .player-push-switch{justify-self:end;position:relative;width:44px;height:26px;padding:3px;border:0;border-radius:99px;background:#505054;transition:background .2s ease;cursor:pointer}
-body.player-theme .player-push-switch[aria-checked="true"]{background:#f5f5f7}
-body.player-theme .player-push-switch-thumb{display:block;width:20px;height:20px;border-radius:50%;background:#f5f5f7;box-shadow:0 1px 3px rgba(0,0,0,.22);transition:transform .2s ease,background .2s ease}
-body.player-theme .player-push-switch[aria-checked="true"] .player-push-switch-thumb{transform:translateX(18px);background:#171719}
-body.player-theme .player-push-switch:disabled{opacity:.55;cursor:wait}
+/* Notification control matches the existing PT/EN segmented selector. */
+body.player-theme .player-profile-push-card{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;cursor:default}
+body.player-theme .player-push-switch{display:flex;align-items:center;gap:3px;width:auto;height:auto;min-width:100px;min-height:42px;padding:3px;border:0;border-radius:10px;background:#303034;cursor:pointer;box-shadow:none;appearance:none;-webkit-appearance:none}
+body.player-theme .player-push-choice{display:flex;align-items:center;justify-content:center;min-width:45px;min-height:36px;padding:6px 9px;border-radius:8px;background:transparent;color:#a8a8af;font-size:12px;font-weight:600;line-height:1}
+body.player-theme .player-push-switch[aria-checked="true"] .player-push-choice-on,
+body.player-theme .player-push-switch[aria-checked="false"] .player-push-choice-off{background:#55555a;color:#fff}
+body.player-theme .player-push-switch:disabled{opacity:.6;cursor:wait}
 body.player-theme .player-push-switch:focus-visible{outline:2px solid #f5f5f7;outline-offset:3px}
