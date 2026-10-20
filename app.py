@@ -325,7 +325,10 @@ def send_player_push(c, user_id, title, message, notification_id):
         return
     try:
         from pywebpush import webpush, WebPushException
-        private_key = base64.b64decode(private).decode('ascii')
+        from cryptography.hazmat.primitives import serialization
+        key = serialization.load_pem_private_key(base64.b64decode(private), password=None)
+        der = key.private_bytes(serialization.Encoding.DER, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+        private_key = base64.urlsafe_b64encode(der).rstrip(b'=').decode('ascii')
         subscriptions = c.execute(
             "SELECT endpoint,p256dh,auth FROM push_subscriptions WHERE user_id=?", (user_id,)).fetchall()
         for sub in subscriptions:
