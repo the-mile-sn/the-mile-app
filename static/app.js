@@ -301,6 +301,11 @@ function fileToDataURL(file){
 
 async function refresh(){
   const session=await api('/me'); user=session.user; csrf=session.csrf;
+  const pushDestination=new URLSearchParams(location.search).get('view')==='notifications';
+  if(pushDestination){
+    history.replaceState(null,'',location.pathname);
+    if(user&&user.role==='player'){folder=null;mode='notifications';}
+  }
   if(user){ if(user.role==='admin'){const [p,a]=await Promise.all([api('/players'),api('/admins')]);players=p.players;admins=a.admins;} else {const n=await api('/notifications');notifications=n.notifications;docs=user.access_expired?[]:(await api('/documents')).documents;} }
   render();
 }
