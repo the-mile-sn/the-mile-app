@@ -3057,3 +3057,7 @@ body.player-theme .player-language-options,body.player-theme .player-push-switch
 body.player-theme .player-profile-push-card{grid-template-columns:28px minmax(0,1fr) 76px!important}
 body.player-theme .player-push-thumb{width:36px!important;height:25px!important;left:2px!important;top:2px!important;border-radius:999px!important}
 body.player-theme .player-push-switch[aria-checked="true"] .player-push-thumb{transform:translateX(36px)!important}
+
+/* Apple green for enabled push notifications; retain white thumb */
+body.player-theme .player-push-switch[aria-checked="true"]{background:#34c759!important}
+body.player-theme .player-push-switch[aria-checked="true"] .player-push-thumb{background:#fff!important}
