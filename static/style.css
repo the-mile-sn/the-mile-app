@@ -2997,6 +2997,6 @@ body.player-theme .player-notifications-screen .player-notification-row.is-unrea
 /* Quiet unread marker and gentle emphasis in the notifications inbox */
 body.player-theme .player-notifications-screen .player-notification-row{position:relative;padding:16px 18px}
 body.player-theme .player-notifications-screen .player-notification-content{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;min-width:0}
-body.player-theme .player-notifications-screen .player-notification-row.is-unread{padding-left:35px}
+body.player-theme .player-notifications-screen .player-notification-row{padding-left:35px}
 body.player-theme .player-notifications-screen .player-notification-row.is-unread::before{content:"";position:absolute;left:17px;top:24px;width:6px;height:6px;border-radius:50%;background:#b7b7bc}
 body.player-theme .player-notifications-screen .player-notification-row.is-unread strong{font-weight:550;color:#f0f0f2}
