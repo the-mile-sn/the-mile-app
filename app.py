@@ -315,6 +315,59 @@ def clean_player_payload(body, require_password=False, require_photo=False):
     }
 
 
+
+def create_due_renewal_notifications(c, today=None):
+    """Create idempotent in-app renewal reminders based on Lisbon calendar days."""
+    today = today or datetime.now(ZoneInfo('Europe/Lisbon')).date()
+    now = int(time.time())
+    players = c.execute("SELECT id,renewal_date FROM users WHERE role='player' AND active=1 AND renewal_date IS NOT NULL AND renewal_date<>''").fetchall()
+    created = 0
+    for player in players:
+        try:
+            renewal = datetime.strptime(player['renewal_date'], '%Y-%m-%d').date()
+        except (TypeError, ValueError):
+            continue
+        remaining = (renewal - today).days
+        if remaining == 7:
+            stage = 'before'
+            title = 'Renovação do acompanhamento'
+            message = 'O teu acompanhamento The Mile aproxima-se da data de renovação.'
+        elif remaining == -1:
+            stage = 'after'
+            title = 'Renovação pendente'
+            message = 'A data de renovação do teu acompanhamento The Mile já passou. Contacta a nossa equipa para regularizares a situação.'
+        else:
+            continue
+        identity = 'renewal:' + player['id'] + ':' + player['renewal_date'] + ':' + stage
+        nid = hashlib.sha256(identity.encode('utf-8')).hexdigest()[:32]
+        result = c.execute(
+            "INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,NULL,NULL,?,NULL,NULL,NULL) ON CONFLICT(id) DO NOTHING",
+            (nid, player['id'], title, message, 'renewal', now))
+        created += 1
+    c.commit()
+    return created
+
+
+def start_renewal_notification_scheduler():
+    """Best-effort daily check in the paid web process, independent of logins."""
+    import threading
+
+    def loop():
+        last_checked = None
+        while True:
+            day = datetime.now(ZoneInfo('Europe/Lisbon')).date()
+            if day != last_checked:
+                try:
+                    with connect() as c:
+                        create_due_renewal_notifications(c, day)
+                    last_checked = day
+                except Exception:
+                    logging.exception('Renewal notification check failed')
+            time.sleep(3600)
+
+    threading.Thread(target=loop, name='mile-renewal-check', daemon=True).start()
+
+
 def access_valid(row):
     if row['role'] != 'player':
         return True
