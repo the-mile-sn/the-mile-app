@@ -137,6 +137,17 @@ async function pushCapability(){
   if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.matchMedia('(display-mode: standalone)').matches)return false;
   return true;
 }
+async function removePlayerPush(){
+  if(!('serviceWorker'in navigator)||!('PushManager'in window))return;
+  try {
+    const registration=await navigator.serviceWorker.ready;
+    const subscription=await registration.pushManager.getSubscription();
+    if(subscription){
+      await api('/push/subscription',{method:'DELETE',body:{endpoint:subscription.endpoint}});
+      await subscription.unsubscribe();
+    }
+  } catch(e){console.warn('Could not remove push subscription',e);}
+}
 async function enablePlayerPush(){
   if(!(await pushCapability())){notify('The Mile',lang==='pt'?'No iPhone, adiciona primeiro a The Mile ao ecrã principal.':'On iPhone, add The Mile to your Home Screen first.');return;}
   const data=await api('/push/config');
@@ -728,7 +739,7 @@ function renderPlayer(w){
       bind('profile-lang-en',()=>{lang='en';localStorage.setItem('mile-language',lang);render();});
       bind('profile-enable-push',enablePlayerPush);
       bind('profile-change-password',()=>{mode='profile-password';render();});
-      bind('profile-logout',async()=>{await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
+      bind('profile-logout',async()=>{await removePlayerPush();await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
       enablePlayerTabSwipe('profile');
       return;
     }
