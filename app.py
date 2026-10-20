@@ -335,7 +335,7 @@ def create_due_renewal_notifications(c, today=None):
         elif remaining == -1:
             stage = 'after'
             title = 'Renovação pendente'
-            message = 'A data de renovação do teu acompanhamento The Mile já passou. Contacta a nossa equipa para regularizares a situação.'
+            message = 'O teu acompanhamento The Mile aguarda renovação. Contacta a nossa equipa para regularizares a situação.'
         else:
             continue
         identity = 'renewal:' + player['id'] + ':' + player['renewal_date'] + ':' + stage
