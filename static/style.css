@@ -3000,3 +3000,7 @@ body.player-theme .player-notifications-screen .player-notification-content{disp
 body.player-theme .player-notifications-screen .player-notification-row{padding-left:35px}
 body.player-theme .player-notifications-screen .player-notification-row.is-unread::before{content:"";position:absolute;left:17px;top:24px;width:6px;height:6px;border-radius:50%;background:#b7b7bc}
 body.player-theme .player-notifications-screen .player-notification-row.is-unread strong{font-weight:550;color:#f0f0f2}
+
+/* Expired-home placeholders use the same borderless filled cards as the active home */
+body.player-theme .player-expired-home .player-expired-actions,
+body.player-theme .player-expired-home .player-expired-documents{border:0!important;background:#171719!important;box-shadow:none!important}
