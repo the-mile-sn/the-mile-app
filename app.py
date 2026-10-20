@@ -170,6 +170,7 @@ def initialize():
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size BIGINT NOT NULL, updated BIGINT NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BYTEA NOT NULL);
             CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_time BIGINT NOT NULL);
+            CREATE TABLE IF NOT EXISTS push_subscriptions(endpoint TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), p256dh TEXT NOT NULL, auth TEXT NOT NULL, created BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), title TEXT NOT NULL, message TEXT NOT NULL, category TEXT NOT NULL, document_id TEXT, folder TEXT, created BIGINT NOT NULL, read_at BIGINT, document_opened_at BIGINT, created_by TEXT REFERENCES users(id));
             CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications(user_id,created DESC);
 
@@ -197,6 +198,7 @@ def initialize():
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size INTEGER NOT NULL, updated INTEGER NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BLOB NOT NULL);
             CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER NOT NULL, until_time INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS push_subscriptions(endpoint TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), p256dh TEXT NOT NULL, auth TEXT NOT NULL, created INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), title TEXT NOT NULL, message TEXT NOT NULL, category TEXT NOT NULL, document_id TEXT, folder TEXT, created INTEGER NOT NULL, read_at INTEGER, document_opened_at INTEGER, created_by TEXT REFERENCES users(id));
             CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications(user_id,created DESC);
 
@@ -751,6 +753,32 @@ def application(env, start_response):
                     c.commit()
                     return respond(200, {'ok': True})
                 raise Problem(404, 'not_found')
+
+            if path == '/api/push/config' and method == 'GET':
+                if not user or user['role'] != 'player':
+                    raise Problem(401, 'unauthorized')
+                return respond(200, {'publicKey': os.environ.get('MILE_VAPID_PUBLIC_KEY','')})
+
+            if path == '/api/push/subscription':
+                if not user or user['role'] != 'player':
+                    raise Problem(401, 'unauthorized')
+                if method == 'POST':
+                    body = read_json(env)
+                    endpoint = body.get('endpoint')
+                    keys = body.get('keys')
+                    if (not isinstance(endpoint,str) or len(endpoint)>1800 or not endpoint.startswith('https://') or
+                        not isinstance(keys,dict) or not all(isinstance(keys.get(k),str) and 10<=len(keys[k])<=300 for k in ('p256dh','auth'))):
+                        raise Problem(400,'invalid_request')
+                    c.execute("DELETE FROM push_subscriptions WHERE endpoint=?", (endpoint,))
+                    c.execute("INSERT INTO push_subscriptions(endpoint,user_id,p256dh,auth,created) VALUES(?,?,?,?,?)",(endpoint,user['id'],keys['p256dh'],keys['auth'],now))
+                    c.commit()
+                    return respond(200, {'ok':True})
+                if method == 'DELETE':
+                    body=read_json(env)
+                    endpoint=body.get('endpoint','')
+                    c.execute("DELETE FROM push_subscriptions WHERE endpoint=? AND user_id=?",(endpoint,user['id']))
+                    c.commit()
+                    return respond(200, {'ok':True})
 
             if path == '/api/notifications':
                 if not user:
