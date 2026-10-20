@@ -3061,3 +3061,15 @@ body.player-theme .player-push-switch[aria-checked="true"] .player-push-thumb{tr
 /* Apple green for enabled push notifications; retain white thumb */
 body.player-theme .player-push-switch[aria-checked="true"]{background:#34c759!important}
 body.player-theme .player-push-switch[aria-checked="true"] .player-push-thumb{background:#fff!important}
+
+/* Notification settings card must remain static, like language settings. */
+body.player-theme .player-profile-push-card,
+body.player-theme .player-profile-push-card:hover,
+body.player-theme .player-profile-push-card:active,
+body.player-theme .player-profile-push-card.is-pressed,
+body.player-theme .player-profile-push-card:focus-within{
+  transform:none!important;
+  background:rgba(245,245,247,.10)!important;
+  box-shadow:none!important;
+  transition:none!important;
+}
