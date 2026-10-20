@@ -2993,3 +2993,10 @@ body.player-theme .player-home-v4 .player-profile-card-copy .player-plan-state{
 /* Borderless notifications match the filled cards throughout the player app, including expired access */
 body.player-theme .player-notifications-screen .player-notification-row,
 body.player-theme .player-notifications-screen .player-notification-row.is-unread{border:0;border-color:transparent;background:#171719;box-shadow:none}
+
+/* Quiet unread marker and gentle emphasis in the notifications inbox */
+body.player-theme .player-notifications-screen .player-notification-row{position:relative;padding:16px 18px}
+body.player-theme .player-notifications-screen .player-notification-content{display:flex;flex-direction:column;align-items:flex-start;gap:7px;width:100%;min-width:0}
+body.player-theme .player-notifications-screen .player-notification-row.is-unread{padding-left:35px}
+body.player-theme .player-notifications-screen .player-notification-row.is-unread::before{content:"";position:absolute;left:17px;top:24px;width:6px;height:6px;border-radius:50%;background:#b7b7bc}
+body.player-theme .player-notifications-screen .player-notification-row.is-unread strong{font-weight:550;color:#f0f0f2}
