@@ -182,7 +182,7 @@ async function enablePlayerPush(){
   }
   if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:desiredKey});
   await api('/push/subscription',{method:'POST',body:subscription.toJSON()});
-  notify('The Mile',lang==='pt'?'Notificações ativadas neste dispositivo.':'Notifications enabled on this device.');
+  // The switch itself indicates success; no in-app confirmation dialog.
 }
 function notify(title,text){ const n=document.getElementById('notice'); const nt=document.getElementById('notice-title'); nt.textContent=title; nt.hidden=!!user&&user.role==='player'; document.getElementById('notice-text').textContent=text; document.getElementById('notice-link').hidden=true; document.getElementById('copy-link').hidden=true; n.showModal(); }
 function error(e){ const el=ui.root.querySelector('.error'); const msg=t().errors[e.message]||t().errors.generic; if(el)el.textContent=msg; else notify('The Mile',msg); }
