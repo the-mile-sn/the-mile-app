@@ -331,7 +331,7 @@ def send_player_push(c, user_id, title, message, notification_id):
         private_key = base64.urlsafe_b64encode(der).rstrip(b'=').decode('ascii')
         subscriptions = c.execute(
             "SELECT endpoint,p256dh,auth FROM push_subscriptions WHERE user_id=?", (user_id,)).fetchall()
-        logging.info('Push attempt: subscribed devices=%d', len(subscriptions))
+        logging.warning('Push attempt: subscribed devices=%d', len(subscriptions))
         for sub in subscriptions:
             try:
                 response = webpush(
@@ -340,7 +340,7 @@ def send_player_push(c, user_id, title, message, notification_id):
                     vapid_private_key=private_key,
                     vapid_claims={'sub':'mailto:themile.sn@gmail.com'},
                     timeout=8)
-                logging.info('Push gateway response status=%s', getattr(response, 'status_code', None))
+                logging.warning('Push gateway response status=%s', getattr(response, 'status_code', None))
             except WebPushException as exc:
                 status = getattr(getattr(exc,'response',None),'status_code',None)
                 if status in (404,410):
