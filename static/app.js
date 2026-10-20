@@ -635,7 +635,7 @@ function renderPlayer(w){
     }
     if(mode==='notifications'){
       ui.root.innerHTML=`<section class="player-shell player-notifications-screen"><h1>${lang==='pt'?'Notificações':'Notifications'}</h1>
-        ${notifications.length?'<div class="player-notifications-list">'+notifications.map(n=>`<button class="player-notification-row ${n.read_at?'':'is-unread'}" data-notification="${esc(n.id)}"><strong>${esc(n.title)}</strong><small>${esc(n.message)}</small></button>`).join('')+'</div>':`<div class="player-notifications-empty"><span class="player-notifications-icon">${playerIcon('bell')}</span><strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong></div>`}
+        ${notifications.length?'<div class="player-notifications-list">'+notifications.map(n=>`<button class="player-notification-row ${n.read_at?'':'is-unread'}" data-notification="${esc(n.id)}"><span class="player-notification-content"><strong>${esc(n.title)}</strong><small>${esc(n.message)}</small></span></button>`).join('')+'</div>':`<div class="player-notifications-empty"><span class="player-notifications-icon">${playerIcon('bell')}</span><strong>${lang==='pt'?'Sem notificações':'No notifications'}</strong></div>`}
       </section>`;
       ui.root.querySelectorAll('[data-notification]').forEach(b=>b.onclick=async()=>{
         const n=notifications.find(item=>item.id===b.dataset.notification);
