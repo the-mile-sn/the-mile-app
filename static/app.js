@@ -148,6 +148,20 @@ async function removePlayerPush(){
     }
   } catch(e){console.warn('Could not remove push subscription',e);}
 }
+async function syncPlayerPushSwitch(){
+  const toggle=document.getElementById('profile-enable-push');
+  if(!toggle)return;
+  let active=false;
+  try{
+    if('serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window&&Notification.permission==='granted'){
+      const registration=await navigator.serviceWorker.ready;
+      active=!!(await registration.pushManager.getSubscription());
+    }
+  }catch(e){console.warn('Push subscription state unavailable',e);}
+  if(!toggle.isConnected)return;
+  toggle.setAttribute('aria-checked',String(active));
+  toggle.disabled=false;
+}
 async function enablePlayerPush(){
   if(!(await pushCapability())){notify('The Mile',lang==='pt'?'No iPhone, adiciona primeiro a The Mile ao ecrã principal.':'On iPhone, add The Mile to your Home Screen first.');return;}
   const data=await api('/push/config');
@@ -743,7 +757,7 @@ function renderPlayer(w){
 
         <div class="player-profile-actions">
           <div class="player-language-setting"><span class="player-language-label"><span class="player-language-icon">${playerIcon('globe')}</span><span>${lang==='pt'?'Idioma predefinido':'Default language'}</span></span><div class="player-language-options" role="group" aria-label="${lang==='pt'?'Idioma da aplicação':'Application language'}"><button type="button" id="profile-lang-pt" class="${lang==='pt'?'is-active':''}" aria-pressed="${lang==='pt'}">PT</button><button type="button" id="profile-lang-en" class="${lang==='en'?'is-active':''}" aria-pressed="${lang==='en'}">EN</button></div></div>
-          <button class="player-profile-action" id="profile-enable-push" type="button"><span class="player-profile-action-icon">${playerIcon('bell')}</span><span>${lang==='pt'?'Ativar notificações':'Enable notifications'}</span></button>
+          <div class="player-profile-action player-profile-push-card"><span class="player-profile-action-icon">${playerIcon('bell')}</span><span>${lang==='pt'?'Ativar notificações':'Enable notifications'}</span><button id="profile-enable-push" class="player-push-switch" type="button" role="switch" aria-checked="false" aria-label="${lang==='pt'?'Ativar notificações':'Enable notifications'}"><span class="player-push-switch-thumb"></span></button></div>
           <button class="player-profile-action" id="profile-change-password" type="button"><span class="player-profile-action-icon">${playerIcon('key')}</span><span>${w.changePassword}</span></button>
           <button class="player-profile-action player-profile-action-danger" id="profile-logout" type="button"><span class="player-profile-action-icon">${playerIcon('logout')}</span><span>${lang==='pt'?'Terminar sessão':'Sign out'}</span></button>
         </div>
@@ -752,7 +766,20 @@ function renderPlayer(w){
       bindPlayerBottomNav();
       bind('profile-lang-pt',()=>{lang='pt';localStorage.setItem('mile-language',lang);render();});
       bind('profile-lang-en',()=>{lang='en';localStorage.setItem('mile-language',lang);render();});
-      bind('profile-enable-push',enablePlayerPush);
+      bind('profile-enable-push',async()=>{
+        const toggle=document.getElementById('profile-enable-push');
+        if(toggle?.disabled)return;
+        toggle.disabled=true;
+        try{
+          if(toggle.getAttribute('aria-checked')==='true'){
+            await removePlayerPush();
+          }else{
+            await enablePlayerPush();
+          }
+        }catch(e){error(e);}
+        finally{await syncPlayerPushSwitch();}
+      });
+      syncPlayerPushSwitch();
       bind('profile-change-password',()=>{mode='profile-password';render();});
       bind('profile-logout',async()=>{await removePlayerPush();await api('/logout',{method:'POST',body:{}});user=null;csrf=null;folder=null;mode='';docs=[];render();});
       enablePlayerTabSwipe('profile');
