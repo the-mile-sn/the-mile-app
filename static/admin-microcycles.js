@@ -148,7 +148,7 @@ function showImportedDraft(draft){
         const name=document.createElement("span");
         name.textContent=item.kind==="food"?item.quantity+" · "+item.name:item.text;
         if(item.kind==="instruction")name.textContent="Preparação: "+item.text;
-        if(item.kind==="title")name.textContent="Descrição: "+item.text.replace(/^[-–]\\s*/,"");
+        if(item.kind==="title"){name.className="import-option-title";name.textContent="Descrição: "+(option.title||item.text.replace(/^[-–]\\s*/,""));}
         line.appendChild(name);
         if(item.nutrients){
           const nutrient=document.createElement("span");nutrient.className="import-nutrients";
@@ -210,6 +210,8 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
         body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:check.checked}})});
       option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
       feedback.textContent="Correções guardadas no rascunho, sem publicação.";
+      const displayedTitle=details.querySelector(".import-option-title");
+      if(displayedTitle)displayedTitle.textContent="Descrição: "+option.title;
     }catch(e){feedback.textContent="Erro: "+e.message;}finally{save.disabled=false;}
   });
   details.appendChild(form);
