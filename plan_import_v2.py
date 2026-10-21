@@ -63,7 +63,8 @@ def structure_line(raw):
 def enrich_groups(groups):
     for group in groups:
         for option in group["options"]:
-            if "items" not in option:\n                option["items"] = [structure_line(line) for line in option["lines"]]
+            if "items" not in option:
+                option["items"] = [structure_line(line) for line in option["lines"]]
     return [group for group in groups if group["options"]]
 
 
