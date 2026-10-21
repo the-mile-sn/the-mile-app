@@ -115,18 +115,9 @@ def connect():
         if psycopg is None:
             raise RuntimeError('DATABASE_URL is set but psycopg is not installed')
         return PgConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
-    logging.warning('TEST_DB_TRACE before_sqlite_open')
-    import faulthandler
-    faulthandler.dump_traceback_later(8, repeat=False)
-    try:
-        c = sqlite3.connect(DATA / 'mile.sqlite3', timeout=20)
-    finally:
-        faulthandler.cancel_dump_traceback_later()
-    logging.warning('TEST_DB_TRACE after_sqlite_open')
+    c = sqlite3.connect(DATA / 'mile.sqlite3', timeout=20)
     c.row_factory = sqlite3.Row
-    logging.warning('TEST_DB_TRACE before_foreign_keys')
     c.execute('PRAGMA foreign_keys = ON')
-    logging.warning('TEST_DB_TRACE after_foreign_keys')
     return c
 
 
@@ -546,12 +537,9 @@ def application(env, start_response):
             pass
         token = cookies['mile_session'].value if 'mile_session' in cookies else ''
 
-        logging.warning('TEST_API_TRACE before_connect path=%s', path)
         with connect() as c:
-            logging.warning('TEST_API_TRACE after_connect path=%s', path)
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
-            logging.warning('TEST_API_TRACE after_session_query path=%s', path)
 
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
