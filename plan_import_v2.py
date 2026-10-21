@@ -27,7 +27,7 @@ OPTION = re.compile(r"^\s*[-–]?\s*Opção\s+(\d+)\b", re.IGNORECASE)
 NUTRIENTS = re.compile(r"(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s*$")
 
 
-FOOD = re.compile(r"^(?P<quantity>(?:\\d+(?:[,.]\\d+)?\\s*(?:un|g|ml|tigela|c\\.sopa|c\\.café)(?:\\s*/\\s*\\d+\\s*g)?|\\d+\\s*un\\s*/\\s*\\d+\\s*g))\\s+(?P<name>.+)$", re.IGNORECASE)
+FOOD = re.compile(r"^(?P<quantity>\d+(?:[,.]\d+)?\s*(?:un|g|ml|tigela|c\.sopa|c\.café)(?:\s*/\s*\d+\s*g)?)\s+(?P<name>.+)$", re.IGNORECASE)
 NOTE_PREFIXES = ("numa ", "servir com", "para a massa", "misturar", "levar ao ", "preparar ", "adicionar ", "aquecer ", "cozinhar ", "juntar ")
 
 
