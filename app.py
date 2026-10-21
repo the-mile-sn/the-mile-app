@@ -110,12 +110,22 @@ GAME_FORM = os.environ.get('MILE_GAME_FORM', 'https://forms.gle/NFmz3rLNJmC44VGC
 USERNAME_RE = re.compile(r'^[a-z]+$')
 
 
+class ClosingSQLiteConnection(sqlite3.Connection):
+    """Commit/rollback and close SQLite connections on context exit."""
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
 def connect():
     if DATABASE_URL:
         if psycopg is None:
             raise RuntimeError('DATABASE_URL is set but psycopg is not installed')
         return PgConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
-    c = sqlite3.connect(DATA / 'mile.sqlite3', timeout=20)
+    c = sqlite3.connect(DATA / 'mile.sqlite3', timeout=20, factory=ClosingSQLiteConnection)
     c.row_factory = sqlite3.Row
     c.execute('PRAGMA foreign_keys = ON')
     return c
