@@ -63,7 +63,7 @@ def structure_line(raw):
 def enrich_groups(groups):
     for group in groups:
         for option in group["options"]:
-            option["items"] = [structure_line(line) for line in option["lines"]]
+            if "items" not in option:\n                option["items"] = [structure_line(line) for line in option["lines"]]
     return [group for group in groups if group["options"]]
 
 
@@ -158,3 +158,61 @@ def get_draft(c, athlete_id, draft_id):
     result["extracted"] = json.loads(result.pop("extracted_json"))
     result["extracted"]["groups"] = enrich_groups(result["extracted"]["groups"])
     return result
+
+
+NUTRIENT_KEYS = ("kcal", "protein_g", "carbs_g", "fat_g")
+
+
+def update_option(c, athlete_id, draft_id, group_index, option_index, payload):
+    """Persist one reviewed option. Never change publication or other athletes."""
+    draft = get_draft(c, athlete_id, draft_id)
+    if draft is None:
+        return None
+    groups = draft["extracted"]["groups"]
+    if type(group_index) is not int or type(option_index) is not int:
+        raise ValueError("invalid_option")
+    if group_index < 0 or group_index >= len(groups):
+        raise ValueError("invalid_option")
+    options = groups[group_index]["options"]
+    if option_index < 0 or option_index >= len(options):
+        raise ValueError("invalid_option")
+    if not isinstance(payload, dict):
+        raise ValueError("invalid_option")
+    items = payload.get("items")
+    totals = payload.get("totals")
+    title = payload.get("title")
+    reviewed = payload.get("reviewed")
+    if not isinstance(items, list) or len(items) > 80 or not isinstance(title, str) or len(title) > 300 or type(reviewed) is not bool:
+        raise ValueError("invalid_option")
+    if totals is not None and (not isinstance(totals, dict) or set(totals) != set(NUTRIENT_KEYS)):
+        raise ValueError("invalid_totals")
+    if totals is not None and any(not isinstance(v, str) or len(v) > 24 for v in totals.values()):
+        raise ValueError("invalid_totals")
+    clean = []
+    for item in items:
+        if not isinstance(item, dict) or item.get("kind") not in ("food", "title", "note", "instruction"):
+            raise ValueError("invalid_item")
+        kind = item["kind"]
+        text = item.get("text", "")
+        name = item.get("name", "")
+        quantity = item.get("quantity", "")
+        values = item.get("nutrients")
+        if any(not isinstance(v, str) or len(v) > 600 for v in (text, name, quantity)):
+            raise ValueError("invalid_item")
+        if kind == "food" and (not name.strip() or not quantity.strip()):
+            raise ValueError("invalid_food")
+        if values is not None and (kind != "food" or not isinstance(values, dict) or set(values) != set(NUTRIENT_KEYS)
+                                   or any(not isinstance(v, str) or len(v) > 24 for v in values.values())):
+            raise ValueError("invalid_nutrients")
+        clean.append({"kind": kind, "text": text, "name": name, "quantity": quantity, "nutrients": values})
+    option = options[option_index]
+    option["items"] = clean
+    option["title"] = title
+    option["totals"] = totals
+    option["reviewed"] = reviewed
+    # Preserve the original PDF lines for traceability.
+    draft["extracted"]["groups"] = groups
+    c.execute("UPDATE v2_plan_imports SET extracted_json=? WHERE id=? AND athlete_id=? AND status='draft'",
+              (json.dumps(draft["extracted"], ensure_ascii=False), draft_id, athlete_id))
+    c.commit()
+    return option
