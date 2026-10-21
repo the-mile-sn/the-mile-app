@@ -552,6 +552,48 @@ def application(env, start_response):
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
 
+            if path.startswith('/api/v2/athletes/') and path.endswith('/calendar') and method == 'GET':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                start = (query.get('start') or [''])[0]
+                end = (query.get('end') or [''])[0]
+                try:
+                    from calendar_v2 import classify_range
+                    matches = microcycles_v2.list_matches(c, aid)
+                    days = classify_range(start, end, [m['match_date'] for m in matches])
+                except ValueError:
+                    raise Problem(400, 'invalid_calendar_range')
+                return respond(200, {'matches': matches, 'days': days})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/matches'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                if method == 'GET':
+                    return respond(200, {'matches': microcycles_v2.list_matches(c, aid)})
+                if method == 'POST':
+                    body = read_json(env)
+                    try:
+                        match = microcycles_v2.add_match(c, aid, body.get('match_date'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_or_duplicate_match')
+                    if match is None:
+                        raise Problem(404, 'not_found')
+                    return respond(201, {'match': match})
+            if path.startswith('/api/v2/athletes/') and '/matches/' in path and method == 'DELETE':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 7 or parts[5] != 'matches':
+                    raise Problem(404, 'not_found')
+                if not microcycles_v2.delete_match(c, parts[4], parts[6]):
+                    raise Problem(404, 'not_found')
+                return respond(200, {'ok': True})
+
             if path == '/api/v2/athletes':
                 if not user:
                     raise Problem(401, 'unauthorized')
