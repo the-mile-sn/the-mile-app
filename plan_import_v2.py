@@ -169,6 +169,8 @@ def update_option(c, athlete_id, draft_id, group_index, option_index, payload):
     draft = get_draft(c, athlete_id, draft_id)
     if draft is None:
         return None
+    if draft["status"] != "draft":
+        raise ValueError("plan_not_in_review")
     groups = draft["extracted"]["groups"]
     if type(group_index) is not int or type(option_index) is not int:
         raise ValueError("invalid_option")
@@ -217,3 +219,29 @@ def update_option(c, athlete_id, draft_id, group_index, option_index, payload):
               (json.dumps(draft["extracted"], ensure_ascii=False), draft_id, athlete_id))
     c.commit()
     return option
+
+
+def set_review_status(c, athlete_id, draft_id, action):
+    """Approve a fully reviewed plan or reopen it; never publish to players."""
+    draft = get_draft(c, athlete_id, draft_id)
+    if draft is None:
+        return None
+    if action == "approve":
+        if draft["status"] != "draft":
+            raise ValueError("invalid_status")
+        options = [option for group in draft["extracted"]["groups"] for option in group["options"]]
+        if not options or any(option.get("reviewed") is not True for option in options):
+            raise ValueError("pending_review")
+        new_status = "validated"
+    elif action == "reopen":
+        if draft["status"] != "validated":
+            raise ValueError("invalid_status")
+        new_status = "draft"
+    else:
+        raise ValueError("invalid_action")
+    result = c.execute("UPDATE v2_plan_imports SET status=? WHERE id=? AND athlete_id=? AND status=?",
+                       (new_status, draft_id, athlete_id, draft["status"]))
+    if result.rowcount != 1:
+        raise ValueError("status_changed")
+    c.commit()
+    return new_status
