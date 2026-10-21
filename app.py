@@ -592,6 +592,15 @@ def application(env, start_response):
                         if draft is None:
                             raise Problem(404, 'not_found')
                         return respond(201, {'draft': draft})
+                if len(segments) == 7 and segments[6] == 'review-status' and method == 'POST':
+                    body = read_json(env)
+                    try:
+                        state = plan_import_v2.set_review_status(c, athlete_id, segments[5], body.get('action'))
+                    except ValueError:
+                        raise Problem(400, 'review_incomplete_or_invalid_status')
+                    if state is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'status': state})
                 if len(segments) == 6 and method == 'PUT':
                     body = read_json(env)
                     try:
