@@ -43,6 +43,15 @@ class PlanImportTests(unittest.TestCase):
         self.assertIn("Numa taça juntar e mexer:", plan["groups"][0]["options"][0]["lines"])
         self.assertGreater(len(plan["warnings"]), 0)
 
+    def test_food_nutrients_and_instruction(self):
+        food = plan_import_v2.structure_line("2 un / 110 g Ovo 158 13,8 0,0 11,4")
+        self.assertEqual(food["kind"], "food")
+        self.assertEqual(food["quantity"], "2 un / 110 g")
+        self.assertEqual(food["name"], "Ovo")
+        self.assertEqual(food["nutrients"]["protein_g"], "13,8")
+        instruction = plan_import_v2.structure_line("Numa taça juntar, mexer e levar ao frigorífico por 6h:")
+        self.assertEqual(instruction["kind"], "instruction")
+
     def test_color_allowlist(self):
         self.assertNotIn("purple", plan_import_v2.ALLOWED_COLORS)
 
