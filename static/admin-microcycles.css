@@ -21,3 +21,23 @@
 .calendar-match-item{display:flex;align-items:center;gap:10px;border:1px solid #353538;border-radius:9px;padding:5px 7px 5px 11px;font-size:12px}
 .calendar-match-item button{padding:6px 9px;font-size:11px}
 @media(max-width:620px){.calendar-panel{padding:13px}.calendar-day{min-height:50px;padding:5px}.calendar-day span{font-size:9px}.calendar-days{gap:4px}.calendar-navigation button{padding:7px}}
+
+/* Read-only colors derived from each athlete's configured microcycle matrix. */
+.calendar-day{cursor:pointer}
+.calendar-day:focus-visible{outline:2px solid #f4f4f5;outline-offset:2px}
+.calendar-day.calendar-selected{box-shadow:inset 0 0 0 1px #c7c7ce}
+.day-color-strip{display:flex;gap:3px;margin-top:auto;flex-wrap:nowrap}
+.day-color-dot{display:block;flex:1;min-width:2px;height:5px;border-radius:3px;background:#414146}
+.meal-orange{background:#e89448!important;color:#1b1410!important}
+.meal-yellow{background:#e4c85d!important;color:#19170f!important}
+.meal-blue{background:#63a7d8!important;color:#101d27!important}
+.meal-green{background:#72c697!important;color:#102319!important}
+.meal-vp{background:#a0d8a0!important;color:#112511!important}
+.day-preview{margin-top:13px;padding:14px;border:1px solid #353538;border-radius:12px;background:#19191d}
+.day-preview h3{font-size:14px;margin:0 0 12px}
+.day-meals{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.day-meal{display:flex;flex-direction:column;gap:8px;padding:9px;border:1px solid #323238;border-radius:9px}
+.day-meal span{font-size:11px;color:#b8b8c0}
+.day-meal strong{font-size:11px;font-weight:600;padding:6px;border-radius:5px;text-align:center;min-height:30px}
+.day-preview p{font-size:11px;margin:12px 0 0}
+@media(max-width:720px){.day-meals{grid-template-columns:repeat(2,minmax(0,1fr))}}
