@@ -137,9 +137,9 @@ function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const h=document.createElement("h3");h.textContent="Revisão · "+draft.filename+" · "+(colors[draft.color]||draft.color);root.appendChild(h);
   for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
-  for(const group of draft.extracted.groups){
+  draft.extracted.groups.forEach((group,groupIndex)=>{
     const groupTitle=document.createElement("h3");groupTitle.textContent=group.heading+" → "+group.meals.map(m=>names[m]).join(" / ");root.appendChild(groupTitle);
-    for(const option of group.options){
+    group.options.forEach((option,optionIndex)=>{
       const details=document.createElement("details");details.className="import-option";
       const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar");details.appendChild(summary);
       if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
@@ -158,9 +158,61 @@ function showImportedDraft(draft){
         if(item.needs_review){const note=document.createElement("small");note.textContent="Verificar";line.appendChild(note);}
         details.appendChild(line);
       }
-      root.appendChild(details);
-    }
+      const edit=document.createElement("button");edit.type="button";edit.textContent="Editar e validar opção";
+      edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
+      details.appendChild(edit);root.appendChild(details);
+    });
+  });
+}
+
+function showOptionEditor(draft,groupIndex,optionIndex,details){
+  const option=draft.extracted.groups[groupIndex].options[optionIndex];
+  const existing=details.querySelector(".option-editor");if(existing){existing.remove();return;}
+  const form=document.createElement("div");form.className="option-editor";
+  const field=(label,value,parent=form)=>{
+    const wrap=document.createElement("label");wrap.textContent=label;
+    const input=document.createElement("input");input.value=value||"";wrap.appendChild(input);parent.appendChild(wrap);return input;
+  };
+  const title=field("Título / descrição",option.title||((option.items||[]).find(i=>i.kind==="title")||{}).text||"");
+  const totals={};
+  for(const [key,label] of [["kcal","kcal"],["protein_g","Proteína (g)"],["carbs_g","HC (g)"],["fat_g","Gordura (g)"]]){
+    totals[key]=field("Total · "+label,option.totals?.[key]||"");
   }
+  const edits=[];
+  (option.items||[]).forEach((item,index)=>{
+    const box=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
+    const type=document.createElement("select");
+    for(const [value,label] of [["food","Alimento"],["instruction","Confeção"],["title","Descrição"],["note","Nota"]]){
+      const el=document.createElement("option");el.value=value;el.textContent=label;type.appendChild(el);
+    }
+    type.value=item.kind;box.appendChild(type);
+    const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,box);
+    const quantity=field("Quantidade",item.quantity||"",box);
+    const nutrients={};
+    for(const [key,label] of [["kcal","kcal"],["protein_g","P (g)"],["carbs_g","HC (g)"],["fat_g","G (g)"]]){
+      nutrients[key]=field(label,item.nutrients?.[key]||"",box);
+    }
+    form.appendChild(box);edits.push({type,name,quantity,nutrients});
+  });
+  const reviewed=document.createElement("label");const check=document.createElement("input");check.type="checkbox";check.checked=Boolean(option.reviewed);reviewed.append(check,document.createTextNode(" Confirmo que revi esta opção"));form.appendChild(reviewed);
+  const save=document.createElement("button");save.type="button";save.textContent="Guardar correções";form.appendChild(save);
+  const feedback=document.createElement("p");form.appendChild(feedback);
+  save.addEventListener("click",async()=>{
+    save.disabled=true;
+    const entries=edits.map(edit=>{
+      const kind=edit.type.value;
+      const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
+      return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null};
+    });
+    const totalValues=Object.fromEntries(Object.entries(totals).map(([key,input])=>[key,input.value.trim()]));
+    try{
+      const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{method:"PUT",
+        body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:check.checked}})});
+      option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
+      feedback.textContent="Correções guardadas no rascunho, sem publicação.";
+    }catch(e){feedback.textContent="Erro: "+e.message;}finally{save.disabled=false;}
+  });
+  details.appendChild(form);
 }
 $("import-submit").addEventListener("click",async()=>{
   if(!model)return;
