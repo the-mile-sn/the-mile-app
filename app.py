@@ -9,6 +9,7 @@ import os
 import re
 import secrets
 import sqlite3
+import microcycles_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -225,6 +226,7 @@ def initialize():
                 if column not in existing:
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
+        microcycles_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         c.execute("UPDATE users SET weekly_next_activate_at=NULL")
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
@@ -515,6 +517,7 @@ def application(env, start_response):
             '/manifest.webmanifest': 'manifest.webmanifest', '/sw.js': 'sw.js', '/icon-192.png': 'icon-192.png',
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
+            '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
             return respond(200, shift_native_splash_down(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAABSgAAAs0AQAAAACjwb+YAAAFX0lEQVR42u3aP27bZhwG4JeyEKtAgGjokCFohZ6gY4cCUW/iI3Tslq83yBFyFHbrmCOoQIeOSpHBKWSzA21HIh07kGhTQZ5nUGRGoV5+//j7GCcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwGN72Vw5z6vNbR/4vtncvDtv3zTrQ75x8jAXcn3axbCneyDLJHl1fqQpq4fpmqGVnT+OvMePvC2Xg3b8192Wi0HP/rBtOT2GlHesg/PRr/aPKmku7v6Xs63XL2P2/D471pTTQfv9616JJkOWRA/dls1Rp6yrrfvkEbdlSZJyeTQpX9ZJkpNm9fHY9dvOhuPl5SErxiFO64skyc/5rlsUdUuikzqrxTht+VNOkqSqU9U3B9fb99DrHVpeJC9G6vG6HYNPkvy4dYdf3HLys7RX9PgpT9pvz/MkT3t/u7O/rUp7USOknF7dCM92TrbJvD/oJ3sv9AennG2tPFXZPT7LavujT3PV5o+fct4m6qzilx8HbafmnI6SctF+c+e+3dyMhO4uYzJKymV7kmlSlX6lVnY/+m6237by4JTlr2k7DN/l9VZtXib9mVIy/7Dfg4RDU1Z5c9GOubd5f19JdLFv/XFoyklTUqp2olxsTY26SrK83L2gTfJ2r5wH9/hlO5EXTbnq5q0hWTpf9c/1TenRU26uCqDL3XVndVtJtOodeayU5227LZNkVW3dGpfd6TxtL2Y+Rsr1ViW5vuexQr3vFuPglKs2XDnv5ltkshu7XabKbIyU9U60cuczmLL3SjLMxqS6ZVJlultsjLnvKZ9aoGbdp0Tzfv3xePueK8+aW7a29S23oosR2rL55PFp5kM9/P/KnxOlTLJojiXl5edP+2Nsy7pbEh1lylVK2Qx1ssFWonefUUVUo7fluvfzL91iozm+Hh90Pg2Wct4r2n7oV3JH15abIU/2gD3+backWo+esun9N9llZr36p3wJs2f8Hi/TpH08uLXslM58WqZ9GjteW06S5PXd3btI8s2YKesqycnsrlW8ffI6L6OOy5JMpzvlRq/YmCU5W46YcpWz5Pnk7iLvSVKVxYgp13menFU7uTfd1aoqeTLOs42bCXya03LfmPg1v41buSXN7nxZ936to86zZr9b0FBt+V9vf3Hey7Paeh0nZduK7z+jBK1HTNku4uud5XHVG7tJmlHXyzc3L3ePir12bMPuKMrO8tjt26bcOygeOuW/ST7sjtRyW3u/HjVlU5I/7/nM33sOywGdNvdvIl41dQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACO0/8MV9LumUcAZAAAAABJRU5ErkJggg==')), 'image/png')
@@ -548,6 +551,41 @@ def application(env, start_response):
                         raise Problem(403, 'origin')
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
+
+            if path == '/api/v2/athletes':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200, {'athletes': microcycles_v2.list_athletes(c)})
+                if method == 'POST':
+                    try:
+                        athlete = microcycles_v2.create_athlete(c, read_json(env).get('name', ''))
+                    except ValueError:
+                        raise Problem(400, 'invalid_athlete_name')
+                    return respond(201, {'athlete': athlete})
+            if path.startswith('/api/v2/athletes/'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                segments = path.strip('/').split('/')
+                if len(segments) == 5 and segments[4] == 'microcycles' and method == 'GET':
+                    result = microcycles_v2.get_model(c, segments[3])
+                    if result is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, result)
+                if len(segments) == 6 and segments[4] == 'microcycles' and method == 'PUT':
+                    body = read_json(env)
+                    if 'color' not in body:
+                        raise Problem(400, 'invalid_model_cell')
+                    try:
+                        ok = microcycles_v2.update_cell(c, segments[3], segments[5],
+                            body.get('meal'), body.get('color'), user['id'])
+                    except ValueError:
+                        raise Problem(400, 'invalid_model_cell')
+                    if not ok:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'ok': True})
 
             if path == '/api/me' and method == 'GET':
                 if not user:
