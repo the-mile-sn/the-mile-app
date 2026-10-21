@@ -27,6 +27,46 @@ OPTION = re.compile(r"^\s*[-–]?\s*Opção\s+(\d+)\b", re.IGNORECASE)
 NUTRIENTS = re.compile(r"(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s*$")
 
 
+FOOD = re.compile(r"^(?P<quantity>(?:\\d+(?:[,.]\\d+)?\\s*(?:un|g|ml|tigela|c\\.sopa|c\\.café)(?:\\s*/\\s*\\d+\\s*g)?|\\d+\\s*un\\s*/\\s*\\d+\\s*g))\\s+(?P<name>.+)$", re.IGNORECASE)
+NOTE_PREFIXES = ("numa ", "servir com", "para a massa", "misturar", "levar ao ", "preparar ", "adicionar ", "aquecer ", "cozinhar ", "juntar ")
+
+
+def structure_line(raw):
+    text = re.sub(r"\\s+", " ", raw).strip()
+    if not text:
+        return {"kind": "note", "text": raw}
+    totals = NUTRIENTS.search(text)
+    body = text[:totals.start()].strip() if totals else text
+    lower = body.casefold().lstrip("-– ").strip()
+    if lower.endswith(":") or lower.startswith(NOTE_PREFIXES):
+        kind = "instruction"
+    else:
+        match = FOOD.match(body)
+        kind = "food" if match else ("title" if body.startswith(("-", "–")) else "note")
+    entry = {"kind": kind, "text": body, "source": raw}
+    if kind == "food":
+        match = FOOD.match(body)
+        entry["quantity"] = match.group("quantity")
+        entry["name"] = match.group("name")
+        if totals:
+            entry["nutrients"] = {
+                "kcal": totals.group(1), "protein_g": totals.group(2),
+                "carbs_g": totals.group(3), "fat_g": totals.group(4)
+            }
+        else:
+            entry["needs_review"] = True
+    elif totals:
+        entry["needs_review"] = True
+    return entry
+
+
+def enrich_groups(groups):
+    for group in groups:
+        for option in group["options"]:
+            option["items"] = [structure_line(line) for line in option["lines"]]
+    return [group for group in groups if group["options"]]
+
+
 def initialize(c):
     c.execute("""CREATE TABLE IF NOT EXISTS v2_plan_imports (
         id TEXT PRIMARY KEY,
@@ -84,9 +124,10 @@ def extract_plan(pdf_bytes):
                 if lowered.startswith("www.themile.pt") or lowered in ("plano alimentar",):
                     continue
                 current_option["lines"].append(plain)
-    if not groups or not any(g["options"] for g in groups):
+    groups = enrich_groups(groups)
+    if not groups:
         raise ValueError("pdf_structure_unrecognized")
-    warnings.append("Confirmar manualmente alimentos, quantidades, valores e instruções; as linhas ainda não são dados validados.")
+    warnings.append("Rever os alimentos, quantidades, valores e instruções extraídos antes da validação clínica.")
     return {"groups": groups, "warnings": warnings, "pages": len(reader.pages)}
 
 
