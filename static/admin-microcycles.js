@@ -136,12 +136,28 @@ async function loadPlanDrafts(){
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const h=document.createElement("h3");h.textContent="Revisão · "+draft.filename+" · "+(colors[draft.color]||draft.color);root.appendChild(h);
+  const allOptions=draft.extracted.groups.flatMap(group=>group.options);
+  const reviewedCount=allOptions.filter(option=>option.reviewed===true).length;
+  const totalCount=allOptions.length;
+  const overview=document.createElement("section");overview.className="import-validation-progress";
+  const count=document.createElement("strong");
+  count.textContent=reviewedCount+" de "+totalCount+" opções revistas";
+  overview.appendChild(count);
+  const summary=document.createElement("p");
+  summary.textContent=totalCount>0&&reviewedCount===totalCount
+    ?"Todas as opções foram revistas. Plano validado internamente, ainda não publicado."
+    :"Faltam "+(totalCount-reviewedCount)+" opções por rever. O plano mantém-se em rascunho.";
+  overview.appendChild(summary);
+  const progress=document.createElement("progress");progress.max=Math.max(totalCount,1);progress.value=reviewedCount;
+  progress.setAttribute("aria-label","Progresso da revisão de opções");
+  overview.appendChild(progress);
+  root.appendChild(overview);
   for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
   draft.extracted.groups.forEach((group,groupIndex)=>{
     const groupTitle=document.createElement("h3");groupTitle.textContent=group.heading+" → "+group.meals.map(m=>names[m]).join(" / ");root.appendChild(groupTitle);
     group.options.forEach((option,optionIndex)=>{
       const details=document.createElement("details");details.className="import-option";
-      const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar");details.appendChild(summary);
+      const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar")+" · "+(option.reviewed===true?"Revista":"Por rever");details.appendChild(summary);
       if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
       if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
       for(const item of option.items||[]){
