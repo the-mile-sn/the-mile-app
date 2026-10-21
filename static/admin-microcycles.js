@@ -143,7 +143,22 @@ function showImportedDraft(draft){
       const details=document.createElement("details");details.className="import-option";
       const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar");details.appendChild(summary);
       if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
-      const pre=document.createElement("pre");pre.textContent=option.lines.join("\n");details.appendChild(pre);root.appendChild(details);
+      for(const item of option.items||[]){
+        const line=document.createElement("div");line.className="import-structured-line";
+        const name=document.createElement("span");
+        name.textContent=item.kind==="food"?item.quantity+" · "+item.name:item.text;
+        if(item.kind==="instruction")name.textContent="Preparação: "+item.text;
+        if(item.kind==="title")name.textContent="Descrição: "+item.text.replace(/^[-–]\\s*/,"");
+        line.appendChild(name);
+        if(item.nutrients){
+          const nutrient=document.createElement("span");nutrient.className="import-nutrients";
+          nutrient.textContent=item.nutrients.kcal+" kcal · P "+item.nutrients.protein_g+" g · HC "+item.nutrients.carbs_g+" g · G "+item.nutrients.fat_g+" g";
+          line.appendChild(nutrient);
+        }
+        if(item.needs_review){const note=document.createElement("small");note.textContent="Verificar";line.appendChild(note);}
+        details.appendChild(line);
+      }
+      root.appendChild(details);
     }
   }
 }
