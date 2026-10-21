@@ -143,12 +143,13 @@ function showImportedDraft(draft){
       const details=document.createElement("details");details.className="import-option";
       const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar");details.appendChild(summary);
       if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
+      if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
       for(const item of option.items||[]){
+        if(item.kind==="title")continue;
         const line=document.createElement("div");line.className="import-structured-line";
         const name=document.createElement("span");
         name.textContent=item.kind==="food"?item.quantity+" · "+item.name:item.text;
-        if(item.kind==="instruction")name.textContent="Preparação: "+item.text;
-        if(item.kind==="title"){name.className="import-option-title";name.textContent="Descrição: "+(option.title||item.text.replace(/^[-–]\\s*/,""));}
+        if(item.kind==="instruction"||item.kind==="note")name.textContent="Nota: "+item.text;
         line.appendChild(name);
         if(item.nutrients){
           const nutrient=document.createElement("span");nutrient.className="import-nutrients";
@@ -179,13 +180,13 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     totals[key]=field("Total · "+label,option.totals?.[key]||"");
   }
   const edits=[];
-  (option.items||[]).forEach((item,index)=>{
+  (option.items||[]).filter(item=>item.kind!=="title").forEach((item,index)=>{
     const box=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
     const type=document.createElement("select");
-    for(const [value,label] of [["food","Alimento"],["instruction","Confeção"],["title","Descrição"],["note","Nota"]]){
+    for(const [value,label] of [["food","Alimento"],["note","Nota"]]){
       const el=document.createElement("option");el.value=value;el.textContent=label;type.appendChild(el);
     }
-    type.value=item.kind;box.appendChild(type);
+    type.value=item.kind==="food"?"food":"note";box.appendChild(type);
     const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,box);
     const quantity=field("Quantidade",item.quantity||"",box);
     const nutrients={};
@@ -210,8 +211,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
         body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:check.checked}})});
       option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
       feedback.textContent="Correções guardadas no rascunho, sem publicação.";
-      const displayedTitle=details.querySelector(".import-option-title");
-      if(displayedTitle)displayedTitle.textContent="Descrição: "+option.title;
+      showImportedDraft(draft);
     }catch(e){feedback.textContent="Erro: "+e.message;}finally{save.disabled=false;}
   });
   details.appendChild(form);
