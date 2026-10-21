@@ -156,4 +156,5 @@ def get_draft(c, athlete_id, draft_id):
         return None
     result = dict(row)
     result["extracted"] = json.loads(result.pop("extracted_json"))
+    result["extracted"]["groups"] = enrich_groups(result["extracted"]["groups"])
     return result
