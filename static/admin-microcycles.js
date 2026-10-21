@@ -181,7 +181,8 @@ function showImportedDraft(draft){
       validate.addEventListener("click",async()=>{
         validate.disabled=true;
         try{
-          const payload={title:option.title||"",totals:option.totals||null,
+          const sourceTitle=(option.items||[]).find(i=>i.kind==="title");
+          const payload={title:option.title||(sourceTitle?sourceTitle.text.replace(/^[-–]\\s*/,""):""),totals:option.totals||null,
             items:(option.items||[]).filter(i=>i.kind!=="title").map(i=>({
               kind:i.kind==="food"?"food":"note",
               text:i.text||"",name:i.kind==="food"?(i.name||""):"",
