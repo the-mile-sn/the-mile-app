@@ -23,8 +23,8 @@ MEAL_MAP = {
     "ceia": ["supper"],
     "lanche": ["snack"],
 }
-OPTION = re.compile(r"^\\s*[-–]?\\s*Opção\\s+(\\d+)\\b", re.IGNORECASE)
-NUTRIENTS = re.compile(r"(\\d+[,.]?\\d*)\\s+(\\d+[,.]?\\d*)\\s+(\\d+[,.]?\\d*)\\s+(\\d+[,.]?\\d*)\\s*$")
+OPTION = re.compile(r"^\s*[-–]?\s*Opção\s+(\d+)\b", re.IGNORECASE)
+NUTRIENTS = re.compile(r"(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s+(\d+[,.]?\d*)\s*$")
 
 
 def initialize(c):
@@ -56,7 +56,7 @@ def extract_plan(pdf_bytes):
             line = raw.strip()
             if not line:
                 continue
-            plain = re.sub(r"\\s+", " ", line).strip()
+            plain = re.sub(r"\s+", " ", line).strip()
             # A subsection heading has no trailing numeric nutrition columns.
             lowered = plain.casefold()
             meal = MEAL_MAP.get(lowered)
