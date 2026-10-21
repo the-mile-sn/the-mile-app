@@ -41,3 +41,13 @@
 .day-meal strong{font-size:11px;font-weight:600;padding:6px;border-radius:5px;text-align:center;min-height:30px}
 .day-preview p{font-size:11px;margin:12px 0 0}
 @media(max-width:720px){.day-meals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+#plan-import-panel .calendar-add{justify-content:flex-start}
+#plan-import-panel input[type=file]{max-width:350px}
+#plan-import-panel select{min-width:150px}
+#import-list{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#import-list button{font-size:12px}
+#import-review h3{font-size:15px;margin:20px 0 9px}
+#import-review pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c4c4cb;font:12px/1.7 ui-monospace,monospace}
+#import-review .import-option{padding:12px;border:1px solid #353538;border-radius:9px;margin:8px 0}
+#import-review summary{cursor:pointer;font-weight:600}
