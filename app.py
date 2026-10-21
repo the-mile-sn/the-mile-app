@@ -537,9 +537,12 @@ def application(env, start_response):
             pass
         token = cookies['mile_session'].value if 'mile_session' in cookies else ''
 
+        logging.warning('TEST_API_TRACE before_connect path=%s', path)
         with connect() as c:
+            logging.warning('TEST_API_TRACE after_connect path=%s', path)
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
+            logging.warning('TEST_API_TRACE after_session_query path=%s', path)
 
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
