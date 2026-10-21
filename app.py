@@ -115,9 +115,13 @@ def connect():
         if psycopg is None:
             raise RuntimeError('DATABASE_URL is set but psycopg is not installed')
         return PgConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
+    logging.warning('TEST_DB_TRACE before_sqlite_open')
     c = sqlite3.connect(DATA / 'mile.sqlite3', timeout=20)
+    logging.warning('TEST_DB_TRACE after_sqlite_open')
     c.row_factory = sqlite3.Row
+    logging.warning('TEST_DB_TRACE before_foreign_keys')
     c.execute('PRAGMA foreign_keys = ON')
+    logging.warning('TEST_DB_TRACE after_foreign_keys')
     return c
 
 
