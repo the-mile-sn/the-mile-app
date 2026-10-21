@@ -125,7 +125,7 @@ async function loadPlanDrafts(){
   if(!data.drafts.length){list.textContent="Ainda não existem rascunhos deste jogador.";return;}
   for(const d of data.drafts){
     const btn=document.createElement("button");btn.type="button";
-    btn.textContent=(colors[d.color]||d.color)+" · "+d.filename+" · Rascunho";
+    btn.textContent=(colors[d.color]||d.color)+" · "+d.filename+" · "+(d.status==="validated"?"Validado":"Rascunho");
     btn.addEventListener("click",async()=>{
       try{const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(d.id));showImportedDraft(result.draft);}
       catch(e){$("import-feedback").textContent=e.message;}
@@ -151,6 +151,25 @@ function showImportedDraft(draft){
   const progress=document.createElement("progress");progress.max=Math.max(totalCount,1);progress.value=reviewedCount;
   progress.setAttribute("aria-label","Progresso da revisão de opções");
   overview.appendChild(progress);
+  const approval=document.createElement("button");approval.type="button";
+  const approved=draft.status==="validated";
+  approval.textContent=approved?"Reabrir para revisão":"Concluir validação do plano";
+  approval.disabled=!approved&&(totalCount===0||reviewedCount!==totalCount);
+  approval.addEventListener("click",async()=>{
+    approval.disabled=true;
+    try{
+      const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{
+        method:"POST",body:JSON.stringify({action:approved?"reopen":"approve"})
+      });
+      draft.status=result.status;
+      showImportedDraft(draft);
+      await loadPlanDrafts();
+    }catch(e){approval.disabled=false;const p=document.createElement("p");p.textContent="Erro na validação: "+e.message;overview.appendChild(p);}
+  });
+  overview.appendChild(approval);
+  const note=document.createElement("p");
+  note.textContent=approved?"Plano aprovado internamente. Não foi publicado a nenhum jogador. Reabre para editar.":"A conclusão fica disponível depois de rever todas as opções. Não publica o plano.";
+  overview.appendChild(note);
   root.appendChild(overview);
   for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
   draft.extracted.groups.forEach((group,groupIndex)=>{
@@ -178,6 +197,7 @@ function showImportedDraft(draft){
       const actions=document.createElement("div");actions.className="import-option-actions";
       const validate=document.createElement("button");validate.type="button";
       validate.textContent=option.reviewed===true?"Retirar validação":"Validar opção";
+      validate.disabled=approved;
       validate.addEventListener("click",async()=>{
         validate.disabled=true;
         try{
@@ -200,7 +220,7 @@ function showImportedDraft(draft){
           actions.appendChild(message);
         }
       });
-      const edit=document.createElement("button");edit.type="button";edit.textContent="Editar opção";
+      const edit=document.createElement("button");edit.type="button";edit.textContent="Editar opção";edit.disabled=approved;
       edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
       actions.append(validate,edit);details.appendChild(actions);root.appendChild(details);
     });
