@@ -10,6 +10,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import plan_import_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -237,6 +238,7 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        plan_import_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         c.execute("UPDATE users SET weekly_next_activate_at=NULL")
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
@@ -561,6 +563,41 @@ def application(env, start_response):
                         raise Problem(403, 'origin')
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
+
+            # Administrator-only draft imports. Never expose these via player APIs.
+            if path.startswith('/api/v2/athletes/') and '/plan-imports' in path:
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                segments = path.strip('/').split('/')
+                if len(segments) < 5 or segments[:3] != ['api', 'v2', 'athletes'] or segments[4] != 'plan-imports':
+                    raise Problem(404, 'not_found')
+                athlete_id = segments[3]
+                if len(segments) == 5:
+                    if method == 'GET':
+                        return respond(200, {'drafts': plan_import_v2.list_drafts(c, athlete_id)})
+                    if method == 'POST':
+                        body = read_json(env)
+                        try:
+                            encoded = body.get('pdf_base64', '')
+                            if not isinstance(encoded, str) or len(encoded) > 4 * 1024 * 1024:
+                                raise ValueError('invalid_pdf')
+                            content = base64.b64decode(encoded, validate=True)
+                            if not content.startswith(b'%PDF-') or len(content) > 3 * 1024 * 1024:
+                                raise ValueError('invalid_pdf')
+                            draft = plan_import_v2.save_draft(c, athlete_id, body.get('color'),
+                                                               body.get('filename'), content)
+                        except (ValueError, TypeError, base64.binascii.Error):
+                            raise Problem(400, 'invalid_or_unreadable_pdf')
+                        if draft is None:
+                            raise Problem(404, 'not_found')
+                        return respond(201, {'draft': draft})
+                if len(segments) == 6 and method == 'GET':
+                    draft = plan_import_v2.get_draft(c, athlete_id, segments[5])
+                    if draft is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'draft': draft})
+                raise Problem(404, 'not_found')
 
             if path.startswith('/api/v2/athletes/') and path.endswith('/calendar') and method == 'GET':
                 if not user:
