@@ -51,3 +51,5 @@
 #import-review pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c4c4cb;font:12px/1.7 ui-monospace,monospace}
 #import-review .import-option{padding:12px;border:1px solid #353538;border-radius:9px;margin:8px 0}
 #import-review summary{cursor:pointer;font-weight:600}
+
+.import-structured-line{display:flex;align-items:baseline;justify-content:space-between;gap:14px;border-top:1px solid #303036;padding:9px 0;font-size:12px;flex-wrap:wrap}.import-nutrients{color:#b6d6c0;font-variant-numeric:tabular-nums}.import-structured-line small{color:#f2bd68}
