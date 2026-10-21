@@ -34,6 +34,13 @@ def initialize(c):
         FOREIGN KEY (athlete_id, classification)
             REFERENCES v2_microcycle_rows(athlete_id, classification)
     );
+    CREATE TABLE IF NOT EXISTS v2_match_events (
+        id TEXT PRIMARY KEY,
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        match_date TEXT NOT NULL,
+        created_at BIGINT NOT NULL,
+        UNIQUE(athlete_id, match_date)
+    );
     CREATE TABLE IF NOT EXISTS v2_microcycle_audit (
         id TEXT PRIMARY KEY,
         athlete_id TEXT NOT NULL,
@@ -104,5 +111,29 @@ def update_cell(c, athlete_id, classification, meal, color, actor_id):
                 (id,athlete_id,actor_id,classification,meal,previous_color,new_color,created_at)
                 VALUES(?,?,?,?,?,?,?,?)""",
               (secrets.token_hex(16), athlete_id, actor_id, classification, meal, old_color, color, int(time.time())))
+    c.commit()
+    return True
+
+def list_matches(c, athlete_id):
+    return [dict(r) for r in c.execute("SELECT id,match_date FROM v2_match_events WHERE athlete_id=? ORDER BY match_date", (athlete_id,)).fetchall()]
+
+
+def add_match(c, athlete_id, match_date):
+    from calendar_v2 import parse_day
+    day = parse_day(match_date).isoformat()
+    if not c.execute("SELECT id FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
+        return None
+    if c.execute("SELECT 1 FROM v2_match_events WHERE athlete_id=? AND match_date=?", (athlete_id, day)).fetchone():
+        raise ValueError("duplicate_match")
+    match_id = secrets.token_hex(16)
+    c.execute("INSERT INTO v2_match_events VALUES(?,?,?,?)", (match_id, athlete_id, day, int(time.time())))
+    c.commit()
+    return {"id": match_id, "match_date": day}
+
+
+def delete_match(c, athlete_id, match_id):
+    if not c.execute("SELECT 1 FROM v2_match_events WHERE athlete_id=? AND id=?", (athlete_id, match_id)).fetchone():
+        return False
+    c.execute("DELETE FROM v2_match_events WHERE athlete_id=? AND id=?", (athlete_id, match_id))
     c.commit()
     return True
