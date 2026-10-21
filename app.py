@@ -97,7 +97,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 BASE_URL = os.environ.get('MILE_BASE_URL', 'http://localhost:8000').strip().rstrip('/')
 ALLOWED_ORIGINS = {BASE_URL, 'https://the-mile-app.onrender.com'}
 ALLOWED_ORIGIN_HOSTS = {h for h in (urlparse(x).hostname for x in ALLOWED_ORIGINS) if h}
-ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'the-mile-app.onrender.com'})
+ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'the-mile-app.onrender.com', 'the-mile-app-test.onrender.com'})
 SECURE = BASE_URL.startswith('https://')
 MAX_PDF = 20 * 1024 * 1024
 MAX_JSON = 5 * 1024 * 1024
