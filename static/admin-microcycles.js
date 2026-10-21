@@ -2,20 +2,46 @@
 const names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"};
 const colors={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"VP · Verde preparação"};
 const $=id=>document.getElementById(id);
-let csrf="",athletes=[],model=null,calendarMonth=new Date();
+let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=null;
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
 async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){status("É necessário iniciar sessão como administrador na aplicação de testes.","warn");return;}csrf=me.csrf;await loadAthletes();status("Ambiente de testes pronto.");}catch(e){status("Não foi possível ligar: "+e.message,"warn");}}
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
-async function loadModel(){if(!$("athlete").value)return;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");render();await loadCalendar();}
-function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;row.configured=true;title.textContent="● "+row.name;status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
+async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");render();await loadCalendar();}
+function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;row.configured=true;title.textContent="● "+row.name;await loadCalendar();status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
 $("athlete").addEventListener("change",()=>loadModel().catch(e=>status(e.message,"warn")));
 $("create").addEventListener("click",async()=>{const name=$("new-name").value.trim();if(!name)return status("Escreve o nome do jogador.","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name})});$("new-name").value="";await loadAthletes(r.athlete.id);status("Jogador de teste criado.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
 start();
 
 function isoDay(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");}
 function matchBase(){return "/api/v2/athletes/"+encodeURIComponent(model.athlete.id);}
+
+// Read-only daily meal color preview based on the selected athlete's matrix.
+function mealColorsForDay(day){
+  const row=model&&model.classifications.find(r=>r.name===day.classification);
+  return model.meals.map(meal=>({meal,color:row&&row.meals[meal]||null}));
+}
+function renderDayPreview(day,host){
+  host.replaceChildren();
+  const heading=document.createElement("h3");
+  heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
+  host.appendChild(heading);
+  const grid=document.createElement("div");grid.className="day-meals";
+  for(const entry of mealColorsForDay(day)){
+    const cell=document.createElement("div");cell.className="day-meal";
+    const label=document.createElement("span");label.textContent=names[entry.meal];
+    const value=document.createElement("strong");
+    value.textContent=entry.color?(colors[entry.color]||entry.color):"— Sem cor atribuída";
+    if(entry.color)value.className="meal-"+entry.color;
+    cell.append(label,value);grid.appendChild(cell);
+  }
+  host.appendChild(grid);
+  const hint=document.createElement("p");
+  hint.textContent="Pré-visualização automática da matriz deste jogador. Não publica prescrições.";
+  host.appendChild(hint);
+}
+
 async function loadCalendar(){
   if(!model)return;
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
@@ -30,7 +56,38 @@ async function loadCalendar(){
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"—";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
     if(data.matches.some(m=>m.match_date===day.date)){el.classList.add("calendar-match");}
+    const strip=document.createElement("div");strip.className="day-color-strip";
+    for(const entry of mealColorsForDay(day)){
+      const dot=document.createElement("i");
+      dot.className="day-color-dot"+(entry.color?" meal-"+entry.color:"");
+      dot.title=names[entry.meal]+": "+(entry.color?(colors[entry.color]||entry.color):"Sem cor atribuída");
+      strip.appendChild(dot);
+    }
+    el.appendChild(strip);
+    el.setAttribute("role","button");el.tabIndex=0;
+    el.setAttribute("aria-label","Ver cores das refeições de "+day.date);
+    const selectDay=()=>{
+      selectedCalendarDay=day.date;
+      for(const item of days.querySelectorAll(".calendar-day"))item.classList.remove("calendar-selected");
+      el.classList.add("calendar-selected");
+      renderDayPreview(day,preview);
+    };
+    el.addEventListener("click",selectDay);
+    el.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();selectDay();}});
+    if(selectedCalendarDay===day.date)el.classList.add("calendar-selected");
     days.appendChild(el);
+  }
+  let preview=$("day-preview");
+  if(!preview){
+    preview=document.createElement("div");preview.id="day-preview";
+    preview.className="day-preview";
+    days.insertAdjacentElement("afterend",preview);
+  }
+  const focused=data.days.find(d=>d.date===selectedCalendarDay)||data.days.find(d=>d.classification)||data.days[0];
+  if(focused){selectedCalendarDay=focused.date;renderDayPreview(focused,preview);
+    for(const el of days.querySelectorAll(".calendar-day")){
+      if(el.getAttribute("aria-label")==="Ver cores das refeições de "+focused.date)el.classList.add("calendar-selected");
+    }
   }
   const list=$("calendar-matches");list.replaceChildren();
   for(const match of data.matches){
