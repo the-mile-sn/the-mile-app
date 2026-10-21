@@ -592,6 +592,16 @@ def application(env, start_response):
                         if draft is None:
                             raise Problem(404, 'not_found')
                         return respond(201, {'draft': draft})
+                if len(segments) == 6 and method == 'PUT':
+                    body = read_json(env)
+                    try:
+                        updated = plan_import_v2.update_option(c, athlete_id, segments[5],
+                            body.get('group_index'), body.get('option_index'), body.get('option'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_option_data')
+                    if updated is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'option': updated})
                 if len(segments) == 6 and method == 'GET':
                     draft = plan_import_v2.get_draft(c, athlete_id, segments[5])
                     if draft is None:
