@@ -175,9 +175,33 @@ function showImportedDraft(draft){
         if(item.needs_review){const note=document.createElement("small");note.textContent="Verificar";line.appendChild(note);}
         details.appendChild(line);
       }
-      const edit=document.createElement("button");edit.type="button";edit.textContent="Editar e validar opção";
+      const actions=document.createElement("div");actions.className="import-option-actions";
+      const validate=document.createElement("button");validate.type="button";
+      validate.textContent=option.reviewed===true?"Retirar validação":"Validar opção";
+      validate.addEventListener("click",async()=>{
+        validate.disabled=true;
+        try{
+          const payload={title:option.title||"",totals:option.totals||null,
+            items:(option.items||[]).filter(i=>i.kind!=="title").map(i=>({
+              kind:i.kind==="food"?"food":"note",
+              text:i.text||"",name:i.kind==="food"?(i.name||""):"",
+              quantity:i.kind==="food"?(i.quantity||""):"",
+              nutrients:i.kind==="food"?(i.nutrients||null):null
+            })),reviewed:option.reviewed!==true};
+          const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{
+            method:"PUT",body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:payload})
+          });
+          Object.assign(option,response.option);
+          showImportedDraft(draft);
+        }catch(e){
+          validate.disabled=false;
+          const message=document.createElement("p");message.textContent="Não foi possível alterar a validação: "+e.message;
+          actions.appendChild(message);
+        }
+      });
+      const edit=document.createElement("button");edit.type="button";edit.textContent="Editar opção";
       edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
-      details.appendChild(edit);root.appendChild(details);
+      actions.append(validate,edit);details.appendChild(actions);root.appendChild(details);
     });
   });
 }
