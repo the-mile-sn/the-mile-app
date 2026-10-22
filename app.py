@@ -696,6 +696,12 @@ def application(env, start_response):
                     raise Problem(401, 'unauthorized')
                 admin(user)
                 segments = path.strip('/').split('/')
+                if len(segments) == 5 and segments[4] == 'weight' and method == 'PUT':
+                    try:
+                        weight = microcycles_v2.update_athlete_weight(c, segments[3], read_json(env).get('weight_kg'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_weight')
+                    return respond(200, {'weight_kg': weight})
                 if len(segments) == 5 and segments[4] == 'microcycles' and method == 'GET':
                     result = microcycles_v2.get_model(c, segments[3])
                     if result is None:
