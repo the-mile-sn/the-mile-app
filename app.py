@@ -13,6 +13,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import calendar_v2
 import plan_import_v2
 import time
 from datetime import datetime, timedelta
