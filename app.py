@@ -733,6 +733,16 @@ def application(env, start_response):
                 file=DATA/'v2_dish_images'/dish['image_filename']
                 if not file.is_file(): raise Problem(404,'not_found')
                 return respond(200,file.read_bytes(),'image/webp')
+            if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method == 'PUT':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                athlete_id=path.split('/')[4]
+                body=read_json(env)
+                try:
+                    result=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''))
+                except ValueError: raise Problem(400,'invalid_athlete_profile')
+                if result is None: raise Problem(404,'not_found')
+                return respond(200,{'athlete':result})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/batch') and method == 'PUT':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
