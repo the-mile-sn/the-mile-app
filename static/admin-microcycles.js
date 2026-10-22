@@ -207,8 +207,8 @@ async function loadCalendar(){
     const row=document.createElement("p");
     row.textContent="Semana de "+monday+" · "+(complete?"Média diária planeada":"Média diária parcial · faltam dados")+" · "+covered+"/7 dias com valores";
     weekly.appendChild(row);
-    const average=Object.fromEntries(Object.entries(subtotal).map(([key,value])=>[key,value/7]));
-    nutritionCards(weekly,average);
+    if(complete){const average=Object.fromEntries(Object.entries(subtotal).map(([key,value])=>[key,value/7]));nutritionCards(weekly,average);}
+    else {const warning=document.createElement("p");warning.textContent="Média semanal indisponível até existirem dados completos dos sete dias.";weekly.appendChild(warning);}
   }
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
