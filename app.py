@@ -1,5 +1,8 @@
 """The Mile private document portal. WSGI; standard-library application."""
 import base64
+import csv
+import io
+import zipfile
 import hashlib
 import hmac
 import json
@@ -637,6 +640,46 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
                 return respond(200, {'matches': matches, 'days': days})
+            if path == '/api/v2/dishes' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, {'dishes':microcycles_v2.list_dish_library(c)})
+            if path == '/api/v2/dishes/import' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                raw=read_body(env, 22*1024*1024)
+                try:
+                    with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                        rows=list(csv.DictReader(io.TextIOWrapper(z.open('catalog.csv'),encoding='utf-8-sig')))
+                        if not 1 <= len(rows) <= 1000: raise ValueError()
+                        files={}
+                        for row in rows:
+                            dish_id=row['id']
+                            filename=row['image_filename']
+                            if not re.fullmatch(r'[a-z0-9-]{4,60}',dish_id) or filename!=dish_id+'.webp':
+                                raise ValueError()
+                            if not row['name_pt'].strip() or not row['category'].strip(): raise ValueError()
+                            data=z.read('images/'+filename)
+                            if len(data)>400000 or data[:4]!=b'RIFF' or data[8:12]!=b'WEBP': raise ValueError()
+                            files[filename]=data
+                    folder=DATA/'v2_dish_images'
+                    folder.mkdir(parents=True,exist_ok=True)
+                    for filename,data in files.items():
+                        (folder/filename).write_bytes(data)
+                    microcycles_v2.import_dish_catalog(c,rows)
+                except (ValueError,KeyError,zipfile.BadZipFile,FileNotFoundError) as exc:
+                    raise Problem(400,'invalid_dish_archive') from exc
+                return respond(200,{'imported':len(rows)})
+            if path.startswith('/api/v2/dishes/image/') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                identifier=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
+                dish=c.execute("SELECT image_filename FROM v2_dish_library WHERE id=? AND active=1",(identifier,)).fetchone()
+                if not dish: raise Problem(404,'not_found')
+                file=DATA/'v2_dish_images'/dish['image_filename']
+                if not file.is_file(): raise Problem(404,'not_found')
+                return respond(200,file.read_bytes(),'image/webp')
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
                 if not user:
                     raise Problem(401, 'unauthorized')
