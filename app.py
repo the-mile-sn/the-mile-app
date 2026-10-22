@@ -641,6 +641,15 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
                 return respond(200, {'matches': matches, 'days': days})
+            if path == '/api/v2/dishes/edit' and method == 'PUT':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    ok=microcycles_v2.update_dish(c,body.get('id'),body.get('name_pt'),body.get('name_en',''),body.get('category'),body.get('active',True))
+                except ValueError: raise Problem(400,'invalid_dish')
+                if not ok: raise Problem(404,'not_found')
+                return respond(200,{'ok':True})
             if path == '/api/v2/dishes' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
