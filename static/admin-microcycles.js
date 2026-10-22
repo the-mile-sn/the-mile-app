@@ -48,6 +48,7 @@ function renderDayPreview(day,host){
   heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
   host.appendChild(heading);
   const grid=document.createElement("div");grid.className="day-meals";
+  const detail=document.createElement("section");detail.className="meal-options-detail";
   for(const entry of mealColorsForDay(day)){
     const cell=document.createElement("div");cell.className="day-meal";
     const label=document.createElement("span");label.textContent=names[entry.meal];
@@ -55,32 +56,43 @@ function renderDayPreview(day,host){
     value.textContent=entry.color?(colors[entry.color]||entry.color):"— Sem cor atribuída";
     if(entry.color)value.className="meal-"+entry.color;
     cell.append(label,value);
-    if(entry.color){const availability=document.createElement("small");availability.textContent=validatedPlansByColor[entry.color]?"Plano validado disponível":"Plano "+(colors[entry.color]||entry.color)+" em falta";cell.appendChild(availability);}
-    if(entry.color&&validatedPlansByColor[entry.color]){
+    if(entry.color){
       const options=mealOptionsByColor[entry.color]?.[entry.meal]||[];
-      const list=document.createElement("details");
-      const title=document.createElement("summary");
-      title.textContent=options.length?options.length+" opção(ões) alimentares":"Refeição não encontrada no plano";
-      list.appendChild(title);
-      for(const option of options){
-        const block=document.createElement("div");
-        const name=document.createElement("strong");name.textContent="Opção "+option.number+(option.title?" · "+option.title:"");
-        block.appendChild(name);
-        for(const item of option.items||[]){
-          const line=document.createElement("div");
-          line.textContent=item.kind==="food"?(item.quantity||"")+" · "+(item.name||""):"Nota: "+(item.text||"");
-          block.appendChild(line);
-        }
-        list.appendChild(block);
+      const available=Boolean(validatedPlansByColor[entry.color]);
+      const availability=document.createElement("small");
+      availability.textContent=!available?"Plano "+(colors[entry.color]||entry.color)+" em falta":options.length?options.length+" opções disponíveis":"Refeição não encontrada no plano";
+      cell.appendChild(availability);
+      if(available&&options.length){
+        const view=document.createElement("button");view.type="button";view.textContent="Ver opções";
+        view.addEventListener("click",()=>{
+          detail.replaceChildren();
+          const title=document.createElement("h3");title.textContent=names[entry.meal]+" · "+(colors[entry.color]||entry.color)+" · "+day.date;detail.appendChild(title);
+          for(const option of options){
+            const box=document.createElement("details");box.className="import-option";
+            const caption=document.createElement("summary");
+            caption.textContent="Opção "+option.number+(option.title?" · "+option.title:"");
+            box.appendChild(caption);
+            if(option.totals){
+              const totals=document.createElement("p");
+              totals.textContent=option.totals.kcal+" kcal · P "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · G "+option.totals.fat_g+" g";
+              box.appendChild(totals);
+            }
+            for(const item of option.items||[]){
+              const line=document.createElement("div");line.className="import-structured-line";
+              line.textContent=item.kind==="food"?(item.quantity||"")+" · "+(item.name||""):"Nota: "+(item.text||"");
+              box.appendChild(line);
+            }
+            detail.appendChild(box);
+          }
+        });
+        cell.appendChild(view);
       }
-      cell.appendChild(list);
     }
     grid.appendChild(cell);
   }
   host.appendChild(grid);
-  const hint=document.createElement("p");
-  hint.textContent="Pré-visualização automática da matriz deste jogador. Não publica prescrições.";
-  host.appendChild(hint);
+  host.appendChild(detail);
+  const hint=document.createElement("p");hint.textContent="Pré-visualização administrativa. Os planos ainda não estão publicados aos jogadores.";host.appendChild(hint);
 }
 
 async function loadCalendar(){
