@@ -63,3 +63,17 @@
 .option-editor label:has(input[type=checkbox]){grid-column:1/-1;flex-direction:row;align-items:center}
 .option-editor button{justify-self:start}.option-editor p{grid-column:1/-1}
 @media(max-width:680px){.option-editor,.option-editor fieldset{grid-template-columns:1fr}}
+
+/* Menu planning cards */
+#menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:14px;align-items:start}
+.menu-day-card{min-width:0;border:1px solid #36363d;border-radius:14px;padding:15px;background:#19191d}
+.menu-day-card>h3{margin:0 0 14px;font-size:15px;line-height:1.4;text-transform:capitalize}
+.menu-meal-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:12px;border:1px solid #35353c;border-radius:11px;margin:10px 0;background:#141417}
+.menu-meal-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.menu-color-label{border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;background:#303037;color:#c5c5cb}
+.menu-meal-card select{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;white-space:normal;overflow:hidden;text-overflow:ellipsis}
+.menu-dish-image{display:block;width:100%;max-width:200px;max-height:130px;height:auto;object-fit:contain;border-radius:10px;background:#101013}
+.menu-dish-image[hidden]{display:none}
+.menu-meal-card [hidden]{display:none!important}
+.menu-save{align-self:flex-start}
+@media(max-width:640px){#menu-grid{grid-template-columns:1fr}.menu-day-card{padding:12px}}
