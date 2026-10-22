@@ -252,4 +252,23 @@ def import_dish_catalog(c, catalog_rows):
 
 def list_dish_library(c):
     return [dict(row) for row in c.execute(
-       "SELECT id,category,name_pt,image_filename FROM v2_dish_library WHERE active=1 ORDER BY category,name_pt").fetchall()]
+       "SELECT id,category,name_pt,name_en,image_filename,active FROM v2_dish_library ORDER BY category,name_pt").fetchall()]
+
+
+def update_dish(c, dish_id, name_pt, name_en, category, active):
+    if not all(isinstance(v,str) for v in (name_pt,name_en,category)) or not 1 <= len(name_pt.strip()) <= 200 or not 1 <= len(category.strip()) <= 100 or len(name_en)>200 or not isinstance(active,bool):
+        raise ValueError("invalid_dish")
+    result=c.execute("UPDATE v2_dish_library SET name_pt=?,name_en=?,category=?,active=? WHERE id=?",
+        (name_pt.strip(),name_en.strip(),category.strip(),int(active),dish_id))
+    c.commit()
+    return bool(result.rowcount)
+
+
+def create_dish(c, name_pt, name_en, category, image_filename):
+    if not all(isinstance(v,str) for v in (name_pt,name_en,category)) or not 1 <= len(name_pt.strip()) <= 200 or not 1 <= len(category.strip()) <= 100 or len(name_en)>200:
+        raise ValueError("invalid_dish")
+    dish_id=secrets.token_hex(12)
+    c.execute("INSERT INTO v2_dish_library (id,category,name_pt,name_en,image_filename) VALUES(?,?,?,?,?)",
+        (dish_id,category.strip(),name_pt.strip(),name_en.strip(),image_filename))
+    c.commit()
+    return dish_id
