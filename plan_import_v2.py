@@ -111,6 +111,38 @@ def color_plan_status(c, athlete_id):
              "publication":publication_by_color.get(color)} for color in COLORS]
 
 
+
+def validated_meal_options(c, athlete_id):
+    """Admin-only latest validated options by color and meal; never player-facing."""
+    from microcycles_v2 import COLORS, MEALS
+    rows = c.execute("""SELECT id,color,extracted_json FROM v2_plan_imports
+                        WHERE athlete_id=? AND status='validated'
+                        ORDER BY created_at DESC, rowid DESC""", (athlete_id,)).fetchall()
+    result = {color: {meal: [] for meal in MEALS} for color in COLORS}
+    selected = set()
+    for row in rows:
+        if row["color"] in selected or row["color"] not in result:
+            continue
+        selected.add(row["color"])
+        data = json.loads(row["extracted_json"])
+        for group in enrich_groups(data.get("groups", [])):
+            for meal in group.get("meals", []):
+                if meal not in result[row["color"]]:
+                    continue
+                for option in group.get("options", []):
+                    result[row["color"]][meal].append({
+                        "number": option.get("number"), "title": option.get("title") or
+                        next((item.get("text", "").lstrip("-– ") for item in option.get("items", [])
+                              if item.get("kind") == "title"), ""),
+                        "totals": option.get("totals"), "items": [
+                            {"kind": item.get("kind"), "name": item.get("name"),
+                             "quantity": item.get("quantity"), "text": item.get("text")}
+                            for item in option.get("items", []) if item.get("kind") != "title"
+                        ]
+                    })
+    return result
+
+
 def extract_plan(pdf_bytes):
     reader = PdfReader(io.BytesIO(pdf_bytes), strict=False)
     if len(reader.pages) < 1 or len(reader.pages) > 40:
