@@ -51,6 +51,7 @@ async function loadMenus(){
   $("menu-week").textContent=begin+" — "+end;
   const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
   dishLibrary=(await request("/api/v2/dishes")).dishes;
+  renderDishEditor();
   const calendar=(await request(matchBase()+"/calendar?start="+begin+"&end="+end)).days;
   const root=$("menu-grid");root.replaceChildren();
   const pending=new Map();
@@ -98,7 +99,7 @@ async function loadMenus(){
       const fillDishes=(selectedId="")=>{
         dishSelect.replaceChildren();
         const blank=document.createElement("option");blank.value="";blank.textContent="Escolher prato da biblioteca…";dishSelect.appendChild(blank);
-        for(const item of dishLibrary.filter(x=>!dishFilter.value||x.category===dishFilter.value)){
+        for(const item of dishLibrary.filter(x=>(x.active||x.id===selectedDish?.id)&&(!dishFilter.value||x.category===dishFilter.value))){
           const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name_pt;dishSelect.appendChild(opt);
         }
         dishSelect.value=selectedId;
@@ -554,6 +555,31 @@ $("import-submit").addEventListener("click",async()=>{
   finally{button.disabled=false;}
 });
 
+function renderDishEditor(){
+  const host=$("dish-editor-list");if(!host)return;host.replaceChildren();
+  const query=($("dish-search").value||"").trim().toLocaleLowerCase("pt-PT");
+  if(!query){host.textContent="Pesquisa pelo nome ou categoria para editar um prato.";return;}
+  const matches=dishLibrary.filter(d=>(d.name_pt+" "+d.category).toLocaleLowerCase("pt-PT").includes(query)).slice(0,25);
+  for(const dish of matches){
+    const card=document.createElement("div");card.className="dish-edit-card";
+    const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);photo.alt=dish.name_pt;photo.loading="lazy";card.appendChild(photo);
+    const fields=document.createElement("div");fields.className="dish-edit-fields";
+    const inputs=[];
+    for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
+      const wrap=document.createElement("label");wrap.textContent=label;const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;wrap.appendChild(input);fields.appendChild(wrap);inputs.push(input);
+    }
+    const active=document.createElement("label");const box=document.createElement("input");box.type="checkbox";box.checked=!!dish.active;active.append(box,document.createTextNode(" Disponível para novos menus"));fields.appendChild(active);
+    const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";
+    save.onclick=async()=>{save.disabled=true;try{
+      await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:box.checked})});
+      dish.name_pt=inputs[0].value;dish.name_en=inputs[1].value;dish.category=inputs[2].value;dish.active=box.checked?1:0;
+      status("Prato atualizado na biblioteca universal.","success");
+    }catch(e){status("Erro: "+e.message,"warn");}finally{save.disabled=false;}};
+    fields.appendChild(save);card.appendChild(fields);host.appendChild(card);
+  }
+  if(!matches.length)host.textContent="Nenhum prato encontrado.";
+}
+$("dish-search").addEventListener("input",renderDishEditor);
 $("dish-catalog-import").addEventListener("click",async()=>{
   const input=$("dish-catalog-file"),feedback=$("dish-catalog-feedback"),file=input.files?.[0];
   if(!file){feedback.textContent="Seleciona o pacote ZIP da biblioteca.";return;}
