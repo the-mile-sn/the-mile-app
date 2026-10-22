@@ -1,5 +1,6 @@
 """The Mile v2: isolated athlete microcycle model (no writes to legacy tables)."""
 import json
+import re
 import secrets
 import time
 
@@ -52,6 +53,9 @@ def initialize(c):
         created_at BIGINT NOT NULL
     );
     """)
+    columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_match_events)").fetchall()}
+    if "match_time" not in columns:
+        c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
 
 
 def list_athletes(c):
@@ -115,20 +119,29 @@ def update_cell(c, athlete_id, classification, meal, color, actor_id):
     return True
 
 def list_matches(c, athlete_id):
-    return [dict(r) for r in c.execute("SELECT id,match_date FROM v2_match_events WHERE athlete_id=? ORDER BY match_date", (athlete_id,)).fetchall()]
+    return [dict(r) for r in c.execute("SELECT id,match_date,match_time FROM v2_match_events WHERE athlete_id=? ORDER BY match_date", (athlete_id,)).fetchall()]
 
 
-def add_match(c, athlete_id, match_date):
+def valid_match_time(value):
+    if value in (None, ""):
+        return None
+    if not isinstance(value, str) or not re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]", value):
+        raise ValueError("invalid_match_time")
+    return value
+
+
+def add_match(c, athlete_id, match_date, match_time=None):
     from calendar_v2 import parse_day
     day = parse_day(match_date).isoformat()
+    hour = valid_match_time(match_time)
     if not c.execute("SELECT id FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
     if c.execute("SELECT 1 FROM v2_match_events WHERE athlete_id=? AND match_date=?", (athlete_id, day)).fetchone():
         raise ValueError("duplicate_match")
     match_id = secrets.token_hex(16)
-    c.execute("INSERT INTO v2_match_events VALUES(?,?,?,?)", (match_id, athlete_id, day, int(time.time())))
+    c.execute("INSERT INTO v2_match_events(id,athlete_id,match_date,created_at,match_time) VALUES(?,?,?,?,?)", (match_id, athlete_id, day, int(time.time()), hour))
     c.commit()
-    return {"id": match_id, "match_date": day}
+    return {"id": match_id, "match_date": day, "match_time": hour}
 
 
 def delete_match(c, athlete_id, match_id):
@@ -137,3 +150,18 @@ def delete_match(c, athlete_id, match_id):
     c.execute("DELETE FROM v2_match_events WHERE athlete_id=? AND id=?", (athlete_id, match_id))
     c.commit()
     return True
+
+
+def update_match(c, athlete_id, match_id, match_date, match_time=None):
+    from calendar_v2 import parse_day
+    day = parse_day(match_date).isoformat()
+    hour = valid_match_time(match_time)
+    current = c.execute("SELECT id FROM v2_match_events WHERE athlete_id=? AND id=?", (athlete_id, match_id)).fetchone()
+    if not current:
+        return None
+    duplicate = c.execute("SELECT id FROM v2_match_events WHERE athlete_id=? AND match_date=? AND id<>?", (athlete_id, day, match_id)).fetchone()
+    if duplicate:
+        raise ValueError("duplicate_match")
+    c.execute("UPDATE v2_match_events SET match_date=?,match_time=? WHERE id=? AND athlete_id=?", (day,hour,match_id,athlete_id))
+    c.commit()
+    return {"id": match_id, "match_date": day, "match_time": hour}
