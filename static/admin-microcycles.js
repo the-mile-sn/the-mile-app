@@ -2,7 +2,7 @@
 const names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"};
 const colors={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"VP · Verde preparação"};
 const $=id=>document.getElementById(id);
-let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=null,validatedPlansByColor={};
+let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=null,validatedPlansByColor={},mealOptionsByColor={};
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
@@ -56,6 +56,25 @@ function renderDayPreview(day,host){
     if(entry.color)value.className="meal-"+entry.color;
     cell.append(label,value);
     if(entry.color){const availability=document.createElement("small");availability.textContent=validatedPlansByColor[entry.color]?"Plano validado disponível":"Plano "+(colors[entry.color]||entry.color)+" em falta";cell.appendChild(availability);}
+    if(entry.color&&validatedPlansByColor[entry.color]){
+      const options=mealOptionsByColor[entry.color]?.[entry.meal]||[];
+      const list=document.createElement("details");
+      const title=document.createElement("summary");
+      title.textContent=options.length?options.length+" opção(ões) alimentares":"Refeição não encontrada no plano";
+      list.appendChild(title);
+      for(const option of options){
+        const block=document.createElement("div");
+        const name=document.createElement("strong");name.textContent="Opção "+option.number+(option.title?" · "+option.title:"");
+        block.appendChild(name);
+        for(const item of option.items||[]){
+          const line=document.createElement("div");
+          line.textContent=item.kind==="food"?(item.quantity||"")+" · "+(item.name||""):"Nota: "+(item.text||"");
+          block.appendChild(line);
+        }
+        list.appendChild(block);
+      }
+      cell.appendChild(list);
+    }
     grid.appendChild(cell);
   }
   host.appendChild(grid);
@@ -155,6 +174,8 @@ async function loadPlanDrafts(){
   const data=await request(matchBase()+"/plan-imports");
   const readiness=await request(matchBase()+"/plan-imports/publication-status");
   validatedPlansByColor=Object.fromEntries(readiness.colors.map(entry=>[entry.color,entry.validated_count>0]));
+  const mealData=await request(matchBase()+"/plan-imports/meal-options");
+  mealOptionsByColor=mealData.options_by_color;
   const panel=$("publication-readiness");panel.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Preparação para publicação · Ainda não disponível aos jogadores";panel.appendChild(heading);
   for(const entry of readiness.colors){
