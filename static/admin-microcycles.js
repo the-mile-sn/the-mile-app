@@ -62,11 +62,19 @@ async function loadMenus(){
       const kind=document.createElement("select");
       for(const [value,name] of [["category","Categoria"],["dish","Prato completo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=name;kind.appendChild(opt);}
       kind.value=existing?.kind||"category";line.appendChild(kind);
-      const value=document.createElement("input");value.type="text";value.maxLength=200;value.placeholder="Ex.: Peixe gordo ou salmão com arroz";value.value=existing?.value||"";line.appendChild(value);
+      const category=document.createElement("select");
+      const categoryNames=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix"];
+      const previousCategory=existing?.kind==="category"?existing.value:"";
+      const categories=previousCategory&&!categoryNames.includes(previousCategory)?[previousCategory,...categoryNames]:categoryNames;
+      for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
+      category.value=previousCategory||categoryNames[0];line.appendChild(category);
+      const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
+      const toggle=()=>{category.hidden=kind.value!=="category";dish.hidden=kind.value!=="dish";};kind.addEventListener("change",toggle);toggle();
       const save=document.createElement("button");save.type="button";save.textContent="Guardar";
       save.addEventListener("click",async()=>{save.disabled=true;try{
-        if(value.value.trim())await request(matchBase()+"/menus",{method:"PUT",body:JSON.stringify({menu_date:date,meal,kind:kind.value,value:value.value.trim()})});
-        else await request(matchBase()+"/menus",{method:"DELETE",body:JSON.stringify({menu_date:date,meal})});
+        const selected=kind.value==="category"?category.value:dish.value.trim();
+        if(!selected){if(kind.value==="dish")throw Error("Indica o nome do prato.");throw Error("Seleciona uma categoria.");}
+        await request(matchBase()+"/menus",{method:"PUT",body:JSON.stringify({menu_date:date,meal,kind:kind.value,value:selected})});
         await loadMenus();await loadCalendar();status("Menu guardado.","success");
       }catch(e){status("Erro no menu: "+e.message,"warn");save.disabled=false;}});line.appendChild(save);section.appendChild(line);
     }
