@@ -42,10 +42,43 @@ $("save-athlete-weight").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar peso: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
-let backofficeView="calendar";
+let backofficeView="calendar",menuWeek=new Date(),menuLookup={};
+function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
+async function loadMenus(){
+  if(!model)return;
+  const start=weekStart(menuWeek),finish=new Date(start);finish.setDate(start.getDate()+6);
+  const begin=isoDay(start),end=isoDay(finish);
+  $("menu-week").textContent=begin+" — "+end;
+  const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
+  const root=$("menu-grid");root.replaceChildren();
+  for(let i=0;i<7;i++){
+    const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
+    const section=document.createElement("section");section.className="import-option";
+    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"});section.appendChild(title);
+    for(const meal of ["lunch","dinner"]){
+      const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
+      const line=document.createElement("div");line.className="calendar-add";
+      const label=document.createElement("strong");label.textContent=names[meal];line.appendChild(label);
+      const kind=document.createElement("select");
+      for(const [value,name] of [["category","Categoria"],["dish","Prato completo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=name;kind.appendChild(opt);}
+      kind.value=existing?.kind||"category";line.appendChild(kind);
+      const value=document.createElement("input");value.type="text";value.maxLength=200;value.placeholder="Ex.: Peixe gordo ou salmão com arroz";value.value=existing?.value||"";line.appendChild(value);
+      const save=document.createElement("button");save.type="button";save.textContent="Guardar";
+      save.addEventListener("click",async()=>{save.disabled=true;try{
+        if(value.value.trim())await request(matchBase()+"/menus",{method:"PUT",body:JSON.stringify({menu_date:date,meal,kind:kind.value,value:value.value.trim()})});
+        else await request(matchBase()+"/menus",{method:"DELETE",body:JSON.stringify({menu_date:date,meal})});
+        await loadMenus();await loadCalendar();status("Menu guardado.","success");
+      }catch(e){status("Erro no menu: "+e.message,"warn");save.disabled=false;}});line.appendChild(save);section.appendChild(line);
+    }
+    root.appendChild(section);
+  }
+}
+$("menu-prev").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()-7);loadMenus().catch(e=>status(e.message,"warn"));});
+$("menu-next").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()+7);loadMenus().catch(e=>status(e.message,"warn"));});
+
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],dashboard:["nutrition-dashboard"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section","nutrition-dashboard"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -53,7 +86,8 @@ function showBackofficeView(view){
     button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
   }
   $("admin-access-panel").hidden=view!=="profile";
-  if(view==="dashboard")refreshBackofficeDashboard();
+  if(view==="calendar")refreshBackofficeDashboard();
+  if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
 }
 function refreshBackofficeDashboard(){
   const panel=$("nutrition-dashboard");
@@ -139,7 +173,7 @@ function renderNutritionTotals(host,label,result){
 function renderDayPreview(day,host){
   host.replaceChildren();
   window.currentNutritionDay=day;
-  if(backofficeView==="dashboard")refreshBackofficeDashboard();
+  if(backofficeView==="calendar")refreshBackofficeDashboard();
   const heading=document.createElement("h3");
   heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
   host.appendChild(heading);
@@ -152,6 +186,7 @@ function renderDayPreview(day,host){
     value.textContent=entry.color?(colors[entry.color]||entry.color):"— Sem cor atribuída";
     if(entry.color)value.className="meal-"+entry.color;
     cell.append(label,value);
+    if(entry.meal==="lunch"||entry.meal==="dinner"){const menu=menuLookup[day.date+"|"+entry.meal];if(menu){const note=document.createElement("small");note.textContent="Menu: "+menu.value;cell.appendChild(note);}}
     if(entry.color){
       const options=mealOptionsByColor[entry.color]?.[entry.meal]||[];
       const available=Boolean(validatedPlansByColor[entry.color]);
@@ -207,6 +242,8 @@ async function loadCalendar(){
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  const menuData=await request(matchBase()+"/menus?start="+isoDay(first)+"&end="+isoDay(last));
+  menuLookup=Object.fromEntries(menuData.menus.map(m=>[m.menu_date+"|"+m.meal,m]));
   const fullStart=new Date(first);fullStart.setDate(first.getDate()-(first.getDay()+6)%7);
   const fullEnd=new Date(last);fullEnd.setDate(last.getDate()+(7-last.getDay())%7);
   const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(fullStart)+"&end="+isoDay(fullEnd));
