@@ -210,6 +210,8 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value):
     day = parse_day(menu_date).isoformat()
     if meal not in ("lunch","dinner") or kind not in ("category","dish") or not isinstance(value,str) or not 1 <= len(value.strip()) <= 200:
         raise ValueError("invalid_menu")
+    if kind == "category" and value.strip() not in ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo", "Livre", "Pós-jogo", "Mix"):
+        raise ValueError("invalid_menu_category")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
     c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
