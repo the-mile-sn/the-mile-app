@@ -54,6 +54,14 @@ def initialize(c):
     );
     """)
     columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_match_events)").fetchall()}
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_dish_library (
+        id TEXT PRIMARY KEY,
+        category TEXT NOT NULL,
+        name_pt TEXT NOT NULL,
+        name_en TEXT,
+        image_filename TEXT NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1
+    )""")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_weekly_menus (
         athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
         menu_date TEXT NOT NULL,
@@ -230,3 +238,18 @@ def delete_menu(c, athlete_id, menu_date, meal):
     result=c.execute("DELETE FROM v2_weekly_menus WHERE athlete_id=? AND menu_date=? AND meal=?",(athlete_id,day,meal))
     c.commit()
     return result.rowcount > 0
+
+
+def import_dish_catalog(c, catalog_rows):
+    for row in catalog_rows:
+        c.execute("""INSERT INTO v2_dish_library (id,category,name_pt,name_en,image_filename)
+          VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
+          category=excluded.category,name_pt=excluded.name_pt,name_en=excluded.name_en,
+          image_filename=excluded.image_filename""",
+          (row["id"],row["category"],row["name_pt"],row.get("name_en",""),row["image_filename"]))
+    c.commit()
+
+
+def list_dish_library(c):
+    return [dict(row) for row in c.execute(
+       "SELECT id,category,name_pt,image_filename FROM v2_dish_library WHERE active=1 ORDER BY category,name_pt").fetchall()]
