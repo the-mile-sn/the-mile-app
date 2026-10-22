@@ -88,15 +88,27 @@ async function loadMenus(){
       for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
       category.value=previousCategory||categoryNames[0];category.className="menu-choice";line.appendChild(category);
       const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
-      const dishSelect=document.createElement("select");
-      const blank=document.createElement("option");blank.value="";blank.textContent="Escolher prato da biblioteca…";dishSelect.appendChild(blank);
-      for(const item of dishLibrary){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name_pt;dishSelect.appendChild(opt);}
       const selectedDish=dishLibrary.find(x=>x.name_pt===existing?.value);
-      dishSelect.value=selectedDish?.id||"";dishSelect.className="menu-choice";line.appendChild(dishSelect);
+      const dishFilter=document.createElement("select");dishFilter.className="menu-choice";dishFilter.setAttribute("aria-label","Filtrar pratos por categoria");
+      const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";dishFilter.appendChild(all);
+      const libraryCategories=[...new Set(dishLibrary.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
+      for(const name of libraryCategories){const opt=document.createElement("option");opt.value=name;opt.textContent=name;dishFilter.appendChild(opt);}
+      dishFilter.value=selectedDish?.category||"";line.appendChild(dishFilter);
+      const dishSelect=document.createElement("select");dishSelect.className="menu-choice";dishSelect.setAttribute("aria-label","Escolher prato da biblioteca");line.appendChild(dishSelect);
+      const fillDishes=(selectedId="")=>{
+        dishSelect.replaceChildren();
+        const blank=document.createElement("option");blank.value="";blank.textContent="Escolher prato da biblioteca…";dishSelect.appendChild(blank);
+        for(const item of dishLibrary.filter(x=>!dishFilter.value||x.category===dishFilter.value)){
+          const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name_pt;dishSelect.appendChild(opt);
+        }
+        dishSelect.value=selectedId;
+      };
+      fillDishes(selectedDish?.id||"");
       const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.style.cssText="max-width:110px;max-height:85px;object-fit:cover;border-radius:10px";preview.className="menu-dish-image";line.appendChild(preview);
       const updatePreview=()=>{const selected=dishLibrary.find(x=>x.id===dishSelect.value);preview.hidden=!selected;if(selected)preview.src="/api/v2/dishes/image/"+encodeURIComponent(selected.id);};
-      dishSelect.addEventListener("change",updatePreview);updatePreview();
-      const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
+      dishSelect.addEventListener("change",updatePreview);
+      dishFilter.addEventListener("change",()=>{fillDishes();updatePreview();toggle();});updatePreview();
+      const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
       kind.addEventListener("change",toggle);dishSelect.addEventListener("change",toggle);toggle();
       const queue=()=>{
         const selectedDish=dishLibrary.find(x=>x.id===dishSelect.value);
