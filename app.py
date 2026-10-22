@@ -573,6 +573,8 @@ def application(env, start_response):
                 if len(segments) < 5 or segments[:3] != ['api', 'v2', 'athletes'] or segments[4] != 'plan-imports':
                     raise Problem(404, 'not_found')
                 athlete_id = segments[3]
+                if len(segments) == 6 and segments[5] == 'meal-options' and method == 'GET':
+                    return respond(200, {'options_by_color': plan_import_v2.validated_meal_options(c, athlete_id)})
                 if len(segments) == 6 and segments[5] == 'publication-status' and method == 'GET':
                     return respond(200, {'colors': plan_import_v2.color_plan_status(c, athlete_id)})
                 if len(segments) == 5:
