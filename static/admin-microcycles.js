@@ -95,30 +95,44 @@ async function loadMenus(){
       const libraryCategories=[...new Set(dishLibrary.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
       for(const name of libraryCategories){const opt=document.createElement("option");opt.value=name;opt.textContent=name;dishFilter.appendChild(opt);}
       dishFilter.value=selectedDish?.category||"";line.appendChild(dishFilter);
-      const dishSearch=document.createElement("input");dishSearch.type="search";dishSearch.className="menu-choice";dishSearch.placeholder="Pesquisar prato pelo nome…";dishSearch.setAttribute("aria-label","Pesquisar prato por nome");line.appendChild(dishSearch);
-      const dishSelect=document.createElement("select");dishSelect.className="menu-choice";dishSelect.setAttribute("aria-label","Escolher prato da biblioteca");line.appendChild(dishSelect);
-      const fillDishes=(selectedId="")=>{
-        dishSelect.replaceChildren();
-        const blank=document.createElement("option");blank.value="";blank.textContent="Escolher prato da biblioteca…";dishSelect.appendChild(blank);
-        for(const item of dishLibrary.filter(x=>(x.active||x.id===selectedDish?.id)&&(!dishFilter.value||x.category===dishFilter.value)&&(!dishSearch.value.trim()||x.name_pt.toLocaleLowerCase("pt-PT").includes(dishSearch.value.trim().toLocaleLowerCase("pt-PT"))))){
-          const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name_pt;dishSelect.appendChild(opt);
+      const picker=document.createElement("div");picker.className="menu-combobox";line.appendChild(picker);
+      const dishSearch=document.createElement("input");dishSearch.type="search";dishSearch.className="menu-choice";dishSearch.placeholder="Pesquisar e selecionar prato…";dishSearch.autocomplete="off";dishSearch.setAttribute("role","combobox");dishSearch.setAttribute("aria-autocomplete","list");dishSearch.setAttribute("aria-expanded","false");picker.appendChild(dishSearch);
+      const suggestions=document.createElement("div");suggestions.className="menu-suggestions";suggestions.setAttribute("role","listbox");suggestions.hidden=true;picker.appendChild(suggestions);
+      let chosenDishId=selectedDish?.id||"";
+      dishSearch.value=selectedDish?.name_pt||"";
+      const candidates=()=>dishLibrary.filter(x=>(x.active||x.id===selectedDish?.id)&&(!dishFilter.value||x.category===dishFilter.value)&&(!dishSearch.value.trim()||x.name_pt.toLocaleLowerCase("pt-PT").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").includes(dishSearch.value.trim().toLocaleLowerCase("pt-PT").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")))).slice(0,30);
+      const closeSuggestions=()=>{suggestions.hidden=true;dishSearch.setAttribute("aria-expanded","false");};
+      const updatePreview=()=>{const item=dishLibrary.find(x=>x.id===chosenDishId);preview.hidden=!item;if(item)preview.src="/api/v2/dishes/image/"+encodeURIComponent(item.id);};
+      const pickDish=item=>{chosenDishId=item.id;dishSearch.value=item.name_pt;closeSuggestions();updatePreview();queue();};
+      const showSuggestions=()=>{
+        suggestions.replaceChildren();
+        const items=candidates();
+        if(!items.length){const empty=document.createElement("div");empty.className="menu-suggestion-empty";empty.textContent="Nenhum prato encontrado";suggestions.appendChild(empty);}
+        for(const item of items){
+          const option=document.createElement("button");option.type="button";option.className="menu-suggestion";option.setAttribute("role","option");option.textContent=item.name_pt;
+          option.addEventListener("mousedown",event=>event.preventDefault());
+          option.addEventListener("click",()=>pickDish(item));suggestions.appendChild(option);
         }
-        dishSelect.value=selectedId;
+        suggestions.hidden=false;dishSearch.setAttribute("aria-expanded","true");
       };
-      fillDishes(selectedDish?.id||"");
-      dishSearch.addEventListener("input",()=>{fillDishes();updatePreview();toggle();});
-      const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.style.cssText="max-width:110px;max-height:85px;object-fit:cover;border-radius:10px";preview.className="menu-dish-image";line.appendChild(preview);
-      const updatePreview=()=>{const selected=dishLibrary.find(x=>x.id===dishSelect.value);preview.hidden=!selected;if(selected)preview.src="/api/v2/dishes/image/"+encodeURIComponent(selected.id);};
-      dishSelect.addEventListener("change",updatePreview);
-      dishFilter.addEventListener("change",()=>{fillDishes();updatePreview();toggle();});updatePreview();
-      const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";dishSearch.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
-      kind.addEventListener("change",toggle);dishSelect.addEventListener("change",toggle);toggle();
+      dishSearch.addEventListener("focus",showSuggestions);
+      dishSearch.addEventListener("input",()=>{chosenDishId="";updatePreview();showSuggestions();});
+      dishSearch.addEventListener("keydown",e=>{
+        if(e.key==="Escape"){closeSuggestions();dishSearch.blur();}
+        if(e.key==="Enter"&&!suggestions.hidden){e.preventDefault();const item=candidates()[0];if(item)pickDish(item);}
+      });
+      dishSearch.addEventListener("blur",()=>{setTimeout(closeSuggestions,120);});
+      dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";updatePreview();closeSuggestions();});
+      const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.className="menu-dish-image";line.appendChild(preview);
+      updatePreview();
+      const toggle=()=>{category.hidden=kind.value!=="category";dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!chosenDishId;dish.hidden=true;closeSuggestions();};
+      kind.addEventListener("change",toggle);toggle();
       const queue=()=>{
-        const selectedDish=dishLibrary.find(x=>x.id===dishSelect.value);
+        const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
         const selected=kind.value==="category"?category.value:(selectedDish?.name_pt||"");
         mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected});
       };
-      kind.addEventListener("change",queue);category.addEventListener("change",queue);dishSelect.addEventListener("change",queue);
+      kind.addEventListener("change",queue);category.addEventListener("change",queue);
       section.appendChild(line);
     }
     root.appendChild(section);
