@@ -33,10 +33,11 @@ $("copy-admin-activation").addEventListener("click",async()=>{
 function renderProfileSummary(){
   if(!model)return;
   const athlete=model.athlete,root=$("profile-summary");root.replaceChildren();
+  root.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:18px 0";
   for(const [label,value] of [["Nome",athlete.name],["Peso atual",athlete.weight_kg!=null?athlete.weight_kg+" kg":"Por preencher"],["Altura",athlete.height_cm!=null?athlete.height_cm+" cm":"Por preencher"],["Notas internas",athlete.profile_notes||"Sem notas"]]){
-    const card=document.createElement("div");card.className="profile-info-card";
-    const caption=document.createElement("small");caption.textContent=label;
-    const text=document.createElement("strong");text.textContent=value;card.append(caption,text);root.appendChild(card);
+    const card=document.createElement("div");card.className="profile-info-card";card.style.cssText="display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #36363c;border-radius:12px;min-width:0;background:#19191d";
+    const caption=document.createElement("small");caption.textContent=label;caption.style.color="#a9a9b2";
+    const text=document.createElement("strong");text.textContent=value;text.style.cssText="font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere";card.append(caption,text);root.appendChild(card);
   }
   $("profile-editor").hidden=true;$("edit-athlete-profile").hidden=false;
 }
