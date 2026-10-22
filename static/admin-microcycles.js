@@ -8,7 +8,7 @@ function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
 async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){status("É necessário iniciar sessão como administrador na aplicação de testes.","warn");return;}csrf=me.csrf;await loadAthletes();status("Ambiente de testes pronto.");}catch(e){status("Não foi possível ligar: "+e.message,"warn");}}
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
-async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");render();$("athlete-weight-panel").hidden=false;$("athlete-weight").value=model.athlete.weight_kg??"";await loadPlanDrafts();await loadCalendar();}
+async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");render();$("athlete-weight").value=model.athlete.weight_kg??"";await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
 function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;row.configured=true;title.textContent="● "+row.name;await loadCalendar();status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
 $("filipe-activate").addEventListener("click",async()=>{
   const button=$("filipe-activate"),feedback=$("admin-access-feedback");
@@ -42,6 +42,31 @@ $("save-athlete-weight").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar peso: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
+let backofficeView="calendar";
+function showBackofficeView(view){
+  backofficeView=view;
+  const sections={profile:["athlete-weight-panel"],dashboard:["nutrition-dashboard"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"]};
+  for(const [key,ids] of Object.entries(sections))for(const id of ids){
+    const el=$(id);if(el)el.hidden=key!==view||!model;
+  }
+  for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
+    button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
+  }
+  $("admin-access-panel").hidden=view!=="profile";
+  if(view==="dashboard")refreshBackofficeDashboard();
+}
+function refreshBackofficeDashboard(){
+  const panel=$("nutrition-dashboard");
+  if(!model)return;
+  const holder=$("dashboard-day");holder.replaceChildren();
+  const day=window.currentNutritionDay;
+  if(!day){holder.textContent="Seleciona um dia no calendário para consultar o resumo.";return;}
+  const title=document.createElement("h3");title.textContent="Resumo de "+day.date+" · "+(day.classification||"Sem classificação");holder.appendChild(title);
+  renderNutritionTotals(holder,"Valores nutricionais planeados",plannedDayTotals(day));
+}
+for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
+  button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
+}
 $("athlete").addEventListener("change",()=>loadModel().catch(e=>status(e.message,"warn")));
 $("create").addEventListener("click",async()=>{const name=$("new-name").value.trim();if(!name)return status("Escreve o nome do jogador.","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name})});$("new-name").value="";await loadAthletes(r.athlete.id);status("Jogador de teste criado.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
 start();
@@ -113,6 +138,8 @@ function renderNutritionTotals(host,label,result){
 
 function renderDayPreview(day,host){
   host.replaceChildren();
+  window.currentNutritionDay=day;
+  if(backofficeView==="dashboard")refreshBackofficeDashboard();
   const heading=document.createElement("h3");
   heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
   host.appendChild(heading);
