@@ -166,25 +166,15 @@ async function loadPlanDrafts(){
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const h=document.createElement("h3");h.textContent="Revisão · "+draft.filename+" · "+(colors[draft.color]||draft.color);root.appendChild(h);
-  const allOptions=draft.extracted.groups.flatMap(group=>group.options);
-  const reviewedCount=allOptions.filter(option=>option.reviewed===true).length;
-  const totalCount=allOptions.length;
+  const totalCount=draft.extracted.groups.reduce((sum,group)=>sum+group.options.length,0);
   const overview=document.createElement("section");overview.className="import-validation-progress";
-  const count=document.createElement("strong");
-  count.textContent=reviewedCount+" de "+totalCount+" opções revistas";
-  overview.appendChild(count);
-  const summary=document.createElement("p");
-  summary.textContent=totalCount>0&&reviewedCount===totalCount
-    ?"Todas as opções foram revistas. Plano validado internamente, ainda não publicado."
-    :"Faltam "+(totalCount-reviewedCount)+" opções por rever. O plano mantém-se em rascunho.";
-  overview.appendChild(summary);
-  const progress=document.createElement("progress");progress.max=Math.max(totalCount,1);progress.value=reviewedCount;
-  progress.setAttribute("aria-label","Progresso da revisão de opções");
-  overview.appendChild(progress);
+  const state=document.createElement("strong");
+  state.textContent=draft.status==="validated"?"Plano validado":"Plano em revisão";
+  overview.appendChild(state);
   const approval=document.createElement("button");approval.type="button";
   const approved=draft.status==="validated";
-  approval.textContent=approved?"Reabrir para revisão":"Concluir validação do plano";
-  approval.disabled=!approved&&(totalCount===0||reviewedCount!==totalCount);
+  approval.textContent=approved?"Reabrir para edição":"Validar plano completo";
+  approval.disabled=!approved&&totalCount===0;
   approval.addEventListener("click",async()=>{
     approval.disabled=true;
     try{
@@ -198,7 +188,7 @@ function showImportedDraft(draft){
   });
   overview.appendChild(approval);
   const note=document.createElement("p");
-  note.textContent=approved?"Plano aprovado internamente. Não foi publicado a nenhum jogador. Reabre para editar.":"A conclusão fica disponível depois de rever todas as opções. Não publica o plano.";
+  note.textContent=approved?"Plano aprovado internamente. Não foi publicado a nenhum jogador. Reabre para editar.":"Confirma a revisão do plano completo numa única ação. Não publica o plano.";
   overview.appendChild(note);
   root.appendChild(overview);
   for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
@@ -206,7 +196,7 @@ function showImportedDraft(draft){
     const groupTitle=document.createElement("h3");groupTitle.textContent=group.heading+" → "+group.meals.map(m=>names[m]).join(" / ");root.appendChild(groupTitle);
     group.options.forEach((option,optionIndex)=>{
       const details=document.createElement("details");details.className="import-option";
-      const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar")+" · "+(option.reviewed===true?"Revista":"Por rever");details.appendChild(summary);
+      const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar");details.appendChild(summary);
       if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
       if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
       for(const item of option.items||[]){
@@ -225,34 +215,9 @@ function showImportedDraft(draft){
         details.appendChild(line);
       }
       const actions=document.createElement("div");actions.className="import-option-actions";
-      const validate=document.createElement("button");validate.type="button";
-      validate.textContent=option.reviewed===true?"Retirar validação":"Validar opção";
-      validate.disabled=approved;
-      validate.addEventListener("click",async()=>{
-        validate.disabled=true;
-        try{
-          const sourceTitle=(option.items||[]).find(i=>i.kind==="title");
-          const payload={title:option.title||(sourceTitle?sourceTitle.text.replace(/^[-–]\\s*/,""):""),totals:option.totals||null,
-            items:(option.items||[]).filter(i=>i.kind!=="title").map(i=>({
-              kind:i.kind==="food"?"food":"note",
-              text:i.text||"",name:i.kind==="food"?(i.name||""):"",
-              quantity:i.kind==="food"?(i.quantity||""):"",
-              nutrients:i.kind==="food"?(i.nutrients||null):null
-            })),reviewed:option.reviewed!==true};
-          const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{
-            method:"PUT",body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:payload})
-          });
-          Object.assign(option,response.option);
-          showImportedDraft(draft);
-        }catch(e){
-          validate.disabled=false;
-          const message=document.createElement("p");message.textContent="Não foi possível alterar a validação: "+e.message;
-          actions.appendChild(message);
-        }
-      });
       const edit=document.createElement("button");edit.type="button";edit.textContent="Editar opção";edit.disabled=approved;
       edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
-      actions.append(validate,edit);details.appendChild(actions);root.appendChild(details);
+      actions.append(edit);details.appendChild(actions);root.appendChild(details);
     });
   });
 }
@@ -286,7 +251,6 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     }
     form.appendChild(box);edits.push({type,name,quantity,nutrients});
   });
-  const reviewed=document.createElement("label");const check=document.createElement("input");check.type="checkbox";check.checked=Boolean(option.reviewed);reviewed.append(check,document.createTextNode(" Confirmo que revi esta opção"));form.appendChild(reviewed);
   const save=document.createElement("button");save.type="button";save.textContent="Guardar correções";form.appendChild(save);
   const feedback=document.createElement("p");form.appendChild(feedback);
   save.addEventListener("click",async()=>{
@@ -299,7 +263,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     const totalValues=Object.fromEntries(Object.entries(totals).map(([key,input])=>[key,input.value.trim()]));
     try{
       const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{method:"PUT",
-        body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:check.checked}})});
+        body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:Boolean(option.reviewed)}})});
       option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
       feedback.textContent="Correções guardadas no rascunho, sem publicação.";
       showImportedDraft(draft);
