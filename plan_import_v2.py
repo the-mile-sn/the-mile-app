@@ -230,8 +230,9 @@ def set_review_status(c, athlete_id, draft_id, action):
         if draft["status"] != "draft":
             raise ValueError("invalid_status")
         options = [option for group in draft["extracted"]["groups"] for option in group["options"]]
-        if not options or any(option.get("reviewed") is not True for option in options):
-            raise ValueError("pending_review")
+        if not options:
+            raise ValueError("empty_plan")
+        # Whole-plan approval is an explicit admin action; per-option review is optional.
         new_status = "validated"
     elif action == "reopen":
         if draft["status"] != "validated":
