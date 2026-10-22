@@ -641,6 +641,36 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
                 return respond(200, {'matches': matches, 'days': days})
+            if path == '/api/v2/dishes/photo' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                import uuid
+                body=read_json(env)
+                dish_id=body.get('id')
+                payload=body.get('image')
+                if not isinstance(payload,str) or len(payload)>1800000: raise Problem(400,'invalid_image')
+                try: raw=base64.b64decode(payload,validate=True)
+                except (ValueError,base64.binascii.Error): raise Problem(400,'invalid_image')
+                if not 50<len(raw)<=1200000 or raw[:4]!=b'RIFF' or raw[8:12]!=b'WEBP': raise Problem(400,'invalid_image')
+                if dish_id:
+                    dish=c.execute("SELECT id FROM v2_dish_library WHERE id=?",(dish_id,)).fetchone()
+                    if not dish: raise Problem(404,'not_found')
+                else:
+                    name_pt=body.get('name_pt')
+                    name_en=body.get('name_en','')
+                    category=body.get('category')
+                    if not all(isinstance(v,str) for v in (name_pt,name_en,category)) or not 1<=len(name_pt.strip())<=200 or not 1<=len(category.strip())<=100 or len(name_en)>200: raise Problem(400,'invalid_dish')
+                    dish_id=secrets.token_hex(12)
+                folder=DATA/'v2_dish_images'
+                folder.mkdir(parents=True,exist_ok=True)
+                filename=dish_id+'.webp'
+                temporary=folder/(dish_id+'-'+secrets.token_hex(4)+'.tmp')
+                temporary.write_bytes(raw)
+                os.replace(temporary,folder/filename)
+                if not body.get('id'):
+                    c.execute("INSERT INTO v2_dish_library(id,category,name_pt,name_en,image_filename) VALUES(?,?,?,?,?)",(dish_id,category.strip(),name_pt.strip(),name_en.strip(),filename))
+                    c.commit()
+                return respond(200,{'id':dish_id,'ok':True})
             if path == '/api/v2/dishes/edit' and method == 'PUT':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
