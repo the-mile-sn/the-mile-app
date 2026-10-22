@@ -42,6 +42,26 @@ function mealColorsForDay(day){
   const row=model&&model.classifications.find(r=>r.name===day.classification);
   return model.meals.map(meal=>({meal,color:row&&row.meals[meal]||null}));
 }
+function averageMealNutrition(options){
+  const keys=["kcal","protein_g","carbs_g","fat_g"];
+  if(!options.length)return null;
+  const sums=Object.fromEntries(keys.map(key=>[key,0]));
+  for(const option of options){
+    if(!option.totals)return null;
+    for(const key of keys){
+      const raw=option.totals[key];
+      if(raw===undefined||raw===null||String(raw).trim()==="")return null;
+      const value=Number(String(raw).replace(",","."));
+      if(!Number.isFinite(value)||value<0)return null;
+      sums[key]+=value;
+    }
+  }
+  return Object.fromEntries(keys.map(key=>[key,sums[key]/options.length]));
+}
+function formatNutrition(value,digits=1){return value.toLocaleString("pt-PT",{maximumFractionDigits:digits,minimumFractionDigits:digits});}
+function nutritionSummary(average){
+  return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
+}
 function renderDayPreview(day,host){
   host.replaceChildren();
   const heading=document.createElement("h3");
@@ -63,10 +83,20 @@ function renderDayPreview(day,host){
       availability.textContent=!available?"Plano "+(colors[entry.color]||entry.color)+" em falta":options.length?options.length+" opções disponíveis":"Refeição não encontrada no plano";
       cell.appendChild(availability);
       if(available&&options.length){
+        const average=averageMealNutrition(options);
+        const avg=document.createElement("small");
+        avg.textContent=average?"Média planeada: "+nutritionSummary(average):"Média indisponível: verificar totais das opções";
+        cell.appendChild(avg);
+      }
+      if(available&&options.length){
         const view=document.createElement("button");view.type="button";view.textContent="Ver opções";
         view.addEventListener("click",()=>{
           detail.replaceChildren();
           const title=document.createElement("h3");title.textContent=names[entry.meal]+" · "+(colors[entry.color]||entry.color)+" · "+day.date;detail.appendChild(title);
+          const average=averageMealNutrition(options);
+          const avgLine=document.createElement("p");
+          avgLine.textContent=average?"Média planeada das "+options.length+" opções: "+nutritionSummary(average):"Não é possível calcular a média: uma ou mais opções têm valores em falta.";
+          detail.appendChild(avgLine);
           for(const option of options){
             const box=document.createElement("details");box.className="import-option";
             const caption=document.createElement("summary");
