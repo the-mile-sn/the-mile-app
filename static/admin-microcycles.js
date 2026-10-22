@@ -51,7 +51,7 @@ async function loadMenus(){
   $("menu-week").textContent=begin+" — "+end;
   const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
   dishLibrary=(await request("/api/v2/dishes")).dishes;
-  renderDishEditor();
+  renderDishEditor();refreshDishCategories();
   const calendar=(await request(matchBase()+"/calendar?start="+begin+"&end="+end)).days;
   const root=$("menu-grid");root.replaceChildren();
   const pending=new Map();
@@ -556,16 +556,19 @@ $("import-submit").addEventListener("click",async()=>{
 });
 
 async function photoAsWebp(file){
-  if(!file||file.size>12000000)throw Error("Seleciona uma imagem até 12 MB.");
-  const bitmap=await createImageBitmap(file);
-  const scale=Math.min(1,900/Math.max(bitmap.width,bitmap.height));
-  const canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
-  canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",.78));
-  if(!blob||blob.size>1200000)throw Error("Imagem demasiado grande após otimização.");
-  const buffer=await blob.arrayBuffer();const bytes=new Uint8Array(buffer);let binary="";
+  if(!file||file.size>12000000)throw Error("Seleciona uma fotografia PNG, JPG ou WebP até 12 MB.");
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
   for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
   return btoa(binary);
+}
+function refreshDishCategories(){
+  const select=$("new-dish-category");const previous=select.value;
+  select.replaceChildren();
+  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar categoria";select.appendChild(empty);
+  for(const name of [...new Set(dishLibrary.map(d=>d.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
+    const option=document.createElement("option");option.value=name;option.textContent=name;select.appendChild(option);
+  }
+  select.value=previous;
 }
 async function uploadDishPhoto(file,fields){
   const image=await photoAsWebp(file);
@@ -579,7 +582,7 @@ $("create-dish").addEventListener("click",async()=>{
   try{await uploadDishPhoto(photo,{name_pt,name_en,category});
     feedback.textContent="Prato adicionado à biblioteca universal.";
     $("new-dish-pt").value="";$("new-dish-en").value="";$("new-dish-category").value="";$("new-dish-photo").value="";
-    dishLibrary=(await request("/api/v2/dishes")).dishes;renderDishEditor();
+    dishLibrary=(await request("/api/v2/dishes")).dishes;renderDishEditor();refreshDishCategories();
   }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
 });
 function renderDishEditor(){
