@@ -95,21 +95,23 @@ async function loadMenus(){
       const libraryCategories=[...new Set(dishLibrary.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
       for(const name of libraryCategories){const opt=document.createElement("option");opt.value=name;opt.textContent=name;dishFilter.appendChild(opt);}
       dishFilter.value=selectedDish?.category||"";line.appendChild(dishFilter);
+      const dishSearch=document.createElement("input");dishSearch.type="search";dishSearch.className="menu-choice";dishSearch.placeholder="Pesquisar prato pelo nome…";dishSearch.setAttribute("aria-label","Pesquisar prato por nome");line.appendChild(dishSearch);
       const dishSelect=document.createElement("select");dishSelect.className="menu-choice";dishSelect.setAttribute("aria-label","Escolher prato da biblioteca");line.appendChild(dishSelect);
       const fillDishes=(selectedId="")=>{
         dishSelect.replaceChildren();
         const blank=document.createElement("option");blank.value="";blank.textContent="Escolher prato da biblioteca…";dishSelect.appendChild(blank);
-        for(const item of dishLibrary.filter(x=>(x.active||x.id===selectedDish?.id)&&(!dishFilter.value||x.category===dishFilter.value))){
+        for(const item of dishLibrary.filter(x=>(x.active||x.id===selectedDish?.id)&&(!dishFilter.value||x.category===dishFilter.value)&&(!dishSearch.value.trim()||x.name_pt.toLocaleLowerCase("pt-PT").includes(dishSearch.value.trim().toLocaleLowerCase("pt-PT"))))){
           const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name_pt;dishSelect.appendChild(opt);
         }
         dishSelect.value=selectedId;
       };
       fillDishes(selectedDish?.id||"");
+      dishSearch.addEventListener("input",()=>{fillDishes();updatePreview();toggle();});
       const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.style.cssText="max-width:110px;max-height:85px;object-fit:cover;border-radius:10px";preview.className="menu-dish-image";line.appendChild(preview);
       const updatePreview=()=>{const selected=dishLibrary.find(x=>x.id===dishSelect.value);preview.hidden=!selected;if(selected)preview.src="/api/v2/dishes/image/"+encodeURIComponent(selected.id);};
       dishSelect.addEventListener("change",updatePreview);
       dishFilter.addEventListener("change",()=>{fillDishes();updatePreview();toggle();});updatePreview();
-      const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
+      const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";dishSearch.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
       kind.addEventListener("change",toggle);dishSelect.addEventListener("change",toggle);toggle();
       const queue=()=>{
         const selectedDish=dishLibrary.find(x=>x.id===dishSelect.value);
