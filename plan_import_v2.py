@@ -78,6 +78,37 @@ def initialize(c):
         extracted_json TEXT NOT NULL,
         created_at BIGINT NOT NULL
     )""")
+    # Reserved for a future explicit publication action. No public/player route writes here.
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_plan_publications (
+        id TEXT PRIMARY KEY,
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        color TEXT NOT NULL,
+        source_import_id TEXT NOT NULL REFERENCES v2_plan_imports(id),
+        snapshot_json TEXT NOT NULL,
+        published_at BIGINT NOT NULL,
+        published_by TEXT NOT NULL,
+        replaced_at BIGINT,
+        UNIQUE(athlete_id, color, published_at)
+    )""")
+    c.execute("""CREATE INDEX IF NOT EXISTS idx_v2_publications_active
+                 ON v2_plan_publications(athlete_id, color, replaced_at)""")
+
+
+def color_plan_status(c, athlete_id):
+    """Admin-only overview; validation is not publication."""
+    from microcycles_v2 import COLORS
+    rows = c.execute("""SELECT id,color,status,created_at FROM v2_plan_imports
+                        WHERE athlete_id=? ORDER BY created_at DESC""", (athlete_id,)).fetchall()
+    active = c.execute("""SELECT color,source_import_id,published_at FROM v2_plan_publications
+                         WHERE athlete_id=? AND replaced_at IS NULL""", (athlete_id,)).fetchall()
+    grouped = {color: [] for color in COLORS}
+    for row in rows:
+        if row["color"] in grouped:
+            grouped[row["color"]].append(dict(row))
+    publication_by_color = {row["color"]: dict(row) for row in active}
+    return [{"color":color,"plans":grouped[color],
+             "validated_count":sum(p["status"]=="validated" for p in grouped[color]),
+             "publication":publication_by_color.get(color)} for color in COLORS]
 
 
 def extract_plan(pdf_bytes):
