@@ -54,12 +54,15 @@ def initialize(c):
     );
     """)
     columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_match_events)").fetchall()}
+    athlete_columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_athletes)").fetchall()}
+    if "weight_kg" not in athlete_columns:
+        c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
     if "match_time" not in columns:
         c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
 
 
 def list_athletes(c):
-    rows = c.execute("SELECT id,name FROM v2_athletes ORDER BY name").fetchall()
+    rows = c.execute("SELECT id,name,weight_kg FROM v2_athletes ORDER BY name").fetchall()
     return [dict(r) for r in rows]
 
 
@@ -78,7 +81,7 @@ def create_athlete(c, name):
 
 
 def get_model(c, athlete_id):
-    athlete = c.execute("SELECT id,name FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone()
+    athlete = c.execute("SELECT id,name,weight_kg FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone()
     if not athlete:
         return None
     configured = c.execute(
@@ -165,3 +168,20 @@ def update_match(c, athlete_id, match_id, match_date, match_time=None):
     c.execute("UPDATE v2_match_events SET match_date=?,match_time=? WHERE id=? AND athlete_id=?", (day,hour,match_id,athlete_id))
     c.commit()
     return {"id": match_id, "match_date": day, "match_time": hour}
+
+
+def update_athlete_weight(c, athlete_id, weight):
+    if weight is None or weight == "":
+        value = None
+    else:
+        try:
+            value = float(weight)
+        except (TypeError, ValueError):
+            raise ValueError("invalid_weight")
+        if not 20 <= value <= 250:
+            raise ValueError("invalid_weight")
+    row = c.execute("UPDATE v2_athletes SET weight_kg=? WHERE id=?", (value, athlete_id))
+    if row.rowcount != 1:
+        return None
+    c.commit()
+    return value
