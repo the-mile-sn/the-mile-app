@@ -2,6 +2,7 @@
 import base64
 import csv
 import io
+from PIL import Image, UnidentifiedImageError
 import zipfile
 import hashlib
 import hmac
@@ -648,10 +649,22 @@ def application(env, start_response):
                 body=read_json(env)
                 dish_id=body.get('id')
                 payload=body.get('image')
-                if not isinstance(payload,str) or len(payload)>1800000: raise Problem(400,'invalid_image')
-                try: raw=base64.b64decode(payload,validate=True)
-                except (ValueError,base64.binascii.Error): raise Problem(400,'invalid_image')
-                if not 50<len(raw)<=1200000 or raw[:4]!=b'RIFF' or raw[8:12]!=b'WEBP': raise Problem(400,'invalid_image')
+                if not isinstance(payload,str) or len(payload)>17000000: raise Problem(400,'invalid_image')
+                try:
+                    raw=base64.b64decode(payload,validate=True)
+                    if len(raw)>12000000: raise ValueError()
+                    source=Image.open(io.BytesIO(raw))
+                    source.verify()
+                    source=Image.open(io.BytesIO(raw))
+                    if source.width>8000 or source.height>8000 or source.width*source.height>32000000: raise ValueError()
+                    source=source.convert('RGB')
+                    source.thumbnail((900,900))
+                    result=io.BytesIO()
+                    source.save(result,format='WEBP',quality=76,method=4)
+                    raw=result.getvalue()
+                    if len(raw)>1200000: raise ValueError()
+                except (ValueError,UnidentifiedImageError,OSError,base64.binascii.Error):
+                    raise Problem(400,'invalid_image')
                 if dish_id:
                     dish=c.execute("SELECT id FROM v2_dish_library WHERE id=?",(dish_id,)).fetchone()
                     if not dish: raise Problem(404,'not_found')
