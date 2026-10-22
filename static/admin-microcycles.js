@@ -112,7 +112,17 @@ async function loadCalendar(){
   const list=$("calendar-matches");list.replaceChildren();
   for(const match of data.matches){
     const item=document.createElement("div");item.className="calendar-match-item";
-    const date=document.createElement("span");date.textContent="Jogo · "+match.match_date;item.appendChild(date);
+    const date=document.createElement("span");date.textContent="Jogo · "+match.match_date+(match.match_time?" · "+match.match_time:"");item.appendChild(date);
+    const edit=document.createElement("button");edit.type="button";edit.textContent="✎ Editar";edit.setAttribute("aria-label","Editar jogo de "+match.match_date);
+    edit.addEventListener("click",()=>{
+      const controls=document.createElement("div");controls.className="calendar-match-edit";
+      const day=document.createElement("input");day.type="date";day.value=match.match_date;
+      const hour=document.createElement("input");hour.type="time";hour.value=match.match_time||"";
+      const save=document.createElement("button");save.type="button";save.textContent="Guardar jogo";
+      const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";
+      save.addEventListener("click",async()=>{save.disabled=true;try{await request(matchBase()+"/matches/"+encodeURIComponent(match.id),{method:"PUT",body:JSON.stringify({match_date:day.value,match_time:hour.value||null})});const parts=day.value.split("-").map(Number);calendarMonth=new Date(parts[0],parts[1]-1,1);await loadCalendar();status("Jogo atualizado.","success");}catch(e){status("Erro ao editar jogo: "+e.message,"warn");save.disabled=false;}});
+      cancel.addEventListener("click",()=>controls.remove());controls.append(day,hour,save,cancel);item.appendChild(controls);
+    });item.appendChild(edit);
     const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.setAttribute("aria-label","Remover jogo de "+match.match_date);
     remove.addEventListener("click",async()=>{
       if(!confirm("Remover o jogo de "+match.match_date+"?"))return;
@@ -129,9 +139,9 @@ $("add-match").addEventListener("click",async()=>{
   const day=$("match-date").value;
   if(!day)return status("Seleciona a data do jogo.","warn");
   const btn=$("add-match");btn.disabled=true;
-  try{await request(matchBase()+"/matches",{method:"POST",body:JSON.stringify({match_date:day})});
+  try{await request(matchBase()+"/matches",{method:"POST",body:JSON.stringify({match_date:day,match_time:$("match-time").value||null})});
     const parts=day.split("-").map(Number);calendarMonth=new Date(parts[0],parts[1]-1,1);
-    $("match-date").value="";await loadCalendar();status("Jogo guardado e calendário atualizado.","success");
+    $("match-date").value="";$("match-time").value="";await loadCalendar();status("Jogo guardado e calendário atualizado.","success");
   }catch(e){status("Não foi possível guardar o jogo: "+e.message,"warn");}finally{btn.disabled=false;}
 });
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
