@@ -643,12 +643,27 @@ def application(env, start_response):
                 if method == 'POST':
                     body = read_json(env)
                     try:
-                        match = microcycles_v2.add_match(c, aid, body.get('match_date'))
+                        match = microcycles_v2.add_match(c, aid, body.get('match_date'), body.get('match_time'))
                     except ValueError:
                         raise Problem(400, 'invalid_or_duplicate_match')
                     if match is None:
                         raise Problem(404, 'not_found')
                     return respond(201, {'match': match})
+            if path.startswith('/api/v2/athletes/') and '/matches/' in path and method == 'PUT':
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 7 or parts[5] != 'matches':
+                    raise Problem(404, 'not_found')
+                body = read_json(env)
+                try:
+                    match = microcycles_v2.update_match(c, parts[4], parts[6], body.get('match_date'), body.get('match_time'))
+                except ValueError:
+                    raise Problem(400, 'invalid_or_duplicate_match')
+                if match is None:
+                    raise Problem(404, 'not_found')
+                return respond(200, {'match': match})
             if path.startswith('/api/v2/athletes/') and '/matches/' in path and method == 'DELETE':
                 if not user:
                     raise Problem(401, 'unauthorized')
