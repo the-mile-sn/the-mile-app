@@ -54,6 +54,14 @@ def initialize(c):
     );
     """)
     columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_match_events)").fetchall()}
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_weekly_menus (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        menu_date TEXT NOT NULL,
+        meal TEXT NOT NULL CHECK(meal IN ('lunch','dinner')),
+        kind TEXT NOT NULL CHECK(kind IN ('category','dish')),
+        value TEXT NOT NULL,
+        PRIMARY KEY (athlete_id, menu_date, meal)
+    )""")
     athlete_columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_athletes)").fetchall()}
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
@@ -185,3 +193,38 @@ def update_athlete_weight(c, athlete_id, weight):
         return None
     c.commit()
     return value
+
+
+def list_menus(c, athlete_id, start, end):
+    from calendar_v2 import parse_day
+    begin, finish = parse_day(start), parse_day(end)
+    if finish < begin or (finish-begin).days > 62:
+        raise ValueError("invalid_range")
+    return [dict(row) for row in c.execute(
+        "SELECT menu_date,meal,kind,value FROM v2_weekly_menus WHERE athlete_id=? AND menu_date BETWEEN ? AND ? ORDER BY menu_date,meal",
+        (athlete_id, begin.isoformat(), finish.isoformat())).fetchall()]
+
+
+def save_menu(c, athlete_id, menu_date, meal, kind, value):
+    from calendar_v2 import parse_day
+    day = parse_day(menu_date).isoformat()
+    if meal not in ("lunch","dinner") or kind not in ("category","dish") or not isinstance(value,str) or not 1 <= len(value.strip()) <= 200:
+        raise ValueError("invalid_menu")
+    if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
+        return None
+    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
+                 VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
+                 DO UPDATE SET kind=excluded.kind,value=excluded.value""",
+              (athlete_id,day,meal,kind,value.strip()))
+    c.commit()
+    return {"menu_date":day,"meal":meal,"kind":kind,"value":value.strip()}
+
+
+def delete_menu(c, athlete_id, menu_date, meal):
+    from calendar_v2 import parse_day
+    day=parse_day(menu_date).isoformat()
+    if meal not in ("lunch","dinner"):
+        raise ValueError("invalid_menu")
+    result=c.execute("DELETE FROM v2_weekly_menus WHERE athlete_id=? AND menu_date=? AND meal=?",(athlete_id,day,meal))
+    c.commit()
+    return result.rowcount > 0
