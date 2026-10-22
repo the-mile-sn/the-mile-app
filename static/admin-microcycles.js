@@ -555,6 +555,33 @@ $("import-submit").addEventListener("click",async()=>{
   finally{button.disabled=false;}
 });
 
+async function photoAsWebp(file){
+  if(!file||file.size>12000000)throw Error("Seleciona uma imagem até 12 MB.");
+  const bitmap=await createImageBitmap(file);
+  const scale=Math.min(1,900/Math.max(bitmap.width,bitmap.height));
+  const canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
+  canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",.78));
+  if(!blob||blob.size>1200000)throw Error("Imagem demasiado grande após otimização.");
+  const buffer=await blob.arrayBuffer();const bytes=new Uint8Array(buffer);let binary="";
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  return btoa(binary);
+}
+async function uploadDishPhoto(file,fields){
+  const image=await photoAsWebp(file);
+  return request("/api/v2/dishes/photo",{method:"POST",body:JSON.stringify({...fields,image})});
+}
+$("create-dish").addEventListener("click",async()=>{
+  const button=$("create-dish"),feedback=$("dish-new-feedback");
+  const name_pt=$("new-dish-pt").value.trim(),name_en=$("new-dish-en").value.trim(),category=$("new-dish-category").value.trim(),photo=$("new-dish-photo").files[0];
+  if(!name_pt||!category||!photo){feedback.textContent="Indica nome português, categoria e fotografia.";return;}
+  button.disabled=true;feedback.textContent="A guardar prato…";
+  try{await uploadDishPhoto(photo,{name_pt,name_en,category});
+    feedback.textContent="Prato adicionado à biblioteca universal.";
+    $("new-dish-pt").value="";$("new-dish-en").value="";$("new-dish-category").value="";$("new-dish-photo").value="";
+    dishLibrary=(await request("/api/v2/dishes")).dishes;renderDishEditor();
+  }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
+});
 function renderDishEditor(){
   const host=$("dish-editor-list");if(!host)return;host.replaceChildren();
   const query=($("dish-search").value||"").trim().toLocaleLowerCase("pt-PT");
@@ -564,6 +591,13 @@ function renderDishEditor(){
     const card=document.createElement("div");card.className="dish-edit-card";
     const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);photo.alt=dish.name_pt;photo.loading="lazy";card.appendChild(photo);
     const fields=document.createElement("div");fields.className="dish-edit-fields";
+    const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
+    const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.appendChild(photoInput);fields.appendChild(photoLabel);
+    const photoButton=document.createElement("button");photoButton.type="button";photoButton.textContent="Atualizar fotografia";
+    photoButton.onclick=async()=>{if(!photoInput.files[0])return;photoButton.disabled=true;
+      try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();status("Fotografia atualizada.","success");}
+      catch(e){status("Erro: "+e.message,"warn");}finally{photoButton.disabled=false;}
+    };fields.appendChild(photoButton);
     const inputs=[];
     for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
       const wrap=document.createElement("label");wrap.textContent=label;const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;wrap.appendChild(input);fields.appendChild(wrap);inputs.push(input);
