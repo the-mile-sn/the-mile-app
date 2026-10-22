@@ -680,6 +680,34 @@ def application(env, start_response):
                 file=DATA/'v2_dish_images'/dish['image_filename']
                 if not file.is_file(): raise Problem(404,'not_found')
                 return respond(200,file.read_bytes(),'image/webp')
+            if path.startswith('/api/v2/athletes/') and path.endswith('/menus/batch') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                items=read_json(env).get('items')
+                if not isinstance(items,list) or len(items)>14:
+                    raise Problem(400,'invalid_menu_batch')
+                try:
+                    validated=[]
+                    for item in items:
+                        if not isinstance(item,dict): raise ValueError()
+                        date=calendar_v2.parse_day(item.get('menu_date')).isoformat()
+                        meal=item.get('meal')
+                        kind=item.get('kind')
+                        value=item.get('value')
+                        if meal not in ('lunch','dinner') or kind not in ('category','dish') or not isinstance(value,str) or not value.strip() or len(value)>200: raise ValueError()
+                        if kind=='category' and value.strip() not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix'): raise ValueError()
+                        validated.append((date,meal,kind,value.strip()))
+                    if len(set((v[0],v[1]) for v in validated))!=len(validated): raise ValueError()
+                except (ValueError,TypeError,AttributeError):
+                    raise Problem(400,'invalid_menu_batch')
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
+                for date,meal,kind,value in validated:
+                    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
+                      VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
+                      kind=excluded.kind,value=excluded.value""",(aid,date,meal,kind,value))
+                c.commit()
+                return respond(200,{'saved':len(validated)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
                 if not user:
                     raise Problem(401, 'unauthorized')
