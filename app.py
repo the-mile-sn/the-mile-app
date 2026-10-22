@@ -637,6 +637,34 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
                 return respond(200, {'matches': matches, 'days': days})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                if method == 'GET':
+                    q = parse_qs(env.get('QUERY_STRING', ''))
+                    try:
+                        menus = microcycles_v2.list_menus(c, aid, (q.get('start') or [''])[0], (q.get('end') or [''])[0])
+                    except ValueError:
+                        raise Problem(400, 'invalid_menu_range')
+                    return respond(200, {'menus': menus})
+                if method == 'PUT':
+                    body = read_json(env)
+                    try:
+                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_menu')
+                    if item is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'menu': item})
+                if method == 'DELETE':
+                    body = read_json(env)
+                    try:
+                        microcycles_v2.delete_menu(c, aid, body.get('menu_date'), body.get('meal'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_menu')
+                    return respond(200, {'ok': True})
             if path.startswith('/api/v2/athletes/') and path.endswith('/matches'):
                 if not user:
                     raise Problem(401, 'unauthorized')
