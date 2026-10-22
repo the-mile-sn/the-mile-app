@@ -53,6 +53,18 @@ async function loadMenus(){
   dishLibrary=(await request("/api/v2/dishes")).dishes;
   const calendar=(await request(matchBase()+"/calendar?start="+begin+"&end="+end)).days;
   const root=$("menu-grid");root.replaceChildren();
+  const pending=new Map();
+  const saveWeek=$("save-menu-week");
+  const feedback=$("menu-save-feedback");
+  saveWeek.disabled=true;feedback.textContent="";
+  const mark=(key,entry)=>{pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
+  saveWeek.onclick=async()=>{
+    saveWeek.disabled=true;feedback.textContent="A guardar a semana…";
+    try{await request(matchBase()+"/menus/batch",{method:"PUT",body:JSON.stringify({items:[...pending.values()]})});
+      feedback.textContent="Semana guardada com sucesso.";await loadMenus();
+      feedback.textContent="Semana guardada com sucesso.";status("Menus da semana guardados.","success");
+    }catch(e){feedback.textContent="Erro ao guardar: "+e.message;saveWeek.disabled=false;}
+  };
   for(let i=0;i<7;i++){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
     const section=document.createElement("section");section.className="menu-day-card";
@@ -86,14 +98,13 @@ async function loadMenus(){
       dishSelect.addEventListener("change",updatePreview);updatePreview();
       const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
       kind.addEventListener("change",toggle);dishSelect.addEventListener("change",toggle);toggle();
-      const save=document.createElement("button");save.type="button";save.textContent="Guardar";save.className="menu-save";
-      save.addEventListener("click",async()=>{save.disabled=true;try{
-        const dishItem=dishLibrary.find(x=>x.id===dishSelect.value);
-        const selected=kind.value==="category"?category.value:(dishItem?.name_pt||"");
-        if(!selected){if(kind.value==="dish")throw Error("Indica o nome do prato.");throw Error("Seleciona uma categoria.");}
-        await request(matchBase()+"/menus",{method:"PUT",body:JSON.stringify({menu_date:date,meal,kind:kind.value,value:selected})});
-        await loadMenus();await loadCalendar();status("Menu guardado.","success");
-      }catch(e){status("Erro no menu: "+e.message,"warn");save.disabled=false;}});line.appendChild(save);section.appendChild(line);
+      const queue=()=>{
+        const selectedDish=dishLibrary.find(x=>x.id===dishSelect.value);
+        const selected=kind.value==="category"?category.value:(selectedDish?.name_pt||"");
+        mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected});
+      };
+      kind.addEventListener("change",queue);category.addEventListener("change",queue);dishSelect.addEventListener("change",queue);
+      section.appendChild(line);
     }
     root.appendChild(section);
   }
