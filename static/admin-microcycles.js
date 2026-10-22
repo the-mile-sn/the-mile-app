@@ -2,7 +2,7 @@
 const names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"};
 const colors={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"VP · Verde preparação"};
 const $=id=>document.getElementById(id);
-let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=null;
+let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=null,validatedPlansByColor={};
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
@@ -54,7 +54,9 @@ function renderDayPreview(day,host){
     const value=document.createElement("strong");
     value.textContent=entry.color?(colors[entry.color]||entry.color):"— Sem cor atribuída";
     if(entry.color)value.className="meal-"+entry.color;
-    cell.append(label,value);grid.appendChild(cell);
+    cell.append(label,value);
+    if(entry.color){const availability=document.createElement("small");availability.textContent=validatedPlansByColor[entry.color]?"Plano validado disponível":"Plano "+(colors[entry.color]||entry.color)+" em falta";cell.appendChild(availability);}
+    grid.appendChild(cell);
   }
   host.appendChild(grid);
   const hint=document.createElement("p");
@@ -152,6 +154,7 @@ async function loadPlanDrafts(){
   $("plan-import-panel").hidden=false;
   const data=await request(matchBase()+"/plan-imports");
   const readiness=await request(matchBase()+"/plan-imports/publication-status");
+  validatedPlansByColor=Object.fromEntries(readiness.colors.map(entry=>[entry.color,entry.validated_count>0]));
   const panel=$("publication-readiness");panel.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Preparação para publicação · Ainda não disponível aos jogadores";panel.appendChild(heading);
   for(const entry of readiness.colors){
