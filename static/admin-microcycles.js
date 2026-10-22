@@ -62,6 +62,30 @@ function formatNutrition(value,digits=1){return value.toLocaleString("pt-PT",{ma
 function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
+function plannedDayTotals(day){
+  if(!day.classification||day.needs_review)return {state:"unclassified",count:0,missing:[],total:null};
+  const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+  const missing=[];let count=0;
+  for(const entry of mealColorsForDay(day)){
+    if(!entry.color)continue;
+    const average=averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]);
+    if(!average){missing.push(names[entry.meal]+" ("+(colors[entry.color]||entry.color)+")");continue;}
+    for(const key of Object.keys(totals))totals[key]+=average[key];
+    count++;
+  }
+  return {state:missing.length?"partial":"complete",count,missing,total:count?totals:null};
+}
+function renderNutritionTotals(host,label,result){
+  const block=document.createElement("section");block.className="import-validation-progress";
+  const heading=document.createElement("strong");heading.textContent=label;block.appendChild(heading);
+  const description=document.createElement("p");
+  if(result.state==="unclassified")description.textContent="Sem classificação nutricional definida.";
+  else if(result.total)description.textContent=(result.state==="complete"?"Total planeado: ":"Subtotal planeado (incompleto): ")+nutritionSummary(result.total);
+  else description.textContent="Ainda não existem valores nutricionais calculáveis.";
+  block.appendChild(description);
+  if(result.missing.length){const note=document.createElement("p");note.textContent="Em falta: "+result.missing.join("; ");block.appendChild(note);}
+  host.appendChild(block);
+}
 function renderDayPreview(day,host){
   host.replaceChildren();
   const heading=document.createElement("h3");
@@ -121,6 +145,7 @@ function renderDayPreview(day,host){
     grid.appendChild(cell);
   }
   host.appendChild(grid);
+  renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day));
   host.appendChild(detail);
   const hint=document.createElement("p");hint.textContent="Pré-visualização administrativa. Os planos ainda não estão publicados aos jogadores.";host.appendChild(hint);
 }
@@ -130,6 +155,31 @@ async function loadCalendar(){
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  let weekly=$("nutrition-weekly-summary");
+  if(!weekly){weekly=document.createElement("section");weekly.id="nutrition-weekly-summary";weekly.className="import-validation-progress";$("calendar-matches").insertAdjacentElement("afterend",weekly);}
+  weekly.replaceChildren();
+  const weekHeading=document.createElement("h3");weekHeading.textContent="Resumo nutricional semanal · Semanas de segunda a domingo";weekly.appendChild(weekHeading);
+  const weeks=new Map();
+  for(const day of data.days){
+    const dt=new Date(day.date+"T12:00:00Z");
+    const weekday=(dt.getUTCDay()+6)%7;
+    dt.setUTCDate(dt.getUTCDate()-weekday);
+    const monday=dt.toISOString().slice(0,10);
+    if(!weeks.has(monday))weeks.set(monday,[]);
+    weeks.get(monday).push(day);
+  }
+  for(const [monday,weekDays] of weeks){
+    const eligible=weekDays.filter(d=>d.classification&&!d.needs_review);
+    if(!eligible.length)continue;
+    const daily=eligible.map(plannedDayTotals);
+    const subtotal={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+    let covered=0;
+    for(const result of daily){if(result.total){covered++;for(const key of Object.keys(subtotal))subtotal[key]+=result.total[key];}}
+    const complete=weekDays.length===7&&daily.every(r=>r.state==="complete")&&daily.length===7;
+    const row=document.createElement("p");
+    row.textContent="Semana de "+monday+": "+(complete?"Total planeado":"Subtotal planeado (incompleto)")+" · "+nutritionSummary(subtotal)+" · "+covered+"/"+eligible.length+" dias com valores"+(weekDays.length<7?" · semana parcialmente visível":"");
+    weekly.appendChild(row);
+  }
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
