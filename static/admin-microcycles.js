@@ -42,7 +42,7 @@ $("save-athlete-weight").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar peso: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
-let backofficeView="calendar",menuWeek=new Date(),menuLookup={};
+let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 async function loadMenus(){
   if(!model)return;
@@ -50,6 +50,7 @@ async function loadMenus(){
   const begin=isoDay(start),end=isoDay(finish);
   $("menu-week").textContent=begin+" — "+end;
   const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
+  dishLibrary=(await request("/api/v2/dishes")).dishes;
   const root=$("menu-grid");root.replaceChildren();
   for(let i=0;i<7;i++){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
@@ -69,10 +70,20 @@ async function loadMenus(){
       for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
       category.value=previousCategory||categoryNames[0];line.appendChild(category);
       const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
-      const toggle=()=>{category.hidden=kind.value!=="category";dish.hidden=kind.value!=="dish";};kind.addEventListener("change",toggle);toggle();
+      const dishSelect=document.createElement("select");
+      const blank=document.createElement("option");blank.value="";blank.textContent="Escolher prato da biblioteca…";dishSelect.appendChild(blank);
+      for(const item of dishLibrary){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name_pt;dishSelect.appendChild(opt);}
+      const selectedDish=dishLibrary.find(x=>x.name_pt===existing?.value);
+      dishSelect.value=selectedDish?.id||"";line.appendChild(dishSelect);
+      const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.style.cssText="max-width:110px;max-height:85px;object-fit:cover;border-radius:10px";line.appendChild(preview);
+      const updatePreview=()=>{const selected=dishLibrary.find(x=>x.id===dishSelect.value);preview.hidden=!selected;if(selected)preview.src="/api/v2/dishes/image/"+encodeURIComponent(selected.id);};
+      dishSelect.addEventListener("change",updatePreview);updatePreview();
+      const toggle=()=>{category.hidden=kind.value!=="category";dishSelect.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!dishSelect.value;dish.hidden=true;};
+      kind.addEventListener("change",toggle);dishSelect.addEventListener("change",toggle);toggle();
       const save=document.createElement("button");save.type="button";save.textContent="Guardar";
       save.addEventListener("click",async()=>{save.disabled=true;try{
-        const selected=kind.value==="category"?category.value:dish.value.trim();
+        const dishItem=dishLibrary.find(x=>x.id===dishSelect.value);
+        const selected=kind.value==="category"?category.value:(dishItem?.name_pt||"");
         if(!selected){if(kind.value==="dish")throw Error("Indica o nome do prato.");throw Error("Seleciona uma categoria.");}
         await request(matchBase()+"/menus",{method:"PUT",body:JSON.stringify({menu_date:date,meal,kind:kind.value,value:selected})});
         await loadMenus();await loadCalendar();status("Menu guardado.","success");
@@ -512,4 +523,16 @@ $("import-submit").addEventListener("click",async()=>{
     showImportedDraft(result.draft);await loadPlanDrafts();
   }catch(e){$("import-feedback").textContent="Erro na importação: "+e.message;}
   finally{button.disabled=false;}
+});
+
+$("dish-catalog-import").addEventListener("click",async()=>{
+  const input=$("dish-catalog-file"),feedback=$("dish-catalog-feedback"),file=input.files?.[0];
+  if(!file){feedback.textContent="Seleciona o pacote ZIP da biblioteca.";return;}
+  const button=$("dish-catalog-import");button.disabled=true;feedback.textContent="A importar biblioteca…";
+  try{
+    const response=await fetch("/api/v2/dishes/import",{method:"POST",credentials:"same-origin",headers:{"X-CSRF-Token":csrf},body:file});
+    const data=await response.json();if(!response.ok)throw Error(data.error||"Erro na importação");
+    feedback.textContent=data.imported+" pratos importados com fotografias.";
+    await loadMenus();
+  }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
 });
