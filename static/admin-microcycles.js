@@ -151,6 +151,15 @@ async function loadPlanDrafts(){
   if(!model)return;
   $("plan-import-panel").hidden=false;
   const data=await request(matchBase()+"/plan-imports");
+  const readiness=await request(matchBase()+"/plan-imports/publication-status");
+  const panel=$("publication-readiness");panel.replaceChildren();
+  const heading=document.createElement("h3");heading.textContent="Preparação para publicação · Ainda não disponível aos jogadores";panel.appendChild(heading);
+  for(const entry of readiness.colors){
+    const line=document.createElement("p");
+    const latest=entry.plans.find(p=>p.status==="validated");
+    line.textContent=(colors[entry.color]||entry.color)+": "+(entry.publication?"Publicado":latest?"Plano validado · pronto para futura publicação":"Sem plano validado")+" · "+entry.plans.length+" importação(ões)";
+    panel.appendChild(line);
+  }
   const list=$("import-list");list.replaceChildren();
   if(!data.drafts.length){list.textContent="Ainda não existem rascunhos deste jogador.";return;}
   for(const d of data.drafts){
