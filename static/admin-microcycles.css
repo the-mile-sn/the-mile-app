@@ -119,3 +119,5 @@
 .player-sim-meal{padding:16px;margin:14px 0;border:1px solid #3b3b42;border-radius:13px}.player-sim-meal h3{margin:0}.player-sim-meal .import-option{margin:7px 0}
 
 .player-sim-menu{display:flex;flex-direction:column;gap:5px;background:#232329;border:1px solid #393941;border-radius:10px;padding:12px;margin:12px 0}.player-sim-menu small{color:#aaaab2}.player-sim-menu strong{font-size:14px}
+
+.player-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin:16px 0}.player-day-pill{padding:12px 5px;font-size:12px;border-radius:11px}.player-day-pill.active{border-color:#d8d8df;background:#36363d;color:#fff}.player-day-summary{margin:12px 0 20px}.player-day-summary small{color:#aaaab4}@media(max-width:550px){.player-week-strip{gap:3px}.player-day-pill{padding:9px 2px;font-size:10px}}
