@@ -184,7 +184,7 @@ let playerView="overview",playerSelectedPlan=null,playerMenuWeek=new Date();
 function playerFormattedNutrition(values){
  const root=document.createElement("span");root.className="nutrient-colors player-formatted-nutrition";
  for(const [key,prefix,cls,digits] of [["kcal","","nutrient-kcal",0],["protein_g","P ","nutrient-protein",1],["carbs_g","HC ","nutrient-carbs",1],["fat_g","G ","nutrient-fat",1]]){
-  const item=document.createElement("span");item.className=cls;item.textContent=prefix+formatNutrition(Number(values[key]),digits)+(key==="kcal"?" kcal":" g");root.appendChild(item);
+  const item=document.createElement("span");item.className=cls;const raw=values?.[key];const n=typeof raw==="number"?raw:Number(String(raw??"").trim().replace(",","."));item.textContent=prefix+(raw===null||raw===undefined||String(raw).trim()===""||!Number.isFinite(n)?"—":formatNutrition(n,digits))+(key==="kcal"?" kcal":" g");root.appendChild(item);
  }
  return root;
 }
