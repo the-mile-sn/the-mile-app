@@ -527,7 +527,11 @@ function showImportedDraft(draft){
     const groupTitle=document.createElement("h3");groupTitle.textContent=group.heading+" → "+group.meals.map(m=>names[m]).join(" / ");root.appendChild(groupTitle);
     group.options.forEach((option,optionIndex)=>{
       const details=document.createElement("details");details.className="import-option";
-      const summary=document.createElement("summary");summary.textContent="Opção "+option.number+" · "+(option.totals?option.totals.kcal+" kcal":"Totais por confirmar");details.appendChild(summary);
+      const summary=document.createElement("summary");summary.className="plan-option-summary";
+      const name=document.createElement("span");name.className="plan-option-name";name.textContent="Opção "+option.number+(option.title?" · "+option.title:"");
+      const nutrients=document.createElement("span");nutrients.className="plan-option-nutrition";
+      nutrients.textContent=option.totals?option.totals.kcal+" kcal · P "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · G "+option.totals.fat_g+" g":"Valores por confirmar";
+      summary.append(name,nutrients);details.appendChild(summary);
       if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
       if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
       for(const item of option.items||[]){
