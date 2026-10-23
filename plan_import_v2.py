@@ -309,3 +309,18 @@ def set_review_status(c, athlete_id, draft_id, action):
         raise ValueError("status_changed")
     c.commit()
     return new_status
+
+
+def update_group_meals(c, athlete_id, draft_id, group_index, meals):
+    from microcycles_v2 import MEALS
+    draft=get_draft(c,athlete_id,draft_id)
+    if draft is None: return None
+    if draft["status"]!="draft" or type(group_index) is not int or not isinstance(meals,list) or not meals or len(meals)>5 or len(set(meals))!=len(meals) or any(m not in MEALS for m in meals):
+        raise ValueError("invalid_meal_mapping")
+    groups=draft["extracted"]["groups"]
+    if not 0<=group_index<len(groups): raise ValueError("invalid_meal_mapping")
+    groups[group_index]["meals"]=meals
+    c.execute("UPDATE v2_plan_imports SET extracted_json=? WHERE id=? AND athlete_id=? AND status='draft'",
+       (json.dumps(draft["extracted"],ensure_ascii=False),draft_id,athlete_id))
+    c.commit()
+    return meals
