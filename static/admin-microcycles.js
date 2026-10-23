@@ -455,7 +455,6 @@ $("calendar-next").addEventListener("click",()=>{calendarMonth=new Date(calendar
 let selectedPlanId=null,selectedPlanMode="consult";
 async function loadPlanDrafts(){
   if(!model)return;
-  $("plan-import-panel").hidden=false;
   const data=await request(matchBase()+"/plan-imports");
   const readiness=await request(matchBase()+"/plan-imports/publication-status");
   validatedPlansByColor=Object.fromEntries(readiness.colors.map(entry=>[entry.color,entry.validated_count>0]));
@@ -530,7 +529,7 @@ function showImportedDraft(draft){
         await Promise.all(planPendingSaves);
         const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{method:"POST",body:JSON.stringify({action:"approve"})});
         draft.status=result.status;selectedPlanMode="consult";
-        await loadCalendar();
+        await loadPlanDrafts();
       }
       showImportedDraft(draft);await loadPlanDrafts();
     }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
