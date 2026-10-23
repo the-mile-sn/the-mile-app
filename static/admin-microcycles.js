@@ -468,6 +468,25 @@ async function loadPlanDrafts(){
     line.textContent=(colors[entry.color]||entry.color)+": "+(entry.publication?"Publicado":latest?"Plano validado · pronto para futura publicação":"Sem plano validado")+" · "+entry.plans.length+" importação(ões)";
     panel.appendChild(line);
   }
+  const checklist=document.createElement("section");checklist.className="import-validation-progress";
+  const checkTitle=document.createElement("h3");checkTitle.textContent="Verificação por refeição · Apenas backoffice";checklist.appendChild(checkTitle);
+  const checkIntro=document.createElement("p");checkIntro.textContent="Confirma que cada cor tem opções válidas para as refeições que pretende prescrever. Esta verificação não publica planos.";checklist.appendChild(checkIntro);
+  for(const entry of readiness.colors){
+    const row=document.createElement("div");row.className="import-structured-line";
+    const name=document.createElement("strong");name.textContent=colors[entry.color]||entry.color;row.appendChild(name);
+    const detail=document.createElement("span");detail.className="import-nutrients";
+    if(!entry.validated_count){detail.textContent="Sem plano validado";}else{
+      const assigned=model.classifications.flatMap(cls=>model.meals.filter(meal=>cls.meals[meal]===entry.color));
+      const required=[...new Set(assigned)];
+      if(!required.length){detail.textContent="Validado · Cor ainda não usada no Modelo";}
+      else{
+        const missing=required.filter(meal=>!averageMealNutrition(mealOptionsByColor[entry.color]?.[meal]||[]));
+        detail.textContent=missing.length?"Rever: "+missing.map(meal=>names[meal]).join(", "):"Opções nutricionais disponíveis nas refeições atribuídas";
+      }
+    }
+    row.appendChild(detail);checklist.appendChild(row);
+  }
+  panel.appendChild(checklist);
   const list=$("import-list");list.replaceChildren();
   if(!data.drafts.length){list.textContent="Ainda não existem rascunhos deste jogador.";return;}
   for(const d of data.drafts){
