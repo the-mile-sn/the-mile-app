@@ -966,6 +966,29 @@ def application(env, start_response):
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals']})
+            if path == '/api/v2/player/dishes' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                rows=c.execute("""SELECT DISTINCT d.id,d.name_pt FROM v2_dish_library d
+                  JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
+                  WHERE m.athlete_id=? AND d.active=1""",(link['athlete_id'],)).fetchall()
+                return respond(200,{'dishes':[dict(row) for row in rows]})
+            if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                identifier=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
+                row=c.execute("""SELECT d.image_filename FROM v2_dish_library d
+                   JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
+                   WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",(link['athlete_id'],identifier)).fetchone()
+                if not row: raise Problem(404,'not_found')
+                photo=DATA/'v2_dish_images'/row['image_filename']
+                if not photo.is_file(): raise Problem(404,'not_found')
+                return respond(200,photo.read_bytes(),'image/webp')
             if path == '/api/v2/player/plans' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
