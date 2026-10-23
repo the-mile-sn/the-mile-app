@@ -96,3 +96,5 @@
 
 /* Clean color-based plan overview */
 #publication-readiness{margin:18px 0}#publication-readiness>h3{margin:0 0 15px}.plan-simple-row{display:flex;align-items:center;gap:13px;padding:13px 4px;border-bottom:1px solid #34343a;flex-wrap:wrap}.plan-simple-dot{height:14px;width:14px;min-width:14px;border-radius:50%;display:inline-block}.plan-simple-info{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}.plan-simple-info small{font-size:12px;color:#a9a9b2}.plan-simple-row button{font-size:12px}.plan-simple-warning{flex-basis:100%;font-size:12px;color:#e8b76e;margin:0 0 0 27px}
+
+.plan-detail-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}.plan-detail-header h3{margin:0}.plan-option-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.plan-option-name{flex:1;min-width:200px}.plan-option-nutrition{font-size:12px;font-weight:400;color:#bdbdc8;text-align:right}.plan-simple-row>button{white-space:nowrap}
