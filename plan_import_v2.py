@@ -324,3 +324,37 @@ def update_group_meals(c, athlete_id, draft_id, group_index, meals):
        (json.dumps(draft["extracted"],ensure_ascii=False),draft_id,athlete_id))
     c.commit()
     return meals
+
+
+def publish_validated_plan(c, athlete_id, draft_id, administrator_id):
+    """Publish an immutable approved snapshot for one athlete/color, atomically."""
+    from microcycles_v2 import COLORS
+    import sqlite3
+    draft=get_draft(c,athlete_id,draft_id)
+    if draft is None: return None
+    if draft["status"]!="validated" or draft["color"] not in COLORS:
+        raise ValueError("plan_not_validated")
+    snapshot=json.dumps(draft["extracted"],ensure_ascii=False)
+    now=int(time.time())
+    publication_id=secrets.token_hex(16)
+    try:
+        c.execute("SAVEPOINT publish_v2")
+        c.execute("UPDATE v2_plan_publications SET replaced_at=? WHERE athlete_id=? AND color=? AND replaced_at IS NULL",
+                  (now,athlete_id,draft["color"]))
+        c.execute("""INSERT INTO v2_plan_publications(id,athlete_id,color,source_import_id,snapshot_json,published_at,published_by,replaced_at)
+                  VALUES(?,?,?,?,?,?,?,NULL)""",
+                  (publication_id,athlete_id,draft["color"],draft_id,snapshot,now,administrator_id))
+        c.execute("RELEASE SAVEPOINT publish_v2")
+        c.commit()
+    except Exception:
+        c.execute("ROLLBACK TO SAVEPOINT publish_v2")
+        c.execute("RELEASE SAVEPOINT publish_v2")
+        raise
+    return {"id":publication_id,"color":draft["color"],"source_import_id":draft_id,"published_at":now}
+
+
+def publication_history(c, athlete_id):
+    rows=c.execute("""SELECT id,color,source_import_id,published_at,published_by,replaced_at
+                     FROM v2_plan_publications WHERE athlete_id=? ORDER BY published_at DESC,id DESC""",
+                   (athlete_id,)).fetchall()
+    return [dict(row) for row in rows]
