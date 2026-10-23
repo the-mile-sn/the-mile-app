@@ -127,3 +127,7 @@
 .player-meal-average{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:8px 0 14px;padding:10px 12px;background:#222228;border-radius:9px}.player-meal-average small{color:#aaaab3}.player-option-nutrients{padding:12px;text-align:right;border-bottom:1px solid #38383e}
 
 .player-meal-header{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;margin-bottom:15px}.player-meal-header h3{margin:0}.player-formatted-nutrition{font-size:13px;gap:10px}.player-option-nutrients{display:none}.player-full-plans .plan-option-summary{align-items:center}.player-full-plans .plan-option-summary>span:first-child{flex:1;min-width:0}
+
+/* Published player plan options: nutrients visible only on expansion */
+#player-plan-detail details:not([open]) .player-option-expanded-values{display:none}
+#player-plan-detail details[open] .player-option-expanded-values{display:inline-flex}
