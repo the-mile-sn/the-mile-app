@@ -502,6 +502,7 @@ async function loadPlanDrafts(){
       const warning=document.createElement("p");warning.className="plan-simple-warning";
       warning.textContent="Rever opções de: "+missing.map(meal=>names[meal]).join(", ");row.appendChild(warning);
     }
+    if(selectedPlanId===latest?.id){row.classList.add("plan-active-row");row.classList.add("plan-active-"+entry.color);}
     panel.appendChild(row);
   }
   list.hidden=true;
@@ -512,9 +513,9 @@ async function loadPlanDrafts(){
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const header=document.createElement("div");header.className="plan-detail-header";
-  const h=document.createElement("h3");h.textContent="Plano selecionado · "+(colors[draft.color]||draft.color);header.appendChild(h);
+  const h=document.createElement("h3");h.textContent="● "+(colors[draft.color]||draft.color);h.className="plan-selected-"+draft.color;header.appendChild(h);
   const close=document.createElement("button");close.type="button";close.textContent="Fechar";
-  close.onclick=()=>{selectedPlanId=null;root.replaceChildren();};header.appendChild(close);root.appendChild(header);
+  close.onclick=()=>{selectedPlanId=null;root.replaceChildren();};root.appendChild(header);
   const totalCount=draft.extracted.groups.reduce((sum,group)=>sum+group.options.length,0);
   const overview=document.createElement("section");overview.className="import-validation-progress";
   const state=document.createElement("strong");
@@ -543,7 +544,21 @@ function showImportedDraft(draft){
   root.appendChild(overview);
   for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
   draft.extracted.groups.forEach((group,groupIndex)=>{
-    const groupTitle=document.createElement("h3");groupTitle.textContent=group.heading+" → "+group.meals.map(m=>names[m]).join(" / ");root.appendChild(groupTitle);
+    const groupTitle=document.createElement("div");groupTitle.className="plan-group-title";
+    const heading=document.createElement("h3");heading.textContent=group.heading||"Refeição";groupTitle.appendChild(heading);
+    if(selectedPlanMode==="edit"){
+      const mapping=document.createElement("div");mapping.className="plan-meal-mapping";
+      for(const meal of model.meals){
+        const label=document.createElement("label");const check=document.createElement("input");check.type="checkbox";check.checked=group.meals.includes(meal);label.append(check,document.createTextNode(" "+names[meal]));mapping.appendChild(label);
+        check.addEventListener("change",async()=>{
+          const choices=[...mapping.querySelectorAll("label")].filter(l=>l.querySelector("input").checked).map(l=>model.meals[[...mapping.children].indexOf(l)]);
+          try{await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/group-meals",{method:"PUT",body:JSON.stringify({group_index:groupIndex,meals:choices})});group.meals=choices;status("Correspondência das refeições atualizada.","success");}
+          catch(e){check.checked=!check.checked;status("Erro na correspondência: "+e.message,"warn");}
+        });
+      }
+      groupTitle.appendChild(mapping);
+    }else{const mapping=document.createElement("small");mapping.textContent=group.meals.map(m=>names[m]).join(" / ");groupTitle.appendChild(mapping);}
+    root.appendChild(groupTitle);
     group.options.forEach((option,optionIndex)=>{
       const details=document.createElement("details");details.className="import-option";
       const summary=document.createElement("summary");summary.className="plan-option-summary";
