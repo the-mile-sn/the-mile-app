@@ -358,3 +358,26 @@ def publication_history(c, athlete_id):
                      FROM v2_plan_publications WHERE athlete_id=? ORDER BY published_at DESC,id DESC""",
                    (athlete_id,)).fetchall()
     return [dict(row) for row in rows]
+
+
+def published_meal_options(c, athlete_id):
+    """Admin-only simulation data sourced exclusively from immutable active publications."""
+    from microcycles_v2 import COLORS, MEALS
+    rows=c.execute("""SELECT color,snapshot_json FROM v2_plan_publications
+                      WHERE athlete_id=? AND replaced_at IS NULL""",(athlete_id,)).fetchall()
+    result={color:{meal:[] for meal in MEALS} for color in COLORS}
+    for row in rows:
+        if row["color"] not in result: continue
+        snapshot=json.loads(row["snapshot_json"])
+        for group in enrich_groups(snapshot.get("groups",[])):
+            for meal in group.get("meals",[]):
+                if meal not in result[row["color"]]: continue
+                for option in group.get("options",[]):
+                    result[row["color"]][meal].append({
+                        "number":option.get("number"),"title":option.get("title",""),
+                        "totals":option.get("totals"),
+                        "items":[{"kind":item.get("kind"),"quantity":item.get("quantity"),
+                                  "name":item.get("name"),"text":item.get("text")}
+                                 for item in option.get("items",[]) if item.get("kind")!="title"]
+                    })
+    return result
