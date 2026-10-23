@@ -461,43 +461,37 @@ async function loadPlanDrafts(){
   const mealData=await request(matchBase()+"/plan-imports/meal-options");
   mealOptionsByColor=mealData.options_by_color;
   const panel=$("publication-readiness");panel.replaceChildren();
-  const heading=document.createElement("h3");heading.textContent="Preparação para publicação · Ainda não disponível aos jogadores";panel.appendChild(heading);
-  for(const entry of readiness.colors){
-    const line=document.createElement("p");
-    const latest=entry.plans.find(p=>p.status==="validated");
-    line.textContent=(colors[entry.color]||entry.color)+": "+(entry.publication?"Publicado":latest?"Plano validado · pronto para futura publicação":"Sem plano validado")+" · "+entry.plans.length+" importação(ões)";
-    panel.appendChild(line);
-  }
-  const checklist=document.createElement("section");checklist.className="import-validation-progress";
-  const checkTitle=document.createElement("h3");checkTitle.textContent="Verificação por refeição · Apenas backoffice";checklist.appendChild(checkTitle);
-  const checkIntro=document.createElement("p");checkIntro.textContent="Confirma que cada cor tem opções válidas para as refeições que pretende prescrever. Esta verificação não publica planos.";checklist.appendChild(checkIntro);
-  for(const entry of readiness.colors){
-    const row=document.createElement("div");row.className="import-structured-line";
-    const name=document.createElement("strong");name.textContent=colors[entry.color]||entry.color;row.appendChild(name);
-    const detail=document.createElement("span");detail.className="import-nutrients";
-    if(!entry.validated_count){detail.textContent="Sem plano validado";}else{
-      const assigned=model.classifications.flatMap(cls=>model.meals.filter(meal=>cls.meals[meal]===entry.color));
-      const required=[...new Set(assigned)];
-      if(!required.length){detail.textContent="Validado · Cor ainda não usada no Modelo";}
-      else{
-        const missing=required.filter(meal=>!averageMealNutrition(mealOptionsByColor[entry.color]?.[meal]||[]));
-        detail.textContent=missing.length?"Rever: "+missing.map(meal=>names[meal]).join(", "):"Opções nutricionais disponíveis nas refeições atribuídas";
-      }
-    }
-    row.appendChild(detail);checklist.appendChild(row);
-  }
-  panel.appendChild(checklist);
+  const title=document.createElement("h3");title.textContent="Planos alimentares";panel.appendChild(title);
   const list=$("import-list");list.replaceChildren();
-  if(!data.drafts.length){list.textContent="Ainda não existem rascunhos deste jogador.";return;}
-  for(const d of data.drafts){
-    const btn=document.createElement("button");btn.type="button";
-    btn.textContent=(colors[d.color]||d.color)+" · "+d.filename+" · "+(d.status==="validated"?"Validado":"Rascunho");
-    btn.addEventListener("click",async()=>{
-      try{const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(d.id));showImportedDraft(result.draft);}
-      catch(e){$("import-feedback").textContent=e.message;}
-    });
-    list.appendChild(btn);
+  const drafts=data.drafts||[];
+  for(const entry of readiness.colors){
+    const latest=drafts.filter(d=>d.color===entry.color).sort((a,b)=>(b.created_at||0)-(a.created_at||0))[0];
+    const row=document.createElement("div");row.className="plan-simple-row";
+    const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+entry.color;row.appendChild(dot);
+    const info=document.createElement("div");info.className="plan-simple-info";
+    const name=document.createElement("strong");name.textContent=colors[entry.color]||entry.color;
+    const state=document.createElement("small");
+    state.textContent=entry.publication?"Publicado":latest?(latest.status==="validated"?"Validado":"Rascunho"):"Sem plano";
+    info.append(name,state);row.appendChild(info);
+    if(latest){
+      const open=document.createElement("button");open.type="button";open.textContent="Consultar / Editar";
+      open.addEventListener("click",async()=>{
+        try{const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(latest.id));showImportedDraft(result.draft);$("import-review").scrollIntoView({behavior:"smooth",block:"start"});}
+        catch(e){$("import-feedback").textContent=e.message;}
+      });row.appendChild(open);
+    }
+    const assigned=[...new Set(model.classifications.flatMap(cls=>model.meals.filter(meal=>cls.meals[meal]===entry.color)))];
+    const missing=entry.validated_count?assigned.filter(meal=>!averageMealNutrition(mealOptionsByColor[entry.color]?.[meal]||[])):[];
+    if(missing.length){
+      const warning=document.createElement("p");warning.className="plan-simple-warning";
+      warning.textContent="Rever opções de: "+missing.map(meal=>names[meal]).join(", ");row.appendChild(warning);
+    }
+    panel.appendChild(row);
   }
+  list.hidden=true;
+  const current=$("import-review");
+  if(!drafts.length)current.replaceChildren();
+
 }
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
