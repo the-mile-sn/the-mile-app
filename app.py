@@ -580,6 +580,17 @@ def application(env, start_response):
                 athlete_id = segments[3]
                 if len(segments) == 6 and segments[5] == 'meal-options' and method == 'GET':
                     return respond(200, {'options_by_color': plan_import_v2.validated_meal_options(c, athlete_id)})
+                if len(segments) == 6 and segments[5] == 'publication-history' and method == 'GET':
+                    return respond(200,{'history':plan_import_v2.publication_history(c,athlete_id)})
+                if len(segments) == 7 and segments[6] == 'publish' and method == 'POST':
+                    body=read_json(env)
+                    if body.get('confirmation')!='PUBLICAR' or body.get('athlete_id')!=athlete_id:
+                        raise Problem(400,'publication_confirmation_required')
+                    try:
+                        publication=plan_import_v2.publish_validated_plan(c,athlete_id,segments[5],user['id'])
+                    except ValueError: raise Problem(400,'plan_not_validated')
+                    if publication is None: raise Problem(404,'not_found')
+                    return respond(200,{'publication':publication})
                 if len(segments) == 6 and segments[5] == 'publication-status' and method == 'GET':
                     return respond(200, {'colors': plan_import_v2.color_plan_status(c, athlete_id)})
                 if len(segments) == 5:
