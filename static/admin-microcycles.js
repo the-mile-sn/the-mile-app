@@ -561,6 +561,18 @@ function showImportedDraft(draft){
     }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
   });
   header.appendChild(edit);
+  if(selectedPlanMode==="consult"&&draft.status==="validated"){
+    const publish=document.createElement("button");publish.type="button";publish.textContent="Publicar";header.appendChild(publish);
+    publish.onclick=async()=>{
+      if(!window.confirm("Publicar o plano "+(colors[draft.color]||draft.color)+" apenas para "+model.athlete.name+"? Esta ação cria uma versão publicada e substitui a anterior desta cor."))return;
+      publish.disabled=true;
+      try{
+        await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:model.athlete.id})});
+        status("Plano publicado no ambiente de testes. Não existe ainda acesso v2 dos jogadores.","success");
+        await loadPlanDrafts();
+      }catch(e){status("Erro ao publicar: "+e.message,"warn");}finally{publish.disabled=false;}
+    };
+  }
   if(selectedPlanMode==="edit"){
     const indicator=document.createElement("small");indicator.textContent="Alterações guardadas automaticamente · validação pendente";header.appendChild(indicator);
   }
