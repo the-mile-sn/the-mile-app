@@ -181,7 +181,7 @@ $("menu-next").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWe
 
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section","nutrition-dashboard"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -189,17 +189,8 @@ function showBackofficeView(view){
     button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
   }
   $("admin-access-panel").hidden=view!=="profile";
-  if(view==="calendar"){loadCalendar().then(refreshBackofficeDashboard).catch(e=>status(e.message,"warn"));}
+  if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
-}
-function refreshBackofficeDashboard(){
-  const panel=$("nutrition-dashboard");
-  if(!model)return;
-  const holder=$("dashboard-day");holder.replaceChildren();
-  const day=window.currentNutritionDay;
-  if(!day){holder.textContent="Seleciona um dia no calendário para consultar o resumo.";return;}
-  const title=document.createElement("h3");title.textContent="Resumo de "+day.date+" · "+(day.classification||"Sem classificação");holder.appendChild(title);
-  renderNutritionTotals(holder,"Valores nutricionais planeados",plannedDayTotals(day));
 }
 for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
   button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
@@ -276,7 +267,7 @@ function renderNutritionTotals(host,label,result){
 function renderDayPreview(day,host){
   host.replaceChildren();
   window.currentNutritionDay=day;
-  if(backofficeView==="calendar")refreshBackofficeDashboard();
+
   const heading=document.createElement("h3");
   heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
   host.appendChild(heading);
@@ -286,7 +277,7 @@ function renderDayPreview(day,host){
     const cell=document.createElement("div");cell.className="day-meal";
     const label=document.createElement("span");label.textContent=names[entry.meal];
     const value=document.createElement("strong");
-    value.textContent=entry.color?(colors[entry.color]||entry.color):"— Sem cor atribuída";
+    value.textContent=entry.color?" ":"";
     if(entry.color)value.className="meal-"+entry.color;
     cell.append(label,value);
     if(entry.meal==="lunch"||entry.meal==="dinner"){const menu=menuLookup[day.date+"|"+entry.meal];if(menu){const note=document.createElement("small");note.textContent="Menu: "+menu.value;cell.appendChild(note);}}
@@ -402,10 +393,12 @@ async function loadCalendar(){
     el.setAttribute("role","button");el.tabIndex=0;
     el.setAttribute("aria-label","Ver cores das refeições de "+day.date);
     const selectDay=()=>{
-      selectedCalendarDay=day.date;
+      const wasSelected=selectedCalendarDay===day.date;
+      selectedCalendarDay=wasSelected?null:day.date;
+      const chosenWeek=isoDay(weekStart(new Date(day.date+"T12:00:00")));
+      if(!wasSelected&&selectedNutritionWeek!==chosenWeek){selectedNutritionWeek=chosenWeek;loadCalendar().catch(e=>status(e.message,"warn"));return;}
       for(const item of days.querySelectorAll(".calendar-day"))item.classList.remove("calendar-selected");
-      el.classList.add("calendar-selected");
-      renderDayPreview(day,preview);
+      if(wasSelected){preview.hidden=true;preview.replaceChildren();}else{el.classList.add("calendar-selected");preview.hidden=false;renderDayPreview(day,preview);}
     };
     el.addEventListener("click",selectDay);
     el.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();selectDay();}});
@@ -418,12 +411,9 @@ async function loadCalendar(){
     preview.className="day-preview";
     days.insertAdjacentElement("afterend",preview);
   }
-  const focused=data.days.find(d=>d.date===selectedCalendarDay)||data.days.find(d=>d.classification)||data.days[0];
-  if(focused){selectedCalendarDay=focused.date;renderDayPreview(focused,preview);
-    for(const el of days.querySelectorAll(".calendar-day")){
-      if(el.getAttribute("aria-label")==="Ver cores das refeições de "+focused.date)el.classList.add("calendar-selected");
-    }
-  }
+  const focused=data.days.find(d=>d.date===selectedCalendarDay);
+  preview.hidden=!focused;
+  if(focused){renderDayPreview(focused,preview);}
   const list=$("calendar-matches");list.replaceChildren();
   for(const match of data.matches){
     const item=document.createElement("div");item.className="calendar-match-item";
