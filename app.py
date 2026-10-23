@@ -902,6 +902,22 @@ def application(env, start_response):
                         raise Problem(404, 'not_found')
                     return respond(200, {'ok': True})
 
+            # V2 player access: self-only, no athlete id supplied by the client.
+            # Accounts are not linked or activated by this read-only endpoint.
+            if path == '/api/v2/player/me' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link = c.execute("""SELECT a.id,a.name FROM v2_player_links l
+                                    JOIN v2_athletes a ON a.id=l.athlete_id
+                                    WHERE l.user_id=?""", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                return respond(200, {'player': dict(link)})
+            if path == '/api/v2/player/plans' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                return respond(200, {'options_by_color': plan_import_v2.published_meal_options(c, link['athlete_id'])})
             if path == '/api/me' and method == 'GET':
                 if not user:
                     return respond(200, {'user': None, 'csrf': None})
