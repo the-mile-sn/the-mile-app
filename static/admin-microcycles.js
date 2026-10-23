@@ -8,7 +8,7 @@ function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
 async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){status("É necessário iniciar sessão como administrador na aplicação de testes.","warn");return;}csrf=me.csrf;await loadAthletes();status("Ambiente de testes pronto.");}catch(e){status("Não foi possível ligar: "+e.message,"warn");}}
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
-async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");render();$("athlete-weight").value=model.athlete.weight_kg??"";$("profile-name").value=model.athlete.name||"";$("profile-height").value=model.athlete.height_cm??"";$("profile-notes").value=model.athlete.profile_notes||"";renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
+async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();$("athlete-weight").value=model.athlete.weight_kg??"";$("profile-name").value=model.athlete.name||"";$("profile-height").value=model.athlete.height_cm??"";$("profile-notes").value=model.athlete.profile_notes||"";renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
 function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;row.configured=true;title.textContent="● "+row.name;await loadCalendar();status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
 $("filipe-activate").addEventListener("click",async()=>{
   const button=$("filipe-activate"),feedback=$("admin-access-feedback");
@@ -30,39 +30,53 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   try{await navigator.clipboard.writeText(input.value);$("admin-access-feedback").textContent="Ligação copiada. Envia-a em privado ao Filipe.";}
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
+let profileEditing=false;
 function renderProfileSummary(){
   if(!model)return;
   const athlete=model.athlete,root=$("profile-summary");root.replaceChildren();
   root.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:18px 0";
-  for(const [label,value] of [["Nome",athlete.name],["Peso atual",athlete.weight_kg!=null?athlete.weight_kg+" kg":"Por preencher"],["Altura",athlete.height_cm!=null?athlete.height_cm+" cm":"Por preencher"],["Notas internas",athlete.profile_notes||"Sem notas"]]){
-    const card=document.createElement("div");card.className="profile-info-card";card.style.cssText="display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #36363c;border-radius:12px;min-width:0;background:#19191d";
+  const fields=[
+    ["Nome","name",athlete.name,"text"],
+    ["Peso atual","weight_kg",athlete.weight_kg,"number"],
+    ["Altura","height_cm",athlete.height_cm,"number"],
+    ["Notas internas","profile_notes",athlete.profile_notes,"textarea"]
+  ];
+  for(const [label,key,value,type] of fields){
+    const card=document.createElement("div");card.className="profile-info-card";
+    card.style.cssText="display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #36363c;border-radius:12px;min-width:0;background:#19191d";
     const caption=document.createElement("small");caption.textContent=label;caption.style.color="#a9a9b2";
-    const text=document.createElement("strong");text.textContent=value;text.style.cssText="font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere";card.append(caption,text);root.appendChild(card);
+    let field;
+    if(profileEditing){
+      field=type==="textarea"?document.createElement("textarea"):document.createElement("input");
+      if(type!=="textarea"){field.type=type;if(type==="number"){field.step=".1";field.min=key==="weight_kg"?"20":"100";field.max=key==="weight_kg"?"250":"230";}}
+      field.value=value??"";field.dataset.profileField=key;field.setAttribute("aria-label",label);
+      field.style.cssText="width:100%;box-sizing:border-box;min-width:0";
+      if(type==="textarea")field.rows=3;
+    }else{
+      field=document.createElement("strong");
+      field.textContent=value==null||value===""?(key==="profile_notes"?"Sem notas":"Por preencher"):String(value)+(key==="weight_kg"?" kg":key==="height_cm"?" cm":"");
+      field.style.cssText="font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere";
+    }
+    card.append(caption,field);root.appendChild(card);
   }
-  $("profile-editor").hidden=true;$("edit-athlete-profile").hidden=false;
+  $("profile-editor").hidden=true;
+  $("edit-athlete-profile").hidden=profileEditing;
+  $("profile-inline-actions").hidden=!profileEditing;
 }
-$("edit-athlete-profile").addEventListener("click",()=>{
-  $("profile-editor").hidden=false;$("edit-athlete-profile").hidden=true;
-});
-$("cancel-athlete-profile").addEventListener("click",()=>{
-  if(!model)return;
-  const a=model.athlete;
-  $("profile-name").value=a.name||"";$("athlete-weight").value=a.weight_kg??"";
-  $("profile-height").value=a.height_cm??"";$("profile-notes").value=a.profile_notes||"";
-  $("profile-editor").hidden=true;$("edit-athlete-profile").hidden=false;
-});
+$("edit-athlete-profile").addEventListener("click",()=>{profileEditing=true;renderProfileSummary();});
+$("cancel-athlete-profile").addEventListener("click",()=>{profileEditing=false;renderProfileSummary();});
 $("save-athlete-profile").addEventListener("click",async()=>{
   if(!model)return;
   const button=$("save-athlete-profile");button.disabled=true;
   try{
-    const raw=$("athlete-weight").value,height=$("profile-height").value;
+    const get=key=>document.querySelector('[data-profile-field="'+key+'"]').value;
+    const raw=get("weight_kg"),height=get("height_cm");
     const result=await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/profile",{method:"PUT",body:JSON.stringify({
-      name:$("profile-name").value.trim(),weight_kg:raw===""?null:Number(raw),height_cm:height===""?null:Number(height),profile_notes:$("profile-notes").value
+      name:get("name").trim(),weight_kg:raw===""?null:Number(raw),height_cm:height===""?null:Number(height),profile_notes:get("profile_notes")
     })});
-    model.athlete=result.athlete;renderProfileSummary();
+    model.athlete=result.athlete;profileEditing=false;renderProfileSummary();
     const active=$("athlete").selectedOptions[0];if(active)active.textContent=result.athlete.name;
-    await loadCalendar();
-    status("Perfil do jogador atualizado.","success");
+    await loadCalendar();status("Perfil do jogador atualizado.","success");
   }catch(e){status("Erro ao guardar perfil: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
