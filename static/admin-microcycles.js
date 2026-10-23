@@ -510,6 +510,32 @@ function coloredNutrition(values){
   }
   return out;
 }
+function renderPlayerPlanPreview(draft,host){
+  host.replaceChildren();
+  const intro=document.createElement("p");intro.className="hint";intro.textContent="Simulação administrativa da consulta pelo jogador · Não publicado";host.appendChild(intro);
+  const byMeal=new Map();
+  for(const group of draft.extracted.groups)for(const meal of group.meals||[]){
+    if(!byMeal.has(meal))byMeal.set(meal,[]);
+    byMeal.get(meal).push(...group.options);
+  }
+  for(const meal of model.meals){
+    const options=byMeal.get(meal)||[];
+    if(!options.length)continue;
+    const section=document.createElement("section");section.className="player-plan-meal";
+    const title=document.createElement("h4");title.textContent=names[meal];section.appendChild(title);
+    for(const [index,option] of options.entries()){
+      const details=document.createElement("details");details.className="import-option";
+      const summary=document.createElement("summary");summary.textContent="Opção "+(option.number||index+1)+(option.title?" · "+option.title:"");details.appendChild(summary);
+      for(const item of option.items||[]){
+        if(item.kind==="title")continue;
+        const line=document.createElement("p");line.className="player-plan-food";
+        line.textContent=item.kind==="food"?(item.quantity+" · "+item.name):(item.text||"");details.appendChild(line);
+      }
+      section.appendChild(details);
+    }
+    host.appendChild(section);
+  }
+}
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const header=document.createElement("div");header.className="plan-detail-header";
@@ -535,6 +561,18 @@ function showImportedDraft(draft){
     }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
   });
   header.appendChild(edit);
+  if(selectedPlanMode==="consult"){
+    const previewButton=document.createElement("button");previewButton.type="button";previewButton.textContent="Pré-visualizar como jogador";
+    header.appendChild(previewButton);
+    const host=document.createElement("div");host.className="player-plan-preview";host.hidden=true;
+    previewButton.addEventListener("click",()=>{
+      host.hidden=!host.hidden;
+      previewButton.textContent=host.hidden?"Pré-visualizar como jogador":"Voltar à consulta";
+      if(!host.hidden)renderPlayerPlanPreview(draft,host);
+      root.querySelectorAll(":scope > .plan-group-title, :scope > .import-option").forEach(el=>el.hidden=!host.hidden);
+    });
+    root.appendChild(host);
+  }
   if(selectedPlanMode==="edit"){
     const indicator=document.createElement("small");indicator.textContent="Alterações guardadas automaticamente · validação pendente";header.appendChild(indicator);
   }
