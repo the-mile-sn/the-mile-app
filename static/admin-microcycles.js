@@ -502,6 +502,14 @@ async function loadPlanDrafts(){
   if(!drafts.length)current.replaceChildren();
 
 }
+function coloredNutrition(values){
+  const out=document.createElement("span");out.className="nutrient-colors";
+  for(const [key,prefix,klass] of [["kcal","","nutrient-kcal"],["protein_g","P ","nutrient-protein"],["carbs_g","HC ","nutrient-carbs"],["fat_g","G ","nutrient-fat"]]){
+    const span=document.createElement("span");span.className=klass;
+    span.textContent=prefix+(values?.[key]??"—")+(key==="kcal"?" kcal":" g");out.appendChild(span);
+  }
+  return out;
+}
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const header=document.createElement("div");header.className="plan-detail-header";
@@ -551,7 +559,7 @@ function showImportedDraft(draft){
       const summary=document.createElement("summary");summary.className="plan-option-summary";
       const name=document.createElement("span");name.className="plan-option-name";name.textContent="Opção "+option.number+(option.title?" · "+option.title:"");
       const nutrients=document.createElement("span");nutrients.className="plan-option-nutrition";
-      nutrients.textContent=option.totals?option.totals.kcal+" kcal · P "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · G "+option.totals.fat_g+" g":"Valores por confirmar";
+      if(option.totals)nutrients.appendChild(coloredNutrition(option.totals));else nutrients.textContent="Valores por confirmar";
       summary.append(name,nutrients);details.appendChild(summary);
 
       if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
@@ -564,7 +572,7 @@ function showImportedDraft(draft){
         line.appendChild(name);
         if(item.nutrients){
           const nutrient=document.createElement("span");nutrient.className="import-nutrients";
-          nutrient.textContent=item.nutrients.kcal+" kcal · P "+item.nutrients.protein_g+" g · HC "+item.nutrients.carbs_g+" g · G "+item.nutrients.fat_g+" g";
+          nutrient.appendChild(coloredNutrition(item.nutrients));
           line.appendChild(nutrient);
         }
         if(item.needs_review){const note=document.createElement("small");note.textContent="Verificar";line.appendChild(note);}
