@@ -70,6 +70,11 @@ def initialize(c):
         value TEXT NOT NULL,
         PRIMARY KEY (athlete_id, menu_date, meal)
     )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_player_links (
+        user_id TEXT PRIMARY KEY REFERENCES users(id),
+        athlete_id TEXT NOT NULL UNIQUE REFERENCES v2_athletes(id),
+        linked_at BIGINT NOT NULL
+    )""")
     athlete_columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_athletes)").fetchall()}
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
