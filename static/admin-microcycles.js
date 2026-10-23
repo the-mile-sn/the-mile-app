@@ -8,7 +8,7 @@ function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
 async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){status("É necessário iniciar sessão como administrador na aplicação de testes.","warn");return;}csrf=me.csrf;await loadAthletes();status("Ambiente de testes pronto.");}catch(e){status("Não foi possível ligar: "+e.message,"warn");}}
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
-async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
+async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
 function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;row.configured=true;title.textContent="● "+row.name;await loadCalendar();status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
 $("filipe-activate").addEventListener("click",async()=>{
   const button=$("filipe-activate"),feedback=$("admin-access-feedback");
@@ -79,6 +79,7 @@ $("save-athlete-profile").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar perfil: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
+let selectedNutritionWeek=null;
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 async function loadMenus(){
@@ -346,35 +347,40 @@ async function loadCalendar(){
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
   const menuData=await request(matchBase()+"/menus?start="+isoDay(first)+"&end="+isoDay(last));
   menuLookup=Object.fromEntries(menuData.menus.map(m=>[m.menu_date+"|"+m.meal,m]));
-  const fullStart=new Date(first);fullStart.setDate(first.getDate()-(first.getDay()+6)%7);
-  const fullEnd=new Date(last);fullEnd.setDate(last.getDate()+(7-last.getDay())%7);
-  const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(fullStart)+"&end="+isoDay(fullEnd));
+  if(!selectedNutritionWeek){
+    const today=new Date();
+    const anchor=today.getFullYear()===first.getFullYear()&&today.getMonth()===first.getMonth()?today:first;
+    selectedNutritionWeek=isoDay(weekStart(anchor));
+  }
   let weekly=$("nutrition-weekly-summary");
   if(!weekly){weekly=document.createElement("section");weekly.id="nutrition-weekly-summary";weekly.className="import-validation-progress";$("calendar-matches").insertAdjacentElement("afterend",weekly);}
   weekly.replaceChildren();
-  const weekHeading=document.createElement("h3");weekHeading.textContent="Resumo nutricional semanal · Semanas de segunda a domingo";weekly.appendChild(weekHeading);
-  const weeks=new Map();
-  for(const day of weeklyData.days){
-    const dt=new Date(day.date+"T12:00:00Z");
-    const weekday=(dt.getUTCDay()+6)%7;
-    dt.setUTCDate(dt.getUTCDate()-weekday);
-    const monday=dt.toISOString().slice(0,10);
-    if(!weeks.has(monday))weeks.set(monday,[]);
-    weeks.get(monday).push(day);
-  }
-  for(const [monday,weekDays] of weeks){
-    const eligible=weekDays.filter(d=>d.classification&&!d.needs_review);
-    if(!eligible.length)continue;
-    const daily=eligible.map(plannedDayTotals);
-    const subtotal={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-    let covered=0;
-    for(const result of daily){if(result.total){covered++;for(const key of Object.keys(subtotal))subtotal[key]+=result.total[key];}}
-    const complete=weekDays.length===7&&daily.length===7&&daily.every(r=>r.state==="complete");
-    const row=document.createElement("p");
-    row.textContent="Semana de "+monday+" · "+(complete?"Média diária planeada":"Média diária parcial · faltam dados")+" · "+covered+"/7 dias com valores";
-    weekly.appendChild(row);
-    if(complete){const average=Object.fromEntries(Object.entries(subtotal).map(([key,value])=>[key,value/7]));nutritionCards(weekly,average);}
-    else {const warning=document.createElement("p");warning.textContent="Média semanal indisponível até existirem dados completos dos sete dias.";weekly.appendChild(warning);}
+  const heading=document.createElement("h3");heading.textContent="Média nutricional diária da semana";weekly.appendChild(heading);
+  const navigation=document.createElement("div");navigation.className="calendar-navigation";
+  const previous=document.createElement("button");previous.type="button";previous.textContent="← Semana anterior";
+  const next=document.createElement("button");next.type="button";next.textContent="Semana seguinte →";
+  const range=document.createElement("strong");navigation.append(previous,range,next);weekly.appendChild(navigation);
+  const monday=new Date(selectedNutritionWeek+"T12:00:00");
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
+  const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
+  previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
+  const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday));
+  const results=weeklyData.days.map(plannedDayTotals);
+  const covered=results.filter(item=>item.total).length;
+  const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
+  const progress=document.createElement("p");
+  progress.textContent=covered+"/7 dias com valores nutricionais disponíveis";
+  weekly.appendChild(progress);
+  if(complete){
+    const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+    for(const result of results)for(const key of Object.keys(sums))sums[key]+=result.total[key];
+    const average=Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7]));
+    nutritionCards(weekly,average);
+  }else{
+    const warning=document.createElement("p");
+    warning.textContent="Média diária semanal indisponível: faltam prescrições ou valores nutricionais para completar os sete dias.";
+    weekly.appendChild(warning);
   }
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
