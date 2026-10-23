@@ -946,7 +946,7 @@ def application(env, start_response):
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
-                link = c.execute("""SELECT a.id,a.name FROM v2_player_links l
+                link = c.execute("""SELECT a.id,a.name,a.weight_kg FROM v2_player_links l
                                     JOIN v2_athletes a ON a.id=l.athlete_id
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
