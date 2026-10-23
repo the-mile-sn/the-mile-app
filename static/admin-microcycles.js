@@ -561,18 +561,6 @@ function showImportedDraft(draft){
     }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
   });
   header.appendChild(edit);
-  if(selectedPlanMode==="consult"){
-    const previewButton=document.createElement("button");previewButton.type="button";previewButton.textContent="Pré-visualizar como jogador";
-    header.appendChild(previewButton);
-    const host=document.createElement("div");host.className="player-plan-preview";host.hidden=true;
-    previewButton.addEventListener("click",()=>{
-      host.hidden=!host.hidden;
-      previewButton.textContent=host.hidden?"Pré-visualizar como jogador":"Voltar à consulta";
-      if(!host.hidden)renderPlayerPlanPreview(draft,host);
-      root.querySelectorAll(":scope > .plan-group-title, :scope > .import-option").forEach(el=>el.hidden=!host.hidden);
-    });
-    root.appendChild(host);
-  }
   if(selectedPlanMode==="edit"){
     const indicator=document.createElement("small");indicator.textContent="Alterações guardadas automaticamente · validação pendente";header.appendChild(indicator);
   }
@@ -600,7 +588,6 @@ function showImportedDraft(draft){
       if(option.totals)nutrients.appendChild(coloredNutrition(option.totals));else nutrients.textContent="Valores por confirmar";
       summary.append(name,nutrients);details.appendChild(summary);
 
-      if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
       for(const item of option.items||[]){
         if(item.kind==="title")continue;
         const line=document.createElement("div");line.className="import-structured-line";
