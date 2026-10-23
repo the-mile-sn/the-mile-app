@@ -185,7 +185,8 @@ function playerOption(option,index){
  const details=document.createElement("details");details.className="import-option";
  const summary=document.createElement("summary");summary.className="plan-option-summary";
  const label=document.createElement("span");label.textContent="Opção "+(option.number||index+1)+(option.title?" · "+option.title:"");summary.appendChild(label);
- if(option.totals)summary.appendChild(coloredNutrition(option.totals));details.appendChild(summary);
+ details.appendChild(summary);
+ if(option.totals){const values=document.createElement("div");values.className="player-option-nutrients";values.appendChild(coloredNutrition(option.totals));details.appendChild(values);}
  for(const item of option.items||[]){const line=document.createElement("p");line.className="player-plan-food";line.textContent=item.kind==="food"?((item.quantity||"")+" · "+(item.name||"")):(item.text||"");details.appendChild(line);}
  return details;
 }
@@ -201,7 +202,7 @@ async function playerShowPlans(){
  if(!available.length){root.textContent="Ainda não há planos publicados.";return;}
  if(!playerSelectedPlan||!data.options_by_color[playerSelectedPlan])return;
  const meals=data.options_by_color[playerSelectedPlan];
- for(const meal of model.meals){if(!meals[meal]?.length)continue;const section=document.createElement("section");section.className="player-sim-meal";const title=document.createElement("h3");title.textContent=names[meal];section.appendChild(title);meals[meal].forEach((option,i)=>section.appendChild(playerOption(option,i)));detail.appendChild(section);}
+ for(const meal of model.meals){if(!meals[meal]?.length)continue;const section=document.createElement("section");section.className="player-sim-meal";const title=document.createElement("h3");title.textContent=names[meal];section.appendChild(title);const average=averageMealNutrition(meals[meal]);if(average){const mean=document.createElement("div");mean.className="player-meal-average";const label=document.createElement("small");label.textContent="Média da refeição";mean.appendChild(label);mean.appendChild(coloredNutrition(average));section.appendChild(mean);}meals[meal].forEach((option,i)=>section.appendChild(playerOption(option,i)));detail.appendChild(section);}
 }
 async function playerShowMenus(){
  const monday=weekStart(playerMenuWeek),last=new Date(monday);last.setDate(monday.getDate()+6);
