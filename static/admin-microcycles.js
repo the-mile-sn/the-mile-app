@@ -585,8 +585,8 @@ function showImportedDraft(draft){
       }
       const actions=document.createElement("div");actions.className="import-option-actions";
       const edit=document.createElement("button");edit.type="button";edit.textContent="Editar opção";edit.disabled=approved;
-      edit.hidden=selectedPlanMode!=="edit";edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
-      actions.append(edit);details.appendChild(actions);root.appendChild(details);
+      if(selectedPlanMode==="edit")details.addEventListener("toggle",()=>{if(details.open&&!details.querySelector(".option-editor"))showOptionEditor(draft,groupIndex,optionIndex,details);});
+      root.appendChild(details);
     });
   });
 }
