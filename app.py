@@ -912,6 +912,21 @@ def application(env, start_response):
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'player': dict(link)})
+            if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                q = parse_qs(env.get('QUERY_STRING', ''))
+                first=(q.get('start') or [''])[0]
+                last=(q.get('end') or [''])[0]
+                try:
+                    if path.endswith('/menus'):
+                        return respond(200, {'menus': microcycles_v2.list_menus(c, link['athlete_id'], first, last)})
+                    days = calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])])
+                except ValueError: raise Problem(400, 'invalid_calendar_range')
+                model_data = microcycles_v2.get_model(c, link['athlete_id'])
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals']})
             if path == '/api/v2/player/plans' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
