@@ -505,47 +505,31 @@ async function loadPlanDrafts(){
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const header=document.createElement("div");header.className="plan-detail-header";
-  const h=document.createElement("h3");h.textContent="● "+(colors[draft.color]||draft.color);h.className="plan-selected-"+draft.color;header.appendChild(h);
+  const h=document.createElement("h3");const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+draft.color;h.append(dot,document.createTextNode(colors[draft.color]||draft.color));header.appendChild(h);
   root.appendChild(header);
-  const edit=document.createElement("button");edit.type="button";edit.textContent=selectedPlanMode==="edit"?"Consultar":"Editar";
+  const edit=document.createElement("button");edit.type="button";edit.textContent=selectedPlanMode==="edit"?"Validar":"Editar";
   edit.addEventListener("click",async()=>{
+    edit.disabled=true;
     try{
-      if(selectedPlanMode==="consult"&&draft.status==="validated"){
-        const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{method:"POST",body:JSON.stringify({action:"reopen"})});
-        draft.status=response.status;
+      if(selectedPlanMode==="consult"){
+        if(draft.status==="validated"){
+          const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{method:"POST",body:JSON.stringify({action:"reopen"})});
+          draft.status=result.status;
+        }
+        selectedPlanMode="edit";
+      }else{
+        await Promise.all([...root.querySelectorAll("[data-plan-save-pending]")].map(()=>Promise.resolve()));
+        const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{method:"POST",body:JSON.stringify({action:"approve"})});
+        draft.status=result.status;selectedPlanMode="consult";
+        await loadCalendar();
       }
-      selectedPlanMode=selectedPlanMode==="consult"?"edit":"consult";
       showImportedDraft(draft);await loadPlanDrafts();
-    }catch(e){status("Não foi possível editar: "+e.message,"warn");}
+    }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
   });
   header.appendChild(edit);
-  const totalCount=draft.extracted.groups.reduce((sum,group)=>sum+group.options.length,0);
-  const overview=document.createElement("section");overview.className="import-validation-progress";
-  const state=document.createElement("strong");
-  state.textContent=draft.status==="validated"?"Plano validado":"Plano em revisão";
-  overview.appendChild(state);
-  const approval=document.createElement("button");approval.type="button";
-  const approved=draft.status==="validated";
-  approval.textContent=approved?"Reabrir para edição":"Validar plano completo";
-  approval.disabled=!approved&&totalCount===0;
-  approval.addEventListener("click",async()=>{
-    approval.disabled=true;
-    try{
-      const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{
-        method:"POST",body:JSON.stringify({action:approved?"reopen":"approve"})
-      });
-      draft.status=result.status;
-      showImportedDraft(draft);
-      await loadPlanDrafts();
-      await loadCalendar();
-    }catch(e){approval.disabled=false;const p=document.createElement("p");p.textContent="Erro na validação: "+e.message;overview.appendChild(p);}
-  });
-  if(selectedPlanMode==="edit"&&!approved)overview.appendChild(approval);
-  const note=document.createElement("p");
-  note.textContent=approved?"Plano aprovado internamente. Não foi publicado a nenhum jogador. Reabre para editar.":"Confirma a revisão do plano completo numa única ação. Não publica o plano.";
-
-  root.appendChild(overview);
-  for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
+  if(selectedPlanMode==="edit"){
+    const indicator=document.createElement("small");indicator.textContent="Alterações guardadas automaticamente · validação pendente";header.appendChild(indicator);
+  }
   draft.extracted.groups.forEach((group,groupIndex)=>{
     const groupTitle=document.createElement("div");groupTitle.className="plan-group-title";
     const heading=document.createElement("h3");heading.textContent=group.heading||"Refeição";groupTitle.appendChild(heading);
