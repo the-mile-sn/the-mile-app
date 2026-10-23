@@ -124,3 +124,19 @@ header{padding:10px 0 24px}
  #week-strip .week-day .day-number{font-size:18px}
  #week-strip .week-arrow{font-size:27px;min-height:87px}
 }
+
+/* Unified soft surfaces, no outlines: player-facing content */
+#plans .meal,#overview .daily-meal,#menus .day-menu,#overview .daily-nutrition,#overview .daily-nutrition-card{border:0!important;box-shadow:none!important;background:rgba(255,255,255,.035)}
+#plans .meal,#menus .day-menu{background:rgba(255,255,255,.045)}
+#plan-colors button,#tabs,#tabs button,#plan-detail details,#overview .daily-meal,#menus .menu-entry{border:0!important;box-shadow:none!important}
+#plan-colors button{background:rgba(255,255,255,.055)}
+#plan-colors button.selected,#tabs button[aria-pressed=true]{background:rgba(255,255,255,.17)}
+#tabs{background:rgba(28,28,34,.96)}
+#menus .date-nav{margin:12px 0 16px}
+#menus .date-nav button{background:none;border:0;box-shadow:none;font-size:30px;padding:5px 10px;min-width:36px}
+#menus .date-nav strong{font-size:16px;font-weight:650}
+.menu-day-heading{display:flex;flex-direction:column;gap:7px;margin-bottom:15px}
+.menu-day-heading h3{font-size:20px;margin:0;font-weight:700}
+.menu-day-subtitle{font-size:13px;color:#a7a7b0;font-weight:500}
+#menus .day-menu .row{border-top:1px solid rgba(255,255,255,.09)}
+@media(max-width:620px){#menus .date-nav button{min-width:30px}#menus .day-menu{padding:17px}}
