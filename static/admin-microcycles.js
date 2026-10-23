@@ -502,6 +502,7 @@ async function loadPlanDrafts(){
   if(!drafts.length)current.replaceChildren();
 
 }
+let planPendingSaves=[];
 function coloredNutrition(values){
   const out=document.createElement("span");out.className="nutrient-colors";
   for(const [key,prefix,klass] of [["kcal","","nutrient-kcal"],["protein_g","P ","nutrient-protein"],["carbs_g","HC ","nutrient-carbs"],["fat_g","G ","nutrient-fat"]]){
@@ -526,7 +527,7 @@ function showImportedDraft(draft){
         }
         selectedPlanMode="edit";
       }else{
-        await Promise.all([...root.querySelectorAll("[data-plan-save-pending]")].map(()=>Promise.resolve()));
+        await Promise.all(planPendingSaves);
         const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{method:"POST",body:JSON.stringify({action:"approve"})});
         draft.status=result.status;selectedPlanMode="consult";
         await loadCalendar();
@@ -630,7 +631,9 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
       const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{method:"PUT",body:JSON.stringify(payload)});
       option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
       feedback.textContent="Alterações guardadas automaticamente.";
-    }).catch(e=>{feedback.textContent="Erro ao guardar: "+e.message;});
+    }).catch(e=>{feedback.textContent="Erro ao guardar: "+e.message;throw e;});
+    planPendingSaves.push(saveChain);
+    saveChain.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==saveChain);}).catch(()=>{});
   };
   for(const control of form.querySelectorAll("input,select"))control.addEventListener("change",persist);
   details.appendChild(form);
