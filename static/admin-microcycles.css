@@ -115,3 +115,5 @@
 .nutrient-kcal{color:#9fc9af}.nutrient-protein{color:#9bbbd6}.nutrient-carbs{color:#d9b19b}.nutrient-fat{color:#d9cb98}
 
 .player-plan-preview{margin:18px 0;padding:16px;border:1px solid #3c3c43;border-radius:14px}.player-plan-preview[hidden]{display:none}.player-plan-meal{margin:18px 0}.player-plan-meal h4{margin:0 0 10px}.player-plan-food{padding:6px 12px;margin:0;border-bottom:1px solid #33343a}
+
+.player-sim-meal{padding:16px;margin:14px 0;border:1px solid #3b3b42;border-radius:13px}.player-sim-meal h3{margin:0}.player-sim-meal .import-option{margin:7px 0}
