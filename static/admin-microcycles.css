@@ -104,3 +104,12 @@
 
 /* Calm neutral selected plan state. */
 .plan-active-row{background:rgba(255,255,255,.065)!important;border:1px solid rgba(255,255,255,.32)!important;box-shadow:0 0 0 1px rgba(255,255,255,.035)!important}.plan-selectable{cursor:pointer}.plan-selectable:hover{background:rgba(255,255,255,.035)}.plan-row-chevron{font-size:23px;color:#b6b6bd;margin-left:auto}.plan-detail-header{display:flex;align-items:center;justify-content:space-between}.plan-option-nutrition{color:#babfc6}
+
+/* Readable multi-meal assignment chips */
+.plan-group-title{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.plan-meal-mapping{display:flex;flex-wrap:wrap;gap:7px;align-items:center;max-width:100%}
+.plan-meal-mapping label{display:inline-flex!important;align-items:center;gap:6px;white-space:nowrap;min-width:0;width:auto!important;padding:7px 10px;border:1px solid #414148;border-radius:9px;background:#222228;font-size:12px}
+.plan-meal-mapping input[type=checkbox]{width:15px!important;height:15px!important;min-width:15px;flex:none;margin:0}
+.plan-detail-header h3{display:flex;align-items:center;gap:10px}
+.nutrient-colors{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.nutrient-kcal{color:#9fc9af}.nutrient-protein{color:#9bbbd6}.nutrient-carbs{color:#d9b19b}.nutrient-fat{color:#d9cb98}
