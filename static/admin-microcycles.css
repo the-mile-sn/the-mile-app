@@ -131,3 +131,5 @@
 /* Published player plan options: nutrients visible only on expansion */
 #player-plan-detail details:not([open]) .player-option-expanded-values{display:none}
 #player-plan-detail details[open] .player-option-expanded-values{display:inline-flex}
+
+.v2-access-box{border:1px solid #38383f;border-radius:12px;padding:16px;margin-top:22px}.v2-access-box label{display:block;margin:12px 0 5px}.v2-access-box input{display:block;max-width:360px;width:100%;margin:0 0 10px}.v2-access-box button{margin-top:7px}
