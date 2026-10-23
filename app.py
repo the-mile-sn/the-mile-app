@@ -580,6 +580,8 @@ def application(env, start_response):
                 athlete_id = segments[3]
                 if len(segments) == 6 and segments[5] == 'meal-options' and method == 'GET':
                     return respond(200, {'options_by_color': plan_import_v2.validated_meal_options(c, athlete_id)})
+                if len(segments) == 6 and segments[5] == 'published-preview' and method == 'GET':
+                    return respond(200,{'options_by_color':plan_import_v2.published_meal_options(c,athlete_id)})
                 if len(segments) == 6 and segments[5] == 'publication-history' and method == 'GET':
                     return respond(200,{'history':plan_import_v2.publication_history(c,athlete_id)})
                 if len(segments) == 7 and segments[6] == 'publish' and method == 'POST':
