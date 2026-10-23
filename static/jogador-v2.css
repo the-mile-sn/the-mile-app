@@ -101,3 +101,5 @@ header{padding:10px 0 24px}
  .menu-entry-body .dish-img{width:82px;height:82px;grid-column:auto;margin:0!important}
  .menu-entry-heading{margin-bottom:8px}
 }
+
+.daily-nutrition-card .per-kg{display:block;margin-top:6px;color:#a9a9b4;font-size:12px}
