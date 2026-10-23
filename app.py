@@ -601,6 +601,13 @@ def application(env, start_response):
                         if draft is None:
                             raise Problem(404, 'not_found')
                         return respond(201, {'draft': draft})
+                if len(segments) == 7 and segments[6] == 'group-meals' and method == 'PUT':
+                    body=read_json(env)
+                    try:
+                        meals=plan_import_v2.update_group_meals(c,athlete_id,segments[5],body.get('group_index'),body.get('meals'))
+                    except ValueError: raise Problem(400,'invalid_meal_mapping')
+                    if meals is None: raise Problem(404,'not_found')
+                    return respond(200,{'meals':meals})
                 if len(segments) == 7 and segments[6] == 'review-status' and method == 'POST':
                     body = read_json(env)
                     try:
