@@ -301,6 +301,26 @@ async function loadPlayerSimulation(){
 for(const [id,delta] of [["player-preview-prev",-1],["player-preview-next",1]]){
   $(id).addEventListener("click",()=>{simulationDay.setDate(simulationDay.getDate()+delta);loadPlayerSimulation().catch(e=>status(e.message,"warn"));});
 }
+let v2Access=null;
+async function loadV2Access(){
+ if(!model)return;
+ const data=await request(matchBase()+"/access");v2Access=data.access;
+ $("v2-access-create").hidden=!!v2Access;$("v2-access-manage").hidden=!v2Access;
+ $("v2-access-state").textContent=v2Access?"Username: "+v2Access.username+" · "+(v2Access.active?"Acesso ativo":"Acesso bloqueado"):"Ainda não existe uma conta associada.";
+ if(v2Access)$("v2-access-toggle").textContent=v2Access.active?"Bloquear acesso":"Reativar acesso";
+}
+$("v2-access-create-btn").onclick=async()=>{
+ const username=$("v2-access-username").value.trim().toLowerCase(),password=$("v2-access-password").value;
+ if(!confirm("Criar conta de testes para "+model.athlete.name+" com username "+username+"?"))return;
+ try{await request(matchBase()+"/access",{method:"POST",body:JSON.stringify({username,password})});$("v2-access-password").value="";$("v2-access-feedback").textContent="Acesso criado. Guarda a palavra-passe num local seguro.";await loadV2Access();}
+ catch(e){$("v2-access-feedback").textContent="Erro: "+e.message;}
+};
+$("v2-access-toggle").onclick=async()=>{
+ const active=!v2Access.active;
+ if(!confirm((active?"Reativar":"Bloquear")+" o acesso de "+model.athlete.name+"?"))return;
+ try{await request(matchBase()+"/access",{method:"PUT",body:JSON.stringify({active})});$("v2-access-feedback").textContent=active?"Acesso reativado.":"Acesso bloqueado; sessões terminadas.";await loadV2Access();}
+ catch(e){$("v2-access-feedback").textContent="Erro: "+e.message;}
+};
 function showBackofficeView(view){
   backofficeView=view;
   const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
@@ -311,6 +331,7 @@ function showBackofficeView(view){
     button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
   }
   $("admin-access-panel").hidden=view!=="profile";
+  if(view==="profile"&&model)loadV2Access().catch(e=>status(e.message,"warn"));
   if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
