@@ -179,9 +179,43 @@ async function loadMenus(){
 $("menu-prev").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()-7);loadMenus().catch(e=>status(e.message,"warn"));});
 $("menu-next").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()+7);loadMenus().catch(e=>status(e.message,"warn"));});
 
+let simulationDay=new Date(),publishedSimulation={};
+async function loadPlayerSimulation(){
+  if(!model)return;
+  const d=isoDay(simulationDay);
+  $("player-preview-date").textContent=simulationDay.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const [plans,calendar]=await Promise.all([
+    request(matchBase()+"/plan-imports/published-preview"),
+    request(matchBase()+"/calendar?start="+d+"&end="+d)
+  ]);
+  publishedSimulation=plans.options_by_color;
+  const host=$("player-preview-meals");host.replaceChildren();
+  const day=calendar.days[0];
+  if(!day||!day.classification){host.textContent="Sem classificação para este dia.";return;}
+  const heading=document.createElement("h3");heading.textContent=day.classification;host.appendChild(heading);
+  for(const entry of mealColorsForDay(day)){
+    if(!entry.color)continue;
+    const section=document.createElement("section");section.className="player-sim-meal";
+    const title=document.createElement("h3");title.textContent=names[entry.meal];section.appendChild(title);
+    const bar=document.createElement("div");bar.className="meal-"+entry.color;bar.style.cssText="height:9px;border-radius:8px;margin:8px 0 15px";section.appendChild(bar);
+    const options=publishedSimulation[entry.color]?.[entry.meal]||[];
+    if(!options.length){const missing=document.createElement("p");missing.className="hint";missing.textContent="Plano ainda não publicado para esta refeição.";section.appendChild(missing);}
+    for(const [index,option] of options.entries()){
+      const details=document.createElement("details");details.className="import-option";
+      const summary=document.createElement("summary");summary.textContent="Opção "+(option.number||index+1)+(option.title?" · "+option.title:"");details.appendChild(summary);
+      if(option.totals){const p=document.createElement("p");p.appendChild(coloredNutrition(option.totals));details.appendChild(p);}
+      for(const item of option.items||[]){const line=document.createElement("p");line.className="player-plan-food";line.textContent=item.kind==="food"?((item.quantity||"")+" · "+(item.name||"")):(item.text||"");details.appendChild(line);}
+      section.appendChild(details);
+    }
+    host.appendChild(section);
+  }
+}
+for(const [id,delta] of [["player-preview-prev",-1],["player-preview-next",1]]){
+  $(id).addEventListener("click",()=>{simulationDay.setDate(simulationDay.getDate()+delta);loadPlayerSimulation().catch(e=>status(e.message,"warn"));});
+}
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -190,6 +224,7 @@ function showBackofficeView(view){
   }
   $("admin-access-panel").hidden=view!=="profile";
   if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
+  if(view==="player-preview"){loadPlayerSimulation().catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
 }
 for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
