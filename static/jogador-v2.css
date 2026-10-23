@@ -1,2 +1,49 @@
 *{box-sizing:border-box}body{background:#0d0d10;color:#f4f4f7;font:16px system-ui,-apple-system,sans-serif;margin:0}.shell{max-width:960px;margin:auto;padding:20px}header{display:flex;justify-content:space-between;align-items:center;padding:16px 0 28px}.brand{font-size:21px;font-weight:800;letter-spacing:.1em}.brand small{font-size:10px;color:#9a9aa4}.panel,.meal,.day-menu{background:#17171b;border:1px solid #393941;border-radius:16px;padding:20px;margin:12px 0}.welcome h1{margin:0}.welcome p,footer,.status,.hint{color:#a9a9b4}h2{font-size:20px}button,input{font:inherit}button{background:#27272d;border:1px solid #43434c;border-radius:12px;color:#fafafa;padding:11px 15px;cursor:pointer}button[aria-pressed=true],.selected{border-color:#ddd;background:#393940}label{display:block;margin:14px 0}input{display:block;margin-top:8px;width:100%;max-width:400px;padding:13px;color:white;background:#26262c;border:1px solid #474750;border-radius:10px}#tabs,.colors{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.date-nav{display:flex;align-items:center;justify-content:space-between;gap:12px}.date-nav h2{font-size:17px;text-align:center}.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:18px 0}.week button{padding:10px 2px;font-size:12px}.meal h3{margin:0 0 12px}.bar{height:9px;border-radius:7px;margin-bottom:12px}.orange{background:#e9944a}.yellow{background:#e5ca62}.blue{background:#6baed9}.green{background:#78c99b}.vp{background:#b2dcae}details{border-top:1px solid #38383f;padding:12px 0}summary{cursor:pointer}summary::marker{color:#aaa}.option{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.macro{display:inline-flex;gap:10px;flex-wrap:wrap;font-size:13px;justify-content:flex-end}.kcal{color:#9fc9af}.protein{color:#9bbbd6}.carbs{color:#d9b19b}.fat{color:#d9cb98}.foods{color:#b9b9c2;padding:8px 0;border-bottom:1px solid #303038}.menu-line{background:#24242a;padding:12px;border-radius:10px;margin:12px 0}.menu-line small{display:block;color:#aaa}.dish-img{width:96px;height:96px;object-fit:cover;border-radius:11px}.day-menu{display:grid;gap:14px}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.row .value{flex:1}.error{color:#f0b7b7}.status{margin:14px 0}@media(max-width:580px){.shell{padding:12px}.week button{font-size:10px;padding:10px 1px}.panel,.meal,.day-menu{padding:14px}.date-nav h2{font-size:14px}}
 .color-dot{display:inline-block;width:13px;height:13px;border-radius:50%;flex:none}.colors button{display:inline-flex;align-items:center;gap:9px}.expanded-option-macros{display:none}details[open] .expanded-option-macros{display:inline-flex}details summary .option{align-items:center}details summary .option>span:first-child{flex:1}.row .value{min-width:180px}.dish-img{flex:none}
+
+/* Mobile-first refinement of the authenticated player experience */
+:root{color-scheme:dark}
+[hidden]{display:none!important}
+.shell{width:min(100%,1060px);padding:clamp(14px,3vw,32px)}
+header{padding:10px 0 24px}
+.welcome{padding:0 2px}.welcome h1{font-size:clamp(25px,4vw,36px);letter-spacing:-.035em}.welcome p{margin:5px 0 0}
+#tabs{background:#17171b;border:1px solid #37373f;border-radius:15px;padding:5px;gap:5px}
+#tabs button{flex:1;border:0;background:transparent;padding:13px 8px;font-weight:600}
+#tabs button[aria-pressed=true]{background:#38383e;box-shadow:inset 0 0 0 1px #75757e}
+.date-nav{margin:18px 0 10px}.date-nav>button{min-width:46px;min-height:46px}
+.week{gap:5px;margin:12px 0 20px}.week button{border-radius:10px;min-height:46px}
+.meal,.day-menu{border-color:#33333b;box-shadow:0 1px 0 #ffffff06}
+.meal>h3{font-size:19px}.bar{height:7px}
+.meal details summary{list-style:none;display:block;padding:1px 0}
+.meal details summary::-webkit-details-marker{display:none}
+.meal details summary .option{position:relative;padding-left:21px;min-height:24px}
+.meal details summary .option:before{content:"›";position:absolute;left:2px;top:-3px;color:#bfc0c8;font-size:25px;line-height:1;transition:transform .15s}
+.meal details[open] summary .option:before{transform:rotate(90deg)}
+.meal .option>span:first-child{min-width:0;overflow-wrap:anywhere}
+.meal .option>.macro{margin-left:auto}
+.meal .foods{font-size:14px;line-height:1.45}
+#plan-detail .meal .option:first-child{align-items:baseline}
+#plan-detail .meal .option h3{margin:0}
+#plan-detail .meal>div.option{margin-bottom:12px}
+#plan-colors button{min-height:46px}
+.day-menu .row{padding:12px 0;border-top:1px solid #34343b}
+.day-menu .row strong{min-width:60px}
+.day-menu h3{margin:0}
+@media(max-width:620px){
+ header{padding:10px 0 18px}.brand{font-size:17px}
+ .shell{padding:12px 14px 28px}
+ .welcome h1{font-size:28px}
+ #tabs{gap:3px}#tabs button{font-size:14px;padding:12px 3px}
+ .date-nav h2{font-size:14px;line-height:1.35}
+ .week{gap:3px}.week button{font-size:10px;padding:7px 0;min-width:0}
+ .meal,.day-menu{border-radius:14px;margin:10px 0;padding:15px}
+ .meal h3{font-size:17px}
+ .macro{justify-content:flex-start;font-size:12px;gap:6px 10px}
+ .option{gap:6px 10px}
+ .meal .option>.macro{width:100%;justify-content:flex-start}
+ .meal details[open] summary .option>.macro{padding-top:5px;padding-left:0}
+ .day-menu .row{display:grid;grid-template-columns:65px 12px minmax(0,1fr);column-gap:8px}
+ .day-menu .row .dish-img{grid-column:3;width:84px;height:84px;margin-top:8px}
+ .row .value{min-width:0;overflow-wrap:anywhere}
+ .colors{gap:6px}.colors button{padding:10px 12px}
+}
