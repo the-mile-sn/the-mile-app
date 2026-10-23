@@ -113,3 +113,5 @@
 .plan-detail-header h3{display:flex;align-items:center;gap:10px}
 .nutrient-colors{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .nutrient-kcal{color:#9fc9af}.nutrient-protein{color:#9bbbd6}.nutrient-carbs{color:#d9b19b}.nutrient-fat{color:#d9cb98}
+
+.player-plan-preview{margin:18px 0;padding:16px;border:1px solid #3c3c43;border-radius:14px}.player-plan-preview[hidden]{display:none}.player-plan-meal{margin:18px 0}.player-plan-meal h4{margin:0 0 10px}.player-plan-food{padding:6px 12px;margin:0;border-bottom:1px solid #33343a}
