@@ -180,6 +180,58 @@ $("menu-prev").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWe
 $("menu-next").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()+7);loadMenus().catch(e=>status(e.message,"warn"));});
 
 let simulationDay=new Date(),publishedSimulation={};
+let playerView="overview",playerSelectedPlan=null,playerMenuWeek=new Date();
+function playerOption(option,index){
+ const details=document.createElement("details");details.className="import-option";
+ const summary=document.createElement("summary");summary.className="plan-option-summary";
+ const label=document.createElement("span");label.textContent="Opção "+(option.number||index+1)+(option.title?" · "+option.title:"");summary.appendChild(label);
+ if(option.totals)summary.appendChild(coloredNutrition(option.totals));details.appendChild(summary);
+ for(const item of option.items||[]){const line=document.createElement("p");line.className="player-plan-food";line.textContent=item.kind==="food"?((item.quantity||"")+" · "+(item.name||"")):(item.text||"");details.appendChild(line);}
+ return details;
+}
+async function playerShowPlans(){
+ const data=await request(matchBase()+"/plan-imports/published-preview"),root=$("player-plan-list"),detail=$("player-plan-detail");
+ root.replaceChildren();detail.replaceChildren();
+ const available=Object.entries(data.options_by_color).filter(([,meals])=>Object.values(meals).some(options=>options.length));
+ for(const [color] of available){
+  const button=document.createElement("button");button.className="player-plan-button"+(playerSelectedPlan===color?" active":"");
+  const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;button.append(dot,document.createTextNode(colors[color]||color));root.appendChild(button);
+  button.onclick=()=>{playerSelectedPlan=playerSelectedPlan===color?null:color;playerShowPlans().catch(e=>status(e.message,"warn"));};
+ }
+ if(!available.length){root.textContent="Ainda não há planos publicados.";return;}
+ if(!playerSelectedPlan||!data.options_by_color[playerSelectedPlan])return;
+ const meals=data.options_by_color[playerSelectedPlan];
+ for(const meal of model.meals){if(!meals[meal]?.length)continue;const section=document.createElement("section");section.className="player-sim-meal";const title=document.createElement("h3");title.textContent=names[meal];section.appendChild(title);meals[meal].forEach((option,i)=>section.appendChild(playerOption(option,i)));detail.appendChild(section);}
+}
+async function playerShowMenus(){
+ const monday=weekStart(playerMenuWeek),last=new Date(monday);last.setDate(monday.getDate()+6);
+ const begin=isoDay(monday),end=isoDay(last);$("player-menu-week").textContent=begin+" — "+end;
+ const [menus,calendar,dishes]=await Promise.all([request(matchBase()+"/menus?start="+begin+"&end="+end),request(matchBase()+"/calendar?start="+begin+"&end="+end),request("/api/v2/dishes")]);
+ const root=$("player-menu-days");root.replaceChildren();
+ for(let i=0;i<7;i++){
+  const date=new Date(monday);date.setDate(monday.getDate()+i);const key=isoDay(date),day=calendar.days.find(item=>item.date===key);
+  const section=document.createElement("section");section.className="player-menu-day";
+  const title=document.createElement("h3");title.textContent=date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"short"})+(day?.classification?" · "+day.classification:"");section.appendChild(title);
+  for(const meal of ["lunch","dinner"]){
+   const menu=menus.menus.find(item=>item.menu_date===key&&item.meal===meal);if(!menu)continue;
+   const line=document.createElement("div");line.className="player-menu-entry";
+   const name=document.createElement("strong");name.textContent=names[meal];line.appendChild(name);
+   const cls=model.classifications.find(c=>c.name===day?.classification),color=cls?.meals?.[meal];
+   if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
+   const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
+   if(menu.kind==="dish"){const dish=dishes.dishes.find(item=>item.name_pt===menu.value);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
+   section.appendChild(line);
+  }
+  root.appendChild(section);
+ }
+}
+async function showPlayerView(view){
+ playerView=view;for(const [key,id] of [["overview","player-overview"],["plans","player-full-plans"],["menus","player-full-menus"]])$(id).hidden=key!==view;
+ for(const button of document.querySelectorAll("[data-player-view]"))button.setAttribute("aria-pressed",button.dataset.playerView===view?"true":"false");
+ if(view==="overview")await loadPlayerSimulation();if(view==="plans")await playerShowPlans();if(view==="menus")await playerShowMenus();
+}
+for(const button of document.querySelectorAll("[data-player-view]"))button.addEventListener("click",()=>showPlayerView(button.dataset.playerView).catch(e=>status(e.message,"warn")));
+for(const [id,delta] of [["player-menu-prev",-7],["player-menu-next",7]])$(id).addEventListener("click",()=>{playerMenuWeek.setDate(playerMenuWeek.getDate()+delta);playerShowMenus().catch(e=>status(e.message,"warn"));});
 async function loadPlayerSimulation(){
   if(!model)return;
   const d=isoDay(simulationDay);
@@ -252,7 +304,7 @@ function showBackofficeView(view){
   }
   $("admin-access-panel").hidden=view!=="profile";
   if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
-  if(view==="player-preview"){loadPlayerSimulation().catch(e=>status(e.message,"warn"));}
+  if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
 }
 for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
