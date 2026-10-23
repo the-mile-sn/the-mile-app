@@ -452,6 +452,7 @@ $("add-match").addEventListener("click",async()=>{
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 $("calendar-next").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 
+let selectedPlanId=null,selectedPlanMode="consult";
 async function loadPlanDrafts(){
   if(!model)return;
   $("plan-import-panel").hidden=false;
@@ -474,11 +475,26 @@ async function loadPlanDrafts(){
     state.textContent=entry.publication?"Publicado":latest?(latest.status==="validated"?"Validado":"Rascunho"):"Sem plano";
     info.append(name,state);row.appendChild(info);
     if(latest){
-      const open=document.createElement("button");open.type="button";open.textContent="Consultar / Editar";
-      open.addEventListener("click",async()=>{
-        try{const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(latest.id));showImportedDraft(result.draft);$("import-review").scrollIntoView({behavior:"smooth",block:"start"});}
-        catch(e){$("import-feedback").textContent=e.message;}
-      });row.appendChild(open);
+      for(const mode of ["consult","edit"]){
+        const button=document.createElement("button");button.type="button";button.textContent=mode==="consult"?"Consultar":"Editar";
+        button.addEventListener("click",async()=>{
+          if(selectedPlanId===latest.id&&selectedPlanMode===mode){selectedPlanId=null;$("import-review").replaceChildren();return;}
+          button.disabled=true;
+          try{
+            const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(latest.id));
+            const draft=result.draft;
+            if(mode==="edit"&&draft.status==="validated"){
+              const reopened=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/review-status",{method:"POST",body:JSON.stringify({action:"reopen"})});
+              draft.status=reopened.status;
+            }
+            selectedPlanId=draft.id;selectedPlanMode=mode;
+            showImportedDraft(draft);
+            if(mode==="edit")await loadPlanDrafts();
+          }catch(e){$("import-feedback").textContent="Erro ao abrir plano: "+e.message;}
+          finally{button.disabled=false;}
+        });
+        row.appendChild(button);
+      }
     }
     const assigned=[...new Set(model.classifications.flatMap(cls=>model.meals.filter(meal=>cls.meals[meal]===entry.color)))];
     const missing=entry.validated_count?assigned.filter(meal=>!averageMealNutrition(mealOptionsByColor[entry.color]?.[meal]||[])):[];
@@ -495,7 +511,10 @@ async function loadPlanDrafts(){
 }
 function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
-  const h=document.createElement("h3");h.textContent="Revisão · "+draft.filename+" · "+(colors[draft.color]||draft.color);root.appendChild(h);
+  const header=document.createElement("div");header.className="plan-detail-header";
+  const h=document.createElement("h3");h.textContent="Plano selecionado · "+(colors[draft.color]||draft.color);header.appendChild(h);
+  const close=document.createElement("button");close.type="button";close.textContent="Fechar";
+  close.onclick=()=>{selectedPlanId=null;root.replaceChildren();};header.appendChild(close);root.appendChild(header);
   const totalCount=draft.extracted.groups.reduce((sum,group)=>sum+group.options.length,0);
   const overview=document.createElement("section");overview.className="import-validation-progress";
   const state=document.createElement("strong");
@@ -517,10 +536,10 @@ function showImportedDraft(draft){
       await loadCalendar();
     }catch(e){approval.disabled=false;const p=document.createElement("p");p.textContent="Erro na validação: "+e.message;overview.appendChild(p);}
   });
-  overview.appendChild(approval);
+  if(selectedPlanMode==="edit")overview.appendChild(approval);
   const note=document.createElement("p");
   note.textContent=approved?"Plano aprovado internamente. Não foi publicado a nenhum jogador. Reabre para editar.":"Confirma a revisão do plano completo numa única ação. Não publica o plano.";
-  overview.appendChild(note);
+  if(selectedPlanMode==="edit")overview.appendChild(note);
   root.appendChild(overview);
   for(const warning of draft.extracted.warnings){const p=document.createElement("p");p.textContent="Atenção: "+warning;root.appendChild(p);}
   draft.extracted.groups.forEach((group,groupIndex)=>{
@@ -532,7 +551,7 @@ function showImportedDraft(draft){
       const nutrients=document.createElement("span");nutrients.className="plan-option-nutrition";
       nutrients.textContent=option.totals?option.totals.kcal+" kcal · P "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · G "+option.totals.fat_g+" g":"Valores por confirmar";
       summary.append(name,nutrients);details.appendChild(summary);
-      if(option.totals){const p=document.createElement("p");p.textContent="Proteína "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · Gordura "+option.totals.fat_g+" g";details.appendChild(p);}
+
       if(option.title){const heading=document.createElement("div");heading.className="import-structured-line";heading.textContent="Descrição: "+option.title;details.appendChild(heading);}
       for(const item of option.items||[]){
         if(item.kind==="title")continue;
@@ -551,7 +570,7 @@ function showImportedDraft(draft){
       }
       const actions=document.createElement("div");actions.className="import-option-actions";
       const edit=document.createElement("button");edit.type="button";edit.textContent="Editar opção";edit.disabled=approved;
-      edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
+      edit.hidden=selectedPlanMode!=="edit";edit.addEventListener("click",()=>showOptionEditor(draft,groupIndex,optionIndex,details));
       actions.append(edit);details.appendChild(actions);root.appendChild(details);
     });
   });
