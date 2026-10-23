@@ -620,24 +620,24 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     }
     form.appendChild(box);edits.push({type,name,quantity,nutrients});
   });
-  const save=document.createElement("button");save.type="button";save.textContent="Guardar correções";form.appendChild(save);
-  const feedback=document.createElement("p");form.appendChild(feedback);
-  save.addEventListener("click",async()=>{
-    save.disabled=true;
+  const feedback=document.createElement("p");feedback.className="hint";feedback.textContent="As alterações são guardadas automaticamente ao sair de cada campo.";form.appendChild(feedback);
+  let saveChain=Promise.resolve();
+  const persist=()=>{
     const entries=edits.map(edit=>{
       const kind=edit.type.value;
       const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
       return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null};
     });
     const totalValues=Object.fromEntries(Object.entries(totals).map(([key,input])=>[key,input.value.trim()]));
-    try{
-      const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{method:"PUT",
-        body:JSON.stringify({group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:Boolean(option.reviewed)}})});
+    const payload={group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:Boolean(option.reviewed)}};
+    feedback.textContent="A guardar alterações…";
+    saveChain=saveChain.catch(()=>{}).then(async()=>{
+      const response=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{method:"PUT",body:JSON.stringify(payload)});
       option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
-      feedback.textContent="Correções guardadas no rascunho, sem publicação.";
-      showImportedDraft(draft);
-    }catch(e){feedback.textContent="Erro: "+e.message;}finally{save.disabled=false;}
-  });
+      feedback.textContent="Alterações guardadas automaticamente.";
+    }).catch(e=>{feedback.textContent="Erro ao guardar: "+e.message;});
+  };
+  for(const control of form.querySelectorAll("input,select"))control.addEventListener("change",persist);
   details.appendChild(form);
 }
 $("import-submit").addEventListener("click",async()=>{
