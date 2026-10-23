@@ -101,3 +101,6 @@
 
 /* Selected nutrition plan and editable meal mappings */
 .plan-active-row{background:rgba(85,148,119,.10);border:1px solid rgba(110,196,151,.5);border-radius:10px;padding:12px!important;margin:3px 0}.plan-detail-header{margin:20px 0 12px}.plan-detail-header h3{font-size:17px}.plan-group-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:20px 0 12px}.plan-group-title h3{margin:0}.plan-meal-mapping{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.plan-meal-mapping label{font-size:12px;display:flex;align-items:center;gap:4px;padding:6px 8px;border:1px solid #414148;border-radius:8px}
+
+/* Calm neutral selected plan state. */
+.plan-active-row{background:rgba(255,255,255,.065)!important;border:1px solid rgba(255,255,255,.32)!important;box-shadow:0 0 0 1px rgba(255,255,255,.035)!important}.plan-selectable{cursor:pointer}.plan-selectable:hover{background:rgba(255,255,255,.035)}.plan-row-chevron{font-size:23px;color:#b6b6bd;margin-left:auto}.plan-detail-header{display:flex;align-items:center;justify-content:space-between}.plan-option-nutrition{color:#babfc6}
