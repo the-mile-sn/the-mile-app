@@ -192,7 +192,7 @@ function playerOption(option,index){
  const details=document.createElement("details");details.className="import-option";
  const summary=document.createElement("summary");summary.className="plan-option-summary";
  const label=document.createElement("span");label.textContent="Opção "+(option.number||index+1)+(option.title?" · "+option.title:"");summary.appendChild(label);
- if(option.totals)summary.appendChild(playerFormattedNutrition(option.totals));
+ if(option.totals){const values=playerFormattedNutrition(option.totals);values.classList.add("player-option-expanded-values");summary.appendChild(values);}
  details.appendChild(summary);
  for(const item of option.items||[]){const line=document.createElement("p");line.className="player-plan-food";line.textContent=item.kind==="food"?((item.quantity||"")+" · "+(item.name||"")):(item.text||"");details.appendChild(line);}
  return details;
