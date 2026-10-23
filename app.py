@@ -902,6 +902,44 @@ def application(env, start_response):
                         raise Problem(404, 'not_found')
                     return respond(200, {'ok': True})
 
+            # Administrative V2 account management; all operations scoped to an athlete.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/access'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5: raise Problem(404,'not_found')
+                aid=parts[3]
+                athlete=c.execute("SELECT id,name FROM v2_athletes WHERE id=?",(aid,)).fetchone()
+                if not athlete: raise Problem(404,'not_found')
+                existing=c.execute("""SELECT u.id,u.username,u.active FROM v2_player_links l
+                   JOIN users u ON u.id=l.user_id WHERE l.athlete_id=?""",(aid,)).fetchone()
+                if method=='GET':
+                    return respond(200,{'access':dict(existing) if existing else None})
+                if method=='POST':
+                    if existing: raise Problem(409,'access_exists')
+                    body=read_json(env);username=str(body.get('username','')).strip().lower()
+                    password=body.get('password','')
+                    if not re.fullmatch(r'[a-z]{4,40}',username) or not isinstance(password,str) or len(password)<12 or len(password)>256:
+                        raise Problem(400,'invalid_credentials')
+                    if c.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone():
+                        raise Problem(409,'username_exists')
+                    uid=secrets.token_hex(16)
+                    # Internal unique email is never a login identifier for player accounts.
+                    email='v2-'+uid+'@accounts.internal.invalid'
+                    c.execute("""INSERT INTO users(id,name,email,username,role,password,active)
+                                 VALUES(?,?,?,?,?,?,1)""",(uid,athlete['name'],email,username,'player',password_hash(password)))
+                    c.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES(?,?,?)",(uid,aid,int(time.time())))
+                    c.commit()
+                    return respond(201,{'access':{'id':uid,'username':username,'active':1}})
+                if method=='PUT':
+                    if not existing: raise Problem(404,'access_not_found')
+                    body=read_json(env)
+                    if type(body.get('active')) is not bool: raise Problem(400,'invalid_status')
+                    active=int(body['active'])
+                    c.execute("UPDATE users SET active=? WHERE id=? AND role='player'",(active,existing['id']))
+                    if not active: c.execute("DELETE FROM sessions WHERE user_id=?",(existing['id'],))
+                    c.commit()
+                    return respond(200,{'access':{'id':existing['id'],'username':existing['username'],'active':active}})
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
             if path == '/api/v2/player/me' and method == 'GET':
