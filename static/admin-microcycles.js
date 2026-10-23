@@ -184,9 +184,10 @@ async function loadPlayerSimulation(){
   if(!model)return;
   const d=isoDay(simulationDay);
   $("player-preview-date").textContent=simulationDay.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const [plans,calendar]=await Promise.all([
+  const [plans,calendar,menus]=await Promise.all([
     request(matchBase()+"/plan-imports/published-preview"),
-    request(matchBase()+"/calendar?start="+d+"&end="+d)
+    request(matchBase()+"/calendar?start="+d+"&end="+d),
+    request(matchBase()+"/menus?start="+d+"&end="+d)
   ]);
   publishedSimulation=plans.options_by_color;
   const host=$("player-preview-meals");host.replaceChildren();
@@ -194,12 +195,14 @@ async function loadPlayerSimulation(){
   if(!day||!day.classification){host.textContent="Sem classificação para este dia.";return;}
   const heading=document.createElement("h3");heading.textContent=day.classification;host.appendChild(heading);
   for(const entry of mealColorsForDay(day)){
-    if(!entry.color)continue;
+    const menu=(entry.meal==="lunch"||entry.meal==="dinner")?menus.menus.find(item=>item.menu_date===d&&item.meal===entry.meal):null;
+    if(!entry.color&&!menu)continue;
     const section=document.createElement("section");section.className="player-sim-meal";
     const title=document.createElement("h3");title.textContent=names[entry.meal];section.appendChild(title);
-    const bar=document.createElement("div");bar.className="meal-"+entry.color;bar.style.cssText="height:9px;border-radius:8px;margin:8px 0 15px";section.appendChild(bar);
-    const options=publishedSimulation[entry.color]?.[entry.meal]||[];
-    if(!options.length){const missing=document.createElement("p");missing.className="hint";missing.textContent="Plano ainda não publicado para esta refeição.";section.appendChild(missing);}
+    if(entry.color){const bar=document.createElement("div");bar.className="meal-"+entry.color;bar.style.cssText="height:9px;border-radius:8px;margin:8px 0 15px";section.appendChild(bar);}
+    if(menu){const menuLine=document.createElement("div");menuLine.className="player-sim-menu";const label=document.createElement("small");label.textContent=menu.kind==="dish"?"Prato do dia":"Categoria do menu";const value=document.createElement("strong");value.textContent=menu.value;menuLine.append(label,value);section.appendChild(menuLine);}
+    const options=entry.color?(publishedSimulation[entry.color]?.[entry.meal]||[]):[];
+    if(entry.color&&!options.length){const missing=document.createElement("p");missing.className="hint";missing.textContent="Plano ainda não publicado para esta refeição.";section.appendChild(missing);}
     for(const [index,option] of options.entries()){
       const details=document.createElement("details");details.className="import-option";
       const summary=document.createElement("summary");summary.textContent="Opção "+(option.number||index+1)+(option.title?" · "+option.title:"");details.appendChild(summary);
