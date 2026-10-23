@@ -25,14 +25,28 @@ function optionEl(o,i){const details=document.createElement("details"),s=documen
 async function session(){const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 async function overview(){
- const d=iso(day),r=await api("/api/v2/player/calendar?start="+d+"&end="+d);
+ const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
+ const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
  model=r.classifications;meals=r.meals;
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
- $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
- const strip=$("week-strip");strip.replaceChildren();const mon=monday(day);
- for(let i=0;i<7;i++){const dt=new Date(mon);dt.setDate(mon.getDate()+i);const button=document.createElement("button");button.textContent=dt.toLocaleDateString("pt-PT",{weekday:"short"})+" "+dt.getDate();button.className=iso(dt)===d?"selected":"";button.onclick=()=>{day=dt;overview().catch(error);};strip.append(button);}
+ $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
+ const strip=$("week-strip");strip.replaceChildren();
+ const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-1);overview().catch(error);};strip.append(prev);
+ for(let i=0;i<7;i++){
+  const dt=new Date(mon);dt.setDate(mon.getDate()+i);
+  const dayInfo=r.days.find(x=>x.date===iso(dt));
+  const button=document.createElement("button");button.type="button";button.className="week-day"+(iso(dt)===d?" selected":"");
+  button.setAttribute("aria-pressed",String(iso(dt)===d));
+  button.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+dayInfo.classification:""));
+  for(const [cls,text] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","")],["day-number",String(dt.getDate())],["day-classification",dayInfo?.classification||"—"]]){
+   const span=document.createElement("span");span.className=cls;span.textContent=text;button.append(span);
+  }
+  button.onclick=()=>{day=dt;overview().catch(error);};strip.append(button);
+ }
+ const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+1);overview().catch(error);};strip.append(next);
  const root=$("day-details");root.replaceChildren();
- const entry=r.days[0];if(!entry?.classification){root.textContent="Sem programação definida para este dia.";return;}
+ const entry=r.days.find(x=>x.date===d);
+ if(!entry?.classification){root.textContent="Sem programação definida para este dia.";return;}
  const cls=model.find(c=>c.name===entry.classification);const heading=document.createElement("h2");heading.textContent=entry.classification;root.append(heading);
  const stripColors=document.createElement("div");stripColors.className="daily-color-strip";stripColors.setAttribute("aria-label","Cores das refeições do dia");
  for(const meal of meals){const box=document.createElement("div");box.className="daily-color-cell";const caption=document.createElement("small");caption.textContent=names[meal];box.append(caption);const bar=document.createElement("div");bar.className="daily-color-bar"+(cls?.meals?.[meal]?" "+cls.meals[meal]:"");box.append(bar);stripColors.append(box);}
