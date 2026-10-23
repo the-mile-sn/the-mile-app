@@ -460,6 +460,7 @@ async function loadPlanDrafts(){
   validatedPlansByColor=Object.fromEntries(readiness.colors.map(entry=>[entry.color,entry.validated_count>0]));
   const mealData=await request(matchBase()+"/plan-imports/meal-options");
   mealOptionsByColor=mealData.options_by_color;
+  const historyData=await request(matchBase()+"/plan-imports/publication-history");
   const panel=$("publication-readiness");panel.replaceChildren();
   const title=document.createElement("h3");title.textContent="Planos alimentares";panel.appendChild(title);
   const list=$("import-list");list.replaceChildren();
@@ -495,6 +496,13 @@ async function loadPlanDrafts(){
     }
     if(selectedPlanId===latest?.id){row.classList.add("plan-active-row");row.classList.add("plan-active-"+entry.color);}
     panel.appendChild(row);
+  }
+  let history=$("plan-publication-history");
+  if(!history){history=document.createElement("details");history.id="plan-publication-history";history.className="import-validation-progress";$("publication-readiness").insertAdjacentElement("afterend",history);}
+  history.replaceChildren();
+  const heading=document.createElement("summary");heading.textContent="Histórico de publicações ("+historyData.history.length+")";history.appendChild(heading);
+  for(const item of historyData.history){
+    const line=document.createElement("p");line.textContent=(colors[item.color]||item.color)+" · "+new Date(item.published_at*1000).toLocaleString("pt-PT")+" · "+(item.replaced_at?"Substituído":"Ativo");history.appendChild(line);
   }
   list.hidden=true;
   const current=$("import-review");
