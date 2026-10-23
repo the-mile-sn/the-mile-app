@@ -869,12 +869,12 @@ def application(env, start_response):
                     if result is None:
                         raise Problem(404, 'not_found')
                     return respond(200, result)
-                if len(segments) == 6 and segments[4] == 'microcycles' and method == 'PUT':
+                if len(segments) >= 6 and segments[4] == 'microcycles' and method == 'PUT':
                     body = read_json(env)
                     if 'color' not in body:
                         raise Problem(400, 'invalid_model_cell')
                     try:
-                        ok = microcycles_v2.update_cell(c, segments[3], segments[5],
+                        ok = microcycles_v2.update_cell(c, segments[3], '/'.join(segments[5:]),
                             body.get('meal'), body.get('color'), user['id'])
                     except ValueError:
                         raise Problem(400, 'invalid_model_cell')
