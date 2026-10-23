@@ -65,3 +65,21 @@ header{padding:10px 0 24px}
 .daily-meal>.menu-line,.daily-meal>p,.daily-meal>details{margin-left:18px;margin-right:18px}
 .daily-meal>details:last-child{margin-bottom:16px}
 @media(max-width:620px){.daily-color-strip{gap:4px}.daily-color-cell small{font-size:9px;letter-spacing:-.03em}.daily-color-bar{height:7px}.daily-meal>.daily-meal-head{padding:15px}.daily-meal>.daily-meal-head strong{font-size:17px}}
+
+/* Correct colored overview strips: the neutral base must not override assigned colors. */
+.daily-color-bar.orange,.daily-meal-indicator.orange{background:#e9944a}
+.daily-color-bar.yellow,.daily-meal-indicator.yellow{background:#e5ca62}
+.daily-color-bar.blue,.daily-meal-indicator.blue{background:#6baed9}
+.daily-color-bar.green,.daily-meal-indicator.green{background:#78c99b}
+.daily-color-bar.vp,.daily-meal-indicator.vp{background:#b2dcae}
+.daily-nutrition-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.daily-nutrition-card{background:#151519;border:1px solid #393940;border-radius:11px;padding:12px;min-width:0}
+.daily-nutrition-card small{display:block;color:#b2b2bb;margin-bottom:8px}
+.daily-nutrition-card strong{display:block;font-size:clamp(15px,2.3vw,22px);white-space:nowrap}
+@media(max-width:620px){
+ .daily-nutrition-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .daily-nutrition-card strong{font-size:18px}
+ #player-panel{padding-bottom:90px}
+ #tabs{position:fixed;z-index:30;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:12px;right:12px;margin:0;box-shadow:0 8px 30px #0009;background:#1b1b20}
+ #tabs button{min-height:49px}
+}
