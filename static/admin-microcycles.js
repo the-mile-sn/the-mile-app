@@ -190,10 +190,35 @@ async function loadPlayerSimulation(){
     request(matchBase()+"/menus?start="+d+"&end="+d)
   ]);
   publishedSimulation=plans.options_by_color;
+  const strip=$("player-week-strip");strip.replaceChildren();
+  const monday=weekStart(simulationDay);
+  for(let i=0;i<7;i++){
+    const date=new Date(monday);date.setDate(monday.getDate()+i);
+    const btn=document.createElement("button");btn.type="button";btn.className="player-day-pill"+(isoDay(date)===d?" active":"");
+    const short=date.toLocaleDateString("pt-PT",{weekday:"short"});
+    btn.textContent=short+" "+date.getDate();
+    btn.onclick=()=>{simulationDay=date;loadPlayerSimulation().catch(e=>status(e.message,"warn"));};
+    strip.appendChild(btn);
+  }
+  const summary=$("player-day-summary");summary.replaceChildren();
   const host=$("player-preview-meals");host.replaceChildren();
   const day=calendar.days[0];
   if(!day||!day.classification){host.textContent="Sem classificação para este dia.";return;}
   const heading=document.createElement("h3");heading.textContent=day.classification;host.appendChild(heading);
+  const publishedTotals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+  let hasValues=false,complete=true;
+  for(const entry of mealColorsForDay(day)){
+    if(!entry.color)continue;
+    const options=publishedSimulation[entry.color]?.[entry.meal]||[];
+    const average=averageMealNutrition(options);
+    if(!average){complete=false;continue;}
+    hasValues=true;for(const key of Object.keys(publishedTotals))publishedTotals[key]+=average[key];
+  }
+  if(hasValues){
+    const caption=document.createElement("small");caption.textContent=complete?"Resumo nutricional do dia":"Resumo parcial · faltam planos publicados";summary.appendChild(caption);
+    nutritionCards(summary,publishedTotals);
+  }
+
   for(const entry of mealColorsForDay(day)){
     const menu=(entry.meal==="lunch"||entry.meal==="dinner")?menus.menus.find(item=>item.menu_date===d&&item.meal===entry.meal):null;
     if(!entry.color&&!menu)continue;
