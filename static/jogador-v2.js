@@ -69,10 +69,17 @@ async function overview(){
   const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   section.append(head);
-  if(color||menu){if(menu){const p=document.createElement("div");p.className="menu-line";p.textContent=menu.value;section.append(p);}
-   const options=plans[color]?.[meal]||[];if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
-   const avg=average(options);if(avg){const p=document.createElement("p");p.className="meal-average";p.append(nutrition(avg));section.append(p);}
-   options.forEach((o,i)=>section.append(optionEl(o,i)));
+  if(color||menu){
+   const options=plans[color]?.[meal]||[];
+   const avg=average(options);
+   if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
+   if(menu){const p=document.createElement("div");p.className="menu-line";p.textContent=menu.value;section.append(p);}
+   if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
+   if(options.length===1){
+    const single=options[0],body=document.createElement("div");body.className="single-meal-option";
+    for(const food of single.items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";body.append(p);}
+    section.append(body);
+   }else options.forEach((o,i)=>section.append(optionEl(o,i)));
   }
   root.append(section);
  }
