@@ -109,7 +109,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
   if(meal==="lunch"||meal==="dinner"){
    const menu=weekMenus.find(x=>x.menu_date===date&&x.meal===meal);
-   if(menu){const line=document.createElement("div");line.className="weekly-menu-line";const tag=document.createElement("small");tag.textContent="Menu atribuído";const value=document.createElement("span");value.textContent=menu.value;line.append(tag,value);section.append(line);}
+   if(menu){const line=document.createElement("div");line.className="weekly-menu-line";line.textContent=menu.value;section.append(line);}
   }
   if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent="Plano ainda não publicado.";section.append(note);}
   else if(options.length===1){
@@ -165,7 +165,7 @@ async function overview(){
    const options=plans[color]?.[meal]||[];
    const avg=average(options);
    if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
-   if(menu){const p=document.createElement("div");p.className="menu-line";p.textContent=menu.value;section.append(p);}
+   if(menu){const p=document.createElement("div");p.className="menu-line meal-menu-card";p.textContent=menu.value;section.append(p);}
    if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
    if(options.length===1){
     const single=options[0],body=document.createElement("div");body.className="single-meal-option";
