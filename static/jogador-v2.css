@@ -175,3 +175,19 @@ header{padding:10px 0 24px}
  #plan-detail .plan-option-card{padding:13px 12px}
  #menus .menu-entry{padding:12px!important}
 }
+
+/* UI polish 1.1 */
+#week-strip .week-day.today .day-number{color:#87b8ee}
+#week-strip .week-day.today:not(.selected) .day-number{background:rgba(120,175,230,.14);border-radius:50%;width:31px;height:31px;display:grid;place-items:center}
+.daily-nutrition{padding:8px!important;margin:8px 0 14px}
+.daily-nutrition h3{font-size:13px;margin-bottom:7px}
+.daily-nutrition-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.daily-nutrition-card{padding:7px!important;border-radius:9px}
+.daily-nutrition-card small{font-size:10px;margin-bottom:4px}
+.daily-nutrition-card strong{font-size:clamp(13px,2vw,19px);white-space:nowrap}
+.daily-nutrition-card .per-kg{font-size:10px;margin-top:4px;white-space:nowrap}
+.daily-meal.tone-orange{--tint:rgba(233,148,74,.19)}.daily-meal.tone-yellow{--tint:rgba(229,202,98,.19)}.daily-meal.tone-blue{--tint:rgba(107,174,217,.19)}.daily-meal.tone-green{--tint:rgba(120,201,155,.19)}.daily-meal.tone-vp{--tint:rgba(178,220,174,.19)}
+#plan-detail .plan-option-card summary .option{padding-left:0!important}
+#plan-detail .plan-option-card summary .option>span:first-child{padding-left:0!important}
+#menus .menu-entry.tone-orange{background:rgba(233,148,74,.15)!important}#menus .menu-entry.tone-yellow{background:rgba(229,202,98,.15)!important}#menus .menu-entry.tone-blue{background:rgba(107,174,217,.15)!important}#menus .menu-entry.tone-green{background:rgba(120,201,155,.15)!important}#menus .menu-entry.tone-vp{background:rgba(178,220,174,.15)!important}
+@media(max-width:620px){.daily-nutrition-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}.daily-nutrition-card{padding:7px 4px!important}.daily-nutrition-card strong{font-size:clamp(10px,2.9vw,16px)}.daily-nutrition-card small,.daily-nutrition-card .per-kg{font-size:clamp(8px,2vw,10px)}}
