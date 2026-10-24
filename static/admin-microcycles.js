@@ -79,7 +79,7 @@ $("save-athlete-profile").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar perfil: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
-let selectedNutritionWeek=null,periByDay={};
+let selectedNutritionWeek=null,periByDay={},dayColorOverrides={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 async function loadMenus(){
@@ -267,7 +267,7 @@ async function loadPlayerSimulation(){
   const heading=document.createElement("h3");heading.textContent=day.classification;host.appendChild(heading);
   const publishedTotals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   let hasValues=false,complete=true;
-  for(const entry of mealColorsForDay(day)){
+  for(const entry of mealColorsForDay(day,colorLookup)){
     if(!entry.color)continue;
     const options=publishedSimulation[entry.color]?.[entry.meal]||[];
     const average=averageMealNutrition(options);
@@ -346,10 +346,17 @@ start();
 function isoDay(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");}
 function matchBase(){return "/api/v2/athletes/"+encodeURIComponent(model.athlete.id);}
 
-// Read-only daily meal color preview based on the selected athlete's matrix.
-function mealColorsForDay(day){
+// An explicit per-day exception takes precedence over the microcycle model.
+function colorForDay(day,meal,overrides=dayColorOverrides){
   const row=model&&model.classifications.find(r=>r.name===day.classification);
-  return model.meals.map(meal=>({meal,color:row&&row.meals[meal]||null}));
+  const fallback=row?.meals?.[meal]||null;
+  return overrides[day.date+"|"+meal]||fallback;
+}
+function mealColorsForDay(day,overrides=dayColorOverrides){
+  return model.meals.map(meal=>({meal,color:colorForDay(day,meal,overrides)}));
+}
+function colorOverrideLookup(rows){
+ return Object.fromEntries((rows||[]).map(r=>[r.meal_date+"|"+r.meal,r.color]));
 }
 function averageMealNutrition(options){
   const keys=["kcal","protein_g","carbs_g","fat_g"];
@@ -371,7 +378,7 @@ function formatNutrition(value,digits=1){return value.toLocaleString("pt-PT",{ma
 function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
-function plannedDayTotals(day,periLookup=periByDay){
+function plannedDayTotals(day,periLookup=periByDay,colorLookup=dayColorOverrides){
   if((!day.classification||day.needs_review)&&!(periLookup[day.date]||[]).length)return {state:"unclassified",count:0,missing:[],total:null};
   const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   const missing=[];let count=0;
@@ -430,6 +437,27 @@ function renderDayPreview(day,host){
     value.textContent=entry.color?" ":"";
     if(entry.color)value.className="meal-"+entry.color;
     cell.append(label,value);
+    const modelRow=model.classifications.find(r=>r.name===day.classification);
+    const baseline=modelRow?.meals?.[entry.meal]||null;
+    const isOverride=Object.hasOwn(dayColorOverrides,day.date+"|"+entry.meal);
+    const choose=document.createElement("select");
+    choose.className="day-color-select";choose.setAttribute("aria-label","Alterar cor de "+names[entry.meal]+" apenas em "+day.date);
+    const inherit=document.createElement("option");inherit.value="";inherit.textContent="Modelo"+(baseline?" · "+(colors[baseline]||baseline):" · sem cor");choose.append(inherit);
+    for(const [colorName,labelText] of Object.entries(colors)){
+      const option=document.createElement("option");option.value=colorName;option.textContent=labelText;choose.append(option);
+    }
+    choose.value=isOverride?dayColorOverrides[day.date+"|"+entry.meal]:"";
+    choose.addEventListener("change",async()=>{
+      choose.disabled=true;
+      try{
+        await request(matchBase()+"/calendar/meal-color",{method:"PUT",body:JSON.stringify({date:day.date,meal:entry.meal,color:choose.value||null})});
+        selectedCalendarDay=day.date;
+        status("Cor atualizada apenas para "+names[entry.meal]+" em "+day.date+".","success");
+        await loadCalendar();
+      }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
+    });
+    cell.append(choose);
+    if(isOverride){const hint=document.createElement("small");hint.className="day-color-exception";hint.textContent="Exceção deste dia";cell.append(hint);}
     if(entry.meal==="lunch"||entry.meal==="dinner"){const menu=menuLookup[day.date+"|"+entry.meal];if(menu){const note=document.createElement("small");note.textContent="Menu: "+menu.value;cell.appendChild(note);}}
     if(entry.color){
       const options=mealOptionsByColor[entry.color]?.[entry.meal]||[];
@@ -496,6 +524,7 @@ async function loadCalendar(){
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
   periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
   const menuData=await request(matchBase()+"/menus?start="+isoDay(first)+"&end="+isoDay(last));
   menuLookup=Object.fromEntries(menuData.menus.map(m=>[m.menu_date+"|"+m.meal,m]));
@@ -519,7 +548,8 @@ async function loadCalendar(){
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
   const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday));
   const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
-  const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri));
+  const weeklyColors=colorOverrideLookup(weeklyData.meal_color_overrides);
+  const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri,weeklyColors));
   const covered=results.filter(item=>item.total).length;
   const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
   const progress=document.createElement("p");
