@@ -1211,8 +1211,25 @@ function renderSupplementEditor(){
    const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{override.add.splice(i,1);renderSupplementEditor();};
    row.append(label,remove);group.append(row);
   }
+  for(const name of override.remove||[]){
+   const row=document.createElement("div");row.className="event-admin-row";
+   const label=document.createElement("span");label.textContent=day+" · Suspenso: "+name;
+   const undo=document.createElement("button");undo.textContent="Repor";undo.onclick=()=>{override.remove=override.remove.filter(x=>x!==name);renderSupplementEditor();};
+   row.append(label,undo);group.append(row);
+  }
   extra.append(group);
  }
+ const selector=document.createElement("select");selector.id="supp-remove-choice";
+ for(const item of supplementDraft.plan){const option=document.createElement("option");option.value=item.name;option.textContent=item.name;selector.append(option);}
+ const disable=document.createElement("button");disable.type="button";disable.textContent="Suspender suplemento neste dia";
+ disable.onclick=()=>{
+  const day=$("supp-day").value,name=selector.value;
+  if(!day||!name)return $("supp-feedback").textContent="Seleciona uma data e suplemento.";
+  const override=supplementDraft.overrides[day]||{add:[],remove:[]};
+  if(!override.remove.includes(name))override.remove.push(name);
+  supplementDraft.overrides[day]=override;renderSupplementEditor();
+ };
+ extra.append(selector,disable);
 }
 $("supp-add").onclick=()=>{
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
