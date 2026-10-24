@@ -34,8 +34,19 @@ function optionEl(o,i,planView=false){
 }
 
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
-async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
+async function show(t){tab=t;for(const key of ["overview","plans","supplements","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="supplements")await renderSupplementPlan();if(t==="menus")await menusView();}
 
+async function renderSupplementPlan(){
+ const data=await api("/api/v2/player/supplements"),root=$("supplement-plan");root.replaceChildren();
+ if(!data.plan.length){root.textContent="Ainda não existe plano de suplementação publicado.";return;}
+ const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1"};
+ for(const item of data.plan){
+  const box=document.createElement("div");box.className="supplement-entry";
+  const title=document.createElement("strong");title.textContent=item.name+" · "+item.dose;
+  const meta=document.createElement("small");meta.textContent=(labels[item.rule]||item.rule)+" · "+({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo"})[item.moment];
+  box.append(title,meta);if(item.note){const note=document.createElement("small");note.textContent=item.note;box.append(note);}root.append(box);
+ }
+}
 function assignedColor(date,meal,classification){
  const own=dayColorOverrides[date+"|"+meal];
  if(own==="none")return null;
