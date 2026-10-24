@@ -326,7 +326,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],peri:["peri-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -336,6 +336,7 @@ function showBackofficeView(view){
   $("admin-access-panel").hidden=view!=="profile";
   if(view==="profile"&&model)loadV2Access().catch(e=>status(e.message,"warn"));
   if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
+  if(view==="plans"&&model)loadPeriImports().catch(e=>status(e.message,"warn"));
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
 }
@@ -1077,6 +1078,31 @@ async function loadPeriImports(){
   const p=document.createElement("p");const date=result.active?.[kind]?.published_at;
   p.textContent=label+": "+(date?("Publicado em "+new Date(date*1000).toLocaleDateString("pt-PT")):"Sem plano publicado");live.append(p);
  }
+ const overview=document.createElement("div");overview.className="peri-published-overview";
+ for(const [kind,title] of [["training","Peri-treino"],["match","Peri-jogo"]]){
+  const record=result.active?.[kind],options=record?.options;
+  if(!options)continue;
+  const section=document.createElement("details");section.className="peri-editor-option";
+  const summary=document.createElement("summary");summary.textContent="Visualizar plano publicado · "+title;section.append(summary);
+  for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+   const choices=options[phase]||[];if(!choices.length)continue;
+   const heading=document.createElement("h4");heading.textContent=label;section.append(heading);
+   for(const [i,option] of choices.entries()){
+    const choice=document.createElement("details");choice.className="peri-editor-option";
+    const top=document.createElement("summary");top.textContent=(option.title||"Opção "+(option.number||i+1));
+    if(option.totals?.kcal!=null)top.textContent+=" · "+option.totals.kcal+" kcal";
+    choice.append(top);
+    const totals=document.createElement("p");totals.className="hint";
+    totals.textContent=["P "+(option.totals?.protein_g??"—"),"HC "+(option.totals?.carbs_g??"—"),"G "+(option.totals?.fat_g??"—")].join(" · ")+" g";choice.append(totals);
+    for(const item of option.items||[]){
+     const line=document.createElement("p");line.textContent=item.kind==="food"?[item.quantity,item.name].filter(Boolean).join(" · "):item.text||"";choice.append(line);
+    }
+    section.append(choice);
+   }
+  }
+  overview.append(section);
+ }
+ live.append(overview);
  const list=$("peri-list");list.replaceChildren();
  for(const draft of result.imports){
   const row=document.createElement("div");row.className="event-admin-row";
