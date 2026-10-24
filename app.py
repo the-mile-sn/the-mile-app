@@ -16,6 +16,7 @@ import sqlite3
 import microcycles_v2
 import calendar_v2
 import events_v2
+import day_colors_v2
 import peri_v2
 import plan_import_v2
 import time
@@ -247,6 +248,7 @@ def initialize():
         microcycles_v2.initialize(c)
         plan_import_v2.initialize(c)
         events_v2.initialize(c)
+        day_colors_v2.initialize(c)
         peri_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         c.execute("UPDATE users SET weekly_next_activate_at=NULL")
@@ -754,6 +756,17 @@ def application(env, start_response):
                     return respond(200, {'draft': draft})
                 raise Problem(404, 'not_found')
 
+            if path.startswith('/api/v2/athletes/') and path.endswith('/calendar/meal-color') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                body=read_json(env)
+                try:
+                    saved=day_colors_v2.set_color(c,aid,body.get('date'),body.get('meal'),body.get('color'),user['id'])
+                except ValueError: raise Problem(400,'invalid_day_meal_color')
+                if saved is None: raise Problem(404,'not_found')
+                return respond(200,{'override':saved})
+
             if path.startswith('/api/v2/athletes/') and path.endswith('/calendar') and method == 'GET':
                 if not user:
                     raise Problem(401, 'unauthorized')
@@ -772,6 +785,7 @@ def application(env, start_response):
                 override_rows=c.execute("SELECT match_id,phase,state FROM v2_match_peri_overrides WHERE athlete_id=?",(aid,)).fetchall()
                 return respond(200, {'matches': matches, 'days': days,'events':event_data,
                                      'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
+                                     'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows]})
             if path == '/api/v2/dishes/photo' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
@@ -1076,7 +1090,7 @@ def application(env, start_response):
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data)})
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
