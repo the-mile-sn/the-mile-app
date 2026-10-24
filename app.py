@@ -1049,7 +1049,7 @@ def application(env, start_response):
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data)})
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
