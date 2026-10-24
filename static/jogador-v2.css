@@ -494,3 +494,17 @@ header{padding:10px 0 24px}
 
 /* Align expanded peri-training food descriptions with the card heading. */
 #overview .peri-meal > .foods{margin-left:16px;margin-right:16px}
+
+/* Match day: intra-match nutrition expands directly inside the Jogo card. */
+#overview .match-intra-card{display:block;padding:0;overflow:hidden;background:#303135;border:0;border-radius:18px}
+#overview .match-intra-card>.daily-meal-head{display:flex;align-items:center;gap:8px;min-height:64px;padding:17px 16px;list-style:none;cursor:pointer}
+#overview .match-intra-card>.daily-meal-head::-webkit-details-marker{display:none}
+#overview .match-intra-card>.daily-meal-head strong{font-size:18px;font-weight:700;flex:1;min-width:0}
+#overview .match-intra-card>.daily-meal-head .meal-average-inline{margin-left:auto;flex:0 0 auto}
+#overview .match-intra-card>.daily-meal-head .macro{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+#overview .match-intra-card>.daily-meal-head:after{content:"›";font-size:27px;color:#c4c4cc;margin-left:8px;transition:transform .16s}
+#overview .match-intra-card[open]>.daily-meal-head:after{transform:rotate(90deg)}
+#overview .match-intra-card>.foods,#overview .match-intra-card>details{margin-left:16px;margin-right:16px}
+#overview .match-intra-card>.foods:last-child{padding-bottom:14px!important;border-bottom:0!important}
+#overview .match-intra-card>details:last-child{margin-bottom:16px}
+@media(max-width:620px){#overview .match-intra-card>.daily-meal-head strong{font-size:16px}#overview .match-intra-card>.daily-meal-head .macro{font-size:12px;gap:5px}}
