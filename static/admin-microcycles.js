@@ -224,7 +224,9 @@ async function playerShowMenus(){
    const menu=menus.menus.find(item=>item.menu_date===key&&item.meal===meal);if(!menu)continue;
    const line=document.createElement("div");line.className="player-menu-entry";
    const name=document.createElement("strong");name.textContent=names[meal];line.appendChild(name);
-   const cls=model.classifications.find(c=>c.name===day?.classification),color=cls?.meals?.[meal];
+   const row=model.classifications.find(c=>c.name===day?.classification),baseline=row?.meals?.[meal];
+   const exception=(calendar.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal)?.color;
+   const color=exception||baseline;
    if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
    const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
    if(menu.kind==="dish"){const dish=dishes.dishes.find(item=>item.name_pt===menu.value);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
@@ -250,6 +252,7 @@ async function loadPlayerSimulation(){
     request(matchBase()+"/menus?start="+d+"&end="+d)
   ]);
   publishedSimulation=plans.options_by_color;
+  dayColorOverrides=colorOverrideLookup(calendar.meal_color_overrides);
   const strip=$("player-week-strip");strip.replaceChildren();
   const monday=weekStart(simulationDay);
   for(let i=0;i<7;i++){
@@ -267,7 +270,7 @@ async function loadPlayerSimulation(){
   const heading=document.createElement("h3");heading.textContent=day.classification;host.appendChild(heading);
   const publishedTotals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   let hasValues=false,complete=true;
-  for(const entry of mealColorsForDay(day,colorLookup)){
+  for(const entry of mealColorsForDay(day)){
     if(!entry.color)continue;
     const options=publishedSimulation[entry.color]?.[entry.meal]||[];
     const average=averageMealNutrition(options);
@@ -379,10 +382,10 @@ function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
 function plannedDayTotals(day,periLookup=periByDay,colorLookup=dayColorOverrides){
-  if((!day.classification||day.needs_review)&&!(periLookup[day.date]||[]).length)return {state:"unclassified",count:0,missing:[],total:null};
+  if((!day.classification||day.needs_review)&&!(periLookup[day.date]||[]).length&&!Object.keys(colorLookup).some(key=>key.startsWith(day.date+"|")))return {state:"unclassified",count:0,missing:[],total:null};
   const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   const missing=[];let count=0;
-  for(const entry of mealColorsForDay(day)){
+  for(const entry of mealColorsForDay(day,colorLookup)){
     if(!entry.color)continue;
     const average=averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]);
     if(!average){missing.push(names[entry.meal]+" ("+(colors[entry.color]||entry.color)+")");continue;}
