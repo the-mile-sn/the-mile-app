@@ -303,3 +303,18 @@ header{padding:10px 0 24px}
 .daily-meal .foods{color:rgba(255,255,255,.88)!important;border-bottom:1px solid rgba(255,255,255,.075)!important;padding:10px 0!important}
 .daily-meal .foods:last-child{border-bottom:0!important;padding-bottom:3px!important}
 #plan-detail .option-expanded-macros{padding-top:10px;padding-bottom:10px}
+
+/* Trial: inline meal nutrient averages and directly expanded single options */
+.daily-meal>.daily-meal-head{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap}
+.daily-meal>.daily-meal-head strong{flex:1 1 auto;min-width:100px}
+.daily-meal>.daily-meal-head .meal-average-inline{margin:0!important;padding:0!important;order:1}
+.daily-meal>.daily-meal-head .meal-average-inline .macro{font-size:13px!important;display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-weight:600}
+.daily-meal>.daily-meal-head:after{order:2;margin-left:0!important}
+.daily-meal>.meal-average{display:none!important}
+.daily-meal .single-meal-option{padding:4px 17px 13px}
+.daily-meal .single-meal-option .foods:last-child{border-bottom:none!important}
+@media(max-width:620px){
+ .daily-meal>.daily-meal-head .meal-average-inline{flex:0 1 auto;max-width:100%}
+ .daily-meal>.daily-meal-head .meal-average-inline .macro{font-size:12px!important;gap:5px}
+ .daily-meal>.daily-meal-head strong{font-size:16px!important}
+}
