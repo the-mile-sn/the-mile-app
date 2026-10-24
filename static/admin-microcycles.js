@@ -1192,13 +1192,13 @@ $("peri-import").addEventListener("click",async()=>{
 
 let supplementDraft={plan:[],overrides:{}};
 async function loadSupplementEditor(){
- supplementDraft=await request(matchBase()+"/supplements");renderSupplementEditor();
+ supplementDraft=await request(matchBase()+"/supplements");await loadSupplementLibrary();renderSupplementEditor();
 }
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
  for(const [i,item] of supplementDraft.plan.entries()){
   const row=document.createElement("div");row.className="event-admin-row";
-  const label=document.createElement("span");label.textContent=[item.name,item.dose,item.moment||"Sem associação",item.rule].join(" · ");
+  const label=document.createElement("span");label.textContent=[item.name,item.dose,item.timing_text||item.moment||"Sem associação",item.rule].join(" · ");
   const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{supplementDraft.plan.splice(i,1);renderSupplementEditor();};
   row.append(label,remove);list.append(row);
  }
@@ -1247,4 +1247,48 @@ $("supp-extra-add").onclick=()=>{
 $("supp-save").onclick=async()=>{
  try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});$("supp-feedback").textContent="Prescrição guardada.";}
  catch(e){$("supp-feedback").textContent="Não foi possível guardar: "+e.message;}
+};
+
+let supplementLibrary=[];
+async function loadSupplementLibrary(){
+ const data=await request("/api/v2/supplement-library");supplementLibrary=data.items||[];
+ const select=$("supp-lib-select"),list=$("supp-lib-list");select.replaceChildren();list.replaceChildren();
+ const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar...";select.append(empty);
+ for(const item of supplementLibrary){
+  const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);
+  const row=document.createElement("div");row.className="event-admin-row";
+  if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+item.id+"/image";img.alt=item.name;img.style.cssText="height:65px;width:55px;object-fit:contain";row.append(img);}
+  const text=document.createElement("span");text.textContent=[item.name,item.dose,item.timing_text||item.moment,item.note].filter(Boolean).join(" · ");row.append(text);
+  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{
+   $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;$("supp-lib-moment").value=item.moment;
+   $("supp-lib-rule").value=item.rule;$("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
+   $("supp-lib-save").dataset.editId=item.id;
+  };row.append(edit);list.append(row);
+ }
+}
+$("supp-lib-save").onclick=async()=>{
+ const button=$("supp-lib-save");button.disabled=true;
+ try{
+  const file=$("supp-lib-image").files?.[0];let imageData;
+  if(file){
+   if(file.size>250000)throw Error("A imagem deve ter menos de 250 KB.");
+   const bytes=new Uint8Array(await file.arrayBuffer());
+   let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.slice(i,i+8192));
+   imageData=btoa(binary);
+  }
+  const payload={id:button.dataset.editId||undefined,name:$("supp-lib-name").value,dose:$("supp-lib-dose").value,
+   moment:$("supp-lib-moment").value,rule:$("supp-lib-rule").value,
+   timing_text:$("supp-lib-timing").value,note:$("supp-lib-note").value};
+  if(imageData!==undefined)payload.image_data=imageData;
+  await request("/api/v2/supplement-library",{method:"POST",body:JSON.stringify(payload)});
+  delete button.dataset.editId;$("supp-lib-image").value="";
+  $("supp-lib-feedback").textContent="Suplemento guardado na biblioteca.";
+  await loadSupplementLibrary();
+ }catch(e){$("supp-lib-feedback").textContent=e.message;}finally{button.disabled=false;}
+};
+$("supp-lib-assign").onclick=()=>{
+ const item=supplementLibrary.find(x=>x.id===$("supp-lib-select").value);
+ if(!item)return;
+ supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text});
+ renderSupplementEditor();$("supp-feedback").textContent="Adicionado ao jogador. Clica Guardar para confirmar.";
 };
