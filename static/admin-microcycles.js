@@ -266,7 +266,7 @@ async function loadPlayerSimulation(){
   const summary=$("player-day-summary");summary.replaceChildren();
   const host=$("player-preview-meals");host.replaceChildren();
   const day=calendar.days[0];
-  if(!day||!day.classification){host.textContent="Sem classificação para este dia.";return;}
+  if(!day||(!day.classification&&!model.meals.some(meal=>colorForDay(day,meal)))){host.textContent="Sem prescrição para este dia.";return;}
   const heading=document.createElement("h3");heading.textContent=day.classification;host.appendChild(heading);
   const publishedTotals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   let hasValues=false,complete=true;
