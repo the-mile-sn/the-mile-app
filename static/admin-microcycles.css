@@ -139,3 +139,13 @@
 .event-admin-row div{font-size:13px;font-weight:600}
 .event-admin-row input,.event-admin-row select,.event-admin-row button{padding:9px;font-size:13px;min-width:0}
 @media(max-width:720px){.event-admin-row{grid-template-columns:1fr 1fr}.event-admin-row div{grid-column:1/-1}.event-admin-row input{grid-column:1/-1}}
+
+/* Peri-plan review controls. */
+.peri-editor-option{margin:12px 0 22px;background:#1b1b20;border:1px solid #36363d;padding:17px;border-radius:13px;display:flex;flex-direction:column;gap:14px}
+.peri-option-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.peri-option-grid label{font-size:12px}
+.peri-editor-option textarea{width:100%;resize:vertical;min-height:100px;color:#fff;background:#242428;border:1px solid #39393d;border-radius:10px;padding:10px;font:inherit}
+.peri-review-check{display:flex;align-items:center;gap:10px}
+.peri-review-check input{width:auto}
+#peri-list .event-admin-row{grid-template-columns:1fr auto}
+@media(max-width:620px){.peri-option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
