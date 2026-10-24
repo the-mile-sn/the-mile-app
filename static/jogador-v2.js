@@ -143,7 +143,9 @@ function renderWeekly(mon,r,weekMenus=[]){
     detail.append(section);
    }
   }
-  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
+  const dayItems=supplementsByDay[iso(day)]||[];
+ if(dayItems.length)root.append(supplementsCard(dayItems));
+ const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
  const valid=totals.filter(Boolean);
  if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
  else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
@@ -264,7 +266,7 @@ function appendDailyEvents(host,date,session){
    host.append(eventCard(event));
   }
   const eventCardElement=Array.from(host.children).at(-1);
-  if(eventCardElement&&event.kind)attachSupplements(eventCardElement,(supplementsByDay[date]||[]).filter(x=>x.moment===event.kind));
+  if(eventCardElement&&event.kind&&eventCardElement.tagName==="DETAILS")attachSupplements(eventCardElement,(supplementsByDay[date]||[]).filter(x=>x.moment===event.kind));
   for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item));
  }
 }
@@ -308,7 +310,7 @@ async function overview(){
  const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+1);overview().catch(error);};strip.append(next);
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
- if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))){root.textContent="Sem programação definida para este dia.";return;}
+ if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length){root.textContent="Sem programação definida para este dia.";return;}
  const cls=model.find(c=>c.name===entry?.classification);const heading=document.createElement("h2");heading.textContent=entry?.classification||"Atividades";root.append(heading);
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let complete=true,assigned=0;
  for(const meal of meals){const color=assignedColor(d,meal,entry?.classification);if(!color)continue;assigned++;const avg=average(plans[color]?.[meal]||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
