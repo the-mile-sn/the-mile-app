@@ -323,7 +323,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],events:["events-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -912,3 +912,44 @@ $("dish-catalog-import").addEventListener("click",async()=>{
     await loadMenus();
   }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
 });
+
+let eventWeek=new Date();
+const EVENT_LABELS={training:"Treino",gym:"Ginásio",travel:"Viagem",other:"Outro",match:"Jogo"};
+function mondayEvent(d){const date=new Date(d);date.setHours(12,0,0,0);date.setDate(date.getDate()-(date.getDay()+6)%7);return date;}
+function eventEndpoint(){return "/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/events";}
+async function loadEvents(){
+ if(!model)return;
+ const begin=mondayEvent(eventWeek),finish=new Date(begin);finish.setDate(begin.getDate()+6);
+ const start=isoDay(begin),end=isoDay(finish);
+ $("event-range").textContent=begin.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" — "+finish.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
+ const result=await request(eventEndpoint()+"?start="+start+"&end="+end);
+ const list=$("event-items");list.replaceChildren();
+ if(!result.events.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem eventos nesta semana.";list.append(p);}
+ for(const ev of result.events){
+  const card=document.createElement("div");card.className="event-admin-row";
+  const label=document.createElement("div");label.textContent=ev.event_date+" · "+(EVENT_LABELS[ev.kind]||ev.title);card.append(label);
+  const title=document.createElement("input");title.value=ev.title;title.maxLength=100;title.setAttribute("aria-label","Designação do evento");card.append(title);
+  const session=document.createElement("select");session.setAttribute("aria-label","Período");
+  for(const [value,name] of [["morning","Manhã"],["afternoon","Tarde"]]){const op=document.createElement("option");op.value=value;op.textContent=name;session.append(op);}
+  session.value=ev.session;card.append(session);
+  const save=document.createElement("button");save.type="button";save.textContent="Guardar";save.onclick=async()=>{
+    save.disabled=true;try{await request(eventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({title:title.value,session:session.value})});$("event-feedback").textContent="Evento atualizado.";await loadEvents();}catch(e){$("event-feedback").textContent=e.message;}finally{save.disabled=false;}
+  };card.append(save);
+  const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.onclick=async()=>{
+    if(!confirm("Remover este evento do calendário?"))return;
+    remove.disabled=true;try{await request(eventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"DELETE",body:JSON.stringify({})});await loadEvents();}catch(e){$("event-feedback").textContent=e.message;}finally{remove.disabled=false;}
+  };card.append(remove);list.append(card);
+ }
+}
+$("event-form").addEventListener("submit",async e=>{
+ e.preventDefault();const button=$("event-form").querySelector('button[type="submit"]');button.disabled=true;
+ try{
+  const values={event_date:$("event-date").value,kind:$("event-kind").value,session:$("event-session").value,title:$("event-title").value.trim()};
+  await request(eventEndpoint(),{method:"POST",body:JSON.stringify(values)});
+  eventWeek=new Date(values.event_date+"T12:00:00");$("event-feedback").textContent="Evento criado.";await loadEvents();
+ }catch(err){$("event-feedback").textContent=err.message;}finally{button.disabled=false;}
+});
+$("event-kind").addEventListener("change",()=>{$("event-title").value=EVENT_LABELS[$("event-kind").value]||"Evento";});
+$("event-date").value=isoDay(new Date());
+$("event-prev").addEventListener("click",()=>{eventWeek.setDate(eventWeek.getDate()-7);loadEvents().catch(e=>status(e.message,"warn"));});
+$("event-next").addEventListener("click",()=>{eventWeek.setDate(eventWeek.getDate()+7);loadEvents().catch(e=>status(e.message,"warn"));});
