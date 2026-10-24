@@ -214,11 +214,35 @@ function eventCard(event,compact=false){
  }
  return section;
 }
+function matchWithIntraCard(event,item){
+ const opts=item.options||[],avg=average(opts);
+ const section=document.createElement("details");
+ section.className="daily-event-card match-intra-card";
+ const head=document.createElement("summary");head.className="daily-meal-head";
+ const label=document.createElement("strong");label.textContent=event.title;head.append(label);
+ if(avg){
+  const totals=document.createElement("span");totals.className="meal-average meal-average-inline";
+  totals.append(nutrition(avg));head.append(totals);
+ }
+ section.append(head);
+ if(opts.length===1){
+  for(const food of opts[0].items||[]){
+   const p=document.createElement("div");p.className="foods";
+   p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";
+   section.append(p);
+  }
+ }else opts.forEach((option,index)=>section.append(optionEl(option,index)));
+ return section;
+}
 function appendDailyEvents(host,date,session){
  for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
   const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
-  for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item));
-  host.append(eventCard(event));
+  const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
+  if(event.kind==="match"&&intra)host.append(matchWithIntraCard(event,intra));
+  else{
+   for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item));
+   host.append(eventCard(event));
+  }
   for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item));
  }
 }
