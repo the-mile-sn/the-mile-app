@@ -59,7 +59,10 @@ def save_import(c, athlete_id, kind, filename, pdf):
         raise ValueError("invalid_pdf")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone():
         return None
-    result=plan_import_v2.extract_plan(pdf, _map_for(kind))
+    try:
+        result=plan_import_v2.extract_plan(pdf, _map_for(kind))
+    except Exception as exc:
+        raise ValueError("invalid_pdf_structure") from exc
     phases={x for g in result["groups"] for x in g["meals"]}
     if not phases.issubset(set(PHASES)) or not phases:
         raise ValueError("missing_peri_headings")
