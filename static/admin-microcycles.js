@@ -1036,7 +1036,7 @@ function syncCalendarEventForm(){
  $("calendar-new-title-wrap").hidden=kind!=="travel";
  $("calendar-pre-wrap").hidden=!(game||training);
  $("calendar-post-wrap").hidden=!(game||training);
- $("calendar-pre-label").textContent=game?"Pré-jogo":"Pré-treino";
+ $("calendar-pre-label").textContent=game?"Entre-jogo":"Pré-treino";
  $("calendar-post-label").textContent=game?"Pós-jogo":"Pós-treino";
 }
 $("calendar-new-kind").addEventListener("change",syncCalendarEventForm);
