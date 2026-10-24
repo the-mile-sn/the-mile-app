@@ -149,3 +149,14 @@
 .peri-review-check input{width:auto}
 #peri-list .event-admin-row{grid-template-columns:1fr auto}
 @media(max-width:620px){.peri-option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Responsive controls for date/daypart and manual meal association. */
+#events-panel .event-admin-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+#events-panel .event-admin-row>div:first-child{flex:1 0 100%}
+#events-panel .event-admin-row>input[type=date]{width:155px}
+#events-panel .event-admin-row>input:not([type=date]){width:160px}
+#events-panel .event-admin-row>select{width:125px}
+#events-panel .event-admin-row>label{display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap}
+#events-panel .event-admin-row>label select{width:115px}
+#events-panel .event-admin-row>button{flex:0 0 auto}
+#peri-list .event-admin-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
