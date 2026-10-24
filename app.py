@@ -15,6 +15,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import calendar_v2
+import events_v2
 import plan_import_v2
 import time
 from datetime import datetime, timedelta
@@ -244,6 +245,7 @@ def initialize():
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
         plan_import_v2.initialize(c)
+        events_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         c.execute("UPDATE users SET weekly_next_activate_at=NULL")
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
@@ -569,6 +571,34 @@ def application(env, start_response):
                         raise Problem(403, 'origin')
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
+
+            # Training and other simple calendar events. Nutrition overrides belong to admins.
+            if path.startswith('/api/v2/athletes/') and '/events' in path:
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                segments=path.strip('/').split('/')
+                if len(segments) not in (5,6) or segments[:3]!=['api','v2','athletes'] or segments[4]!='events':
+                    raise Problem(404,'not_found')
+                athlete_id=segments[3]
+                if len(segments)==5 and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    try: entries=events_v2.list_events(c,athlete_id,(q.get('start') or [''])[0],(q.get('end') or [''])[0])
+                    except ValueError: raise Problem(400,'invalid_range')
+                    return respond(200,{'events':entries})
+                if len(segments)==5 and method=='POST':
+                    try: event=events_v2.create_event(c,athlete_id,read_json(env),user['id'])
+                    except ValueError: raise Problem(400,'invalid_event')
+                    if event is None: raise Problem(404,'not_found')
+                    return respond(201,{'event':event})
+                if len(segments)==6 and method=='PUT':
+                    try: event=events_v2.update_event(c,athlete_id,segments[5],read_json(env),user['id'],True)
+                    except ValueError: raise Problem(400,'invalid_event')
+                    if event is None: raise Problem(404,'not_found')
+                    return respond(200,{'event':event})
+                if len(segments)==6 and method=='DELETE':
+                    if not events_v2.delete_event(c,athlete_id,segments[5]): raise Problem(404,'not_found')
+                    return respond(200,{'ok':True})
+                raise Problem(404,'not_found')
 
             # Administrator-only draft imports. Never expose these via player APIs.
             if path.startswith('/api/v2/athletes/') and '/plan-imports' in path:
@@ -965,7 +995,7 @@ def application(env, start_response):
                     days = calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])])
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals']})
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':events_v2.list_events(c,link['athlete_id'],first,last)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
