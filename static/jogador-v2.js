@@ -1,6 +1,6 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let me=null,plans={},model=[],meals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[];
+let me=null,plans={},model=[],meals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){
@@ -35,10 +35,86 @@ function optionEl(o,i,planView=false){
 
 async function session(){const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
+
+function weeklyDayTotal(entry){
+ const cls=model.find(x=>x.name===entry?.classification);if(!cls)return null;
+ const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
+ for(const meal of meals){const color=cls.meals?.[meal];if(!color)continue;count++;
+  const avg=average(plans[color]?.[meal]||[]);if(!avg)return null;
+  for(const k in total)total[k]+=avg[k];
+ }
+ return count?total:null;
+}
+function weeklySummary(data){
+ const summary=document.createElement("section");summary.className="daily-nutrition";const grid=document.createElement("div");grid.className="daily-nutrition-grid";
+ for(const [k,label,unit,cls] of [["kcal","Energia","kcal","kcal"],["protein_g","Proteína","g","protein"],["carbs_g","Hidratos","g","carbs"],["fat_g","Gordura","g","fat"]]){
+  const card=document.createElement("div");card.className="daily-nutrition-card";
+  const name=document.createElement("small");name.textContent=label;const n=document.createElement("strong");n.className=cls;n.textContent=fmt(data[k],0)+" "+unit;card.append(name,n);
+  const w=Number(me?.weight_kg);if(w>0&&Number.isFinite(w)){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(data[k]/w,1)+(k==="kcal"?" kcal/kg":" g/kg");card.append(ratio);}
+  grid.append(card);
+ }
+ summary.append(grid);return summary;
+}
+function renderWeekly(mon,r){
+ const root=$("weekly-view");root.replaceChildren();const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
+ const dates=[],classes=[],totals=[];
+ for(let i=0;i<7;i++){
+  const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
+  dates.push(key);classes.push(model.find(c=>c.name===entry?.classification));totals.push(weeklyDayTotal(entry));
+  const header=document.createElement("button");header.type="button";header.className="weekly-day-header";header.setAttribute("aria-label","Abrir vista diária: "+dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
+  for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","")],["number",String(dt.getDate())],["classification",entry?.classification||"—"]]){
+   const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
+  }
+  header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};grid.append(header);
+ }
+ for(const meal of meals){
+  for(let i=0;i<7;i++){
+   const color=classes[i]?.meals?.[meal],avg=color?average(plans[color]?.[meal]||[]):null;
+   if(!color){const empty=document.createElement("div");empty.className="weekly-empty";grid.append(empty);continue;}
+   const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
+   const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");
+   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=names[meal]||meal;b.append(label);
+   if(avg){const macros=document.createElement("span");macros.className="weekly-meal-macros";for(const k of ["kcal","protein_g","carbs_g","fat_g"]){const val=document.createElement("span");val.textContent=fmt(avg[k],0);macros.append(val);}b.append(macros);}
+   b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
+   b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r);};grid.append(b);
+  }
+ }
+ for(let i=0;i<7;i++){
+  const box=document.createElement("div");box.className="weekly-day-total";const total=totals[i];const weight=Number(me?.weight_kg);
+  if(!total){box.textContent="—";grid.append(box);continue;}
+  for(const ratio of [false,true]){
+   const line=document.createElement("div");line.className="weekly-day-values"+(ratio?" per-kg":"");
+   for(const k of ["kcal","protein_g","carbs_g","fat_g"]){const span=document.createElement("span");span.className=k==="protein_g"?"protein":k==="carbs_g"?"carbs":k==="fat_g"?"fat":"kcal";span.textContent=ratio?(weight>0&&Number.isFinite(weight)?fmt(total[k]/weight,1):"—"):fmt(total[k],0);line.append(span);}
+   box.append(line);
+  }grid.append(box);
+ }
+ const detail=document.createElement("div");detail.id="weekly-selection-detail";root.append(detail);
+ if(weeklySelection&&dates.includes(weeklySelection.date)){
+  const {date,meal,color}=weeklySelection;const section=document.createElement("section");section.className="weekly-detail";
+  const heading=document.createElement("div");heading.className="weekly-detail-heading";const title=document.createElement("strong");title.textContent=names[meal];
+  const sub=document.createElement("small");sub.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"});
+  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar detalhes");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r);};heading.append(title,sub,close);section.append(heading);
+  const options=plans[color]?.[meal]||[];
+  if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent="Plano ainda não publicado.";section.append(note);}
+  else if(options.length===1){const avg=average(options);if(avg){const p=document.createElement("div");p.className="weekly-detail-macros";p.append(nutrition(avg));section.append(p);}
+   for(const food of options[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";section.append(p);}
+  }else options.forEach((o,i)=>section.append(optionEl(o,i)));
+  detail.append(section);
+ }
+ const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
+ const valid=totals.filter(Boolean);
+ if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
+ else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
+}
+
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
  model=r.classifications;meals=r.meals;
+ const isWeek=overviewMode==="week";
+ for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
+ $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
+ if(isWeek){renderWeekly(mon,r);return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
@@ -98,4 +174,4 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
  }
  div.append(title,body);section.append(div);}root.append(section);}}
 function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{await api("/api/logout",{method:"POST",body:"{}"}).catch(()=>{});location.reload();};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};session().catch(()=>{$("login-panel").hidden=false;});
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{await api("/api/logout",{method:"POST",body:"{}"}).catch(()=>{});location.reload();};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};session().catch(()=>{$("login-panel").hidden=false;});
