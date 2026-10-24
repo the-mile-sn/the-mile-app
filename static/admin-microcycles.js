@@ -323,7 +323,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],events:["events-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],events:["events-panel"],peri:["peri-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -953,3 +953,81 @@ $("event-kind").addEventListener("change",()=>{$("event-title").value=EVENT_LABE
 $("event-date").value=isoDay(new Date());
 $("event-prev").addEventListener("click",()=>{eventWeek.setDate(eventWeek.getDate()-7);loadEvents().catch(e=>status(e.message,"warn"));});
 $("event-next").addEventListener("click",()=>{eventWeek.setDate(eventWeek.getDate()+7);loadEvents().catch(e=>status(e.message,"warn"));});
+
+function periEndpoint(){return "/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/peri-imports";}
+function periMessage(value){$("peri-feedback").textContent=value;}
+async function loadPeriImports(){
+ if(!model)return;
+ const result=await request(periEndpoint());
+ const live=$("peri-current");live.replaceChildren();
+ for(const [kind,label] of [["training","Peri-treino"],["match","Peri-jogo"]]){
+  const p=document.createElement("p");const date=result.active?.[kind]?.published_at;
+  p.textContent=label+": "+(date?("Publicado em "+new Date(date*1000).toLocaleDateString("pt-PT")):"Sem plano publicado");live.append(p);
+ }
+ const list=$("peri-list");list.replaceChildren();
+ for(const draft of result.imports){
+  const row=document.createElement("div");row.className="event-admin-row";
+  const label=document.createElement("span");label.textContent=(draft.kind==="training"?"Peri-treino":"Peri-jogo")+" · "+draft.filename+" · "+(draft.status==="draft"?"Em revisão":"Publicado");
+  const button=document.createElement("button");button.type="button";button.textContent="Consultar"+(draft.status==="draft"?" / editar":"");
+  button.onclick=async()=>{try{const result=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(result.draft);}catch(e){periMessage(e.message);}};
+  row.append(label,button);list.append(row);
+ }
+}
+function renderPeriDraft(draft){
+ const root=$("peri-review");root.replaceChildren();
+ const heading=document.createElement("h3");heading.textContent=draft.filename+" · "+(draft.kind==="training"?"Peri-treino":"Peri-jogo");root.append(heading);
+ for(const warning of draft.extracted.warnings||[]){const p=document.createElement("p");p.className="hint";p.textContent=warning;root.append(p);}
+ draft.extracted.groups.forEach((group,gi)=>{
+  const title=document.createElement("h3");title.textContent=group.heading;root.append(title);
+  group.options.forEach((option,oi)=>{
+   const card=document.createElement("section");card.className="peri-editor-option";
+   const title=document.createElement("strong");title.textContent="Opção "+option.number;card.append(title);
+   const form=document.createElement("div");form.className="peri-option-grid";
+   const fields={};
+   for(const [key,label] of [["kcal","Energia (kcal)"],["protein_g","Proteína (g)"],["carbs_g","Hidratos (g)"],["fat_g","Gordura (g)"]]){
+    const wrapper=document.createElement("label");wrapper.textContent=label;const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.value=option.totals?.[key]??"";fields[key]=input;wrapper.append(input);form.append(wrapper);
+   }
+   card.append(form);
+   const dishName=document.createElement("label");dishName.textContent="Título da opção";const titleInput=document.createElement("input");titleInput.value=option.title||"";dishName.append(titleInput);card.append(dishName);
+   const foodsLabel=document.createElement("label");foodsLabel.textContent="Alimentos e instruções (uma linha por item)";
+   const textarea=document.createElement("textarea");textarea.rows=5;textarea.value=(option.lines||[]).join("\n");foodsLabel.append(textarea);card.append(foodsLabel);
+   const review=document.createElement("label");review.className="peri-review-check";const check=document.createElement("input");check.type="checkbox";check.checked=option.reviewed===true;review.append(check,document.createTextNode("Valores e alimentos revistos pela equipa"));card.append(review);
+   const save=document.createElement("button");save.type="button";save.textContent="Guardar esta opção";save.disabled=draft.status!=="draft";
+   save.onclick=async()=>{
+    save.disabled=true;
+    const payload={group_index:gi,option_index:oi,option:{
+      totals:Object.fromEntries(Object.entries(fields).map(([k,input])=>[k,input.value.trim()])),
+      title:titleInput.value.trim(),lines:textarea.value.split(/\r?\n/),reviewed:check.checked
+    }};
+    try{
+      await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
+      periMessage("Opção guardada. Revê todas as opções antes da publicação.");
+    }catch(e){periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
+   };card.append(save);root.append(card);
+  });
+ });
+ if(draft.status==="draft"){
+  const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar plano peri";
+  pub.onclick=async()=>{
+    if(!confirm("Confirmas a publicação? As refeições serão aplicadas aos eventos futuros, respeitando as remoções manuais."))return;
+    pub.disabled=true;try{
+      await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:$("athlete").value})});
+      periMessage("Plano publicado. As refeições passam a ser consideradas nos eventos futuros.");
+      await loadPeriImports();const refreshed=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(refreshed.draft);
+    }catch(e){periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
+  };root.append(pub);
+ }
+}
+$("peri-import").addEventListener("click",async()=>{
+ if(!model)return;
+ const file=$("peri-pdf").files?.[0];
+ if(!file||file.size>3*1024*1024||!file.name.toLowerCase().endsWith(".pdf")){periMessage("Seleciona um PDF até 3 MB.");return;}
+ const button=$("peri-import");button.disabled=true;periMessage("A interpretar o PDF...");
+ try{
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  const result=await request(periEndpoint(),{method:"POST",body:JSON.stringify({kind:$("peri-kind").value,filename:file.name,pdf_base64:btoa(binary)})});
+  periMessage("Rascunho importado. Confirma os alimentos e os valores nutricionais antes de publicar.");
+  await loadPeriImports();renderPeriDraft(result.draft);
+ }catch(e){periMessage("Erro ao importar: "+e.message);}finally{button.disabled=false;}
+});
