@@ -1,10 +1,10 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){
- me=null;plans={};model=[];meals=[];calendarEvents=[];periMeals=[];selectedColor=null;
+ me=null;playerCsrf='';plans={};model=[];meals=[];calendarEvents=[];periMeals=[];selectedColor=null;
  for(const id of ["day-details","week-strip","plan-colors","plan-detail","menu-days"])$(id).replaceChildren();
  $("player-name").textContent="";$("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
@@ -33,7 +33,7 @@ function optionEl(o,i,planView=false){
  return details;
 }
 
-async function session(){const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 function weeklyDayTotal(entry){
@@ -146,7 +146,30 @@ function makePeriCard(item,compact=false){
 }
 function eventCard(event,compact=false){
  const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card";
- section.textContent=event.title+" · "+(event.session==="morning"?"Manhã":"Tarde");
+ const label=document.createElement("span");label.textContent=event.title+" · "+(event.session==="morning"?"Manhã":"Tarde");section.append(label);
+ if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
+   const toggle=document.createElement("button");toggle.type="button";toggle.textContent="Alterar";toggle.className="daily-event-edit";
+   const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
+   const date=document.createElement("input");date.type="date";date.value=event.event_date;date.setAttribute("aria-label","Data");
+   const session=document.createElement("select");session.setAttribute("aria-label","Período");
+   for(const [val,text] of [["morning","Manhã"],["afternoon","Tarde"]]){
+     const option=document.createElement("option");option.value=val;option.textContent=text;session.append(option);
+   }session.value=event.session;
+   const save=document.createElement("button");save.type="button";save.textContent="Guardar";
+   const warning=document.createElement("small");
+   toggle.onclick=()=>{editor.hidden=!editor.hidden;};
+   save.onclick=async()=>{
+     save.disabled=true;warning.textContent="";
+     try{
+       await api("/api/v2/player/events/"+encodeURIComponent(event.id),{method:"PUT",
+         headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
+         body:JSON.stringify({event_date:date.value,session:session.value})});
+       await overview();
+     }catch(e){warning.textContent=e.message;save.disabled=false;}
+   };
+   editor.append(date,session,save,warning);
+   section.append(toggle,editor);
+ }
  return section;
 }
 function appendDailyEvents(host,date,session){
