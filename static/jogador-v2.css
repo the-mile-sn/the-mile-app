@@ -212,3 +212,23 @@ header{padding:10px 0 24px}
 .daily-meal .daily-meal-head strong,#menus .menu-entry-heading strong{color:#fafafa}
 #menus .menu-entry-body .value{color:#f3f3f5}
 @media(max-width:620px){.daily-nutrition{padding:0!important}.daily-nutrition-grid{gap:5px}.daily-nutrition-card{padding:12px 7px!important;min-height:88px}.daily-nutrition-card strong{font-size:clamp(12px,3vw,17px)}.daily-nutrition-card small{font-size:11px}.daily-nutrition-card .per-kg{font-size:10px}}
+
+/* Detail pass: readable nutrient spacing and solid meal surfaces */
+.daily-nutrition-card{padding:15px 13px!important}
+.daily-nutrition-card strong{margin:0!important;line-height:1.15}
+.daily-nutrition-card .per-kg{margin-top:2px!important;line-height:1.2}
+.daily-meal.tone-orange{--tint:#513924}
+.daily-meal.tone-yellow{--tint:#4b4227}
+.daily-meal.tone-blue{--tint:#283f50}
+.daily-meal.tone-green{--tint:#294438}
+.daily-meal.tone-vp{--tint:#354b38}
+.daily-meal{background:var(--tint)!important}
+.plan-option-label{display:flex;flex-direction:column;gap:5px;min-width:0}
+.plan-option-label small{font-size:12px;color:#adaeb8;font-weight:400}
+.plan-option-label strong{font-size:16px;color:#f6f6f7;font-weight:550;line-height:1.32;overflow-wrap:anywhere}
+#plan-detail .plan-option-card summary .option{align-items:center}
+@media(max-width:620px){
+ .daily-nutrition-card{padding:12px 9px!important}
+ .daily-nutrition-card .per-kg{margin-top:2px!important}
+ .plan-option-label strong{font-size:15px}
+}
