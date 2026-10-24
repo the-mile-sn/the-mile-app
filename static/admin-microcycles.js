@@ -371,8 +371,8 @@ function formatNutrition(value,digits=1){return value.toLocaleString("pt-PT",{ma
 function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
-function plannedDayTotals(day){
-  if((!day.classification||day.needs_review)&&!(periByDay[day.date]||[]).length)return {state:"unclassified",count:0,missing:[],total:null};
+function plannedDayTotals(day,periLookup=periByDay){
+  if((!day.classification||day.needs_review)&&!(periLookup[day.date]||[]).length)return {state:"unclassified",count:0,missing:[],total:null};
   const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   const missing=[];let count=0;
   for(const entry of mealColorsForDay(day)){
@@ -382,7 +382,7 @@ function plannedDayTotals(day){
     for(const key of Object.keys(totals))totals[key]+=average[key];
     count++;
   }
-  for(const peri of periByDay[day.date]||[]){
+  for(const peri of periLookup[day.date]||[]){
     const average=averageMealNutrition(peri.options||[]);
     if(!average){missing.push(peri.title);continue;}
     for(const key of Object.keys(totals))totals[key]+=average[key];
@@ -496,6 +496,7 @@ async function loadCalendar(){
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
   const menuData=await request(matchBase()+"/menus?start="+isoDay(first)+"&end="+isoDay(last));
   menuLookup=Object.fromEntries(menuData.menus.map(m=>[m.menu_date+"|"+m.meal,m]));
   if(!selectedNutritionWeek){
@@ -517,8 +518,8 @@ async function loadCalendar(){
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
   const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday));
-  periByDay=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
-  const results=weeklyData.days.map(plannedDayTotals);
+  const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
+  const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri));
   const covered=results.filter(item=>item.total).length;
   const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
   const progress=document.createElement("p");
