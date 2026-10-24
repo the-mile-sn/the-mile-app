@@ -18,6 +18,7 @@ import calendar_v2
 import events_v2
 import day_colors_v2
 import peri_v2
+import supplements_v2
 import plan_import_v2
 import time
 from datetime import datetime, timedelta
@@ -250,6 +251,7 @@ def initialize():
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
+        supplements_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         c.execute("UPDATE users SET weekly_next_activate_at=NULL")
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
@@ -604,6 +606,21 @@ def application(env, start_response):
                 if changed is None:raise Problem(404,'not_found')
                 return respond(200,{'event':changed})
 
+            # Supplementation: published routine and calendar day exceptions.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)!=5 or seg[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                aid=seg[3]
+                if method=='GET':return respond(200,supplements_v2.read(c,aid))
+                try: return respond(200,supplements_v2.save(c,aid,read_json(env)))
+                except ValueError:raise Problem(400,'invalid_supplementation')
+            if path == '/api/v2/player/supplements' and method=='GET':
+                if not user or user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                return respond(200,{"plan":supplements_v2.read(c,link['athlete_id'])['plan']})
             # Peri-training and peri-match imports: draft review precedes publication.
             if path.startswith('/api/v2/athletes/') and '/peri-imports' in path:
                 if not user: raise Problem(401,'unauthorized')
@@ -1095,7 +1112,7 @@ def application(env, start_response):
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last)})
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
