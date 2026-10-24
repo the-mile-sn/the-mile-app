@@ -53,11 +53,17 @@ def create_event(c,athlete_id,payload,actor):
         return None
     n=c.execute("SELECT COUNT(*) AS n FROM v2_calendar_events WHERE athlete_id=?",(athlete_id,)).fetchone()["n"]
     if n>=MAX_EVENTS: raise ValueError("too_many_events")
+    pre=payload.get("pre_override","auto")
+    post=payload.get("post_override","auto")
+    if pre not in ("auto","off","on") or post not in ("auto","off","on"):
+        raise ValueError("invalid_override")
+    if values[1] not in ("training","match") and (pre!="auto" or post!="auto"):
+        raise ValueError("invalid_override")
     identifier=secrets.token_hex(16); now=int(time())
     c.execute("""INSERT INTO v2_calendar_events
-      (id,athlete_id,event_date,kind,session,title,created_by,updated_by,created_at,updated_at)
-      VALUES(?,?,?,?,?,?,?,?,?,?)""",(identifier,athlete_id,*values,actor,actor,now,now))
-    return {"id":identifier,"event_date":values[0],"kind":values[1],"session":values[2],"title":values[3],"pre_override":"auto","post_override":"auto"}
+      (id,athlete_id,event_date,kind,session,title,created_by,updated_by,pre_override,post_override,created_at,updated_at)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",(identifier,athlete_id,*values,actor,actor,pre,post,now,now))
+    return {"id":identifier,"event_date":values[0],"kind":values[1],"session":values[2],"title":values[3],"pre_override":pre,"post_override":post}
 
 def update_event(c,athlete_id,event_id,payload,actor,allow_nutrition_changes):
     from time import time
