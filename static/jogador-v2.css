@@ -457,3 +457,12 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-meal-average{margin:2px 0 12px!important}
 #weekly-view .weekly-detail .foods,#weekly-view .weekly-detail .weekly-option-card .foods,#weekly-view .weekly-detail>.foods{font-size:14px!important;line-height:1.45!important;color:#f7f7f8!important}
 #weekly-view .weekly-option-card .foods{padding:10px 0!important}
+
+/* Scheduled activities and independently published peri-meals. */
+.daily-event-card{background:#303135;color:#f3f3f5;border:1px solid #43454a;border-radius:13px;padding:13px 15px;margin:8px 0;font-size:14px;font-weight:500}
+.peri-meal{background:#282a2f;border:1px solid #46474e;color:#f3f3f5;margin:8px 0;border-radius:13px}
+.peri-meal .daily-meal-head{color:#f3f3f5}
+.weekly-event-slot{display:flex;flex-direction:column;gap:4px;min-width:0}
+.weekly-event-card,.weekly-peri-card{border-radius:8px;background:#35363b;color:#fff;padding:8px 5px;font-size:11px;line-height:1.3;text-align:center;overflow-wrap:anywhere}
+.weekly-peri-card{background:#292e34;border:1px solid #454950;display:flex;flex-direction:column;gap:3px}
+.weekly-peri-card span:last-child{font-size:10px;color:#c3cad4}
