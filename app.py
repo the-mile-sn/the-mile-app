@@ -606,6 +606,21 @@ def application(env, start_response):
                 if changed is None:raise Problem(404,'not_found')
                 return respond(200,{'event':changed})
 
+            if path == '/api/v2/supplement-library' and method in ('GET','POST'):
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                if method=='GET':return respond(200,{'items':supplements_v2.library_list(c)})
+                try:ident=supplements_v2.library_save(c,read_json(env))
+                except ValueError:raise Problem(400,'invalid_supplement_catalogue')
+                return respond(200,{'id':ident})
+            if path.startswith('/api/v2/supplement-library/') and path.endswith('/image') and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                ident=path.split('/')[-2]
+                image=supplements_v2.library_image(c,ident)
+                if not image:raise Problem(404,'not_found')
+                binary=base64.b64decode(image)
+                mime='image/png' if binary.startswith(b'\\x89PNG') else 'image/jpeg' if binary.startswith(b'\\xff\\xd8') else 'image/webp'
+                return respond(200,binary,mime)
             # Supplementation: published routine and calendar day exceptions.
             if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
                 if not user:raise Problem(401,'unauthorized')
