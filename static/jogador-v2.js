@@ -1,10 +1,10 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let playerCsrf='',me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],weeklyContext=null,day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){
- me=null;playerCsrf='';plans={};model=[];meals=[];calendarEvents=[];periMeals=[];selectedColor=null;
+ me=null;playerCsrf='';plans={};model=[];meals=[];calendarEvents=[];periMeals=[];dayColorOverrides={};selectedColor=null;
  for(const id of ["day-details","week-strip","plan-colors","plan-detail","menu-days"])$(id).replaceChildren();
  $("player-name").textContent="";$("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
@@ -36,10 +36,15 @@ function optionEl(o,i,planView=false){
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
+function assignedColor(date,meal,classification){
+ const own=dayColorOverrides[date+"|"+meal];
+ if(own)return own;
+ return model.find(c=>c.name===classification)?.meals?.[meal]||null;
+}
 function weeklyDayTotal(entry){
  const cls=model.find(x=>x.name===entry?.classification);
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
- for(const meal of meals){const color=cls?.meals?.[meal];if(!color)continue;count++;
+ for(const meal of meals){const color=assignedColor(entry?.date,meal,entry?.classification);if(!color)continue;count++;
   const avg=average(plans[color]?.[meal]||[]);if(!avg)return null;
   for(const k in total)total[k]+=avg[k];
  }
@@ -81,7 +86,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   if(meal==="lunch")appendWeeklyEvents(grid,dates,"morning");
   if(meal==="dinner")appendWeeklyEvents(grid,dates,"afternoon");
   for(let i=0;i<7;i++){
-   const color=classes[i]?.meals?.[meal],avg=color?average(plans[color]?.[meal]||[]):null;
+   const color=assignedColor(dates[i],meal,r.days.find(e=>e.date===dates[i])?.classification),avg=color?average(plans[color]?.[meal]||[]):null;
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");
@@ -170,7 +175,7 @@ function makePeriCard(item,compact=false){
 }
 function eventCard(event,compact=false){
  const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card";
- const label=document.createElement("span");label.textContent=event.title+" · "+(event.session==="morning"?"Manhã":"Tarde");section.append(label);
+ const label=document.createElement("span");label.textContent=event.title;section.append(label);
  if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
    const toggle=document.createElement("button");toggle.type="button";toggle.textContent="Alterar";toggle.className="daily-event-edit";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
@@ -221,7 +226,7 @@ function appendWeeklyEvents(host,dates,session){
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
- model=r.classifications;meals=r.meals;periMeals=r.peri_meals||[];calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
+ model=r.classifications;meals=r.meals;dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
@@ -247,13 +252,13 @@ async function overview(){
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)){root.textContent="Sem programação definida para este dia.";return;}
  const cls=model.find(c=>c.name===entry?.classification);const heading=document.createElement("h2");heading.textContent=entry?.classification||"Atividades";root.append(heading);
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let complete=true,assigned=0;
- for(const meal of meals){const color=cls?.meals?.[meal];if(!color)continue;assigned++;const avg=average(plans[color]?.[meal]||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
+ for(const meal of meals){const color=assignedColor(d,meal,entry?.classification);if(!color)continue;assigned++;const avg=average(plans[color]?.[meal]||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
  for(const item of periMeals.filter(x=>x.event_date===d)){assigned++;const avg=average(item.options||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
  if(assigned){const summary=document.createElement("section");summary.className="daily-nutrition";if(complete){const grid=document.createElement("div");grid.className="daily-nutrition-grid";for(const [key,label,unit,digits,css] of [["kcal","Energia","kcal",0,"kcal"],["protein_g","Proteína","g",0,"protein"],["carbs_g","Hidratos","g",0,"carbs"],["fat_g","Gordura","g",0,"fat"]]){const card=document.createElement("div");card.className="daily-nutrition-card";const name=document.createElement("small");name.textContent=label;const value=document.createElement("strong");value.className=css;value.textContent=fmt(total[key],digits)+" "+unit;card.append(name,value);const weight=Number(me?.weight_kg);if(Number.isFinite(weight)&&weight>0){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total[key]/weight,1)+(key==="kcal"?" kcal/kg":" g/kg");card.append(ratio);}grid.append(card);}summary.append(grid);}else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}root.append(summary);}
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
-  const color=cls?.meals?.[meal],menu=(meal==="lunch"||meal==="dinner")?menus.menus.find(x=>x.meal===meal):null;
+  const color=assignedColor(d,meal,entry?.classification),menu=(meal==="lunch"||meal==="dinner")?menus.menus.find(x=>x.meal===meal):null;
   if(!color&&!menu)continue;
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
   const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);
