@@ -38,6 +38,7 @@ async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key
 
 function assignedColor(date,meal,classification){
  const own=dayColorOverrides[date+"|"+meal];
+ if(own==="none")return null;
  if(own)return own;
  return model.find(c=>c.name===classification)?.meals?.[meal]||null;
 }
@@ -197,7 +198,19 @@ function eventCard(event,compact=false){
      }catch(e){warning.textContent=e.message;save.disabled=false;}
    };
    editor.append(date,session,save,warning);
-   section.append(toggle,editor);
+   const remove=document.createElement("button");remove.type="button";remove.className="daily-event-remove";
+   remove.setAttribute("aria-label","Remover "+event.title);remove.title="Remover "+event.title;
+   remove.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v6m4-6v6"/></svg>';
+   remove.onclick=async()=>{
+     if(!confirm("Remover "+event.title+" deste dia? As refeições peri-treino associadas deixam também de ser contabilizadas."))return;
+     remove.disabled=true;
+     try{
+       await api("/api/v2/player/events/"+encodeURIComponent(event.id),{method:"DELETE",
+         headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf}});
+       await overview();
+     }catch(e){warning.textContent=e.message;editor.hidden=false;remove.disabled=false;}
+   };
+   section.append(toggle,remove,editor);
  }
  return section;
 }
