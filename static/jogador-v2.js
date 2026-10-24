@@ -55,15 +55,15 @@ function weeklySummary(data){
  }
  summary.append(grid);return summary;
 }
-function renderWeekly(mon,r){
+function renderWeekly(mon,r,weekMenus=[]){
  const root=$("weekly-view");root.replaceChildren();
  const nav=document.createElement("div");nav.className="weekly-date-nav";
  const prev=document.createElement("button");prev.type="button";prev.textContent="‹";prev.setAttribute("aria-label","Semana anterior");
- const label=document.createElement("strong");const end=new Date(mon);end.setDate(mon.getDate()+6);label.textContent=mon.toLocaleDateString("pt-PT",{day:"numeric",month:"short"})+" – "+end.toLocaleDateString("pt-PT",{day:"numeric",month:"short",year:"numeric"});
+
  const next=document.createElement("button");next.type="button";next.textContent="›";next.setAttribute("aria-label","Semana seguinte");
  prev.onclick=()=>{day.setDate(day.getDate()-7);weeklySelection=null;overview().catch(error);};
  next.onclick=()=>{day.setDate(day.getDate()+7);weeklySelection=null;overview().catch(error);};
- nav.append(prev,label,next);root.append(nav);
+ nav.append(prev,next);root.append(nav);
  const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
  const dates=[],classes=[],totals=[];
  for(let i=0;i<7;i++){
@@ -73,7 +73,7 @@ function renderWeekly(mon,r){
   for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","")],["number",String(dt.getDate())],["classification",entry?.classification||"—"]]){
    const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
   }
-  header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};grid.append(header);
+  header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};if(key===iso(new Date()))header.classList.add("today");grid.append(header);
  }
  for(const meal of meals){
   for(let i=0;i<7;i++){
@@ -81,32 +81,40 @@ function renderWeekly(mon,r){
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");
-   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=names[meal]||meal;b.append(label);
-   if(avg){const macros=document.createElement("span");macros.className="weekly-meal-macros";for(const k of ["kcal","protein_g","carbs_g","fat_g"]){const val=document.createElement("span");val.textContent=fmt(avg[k],0);macros.append(val);}b.append(macros);}
+   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq. almoço":names[meal]||meal;b.append(label);
+   if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
    b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
-   b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r);};grid.append(b);
+   b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus);};grid.append(b);
   }
  }
  for(let i=0;i<7;i++){
-  const box=document.createElement("div");box.className="weekly-day-total";const total=totals[i];const weight=Number(me?.weight_kg);
+  const box=document.createElement("div");box.className="weekly-day-total";const total=totals[i];
   if(!total){box.textContent="—";grid.append(box);continue;}
-  for(const ratio of [false,true]){
-   const line=document.createElement("div");line.className="weekly-day-values"+(ratio?" per-kg":"");
-   for(const k of ["kcal","protein_g","carbs_g","fat_g"]){const span=document.createElement("span");span.className=k==="protein_g"?"protein":k==="carbs_g"?"carbs":k==="fat_g"?"fat":"kcal";span.textContent=ratio?(weight>0&&Number.isFinite(weight)?fmt(total[k]/weight,1):"—"):fmt(total[k],0);line.append(span);}
-   box.append(line);
-  }grid.append(box);
+  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmt(total.kcal,0);box.append(energy);
+  const line=document.createElement("div");line.className="weekly-total-macros";
+  for(const k of ["protein_g","carbs_g","fat_g"]){const v=document.createElement("span");v.className=k==="protein_g"?"protein":k==="carbs_g"?"carbs":"fat";v.textContent=fmt(total[k],0);line.append(v);}
+  box.append(line);grid.append(box);
  }
  const detail=document.createElement("div");detail.id="weekly-selection-detail";root.append(detail);
  if(weeklySelection&&dates.includes(weeklySelection.date)){
-  const {date,meal,color}=weeklySelection;const section=document.createElement("section");section.className="weekly-detail";
-  const heading=document.createElement("div");heading.className="weekly-detail-heading";const title=document.createElement("strong");title.textContent=names[meal];
-  const sub=document.createElement("small");sub.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"});
-  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar detalhes");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r);};heading.append(title,sub,close);section.append(heading);
-  const options=plans[color]?.[meal]||[];
+  const {date,meal,color}=weeklySelection;
+  const section=document.createElement("section");section.className="weekly-detail tone-"+color;
+  const dayData=r.days.find(x=>x.date===date);
+  const top=document.createElement("div");top.className="weekly-detail-heading";
+  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"—");
+  const title=document.createElement("strong");title.textContent=names[meal]||meal;
+  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus);};
+  const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
+  const options=plans[color]?.[meal]||[],avg=average(options);
+  if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
+  if(meal==="lunch"||meal==="dinner"){
+   const menu=weekMenus.find(x=>x.menu_date===date&&x.meal===meal);
+   if(menu){const line=document.createElement("div");line.className="weekly-menu-line";const tag=document.createElement("small");tag.textContent="Menu atribuído";const value=document.createElement("span");value.textContent=menu.value;line.append(tag,value);section.append(line);}
+  }
   if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent="Plano ainda não publicado.";section.append(note);}
-  else if(options.length===1){const avg=average(options);if(avg){const p=document.createElement("div");p.className="weekly-detail-macros";p.append(nutrition(avg));section.append(p);}
+  else if(options.length===1){
    for(const food of options[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";section.append(p);}
-  }else options.forEach((o,i)=>section.append(optionEl(o,i)));
+  }else options.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("weekly-option-card");section.append(item);});
   detail.append(section);
  }
  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
@@ -122,7 +130,7 @@ async function overview(){
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
- if(isWeek){renderWeekly(mon,r);return;}
+ if(isWeek){const weekMenus=await api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end));renderWeekly(mon,r,weekMenus.menus||[]);return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
