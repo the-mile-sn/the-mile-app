@@ -553,3 +553,9 @@ header{padding:10px 0 24px}
 #supplement-plan .supplement-entry{position:relative;min-height:80px;padding-left:78px}
 #supplement-plan .supplement-entry:not(:has(.supplement-product-image)){padding-left:0;min-height:0}
 .supplement-product-image{position:absolute;left:0;top:10px;width:64px;height:64px;object-fit:contain;border-radius:7px}
+
+/* Weekly match merges intra-match nutrition into one interactive event card. */
+.weekly-match-with-intra{cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.weekly-match-with-intra .weekly-match-kcal{font-size:10px;font-weight:500;white-space:nowrap;opacity:.85}
+.weekly-match-with-intra[aria-pressed="true"]{outline:2px solid currentColor;outline-offset:-2px}
+.weekly-match-with-intra:focus-visible{outline:2px solid currentColor;outline-offset:2px}
