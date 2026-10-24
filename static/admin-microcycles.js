@@ -1051,6 +1051,7 @@ async function saveMatchPeri(matchId,pre,post){
 }
 function syncCalendarEventForm(){
  const kind=$("calendar-new-kind").value,game=kind==="match",training=kind==="training";
+ $("calendar-supp-options").hidden=kind!=="supplementation";
  $("calendar-new-session").closest("div").hidden=game;
  $("calendar-new-time-wrap").hidden=!game;
  $("calendar-new-title-wrap").hidden=kind!=="travel";
@@ -1059,7 +1060,36 @@ function syncCalendarEventForm(){
  $("calendar-pre-label").textContent=game?"Intra-jogo":"Pré-treino";
  $("calendar-post-label").textContent=game?"Pós-jogo":"Pós-treino";
 }
-$("calendar-new-kind").addEventListener("change",syncCalendarEventForm);
+
+async function renderCalendarSupplementChoices(){
+ if(!model)return;
+ const [library,assigned]=await Promise.all([request("/api/v2/supplement-library"),request(matchBase()+"/supplements")]);
+ supplementLibrary=library.items||[];supplementDraft=assigned;
+ const root=$("calendar-supp-list");root.replaceChildren();
+ const date=$("calendar-new-date").value,day=assigned.overrides?.[date]?.add||[];
+ for(const item of supplementLibrary){
+  const label=document.createElement("label");label.className="calendar-peri-check";
+  const cb=document.createElement("input");cb.type="checkbox";cb.dataset.suppId=item.id;
+  cb.checked=day.some(x=>x.library_id===item.id);
+  const title=document.createElement("span");title.textContent=item.name+" · "+item.dose+(item.timing_text?" · "+item.timing_text:"");
+  label.append(cb,title);root.append(label);
+ }
+ if(!supplementLibrary.length)root.textContent="Ainda não existem suplementos na biblioteca. Cria-os no separador Suplementação.";
+}
+async function saveCalendarSupplements(date){
+ const selected=Array.from($("calendar-supp-list").querySelectorAll("input:checked")).map(x=>x.dataset.suppId);
+ const data=await request(matchBase()+"/supplements"),current=data.overrides[date]||{add:[],remove:[]};
+ const catalogueIds=new Set(supplementLibrary.map(x=>x.id));
+ const preserved=(current.add||[]).filter(x=>!catalogueIds.has(x.library_id));
+ const additions=selected.map(id=>{
+  const item=supplementLibrary.find(x=>x.id===id);
+  return {library_id:id,name:item.name,dose:item.dose,moment:item.moment,rule:"daily",timing_text:item.timing_text,note:item.note};
+ });
+ data.overrides[date]={...current,add:preserved.concat(additions)};
+ await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(data)});
+}
+$("calendar-new-date").addEventListener("change",()=>renderCalendarSupplementChoices().catch(e=>status(e.message,"warn")));
+$("calendar-new-kind").addEventListener("change",()=>{syncCalendarEventForm();if($("calendar-new-kind").value==="supplementation")renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));});
 $("calendar-new-date").value=isoDay(new Date());
 syncCalendarEventForm();
 $("calendar-event-form").addEventListener("submit",async e=>{
@@ -1068,7 +1098,9 @@ $("calendar-event-form").addEventListener("submit",async e=>{
  const kind=$("calendar-new-kind").value,date=$("calendar-new-date").value;
  const button=$("calendar-add-event"),feedback=$("calendar-event-feedback");button.disabled=true;
  try{
-  if(kind==="match"){
+  if(kind==="supplementation"){
+   await saveCalendarSupplements(date);
+  }else if(kind==="match"){
    const response=await request(matchBase()+"/matches",{method:"POST",
      body:JSON.stringify({match_date:date,match_time:$("calendar-new-time").value||null})});
    await saveMatchPeri(response.match.id,$("calendar-new-pre").checked,$("calendar-new-post").checked);
@@ -1080,7 +1112,7 @@ $("calendar-event-form").addEventListener("submit",async e=>{
       post_override:$("calendar-new-post").checked?"auto":"off"}:{})
    })});
   }
-  feedback.textContent="Evento adicionado ao calendário.";
+  feedback.textContent=kind==="supplementation"?"Suplementação do dia atualizada.":"Evento adicionado ao calendário.";
   const [year,month]=date.split("-").map(Number);calendarMonth=new Date(year,month-1,1);
   await loadCalendar();
  }catch(err){feedback.textContent="Não foi possível adicionar: "+err.message;}
@@ -1202,47 +1234,13 @@ function renderSupplementEditor(){
   const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{supplementDraft.plan.splice(i,1);renderSupplementEditor();};
   row.append(label,remove);list.append(row);
  }
- const extra=$("supp-extra-list");extra.replaceChildren();
- for(const [day,override] of Object.entries(supplementDraft.overrides)){
-  const group=document.createElement("div");
-  for(const [i,item] of (override.add||[]).entries()){
-   const row=document.createElement("div");row.className="event-admin-row";
-   const label=document.createElement("span");label.textContent=day+" · "+item.name+" · "+item.dose;
-   const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{override.add.splice(i,1);renderSupplementEditor();};
-   row.append(label,remove);group.append(row);
-  }
-  for(const name of override.remove||[]){
-   const row=document.createElement("div");row.className="event-admin-row";
-   const label=document.createElement("span");label.textContent=day+" · Suspenso: "+name;
-   const undo=document.createElement("button");undo.textContent="Repor";undo.onclick=()=>{override.remove=override.remove.filter(x=>x!==name);renderSupplementEditor();};
-   row.append(label,undo);group.append(row);
-  }
-  extra.append(group);
- }
- const selector=document.createElement("select");selector.id="supp-remove-choice";
- for(const item of supplementDraft.plan){const option=document.createElement("option");option.value=item.name;option.textContent=item.name;selector.append(option);}
- const disable=document.createElement("button");disable.type="button";disable.textContent="Suspender suplemento neste dia";
- disable.onclick=()=>{
-  const day=$("supp-day").value,name=selector.value;
-  if(!day||!name)return $("supp-feedback").textContent="Seleciona uma data e suplemento.";
-  const override=supplementDraft.overrides[day]||{add:[],remove:[]};
-  if(!override.remove.includes(name))override.remove.push(name);
-  supplementDraft.overrides[day]=override;renderSupplementEditor();
- };
- extra.append(selector,disable);
+
 }
 $("supp-add").onclick=()=>{
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
  if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
  supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
  $("supp-name").value="";$("supp-dose").value="";renderSupplementEditor();
-};
-$("supp-extra-add").onclick=()=>{
- const day=$("supp-day").value,name=$("supp-extra-name").value.trim(),dose=$("supp-extra-dose").value.trim();
- if(!day||!name||!dose)return $("supp-feedback").textContent="Preenche data, suplemento e dose.";
- const override=supplementDraft.overrides[day]||{add:[],remove:[]};
- override.add.push({name,dose,moment:$("supp-extra-moment").value,rule:"daily",note:""});
- supplementDraft.overrides[day]=override;$("supp-extra-name").value="";$("supp-extra-dose").value="";renderSupplementEditor();
 };
 $("supp-save").onclick=async()=>{
  try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});$("supp-feedback").textContent="Prescrição guardada.";}
