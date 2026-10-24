@@ -1,10 +1,10 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let playerCsrf='',me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){
- me=null;playerCsrf='';plans={};model=[];meals=[];calendarEvents=[];periMeals=[];dayColorOverrides={};selectedColor=null;
+ me=null;playerCsrf='';plans={};periPlans={};model=[];meals=[];calendarEvents=[];periMeals=[];dayColorOverrides={};selectedColor=null;
  for(const id of ["day-details","week-strip","plan-colors","plan-detail","menu-days"])$(id).replaceChildren();
  $("player-name").textContent="";$("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
@@ -33,7 +33,7 @@ function optionEl(o,i,planView=false){
  return details;
 }
 
-async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 function assignedColor(date,meal,classification){
@@ -316,7 +316,44 @@ async function overview(){
   root.append(section);
  }
 }
-function renderPlans(){const root=$("plan-colors"),detail=$("plan-detail");root.replaceChildren();detail.replaceChildren();const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));for(const color of available){const b=document.createElement("button");const dot=document.createElement("span");dot.className="color-dot "+color;b.append(dot,document.createTextNode(colorNames[color]));b.className=selectedColor===color?"selected":"";b.onclick=()=>{selectedColor=selectedColor===color?null:color;renderPlans();};root.append(b);}if(!selectedColor||!plans[selectedColor])return;for(const meal of ["breakfast","lunch","snack","dinner","supper"]){const opts=plans[selectedColor][meal]||[];if(!opts.length)continue;const section=document.createElement("section");section.className="meal plan-meal";const header=document.createElement("div");header.className="option";const h=document.createElement("h3");h.textContent=names[meal];header.append(h);const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});detail.append(section);}}
+function renderPlans(){
+ const root=$("plan-colors"),detail=$("plan-detail");root.replaceChildren();detail.replaceChildren();
+ const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
+ for(const color of available){
+  const b=document.createElement("button"),dot=document.createElement("span");dot.className="color-dot "+color;
+  b.append(dot,document.createTextNode(colorNames[color]));b.className=selectedColor===color?"selected":"";
+  b.onclick=()=>{selectedColor=selectedColor===color?null:color;renderPlans();};root.append(b);
+ }
+ for(const [kind,label] of [["training","Peri-treino"],["match","Peri-jogo"]]){
+  const published=periPlans[kind]?.options;
+  if(!published||!Object.values(published).some(options=>options.length))continue;
+  const key="peri-"+kind,b=document.createElement("button");b.textContent=label;
+  b.className=selectedColor===key?"selected":"";
+  b.onclick=()=>{selectedColor=selectedColor===key?null:key;renderPlans();};root.append(b);
+ }
+ if(!selectedColor)return;
+ if(selectedColor.startsWith("peri-")){
+  const kind=selectedColor.slice(5),published=periPlans[kind]?.options||{};
+  for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+   const opts=published[phase]||[];if(!opts.length)continue;
+   const section=document.createElement("section");section.className="meal plan-meal";
+   const header=document.createElement("div");header.className="option";
+   const heading=document.createElement("h3");heading.textContent=label;header.append(heading);
+   const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);
+   opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});
+   detail.append(section);
+  }
+  return;
+ }
+ if(!plans[selectedColor])return;
+ for(const meal of ["breakfast","lunch","snack","dinner","supper"]){
+  const opts=plans[selectedColor][meal]||[];if(!opts.length)continue;
+  const section=document.createElement("section");section.className="meal plan-meal";
+  const header=document.createElement("div");header.className="option";const h=document.createElement("h3");
+  h.textContent=names[meal];header.append(h);const avg=average(opts);if(avg)header.append(nutrition(avg));
+  section.append(header);opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});detail.append(section);
+ }
+}
 async function menusView(){const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);$("menu-week").textContent=String(start.getDate()).padStart(2,"0")+"/"+String(start.getMonth()+1).padStart(2,"0")+" - "+String(end.getDate()).padStart(2,"0")+"/"+String(end.getMonth()+1).padStart(2,"0");const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));const root=$("menu-days");root.replaceChildren();for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu";const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"});title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+(dayClass?.classification?" · "+dayClass.classification:"");h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===dayClass?.classification),color=rowClass?.meals?.[meal];
