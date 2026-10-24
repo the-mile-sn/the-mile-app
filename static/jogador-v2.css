@@ -482,3 +482,8 @@ header{padding:10px 0 24px}
 .daily-event-remove{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;padding:0;border:0!important;box-shadow:none!important;border-radius:999px;background:transparent;color:#e1e1e5;cursor:pointer}
 .daily-event-remove:hover,.daily-event-remove:focus-visible{background:#4a4c52}
 .daily-event-remove:disabled{opacity:.5;cursor:default}
+
+/* Official Hugeicons icon-only actions on event cards. */
+.daily-event-card .daily-event-edit{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;min-width:34px;padding:0!important;border:0!important;border-radius:999px!important;background:#505158!important;color:#f5f5f7;line-height:1}
+.daily-event-card .daily-event-edit svg,.daily-event-card .daily-event-remove svg{display:block;width:18px;height:18px;flex:none}
+.daily-event-card .daily-event-remove{width:34px;height:34px;flex:0 0 34px}
