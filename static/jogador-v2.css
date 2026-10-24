@@ -433,3 +433,19 @@ header{padding:10px 0 24px}
  #weekly-view .weekly-total-macros{font-size:7px}
  #weekly-view .weekly-day-header{padding-left:0;padding-right:0}
 }
+
+/* Approved weekly design: solid colored detail, concise figures, unchanged today marker */
+#weekly-view .weekly-meal-kcal{font-size:10px!important;letter-spacing:0!important;font-variant-numeric:normal!important;font-feature-settings:"kern" 1!important}
+#weekly-view .weekly-total-kcal{font-size:11px!important;letter-spacing:0!important;font-variant-numeric:normal!important}
+#weekly-view .weekly-detail{background:var(--detail-bg,#37332a)!important;box-shadow:none!important}
+#weekly-view .weekly-detail.tone-orange{--detail-bg:#513b2c}
+#weekly-view .weekly-detail.tone-yellow{--detail-bg:#514427}
+#weekly-view .weekly-detail.tone-blue{--detail-bg:#284656}
+#weekly-view .weekly-detail.tone-green{--detail-bg:#2a4d3b}
+#weekly-view .weekly-detail.tone-vp{--detail-bg:#3d5438}
+#weekly-view .weekly-meal-average{background:transparent!important;padding:0!important;margin:6px 0 16px!important;border-radius:0!important}
+#weekly-view .weekly-meal-average .macro{justify-content:flex-start!important;font-size:12px!important}
+#weekly-view .weekly-option-card{background:var(--tint)!important}
+#weekly-view .weekly-option-card .foods,#weekly-view .weekly-detail>.foods{color:rgba(255,255,255,.96)!important}
+#weekly-view .weekly-option-card .option-expanded-macros .macro{color:#f6f6f7}
+@media(max-width:620px){#weekly-view .weekly-meal-kcal{font-size:9px!important}#weekly-view .weekly-total-kcal{font-size:10px!important}}
