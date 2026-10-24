@@ -449,3 +449,11 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-option-card .foods,#weekly-view .weekly-detail>.foods{color:rgba(255,255,255,.96)!important}
 #weekly-view .weekly-option-card .option-expanded-macros .macro{color:#f6f6f7}
 @media(max-width:620px){#weekly-view .weekly-meal-kcal{font-size:9px!important}#weekly-view .weekly-total-kcal{font-size:10px!important}}
+
+/* Informative, non-interactive menus share their meal color in both views */
+#overview .daily-meal .meal-menu-card{background:var(--tint)!important;border:1px solid rgba(255,255,255,.12)!important;color:#f5f6f8!important;border-radius:12px!important;padding:12px 14px!important;box-shadow:inset 0 0 0 999px rgba(255,255,255,.055);font-size:14px!important;line-height:1.4!important}
+#weekly-view .weekly-detail .weekly-menu-line{display:block!important;background:var(--tint)!important;border-radius:12px!important;padding:12px 14px!important;margin:3px 0 13px!important;color:#f5f6f8!important;font-size:14px!important;line-height:1.4!important}
+#weekly-view .weekly-detail-heading{margin-bottom:5px!important}
+#weekly-view .weekly-meal-average{margin:2px 0 12px!important}
+#weekly-view .weekly-detail .foods,#weekly-view .weekly-detail .weekly-option-card .foods,#weekly-view .weekly-detail>.foods{font-size:14px!important;line-height:1.45!important;color:#f7f7f8!important}
+#weekly-view .weekly-option-card .foods{padding:10px 0!important}
