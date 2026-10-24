@@ -145,7 +145,7 @@ function renderWeekly(mon,r,weekMenus=[]){
     const section=document.createElement("section");section.className="weekly-detail peri-weekly-detail";
     const top=document.createElement("div");top.className="weekly-detail-heading";
     const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"});
-    const title=document.createElement("strong");title.textContent=item.title;
+    const title=document.createElement("strong");title.textContent=item.phase==="pre"&&calendarEvents.some(e=>e.id===item.event_id&&e.kind==="match")?"Jogo":item.title;
     const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus);};
     const group=document.createElement("div");group.className="weekly-detail-titles";group.append(caption,title);top.append(group,close);section.append(top);
     const opts=item.options||[],avg=average(opts);
@@ -288,8 +288,21 @@ function appendWeeklyEvents(host,dates,session){
   const slot=document.createElement("div");slot.className="weekly-event-slot";
   for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
    const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
-   for(const item of associated.filter(p=>p.phase==="pre"))slot.append(makePeriCard(item,true));
-   slot.append(eventCard(event,true));
+   const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
+   if(intra){
+    const button=eventCard(event,true),avg=average(intra.options||[]);
+    button.classList.add("weekly-match-with-intra");
+    button.setAttribute("role","button");button.tabIndex=0;
+    const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.phase==="pre"&&weeklySelection?.date===date;
+    button.setAttribute("aria-pressed",String(active));
+    if(avg){const kcal=document.createElement("span");kcal.className="weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0)+" kcal";button.append(kcal);}
+    const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus);};
+    button.onclick=select;button.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}};
+    slot.append(button);
+   }else{
+    for(const item of associated.filter(p=>p.phase==="pre"))slot.append(makePeriCard(item,true));
+    slot.append(eventCard(event,true));
+   }
    for(const item of associated.filter(p=>p.phase==="post"))slot.append(makePeriCard(item,true));
   }
   host.append(slot);
