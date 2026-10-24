@@ -16,6 +16,7 @@ import sqlite3
 import microcycles_v2
 import calendar_v2
 import events_v2
+import peri_v2
 import plan_import_v2
 import time
 from datetime import datetime, timedelta
@@ -246,6 +247,7 @@ def initialize():
         microcycles_v2.initialize(c)
         plan_import_v2.initialize(c)
         events_v2.initialize(c)
+        peri_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         c.execute("UPDATE users SET weekly_next_activate_at=NULL")
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
@@ -571,6 +573,57 @@ def application(env, start_response):
                         raise Problem(403, 'origin')
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
+
+            # Peri-training and peri-match imports: draft review precedes publication.
+            if path.startswith('/api/v2/athletes/') and '/peri-imports' in path:
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)<5 or seg[:3]!=['api','v2','athletes'] or seg[4]!='peri-imports':
+                    raise Problem(404,'not_found')
+                aid=seg[3]
+                if len(seg)==5 and method=='GET':
+                    return respond(200,{'imports':peri_v2.list_imports(c,aid),'active':peri_v2.current(c,aid)})
+                if len(seg)==5 and method=='POST':
+                    body=read_json(env)
+                    try:
+                        encoded=body.get('pdf_base64','')
+                        if not isinstance(encoded,str) or len(encoded)>4*1024*1024:raise ValueError('invalid_pdf')
+                        content=base64.b64decode(encoded,validate=True)
+                        draft=peri_v2.save_import(c,aid,body.get('kind'),body.get('filename'),content)
+                    except (ValueError,TypeError,base64.binascii.Error):
+                        raise Problem(400,'invalid_or_unreadable_peri_pdf')
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(201,{'draft':draft})
+                if len(seg)==6 and method=='GET':
+                    draft=peri_v2.get_import(c,aid,seg[5])
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(200,{'draft':draft})
+                if len(seg)==7 and seg[6]=='option' and method=='PUT':
+                    body=read_json(env)
+                    try:
+                        option=peri_v2.update_option(c,aid,seg[5],body.get('group_index'),body.get('option_index'),body.get('option'))
+                    except ValueError:raise Problem(400,'invalid_peri_option')
+                    if option is None:raise Problem(404,'not_found')
+                    return respond(200,{'option':option})
+                if len(seg)==7 and seg[6]=='publish' and method=='POST':
+                    body=read_json(env)
+                    if body.get('confirmation')!='PUBLICAR' or body.get('athlete_id')!=aid:
+                        raise Problem(400,'publication_confirmation_required')
+                    try: published=peri_v2.publish(c,aid,seg[5],user['id'])
+                    except ValueError:raise Problem(400,'peri_review_incomplete')
+                    if published is None:raise Problem(404,'not_found')
+                    return respond(200,{'publication':published})
+                raise Problem(404,'not_found')
+            if path.startswith('/api/v2/athletes/') and '/match-peri/' in path and method=='PUT':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)!=7 or seg[4]!='match-peri':raise Problem(404,'not_found')
+                try: saved=peri_v2.update_match_override(c,seg[3],seg[5],seg[6],read_json(env).get('state'))
+                except ValueError:raise Problem(400,'invalid_override')
+                if not saved:raise Problem(404,'not_found')
+                return respond(200,{'ok':True})
 
             # Training and other simple calendar events. Nutrition overrides belong to admins.
             if path.startswith('/api/v2/athletes/') and '/events' in path:
@@ -995,7 +1048,8 @@ def application(env, start_response):
                     days = calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])])
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':events_v2.list_events(c,link['athlete_id'],first,last)})
+                event_data=events_v2.list_events(c,link['athlete_id'],first,last)
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
