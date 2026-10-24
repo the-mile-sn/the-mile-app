@@ -143,7 +143,7 @@ def validated_meal_options(c, athlete_id):
     return result
 
 
-def extract_plan(pdf_bytes):
+def extract_plan(pdf_bytes, meal_map=None):
     reader = PdfReader(io.BytesIO(pdf_bytes), strict=False)
     if len(reader.pages) < 1 or len(reader.pages) > 40:
         raise ValueError("invalid_pdf_pages")
@@ -163,7 +163,7 @@ def extract_plan(pdf_bytes):
             plain = re.sub(r"\s+", " ", line).strip()
             # A subsection heading has no trailing numeric nutrition columns.
             lowered = plain.casefold()
-            meal = MEAL_MAP.get(lowered)
+            meal = (meal_map if meal_map is not None else MEAL_MAP).get(lowered.rstrip(':').strip())
             if meal:
                 current_group = {"heading": plain, "meals": meal, "page": page_number, "options": []}
                 groups.append(current_group)
