@@ -279,3 +279,27 @@ header{padding:10px 0 24px}
 /* Image elements do not receive a black CSS frame. Black baked into source pixels requires asset cleanup. */
 #menus img.dish-img{background:transparent!important;mix-blend-mode:normal!important}
 @media(max-width:620px){.daily-nutrition-card{min-height:76px!important;padding:10px 10px!important}.daily-nutrition-card strong{font-size:clamp(14px,3.4vw,19px)!important}.daily-nutrition-card .per-kg{font-size:10px!important}}
+
+/* Open-meal finishing details */
+.daily-nutrition-card small:not(.per-kg){font-size:11px!important;margin-bottom:8px!important}
+.daily-nutrition-card strong{line-height:1.14!important}
+.daily-nutrition-card .per-kg{margin-top:2px!important}
+.daily-meal[open]>.daily-meal-head{padding-bottom:3px!important}
+.daily-meal[open]>.meal-average{margin-top:0!important;margin-bottom:8px!important}
+.daily-meal .meal-average .macro{font-weight:650}
+.daily-meal .meal-average .macro .protein{color:#adcde0}
+.daily-meal .meal-average .macro .carbs{color:#f0bc9f}
+.daily-meal .meal-average .macro .fat{color:#f2de9a}
+#overview .daily-meal>details{border-top:1px solid rgba(255,255,255,.13)!important;margin-top:0!important;padding:12px 0!important}
+#overview .daily-meal>details:first-of-type{margin-top:4px!important}
+#overview .daily-meal>details summary .option.day-option{padding-left:0!important;padding-right:31px!important}
+#overview .daily-meal>details summary .option.day-option:before{content:none!important;display:none!important}
+#overview .daily-meal>details summary .option.day-option:after{content:"›"!important;right:1px!important;left:auto!important}
+#overview .daily-meal .plan-option-label{display:flex;flex-direction:column;gap:3px}
+#overview .daily-meal .plan-option-label small{font-size:12px;color:rgba(255,255,255,.72)}
+#overview .daily-meal .plan-option-label strong{font-size:16px;font-weight:520;color:#fff}
+.daily-meal .option-expanded-macros{padding-top:9px;padding-bottom:12px}
+.daily-meal .option-expanded-macros .macro{font-weight:550}
+.daily-meal .foods{color:rgba(255,255,255,.88)!important;border-bottom:1px solid rgba(255,255,255,.075)!important;padding:10px 0!important}
+.daily-meal .foods:last-child{border-bottom:0!important;padding-bottom:3px!important}
+#plan-detail .option-expanded-macros{padding-top:10px;padding-bottom:10px}
