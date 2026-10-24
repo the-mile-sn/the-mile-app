@@ -263,3 +263,19 @@ header{padding:10px 0 24px}
 #overview .daily-meal details summary .option.day-option:after{content:"›";position:absolute;right:2px;top:0;font-size:24px;line-height:1;color:#e4e4e8;transition:transform .15s}
 #overview .daily-meal details[open] summary .option.day-option:after{transform:rotate(90deg)}
 @media(max-width:620px){#week-strip .week-day .day-number{width:33px;height:33px}}
+
+/* Mobile polish: shorter cards, larger nutrition numbers, right-only arrows */
+.daily-nutrition-card{min-height:70px!important;padding:11px 15px!important}
+.daily-nutrition-card small{margin-bottom:3px!important}
+.daily-nutrition-card strong{font-size:clamp(17px,2.5vw,23px)!important;line-height:1.13!important}
+.daily-nutrition-card .per-kg{margin-top:2px!important}
+.daily-meal>.daily-meal-head{min-height:55px!important;padding:12px 17px!important}
+.daily-meal>.daily-meal-head strong{font-size:17px!important;font-weight:590!important}
+.daily-meal>.daily-meal-head:before{content:none!important;display:none!important}
+#overview .daily-meal>details summary .option.day-option{padding-left:0!important;padding-right:32px!important}
+#overview .daily-meal>details summary .option.day-option:before{content:none!important;display:none!important}
+#overview .daily-meal>details summary .option.day-option:after{content:"›"!important;position:absolute!important;left:auto!important;right:0!important;top:0!important;color:#f0f0f2!important;font-size:25px!important}
+#overview .daily-meal>details[open] summary .option.day-option:after{transform:rotate(90deg)}
+/* Image elements do not receive a black CSS frame. Black baked into source pixels requires asset cleanup. */
+#menus img.dish-img{background:transparent!important;mix-blend-mode:normal!important}
+@media(max-width:620px){.daily-nutrition-card{min-height:76px!important;padding:10px 10px!important}.daily-nutrition-card strong{font-size:clamp(14px,3.4vw,19px)!important}.daily-nutrition-card .per-kg{font-size:10px!important}}
