@@ -188,6 +188,14 @@ def extract_plan(pdf_bytes, meal_map=None):
                 if lowered.startswith("www.themile.pt") or lowered in ("plano alimentar",):
                     continue
                 current_option["lines"].append(plain)
+            elif current_group is not None and meal_map is not None and lowered not in ("plano alimentar",):
+                # A peri meal may consist of one recipe without numbered options.
+                current_group.setdefault("_unlabeled_lines", []).append(plain)
+    if meal_map is not None:
+        for group in groups:
+            lines=group.pop("_unlabeled_lines", [])
+            if lines and not group["options"]:
+                group["options"].append({"number":1,"totals":None,"lines":lines,"page":group["page"]})
     groups = enrich_groups(groups)
     if not groups:
         raise ValueError("pdf_structure_unrecognized")
