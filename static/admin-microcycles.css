@@ -192,3 +192,7 @@
  .calendar-event-form>button{width:100%}
  .calendar-inline-editor>label:not(.calendar-peri-check){flex-basis:calc(50% - 10px)}
 }
+
+/* Per-day meal color exceptions inside the Microciclos calendar preview. */
+.day-meal .day-color-select{width:100%;min-width:0;font-size:12px;padding:8px 7px;margin-top:3px}
+.day-meal .day-color-exception{color:#f0c98b;font-size:11px}
