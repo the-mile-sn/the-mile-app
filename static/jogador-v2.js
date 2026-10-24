@@ -35,7 +35,7 @@ async function overview(){
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);
   const dayInfo=r.days.find(x=>x.date===iso(dt));
-  const button=document.createElement("button");button.type="button";button.className="week-day"+(iso(dt)===d?" selected":"");
+  const button=document.createElement("button");button.type="button";button.className="week-day"+(iso(dt)===d?" selected":"")+(iso(dt)===iso(new Date())?" today":"");
   button.setAttribute("aria-pressed",String(iso(dt)===d));
   button.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+dayInfo.classification:""));
   for(const [cls,text] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","")],["day-number",String(dt.getDate())],["day-classification",dayInfo?.classification||"—"]]){
