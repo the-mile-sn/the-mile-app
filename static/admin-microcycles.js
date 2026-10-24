@@ -353,7 +353,8 @@ function matchBase(){return "/api/v2/athletes/"+encodeURIComponent(model.athlete
 function colorForDay(day,meal,overrides=dayColorOverrides){
   const row=model&&model.classifications.find(r=>r.name===day.classification);
   const fallback=row?.meals?.[meal]||null;
-  return overrides[day.date+"|"+meal]||fallback;
+  const selected=overrides[day.date+"|"+meal];
+  return selected==="none"?null:(selected||fallback);
 }
 function mealColorsForDay(day,overrides=dayColorOverrides){
   return model.meals.map(meal=>({meal,color:colorForDay(day,meal,overrides)}));
@@ -446,6 +447,7 @@ function renderDayPreview(day,host){
     const choose=document.createElement("select");
     choose.className="day-color-select";choose.setAttribute("aria-label","Alterar cor de "+names[entry.meal]+" apenas em "+day.date);
     const inherit=document.createElement("option");inherit.value="";inherit.textContent="Modelo"+(baseline?" · "+(colors[baseline]||baseline):" · sem cor");choose.append(inherit);
+    const noMeal=document.createElement("option");noMeal.value="none";noMeal.textContent="Nenhuma · remover refeição";choose.append(noMeal);
     for(const [colorName,labelText] of Object.entries(colors)){
       const option=document.createElement("option");option.value=colorName;option.textContent=labelText;choose.append(option);
     }
@@ -455,7 +457,7 @@ function renderDayPreview(day,host){
       try{
         await request(matchBase()+"/calendar/meal-color",{method:"PUT",body:JSON.stringify({date:day.date,meal:entry.meal,color:choose.value||null})});
         selectedCalendarDay=day.date;
-        status("Cor atualizada apenas para "+names[entry.meal]+" em "+day.date+".","success");
+        status((choose.value==="none"?"Refeição removida":choose.value?"Cor atualizada":"Reposta a cor do Modelo")+" apenas para "+names[entry.meal]+" em "+day.date+".","success");
         await loadCalendar();
       }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
     });
