@@ -491,3 +491,6 @@ header{padding:10px 0 24px}
 /* Match the training title typography to the daily meal headings. */
 .daily-event-card>span{font-size:18px;font-weight:700;line-height:1.3}
 @media(max-width:620px){.daily-event-card>span{font-size:17px}}
+
+/* Align expanded peri-training food descriptions with the card heading. */
+#overview .peri-meal > .foods{margin-left:16px;margin-right:16px}
