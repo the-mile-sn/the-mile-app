@@ -745,7 +745,11 @@ def application(env, start_response):
                     days = classify_range(start, end, [m['match_date'] for m in matches])
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
-                return respond(200, {'matches': matches, 'days': days})
+                event_data=events_v2.list_events(c,aid,start,end)
+                override_rows=c.execute("SELECT match_id,phase,state FROM v2_match_peri_overrides WHERE athlete_id=?",(aid,)).fetchall()
+                return respond(200, {'matches': matches, 'days': days,'events':event_data,
+                                     'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
+                                     'match_peri_overrides':[dict(r) for r in override_rows]})
             if path == '/api/v2/dishes/photo' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
