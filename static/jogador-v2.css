@@ -381,3 +381,5 @@ header{padding:10px 0 24px}
 .weekly-summary-heading h2{margin:0;font-size:19px}.weekly-summary-heading small{font-size:12px;color:#a6a8b0}
 #weekly-view>.daily-nutrition{margin-top:5px}
 @media(max-width:620px){.weekly-calendar-grid{column-gap:2px;row-gap:4px}.weekly-meal{min-height:68px;padding:8px 1px}.weekly-meal-name{font-size:8px}.weekly-day-total{padding:8px 0;gap:5px}.weekly-day-values{letter-spacing:-.4px}}
+
+.weekly-date-nav{display:flex;align-items:center;justify-content:space-between;margin:13px 0 6px;gap:10px}.weekly-date-nav strong{font-size:14px;font-weight:610;text-align:center}.weekly-date-nav button{border:0;background:transparent;padding:5px 10px;font-size:28px;line-height:1}
