@@ -16,10 +16,11 @@ MAP = {
     "pré-treino": ["pre"], "pre-treino": ["pre"], "pré treino": ["pre"], "pre treino": ["pre"],
     "pós-treino": ["post"], "pos-treino": ["post"], "pós treino": ["post"], "pos treino": ["post"],
     "pré-jogo": ["pre"], "pre-jogo": ["pre"], "pré jogo": ["pre"], "pre jogo": ["pre"],
+    "intra-jogo": ["pre"], "intra jogo": ["pre"], "intrajogo": ["pre"],
     "pós-jogo": ["post"], "pos-jogo": ["post"], "pós jogo": ["post"], "pos jogo": ["post"],
 }
 LABELS = {"training": {"pre": "Pré-treino", "post": "Pós-treino"},
-          "match": {"pre": "Pré-jogo", "post": "Pós-jogo"}}
+          "match": {"pre": "Entre-jogo", "post": "Pós-jogo"}}
 
 def initialize(c):
     c.execute("""CREATE TABLE IF NOT EXISTS v2_peri_imports(
