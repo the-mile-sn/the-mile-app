@@ -35,6 +35,14 @@ class DayMealColorsTest(unittest.TestCase):
         day_colors_v2.set_color(self.conn,"a",self.day,"dinner",None,"admin")
         self.assertEqual(day_colors_v2.list_colors(self.conn,"a",self.day,self.day),[])
 
+    def test_explicit_no_meal_is_independent_of_model_restore(self):
+        day_colors_v2.set_color(self.conn,"a",self.day,"supper","none","admin")
+        entries=day_colors_v2.list_colors(self.conn,"a",self.day,self.day)
+        self.assertEqual(entries,[{"meal_date":self.day,"meal":"supper","color":"none"}])
+        self.assertEqual(day_colors_v2.list_colors(self.conn,"b",self.day,self.day),[])
+        day_colors_v2.set_color(self.conn,"a",self.day,"supper",None,"admin")
+        self.assertEqual(day_colors_v2.list_colors(self.conn,"a",self.day,self.day),[])
+
     def test_invalid_values_rejected(self):
         for kwargs in (dict(meal="not-a-meal",color="blue"),
                        dict(meal="dinner",color="invalid")):
