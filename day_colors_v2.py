@@ -38,7 +38,7 @@ def set_color(c, athlete_id, meal_date, meal, color, actor):
         if meal_date!=parsed.isoformat():raise ValueError()
     except (ValueError,TypeError):
         raise ValueError("invalid_date")
-    if meal not in MEALS or color not in (*COLORS,None):
+    if meal not in MEALS or color not in (*COLORS,"none",None):
         raise ValueError("invalid_color")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone():
         return None
