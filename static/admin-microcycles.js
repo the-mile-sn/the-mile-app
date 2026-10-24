@@ -649,6 +649,20 @@ async function loadCalendar(){
   ].sort((a,b)=>a.event_date.localeCompare(b.event_date)||(a.session===b.session?0:a.session==="morning"?-1:1));
   if(!combined.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem eventos neste mês.";list.append(p);}
   for(const ev of combined)list.append(renderUnifiedEvent(ev));
+  const supplementation=await request(matchBase()+"/supplements");
+  for(const [date,entry] of Object.entries(supplementation.overrides||{})){
+   if(date<isoDay(first)||date>isoDay(last)||!(entry.add||[]).length)continue;
+   const card=document.createElement("div");card.className="event-admin-row";
+   const label=document.createElement("span");
+   label.textContent=date+" · Suplementação · "+entry.add.map(x=>x.name).join(", ");
+   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar suplementos";
+   edit.onclick=()=>{
+    $("calendar-new-kind").value="supplementation";$("calendar-new-date").value=date;
+    syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
+    $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
+   };
+   card.append(label,edit);list.append(card);
+  }
   $("calendar-section").hidden=false;
 }
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
@@ -1052,7 +1066,7 @@ async function saveMatchPeri(matchId,pre,post){
 function syncCalendarEventForm(){
  const kind=$("calendar-new-kind").value,game=kind==="match",training=kind==="training";
  $("calendar-supp-options").hidden=kind!=="supplementation";
- $("calendar-new-session").closest("div").hidden=game;
+ $("calendar-new-session").closest("div").hidden=game||kind==="supplementation";
  $("calendar-new-time-wrap").hidden=!game;
  $("calendar-new-title-wrap").hidden=kind!=="travel";
  $("calendar-pre-wrap").hidden=!(game||training);
