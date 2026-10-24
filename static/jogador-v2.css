@@ -191,3 +191,24 @@ header{padding:10px 0 24px}
 #plan-detail .plan-option-card summary .option>span:first-child{padding-left:0!important}
 #menus .menu-entry.tone-orange{background:rgba(233,148,74,.15)!important}#menus .menu-entry.tone-yellow{background:rgba(229,202,98,.15)!important}#menus .menu-entry.tone-blue{background:rgba(107,174,217,.15)!important}#menus .menu-entry.tone-green{background:rgba(120,201,155,.15)!important}#menus .menu-entry.tone-vp{background:rgba(178,220,174,.15)!important}
 @media(max-width:620px){.daily-nutrition-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}.daily-nutrition-card{padding:7px 4px!important}.daily-nutrition-card strong{font-size:clamp(10px,2.9vw,16px)}.daily-nutrition-card small,.daily-nutrition-card .per-kg{font-size:clamp(8px,2vw,10px)}}
+
+/* Finishing pass: clean nutrition and richer meal surfaces */
+.daily-nutrition{padding:10px!important;margin:14px 0 24px;background:transparent!important}
+.daily-nutrition-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.daily-nutrition-card{padding:14px 11px!important;min-height:95px;background:rgba(255,255,255,.075)!important}
+.daily-nutrition-card small{font-size:12px;margin-bottom:7px}
+.daily-nutrition-card strong{font-size:clamp(15px,2.4vw,22px)}
+.daily-nutrition-card .per-kg{font-size:11px;margin-top:7px}
+.daily-meal.tone-orange{--tint:rgba(233,148,74,.27)}
+.daily-meal.tone-yellow{--tint:rgba(229,202,98,.25)}
+.daily-meal.tone-blue{--tint:rgba(107,174,217,.27)}
+.daily-meal.tone-green{--tint:rgba(120,201,155,.25)}
+.daily-meal.tone-vp{--tint:rgba(178,220,174,.25)}
+#menus .menu-entry.tone-orange{background:rgba(233,148,74,.24)!important}
+#menus .menu-entry.tone-yellow{background:rgba(229,202,98,.23)!important}
+#menus .menu-entry.tone-blue{background:rgba(107,174,217,.25)!important}
+#menus .menu-entry.tone-green{background:rgba(120,201,155,.23)!important}
+#menus .menu-entry.tone-vp{background:rgba(178,220,174,.23)!important}
+.daily-meal .daily-meal-head strong,#menus .menu-entry-heading strong{color:#fafafa}
+#menus .menu-entry-body .value{color:#f3f3f5}
+@media(max-width:620px){.daily-nutrition{padding:0!important}.daily-nutrition-grid{gap:5px}.daily-nutrition-card{padding:12px 7px!important;min-height:88px}.daily-nutrition-card strong{font-size:clamp(12px,3vw,17px)}.daily-nutrition-card small{font-size:11px}.daily-nutrition-card .per-kg{font-size:10px}}
