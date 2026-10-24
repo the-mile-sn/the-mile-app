@@ -234,6 +234,26 @@ function matchWithIntraCard(event,item){
  }else opts.forEach((option,index)=>section.append(optionEl(option,index)));
  return section;
 }
+
+let supplementsByDay={};
+function supplementsCard(items){
+ const box=document.createElement("details");box.className="daily-supplements";
+ const title=document.createElement("summary");title.textContent="Suplementação do dia";box.append(title);
+ for(const x of items){
+  const line=document.createElement("div");line.className="supplement-entry";
+  const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
+  const moment=document.createElement("small");moment.textContent=({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo"})[x.moment]||"Sem associação";
+  line.append(name,moment);if(x.note){const note=document.createElement("small");note.textContent=x.note;line.append(note);}box.append(line);
+ }
+ return box;
+}
+function attachSupplements(card,items){
+ if(!items.length)return;
+ const area=document.createElement("div");area.className="supplement-in-meal";
+ const label=document.createElement("strong");label.textContent="Suplementação";area.append(label);
+ for(const x of items){const line=document.createElement("div");line.textContent=x.name+" · "+x.dose;area.append(line);}
+ card.append(area);
+}
 function appendDailyEvents(host,date,session){
  for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
   const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
@@ -243,6 +263,8 @@ function appendDailyEvents(host,date,session){
    for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item));
    host.append(eventCard(event));
   }
+  const eventCardElement=Array.from(host.children).at(-1);
+  if(eventCardElement&&event.kind)attachSupplements(eventCardElement,(supplementsByDay[date]||[]).filter(x=>x.moment===event.kind));
   for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item));
  }
 }
@@ -263,7 +285,7 @@ function appendWeeklyEvents(host,dates,session){
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
- model=r.classifications;meals=r.meals;dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
+ model=r.classifications;meals=r.meals;dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
@@ -313,8 +335,10 @@ async function overview(){
     section.append(body);
    }else options.forEach((o,i)=>section.append(optionEl(o,i)));
   }
+  attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>x.moment===meal));
   root.append(section);
  }
+ if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
 }
 function renderPlans(){
  const root=$("plan-colors"),detail=$("plan-detail");root.replaceChildren();detail.replaceChildren();
