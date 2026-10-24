@@ -232,3 +232,34 @@ header{padding:10px 0 24px}
  .daily-nutrition-card .per-kg{margin-top:2px!important}
  .plan-option-label strong{font-size:15px}
 }
+
+/* Consistent opaque, vibrant meal colors across player views */
+:root{--meal-orange:#78482e;--meal-yellow:#746028;--meal-blue:#285771;--meal-green:#296447;--meal-vp:#4a7143}
+.daily-meal.tone-orange{--tint:var(--meal-orange)}
+.daily-meal.tone-yellow{--tint:var(--meal-yellow)}
+.daily-meal.tone-blue{--tint:var(--meal-blue)}
+.daily-meal.tone-green{--tint:var(--meal-green)}
+.daily-meal.tone-vp{--tint:var(--meal-vp)}
+#menus .menu-entry.tone-orange{background:var(--meal-orange)!important}
+#menus .menu-entry.tone-yellow{background:var(--meal-yellow)!important}
+#menus .menu-entry.tone-blue{background:var(--meal-blue)!important}
+#menus .menu-entry.tone-green{background:var(--meal-green)!important}
+#menus .menu-entry.tone-vp{background:var(--meal-vp)!important}
+#plan-colors button:has(.color-dot.orange){background:var(--meal-orange)!important}
+#plan-colors button:has(.color-dot.yellow){background:var(--meal-yellow)!important}
+#plan-colors button:has(.color-dot.blue){background:var(--meal-blue)!important}
+#plan-colors button:has(.color-dot.green){background:var(--meal-green)!important}
+#plan-colors button:has(.color-dot.vp){background:var(--meal-vp)!important}
+#plan-colors button.selected{box-shadow:inset 0 0 0 2px rgba(255,255,255,.65)!important}
+#menus .menu-entry-body .dish-img{background:transparent!important;object-fit:contain!important;border:0!important;box-shadow:none!important}
+#week-strip .week-day,#week-strip .week-day.selected{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important}
+#week-strip .week-day .day-number{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;margin:0 auto}
+#week-strip .week-day.selected .day-number{background:#f3f3f5!important;color:#17171b!important}
+#week-strip .week-day.today .day-number{color:#7bb8fa}
+#week-strip .week-day.today.selected .day-number{background:#f3f3f5!important;color:#2070bb!important}
+#week-strip .week-day.today:not(.selected) .day-number{background:transparent!important;color:#7bb8fa!important}
+#overview .daily-meal details summary .option.day-option{padding-left:0!important;padding-right:26px!important;position:relative}
+#overview .daily-meal details summary .option.day-option:before{display:none!important}
+#overview .daily-meal details summary .option.day-option:after{content:"›";position:absolute;right:2px;top:0;font-size:24px;line-height:1;color:#e4e4e8;transition:transform .15s}
+#overview .daily-meal details[open] summary .option.day-option:after{transform:rotate(90deg)}
+@media(max-width:620px){#week-strip .week-day .day-number{width:33px;height:33px}}
