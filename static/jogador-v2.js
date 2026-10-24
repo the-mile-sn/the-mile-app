@@ -43,7 +43,7 @@ async function renderSupplementPlan(){
  for(const item of data.plan){
   const box=document.createElement("div");box.className="supplement-entry";
   const title=document.createElement("strong");title.textContent=item.name+" · "+item.dose;
-  const meta=document.createElement("small");meta.textContent=(labels[item.rule]||item.rule)+" · "+({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo"})[item.moment];
+  const meta=document.createElement("small");meta.textContent=(labels[item.rule]||item.rule)+" · "+(item.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[item.moment]||"Sem associação");
   box.append(title,meta);if(item.note){const note=document.createElement("small");note.textContent=item.note;box.append(note);}root.append(box);
  }
 }
@@ -255,7 +255,7 @@ function supplementsCard(items){
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
-  const moment=document.createElement("small");moment.textContent=({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo"})[x.moment]||"Sem associação";
+  const moment=document.createElement("small");moment.textContent=x.display_moment||x.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[x.moment]||"Sem associação";
   line.append(name,moment);if(x.note){const note=document.createElement("small");note.textContent=x.note;line.append(note);}box.append(line);
  }
  return box;
@@ -348,7 +348,7 @@ async function overview(){
     section.append(body);
    }else options.forEach((o,i)=>section.append(optionEl(o,i)));
   }
-  attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>x.moment===meal));
+  attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
   root.append(section);
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
