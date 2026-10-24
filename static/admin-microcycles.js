@@ -618,6 +618,8 @@ async function loadCalendar(){
     const selectDay=()=>{
       const wasSelected=selectedCalendarDay===day.date;
       selectedCalendarDay=wasSelected?null:day.date;
+      $("calendar-new-date").value=day.date;
+      if($("calendar-new-kind").value==="supplementation")renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
       const chosenWeek=isoDay(weekStart(new Date(day.date+"T12:00:00")));
       if(!wasSelected&&selectedNutritionWeek!==chosenWeek){selectedNutritionWeek=chosenWeek;loadCalendar().catch(e=>status(e.message,"warn"));return;}
       for(const item of days.querySelectorAll(".calendar-day"))item.classList.remove("calendar-selected");
