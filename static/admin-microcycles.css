@@ -160,3 +160,35 @@
 #events-panel .event-admin-row>label select{width:115px}
 #events-panel .event-admin-row>button{flex:0 0 auto}
 #peri-list .event-admin-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+
+/* One calendar for matches, training and travel. */
+.calendar-event-form{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:20px 0 8px;padding:16px;border:1px solid #353538;border-radius:13px;background:#19191d}
+.calendar-event-form>div{min-width:130px;flex:1 1 155px}
+.calendar-event-form>div input,.calendar-event-form>div select{width:100%;min-width:0}
+.calendar-event-form label{margin:0 0 6px}
+.calendar-peri-check{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#f3f3f4}
+.calendar-peri-check[hidden],.calendar-event-form>div[hidden],.calendar-inline-editor[hidden]{display:none}
+.calendar-peri-check input{width:auto;accent-color:#72c697}
+.calendar-event-form>.calendar-peri-check{align-self:center;flex:0 0 auto;margin:0 8px 0 0}
+.calendar-event-form>button{min-height:45px}
+.calendar-event-list{margin-top:18px}
+.calendar-event-list h3{font-size:16px;margin:0 0 12px}
+#calendar-matches{display:flex;flex-direction:column;gap:10px}
+.calendar-unified-event{background:#1b1b1f;border:1px solid #38383d;border-radius:12px;padding:13px 15px}
+.calendar-unified-heading{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.calendar-unified-heading strong{font-size:14px}
+.calendar-unified-heading span{font-size:12px;color:#a8a8b0;flex:1}
+.calendar-unified-heading button{font-size:12px;padding:8px 12px}
+.calendar-inline-editor{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #353538}
+.calendar-inline-editor>label:not(.calendar-peri-check){flex:1 1 135px;margin:0}
+.calendar-inline-editor>label>input,.calendar-inline-editor>label>select{width:100%;min-width:0;margin-top:5px}
+.calendar-inline-editor>.calendar-peri-check{align-self:center;margin:8px 5px}
+.calendar-inline-editor button{font-size:12px;padding:10px}
+.calendar-inline-editor .calendar-remove{color:#ffd1d1}
+.calendar-event-mark{display:block;font-size:10px;color:#eee6d4;line-height:1.2}
+@media(max-width:620px){
+ .calendar-event-form{padding:12px;gap:10px}
+ .calendar-event-form>div{flex-basis:calc(50% - 10px)}
+ .calendar-event-form>button{width:100%}
+ .calendar-inline-editor>label:not(.calendar-peri-check){flex-basis:calc(50% - 10px)}
+}
