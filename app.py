@@ -574,6 +574,29 @@ def application(env, start_response):
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
 
+            # Players can reschedule ordinary events, but cannot change nutrition or games.
+            if path.startswith('/api/v2/player/events/') and method=='PUT':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                event_id=path.rsplit('/',1)[-1]
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                existing=c.execute("""SELECT kind,event_date FROM v2_calendar_events WHERE id=? AND athlete_id=?""",
+                                   (event_id,link['athlete_id'])).fetchone()
+                if not existing: raise Problem(404,'not_found')
+                if existing['kind']=='match':raise Problem(403,'forbidden')
+                body=read_json(env)
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                if existing['event_date']<today or body.get('event_date','')<today:
+                    raise Problem(400,'past_event_locked')
+                try:
+                    changed=events_v2.update_event(c,link['athlete_id'],event_id,
+                        {'event_date':body.get('event_date'),'session':body.get('session')},
+                        user['id'],False)
+                except ValueError:raise Problem(400,'invalid_event')
+                if changed is None:raise Problem(404,'not_found')
+                return respond(200,{'event':changed})
+
             # Peri-training and peri-match imports: draft review precedes publication.
             if path.startswith('/api/v2/athletes/') and '/peri-imports' in path:
                 if not user: raise Problem(401,'unauthorized')
