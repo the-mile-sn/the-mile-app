@@ -79,7 +79,7 @@ $("save-athlete-profile").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar perfil: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
-let selectedNutritionWeek=null;
+let selectedNutritionWeek=null,periByDay={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 async function loadMenus(){
@@ -372,13 +372,19 @@ function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
 function plannedDayTotals(day){
-  if(!day.classification||day.needs_review)return {state:"unclassified",count:0,missing:[],total:null};
+  if((!day.classification||day.needs_review)&&!(periByDay[day.date]||[]).length)return {state:"unclassified",count:0,missing:[],total:null};
   const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   const missing=[];let count=0;
   for(const entry of mealColorsForDay(day)){
     if(!entry.color)continue;
     const average=averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]);
     if(!average){missing.push(names[entry.meal]+" ("+(colors[entry.color]||entry.color)+")");continue;}
+    for(const key of Object.keys(totals))totals[key]+=average[key];
+    count++;
+  }
+  for(const peri of periByDay[day.date]||[]){
+    const average=averageMealNutrition(peri.options||[]);
+    if(!average){missing.push(peri.title);continue;}
     for(const key of Object.keys(totals))totals[key]+=average[key];
     count++;
   }
@@ -470,6 +476,16 @@ function renderDayPreview(day,host){
     grid.appendChild(cell);
   }
   host.appendChild(grid);
+  if((periByDay[day.date]||[]).length){
+    const area=document.createElement("div");area.className="import-validation-progress";
+    const head=document.createElement("h3");head.textContent="Refeições peri-treino e peri-jogo";area.append(head);
+    for(const item of periByDay[day.date]){
+      const avg=averageMealNutrition(item.options||[]);const p=document.createElement("p");
+      p.textContent=item.title+" · "+(item.session==="morning"?"Manhã":"Tarde")+(avg?" · "+nutritionSummary(avg):" · Valores indisponíveis");
+      area.append(p);
+    }
+    host.append(area);
+  }
   renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day));
   host.appendChild(detail);
   const hint=document.createElement("p");hint.textContent="Pré-visualização administrativa. Os planos ainda não estão publicados aos jogadores.";host.appendChild(hint);
@@ -501,6 +517,7 @@ async function loadCalendar(){
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
   const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday));
+  periByDay=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
   const results=weeklyData.days.map(plannedDayTotals);
   const covered=results.filter(item=>item.total).length;
   const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
@@ -579,7 +596,22 @@ async function loadCalendar(){
       try{await request(matchBase()+"/matches/"+encodeURIComponent(match.id),{method:"DELETE"});await loadCalendar();status("Jogo removido.","success");}
       catch(e){status("Erro ao remover jogo: "+e.message,"warn");remove.disabled=false;}
     });
-    item.appendChild(remove);list.appendChild(item);
+    item.appendChild(remove);
+    for(const [phase,label] of [["pre","Pré-jogo"],["post","Pós-jogo"]]){
+      const holder=document.createElement("label");holder.textContent=label;
+      const select=document.createElement("select");
+      for(const [value,caption] of [["auto","Automático"],["off","Removido"],["on","Ativo"]]){
+        const option=document.createElement("option");option.value=value;option.textContent=caption;select.append(option);
+      }
+      select.value=(data.match_peri_overrides||[]).find(x=>x.match_id===match.id&&x.phase===phase)?.state||"auto";
+      select.addEventListener("change",async()=>{
+        select.disabled=true;try{
+          await request(matchBase()+"/match-peri/"+encodeURIComponent(match.id)+"/"+phase,{method:"PUT",body:JSON.stringify({state:select.value})});
+          status(label+" atualizado.","success");await loadCalendar();
+        }catch(e){status("Erro: "+e.message,"warn");}finally{select.disabled=false;}
+      });holder.append(select);item.append(holder);
+    }
+    list.appendChild(item);
   }
   $("calendar-section").hidden=false;
 }
@@ -928,12 +960,22 @@ async function loadEvents(){
  for(const ev of result.events){
   const card=document.createElement("div");card.className="event-admin-row";
   const label=document.createElement("div");label.textContent=ev.event_date+" · "+(EVENT_LABELS[ev.kind]||ev.title);card.append(label);
+  const date=document.createElement("input");date.type="date";date.value=ev.event_date;date.setAttribute("aria-label","Data do evento");card.append(date);
   const title=document.createElement("input");title.value=ev.title;title.maxLength=100;title.setAttribute("aria-label","Designação do evento");card.append(title);
   const session=document.createElement("select");session.setAttribute("aria-label","Período");
   for(const [value,name] of [["morning","Manhã"],["afternoon","Tarde"]]){const op=document.createElement("option");op.value=value;op.textContent=name;session.append(op);}
   session.value=ev.session;card.append(session);
+  const override=(phase,current)=>{
+    const holder=document.createElement("label");holder.textContent=(phase==="pre"?"Pré":"Pós")+"-refeição";
+    const select=document.createElement("select");select.setAttribute("aria-label","Ativar ou remover refeição "+phase);
+    for(const [value,label] of [["auto","Automática"],["off","Removida"],["on","Ativa"]]){
+      const option=document.createElement("option");option.value=value;option.textContent=label;select.append(option);
+    }
+    select.value=current;holder.append(select);card.append(holder);return select;
+  };
+  const pre=override("pre",ev.pre_override),post=override("post",ev.post_override);
   const save=document.createElement("button");save.type="button";save.textContent="Guardar";save.onclick=async()=>{
-    save.disabled=true;try{await request(eventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({title:title.value,session:session.value})});$("event-feedback").textContent="Evento atualizado.";await loadEvents();}catch(e){$("event-feedback").textContent=e.message;}finally{save.disabled=false;}
+    save.disabled=true;try{await request(eventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({event_date:date.value,title:title.value,session:session.value,pre_override:pre.value,post_override:post.value})});$("event-feedback").textContent="Evento atualizado.";await loadEvents();}catch(e){$("event-feedback").textContent=e.message;}finally{save.disabled=false;}
   };card.append(save);
   const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.onclick=async()=>{
     if(!confirm("Remover este evento do calendário?"))return;
