@@ -74,5 +74,11 @@ def update_event(c,athlete_id,event_id,payload,actor,allow_nutrition_changes):
        (*values,pre,post,actor,int(time()),event_id,athlete_id))
     return {"id":event_id,"event_date":values[0],"kind":values[1],"session":values[2],"title":values[3],"pre_override":pre,"post_override":post}
 
-def delete_event(c,athlete_id,event_id):
-    return c.execute("DELETE FROM v2_calendar_events WHERE id=? AND athlete_id=?",(event_id,athlete_id)).rowcount if hasattr(c.execute("SELECT 1"),"rowcount") else bool(c.execute("SELECT 1 FROM v2_calendar_events WHERE id=? AND athlete_id=?",(event_id,athlete_id)).fetchone()) and bool(c.execute("DELETE FROM v2_calendar_events WHERE id=? AND athlete_id=?",(event_id,athlete_id)))
+def delete_event(c, athlete_id, event_id):
+    row = c.execute("SELECT 1 FROM v2_calendar_events WHERE id=? AND athlete_id=?",
+                    (event_id, athlete_id)).fetchone()
+    if row is None:
+        return False
+    c.execute("DELETE FROM v2_calendar_events WHERE id=? AND athlete_id=?",
+              (event_id, athlete_id))
+    return True
