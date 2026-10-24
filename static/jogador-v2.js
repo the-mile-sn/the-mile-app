@@ -56,7 +56,15 @@ function weeklySummary(data){
  summary.append(grid);return summary;
 }
 function renderWeekly(mon,r){
- const root=$("weekly-view");root.replaceChildren();const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
+ const root=$("weekly-view");root.replaceChildren();
+ const nav=document.createElement("div");nav.className="weekly-date-nav";
+ const prev=document.createElement("button");prev.type="button";prev.textContent="‹";prev.setAttribute("aria-label","Semana anterior");
+ const label=document.createElement("strong");const end=new Date(mon);end.setDate(mon.getDate()+6);label.textContent=mon.toLocaleDateString("pt-PT",{day:"numeric",month:"short"})+" – "+end.toLocaleDateString("pt-PT",{day:"numeric",month:"short",year:"numeric"});
+ const next=document.createElement("button");next.type="button";next.textContent="›";next.setAttribute("aria-label","Semana seguinte");
+ prev.onclick=()=>{day.setDate(day.getDate()-7);weeklySelection=null;overview().catch(error);};
+ next.onclick=()=>{day.setDate(day.getDate()+7);weeklySelection=null;overview().catch(error);};
+ nav.append(prev,label,next);root.append(nav);
+ const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
  const dates=[],classes=[],totals=[];
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
