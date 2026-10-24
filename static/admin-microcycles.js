@@ -323,7 +323,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],events:["events-panel"],peri:["peri-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel"],peri:["peri-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -544,6 +544,12 @@ async function loadCalendar(){
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"—";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
     if(data.matches.some(m=>m.match_date===day.date)){el.classList.add("calendar-match");}
+    const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date);
+    if(dayEvents.length){
+      const chip=document.createElement("span");chip.className="calendar-event-mark";
+      chip.textContent=dayEvents.map(e=>CALENDAR_EVENT_NAMES[e.kind]||e.title).join(" · ");
+      chip.title=chip.textContent;el.append(chip);
+    }
     const strip=document.createElement("div");strip.className="day-color-strip";
     for(const entry of mealColorsForDay(day)){
       const dot=document.createElement("i");
@@ -577,55 +583,19 @@ async function loadCalendar(){
   preview.hidden=!focused;
   if(focused){renderDayPreview(focused,preview);}
   const list=$("calendar-matches");list.replaceChildren();
-  for(const match of data.matches){
-    const item=document.createElement("div");item.className="calendar-match-item";
-    const date=document.createElement("span");date.textContent="Jogo · "+match.match_date+(match.match_time?" · "+match.match_time:"");item.appendChild(date);
-    const edit=document.createElement("button");edit.type="button";edit.textContent="✎ Editar";edit.setAttribute("aria-label","Editar jogo de "+match.match_date);
-    edit.addEventListener("click",()=>{
-      const controls=document.createElement("div");controls.className="calendar-match-edit";
-      const day=document.createElement("input");day.type="date";day.value=match.match_date;
-      const hour=document.createElement("input");hour.type="time";hour.value=match.match_time||"";
-      const save=document.createElement("button");save.type="button";save.textContent="Guardar jogo";
-      const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";
-      save.addEventListener("click",async()=>{save.disabled=true;try{await request(matchBase()+"/matches/"+encodeURIComponent(match.id),{method:"PUT",body:JSON.stringify({match_date:day.value,match_time:hour.value||null})});const parts=day.value.split("-").map(Number);calendarMonth=new Date(parts[0],parts[1]-1,1);await loadCalendar();status("Jogo atualizado.","success");}catch(e){status("Erro ao editar jogo: "+e.message,"warn");save.disabled=false;}});
-      cancel.addEventListener("click",()=>controls.remove());controls.append(day,hour,save,cancel);item.appendChild(controls);
-    });item.appendChild(edit);
-    const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.setAttribute("aria-label","Remover jogo de "+match.match_date);
-    remove.addEventListener("click",async()=>{
-      if(!confirm("Remover o jogo de "+match.match_date+"?"))return;
-      remove.disabled=true;
-      try{await request(matchBase()+"/matches/"+encodeURIComponent(match.id),{method:"DELETE"});await loadCalendar();status("Jogo removido.","success");}
-      catch(e){status("Erro ao remover jogo: "+e.message,"warn");remove.disabled=false;}
-    });
-    item.appendChild(remove);
-    for(const [phase,label] of [["pre","Pré-jogo"],["post","Pós-jogo"]]){
-      const holder=document.createElement("label");holder.textContent=label;
-      const select=document.createElement("select");
-      for(const [value,caption] of [["auto","Automático"],["off","Removido"],["on","Ativo"]]){
-        const option=document.createElement("option");option.value=value;option.textContent=caption;select.append(option);
-      }
-      select.value=(data.match_peri_overrides||[]).find(x=>x.match_id===match.id&&x.phase===phase)?.state||"auto";
-      select.addEventListener("change",async()=>{
-        select.disabled=true;try{
-          await request(matchBase()+"/match-peri/"+encodeURIComponent(match.id)+"/"+phase,{method:"PUT",body:JSON.stringify({state:select.value})});
-          status(label+" atualizado.","success");await loadCalendar();
-        }catch(e){status("Erro: "+e.message,"warn");}finally{select.disabled=false;}
-      });holder.append(select);item.append(holder);
-    }
-    list.appendChild(item);
-  }
+  const combined=[
+    ...(data.matches||[]).map(m=>({
+      id:m.id,kind:"match",event_date:m.match_date,session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",
+      title:"Jogo",match_time:m.match_time||"",
+      pre_override:(data.match_peri_overrides||[]).find(x=>x.match_id===m.id&&x.phase==="pre")?.state||"auto",
+      post_override:(data.match_peri_overrides||[]).find(x=>x.match_id===m.id&&x.phase==="post")?.state||"auto"
+    })),
+    ...(data.events||[])
+  ].sort((a,b)=>a.event_date.localeCompare(b.event_date)||(a.session===b.session?0:a.session==="morning"?-1:1));
+  if(!combined.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem eventos neste mês.";list.append(p);}
+  for(const ev of combined)list.append(renderUnifiedEvent(ev));
   $("calendar-section").hidden=false;
 }
-$("add-match").addEventListener("click",async()=>{
-  if(!model)return;
-  const day=$("match-date").value;
-  if(!day)return status("Seleciona a data do jogo.","warn");
-  const btn=$("add-match");btn.disabled=true;
-  try{await request(matchBase()+"/matches",{method:"POST",body:JSON.stringify({match_date:day,match_time:$("match-time").value||null})});
-    const parts=day.split("-").map(Number);calendarMonth=new Date(parts[0],parts[1]-1,1);
-    $("match-date").value="";$("match-time").value="";await loadCalendar();status("Jogo guardado e calendário atualizado.","success");
-  }catch(e){status("Não foi possível guardar o jogo: "+e.message,"warn");}finally{btn.disabled=false;}
-});
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 $("calendar-next").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 
@@ -946,56 +916,121 @@ $("dish-catalog-import").addEventListener("click",async()=>{
   }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
 });
 
-let eventWeek=new Date();
-const EVENT_LABELS={training:"Treino",gym:"Ginásio",travel:"Viagem",other:"Outro",match:"Jogo"};
-function mondayEvent(d){const date=new Date(d);date.setHours(12,0,0,0);date.setDate(date.getDate()-(date.getDay()+6)%7);return date;}
-function eventEndpoint(){return "/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/events";}
-async function loadEvents(){
- if(!model)return;
- const begin=mondayEvent(eventWeek),finish=new Date(begin);finish.setDate(begin.getDate()+6);
- const start=isoDay(begin),end=isoDay(finish);
- $("event-range").textContent=begin.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" — "+finish.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
- const result=await request(eventEndpoint()+"?start="+start+"&end="+end);
- const list=$("event-items");list.replaceChildren();
- if(!result.events.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem eventos nesta semana.";list.append(p);}
- for(const ev of result.events){
-  const card=document.createElement("div");card.className="event-admin-row";
-  const label=document.createElement("div");label.textContent=ev.event_date+" · "+(EVENT_LABELS[ev.kind]||ev.title);card.append(label);
-  const date=document.createElement("input");date.type="date";date.value=ev.event_date;date.setAttribute("aria-label","Data do evento");card.append(date);
-  const title=document.createElement("input");title.value=ev.title;title.maxLength=100;title.setAttribute("aria-label","Designação do evento");card.append(title);
-  const session=document.createElement("select");session.setAttribute("aria-label","Período");
-  for(const [value,name] of [["morning","Manhã"],["afternoon","Tarde"]]){const op=document.createElement("option");op.value=value;op.textContent=name;session.append(op);}
-  session.value=ev.session;card.append(session);
-  const override=(phase,current)=>{
-    const holder=document.createElement("label");holder.textContent=(phase==="pre"?"Pré":"Pós")+"-refeição";
-    const select=document.createElement("select");select.setAttribute("aria-label","Ativar ou remover refeição "+phase);
-    for(const [value,label] of [["auto","Automática"],["off","Removida"],["on","Ativa"]]){
-      const option=document.createElement("option");option.value=value;option.textContent=label;select.append(option);
-    }
-    select.value=current;holder.append(select);card.append(holder);return select;
-  };
-  const pre=override("pre",ev.pre_override),post=override("post",ev.post_override);
-  const save=document.createElement("button");save.type="button";save.textContent="Guardar";save.onclick=async()=>{
-    save.disabled=true;try{await request(eventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({event_date:date.value,title:title.value,session:session.value,pre_override:pre.value,post_override:post.value})});$("event-feedback").textContent="Evento atualizado.";await loadEvents();}catch(e){$("event-feedback").textContent=e.message;}finally{save.disabled=false;}
-  };card.append(save);
-  const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.onclick=async()=>{
-    if(!confirm("Remover este evento do calendário?"))return;
-    remove.disabled=true;try{await request(eventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"DELETE",body:JSON.stringify({})});await loadEvents();}catch(e){$("event-feedback").textContent=e.message;}finally{remove.disabled=false;}
-  };card.append(remove);list.append(card);
+const CALENDAR_EVENT_NAMES={training:"Treino",match:"Jogo",travel:"Viagem"};
+function calendarEventEndpoint(){return matchBase()+"/events";}
+function dayPartSelect(value,label){
+ const field=document.createElement("label");field.textContent=label;
+ const select=document.createElement("select");
+ for(const [code,title] of [["morning","Manhã"],["afternoon","Tarde"]]){
+  const option=document.createElement("option");option.value=code;option.textContent=title;select.append(option);
+ }
+ select.value=value;field.append(select);return {field,select};
+}
+function periToggle(phase,kind,initial){
+ const field=document.createElement("label");field.className="calendar-peri-check";
+ const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=initial!=="off";
+ const name=document.createElement("span");name.textContent=(phase==="pre"?"Pré-":"Pós-")+(kind==="match"?"jogo":"treino");
+ field.append(checkbox,name);
+ return {field,checkbox};
+}
+function renderUnifiedEvent(ev){
+ const card=document.createElement("section");card.className="calendar-unified-event";
+ const heading=document.createElement("div");heading.className="calendar-unified-heading";
+ const title=document.createElement("strong");title.textContent=CALENDAR_EVENT_NAMES[ev.kind]||ev.title;
+ const dateLabel=document.createElement("span");dateLabel.textContent=ev.event_date+" · "+(ev.kind==="match"&&ev.match_time?ev.match_time:ev.session==="morning"?"Manhã":"Tarde");
+ heading.append(title,dateLabel);
+ const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";heading.append(edit);card.append(heading);
+ const controls=document.createElement("form");controls.className="calendar-inline-editor";controls.hidden=true;
+ const dateWrap=document.createElement("label");dateWrap.textContent="Data";
+ const date=document.createElement("input");date.type="date";date.required=true;date.value=ev.event_date;dateWrap.append(date);controls.append(dateWrap);
+ const period=dayPartSelect(ev.session,"Período");
+ const timeWrap=document.createElement("label");timeWrap.textContent="Hora do jogo";
+ const time=document.createElement("input");time.type="time";time.value=ev.match_time||"";timeWrap.append(time);
+ if(ev.kind==="match")controls.append(timeWrap);else controls.append(period.field);
+ if(ev.kind==="travel"){
+  const label=document.createElement("label");label.textContent="Descrição";
+  const text=document.createElement("input");text.value=ev.title;text.maxLength=100;text.required=true;label.append(text);controls.append(label);
+ }
+ let pre=null,post=null;
+ if(ev.kind==="match"||ev.kind==="training"){
+  pre=periToggle("pre",ev.kind,ev.pre_override);
+  post=periToggle("post",ev.kind,ev.post_override);
+  controls.append(pre.field,post.field);
+ }
+ const save=document.createElement("button");save.type="submit";save.textContent="Guardar";
+ const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.className="calendar-remove";
+ controls.append(save,remove);
+ edit.onclick=()=>{controls.hidden=!controls.hidden;edit.textContent=controls.hidden?"Editar":"Fechar";};
+ const feedback=$("calendar-event-feedback");
+ controls.onsubmit=async e=>{
+  e.preventDefault();save.disabled=true;
+  try{
+   if(ev.kind==="match"){
+    await request(matchBase()+"/matches/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({match_date:date.value,match_time:time.value||null})});
+    await saveMatchPeri(ev.id,pre.checkbox.checked,post.checkbox.checked);
+   }else{
+    await request(calendarEventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({
+      event_date:date.value,session:period.select.value,title:ev.kind==="travel"?controls.querySelector('input[maxlength="100"]').value:ev.title,
+      ...(pre?{pre_override:pre.checkbox.checked?"auto":"off",post_override:post.checkbox.checked?"auto":"off"}:{})
+    })});
+   }
+   feedback.textContent="Evento atualizado.";
+   const [year,month]=date.value.split("-").map(Number);calendarMonth=new Date(year,month-1,1);
+   await loadCalendar();
+  }catch(err){feedback.textContent="Erro ao guardar: "+err.message;}finally{save.disabled=false;}
+ };
+ remove.onclick=async()=>{
+  if(!confirm("Remover "+(CALENDAR_EVENT_NAMES[ev.kind]||"evento")+" de "+ev.event_date+"?"))return;
+  remove.disabled=true;
+  try{
+   const url=ev.kind==="match"?matchBase()+"/matches/"+encodeURIComponent(ev.id):calendarEventEndpoint()+"/"+encodeURIComponent(ev.id);
+   await request(url,{method:"DELETE"});feedback.textContent="Evento removido.";await loadCalendar();
+  }catch(err){feedback.textContent="Erro ao remover: "+err.message;}finally{remove.disabled=false;}
+ };
+ card.append(controls);return card;
+}
+async function saveMatchPeri(matchId,pre,post){
+ for(const [phase,enabled] of [["pre",pre],["post",post]]){
+  await request(matchBase()+"/match-peri/"+encodeURIComponent(matchId)+"/"+phase,{method:"PUT",body:JSON.stringify({state:enabled?"auto":"off"})});
  }
 }
-$("event-form").addEventListener("submit",async e=>{
- e.preventDefault();const button=$("event-form").querySelector('button[type="submit"]');button.disabled=true;
+function syncCalendarEventForm(){
+ const kind=$("calendar-new-kind").value,game=kind==="match",training=kind==="training";
+ $("calendar-new-session").closest("div").hidden=game;
+ $("calendar-new-time-wrap").hidden=!game;
+ $("calendar-new-title-wrap").hidden=kind!=="travel";
+ $("calendar-pre-wrap").hidden=!(game||training);
+ $("calendar-post-wrap").hidden=!(game||training);
+ $("calendar-pre-label").textContent=game?"Pré-jogo":"Pré-treino";
+ $("calendar-post-label").textContent=game?"Pós-jogo":"Pós-treino";
+}
+$("calendar-new-kind").addEventListener("change",syncCalendarEventForm);
+$("calendar-new-date").value=isoDay(new Date());
+syncCalendarEventForm();
+$("calendar-event-form").addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(!model)return;
+ const kind=$("calendar-new-kind").value,date=$("calendar-new-date").value;
+ const button=$("calendar-add-event"),feedback=$("calendar-event-feedback");button.disabled=true;
  try{
-  const values={event_date:$("event-date").value,kind:$("event-kind").value,session:$("event-session").value,title:$("event-title").value.trim()};
-  await request(eventEndpoint(),{method:"POST",body:JSON.stringify(values)});
-  eventWeek=new Date(values.event_date+"T12:00:00");$("event-feedback").textContent="Evento criado.";await loadEvents();
- }catch(err){$("event-feedback").textContent=err.message;}finally{button.disabled=false;}
+  if(kind==="match"){
+   const response=await request(matchBase()+"/matches",{method:"POST",
+     body:JSON.stringify({match_date:date,match_time:$("calendar-new-time").value||null})});
+   await saveMatchPeri(response.match.id,$("calendar-new-pre").checked,$("calendar-new-post").checked);
+  }else{
+   await request(calendarEventEndpoint(),{method:"POST",body:JSON.stringify({
+    event_date:date,kind,session:$("calendar-new-session").value,
+    title:kind==="training"?"Treino":$("calendar-new-title").value.trim()||"Viagem",
+    ...(kind==="training"?{pre_override:$("calendar-new-pre").checked?"auto":"off",
+      post_override:$("calendar-new-post").checked?"auto":"off"}:{})
+   })});
+  }
+  feedback.textContent="Evento adicionado ao calendário.";
+  const [year,month]=date.split("-").map(Number);calendarMonth=new Date(year,month-1,1);
+  await loadCalendar();
+ }catch(err){feedback.textContent="Não foi possível adicionar: "+err.message;}
+ finally{button.disabled=false;}
 });
-$("event-kind").addEventListener("change",()=>{$("event-title").value=EVENT_LABELS[$("event-kind").value]||"Evento";});
-$("event-date").value=isoDay(new Date());
-$("event-prev").addEventListener("click",()=>{eventWeek.setDate(eventWeek.getDate()-7);loadEvents().catch(e=>status(e.message,"warn"));});
-$("event-next").addEventListener("click",()=>{eventWeek.setDate(eventWeek.getDate()+7);loadEvents().catch(e=>status(e.message,"warn"));});
 
 function periEndpoint(){return "/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/peri-imports";}
 function periMessage(value){$("peri-feedback").textContent=value;}
