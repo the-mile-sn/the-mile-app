@@ -577,7 +577,7 @@ def application(env, start_response):
                     raise Problem(403, 'csrf')
 
             # Players can reschedule ordinary events, but cannot change nutrition or games.
-            if path.startswith('/api/v2/player/events/') and method=='PUT':
+            if path.startswith('/api/v2/player/events/') and method in ('PUT','DELETE'):
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
                 event_id=path.rsplit('/',1)[-1]
@@ -587,6 +587,11 @@ def application(env, start_response):
                                    (event_id,link['athlete_id'])).fetchone()
                 if not existing: raise Problem(404,'not_found')
                 if existing['kind']=='match':raise Problem(403,'forbidden')
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                if method=='DELETE':
+                    if existing['event_date']<today:raise Problem(400,'past_event_locked')
+                    if not events_v2.delete_event(c,link['athlete_id'],event_id):raise Problem(404,'not_found')
+                    return respond(200,{'ok':True})
                 body=read_json(env)
                 today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
                 if existing['event_date']<today or body.get('event_date','')<today:
