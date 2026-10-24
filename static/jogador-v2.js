@@ -34,10 +34,10 @@ function optionEl(o,i,planView=false){
 }
 
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
-async function show(t){tab=t;for(const key of ["overview","plans","supplements","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="supplements")await renderSupplementPlan();if(t==="menus")await menusView();}
+async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(){
- const data=await api("/api/v2/player/supplements"),root=$("supplement-plan");root.replaceChildren();
+ const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
  if(!data.plan.length){root.textContent="Ainda não existe plano de suplementação publicado.";return;}
  const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1"};
  for(const item of data.plan){
@@ -369,7 +369,10 @@ function renderPlans(){
   b.className=selectedColor===key?"selected":"";
   b.onclick=()=>{selectedColor=selectedColor===key?null:key;renderPlans();};root.append(b);
  }
+ const supplementButton=document.createElement("button");supplementButton.textContent="Suplementação";supplementButton.className=selectedColor==="supplements"?"selected":"";
+ supplementButton.onclick=()=>{selectedColor=selectedColor==="supplements"?null:"supplements";renderPlans();};root.append(supplementButton);
  if(!selectedColor)return;
+ if(selectedColor==="supplements"){renderSupplementPlan().catch(error);return;}
  if(selectedColor.startsWith("peri-")){
   const kind=selectedColor.slice(5),published=periPlans[kind]?.options||{};
   for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
