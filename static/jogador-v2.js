@@ -1,6 +1,6 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let playerCsrf='',me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],weeklyContext=null,day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){
@@ -57,6 +57,7 @@ function weeklySummary(data){
  summary.append(grid);return summary;
 }
 function renderWeekly(mon,r,weekMenus=[]){
+ weeklyContext={mon,r,weekMenus};
  const root=$("weekly-view");root.replaceChildren();
  const nav=document.createElement("div");nav.className="weekly-date-nav";
  const prev=document.createElement("button");prev.type="button";prev.textContent="‹";prev.setAttribute("aria-label","Semana anterior");
@@ -99,7 +100,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   box.append(line);grid.append(box);
  }
  const detail=document.createElement("div");detail.id="weekly-selection-detail";root.append(detail);
- if(weeklySelection&&dates.includes(weeklySelection.date)){
+ if(weeklySelection&&!weeklySelection.periEventId&&dates.includes(weeklySelection.date)){
   const {date,meal,color}=weeklySelection;
   const section=document.createElement("section");section.className="weekly-detail tone-"+color;
   const dayData=r.days.find(x=>x.date===date);
@@ -120,7 +121,23 @@ function renderWeekly(mon,r,weekMenus=[]){
   }else options.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("weekly-option-card");section.append(item);});
   detail.append(section);
  }
- const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
+ if(weeklySelection?.periEventId&&dates.includes(weeklySelection.date)){
+   const item=periMeals.find(x=>x.event_id===weeklySelection.periEventId&&x.phase===weeklySelection.phase&&x.event_date===weeklySelection.date);
+   if(item){
+    const section=document.createElement("section");section.className="weekly-detail peri-weekly-detail";
+    const top=document.createElement("div");top.className="weekly-detail-heading";
+    const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"});
+    const title=document.createElement("strong");title.textContent=item.title;
+    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus);};
+    const group=document.createElement("div");group.className="weekly-detail-titles";group.append(caption,title);top.append(group,close);section.append(top);
+    const opts=item.options||[],avg=average(opts);
+    if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
+    if(opts.length===1){for(const food of opts[0].items||[]){const line=document.createElement("div");line.className="foods";line.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";section.append(line);}}
+    else opts.forEach((option,index)=>{const card=optionEl(option,index,true);card.classList.add("weekly-option-card");section.append(card);});
+    detail.append(section);
+   }
+  }
+  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
  const valid=totals.filter(Boolean);
  if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
  else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
@@ -129,8 +146,15 @@ function renderWeekly(mon,r,weekMenus=[]){
 
 function makePeriCard(item,compact=false){
  const opts=item.options||[],avg=average(opts);
- const section=document.createElement(compact?"div":"details");section.className=compact?"weekly-peri-card":"meal daily-meal peri-meal";
+ const section=document.createElement(compact?"button":"details");section.className=compact?"weekly-peri-card":"meal daily-meal peri-meal";
  if(compact){
+  section.type="button";
+  const active=weeklySelection?.periEventId===item.event_id&&weeklySelection?.phase===item.phase&&weeklySelection?.date===item.event_date;
+  section.setAttribute("aria-pressed",String(active));
+  section.onclick=()=>{
+    weeklySelection=active?null:{date:item.event_date,periEventId:item.event_id,phase:item.phase};
+    if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus);
+  };
   const title=document.createElement("span");title.textContent=item.title;
   section.append(title);
   if(avg){const kcal=document.createElement("span");kcal.textContent=fmt(avg.kcal,0)+" kcal";section.append(kcal);}
