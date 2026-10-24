@@ -534,3 +534,7 @@ header{padding:10px 0 24px}
  #overview .match-intra-card>.daily-meal-head .meal-average-inline .macro{font-size:9px!important;column-gap:4px!important}
  #overview .match-intra-card>.daily-meal-head .meal-average-inline .macro>.kcal{font-size:10px!important}
 }
+
+/* Daily cards: calories always visible; macros appear only when expanded. */
+#overview .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal),
+#overview .match-intra-card:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal){display:none!important}
