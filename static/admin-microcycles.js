@@ -198,7 +198,7 @@ function playerOption(option,index){
  return details;
 }
 async function playerShowPlans(){
- const data=await request(matchBase()+"/plan-imports/published-preview"),root=$("player-plan-list"),detail=$("player-plan-detail");
+ const [data,periData]=await Promise.all([request(matchBase()+"/plan-imports/published-preview"),request(matchBase()+"/peri-imports")]),root=$("player-plan-list"),detail=$("player-plan-detail");
  root.replaceChildren();detail.replaceChildren();
  const available=Object.entries(data.options_by_color).filter(([,meals])=>Object.values(meals).some(options=>options.length));
  for(const [color] of available){
@@ -206,7 +206,25 @@ async function playerShowPlans(){
   const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;button.append(dot,document.createTextNode(colors[color]||color));root.appendChild(button);
   button.onclick=()=>{playerSelectedPlan=playerSelectedPlan===color?null:color;playerShowPlans().catch(e=>status(e.message,"warn"));};
  }
- if(!available.length){root.textContent="Ainda não há planos publicados.";return;}
+ for(const [kind,label] of [["training","Peri-treino"],["match","Peri-jogo"]]){
+  const opts=periData.active?.[kind]?.options;if(!opts||!Object.values(opts).some(arr=>arr.length))continue;
+  const button=document.createElement("button"),key="peri-"+kind;
+  button.className="player-plan-button"+(playerSelectedPlan===key?" active":"");button.textContent=label;
+  button.onclick=()=>{playerSelectedPlan=playerSelectedPlan===key?null:key;playerShowPlans().catch(e=>status(e.message,"warn"));};
+  root.append(button);
+ }
+ if(!root.children.length){root.textContent="Ainda não há planos publicados.";return;}
+ if(playerSelectedPlan?.startsWith("peri-")){
+  const kind=playerSelectedPlan.slice(5),phases=periData.active?.[kind]?.options||{};
+  for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+   const opts=phases[phase]||[];if(!opts.length)continue;
+   const section=document.createElement("section");section.className="player-sim-meal";
+   const header=document.createElement("div");header.className="player-meal-header";const title=document.createElement("h3");title.textContent=label;header.append(title);
+   const avg=averageMealNutrition(opts);if(avg)header.append(playerFormattedNutrition(avg));section.append(header);
+   opts.forEach((option,i)=>section.append(playerOption(option,i)));detail.append(section);
+  }
+  return;
+ }
  if(!playerSelectedPlan||!data.options_by_color[playerSelectedPlan])return;
  const meals=data.options_by_color[playerSelectedPlan];
  for(const meal of model.meals){if(!meals[meal]?.length)continue;const section=document.createElement("section");section.className="player-sim-meal";const header=document.createElement("div");header.className="player-meal-header";const title=document.createElement("h3");title.textContent=names[meal];header.appendChild(title);const average=averageMealNutrition(meals[meal]);if(average)header.appendChild(playerFormattedNutrition(average));section.appendChild(header);meals[meal].forEach((option,i)=>section.appendChild(playerOption(option,i)));detail.appendChild(section);}
