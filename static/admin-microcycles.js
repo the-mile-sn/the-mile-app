@@ -344,7 +344,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -354,6 +354,7 @@ function showBackofficeView(view){
   $("admin-access-panel").hidden=view!=="profile";
   if(view==="profile"&&model)loadV2Access().catch(e=>status(e.message,"warn"));
   if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
+  if(view==="supplements"&&model)loadSupplementEditor().catch(e=>status(e.message,"warn"));
   if(view==="plans"&&model)loadPeriImports().catch(e=>status(e.message,"warn"));
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
@@ -1188,3 +1189,45 @@ $("peri-import").addEventListener("click",async()=>{
   await loadPeriImports();renderPeriDraft(result.draft);
  }catch(e){periMessage("Erro ao importar: "+e.message);}finally{button.disabled=false;}
 });
+
+let supplementDraft={plan:[],overrides:{}};
+async function loadSupplementEditor(){
+ supplementDraft=await request(matchBase()+"/supplements");renderSupplementEditor();
+}
+function renderSupplementEditor(){
+ const list=$("supp-base-list");list.replaceChildren();
+ for(const [i,item] of supplementDraft.plan.entries()){
+  const row=document.createElement("div");row.className="event-admin-row";
+  const label=document.createElement("span");label.textContent=[item.name,item.dose,item.moment||"Sem associação",item.rule].join(" · ");
+  const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{supplementDraft.plan.splice(i,1);renderSupplementEditor();};
+  row.append(label,remove);list.append(row);
+ }
+ const extra=$("supp-extra-list");extra.replaceChildren();
+ for(const [day,override] of Object.entries(supplementDraft.overrides)){
+  const group=document.createElement("div");
+  for(const [i,item] of (override.add||[]).entries()){
+   const row=document.createElement("div");row.className="event-admin-row";
+   const label=document.createElement("span");label.textContent=day+" · "+item.name+" · "+item.dose;
+   const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{override.add.splice(i,1);renderSupplementEditor();};
+   row.append(label,remove);group.append(row);
+  }
+  extra.append(group);
+ }
+}
+$("supp-add").onclick=()=>{
+ const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
+ if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
+ supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
+ $("supp-name").value="";$("supp-dose").value="";renderSupplementEditor();
+};
+$("supp-extra-add").onclick=()=>{
+ const day=$("supp-day").value,name=$("supp-extra-name").value.trim(),dose=$("supp-extra-dose").value.trim();
+ if(!day||!name||!dose)return $("supp-feedback").textContent="Preenche data, suplemento e dose.";
+ const override=supplementDraft.overrides[day]||{add:[],remove:[]};
+ override.add.push({name,dose,moment:$("supp-extra-moment").value,rule:"daily",note:""});
+ supplementDraft.overrides[day]=override;$("supp-extra-name").value="";$("supp-extra-dose").value="";renderSupplementEditor();
+};
+$("supp-save").onclick=async()=>{
+ try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});$("supp-feedback").textContent="Prescrição guardada.";}
+ catch(e){$("supp-feedback").textContent="Não foi possível guardar: "+e.message;}
+};
