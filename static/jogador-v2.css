@@ -140,3 +140,38 @@ header{padding:10px 0 24px}
 .menu-day-subtitle{font-size:13px;color:#a7a7b0;font-weight:500}
 #menus .day-menu .row{border-top:1px solid rgba(255,255,255,.09)}
 @media(max-width:620px){#menus .date-nav button{min-width:30px}#menus .day-menu{padding:17px}}
+
+/* Phase 1: clearer, compact player reading */
+.welcome p{display:none}
+.daily-nutrition{padding:12px!important;margin:10px 0 18px}
+.daily-nutrition h3{font-size:14px;margin-bottom:9px}
+.daily-nutrition-grid{gap:7px}
+.daily-nutrition-card{padding:10px!important;border-radius:12px}
+.daily-nutrition-card small{font-size:12px;margin-bottom:5px}
+.daily-nutrition-card strong{font-size:clamp(16px,3vw,21px)}
+.daily-nutrition-card .per-kg{margin-top:4px}
+.daily-meal{--tint:rgba(255,255,255,.045);background:var(--tint)!important}
+.tone-orange{--tint:rgba(233,148,74,.12)}.tone-yellow{--tint:rgba(229,202,98,.12)}.tone-blue{--tint:rgba(107,174,217,.12)}.tone-green{--tint:rgba(120,201,155,.12)}.tone-vp{--tint:rgba(178,220,174,.12)}
+.daily-meal>.daily-meal-head{flex-direction:row;padding:17px 16px}
+.daily-meal>.daily-meal-head:before{display:none}
+.daily-meal>.daily-meal-head:after{content:"›";font-size:27px;line-height:1;color:#c4c4cc;margin-left:auto;transition:transform .16s}
+.daily-meal[open]>.daily-meal-head:after{transform:rotate(90deg)}
+.daily-meal>.daily-meal-head strong{flex:1}
+.daily-meal>.daily-meal-head .daily-meal-indicator{display:none}
+#plan-detail .plan-meal{padding:16px}
+#plan-detail .plan-option-card{display:block;background:rgba(255,255,255,.05);border-radius:11px;margin:9px 0;padding:12px 13px}
+#plan-detail .plan-option-card summary .option{display:flex;align-items:center;padding-right:23px;position:relative}
+#plan-detail .plan-option-card summary .option:before{display:none}
+#plan-detail .plan-option-card summary .option:after{content:"›";position:absolute;right:2px;top:0;font-size:23px;color:#bbbcc4;transition:transform .15s}
+#plan-detail .plan-option-card[open] summary .option:after{transform:rotate(90deg)}
+#plan-detail .plan-option-card .foods:last-child{border-bottom:none}
+#menus .menu-entry{--tint:rgba(255,255,255,.04);background:var(--tint);border:none!important;border-radius:12px;padding:13px!important;margin:9px 0}
+#menus .menu-entry .color-dot{display:none}
+#menus .menu-entry-body .dish-img{border-radius:10px}
+@media(max-width:620px){
+ .daily-nutrition{padding:11px!important}
+ .daily-nutrition-card{padding:11px!important}
+ .daily-nutrition-card strong{font-size:17px}
+ #plan-detail .plan-option-card{padding:13px 12px}
+ #menus .menu-entry{padding:12px!important}
+}
