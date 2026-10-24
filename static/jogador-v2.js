@@ -1,10 +1,10 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let me=null,plans={},model=[],meals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let me=null,plans={},model=[],meals=[],calendarEvents=[],periMeals=[],day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){
- me=null;plans={};model=[];meals=[];selectedColor=null;
+ me=null;plans={};model=[];meals=[];calendarEvents=[];periMeals=[];selectedColor=null;
  for(const id of ["day-details","week-strip","plan-colors","plan-detail","menu-days"])$(id).replaceChildren();
  $("player-name").textContent="";$("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
@@ -37,12 +37,13 @@ async function session(){const r=await api("/api/v2/player/me");me=r.player;$("p
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 function weeklyDayTotal(entry){
- const cls=model.find(x=>x.name===entry?.classification);if(!cls)return null;
+ const cls=model.find(x=>x.name===entry?.classification);
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
- for(const meal of meals){const color=cls.meals?.[meal];if(!color)continue;count++;
+ for(const meal of meals){const color=cls?.meals?.[meal];if(!color)continue;count++;
   const avg=average(plans[color]?.[meal]||[]);if(!avg)return null;
   for(const k in total)total[k]+=avg[k];
  }
+ for(const item of periMeals.filter(x=>x.event_date===entry?.date)){const avg=average(item.options||[]);if(!avg)return null;count++;for(const k in total)total[k]+=avg[k];}
  return count?total:null;
 }
 function weeklySummary(data){
@@ -76,6 +77,8 @@ function renderWeekly(mon,r,weekMenus=[]){
   header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};if(key===iso(new Date()))header.classList.add("today");grid.append(header);
  }
  for(const meal of meals){
+  if(meal==="lunch")appendWeeklyEvents(grid,dates,"morning");
+  if(meal==="dinner")appendWeeklyEvents(grid,dates,"afternoon");
   for(let i=0;i<7;i++){
    const color=classes[i]?.meals?.[meal],avg=color?average(plans[color]?.[meal]||[]):null;
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";grid.append(empty);continue;}
@@ -123,10 +126,55 @@ function renderWeekly(mon,r,weekMenus=[]){
  else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
 }
 
+
+function makePeriCard(item,compact=false){
+ const opts=item.options||[],avg=average(opts);
+ const section=document.createElement(compact?"div":"details");section.className=compact?"weekly-peri-card":"meal daily-meal peri-meal";
+ if(compact){
+  const title=document.createElement("span");title.textContent=item.title;
+  section.append(title);
+  if(avg){const kcal=document.createElement("span");kcal.textContent=fmt(avg.kcal,0)+" kcal";section.append(kcal);}
+  return section;
+ }
+ const head=document.createElement("summary");head.className="daily-meal-head";
+ const title=document.createElement("strong");title.textContent=item.title;head.append(title);
+ if(avg){const nutritionSummary=document.createElement("span");nutritionSummary.className="meal-average meal-average-inline";nutritionSummary.append(nutrition(avg));head.append(nutritionSummary);}
+ section.append(head);
+ if(opts.length===1){for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";section.append(p);}}
+ else opts.forEach((option,index)=>section.append(optionEl(option,index)));
+ return section;
+}
+function eventCard(event,compact=false){
+ const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card";
+ section.textContent=event.title+" · "+(event.session==="morning"?"Manhã":"Tarde");
+ return section;
+}
+function appendDailyEvents(host,date,session){
+ for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
+  const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
+  for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item));
+  host.append(eventCard(event));
+  for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item));
+ }
+}
+function appendWeeklyEvents(host,dates,session){
+ if(!calendarEvents.some(e=>dates.includes(e.event_date)&&e.session===session))return;
+ for(const date of dates){
+  const slot=document.createElement("div");slot.className="weekly-event-slot";
+  for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
+   const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
+   for(const item of associated.filter(p=>p.phase==="pre"))slot.append(makePeriCard(item,true));
+   slot.append(eventCard(event,true));
+   for(const item of associated.filter(p=>p.phase==="post"))slot.append(makePeriCard(item,true));
+  }
+  host.append(slot);
+ }
+}
+
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
- model=r.classifications;meals=r.meals;
+ model=r.classifications;meals=r.meals;periMeals=r.peri_meals||[];calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
@@ -149,12 +197,15 @@ async function overview(){
  const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+1);overview().catch(error);};strip.append(next);
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
- if(!entry?.classification){root.textContent="Sem programação definida para este dia.";return;}
- const cls=model.find(c=>c.name===entry.classification);const heading=document.createElement("h2");heading.textContent=entry.classification;root.append(heading);
+ if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)){root.textContent="Sem programação definida para este dia.";return;}
+ const cls=model.find(c=>c.name===entry?.classification);const heading=document.createElement("h2");heading.textContent=entry?.classification||"Atividades";root.append(heading);
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let complete=true,assigned=0;
  for(const meal of meals){const color=cls?.meals?.[meal];if(!color)continue;assigned++;const avg=average(plans[color]?.[meal]||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
+ for(const item of periMeals.filter(x=>x.event_date===d)){assigned++;const avg=average(item.options||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
  if(assigned){const summary=document.createElement("section");summary.className="daily-nutrition";if(complete){const grid=document.createElement("div");grid.className="daily-nutrition-grid";for(const [key,label,unit,digits,css] of [["kcal","Energia","kcal",0,"kcal"],["protein_g","Proteína","g",0,"protein"],["carbs_g","Hidratos","g",0,"carbs"],["fat_g","Gordura","g",0,"fat"]]){const card=document.createElement("div");card.className="daily-nutrition-card";const name=document.createElement("small");name.textContent=label;const value=document.createElement("strong");value.className=css;value.textContent=fmt(total[key],digits)+" "+unit;card.append(name,value);const weight=Number(me?.weight_kg);if(Number.isFinite(weight)&&weight>0){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total[key]/weight,1)+(key==="kcal"?" kcal/kg":" g/kg");card.append(ratio);}grid.append(card);}summary.append(grid);}else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}root.append(summary);}
  for(const meal of meals){
+  if(meal==="lunch")appendDailyEvents(root,d,"morning");
+  if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
   const color=cls?.meals?.[meal],menu=(meal==="lunch"||meal==="dinner")?menus.menus.find(x=>x.meal===meal):null;
   if(!color&&!menu)continue;
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
