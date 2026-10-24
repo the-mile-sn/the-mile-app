@@ -318,3 +318,33 @@ header{padding:10px 0 24px}
  .daily-meal>.daily-meal-head .meal-average-inline .macro{font-size:12px!important;gap:5px}
  .daily-meal>.daily-meal-head strong{font-size:16px!important}
 }
+
+/* Meal heading nutrition: approved compact right-aligned two-line layout */
+#overview .daily-meal{border-radius:18px!important;overflow:hidden}
+#overview .daily-meal>.daily-meal-head{flex-wrap:nowrap!important;column-gap:8px!important}
+#overview .daily-meal>.daily-meal-head strong{min-width:0!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline{flex:0 0 auto!important;margin-left:auto!important;margin-right:13px!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro{
+ display:grid!important;grid-template-columns:repeat(3,max-content);justify-content:end;
+ justify-items:end;align-items:center;column-gap:7px!important;row-gap:0!important;
+ font-size:10px!important;line-height:1.12!important;font-weight:400!important;
+ white-space:nowrap;flex-wrap:nowrap!important;color:rgba(255,255,255,.77)
+}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro>.kcal{
+ grid-column:1/-1;justify-self:end;font-size:11px!important;line-height:1.12!important;
+ font-weight:400!important;color:rgba(255,255,255,.85)
+}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro>span{gap:3px!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro .protein{color:#a9c4d0!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro .carbs{color:#e4b398!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro .fat{color:#e0cf9f!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro .macro-dot{
+ width:3px!important;height:3px!important;opacity:.50!important
+}
+#overview .daily-meal>.daily-meal-head:after{flex:none!important;margin-left:0!important}
+@media(max-width:380px){
+ #overview .daily-meal>.daily-meal-head{column-gap:5px!important}
+ #overview .daily-meal>.daily-meal-head .meal-average-inline{margin-right:8px!important}
+ #overview .daily-meal>.daily-meal-head .meal-average-inline .macro{font-size:9px!important;column-gap:4px!important}
+ #overview .daily-meal>.daily-meal-head .meal-average-inline .macro>.kcal{font-size:10px!important}
+}
