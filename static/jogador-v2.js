@@ -350,14 +350,7 @@ async function overview(){
    energy.append(label,value);
    const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
    if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,1)+" kcal/kg";energy.append(ratio);}
-   const chart=document.createElement("div");chart.className="nutrition-ring";chart.setAttribute("role","img");
-   const kcalParts=[total.protein_g*4,total.carbs_g*4,total.fat_g*9],sum=kcalParts.reduce((a,b)=>a+b,0);
-   const p=sum?kcalParts.map(x=>100*x/sum):[0,0,0];
-   chart.style.setProperty("--protein-end",p[0]+"%");
-   chart.style.setProperty("--carbs-end",(p[0]+p[1])+"%");
-   chart.setAttribute("aria-label",sum?"Distribuição energética dos macronutrientes: proteína "+fmt(p[0],0)+"%, hidratos "+fmt(p[1],0)+"%, gordura "+fmt(p[2],0)+"%":"Distribuição energética indisponível");
-   const ringLabel=document.createElement("span");ringLabel.textContent="Macros";chart.append(ringLabel);
-   hero.append(energy,chart);summary.append(hero);
+   hero.append(energy);summary.append(hero);
    const macros=document.createElement("div");macros.className="nutrition-macro-row";
    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-macro "+cls;
