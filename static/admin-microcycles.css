@@ -196,3 +196,22 @@
 /* Per-day meal color exceptions inside the Microciclos calendar preview. */
 .day-meal .day-color-select{width:100%;min-width:0;font-size:12px;padding:8px 7px;margin-top:3px}
 .day-meal .day-color-exception{color:#f0c98b;font-size:11px}
+
+/* Supplementation workflow, shared visual language with plans. */
+#supplements-panel .supp-workflow{margin:16px 0 0;padding:16px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.025)}
+#supplements-panel details.supp-workflow>summary{cursor:pointer;font-weight:650;list-style:none}
+#supplements-panel details.supp-workflow>summary::-webkit-details-marker{display:none}
+#supplements-panel details.supp-workflow>summary:after{content:"⌄";float:right;opacity:.65}
+#supplements-panel details.supp-workflow[open]>summary:after{content:"⌃"}
+#supplements-panel .supp-workflow-body{padding-top:14px}
+#supplements-panel #supp-base-list .event-admin-row{border-radius:14px;padding:10px 12px;margin:7px 0;background:rgba(255,255,255,.035)}
+#supplements-panel #supp-base-list .event-admin-row button,#supplements-panel .supp-workflow button{border-radius:999px}
+#supplements-panel #supp-base-list:empty:before{content:"Ainda não existem suplementos associados.";display:block;opacity:.65;padding:14px 0}
+#peri-panel .peri-plan-section{border:1px solid rgba(255,255,255,.11);border-radius:18px;padding:16px;margin:12px 0;background:rgba(255,255,255,.03)}
+#peri-panel .peri-plan-section>summary{cursor:pointer;font-weight:650;list-style:none}
+#peri-panel .peri-plan-section>summary::-webkit-details-marker{display:none}
+#peri-panel .peri-plan-section>summary:after{content:"⌄";float:right}
+#peri-panel .peri-plan-section[open]>summary:after{content:"⌃"}
+#peri-panel .peri-history{margin-top:12px;padding:10px;border-radius:14px;background:rgba(255,255,255,.025)}
+#peri-panel .peri-history>summary{cursor:pointer}
+#peri-panel .event-admin-row button,#peri-panel .calendar-add button{border-radius:999px}
