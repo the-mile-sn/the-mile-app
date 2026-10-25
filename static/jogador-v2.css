@@ -846,3 +846,29 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal>details[open]:not(:last-child) .foods:last-child{
  margin-bottom:10px!important;
 }
+
+/* Centre the single separator within the breathing room between options. */
+#overview .daily-meal>details:not(:last-child),
+#plans #plan-detail .plan-overview-meal>details:not(:last-child){
+ border-bottom:0!important;
+ padding-bottom:0!important;
+ margin-bottom:0!important;
+}
+#overview .daily-meal>details+details,
+#plans #plan-detail .plan-overview-meal>details+details{
+ border-top:1px solid rgba(255,255,255,.13)!important;
+}
+#overview .daily-meal>details[open]+details,
+#plans #plan-detail .plan-overview-meal>details[open]+details{
+ margin-top:19px!important;
+ padding-top:19px!important;
+}
+#overview .daily-meal>details:not([open])+details,
+#plans #plan-detail .plan-overview-meal>details:not([open])+details{
+ margin-top:0!important;
+ padding-top:0!important;
+}
+#overview .daily-meal>details[open] .foods:last-child,
+#plans #plan-detail .plan-overview-meal>details[open] .foods:last-child{
+ margin-bottom:0!important;
+}
