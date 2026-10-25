@@ -895,3 +895,10 @@ header{padding:10px 0 24px}
  padding-bottom:0!important;
  margin-bottom:0!important;
 }
+
+/* Give kcal and the macro row slightly more breathing room in expanded meal headings. */
+#overview .daily-meal[open]>.daily-meal-head .meal-average-inline .macro,
+#overview .match-intra-card[open]>.daily-meal-head .meal-average-inline .macro,
+#plans #plan-detail .plan-overview-meal[open]>.daily-meal-head .meal-average-inline .macro{
+ row-gap:5px!important;
+}
