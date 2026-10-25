@@ -561,7 +561,7 @@ async function loadCalendar(){
   let weekly=$("nutrition-weekly-summary");
   if(!weekly){weekly=document.createElement("section");weekly.id="nutrition-weekly-summary";weekly.className="import-validation-progress";$("calendar-matches").insertAdjacentElement("afterend",weekly);}
   weekly.replaceChildren();
-  const heading=document.createElement("h3");heading.textContent="Média nutricional diária da semana";weekly.appendChild(heading);
+  const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation";
   const previous=document.createElement("button");previous.type="button";previous.textContent="← Semana anterior";
   const next=document.createElement("button");next.type="button";next.textContent="Semana seguinte →";
