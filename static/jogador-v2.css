@@ -1058,3 +1058,52 @@ header{padding:10px 0 24px}
  #overview .daily-meal>details:not(.daily-meal),
  #plans #plan-detail .plan-overview-meal>details{margin:9px 11px!important;padding:12px!important}
 }
+
+/* Option subcards: stronger tinted surfaces, consistent spacing and text alignment.
+   Keep supplement cards and all meal nutrition behavior unchanged. */
+#overview .daily-meal>details:not(.daily-meal),
+#plans #plan-detail .plan-overview-meal>details{
+ background:color-mix(in srgb, var(--option-base,#b9b9b9) 34%,transparent)!important;
+ margin:12px 16px!important;
+ padding:16px 17px!important;
+ border-radius:18px!important;
+ box-sizing:border-box!important;
+ clear:both!important;
+}
+#overview .daily-meal,
+#plans #plan-detail .plan-overview-meal{--option-base:#ffffff}
+#overview .daily-meal.tone-orange,#plans #plan-detail .tone-orange{--option-base:#dca778}
+#overview .daily-meal.tone-yellow,#plans #plan-detail .tone-yellow{--option-base:#e0c475}
+#overview .daily-meal.tone-blue,#plans #plan-detail .tone-blue{--option-base:#88b9d7}
+#overview .daily-meal.tone-green,#plans #plan-detail .tone-green{--option-base:#82c8a4}
+#overview .daily-meal.tone-vp,#plans #plan-detail .tone-vp{--option-base:#b0d2ab}
+#overview .daily-meal>details:not(.daily-meal)>summary .option,
+#plans #plan-detail .plan-overview-meal>details>summary .option{
+ display:flex!important;
+ flex-wrap:nowrap!important;
+ align-items:center!important;
+ justify-content:space-between!important;
+ padding:0 27px 0 0!important;
+ min-height:48px!important;
+ position:relative!important;
+}
+#overview .daily-meal>details:not(.daily-meal) .plan-option-label,
+#plans #plan-detail .plan-overview-meal>details .plan-option-label{
+ display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;justify-content:center!important;
+ gap:5px!important;min-width:0!important;margin:0!important;
+}
+#overview .daily-meal>details:not(.daily-meal) .plan-option-label small,
+#plans #plan-detail .plan-overview-meal>details .plan-option-label small{
+ display:block!important;margin:0!important;line-height:1.2!important;
+}
+#overview .daily-meal>details:not(.daily-meal) .plan-option-label strong,
+#plans #plan-detail .plan-overview-meal>details .plan-option-label strong{
+ display:block!important;margin:0!important;line-height:1.35!important;
+}
+#plans #plan-detail .plan-overview-meal>details+details,
+#overview .daily-meal>details:not(.daily-meal)+details:not(.daily-meal){margin-top:12px!important}
+@media(max-width:620px){
+ #overview .daily-meal>details:not(.daily-meal),
+ #plans #plan-detail .plan-overview-meal>details{margin:11px 12px!important;padding:15px 14px!important}
+}
