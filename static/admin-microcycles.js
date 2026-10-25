@@ -1255,13 +1255,40 @@ $("peri-import").addEventListener("click",async()=>{
 
 let supplementDraft={plan:[],overrides:{}};
 let publishedSupplementSnapshot="[]";
+let supplementMatches=[];
 function supplementPublishedKey(){return JSON.stringify(supplementDraft.plan);}
 function supplementPending(){return supplementPublishedKey()!==publishedSupplementSnapshot;}
 async function loadSupplementEditor(){
- supplementDraft=await request(matchBase()+"/supplements");publishedSupplementSnapshot=supplementPublishedKey();await loadSupplementLibrary();renderSupplementEditor();
+ supplementDraft=await request(matchBase()+"/supplements");publishedSupplementSnapshot=supplementPublishedKey();await loadSupplementLibrary();
+ const calendar=await request(matchBase()+"/calendar?start=2026-01-01&end=2027-12-31");supplementMatches=calendar.matches||[];
+ renderSupplementEditor();
+}
+function renderSupplementMatchExclusions(){
+ const host=$("supp-match-exclusions");if(!host)return;host.replaceChildren();
+ const current=supplementDraft.match_exclusions||{};
+ const eligible=supplementDraft.plan.filter(item=>(item.prescriptions||[item]).some(p=>["match","md-1","md+1"].includes(p.rule)));
+ if(!eligible.length||!supplementMatches.length){host.textContent="Sem protocolos associados a jogos para suspender.";return;}
+ for(const match of supplementMatches){
+  const wrap=document.createElement("details");wrap.className="supp-match-exclusion";
+  const title=document.createElement("summary");title.textContent="Jogo · "+match.match_date;wrap.append(title);
+  const group=document.createElement("div");group.className="supp-match-exclusion-options";
+  for(const item of eligible){
+   const key=item.library_id||item.name;const label=document.createElement("label");const check=document.createElement("input");
+   check.type="checkbox";check.checked=(current[match.id]||[]).includes(key);
+   check.onchange=()=>{const values=new Set((supplementDraft.match_exclusions||{})[match.id]||[]);
+    if(check.checked)values.add(key);else values.delete(key);
+    supplementDraft.match_exclusions ||= {};
+    if(values.size)supplementDraft.match_exclusions[match.id]=[...values];else delete supplementDraft.match_exclusions[match.id];
+    $("supp-feedback").textContent="Exceções por publicar.";
+   };
+   label.append(check,document.createTextNode(" Suspender "+item.name+" neste jogo (MD-1, MD e MD+1)"));group.append(label);
+  }
+  wrap.append(group);host.append(wrap);
+ }
 }
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
+ renderSupplementMatchExclusions();
  const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1","md+1":"MD+1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
  for(const [i,item] of supplementDraft.plan.entries()){
   const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(JSON.stringify(item)===(JSON.parse(publishedSupplementSnapshot)[i]===undefined?"":JSON.stringify(JSON.parse(publishedSupplementSnapshot)[i]))?"supp-published":"supp-pending");
