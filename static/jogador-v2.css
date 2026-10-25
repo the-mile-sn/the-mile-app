@@ -997,3 +997,10 @@ header{padding:10px 0 24px}
 }
 #weekly-view .weekly-event-slot{min-height:0!important}
 #weekly-view .weekly-summary-heading{padding-left:20px!important}
+
+#weekly-view .weekly-supplement-summary{margin:14px 0 0;border-radius:17px;background:rgba(255,255,255,.055);padding:13px 16px}
+#weekly-view .weekly-supplement-summary>summary{cursor:pointer;font-weight:650}
+#weekly-view .weekly-supplement-group{display:flex;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.09)}
+#weekly-view .weekly-supplement-group:last-child{border-bottom:0}
+#weekly-view .weekly-supplement-group>strong{min-width:85px;white-space:nowrap}
+#weekly-view .weekly-supplement-group>span{flex:1;color:#c6c6cb}
