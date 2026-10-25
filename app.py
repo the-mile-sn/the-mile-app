@@ -661,6 +661,10 @@ def application(env, start_response):
                     draft=peri_v2.get_import(c,aid,seg[5])
                     if draft is None:raise Problem(404,'not_found')
                     return respond(200,{'draft':draft})
+                if len(seg)==7 and seg[6]=='copy' and method=='POST':
+                    draft=peri_v2.copy_as_draft(c,aid,seg[5])
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(201,{'draft':draft})
                 if len(seg)==7 and seg[6]=='option' and method=='PUT':
                     body=read_json(env)
                     try:
