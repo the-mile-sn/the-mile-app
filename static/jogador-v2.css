@@ -824,3 +824,25 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal>details:not(:last-child) .foods:last-child{
  margin-bottom:12px!important;
 }
+
+/* Option spacing: closed options retain one standard separator.
+   Extra breathing room is only shown after expanded option content. */
+#overview .daily-meal>details:not(:last-child),
+#plans #plan-detail .plan-overview-meal>details:not(:last-child){
+ padding-bottom:0!important;
+ margin-bottom:0!important;
+ border-bottom:1px solid rgba(255,255,255,.13)!important;
+}
+#overview .daily-meal>details:not(:last-child) .foods:last-child,
+#plans #plan-detail .plan-overview-meal>details:not(:last-child) .foods:last-child{
+ margin-bottom:0!important;
+}
+#overview .daily-meal>details[open]:not(:last-child),
+#plans #plan-detail .plan-overview-meal>details[open]:not(:last-child){
+ padding-bottom:17px!important;
+ margin-bottom:0!important;
+}
+#overview .daily-meal>details[open]:not(:last-child) .foods:last-child,
+#plans #plan-detail .plan-overview-meal>details[open]:not(:last-child) .foods:last-child{
+ margin-bottom:10px!important;
+}
