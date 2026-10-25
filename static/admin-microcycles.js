@@ -1254,15 +1254,19 @@ $("peri-import").addEventListener("click",async()=>{
 });
 
 let supplementDraft={plan:[],overrides:{}};
+let publishedSupplementSnapshot="[]";
+function supplementPublishedKey(){return JSON.stringify(supplementDraft.plan);}
+function supplementPending(){return supplementPublishedKey()!==publishedSupplementSnapshot;}
 async function loadSupplementEditor(){
- supplementDraft=await request(matchBase()+"/supplements");await loadSupplementLibrary();renderSupplementEditor();
+ supplementDraft=await request(matchBase()+"/supplements");publishedSupplementSnapshot=supplementPublishedKey();await loadSupplementLibrary();renderSupplementEditor();
 }
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
  const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
  for(const [i,item] of supplementDraft.plan.entries()){
-  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";
+  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(supplementPending()?"supp-pending":"supp-published");
   const label=document.createElement("span");
+  const marker=document.createElement("span");marker.className="supp-status-indicator";marker.title=supplementPending()?"Alterações por publicar":"Publicado";row.append(marker);
   label.textContent=[item.name,item.dose,item.timing_text||labels[item.moment]||item.moment||"Sem associação",labels[item.rule]||item.rule].filter(Boolean).join(" · ");
   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
   edit.onclick=()=>{
@@ -1294,7 +1298,7 @@ $("supp-add").onclick=()=>{
  $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
 };
 $("supp-save").onclick=async()=>{
- try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});$("supp-feedback").textContent="Suplementação publicada para o jogador.";}
+ try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});publishedSupplementSnapshot=supplementPublishedKey();renderSupplementEditor();$("supp-feedback").textContent="Suplementação publicada para o jogador.";}
  catch(e){$("supp-feedback").textContent="Não foi possível guardar: "+e.message;}
 };
 
@@ -1308,10 +1312,10 @@ function filterSupplementLists(){
  for(const item of supplementLibrary){
   const hay=[item.name,item.dose,item.note,item.timing_text].join(" ").toLocaleLowerCase("pt-PT");
   if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}const suggestion=document.createElement("option");suggestion.value=item.name;suggestions.append(suggestion);
-  if(!hay.includes(lq))continue;
+  if(!lq||!hay.includes(lq))continue;
   const row=document.createElement("div");row.className="event-admin-row";
   if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+item.id+"/image";img.alt=item.name;img.style.cssText="height:65px;width:55px;object-fit:contain";row.append(img);}
-  const label=document.createElement("span");label.textContent=[item.name,item.dose,item.timing_text||item.moment,item.note].filter(Boolean).join(" · ");row.append(label);
+  const label=document.createElement("span");label.className="supp-library-product";const name=document.createElement("strong");name.textContent=item.name;label.append(name);row.append(label);
   const actions=document.createElement("div");actions.className="supp-library-actions";const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{
    $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;$("supp-lib-moment").value=item.moment;
    $("supp-lib-rule").value=item.rule;$("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
