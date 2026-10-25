@@ -1341,3 +1341,28 @@ $("supp-lib-assign").onclick=()=>{
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text});
  renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
 };
+
+let supplementBulkPackage="";
+$("supp-bulk-preview").onclick=async()=>{
+ const file=$("supp-bulk-file").files?.[0],feedback=$("supp-bulk-results");
+ if(!file||file.size>5*1024*1024){feedback.textContent="Seleciona o ZIP preparado até 5 MB.";return;}
+ $("supp-bulk-confirm").hidden=true;supplementBulkPackage="";
+ try{
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  const encoded=btoa(binary);
+  const result=await request("/api/v2/supplement-library/bulk-preview",{method:"POST",body:JSON.stringify({package_base64:encoded})});
+  supplementBulkPackage=encoded;
+  feedback.textContent=result.total+" registos · "+result.existing+" já existentes · "+result.to_add+" novos · "+result.review+" protocolos a rever após importação.";
+  $("supp-bulk-confirm").hidden=result.to_add===0;
+ }catch(e){feedback.textContent="Não foi possível analisar o pacote: "+e.message;}
+};
+$("supp-bulk-confirm").onclick=async()=>{
+ if(!supplementBulkPackage||!confirm("Confirmas a importação dos produtos para a biblioteca? Não são atribuídos automaticamente a jogadores."))return;
+ const button=$("supp-bulk-confirm");button.disabled=true;
+ try{
+  const result=await request("/api/v2/supplement-library/bulk-import",{method:"POST",body:JSON.stringify({package_base64:supplementBulkPackage,confirmation:"IMPORTAR"})});
+  $("supp-bulk-results").textContent=result.saved+" produtos adicionados. Revê os protocolos antes de os associares a jogadores.";
+  button.hidden=true;await loadSupplementLibrary();
+ }catch(e){$("supp-bulk-results").textContent="Erro ao importar: "+e.message;}finally{button.disabled=false;}
+};
