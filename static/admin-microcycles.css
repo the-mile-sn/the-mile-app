@@ -215,3 +215,15 @@
 #peri-panel .peri-history{margin-top:12px;padding:10px;border-radius:14px;background:rgba(255,255,255,.025)}
 #peri-panel .peri-history>summary{cursor:pointer}
 #peri-panel .event-admin-row button,#peri-panel .calendar-add button{border-radius:999px}
+
+/* Keep peri plan publication as one compact list. */
+#peri-panel #peri-current{display:none}
+#peri-panel .peri-plan-section{margin:0;border:0;border-bottom:1px solid rgba(255,255,255,.15);border-radius:0;background:transparent;padding:14px 4px}
+#peri-panel .peri-plan-section>summary{font-size:1.05rem;list-style:none}
+#peri-panel #peri-list>.peri-history{margin-top:14px}
+#peri-panel .peri-plan-section .event-admin-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px}
+#supplements-panel .supp-associated-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#supplements-panel .supp-associated-actions{display:flex;gap:8px;flex-wrap:wrap}
+#supplements-panel .supp-associated-actions button{width:auto;min-width:78px}
+#supplements-panel .supp-inline-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;width:100%}
+#supplements-panel .supp-inline-edit label{display:flex;flex-direction:column;gap:5px}
