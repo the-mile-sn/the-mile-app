@@ -429,7 +429,7 @@ function renderPlans(){
  if(!plans[selectedColor])return;
  for(const meal of ["breakfast","lunch","snack","dinner","supper"]){
   const opts=plans[selectedColor][meal]||[];if(!opts.length)continue;
-  const section=document.createElement("section");section.className="meal plan-meal";
+  const section=document.createElement("section");section.className="meal plan-meal tone-"+selectedColor;
   const header=document.createElement("div");header.className="option";const h=document.createElement("h3");
   h.textContent=names[meal];header.append(h);const avg=average(opts);if(avg)header.append(nutrition(avg));
   section.append(header);opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});detail.append(section);
