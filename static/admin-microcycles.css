@@ -233,3 +233,13 @@
 #peri-panel #peri-list>.peri-history>summary{font-weight:600;padding:5px 0}
 #peri-panel .peri-plan-section>.event-admin-row{justify-content:flex-start}
 #peri-panel .peri-plan-section>.event-admin-row>span{margin-right:auto}
+
+/* Peri consult follows the same compact option disclosure as meal plans. */
+#peri-panel .peri-plan-actions{display:flex;align-items:center;justify-content:space-between}
+#peri-panel .peri-plan-actions strong{margin-right:auto}
+#peri-panel .peri-option-consult{border-bottom:1px solid rgba(255,255,255,.12);padding:9px 0}
+#peri-panel .peri-option-consult>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;list-style:none}
+#peri-panel .peri-option-consult>summary::-webkit-details-marker{display:none}
+#peri-panel .peri-option-consult>summary:after{content:"⌄";opacity:.65}
+#peri-panel .peri-option-consult[open]>summary:after{content:"⌃"}
+#peri-panel .peri-option-consult>p{margin:8px 0 4px 14px;color:var(--muted,#aaa)}
