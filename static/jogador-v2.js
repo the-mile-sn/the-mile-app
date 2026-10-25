@@ -65,14 +65,17 @@ function weeklyDayTotal(entry){
  return count?total:null;
 }
 function weeklySummary(data){
- const summary=document.createElement("section");summary.className="daily-nutrition";const grid=document.createElement("div");grid.className="daily-nutrition-grid";
- for(const [k,label,unit,cls] of [["kcal","Energia","kcal","kcal"],["protein_g","Proteína","g","protein"],["carbs_g","Hidratos","g","carbs"],["fat_g","Gordura","g","fat"]]){
-  const card=document.createElement("div");card.className="daily-nutrition-card";
-  const name=document.createElement("small");name.textContent=label;const n=document.createElement("strong");n.className=cls;n.textContent=fmt(data[k],0)+" "+unit;card.append(name,n);
-  const w=Number(me?.weight_kg);if(w>0&&Number.isFinite(w)){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(data[k]/w,1)+(k==="kcal"?" kcal/kg":" g/kg");card.append(ratio);}
-  grid.append(card);
+ const section=document.createElement("section");section.className="weekly-average-summary";
+ const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
+ for(const [key,label,cls] of [["kcal","Energia","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+  const item=document.createElement("div");item.className="weekly-average-metric "+cls;
+  const title=document.createElement("small");title.textContent=label;
+  const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?" kcal":" g");
+  item.append(title,value);
+  if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(data[key]/weight,1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
+  section.append(item);
  }
- summary.append(grid);return summary;
+ return section;
 }
 function renderWeekly(mon,r,weekMenus=[]){
  weeklyContext={mon,r,weekMenus};
@@ -157,7 +160,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   }
   const dayItems=supplementsByDay[iso(day)]||[];
  if(dayItems.length)root.append(supplementsCard(dayItems));
- const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Resumo semanal";const sub=document.createElement("small");sub.textContent="Média diária";heading.append(h,sub);root.append(heading);
+ const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Média diária";heading.append(h);root.append(heading);
  const valid=totals.filter(Boolean);
  if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
  else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
@@ -291,11 +294,12 @@ function appendWeeklyEvents(host,dates,session){
    const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
    if(intra){
     const button=eventCard(event,true),avg=average(intra.options||[]);
+    button.classList.add("weekly-meal");
     button.classList.add("weekly-match-with-intra");
     button.setAttribute("role","button");button.tabIndex=0;
     const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.phase==="pre"&&weeklySelection?.date===date;
     button.setAttribute("aria-pressed",String(active));
-    if(avg){const kcal=document.createElement("span");kcal.className="weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0)+" kcal";button.append(kcal);}
+    if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0);button.append(kcal);}
     const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus);};
     button.onclick=select;button.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}};
     slot.append(button);
