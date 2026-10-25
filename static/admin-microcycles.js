@@ -1338,6 +1338,7 @@ $("supp-lib-save").onclick=async()=>{
 $("supp-lib-assign").onclick=()=>{
  const item=supplementLibrary.find(x=>x.id===$("supp-lib-select").value);
  if(!item)return;
+ if(/MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){$("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";return;}
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text});
  renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
 };
