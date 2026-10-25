@@ -17,7 +17,7 @@ def validate(items):
   name=item.get("name","");dose=item.get("dose","");moment=item.get("moment","");rule=item.get("rule","daily")
   if any(not isinstance(v,str) for v in (name,dose,moment,rule)):raise ValueError("invalid_item")
   if not name.strip() or not dose.strip() or len(name)>120 or len(dose)>120 or len(moment)>120:raise ValueError("invalid_item")
-  if rule not in ("daily","match","training","md-1"):raise ValueError("invalid_rule")
+  if rule not in ("daily","match","training","md-1","md+1"):raise ValueError("invalid_rule")
   result.append({"name":name.strip(),"dose":dose.strip(),"moment":moment.strip(),"rule":rule,"note":str(item.get("note",""))[:400], "timing_text":str(item.get("timing_text",""))[:240], "library_id":str(item.get("library_id",""))[:64]})
  return result
 def save(c,aid,payload):
@@ -41,8 +41,8 @@ def days(c,aid,start,end,matches,events):
  d=date.fromisoformat(start);last=date.fromisoformat(end)
  if (last-d).days>62 or d>last:raise ValueError("invalid_range")
  while d<=last:
-  day=d.isoformat();tomorrow=(d+timedelta(days=1)).isoformat()
-  items=[x for x in data["plan"] if x["rule"]=="daily" or (x["rule"]=="match" and day in match_dates) or (x["rule"]=="training" and day in train_dates) or (x["rule"]=="md-1" and tomorrow in match_dates)]
+  day=d.isoformat();tomorrow=(d+timedelta(days=1)).isoformat();yesterday=(d-timedelta(days=1)).isoformat()
+  items=[x for x in data["plan"] if x["rule"]=="daily" or (x["rule"]=="match" and day in match_dates) or (x["rule"]=="training" and day in train_dates) or (x["rule"]=="md-1" and tomorrow in match_dates) or (x["rule"]=="md+1" and yesterday in match_dates)]
   override=data["overrides"].get(day,{})
   removed=set(override.get("remove",[]))
   items=[x for x in items if x["name"] not in removed]+override.get("add",[])
