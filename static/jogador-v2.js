@@ -175,13 +175,13 @@ function renderWeekly(mon,r,weekMenus=[]){
  }
  if(weeklySupplements.size){
   const summary=document.createElement("details");summary.className="weekly-supplement-summary";
-  const header=document.createElement("summary");header.textContent="Suplementação da semana";summary.append(header);
+  const header=document.createElement("summary");header.textContent="Suplementação";summary.append(header);
   for(const group of ["Diariamente","Treino","MD-1","MD","Outros"]){
    const items=[...weeklySupplements.values()].filter(x=>x.group===group);
    if(!items.length)continue;
    const row=document.createElement("div");row.className="weekly-supplement-group";
    const label=document.createElement("strong");label.textContent=group;row.append(label);
-   const names=document.createElement("span");names.textContent=items.map(x=>x.name+" · "+x.dose+(x.dates.length===7?"":" ("+x.dates.length+" dia"+(x.dates.length===1?"":"s")+")")).join(" · ");row.append(names);summary.append(row);
+   for(const item of items){const entry=document.createElement("div");entry.className="weekly-supplement-entry";entry.textContent=item.name+" - "+item.dose;row.append(entry);}summary.append(row);
   }
   root.append(summary);
  }
