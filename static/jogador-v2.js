@@ -324,7 +324,7 @@ async function overview(){
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
- const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-1);overview().catch(error);};strip.append(prev);
+ const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);
   const dayInfo=r.days.find(x=>x.date===iso(dt));
@@ -336,7 +336,7 @@ async function overview(){
   }
   button.onclick=()=>{day=dt;overview().catch(error);};strip.append(button);
  }
- const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+1);overview().catch(error);};strip.append(next);
+ const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+7);overview().catch(error);};strip.append(next);
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length){root.textContent="Sem programação definida para este dia.";return;}
