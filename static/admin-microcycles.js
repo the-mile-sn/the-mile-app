@@ -1160,7 +1160,17 @@ async function loadPeriImports(){
    const button=document.createElement("button");button.type="button";
    button.textContent=chosen.status==="draft"?"Editar e validar":"Consultar";
    button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(chosen.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
-   controls.append(note,button);section.append(controls);
+   controls.append(note,button);
+   if(chosen.status!=="draft"){
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
+    edit.onclick=async()=>{
+     if(!confirm("Criar uma cópia editável deste plano? A versão publicada permanece disponível até publicares a nova."))return;
+     try{const data=await request(periEndpoint()+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});await loadPeriImports();renderPeriDraft(data.draft);periMessage("Cópia editável criada. Revê e publica quando estiver pronta.");}
+     catch(e){periMessage("Não foi possível iniciar edição: "+e.message);}
+    };
+    controls.append(edit);
+   }
+   section.append(controls);
   }
   const active=result.active?.[kind]?.options;
   if(active){
