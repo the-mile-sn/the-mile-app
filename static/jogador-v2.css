@@ -682,3 +682,27 @@ header{padding:10px 0 24px}
  opacity:1!important;
  vertical-align:middle!important;
 }
+
+/* Planos color meals share the overview structure and appearance, including unboxed options. */
+#plans #plan-detail .plan-overview-meal{padding:0!important;border:0!important;border-radius:18px!important;overflow:hidden;box-shadow:none!important}
+#plans #plan-detail .plan-overview-meal.tone-orange{background:var(--meal-orange)!important}
+#plans #plan-detail .plan-overview-meal.tone-yellow{background:var(--meal-yellow)!important}
+#plans #plan-detail .plan-overview-meal.tone-blue{background:var(--meal-blue)!important}
+#plans #plan-detail .plan-overview-meal.tone-green{background:var(--meal-green)!important}
+#plans #plan-detail .plan-overview-meal.tone-vp{background:var(--meal-vp)!important}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:65px!important;padding:17px 16px!important;list-style:none!important;cursor:pointer}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head::-webkit-details-marker{display:none}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head>strong{flex:1;min-width:0;font-size:18px;font-weight:700}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head:after{content:"›";font-size:27px;line-height:1;color:#c4c4cc;margin-left:0;transition:transform .16s}
+#plans #plan-detail .plan-overview-meal[open]>.daily-meal-head:after{transform:rotate(90deg)}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline{margin-left:auto;margin-right:13px;flex:0 0 auto}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline .macro{display:grid!important;grid-template-columns:repeat(3,max-content)!important;justify-content:end;justify-items:end;align-items:center;column-gap:7px!important;row-gap:0!important;font-size:10px!important;line-height:1.12!important;white-space:nowrap}
+#plans #plan-detail .plan-overview-meal>.daily-meal-head .macro>.kcal{grid-column:1/-1;justify-self:end;font-size:11px!important}
+#plans #plan-detail .plan-overview-meal:not([open])>.daily-meal-head .macro>span:not(.kcal){display:none!important}
+#plans #plan-detail .plan-overview-meal>.option-expanded-macros{background:transparent!important}
+#plans #plan-detail .plan-overview-meal>details{border:0!important;background:transparent!important;border-radius:0!important;margin:0 16px!important;padding:0!important;box-shadow:none!important;border-top:1px solid rgba(255,255,255,.13)!important}
+#plans #plan-detail .plan-overview-meal>details>summary{background:transparent!important;padding:14px 0!important;list-style:none}
+#plans #plan-detail .plan-overview-meal>details>summary::-webkit-details-marker{display:none}
+#plans #plan-detail .plan-overview-meal>details .foods{background:transparent!important}
+#plans #plan-detail .plan-overview-meal .single-meal-option{padding:0 16px 14px}
+@media(max-width:620px){#plans #plan-detail .plan-overview-meal>.daily-meal-head>strong{font-size:17px}#plans #plan-detail .plan-overview-meal>.daily-meal-head{column-gap:5px!important}#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline{margin-right:8px}}
