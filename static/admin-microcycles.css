@@ -282,3 +282,8 @@
 #supplements-panel #supp-lib-list .event-admin-row>img{flex:0 0 55px;margin-right:10px}
 #supplements-panel #supp-lib-list .event-admin-row{padding:11px 4px;gap:12px}
 #supplements-panel #supp-lib-list:empty:before{content:"Escreve o nome ou a marca para encontrar um suplemento.";display:block;color:#a4a4ac;padding:14px 0}
+
+#supplements-panel .supp-associated-row{justify-content:flex-start!important;text-align:left!important;padding:12px 16px!important}
+#supplements-panel .supp-associated-row .supp-associated-label{flex:1!important;text-align:left!important;margin:0!important}
+#supplements-panel .supp-associated-row.supp-published{background:rgba(69,139,99,.16)!important}
+#supplements-panel .supp-associated-row.supp-pending{background:rgba(169,124,51,.20)!important}
