@@ -706,3 +706,46 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal>details .foods{background:transparent!important}
 #plans #plan-detail .plan-overview-meal .single-meal-option{padding:0 16px 14px}
 @media(max-width:620px){#plans #plan-detail .plan-overview-meal>.daily-meal-head>strong{font-size:17px}#plans #plan-detail .plan-overview-meal>.daily-meal-head{column-gap:5px!important}#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline{margin-right:8px}}
+
+/* Consistent option chevrons: right-aligned and vertically centered on both label lines. */
+#overview .daily-meal>details>summary .option,
+#plans #plan-detail .plan-overview-meal>details>summary .option,
+#weekly-view .weekly-option-card>summary .option,
+#plans #plan-detail .plan-option-card>summary .option{
+ display:flex!important;
+ align-items:center!important;
+ position:relative!important;
+ padding-left:0!important;
+ padding-right:31px!important;
+ min-height:36px!important;
+}
+#overview .daily-meal>details>summary .option:before,
+#plans #plan-detail .plan-overview-meal>details>summary .option:before,
+#weekly-view .weekly-option-card>summary .option:before,
+#plans #plan-detail .plan-option-card>summary .option:before{
+ content:none!important;
+ display:none!important;
+}
+#overview .daily-meal>details>summary .option:after,
+#plans #plan-detail .plan-overview-meal>details>summary .option:after,
+#weekly-view .weekly-option-card>summary .option:after,
+#plans #plan-detail .plan-option-card>summary .option:after{
+ content:"›"!important;
+ display:block!important;
+ position:absolute!important;
+ left:auto!important;
+ right:1px!important;
+ top:50%!important;
+ bottom:auto!important;
+ font-size:25px!important;
+ line-height:1!important;
+ color:#d6d6dd!important;
+ transform:translateY(-50%)!important;
+ transition:transform .16s!important;
+}
+#overview .daily-meal>details[open]>summary .option:after,
+#plans #plan-detail .plan-overview-meal>details[open]>summary .option:after,
+#weekly-view .weekly-option-card[open]>summary .option:after,
+#plans #plan-detail .plan-option-card[open]>summary .option:after{
+ transform:translateY(-50%) rotate(90deg)!important;
+}
