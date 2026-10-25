@@ -1014,3 +1014,47 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-detail .supplement-section:before{display:none!important}
 
 #weekly-view .weekly-detail .supplement-in-meal{border-top:0!important;margin-top:6px!important;padding-top:5px!important}
+
+/* Match weekly option subcards in daily overview and colored plans.
+   Meal headers, nutrition rows, detail behavior and values are unchanged. */
+#overview .daily-meal>details:not(.daily-meal),
+#plans #plan-detail .plan-overview-meal>details {
+ display:block!important;
+ background:rgba(255,255,255,.095)!important;
+ border:0!important;
+ border-radius:17px!important;
+ margin:10px 14px!important;
+ padding:13px 14px!important;
+ box-shadow:none!important;
+}
+#overview .daily-meal>details:not(.daily-meal)>summary,
+#plans #plan-detail .plan-overview-meal>details>summary {
+ border:0!important;
+ padding:0!important;
+ margin:0!important;
+ list-style:none;
+}
+#overview .daily-meal>details:not(.daily-meal)>summary::-webkit-details-marker,
+#plans #plan-detail .plan-overview-meal>details>summary::-webkit-details-marker{display:none}
+#overview .daily-meal>details:not(.daily-meal) .option,
+#plans #plan-detail .plan-overview-meal>details .option {
+ padding-top:0!important;
+ padding-bottom:0!important;
+ min-height:35px;
+ align-items:center!important;
+}
+#overview .daily-meal>details:not(.daily-meal) .option-expanded-macros,
+#plans #plan-detail .plan-overview-meal>details .option-expanded-macros{
+ margin:8px 0 0!important;
+ padding:10px 0!important;
+}
+#overview .daily-meal>details:not(.daily-meal) .foods,
+#plans #plan-detail .plan-overview-meal>details .foods{
+ border-bottom:1px solid rgba(255,255,255,.1)!important;
+}
+#overview .daily-meal>details:not(.daily-meal) .foods:last-child,
+#plans #plan-detail .plan-overview-meal>details .foods:last-child{border-bottom:0!important}
+@media(max-width:620px){
+ #overview .daily-meal>details:not(.daily-meal),
+ #plans #plan-detail .plan-overview-meal>details{margin:9px 11px!important;padding:12px!important}
+}
