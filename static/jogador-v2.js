@@ -336,11 +336,41 @@ async function overview(){
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length){root.textContent="Sem programação definida para este dia.";return;}
- const cls=model.find(c=>c.name===entry?.classification);const heading=document.createElement("h2");heading.textContent=entry?.classification||"Atividades";root.append(heading);
+
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let complete=true,assigned=0;
  for(const meal of meals){const color=assignedColor(d,meal,entry?.classification);if(!color)continue;assigned++;const avg=average(plans[color]?.[meal]||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
  for(const item of periMeals.filter(x=>x.event_date===d)){assigned++;const avg=average(item.options||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
- if(assigned){const summary=document.createElement("section");summary.className="daily-nutrition";if(complete){const grid=document.createElement("div");grid.className="daily-nutrition-grid";for(const [key,label,unit,digits,css] of [["kcal","Energia","kcal",0,"kcal"],["protein_g","Proteína","g",0,"protein"],["carbs_g","Hidratos","g",0,"carbs"],["fat_g","Gordura","g",0,"fat"]]){const card=document.createElement("div");card.className="daily-nutrition-card";const name=document.createElement("small");name.textContent=label;const value=document.createElement("strong");value.className=css;value.textContent=fmt(total[key],digits)+" "+unit;card.append(name,value);const weight=Number(me?.weight_kg);if(Number.isFinite(weight)&&weight>0){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total[key]/weight,1)+(key==="kcal"?" kcal/kg":" g/kg");card.append(ratio);}grid.append(card);}summary.append(grid);}else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}root.append(summary);}
+ if(assigned){
+  const summary=document.createElement("section");summary.className="daily-nutrition nutrition-donut-summary";
+  if(complete){
+   const hero=document.createElement("div");hero.className="nutrition-hero";
+   const energy=document.createElement("div");energy.className="nutrition-energy";
+   const label=document.createElement("small");label.textContent="Energia";
+   const value=document.createElement("strong");value.textContent=fmt(total.kcal,0)+" kcal";
+   energy.append(label,value);
+   const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
+   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,1)+" kcal/kg";energy.append(ratio);}
+   const chart=document.createElement("div");chart.className="nutrition-ring";chart.setAttribute("role","img");
+   const kcalParts=[total.protein_g*4,total.carbs_g*4,total.fat_g*9],sum=kcalParts.reduce((a,b)=>a+b,0);
+   const p=sum?kcalParts.map(x=>100*x/sum):[0,0,0];
+   chart.style.setProperty("--protein-end",p[0]+"%");
+   chart.style.setProperty("--carbs-end",(p[0]+p[1])+"%");
+   chart.setAttribute("aria-label",sum?"Distribuição energética dos macronutrientes: proteína "+fmt(p[0],0)+"%, hidratos "+fmt(p[1],0)+"%, gordura "+fmt(p[2],0)+"%":"Distribuição energética indisponível");
+   const ringLabel=document.createElement("span");ringLabel.textContent="Macros";chart.append(ringLabel);
+   hero.append(energy,chart);summary.append(hero);
+   const macros=document.createElement("div");macros.className="nutrition-macro-row";
+   for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+    const cell=document.createElement("div");cell.className="nutrition-macro "+cls;
+    const name=document.createElement("small");name.textContent=title;
+    const grams=document.createElement("strong");grams.textContent=fmt(total[key],0)+" g";
+    cell.append(name,grams);
+    if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total[key]/weight,1)+" g/kg";cell.append(ratio);}
+    macros.append(cell);
+   }
+   summary.append(macros);
+  }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
+  root.append(summary);
+ }
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
