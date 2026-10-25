@@ -1262,7 +1262,7 @@ async function loadSupplementEditor(){
 }
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
- const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
+ const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1","md+1":"MD+1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
  for(const [i,item] of supplementDraft.plan.entries()){
   const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(JSON.stringify(item)===(JSON.parse(publishedSupplementSnapshot)[i]===undefined?"":JSON.stringify(JSON.parse(publishedSupplementSnapshot)[i]))?"supp-published":"supp-pending");
   const label=document.createElement("span");
@@ -1274,7 +1274,7 @@ function renderSupplementEditor(){
    const fields=[["name","Suplemento"],["dose","Dose"],["timing_text","Momento ou condição"],["note","Instruções"]];
    const inputs={};
    for(const [key,title] of fields){const wrap=document.createElement("label");wrap.textContent=title;const input=document.createElement("input");input.value=item[key]||"";inputs[key]=input;wrap.append(input);form.append(wrap);}
-   for(const [key,title,options] of [["moment","Associação",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["dinner","Jantar"],["training","Treino"],["match","Jogo"]]],["rule","Frequência",[["daily","Diária"],["training","Treino"],["match","MD"],["md-1","MD-1"]]]]){
+   for(const [key,title,options] of [["moment","Associação",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["dinner","Jantar"],["training","Treino"],["match","Jogo"]]],["rule","Frequência",[["daily","Diária"],["training","Treino"],["match","MD"],["md-1","MD-1"],["md+1","MD+1"]]]]){
     const wrap=document.createElement("label");wrap.textContent=title;const select=document.createElement("select");for(const [value,text] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=text;select.append(opt);}select.value=item[key]||"";inputs[key]=select;wrap.append(select);form.append(wrap);
    }
    const save=document.createElement("button");save.textContent="Aplicar alterações";save.type="button";save.onclick=()=>{
