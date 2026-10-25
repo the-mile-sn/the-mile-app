@@ -657,3 +657,28 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-average-metric.fat>strong{color:#e0cf9f}
 #weekly-view .weekly-average-metric>.per-kg{font-size:clamp(9px,2vw,11px);color:#aaaab3;white-space:nowrap}
 @media(max-width:380px){#weekly-view .weekly-average-summary{padding:13px 6px;grid-template-columns:1.4fr repeat(3,1fr)}#weekly-view .weekly-average-metric{padding:0 5px}}
+
+/* Color plans use the same solid tone, dimensions and corners as overview meals. */
+#plans #plan-detail .plan-meal.tone-orange{background:var(--meal-orange)!important}
+#plans #plan-detail .plan-meal.tone-yellow{background:var(--meal-yellow)!important}
+#plans #plan-detail .plan-meal.tone-blue{background:var(--meal-blue)!important}
+#plans #plan-detail .plan-meal.tone-green{background:var(--meal-green)!important}
+#plans #plan-detail .plan-meal.tone-vp{background:var(--meal-vp)!important}
+#plans #plan-detail .plan-meal[class*="tone-"]{border:0!important;border-radius:18px!important;box-shadow:none!important;overflow:hidden}
+#plans #plan-detail .plan-meal[class*="tone-"]>.option{padding:2px 0 7px}
+/* Thin grey dividers replace all nutrition bullets across player views. */
+.macro .macro-dot,
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro .macro-dot,
+#overview .match-intra-card>.daily-meal-head .meal-average-inline .macro .macro-dot{
+ display:inline-block!important;
+ position:relative!important;
+ width:1px!important;
+ min-width:1px!important;
+ height:11px!important;
+ margin:0 4px 0 1px!important;
+ padding:0!important;
+ border-radius:0!important;
+ background:rgba(194,196,204,.44)!important;
+ opacity:1!important;
+ vertical-align:middle!important;
+}
