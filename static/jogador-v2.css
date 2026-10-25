@@ -749,3 +749,36 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-option-card[open]>summary .option:after{
  transform:translateY(-50%) rotate(90deg)!important;
 }
+
+/* Final chevron geometry: vertically centre on both title lines, with clear option spacing. */
+#overview .daily-meal>details>summary .option,
+#plans #plan-detail .plan-overview-meal>details>summary .option,
+#weekly-view .weekly-option-card>summary .option{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 28px!important;
+ align-items:center!important;padding:0!important;min-height:48px!important;
+}
+#overview .daily-meal>details>summary .option:after,
+#plans #plan-detail .plan-overview-meal>details>summary .option:after,
+#weekly-view .weekly-option-card>summary .option:after{
+ position:static!important;grid-column:2!important;grid-row:1!important;
+ justify-self:center!important;align-self:center!important;
+ transform:none!important;line-height:1!important;
+}
+#overview .daily-meal>details[open]>summary .option:after,
+#plans #plan-detail .plan-overview-meal>details[open]>summary .option:after,
+#weekly-view .weekly-option-card[open]>summary .option:after{transform:rotate(90deg)!important}
+#overview .daily-meal>details>summary .option>.plan-option-label,
+#plans #plan-detail .plan-overview-meal>details>summary .option>.plan-option-label,
+#weekly-view .weekly-option-card>summary .option>.plan-option-label{
+ grid-column:1!important;grid-row:1!important;
+ display:flex!important;flex-direction:column!important;justify-content:center!important;gap:5px!important;
+}
+#plans #plan-detail .plan-overview-meal>details{margin:0 16px!important;padding:0!important}
+#plans #plan-detail .plan-overview-meal>details>summary{padding:20px 0!important}
+#plans #plan-detail .plan-overview-meal>details .option-expanded-macros{padding:9px 0 15px!important}
+/* Nutrition summary starts with kcal: never precede the protein with a separator. */
+.macro>span.protein .macro-dot,
+#overview .daily-meal .macro>span.protein .macro-dot,
+#plans .macro>span.protein .macro-dot{display:none!important}
+.macro>span.carbs .macro-dot,
+.macro>span.fat .macro-dot{display:inline-block!important}
