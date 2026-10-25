@@ -914,3 +914,16 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal>details[open]>summary{
  padding-bottom:5px!important;
 }
+
+/* Daily total uses the same single rounded, muted surface as weekly daily average. */
+#overview .nutrition-donut-summary{
+ background:rgba(255,255,255,.045)!important;
+ border:0!important;
+ border-radius:16px!important;
+ padding:15px 10px!important;
+ margin:0 0 19px!important;
+ box-shadow:none!important;
+}
+@media(max-width:380px){
+ #overview .nutrition-donut-summary{padding:13px 6px!important}
+}
