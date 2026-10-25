@@ -158,12 +158,32 @@ function renderWeekly(mon,r,weekMenus=[]){
     detail.append(section);
    }
   }
-  const dayItems=supplementsByDay[iso(day)]||[];
- if(dayItems.length)root.append(supplementsCard(dayItems));
+
  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Média diária";heading.append(h);root.append(heading);
  const valid=totals.filter(Boolean);
  if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
  else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
+ const weeklySupplements=new Map();
+ for(const date of dates){
+  for(const item of supplementsByDay[date]||[]){
+   const group=item.rule==="daily"?"Diariamente":item.rule==="match"?"MD":item.rule==="md-1"?"MD-1":item.rule==="training"?"Treino":"Outros";
+   const key=group+"|"+(item.library_id||item.name)+"|"+item.dose;
+   if(!weeklySupplements.has(key))weeklySupplements.set(key,{group,name:item.name,dose:item.dose,dates:[]});
+   weeklySupplements.get(key).dates.push(date);
+  }
+ }
+ if(weeklySupplements.size){
+  const summary=document.createElement("details");summary.className="weekly-supplement-summary";
+  const header=document.createElement("summary");header.textContent="Suplementação da semana";summary.append(header);
+  for(const group of ["Diariamente","Treino","MD-1","MD","Outros"]){
+   const items=[...weeklySupplements.values()].filter(x=>x.group===group);
+   if(!items.length)continue;
+   const row=document.createElement("div");row.className="weekly-supplement-group";
+   const label=document.createElement("strong");label.textContent=group;row.append(label);
+   const names=document.createElement("span");names.textContent=items.map(x=>x.name+" · "+x.dose+(x.dates.length===7?"":" ("+x.dates.length+" dia"+(x.dates.length===1?"":"s")+")")).join(" · ");row.append(names);summary.append(row);
+  }
+  root.append(summary);
+ }
 }
 
 
