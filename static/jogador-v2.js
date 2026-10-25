@@ -39,7 +39,7 @@ async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key
 async function renderSupplementPlan(){
  const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
  if(!data.plan.length){root.textContent="Ainda não existe plano de suplementação publicado.";return;}
- const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1"};
+ const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
  for(const item of data.plan){
   const box=document.createElement("div");box.className="supplement-entry";
   if(item.library_id){const img=document.createElement("img");img.className="supplement-product-image";img.src="/api/v2/supplement-library/"+encodeURIComponent(item.library_id)+"/image";img.alt=item.name;img.loading="lazy";img.onerror=()=>img.remove();box.append(img);}
