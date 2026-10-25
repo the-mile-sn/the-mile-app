@@ -303,3 +303,22 @@
 #supplements-panel .supp-match-exclusion-options{display:grid;gap:12px;padding:14px 12px 8px}
 #supplements-panel .supp-match-exclusion-options label{display:flex;align-items:center;gap:12px;margin:0;line-height:1.45;cursor:pointer}
 #supplements-panel .supp-match-exclusion-options input[type=checkbox]{flex:0 0 auto;margin:0;width:18px;height:18px}
+
+/* Consistent backoffice actions and spacing */
+#supplements-panel #supp-base-list .supp-associated-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#supplements-panel #supp-base-list .supp-associated-row>span{flex:1;min-width:0}
+#supplements-panel #supp-base-list .supp-associated-actions{margin-left:auto;flex-shrink:0;justify-content:flex-end}
+#supplements-panel .supp-exceptions-card{background:rgba(111,69,171,.2);border-color:rgba(178,127,230,.38)}
+#supplements-panel .supp-match-exclusion-options{justify-items:stretch}
+#supplements-panel .supp-match-exclusion-options label{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;text-align:left!important;gap:12px;width:100%;padding:6px 4px}
+#supplements-panel .supp-match-exclusion-options label input[type=checkbox]{position:static!important;display:block!important;margin:0!important;flex:0 0 18px!important}
+#calendar-supp-list{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left}
+#calendar-supp-list label{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:10px;text-align:left!important;width:100%;margin:0!important}
+#calendar-supp-list input[type=checkbox]{position:static!important;flex:0 0 18px!important;margin:0!important}
+#calendar-supp-wrap{align-items:flex-start;text-align:left}
+#calendar-section .calendar-event-list{margin-bottom:24px}
+#calendar-section .calendar-event-list + *{margin-top:26px}
+#menus-panel .menu-library-section,#menus-panel .menu-create-section{margin-top:25px;padding:22px;border-radius:20px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025)}
+#menus-panel .menu-library-section h3,#menus-panel .menu-create-section h3{margin-top:0}
+#menus-panel #menu-grid{margin-bottom:12px}
+#calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button{border-radius:999px}
