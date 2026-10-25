@@ -1012,3 +1012,5 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-supplement-entry{font-size:.9rem;line-height:1.5;color:#c7c7cc}
 #weekly-view .weekly-detail .supplement-section{border-top:0!important}
 #weekly-view .weekly-detail .supplement-section:before{display:none!important}
+
+#weekly-view .weekly-detail .supplement-in-meal{border-top:0!important;margin-top:6px!important;padding-top:5px!important}
