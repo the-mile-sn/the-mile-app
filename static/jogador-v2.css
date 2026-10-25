@@ -583,3 +583,16 @@ header{padding:10px 0 24px}
 #overview .nutrition-macro.fat>strong{color:#e0cf9f}
 #overview .nutrition-macro>.per-kg{font-size:11px;color:#a6a6b1;white-space:nowrap}
 @media(max-width:360px){#overview .nutrition-donut-summary{padding:16px 13px!important}#overview .nutrition-hero{grid-template-columns:minmax(0,1fr) 96px}#overview .nutrition-ring{width:94px;height:94px}#overview .nutrition-ring:before{inset:16px}#overview .nutrition-macro{padding:0 7px}#overview .nutrition-macro>small:first-child{font-size:11px}}
+
+/* Approved compact no-card nutritional summary (daily overview). */
+#overview .nutrition-donut-summary{background:transparent!important;border:0!important;border-radius:0!important;padding:0 4px!important;margin:0 0 17px!important;box-shadow:none!important}
+#overview .nutrition-hero{display:block!important;padding:0!important;margin:0 0 13px!important}
+#overview .nutrition-energy{gap:2px!important}
+#overview .nutrition-energy>small{font-size:13px!important}
+#overview .nutrition-energy>strong{font-size:clamp(25px,5.8vw,36px)!important;line-height:1.06!important}
+#overview .nutrition-energy>.per-kg{font-size:12px!important}
+#overview .nutrition-ring{display:none!important}
+#overview .nutrition-macro-row{padding-top:0!important;border-top:0!important}
+#overview .nutrition-macro{gap:3px!important}
+#overview .nutrition-macro>strong{font-size:clamp(17px,4.1vw,23px)!important}
+#overview .nutrition-macro>.per-kg{font-size:11px!important}
