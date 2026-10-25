@@ -18,7 +18,18 @@ def validate(items):
   if any(not isinstance(v,str) for v in (name,dose,moment,rule)):raise ValueError("invalid_item")
   if not name.strip() or not dose.strip() or len(name)>120 or len(dose)>120 or len(moment)>120:raise ValueError("invalid_item")
   if rule not in ("daily","match","training","md-1","md+1"):raise ValueError("invalid_rule")
-  result.append({"name":name.strip(),"dose":dose.strip(),"moment":moment.strip(),"rule":rule,"note":str(item.get("note",""))[:400], "timing_text":str(item.get("timing_text",""))[:240], "library_id":str(item.get("library_id",""))[:64]})
+  normalized={"name":name.strip(),"dose":dose.strip(),"moment":moment.strip(),"rule":rule,"note":str(item.get("note",""))[:400], "timing_text":str(item.get("timing_text",""))[:240], "library_id":str(item.get("library_id",""))[:64]}
+  prescriptions=item.get("prescriptions")
+  if prescriptions is not None:
+   if not isinstance(prescriptions,list) or not 1<=len(prescriptions)<=12:raise ValueError("invalid_prescriptions")
+   entries=[]
+   for p in prescriptions:
+    if not isinstance(p,dict):raise ValueError("invalid_prescriptions")
+    pr=p.get("rule");pd=p.get("dose");pm=p.get("moment","");pt=p.get("timing_text","");pn=p.get("note","")
+    if pr not in ("daily","training","match","md-1","md+1") or any(not isinstance(v,str) for v in (pd,pm,pt,pn)) or not pd.strip() or len(pd)>120 or len(pm)>120 or len(pt)>240 or len(pn)>400:raise ValueError("invalid_prescriptions")
+    entries.append({"rule":pr,"dose":pd.strip(),"moment":pm.strip(),"timing_text":pt.strip(),"note":pn.strip()})
+   normalized["prescriptions"]=entries
+  result.append(normalized)
  return result
 def save(c,aid,payload):
  if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():raise ValueError("not_found")
@@ -42,7 +53,13 @@ def days(c,aid,start,end,matches,events):
  if (last-d).days>62 or d>last:raise ValueError("invalid_range")
  while d<=last:
   day=d.isoformat();tomorrow=(d+timedelta(days=1)).isoformat();yesterday=(d-timedelta(days=1)).isoformat()
-  items=[x for x in data["plan"] if x["rule"]=="daily" or (x["rule"]=="match" and day in match_dates) or (x["rule"]=="training" and day in train_dates) or (x["rule"]=="md-1" and tomorrow in match_dates) or (x["rule"]=="md+1" and yesterday in match_dates)]
+  def applies(rule):
+   return rule=="daily" or (rule=="match" and day in match_dates) or (rule=="training" and day in train_dates) or (rule=="md-1" and tomorrow in match_dates) or (rule=="md+1" and yesterday in match_dates)
+  items=[]
+  for item in data["plan"]:
+   for entry in item.get("prescriptions") or [item]:
+    if applies(entry["rule"]):
+     items.append({**item,**entry, "prescriptions":None})
   override=data["overrides"].get(day,{})
   removed=set(override.get("remove",[]))
   items=[x for x in items if x["name"] not in removed]+override.get("add",[])
