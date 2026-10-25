@@ -6,9 +6,12 @@ def initialize(c):
  c.execute("""CREATE TABLE IF NOT EXISTS v2_supplements(
  athlete_id TEXT PRIMARY KEY, plan_json TEXT NOT NULL DEFAULT '[]',
  overrides_json TEXT NOT NULL DEFAULT '{}')""")
+ try:c.execute("ALTER TABLE v2_supplements ADD COLUMN match_exclusions_json TEXT NOT NULL DEFAULT '{}'")
+ except Exception as e:
+  if "duplicate column" not in str(e).lower():raise
 def read(c,aid):
- row=c.execute("SELECT plan_json,overrides_json FROM v2_supplements WHERE athlete_id=?",(aid,)).fetchone()
- return {"plan":json.loads(row["plan_json"]),"overrides":json.loads(row["overrides_json"])} if row else {"plan":[],"overrides":{}}
+ row=c.execute("SELECT plan_json,overrides_json,match_exclusions_json FROM v2_supplements WHERE athlete_id=?",(aid,)).fetchone()
+ return {"plan":json.loads(row["plan_json"]),"overrides":json.loads(row["overrides_json"]),"match_exclusions":json.loads(row["match_exclusions_json"])} if row else {"plan":[],"overrides":{},"match_exclusions":{}}
 def validate(items):
  if not isinstance(items,list) or len(items)>120:raise ValueError("invalid_items")
  result=[]
@@ -42,9 +45,17 @@ def save(c,aid,payload):
   except (TypeError,ValueError):raise ValueError("invalid_date")
   if not isinstance(entry,dict):raise ValueError("invalid_override")
   clean[day]={"add":validate(entry.get("add",[])),"remove":[str(x)[:120] for x in entry.get("remove",[])][:120]}
- c.execute("""INSERT INTO v2_supplements(athlete_id,plan_json,overrides_json) VALUES(?,?,?)
- ON CONFLICT(athlete_id) DO UPDATE SET plan_json=excluded.plan_json,overrides_json=excluded.overrides_json""",(aid,json.dumps(plan,ensure_ascii=False),json.dumps(clean,ensure_ascii=False)))
- return {"plan":plan,"overrides":clean}
+ exclusions=payload.get("match_exclusions",old["match_exclusions"])
+ if not isinstance(exclusions,dict) or len(exclusions)>200:raise ValueError("invalid_exclusions")
+ valid_matches={r["id"] for r in c.execute("SELECT id FROM v2_match_events WHERE athlete_id=?",(aid,)).fetchall()}
+ keys={x.get("library_id") or x["name"] for x in plan}
+ clean_exclusions={}
+ for mid,ids in exclusions.items():
+  if mid not in valid_matches or not isinstance(ids,list) or len(ids)>120 or any(not isinstance(k,str) or k not in keys for k in ids):raise ValueError("invalid_exclusions")
+  if ids:clean_exclusions[mid]=list(dict.fromkeys(ids))
+ c.execute("""INSERT INTO v2_supplements(athlete_id,plan_json,overrides_json,match_exclusions_json) VALUES(?,?,?,?)
+ ON CONFLICT(athlete_id) DO UPDATE SET plan_json=excluded.plan_json,overrides_json=excluded.overrides_json,match_exclusions_json=excluded.match_exclusions_json""",(aid,json.dumps(plan,ensure_ascii=False),json.dumps(clean,ensure_ascii=False),json.dumps(clean_exclusions,ensure_ascii=False)))
+ return {"plan":plan,"overrides":clean,"match_exclusions":clean_exclusions}
 def days(c,aid,start,end,matches,events):
  data=read(c,aid);match_dates={m["match_date"] for m in matches};train_dates={e["event_date"] for e in events if e.get("kind")=="training"}
  from datetime import timedelta
@@ -53,13 +64,20 @@ def days(c,aid,start,end,matches,events):
  if (last-d).days>62 or d>last:raise ValueError("invalid_range")
  while d<=last:
   day=d.isoformat();tomorrow=(d+timedelta(days=1)).isoformat();yesterday=(d-timedelta(days=1)).isoformat()
-  def applies(rule):
-   return rule=="daily" or (rule=="match" and day in match_dates) or (rule=="training" and day in train_dates) or (rule=="md-1" and tomorrow in match_dates) or (rule=="md+1" and yesterday in match_dates)
   items=[]
   for item in data["plan"]:
+   key=item.get("library_id") or item["name"]
    for entry in item.get("prescriptions") or [item]:
-    if applies(entry["rule"]):
-     items.append({**item,**entry, "prescriptions":None})
+    rule=entry["rule"]
+    if rule=="daily" or (rule=="training" and day in train_dates):
+     items.append({**item,**entry,"prescriptions":None})
+    elif rule in ("match","md-1","md+1"):
+     for match in matches:
+      md=match["match_date"]
+      applies=(rule=="match" and day==md) or (rule=="md-1" and tomorrow==md) or (rule=="md+1" and yesterday==md)
+      if applies and key not in data["match_exclusions"].get(match["id"],[]):
+       items.append({**item,**entry,"prescriptions":None})
+       break
   override=data["overrides"].get(day,{})
   removed=set(override.get("remove",[]))
   items=[x for x in items if x["name"] not in removed]+override.get("add",[])
