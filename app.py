@@ -628,6 +628,13 @@ def application(env, start_response):
                 try:ident=supplements_v2.library_save(c,read_json(env))
                 except ValueError:raise Problem(400,'invalid_supplement_catalogue')
                 return respond(200,{'id':ident})
+            if path.startswith('/api/v2/supplement-library/') and method=='DELETE':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                ident=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[0-9a-f]{1,64}',ident):raise Problem(400,'invalid_id')
+                c.execute('DELETE FROM v2_supplement_library WHERE id=?',(ident,))
+                return respond(200,{'ok':True})
             if path.startswith('/api/v2/supplement-library/') and path.endswith('/image') and method=='GET':
                 if not user:raise Problem(401,'unauthorized')
                 ident=path.split('/')[-2]
