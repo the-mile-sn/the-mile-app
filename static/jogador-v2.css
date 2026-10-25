@@ -943,3 +943,33 @@ header{padding:10px 0 24px}
 #overview-mode{border-radius:999px!important}
 #overview-mode button{border-radius:999px!important}
 #overview-mode button[aria-pressed=true]{border-radius:999px!important}
+
+/* Weekly grid: compact iOS-style meal cells with a tighter label/kcal stack. */
+#weekly-view .weekly-meal{
+ min-height:59px!important;
+ padding:6px 2px!important;
+ gap:2px!important;
+ justify-content:center!important;
+ border-radius:16px!important;
+}
+#weekly-view .weekly-meal-name{font-size:clamp(8px,1.5vw,11px)!important;line-height:1.16!important}
+#weekly-view .weekly-meal-kcal{font-size:clamp(9px,1.65vw,11px)!important;line-height:1.12!important}
+#weekly-view .weekly-match-with-intra{
+ min-height:59px!important;
+ padding:6px 2px!important;
+ border-radius:16px!important;
+ gap:2px!important;
+}
+/* Plans selector: softer unselected tones, full color only when chosen, no outlines or dots. */
+#plan-colors button:has(.color-dot.orange):not(.selected){background:color-mix(in srgb,var(--meal-orange) 48%,#1c1c20)!important}
+#plan-colors button:has(.color-dot.yellow):not(.selected){background:color-mix(in srgb,var(--meal-yellow) 48%,#1c1c20)!important}
+#plan-colors button:has(.color-dot.blue):not(.selected){background:color-mix(in srgb,var(--meal-blue) 48%,#1c1c20)!important}
+#plan-colors button:has(.color-dot.green):not(.selected){background:color-mix(in srgb,var(--meal-green) 48%,#1c1c20)!important}
+#plan-colors button:has(.color-dot.vp):not(.selected){background:color-mix(in srgb,var(--meal-vp) 48%,#1c1c20)!important}
+#plan-colors button.selected{box-shadow:none!important;outline:none!important;border:0!important}
+#plan-colors button .color-dot{display:none!important}
+/* Closed Planos meal kcal must match the neutral kcal text in Overview. */
+#plans #plan-detail .plan-overview-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal,
+#plans #plan-detail .plan-overview-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal *{
+ color:#dedee3!important;
+}
