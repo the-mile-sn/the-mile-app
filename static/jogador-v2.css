@@ -872,3 +872,26 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal>details[open] .foods:last-child{
  margin-bottom:0!important;
 }
+
+/* Unified option rhythm across Overview and Plans: a single centered divider. */
+#overview .daily-meal>details>summary,
+#plans #plan-detail .plan-overview-meal>details>summary{
+ padding:12px 0!important;
+}
+#overview .daily-meal>details+details,
+#plans #plan-detail .plan-overview-meal>details+details{
+ margin-top:9px!important;
+ padding-top:9px!important;
+ border-top:1px solid rgba(255,255,255,.13)!important;
+}
+#overview .daily-meal>details[open]+details,
+#plans #plan-detail .plan-overview-meal>details[open]+details{
+ margin-top:12px!important;
+ padding-top:12px!important;
+}
+#overview .daily-meal>details:not(:last-child),
+#plans #plan-detail .plan-overview-meal>details:not(:last-child){
+ border-bottom:0!important;
+ padding-bottom:0!important;
+ margin-bottom:0!important;
+}
