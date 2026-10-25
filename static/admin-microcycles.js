@@ -1277,9 +1277,27 @@ function renderSupplementEditor(){
    for(const [key,title,options] of [["moment","Associação",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["dinner","Jantar"],["training","Treino"],["match","Jogo"]]],["rule","Frequência",[["daily","Diária"],["training","Treino"],["match","MD"],["md-1","MD-1"],["md+1","MD+1"]]]]){
     const wrap=document.createElement("label");wrap.textContent=title;const select=document.createElement("select");for(const [value,text] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=text;select.append(opt);}select.value=item[key]||"";inputs[key]=select;wrap.append(select);form.append(wrap);
    }
+   const prescriptions=document.createElement("div");prescriptions.className="supp-prescription-rules";
+   const rows=[];
+   function addRule(source){
+    const entry=document.createElement("div");entry.className="supp-prescription-rule";
+    const fields={};
+    for(const [key,title,options] of [["rule","Frequência",[["daily","Diária"],["training","Treino"],["md-1","MD-1"],["match","MD"],["md+1","MD+1"]]],["dose","Dose",null],["timing_text","Momento da toma",null]]){
+     const wrap=document.createElement("label");wrap.textContent=title;
+     const input=options?document.createElement("select"):document.createElement("input");
+     if(options)for(const [v,t] of options){const opt=document.createElement("option");opt.value=v;opt.textContent=t;input.append(opt);}
+     input.value=source[key]||"";fields[key]=input;wrap.append(input);entry.append(wrap);
+    }
+    const remove=document.createElement("button");remove.type="button";remove.textContent="Remover toma";remove.onclick=()=>{entry.remove();const i=rows.indexOf(fields);if(i>=0)rows.splice(i,1);};entry.append(remove);rows.push(fields);prescriptions.append(entry);
+   }
+   for(const prescription of item.prescriptions||[{rule:item.rule,dose:item.dose,timing_text:item.timing_text}])addRule(prescription);
+   const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar outra prescrição";add.onclick=()=>addRule({rule:"daily",dose:item.dose,timing_text:""});
+   form.append(prescriptions,add);
    const save=document.createElement("button");save.textContent="Aplicar alterações";save.type="button";save.onclick=()=>{
     if(!inputs.name.value.trim()||!inputs.dose.value.trim())return;
+    if(!rows.length||rows.some(r=>!r.dose.value.trim()))return;
     for(const key of Object.keys(inputs))item[key]=inputs[key].value.trim();
+    item.prescriptions=rows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:item.moment,timing_text:r.timing_text.value.trim(),note:item.note}));
     $("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
    };
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
