@@ -1079,28 +1079,28 @@ function syncCalendarEventForm(){
 
 async function renderCalendarSupplementChoices(){
  if(!model)return;
- const [library,assigned]=await Promise.all([request("/api/v2/supplement-library"),request(matchBase()+"/supplements")]);
- supplementLibrary=library.items||[];supplementDraft=assigned;
+ const assigned=await request(matchBase()+"/supplements");
  const root=$("calendar-supp-list");root.replaceChildren();
  const date=$("calendar-new-date").value,day=assigned.overrides?.[date]?.add||[];
- for(const item of supplementLibrary){
+ const options=assigned.plan||[];
+ for(const [index,item] of options.entries()){
   const label=document.createElement("label");label.className="calendar-peri-check";
-  const cb=document.createElement("input");cb.type="checkbox";cb.dataset.suppId=item.id;
-  cb.checked=day.some(x=>x.library_id===item.id);
-  const title=document.createElement("span");title.textContent=item.name+" · "+item.dose+(item.timing_text?" · "+item.timing_text:"");
+  const cb=document.createElement("input");cb.type="checkbox";cb.dataset.suppIndex=String(index);
+  cb.checked=day.some(x=>item.library_id?x.library_id===item.library_id:x.name===item.name);
+  const title=document.createElement("span");title.textContent=item.name+" · "+item.dose;
   label.append(cb,title);root.append(label);
  }
- if(!supplementLibrary.length)root.textContent="Ainda não existem suplementos na biblioteca. Cria-os no separador Suplementação.";
+ if(!options.length)root.textContent="Ainda não há suplementos atribuídos a este jogador. Associa-os primeiro no separador Suplementação.";
 }
 async function saveCalendarSupplements(date){
- const selected=Array.from($("calendar-supp-list").querySelectorAll("input:checked")).map(x=>x.dataset.suppId);
+ const selected=Array.from($("calendar-supp-list").querySelectorAll("input:checked")).map(x=>Number(x.dataset.suppIndex));
  const data=await request(matchBase()+"/supplements"),current=data.overrides[date]||{add:[],remove:[]};
- const catalogueIds=new Set(supplementLibrary.map(x=>x.id));
- const preserved=(current.add||[]).filter(x=>!catalogueIds.has(x.library_id));
- const additions=selected.map(id=>{
-  const item=supplementLibrary.find(x=>x.id===id);
-  return {library_id:id,name:item.name,dose:item.dose,moment:item.moment,rule:"daily",timing_text:item.timing_text,note:item.note};
- });
+ const assigned=data.plan||[];
+ const isAssigned=x=>assigned.some(p=>p.library_id?x.library_id===p.library_id:x.name===p.name);
+ const preserved=(current.add||[]).filter(x=>!isAssigned(x));
+ const additions=selected.map(i=>assigned[i]).filter(Boolean).map(item=>({
+  library_id:item.library_id||"",name:item.name,dose:item.dose,moment:item.moment,rule:"daily",timing_text:item.timing_text||"",note:item.note||""
+ }));
  data.overrides[date]={...current,add:preserved.concat(additions)};
  await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(data)});
 }
