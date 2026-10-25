@@ -72,12 +72,16 @@ def library_init(c):
  id TEXT PRIMARY KEY, name TEXT NOT NULL, dose TEXT NOT NULL, moment TEXT NOT NULL,
  rule TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', timing_text TEXT NOT NULL DEFAULT '',
  image_data TEXT NOT NULL DEFAULT '')""")
+ try:c.execute("ALTER TABLE v2_supplement_library ADD COLUMN prescriptions_json TEXT NOT NULL DEFAULT '[]'")
+ except Exception as e:
+  if "duplicate column" not in str(e).lower():raise
 def library_list(c):
- return [dict(row) for row in c.execute("SELECT id,name,dose,moment,rule,note,timing_text,CASE WHEN image_data='' THEN 0 ELSE 1 END AS has_image FROM v2_supplement_library ORDER BY name").fetchall()]
+ return [dict(dict(row),prescriptions=json.loads(row["prescriptions_json"])) for row in c.execute("SELECT id,name,dose,moment,rule,note,timing_text,prescriptions_json,CASE WHEN image_data='' THEN 0 ELSE 1 END AS has_image FROM v2_supplement_library ORDER BY name").fetchall()]
 def library_save(c,payload):
  import secrets
  name=str(payload.get("name","")).strip()
  data=validate([{"name":name,"dose":payload.get("dose",""),"moment":payload.get("moment",""),"rule":payload.get("rule","daily"),"note":payload.get("note",""),"timing_text":payload.get("timing_text","")}])[0]
+ prescriptions=validate([{**data,"prescriptions":payload["prescriptions"]}])[0].get("prescriptions",[]) if "prescriptions" in payload else []
  ident=str(payload.get("id") or secrets.token_hex(12))
  if not all(ch in "0123456789abcdef" for ch in ident) or len(ident)>64:raise ValueError("invalid_id")
  image=payload.get("image_data",None)
@@ -91,18 +95,18 @@ def library_save(c,payload):
   existing=library_image(c,ident)
   if not image and existing:image=existing
  else:image=library_image(c,ident)
- c.execute("""INSERT INTO v2_supplement_library(id,name,dose,moment,rule,note,timing_text,image_data)
- VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
+ c.execute("""INSERT INTO v2_supplement_library(id,name,dose,moment,rule,note,timing_text,image_data,prescriptions_json)
+ VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
  name=excluded.name,dose=excluded.dose,moment=excluded.moment,rule=excluded.rule,
- note=excluded.note,timing_text=excluded.timing_text,image_data=excluded.image_data""",
- (ident,data["name"],data["dose"],data["moment"],data["rule"],data["note"],data["timing_text"],image or ""))
+ note=excluded.note,timing_text=excluded.timing_text,image_data=excluded.image_data,prescriptions_json=excluded.prescriptions_json""",
+ (ident,data["name"],data["dose"],data["moment"],data["rule"],data["note"],data["timing_text"],image or "",json.dumps(prescriptions,ensure_ascii=False)))
  return ident
 def library_image(c,ident):
  row=c.execute("SELECT image_data FROM v2_supplement_library WHERE id=?",(ident,)).fetchone()
  return row["image_data"] if row else ""
 def library_get(c,ident):
- row=c.execute("SELECT id,name,dose,moment,rule,note,timing_text FROM v2_supplement_library WHERE id=?",(ident,)).fetchone()
- return dict(row) if row else None
+ row=c.execute("SELECT id,name,dose,moment,rule,note,timing_text,prescriptions_json FROM v2_supplement_library WHERE id=?",(ident,)).fetchone()
+ return dict(dict(row),prescriptions=json.loads(row["prescriptions_json"])) if row else None
 
 def library_bulk_zip(c, encoded, commit=False):
  import base64, io, zipfile
