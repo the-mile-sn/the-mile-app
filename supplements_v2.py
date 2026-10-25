@@ -86,3 +86,39 @@ def library_image(c,ident):
 def library_get(c,ident):
  row=c.execute("SELECT id,name,dose,moment,rule,note,timing_text FROM v2_supplement_library WHERE id=?",(ident,)).fetchone()
  return dict(row) if row else None
+
+def library_bulk_zip(c, encoded, commit=False):
+ import base64, io, zipfile
+ try:
+  binary=base64.b64decode(encoded,validate=True)
+  if len(binary)>5*1024*1024:raise ValueError("invalid_package")
+  with zipfile.ZipFile(io.BytesIO(binary)) as z:
+   if len(z.namelist())>130 or sum(x.file_size for x in z.infolist())>10*1024*1024:raise ValueError("invalid_package")
+   manifest=json.loads(z.read("manifest.json"))
+   if manifest.get("version")!=1:raise ValueError("invalid_package")
+   items=manifest["items"]
+   if not isinstance(items,list) or len(items)>100:raise ValueError("invalid_package")
+   existing={r["name"].strip().casefold():r["id"] for r in library_list(c)}
+   preview=[];saved=0
+   for item in items:
+    name=str(item["name"]).strip()
+    if not name or len(name)>120:raise ValueError("invalid_package")
+    found=existing.get(name.casefold())
+    preview.append({"name":name,"exists":bool(found),"requires_review":bool(item.get("requires_review"))})
+    if not commit or found:continue
+    dose=str(item.get("dose_original","")).splitlines()[0].strip()[:120]
+    image_name=item.get("image")
+    image=z.read(image_name) if image_name else b""
+    if len(image)>250000:raise ValueError("invalid_package")
+    source_timing=str(item.get("timing_original","")).strip()
+    instructions=str(item.get("instructions_original","")).strip()
+    frequency=item.get("frequency_candidate")
+    # Event-based and conditional protocols are stored as library references,
+    # never activated as automatic daily supplementation before clinical review.
+    timing_text=source_timing[:240]
+    note=(("Frequência original: "+str(item.get("dose_original",""))+"\\n") if frequency!="daily" else "")+instructions
+    library_save(c,{"name":name,"dose":dose or "Conforme protocolo","moment":"","rule":"daily","timing_text":timing_text,"note":note[:400],"image_data":base64.b64encode(image).decode("ascii")})
+    saved+=1
+   return {"total":len(items),"existing":sum(x["exists"] for x in preview),"to_add":sum(not x["exists"] for x in preview),"saved":saved,"review":sum(x["requires_review"] for x in preview),"items":preview}
+ except (KeyError,TypeError,zipfile.BadZipFile,UnicodeDecodeError,base64.binascii.Error):
+  raise ValueError("invalid_package")
