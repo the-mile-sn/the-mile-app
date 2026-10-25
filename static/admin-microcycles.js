@@ -1260,7 +1260,8 @@ function supplementPublishedKey(){return JSON.stringify(supplementDraft.plan);}
 function supplementPending(){return supplementPublishedKey()!==publishedSupplementSnapshot;}
 async function loadSupplementEditor(){
  supplementDraft=await request(matchBase()+"/supplements");publishedSupplementSnapshot=supplementPublishedKey();await loadSupplementLibrary();
- const calendar=await request(matchBase()+"/calendar?start=2026-01-01&end=2027-12-31");supplementMatches=calendar.matches||[];
+ const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1);const last=new Date(first);last.setDate(last.getDate()+55);
+ const calendar=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));supplementMatches=calendar.matches||[];
  renderSupplementEditor();
 }
 function renderSupplementMatchExclusions(){
