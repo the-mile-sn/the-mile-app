@@ -291,3 +291,15 @@
 #supplements-panel .supp-prescription-rules{grid-column:1/-1;display:grid;gap:10px}#supplements-panel .supp-prescription-rule{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:9px;align-items:end;padding:11px;border-radius:14px;background:rgba(255,255,255,.04)}#supplements-panel .supp-prescription-rule label{margin:0!important}#supplements-panel .supp-prescription-rule button{align-self:end}#supplements-panel .supp-inline-edit>button{justify-self:start}@media(max-width:700px){#supplements-panel .supp-prescription-rule{grid-template-columns:1fr 1fr}#supplements-panel .supp-prescription-rule label:nth-child(3){grid-column:1/-1}}
 
 .supp-prescription-library{display:grid;gap:10px;grid-column:1/-1}.supp-prescription-library .supp-prescription-rules{display:grid;gap:10px}.supp-prescription-library .supp-prescription-rule,.supp-inline-edit .supp-prescription-rule{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:9px;align-items:end;padding:12px;border-radius:14px;background:rgba(125,125,125,.08)}@media(max-width:700px){.supp-prescription-library .supp-prescription-rule,.supp-inline-edit .supp-prescription-rule{grid-template-columns:1fr 1fr}}
+
+#supplements-panel .supp-exceptions-card{background:rgba(104,119,148,.13);border:1px solid rgba(155,169,200,.18);border-radius:22px;padding:20px 24px}
+#supplements-panel .supp-exceptions-card>summary{font-size:1.05rem}
+#supplements-panel #supp-match-exclusions{display:grid;gap:10px;margin-top:16px}
+#supplements-panel .supp-match-exclusion{padding:0 2px}
+#supplements-panel .supp-match-exclusion>summary{list-style:none;display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.045);font-weight:600}
+#supplements-panel .supp-match-exclusion>summary::-webkit-details-marker{display:none}
+#supplements-panel .supp-match-exclusion>summary::before{content:"";display:inline-block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);opacity:.75;flex:none;transition:transform .15s}
+#supplements-panel .supp-match-exclusion[open]>summary::before{transform:rotate(45deg)}
+#supplements-panel .supp-match-exclusion-options{display:grid;gap:12px;padding:14px 12px 8px}
+#supplements-panel .supp-match-exclusion-options label{display:flex;align-items:center;gap:12px;margin:0;line-height:1.45;cursor:pointer}
+#supplements-panel .supp-match-exclusion-options input[type=checkbox]{flex:0 0 auto;margin:0;width:18px;height:18px}
