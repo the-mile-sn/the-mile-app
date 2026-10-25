@@ -227,3 +227,9 @@
 #supplements-panel .supp-associated-actions button{width:auto;min-width:78px}
 #supplements-panel .supp-inline-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;width:100%}
 #supplements-panel .supp-inline-edit label{display:flex;flex-direction:column;gap:5px}
+
+/* Publication history uses the same plain disclosure as food plans. */
+#peri-panel #peri-list>.peri-history{border:0!important;background:transparent!important;padding:8px 0!important;border-radius:0!important}
+#peri-panel #peri-list>.peri-history>summary{font-weight:600;padding:5px 0}
+#peri-panel .peri-plan-section>.event-admin-row{justify-content:flex-start}
+#peri-panel .peri-plan-section>.event-admin-row>span{margin-right:auto}
