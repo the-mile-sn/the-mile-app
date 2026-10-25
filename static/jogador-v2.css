@@ -559,3 +559,27 @@ header{padding:10px 0 24px}
 .weekly-match-with-intra .weekly-match-kcal{font-size:10px;font-weight:500;white-space:nowrap;opacity:.85}
 .weekly-match-with-intra[aria-pressed="true"]{outline:2px solid currentColor;outline-offset:-2px}
 .weekly-match-with-intra:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* V2 daily nutrition: a single informational surface, not four tappable tiles. */
+#overview #date-title,#overview #day-details>h2{display:none!important}
+#overview .nutrition-donut-summary{border:0!important;background:rgba(255,255,255,.045)!important;border-radius:19px!important;padding:20px 18px!important;margin:8px 0 25px;box-shadow:none!important}
+#overview .nutrition-hero{display:grid;grid-template-columns:minmax(0,1fr) 122px;gap:13px;align-items:center;padding-bottom:19px}
+#overview .nutrition-energy{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
+#overview .nutrition-energy>small{font-size:14px;color:#b1b1bc}
+#overview .nutrition-energy>strong{font-size:clamp(24px,5.8vw,39px);font-weight:750;white-space:nowrap;letter-spacing:-.035em;line-height:1.12;color:#a7d8bc}
+#overview .nutrition-energy>.per-kg{font-size:13px;color:#a6a6b1}
+#overview .nutrition-ring{width:114px;height:114px;justify-self:end;border-radius:50%;background:conic-gradient(#a9c4d0 0 var(--protein-end),#e4b398 var(--protein-end) var(--carbs-end),#e0cf9f var(--carbs-end) 100%);display:grid;place-items:center;position:relative}
+#overview .nutrition-ring:before{content:"";position:absolute;inset:19px;border-radius:50%;background:#212126}
+#overview .nutrition-ring>span{position:relative;color:#d4d4dc;font-size:12px;font-weight:550}
+#overview .nutrition-macro-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(255,255,255,.10);padding-top:17px}
+#overview .nutrition-macro{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;padding:0 11px}
+#overview .nutrition-macro:first-child{padding-left:0}
+#overview .nutrition-macro:last-child{padding-right:0}
+#overview .nutrition-macro+.nutrition-macro{border-left:1px solid rgba(255,255,255,.10)}
+#overview .nutrition-macro>small:first-child{font-size:12px;color:#b4b4bf;white-space:nowrap}
+#overview .nutrition-macro>strong{font-size:clamp(17px,4vw,25px);line-height:1.13;font-weight:720;white-space:nowrap}
+#overview .nutrition-macro.protein>strong{color:#a9c4d0}
+#overview .nutrition-macro.carbs>strong{color:#e4b398}
+#overview .nutrition-macro.fat>strong{color:#e0cf9f}
+#overview .nutrition-macro>.per-kg{font-size:11px;color:#a6a6b1;white-space:nowrap}
+@media(max-width:360px){#overview .nutrition-donut-summary{padding:16px 13px!important}#overview .nutrition-hero{grid-template-columns:minmax(0,1fr) 96px}#overview .nutrition-ring{width:94px;height:94px}#overview .nutrition-ring:before{inset:16px}#overview .nutrition-macro{padding:0 7px}#overview .nutrition-macro>small:first-child{font-size:11px}}
