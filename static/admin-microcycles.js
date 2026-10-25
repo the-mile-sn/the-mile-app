@@ -1282,7 +1282,7 @@ function renderSupplementEditor(){
    function addRule(source){
     const entry=document.createElement("div");entry.className="supp-prescription-rule";
     const fields={};
-    for(const [key,title,options] of [["rule","Frequência",[["daily","Diária"],["training","Treino"],["md-1","MD-1"],["match","MD"],["md+1","MD+1"]]],["dose","Dose",null],["timing_text","Momento da toma",null]]){
+    for(const [key,title,options] of [["rule","Frequência",[["daily","Diária"],["training","Treino"],["md-1","MD-1"],["match","MD"],["md+1","MD+1"]]],["dose","Dose",null],["moment","Associar a",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["snack","Lanche"],["dinner","Jantar"],["supper","Ceia"],["training","Treino"],["match","Jogo"]]],["timing_text","Momento da toma",null]]){
      const wrap=document.createElement("label");wrap.textContent=title;
      const input=options?document.createElement("select"):document.createElement("input");
      if(options)for(const [v,t] of options){const opt=document.createElement("option");opt.value=v;opt.textContent=t;input.append(opt);}
@@ -1290,14 +1290,14 @@ function renderSupplementEditor(){
     }
     const remove=document.createElement("button");remove.type="button";remove.textContent="Remover toma";remove.onclick=()=>{entry.remove();const i=rows.indexOf(fields);if(i>=0)rows.splice(i,1);};entry.append(remove);rows.push(fields);prescriptions.append(entry);
    }
-   for(const prescription of item.prescriptions||[{rule:item.rule,dose:item.dose,timing_text:item.timing_text}])addRule(prescription);
-   const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar outra prescrição";add.onclick=()=>addRule({rule:"daily",dose:item.dose,timing_text:""});
+   for(const prescription of item.prescriptions||[{rule:item.rule,dose:item.dose,moment:item.moment,timing_text:item.timing_text}])addRule(prescription);
+   const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar outra prescrição";add.onclick=()=>addRule({rule:"daily",dose:item.dose,moment:"",timing_text:""});
    form.append(prescriptions,add);
    const save=document.createElement("button");save.textContent="Aplicar alterações";save.type="button";save.onclick=()=>{
     if(!inputs.name.value.trim()||!inputs.dose.value.trim())return;
     if(!rows.length||rows.some(r=>!r.dose.value.trim()))return;
     for(const key of Object.keys(inputs))item[key]=inputs[key].value.trim();
-    item.prescriptions=rows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:item.moment,timing_text:r.timing_text.value.trim(),note:item.note}));
+    item.prescriptions=rows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:r.moment.value,timing_text:r.timing_text.value.trim(),note:item.note}));
     $("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
    };
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
@@ -1320,6 +1320,21 @@ $("supp-save").onclick=async()=>{
  catch(e){$("supp-feedback").textContent="Não foi possível guardar: "+e.message;}
 };
 
+let libraryPrescriptionRows=[];
+function renderLibraryPrescriptionRules(values){
+ const host=$("supp-lib-prescriptions");host.replaceChildren();libraryPrescriptionRows=[];
+ const add=(source={})=>{
+  const entry=document.createElement("div");entry.className="supp-prescription-rule";const fields={};
+  for(const [key,title,options] of [["rule","Frequência",[["daily","Diária"],["training","Treino"],["md-1","MD-1"],["match","MD"],["md+1","MD+1"]]],["dose","Dose",null],["moment","Associar a",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["snack","Lanche"],["dinner","Jantar"],["supper","Ceia"],["training","Treino"],["match","Jogo"]]],["timing_text","Momento da toma",null]]){
+   const wrap=document.createElement("label");wrap.textContent=title;const input=options?document.createElement("select"):document.createElement("input");
+   if(options)for(const [value,label] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=label;input.append(opt);}
+   input.value=source[key]||"";fields[key]=input;wrap.append(input);entry.append(wrap);
+  }
+  const remove=document.createElement("button");remove.type="button";remove.textContent="Remover toma";remove.onclick=()=>{entry.remove();libraryPrescriptionRows=libraryPrescriptionRows.filter(x=>x!==fields);};entry.append(remove);libraryPrescriptionRows.push(fields);host.append(entry);
+ };
+ (values&&values.length?values:[{rule:$("supp-lib-rule").value,dose:$("supp-lib-dose").value,moment:$("supp-lib-moment").value,timing_text:$("supp-lib-timing").value}]).forEach(add);
+ $("supp-lib-add-rule").onclick=()=>add({rule:"daily",dose:"",moment:"",timing_text:""});
+}
 let supplementLibrary=[];
 function filterSupplementLists(){
  const q=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");
@@ -1338,6 +1353,7 @@ function filterSupplementLists(){
    $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;$("supp-lib-moment").value=item.moment;
    $("supp-lib-rule").value=item.rule;$("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
    $("supp-lib-save").dataset.editId=item.id;
+   renderLibraryPrescriptionRules(item.prescriptions);
    const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";panel.scrollIntoView({behavior:"smooth",block:"nearest"});
   };actions.append(edit);const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};actions.append(remove);row.append(actions);list.append(row);
  }
@@ -1362,6 +1378,8 @@ $("supp-lib-save").onclick=async()=>{
   const payload={id:button.dataset.editId||undefined,name:$("supp-lib-name").value,dose:$("supp-lib-dose").value,
    moment:$("supp-lib-moment").value,rule:$("supp-lib-rule").value,
    timing_text:$("supp-lib-timing").value,note:$("supp-lib-note").value};
+  if(!libraryPrescriptionRows.length||libraryPrescriptionRows.some(r=>!r.dose.value.trim()))throw Error("Preenche pelo menos uma toma com dose.");
+  payload.prescriptions=libraryPrescriptionRows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:r.moment.value,timing_text:r.timing_text.value.trim(),note:payload.note}));
   if(imageData!==undefined)payload.image_data=imageData;
   await request("/api/v2/supplement-library",{method:"POST",body:JSON.stringify(payload)});
   delete button.dataset.editId;$("supp-lib-image").value="";
@@ -1373,7 +1391,7 @@ $("supp-lib-assign").onclick=()=>{
  const query=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");const item=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===query);
  if(!item){$("supp-feedback").textContent="Seleciona uma sugestão exata da lista.";return;}
  if(/MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){$("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";return;}
- supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text});
+ supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text,...(item.prescriptions?.length?{prescriptions:item.prescriptions.map(p=>({...p}))}:{})});
  renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
 };
 
@@ -1401,3 +1419,5 @@ $("supp-bulk-confirm").onclick=async()=>{
   button.hidden=true;await loadSupplementLibrary();
  }catch(e){$("supp-bulk-results").textContent="Erro ao importar: "+e.message;}finally{button.disabled=false;}
 };
+
+if($("supp-lib-prescriptions")){renderLibraryPrescriptionRules([]);$("supp-library-editor").addEventListener("toggle",()=>{if($("supp-library-editor").open&&!$("supp-lib-save").dataset.editId)renderLibraryPrescriptionRules([]);});}
