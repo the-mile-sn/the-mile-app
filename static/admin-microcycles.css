@@ -264,3 +264,12 @@
 #peri-panel .peri-option-consult>summary:after{margin-left:14px}
 #peri-panel .peri-option-consult>p{margin:7px 0 4px 15px}
 @media(max-width:680px){#peri-panel .peri-macros{gap:6px;font-size:.72rem;flex-wrap:wrap;white-space:normal}}
+
+/* Consistent spacing between labels and editable fields in the admin interface. */
+#supplements-panel label,#menus-panel label,#peri-panel label,#import-panel label{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+#supplements-panel .supp-workflow-body>label,#supplements-panel .supp-workflow>label{margin-bottom:14px}
+#supplements-panel .supp-library-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#supplements-panel .supp-library-actions button{min-width:78px}
+#supplements-panel #supp-lib-list .event-admin-row{gap:12px;align-items:center}
+#supplements-panel #supp-lib-list .event-admin-row>span{flex:1}
+#supplements-panel #supp-assign-search{width:100%;max-width:600px}
