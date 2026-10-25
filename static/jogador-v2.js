@@ -408,7 +408,7 @@ async function overview(){
     const single=options[0],body=document.createElement("div");body.className="single-meal-option";
     for(const food of single.items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";body.append(p);}
     section.append(body);
-   }else options.forEach((o,i)=>section.append(optionEl(o,i)));
+   }else options.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
   root.append(section);
@@ -459,7 +459,7 @@ function renderPlans(){
    const body=document.createElement("div");body.className="single-meal-option";
    for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";body.append(p);}
    section.append(body);
-  }else opts.forEach((o,i)=>section.append(optionEl(o,i)));
+  }else opts.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   detail.append(section);
  }
 }
