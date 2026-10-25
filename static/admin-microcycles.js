@@ -1150,9 +1150,9 @@ async function loadPeriImports(){
   const active=result.active?.[kind]?.options;
   const section=document.createElement("details");section.className="peri-plan-section";section.open=periExpandedKind===kind;
   section.addEventListener("toggle",()=>{if(section.open)periExpandedKind=kind;else if(periExpandedKind===kind)periExpandedKind=null;});
-  const summary=document.createElement("summary");summary.textContent=title+" · "+(drafts.length?"Em revisão":active?"Publicado":"Sem plano");section.append(summary);
+  const summary=document.createElement("summary");summary.className="peri-summary";const headline=document.createElement("strong");headline.textContent=title;const state=document.createElement("span");state.className="peri-state";state.textContent=drafts.length?"Em revisão":active?"Publicado":"Sem plano";const meta=document.createElement("span");meta.className="peri-summary-text";meta.append(headline,state);summary.append(meta);section.append(summary);
   const controls=document.createElement("div");controls.className="event-admin-row peri-plan-actions";
-  const label=document.createElement("strong");label.textContent=title;controls.append(label);
+  
   if(chosen){
    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
    edit.onclick=async()=>{
@@ -1174,7 +1174,7 @@ async function loadPeriImports(){
     const choice=document.createElement("details");choice.className="peri-option-consult";
     const top=document.createElement("summary");
     const name=document.createElement("strong");name.textContent=option.title||"Opção "+(option.number||i+1);
-    const totals=document.createElement("span");totals.className="hint";totals.textContent=[option.totals?.kcal!=null?option.totals.kcal+" kcal":"",option.totals?.protein_g!=null?"P "+option.totals.protein_g+" g":"",option.totals?.carbs_g!=null?"HC "+option.totals.carbs_g+" g":"",option.totals?.fat_g!=null?"G "+option.totals.fat_g+" g":""].filter(Boolean).join(" · ");
+    const totals=document.createElement("span");totals.className="peri-macros";for(const [key,prefix,unit,kindClass] of [["kcal",""," kcal","energy"],["protein_g","P "," g","protein"],["carbs_g","HC "," g","carbs"],["fat_g","G "," g","fat"]]){if(option.totals?.[key]==null)continue;const part=document.createElement("span");part.className="peri-macro-"+kindClass;part.textContent=prefix+String(option.totals[key]).replace(".",",")+unit;totals.append(part);}
     top.append(name,totals);choice.append(top);
     for(const item of option.items||[]){const line=document.createElement("p");line.textContent=item.kind==="food"?[item.quantity,item.name].filter(Boolean).join(" · "):(item.text||"");choice.append(line);}
     section.append(choice);
