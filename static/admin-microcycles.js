@@ -1140,58 +1140,53 @@ function periMessage(value){$("peri-feedback").textContent=value;}
 async function loadPeriImports(){
  if(!model)return;
  const result=await request(periEndpoint());
- const live=$("peri-current");live.replaceChildren();
- for(const [kind,label] of [["training","Peri-treino"],["match","Peri-jogo"]]){
-  const p=document.createElement("p");const date=result.active?.[kind]?.published_at;
-  p.textContent=label+": "+(date?("Publicado em "+new Date(date*1000).toLocaleDateString("pt-PT")):"Sem plano publicado");live.append(p);
- }
- const overview=document.createElement("div");overview.className="peri-published-overview";
- for(const [kind,title] of [["training","Peri-treino"],["match","Peri-jogo"]]){
-  const record=result.active?.[kind],options=record?.options;
-  if(!options)continue;
-  const section=document.createElement("details");section.className="peri-editor-option";
-  const summary=document.createElement("summary");summary.textContent="Visualizar plano publicado · "+title;section.append(summary);
-  for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
-   const choices=options[phase]||[];if(!choices.length)continue;
-   const heading=document.createElement("h4");heading.textContent=label;section.append(heading);
-   for(const [i,option] of choices.entries()){
-    const choice=document.createElement("details");choice.className="peri-editor-option";
-    const top=document.createElement("summary");top.textContent=(option.title||"Opção "+(option.number||i+1));
-    if(option.totals?.kcal!=null)top.textContent+=" · "+option.totals.kcal+" kcal";
-    choice.append(top);
-    const totals=document.createElement("p");totals.className="hint";
-    totals.textContent=["P "+(option.totals?.protein_g??"—"),"HC "+(option.totals?.carbs_g??"—"),"G "+(option.totals?.fat_g??"—")].join(" · ")+" g";choice.append(totals);
-    for(const item of option.items||[]){
-     const line=document.createElement("p");line.textContent=item.kind==="food"?[item.quantity,item.name].filter(Boolean).join(" · "):item.text||"";choice.append(line);
-    }
-    section.append(choice);
-   }
-  }
-  overview.append(section);
- }
- live.append(overview);
+ $("peri-current").replaceChildren();
  const list=$("peri-list");list.replaceChildren();
+ const history=document.createElement("details");history.className="peri-history";
+ const historyTitle=document.createElement("summary");history.append(historyTitle);
+ let historyCount=0;
  for(const [kind,title] of [["training","Peri-treino"],["match","Peri-jogo"]]){
   const all=(result.imports||[]).filter(d=>d.kind===kind);
+  const drafts=all.filter(d=>d.status==="draft");
+  const published=all.filter(d=>d.status!=="draft");
   const section=document.createElement("details");section.className="peri-plan-section";
-  const summary=document.createElement("summary");summary.textContent=title+" · "+(result.active?.[kind]?"Publicado":"Sem plano publicado");section.append(summary);
-  const drafts=all.filter(d=>d.status==="draft"),history=all.filter(d=>d.status!=="draft");
-  for(const draft of drafts){
+  const summary=document.createElement("summary");
+  summary.textContent=title+" · "+(drafts.length?"Em revisão":result.active?.[kind]?"Publicado":"Sem plano");
+  section.append(summary);
+  const chosen=drafts[0]||published[0];
+  if(chosen){
+   const controls=document.createElement("div");controls.className="event-admin-row";
+   const note=document.createElement("span");note.textContent=chosen.status==="draft"?"Rascunho por validar":"Plano publicado";
+   const button=document.createElement("button");button.type="button";
+   button.textContent=chosen.status==="draft"?"Editar e validar":"Consultar";
+   button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(chosen.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
+   controls.append(note,button);section.append(controls);
+  }
+  const active=result.active?.[kind]?.options;
+  if(active){
+   for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+    const options=active[phase]||[];if(!options.length)continue;
+    const heading=document.createElement("h4");heading.textContent=label;section.append(heading);
+    for(const [i,option] of options.entries()){
+     const row=document.createElement("div");row.className="event-admin-row";
+     const name=document.createElement("strong");name.textContent=option.title||"Opção "+(option.number||i+1);
+     const nutrition=document.createElement("span");nutrition.className="hint";nutrition.textContent=[option.totals?.kcal!=null?option.totals.kcal+" kcal":"",option.totals?.protein_g!=null?"P "+option.totals.protein_g+" g":"",option.totals?.carbs_g!=null?"HC "+option.totals.carbs_g+" g":"",option.totals?.fat_g!=null?"G "+option.totals.fat_g+" g":""].filter(Boolean).join(" · ");
+     row.append(name,nutrition);section.append(row);
+    }
+   }
+  }
+  list.append(section);
+  for(const draft of published){
+   historyCount++;
    const row=document.createElement("div");row.className="event-admin-row";
-   const label=document.createElement("span");label.textContent="Plano em revisão";
-   const button=document.createElement("button");button.type="button";button.textContent="Editar e validar";
+   const label=document.createElement("span");label.textContent=title+" · Publicado";
+   const button=document.createElement("button");button.type="button";button.textContent="Consultar";
    button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
-   row.append(label,button);section.append(row);
+   row.append(label,button);history.append(row);
   }
-  if(!drafts.length){const hint=document.createElement("p");hint.className="hint";hint.textContent="Sem rascunhos pendentes.";section.append(hint);}
-  const historyBox=document.createElement("details");historyBox.className="peri-history";const titleRow=document.createElement("summary");titleRow.textContent="Histórico de publicações ("+history.length+")";historyBox.append(titleRow);
-  for(const draft of history){
-   const row=document.createElement("div");row.className="event-admin-row";const label=document.createElement("span");label.textContent="Plano publicado";
-   const button=document.createElement("button");button.type="button";button.textContent="Consultar";button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
-   row.append(label,button);historyBox.append(row);
-  }
-  section.append(historyBox);list.append(section);
  }
+ historyTitle.textContent="Histórico de publicações ("+historyCount+")";
+ list.append(history);
 }
 function renderPeriDraft(draft){
  const root=$("peri-review");root.replaceChildren();
@@ -1258,13 +1253,33 @@ async function loadSupplementEditor(){
 }
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
+ const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
  for(const [i,item] of supplementDraft.plan.entries()){
-  const row=document.createElement("div");row.className="event-admin-row";
-  const label=document.createElement("span");label.textContent=[item.name,item.dose,item.timing_text||item.moment||"Sem associação",item.rule].join(" · ");
-  const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();};
-  row.append(label,remove);list.append(row);
+  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";
+  const label=document.createElement("span");
+  label.textContent=[item.name,item.dose,item.timing_text||labels[item.moment]||item.moment||"Sem associação",labels[item.rule]||item.rule].filter(Boolean).join(" · ");
+  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
+  edit.onclick=()=>{
+   const form=document.createElement("div");form.className="supp-inline-edit";
+   const fields=[["name","Suplemento"],["dose","Dose"],["timing_text","Momento ou condição"],["note","Instruções"]];
+   const inputs={};
+   for(const [key,title] of fields){const wrap=document.createElement("label");wrap.textContent=title;const input=document.createElement("input");input.value=item[key]||"";inputs[key]=input;wrap.append(input);form.append(wrap);}
+   for(const [key,title,options] of [["moment","Associação",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["dinner","Jantar"],["training","Treino"],["match","Jogo"]]],["rule","Frequência",[["daily","Diária"],["training","Treino"],["match","MD"],["md-1","MD-1"]]]]){
+    const wrap=document.createElement("label");wrap.textContent=title;const select=document.createElement("select");for(const [value,text] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=text;select.append(opt);}select.value=item[key]||"";inputs[key]=select;wrap.append(select);form.append(wrap);
+   }
+   const save=document.createElement("button");save.textContent="Aplicar alterações";save.type="button";save.onclick=()=>{
+    if(!inputs.name.value.trim()||!inputs.dose.value.trim())return;
+    for(const key of Object.keys(inputs))item[key]=inputs[key].value.trim();
+    $("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
+   };
+   const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
+   form.append(save,cancel);row.replaceChildren(form);
+  };
+  const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";
+  remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();};
+  const controls=document.createElement("div");controls.className="supp-associated-actions";controls.append(edit,remove);
+  row.append(label,controls);list.append(row);
  }
-
 }
 $("supp-add").onclick=()=>{
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
