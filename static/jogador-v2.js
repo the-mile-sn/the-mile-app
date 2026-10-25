@@ -106,7 +106,7 @@ function renderWeekly(mon,r,weekMenus=[]){
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");
-   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"PA":names[meal]||meal;b.append(label);
+   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq Alm.":names[meal]||meal;b.append(label);
    if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
    b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
    b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus);};grid.append(b);
