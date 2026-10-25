@@ -596,3 +596,41 @@ header{padding:10px 0 24px}
 #overview .nutrition-macro{gap:3px!important}
 #overview .nutrition-macro>strong{font-size:clamp(17px,4.1vw,23px)!important}
 #overview .nutrition-macro>.per-kg{font-size:11px!important}
+
+/* Approved single-row daily nutritional metrics, aligned to meal cards. */
+#overview .nutrition-donut-summary{
+ display:grid!important;
+ grid-template-columns:minmax(0,1.65fr) minmax(0,3fr);
+ align-items:center!important;
+ gap:0!important;
+ padding:0 8px!important;
+ margin:0 0 19px!important;
+ background:transparent!important;
+}
+#overview .nutrition-hero{
+ display:block!important;
+ min-width:0!important;
+ margin:0!important;
+ padding:0 12px 0 0!important;
+}
+#overview .nutrition-energy{gap:4px!important}
+#overview .nutrition-energy>small{font-size:clamp(10px,2.6vw,13px)!important}
+#overview .nutrition-energy>strong{font-size:clamp(19px,4.4vw,32px)!important;letter-spacing:-.045em!important}
+#overview .nutrition-energy>.per-kg{font-size:clamp(9px,2.3vw,12px)!important}
+#overview .nutrition-macro-row{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ border:0!important;
+ padding:0!important;
+ min-width:0!important;
+}
+#overview .nutrition-macro{padding:0 8px!important;gap:5px!important;justify-content:center!important;min-width:0!important}
+#overview .nutrition-macro:first-child{border-left:1px solid rgba(255,255,255,.14)!important}
+#overview .nutrition-macro>small:first-child{font-size:clamp(10px,2.35vw,13px)!important}
+#overview .nutrition-macro>strong{font-size:clamp(15px,3.4vw,23px)!important}
+#overview .nutrition-macro>.per-kg{font-size:clamp(9px,2.2vw,11px)!important}
+@media(max-width:370px){
+ #overview .nutrition-donut-summary{grid-template-columns:minmax(0,1.6fr) minmax(0,3fr);padding:0 5px!important}
+ #overview .nutrition-hero{padding-right:6px!important}
+ #overview .nutrition-macro{padding:0 5px!important;gap:4px!important}
+}
