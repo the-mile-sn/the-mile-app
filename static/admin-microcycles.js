@@ -1264,9 +1264,9 @@ function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
  const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
  for(const [i,item] of supplementDraft.plan.entries()){
-  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(supplementPending()?"supp-pending":"supp-published");
+  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(JSON.stringify(item)===(JSON.parse(publishedSupplementSnapshot)[i]===undefined?"":JSON.stringify(JSON.parse(publishedSupplementSnapshot)[i]))?"supp-published":"supp-pending");
   const label=document.createElement("span");
-  const marker=document.createElement("span");marker.className="supp-status-indicator";marker.title=supplementPending()?"Alterações por publicar":"Publicado";row.append(marker);
+  const marker=document.createElement("span");marker.className="supp-status-indicator";marker.title=row.classList.contains("supp-pending")?"Alterações por publicar":"Publicado";row.append(marker);
   label.textContent=[item.name,item.dose,item.timing_text||labels[item.moment]||item.moment||"Sem associação",labels[item.rule]||item.rule].filter(Boolean).join(" · ");
   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
   edit.onclick=()=>{
