@@ -946,7 +946,7 @@ $("create-dish").addEventListener("click",async()=>{
 function renderDishEditor(){
   const host=$("dish-editor-list");if(!host)return;host.replaceChildren();
   const query=($("dish-search").value||"").trim().toLocaleLowerCase("pt-PT");
-  if(!query){host.textContent="Pesquisa pelo nome ou categoria para editar um prato.";return;}
+  if(!query){host.textContent="";return;}
   const matches=dishLibrary.filter(d=>(d.name_pt+" "+d.category).toLocaleLowerCase("pt-PT").includes(query)).slice(0,25);
   for(const dish of matches){
     const card=document.createElement("div");card.className="dish-edit-card";
