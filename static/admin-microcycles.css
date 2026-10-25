@@ -345,3 +345,17 @@
 #menus-panel #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
 #menus-panel #dish-editor-list input[type=file]{min-height:42px}
 @media(max-width:650px){#menus-panel .dish-new{grid-template-columns:1fr}#menus-panel .menu-library-section,#menus-panel .menu-create-section{padding:18px!important}}
+
+#menus-panel .menu-planning-card,#menus-panel .menu-library-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.025);border-radius:22px;padding:24px;margin-top:22px}
+#menus-panel .menu-planning-card>h3,#menus-panel .menu-library-card>h3{margin:0 0 20px}
+#menus-panel .menu-library-card>.menu-library-section,#menus-panel .menu-library-card>.menu-create-section{margin:18px 0!important;background:rgba(255,255,255,.025)}
+#menus-panel .menu-library-card>.menu-create-section{margin-top:22px!important}
+#plan-import-panel .calendar-add>div,#peri-panel .calendar-add>div{align-self:end}
+#plan-import-panel .calendar-add select,#peri-panel .calendar-add select{min-height:45px}
+#matrix .microcycle-color-select[data-color=yellow]{background:#e9c95b!important;color:#302609!important;border-color:#e9c95b!important}
+#matrix .microcycle-color-select[data-color=orange]{background:#e6a66c!important;color:#30200e!important;border-color:#e6a66c!important}
+#matrix .microcycle-color-select[data-color=blue]{background:#85b5e5!important;color:#11243b!important;border-color:#85b5e5!important}
+#matrix .microcycle-color-select[data-color=green]{background:#92cfa4!important;color:#183524!important;border-color:#92cfa4!important}
+#matrix .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
+#matrix .microcycle-color-select option{background:#232329;color:#fff}
+@media(max-width:650px){#menus-panel .menu-planning-card,#menus-panel .menu-library-card{padding:15px}}
