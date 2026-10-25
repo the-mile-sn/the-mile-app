@@ -322,3 +322,26 @@
 #menus-panel .menu-library-section h3,#menus-panel .menu-create-section h3{margin-top:0}
 #menus-panel #menu-grid{margin-bottom:12px}
 #calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button{border-radius:999px}
+
+/* Fine spacing and compact editorial UI */
+#calendar-supp-options{align-self:stretch;padding:12px 0}
+#calendar-supp-options>strong{display:block;margin-bottom:12px}
+#calendar-supp-list{gap:13px}
+#calendar-supp-list label{min-height:24px}
+#nutrition-weekly-summary{margin-top:34px!important;padding-top:14px}
+#nutrition-weekly-summary>h3{margin:0 0 24px!important}
+#calendar-matches{margin-bottom:22px}
+#supplements-panel .supp-associated-row.supp-published{background:rgba(80,150,112,.23)!important;border-color:rgba(125,191,150,.22)!important}
+#supplements-panel .supp-associated-row.supp-pending{background:rgba(222,162,75,.15)!important}
+#menus-panel .menu-color-label{display:inline-block!important;width:25px!important;min-width:25px!important;height:25px!important;padding:0!important;border-radius:9px!important;font-size:0!important}
+#menus-panel .menu-color-label:not([class*="meal-"]){background:#555!important}
+#menus-panel .menu-library-section,#menus-panel .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
+#menus-panel .menu-library-section{margin-top:46px!important}
+#menus-panel .dish-new{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+#menus-panel .dish-new input,#menus-panel .dish-new select{min-height:46px;width:100%;min-width:0}
+#menus-panel .dish-new input[type=file]{padding:9px}
+#menus-panel .dish-new button{justify-self:start}
+#menus-panel .dish-new #dish-new-feedback{align-self:center}
+#menus-panel #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
+#menus-panel #dish-editor-list input[type=file]{min-height:42px}
+@media(max-width:650px){#menus-panel .dish-new{grid-template-columns:1fr}#menus-panel .menu-library-section,#menus-panel .menu-create-section{padding:18px!important}}
