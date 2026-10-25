@@ -115,7 +115,7 @@ async function loadMenus(){
       const line=document.createElement("div");line.className="menu-meal-card";
       const heading=document.createElement("div");heading.className="menu-meal-heading";
       const assignedColor=modelRow?.meals?.[meal];
-      const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent=assignedColor?(colors[assignedColor]||assignedColor):"Sem cor";
+      const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
       for(const [value,name] of [["category","Categoria"],["dish","Prato completo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=name;kind.appendChild(opt);}
@@ -963,11 +963,11 @@ function renderDishEditor(){
     for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
       const wrap=document.createElement("label");wrap.textContent=label;const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;wrap.appendChild(input);fields.appendChild(wrap);inputs.push(input);
     }
-    const active=document.createElement("label");const box=document.createElement("input");box.type="checkbox";box.checked=!!dish.active;active.append(box,document.createTextNode(" Disponível para novos menus"));fields.appendChild(active);
+
     const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";
     save.onclick=async()=>{save.disabled=true;try{
-      await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:box.checked})});
-      dish.name_pt=inputs[0].value;dish.name_en=inputs[1].value;dish.category=inputs[2].value;dish.active=box.checked?1:0;
+      await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:true})});
+      dish.name_pt=inputs[0].value;dish.name_en=inputs[1].value;dish.category=inputs[2].value;dish.active=1;
       status("Prato atualizado na biblioteca universal.","success");
     }catch(e){status("Erro: "+e.message,"warn");}finally{save.disabled=false;}};
     fields.appendChild(save);card.appendChild(fields);host.appendChild(card);
@@ -1295,7 +1295,8 @@ function renderSupplementEditor(){
   const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(JSON.stringify(item)===(JSON.parse(publishedSupplementSnapshot)[i]===undefined?"":JSON.stringify(JSON.parse(publishedSupplementSnapshot)[i]))?"supp-published":"supp-pending");
   const label=document.createElement("span");
   
-  label.textContent=[item.name,item.dose,item.timing_text||labels[item.moment]||item.moment||"Sem associação",labels[item.rule]||item.rule].filter(Boolean).join(" · ");
+  const rules=item.prescriptions?.length?item.prescriptions:[item];
+  label.textContent=item.name+" · "+rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação",labels[p.rule]||p.rule].filter(Boolean).join(" · ")).join("  |  ");
   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
   edit.onclick=()=>{
    const form=document.createElement("div");form.className="supp-inline-edit";
