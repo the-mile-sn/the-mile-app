@@ -634,3 +634,26 @@ header{padding:10px 0 24px}
  #overview .nutrition-hero{padding-right:6px!important}
  #overview .nutrition-macro{padding:0 5px!important;gap:4px!important}
 }
+
+/* Weekly view: compact empty lanes, readable dates, unified match and average. */
+#weekly-view .weekly-day-header .weekday{font-size:clamp(11px,1.9vw,15px)!important}
+#weekly-view .weekly-day-header .number{font-size:clamp(17px,3.2vw,24px)!important;line-height:1.1}
+#weekly-view .weekly-day-header .classification{font-size:clamp(9px,1.55vw,12px)!important}
+#weekly-view .weekly-event-slot:empty{min-height:12px!important;height:12px!important;padding:0!important;margin:0!important}
+#weekly-view .weekly-empty{min-height:12px!important;height:12px!important;background:rgba(255,255,255,.025)!important;border-radius:7px!important}
+#weekly-view .weekly-match-with-intra{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;min-height:68px!important;padding:8px 1px!important;border:0!important;border-radius:11px!important;background:#303137!important;color:#f4f4f5!important;box-shadow:none!important;text-align:center}
+#weekly-view .weekly-match-with-intra>span:first-child{font-size:clamp(9px,1.8vw,12px)!important;font-weight:600!important}
+#weekly-view .weekly-match-with-intra .weekly-match-kcal{font-size:clamp(9px,1.65vw,11px)!important;font-weight:400!important;color:#d6d6df!important;opacity:1!important}
+#weekly-view .weekly-match-with-intra[aria-pressed=true]{outline:2px solid #b9bbc4!important;outline-offset:-2px}
+#weekly-view .weekly-average-summary{display:grid;grid-template-columns:1.45fr repeat(3,1fr);gap:0;padding:15px 10px;border-radius:16px;background:rgba(255,255,255,.045);min-width:0}
+#weekly-view .weekly-average-metric{display:flex;flex-direction:column;gap:5px;min-width:0;padding:0 10px}
+#weekly-view .weekly-average-metric:first-child{padding-left:0}
+#weekly-view .weekly-average-metric+.weekly-average-metric{border-left:1px solid rgba(255,255,255,.12)}
+#weekly-view .weekly-average-metric>small:first-child{color:#b8b8c1;font-size:clamp(10px,2.3vw,13px)}
+#weekly-view .weekly-average-metric>strong{white-space:nowrap;font-size:clamp(14px,3.2vw,23px);line-height:1.12}
+#weekly-view .weekly-average-metric.kcal>strong{color:#a4d0b4}
+#weekly-view .weekly-average-metric.protein>strong{color:#a9c4d0}
+#weekly-view .weekly-average-metric.carbs>strong{color:#e4b398}
+#weekly-view .weekly-average-metric.fat>strong{color:#e0cf9f}
+#weekly-view .weekly-average-metric>.per-kg{font-size:clamp(9px,2vw,11px);color:#aaaab3;white-space:nowrap}
+@media(max-width:380px){#weekly-view .weekly-average-summary{padding:13px 6px;grid-template-columns:1.4fr repeat(3,1fr)}#weekly-view .weekly-average-metric{padding:0 5px}}
