@@ -937,3 +937,9 @@ header{padding:10px 0 24px}
 #overview .match-intra-card[open]{
  border-radius:18px!important;
 }
+
+/* iOS pill geometry for Plans selectors and Day/Week segmented control. */
+#plan-colors button{border-radius:999px!important}
+#overview-mode{border-radius:999px!important}
+#overview-mode button{border-radius:999px!important}
+#overview-mode button[aria-pressed=true]{border-radius:999px!important}
