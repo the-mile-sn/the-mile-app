@@ -782,3 +782,26 @@ header{padding:10px 0 24px}
 #plans .macro>span.protein .macro-dot{display:none!important}
 .macro>span.carbs .macro-dot,
 .macro>span.fat .macro-dot{display:inline-block!important}
+
+/* Precision alignment adjustments — player day and plans. */
+#overview .daily-meal>details>summary .option:after{
+ transform:translateY(5px)!important;
+}
+#overview .daily-meal>details[open]>summary .option:after{
+ transform:translateY(5px) rotate(90deg)!important;
+}
+/* The first macro separator is not meaningful: first visible macro is protein. */
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro>.protein .macro-dot,
+#overview .match-intra-card>.daily-meal-head .meal-average-inline .macro>.protein .macro-dot,
+#overview .daily-meal .option-expanded-macros .macro>.protein .macro-dot{
+ display:none!important;
+}
+/* Move Planos kcal/macro block away from header chevron. */
+#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline{
+ margin-right:22px!important;
+}
+@media(max-width:620px){
+ #plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline{
+  margin-right:17px!important;
+ }
+}
