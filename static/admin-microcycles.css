@@ -243,3 +243,24 @@
 #peri-panel .peri-option-consult>summary:after{content:"⌄";opacity:.65}
 #peri-panel .peri-option-consult[open]>summary:after{content:"⌃"}
 #peri-panel .peri-option-consult>p{margin:8px 0 4px 14px;color:var(--muted,#aaa)}
+
+/* Peri plan rows: food-plan hierarchy, no duplicated separators. */
+#peri-panel .peri-plan-section{border-bottom:1px solid rgba(255,255,255,.15);padding:12px 4px 10px}
+#peri-panel .peri-plan-section>summary.peri-summary{display:flex;align-items:center;justify-content:space-between;padding:3px 0 5px}
+#peri-panel .peri-summary-text{display:flex;flex-direction:column;gap:3px}
+#peri-panel .peri-state{font-size:.83rem;color:#a8a8b0;font-weight:400}
+#peri-panel .peri-plan-actions{padding:0 0 7px!important;margin:0!important;justify-content:flex-end!important;border:0!important;min-height:0}
+#peri-panel .peri-plan-actions button{margin-left:auto}
+#peri-panel .peri-plan-section h4{margin:14px 0 5px}
+#peri-panel .peri-option-consult{border-bottom:1px solid rgba(255,255,255,.13);padding:8px 0}
+#peri-panel .peri-option-consult:last-of-type{border-bottom:0}
+#peri-panel .peri-option-consult>summary{display:flex;align-items:center;gap:10px;justify-content:space-between}
+#peri-panel .peri-option-consult>summary strong{flex:1;min-width:0}
+#peri-panel .peri-macros{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-left:auto;white-space:nowrap;font-size:.9rem;font-weight:500}
+#peri-panel .peri-macro-energy{color:#99cbb5}
+#peri-panel .peri-macro-protein{color:#a6c5ed}
+#peri-panel .peri-macro-carbs{color:#e4b79b}
+#peri-panel .peri-macro-fat{color:#e9d48f}
+#peri-panel .peri-option-consult>summary:after{margin-left:14px}
+#peri-panel .peri-option-consult>p{margin:7px 0 4px 15px}
+@media(max-width:680px){#peri-panel .peri-macros{gap:6px;font-size:.72rem;flex-wrap:wrap;white-space:normal}}
