@@ -1107,3 +1107,52 @@ header{padding:10px 0 24px}
  #overview .daily-meal>details:not(.daily-meal),
  #plans #plan-detail .plan-overview-meal>details{margin:11px 12px!important;padding:15px 14px!important}
 }
+
+/* Explicit option subcards: apply only to daily Overview and colored Plans.
+   Preserve nutrition headers and supplementary sections. */
+#overview .daily-meal > details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard{
+ display:block!important;
+ width:auto!important;
+ box-sizing:border-box!important;
+ background:color-mix(in srgb,var(--tint,var(--meal-yellow)) 82%,white 18%)!important;
+ border:0!important;
+ border-radius:18px!important;
+ margin:12px 16px!important;
+ padding:16px 17px!important;
+ box-shadow:none!important;
+ overflow:hidden;
+}
+#plans #plan-detail .plan-overview-meal.tone-orange{--tint:var(--meal-orange)}
+#plans #plan-detail .plan-overview-meal.tone-yellow{--tint:var(--meal-yellow)}
+#plans #plan-detail .plan-overview-meal.tone-blue{--tint:var(--meal-blue)}
+#plans #plan-detail .plan-overview-meal.tone-green{--tint:var(--meal-green)}
+#plans #plan-detail .plan-overview-meal.tone-vp{--tint:var(--meal-vp)}
+#overview .daily-meal > details.player-meal-option-subcard > summary,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary{
+ padding:0!important;margin:0!important;border:0!important;background:transparent!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard .option,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard .option{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ flex-wrap:nowrap!important;min-height:48px!important;padding:0 26px 0 0!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard .plan-option-label,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard .plan-option-label{
+ display:flex!important;flex:1 1 auto!important;flex-direction:column!important;
+ align-items:flex-start!important;justify-content:center!important;gap:5px!important;min-width:0!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard .plan-option-label small,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard .plan-option-label small,
+#overview .daily-meal > details.player-meal-option-subcard .plan-option-label strong,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard .plan-option-label strong{
+ display:block!important;margin:0!important;padding:0!important;text-align:left!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard .plan-option-label strong,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard .plan-option-label strong{line-height:1.35!important}
+@media(max-width:620px){
+ #overview .daily-meal > details.player-meal-option-subcard,
+ #plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard{
+  margin:11px 12px!important;padding:15px 14px!important;
+ }
+}
