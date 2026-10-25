@@ -1302,26 +1302,26 @@ let supplementLibrary=[];
 function filterSupplementLists(){
  const q=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");
  const lq=$("supp-library-search").value.trim().toLocaleLowerCase("pt-PT");
- const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list");
+ const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list"),suggestions=$("supp-search-options");suggestions.replaceChildren();
  select.replaceChildren();list.replaceChildren();
  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar...";select.append(empty);
  for(const item of supplementLibrary){
   const hay=[item.name,item.dose,item.note,item.timing_text].join(" ").toLocaleLowerCase("pt-PT");
-  if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}
+  if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}const suggestion=document.createElement("option");suggestion.value=item.name;suggestions.append(suggestion);
   if(!hay.includes(lq))continue;
   const row=document.createElement("div");row.className="event-admin-row";
   if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+item.id+"/image";img.alt=item.name;img.style.cssText="height:65px;width:55px;object-fit:contain";row.append(img);}
   const label=document.createElement("span");label.textContent=[item.name,item.dose,item.timing_text||item.moment,item.note].filter(Boolean).join(" · ");row.append(label);
-  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{
+  const actions=document.createElement("div");actions.className="supp-library-actions";const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{
    $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;$("supp-lib-moment").value=item.moment;
    $("supp-lib-rule").value=item.rule;$("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
    $("supp-lib-save").dataset.editId=item.id;
-   $("supp-lib-save").closest("details").open=true;
-  };row.append(edit);list.append(row);
+   const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+  };actions.append(edit);const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};actions.append(remove);row.append(actions);list.append(row);
  }
  if([...select.options].some(option=>option.value===previous))select.value=previous;
 }
-$("supp-assign-search").addEventListener("input",filterSupplementLists);
+$("supp-assign-search").addEventListener("input",()=>{const exact=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT"));$("supp-lib-select").value=exact?.id||"";});
 $("supp-library-search").addEventListener("input",filterSupplementLists);
 async function loadSupplementLibrary(){
  const data=await request("/api/v2/supplement-library");supplementLibrary=data.items||[];
@@ -1348,8 +1348,8 @@ $("supp-lib-save").onclick=async()=>{
  }catch(e){$("supp-lib-feedback").textContent=e.message;}finally{button.disabled=false;}
 };
 $("supp-lib-assign").onclick=()=>{
- const item=supplementLibrary.find(x=>x.id===$("supp-lib-select").value);
- if(!item)return;
+ const query=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");const item=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===query);
+ if(!item){$("supp-feedback").textContent="Seleciona uma sugestão exata da lista.";return;}
  if(/MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){$("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";return;}
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text});
  renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
