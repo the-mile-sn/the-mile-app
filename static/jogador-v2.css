@@ -973,3 +973,27 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal *{
  color:#dedee3!important;
 }
+
+/* Weekly grid: tighter meal/event heights; match follows identical cell rhythm. */
+#weekly-view .weekly-meal{
+ min-height:46px!important;
+ height:auto!important;
+ padding:5px 2px!important;
+ gap:1px!important;
+ border-radius:15px!important;
+}
+#weekly-view .weekly-match-with-intra{
+ min-height:46px!important;
+ height:auto!important;
+ padding:5px 2px!important;
+ gap:1px!important;
+ border-radius:15px!important;
+}
+#weekly-view .weekly-event-card:not(.weekly-match-with-intra),
+#weekly-view .weekly-peri-card{
+ min-height:46px!important;
+ padding:5px 2px!important;
+ border-radius:15px!important;
+}
+#weekly-view .weekly-event-slot{min-height:0!important}
+#weekly-view .weekly-summary-heading{padding-left:20px!important}
