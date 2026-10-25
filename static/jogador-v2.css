@@ -927,3 +927,13 @@ header{padding:10px 0 24px}
 @media(max-width:380px){
  #overview .nutrition-donut-summary{padding:13px 6px!important}
 }
+
+/* iOS-inspired compact daily cards: pill when closed, normal card when expanded. */
+#overview .daily-meal:not([open]),
+#overview .match-intra-card:not([open]){
+ border-radius:999px!important;
+}
+#overview .daily-meal[open],
+#overview .match-intra-card[open]{
+ border-radius:18px!important;
+}
