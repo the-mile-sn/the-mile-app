@@ -1137,65 +1137,61 @@ $("calendar-event-form").addEventListener("submit",async e=>{
 
 function periEndpoint(){return "/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/peri-imports";}
 function periMessage(value){$("peri-feedback").textContent=value;}
+let periExpandedKind=null;
 async function loadPeriImports(){
  if(!model)return;
  const result=await request(periEndpoint());
  $("peri-current").replaceChildren();
  const list=$("peri-list");list.replaceChildren();
- const history=document.createElement("details");history.className="peri-history";
- const historyTitle=document.createElement("summary");history.append(historyTitle);
- let historyCount=0;
  for(const [kind,title] of [["training","Peri-treino"],["match","Peri-jogo"]]){
   const all=(result.imports||[]).filter(d=>d.kind===kind);
-  const drafts=all.filter(d=>d.status==="draft");
-  const published=all.filter(d=>d.status!=="draft");
-  const section=document.createElement("details");section.className="peri-plan-section";
-  const summary=document.createElement("summary");
-  summary.textContent=title+" · "+(drafts.length?"Em revisão":result.active?.[kind]?"Publicado":"Sem plano");
-  section.append(summary);
+  const drafts=all.filter(d=>d.status==="draft"),published=all.filter(d=>d.status==="published");
   const chosen=drafts[0]||published[0];
-  if(chosen){
-   const controls=document.createElement("div");controls.className="event-admin-row";
-   const note=document.createElement("span");note.textContent=chosen.status==="draft"?"Rascunho por validar":"Plano publicado";
-   const button=document.createElement("button");button.type="button";
-   button.textContent=chosen.status==="draft"?"Editar e validar":"Consultar";
-   button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(chosen.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
-   controls.append(note,button);
-   if(chosen.status!=="draft"){
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
-    edit.onclick=async()=>{
-     if(!confirm("Criar uma cópia editável deste plano? A versão publicada permanece disponível até publicares a nova."))return;
-     try{const data=await request(periEndpoint()+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});await loadPeriImports();renderPeriDraft(data.draft);periMessage("Cópia editável criada. Revê e publica quando estiver pronta.");}
-     catch(e){periMessage("Não foi possível iniciar edição: "+e.message);}
-    };
-    controls.append(edit);
-   }
-   section.append(controls);
-  }
   const active=result.active?.[kind]?.options;
-  if(active){
-   for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
-    const options=active[phase]||[];if(!options.length)continue;
-    const heading=document.createElement("h4");heading.textContent=label;section.append(heading);
-    for(const [i,option] of options.entries()){
-     const row=document.createElement("div");row.className="event-admin-row";
-     const name=document.createElement("strong");name.textContent=option.title||"Opção "+(option.number||i+1);
-     const nutrition=document.createElement("span");nutrition.className="hint";nutrition.textContent=[option.totals?.kcal!=null?option.totals.kcal+" kcal":"",option.totals?.protein_g!=null?"P "+option.totals.protein_g+" g":"",option.totals?.carbs_g!=null?"HC "+option.totals.carbs_g+" g":"",option.totals?.fat_g!=null?"G "+option.totals.fat_g+" g":""].filter(Boolean).join(" · ");
-     row.append(name,nutrition);section.append(row);
-    }
+  const section=document.createElement("details");section.className="peri-plan-section";section.open=periExpandedKind===kind;
+  section.addEventListener("toggle",()=>{if(section.open)periExpandedKind=kind;else if(periExpandedKind===kind)periExpandedKind=null;});
+  const summary=document.createElement("summary");summary.textContent=title+" · "+(drafts.length?"Em revisão":active?"Publicado":"Sem plano");section.append(summary);
+  const controls=document.createElement("div");controls.className="event-admin-row peri-plan-actions";
+  const label=document.createElement("strong");label.textContent=title;controls.append(label);
+  if(chosen){
+   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
+   edit.onclick=async()=>{
+    try{
+     const data=chosen.status==="draft"
+      ?await request(periEndpoint()+"/"+encodeURIComponent(chosen.id))
+      :await request(periEndpoint()+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});
+     periExpandedKind=kind;await loadPeriImports();renderPeriDraft(data.draft);periMessage("Modo de edição. Revê as opções, guarda e publica a nova versão.");
+    }catch(e){periMessage("Erro ao editar: "+e.message);}
+   };
+   controls.append(edit);
+  }
+  section.append(controls);
+  const groups=active||{};
+  for(const [phase,phaseLabel] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+   const options=groups[phase]||[];if(!options.length)continue;
+   const heading=document.createElement("h4");heading.textContent=phaseLabel;section.append(heading);
+   for(const [i,option] of options.entries()){
+    const choice=document.createElement("details");choice.className="peri-option-consult";
+    const top=document.createElement("summary");
+    const name=document.createElement("strong");name.textContent=option.title||"Opção "+(option.number||i+1);
+    const totals=document.createElement("span");totals.className="hint";totals.textContent=[option.totals?.kcal!=null?option.totals.kcal+" kcal":"",option.totals?.protein_g!=null?"P "+option.totals.protein_g+" g":"",option.totals?.carbs_g!=null?"HC "+option.totals.carbs_g+" g":"",option.totals?.fat_g!=null?"G "+option.totals.fat_g+" g":""].filter(Boolean).join(" · ");
+    top.append(name,totals);choice.append(top);
+    for(const item of option.items||[]){const line=document.createElement("p");line.textContent=item.kind==="food"?[item.quantity,item.name].filter(Boolean).join(" · "):(item.text||"");choice.append(line);}
+    section.append(choice);
    }
   }
+  if(!active&&chosen){const hint=document.createElement("p");hint.className="hint";hint.textContent="Plano em revisão. Seleciona Editar para consultar e validar as opções.";section.append(hint);}
   list.append(section);
-  for(const draft of published){
-   historyCount++;
-   const row=document.createElement("div");row.className="event-admin-row";
-   const label=document.createElement("span");label.textContent=title+" · Publicado";
-   const button=document.createElement("button");button.type="button";button.textContent="Consultar";
-   button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
-   row.append(label,button);history.append(row);
-  }
  }
- historyTitle.textContent="Histórico de publicações ("+historyCount+")";
+ const history=document.createElement("details");history.className="peri-history";
+ const published=(result.imports||[]).filter(d=>d.status==="published");
+ const title=document.createElement("summary");title.textContent="Histórico de publicações ("+published.length+")";history.append(title);
+ for(const draft of published){
+  const row=document.createElement("div");row.className="event-admin-row";
+  const label=document.createElement("span");label.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";
+  const button=document.createElement("button");button.type="button";button.textContent="Ver versão";button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
+  row.append(label,button);history.append(row);
+ }
  list.append(history);
 }
 function renderPeriDraft(draft){
