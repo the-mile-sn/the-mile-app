@@ -1171,17 +1171,31 @@ async function loadPeriImports(){
  }
  live.append(overview);
  const list=$("peri-list");list.replaceChildren();
- for(const draft of result.imports){
-  const row=document.createElement("div");row.className="event-admin-row";
-  const label=document.createElement("span");label.textContent=(draft.kind==="training"?"Peri-treino":"Peri-jogo")+" · "+draft.filename+" · "+(draft.status==="draft"?"Em revisão":"Publicado");
-  const button=document.createElement("button");button.type="button";button.textContent="Consultar"+(draft.status==="draft"?" / editar":"");
-  button.onclick=async()=>{try{const result=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(result.draft);}catch(e){periMessage(e.message);}};
-  row.append(label,button);list.append(row);
+ for(const [kind,title] of [["training","Peri-treino"],["match","Peri-jogo"]]){
+  const all=(result.imports||[]).filter(d=>d.kind===kind);
+  const section=document.createElement("details");section.className="peri-plan-section";
+  const summary=document.createElement("summary");summary.textContent=title+" · "+(result.active?.[kind]?"Publicado":"Sem plano publicado");section.append(summary);
+  const drafts=all.filter(d=>d.status==="draft"),history=all.filter(d=>d.status!=="draft");
+  for(const draft of drafts){
+   const row=document.createElement("div");row.className="event-admin-row";
+   const label=document.createElement("span");label.textContent="Plano em revisão";
+   const button=document.createElement("button");button.type="button";button.textContent="Editar e validar";
+   button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
+   row.append(label,button);section.append(row);
+  }
+  if(!drafts.length){const hint=document.createElement("p");hint.className="hint";hint.textContent="Sem rascunhos pendentes.";section.append(hint);}
+  const historyBox=document.createElement("details");historyBox.className="peri-history";const titleRow=document.createElement("summary");titleRow.textContent="Histórico de publicações ("+history.length+")";historyBox.append(titleRow);
+  for(const draft of history){
+   const row=document.createElement("div");row.className="event-admin-row";const label=document.createElement("span");label.textContent="Plano publicado";
+   const button=document.createElement("button");button.type="button";button.textContent="Consultar";button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
+   row.append(label,button);historyBox.append(row);
+  }
+  section.append(historyBox);list.append(section);
  }
 }
 function renderPeriDraft(draft){
  const root=$("peri-review");root.replaceChildren();
- const heading=document.createElement("h3");heading.textContent=draft.filename+" · "+(draft.kind==="training"?"Peri-treino":"Peri-jogo");root.append(heading);
+ const heading=document.createElement("h3");heading.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";root.append(heading);
  for(const warning of draft.extracted.warnings||[]){const p=document.createElement("p");p.className="hint";p.textContent=warning;root.append(p);}
  draft.extracted.groups.forEach((group,gi)=>{
   const title=document.createElement("h3");title.textContent=group.heading;root.append(title);
@@ -1247,7 +1261,7 @@ function renderSupplementEditor(){
  for(const [i,item] of supplementDraft.plan.entries()){
   const row=document.createElement("div");row.className="event-admin-row";
   const label=document.createElement("span");label.textContent=[item.name,item.dose,item.timing_text||item.moment||"Sem associação",item.rule].join(" · ");
-  const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{supplementDraft.plan.splice(i,1);renderSupplementEditor();};
+  const remove=document.createElement("button");remove.textContent="Remover";remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();};
   row.append(label,remove);list.append(row);
  }
 
@@ -1256,10 +1270,10 @@ $("supp-add").onclick=()=>{
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
  if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
  supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
- $("supp-name").value="";$("supp-dose").value="";renderSupplementEditor();
+ $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
 };
 $("supp-save").onclick=async()=>{
- try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});$("supp-feedback").textContent="Prescrição guardada.";}
+ try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});$("supp-feedback").textContent="Suplementação publicada para o jogador.";}
  catch(e){$("supp-feedback").textContent="Não foi possível guardar: "+e.message;}
 };
 
@@ -1304,5 +1318,5 @@ $("supp-lib-assign").onclick=()=>{
  const item=supplementLibrary.find(x=>x.id===$("supp-lib-select").value);
  if(!item)return;
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text});
- renderSupplementEditor();$("supp-feedback").textContent="Adicionado ao jogador. Clica Guardar para confirmar.";
+ renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
 };
