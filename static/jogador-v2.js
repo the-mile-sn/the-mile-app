@@ -169,7 +169,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   for(const item of supplementsByDay[date]||[]){
    const group=item.rule==="daily"?"Diariamente":item.rule==="match"?"MD":item.rule==="md-1"?"MD-1":item.rule==="training"?"Treino":"Outros";
    const key=group+"|"+(item.library_id||item.name)+"|"+item.dose;
-   if(!weeklySupplements.has(key))weeklySupplements.set(key,{group,name:item.name,dose:item.dose,dates:[]});
+   if(!weeklySupplements.has(key))weeklySupplements.set(key,{group,name:item.name,dose:item.dose,dates:[],timing:item.display_moment||item.timing_text||""});
    weeklySupplements.get(key).dates.push(date);
   }
  }
@@ -181,7 +181,7 @@ function renderWeekly(mon,r,weekMenus=[]){
    if(!items.length)continue;
    const row=document.createElement("div");row.className="weekly-supplement-group";
    const label=document.createElement("strong");label.textContent=group;row.append(label);
-   for(const item of items){const entry=document.createElement("div");entry.className="weekly-supplement-entry";entry.textContent=item.name+" - "+item.dose;row.append(entry);}summary.append(row);
+   for(const item of items){const entry=document.createElement("div");entry.className="weekly-supplement-entry";entry.textContent=item.name+" - "+item.dose+(item.timing?", "+item.timing.toLowerCase():"");row.append(entry);}summary.append(row);
   }
   root.append(summary);
  }
