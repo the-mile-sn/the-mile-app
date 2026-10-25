@@ -902,3 +902,15 @@ header{padding:10px 0 24px}
 #plans #plan-detail .plan-overview-meal[open]>.daily-meal-head .meal-average-inline .macro{
  row-gap:5px!important;
 }
+
+/* Option composition: title + macros together, food list as a second group. */
+#overview .daily-meal>details[open]>.option-expanded-macros,
+#plans #plan-detail .plan-overview-meal>details[open]>.option-expanded-macros{
+ padding-top:0!important;
+ padding-bottom:22px!important;
+ margin-top:-2px!important;
+}
+#overview .daily-meal>details[open]>summary,
+#plans #plan-detail .plan-overview-meal>details[open]>summary{
+ padding-bottom:5px!important;
+}
