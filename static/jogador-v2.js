@@ -140,6 +140,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   else if(options.length===1){
    for(const food of options[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";section.append(p);}
   }else options.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("weekly-option-card");section.append(item);});
+  attachSupplements(section,(supplementsByDay[date]||[]).filter(x=>x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner")));
   detail.append(section);
  }
  if(weeklySelection?.periEventId&&dates.includes(weeklySelection.date)){
