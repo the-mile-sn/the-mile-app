@@ -805,3 +805,22 @@ header{padding:10px 0 24px}
   margin-right:17px!important;
  }
 }
+
+/* Divider only disappears in stacked meal headings (kcal above macros). */
+#overview .daily-meal .option-expanded-macros .macro>span.protein .macro-dot,
+#plans #plan-detail .plan-overview-meal .option-expanded-macros .macro>span.protein .macro-dot,
+#weekly-view .weekly-option-card .option-expanded-macros .macro>span.protein .macro-dot,
+#plans #plan-detail .plan-meal .option-expanded-macros .macro>span.protein .macro-dot{
+ display:inline-block!important;
+}
+/* Clear but restrained break after final ingredient, before the next option. */
+#overview .daily-meal>details:not(:last-child),
+#plans #plan-detail .plan-overview-meal>details:not(:last-child){
+ padding-bottom:18px!important;
+ margin-bottom:15px!important;
+ border-bottom:1px solid rgba(255,255,255,.18)!important;
+}
+#overview .daily-meal>details:not(:last-child) .foods:last-child,
+#plans #plan-detail .plan-overview-meal>details:not(:last-child) .foods:last-child{
+ margin-bottom:12px!important;
+}
