@@ -82,6 +82,17 @@ def get_import(c,athlete_id,identifier):
     doc=dict(row);doc["extracted"]=json.loads(doc.pop("extracted_json"))
     return doc
 
+def copy_as_draft(c,athlete_id,identifier):
+    """Create an editable copy; the already published release stays immutable."""
+    doc=get_import(c,athlete_id,identifier)
+    if doc is None:return None
+    if doc["status"]=="draft":return doc
+    identity=secrets.token_hex(16)
+    extracted=json.loads(json.dumps(doc["extracted"],ensure_ascii=False))
+    c.execute("""INSERT INTO v2_peri_imports(id,athlete_id,kind,filename,status,extracted_json,created_at)
+                 VALUES(?,?,?,?,?,?,?)""",(identity,athlete_id,doc["kind"],doc["filename"],"draft",json.dumps(extracted,ensure_ascii=False),int(time.time())))
+    return get_import(c,athlete_id,identity)
+
 def _validate_totals(totals):
     if not isinstance(totals,dict) or set(totals)!=set(KEYS):
         raise ValueError("invalid_totals")
