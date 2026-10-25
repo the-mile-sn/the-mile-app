@@ -273,3 +273,12 @@
 #supplements-panel #supp-lib-list .event-admin-row{gap:12px;align-items:center}
 #supplements-panel #supp-lib-list .event-admin-row>span{flex:1}
 #supplements-panel #supp-assign-search{width:100%;max-width:600px}
+
+#supplements-panel .supp-associated-row.supp-published .supp-status-indicator{background:#70bb87}
+#supplements-panel .supp-associated-row.supp-pending .supp-status-indicator{background:#e9ad59}
+#supplements-panel .supp-status-indicator{width:10px;height:10px;flex:0 0 10px;border-radius:50%}
+#supplements-panel #supp-lib-list .supp-library-product{display:block;flex:1;min-width:0;font-size:1.03rem}
+#supplements-panel #supp-lib-list .supp-library-product strong{font-weight:650}
+#supplements-panel #supp-lib-list .event-admin-row>img{flex:0 0 55px;margin-right:10px}
+#supplements-panel #supp-lib-list .event-admin-row{padding:11px 4px;gap:12px}
+#supplements-panel #supp-lib-list:empty:before{content:"Escreve o nome ou a marca para encontrar um suplemento.";display:block;color:#a4a4ac;padding:14px 0}
