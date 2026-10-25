@@ -606,6 +606,21 @@ def application(env, start_response):
                 if changed is None:raise Problem(404,'not_found')
                 return respond(200,{'event':changed})
 
+            if path == '/api/v2/supplement-library/bulk-preview' and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),False)
+                except ValueError:raise Problem(400,'invalid_supplement_package')
+                return respond(200,result)
+            if path == '/api/v2/supplement-library/bulk-import' and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if body.get('confirmation')!='IMPORTAR':raise Problem(400,'confirmation_required')
+                try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
+                except ValueError:raise Problem(400,'invalid_supplement_package')
+                return respond(200,result)
             if path == '/api/v2/supplement-library' and method in ('GET','POST'):
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
