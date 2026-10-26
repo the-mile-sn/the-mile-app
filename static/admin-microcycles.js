@@ -1498,7 +1498,7 @@ async function loadAssessmentsAdmin(){
 $("assessment-preview").onclick=async()=>{
  const input=$("assessment-pdf"),file=input.files?.[0],msg=$("assessment-upload-feedback"),button=$("assessment-preview");
  if(!file){msg.textContent="Escolhe primeiro um ficheiro PDF.";return;}
- if(file.size>9000000){msg.textContent="O ficheiro excede 9 MB.";return;}
+ if(file.size>21000000){msg.textContent="O ficheiro excede 21 MB.";return;}
  button.disabled=true;msg.textContent="A analisar o documento…";
  try{
   const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
