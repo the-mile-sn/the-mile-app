@@ -1427,10 +1427,23 @@ def application(env, start_response):
                     c.commit()
                     return respond(201, {'id': uid})
 
-            if path == '/api/admins' and method == 'GET':
+            if path == '/api/admins' and method in ('GET','POST'):
                 admin(user)
-                rows = c.execute("SELECT id,name,email,active,(password IS NOT NULL) activated FROM users WHERE role='admin' ORDER BY name").fetchall()
-                return respond(200, {'admins': [dict(r) for r in rows]})
+                if method == 'GET':
+                    rows = c.execute("SELECT id,name,email,active,(password IS NOT NULL) activated FROM users WHERE role='admin' ORDER BY name").fetchall()
+                    return respond(200, {'admins': [dict(r) for r in rows]})
+                body=read_json(env)
+                name=str(body.get('name','')).strip()
+                email=str(body.get('email','')).strip().lower()
+                if not (2<=len(name)<=120 and re.fullmatch(r'[^@\\s]+@[^@\\s]+\\.[^@\\s]+',email) and len(email)<=200):
+                    raise Problem(400,'invalid_admin')
+                if c.execute("SELECT id FROM users WHERE lower(email)=?",(email,)).fetchone():
+                    raise Problem(409,'email_exists')
+                uid=secrets.token_hex(16)
+                c.execute("INSERT INTO users(id,name,email,role,password,active) VALUES(?,?,?,'admin',NULL,1)",(uid,name,email))
+                link=activation(c,uid)
+                c.commit()
+                return respond(201,{'activation_url':link})
 
             if path.startswith('/api/admins/') and method == 'POST':
                 admin(user)
