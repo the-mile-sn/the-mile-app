@@ -1453,3 +1453,22 @@ header{padding:10px 0 24px}
 }
 /* Keep the meal label and description grouped at the top. */
 #menus .menu-entry-heading{margin-bottom:2px!important}
+
+
+/* Match macro disclosure spacing exactly in Daily Overview and Plans. */
+#overview .daily-meal > details.player-meal-option-subcard[open] > .option-expanded-macros,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard[open] > .option-expanded-macros{
+ margin:6px 0 0!important;
+ padding:5px 0 11px!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard[open] > summary,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard[open] > summary{
+ padding:0!important;margin:0!important;
+}
+/* Some uploaded images contain black pixels within the image itself.
+   Screen blending neutralizes black on the menu surface, not just borders. */
+#menus .menu-entry-body img.dish-img{
+ mix-blend-mode:screen!important;
+ outline:0!important;
+ filter:none!important;
+}
