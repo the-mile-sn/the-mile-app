@@ -705,16 +705,15 @@ function renderPlayerAssessments(){
  stamp.textContent="Última avaliação · "+assessmentDate(recent.assessed_on);
  for(const [key,label,unit] of assessmentFields[assessmentGroup]||[]){
   const readings=assessmentRecords.filter(r=>Number.isFinite(r.measurements?.[key])).map(r=>({date:r.assessed_on,value:Number(r.measurements[key])}));
-  if(!readings.length)continue;
-  const current=readings[readings.length-1],prior=readings.length>1?readings[readings.length-2]:null;
+  const current=readings.length?readings[readings.length-1]:null,prior=readings.length>1?readings[readings.length-2]:null;
   const details=document.createElement("details");details.className="assessment-measure-card";
   const summary=document.createElement("summary");
   const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=label;
   const right=document.createElement("span");right.className="assessment-metric-right";
-  const number=document.createElement("strong");number.textContent=assessNumber(current.value)+(unit?" "+unit:"");right.append(number);
+  const number=document.createElement("strong");number.textContent=current?assessNumber(current.value)+(unit?" "+unit:""):"—";right.append(number);
   const change=document.createElement("small");change.className="assessment-change";
-  if(prior){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta))+(unit?" "+unit:"")+" face à anterior";}
-  else change.textContent="Primeira medição";
+  if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta))+(unit?" "+unit:"")+" face à anterior";}
+  else change.textContent=current?"Primeira medição":"Sem dados";
   right.append(change);
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.textContent="⌄";
   summary.append(left,right,arrow);details.append(summary,buildAssessmentTrend(readings,unit));target.append(details);
