@@ -117,7 +117,7 @@ def validated_meal_options(c, athlete_id):
     from microcycles_v2 import COLORS, MEALS
     rows = c.execute("""SELECT id,color,extracted_json FROM v2_plan_imports
                         WHERE athlete_id=? AND status='validated'
-                        ORDER BY created_at DESC, rowid DESC""", (athlete_id,)).fetchall()
+                        ORDER BY created_at DESC, id DESC""", (athlete_id,)).fetchall()
     result = {color: {meal: [] for meal in MEALS} for color in COLORS}
     selected = set()
     for row in rows:
