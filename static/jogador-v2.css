@@ -1472,3 +1472,6 @@ header{padding:10px 0 24px}
  outline:0!important;
  filter:none!important;
 }
+
+/* Black matte is removed from the served image; render food at full opacity. */
+#menus .menu-entry-body img.dish-img{mix-blend-mode:normal!important;opacity:1!important;filter:none!important}
