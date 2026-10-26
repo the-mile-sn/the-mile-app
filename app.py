@@ -945,6 +945,36 @@ def application(env, start_response):
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
                 return respond(200, {'dishes':microcycles_v2.list_dish_library(c)})
+            if path == '/api/v2/dishes/export' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                dishes = microcycles_v2.list_dish_library(c)
+                if not dishes: raise Problem(404, 'empty_dish_library')
+                if len(dishes) > 1000: raise Problem(400, 'dish_library_too_large')
+                archive = io.BytesIO()
+                columns = ('id', 'category', 'name_pt', 'name_en', 'image_filename')
+                catalog = io.StringIO()
+                writer = csv.DictWriter(catalog, fieldnames=columns)
+                writer.writeheader()
+                total_bytes = 0
+                with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+                    for dish in dishes:
+                        filename = dish['image_filename']
+                        if not re.fullmatch(r'[a-z0-9-]{4,60}', dish['id']) or filename != dish['id'] + '.webp':
+                            raise Problem(400, 'invalid_dish_catalog')
+                        photo = read_dish_image(c, filename)
+                        if photo is None:
+                            raise Problem(409, 'dish_photo_missing')
+                        if len(photo) > 400000 or photo[:4] != b'RIFF' or photo[8:12] != b'WEBP':
+                            raise Problem(400, 'invalid_dish_photo')
+                        total_bytes += len(photo)
+                        if total_bytes > 20 * 1024 * 1024:
+                            raise Problem(413, 'dish_library_too_large')
+                        z.writestr('images/' + filename, photo)
+                        writer.writerow({field: dish.get(field, '') for field in columns})
+                    z.writestr('catalog.csv', catalog.getvalue().encode('utf-8-sig'))
+                headers.append(('Content-Disposition', 'attachment; filename="the-mile-biblioteca-pratos.zip"'))
+                return respond(200, archive.getvalue(), 'application/zip')
             if path == '/api/v2/dishes/import' and method == 'POST':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
