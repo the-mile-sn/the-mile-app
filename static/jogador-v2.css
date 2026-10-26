@@ -1346,3 +1346,59 @@ header{padding:10px 0 24px}
 #menus .menu-entry-body .dish-img{
  align-self:flex-start!important;position:relative!important;top:-9px!important;
 }
+
+
+/* Stable collapsed-option layout, independent of previous option open state.
+   Earlier sibling selectors were adding padding/margins to all but the first option. */
+#overview .daily-meal > details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard{
+ margin:9px 12px!important;padding:12px 14px!important;
+ border-top:0!important;border-bottom:0!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard + details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard + details.player-meal-option-subcard,
+#overview .daily-meal > details.player-meal-option-subcard[open] + details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard[open] + details.player-meal-option-subcard,
+#overview .daily-meal > details.player-meal-option-subcard:not([open]) + details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard:not([open]) + details.player-meal-option-subcard{
+ margin:9px 12px!important;padding:12px 14px!important;
+ border-top:0!important;border-bottom:0!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary{
+ min-height:0!important;margin:0!important;padding:0!important;
+ display:flex!important;align-items:center!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary .option,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .option{
+ min-height:0!important;margin:0!important;padding:0 24px 0 0!important;
+ display:flex!important;align-items:center!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary .plan-option-label,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .plan-option-label{
+ align-self:center!important;justify-content:center!important;gap:5px!important;
+}
+/* Menu meal labels always left aligned, with text directly below. */
+#menus .day-menu .menu-entry{align-items:stretch!important;text-align:left!important}
+#menus .day-menu .menu-entry-heading{
+ display:flex!important;justify-content:flex-start!important;align-items:flex-start!important;
+ width:100%!important;text-align:left!important;
+}
+#menus .day-menu .menu-entry-heading strong{
+ display:block!important;text-align:left!important;margin:0!important;
+}
+#menus .day-menu .menu-entry-body{text-align:left!important;align-self:stretch!important}
+/* All weekly training, post-training and match events share the same surface and sizing. */
+#weekly-view .weekly-event-card,
+#weekly-view .weekly-peri-card,
+#weekly-view .weekly-match-with-intra{
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;gap:2px!important;
+ width:100%!important;min-height:46px!important;height:auto!important;
+ padding:5px 2px!important;border-radius:15px!important;
+ border:0!important;box-shadow:none!important;
+ font-size:clamp(8px,1.5vw,11px)!important;line-height:1.16!important;
+ font-weight:600!important;text-align:center!important;
+}
+#weekly-view .weekly-peri-card span,
+#weekly-view .weekly-event-card span{line-height:1.16!important}
