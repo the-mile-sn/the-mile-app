@@ -1431,3 +1431,25 @@ header{padding:10px 0 24px}
 @media(max-width:620px){
  #menus .menu-day-subtitle{font-size:17px!important}
 }
+
+
+/* Peri-training: breathing space after the last expanded food line. */
+#overview details.peri-meal[open] > .foods:last-child,
+#overview details.peri-meal[open] > .single-meal-option:last-child,
+#overview details.peri-meal[open] > details:last-child,
+#overview details.peri-meal[open] > .option-expanded-macros:last-child{
+ margin-bottom:18px!important;
+}
+#overview details.peri-meal[open]{padding-bottom:18px!important}
+
+/* Menu photos: display only a circular crop, removing the square backing.
+   Original assets are unchanged. */
+#menus .menu-entry-body img.dish-img{
+ display:block!important;width:82px!important;height:82px!important;
+ border-radius:50%!important;clip-path:circle(50% at 50% 50%)!important;
+ object-fit:cover!important;object-position:center!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:0!important;overflow:hidden!important;
+}
+/* Keep the meal label and description grouped at the top. */
+#menus .menu-entry-heading{margin-bottom:2px!important}
