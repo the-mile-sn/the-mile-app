@@ -1424,6 +1424,18 @@ $("supp-lib-assign").onclick=()=>{
  renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
 };
 
+$("supp-transfer-import").onclick=async()=>{
+ const file=$("supp-transfer-file").files?.[0],feedback=$("supp-transfer-feedback");
+ if(!file||file.size>5*1024*1024){feedback.textContent="Seleciona o JSON exportado da app de testes (até 5 MB).";return;}
+ const button=$("supp-transfer-import");button.disabled=true;feedback.textContent="A importar biblioteca…";
+ try{
+  const payload=JSON.parse(await file.text());
+  const result=await request("/api/v2/supplement-library/transfer",{method:"POST",body:JSON.stringify(payload)});
+  feedback.textContent=result.imported+" suplementos importados de "+result.total+". Os existentes não foram substituídos.";
+  await loadSupplementLibrary();
+ }catch(e){feedback.textContent="Não foi possível importar: "+e.message;}
+ finally{button.disabled=false;}
+};
 let supplementBulkPackage="";
 $("supp-bulk-preview").onclick=async()=>{
  const file=$("supp-bulk-file").files?.[0],feedback=$("supp-bulk-results");
