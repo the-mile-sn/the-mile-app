@@ -479,7 +479,7 @@ async function overview(){
     macros.append(cell);
    }
    summary.append(macros);
-   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expandir resumo nutricional");expand.textContent="⌄";
+   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expandir resumo nutricional");expand.textContent="";
    const weeklyCharts=document.createElement("div");weeklyCharts.className="nutrition-weekly-charts";weeklyCharts.hidden=true;
    const weekDays=[];
    for(let offset=0;offset<7;offset++){
@@ -515,7 +515,7 @@ async function overview(){
    };
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=!hasWeight;
    renderMacroMode("g");
-   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.textContent=weeklyCharts.hidden?"⌄":"⌃";};
+   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));};
    summary.append(expand,weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
