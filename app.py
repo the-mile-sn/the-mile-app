@@ -548,10 +548,14 @@ def application(env, start_response):
                     or path.startswith('/api/v2/supplement-library')
                     or path.startswith('/api/v2/dishes/edit')
                     or path.startswith('/api/v2/dishes/photo')
-                    or path.startswith('/api/v2/dishes/import')):
+                    or path.startswith('/api/v2/dishes/import')
+                    or path.startswith('/api/players')
+                    or path.startswith('/api/admins')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
-            if path in ('/jogador-v2', '/jogador-v2.js', '/jogador-v2.css'):
+            if (path in ('/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
+                    or path.startswith('/api/v2/player/')
+                    or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
         static_files = {
             '/': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
