@@ -107,7 +107,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 BASE_URL = os.environ.get('MILE_BASE_URL', 'http://localhost:8000').strip().rstrip('/')
 ALLOWED_ORIGINS = {BASE_URL, 'https://the-mile-app.onrender.com'}
 ALLOWED_ORIGIN_HOSTS = {h for h in (urlparse(x).hostname for x in ALLOWED_ORIGINS) if h}
-ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'the-mile-app.onrender.com', 'the-mile-app-test.onrender.com'})
+ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'admin.themile.pt', 'the-mile-app.onrender.com', 'the-mile-app-test.onrender.com'})
 SITE_ROLE = os.environ.get('MILE_SITE_ROLE', 'both').strip().lower()
 if SITE_ROLE not in ('both', 'admin', 'player'):
     raise RuntimeError('Invalid MILE_SITE_ROLE')
@@ -187,6 +187,7 @@ class PgConnection:
 def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
     with connect() as c:
+        c.execute('CREATE TABLE IF NOT EXISTS v2_shared_images (image_key TEXT PRIMARY KEY, image_data ' + ('BYTEA' if DATABASE_URL else 'BLOB') + ' NOT NULL)')
         if DATABASE_URL:
             c.executescript('''
             CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
@@ -260,6 +261,21 @@ def initialize():
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
         for name, email in ADMINS:
             c.execute('INSERT OR IGNORE INTO users(id,name,email,role) VALUES(?,?,?,?)', (secrets.token_hex(16), name, email, 'admin'))
+
+
+def store_dish_image(c, filename, image_data):
+    """Keep dish photos in the same database both production services use."""
+    c.execute('DELETE FROM v2_shared_images WHERE image_key=?', (filename,))
+    c.execute('INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)', (filename, image_data))
+
+
+def read_dish_image(c, filename):
+    row = c.execute('SELECT image_data FROM v2_shared_images WHERE image_key=?', (filename,)).fetchone()
+    if row:
+        return bytes(row['image_data'])
+    # Compatibility with existing test images; migrate explicitly before production.
+    file = DATA / 'v2_dish_images' / filename
+    return file.read_bytes() if file.is_file() else None
 
 
 def digest(value):
@@ -587,6 +603,9 @@ def application(env, start_response):
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
 
+            if SITE_ROLE != 'both' and user and user['role'] != SITE_ROLE:
+                user = None
+
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
                 if origin:
@@ -902,12 +921,8 @@ def application(env, start_response):
                     category=body.get('category')
                     if not all(isinstance(v,str) for v in (name_pt,name_en,category)) or not 1<=len(name_pt.strip())<=200 or not 1<=len(category.strip())<=100 or len(name_en)>200: raise Problem(400,'invalid_dish')
                     dish_id=secrets.token_hex(12)
-                folder=DATA/'v2_dish_images'
-                folder.mkdir(parents=True,exist_ok=True)
                 filename=dish_id+'.webp'
-                temporary=folder/(dish_id+'-'+secrets.token_hex(4)+'.tmp')
-                temporary.write_bytes(raw)
-                os.replace(temporary,folder/filename)
+                store_dish_image(c, filename, raw)
                 if not body.get('id'):
                     c.execute("INSERT INTO v2_dish_library(id,category,name_pt,name_en,image_filename) VALUES(?,?,?,?,?)",(dish_id,category.strip(),name_pt.strip(),name_en.strip(),filename))
                     c.commit()
@@ -943,10 +958,8 @@ def application(env, start_response):
                             data=z.read('images/'+filename)
                             if len(data)>400000 or data[:4]!=b'RIFF' or data[8:12]!=b'WEBP': raise ValueError()
                             files[filename]=data
-                    folder=DATA/'v2_dish_images'
-                    folder.mkdir(parents=True,exist_ok=True)
                     for filename,data in files.items():
-                        (folder/filename).write_bytes(data)
+                        store_dish_image(c,filename,data)
                     microcycles_v2.import_dish_catalog(c,rows)
                 except (ValueError,KeyError,zipfile.BadZipFile,FileNotFoundError) as exc:
                     raise Problem(400,'invalid_dish_archive') from exc
@@ -958,9 +971,9 @@ def application(env, start_response):
                 if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
                 dish=c.execute("SELECT image_filename FROM v2_dish_library WHERE id=? AND active=1",(identifier,)).fetchone()
                 if not dish: raise Problem(404,'not_found')
-                file=DATA/'v2_dish_images'/dish['image_filename']
-                if not file.is_file(): raise Problem(404,'not_found')
-                return respond(200,file.read_bytes(),'image/webp')
+                image_data=read_dish_image(c,dish['image_filename'])
+                if image_data is None: raise Problem(404,'not_found')
+                return respond(200,image_data,'image/webp')
             if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method == 'PUT':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -1194,9 +1207,9 @@ def application(env, start_response):
                    JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
                    WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",(link['athlete_id'],identifier)).fetchone()
                 if not row: raise Problem(404,'not_found')
-                photo=DATA/'v2_dish_images'/row['image_filename']
-                if not photo.is_file(): raise Problem(404,'not_found')
-                return respond(200,photo.read_bytes(),'image/webp')
+                image_data=read_dish_image(c,row['image_filename'])
+                if image_data is None: raise Problem(404,'not_found')
+                return respond(200,image_data,'image/webp')
             if path == '/api/v2/player/plans' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
@@ -1224,6 +1237,8 @@ def application(env, start_response):
                 if path == '/api/login':
                     identifier = str(body.get('identifier', body.get('email', ''))).strip().lower()
                     u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
+                    if SITE_ROLE != 'both' and u and u['role'] != SITE_ROLE:
+                        u = None
                     if not password_valid(password, u['password'] if u else None):
                         raise Problem(401, 'credentials')
                 else:
