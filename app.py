@@ -1216,6 +1216,12 @@ def application(env, start_response):
                     return respond(200,{'access':{'id':existing['id'],'username':existing['username'],'active':active}})
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
+            if path == '/api/v2/player/profile-photo' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                photo = c.execute("SELECT photo,photo_mime FROM users WHERE id=? AND active=1 AND role='player'", (user['id'],)).fetchone()
+                if not photo or not photo['photo']: raise Problem(404, 'not_found')
+                return respond(200, bytes(photo['photo']), photo['photo_mime'] or 'image/jpeg')
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
