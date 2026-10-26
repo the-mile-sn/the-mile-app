@@ -511,7 +511,7 @@ async function overview(){
    const renderMacroMode=mode=>{
     macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent="Para consultar g/kg, adiciona o peso do jogador ao perfil.";macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
     const divisor=mode==="kg"?(hasWeight?weight:NaN):1;
-    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?2:0));
+    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
    };
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
    renderMacroMode("g");
