@@ -1675,3 +1675,24 @@ header{padding:10px 0 24px}
 /* g/g/kg switch must be legible and enabled. */
 #overview .macro-chart-switch{display:flex!important}
 #overview .macro-chart-switch button{cursor:pointer!important}
+
+
+/* Agreed player typography: headings/events 500, option description 450, navigation 400. */
+#overview .daily-meal > .daily-meal-head > strong,
+#plans #plan-detail .plan-overview-meal > .daily-meal-head > strong,
+#overview .peri-meal > .daily-meal-head > strong{
+ font-weight:500!important;
+}
+#overview .daily-meal .plan-option-label > strong,
+#plans #plan-detail .plan-option-card .plan-option-label > strong,
+#plans #plan-detail .player-meal-option-subcard .plan-option-label > strong{
+ font-weight:450!important;
+}
+#overview .daily-event-card > span:not(.meal-leading-icon),
+#overview .peri-meal > .daily-meal-head > strong,
+#overview .match-intra-card > .daily-meal-head > strong,
+#weekly-view .weekly-event-card > span:first-child,
+#weekly-view .weekly-peri-card > span:first-child{
+ font-weight:500!important;
+}
+#tabs button,#tabs button span{font-weight:400!important}
