@@ -6,8 +6,53 @@ let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
-async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-login-panel").hidden=true;$("admin-workspace").hidden=false;await loadAthletes();status("Backoffice pronto.");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
+async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;$("admin-login-panel").hidden=true;$("admin-workspace").hidden=false;await loadAthletes();status("Backoffice pronto.");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
 $("admin-login-form").addEventListener("submit",async e=>{e.preventDefault();const feedback=$("admin-login-error");feedback.textContent="";try{await fetch("/api/login",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({identifier:$("admin-login-email").value.trim().toLowerCase(),password:$("admin-login-password").value})}).then(async r=>{if(!r.ok)throw Error("invalid_login");});$("admin-login-password").value="";await start();}catch(err){feedback.textContent="Não foi possível iniciar sessão. Confirma as credenciais.";}});
+let administratorIdentity=null;
+async function loadAdminAccounts(){
+ const res=await request("/api/admins");
+ const host=$("admin-users-list");host.replaceChildren();
+ for(const a of res.admins){
+  const row=document.createElement("p");
+  row.textContent=a.name+" · "+a.email+" · "+(a.active?"Ativo":"Inativo")+(a.activated?"":" · Por ativar");
+  host.append(row);
+ }
+}
+$("admin-account-toggle").onclick=async()=>{
+ const panel=$("admin-account-panel");panel.hidden=!panel.hidden;
+ $("admin-account-toggle").setAttribute("aria-expanded",String(!panel.hidden));
+ if(!panel.hidden)try{await loadAdminAccounts();}catch(e){$("admin-invite-feedback").textContent=e.message;}
+};
+$("admin-password-form").onsubmit=async e=>{
+ e.preventDefault();const feedback=$("admin-password-feedback");feedback.textContent="";
+ try{
+  await request("/api/password",{method:"POST",body:JSON.stringify({current_password:$("admin-current-password").value,new_password:$("admin-new-password").value})});
+  $("admin-current-password").value="";$("admin-new-password").value="";
+  feedback.textContent="Palavra-passe alterada. Outras sessões foram terminadas.";
+ }catch(err){feedback.textContent="Não foi possível alterar a palavra-passe: "+err.message;}
+};
+$("admin-invite-form").onsubmit=async e=>{
+ e.preventDefault();const feedback=$("admin-invite-feedback");feedback.textContent="";
+ try{
+  const res=await request("/api/admins",{method:"POST",body:JSON.stringify({name:$("admin-invite-name").value.trim(),email:$("admin-invite-email").value.trim()})});
+  $("admin-invite-link").value=res.activation_url;
+  $("admin-invite-link-label").hidden=false;$("admin-invite-copy").hidden=false;
+  feedback.textContent="Convite criado. Partilha a ligação apenas com o administrador indicado.";
+  await loadAdminAccounts();
+ }catch(err){feedback.textContent="Não foi possível gerar convite: "+err.message;}
+};
+$("admin-invite-copy").onclick=async()=>{
+ try{await navigator.clipboard.writeText($("admin-invite-link").value);$("admin-invite-feedback").textContent="Ligação copiada.";}
+ catch(e){$("admin-invite-feedback").textContent="Seleciona e copia a ligação manualmente.";}
+};
+$("admin-signout").onclick=async()=>{
+ const feedback=$("admin-signout-feedback");feedback.textContent="";
+ try{
+  await request("/api/logout",{method:"POST",body:"{}"});
+  csrf="";$("admin-account-panel").hidden=true;$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;
+  $("admin-login-password").value="";
+ }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
+};
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
 async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
 function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.classList.add("microcycle-color-select");sel.dataset.color=sel.value||"none";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;sel.dataset.color=next||"none";row.configured=true;title.textContent="● "+row.name;status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
