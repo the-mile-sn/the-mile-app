@@ -874,12 +874,16 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     for(const [key,label] of [["kcal","kcal"],["protein_g","P (g)"],["carbs_g","HC (g)"],["fat_g","G (g)"]]){
       nutrients[key]=field(label,item.nutrients?.[key]||"",box);
     }
-    form.appendChild(box);edits.push({type,name,quantity,nutrients});
+    const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.textContent="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
+    box.appendChild(remove);
+    form.appendChild(box);
+    const edit={type,name,quantity,nutrients,box,removed:false};edits.push(edit);
+    remove.onclick=()=>{edit.removed=true;box.remove();persist();};
   });
   const feedback=document.createElement("p");feedback.className="hint";feedback.textContent="As alterações são guardadas automaticamente ao sair de cada campo.";form.appendChild(feedback);
   let saveChain=Promise.resolve();
   const persist=()=>{
-    const entries=edits.map(edit=>{
+    const entries=edits.filter(edit=>!edit.removed).map(edit=>{
       const kind=edit.type.value;
       const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
       return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null};
