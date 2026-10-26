@@ -93,22 +93,48 @@ def parse_pdf(encoded):
  text="\n".join(pages[:3])
  summary=pages[1] if len(pages)>1 else text
  aliases={
-  "sum_8":["Soma de 8 pregas","Sum of 8 skinfolds"],
-  "weight":["Peso corporal (kg)","Body weight (kg)"],
-  "body_fat":["Gordura corporal","Bodyfat"],
-  "bmi":["IMC","BMI"],
-  "muscle_index":["Índice de massa muscular","Muscle mass index"],
-  "arm_muscle":["Músculo do braço","Arm muscle mass"],
-  "thigh_muscle":["Músculo da coxa","Thigh muscle mass"],
-  "calf_muscle":["Músculo do gémeo","Calf muscle mass"],
-  "sum_perimeters":["Soma de perímetros","Sum of perimeters"],
+  "sum_8":("Soma de 8 pregas","Sum of 8 skinfolds"),
+  "weight":("Peso corporal (kg)","Body weight (kg)"),
+  "body_fat":("Gordura corporal","Bodyfat"),
+  "bmi":("IMC","BMI"),
+  "muscle_index":("Índice de massa muscular","Muscle mass index"),
+  "arm_muscle":("Músculo do braço","Arm muscle mass"),
+  "thigh_muscle":("Músculo da coxa","Thigh muscle mass"),
+  "calf_muscle":("Músculo do gémeo","Calf muscle mass"),
+  "sum_perimeters":("Soma de perímetros","Sum of perimeters"),
  }
+ decimal=r"([0-9]{1,3}\\s*[,.]\\s*[0-9]{1,2})"
+ def number(fragment):
+  try:return float(re.sub(r"\\s+","",fragment).replace(",","."))
+  except (TypeError,ValueError):return None
  candidates={}
  for key,(pt,en) in aliases.items():
-  # First inspect the immediate content after a PT heading; skip if uncertain.
-  match=re.search(re.escape(pt)+r"\s*([0-9]{1,3}[,.][0-9]{1,2})\s*(?:%|\n|$)",summary,re.I)
+  pattern=re.escape(pt)+r"\\*?\\s*"+re.escape(en)+r"\\*?\\s*"+decimal
+  match=re.search(pattern,summary,re.I)
   if match:
-   candidates[key]=float(match.group(1).replace(",","."))
+   val=number(match.group(1))
+   if val is not None:candidates[key]=val
+ # The PDF's latest-measurement overview puts some numbers next to the
+ # translated names and others on the facing column. Match only the
+ # characteristic annotated layout; leave unmatched fields for review.
+ lines={
+  "biceps":r"Bicep\\s+Biceps\\s*"+decimal,
+  "back":decimal+r"\\s*Costas\\s+Back",
+  "suprailiac":r"Suprailíaca\\s+Suprailiac\\s*"+decimal,
+  "triceps":decimal+r"\\s*Trícep\\s+Triceps",
+  "supraspinal":r"Supraespinal\\s+Supraspinal\\s*"+decimal,
+  "arm_right_relaxed":decimal+r"\\s*Braço dir\\s+Right arm",
+  "abdominal_skin":r"Abdominal\\s+Abdominal\\s*"+decimal,
+  "thigh_right":decimal+r"\\s*Coxa dir\\s+Right thigh",
+  "thigh_skin":r"Coxa\\s+Thigh\\s*"+decimal,
+  "calf_right":decimal+r"\\s*Gémeo dir\\s+Right calf",
+  "calf_skin":r"Gémeo\\s+Calf\\s*"+decimal,
+ }
+ for key,pattern in lines.items():
+  match=re.search(pattern,summary,re.I)
+  if match:
+   val=number(match.group(1))
+   if val is not None:candidates[key]=val
  date_match=re.search(r"\b(\d{2})/(\d{2})/(20\d{2})\b",summary)
  assessed_on=f"{date_match.group(3)}-{date_match.group(2)}-{date_match.group(1)}" if date_match else ""
  return {"measurements":candidates,"averages":{},"assessed_on":assessed_on,"formula_note":"* Média de 4" if "Média de 4" in text else "",
