@@ -1313,3 +1313,36 @@ header{padding:10px 0 24px}
 #menus .menu-entry-body .dish-img{
  position:relative!important;top:-9px!important;align-self:center!important;
 }
+
+
+/* Compact closed option subcards; no forced 76px heading height. */
+#overview .daily-meal > details.player-meal-option-subcard > summary,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary{
+ min-height:0!important;height:auto!important;padding:0!important;
+ display:flex!important;align-items:center!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary .option,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .option{
+ min-height:0!important;height:auto!important;padding:0 24px 0 0!important;
+ display:flex!important;align-items:center!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary .plan-option-label,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .plan-option-label{
+ align-self:center!important;justify-content:center!important;gap:5px!important;
+ line-height:1.3!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard{
+ padding:12px 14px!important;margin:9px 12px!important;
+}
+/* Menu text always starts at the same top position. Images stay independently aligned. */
+#menus .menu-entry{display:flex!important;flex-direction:column!important}
+#menus .menu-entry-heading{margin:0 0 6px!important;flex:none!important}
+#menus .menu-entry-body{display:flex!important;align-items:flex-start!important;gap:12px!important}
+#menus .menu-entry-body .value{
+ align-self:flex-start!important;margin:0!important;padding:0!important;
+ line-height:1.4!important;
+}
+#menus .menu-entry-body .dish-img{
+ align-self:flex-start!important;position:relative!important;top:-9px!important;
+}
