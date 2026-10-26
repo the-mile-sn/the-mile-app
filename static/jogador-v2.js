@@ -38,7 +38,7 @@ function optionEl(o,i,planView=false){
 const mealIconMap={breakfast:"coffee-03",snack:"vegetarian-food",lunch:"restaurant-02",dinner:"restaurant-02",supper:"moon-02",supplements:"pill"};
 const mileSvgPaths={"coffee-03":"<path d=\"M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Zm12 1h1a3 3 0 0 1 0 6h-2M4 22h16M8 3v3m4-3v3m4-3v3\"/>","vegetarian-food":"<path d=\"M4 12c2-4 6-4 8 0 2-4 6-4 8 0l-2 7H6l-2-7ZM12 10V4M8 7 5 5m11 2 3-2M6 22h12\"/>","restaurant-02":"<path d=\"M4 3v8m3-8v8M4 7h3M5.5 11v10M13 3v18M13 12c7 0 8-8 3-9v9M20 3v18\"/>","moon-02":"<path d=\"M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z\"/>","football":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 7 4 3-1.5 5h-5L8 10l4-3Zm-4 3-4-1m12 1 4-1m-5.5 6 2 5m-7-5-2 5M12 7V3\"/>","football-pitch":"<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1\"/><path d=\"M12 4v16m0-12a4 4 0 0 0 0 8M2.5 9h4v6h-4m19-6h-4v6h4\"/>","soft-drink-01":"<path d=\"M5 5h14l-2 16H7L5 5ZM4 3h16M12 5l4-4M8 11h8m-6 4h4\"/>","home-09":"<path d=\"m3 11 9-8 9 8v9H3v-9Zm6 9v-7h6v7\"/>","files-01":"<path d=\"M7 3h10l4 4v14H7V3Zm10 0v5h4M3 7v14h14\"/>","add-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10m-5-5h10\"/>","menu-restaurant":"<path d=\"M4 4v7m3-7v7M4 7h3m-1.5 4v9M13 4v16m0-8c7 0 8-7 3-8v8M3 22h18\"/>","user-03":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>"};
 function mealIcon(name){const el=document.createElement("span");el.className="mile-icon icon-"+name;el.setAttribute("aria-hidden","true");el.innerHTML='<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(mileSvgPaths[name]||"")+'</svg>';if(hugeiconsOfficial){const raw=hugeiconsOfficial[hugeiconsNames[name]];if(Array.isArray(raw)){el.replaceChildren(iconToSvg(raw));el.dataset.official="true";}}return el;}
-const hugeiconsNames={"coffee-03":"Coffee03Icon","vegetarian-food":"VegetarianFoodIcon","restaurant-02":"Restaurant02Icon","moon-02":"Moon02Icon","football":"FootballIcon","football-pitch":"FootballPitchIcon","soft-drink-01":"SoftDrink01Icon","pill":"PillIcon","home-09":"Home09Icon","files-01":"Files01Icon","add-circle":"AddCircleIcon","menu-restaurant":"MenuRestaurantIcon","user-03":"User03Icon"};
+const hugeiconsNames={"coffee-03":"Coffee03Icon","vegetarian-food":"VegetarianFoodIcon","restaurant-02":"Restaurant02Icon","moon-02":"Moon02Icon","football":"FootballIcon","football-pitch":"FootballPitchIcon","soft-drink-01":"SoftDrink01Icon","pill":"PillIcon","home-09":"Home09Icon","files-01":"Files01Icon","add-circle":"AddCircleIcon","menu-restaurant":"MenuRestaurantIcon","user-03":"User03Icon","key-01":"Key01Icon","door-01":"Door01Icon"};
 const hugeiconsOfficial={
 "Coffee03Icon":[
   ["path", { d: "M17 11H18C18.9319 11 19.3978 11 19.7654 11.1522C20.2554 11.3552 20.6448 11.7446 20.8478 12.2346C21 12.6022 21 13.0681 21 14C21 14.9319 21 15.3978 20.8478 15.7654C20.6448 16.2554 20.2554 16.6448 19.7654 16.8478C19.3978 17 18.9319 17 18 17H17", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
@@ -109,6 +109,15 @@ const hugeiconsOfficial={
   ["path", { d: "M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }]
 ]
 };
+hugeiconsOfficial["Key01Icon"]=[
+  ["path", { d: "M15.5 14.5C18.8137 14.5 21.5 11.8137 21.5 8.5C21.5 5.18629 18.8137 2.5 15.5 2.5C12.1863 2.5 9.5 5.18629 9.5 8.5C9.5 9.38041 9.68962 10.2165 10.0303 10.9697L2.5 18.5V21.5H5.5V19.5H7.5V17.5H9.5L13.0303 13.9697C13.7835 14.3104 14.6196 14.5 15.5 14.5Z", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M17.5 6.5L16.5 7.5", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }]
+];
+hugeiconsOfficial["Door01Icon"]=[
+  ["path", { d: "M18 20C19.1046 20 20 19.1046 20 18V6C20 4.89543 19.1046 4 18 4", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M4 6.84771V17.1523C4 18.7454 4 19.542 4.4645 20.0976C4.92899 20.6531 5.71415 20.7956 7.28446 21.0806L10.2845 21.6251C12.4701 22.0217 13.563 22.2201 14.2815 21.6215C15 21.023 15 19.9142 15 17.6968V6.30325C15 4.08578 15 2.97704 14.2815 2.37849C13.563 1.77994 12.4701 1.97827 10.2845 2.37495L7.28446 2.91941C5.71415 3.2044 4.92899 3.34689 4.4645 3.90244C4 4.45799 4 5.25457 4 6.84771Z", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }],
+  ["path", { d: "M11.625 12H11.5M11.75 12C11.75 12.1381 11.6381 12.25 11.5 12.25C11.3619 12.25 11.25 12.1381 11.25 12C11.25 11.8619 11.3619 11.75 11.5 11.75C11.6381 11.75 11.75 11.8619 11.75 12Z", stroke: "currentColor", strokeLinecap: "round", strokeWidth: "1.5", key: "2" }]
+];
 function iconToSvg(nodes){
  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.5");svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
  const append=(items,parent)=>{for(const node of items||[]){if(!Array.isArray(node))continue;const [tag,props,children]=node;if(typeof tag!=="string"||!["path","circle","rect","line","polyline","polygon","ellipse","g"].includes(tag))continue;const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(props||{})){if(k==="key"||k==="ref"||typeof v==="object")continue;el.setAttribute(k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),String(v));}parent.append(el);if(Array.isArray(children))append(children,el);}};
@@ -126,7 +135,8 @@ function decorateLabel(el,key){
  const item=document.createElement("span");item.className="meal-leading-icon";item.append(mealIcon(iconName));el.prepend(item);updateOfficialIcons();
 }
 
-async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+let profileUsername="";
+async function session(){const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(){
@@ -610,6 +620,21 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
  div.append(title,body);section.append(div);}root.append(section);}}
 function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
 $("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+$("profile-password-toggle").onclick=()=>{const form=$("profile-password-form");form.hidden=!form.hidden;};
+$("profile-password-form").onsubmit=async e=>{
+ e.preventDefault();const feedback=$("profile-password-feedback"),button=e.currentTarget.querySelector('button[type="submit"]');
+ const current=$("profile-current-password").value,next=$("profile-new-password").value,confirm=$("profile-confirm-password").value;
+ if(next!==confirm){feedback.textContent="As novas palavras-passe não coincidem.";return;}
+ if(next.length<8){feedback.textContent="Utiliza pelo menos 8 caracteres.";return;}
+ if(!profileUsername){feedback.textContent="Não foi possível identificar a conta. Volta a iniciar sessão.";return;}
+ button.disabled=true;feedback.textContent="";
+ try{await api("/api/change-password",{method:"POST",body:JSON.stringify({identifier:profileUsername,current_password:current,new_password:next})});
+ $("profile-current-password").value="";$("profile-new-password").value="";$("profile-confirm-password").value="";
+ revokePlayerView();$("status").textContent="Palavra-passe alterada. Inicia sessão novamente.";
+ }catch(err){feedback.textContent="Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente.";}finally{button.disabled=false;}
+};
+for(const item of document.querySelectorAll("#profile .mile-icon")){const name=[...item.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)item.replaceWith(mealIcon(name));}
+
 loadOfficialHugeicons();
 for(const icon of document.querySelectorAll("#tabs .mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)icon.replaceWith(mealIcon(name));}
 updateOfficialIcons();
