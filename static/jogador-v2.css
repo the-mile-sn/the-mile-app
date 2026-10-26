@@ -1867,3 +1867,14 @@ header{padding:10px 0 24px}
 #profile .profile-password-form input{height:43px;box-sizing:border-box;background:#313139;border:1px solid #4c4c53;border-radius:11px;padding:9px 12px;color:#fff;font-size:14px}
 #profile .profile-password-form p{margin:0;font-size:12px;color:#e8b48b}
 #profile .profile-password-save{align-self:flex-end;background:#fff!important;color:#17171b!important;border:0!important;border-radius:999px!important;padding:10px 17px!important;font-size:13px!important;font-weight:500!important}
+
+
+/* Player profile identity replaces the global avatar header on this tab only. */
+body.profile-active .player-top{display:none!important}
+#profile .profile-identity{display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;margin:8px 0 30px}
+#profile .profile-photo-circle{width:90px;height:90px;flex:none;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#414148;color:#fff;font-size:28px;font-weight:550;margin-bottom:9px}
+#profile .profile-photo-circle img{width:100%;height:100%;object-fit:cover;display:block}
+#profile .profile-photo-circle img[hidden],#profile .profile-photo-circle span[hidden]{display:none!important}
+#profile .profile-identity>strong{font-size:21px;line-height:1.2;font-weight:550;color:#f5f5f7}
+#profile .profile-identity>span{font-size:14px;line-height:1.4;font-weight:400;color:#a9a9b1}
+#player-panel #profile{padding-top:19px!important}
