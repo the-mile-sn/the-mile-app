@@ -1289,3 +1289,27 @@ header{padding:10px 0 24px}
  transform:none!important;
 }
 #weekly-view .weekly-supplement-summary[open]>summary:after{transform:rotate(180deg)!important}
+
+
+/* Fine tuning: center the two-line option label inside each inner card.
+   Keep the disclosure triangle in its existing position. */
+#overview .daily-meal > details.player-meal-option-subcard > summary,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary{
+ display:flex!important;align-items:center!important;min-height:76px!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary .option,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .option{
+ display:flex!important;align-items:center!important;width:100%!important;
+ min-height:76px!important;margin:0!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard > summary .plan-option-label,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .plan-option-label{
+ display:flex!important;flex-direction:column!important;justify-content:center!important;
+ align-self:stretch!important;gap:6px!important;margin:0!important;
+}
+
+/* Menu: lower weekday header, independently raise photos without moving dish text. */
+#menus .menu-day-heading h3{padding-top:7px!important}
+#menus .menu-entry-body .dish-img{
+ position:relative!important;top:-9px!important;align-self:center!important;
+}
