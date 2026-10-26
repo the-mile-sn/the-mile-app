@@ -560,6 +560,7 @@ def application(env, start_response):
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
             if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css')
+                    or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/supplement-library')
                     or path.startswith('/api/v2/dishes/edit')
@@ -1242,6 +1243,8 @@ def application(env, start_response):
                     if not password_valid(password, u['password'] if u else None):
                         raise Problem(401, 'credentials')
                 else:
+                    if SITE_ROLE == 'player':
+                        raise Problem(404, 'not_found')
                     if len(password) < 12:
                         raise Problem(400, 'password_length')
                     a = c.execute("SELECT u.* FROM activations a JOIN users u ON u.id=a.user_id WHERE a.token=? AND a.expires>? AND u.active=1 AND u.role='admin'", (digest(str(body.get('token', ''))), now)).fetchone()
