@@ -201,7 +201,7 @@ function makePeriCard(item,compact=false){
   };
   const title=document.createElement("span");title.textContent=item.title;
   section.append(title);
-  if(avg){const kcal=document.createElement("span");kcal.textContent=fmt(avg.kcal,0)+" kcal";section.append(kcal);}
+  if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmt(avg.kcal,0);section.append(kcal);}
   return section;
  }
  const head=document.createElement("summary");head.className="daily-meal-head";
