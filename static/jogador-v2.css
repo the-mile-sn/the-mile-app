@@ -1777,3 +1777,13 @@ header{padding:10px 0 24px}
  width:24px!important;height:24px!important;flex:none!important;
 }
 #overview .peri-meal>.daily-meal-head{align-items:center!important}
+
+
+/* Standardize daily meal and event heading text at 18px / medium. */
+#overview .daily-meal > .daily-meal-head > strong,
+#overview .peri-meal > .daily-meal-head > strong,
+#overview .match-intra-card > .daily-meal-head > strong,
+#overview .daily-event-card > span:not(.meal-leading-icon),
+#plans #plan-detail .plan-overview-meal > .daily-meal-head > strong{
+ font-size:18px!important;font-weight:500!important;line-height:1.3!important;
+}
