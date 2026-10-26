@@ -472,7 +472,7 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
  const body=document.createElement("div");body.className="menu-entry-body";
  const name=document.createElement("span");name.className="value";name.textContent=menu.value;body.append(name);
  if(menu.kind==="dish"&&dishMap.has(menu.value)){
-  const photo=document.createElement("img");photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.src="/api/v2/player/dish-photo/"+encodeURIComponent(dishMap.get(menu.value));body.append(photo);
+  const photo=document.createElement("img");photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.src="/api/v2/player/dish-photo/"+encodeURIComponent(dishMap.get(menu.value))+"?v=2";body.append(photo);
  }
  div.append(title,body);section.append(div);}root.append(section);}}
 function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
