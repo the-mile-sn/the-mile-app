@@ -397,6 +397,44 @@ async function overview(){
     macros.append(cell);
    }
    summary.append(macros);
+   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expandir resumo nutricional");expand.textContent="⌄";
+   const weeklyCharts=document.createElement("div");weeklyCharts.className="nutrition-weekly-charts";weeklyCharts.hidden=true;
+   const weekDays=[];
+   for(let offset=0;offset<7;offset++){
+    const date=new Date(mon);date.setDate(mon.getDate()+offset);const key=iso(date);
+    const dayModel=r.days?.find(x=>x.date===key);
+    const sum={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let found=false;
+    for(const meal of meals){const color=assignedColor(key,meal,dayModel?.classification);const a=average(plans[color]?.[meal]||[]);if(a){found=true;for(const nutrient of Object.keys(sum))sum[nutrient]+=Number(a[nutrient]||0);}}
+    for(const peri of periMeals.filter(x=>x.event_date===key)){const a=average(peri.options||[]);if(a){found=true;for(const nutrient of Object.keys(sum))sum[nutrient]+=Number(a[nutrient]||0);}}
+    weekDays.push({date,key,total:sum,found});
+   }
+   function buildBars(title,key,color,scale){
+    const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
+    const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
+    const bars=document.createElement("div");bars.className="nutrition-chart-bars";
+    const max=Math.max(1,...weekDays.map(x=>x.found?x.total[key]/scale:0));
+    for(const item of weekDays){
+     const column=document.createElement("div");column.className="nutrition-chart-column";
+     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,0):"–";
+     const track=document.createElement("div");track.className="nutrition-chart-track";
+     const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
+     const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
+    }
+    wrap.append(bars);return wrap;
+   }
+   weeklyCharts.append(buildBars("Calorias da semana","kcal","#82d4a4",1));
+   const macroTitle=document.createElement("strong");macroTitle.textContent="Macros da semana";macroTitle.className="macro-chart-heading";weeklyCharts.append(macroTitle);
+   const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);weeklyCharts.append(modes);
+   const macArea=document.createElement("div");weeklyCharts.append(macArea);
+   const renderMacroMode=mode=>{
+    macArea.replaceChildren();gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
+    const divisor=mode==="kg"&&hasWeight?weight:1;
+    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor));
+   };
+   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=!hasWeight;
+   renderMacroMode("g");
+   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.textContent=weeklyCharts.hidden?"⌄":"⌃";};
+   summary.append(expand,weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }
