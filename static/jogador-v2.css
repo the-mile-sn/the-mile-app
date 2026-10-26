@@ -1818,3 +1818,32 @@ header{padding:10px 0 24px}
 }
 #overview .daily-event-editor button.daily-event-save:disabled{opacity:.5!important;cursor:default!important}
 #overview .daily-event-editor>small{width:100%!important;color:#f2bb89!important}
+
+
+/* iOS date picker: independently constrained columns prevent overlap. */
+#overview .daily-event-fields{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ width:100%!important;gap:12px!important;min-width:0!important;
+}
+#overview .daily-event-fields .daily-event-field{
+ display:block!important;min-width:0!important;max-width:100%!important;
+ overflow:hidden!important;box-sizing:border-box!important;
+}
+#overview .daily-event-fields .daily-event-field > input,
+#overview .daily-event-fields .daily-event-field > select{
+ display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
+ box-sizing:border-box!important;margin:0!important;padding:0 8px!important;
+ height:46px!important;line-height:46px!important;overflow:hidden!important;
+ font-size:13px!important;
+}
+#overview .daily-event-fields .daily-event-date input[type="date"]{
+ -webkit-appearance:none!important;appearance:none!important;
+ text-align:left!important;
+}
+#overview .daily-event-fields input[type="date"]::-webkit-date-and-time-value{
+ min-width:0!important;text-align:left!important;
+}
+#overview .daily-event-fields input[type="date"]::-webkit-datetime-edit{
+ padding:0!important;min-width:0!important;
+}
+#overview .daily-event-fields .daily-event-period select{text-align:left!important}
