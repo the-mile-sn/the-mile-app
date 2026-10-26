@@ -6,9 +6,12 @@ def initialize(c):
  c.execute("""CREATE TABLE IF NOT EXISTS v2_supplements(
  athlete_id TEXT PRIMARY KEY, plan_json TEXT NOT NULL DEFAULT '[]',
  overrides_json TEXT NOT NULL DEFAULT '{}')""")
- try:c.execute("ALTER TABLE v2_supplements ADD COLUMN match_exclusions_json TEXT NOT NULL DEFAULT '{}'")
- except Exception as e:
-  if "duplicate column" not in str(e).lower():raise
+ if hasattr(c, 'conn'):
+  c.execute("ALTER TABLE v2_supplements ADD COLUMN IF NOT EXISTS match_exclusions_json TEXT NOT NULL DEFAULT '{}'")
+ else:
+  columns={row["name"] for row in c.execute("PRAGMA table_info(v2_supplements)").fetchall()}
+  if "match_exclusions_json" not in columns:
+   c.execute("ALTER TABLE v2_supplements ADD COLUMN match_exclusions_json TEXT NOT NULL DEFAULT '{}'")
 def read(c,aid):
  row=c.execute("SELECT plan_json,overrides_json,match_exclusions_json FROM v2_supplements WHERE athlete_id=?",(aid,)).fetchone()
  return {"plan":json.loads(row["plan_json"]),"overrides":json.loads(row["overrides_json"]),"match_exclusions":json.loads(row["match_exclusions_json"])} if row else {"plan":[],"overrides":{},"match_exclusions":{}}
