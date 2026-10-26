@@ -127,7 +127,7 @@ function decorateLabel(el,key){
 }
 
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
-async function show(t){tab=t;for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
+async function show(t){tab=t;for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=t==="overview";if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(){
  const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
@@ -160,10 +160,10 @@ function weeklyDayTotal(entry){
 function weeklySummary(data){
  const section=document.createElement("section");section.className="weekly-average-summary";
  const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
- for(const [key,label,cls] of [["kcal","Energia","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+ for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
-  const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?" kcal":" g");
+  const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?"":" g");
   item.append(title,value);
   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(data[key]/weight,1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
   section.append(item);
@@ -268,7 +268,7 @@ function renderWeekly(mon,r,weekMenus=[]){
  }
  if(weeklySupplements.size){
   const summary=document.createElement("details");summary.className="weekly-supplement-summary";
-  const header=document.createElement("summary");header.textContent="Suplementação";summary.append(header);
+  const header=document.createElement("summary");header.textContent="Suplementação";header.prepend(mealIcon("pill"));summary.append(header);
   for(const group of ["Diariamente","Treino","MD-1","MD","MD+1","Outros"]){
    const items=[...weeklySupplements.values()].filter(x=>x.group===group);
    if(!items.length)continue;
@@ -490,14 +490,14 @@ async function overview(){
     for(const peri of periMeals.filter(x=>x.event_date===key)){const a=average(peri.options||[]);if(a){found=true;for(const nutrient of Object.keys(sum))sum[nutrient]+=Number(a[nutrient]||0);}}
     weekDays.push({date,key,total:sum,found});
    }
-   function buildBars(title,key,color,scale){
+   function buildBars(title,key,color,scale,decimals=0){
     const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
     const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
     const bars=document.createElement("div");bars.className="nutrition-chart-bars";
     const max=Math.max(1,...weekDays.map(x=>x.found?x.total[key]/scale:0));
     for(const item of weekDays){
      const column=document.createElement("div");column.className="nutrition-chart-column";
-     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,0):"–";
+     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";
      const track=document.createElement("div");track.className="nutrition-chart-track";
      const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
      const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
@@ -511,7 +511,7 @@ async function overview(){
    const renderMacroMode=mode=>{
     macArea.replaceChildren();gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
     const divisor=mode==="kg"&&hasWeight?weight:1;
-    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor));
+    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?2:0));
    };
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=!hasWeight;
    renderMacroMode("g");
