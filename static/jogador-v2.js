@@ -127,7 +127,7 @@ function decorateLabel(el,key){
 }
 
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
-async function show(t){tab=t;for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=t==="overview";if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
+async function show(t){tab=t;for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(){
  const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
@@ -159,7 +159,7 @@ function weeklyDayTotal(entry){
 }
 function weeklySummary(data){
  const section=document.createElement("section");section.className="weekly-average-summary";
- const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
+ const weight=Number(me?.weight_kg||me?.weight||me?.body_weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
  for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
@@ -509,11 +509,11 @@ async function overview(){
    const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);weeklyCharts.append(modes);
    const macArea=document.createElement("div");weeklyCharts.append(macArea);
    const renderMacroMode=mode=>{
-    macArea.replaceChildren();gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
-    const divisor=mode==="kg"&&hasWeight?weight:1;
+    macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent="Para consultar g/kg, adiciona o peso do jogador ao perfil.";macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
+    const divisor=mode==="kg"?(hasWeight?weight:NaN):1;
     for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?2:0));
    };
-   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=!hasWeight;
+   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
    renderMacroMode("g");
    expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));};
    summary.append(expand,weeklyCharts);
