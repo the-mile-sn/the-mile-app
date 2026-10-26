@@ -593,7 +593,12 @@ def application(env, start_response):
             mime = mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             if file.name.endswith('.webmanifest'):
                 mime = 'application/manifest+json'
-            return respond(200, file.read_bytes(), mime)
+            content = file.read_bytes()
+            if SITE_ROLE == 'player' and file.name == 'jogador-v2.html':
+                content = content.replace(b'THE MILE <small>TESTES</small>', b'THE MILE')
+                content = content.replace('Ambiente de testes · The Mile 2.0'.encode(), b'The Mile')
+                content = content.replace('The Mile · Jogador (testes)'.encode(), b'The Mile')
+            return respond(200, content, mime)
         if not path.startswith('/api/'):
             raise Problem(404, 'not_found')
 
