@@ -1574,3 +1574,19 @@ header{padding:10px 0 24px}
 #overview .daily-supplements>summary{display:flex!important;align-items:center!important;gap:10px!important}
 #overview .daily-supplements>summary>.supplement-leading-icon{width:23px!important;height:23px!important;flex:none!important}
 #overview .daily-supplements>summary:after{margin-left:auto!important}
+
+
+/* Nutrition expansion arrow matches the small triangular meal card chevrons. */
+#overview .nutrition-donut-summary .nutrition-expand{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ font-size:0!important;color:#c9c9cf!important;
+}
+#overview .nutrition-donut-summary .nutrition-expand:after{
+ content:""!important;display:block!important;width:0!important;height:0!important;
+ border-left:5px solid transparent!important;border-right:5px solid transparent!important;
+ border-top:6px solid currentColor!important;border-bottom:0!important;
+ transition:transform .16s ease!important;
+}
+#overview .nutrition-donut-summary .nutrition-expand[aria-expanded=true]:after{
+ transform:rotate(180deg)!important;
+}
