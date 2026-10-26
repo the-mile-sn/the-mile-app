@@ -1756,3 +1756,24 @@ header{padding:10px 0 24px}
 #overview .nutrition-weekly-charts .macro-chart-switch button.selected{
  background:#56565d!important;color:#fff!important;
 }
+
+
+/* Keep kcal expand/retract control at the same top-right coordinates. */
+#overview #day-details .nutrition-donut-summary .nutrition-expand,
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]{
+ top:14px!important;right:8px!important;bottom:auto!important;
+ transform:none!important;position:absolute!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-expand:after{transform:none!important}
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]:after{transform:rotate(180deg)!important}
+/* Peri-training icon box matches meal/event left inset and icon dimensions. */
+#overview .peri-meal>.daily-meal-head>.meal-leading-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 37px!important;width:37px!important;min-width:37px!important;
+ max-width:37px!important;height:37px!important;margin:0 10px 0 0!important;
+ padding:0!important;align-self:center!important;order:-1!important;
+}
+#overview .peri-meal>.daily-meal-head>.meal-leading-icon>.mile-icon{
+ width:24px!important;height:24px!important;flex:none!important;
+}
+#overview .peri-meal>.daily-meal-head{align-items:center!important}
