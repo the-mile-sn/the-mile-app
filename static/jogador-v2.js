@@ -33,8 +33,19 @@ function optionEl(o,i,planView=false){
  return details;
 }
 
-async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
-async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
+
+// Hugeicons free stroke names are used through their published SVG collection.
+const mealIconMap={breakfast:"coffee-03",snack:"vegetarian-food",lunch:"restaurant-02",dinner:"restaurant-02",supper:"moon-02"};
+function mealIcon(name){const el=document.createElement("i");el.className="mile-icon icon-"+name;el.setAttribute("aria-hidden","true");return el;}
+function decorateLabel(el,key){
+ if(!el||el.querySelector(".meal-leading-icon"))return;
+ const iconName=mealIconMap[key]||(/p[oó]s/i.test(key)? "soft-drink-01":/jogo/i.test(key)?"football":/treino/i.test(key)?"football-pitch":null);
+ if(!iconName)return;
+ const item=document.createElement("span");item.className="meal-leading-icon";item.append(mealIcon(iconName));el.prepend(item);
+}
+
+async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+async function show(t){tab=t;for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(){
  const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
@@ -200,12 +211,12 @@ function makePeriCard(item,compact=false){
     if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus);
   };
   const title=document.createElement("span");title.textContent=item.title;
-  section.append(title);
+  section.append(title);decorateLabel(section,item.title);
   if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmt(avg.kcal,0);section.append(kcal);}
   return section;
  }
  const head=document.createElement("summary");head.className="daily-meal-head";
- const title=document.createElement("strong");title.textContent=item.title;head.append(title);
+ const title=document.createElement("strong");title.textContent=item.title;head.append(title);decorateLabel(head,item.title);
  if(avg){const nutritionSummary=document.createElement("span");nutritionSummary.className="meal-average meal-average-inline";nutritionSummary.append(nutrition(avg));head.append(nutritionSummary);}
  section.append(head);
  if(opts.length===1){for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";section.append(p);}}
@@ -214,7 +225,7 @@ function makePeriCard(item,compact=false){
 }
 function eventCard(event,compact=false){
  const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card";
- const label=document.createElement("span");label.textContent=event.title;section.append(label);
+ const label=document.createElement("span");label.textContent=event.title;section.append(label);decorateLabel(section,event.title||event.kind);
  if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
    const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label","Editar "+event.title);toggle.title="Editar "+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
@@ -276,7 +287,7 @@ function matchWithIntraCard(event,item){
 let supplementsByDay={};
 function supplementsCard(items){
  const box=document.createElement("details");box.className="daily-supplements";
- const title=document.createElement("summary");title.textContent="Suplementação";box.append(title);
+ const title=document.createElement("summary");title.textContent="Suplementação";box.append(title);decorateLabel(title,"supplements");
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
@@ -370,8 +381,8 @@ async function overview(){
   if(complete){
    const hero=document.createElement("div");hero.className="nutrition-hero";
    const energy=document.createElement("div");energy.className="nutrition-energy";
-   const label=document.createElement("small");label.textContent="Energia";
-   const value=document.createElement("strong");value.textContent=fmt(total.kcal,0)+" kcal";
+   const label=document.createElement("small");label.textContent="kcal";
+   const value=document.createElement("strong");value.textContent=fmt(total.kcal,0);
    energy.append(label,value);
    const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
    if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,1)+" kcal/kg";energy.append(ratio);}
@@ -395,7 +406,7 @@ async function overview(){
   const color=assignedColor(d,meal,entry?.classification),menu=(meal==="lunch"||meal==="dinner")?menus.menus.find(x=>x.meal===meal):null;
   if(!color&&!menu)continue;
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
-  const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);
+  const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   section.append(head);
   if(color||menu){
@@ -476,4 +487,5 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
  }
  div.append(title,body);section.append(div);}root.append(section);}}
 function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};session().catch(()=>{$("login-panel").hidden=false;});
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+session().catch(()=>{$("login-panel").hidden=false;});
