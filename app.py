@@ -187,6 +187,9 @@ class PgConnection:
     def commit(self):
         self.conn.commit()
 
+    def rollback(self):
+        self.conn.rollback()
+
 
 def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -673,7 +676,7 @@ def application(env, start_response):
                         name=str(item['name']).strip()
                         if not name: raise ValueError()
                         if name.casefold() in existing: continue
-                        supplements_v2.library_save(c,{'name':name,'dose':item['dose'],'moment':item['moment'],'rule':item['rule'],'note':item['note'],'timing_text':item['timing_text'],'image_data':item['image_data'],'prescriptions':json.loads(item['prescriptions_json'])})
+                        supplements_v2.library_save(c,{'name':name,'dose':item['dose'],'moment':item['moment'],'rule':item['rule'],'note':item['note'],'timing_text':item['timing_text'],'image_data':item['image_data'],**({'prescriptions':json.loads(item['prescriptions_json'])} if json.loads(item['prescriptions_json']) else {})})
                         existing.add(name.casefold())
                         added+=1
                     c.commit()
