@@ -505,8 +505,8 @@ async function overview(){
     wrap.append(bars);return wrap;
    }
    weeklyCharts.append(buildBars("Calorias da semana","kcal","#82d4a4",1));
-   const macroTitle=document.createElement("strong");macroTitle.textContent="Macros da semana";macroTitle.className="macro-chart-heading";weeklyCharts.append(macroTitle);
-   const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);weeklyCharts.append(modes);
+   const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent="Macros da semana";macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);weeklyCharts.append(macroHeader);
+   const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);macroHeader.append(modes);
    const macArea=document.createElement("div");weeklyCharts.append(macArea);
    const renderMacroMode=mode=>{
     macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent="Para consultar g/kg, adiciona o peso do jogador ao perfil.";macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
