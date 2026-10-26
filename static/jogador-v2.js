@@ -276,7 +276,7 @@ function matchWithIntraCard(event,item){
 let supplementsByDay={};
 function supplementsCard(items){
  const box=document.createElement("details");box.className="daily-supplements";
- const title=document.createElement("summary");title.textContent="Suplementação do dia";box.append(title);
+ const title=document.createElement("summary");title.textContent="Suplementação";box.append(title);
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
