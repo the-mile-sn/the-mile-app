@@ -344,7 +344,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],assessments:["assessments-admin-panel"],supplements:["supplements-panel"],matrix:["matrix"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -356,6 +356,7 @@ function showBackofficeView(view){
   if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
   if(view==="supplements"&&model)loadSupplementEditor().catch(e=>status(e.message,"warn"));
   if(view==="plans"&&model)loadPeriImports().catch(e=>status(e.message,"warn"));
+  if(view==="assessments"&&model)loadAssessmentsAdmin().catch(e=>status(e.message,"warn"));
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
 }
@@ -1466,3 +1467,79 @@ $("supp-bulk-confirm").onclick=async()=>{
 };
 
 if($("supp-lib-prescriptions")){renderLibraryPrescriptionRules([]);$("supp-library-editor").addEventListener("toggle",()=>{if($("supp-library-editor").open&&!$("supp-lib-save").dataset.editId)renderLibraryPrescriptionRules([]);});}
+
+/* Assessment import: values are editable and never published by PDF upload alone. */
+const ASSESSMENT_GROUPS=[
+ ["resumo","Resumo",[
+ ["sum_8","Soma de 8 pregas","mm"],["weight","Peso corporal","kg"],["body_fat","Gordura corporal","%"],["bmi","IMC",""],["muscle_index","Índice de massa muscular",""],
+ ["arm_muscle","Músculo do braço",""],["thigh_muscle","Músculo da coxa",""],["calf_muscle","Músculo do gémeo",""],["sum_perimeters","Soma de perímetros","cm"]]],
+ ["pregas","Pregas",[
+ ["back","Costas","mm"],["triceps","Trícep","mm"],["biceps","Bícep","mm"],["suprailiac","Suprailíaca","mm"],["supraspinal","Supraespinal","mm"],["abdominal_skin","Abdominal","mm"],["thigh_skin","Coxa","mm"],["calf_skin","Gémeo","mm"]]],
+ ["perimetros","Perímetros",[
+ ["arm_right_relaxed","Braço direito relaxado","cm"],["chest","Peitoral","cm"],["waist","Cintura","cm"],["abdominal_perimeter","Abdominal","cm"],["thigh_right","Coxa direita","cm"],["thigh_left","Coxa esquerda","cm"],["calf_right","Gémeo direito","cm"],["calf_left","Gémeo esquerdo","cm"]]]];
+const ASSESSMENT_AVERAGES=[["avg_skinfolds","Média da soma de pregas","mm"],["avg_weight","Peso médio","kg"],["avg_body_fat","Gordura corporal média","%"]];
+let assessmentPdf="",assessmentUploadedFor="";
+const assessmentValue=(id)=>$(id)?.value.trim()||"";
+function renderAssessmentForm(data={}){
+ const box=$("assessment-review-fields");box.replaceChildren();
+ for(const [,title,fields] of ASSESSMENT_GROUPS.concat([["medias","Médias apresentadas no PDF",ASSESSMENT_AVERAGES]])){
+  const section=document.createElement("section");section.className="assessment-review-group";
+  const heading=document.createElement("h3");heading.textContent=title;section.append(heading);
+  const grid=document.createElement("div");grid.className="assessment-review-grid";
+  for(const [key,label,unit] of fields){
+   const row=document.createElement("label");row.textContent=label+(unit?" ("+unit+")":"");
+   const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.autocomplete="off";
+   input.id="assess-field-"+key;input.value=String((data.measurements||{})[key]??(data.averages||{})[key]??"");
+   row.append(input);grid.append(row);
+  }
+  section.append(grid);box.append(section);
+ }
+ $("assessment-date").value=data.assessed_on||"";
+ $("assessment-formula").value=data.formula_note||"";
+ $("assessment-review-form").hidden=false;
+}
+async function loadAssessmentsAdmin(){
+ const athleteId=$("athlete").value;if(!athleteId)return;
+ const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments");
+ const wrap=$("assessment-history");wrap.replaceChildren();
+ if(!result.assessments.length){const p=document.createElement("p");p.className="hint";p.textContent="Ainda não existem avaliações para este jogador.";wrap.append(p);}
+ for(const record of result.assessments.slice().reverse()){
+  const button=document.createElement("button");button.type="button";button.className="assessment-history-row";
+  button.textContent=record.assessed_on+" · "+(record.status==="published"?"Publicada":"Rascunho")+" · Editar";
+  button.onclick=()=>{assessmentPdf="";assessmentUploadedFor="";renderAssessmentForm(record);};
+  wrap.append(button);
+ }
+}
+$("assessment-preview").onclick=async()=>{
+ const input=$("assessment-pdf"),file=input.files?.[0],msg=$("assessment-upload-feedback"),button=$("assessment-preview");
+ if(!file){msg.textContent="Escolhe primeiro um ficheiro PDF.";return;}
+ if(file.size>21000000){msg.textContent="O ficheiro excede 21 MB.";return;}
+ button.disabled=true;msg.textContent="A analisar o documento…";
+ try{
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  const encoded=btoa(binary);
+  const id=$("athlete").value;
+  const result=await request("/api/v2/athletes/"+encodeURIComponent(id)+"/assessments",{method:"POST",body:JSON.stringify({action:"preview",pdf_base64:encoded})});
+  assessmentPdf=encoded;assessmentUploadedFor=id;renderAssessmentForm(result);
+  msg.textContent="PDF analisado. Confirma a data e todos os valores antes de publicares.";
+ }catch(e){msg.textContent="Não foi possível ler este PDF: "+e.message;}finally{button.disabled=false;}
+};
+async function saveAssessmentAdmin(publish){
+ const msg=$("assessment-save-feedback"),athleteId=$("athlete").value;msg.textContent="";
+ const measurements={},averages={};
+ for(const [group,,fields] of ASSESSMENT_GROUPS){
+  for(const [key] of fields){const v=assessmentValue("assess-field-"+key);if(v)measurements[key]=v;}
+ }
+ for(const [key] of ASSESSMENT_AVERAGES){const v=assessmentValue("assess-field-"+key);if(v)averages[key]=v;}
+ const payload={action:"save",assessed_on:assessmentValue("assessment-date"),formula_note:assessmentValue("assessment-formula"),measurements,averages,publish};
+ if(assessmentPdf&&assessmentUploadedFor===athleteId)payload.pdf_base64=assessmentPdf;
+ try{
+  await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments",{method:"POST",body:JSON.stringify(payload)});
+  msg.textContent=publish?"Avaliação publicada.":"Rascunho guardado.";
+  assessmentPdf="";assessmentUploadedFor="";
+  await loadAssessmentsAdmin();
+ }catch(e){msg.textContent="Erro ao guardar: "+e.message;}
+}
+$("assessment-review-form").addEventListener("submit",e=>{e.preventDefault();saveAssessmentAdmin(true);});
+$("assessment-draft").onclick=()=>saveAssessmentAdmin(false);
