@@ -567,6 +567,7 @@ function openPlansSection(section){
  $("plans-prescriptions").hidden=section!=="prescriptions";
  $("plans-assessments").hidden=section!=="assessments";
  if(section==="prescriptions")renderPlans();
+ if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});
 }
 function renderPlans(){
  const root=$("plan-colors"),detail=$("plan-detail");root.replaceChildren();detail.replaceChildren();
@@ -654,3 +655,76 @@ $("plans-open-assessments").onclick=()=>openPlansSection("assessments");
 $("plans-back-prescriptions").onclick=()=>openPlansSection("landing");
 $("plans-back-assessments").onclick=()=>openPlansSection("landing");
 session().catch(()=>{$("login-panel").hidden=false;});
+
+
+/* Player anthropometry data. Only clinician-published measurements are shown. */
+let assessmentRecords=[],assessmentFields={},assessmentAverages=[],assessmentGroup="resumo";
+const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
+async function loadPlayerAssessments(){
+ $("assessment-measurements").textContent="A carregar avaliações…";
+ const response=await api("/api/v2/player/assessments");
+ assessmentRecords=response.assessments||[];
+ assessmentFields=response.fields||{};
+ assessmentAverages=response.averages_fields||[];
+ renderPlayerAssessments();
+}
+function buildAssessmentTrend(points,unit){
+ const holder=document.createElement("div");holder.className="assessment-trend";
+ const title=document.createElement("p");title.textContent="Evolução";holder.append(title);
+ if(points.length<2){
+  const note=document.createElement("p");note.className="assessment-trend-note";
+  note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";
+  holder.append(note);return holder;
+ }
+ const values=points.map(p=>p.value),lo=Math.min(...values),hi=Math.max(...values),range=hi-lo||1;
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ svg.setAttribute("viewBox","0 0 320 132");svg.setAttribute("preserveAspectRatio","none");
+ svg.setAttribute("role","img");svg.setAttribute("aria-label","Gráfico de evolução: "+points.map(p=>assessmentDate(p.date)+": "+assessNumber(p.value)).join("; "));
+ const coords=points.map((p,i)=>[14+(292*i/(points.length-1)),112-88*((p.value-lo)/range)]);
+ const ns="http://www.w3.org/2000/svg";
+ const grid=document.createElementNS(ns,"path");grid.setAttribute("d","M14 112H306 M14 68H306 M14 24H306");grid.setAttribute("class","assessment-chart-grid");svg.append(grid);
+ const line=document.createElementNS(ns,"polyline");line.setAttribute("points",coords.map(a=>a.join(",")).join(" "));line.setAttribute("class","assessment-chart-line");svg.append(line);
+ coords.forEach((point,i)=>{const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",point[0]);dot.setAttribute("cy",point[1]);dot.setAttribute("r",i===coords.length-1?5:3);dot.setAttribute("class","assessment-chart-point");svg.append(dot);});
+ holder.append(svg);
+ const axis=document.createElement("div");axis.className="assessment-chart-labels";
+ const first=document.createElement("span");first.textContent=assessmentDate(points[0].date);
+ const last=document.createElement("span");last.textContent=assessmentDate(points[points.length-1].date);axis.append(first,last);holder.append(axis);
+ const val=document.createElement("p");val.className="assessment-chart-range";val.textContent="Intervalo: "+assessNumber(lo)+(unit?" "+unit:"")+" – "+assessNumber(hi)+(unit?" "+unit:"");holder.append(val);
+ const history=document.createElement("div");history.className="assessment-history-points";
+ points.forEach(p=>{const row=document.createElement("div");const date=document.createElement("span"),value=document.createElement("strong");date.textContent=assessmentDate(p.date);value.textContent=assessNumber(p.value)+(unit?" "+unit:"");row.append(date,value);history.append(row);});holder.append(history);
+ return holder;
+}
+function renderPlayerAssessments(){
+ for(const button of document.querySelectorAll("[data-assessment-tab]"))button.setAttribute("aria-pressed",String(button.dataset.assessmentTab===assessmentGroup));
+ const target=$("assessment-measurements"),stamp=$("assessment-most-recent");target.replaceChildren();stamp.replaceChildren();
+ if(!assessmentRecords.length){
+  const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem avaliações publicadas.";target.append(empty);return;
+ }
+ const recent=assessmentRecords[assessmentRecords.length-1];
+ stamp.textContent="Última avaliação · "+assessmentDate(recent.assessed_on);
+ for(const [key,label,unit] of assessmentFields[assessmentGroup]||[]){
+  const readings=assessmentRecords.filter(r=>Number.isFinite(r.measurements?.[key])).map(r=>({date:r.assessed_on,value:Number(r.measurements[key])}));
+  if(!readings.length)continue;
+  const current=readings[readings.length-1],prior=readings.length>1?readings[readings.length-2]:null;
+  const details=document.createElement("details");details.className="assessment-measure-card";
+  const summary=document.createElement("summary");
+  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=label;
+  const right=document.createElement("span");right.className="assessment-metric-right";
+  const number=document.createElement("strong");number.textContent=assessNumber(current.value)+(unit?" "+unit:"");right.append(number);
+  const change=document.createElement("small");change.className="assessment-change";
+  if(prior){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta))+(unit?" "+unit:"")+" face à anterior";}
+  else change.textContent="Primeira medição";
+  right.append(change);
+  const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.textContent="⌄";
+  summary.append(left,right,arrow);details.append(summary,buildAssessmentTrend(readings,unit));target.append(details);
+ }
+ if(assessmentGroup==="resumo"){
+  const recentAverages=recent.averages||{},known=assessmentAverages.filter(([key])=>recentAverages[key]!==undefined);
+  if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent="Médias do relatório";averages.append(head);
+   for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=label;v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
+  if(recent.formula_note){const note=document.createElement("p");note.className="assessment-formula";note.textContent="Gordura corporal: "+recent.formula_note;target.append(note);}
+ }
+ if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem medições publicadas nesta categoria.";target.append(empty);}
+}
+for(const button of document.querySelectorAll("[data-assessment-tab]"))button.onclick=()=>{assessmentGroup=button.dataset.assessmentTab;renderPlayerAssessments();};
