@@ -950,13 +950,13 @@ function renderDishEditor(){
   const matches=dishLibrary.filter(d=>(d.name_pt+" "+d.category).toLocaleLowerCase("pt-PT").includes(query)).slice(0,25);
   for(const dish of matches){
     const card=document.createElement("div");card.className="dish-edit-card";
-    const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);photo.alt=dish.name_pt;photo.loading="lazy";card.appendChild(photo);
+    const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();photo.alt=dish.name_pt;photo.loading="lazy";card.appendChild(photo);
     const fields=document.createElement("div");fields.className="dish-edit-fields";
     const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
     const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.appendChild(photoInput);fields.appendChild(photoLabel);
     const photoButton=document.createElement("button");photoButton.type="button";photoButton.textContent="Atualizar fotografia";
     photoButton.onclick=async()=>{if(!photoInput.files[0])return;photoButton.disabled=true;
-      try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();status("Fotografia atualizada.","success");}
+      try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photoInput.value="";photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();status("Fotografia atualizada.","success");}
       catch(e){status("Erro: "+e.message,"warn");}finally{photoButton.disabled=false;}
     };fields.appendChild(photoButton);
     const inputs=[];
