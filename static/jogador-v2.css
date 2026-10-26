@@ -1907,3 +1907,37 @@ body.profile-active .player-top{display:none!important}
 #plans .plans-entry-card>.mile-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:23px!important;height:23px!important;flex:0 0 23px!important}
 #plans .plans-entry-card>.mile-icon svg{width:23px!important;height:23px!important}
 #plans .plans-entry-card>.plans-entry-arrow{margin-left:auto!important}
+
+
+/* Three-way assessments navigation and expandable metric history. */
+#plans .assessment-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;border-radius:999px;background:#212126;padding:4px;margin:4px 0 16px}
+#plans .assessment-tabs button{background:transparent!important;color:#b8b8bf!important;border:0!important;border-radius:999px!important;font-size:13px!important;font-weight:450!important;padding:11px 4px!important;min-width:0!important}
+#plans .assessment-tabs button[aria-pressed="true"]{background:#53545c!important;color:#fff!important}
+#plans .assessment-most-recent{color:#a8a8b1;font-size:13px;padding:0 5px;margin:0 0 15px}
+#plans .assessment-measure-card{background:#242429;border-radius:15px;margin:8px 0;overflow:hidden;border:0}
+#plans .assessment-measure-card>summary{display:flex;align-items:center;gap:10px;padding:14px 13px 14px 16px;min-height:64px;list-style:none;cursor:pointer}
+#plans .assessment-measure-card>summary::-webkit-details-marker{display:none}
+#plans .assessment-metric-name{flex:1;min-width:0;color:#f1f1f4;font-size:15px;font-weight:450;line-height:1.3}
+#plans .assessment-metric-right{flex:none;text-align:right;display:flex;flex-direction:column;gap:3px;max-width:48%;align-items:flex-end}
+#plans .assessment-metric-right strong{font-size:15px;font-weight:550;color:#f5f5f6;white-space:nowrap}
+#plans .assessment-change{font-size:11px;color:#abaeb8;white-space:nowrap;font-weight:400}
+#plans .assessment-expander{font-size:21px;font-weight:400;color:#bbbcc5;transition:transform .18s;line-height:20px;margin-left:3px}
+#plans details[open]>summary .assessment-expander{transform:rotate(180deg)}
+#plans .assessment-trend{margin:0 10px 10px;background:#1b1b20;border-radius:13px;padding:16px 12px 14px}
+#plans .assessment-trend>p:first-child{margin:0 0 9px;font-size:13px;font-weight:550}
+#plans .assessment-trend svg{width:100%;height:135px;display:block;overflow:visible}
+#plans .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:1;stroke-dasharray:3 5}
+#plans .assessment-chart-line{fill:none;stroke:#a2ddc0;stroke-width:2.3;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+#plans .assessment-chart-point{stroke:#1b1b20;stroke-width:1.5;fill:#bbefd3;vector-effect:non-scaling-stroke}
+#plans .assessment-chart-labels{display:flex;justify-content:space-between;color:#aaaab3;font-size:11px;padding:0 3px;margin-top:5px}
+#plans .assessment-chart-range{font-size:11px;color:#a3a3af;margin:8px 3px 14px}
+#plans .assessment-trend-note{font-size:12px;color:#afafb7}
+#plans .assessment-history-points{border-top:1px solid #34343b;padding-top:9px}
+#plans .assessment-history-points>div{display:flex;justify-content:space-between;gap:10px;color:#aeb0b8;font-size:12px;margin:7px 0}
+#plans .assessment-history-points strong{color:#eeeef1;font-weight:500}
+#plans .assessment-averages{background:#242429;border-radius:15px;padding:16px;margin:14px 0}
+#plans .assessment-averages h3{font-size:14px;margin:0 0 12px}
+#plans .assessment-averages>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #38383f;font-size:13px}
+#plans .assessment-averages strong{font-weight:500}
+#plans .assessment-empty-state{background:#25252b;color:#b7b7c0;border-radius:15px;padding:25px 17px;font-size:14px;text-align:center}
+#plans .assessment-formula{color:#92929d;font-size:12px;padding:0 7px}
