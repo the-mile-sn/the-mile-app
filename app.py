@@ -650,6 +650,37 @@ def application(env, start_response):
                 if changed is None:raise Problem(404,'not_found')
                 return respond(200,{'event':changed})
 
+            if path == '/api/v2/supplement-library/transfer' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                rows=c.execute("SELECT id,name,dose,moment,rule,note,timing_text,image_data,prescriptions_json FROM v2_supplement_library ORDER BY name").fetchall()
+                data=json.dumps({'format':'the-mile-supplements-v1','items':[dict(r) for r in rows]},ensure_ascii=False).encode()
+                if len(data)>5*1024*1024: raise Problem(413,'library_too_large')
+                headers.append(('Content-Disposition','attachment; filename="the-mile-suplementos.json"'))
+                return respond(200,data,'application/json; charset=utf-8')
+            if path == '/api/v2/supplement-library/transfer' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                payload=read_json(env)
+                items=payload.get('items')
+                if payload.get('format')!='the-mile-supplements-v1' or not isinstance(items,list) or len(items)>500:
+                    raise Problem(400,'invalid_package')
+                existing={r['name'].strip().casefold() for r in c.execute('SELECT name FROM v2_supplement_library').fetchall()}
+                added=0
+                try:
+                    for item in items:
+                        if not isinstance(item,dict): raise ValueError()
+                        name=str(item['name']).strip()
+                        if not name: raise ValueError()
+                        if name.casefold() in existing: continue
+                        supplements_v2.library_save(c,{'name':name,'dose':item['dose'],'moment':item['moment'],'rule':item['rule'],'note':item['note'],'timing_text':item['timing_text'],'image_data':item['image_data'],'prescriptions':json.loads(item['prescriptions_json'])})
+                        existing.add(name.casefold())
+                        added+=1
+                    c.commit()
+                except (ValueError,KeyError,TypeError):
+                    c.rollback()
+                    raise Problem(400,'invalid_package')
+                return respond(200,{'imported':added,'total':len(items)})
             if path == '/api/v2/supplement-library/bulk-preview' and method=='POST':
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
