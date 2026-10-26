@@ -1272,6 +1272,8 @@ def application(env, start_response):
                 if not isinstance(current, str) or not isinstance(new, str) or len(new) < 8 or len(new) > 256:
                     raise Problem(400, 'password_change')
                 target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
+                if SITE_ROLE != 'both' and target and target['role'] != SITE_ROLE:
+                    target = None
                 if not target or not password_valid(current, target['password']):
                     raise Problem(400, 'password_change')
                 c.execute('UPDATE users SET password=? WHERE id=?', (password_hash(new), target['id']))
@@ -1416,6 +1418,9 @@ def application(env, start_response):
                     sql += ' WHERE id=?'
                     fields.append(uid)
                     c.execute(sql, tuple(fields))
+                    # Revoke all active sessions when access or credentials change.
+                    if p['password'] or (access_until != player['access_until']):
+                        c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
                     c.commit()
                     return respond(200, {'ok': True})
                 c.execute('DELETE FROM documents WHERE user_id=?', (uid,))
