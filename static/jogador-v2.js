@@ -328,7 +328,7 @@ function eventCard(event,compact=false){
        await overview();
      }catch(e){warning.textContent=e.message;save.disabled=false;}
    };
-   const fields=document.createElement("div");fields.className="daily-event-fields";fields.append(date,session);
+   const fields=document.createElement("div");fields.className="daily-event-fields";const dateField=document.createElement("div");dateField.className="daily-event-field daily-event-date";dateField.append(date);const periodField=document.createElement("div");periodField.className="daily-event-field daily-event-period";periodField.append(session);fields.append(dateField,periodField);
    const actions=document.createElement("div");actions.className="daily-event-actions";save.className="daily-event-save";actions.append(save);
    editor.append(fields,actions,warning);
    const remove=document.createElement("button");remove.type="button";remove.className="daily-event-remove";
