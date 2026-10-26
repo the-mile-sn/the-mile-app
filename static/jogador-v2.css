@@ -1878,3 +1878,27 @@ body.profile-active .player-top{display:none!important}
 #profile .profile-identity>strong{font-size:21px;line-height:1.2;font-weight:550;color:#f5f5f7}
 #profile .profile-identity>span{font-size:14px;line-height:1.4;font-weight:400;color:#a9a9b1}
 #player-panel #profile{padding-top:19px!important}
+
+
+/* Plans tab starts with two compact navigation cards. */
+#plans [hidden]{display:none!important}
+#plans .plans-landing{display:flex;flex-direction:column;gap:12px;margin:9px 0 0}
+#plans .plans-entry-card{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ width:100%!important;box-sizing:border-box!important;min-height:70px!important;
+ padding:18px 21px!important;background:#25252b!important;color:#f4f4f6!important;
+ border:0!important;border-radius:17px!important;text-align:left!important;box-shadow:none!important;
+ font-size:16px!important;font-weight:500!important;
+}
+#plans .plans-entry-arrow{font-size:25px;font-weight:300;color:#b9b9c1;line-height:1}
+#plans .plans-back{
+ display:inline-flex!important;align-items:center!important;gap:9px!important;
+ margin:3px 0 17px!important;padding:7px 4px!important;
+ border:0!important;background:transparent!important;color:#e5e5e9!important;
+ font-size:15px!important;font-weight:500!important;
+}
+#plans .plans-back span{font-size:27px;line-height:17px;font-weight:300}
+#plans .plans-assessments-empty{
+ margin:10px 0;background:#24242a;border-radius:17px;
+ padding:24px 18px;color:#a9a9b3;font-size:14px;text-align:center;
+}
