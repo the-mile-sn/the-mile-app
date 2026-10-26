@@ -257,7 +257,7 @@ def initialize():
         peri_v2.initialize(c)
         supplements_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
-        c.execute("UPDATE users SET weekly_next_activate_at=NULL")
+        # Preserve scheduled weekly activation timestamps across application restarts.
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
         for name, email in ADMINS:
             c.execute('INSERT OR IGNORE INTO users(id,name,email,role) VALUES(?,?,?,?)', (secrets.token_hex(16), name, email, 'admin'))
