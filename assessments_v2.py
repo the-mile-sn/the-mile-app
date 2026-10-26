@@ -166,8 +166,14 @@ def save(c,athlete_id,payload,user_id):
  existing=c.execute("SELECT id FROM v2_body_assessments WHERE athlete_id=? AND assessed_on=?",(athlete_id,assessed_on)).fetchone()
  record_id=existing["id"] if existing else secrets.token_hex(16)
  if existing:
+  # Historical imports may contribute only a subset of fields for a date.
+  # Merge those readings without deleting measurements already confirmed.
+  previous=c.execute("SELECT measurements,averages,formula_note,status FROM v2_body_assessments WHERE id=?",(record_id,)).fetchone()
+  combined=json.loads(previous["measurements"]);combined.update(values)
+  combined_averages=json.loads(previous["averages"]);combined_averages.update(averages)
+  keep_status="published" if publication or previous["status"]=="published" else "draft"
   c.execute("""UPDATE v2_body_assessments SET measurements=?,averages=?,formula_note=?,status=? WHERE id=? AND athlete_id=?""",
-           (json.dumps(values),json.dumps(averages),formula,"published" if publication else "draft",record_id,athlete_id))
+           (json.dumps(combined),json.dumps(combined_averages),formula or previous["formula_note"],keep_status,record_id,athlete_id))
  else:
   c.execute("""INSERT INTO v2_body_assessments(id,athlete_id,assessed_on,measurements,averages,formula_note,pdf_data,status,created_at)
         VALUES(?,?,?,?,?,?,?,?,?)""",(record_id,athlete_id,assessed_on,json.dumps(values),json.dumps(averages),formula,pdf_data,"published" if publication else "draft",int(time.time())))
