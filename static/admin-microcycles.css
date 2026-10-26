@@ -359,3 +359,20 @@
 #matrix .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
 #matrix .microcycle-color-select option{background:#232329;color:#fff}
 @media(max-width:650px){#menus-panel .menu-planning-card,#menus-panel .menu-library-card{padding:15px}}
+
+
+/* Assessment review workflow */
+#assessments-admin-panel .assessment-upload{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:18px 0}
+#assessments-admin-panel .assessment-upload label{display:flex;flex-direction:column;gap:8px;min-width:200px;flex:1}
+#assessments-admin-panel input[type=file]{max-width:100%;font-size:13px}
+#assessments-admin-panel .assessment-review-top{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin:22px 0}
+#assessments-admin-panel label{font-size:13px;color:#d4d4d9}
+#assessments-admin-panel .assessment-review-top label,#assessments-admin-panel .assessment-review-grid label{display:flex;flex-direction:column;gap:7px}
+#assessments-admin-panel .assessment-review-top input,#assessments-admin-panel .assessment-review-grid input{width:100%;min-width:0;height:42px;border:1px solid #55555c;background:#27272d;color:white;border-radius:11px;padding:9px 12px;box-sizing:border-box;font-size:14px}
+#assessments-admin-panel .assessment-review-group{padding:17px;background:#1d1d22;border-radius:14px;margin:12px 0}
+#assessments-admin-panel .assessment-review-group h3{margin:0 0 15px;font-size:16px;font-weight:550}
+#assessments-admin-panel .assessment-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#assessments-admin-panel .assessment-review-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:24px 0}
+#assessments-admin-panel #assessment-publish{background:white;color:#18181c;border:0;border-radius:999px;padding:12px 20px;font-weight:550}
+#assessments-admin-panel .assessment-history-row{display:block;width:100%;text-align:left;background:#27272e;border:0;border-radius:10px;margin:7px 0;padding:11px 14px;color:#dddde4}
+@media(max-width:650px){#assessments-admin-panel .assessment-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#assessments-admin-panel .assessment-review-top{grid-template-columns:1fr}}
