@@ -78,10 +78,10 @@ def normalize_averages(body):
  return out
 
 def parse_pdf(encoded):
- if not isinstance(encoded,str) or len(encoded)>13000000:raise ValueError("pdf_too_large")
+ if not isinstance(encoded,str) or len(encoded)>30000000:raise ValueError("pdf_too_large")
  try:data=base64.b64decode(encoded,validate=True)
  except Exception:raise ValueError("invalid_pdf")
- if len(data)>9000000 or not data.startswith(b"%PDF"):raise ValueError("invalid_pdf")
+ if len(data)>21000000 or not data.startswith(b"%PDF"):raise ValueError("invalid_pdf")
  try:
   reader=PdfReader(io.BytesIO(data))
   if len(reader.pages)>50:raise ValueError("pdf_too_long")
