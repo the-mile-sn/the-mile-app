@@ -1535,3 +1535,10 @@ header{padding:10px 0 24px}
  #tabs button{font-size:9px!important}
  .meal-leading-icon{width:32px;height:32px;margin-right:6px}
 }
+
+
+/* Header contains only the player-avatar; sign-out is in Profile. */
+.player-top #logout{display:none!important}
+#player-panel .welcome h1{margin-top:0!important}
+#profile-logout{border-radius:999px!important;padding:12px 20px!important}
+#overview .nutrition-donut-summary .nutrition-energy small:first-child{font-weight:550}
