@@ -1696,3 +1696,16 @@ header{padding:10px 0 24px}
  font-weight:500!important;
 }
 #tabs button,#tabs button span{font-weight:400!important}
+
+
+/* Menus: compact top spacing and equal, understated meal typography. */
+#player-panel #menus{padding-top:0!important;margin-top:0!important}
+#menus>.date-nav{margin:0 0 12px!important;padding:0!important;min-height:35px!important}
+#menus .date-nav strong{font-size:clamp(13px,3.6vw,16px)!important;font-weight:500!important;text-align:center!important}
+#menus .day-menu .menu-entry-heading{margin:0 0 2px!important}
+#menus .day-menu .menu-entry-heading strong,
+#menus .day-menu .menu-entry-body .value{
+ font-size:16px!important;font-weight:450!important;line-height:1.4!important;
+}
+#menus .day-menu .menu-entry-heading strong{color:#c6c6cb!important}
+#menus .day-menu .menu-entry-body .value{color:#f0f0f2!important}
