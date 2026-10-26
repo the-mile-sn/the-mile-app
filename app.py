@@ -19,6 +19,7 @@ import events_v2
 import day_colors_v2
 import peri_v2
 import supplements_v2
+import assessments_v2
 import plan_import_v2
 import time
 from datetime import datetime, timedelta
@@ -260,6 +261,7 @@ def initialize():
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
         supplements_v2.initialize(c)
+        assessments_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         # Preserve scheduled weekly activation timestamps across application restarts.
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
@@ -1222,6 +1224,38 @@ def application(env, start_response):
                 photo = c.execute("SELECT photo,photo_mime FROM users WHERE id=? AND active=1 AND role='player'", (user['id'],)).fetchone()
                 if not photo or not photo['photo']: raise Problem(404, 'not_found')
                 return respond(200, bytes(photo['photo']), photo['photo_mime'] or 'image/jpeg')
+
+            if path == '/api/v2/player/assessments' and method == 'GET':
+                if not user or user['role'] != 'player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                return respond(200,{'assessments':assessments_v2.rows(c,link['athlete_id'],public=True),
+                                   'fields':assessments_v2.FIELDS,'averages_fields':assessments_v2.AVERAGES})
+            if path.startswith('/api/v2/athletes/') and '/assessments' in path:
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                bits=path.strip('/').split('/')
+                if len(bits)!=5 or bits[0:3]!=['api','v2','athletes'] or bits[4]!='assessments':
+                    raise Problem(404,'not_found')
+                athlete_id=bits[3]
+                if not c.execute('SELECT id FROM v2_athletes WHERE id=?',(athlete_id,)).fetchone():
+                    raise Problem(404,'not_found')
+                if method=='GET':
+                    return respond(200,{'assessments':assessments_v2.rows(c,athlete_id),
+                                        'fields':assessments_v2.FIELDS,'averages_fields':assessments_v2.AVERAGES})
+                if method=='POST':
+                    payload=read_json(env)
+                    if payload.get('action')=='preview':
+                        try:
+                            result=assessments_v2.parse_pdf(payload.get('pdf_base64'))
+                        except ValueError:raise Problem(400,'invalid_assessment_pdf')
+                        result.pop('pdf_bytes',None)
+                        return respond(200,result)
+                    if payload.get('action')=='save':
+                        try:aid=assessments_v2.save(c,athlete_id,payload,user['id'])
+                        except ValueError:raise Problem(400,'invalid_assessment')
+                        return respond(200,{'saved':True,'id':aid})
+                    raise Problem(400,'invalid_action')
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
