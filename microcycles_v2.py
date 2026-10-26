@@ -13,6 +13,17 @@ MEALS = ("breakfast", "lunch", "snack", "dinner", "supper")
 COLORS = ("orange", "yellow", "blue", "green", "vp")
 
 
+def _table_columns(c, table):
+    """Read table metadata in PostgreSQL and SQLite without changing data."""
+    if hasattr(c, 'conn'):
+        rows = c.execute(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_schema=current_schema() AND table_name=?", (table,)
+        ).fetchall()
+        return {row['column_name'] for row in rows}
+    return {row['name'] for row in c.execute('PRAGMA table_info(' + table + ')').fetchall()}
+
+
 def initialize(c):
     c.executescript("""
     CREATE TABLE IF NOT EXISTS v2_athletes (
@@ -53,7 +64,7 @@ def initialize(c):
         created_at BIGINT NOT NULL
     );
     """)
-    columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_match_events)").fetchall()}
+    columns = _table_columns(c, "v2_match_events")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_dish_library (
         id TEXT PRIMARY KEY,
         category TEXT NOT NULL,
@@ -75,7 +86,7 @@ def initialize(c):
         athlete_id TEXT NOT NULL UNIQUE REFERENCES v2_athletes(id),
         linked_at BIGINT NOT NULL
     )""")
-    athlete_columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_athletes)").fetchall()}
+    athlete_columns = _table_columns(c, "v2_athletes")
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
     for name, definition in (("height_cm","REAL"),("profile_notes","TEXT")):
