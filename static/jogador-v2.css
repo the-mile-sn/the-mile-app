@@ -1590,3 +1590,43 @@ header{padding:10px 0 24px}
 #overview .nutrition-donut-summary .nutrition-expand[aria-expanded=true]:after{
  transform:rotate(180deg)!important;
 }
+
+
+/* Latest compact player refinements. */
+#player-panel .welcome[hidden]{display:none!important}
+#tabs{bottom:calc(env(safe-area-inset-bottom,0px) + 7px)!important}
+#overview .daily-event-card .meal-leading-icon{
+ width:37px!important;height:37px!important;min-width:37px!important;max-width:37px!important;
+ flex:0 0 37px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ padding:0!important;margin-right:10px!important;border-radius:11px!important;
+}
+#overview .daily-event-card .meal-leading-icon .mile-icon{flex:none!important;width:24px!important;height:24px!important}
+#overview .daily-event-card>span.meal-leading-icon{flex:0 0 37px!important}
+#overview .daily-event-card>span:not(.meal-leading-icon){flex:1 1 auto!important}
+/* No duplicate caret in expandable peri-plan cards. */
+#plans #plan-detail details>summary .option:before,
+#plans #plan-detail .plan-option-card>summary .option:before{content:none!important;display:none!important}
+#plans #plan-detail details>summary .option:after{content:""!important;border-left:5px solid transparent!important;border-right:5px solid transparent!important;border-top:6px solid currentColor!important;border-bottom:0!important;width:0!important;height:0!important;font-size:0!important}
+#plans #plan-detail details[open]>summary .option:after{transform:rotate(180deg)!important}
+/* Weekly mean matches the daily 4-column macro surface. */
+#weekly-view .weekly-summary-heading{padding-left:0!important;margin:18px 0 10px!important}
+#weekly-view .weekly-summary-heading h2{margin:0!important;padding:0 12px!important;font-size:17px!important}
+#weekly-view .weekly-average-summary{
+ box-sizing:border-box!important;width:100%!important;display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ background:rgba(255,255,255,.045)!important;border:0!important;border-radius:16px!important;
+ padding:15px 10px!important;gap:0!important;box-shadow:none!important;
+}
+#weekly-view .weekly-average-metric{
+ display:flex!important;flex-direction:column!important;justify-content:center!important;
+ min-width:0!important;gap:6px!important;margin:0!important;padding:0 8px!important;
+ border:0!important;border-right:1px solid rgba(255,255,255,.16)!important;
+ background:transparent!important;text-align:left!important;
+}
+#weekly-view .weekly-average-metric:first-child{padding-left:4px!important}
+#weekly-view .weekly-average-metric:last-child{border-right:0!important}
+#weekly-view .weekly-average-metric strong{font-size:clamp(15px,4vw,23px)!important;line-height:1.15!important}
+#weekly-view .weekly-average-metric small{font-size:clamp(10px,2.6vw,13px)!important}
+#weekly-view .weekly-supplement-summary>summary>.mile-icon{width:23px!important;height:23px!important;flex:none!important;margin-right:8px!important}
+#weekly-view .weekly-supplement-summary>summary{justify-content:flex-start!important}
+#weekly-view .weekly-supplement-summary>summary:after{margin-left:auto!important}
