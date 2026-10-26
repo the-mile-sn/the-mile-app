@@ -136,7 +136,9 @@ async function loadMenus(){
   const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
   dishLibrary=(await request("/api/v2/dishes")).dishes;
   renderDishEditor();refreshDishCategories();
-  const calendar=(await request(matchBase()+"/calendar?start="+begin+"&end="+end)).days;
+  const calendarData=await request(matchBase()+"/calendar?start="+begin+"&end="+end);
+  const calendar=calendarData.days;
+  const menuColorOverrides=colorOverrideLookup(calendarData.meal_color_overrides);
   const root=$("menu-grid");root.replaceChildren();
   const pending=new Map();
   const saveWeek=$("save-menu-week");
@@ -160,7 +162,8 @@ async function loadMenus(){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
       const line=document.createElement("div");line.className="menu-meal-card";
       const heading=document.createElement("div");heading.className="menu-meal-heading";
-      const assignedColor=modelRow?.meals?.[meal];
+      const overrideKey=date+"|"+meal;
+      const assignedColor=Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal];
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
