@@ -1542,3 +1542,29 @@ header{padding:10px 0 24px}
 #player-panel .welcome h1{margin-top:0!important}
 #profile-logout{border-radius:999px!important;padding:12px 20px!important}
 #overview .nutrition-donut-summary .nutrition-energy small:first-child{font-weight:550}
+
+
+/* Local inline SVGs — do not rely on external mask files. */
+.mile-icon{background:none!important;-webkit-mask:none!important;mask:none!important;display:inline-flex!important;align-items:center;justify-content:center;color:inherit}
+.mile-icon svg{display:block;width:100%;height:100%}
+/* Nutrition summary spans the complete available viewport/card width. */
+#overview #day-details .nutrition-donut-summary{
+ display:grid!important;grid-template-columns:minmax(0,1.05fr) minmax(0,2.95fr)!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ box-sizing:border-box!important;align-items:center!important;justify-content:stretch!important;
+ gap:0!important;padding:15px 43px 15px 12px!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-hero{
+ grid-column:1!important;grid-row:1!important;width:auto!important;min-width:0!important;flex:none!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-macro-row{
+ grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;flex:none!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-weekly-charts{
+ grid-column:1/-1!important;grid-row:2!important;width:100%!important;box-sizing:border-box!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-expand{
+ position:absolute!important;right:7px!important;top:50%!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded=true]{top:12px!important}
+#weekly-view .meal-leading-icon,#weekly-view .mile-icon{display:none!important}
