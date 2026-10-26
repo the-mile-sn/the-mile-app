@@ -1,0 +1,361 @@
+:root{color-scheme:dark;font-family:"Inter Tight",system-ui,sans-serif;background:#0c0c0e;color:#f4f4f5}*{box-sizing:border-box}body{margin:0;padding:32px 22px}main{max-width:1060px;margin:auto}header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:38px}h1{font-size:30px;letter-spacing:-.04em;margin:7px 0}p{color:#aaaab1}label{display:block;color:#aaaab1;font-size:13px;margin-bottom:9px}input,select,button{font:inherit;background:#242428;color:#fff;border:1px solid #39393d;border-radius:12px;padding:12px}button{cursor:pointer}button:hover{border-color:#999}button:disabled{opacity:.45;cursor:not-allowed}input{width:100%}.toolbar{display:grid;grid-template-columns:2fr 1fr auto;gap:12px;align-items:end;margin-bottom:22px}.gridbox{overflow:auto;border:1px solid #353538;border-radius:15px}table{width:100%;border-collapse:collapse;min-width:830px}th,td{padding:9px;border-bottom:1px solid #28282c;text-align:center}th{color:#a8a8b0;font-size:12px;font-weight:500}td:first-child,th:first-child{text-align:left;font-weight:600;padding-left:18px;white-space:nowrap}td select{width:100%;min-width:115px;padding:9px;background:#1c1c20;font-size:12px}.status{font-size:13px;color:#a3a3aa;margin:15px 0;min-height:20px}.warn{color:#f2bd68}.success{color:#7bd2a0}.tag{font-size:12px;color:#b0b0b8}.hint{font-size:12px}.name{display:flex;gap:12px;align-items:center}.name input{max-width:260px}.name button{white-space:nowrap}.toolbar>div{min-width:0}@media(max-width:620px){body{padding:20px 12px}.toolbar{grid-template-columns:1fr}.name{flex-wrap:wrap}h1{font-size:25px}}
+.calendar-panel{margin:22px 0 28px;border:1px solid #353538;border-radius:15px;padding:22px;background:#131316}
+.calendar-top{display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.calendar-top h2{font-size:22px;letter-spacing:-.035em;margin:0 0 6px}
+.calendar-top p{font-size:13px;margin:0;max-width:510px}
+.calendar-add{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.calendar-add label{width:100%;margin:0 0 -4px}
+.calendar-add input{width:auto;min-width:170px}
+.calendar-navigation{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 12px}
+.calendar-navigation strong{text-transform:capitalize;text-align:center}
+.calendar-navigation button{padding:9px 12px;font-size:12px}
+.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.calendar-day,.calendar-empty{min-height:65px;border:1px solid #303034;border-radius:10px;padding:9px;display:flex;flex-direction:column;gap:5px}
+.calendar-empty{border-color:transparent}
+.calendar-day strong{font-size:13px}
+.calendar-day span{font-size:11px;color:#aaaab1}
+.calendar-day.calendar-match{border-color:#78d4a0;background:#193126}
+.calendar-day.calendar-review{border-color:#f2bd68;background:#34291b}
+.calendar-day.calendar-review span{color:#f2bd68;font-weight:600}
+.calendar-matches{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.calendar-match-item{display:flex;align-items:center;gap:10px;border:1px solid #353538;border-radius:9px;padding:5px 7px 5px 11px;font-size:12px}
+.calendar-match-item button{padding:6px 9px;font-size:11px}
+@media(max-width:620px){.calendar-panel{padding:13px}.calendar-day{min-height:50px;padding:5px}.calendar-day span{font-size:9px}.calendar-days{gap:4px}.calendar-navigation button{padding:7px}}
+
+/* Read-only colors derived from each athlete's configured microcycle matrix. */
+.calendar-day{cursor:pointer}
+.calendar-day:focus-visible{outline:2px solid #f4f4f5;outline-offset:2px}
+.calendar-day.calendar-selected{box-shadow:inset 0 0 0 1px #c7c7ce}
+.day-color-strip{display:flex;gap:3px;margin-top:auto;flex-wrap:nowrap}
+.day-color-dot{display:block;flex:1;min-width:2px;height:5px;border-radius:3px;background:#414146}
+.meal-orange{background:#e89448!important;color:#1b1410!important}
+.meal-yellow{background:#e4c85d!important;color:#19170f!important}
+.meal-blue{background:#63a7d8!important;color:#101d27!important}
+.meal-green{background:#72c697!important;color:#102319!important}
+.meal-vp{background:#a0d8a0!important;color:#112511!important}
+.day-preview{margin-top:13px;padding:14px;border:1px solid #353538;border-radius:12px;background:#19191d}
+.day-preview h3{font-size:14px;margin:0 0 12px}
+.day-meals{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.day-meal{display:flex;flex-direction:column;gap:8px;padding:9px;border:1px solid #323238;border-radius:9px}
+.day-meal span{font-size:11px;color:#b8b8c0}
+.day-meal strong{font-size:11px;font-weight:600;padding:6px;border-radius:5px;text-align:center;min-height:30px}
+.day-preview p{font-size:11px;margin:12px 0 0}
+@media(max-width:720px){.day-meals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+#plan-import-panel .calendar-add{justify-content:flex-start}
+#plan-import-panel input[type=file]{max-width:350px}
+#plan-import-panel select{min-width:150px}
+#import-list{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#import-list button{font-size:12px}
+#import-review h3{font-size:15px;margin:20px 0 9px}
+#import-review pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c4c4cb;font:12px/1.7 ui-monospace,monospace}
+#import-review .import-option{padding:12px;border:1px solid #353538;border-radius:9px;margin:8px 0}
+#import-review summary{cursor:pointer;font-weight:600}
+
+.import-structured-line{display:flex;align-items:baseline;justify-content:space-between;gap:14px;border-top:1px solid #303036;padding:9px 0;font-size:12px;flex-wrap:wrap}.import-nutrients{color:#b6d6c0;font-variant-numeric:tabular-nums}.import-structured-line small{color:#f2bd68}
+
+.option-editor{margin-top:14px;padding:14px;border:1px solid #44444b;border-radius:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.option-editor label{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.option-editor input:not([type=checkbox]){padding:8px;font-size:13px}
+.option-editor fieldset{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border:1px solid #35353b;border-radius:8px;padding:10px}
+.option-editor legend{font-size:12px;padding:0 5px}
+.option-editor select{font-size:12px;padding:7px}
+.option-editor label:has(input[type=checkbox]){grid-column:1/-1;flex-direction:row;align-items:center}
+.option-editor button{justify-self:start}.option-editor p{grid-column:1/-1}
+@media(max-width:680px){.option-editor,.option-editor fieldset{grid-template-columns:1fr}}
+
+/* Menu planning cards */
+#menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:14px;align-items:start}
+.menu-day-card{min-width:0;border:1px solid #36363d;border-radius:14px;padding:15px;background:#19191d}
+.menu-day-card>h3{margin:0 0 14px;font-size:15px;line-height:1.4;text-transform:capitalize}
+.menu-meal-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:12px;border:1px solid #35353c;border-radius:11px;margin:10px 0;background:#141417}
+.menu-meal-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.menu-color-label{border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;background:#303037;color:#c5c5cb}
+.menu-meal-card select{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;white-space:normal;overflow:hidden;text-overflow:ellipsis}
+.menu-dish-image{display:block;width:100%;max-width:200px;max-height:130px;height:auto;object-fit:contain;border-radius:10px;background:#101013}
+.menu-dish-image[hidden]{display:none}
+.menu-meal-card [hidden]{display:none!important}
+.menu-save{align-self:flex-start}
+@media(max-width:640px){#menu-grid{grid-template-columns:1fr}.menu-day-card{padding:12px}}
+
+/* Weekly menu: one full-width day per row, lunch/dinner side by side. */
+#menu-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+#menu-grid .menu-day-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:0;align-items:start}
+#menu-grid .menu-day-card>h3{grid-column:1/-1;margin:0 0 10px}
+#menu-grid .menu-meal-card{margin:0;min-width:0;height:100%;box-sizing:border-box}
+@media(max-width:680px){#menu-grid .menu-day-card{grid-template-columns:minmax(0,1fr);row-gap:12px}#menu-grid .menu-meal-card{height:auto}}
+
+#dish-editor-list{margin-top:14px;display:grid;gap:12px}.dish-edit-card{border:1px solid #393941;border-radius:12px;padding:12px;display:flex;align-items:flex-start;gap:14px;min-width:0}.dish-edit-card>img{width:110px;height:100px;object-fit:contain;border-radius:9px}.dish-edit-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;flex:1;min-width:0}.dish-edit-fields label{display:flex;flex-direction:column;gap:5px;font-size:12px}.dish-edit-fields input:not([type=checkbox]){min-width:0;width:100%;box-sizing:border-box}.dish-edit-fields label:has(input[type=checkbox]){flex-direction:row;align-items:center}.dish-edit-fields button{justify-self:start}@media(max-width:640px){.dish-edit-card{flex-direction:column}.dish-edit-fields{grid-template-columns:1fr;width:100%}}
+
+/* Search and choose a dish in one field. */
+.menu-combobox{position:relative;min-width:0;width:100%}.menu-combobox input{width:100%;box-sizing:border-box}.menu-suggestions{position:absolute;z-index:30;top:calc(100% + 4px);left:0;right:0;max-height:260px;overflow-y:auto;background:#27272d;border:1px solid #55545f;border-radius:9px;box-shadow:0 10px 30px #0009}.menu-suggestions[hidden]{display:none}.menu-suggestion{display:block;width:100%;text-align:left;padding:10px 12px;background:transparent;border:0;border-radius:0;white-space:normal;overflow-wrap:anywhere;color:#f1f1f3;font-size:12px}.menu-suggestion:hover,.menu-suggestion:focus-visible{background:#41414a}.menu-suggestion-empty{padding:12px;color:#bdbdc5;font-size:12px}.menu-combobox[hidden]{display:none!important}
+
+.profile-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}.profile-fields label{display:flex;flex-direction:column;gap:7px;font-size:13px}.profile-fields input,.profile-fields textarea{width:100%;min-width:0;box-sizing:border-box}.profile-fields .profile-notes{grid-column:1/-1}@media(max-width:700px){.profile-fields{grid-template-columns:1fr}}
+
+.profile-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.profile-info-card{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #36363c;border-radius:12px;min-width:0}.profile-info-card small{color:#a9a9b2}.profile-info-card strong{font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}.profile-info-card:last-child{grid-column:1/-1}@media(max-width:620px){.profile-summary{grid-template-columns:1fr}}
+
+/* Clean color-based plan overview */
+#publication-readiness{margin:18px 0}#publication-readiness>h3{margin:0 0 15px}.plan-simple-row{display:flex;align-items:center;gap:13px;padding:13px 4px;border-bottom:1px solid #34343a;flex-wrap:wrap}.plan-simple-dot{height:14px;width:14px;min-width:14px;border-radius:50%;display:inline-block}.plan-simple-info{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}.plan-simple-info small{font-size:12px;color:#a9a9b2}.plan-simple-row button{font-size:12px}.plan-simple-warning{flex-basis:100%;font-size:12px;color:#e8b76e;margin:0 0 0 27px}
+
+.plan-detail-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}.plan-detail-header h3{margin:0}.plan-option-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.plan-option-name{flex:1;min-width:200px}.plan-option-nutrition{font-size:12px;font-weight:400;color:#bdbdc8;text-align:right}.plan-simple-row>button{white-space:nowrap}
+
+/* Selected nutrition plan and editable meal mappings */
+.plan-active-row{background:rgba(85,148,119,.10);border:1px solid rgba(110,196,151,.5);border-radius:10px;padding:12px!important;margin:3px 0}.plan-detail-header{margin:20px 0 12px}.plan-detail-header h3{font-size:17px}.plan-group-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:20px 0 12px}.plan-group-title h3{margin:0}.plan-meal-mapping{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.plan-meal-mapping label{font-size:12px;display:flex;align-items:center;gap:4px;padding:6px 8px;border:1px solid #414148;border-radius:8px}
+
+/* Calm neutral selected plan state. */
+.plan-active-row{background:rgba(255,255,255,.065)!important;border:1px solid rgba(255,255,255,.32)!important;box-shadow:0 0 0 1px rgba(255,255,255,.035)!important}.plan-selectable{cursor:pointer}.plan-selectable:hover{background:rgba(255,255,255,.035)}.plan-row-chevron{font-size:23px;color:#b6b6bd;margin-left:auto}.plan-detail-header{display:flex;align-items:center;justify-content:space-between}.plan-option-nutrition{color:#babfc6}
+
+/* Readable multi-meal assignment chips */
+.plan-group-title{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.plan-meal-mapping{display:flex;flex-wrap:wrap;gap:7px;align-items:center;max-width:100%}
+.plan-meal-mapping label{display:inline-flex!important;align-items:center;gap:6px;white-space:nowrap;min-width:0;width:auto!important;padding:7px 10px;border:1px solid #414148;border-radius:9px;background:#222228;font-size:12px}
+.plan-meal-mapping input[type=checkbox]{width:15px!important;height:15px!important;min-width:15px;flex:none;margin:0}
+.plan-detail-header h3{display:flex;align-items:center;gap:10px}
+.nutrient-colors{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.nutrient-kcal{color:#9fc9af}.nutrient-protein{color:#9bbbd6}.nutrient-carbs{color:#d9b19b}.nutrient-fat{color:#d9cb98}
+
+.player-plan-preview{margin:18px 0;padding:16px;border:1px solid #3c3c43;border-radius:14px}.player-plan-preview[hidden]{display:none}.player-plan-meal{margin:18px 0}.player-plan-meal h4{margin:0 0 10px}.player-plan-food{padding:6px 12px;margin:0;border-bottom:1px solid #33343a}
+
+.player-sim-meal{padding:16px;margin:14px 0;border:1px solid #3b3b42;border-radius:13px}.player-sim-meal h3{margin:0}.player-sim-meal .import-option{margin:7px 0}
+
+.player-sim-menu{display:flex;flex-direction:column;gap:5px;background:#232329;border:1px solid #393941;border-radius:10px;padding:12px;margin:12px 0}.player-sim-menu small{color:#aaaab2}.player-sim-menu strong{font-size:14px}
+
+.player-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin:16px 0}.player-day-pill{padding:12px 5px;font-size:12px;border-radius:11px}.player-day-pill.active{border-color:#d8d8df;background:#36363d;color:#fff}.player-day-summary{margin:12px 0 20px}.player-day-summary small{color:#aaaab4}@media(max-width:550px){.player-week-strip{gap:3px}.player-day-pill{padding:9px 2px;font-size:10px}}
+
+.player-view-nav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.player-view-nav button[aria-pressed=true]{background:#393940;border-color:#aaaab2}.player-plan-button{display:inline-flex;gap:9px;align-items:center;margin:5px;padding:12px 16px}.player-plan-button.active{background:#393940;border-color:#ccc}.player-menu-day{border:1px solid #383841;border-radius:12px;padding:16px;margin:12px 0}.player-menu-day h3{margin:0 0 12px}.player-menu-entry{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:1px solid #34343b;padding:12px 0}.player-menu-entry>span:not(.plan-simple-dot){flex:1;min-width:180px}.player-menu-photo{width:92px;height:92px;object-fit:cover;border-radius:10px}
+
+.player-meal-average{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:8px 0 14px;padding:10px 12px;background:#222228;border-radius:9px}.player-meal-average small{color:#aaaab3}.player-option-nutrients{padding:12px;text-align:right;border-bottom:1px solid #38383e}
+
+.player-meal-header{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;margin-bottom:15px}.player-meal-header h3{margin:0}.player-formatted-nutrition{font-size:13px;gap:10px}.player-option-nutrients{display:none}.player-full-plans .plan-option-summary{align-items:center}.player-full-plans .plan-option-summary>span:first-child{flex:1;min-width:0}
+
+/* Published player plan options: nutrients visible only on expansion */
+#player-plan-detail details:not([open]) .player-option-expanded-values{display:none}
+#player-plan-detail details[open] .player-option-expanded-values{display:inline-flex}
+
+.v2-access-box{border:1px solid #38383f;border-radius:12px;padding:16px;margin-top:22px}.v2-access-box label{display:block;margin:12px 0 5px}.v2-access-box input{display:block;max-width:360px;width:100%;margin:0 0 10px}.v2-access-box button{margin-top:7px}
+
+/* Editable test calendar events */
+.event-admin-row{display:grid;grid-template-columns:minmax(150px,1fr) minmax(160px,1fr) 120px auto auto;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #313136}
+.event-admin-row div{font-size:13px;font-weight:600}
+.event-admin-row input,.event-admin-row select,.event-admin-row button{padding:9px;font-size:13px;min-width:0}
+@media(max-width:720px){.event-admin-row{grid-template-columns:1fr 1fr}.event-admin-row div{grid-column:1/-1}.event-admin-row input{grid-column:1/-1}}
+
+/* Peri-plan review controls. */
+.peri-editor-option{margin:12px 0 22px;background:#1b1b20;border:1px solid #36363d;padding:17px;border-radius:13px;display:flex;flex-direction:column;gap:14px}
+.peri-option-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.peri-option-grid label{font-size:12px}
+.peri-editor-option textarea{width:100%;resize:vertical;min-height:100px;color:#fff;background:#242428;border:1px solid #39393d;border-radius:10px;padding:10px;font:inherit}
+.peri-review-check{display:flex;align-items:center;gap:10px}
+.peri-review-check input{width:auto}
+#peri-list .event-admin-row{grid-template-columns:1fr auto}
+@media(max-width:620px){.peri-option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Responsive controls for date/daypart and manual meal association. */
+#events-panel .event-admin-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+#events-panel .event-admin-row>div:first-child{flex:1 0 100%}
+#events-panel .event-admin-row>input[type=date]{width:155px}
+#events-panel .event-admin-row>input:not([type=date]){width:160px}
+#events-panel .event-admin-row>select{width:125px}
+#events-panel .event-admin-row>label{display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap}
+#events-panel .event-admin-row>label select{width:115px}
+#events-panel .event-admin-row>button{flex:0 0 auto}
+#peri-list .event-admin-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+
+/* One calendar for matches, training and travel. */
+.calendar-event-form{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:20px 0 8px;padding:16px;border:1px solid #353538;border-radius:13px;background:#19191d}
+.calendar-event-form>div{min-width:130px;flex:1 1 155px}
+.calendar-event-form>div input,.calendar-event-form>div select{width:100%;min-width:0}
+.calendar-event-form label{margin:0 0 6px}
+.calendar-peri-check{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#f3f3f4}
+.calendar-peri-check[hidden],.calendar-event-form>div[hidden],.calendar-inline-editor[hidden]{display:none}
+.calendar-peri-check input{width:auto;accent-color:#72c697}
+.calendar-event-form>.calendar-peri-check{align-self:center;flex:0 0 auto;margin:0 8px 0 0}
+.calendar-event-form>button{min-height:45px}
+.calendar-event-list{margin-top:18px}
+.calendar-event-list h3{font-size:16px;margin:0 0 12px}
+#calendar-matches{display:flex;flex-direction:column;gap:10px}
+.calendar-unified-event{background:#1b1b1f;border:1px solid #38383d;border-radius:12px;padding:13px 15px}
+.calendar-unified-heading{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.calendar-unified-heading strong{font-size:14px}
+.calendar-unified-heading span{font-size:12px;color:#a8a8b0;flex:1}
+.calendar-unified-heading button{font-size:12px;padding:8px 12px}
+.calendar-inline-editor{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #353538}
+.calendar-inline-editor>label:not(.calendar-peri-check){flex:1 1 135px;margin:0}
+.calendar-inline-editor>label>input,.calendar-inline-editor>label>select{width:100%;min-width:0;margin-top:5px}
+.calendar-inline-editor>.calendar-peri-check{align-self:center;margin:8px 5px}
+.calendar-inline-editor button{font-size:12px;padding:10px}
+.calendar-inline-editor .calendar-remove{color:#ffd1d1}
+.calendar-event-mark{display:block;font-size:10px;color:#eee6d4;line-height:1.2}
+@media(max-width:620px){
+ .calendar-event-form{padding:12px;gap:10px}
+ .calendar-event-form>div{flex-basis:calc(50% - 10px)}
+ .calendar-event-form>button{width:100%}
+ .calendar-inline-editor>label:not(.calendar-peri-check){flex-basis:calc(50% - 10px)}
+}
+
+/* Per-day meal color exceptions inside the Microciclos calendar preview. */
+.day-meal .day-color-select{width:100%;min-width:0;font-size:12px;padding:8px 7px;margin-top:3px}
+.day-meal .day-color-exception{color:#f0c98b;font-size:11px}
+
+/* Supplementation workflow, shared visual language with plans. */
+#supplements-panel .supp-workflow{margin:16px 0 0;padding:16px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.025)}
+#supplements-panel details.supp-workflow>summary{cursor:pointer;font-weight:650;list-style:none}
+#supplements-panel details.supp-workflow>summary::-webkit-details-marker{display:none}
+#supplements-panel details.supp-workflow>summary:after{content:"⌄";float:right;opacity:.65}
+#supplements-panel details.supp-workflow[open]>summary:after{content:"⌃"}
+#supplements-panel .supp-workflow-body{padding-top:14px}
+#supplements-panel #supp-base-list .event-admin-row{border-radius:14px;padding:10px 12px;margin:7px 0;background:rgba(255,255,255,.035)}
+#supplements-panel #supp-base-list .event-admin-row button,#supplements-panel .supp-workflow button{border-radius:999px}
+#supplements-panel #supp-base-list:empty:before{content:"Ainda não existem suplementos associados.";display:block;opacity:.65;padding:14px 0}
+#peri-panel .peri-plan-section{border:1px solid rgba(255,255,255,.11);border-radius:18px;padding:16px;margin:12px 0;background:rgba(255,255,255,.03)}
+#peri-panel .peri-plan-section>summary{cursor:pointer;font-weight:650;list-style:none}
+#peri-panel .peri-plan-section>summary::-webkit-details-marker{display:none}
+#peri-panel .peri-plan-section>summary:after{content:"⌄";float:right}
+#peri-panel .peri-plan-section[open]>summary:after{content:"⌃"}
+#peri-panel .peri-history{margin-top:12px;padding:10px;border-radius:14px;background:rgba(255,255,255,.025)}
+#peri-panel .peri-history>summary{cursor:pointer}
+#peri-panel .event-admin-row button,#peri-panel .calendar-add button{border-radius:999px}
+
+/* Keep peri plan publication as one compact list. */
+#peri-panel #peri-current{display:none}
+#peri-panel .peri-plan-section{margin:0;border:0;border-bottom:1px solid rgba(255,255,255,.15);border-radius:0;background:transparent;padding:14px 4px}
+#peri-panel .peri-plan-section>summary{font-size:1.05rem;list-style:none}
+#peri-panel #peri-list>.peri-history{margin-top:14px}
+#peri-panel .peri-plan-section .event-admin-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px}
+#supplements-panel .supp-associated-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#supplements-panel .supp-associated-actions{display:flex;gap:8px;flex-wrap:wrap}
+#supplements-panel .supp-associated-actions button{width:auto;min-width:78px}
+#supplements-panel .supp-inline-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;width:100%}
+#supplements-panel .supp-inline-edit label{display:flex;flex-direction:column;gap:5px}
+
+/* Publication history uses the same plain disclosure as food plans. */
+#peri-panel #peri-list>.peri-history{border:0!important;background:transparent!important;padding:8px 0!important;border-radius:0!important}
+#peri-panel #peri-list>.peri-history>summary{font-weight:600;padding:5px 0}
+#peri-panel .peri-plan-section>.event-admin-row{justify-content:flex-start}
+#peri-panel .peri-plan-section>.event-admin-row>span{margin-right:auto}
+
+/* Peri consult follows the same compact option disclosure as meal plans. */
+#peri-panel .peri-plan-actions{display:flex;align-items:center;justify-content:space-between}
+#peri-panel .peri-plan-actions strong{margin-right:auto}
+#peri-panel .peri-option-consult{border-bottom:1px solid rgba(255,255,255,.12);padding:9px 0}
+#peri-panel .peri-option-consult>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;list-style:none}
+#peri-panel .peri-option-consult>summary::-webkit-details-marker{display:none}
+#peri-panel .peri-option-consult>summary:after{content:"⌄";opacity:.65}
+#peri-panel .peri-option-consult[open]>summary:after{content:"⌃"}
+#peri-panel .peri-option-consult>p{margin:8px 0 4px 14px;color:var(--muted,#aaa)}
+
+/* Peri plan rows: food-plan hierarchy, no duplicated separators. */
+#peri-panel .peri-plan-section{border-bottom:1px solid rgba(255,255,255,.15);padding:12px 4px 10px}
+#peri-panel .peri-plan-section>summary.peri-summary{display:flex;align-items:center;justify-content:space-between;padding:3px 0 5px}
+#peri-panel .peri-summary-text{display:flex;flex-direction:column;gap:3px}
+#peri-panel .peri-state{font-size:.83rem;color:#a8a8b0;font-weight:400}
+#peri-panel .peri-plan-actions{padding:0 0 7px!important;margin:0!important;justify-content:flex-end!important;border:0!important;min-height:0}
+#peri-panel .peri-plan-actions button{margin-left:auto}
+#peri-panel .peri-plan-section h4{margin:14px 0 5px}
+#peri-panel .peri-option-consult{border-bottom:1px solid rgba(255,255,255,.13);padding:8px 0}
+#peri-panel .peri-option-consult:last-of-type{border-bottom:0}
+#peri-panel .peri-option-consult>summary{display:flex;align-items:center;gap:10px;justify-content:space-between}
+#peri-panel .peri-option-consult>summary strong{flex:1;min-width:0}
+#peri-panel .peri-macros{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin-left:auto;white-space:nowrap;font-size:.9rem;font-weight:500}
+#peri-panel .peri-macro-energy{color:#99cbb5}
+#peri-panel .peri-macro-protein{color:#a6c5ed}
+#peri-panel .peri-macro-carbs{color:#e4b79b}
+#peri-panel .peri-macro-fat{color:#e9d48f}
+#peri-panel .peri-option-consult>summary:after{margin-left:14px}
+#peri-panel .peri-option-consult>p{margin:7px 0 4px 15px}
+@media(max-width:680px){#peri-panel .peri-macros{gap:6px;font-size:.72rem;flex-wrap:wrap;white-space:normal}}
+
+/* Consistent spacing between labels and editable fields in the admin interface. */
+#supplements-panel label,#menus-panel label,#peri-panel label,#import-panel label{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+#supplements-panel .supp-workflow-body>label,#supplements-panel .supp-workflow>label{margin-bottom:14px}
+#supplements-panel .supp-library-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#supplements-panel .supp-library-actions button{min-width:78px}
+#supplements-panel #supp-lib-list .event-admin-row{gap:12px;align-items:center}
+#supplements-panel #supp-lib-list .event-admin-row>span{flex:1}
+#supplements-panel #supp-assign-search{width:100%;max-width:600px}
+
+#supplements-panel .supp-associated-row.supp-published .supp-status-indicator{background:#70bb87}
+#supplements-panel .supp-associated-row.supp-pending .supp-status-indicator{background:#e9ad59}
+#supplements-panel .supp-status-indicator{width:10px;height:10px;flex:0 0 10px;border-radius:50%}
+#supplements-panel #supp-lib-list .supp-library-product{display:block;flex:1;min-width:0;font-size:1.03rem}
+#supplements-panel #supp-lib-list .supp-library-product strong{font-weight:650}
+#supplements-panel #supp-lib-list .event-admin-row>img{flex:0 0 55px;margin-right:10px}
+#supplements-panel #supp-lib-list .event-admin-row{padding:11px 4px;gap:12px}
+#supplements-panel #supp-lib-list:empty:before{content:"Escreve o nome ou a marca para encontrar um suplemento.";display:block;color:#a4a4ac;padding:14px 0}
+
+#supplements-panel .supp-associated-row{justify-content:flex-start!important;text-align:left!important;padding:12px 16px!important}
+#supplements-panel .supp-associated-row .supp-associated-label{flex:1!important;text-align:left!important;margin:0!important}
+#supplements-panel .supp-associated-row.supp-published{background:rgba(69,139,99,.16)!important}
+#supplements-panel .supp-associated-row.supp-pending{background:rgba(169,124,51,.20)!important}
+
+#supplements-panel .supp-prescription-rules{grid-column:1/-1;display:grid;gap:10px}#supplements-panel .supp-prescription-rule{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:9px;align-items:end;padding:11px;border-radius:14px;background:rgba(255,255,255,.04)}#supplements-panel .supp-prescription-rule label{margin:0!important}#supplements-panel .supp-prescription-rule button{align-self:end}#supplements-panel .supp-inline-edit>button{justify-self:start}@media(max-width:700px){#supplements-panel .supp-prescription-rule{grid-template-columns:1fr 1fr}#supplements-panel .supp-prescription-rule label:nth-child(3){grid-column:1/-1}}
+
+.supp-prescription-library{display:grid;gap:10px;grid-column:1/-1}.supp-prescription-library .supp-prescription-rules{display:grid;gap:10px}.supp-prescription-library .supp-prescription-rule,.supp-inline-edit .supp-prescription-rule{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:9px;align-items:end;padding:12px;border-radius:14px;background:rgba(125,125,125,.08)}@media(max-width:700px){.supp-prescription-library .supp-prescription-rule,.supp-inline-edit .supp-prescription-rule{grid-template-columns:1fr 1fr}}
+
+#supplements-panel .supp-exceptions-card{background:rgba(104,119,148,.13);border:1px solid rgba(155,169,200,.18);border-radius:22px;padding:20px 24px}
+#supplements-panel .supp-exceptions-card>summary{font-size:1.05rem}
+#supplements-panel #supp-match-exclusions{display:grid;gap:10px;margin-top:16px}
+#supplements-panel .supp-match-exclusion{padding:0 2px}
+#supplements-panel .supp-match-exclusion>summary{list-style:none;display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.045);font-weight:600}
+#supplements-panel .supp-match-exclusion>summary::-webkit-details-marker{display:none}
+#supplements-panel .supp-match-exclusion>summary::before{content:"";display:inline-block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);opacity:.75;flex:none;transition:transform .15s}
+#supplements-panel .supp-match-exclusion[open]>summary::before{transform:rotate(45deg)}
+#supplements-panel .supp-match-exclusion-options{display:grid;gap:12px;padding:14px 12px 8px}
+#supplements-panel .supp-match-exclusion-options label{display:flex;align-items:center;gap:12px;margin:0;line-height:1.45;cursor:pointer}
+#supplements-panel .supp-match-exclusion-options input[type=checkbox]{flex:0 0 auto;margin:0;width:18px;height:18px}
+
+/* Consistent backoffice actions and spacing */
+#supplements-panel #supp-base-list .supp-associated-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#supplements-panel #supp-base-list .supp-associated-row>span{flex:1;min-width:0}
+#supplements-panel #supp-base-list .supp-associated-actions{margin-left:auto;flex-shrink:0;justify-content:flex-end}
+#supplements-panel .supp-exceptions-card{background:rgba(111,69,171,.2);border-color:rgba(178,127,230,.38)}
+#supplements-panel .supp-match-exclusion-options{justify-items:stretch}
+#supplements-panel .supp-match-exclusion-options label{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;text-align:left!important;gap:12px;width:100%;padding:6px 4px}
+#supplements-panel .supp-match-exclusion-options label input[type=checkbox]{position:static!important;display:block!important;margin:0!important;flex:0 0 18px!important}
+#calendar-supp-list{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left}
+#calendar-supp-list label{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:10px;text-align:left!important;width:100%;margin:0!important}
+#calendar-supp-list input[type=checkbox]{position:static!important;flex:0 0 18px!important;margin:0!important}
+#calendar-supp-wrap{align-items:flex-start;text-align:left}
+#calendar-section .calendar-event-list{margin-bottom:24px}
+#calendar-section .calendar-event-list + *{margin-top:26px}
+#menus-panel .menu-library-section,#menus-panel .menu-create-section{margin-top:25px;padding:22px;border-radius:20px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025)}
+#menus-panel .menu-library-section h3,#menus-panel .menu-create-section h3{margin-top:0}
+#menus-panel #menu-grid{margin-bottom:12px}
+#calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button{border-radius:999px}
+
+/* Fine spacing and compact editorial UI */
+#calendar-supp-options{align-self:stretch;padding:12px 0}
+#calendar-supp-options>strong{display:block;margin-bottom:12px}
+#calendar-supp-list{gap:13px}
+#calendar-supp-list label{min-height:24px}
+#nutrition-weekly-summary{margin-top:34px!important;padding-top:14px}
+#nutrition-weekly-summary>h3{margin:0 0 24px!important}
+#calendar-matches{margin-bottom:22px}
+#supplements-panel .supp-associated-row.supp-published{background:rgba(80,150,112,.23)!important;border-color:rgba(125,191,150,.22)!important}
+#supplements-panel .supp-associated-row.supp-pending{background:rgba(222,162,75,.15)!important}
+#menus-panel .menu-color-label{display:inline-block!important;width:25px!important;min-width:25px!important;height:25px!important;padding:0!important;border-radius:9px!important;font-size:0!important}
+#menus-panel .menu-color-label:not([class*="meal-"]){background:#555!important}
+#menus-panel .menu-library-section,#menus-panel .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
+#menus-panel .menu-library-section{margin-top:46px!important}
+#menus-panel .dish-new{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+#menus-panel .dish-new input,#menus-panel .dish-new select{min-height:46px;width:100%;min-width:0}
+#menus-panel .dish-new input[type=file]{padding:9px}
+#menus-panel .dish-new button{justify-self:start}
+#menus-panel .dish-new #dish-new-feedback{align-self:center}
+#menus-panel #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
+#menus-panel #dish-editor-list input[type=file]{min-height:42px}
+@media(max-width:650px){#menus-panel .dish-new{grid-template-columns:1fr}#menus-panel .menu-library-section,#menus-panel .menu-create-section{padding:18px!important}}
+
+#menus-panel .menu-planning-card,#menus-panel .menu-library-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.025);border-radius:22px;padding:24px;margin-top:22px}
+#menus-panel .menu-planning-card>h3,#menus-panel .menu-library-card>h3{margin:0 0 20px}
+#menus-panel .menu-library-card>.menu-library-section,#menus-panel .menu-library-card>.menu-create-section{margin:18px 0!important;background:rgba(255,255,255,.025)}
+#menus-panel .menu-library-card>.menu-create-section{margin-top:22px!important}
+#plan-import-panel .calendar-add>div,#peri-panel .calendar-add>div{align-self:end}
+#plan-import-panel .calendar-add select,#peri-panel .calendar-add select{min-height:45px}
+#matrix .microcycle-color-select[data-color=yellow]{background:#e9c95b!important;color:#302609!important;border-color:#e9c95b!important}
+#matrix .microcycle-color-select[data-color=orange]{background:#e6a66c!important;color:#30200e!important;border-color:#e6a66c!important}
+#matrix .microcycle-color-select[data-color=blue]{background:#85b5e5!important;color:#11243b!important;border-color:#85b5e5!important}
+#matrix .microcycle-color-select[data-color=green]{background:#92cfa4!important;color:#183524!important;border-color:#92cfa4!important}
+#matrix .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
+#matrix .microcycle-color-select option{background:#232329;color:#fff}
+@media(max-width:650px){#menus-panel .menu-planning-card,#menus-panel .menu-library-card{padding:15px}}
