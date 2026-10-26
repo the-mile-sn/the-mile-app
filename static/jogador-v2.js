@@ -137,7 +137,7 @@ function decorateLabel(el,key){
 
 let profileUsername="";
 async function session(){const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
-async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
+async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("landing");if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(){
  const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
@@ -558,6 +558,12 @@ async function overview(){
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
 }
+function openPlansSection(section){
+ $("plans-landing").hidden=section!=="landing";
+ $("plans-prescriptions").hidden=section!=="prescriptions";
+ $("plans-assessments").hidden=section!=="assessments";
+ if(section==="prescriptions")renderPlans();
+}
 function renderPlans(){
  const root=$("plan-colors"),detail=$("plan-detail");root.replaceChildren();detail.replaceChildren();
  const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
@@ -638,4 +644,8 @@ for(const item of document.querySelectorAll("#profile .mile-icon")){const name=[
 loadOfficialHugeicons();
 for(const icon of document.querySelectorAll("#tabs .mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)icon.replaceWith(mealIcon(name));}
 updateOfficialIcons();
+$("plans-open-prescriptions").onclick=()=>openPlansSection("prescriptions");
+$("plans-open-assessments").onclick=()=>openPlansSection("assessments");
+$("plans-back-prescriptions").onclick=()=>openPlansSection("landing");
+$("plans-back-assessments").onclick=()=>openPlansSection("landing");
 session().catch(()=>{$("login-panel").hidden=false;});
