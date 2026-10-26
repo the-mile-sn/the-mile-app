@@ -108,6 +108,9 @@ BASE_URL = os.environ.get('MILE_BASE_URL', 'http://localhost:8000').strip().rstr
 ALLOWED_ORIGINS = {BASE_URL, 'https://the-mile-app.onrender.com'}
 ALLOWED_ORIGIN_HOSTS = {h for h in (urlparse(x).hostname for x in ALLOWED_ORIGINS) if h}
 ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'the-mile-app.onrender.com', 'the-mile-app-test.onrender.com'})
+SITE_ROLE = os.environ.get('MILE_SITE_ROLE', 'both').strip().lower()
+if SITE_ROLE not in ('both', 'admin', 'player'):
+    raise RuntimeError('Invalid MILE_SITE_ROLE')
 SECURE = BASE_URL.startswith('https://')
 MAX_PDF = 20 * 1024 * 1024
 MAX_JSON = 5 * 1024 * 1024
@@ -537,6 +540,19 @@ def application(env, start_response):
     try:
         method = env.get('REQUEST_METHOD', 'GET')
         path = env.get('PATH_INFO', '/')
+        # Deployment-level separation. The test environment defaults to both.
+        # Role authorization remains mandatory on all protected API endpoints.
+        if SITE_ROLE == 'player':
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css')
+                    or path.startswith('/api/v2/athletes/')
+                    or path.startswith('/api/v2/supplement-library')
+                    or path.startswith('/api/v2/dishes/edit')
+                    or path.startswith('/api/v2/dishes/photo')
+                    or path.startswith('/api/v2/dishes/import')):
+                raise Problem(404, 'not_found')
+        elif SITE_ROLE == 'admin':
+            if path in ('/jogador-v2', '/jogador-v2.js', '/jogador-v2.css'):
+                raise Problem(404, 'not_found')
         static_files = {
             '/': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
             '/manifest.webmanifest': 'manifest.webmanifest', '/sw.js': 'sw.js', '/icon-192.png': 'icon-192.png',
