@@ -173,8 +173,9 @@ async function loadMenus(){
       const categoryNames=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix"];
       const previousCategory=existing?.kind==="category"?existing.value:"";
       const categories=previousCategory&&!categoryNames.includes(previousCategory)?[previousCategory,...categoryNames]:categoryNames;
+      const chooseCategory=document.createElement("option");chooseCategory.value="";chooseCategory.textContent="Selecionar categoria…";category.appendChild(chooseCategory);
       for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
-      category.value=previousCategory||categoryNames[0];category.className="menu-choice";line.appendChild(category);
+      category.value=previousCategory||"";category.className="menu-choice";line.appendChild(category);
       const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
       const selectedDish=dishLibrary.find(x=>x.name_pt===existing?.value);
       const dishFilter=document.createElement("select");dishFilter.className="menu-choice";dishFilter.setAttribute("aria-label","Filtrar pratos por categoria");
@@ -217,6 +218,7 @@ async function loadMenus(){
       const queue=()=>{
         const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
         const selected=kind.value==="category"?category.value:(selectedDish?.name_pt||"");
+        if(!selected)return;
         mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected});
       };
       kind.addEventListener("change",queue);category.addEventListener("change",queue);
