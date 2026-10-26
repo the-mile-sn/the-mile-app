@@ -93,9 +93,12 @@ def library_init(c):
  id TEXT PRIMARY KEY, name TEXT NOT NULL, dose TEXT NOT NULL, moment TEXT NOT NULL,
  rule TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', timing_text TEXT NOT NULL DEFAULT '',
  image_data TEXT NOT NULL DEFAULT '')""")
- try:c.execute("ALTER TABLE v2_supplement_library ADD COLUMN prescriptions_json TEXT NOT NULL DEFAULT '[]'")
- except Exception as e:
-  if "duplicate column" not in str(e).lower():raise
+ if hasattr(c, 'conn'):
+  c.execute("ALTER TABLE v2_supplement_library ADD COLUMN IF NOT EXISTS prescriptions_json TEXT NOT NULL DEFAULT '[]'")
+ else:
+  columns={row["name"] for row in c.execute("PRAGMA table_info(v2_supplement_library)").fetchall()}
+  if "prescriptions_json" not in columns:
+   c.execute("ALTER TABLE v2_supplement_library ADD COLUMN prescriptions_json TEXT NOT NULL DEFAULT '[]'")
 def library_list(c):
  return [dict(dict(row),prescriptions=json.loads(row["prescriptions_json"])) for row in c.execute("SELECT id,name,dose,moment,rule,note,timing_text,prescriptions_json,CASE WHEN image_data='' THEN 0 ELSE 1 END AS has_image FROM v2_supplement_library ORDER BY name").fetchall()]
 def library_save(c,payload):
