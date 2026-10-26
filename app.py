@@ -282,6 +282,49 @@ def read_dish_image(c, filename):
     return file.read_bytes() if file.is_file() else None
 
 
+def player_menu_photo(image_bytes):
+    """Remove only near-black edge-connected matte; preserve the opaque food."""
+    from collections import deque
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as original:
+            rgba = original.convert('RGBA')
+            if rgba.width * rgba.height > 800000:
+                return image_bytes
+            px = rgba.load()
+            w, h = rgba.size
+            visited = bytearray(w*h)
+            queue = deque()
+            def candidate(x,y):
+                r,g,b,a = px[x,y]
+                return a > 0 and max(r,g,b) < 46
+            for x in range(w):
+                if candidate(x,0): queue.append((x,0))
+                if candidate(x,h-1): queue.append((x,h-1))
+            for y in range(h):
+                if candidate(0,y): queue.append((0,y))
+                if candidate(w-1,y): queue.append((w-1,y))
+            count=0
+            while queue:
+                x,y=queue.popleft()
+                i=y*w+x
+                if visited[i]: continue
+                visited[i]=1
+                if not candidate(x,y): continue
+                r,g,b,a=px[x,y]
+                px[x,y]=(r,g,b,0)
+                count+=1
+                if x>0: queue.append((x-1,y))
+                if x+1<w: queue.append((x+1,y))
+                if y>0: queue.append((x,y-1))
+                if y+1<h: queue.append((x,y+1))
+            if not count: return image_bytes
+            buf=io.BytesIO()
+            rgba.save(buf,'WEBP',lossless=True,method=3)
+            return buf.getvalue()
+    except (OSError,UnidentifiedImageError):
+        return image_bytes
+
+
 def digest(value):
     return hashlib.sha256(value.encode()).hexdigest()
 
@@ -1219,7 +1262,7 @@ def application(env, start_response):
                 if not row: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,row['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
-                return respond(200,image_data,'image/webp')
+                return respond(200,player_menu_photo(image_data),'image/webp')
             if path == '/api/v2/player/plans' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
