@@ -1630,3 +1630,48 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-supplement-summary>summary>.mile-icon{width:23px!important;height:23px!important;flex:none!important;margin-right:8px!important}
 #weekly-view .weekly-supplement-summary>summary{justify-content:flex-start!important}
 #weekly-view .weekly-supplement-summary>summary:after{margin-left:auto!important}
+
+
+/* Verified follow-up: move bottom tab bar up a few actual pixels. */
+@media(max-width:620px){
+ #player-panel #tabs{
+  position:fixed!important;
+  bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
+  transform:translateY(-4px)!important;
+ }
+}
+/* No repeated player-name heading in any tab. */
+#player-panel .welcome{display:none!important}
+#player-panel #overview,#player-panel #plans,#player-panel #menus{margin-top:0!important}
+/* Peri-plan option cards: browser summary marker plus old CSS marker are suppressed. */
+#plans #plan-detail .plan-meal details.plan-option-card>summary{
+ list-style:none!important;display:block!important;
+}
+#plans #plan-detail .plan-meal details.plan-option-card>summary::-webkit-details-marker{display:none!important}
+#plans #plan-detail .plan-meal details.plan-option-card>summary::marker{content:""!important}
+#plans #plan-detail .plan-meal details.plan-option-card>summary:before,
+#plans #plan-detail .plan-meal details.plan-option-card>summary:after,
+#plans #plan-detail .plan-meal details.plan-option-card>summary .option:before{
+ display:none!important;content:none!important;
+}
+#plans #plan-detail .plan-meal details.plan-option-card>summary .option:after{
+ content:""!important;display:block!important;
+ width:0!important;height:0!important;position:absolute!important;
+ right:2px!important;left:auto!important;top:50%!important;
+ border-left:5px solid transparent!important;
+ border-right:5px solid transparent!important;
+ border-top:6px solid currentColor!important;border-bottom:0!important;
+ font-size:0!important;transform:translateY(-50%)!important;
+}
+#plans #plan-detail .plan-meal details.plan-option-card[open]>summary .option:after{
+ transform:translateY(-50%) rotate(180deg)!important;
+}
+/* Weekly supplement header needs its icon: weekly grid cells alone remain iconless. */
+#weekly-view .weekly-supplement-summary>summary>.mile-icon{
+ display:inline-flex!important;visibility:visible!important;
+ width:23px!important;height:23px!important;flex:0 0 23px!important;
+}
+#weekly-view .weekly-supplement-summary>summary>.mile-icon svg{display:block!important}
+/* g/g/kg switch must be legible and enabled. */
+#overview .macro-chart-switch{display:flex!important}
+#overview .macro-chart-switch button{cursor:pointer!important}
