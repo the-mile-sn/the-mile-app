@@ -35,14 +35,28 @@ function optionEl(o,i,planView=false){
 
 
 // Hugeicons free stroke names are used through their published SVG collection.
-const mealIconMap={breakfast:"coffee-03",snack:"vegetarian-food",lunch:"restaurant-02",dinner:"restaurant-02",supper:"moon-02"};
+const mealIconMap={breakfast:"coffee-03",snack:"vegetarian-food",lunch:"restaurant-02",dinner:"restaurant-02",supper:"moon-02",supplements:"pill"};
 const mileSvgPaths={"coffee-03":"<path d=\"M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Zm12 1h1a3 3 0 0 1 0 6h-2M4 22h16M8 3v3m4-3v3m4-3v3\"/>","vegetarian-food":"<path d=\"M4 12c2-4 6-4 8 0 2-4 6-4 8 0l-2 7H6l-2-7ZM12 10V4M8 7 5 5m11 2 3-2M6 22h12\"/>","restaurant-02":"<path d=\"M4 3v8m3-8v8M4 7h3M5.5 11v10M13 3v18M13 12c7 0 8-8 3-9v9M20 3v18\"/>","moon-02":"<path d=\"M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z\"/>","football":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 7 4 3-1.5 5h-5L8 10l4-3Zm-4 3-4-1m12 1 4-1m-5.5 6 2 5m-7-5-2 5M12 7V3\"/>","football-pitch":"<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1\"/><path d=\"M12 4v16m0-12a4 4 0 0 0 0 8M2.5 9h4v6h-4m19-6h-4v6h4\"/>","soft-drink-01":"<path d=\"M5 5h14l-2 16H7L5 5ZM4 3h16M12 5l4-4M8 11h8m-6 4h4\"/>","home-09":"<path d=\"m3 11 9-8 9 8v9H3v-9Zm6 9v-7h6v7\"/>","files-01":"<path d=\"M7 3h10l4 4v14H7V3Zm10 0v5h4M3 7v14h14\"/>","add-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10m-5-5h10\"/>","menu-restaurant":"<path d=\"M4 4v7m3-7v7M4 7h3m-1.5 4v9M13 4v16m0-8c7 0 8-7 3-8v8M3 22h18\"/>","user-03":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>"};
 function mealIcon(name){const el=document.createElement("span");el.className="mile-icon icon-"+name;el.setAttribute("aria-hidden","true");el.innerHTML='<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(mileSvgPaths[name]||mileSvgPaths["restaurant-02"])+'</svg>';return el;}
+const hugeiconsNames={"coffee-03":"Coffee03Icon","vegetarian-food":"VegetarianFoodIcon","restaurant-02":"Restaurant02Icon","moon-02":"Moon02Icon","football":"FootballIcon","football-pitch":"FootballPitchIcon","soft-drink-01":"SoftDrink01Icon","pill":"PillIcon","home-09":"Home09Icon","files-01":"Files01Icon","add-circle":"AddCircleIcon","menu-restaurant":"MenuRestaurantIcon","user-03":"User03Icon"};
+let hugeiconsOfficial=null;
+function iconToSvg(nodes){
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.5");svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
+ const append=(items,parent)=>{for(const node of items||[]){if(!Array.isArray(node))continue;const [tag,props,children]=node;if(typeof tag!=="string"||!["path","circle","rect","line","polyline","polygon","ellipse","g"].includes(tag))continue;const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(props||{})){if(k==="key"||k==="ref"||typeof v==="object")continue;el.setAttribute(k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),String(v));}parent.append(el);if(Array.isArray(children))append(children,el);}};
+ append(nodes,svg);return svg;
+}
+function updateOfficialIcons(){
+ if(!hugeiconsOfficial)return;
+ for(const icon of document.querySelectorAll(".mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);const raw=hugeiconsOfficial[hugeiconsNames[name]];if(raw&&Array.isArray(raw)){icon.replaceChildren(iconToSvg(raw));icon.dataset.official="true";}}
+}
+async function loadOfficialHugeicons(){
+ try{const pkg=await import("https://esm.sh/@hugeicons/core-free-icons@4.2.1?bundle");hugeiconsOfficial=pkg;updateOfficialIcons();}catch(e){console.warn("Unable to load Hugeicons icon data",e);}
+}
 function decorateLabel(el,key){
  if(!el||el.querySelector(".meal-leading-icon"))return;
  const iconName=mealIconMap[key]||(/p[oó]s/i.test(key)? "soft-drink-01":/jogo/i.test(key)?"football":/treino/i.test(key)?"football-pitch":null);
  if(!iconName)return;
- const item=document.createElement("span");item.className="meal-leading-icon";item.append(mealIcon(iconName));el.prepend(item);
+ const item=document.createElement("span");item.className="meal-leading-icon";item.append(mealIcon(iconName));el.prepend(item);updateOfficialIcons();
 }
 
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
@@ -288,7 +302,7 @@ function matchWithIntraCard(event,item){
 let supplementsByDay={};
 function supplementsCard(items){
  const box=document.createElement("details");box.className="daily-supplements";
- const title=document.createElement("summary");title.textContent="Suplementação";box.append(title);decorateLabel(title,"supplements");
+ const title=document.createElement("summary");title.textContent="Suplementação";box.append(title);const pill=mealIcon("pill");pill.classList.add("supplement-leading-icon");title.prepend(pill);
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
@@ -527,5 +541,7 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
  div.append(title,body);section.append(div);}root.append(section);}}
 function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
 $("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+loadOfficialHugeicons();
 for(const icon of document.querySelectorAll("#tabs .mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)icon.replaceWith(mealIcon(name));}
+updateOfficialIcons();
 session().catch(()=>{$("login-panel").hidden=false;});
