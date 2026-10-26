@@ -1568,3 +1568,9 @@ header{padding:10px 0 24px}
 }
 #overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded=true]{top:12px!important}
 #weekly-view .meal-leading-icon,#weekly-view .mile-icon{display:none!important}
+
+
+/* Hugeicons PillIcon next to supplementation label. */
+#overview .daily-supplements>summary{display:flex!important;align-items:center!important;gap:10px!important}
+#overview .daily-supplements>summary>.supplement-leading-icon{width:23px!important;height:23px!important;flex:none!important}
+#overview .daily-supplements>summary:after{margin-left:auto!important}
