@@ -579,7 +579,7 @@ def application(env, start_response):
                     or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
         static_files = {
-            '/': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
+            '/': 'jogador-v2.html' if SITE_ROLE == 'player' else 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
             '/manifest.webmanifest': 'manifest.webmanifest', '/sw.js': 'sw.js', '/icon-192.png': 'icon-192.png',
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
