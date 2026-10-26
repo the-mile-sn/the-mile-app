@@ -1709,3 +1709,50 @@ header{padding:10px 0 24px}
 }
 #menus .day-menu .menu-entry-heading strong{color:#c6c6cb!important}
 #menus .day-menu .menu-entry-body .value{color:#f0f0f2!important}
+
+
+/* Apple Screen Time inspired day/week segmented switch. */
+#player-panel #overview{margin-top:0!important}
+#overview #overview-mode{
+ display:grid!important;grid-template-columns:1fr 1fr!important;
+ width:100%!important;box-sizing:border-box!important;
+ background:#202024!important;border:none!important;
+ border-radius:999px!important;padding:3px!important;gap:3px!important;
+ min-height:0!important;margin:0 0 10px!important;
+}
+#overview #overview-mode button{
+ appearance:none!important;background:transparent!important;border:0!important;
+ border-radius:999px!important;box-shadow:none!important;
+ min-height:35px!important;padding:6px 8px!important;
+ font-size:14px!important;font-weight:500!important;color:#f2f2f5!important;
+}
+#overview #overview-mode button[aria-pressed="true"]{
+ background:#55555b!important;box-shadow:0 1px 2px rgba(0,0,0,.18)!important;
+}
+/* Reduce the gap beneath the avatar only on the home view. */
+#player-panel:has(#overview:not([hidden])){margin-top:-9px!important}
+/* Stable kcal chevron: same button coordinates in both states. */
+#overview #day-details .nutrition-donut-summary .nutrition-expand,
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]{
+ top:50%!important;right:7px!important;transform:translateY(-50%)!important;
+}
+/* Macro title and segmented control aligned on a single header row. */
+#overview .nutrition-weekly-charts .macro-chart-header{
+ display:flex!important;justify-content:space-between!important;align-items:center!important;
+ gap:10px!important;margin:21px 0 10px!important;
+}
+#overview .nutrition-weekly-charts .macro-chart-heading{margin:0!important;line-height:1.3!important}
+#overview .nutrition-weekly-charts .macro-chart-switch{
+ display:flex!important;gap:2px!important;margin:0!important;
+ background:#242429!important;border:1px solid #45454e!important;
+ border-radius:999px!important;padding:2px!important;flex:none!important;
+}
+#overview .nutrition-weekly-charts .macro-chart-switch button{
+ min-width:43px!important;padding:6px 9px!important;border:0!important;
+ border-radius:999px!important;box-shadow:none!important;
+ background:transparent!important;font-size:12px!important;
+ color:#bbbcc5!important;font-weight:500!important;
+}
+#overview .nutrition-weekly-charts .macro-chart-switch button.selected{
+ background:#56565d!important;color:#fff!important;
+}
