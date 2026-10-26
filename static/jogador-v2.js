@@ -501,7 +501,7 @@ function renderPlans(){
   const opts=plans[selectedColor][meal]||[];if(!opts.length)continue;
   const section=document.createElement("details");section.className="meal daily-meal plan-overview-meal tone-"+selectedColor;
   const header=document.createElement("summary");header.className="daily-meal-head";
-  const h=document.createElement("strong");h.textContent=names[meal];header.append(h);
+  const h=document.createElement("strong");h.textContent=names[meal];header.append(h);decorateLabel(header,meal);
   const avg=average(opts);if(avg){const totals=document.createElement("span");totals.className="meal-average meal-average-inline";totals.append(nutrition(avg));header.append(totals);}
   section.append(header);
   if(opts.length===1){
