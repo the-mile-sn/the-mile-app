@@ -1902,3 +1902,8 @@ body.profile-active .player-top{display:none!important}
  margin:10px 0;background:#24242a;border-radius:17px;
  padding:24px 18px;color:#a9a9b3;font-size:14px;text-align:center;
 }
+
+#plans .plans-entry-card{justify-content:flex-start!important;gap:14px!important}
+#plans .plans-entry-card>.mile-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:23px!important;height:23px!important;flex:0 0 23px!important}
+#plans .plans-entry-card>.mile-icon svg{width:23px!important;height:23px!important}
+#plans .plans-entry-card>.plans-entry-arrow{margin-left:auto!important}
