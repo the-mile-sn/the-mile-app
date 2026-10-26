@@ -1244,7 +1244,8 @@ def application(env, start_response):
                     return respond(200,{'assessments':assessments_v2.rows(c,athlete_id),
                                         'fields':assessments_v2.FIELDS,'averages_fields':assessments_v2.AVERAGES})
                 if method=='POST':
-                    payload=read_json(env)
+                    payload=json.loads(read_body(env, 29 * 1024 * 1024))
+                    if not isinstance(payload,dict):raise Problem(400,'invalid_request')
                     if payload.get('action')=='preview':
                         try:
                             result=assessments_v2.parse_pdf(payload.get('pdf_base64'))
