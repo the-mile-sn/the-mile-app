@@ -2465,3 +2465,27 @@ body.profile-active .player-top{display:none!important}
 #overview .peri-meal > details.player-meal-option-subcard[open] > summary .option::after{
  transform:translateY(-50%) rotate(225deg)!important;
 }
+
+
+/* Docs landing cards match the compact 65px daily-view cards. */
+#plans .plans-landing .plans-entry-card{
+ height:65px!important;min-height:65px!important;max-height:65px!important;
+ padding:0 16px!important;border-radius:13px!important;
+}
+/* The kcal expand control uses the same unfilled chevron as other daily cards.
+   Override the legacy filled-triangle rules with more specific selectors. */
+#overview #day-details .nutrition-donut-summary .nutrition-expand::after,
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="false"]::after{
+ content:""!important;display:block!important;box-sizing:border-box!important;
+ width:9px!important;height:9px!important;
+ border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
+ background:none!important;clip-path:none!important;border-radius:0!important;
+ transform:rotate(45deg)!important;transition:transform .16s ease!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]::after{
+ content:""!important;display:block!important;box-sizing:border-box!important;
+ width:9px!important;height:9px!important;
+ border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
+ background:none!important;clip-path:none!important;border-radius:0!important;
+ transform:rotate(225deg)!important;
+}
