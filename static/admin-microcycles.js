@@ -1621,25 +1621,27 @@ $("assessment-excel-confirm").onclick=async()=>{
 
 /* Assessment import: values are editable and never published by PDF upload alone. */
 const ASSESSMENT_GROUPS=[
+ ["geral","Dados gerais",[["height","Altura","m"]]],
  ["resumo","Resumo",[
  ["sum_8","Soma de 8 pregas","mm"],["weight","Peso corporal","kg"],["body_fat","Gordura corporal","%"],["bmi","IMC",""],["muscle_index","Índice de massa muscular",""],
- ["arm_muscle","Músculo do braço",""],["thigh_muscle","Músculo da coxa",""],["calf_muscle","Músculo do gémeo",""],["sum_perimeters","Soma de perímetros","cm"]]],
+ ["arm_muscle","Músculo do braço","cm"],["thigh_muscle","Músculo da coxa","cm"],["calf_muscle","Músculo do gémeo","cm"],["sum_perimeters","Soma de perímetros","cm"]]],
  ["pregas","Pregas",[
  ["back","Costas","mm"],["triceps","Trícep","mm"],["biceps","Bícep","mm"],["suprailiac","Suprailíaca","mm"],["supraspinal","Supraespinal","mm"],["abdominal_skin","Abdominal","mm"],["thigh_skin","Coxa","mm"],["calf_skin","Gémeo","mm"]]],
  ["perimetros","Perímetros",[
- ["arm_right_relaxed","Braço direito relaxado","cm"],["chest","Peitoral","cm"],["waist","Cintura","cm"],["abdominal_perimeter","Abdominal","cm"],["thigh_right","Coxa direita","cm"],["thigh_left","Coxa esquerda","cm"],["calf_right","Gémeo direito","cm"],["calf_left","Gémeo esquerdo","cm"]]]];
+ ["arm_right_relaxed","Braço direito relaxado","cm"],["arm_right_flexed","Braço direito contraído","cm"],["chest","Peitoral","cm"],["waist","Cintura","cm"],["abdominal_perimeter","Abdominal","cm"],["glute","Glúteo","cm"],["thigh_right","Coxa direita","cm"],["thigh_left","Coxa esquerda","cm"],["calf_right","Gémeo direito","cm"],["calf_left","Gémeo esquerdo","cm"]]]];
 const ASSESSMENT_AVERAGES=[["avg_skinfolds","Média da soma de pregas","mm"],["avg_weight","Peso médio","kg"],["avg_body_fat","Gordura corporal média","%"]];
 let assessmentPdf="",assessmentUploadedFor="";
 const assessmentValue=(id)=>$(id)?.value.trim()||"";
 function renderAssessmentForm(data={}){
  const box=$("assessment-review-fields");box.replaceChildren();
- for(const [,title,fields] of ASSESSMENT_GROUPS.concat([["medias","Médias apresentadas no PDF",ASSESSMENT_AVERAGES]])){
+ for(const [,title,fields] of ASSESSMENT_GROUPS.concat([["medias","Médias do histórico · cálculo automático",ASSESSMENT_AVERAGES]])){
   const section=document.createElement("section");section.className="assessment-review-group";
   const heading=document.createElement("h3");heading.textContent=title;section.append(heading);
   const grid=document.createElement("div");grid.className="assessment-review-grid";
   for(const [key,label,unit] of fields){
    const row=document.createElement("label");row.textContent=label+(unit?" ("+unit+")":"");
    const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.autocomplete="off";
+   if(["avg_skinfolds","avg_weight","avg_body_fat"].includes(key)){input.readOnly=true;input.setAttribute("aria-readonly","true");}
    input.id="assess-field-"+key;input.value=String((data.measurements||{})[key]??(data.averages||{})[key]??"");
    row.append(input);grid.append(row);
   }
@@ -1653,6 +1655,11 @@ async function loadAssessmentsAdmin(){
  const athleteId=$("athlete").value;if(!athleteId)return;
  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments");
  const wrap=$("assessment-history");wrap.replaceChildren();
+ const published=result.assessments.filter(x=>x.status==="published");
+ for(const [key,source] of [["avg_skinfolds","sum_8"],["avg_weight","weight"],["avg_body_fat","body_fat"]]){
+  const values=published.map(x=>Number(x.measurements?.[source])).filter((v,i)=>published[i].measurements?.[source]!=null&&Number.isFinite(v));
+  const field=$("assess-field-"+key);if(field)field.value=values.length?(values.reduce((a,b)=>a+b,0)/values.length).toFixed(2).replace(".",","):"";
+ }
  if(!result.assessments.length){const p=document.createElement("p");p.className="hint";p.textContent="Ainda não existem avaliações para este jogador.";wrap.append(p);}
  for(const record of result.assessments.slice().reverse()){
   const button=document.createElement("button");button.type="button";button.className="assessment-history-row";
@@ -1682,7 +1689,7 @@ async function saveAssessmentAdmin(publish){
  for(const [group,,fields] of ASSESSMENT_GROUPS){
   for(const [key] of fields){const v=assessmentValue("assess-field-"+key);if(v)measurements[key]=v;}
  }
- for(const [key] of ASSESSMENT_AVERAGES){const v=assessmentValue("assess-field-"+key);if(v)averages[key]=v;}
+
  const payload={action:"save",assessed_on:assessmentValue("assessment-date"),formula_note:assessmentValue("assessment-formula"),measurements,averages,publish};
  if(assessmentPdf&&assessmentUploadedFor===athleteId)payload.pdf_base64=assessmentPdf;
  try{
