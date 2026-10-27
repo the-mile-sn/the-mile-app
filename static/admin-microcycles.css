@@ -499,3 +499,5 @@
 .peri-option-flat>p{margin:10px 0 0 0;color:#cbcbd0}
 .peri-editor-option .peri-option-grid label{font-size:12px}
 @media(max-width:650px){.peri-option-flat>.peri-option-heading{align-items:flex-start}.peri-option-flat>.peri-option-heading .peri-macros{margin-left:0}}
+
+.peri-plan-section .peri-state.is-published{color:#83c69c!important}
