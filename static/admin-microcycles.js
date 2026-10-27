@@ -1677,24 +1677,18 @@ async function loadAssessmentsAdmin(){
   const button=document.createElement("button");button.type="button";button.className="assessment-history-row";
   button.textContent=record.assessed_on+" · "+(record.status==="published"?"Publicada":"Rascunho")+" · Editar";
   button.onclick=()=>{assessmentPdf="";assessmentUploadedFor="";renderAssessmentForm(record);};
-  wrap.append(button);
+  const row=document.createElement("div");row.className="assessment-history-entry";row.append(button);
+  const remove=document.createElement("button");remove.type="button";remove.className="assessment-delete-button";remove.textContent="Eliminar";remove.setAttribute("aria-label","Eliminar avaliação de "+assessmentPtDate(record.assessed_on));
+  remove.onclick=async()=>{
+   if(!window.confirm("Eliminar definitivamente a avaliação de "+assessmentPtDate(record.assessed_on)+" deste jogador? Esta ação também a retira da App e não pode ser anulada."))return;
+   remove.disabled=true;
+   try{await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments/delete",{method:"POST",body:JSON.stringify({id:record.id})});$("assessment-review-form").hidden=true;await loadAssessmentsAdmin();}
+   catch(e){$("assessment-excel-feedback").textContent="Não foi possível eliminar: "+e.message;remove.disabled=false;}
+  };
+  row.append(remove);wrap.append(row);
  }
 }
-$("assessment-preview").onclick=async()=>{
- const input=$("assessment-pdf"),file=input.files?.[0],msg=$("assessment-upload-feedback"),button=$("assessment-preview");
- if(!file){msg.textContent="Escolhe primeiro um ficheiro PDF.";return;}
- if(file.size>21000000){msg.textContent="O ficheiro excede 21 MB.";return;}
- button.disabled=true;msg.textContent="A analisar o documento…";
- try{
-  const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
-  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
-  const encoded=btoa(binary);
-  const id=$("athlete").value;
-  const result=await request("/api/v2/athletes/"+encodeURIComponent(id)+"/assessments",{method:"POST",body:JSON.stringify({action:"preview",pdf_base64:encoded})});
-  assessmentPdf=encoded;assessmentUploadedFor=id;renderAssessmentForm(result);
-  msg.textContent="PDF analisado. Confirma a data e todos os valores antes de publicares.";
- }catch(e){msg.textContent="Não foi possível ler este PDF: "+e.message;}finally{button.disabled=false;}
-};
+$("assessment-new").onclick=()=>{assessmentPdf="";assessmentUploadedFor="";renderAssessmentForm({});$("assessment-review-form").scrollIntoView({behavior:"smooth",block:"start"});};
 async function saveAssessmentAdmin(publish){
  const msg=$("assessment-save-feedback"),athleteId=$("athlete").value;msg.textContent="";
  const measurements={},averages={};
