@@ -129,8 +129,22 @@ def update_option(c,athlete_id,identifier,group_index,option_index,payload):
     option=groups[group_index]["options"][option_index]
     option["totals"]=totals
     option["title"]=title.strip()
+    timings=payload.get("timings")
+    allowed={"","pre_match","post_warmup","first_half","half_time","second_half","post_match","throughout"}
+    if timings is not None:
+        if not isinstance(timings,list) or len(timings)!=len(lines) or any(not isinstance(t,str) or t not in allowed for t in timings):
+            raise ValueError("invalid_timings")
+        if doc["kind"]!="match" or "pre" not in groups[group_index]["meals"]:
+            raise ValueError("invalid_timings")
     option["lines"]=lines
-    option["items"]=[plan_import_v2.structure_line(x) for x in lines if x.strip()]
+    if timings is not None: option["timings"]=timings
+    structured=[]
+    for index,line in enumerate(lines):
+        if not line.strip():continue
+        item=plan_import_v2.structure_line(line)
+        if timings is not None and timings[index]: item["timing"]=timings[index]
+        structured.append(item)
+    option["items"]=structured
     option["reviewed"]=reviewed
     c.execute("""UPDATE v2_peri_imports SET extracted_json=? WHERE id=? AND athlete_id=? AND status='draft'""",
               (json.dumps(doc["extracted"],ensure_ascii=False),identifier,athlete_id))
