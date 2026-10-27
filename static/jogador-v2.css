@@ -2712,3 +2712,20 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details .daily-event-card > .meal-leading-icon > .mile-icon{transform:translateX(-1px)!important}
 #overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon{transform:translateX(1px)!important}
 #overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon svg{transform:none!important}
+
+
+/* Match card has both daily-event-card and match-intra-card classes.
+   Prevent event padding from stacking with the 16px summary inset. */
+#overview #day-details .daily-event-card.match-intra-card{
+ padding:0!important;
+}
+#overview #day-details .daily-event-card.match-intra-card > summary.daily-meal-head{
+ padding-left:16px!important;
+}
+/* Move only the shaker artwork slightly left; keep its surrounding box fixed. */
+#overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon{
+ transform:translateX(-2px)!important;
+}
+#overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon svg{
+ transform:none!important;
+}
