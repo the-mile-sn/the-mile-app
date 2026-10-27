@@ -30,6 +30,16 @@ function periItemBlock(food){
  return box;
 }
 function periFoodText(food){const content=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";return (periTimingLabels[food.timing]?periTimingLabels[food.timing]+" — ":"")+content;}
+function mealNoteCard(food){
+ const note=document.createElement("details");note.className="meal-collapsible-note";
+ const head=document.createElement("summary");head.textContent=food.title?.trim()||"Nota";note.append(head);
+ const body=document.createElement("div");body.className="meal-note-body";body.textContent=food.text||"";note.append(body);
+ return note;
+}
+function appendMealItems(host,items){
+ for(const food of items||[]){if(food.kind==="collapsible_note")continue;const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);host.append(p);}
+ for(const food of items||[]){if(food.kind==="collapsible_note")host.append(mealNoteCard(food));}
+}
 function optionEl(o,i,planView=false){
  const details=document.createElement("details"),summary=document.createElement("summary"),line=document.createElement("div");
  line.className="option"+(planView?"":" day-option");
@@ -38,7 +48,7 @@ function optionEl(o,i,planView=false){
  if(o.title){const name=document.createElement("strong");name.textContent=o.title;label.append(name);}
  line.append(label);summary.append(line);details.append(summary);
  if(o.totals){const value=document.createElement("div");value.className="option-expanded-macros";value.append(nutrition(o.totals));details.append(value);}
- for(const food of o.items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);details.append(p);}
+ appendMealItems(details,o.items);
  return details;
 }
 
@@ -257,7 +267,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   }
   if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent="Plano ainda não publicado.";section.append(note);}
   else if(options.length===1){
-   for(const food of options[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);section.append(p);}
+   appendMealItems(section,options[0].items);
   }else options.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("weekly-option-card");section.append(item);});
   attachSupplements(section,(supplementsByDay[date]||[]).filter(x=>x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner")));
   detail.append(section);
@@ -572,7 +582,7 @@ async function overview(){
    if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
    if(options.length===1){
     const single=options[0],body=document.createElement("div");body.className="single-meal-option";
-    for(const food of single.items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);body.append(p);}
+    appendMealItems(body,single.items);
     section.append(body);
    }else options.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   }
@@ -630,7 +640,7 @@ function renderPlans(){
   section.append(header);
   if(opts.length===1){
    const body=document.createElement("div");body.className="single-meal-option";
-   for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);body.append(p);}
+   appendMealItems(body,opts[0].items);
    section.append(body);
   }else opts.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   detail.append(section);
