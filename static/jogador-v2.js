@@ -719,30 +719,71 @@ async function loadPlayerAssessments(){
  assessmentAverages=response.averages_fields||[];
  renderPlayerAssessments();
 }
+
 function buildAssessmentTrend(points,unit){
  const holder=document.createElement("div");holder.className="assessment-trend";
  const title=document.createElement("p");title.textContent="Evolução";holder.append(title);
+ const history=document.createElement("details");history.className="assessment-history-card";
+ const historySummary=document.createElement("summary");historySummary.textContent="Todas as avaliações ("+points.length+")";history.append(historySummary);
+ const rows=document.createElement("div");rows.className="assessment-history-points";
+ points.slice().reverse().forEach(p=>{const row=document.createElement("div"),date=document.createElement("span"),value=document.createElement("strong");date.textContent=assessmentDate(p.date);value.textContent=assessNumber(p.value)+(unit?" "+unit:"");row.append(date,value);rows.append(row);});history.append(rows);
  if(points.length<2){
-  const note=document.createElement("p");note.className="assessment-trend-note";
-  note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";
-  holder.append(note);return holder;
+  const note=document.createElement("p");note.className="assessment-trend-note";note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";holder.append(note,history);return holder;
  }
- const values=points.map(p=>p.value),lo=Math.min(...values),hi=Math.max(...values),range=hi-lo||1;
- const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
- svg.setAttribute("viewBox","0 0 320 132");svg.setAttribute("preserveAspectRatio","none");
- svg.setAttribute("role","img");svg.setAttribute("aria-label","Gráfico de evolução: "+points.map(p=>assessmentDate(p.date)+": "+assessNumber(p.value)).join("; "));
- const coords=points.map((p,i)=>[14+(292*i/(points.length-1)),112-88*((p.value-lo)/range)]);
- const ns="http://www.w3.org/2000/svg";
- const grid=document.createElementNS(ns,"path");grid.setAttribute("d","M14 112H306 M14 68H306 M14 24H306");grid.setAttribute("class","assessment-chart-grid");svg.append(grid);
- const line=document.createElementNS(ns,"polyline");line.setAttribute("points",coords.map(a=>a.join(",")).join(" "));line.setAttribute("class","assessment-chart-line");svg.append(line);
- coords.forEach((point,i)=>{const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",point[0]);dot.setAttribute("cy",point[1]);dot.setAttribute("r",i===coords.length-1?5:3);dot.setAttribute("class","assessment-chart-point");svg.append(dot);});
- holder.append(svg);
- const axis=document.createElement("div");axis.className="assessment-chart-labels";
- const first=document.createElement("span");first.textContent=assessmentDate(points[0].date);
- const last=document.createElement("span");last.textContent=assessmentDate(points[points.length-1].date);axis.append(first,last);holder.append(axis);
- const val=document.createElement("p");val.className="assessment-chart-range";val.textContent="Intervalo: "+assessNumber(lo)+(unit?" "+unit:"")+" – "+assessNumber(hi)+(unit?" "+unit:"");holder.append(val);
- const history=document.createElement("div");history.className="assessment-history-points";
- points.forEach(p=>{const row=document.createElement("div");const date=document.createElement("span"),value=document.createElement("strong");date.textContent=assessmentDate(p.date);value.textContent=assessNumber(p.value)+(unit?" "+unit:"");row.append(date,value);history.append(row);});holder.append(history);
+ const visible=points.slice(-8),values=visible.map(p=>p.value);
+ const step=unit==="kg"||unit==="cm"?1:unit==="mm"?5:1;
+ const minimum=Math.min(...values),maximum=Math.max(...values);
+ let low=Math.floor(minimum/step)*step,high=Math.ceil(maximum/step)*step;
+ if(low===high){low-=step;high+=step;}
+ const tickCount=Math.round((high-low)/step);
+ const mean=values.reduce((sum,value)=>sum+value,0)/values.length;
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+ svg.setAttribute("viewBox","0 0 344 176");svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+ svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução das últimas "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
+ const left=37,right=332,top=25,bottom=140;
+ const y=v=>bottom-(v-low)/(high-low)*(bottom-top),x=i=>left+(right-left)*i/(visible.length-1);
+ const add=(tag,attributes,css,text)=>{const node=document.createElementNS(ns,tag);for(const [name,value]of Object.entries(attributes||{}))node.setAttribute(name,String(value));if(css)node.setAttribute("class",css);if(text!==undefined)node.textContent=text;svg.append(node);return node;};
+ for(let i=0;i<=tickCount;i++){
+  const v=low+i*step,yy=y(v);
+  add("line",{x1:left,y1:yy,x2:right,y2:yy},"assessment-chart-grid");
+  add("text",{x:left-8,y:yy+3.5,"text-anchor":"end"},"assessment-chart-tick",assessNumber(v));
+ }
+ add("line",{x1:left,y1:y(mean),x2:right,y2:y(mean)},"assessment-chart-mean");
+ const coords=visible.map((p,i)=>[x(i),y(p.value)]);
+ add("polyline",{points:coords.map(p=>p.join(",")).join(" ")},"assessment-chart-line");
+ const labels=[];
+ coords.forEach(([cx,cy],i)=>{
+  add("circle",{cx,cy,r:4.5},"assessment-chart-point");
+  labels.push(add("text",{x:cx,y:Math.max(12,cy-10),"text-anchor":"middle"},"assessment-chart-value",assessNumber(visible[i].value)));
+ });
+ const guide=add("line",{x1:left,y1:top,x2:left,y2:bottom},"assessment-chart-guide");
+ const selected=add("circle",{cx:left,cy:top,r:6.5},"assessment-chart-selected");
+ guide.style.display="none";selected.style.display="none";
+ const focus=document.createElement("div");focus.className="assessment-chart-focus";focus.setAttribute("aria-live","off");
+ const avg=document.createElement("div");avg.className="assessment-chart-average";avg.textContent="— Média: "+assessNumber(mean)+(unit?" "+unit:"");
+ let active=-1;
+ const highlight=index=>{
+  active=index;
+  const p=visible[index];guide.setAttribute("x1",coords[index][0]);guide.setAttribute("x2",coords[index][0]);
+  selected.setAttribute("cx",coords[index][0]);selected.setAttribute("cy",coords[index][1]);
+  guide.style.display="";selected.style.display="";
+  focus.textContent=assessmentDate(p.date)+" · "+assessNumber(p.value)+(unit?" "+unit:"");
+  labels.forEach((label,i)=>label.classList.toggle("is-selected",i===index));
+ };
+ const clear=()=>{active=-1;guide.style.display="none";selected.style.display="none";focus.textContent="Desliza no gráfico para consultar cada avaliação";labels.forEach(l=>l.classList.remove("is-selected"));};
+ const move=event=>{
+  const rect=svg.getBoundingClientRect();if(!rect.width)return;
+  const px=(event.clientX-rect.left)/rect.width*344;
+  let nearest=0;for(let i=1;i<coords.length;i++)if(Math.abs(coords[i][0]-px)<Math.abs(coords[nearest][0]-px))nearest=i;
+  if(nearest!==active)highlight(nearest);
+ };
+ svg.addEventListener("pointerdown",event=>{if(svg.setPointerCapture)svg.setPointerCapture(event.pointerId);move(event);});
+ svg.addEventListener("pointermove",event=>{if(event.pointerType==="mouse"&&event.buttons===0&&active===-1)return;move(event);});
+ svg.addEventListener("pointerup",()=>{});
+ svg.addEventListener("pointercancel",clear);
+ svg.addEventListener("pointerleave",event=>{if(event.pointerType==="mouse")clear();});
+ clear();
+ holder.append(svg,focus,avg,history);
  return holder;
 }
 function renderPlayerAssessments(){
