@@ -1227,7 +1227,7 @@ async function loadPeriImports(){
   const active=result.active?.[kind]?.options;
   const section=document.createElement("details");section.className="peri-plan-section";section.dataset.periKind=kind;section.open=periExpandedKind===kind;
   section.addEventListener("toggle",()=>{if(section.open)periExpandedKind=kind;else if(periExpandedKind===kind)periExpandedKind=null;});
-  const summary=document.createElement("summary");summary.className="peri-summary";const headline=document.createElement("strong");headline.textContent=title;const state=document.createElement("span");state.className="peri-state";state.textContent=drafts.length?"Em revisão":active?"Publicado":"Sem plano";state.classList.toggle("is-published",!drafts.length&&Boolean(active));const meta=document.createElement("span");meta.className="peri-summary-text";meta.append(headline,state);summary.append(meta);section.append(summary);
+  const summary=document.createElement("summary");summary.className="peri-summary";const headline=document.createElement("strong");headline.textContent=title;const state=document.createElement("span");state.className="peri-state";const hasPending=drafts.some(d=>!periUnchangedCopies.has(d.id));state.textContent=hasPending?"Em revisão":active?"Publicado":drafts.length?"Rascunho":"Sem plano";state.classList.toggle("is-published",!hasPending&&Boolean(active));const meta=document.createElement("span");meta.className="peri-summary-text";meta.append(headline,state);summary.append(meta);section.append(summary);
   const controls=document.createElement("div");controls.className="event-admin-row peri-plan-actions";const headRow=document.createElement("div");headRow.className="peri-plan-header";section.append(headRow);headRow.append(controls);
   
   if(chosen){
