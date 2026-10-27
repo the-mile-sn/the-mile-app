@@ -913,7 +913,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     totals[key]=field("Total · "+label,option.totals?.[key]||"");
   }
   const edits=[];
-  (option.items||[]).filter(item=>item.kind!=="title").forEach((item,index)=>{
+  const addPlanLine=(item,index)=>{
     const box=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
     const type=document.createElement("select");
     for(const [value,label] of [["food","Alimento"],["note","Nota"],["collapsible_note","Nota colapsável"]]){
@@ -940,7 +940,9 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     form.appendChild(box);
     const edit={type,name,noteTitle,quantity,nutrients,box,removed:false};edits.push(edit);
     remove.onclick=()=>{edit.removed=true;box.remove();persist();};
-  });
+  };
+  (option.items||[]).filter(item=>item.kind!=="title").forEach(addPlanLine);
+  const addLine=document.createElement("button");addLine.type="button";addLine.textContent="+ Adicionar linha";addLine.onclick=()=>addPlanLine({kind:"note",text:""},edits.length);form.appendChild(addLine);
   const feedback=document.createElement("p");feedback.className="hint";feedback.textContent="As alterações são guardadas automaticamente ao sair de cada campo.";form.appendChild(feedback);
   let saveChain=Promise.resolve();
   const persist=()=>{
@@ -960,7 +962,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     planPendingSaves.push(saveChain);
     saveChain.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==saveChain);}).catch(()=>{});
   };
-  for(const control of form.querySelectorAll("input,select"))control.addEventListener("change",persist);
+  form.addEventListener("change",event=>{if(event.target.matches("input,select"))persist();});
   details.appendChild(form);
 }
 $("import-submit").addEventListener("click",async()=>{
