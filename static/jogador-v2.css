@@ -2448,3 +2448,20 @@ body.profile-active .player-top{display:none!important}
 
 /* Override inherited .row gap: it separated Almoço/Jantar from the description. */
 #menus .day-menu .row.menu-entry{row-gap:2px!important;column-gap:0!important;gap:2px!important}
+
+
+/* Inner daily meal options: override the legacy solid triangle with an outline chevron. */
+#overview .daily-meal > details.player-meal-option-subcard > summary .option::after,
+#overview .peri-meal > details.player-meal-option-subcard > summary .option::after{
+ content:""!important;display:block!important;box-sizing:border-box!important;
+ position:absolute!important;top:50%!important;right:1px!important;left:auto!important;
+ width:9px!important;height:9px!important;
+ border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
+ background:none!important;clip-path:none!important;border-radius:0!important;
+ transform:translateY(-50%) rotate(45deg)!important;
+ transition:transform .16s ease!important;
+}
+#overview .daily-meal > details.player-meal-option-subcard[open] > summary .option::after,
+#overview .peri-meal > details.player-meal-option-subcard[open] > summary .option::after{
+ transform:translateY(-50%) rotate(225deg)!important;
+}
