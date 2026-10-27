@@ -543,3 +543,8 @@
 .assessment-excel-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
 .assessment-excel-table th,.assessment-excel-table td{padding:9px 10px;border-bottom:1px solid rgba(128,128,128,.19);vertical-align:top}
 #assessment-excel-feedback{font-size:13px;margin:10px 0}
+
+/* Three aligned general fields and computed summary controls. */
+#assessments-admin-panel .assessment-review-top{grid-template-columns:1fr 1fr 2fr}
+#assessments-admin-panel .assessment-review-grid input[readonly]{opacity:.78;cursor:default;background:#222228}
+@media(max-width:700px){#assessments-admin-panel .assessment-review-top{grid-template-columns:1fr}}
