@@ -2680,3 +2680,19 @@ body.profile-active .player-top{display:none!important}
 #overview .daily-supplements > summary::after{
  flex:0 0 auto!important;margin-left:auto!important;
 }
+
+
+/* Precision alignment: event icon box and peri-meal box share the meal card's left inset.
+   The peri card previously accumulated the generic .meal padding and its summary padding. */
+#overview #day-details .peri-meal.meal.daily-meal{
+ padding:0!important;
+ box-sizing:border-box!important;
+}
+#overview #day-details .daily-event-card{
+ padding-left:17px!important;
+ box-sizing:border-box!important;
+}
+/* The shaker artwork has an asymmetric shape; optically centre it inside its box. */
+#overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon svg{
+ transform:translateX(-2px)!important;
+}
