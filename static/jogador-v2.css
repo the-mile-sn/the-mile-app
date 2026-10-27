@@ -2363,6 +2363,6 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-history-card>summary{min-height:23px;align-items:center}
 
 /* Assessment header: compact comparison beneath the prominent current value. */
-#plans .assessment-metric-right{gap:5px;justify-content:center}
+#plans .assessment-metric-right{gap:9px;justify-content:center}
 #plans .assessment-metric-right strong{font-weight:600;line-height:1.15}
 #plans .assessment-change{line-height:1.15}
