@@ -929,10 +929,10 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     }
     const updateFields=()=>{
       const kind=type.value;
-      noteTitle.parentElement.hidden=kind!=="collapsible_note";
+      noteTitle.parentElement.style.display=kind==="collapsible_note"?"":"none";
       name.parentElement.firstChild.textContent=kind==="food"?"Alimento":kind==="collapsible_note"?"Descrição":"Texto da nota";
-      quantity.parentElement.hidden=kind!=="food";
-      for(const input of Object.values(nutrients))input.parentElement.hidden=kind!=="food";
+      quantity.parentElement.style.display=kind==="food"?"":"none";
+      for(const input of Object.values(nutrients))input.parentElement.style.display=kind==="food"?"":"none";
     };
     type.addEventListener("change",updateFields);updateFields();
     const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.textContent="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
