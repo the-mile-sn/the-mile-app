@@ -366,7 +366,7 @@ function matchWithIntraCard(event,item){
  const section=document.createElement("details");
  section.className="daily-event-card match-intra-card";
  const head=document.createElement("summary");head.className="daily-meal-head";
- const label=document.createElement("strong");label.textContent=event.title;head.append(label);
+ const matchIcon=mealIcon("football");matchIcon.classList.add("meal-leading-icon");head.append(matchIcon);const label=document.createElement("strong");label.textContent=event.title;head.append(label);
  if(avg){
   const totals=document.createElement("span");totals.className="meal-average meal-average-inline";
   totals.append(nutrition(avg));head.append(totals);
