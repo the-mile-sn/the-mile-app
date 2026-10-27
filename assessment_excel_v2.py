@@ -27,7 +27,7 @@ def _date(value):
  if isinstance(value,datetime):return value.date()
  if isinstance(value,date):return value
  if isinstance(value,str):
-  for fmt in ("%Y-%m-%d","%d/%m/%Y","%d-%m-%Y"):
+  for fmt in ("%Y-%m-%d","%d/%m/%Y","%d/%m/%y","%d-%m-%Y","%d-%m-%y"):
    try:return datetime.strptime(value.strip(),fmt).date()
    except ValueError:pass
  return None
