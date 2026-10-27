@@ -1698,6 +1698,7 @@ function renderAssessmentForm(data={}){
   }
  };
  box.addEventListener("input",recompute);
+ recompute();
  $("assess-field-height").value=String(data.measurements?.height??"");
  $("assessment-date").value=data.assessed_on||"";
  $("assessment-formula").value=data.formula_note||"";
