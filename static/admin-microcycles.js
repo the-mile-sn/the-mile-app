@@ -1631,6 +1631,7 @@ const ASSESSMENT_GROUPS=[
  ["arm_right_relaxed","Braço direito relaxado","cm"],["arm_right_flexed","Braço direito contraído","cm"],["chest","Peitoral","cm"],["waist","Cintura","cm"],["abdominal_perimeter","Abdominal","cm"],["glute","Glúteo","cm"],["thigh_right","Coxa direita","cm"],["thigh_left","Coxa esquerda","cm"],["calf_right","Gémeo direito","cm"],["calf_left","Gémeo esquerdo","cm"]]]];
 const ASSESSMENT_AVERAGES=[["avg_skinfolds","Média da soma de pregas","mm"],["avg_weight","Peso médio","kg"],["avg_body_fat","Gordura corporal média","%"]];
 let assessmentPdf="",assessmentUploadedFor="";
+let assessmentHistoryAverages={};
 const assessmentValue=(id)=>$(id)?.value.trim()||"";
 function renderAssessmentForm(data={}){
  const box=$("assessment-review-fields");box.replaceChildren();
@@ -1642,7 +1643,7 @@ function renderAssessmentForm(data={}){
    const row=document.createElement("label");row.textContent=label+(unit?" ("+unit+")":"");
    const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.autocomplete="off";
    if(["avg_skinfolds","avg_weight","avg_body_fat"].includes(key)){input.readOnly=true;input.setAttribute("aria-readonly","true");}
-   input.id="assess-field-"+key;input.value=String((data.measurements||{})[key]??(data.averages||{})[key]??"");
+   input.id="assess-field-"+key;input.value=String((data.measurements||{})[key]??(key.startsWith("avg_")?assessmentHistoryAverages[key]:(data.averages||{})[key])??"");
    row.append(input);grid.append(row);
   }
   section.append(grid);box.append(section);
@@ -1656,9 +1657,11 @@ async function loadAssessmentsAdmin(){
  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments");
  const wrap=$("assessment-history");wrap.replaceChildren();
  const published=result.assessments.filter(x=>x.status==="published");
+ assessmentHistoryAverages={};
  for(const [key,source] of [["avg_skinfolds","sum_8"],["avg_weight","weight"],["avg_body_fat","body_fat"]]){
   const values=published.map(x=>Number(x.measurements?.[source])).filter((v,i)=>published[i].measurements?.[source]!=null&&Number.isFinite(v));
-  const field=$("assess-field-"+key);if(field)field.value=values.length?(values.reduce((a,b)=>a+b,0)/values.length).toFixed(2).replace(".",","):"";
+  assessmentHistoryAverages[key]=values.length?(values.reduce((a,b)=>a+b,0)/values.length).toFixed(2).replace(".",","):"";
+  const field=$("assess-field-"+key);if(field)field.value=assessmentHistoryAverages[key];
  }
  if(!result.assessments.length){const p=document.createElement("p");p.className="hint";p.textContent="Ainda não existem avaliações para este jogador.";wrap.append(p);}
  for(const record of result.assessments.slice().reverse()){
