@@ -1282,6 +1282,21 @@ def application(env, start_response):
                         except ValueError:raise Problem(400,'invalid_assessment')
                         return respond(200,{'saved':True,'id':aid})
                     raise Problem(400,'invalid_action')
+            if path.startswith('/api/v2/athletes/') and path.endswith('/assessments/delete') and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                bits=path.strip('/').split('/')
+                if len(bits)!=6 or bits[:3]!=['api','v2','athletes'] or bits[4:]!=['assessments','delete']:
+                    raise Problem(404,'not_found')
+                athlete_id=bits[3]
+                payload=read_json(env)
+                record_id=payload.get('id')
+                if not isinstance(record_id,str) or not record_id:raise Problem(400,'invalid_assessment')
+                row=c.execute("SELECT id FROM v2_body_assessments WHERE id=? AND athlete_id=?",(record_id,athlete_id)).fetchone()
+                if not row:raise Problem(404,'assessment_not_found')
+                c.execute("DELETE FROM v2_body_assessments WHERE id=? AND athlete_id=?",(record_id,athlete_id))
+                c.commit()
+                return respond(200,{'deleted':True})
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
