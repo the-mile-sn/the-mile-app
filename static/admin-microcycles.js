@@ -1216,7 +1216,7 @@ async function loadPeriImports(){
      const data=chosen.status==="draft"
       ?await request(periEndpoint()+"/"+encodeURIComponent(chosen.id))
       :await request(periEndpoint()+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});
-     periExpandedKind=kind;await loadPeriImports();renderPeriDraft(data.draft);periMessage("Modo de edição. Revê as opções, guarda e publica a nova versão.");
+     periExpandedKind=kind;await loadPeriImports();renderPeriDraft(data.draft,true);periMessage("Modo de edição. Revê as opções, guarda e publica a nova versão.");
     }catch(e){periMessage("Erro ao editar: "+e.message);}
    };
    controls.append(edit);
@@ -1250,7 +1250,7 @@ async function loadPeriImports(){
  }
  list.append(history);
 }
-function renderPeriDraft(draft){
+function renderPeriDraft(draft,editing=false){
  const root=$("peri-review");root.replaceChildren();
  const heading=document.createElement("h3");heading.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";root.append(heading);
  for(const warning of draft.extracted.warnings||[]){const p=document.createElement("p");p.className="hint";p.textContent=warning;root.append(p);}
@@ -1259,6 +1259,7 @@ function renderPeriDraft(draft){
   group.options.forEach((option,oi)=>{
    const card=document.createElement("section");card.className="peri-editor-option";
    const title=document.createElement("strong");title.textContent="Opção "+option.number;card.append(title);
+   if(!editing){const info=document.createElement("p");info.textContent="Energia: "+(option.totals?.kcal??"—")+" kcal · Proteína: "+(option.totals?.protein_g??"—")+" g · Hidratos: "+(option.totals?.carbs_g??"—")+" g · Gordura: "+(option.totals?.fat_g??"—")+" g";card.append(info);const name=document.createElement("p");name.textContent=option.title||"";card.append(name);(option.lines||[]).forEach((line,i)=>{if(!line.trim())return;const item=document.createElement("p");const labels={pre_warmup:"Pré-aquecimento",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",throughout:"Ao longo do jogo"};item.textContent=(labels[option.timings?.[i]]?labels[option.timings[i]]+" — ":"")+line;card.append(item);});root.append(card);return;}
    const form=document.createElement("div");form.className="peri-option-grid";
    const fields={};
    for(const [key,label] of [["kcal","Energia (kcal)"],["protein_g","Proteína (g)"],["carbs_g","Hidratos (g)"],["fat_g","Gordura (g)"]]){
@@ -1269,7 +1270,7 @@ function renderPeriDraft(draft){
    const foodsLabel=document.createElement("label");foodsLabel.textContent="Alimentos e instruções (uma linha por item)";
    const intra=draft.kind==="match"&&group.meals.includes("pre");
    const timingRows=[];
-   const timingOptions=[["","Sem timing específico"],["pre_match","Pré-jogo"],["post_warmup","Pós-aquecimento"],["first_half","Durante a 1.ª parte"],["half_time","Intervalo"],["second_half","Durante a 2.ª parte"],["post_match","Pós-jogo"],["throughout","Ao longo do jogo"]];
+   const timingOptions=[["","Sem timing específico"],["pre_warmup","Pré-aquecimento"],["post_warmup","Pós-aquecimento"],["first_half","Durante a 1.ª parte"],["half_time","Intervalo"],["second_half","Durante a 2.ª parte"],["throughout","Ao longo do jogo"]];
    const textarea=document.createElement("textarea");textarea.rows=5;textarea.value=(option.lines||[]).join("\n");
    if(intra){
     foodsLabel.textContent="Timing e alimentos";
@@ -1307,7 +1308,7 @@ function renderPeriDraft(draft){
    };card.append(save);root.append(card);
   });
  });
- if(draft.status==="draft"){
+ if(editing&&draft.status==="draft"){
   const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar plano peri";
   pub.onclick=async()=>{
     if(!confirm("Confirmas a publicação? As refeições serão aplicadas aos eventos futuros, respeitando as remoções manuais."))return;
@@ -1329,7 +1330,7 @@ $("peri-import").addEventListener("click",async()=>{
   for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
   const result=await request(periEndpoint(),{method:"POST",body:JSON.stringify({kind:$("peri-kind").value,filename:file.name,pdf_base64:btoa(binary)})});
   periMessage("Rascunho importado. Confirma os alimentos e os valores nutricionais antes de publicar.");
-  await loadPeriImports();renderPeriDraft(result.draft);
+  await loadPeriImports();renderPeriDraft(result.draft,true);
  }catch(e){periMessage("Erro ao importar: "+e.message);}finally{button.disabled=false;}
 });
 
