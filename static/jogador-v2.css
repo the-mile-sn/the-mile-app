@@ -2644,3 +2644,39 @@ body.profile-active .player-top{display:none!important}
 /* Keep Assessments tabs close to its back control. */
 #plans #plans-assessments > button.plans-back-round{margin-top:3px!important;margin-bottom:11px!important}
 #plans #plans-assessments .assessment-tabs{margin-top:0!important}
+
+
+/* Align peri-training and supplementation with the same daily meal icon grid. */
+#overview .peri-meal > .daily-meal-head,
+#overview .daily-supplements > summary{
+ display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
+ min-height:65px!important;box-sizing:border-box!important;
+ padding:12px 17px!important;column-gap:8px!important;
+}
+#overview .peri-meal > .daily-meal-head > .meal-leading-icon,
+#overview .daily-supplements > summary > .supplement-leading-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 37px!important;width:37px!important;min-width:37px!important;
+ height:37px!important;margin:0 10px 0 0!important;padding:0!important;
+ border-radius:11px!important;background:rgba(0,0,0,.16)!important;
+ align-self:center!important;box-sizing:border-box!important;
+}
+#overview .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon,
+#overview .daily-supplements > summary > .supplement-leading-icon > .mile-icon{
+ display:block!important;flex:0 0 24px!important;width:24px!important;height:24px!important;
+ margin:0!important;align-self:center!important;
+}
+#overview .daily-supplements{
+ margin:8px 0!important;border-radius:13px!important;
+ background:#303135!important;border:0!important;
+}
+#overview .daily-supplements > summary{
+ font-size:15px!important;font-weight:500!important;justify-content:flex-start!important;
+}
+#overview .daily-supplements > summary > strong{
+ font-size:15px!important;font-weight:500!important;line-height:1.3!important;
+ flex:1 1 auto!important;min-width:0!important;
+}
+#overview .daily-supplements > summary::after{
+ flex:0 0 auto!important;margin-left:auto!important;
+}
