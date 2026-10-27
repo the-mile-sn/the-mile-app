@@ -23,7 +23,7 @@ function nutrition(values){const el=document.createElement("span");el.className=
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const n=Number(String(o.totals[k]??"").replace(",","."));if(!Number.isFinite(n))return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
 function periItemBlock(food){
- const box=document.createElement("div");box.className="peri-timed-item";box.style.cssText="padding:14px 0;border-bottom:1px solid rgba(145,145,155,.2)";
+ const box=document.createElement("div");box.className="peri-timed-item";box.style.cssText="";
  const label=periTimingLabels[food.timing];
  if(label){const head=document.createElement("div");head.textContent=label;head.style.cssText="font-weight:600;margin-bottom:7px;color:inherit";box.append(head);}
  const line=document.createElement("div");line.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" ").trim():food.text||"";line.style.cssText="color:inherit;opacity:.82";box.append(line);
