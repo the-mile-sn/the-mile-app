@@ -2624,3 +2624,23 @@ body.profile-active .player-top{display:none!important}
 }
 #plans #plan-detail .plans-all-body{padding:0 8px 10px}
 #plans #plan-detail .plans-all-body .meal{margin:9px 0!important}
+
+
+/* Small matching circular back controls in Plans and Assessments. */
+#plans #plans-prescriptions button.plans-back-round,
+#plans #plans-assessments button.plans-back-round{
+ width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+ padding:0!important;margin:0 0 0 3px!important;box-sizing:border-box!important;
+ border-radius:50%!important;border:1px solid #414148!important;
+ background:#242428!important;box-shadow:none!important;
+ display:grid!important;place-items:center!important;
+ font-size:0!important;line-height:1!important;
+}
+#plans #plans-prescriptions button.plans-back-round span,
+#plans #plans-assessments button.plans-back-round span{
+ font-size:25px!important;font-weight:350!important;line-height:1!important;
+ position:relative;top:-2px;left:-1px;
+}
+/* Keep Assessments tabs close to its back control. */
+#plans #plans-assessments > button.plans-back-round{margin-top:3px!important;margin-bottom:11px!important}
+#plans #plans-assessments .assessment-tabs{margin-top:0!important}
