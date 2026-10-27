@@ -2092,3 +2092,31 @@ body.profile-active .player-top{display:none!important}
  color:#b7b7c0!important;background:#1b1b20!important;
  padding:2px 4px!important;border-radius:4px!important;white-space:nowrap!important;
 }
+
+/* Weekly nutrition charts: keep the mean guide, without numeric labels;
+   distinguish the current day only through fill opacity. */
+#overview #day-details .nutrition-chart-average > span,
+#overview #day-details .nutrition-chart-average::before,
+#overview #day-details .nutrition-chart-average::after{
+ display:none!important;
+ content:none!important;
+}
+#overview #day-details .nutrition-chart-fill{
+ opacity:.78!important;
+ border:0!important;
+ outline:0!important;
+ box-shadow:none!important;
+ filter:none!important;
+}
+#overview #day-details .nutrition-chart-today .nutrition-chart-fill{
+ opacity:.94!important;
+ border:0!important;
+ outline:0!important;
+ box-shadow:none!important;
+ filter:none!important;
+}
+#overview #day-details .nutrition-chart-today .nutrition-chart-track{
+ border:0!important;
+ outline:0!important;
+ box-shadow:none!important;
+}
