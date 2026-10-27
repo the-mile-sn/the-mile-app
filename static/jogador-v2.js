@@ -516,7 +516,7 @@ async function overview(){
     for(const item of weekDays){
      const column=document.createElement("div");column.className="nutrition-chart-column";
      if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
-     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";
+     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";n.style.color=color;
      const track=document.createElement("div");track.className="nutrition-chart-track";
      const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
      const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
