@@ -2234,3 +2234,11 @@ body.profile-active .player-top{display:none!important}
 /* Prevent generic event-card flex layout from shrinking game dividers. */
 #overview .daily-event-card.match-intra-card{display:block!important;}
 #overview .daily-event-card.match-intra-card>.peri-timed-item{display:block!important;width:calc(100% - 36px)!important;max-width:none!important;flex:none!important;}
+
+/* Optional note cards appear after all standard option rows. */
+.meal-collapsible-note{margin:12px 0 4px;border:1px solid rgba(255,255,255,.19);border-radius:12px;background:rgba(255,255,255,.055);overflow:hidden;color:inherit}
+.meal-collapsible-note>summary{padding:13px 15px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600}
+.meal-collapsible-note>summary::-webkit-details-marker{display:none}
+.meal-collapsible-note>summary:after{content:"⌄";font-size:20px;line-height:1;opacity:.75}
+.meal-collapsible-note[open]>summary:after{transform:rotate(180deg)}
+.meal-collapsible-note>.meal-note-body{padding:0 15px 14px;white-space:pre-wrap;line-height:1.5;overflow-wrap:anywhere}
