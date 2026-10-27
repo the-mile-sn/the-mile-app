@@ -2522,3 +2522,32 @@ body.profile-active .player-top{display:none!important}
 }
 #menus .day-menu{transition:background-color .2s ease}
 #menus .day-menu.is-selected{background:rgba(255,255,255,.11)!important}
+
+
+/* Final outline chevrons for Plans and weekly meal options, overriding legacy triangles. */
+#plans #plan-detail .plan-overview-meal > summary.daily-meal-head::after,
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard > summary .option::after,
+#plans #plan-detail .plan-meal details.plan-option-card > summary .option::after,
+#weekly-view details.weekly-option-card > summary .option::after{
+ content:""!important;display:block!important;box-sizing:border-box!important;
+ width:9px!important;height:9px!important;
+ border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
+ background:none!important;clip-path:none!important;border-radius:0!important;
+ font-size:0!important;line-height:0!important;
+ transform:translateY(-50%) rotate(45deg)!important;
+ transition:transform .16s ease!important;
+}
+#plans #plan-detail .plan-overview-meal > summary.daily-meal-head::after{
+ transform:rotate(45deg)!important;
+}
+#plans #plan-detail .plan-overview-meal[open] > summary.daily-meal-head::after{
+ transform:rotate(225deg)!important;
+}
+#plans #plan-detail .plan-overview-meal > details.player-meal-option-subcard[open] > summary .option::after,
+#plans #plan-detail .plan-meal details.plan-option-card[open] > summary .option::after,
+#weekly-view details.weekly-option-card[open] > summary .option::after{
+ transform:translateY(-50%) rotate(225deg)!important;
+}
+/* Show some context above the selected menu card when jumping from the calendar. */
+#menus #menu-days .day-menu{scroll-margin-top:128px}
+#menus #menu-days .day-menu.is-selected{background:rgba(255,255,255,.15)!important}
