@@ -514,3 +514,13 @@
 .peri-pending-label{color:#e3bc61;font-size:12px}
 .peri-plan-section .peri-state.is-published{color:#82cc9f!important}
 @media(max-width:700px){.peri-plan-section .peri-plan-actions{margin:0 12px 12px auto!important}.peri-option-flat>.peri-option-heading{align-items:flex-start}}
+
+
+/* Publication state and consistent action controls */
+.plan-simple-info small.is-published{color:#84cda0!important}
+.plan-action-header{display:flex!important;align-items:center!important;gap:10px!important}
+.plan-action-header>h3{flex:1!important;margin-right:auto!important}
+.plan-action-header>button,
+.peri-plan-actions>button{min-height:39px!important;padding:8px 17px!important;font-size:14px!important;line-height:1.25!important}
+.plan-publish-action.is-pending,.peri-publish-action.is-pending{background:#7d6225!important}
+#peri-import-controls select,#peri-import-controls input[type=file],#peri-import-controls button{min-height:43px}
