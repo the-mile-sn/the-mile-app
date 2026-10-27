@@ -722,7 +722,6 @@ async function loadPlayerAssessments(){
 
 function buildAssessmentTrend(points,unit){
  const holder=document.createElement("div");holder.className="assessment-trend";
- const title=document.createElement("p");title.textContent="Evolução";holder.append(title);
  const history=document.createElement("details");history.className="assessment-history-card";
  const historySummary=document.createElement("summary");historySummary.textContent="Todas as avaliações ("+points.length+")";history.append(historySummary);
  const rows=document.createElement("div");rows.className="assessment-history-points";
@@ -740,7 +739,7 @@ function buildAssessmentTrend(points,unit){
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
  svg.setAttribute("viewBox","0 0 344 176");svg.setAttribute("preserveAspectRatio","xMidYMid meet");
  svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução das últimas "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
- const left=37,right=332,top=25,bottom=140;
+ const left=27,right=338,top=22,bottom=148;
  const y=v=>bottom-(v-low)/(high-low)*(bottom-top),x=i=>left+(right-left)*i/(visible.length-1);
  const add=(tag,attributes,css,text)=>{const node=document.createElementNS(ns,tag);for(const [name,value]of Object.entries(attributes||{}))node.setAttribute(name,String(value));if(css)node.setAttribute("class",css);if(text!==undefined)node.textContent=text;svg.append(node);return node;};
  for(let i=0;i<=tickCount;i++){
@@ -769,7 +768,7 @@ function buildAssessmentTrend(points,unit){
   focus.textContent=assessmentDate(p.date);
   labels.forEach((label,i)=>label.classList.toggle("is-selected",i===index));
  };
- const clear=()=>{active=-1;guide.style.display="none";dots.forEach(dot=>dot.classList.remove("is-selected"));focus.textContent="Desliza no gráfico para consultar cada avaliação";labels.forEach(l=>l.classList.remove("is-selected"));};
+ const clear=()=>{active=-1;guide.style.display="none";dots.forEach(dot=>dot.classList.remove("is-selected"));focus.textContent="";labels.forEach(l=>l.classList.remove("is-selected"));};
  const move=event=>{
   const rect=svg.getBoundingClientRect();if(!rect.width)return;
   const px=(event.clientX-rect.left)/rect.width*344;
