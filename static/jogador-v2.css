@@ -2332,3 +2332,32 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-chart-point{fill:#1b1b20;fill-opacity:1;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke;filter:none}
 #plans .assessment-chart-point.is-selected{fill:#fff;fill-opacity:1;stroke:#fff;stroke-width:1.5;filter:none}
 #plans .assessment-chart-focus:empty{min-height:0;margin:0}
+
+/* Assessment: clearer value hierarchy and identical centered expand chevrons. */
+#plans .assessment-metric-right{gap:8px}
+#plans .assessment-measure-card>summary{align-items:center}
+#plans .assessment-expander,
+#plans .assessment-history-card>summary::after{
+ content:"";
+ display:block;
+ box-sizing:border-box;
+ width:9px;
+ height:9px;
+ flex:0 0 9px;
+ border:solid #bfc0c9;
+ border-width:0 2px 2px 0;
+ border-radius:1px;
+ transform:rotate(45deg);
+ transition:transform .18s ease;
+ align-self:center;
+ margin:0 4px 5px 5px;
+ font-size:0;
+ line-height:0;
+}
+#plans .assessment-measure-card[open]>summary .assessment-expander,
+#plans .assessment-history-card[open]>summary::after{
+ transform:rotate(225deg);
+ margin-top:5px;
+ margin-bottom:0;
+}
+#plans .assessment-history-card>summary{min-height:23px;align-items:center}
