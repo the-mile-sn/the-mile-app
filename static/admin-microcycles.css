@@ -554,3 +554,6 @@
 .assessment-history-entry{display:flex;align-items:center;gap:9px;margin:7px 0}
 .assessment-history-entry .assessment-history-row{flex:1;min-width:0}
 .assessment-delete-button{flex:none;min-height:36px;padding:7px 13px!important;border-radius:9px!important;color:#edafae!important;background:rgba(210,84,84,.09)!important;border:1px solid rgba(210,84,84,.25)!important}
+
+.assessment-missing-row{padding:12px 0;border-bottom:1px solid rgba(128,128,128,.22)}
+.assessment-missing-row ul{margin:9px 0 0;padding-left:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 18px;color:#c9c9d0;font-size:13px}
