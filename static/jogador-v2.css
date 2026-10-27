@@ -2366,3 +2366,52 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-metric-right{gap:9px;justify-content:center}
 #plans .assessment-metric-right strong{font-weight:600;line-height:1.15}
 #plans .assessment-change{line-height:1.15}
+
+
+/* Unified outline-only disclosure chevrons (the same language as Assessments). */
+#overview details > summary .option::after,
+#plans details > summary .option::after,
+#weekly-view details > summary .option::after,
+#overview details > summary.daily-meal-head::after,
+#plans details > summary.daily-meal-head::after,
+#weekly-view details > summary.daily-meal-head::after,
+#overview .daily-supplements > summary::after,
+#weekly-view .weekly-supplement-summary > summary::after,
+#overview .nutrition-donut-summary .nutrition-expand::after,
+#plans #plan-detail .plan-meal details.plan-option-card > summary .option::after,
+.meal-collapsible-note > summary::after,
+#overview .meal-collapsible-note > summary::after{
+ content:""!important;display:block!important;
+ box-sizing:border-box!important;
+ width:9px!important;height:9px!important;
+ border:solid currentColor!important;border-width:0 2px 2px 0!important;
+ background:none!important;clip-path:none!important;border-radius:0!important;
+ color:#c9c9cf!important;font-size:0!important;
+ transform:rotate(45deg)!important;
+ transition:transform .16s ease!important;
+ flex-shrink:0!important;
+}
+#overview details[open] > summary .option::after,
+#plans details[open] > summary .option::after,
+#weekly-view details[open] > summary .option::after,
+#overview details[open] > summary.daily-meal-head::after,
+#plans details[open] > summary.daily-meal-head::after,
+#weekly-view details[open] > summary.daily-meal-head::after,
+#overview .daily-supplements[open] > summary::after,
+#weekly-view .weekly-supplement-summary[open] > summary::after,
+#overview .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]::after,
+#plans #plan-detail .plan-meal details.plan-option-card[open] > summary .option::after,
+.meal-collapsible-note[open] > summary::after,
+#overview .meal-collapsible-note[open] > summary::after{
+ transform:rotate(225deg)!important;
+}
+#plans #plan-detail .plan-meal details.plan-option-card > summary .option::after{
+ transform:translateY(-50%) rotate(45deg)!important;
+}
+#plans #plan-detail .plan-meal details.plan-option-card[open] > summary .option::after{
+ transform:translateY(-50%) rotate(225deg)!important;
+}
+/* Menus: long date left, MD only right, both on a single balanced row. */
+#menus .menu-day-heading{align-items:center!important;gap:10px!important}
+#menus .menu-day-heading h3{font-size:clamp(13px,3.4vw,17px)!important;font-weight:600!important;flex:1 1 auto;min-width:0;line-height:1.35!important}
+#menus .menu-day-subtitle{font-size:12px!important;flex:0 0 auto!important;align-self:center!important;margin-top:0!important;text-align:right!important}
