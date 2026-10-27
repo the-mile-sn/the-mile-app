@@ -429,3 +429,16 @@
  .option-editor .meal-line-editor>.meal-nutrient-row{grid-column:1}
  .option-editor .meal-line-editor>.option-remove-line{grid-column:1;justify-self:end}
 }
+
+
+/* Notes use the entire editing width while the delete icon stays right. */
+.option-editor .meal-line-editor[data-line-kind="note"]>.meal-food-row{grid-column:1/-1;grid-template-columns:minmax(0,1fr);padding-right:45px}
+.option-editor .meal-line-editor[data-line-kind="note"]>.meal-food-row label{width:100%}
+.option-editor .meal-line-editor[data-line-kind="note"]>.meal-food-row input{width:100%}
+.option-editor .meal-line-editor[data-line-kind="collapsible_note"]>.meal-note-description{grid-column:1/-1}
+.option-editor .meal-line-editor[data-line-kind="note"]>.option-remove-line,
+.option-editor .meal-line-editor[data-line-kind="collapsible_note"]>.option-remove-line{grid-column:2;justify-self:end}
+@media(max-width:830px){
+ .option-editor .meal-line-editor[data-line-kind="note"]>.option-remove-line,
+ .option-editor .meal-line-editor[data-line-kind="collapsible_note"]>.option-remove-line{grid-column:1}
+}
