@@ -510,13 +510,22 @@ async function overview(){
     const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
     const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
     const bars=document.createElement("div");bars.className="nutrition-chart-bars";
-    const max=Math.max(1,...weekDays.map(x=>x.found?x.total[key]/scale:0));
+    const valid=weekDays.filter(x=>x.found&&Number.isFinite(x.total[key]/scale));
+    const mean=valid.length?valid.reduce((sum,x)=>sum+x.total[key]/scale,0)/valid.length:null;
+    const max=Math.max(1,...weekDays.map(x=>x.found?x.total[key]/scale:0),mean||0);
     for(const item of weekDays){
      const column=document.createElement("div");column.className="nutrition-chart-column";
+     if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
      const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";
      const track=document.createElement("div");track.className="nutrition-chart-track";
      const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
      const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
+    }
+    if(mean!==null){
+     const line=document.createElement("div");line.className="nutrition-chart-average";
+     line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
+     line.setAttribute("aria-label","Média semanal: "+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
+     const tag=document.createElement("span");tag.textContent="Média "+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg");line.append(tag);bars.append(line);
     }
     wrap.append(bars);return wrap;
    }
