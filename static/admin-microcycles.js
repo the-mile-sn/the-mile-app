@@ -1619,6 +1619,39 @@ $("assessment-excel-confirm").onclick=async()=>{
  }catch(e){msg.textContent="Erro na importação: "+e.message;}finally{button.disabled=false;}
 };
 
+
+$("assessment-excel-fill-preview").onclick=async()=>{
+ const msg=$("assessment-excel-feedback"),button=$("assessment-excel-fill-preview"),target=$("assessment-excel-fill-results");
+ target.replaceChildren();$("assessment-excel-fill-confirm").hidden=true;
+ const athleteId=$("athlete").value;
+ if(!athleteId){msg.textContent="Seleciona um jogador.";return;}
+ button.disabled=true;
+ try{
+  const encoded=await readAssessmentExcel($("assessment-excel").files?.[0]);
+  const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments",{method:"POST",body:JSON.stringify({action:"excel_missing_preview",excel_base64:encoded})});
+  const additions=(data.assessments||[]).filter(r=>Object.keys(r.missing||{}).length&&!(r.warnings||[]).length);
+  const count=additions.reduce((n,r)=>n+Object.keys(r.missing).length,0);
+  const intro=document.createElement("p");intro.textContent=additions.length+" avaliações com campos em falta · "+count+" valores novos identificados.";target.append(intro);
+  for(const row of additions){
+   const line=document.createElement("p");line.textContent=assessmentPtDate(row.assessed_on)+" · "+Object.keys(row.missing).length+" campos: "+Object.keys(row.missing).join(", ");target.append(line);
+  }
+  excelHistoryEncoded=encoded;excelHistoryAthlete=athleteId;
+  $("assessment-excel-fill-confirm").hidden=!count;
+  msg.textContent="Nenhuma medição preenchida será substituída. Confirma a lista antes de avançar.";
+ }catch(e){msg.textContent="Erro na comparação: "+e.message;}
+ finally{button.disabled=false;}
+};
+$("assessment-excel-fill-confirm").onclick=async()=>{
+ const athleteId=$("athlete").value,msg=$("assessment-excel-feedback"),button=$("assessment-excel-fill-confirm");
+ if(!excelHistoryEncoded||athleteId!==excelHistoryAthlete){msg.textContent="Pré-visualiza novamente o ficheiro para este jogador.";return;}
+ if(!window.confirm("Adicionar apenas valores em falta às avaliações existentes? Nenhum valor preenchido será substituído."))return;
+ button.disabled=true;
+ try{
+  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments",{method:"POST",body:JSON.stringify({action:"excel_fill_missing",excel_base64:excelHistoryEncoded,confirmation:"PREENCHER_CAMPOS_VAZIOS"})});
+  clearExcelPreview();$("assessment-excel-fill-results").replaceChildren();msg.textContent=result.updated+" avaliações atualizadas · "+result.fields_added+" campos preenchidos.";await loadAssessmentsAdmin();
+ }catch(e){msg.textContent="Erro ao atualizar: "+e.message;}
+ finally{button.disabled=false;}
+};
 /* Assessment import: values are editable and never published by PDF upload alone. */
 const ASSESSMENT_GROUPS=[
  ["geral","Dados gerais",[["height","Altura","m"]]],
