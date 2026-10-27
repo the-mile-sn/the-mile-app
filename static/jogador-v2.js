@@ -405,7 +405,7 @@ function matchWithIntraCard(event,item){
 let supplementsByDay={};
 function supplementsCard(items){
  const box=document.createElement("details");box.className="daily-supplements";
- const title=document.createElement("summary");title.textContent="Suplementação";box.append(title);const pill=mealIcon("pill");pill.classList.add("supplement-leading-icon");title.prepend(pill);
+ const title=document.createElement("summary");box.append(title);const iconBox=document.createElement("span");iconBox.className="meal-leading-icon supplement-leading-icon";iconBox.append(mealIcon("pill"));const heading=document.createElement("strong");heading.textContent="Suplementação";title.append(iconBox,heading);
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
