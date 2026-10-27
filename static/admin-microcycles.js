@@ -914,31 +914,38 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
   }
   const edits=[];
   const addPlanLine=(item,index)=>{
-    const box=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
+    const box=document.createElement("fieldset");box.className="meal-line-editor";const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
     const type=document.createElement("select");
     for(const [value,label] of [["food","Alimento"],["note","Nota"],["collapsible_note","Nota colapsável"]]){
       const el=document.createElement("option");el.value=value;el.textContent=label;type.appendChild(el);
     }
-    type.value=item.kind==="food"?"food":item.kind==="collapsible_note"?"collapsible_note":"note";box.appendChild(type);
+    type.value=item.kind==="food"?"food":item.kind==="collapsible_note"?"collapsible_note":"note";const typeLabel=document.createElement("label");typeLabel.textContent="Tipo de linha";typeLabel.className="meal-line-kind";typeLabel.append(type);box.appendChild(typeLabel);
     const noteTitle=field("Título (opcional)",item.kind==="collapsible_note"?(item.title||""):"",box);
-    const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,box);
-    const quantity=field("Quantidade",item.quantity||"",box);
+    const foodRow=document.createElement("div");foodRow.className="meal-food-row";box.append(foodRow);
+    const quantity=field("Quantidade",item.quantity||"",foodRow);
+    const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,foodRow);
+    const noteDescription=document.createElement("label");noteDescription.className="meal-note-description";noteDescription.textContent="Descrição";const noteTextarea=document.createElement("textarea");noteTextarea.rows=4;noteTextarea.maxLength=4000;noteTextarea.value=item.kind==="collapsible_note"?(item.text||""):"";noteDescription.append(noteTextarea);box.append(noteDescription);
+    const nutrientRow=document.createElement("div");nutrientRow.className="meal-nutrient-row";box.append(nutrientRow);
     const nutrients={};
-    for(const [key,label] of [["kcal","kcal"],["protein_g","P (g)"],["carbs_g","HC (g)"],["fat_g","G (g)"]]){
-      nutrients[key]=field(label,item.nutrients?.[key]||"",box);
+    for(const [key,label] of [["kcal","kcal"],["protein_g","P"],["carbs_g","HC"],["fat_g","G"]]){
+      nutrients[key]=field(label,item.nutrients?.[key]||"",nutrientRow);
+      nutrients[key].parentElement.classList.add("nutrient-"+key);
     }
     const updateFields=()=>{
       const kind=type.value;
       noteTitle.parentElement.style.display=kind==="collapsible_note"?"":"none";
-      name.parentElement.firstChild.textContent=kind==="food"?"Alimento":kind==="collapsible_note"?"Descrição":"Texto da nota";
+      name.parentElement.firstChild.textContent=kind==="food"?"Alimento":"Texto da nota";
+      foodRow.style.display=kind==="collapsible_note"?"none":"";
+      noteDescription.style.display=kind==="collapsible_note"?"":"none";
+      nutrientRow.style.display=kind==="food"?"":"none";
       quantity.parentElement.style.display=kind==="food"?"":"none";
       for(const input of Object.values(nutrients))input.parentElement.style.display=kind==="food"?"":"none";
     };
     type.addEventListener("change",updateFields);updateFields();
-    const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.textContent="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
+    const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg>';remove.title="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
     box.appendChild(remove);
     form.appendChild(box);
-    const edit={type,name,noteTitle,quantity,nutrients,box,removed:false};edits.push(edit);
+    const edit={type,name,noteTitle,noteTextarea,quantity,nutrients,box,removed:false};edits.push(edit);
     remove.onclick=()=>{edit.removed=true;box.remove();persist();};
   };
   (option.items||[]).filter(item=>item.kind!=="title").forEach(addPlanLine);
@@ -949,7 +956,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     const entries=edits.filter(edit=>!edit.removed).map(edit=>{
       const kind=edit.type.value;
       const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
-      return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null,...(kind==="collapsible_note"?{title:edit.noteTitle.value.trim()}:{})};
+      return {kind,text:kind==="collapsible_note"?edit.noteTextarea.value:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null,...(kind==="collapsible_note"?{title:edit.noteTitle.value.trim()}:{})};
     });
     const totalValues=Object.fromEntries(Object.entries(totals).map(([key,input])=>[key,input.value.trim()]));
     const payload={group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:Boolean(option.reviewed)}};
@@ -962,7 +969,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     planPendingSaves.push(saveChain);
     saveChain.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==saveChain);}).catch(()=>{});
   };
-  form.addEventListener("change",event=>{if(event.target.matches("input,select"))persist();});
+  form.addEventListener("change",event=>{if(event.target.matches("input,select,textarea"))persist();});
   details.appendChild(form);
 }
 $("import-submit").addEventListener("click",async()=>{
