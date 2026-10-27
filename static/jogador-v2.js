@@ -1,6 +1,6 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
-let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 function revokePlayerView(){for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});dishPhotoCache.clear();menuRenderToken++;document.body.classList.remove("profile-active");
@@ -667,7 +667,28 @@ function openDishPhoto(src,alt){
  close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss();};document.addEventListener("keydown",onKey);
  overlay.append(close,image);document.body.append(overlay);close.focus();
 }
-async function menusView(){const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);$("menu-week").textContent= start.getMonth()===end.getMonth()&&start.getFullYear()===end.getFullYear()?start.getDate()+" a "+end.getDate()+" de "+start.toLocaleDateString("pt-PT",{month:"long",year:"numeric"}):start.getDate()+" de "+start.toLocaleDateString("pt-PT",{month:"long"})+" a "+end.getDate()+" de "+end.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));const root=$("menu-days");const renderToken=++menuRenderToken;const fragment=document.createDocumentFragment();for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu";const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
+async function menusView(){const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));
+ const strip=$("menu-week-strip");strip.querySelectorAll(".week-day").forEach(el=>el.remove());
+ const todayKey=iso(new Date()),isCurrentWeek=todayKey>=iso(start)&&todayKey<=iso(end);
+ if(!menuSelectedDate||menuSelectedDate<iso(start)||menuSelectedDate>iso(end))menuSelectedDate=isCurrentWeek?todayKey:iso(start);
+ const selectMenuDay=key=>{
+  menuSelectedDate=key;
+  strip.querySelectorAll(".week-day").forEach(el=>{const active=el.dataset.date===key;el.classList.toggle("selected",active);el.setAttribute("aria-pressed",String(active));});
+  document.querySelectorAll("#menu-days .day-menu").forEach(el=>el.classList.toggle("is-selected",el.dataset.date===key));
+ };
+ for(let i=0;i<7;i++){
+  const dt=new Date(start);dt.setDate(start.getDate()+i);
+  const key=iso(dt),classification=c.days.find(x=>x.date===key)?.classification||"—";
+  const button=document.createElement("button");button.type="button";button.className="week-day"+(key===menuSelectedDate?" selected":"")+(key===todayKey?" today":"");button.dataset.date=key;
+  button.setAttribute("aria-pressed",String(key===menuSelectedDate));
+  button.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})+" · "+classification);
+  for(const [cls,value] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",classification]]){
+   const span=document.createElement("span");span.className=cls;span.textContent=value;button.append(span);
+  }
+  button.onclick=()=>selectMenuDay(key);
+  strip.insertBefore(button,$("menu-next"));
+ }
+ const root=$("menu-days");const renderToken=++menuRenderToken;const fragment=document.createDocumentFragment();for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===dayClass?.classification);const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal]);
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";
