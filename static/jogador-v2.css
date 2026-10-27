@@ -2002,3 +2002,51 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-metric-name,
 #plans .assessment-metric-right strong{font-size:14px!important}
 #plans .assessment-change{font-size:10px!important}
+
+
+/* Final mobile geometry: all collapsed daily event/meal cards share 65px. */
+#overview .match-intra-card:not([open]){
+ min-height:65px!important;height:65px!important;padding:0!important;
+ box-sizing:border-box!important;display:flex!important;align-items:stretch!important;
+}
+#overview .match-intra-card:not([open]) > summary.daily-meal-head{
+ height:65px!important;min-height:65px!important;max-height:65px!important;
+ margin:0!important;padding:0 16px!important;
+ box-sizing:border-box!important;
+}
+#overview .match-intra-card:not([open]) > summary.daily-meal-head > .meal-leading-icon{
+ width:37px!important;height:37px!important;flex:0 0 37px!important;
+}
+/* The chart area was capped by the 43px right padding reserved for the
+   kcal arrow. Expand charts into that unused space, without shifting top macros. */
+#overview #day-details .nutrition-donut-summary > .nutrition-weekly-charts{
+ width:calc(100% + 31px)!important;max-width:none!important;
+ justify-self:start!important;align-self:stretch!important;
+ margin-right:-31px!important;padding-left:0!important;padding-right:0!important;
+ grid-column:1/-1!important;box-sizing:border-box!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-chart-bars{
+ width:100%!important;display:grid!important;
+ grid-template-columns:repeat(7,minmax(0,1fr))!important;
+ column-gap:0!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-chart-track{
+ width:min(75%,40px)!important;max-width:none!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-chart-column{
+ flex:1 1 0!important;min-width:0!important;padding:0!important;
+}
+/* More compact assessment rows — override native summary height and default
+   generic details/summary padding with matching selector specificity. */
+#plans #plans-assessments details.assessment-measure-card{
+ margin:5px 0!important;padding:0!important;min-height:0!important;
+}
+#plans #plans-assessments details.assessment-measure-card > summary{
+ height:44px!important;min-height:44px!important;max-height:44px!important;
+ padding:5px 11px 5px 13px!important;box-sizing:border-box!important;
+ gap:7px!important;line-height:1.15!important;
+}
+#plans #plans-assessments .assessment-metric-right{gap:0!important}
+#plans #plans-assessments .assessment-metric-name,
+#plans #plans-assessments .assessment-metric-right strong{font-size:13px!important}
+#plans #plans-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
