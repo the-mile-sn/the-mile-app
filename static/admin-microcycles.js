@@ -818,7 +818,7 @@ function showImportedDraft(draft){
   const root=$("import-review");root.replaceChildren();
   const header=document.createElement("div");header.className="plan-detail-header";
   const h=document.createElement("h3");const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+draft.color;h.append(dot,document.createTextNode(colors[draft.color]||draft.color));header.appendChild(h);
-  root.appendChild(header);
+  header.classList.add("plan-action-header");root.appendChild(header);
   const edit=document.createElement("button");edit.type="button";edit.textContent=selectedPlanMode==="edit"?"Validar":"Editar";
   edit.addEventListener("click",async()=>{
     edit.disabled=true;
@@ -840,7 +840,7 @@ function showImportedDraft(draft){
   });
   if(selectedPlanMode==="consult")header.appendChild(edit);
   if(selectedPlanMode==="consult"&&draft.status==="validated"){
-    const publish=document.createElement("button");publish.type="button";publish.textContent="Publicar";header.appendChild(publish);
+    const publish=document.createElement("button");publish.type="button";publish.textContent="Publicar";publish.className="plan-publish-action is-pending";header.appendChild(publish);
     publish.onclick=async()=>{
       if(!window.confirm("Publicar o plano "+(colors[draft.color]||draft.color)+" apenas para "+model.athlete.name+"? Esta ação cria uma versão publicada e substitui a anterior desta cor."))return;
       publish.disabled=true;
@@ -1247,9 +1247,9 @@ async function loadPeriImports(){
    const options=groups[phase]||[];if(!options.length)continue;
    const heading=document.createElement("h4");heading.textContent=phaseLabel;section.append(heading);
    for(const [i,option] of options.entries()){
-    const choice=document.createElement("details");choice.className="peri-option-consult";
-    const top=document.createElement("summary");
-    const name=document.createElement("strong");name.textContent=option.title||"Opção "+(option.number||i+1);
+    const choice=document.createElement("div");choice.className="peri-option-consult peri-option-flat";
+    const top=document.createElement("div");top.className="peri-option-heading";
+    const name=document.createElement("strong");name.textContent=phaseLabel+" · "+(option.title||"Opção "+(option.number||i+1));
     const totals=document.createElement("span");totals.className="peri-macros";for(const [key,prefix,unit,kindClass] of [["kcal",""," kcal","energy"],["protein_g","P "," g","protein"],["carbs_g","HC "," g","carbs"],["fat_g","G "," g","fat"]]){if(option.totals?.[key]==null)continue;const part=document.createElement("span");part.className="peri-macro-"+kindClass;part.textContent=prefix+String(option.totals[key]).replace(".",",")+unit;totals.append(part);}
     top.append(name,totals);choice.append(top);
     for(const item of option.items||[]){const line=document.createElement("p");line.textContent=item.kind==="food"?[item.quantity,item.name].filter(Boolean).join(" · "):(item.text||"");choice.append(line);}
@@ -1282,7 +1282,7 @@ function renderPeriDraft(draft,editing=false){
    if(!editing){const info=document.createElement("p");info.textContent="Energia: "+(option.totals?.kcal??"—")+" kcal · Proteína: "+(option.totals?.protein_g??"—")+" g · Hidratos: "+(option.totals?.carbs_g??"—")+" g · Gordura: "+(option.totals?.fat_g??"—")+" g";card.append(info);const name=document.createElement("p");name.textContent=option.title||"";card.append(name);(option.lines||[]).forEach((line,i)=>{if(!line.trim())return;const item=document.createElement("p");const labels={pre_warmup:"Pré-aquecimento",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",throughout:"Ao longo do jogo"};item.textContent=(labels[option.timings?.[i]]?labels[option.timings[i]]+" — ":"")+line;card.append(item);});root.append(card);return;}
    const form=document.createElement("div");form.className="peri-option-grid";
    const fields={};
-   for(const [key,label] of [["kcal","Energia (kcal)"],["protein_g","Proteína (g)"],["carbs_g","Hidratos (g)"],["fat_g","Gordura (g)"]]){
+   for(const [key,label] of [["kcal","kcal"],["protein_g","P"],["carbs_g","HC"],["fat_g","G"]]){
     const wrapper=document.createElement("label");wrapper.textContent=label;const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.value=option.totals?.[key]??"";fields[key]=input;wrapper.append(input);form.append(wrapper);
    }
    const bodyGrid=document.createElement("div");bodyGrid.className="peri-editor-body";card.append(bodyGrid);
@@ -1330,7 +1330,7 @@ function renderPeriDraft(draft,editing=false){
   });
  });
  if(editing&&draft.status==="draft"){
-  const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar";pub.className="peri-publish-action";
+  const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar";pub.className="peri-publish-action is-pending";
   pub.onclick=async()=>{
     if(!confirm("Confirmas a publicação? As refeições serão aplicadas aos eventos futuros, respeitando as remoções manuais."))return;
     pub.disabled=true;try{
