@@ -933,6 +933,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     }
     const updateFields=()=>{
       const kind=type.value;
+      box.dataset.lineKind=kind;
       noteTitle.parentElement.style.display=kind==="collapsible_note"?"":"none";
       name.parentElement.firstChild.textContent=kind==="food"?"Alimento":"Texto da nota";
       foodRow.style.display=kind==="collapsible_note"?"none":"";
