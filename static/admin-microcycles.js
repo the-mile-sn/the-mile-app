@@ -1635,19 +1635,20 @@ let assessmentHistoryAverages={};
 const assessmentValue=(id)=>$(id)?.value.trim()||"";
 function renderAssessmentForm(data={}){
  const box=$("assessment-review-fields");box.replaceChildren();
- for(const [,title,fields] of ASSESSMENT_GROUPS.concat([["medias","Médias do histórico · cálculo automático",ASSESSMENT_AVERAGES]])){
+ for(const [,title,fields] of ASSESSMENT_GROUPS.filter(g=>g[0]!=="geral").concat([["medias","Médias do histórico · cálculo automático",ASSESSMENT_AVERAGES]])){
   const section=document.createElement("section");section.className="assessment-review-group";
   const heading=document.createElement("h3");heading.textContent=title;section.append(heading);
   const grid=document.createElement("div");grid.className="assessment-review-grid";
   for(const [key,label,unit] of fields){
    const row=document.createElement("label");row.textContent=label+(unit?" ("+unit+")":"");
    const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.autocomplete="off";
-   if(["avg_skinfolds","avg_weight","avg_body_fat"].includes(key)){input.readOnly=true;input.setAttribute("aria-readonly","true");}
+   if(["avg_skinfolds","avg_weight","avg_body_fat","sum_8","sum_perimeters"].includes(key)){input.readOnly=true;input.setAttribute("aria-readonly","true");}
    input.id="assess-field-"+key;input.value=String((data.measurements||{})[key]??(key.startsWith("avg_")?assessmentHistoryAverages[key]:(data.averages||{})[key])??"");
    row.append(input);grid.append(row);
   }
   section.append(grid);box.append(section);
  }
+ $("assess-field-height").value=String(data.measurements?.height??"");
  $("assessment-date").value=data.assessed_on||"";
  $("assessment-formula").value=data.formula_note||"";
  $("assessment-review-form").hidden=false;
@@ -1689,6 +1690,7 @@ $("assessment-preview").onclick=async()=>{
 async function saveAssessmentAdmin(publish){
  const msg=$("assessment-save-feedback"),athleteId=$("athlete").value;msg.textContent="";
  const measurements={},averages={};
+ const height=assessmentValue("assess-field-height");if(height)measurements.height=height;
  for(const [group,,fields] of ASSESSMENT_GROUPS){
   for(const [key] of fields){const v=assessmentValue("assess-field-"+key);if(v)measurements[key]=v;}
  }
