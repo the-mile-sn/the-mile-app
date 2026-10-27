@@ -2222,7 +2222,8 @@ body.profile-active .player-top{display:none!important}
 
 /* Align intra-game timing and dividers with meal-option content. */
 #overview .match-intra-card>.peri-timed-item{
- margin-left:32px;margin-right:32px;
+ margin-left:18px!important;margin-right:18px!important;
+ width:auto!important;box-sizing:border-box;
  padding:16px 0;
  border-bottom:1px solid rgba(200,200,205,.15);
  min-width:0;
