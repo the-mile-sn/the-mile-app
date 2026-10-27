@@ -479,3 +479,23 @@
 .peri-publication-bar{margin:0 0 14px}
 .peri-publish-action{border-radius:999px;background:#35333b;color:#fff}
 @media(max-width:800px){.peri-editor-option>.peri-editor-body{grid-template-columns:minmax(0,1fr)}.peri-editor-option .peri-option-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+
+/* Unified plan controls: right-aligned edit + publication state. */
+.plan-action-header{display:flex!important;align-items:center!important;gap:10px!important}
+.plan-action-header>h3{margin-right:auto!important;flex:1;min-width:0}
+.plan-action-header>button{position:static!important;transform:none!important;margin:0!important;flex:none}
+.peri-plan-section{position:relative}
+.peri-plan-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important;margin:0 0 13px!important}
+.peri-plan-actions>button{position:static!important;margin:0!important;transform:none!important}
+.plan-publish-action.is-pending,.peri-publish-action.is-pending{background:#7d6225!important;border-color:#a98536!important;color:#fff!important}
+.peri-plan-section:has(.peri-state) .peri-state{font-weight:500}
+.peri-plan-section .peri-state{color:#d4ad55}
+.peri-plan-section .peri-state:not(:empty){opacity:.95}
+.peri-plan-section:has(.peri-state) .peri-option-flat{border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:12px 14px;margin:10px 0;background:rgba(255,255,255,.018)}
+.peri-option-flat>.peri-option-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.peri-option-flat>.peri-option-heading strong{font-size:14px;font-weight:600}
+.peri-option-flat>.peri-option-heading .peri-macros{margin-left:auto}
+.peri-option-flat>p{margin:10px 0 0 0;color:#cbcbd0}
+.peri-editor-option .peri-option-grid label{font-size:12px}
+@media(max-width:650px){.peri-option-flat>.peri-option-heading{align-items:flex-start}.peri-option-flat>.peri-option-heading .peri-macros{margin-left:0}}
