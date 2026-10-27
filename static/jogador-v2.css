@@ -2046,7 +2046,7 @@ body.profile-active .player-top{display:none!important}
  padding:5px 11px 5px 13px!important;box-sizing:border-box!important;
  gap:7px!important;line-height:1.15!important;
 }
-#plans #plans-assessments .assessment-metric-right{gap:0!important}
+#plans #plans-assessments .assessment-metric-right{gap:12px!important}
 #plans #plans-assessments .assessment-metric-name,
 #plans #plans-assessments .assessment-metric-right strong{font-size:13px!important}
 #plans #plans-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
