@@ -1267,14 +1267,38 @@ function renderPeriDraft(draft){
    card.append(form);
    const dishName=document.createElement("label");dishName.textContent="Título da opção";const titleInput=document.createElement("input");titleInput.value=option.title||"";dishName.append(titleInput);card.append(dishName);
    const foodsLabel=document.createElement("label");foodsLabel.textContent="Alimentos e instruções (uma linha por item)";
-   const textarea=document.createElement("textarea");textarea.rows=5;textarea.value=(option.lines||[]).join("\n");foodsLabel.append(textarea);card.append(foodsLabel);
+   const intra=draft.kind==="match"&&group.meals.includes("pre");
+   const timingRows=[];
+   const timingOptions=[["","Sem timing específico"],["pre_match","Pré-jogo"],["post_warmup","Pós-aquecimento"],["first_half","Durante a 1.ª parte"],["half_time","Intervalo"],["second_half","Durante a 2.ª parte"],["post_match","Pós-jogo"],["throughout","Ao longo do jogo"]];
+   const textarea=document.createElement("textarea");textarea.rows=5;textarea.value=(option.lines||[]).join("\n");
+   if(intra){
+    foodsLabel.textContent="Timing e alimentos";
+    const rows=document.createElement("div");rows.className="peri-timing-rows";
+    const addRow=(line="",timing="")=>{
+     const wrap=document.createElement("div");wrap.style.cssText="display:grid;grid-template-columns:minmax(155px,1fr) minmax(200px,2fr) auto;gap:10px;align-items:center;margin:10px 0";
+     const select=document.createElement("select");select.setAttribute("aria-label","Timing");
+     for(const [value,label] of timingOptions){const opt=document.createElement("option");opt.value=value;opt.textContent=label;select.append(opt);}
+     select.value=timing;
+     const input=document.createElement("input");input.value=line;input.placeholder="Alimento, quantidade e instruções";input.setAttribute("aria-label","Alimento e instruções");
+     const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.disabled=draft.status!=="draft";
+     const row={wrap,select,input};timingRows.push(row);
+     remove.onclick=()=>{wrap.remove();timingRows.splice(timingRows.indexOf(row),1);};
+     wrap.append(select,input,remove);rows.append(wrap);
+    };
+    const lines=option.lines||[];
+    lines.forEach((line,index)=>addRow(line,option.timings?.[index]||""));
+    if(!lines.length)addRow();
+    foodsLabel.append(rows);
+    const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar alimento";add.disabled=draft.status!=="draft";add.onclick=()=>addRow();foodsLabel.append(add);
+   }else foodsLabel.append(textarea);
+   card.append(foodsLabel);
    const review=document.createElement("label");review.className="peri-review-check";const check=document.createElement("input");check.type="checkbox";check.checked=option.reviewed===true;review.append(check,document.createTextNode("Valores e alimentos revistos pela equipa"));card.append(review);
    const save=document.createElement("button");save.type="button";save.textContent="Guardar esta opção";save.disabled=draft.status!=="draft";
    save.onclick=async()=>{
     save.disabled=true;
     const payload={group_index:gi,option_index:oi,option:{
       totals:Object.fromEntries(Object.entries(fields).map(([k,input])=>[k,input.value.trim()])),
-      title:titleInput.value.trim(),lines:textarea.value.split(/\r?\n/),reviewed:check.checked
+      title:titleInput.value.trim(),lines:intra?timingRows.map(r=>r.input.value).filter(x=>x.trim()):textarea.value.split(/\r?\n/),...(intra?{timings:timingRows.filter(r=>r.input.value.trim()).map(r=>r.select.value)}:{}),reviewed:check.checked
     }};
     try{
       await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
