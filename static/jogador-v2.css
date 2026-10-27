@@ -2230,3 +2230,7 @@ body.profile-active .player-top{display:none!important}
 }
 #overview .match-intra-card>.peri-timed-item:last-child{border-bottom:0;padding-bottom:22px;}
 #overview .match-intra-card>.peri-timed-item>div{overflow-wrap:anywhere;}
+
+/* Prevent generic event-card flex layout from shrinking game dividers. */
+#overview .daily-event-card.match-intra-card{display:block!important;}
+#overview .daily-event-card.match-intra-card>.peri-timed-item{display:block!important;width:calc(100% - 36px)!important;max-width:none!important;flex:none!important;}
