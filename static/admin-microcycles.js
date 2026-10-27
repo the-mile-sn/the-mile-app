@@ -838,7 +838,7 @@ function showImportedDraft(draft){
       showImportedDraft(draft);await loadPlanDrafts();
     }catch(e){status("Não foi possível concluir: "+e.message,"warn");}finally{edit.disabled=false;}
   });
-  header.appendChild(edit);
+  if(selectedPlanMode==="consult")header.appendChild(edit);
   if(selectedPlanMode==="consult"&&draft.status==="validated"){
     const publish=document.createElement("button");publish.type="button";publish.textContent="Publicar";header.appendChild(publish);
     publish.onclick=async()=>{
@@ -897,6 +897,7 @@ function showImportedDraft(draft){
       root.appendChild(details);
     });
   });
+  if(selectedPlanMode==="edit"){edit.classList.add("plan-validate-action");const footer=document.createElement("div");footer.className="plan-editor-footer";footer.append(edit);root.append(footer);}
 }
 
 function showOptionEditor(draft,groupIndex,optionIndex,details){
@@ -1284,8 +1285,9 @@ function renderPeriDraft(draft,editing=false){
    for(const [key,label] of [["kcal","Energia (kcal)"],["protein_g","Proteína (g)"],["carbs_g","Hidratos (g)"],["fat_g","Gordura (g)"]]){
     const wrapper=document.createElement("label");wrapper.textContent=label;const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.value=option.totals?.[key]??"";fields[key]=input;wrapper.append(input);form.append(wrapper);
    }
-   card.append(form);
-   const dishName=document.createElement("label");dishName.textContent="Título da opção";const titleInput=document.createElement("input");titleInput.value=option.title||"";dishName.append(titleInput);card.append(dishName);
+   const bodyGrid=document.createElement("div");bodyGrid.className="peri-editor-body";card.append(bodyGrid);
+   const leftColumn=document.createElement("div");leftColumn.className="peri-editor-left";bodyGrid.append(leftColumn,form);
+   const dishName=document.createElement("label");dishName.textContent="Título da opção";const titleInput=document.createElement("input");titleInput.value=option.title||"";dishName.append(titleInput);leftColumn.append(dishName);
    const foodsLabel=document.createElement("label");foodsLabel.textContent="Alimentos e instruções (uma linha por item)";
    const intra=draft.kind==="match"&&group.meals.includes("pre");
    const timingRows=[];
@@ -1311,24 +1313,24 @@ function renderPeriDraft(draft,editing=false){
     foodsLabel.append(rows);
     const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar alimento";add.disabled=draft.status!=="draft";add.onclick=()=>addRow();foodsLabel.append(add);
    }else foodsLabel.append(textarea);
-   card.append(foodsLabel);
-   const review=document.createElement("label");review.className="peri-review-check";const check=document.createElement("input");check.type="checkbox";check.checked=option.reviewed===true;review.append(check,document.createTextNode("Valores e alimentos revistos pela equipa"));card.append(review);
-   const save=document.createElement("button");save.type="button";save.textContent="Guardar esta opção";save.disabled=draft.status!=="draft";
+   leftColumn.append(foodsLabel);
+   /* Validation is confirmed explicitly by the save action, without a redundant checkbox. */
+   const save=document.createElement("button");save.type="button";save.textContent="Validar";save.className="peri-option-validate";save.disabled=draft.status!=="draft";
    save.onclick=async()=>{
     save.disabled=true;
     const payload={group_index:gi,option_index:oi,option:{
       totals:Object.fromEntries(Object.entries(fields).map(([k,input])=>[k,input.value.trim()])),
-      title:titleInput.value.trim(),lines:intra?timingRows.map(r=>r.input.value).filter(x=>x.trim()):textarea.value.split(/\r?\n/),...(intra?{timings:timingRows.filter(r=>r.input.value.trim()).map(r=>r.select.value)}:{}),reviewed:check.checked
+      title:titleInput.value.trim(),lines:intra?timingRows.map(r=>r.input.value).filter(x=>x.trim()):textarea.value.split(/\r?\n/),...(intra?{timings:timingRows.filter(r=>r.input.value.trim()).map(r=>r.select.value)}:{}),reviewed:true
     }};
     try{
       await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
       periMessage("Opção guardada. Revê todas as opções antes da publicação.");
     }catch(e){periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
-   };card.append(save);root.append(card);
+   };const actions=document.createElement("div");actions.className="peri-editor-footer";actions.append(save);card.append(actions);root.append(card);
   });
  });
  if(editing&&draft.status==="draft"){
-  const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar plano peri";
+  const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar";pub.className="peri-publish-action";
   pub.onclick=async()=>{
     if(!confirm("Confirmas a publicação? As refeições serão aplicadas aos eventos futuros, respeitando as remoções manuais."))return;
     pub.disabled=true;try{
@@ -1336,7 +1338,7 @@ function renderPeriDraft(draft,editing=false){
       periMessage("Plano publicado. As refeições passam a ser consideradas nos eventos futuros.");
       await loadPeriImports();const refreshed=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(refreshed.draft);
     }catch(e){periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
-  };root.append(pub);
+  };const actionBar=document.createElement("div");actionBar.className="peri-publication-bar";actionBar.append(pub);root.prepend(actionBar);
  }
 }
 $("peri-import").addEventListener("click",async()=>{
