@@ -21,7 +21,14 @@ async function api(path,opts={}){
 function fmt(v,d=1){return Number(v).toLocaleString("pt-PT",{minimumFractionDigits:d,maximumFractionDigits:d});}
 function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const n=Number(String(o.totals[k]??"").replace(",","."));if(!Number.isFinite(n))return null;out[k]+=n/options.length;}}return out;}
-const periTimingLabels={pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
+const periTimingLabels={pre_warmup:"Pré-aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
+function periItemBlock(food){
+ const box=document.createElement("div");box.className="peri-timed-item";box.style.cssText="padding:14px 0;border-bottom:1px solid rgba(145,145,155,.2)";
+ const label=periTimingLabels[food.timing];
+ if(label){const head=document.createElement("div");head.textContent=label;head.style.cssText="font-weight:600;margin-bottom:7px;color:inherit";box.append(head);}
+ const line=document.createElement("div");line.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" ").trim():food.text||"";line.style.cssText="color:inherit;opacity:.82";box.append(line);
+ return box;
+}
 function periFoodText(food){const content=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";return (periTimingLabels[food.timing]?periTimingLabels[food.timing]+" — ":"")+content;}
 function optionEl(o,i,planView=false){
  const details=document.createElement("details"),summary=document.createElement("summary"),line=document.createElement("div");
@@ -267,9 +274,7 @@ function matchWithIntraCard(event,item){
  section.append(head);
  if(opts.length===1){
   for(const food of opts[0].items||[]){
-   const p=document.createElement("div");p.className="foods";
-   p.textContent=periFoodText(food);
-   section.append(p);
+   section.append(periItemBlock(food));
   }
  }else opts.forEach((option,index)=>section.append(optionEl(option,index)));
  return section;
