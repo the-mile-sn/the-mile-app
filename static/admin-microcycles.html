@@ -12,8 +12,6 @@
 <div id="player-full-menus" hidden><h3>Menus semanais</h3><div class="calendar-navigation"><button type="button" id="player-menu-prev">← Semana anterior</button><strong id="player-menu-week"></strong><button type="button" id="player-menu-next">Semana seguinte →</button></div><div id="player-menu-days"></div></div>
 </section><section class="calendar-panel" id="assessments-admin-panel" hidden>
 <h2>Avaliações · Composição corporal</h2>
-<p class="hint">Importação semiautomática: o PDF é lido para sugerir valores. Confirma os 25 parâmetros e a data antes de publicares. Os campos não extraídos ficam em branco.</p>
-<div class="assessment-upload"><label>Documento PDF<input type="file" id="assessment-pdf" accept=".pdf,application/pdf"></label><button type="button" id="assessment-preview">Analisar PDF</button><span id="assessment-upload-feedback" role="status"></span></div>
 <div class="assessment-excel-import">
 <h3>Importar histórico de Google Sheets / Excel</h3>
 <p class="hint">Exporta a folha em formato .xlsx. A importação associa os registos ao jogador selecionado, mantém os campos vazios e não substitui avaliações com a mesma data.</p>
@@ -21,7 +19,7 @@
 <div id="assessment-excel-feedback" role="status"></div><div id="assessment-excel-results"></div>
 <button id="assessment-excel-confirm" type="button" hidden>Confirmar e importar histórico</button>
 </div>
-<div id="assessment-history"></div>
+<div class="assessment-history-actions"><button type="button" id="assessment-new">+ Nova avaliação</button></div><div id="assessment-history"></div>
 <form id="assessment-review-form" hidden>
 <div class="assessment-review-top"><label>Data da avaliação<input type="date" id="assessment-date" required></label><label>Altura (m)<input id="assess-field-height" type="text" inputmode="decimal" autocomplete="off"></label><label>Observações<input type="text" id="assessment-formula" placeholder="Observações da avaliação"></label></div>
 <div id="assessment-review-fields"></div>
