@@ -2325,3 +2325,10 @@ body.profile-active .player-top{display:none!important}
 /* Markers sit over the trend line; only the touched point gains emphasis. */
 #plans .assessment-chart-point{fill:#a2ddc0;fill-opacity:.7;stroke:#a2ddc0;stroke-width:1;vector-effect:non-scaling-stroke;transition:fill-opacity .12s,stroke-width .12s}
 #plans .assessment-chart-point.is-selected{fill:#bff6d7;fill-opacity:1;stroke:#e5ffef;stroke-width:2.5;filter:drop-shadow(0 0 2px rgba(162,221,192,.5))}
+
+/* Assessment refinements: maximise chart width and keep points visually above line. */
+#plans .assessment-trend{margin:0 5px 10px;padding:13px 8px 14px}
+#plans .assessment-trend>svg{width:100%;max-height:none;display:block}
+#plans .assessment-chart-point{fill:#1b1b20;fill-opacity:1;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke;filter:none}
+#plans .assessment-chart-point.is-selected{fill:#fff;fill-opacity:1;stroke:#fff;stroke-width:1.5;filter:none}
+#plans .assessment-chart-focus:empty{min-height:0;margin:0}
