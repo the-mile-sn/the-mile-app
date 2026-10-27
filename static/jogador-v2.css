@@ -2219,3 +2219,13 @@ body.profile-active .player-top{display:none!important}
  width:calc((100% - 18px) / 7);
  }
 }
+
+/* Align intra-game timing and dividers with meal-option content. */
+#overview .match-intra-card>.peri-timed-item{
+ margin-left:32px;margin-right:32px;
+ padding:16px 0;
+ border-bottom:1px solid rgba(200,200,205,.15);
+ min-width:0;
+}
+#overview .match-intra-card>.peri-timed-item:last-child{border-bottom:0;padding-bottom:22px;}
+#overview .match-intra-card>.peri-timed-item>div{overflow-wrap:anywhere;}
