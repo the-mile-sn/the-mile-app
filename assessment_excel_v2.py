@@ -88,3 +88,38 @@ def import_rows(c,athlete_id,records):
   assessments_v2.save(c,athlete_id,{"assessed_on":day,"measurements":readings,"averages":{},"formula_note":"Histórico importado de Excel","publish":True},None)
   saved+=1;existing.add(day)
  return {"imported":saved,"skipped":skipped}
+
+def missing_preview(c,athlete_id,records):
+ existing={r["assessed_on"]:r for r in assessments_v2.rows(c,athlete_id)}
+ result=[]
+ for record in records:
+  current=existing.get(record["assessed_on"])
+  if current is None:continue
+  missing={key:value for key,value in record["measurements"].items()
+           if key not in current["measurements"] or current["measurements"][key] is None}
+  result.append({"assessed_on":record["assessed_on"],"name":record["name"],
+                 "row":record["row"],"missing":missing,"warnings":record["warnings"]})
+ return result
+
+def fill_missing(c,athlete_id,records):
+ import json
+ existing={r["assessed_on"]:r for r in assessments_v2.rows(c,athlete_id)}
+ changed=0;added=0;skipped=0
+ for record in records:
+  current=existing.get(record["assessed_on"])
+  if current is None:
+   skipped+=1
+   continue
+  if record["warnings"]:
+   skipped+=1
+   continue
+  additions={k:v for k,v in record["measurements"].items()
+             if k not in current["measurements"] or current["measurements"][k] is None}
+  if not additions:continue
+  updated=dict(current["measurements"])
+  updated.update(additions)
+  c.execute("UPDATE v2_body_assessments SET measurements=? WHERE id=? AND athlete_id=?",
+            (json.dumps(updated),current["id"],athlete_id))
+  changed+=1
+  added+=len(additions)
+ return {"updated":changed,"fields_added":added,"skipped":skipped}
