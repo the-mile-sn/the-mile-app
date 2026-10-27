@@ -20,6 +20,7 @@ import day_colors_v2
 import peri_v2
 import supplements_v2
 import assessments_v2
+import assessment_excel_v2
 import plan_import_v2
 import time
 from datetime import datetime, timedelta
@@ -1261,6 +1262,21 @@ def application(env, start_response):
                         except ValueError:raise Problem(400,'invalid_assessment_pdf')
                         result.pop('pdf_bytes',None)
                         return respond(200,result)
+                    if payload.get('action') in ('excel_preview','excel_import'):
+                        try:
+                            parsed=assessment_excel_v2.preview(payload.get('excel_base64'))
+                            if payload['action']=='excel_preview':
+                                existing={row['assessed_on'] for row in assessments_v2.rows(c,athlete_id)}
+                                for row in parsed['assessments']:
+                                    row['existing']=row['assessed_on'] in existing
+                                return respond(200,parsed)
+                            if payload.get('confirmation')!='IMPORTAR_HISTORICO':
+                                raise ValueError('confirmation_required')
+                            outcome=assessment_excel_v2.import_rows(c,athlete_id,parsed['assessments'])
+                            c.commit()
+                            return respond(200,outcome)
+                        except ValueError as exc:
+                            raise Problem(400,str(exc))
                     if payload.get('action')=='save':
                         try:aid=assessments_v2.save(c,athlete_id,payload,user['id'])
                         except ValueError:raise Problem(400,'invalid_assessment')
