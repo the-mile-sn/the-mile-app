@@ -1632,8 +1632,17 @@ $("assessment-excel-fill-preview").onclick=async()=>{
   const additions=(data.assessments||[]).filter(r=>Object.keys(r.missing||{}).length&&!(r.warnings||[]).length);
   const count=additions.reduce((n,r)=>n+Object.keys(r.missing).length,0);
   const intro=document.createElement("p");intro.textContent=additions.length+" avaliações com campos em falta · "+count+" valores novos identificados.";target.append(intro);
+  const displayFields=Object.fromEntries(ASSESSMENT_GROUPS.flatMap(group=>group[2].map(([key,label,unit])=>[key,{label,unit}])));
   for(const row of additions){
-   const line=document.createElement("p");line.textContent=assessmentPtDate(row.assessed_on)+" · "+Object.keys(row.missing).length+" campos: "+Object.keys(row.missing).join(", ");target.append(line);
+   const section=document.createElement("div");section.className="assessment-missing-row";
+   const heading=document.createElement("strong");heading.textContent=assessmentPtDate(row.assessed_on)+" · "+Object.keys(row.missing).length+" campos";section.append(heading);
+   const list=document.createElement("ul");
+   for(const [key,value] of Object.entries(row.missing)){
+    const item=document.createElement("li");const field=displayFields[key];
+    item.textContent=(field?.label||key)+": "+String(value).replace(".",",")+(field?.unit?" "+field.unit:"");
+    list.append(item);
+   }
+   section.append(list);target.append(section);
   }
   excelHistoryEncoded=encoded;excelHistoryAthlete=athleteId;
   $("assessment-excel-fill-confirm").hidden=!count;
