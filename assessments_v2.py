@@ -15,9 +15,9 @@ SUMMARY = [
  ("body_fat","Gordura corporal","%"),
  ("bmi","IMC",""),
  ("muscle_index","Índice de massa muscular",""),
- ("arm_muscle","Músculo do braço",""),
- ("thigh_muscle","Músculo da coxa",""),
- ("calf_muscle","Músculo do gémeo",""),
+ ("arm_muscle","Músculo do braço","cm"),
+ ("thigh_muscle","Músculo da coxa","cm"),
+ ("calf_muscle","Músculo do gémeo","cm"),
  ("sum_perimeters","Soma de perímetros","cm"),
 ]
 SKINFOLDS = [
@@ -27,13 +27,14 @@ SKINFOLDS = [
  ("thigh_skin","Coxa","mm"),("calf_skin","Gémeo","mm"),
 ]
 PERIMETERS = [
- ("arm_right_relaxed","Braço direito relaxado","cm"),
+ ("arm_right_relaxed","Braço direito relaxado","cm"),("arm_right_flexed","Braço direito contraído","cm"),
  ("chest","Peitoral","cm"),("waist","Cintura","cm"),
- ("abdominal_perimeter","Abdominal","cm"),
+ ("abdominal_perimeter","Abdominal","cm"),("glute","Glúteo","cm"),
  ("thigh_right","Coxa direita","cm"),("thigh_left","Coxa esquerda","cm"),
  ("calf_right","Gémeo direito","cm"),("calf_left","Gémeo esquerdo","cm"),
 ]
-FIELDS = {"resumo":SUMMARY,"pregas":SKINFOLDS,"perimetros":PERIMETERS}
+GENERAL=[("height","Altura","m")]
+FIELDS = {"geral":GENERAL,"resumo":SUMMARY,"pregas":SKINFOLDS,"perimetros":PERIMETERS}
 KEYS={key for group in FIELDS.values() for key,_,_ in group}
 AVERAGES=[("avg_skinfolds","Média da soma de pregas","mm"),("avg_weight","Peso médio","kg"),("avg_body_fat","Gordura corporal média","%")]
 AVERAGE_KEYS={k for k,_,_ in AVERAGES}
@@ -63,6 +64,12 @@ def normalize(body):
   except (ValueError,TypeError):raise ValueError("invalid_value")
   if not (-10000<n<10000):raise ValueError("invalid_value")
   result[k]=round(n,3)
+ if "sum_8" not in result and all(k in result for k in ("back","triceps","biceps","suprailiac","supraspinal","abdominal_skin","thigh_skin","calf_skin")):
+  result["sum_8"]=round(sum(result[k] for k in ("back","triceps","biceps","suprailiac","supraspinal","abdominal_skin","thigh_skin","calf_skin")),3)
+ if "sum_perimeters" not in result and all(k in result for k in ("arm_muscle","thigh_muscle","calf_muscle")):
+  result["sum_perimeters"]=round(result["arm_muscle"]+result["thigh_muscle"]+result["calf_muscle"],3)
+ if "bmi" not in result and result.get("height",0)>0 and "weight" in result:
+  result["bmi"]=round(result["weight"]/(result["height"]**2),3)
  return result
 
 def normalize_averages(body):
