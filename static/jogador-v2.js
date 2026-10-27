@@ -197,6 +197,8 @@ function renderWeekly(mon,r,weekMenus=[]){
  next.onclick=()=>{day.setDate(day.getDate()+7);weeklySelection=null;overview().catch(error);};
  nav.append(prev,next);root.append(nav);
  const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
+ const selectedWeeklyDate=weeklySelection?.date||null;
+ const markWeeklyColumn=(el,date)=>{if(date===selectedWeeklyDate)el.classList.add("weekly-selected-column");};
  const dates=[],classes=[],totals=[];
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
@@ -205,16 +207,16 @@ function renderWeekly(mon,r,weekMenus=[]){
   for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","")],["number",String(dt.getDate())],["classification",entry?.classification||"—"]]){
    const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
   }
-  header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};if(key===iso(new Date()))header.classList.add("today");grid.append(header);
+  markWeeklyColumn(header,key);header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};if(key===iso(new Date()))header.classList.add("today");grid.append(header);
  }
  for(const meal of meals){
   if(meal==="lunch")appendWeeklyEvents(grid,dates,"morning");
   if(meal==="dinner")appendWeeklyEvents(grid,dates,"afternoon");
   for(let i=0;i<7;i++){
    const color=assignedColor(dates[i],meal,r.days.find(e=>e.date===dates[i])?.classification),avg=color?average(plans[color]?.[meal]||[]):null;
-   if(!color){const empty=document.createElement("div");empty.className="weekly-empty";grid.append(empty);continue;}
+   if(!color){const empty=document.createElement("div");empty.className="weekly-empty";markWeeklyColumn(empty,dates[i]);grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
-   const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");
+   const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");markWeeklyColumn(b,dates[i]);
    const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq Alm.":names[meal]||meal;b.append(label);
    if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
    b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
@@ -222,7 +224,7 @@ function renderWeekly(mon,r,weekMenus=[]){
   }
  }
  for(let i=0;i<7;i++){
-  const box=document.createElement("div");box.className="weekly-day-total";const total=totals[i];
+  const box=document.createElement("div");box.className="weekly-day-total";markWeeklyColumn(box,dates[i]);const total=totals[i];
   if(!total){box.textContent="—";grid.append(box);continue;}
   const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmt(total.kcal,0);box.append(energy);
   const line=document.createElement("div");line.className="weekly-total-macros";
@@ -420,7 +422,7 @@ function appendDailyEvents(host,date,session){
 function appendWeeklyEvents(host,dates,session){
  if(!calendarEvents.some(e=>dates.includes(e.event_date)&&e.session===session))return;
  for(const date of dates){
-  const slot=document.createElement("div");slot.className="weekly-event-slot";
+  const slot=document.createElement("div");slot.className="weekly-event-slot";if(weeklySelection?.date===date)slot.classList.add("weekly-selected-column");
   for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
    const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
    const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
