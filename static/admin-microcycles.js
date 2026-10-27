@@ -1661,6 +1661,7 @@ function renderAssessmentForm(data={}){
  $("assessment-formula").value=data.formula_note||"";
  $("assessment-review-form").hidden=false;
 }
+const assessmentPtDate=(iso)=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 async function loadAssessmentsAdmin(){
  const athleteId=$("athlete").value;if(!athleteId)return;
  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments");
