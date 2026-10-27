@@ -863,27 +863,55 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
   }
   const edits=[];
   (option.items||[]).filter(item=>item.kind!=="title").forEach((item,index)=>{
-    const box=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
-    const type=document.createElement("select");
-    for(const [value,label] of [["food","Alimento"],["note","Nota"]]){
+    const box=document.createElement("fieldset");box.className="meal-line-editor";
+    const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
+    const typeWrap=document.createElement("label");typeWrap.textContent="Tipo";
+    const type=document.createElement("select");type.className="meal-line-type";
+    for(const [value,label] of [["food","Alimento"],["note","Nota"],["collapsible_note","Nota colapsável"]]){
       const el=document.createElement("option");el.value=value;el.textContent=label;type.appendChild(el);
     }
-    type.value=item.kind==="food"?"food":"note";box.appendChild(type);
-    const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,box);
-    const quantity=field("Quantidade",item.quantity||"",box);
+    type.value=["food","note","collapsible_note"].includes(item.kind)?item.kind:"note";
+    typeWrap.appendChild(type);box.appendChild(typeWrap);
+    const row=document.createElement("div");row.className="meal-food-main";
+    const quantity=field("Quantidade",item.quantity||"",row);
+    const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,row);
+    box.appendChild(row);
+    const noteTitle=field("Título da nota",item.title||"",box);
+    const noteBody=document.createElement("label");noteBody.className="meal-note-description";noteBody.textContent="Descrição";
+    const noteText=document.createElement("textarea");noteText.rows=4;noteText.value=item.text||"";
+    noteBody.appendChild(noteText);box.appendChild(noteBody);
+    const nutrientRow=document.createElement("div");nutrientRow.className="meal-nutrient-row";
     const nutrients={};
-    for(const [key,label] of [["kcal","kcal"],["protein_g","P (g)"],["carbs_g","HC (g)"],["fat_g","G (g)"]]){
-      nutrients[key]=field(label,item.nutrients?.[key]||"",box);
+    for(const [key,label] of [["kcal","kcal"],["protein_g","P"],["carbs_g","HC"],["fat_g","G"]]){
+      const wrap=document.createElement("label");wrap.className="meal-nutrient-"+key;wrap.textContent=label;
+      const input=document.createElement("input");input.inputMode="decimal";input.value=item.nutrients?.[key]??"";wrap.appendChild(input);nutrientRow.appendChild(wrap);nutrients[key]=input;
     }
-    form.appendChild(box);edits.push({type,name,quantity,nutrients});
+    box.appendChild(nutrientRow);
+    const remove=document.createElement("button");remove.type="button";remove.className="meal-line-remove";remove.title="Remover linha";remove.setAttribute("aria-label","Remover linha");
+    remove.innerHTML='<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg>';
+    box.appendChild(remove);
+    const edit={type,name,quantity,nutrients,noteTitle,noteText,box,removed:false};
+    edits.push(edit);
+    const updateVisibility=()=>{
+      const food=type.value==="food",collapsible=type.value==="collapsible_note";
+      row.hidden=!food;noteTitle.parentElement.hidden=!collapsible;noteBody.hidden=!collapsible;
+      nutrientRow.hidden=!food;
+      if(!food&&!collapsible){row.hidden=false;quantity.parentElement.hidden=true;name.parentElement.hidden=false;name.parentElement.firstChild.textContent="Texto";}
+      else {quantity.parentElement.hidden=false;name.parentElement.firstChild.textContent="Alimento / texto";}
+      if(collapsible)row.hidden=true;
+    };
+    type.addEventListener("change",updateVisibility);updateVisibility();
+    remove.addEventListener("click",()=>{edit.removed=true;box.remove();persist();});
+    form.appendChild(box);
   });
   const feedback=document.createElement("p");feedback.className="hint";feedback.textContent="As alterações são guardadas automaticamente ao sair de cada campo.";form.appendChild(feedback);
   let saveChain=Promise.resolve();
   const persist=()=>{
-    const entries=edits.map(edit=>{
+    const entries=edits.filter(edit=>!edit.removed).map(edit=>{
       const kind=edit.type.value;
       const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
-      return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null};
+      const text=kind==="collapsible_note"?edit.noteText.value:edit.name.value.trim();
+      return {kind,text,name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",title:kind==="collapsible_note"?edit.noteTitle.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null};
     });
     const totalValues=Object.fromEntries(Object.entries(totals).map(([key,input])=>[key,input.value.trim()]));
     const payload={group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:Boolean(option.reviewed)}};
@@ -896,7 +924,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     planPendingSaves.push(saveChain);
     saveChain.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==saveChain);}).catch(()=>{});
   };
-  for(const control of form.querySelectorAll("input,select"))control.addEventListener("change",persist);
+  for(const control of form.querySelectorAll("input,select,textarea"))control.addEventListener("change",persist);
   details.appendChild(form);
 }
 $("import-submit").addEventListener("click",async()=>{
