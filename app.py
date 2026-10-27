@@ -1277,6 +1277,19 @@ def application(env, start_response):
                             return respond(200,outcome)
                         except ValueError as exc:
                             raise Problem(400,str(exc))
+                    if payload.get('action') in ('excel_missing_preview','excel_fill_missing'):
+                        try:
+                            parsed=assessment_excel_v2.preview(payload.get('excel_base64'))
+                            comparison=assessment_excel_v2.missing_preview(c,athlete_id,parsed['assessments'])
+                            if payload['action']=='excel_missing_preview':
+                                return respond(200,{'assessments':comparison,'count':len(comparison)})
+                            if payload.get('confirmation')!='PREENCHER_CAMPOS_VAZIOS':
+                                raise ValueError('confirmation_required')
+                            outcome=assessment_excel_v2.fill_missing(c,athlete_id,parsed['assessments'])
+                            c.commit()
+                            return respond(200,outcome)
+                        except ValueError as exc:
+                            raise Problem(400,str(exc))
                     if payload.get('action')=='save':
                         try:aid=assessments_v2.save(c,athlete_id,payload,user['id'])
                         except ValueError:raise Problem(400,'invalid_assessment')
