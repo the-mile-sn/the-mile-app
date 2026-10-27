@@ -2696,3 +2696,19 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon svg{
  transform:translateX(-2px)!important;
 }
+
+
+/* Daily icon optical alignment: match icon box follows meal geometry. */
+#overview #day-details .match-intra-card > .daily-meal-head > .meal-leading-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:37px!important;min-width:37px!important;height:37px!important;flex:0 0 37px!important;
+ margin:0 10px 0 0!important;order:-1!important;
+ border-radius:11px!important;background:rgba(0,0,0,.16)!important;
+}
+#overview #day-details .match-intra-card > .daily-meal-head > .meal-leading-icon > .mile-icon{
+ width:24px!important;height:24px!important;display:block!important;flex:none!important;
+}
+/* Artwork-only nudges: leave every icon box in its shared column. */
+#overview #day-details .daily-event-card > .meal-leading-icon > .mile-icon{transform:translateX(-1px)!important}
+#overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon{transform:translateX(1px)!important}
+#overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon svg{transform:none!important}
