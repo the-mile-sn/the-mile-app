@@ -525,7 +525,7 @@ async function overview(){
      const line=document.createElement("div");line.className="nutrition-chart-average";
      line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
      line.setAttribute("aria-label","Média semanal: "+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
-     const tag=document.createElement("span");tag.textContent="Média "+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg");line.append(tag);bars.append(line);
+     bars.append(line);
     }
     wrap.append(bars);return wrap;
    }
