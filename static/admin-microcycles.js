@@ -916,20 +916,29 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
   (option.items||[]).filter(item=>item.kind!=="title").forEach((item,index)=>{
     const box=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
     const type=document.createElement("select");
-    for(const [value,label] of [["food","Alimento"],["note","Nota"]]){
+    for(const [value,label] of [["food","Alimento"],["note","Nota"],["collapsible_note","Nota colapsável"]]){
       const el=document.createElement("option");el.value=value;el.textContent=label;type.appendChild(el);
     }
-    type.value=item.kind==="food"?"food":"note";box.appendChild(type);
+    type.value=item.kind==="food"?"food":item.kind==="collapsible_note"?"collapsible_note":"note";box.appendChild(type);
+    const noteTitle=field("Título (opcional)",item.kind==="collapsible_note"?(item.title||""):"",box);
     const name=field("Alimento / texto",item.kind==="food"?item.name:item.text,box);
     const quantity=field("Quantidade",item.quantity||"",box);
     const nutrients={};
     for(const [key,label] of [["kcal","kcal"],["protein_g","P (g)"],["carbs_g","HC (g)"],["fat_g","G (g)"]]){
       nutrients[key]=field(label,item.nutrients?.[key]||"",box);
     }
+    const updateFields=()=>{
+      const kind=type.value;
+      noteTitle.parentElement.hidden=kind!=="collapsible_note";
+      name.parentElement.firstChild.textContent=kind==="food"?"Alimento":kind==="collapsible_note"?"Descrição":"Texto da nota";
+      quantity.parentElement.hidden=kind!=="food";
+      for(const input of Object.values(nutrients))input.parentElement.hidden=kind!=="food";
+    };
+    type.addEventListener("change",updateFields);updateFields();
     const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.textContent="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
     box.appendChild(remove);
     form.appendChild(box);
-    const edit={type,name,quantity,nutrients,box,removed:false};edits.push(edit);
+    const edit={type,name,noteTitle,quantity,nutrients,box,removed:false};edits.push(edit);
     remove.onclick=()=>{edit.removed=true;box.remove();persist();};
   });
   const feedback=document.createElement("p");feedback.className="hint";feedback.textContent="As alterações são guardadas automaticamente ao sair de cada campo.";form.appendChild(feedback);
@@ -938,7 +947,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     const entries=edits.filter(edit=>!edit.removed).map(edit=>{
       const kind=edit.type.value;
       const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
-      return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null};
+      return {kind,text:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null,...(kind==="collapsible_note"?{title:edit.noteTitle.value.trim()}:{})};
     });
     const totalValues=Object.fromEntries(Object.entries(totals).map(([key,input])=>[key,input.value.trim()]));
     const payload={group_index:groupIndex,option_index:optionIndex,option:{title:title.value.trim(),totals:Object.values(totalValues).some(Boolean)?totalValues:null,items:entries,reviewed:Boolean(option.reviewed)}};
