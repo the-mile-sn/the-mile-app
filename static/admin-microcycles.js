@@ -742,7 +742,7 @@ async function loadPlanDrafts(){
     const info=document.createElement("div");info.className="plan-simple-info";
     const name=document.createElement("strong");name.textContent=colors[entry.color]||entry.color;
     const state=document.createElement("small");
-    state.textContent=entry.publication?"Publicado":latest?(latest.status==="validated"?"Validado":"Rascunho"):"Sem plano";
+    state.textContent=latest?.status==="validated"?"Validado · por publicar":entry.publication?"Publicado":latest?"Em revisão":"Sem plano";state.classList.toggle("is-published",Boolean(entry.publication)&&latest?.status!=="validated");
     info.append(name,state);row.appendChild(info);
     if(latest){
       row.classList.add("plan-selectable");row.tabIndex=0;row.setAttribute("role","button");
@@ -846,7 +846,7 @@ function showImportedDraft(draft){
       publish.disabled=true;
       try{
         await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:model.athlete.id})});
-        status("Plano publicado no ambiente de testes. Não existe ainda acesso v2 dos jogadores.","success");
+        status("Plano publicado com sucesso.","success");
         await loadPlanDrafts();
       }catch(e){status("Erro ao publicar: "+e.message,"warn");}finally{publish.disabled=false;}
     };
@@ -1324,7 +1324,7 @@ function renderPeriDraft(draft,editing=false){
     }};
     try{
       await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
-      periMessage("Opção guardada. Revê todas as opções antes da publicação.");
+      periMessage("");
     }catch(e){periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
    };const actions=document.createElement("div");actions.className="peri-editor-footer";actions.append(save);card.append(actions);root.append(card);
   });
@@ -1336,7 +1336,7 @@ function renderPeriDraft(draft,editing=false){
     pub.disabled=true;try{
       await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:$("athlete").value})});
       periMessage("");
-      await loadPeriImports();const refreshed=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(refreshed.draft);
+      await loadPeriImports();root.replaceChildren();
     }catch(e){periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
   };const targetSection=[...document.querySelectorAll(".peri-plan-section")].find(el=>el.dataset.periKind===draft.kind);const actionBar=targetSection?.querySelector(".peri-plan-actions");if(actionBar){actionBar.append(pub);}else{const fallback=document.createElement("div");fallback.className="peri-publication-bar";fallback.append(pub);root.prepend(fallback);}
  }
