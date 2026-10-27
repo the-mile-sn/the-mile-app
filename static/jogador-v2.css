@@ -1941,3 +1941,64 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-averages strong{font-weight:500}
 #plans .assessment-empty-state{background:#25252b;color:#b7b7c0;border-radius:15px;padding:25px 17px;font-size:14px;text-align:center}
 #plans .assessment-formula{color:#92929d;font-size:12px;padding:0 7px}
+
+
+/* Jogo: identical heading alignment in collapsed and expanded states. */
+#overview .match-intra-card > .daily-meal-head{
+ display:flex!important;align-items:center!important;gap:10px!important;
+ width:100%!important;min-width:0!important;
+}
+#overview .match-intra-card > .daily-meal-head > .meal-leading-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 37px!important;width:37px!important;height:37px!important;
+ margin:0!important;order:0!important;
+}
+#overview .match-intra-card > .daily-meal-head > .meal-leading-icon svg{
+ width:24px!important;height:24px!important;
+}
+#overview .match-intra-card > .daily-meal-head > strong{
+ flex:1 1 auto!important;min-width:0!important;margin:0!important;
+}
+#overview .match-intra-card > .daily-meal-head > .meal-average{
+ flex:0 0 auto!important;margin-left:auto!important;margin-right:13px!important;
+ white-space:nowrap!important;
+}
+#overview .match-intra-card > .daily-meal-head::after{
+ flex:0 0 auto!important;margin-left:0!important;
+}
+/* Weekly energy and macro charts use matching 7-column full-width grids. */
+#overview #day-details .nutrition-weekly-charts{
+ width:100%!important;max-width:none!important;min-width:0!important;
+ box-sizing:border-box!important;padding-left:0!important;padding-right:0!important;
+}
+#overview #day-details .nutrition-weekly-charts .nutrition-chart-section,
+#overview #day-details .nutrition-weekly-charts .nutrition-chart-bars,
+#overview #day-details .nutrition-weekly-charts .macro-chart-header{
+ width:100%!important;max-width:none!important;min-width:0!important;
+ box-sizing:border-box!important;
+}
+#overview #day-details .nutrition-chart-bars{
+ display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;
+ gap:0!important;padding:0!important;margin-left:0!important;margin-right:0!important;
+}
+#overview #day-details .nutrition-chart-column{
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ min-width:0!important;width:100%!important;
+}
+#overview #day-details .nutrition-chart-track{
+ width:clamp(16px,70%,44px)!important;max-width:none!important;
+}
+#overview #day-details .nutrition-chart-number,
+#overview #day-details .nutrition-chart-column small{
+ width:100%!important;text-align:center!important;
+}
+/* Assessment metric rows are denser without losing label/delta hierarchy. */
+#plans .assessment-measure-card{margin:6px 0!important;border-radius:13px!important}
+#plans .assessment-measure-card > summary{
+ min-height:49px!important;padding:9px 12px 9px 14px!important;
+ gap:8px!important;
+}
+#plans .assessment-metric-right{gap:1px!important}
+#plans .assessment-metric-name,
+#plans .assessment-metric-right strong{font-size:14px!important}
+#plans .assessment-change{font-size:10px!important}
