@@ -730,7 +730,7 @@ function buildAssessmentTrend(points,unit){
  if(points.length<2){
   const note=document.createElement("p");note.className="assessment-trend-note";note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";holder.append(note,history);return holder;
  }
- const visible=points.slice(-8),values=visible.map(p=>p.value);
+ const visible=points.slice(-10),values=visible.map(p=>p.value);
  const step=unit==="kg"||unit==="cm"?1:unit==="mm"?5:1;
  const minimum=Math.min(...values),maximum=Math.max(...values);
  let low=Math.floor(minimum/step)*step,high=Math.ceil(maximum/step)*step;
@@ -746,31 +746,30 @@ function buildAssessmentTrend(points,unit){
  for(let i=0;i<=tickCount;i++){
   const v=low+i*step,yy=y(v);
   add("line",{x1:left,y1:yy,x2:right,y2:yy},"assessment-chart-grid");
-  add("text",{x:left-8,y:yy+3.5,"text-anchor":"end"},"assessment-chart-tick",assessNumber(v));
+  add("text",{x:left-8,y:yy+3.5,"text-anchor":"end"},"assessment-chart-tick",String(Math.round(v)));
  }
  add("line",{x1:left,y1:y(mean),x2:right,y2:y(mean)},"assessment-chart-mean");
  const coords=visible.map((p,i)=>[x(i),y(p.value)]);
  add("polyline",{points:coords.map(p=>p.join(",")).join(" ")},"assessment-chart-line");
- const labels=[];
+ const labels=[],dots=[];
  coords.forEach(([cx,cy],i)=>{
-  add("circle",{cx,cy,r:4.5},"assessment-chart-point");
+  dots.push(add("circle",{cx,cy,r:4.5},"assessment-chart-point"));
   labels.push(add("text",{x:cx,y:Math.max(12,cy-10),"text-anchor":"middle"},"assessment-chart-value",assessNumber(visible[i].value)));
  });
  const guide=add("line",{x1:left,y1:top,x2:left,y2:bottom},"assessment-chart-guide");
- const selected=add("circle",{cx:left,cy:top,r:6.5},"assessment-chart-selected");
- guide.style.display="none";selected.style.display="none";
+ guide.style.display="none";
  const focus=document.createElement("div");focus.className="assessment-chart-focus";focus.setAttribute("aria-live","off");
  const avg=document.createElement("div");avg.className="assessment-chart-average";avg.textContent="— Média: "+assessNumber(mean)+(unit?" "+unit:"");
  let active=-1;
  const highlight=index=>{
   active=index;
   const p=visible[index];guide.setAttribute("x1",coords[index][0]);guide.setAttribute("x2",coords[index][0]);
-  selected.setAttribute("cx",coords[index][0]);selected.setAttribute("cy",coords[index][1]);
-  guide.style.display="";selected.style.display="";
-  focus.textContent=assessmentDate(p.date)+" · "+assessNumber(p.value)+(unit?" "+unit:"");
+  guide.style.display="";
+  dots.forEach((dot,i)=>dot.classList.toggle("is-selected",i===index));
+  focus.textContent=assessmentDate(p.date);
   labels.forEach((label,i)=>label.classList.toggle("is-selected",i===index));
  };
- const clear=()=>{active=-1;guide.style.display="none";selected.style.display="none";focus.textContent="Desliza no gráfico para consultar cada avaliação";labels.forEach(l=>l.classList.remove("is-selected"));};
+ const clear=()=>{active=-1;guide.style.display="none";dots.forEach(dot=>dot.classList.remove("is-selected"));focus.textContent="Desliza no gráfico para consultar cada avaliação";labels.forEach(l=>l.classList.remove("is-selected"));};
  const move=event=>{
   const rect=svg.getBoundingClientRect();if(!rect.width)return;
   const px=(event.clientX-rect.left)/rect.width*344;
