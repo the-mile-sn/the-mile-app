@@ -2120,3 +2120,20 @@ body.profile-active .player-top{display:none!important}
  outline:0!important;
  box-shadow:none!important;
 }
+
+/* Chart values use the matching nutrient hue; dates remain neutral.
+   A lower baseline opacity makes today's fill visibly distinct without outlines. */
+#overview #day-details .nutrition-chart-column .nutrition-chart-number{
+ color:inherit;
+}
+#overview #day-details .nutrition-chart-column > small{
+ color:#bbb!important;
+}
+#overview #day-details .nutrition-chart-column .nutrition-chart-fill{
+ opacity:.52!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+}
+#overview #day-details .nutrition-chart-column.nutrition-chart-today .nutrition-chart-fill{
+ opacity:1!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+}
