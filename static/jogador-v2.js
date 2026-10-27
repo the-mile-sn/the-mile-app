@@ -720,7 +720,7 @@ async function loadPlayerAssessments(){
  renderPlayerAssessments();
 }
 
-function buildAssessmentTrend(points,unit){
+function buildAssessmentTrend(points,unit,axisStep){
  const holder=document.createElement("div");holder.className="assessment-trend";
  const history=document.createElement("details");history.className="assessment-history-card";
  const historySummary=document.createElement("summary");historySummary.textContent="Todas as avaliações ("+points.length+")";history.append(historySummary);
@@ -730,7 +730,7 @@ function buildAssessmentTrend(points,unit){
   const note=document.createElement("p");note.className="assessment-trend-note";note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";holder.append(note,history);return holder;
  }
  const visible=points.slice(-10),values=visible.map(p=>p.value);
- const step=unit==="kg"||unit==="cm"?1:unit==="mm"?5:1;
+ const step=axisStep||(unit==="kg"||unit==="cm"?1:unit==="mm"?5:1);
  const minimum=Math.min(...values),maximum=Math.max(...values);
  let low=Math.floor(minimum/step)*step,high=Math.ceil(maximum/step)*step;
  if(low===high){low-=step;high+=step;}
@@ -801,11 +801,11 @@ function renderPlayerAssessments(){
   const right=document.createElement("span");right.className="assessment-metric-right";
   const number=document.createElement("strong");number.textContent=current?assessNumber(current.value)+(unit?" "+unit:""):"—";right.append(number);
   const change=document.createElement("small");change.className="assessment-change";
-  if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta))+(unit?" "+unit:"")+" face à anterior";}
+  if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta))+(unit?" "+unit:"");}
   else change.textContent=current?"Primeira medição":"Sem dados";
   right.append(change);
-  const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.textContent="⌄";
-  summary.append(left,right,arrow);details.append(summary,buildAssessmentTrend(readings,unit));target.append(details);
+  const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
+  summary.append(left,right,arrow);details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined));target.append(details);
  }
  if(assessmentGroup==="resumo"){
   const recentAverages=recent.averages||{},known=assessmentAverages.filter(([key])=>recentAverages[key]!==undefined);
