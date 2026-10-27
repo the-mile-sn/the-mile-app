@@ -797,11 +797,11 @@ function renderPlayerAssessments(){
   const current=readings.length?readings[readings.length-1]:null,prior=readings.length>1?readings[readings.length-2]:null;
   const details=document.createElement("details");details.className="assessment-measure-card";
   const summary=document.createElement("summary");
-  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=label;
+  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=unit&&!label.endsWith("("+unit+")")?label+" ("+unit+")":label;
   const right=document.createElement("span");right.className="assessment-metric-right";
-  const number=document.createElement("strong");number.textContent=current?assessNumber(current.value)+(unit?" "+unit:""):"—";right.append(number);
+  const number=document.createElement("strong");number.textContent=current?assessNumber(current.value):"—";right.append(number);
   const change=document.createElement("small");change.className="assessment-change";
-  if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta))+(unit?" "+unit:"");}
+  if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta));}
   else change.textContent=current?"Primeira medição":"Sem dados";
   right.append(change);
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
