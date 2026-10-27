@@ -2444,3 +2444,7 @@ body.profile-active .player-top{display:none!important}
 #menus .day-menu .menu-entry-heading strong{line-height:1.25!important}
 #menus .day-menu .menu-entry-body{margin-top:2px!important;padding-top:0!important}
 #menus .day-menu .menu-entry-body .value{line-height:1.3!important}
+
+
+/* Override inherited .row gap: it separated Almoço/Jantar from the description. */
+#menus .day-menu .row.menu-entry{row-gap:2px!important;column-gap:0!important;gap:2px!important}
