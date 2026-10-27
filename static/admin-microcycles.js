@@ -1569,6 +1569,56 @@ $("supp-bulk-confirm").onclick=async()=>{
 
 if($("supp-lib-prescriptions")){renderLibraryPrescriptionRules([]);$("supp-library-editor").addEventListener("toggle",()=>{if($("supp-library-editor").open&&!$("supp-lib-save").dataset.editId)renderLibraryPrescriptionRules([]);});}
 
+/* Historical Excel import: read-only preview, deliberate bulk confirmation. */
+let excelHistoryEncoded="",excelHistoryAthlete="";
+async function readAssessmentExcel(file){
+ if(!file||!file.name.toLowerCase().endsWith(".xlsx")||file.size>5*1024*1024)throw Error("Seleciona um ficheiro .xlsx até 5 MB.");
+ const buffer=new Uint8Array(await file.arrayBuffer());let binary="";
+ for(let i=0;i<buffer.length;i+=8192)binary+=String.fromCharCode(...buffer.subarray(i,i+8192));
+ return btoa(binary);
+}
+function clearExcelPreview(){
+ excelHistoryEncoded="";excelHistoryAthlete="";
+ $("assessment-excel-confirm").hidden=true;
+ $("assessment-excel-results").replaceChildren();
+}
+$("assessment-excel-preview").onclick=async()=>{
+ const msg=$("assessment-excel-feedback"),button=$("assessment-excel-preview");
+ clearExcelPreview();msg.textContent="";
+ const athleteId=$("athlete").value;
+ if(!athleteId){msg.textContent="Seleciona um jogador.";return;}
+ button.disabled=true;
+ try{
+  const encoded=await readAssessmentExcel($("assessment-excel").files?.[0]);
+  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments",{method:"POST",body:JSON.stringify({action:"excel_preview",excel_base64:encoded})});
+  const rows=result.assessments||[];
+  const pending=rows.filter(r=>!r.existing&&Object.keys(r.measurements||{}).length);
+  const wrapper=$("assessment-excel-results");wrapper.replaceChildren();
+  const intro=document.createElement("p");intro.textContent=rows.length+" avaliações encontradas · "+pending.length+" novas · "+(rows.length-pending.length)+" já existentes ou sem medições.";wrapper.append(intro);
+  const table=document.createElement("table");table.className="assessment-excel-table";
+  const header=document.createElement("tr");for(const col of ["Data","Nome na folha","Medições","Estado / avisos"]){const th=document.createElement("th");th.textContent=col;header.append(th);}table.append(header);
+  for(const r of rows){
+   const tr=document.createElement("tr");const values=[r.assessed_on,r.name,String(Object.keys(r.measurements||{}).length),[r.existing?"Data já existente (será ignorada)": "",...(r.warnings||[])].filter(Boolean).join(" · ")||"Pronta para importar"];
+   for(const value of values){const td=document.createElement("td");td.textContent=value;tr.append(td);}table.append(tr);
+  }
+  wrapper.append(table);excelHistoryEncoded=encoded;excelHistoryAthlete=athleteId;
+  $("assessment-excel-confirm").hidden=!pending.length;
+  msg.textContent="Confirma as datas e o jogador antes de importar. Os avisos não são corrigidos automaticamente.";
+ }catch(e){msg.textContent="Não foi possível analisar o histórico: "+e.message;}
+ finally{button.disabled=false;}
+};
+$("assessment-excel-confirm").onclick=async()=>{
+ const msg=$("assessment-excel-feedback"),button=$("assessment-excel-confirm");
+ const athleteId=$("athlete").value;
+ if(!excelHistoryEncoded||athleteId!==excelHistoryAthlete){msg.textContent="Seleciona o jogador e pré-visualiza novamente o ficheiro.";return;}
+ if(!window.confirm("Importar o histórico para este jogador e publicá-lo na App? As avaliações já existentes serão preservadas."))return;
+ button.disabled=true;
+ try{
+  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments",{method:"POST",body:JSON.stringify({action:"excel_import",excel_base64:excelHistoryEncoded,confirmation:"IMPORTAR_HISTORICO"})});
+  clearExcelPreview();msg.textContent=result.imported+" avaliações importadas e publicadas. "+result.skipped+" ignoradas.";await loadAssessmentsAdmin();
+ }catch(e){msg.textContent="Erro na importação: "+e.message;}finally{button.disabled=false;}
+};
+
 /* Assessment import: values are editable and never published by PDF upload alone. */
 const ASSESSMENT_GROUPS=[
  ["resumo","Resumo",[
