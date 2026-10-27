@@ -130,7 +130,7 @@ def update_option(c,athlete_id,identifier,group_index,option_index,payload):
     option["totals"]=totals
     option["title"]=title.strip()
     timings=payload.get("timings")
-    allowed={"","pre_match","post_warmup","first_half","half_time","second_half","post_match","throughout"}
+    allowed={"","pre_warmup","pre_match","post_warmup","first_half","half_time","second_half","post_match","throughout"}
     if timings is not None:
         if not isinstance(timings,list) or len(timings)!=len(lines) or any(not isinstance(t,str) or t not in allowed for t in timings):
             raise ValueError("invalid_timings")
