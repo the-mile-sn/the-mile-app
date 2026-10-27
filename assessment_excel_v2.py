@@ -12,6 +12,7 @@ COLUMN_MAP={
  "K":"abdominal_skin","L":"thigh_skin","M":"calf_skin",
  "Q":"arm_right_relaxed","S":"chest","T":"waist","U":"abdominal_perimeter",
  "X":"thigh_right","AD":"thigh_left","Z":"calf_right","AF":"calf_left",
+ "R":"arm_right_flexed","V":"glute","AM":"arm_muscle","AN":"thigh_muscle","AO":"calf_muscle","AX":"height",
 }
 HEADERS={"A":"Data","B":"Nome","E":"Peso (kg)","N":"Σ8","O":"Massa gorda (Σ4)"}
 LIMIT=5*1024*1024
