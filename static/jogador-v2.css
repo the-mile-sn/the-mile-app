@@ -2321,3 +2321,7 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-history-card[open]>summary:after{transform:rotate(180deg)}
 #plans .assessment-history-card .assessment-history-points{margin-top:10px;max-height:360px;overflow-y:auto}
 #plans .assessment-chart-point{fill:rgba(162,221,192,.65);stroke:#a2ddc0;stroke-width:1.3;vector-effect:non-scaling-stroke}
+
+/* Markers sit over the trend line; only the touched point gains emphasis. */
+#plans .assessment-chart-point{fill:#a2ddc0;fill-opacity:.7;stroke:#a2ddc0;stroke-width:1;vector-effect:non-scaling-stroke;transition:fill-opacity .12s,stroke-width .12s}
+#plans .assessment-chart-point.is-selected{fill:#bff6d7;fill-opacity:1;stroke:#e5ffef;stroke-width:2.5;filter:drop-shadow(0 0 2px rgba(162,221,192,.5))}
