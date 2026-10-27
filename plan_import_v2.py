@@ -264,21 +264,24 @@ def update_option(c, athlete_id, draft_id, group_index, option_index, payload):
         raise ValueError("invalid_totals")
     clean = []
     for item in items:
-        if not isinstance(item, dict) or item.get("kind") not in ("food", "title", "note", "instruction"):
+        if not isinstance(item, dict) or item.get("kind") not in ("food", "title", "note", "instruction", "collapsible_note"):
             raise ValueError("invalid_item")
         kind = item["kind"]
         text = item.get("text", "")
         name = item.get("name", "")
         quantity = item.get("quantity", "")
         values = item.get("nutrients")
-        if any(not isinstance(v, str) or len(v) > 600 for v in (text, name, quantity)):
+        note_title = item.get("title", "")
+        if not isinstance(note_title, str) or len(note_title) > 300:
+            raise ValueError("invalid_item")
+        if any(not isinstance(v, str) or len(v) > (4000 if v == text and kind == "collapsible_note" else 600) for v in (text, name, quantity)):
             raise ValueError("invalid_item")
         if kind == "food" and (not name.strip() or not quantity.strip()):
             raise ValueError("invalid_food")
         if values is not None and (kind != "food" or not isinstance(values, dict) or set(values) != set(NUTRIENT_KEYS)
                                    or any(not isinstance(v, str) or len(v) > 24 for v in values.values())):
             raise ValueError("invalid_nutrients")
-        clean.append({"kind": kind, "text": text, "name": name, "quantity": quantity, "nutrients": values})
+        clean.append({"kind": kind, "text": text, "name": name, "quantity": quantity, "nutrients": values, "title": note_title if kind == "collapsible_note" else ""})
     option = options[option_index]
     option["items"] = clean
     option["title"] = title
@@ -385,7 +388,7 @@ def published_meal_options(c, athlete_id):
                         "number":option.get("number"),"title":option.get("title",""),
                         "totals":option.get("totals"),
                         "items":[{"kind":item.get("kind"),"quantity":item.get("quantity"),
-                                  "name":item.get("name"),"text":item.get("text")}
+                                  "name":item.get("name"),"text":item.get("text"),"title":item.get("title","") }
                                  for item in option.get("items",[]) if item.get("kind")!="title"]
                     })
     return result
