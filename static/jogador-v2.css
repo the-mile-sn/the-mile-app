@@ -2055,3 +2055,14 @@ body.profile-active .player-top{display:none!important}
 #plans #plans-assessments details.assessment-measure-card > summary{
  height:65px!important;min-height:65px!important;max-height:65px!important;
 }
+
+
+/* Kcal arrow centered against the closed card summary (fixed on expansion). */
+#overview #day-details .nutrition-donut-summary .nutrition-expand,
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]{
+ top:25px!important;right:8px!important;transform:none!important;
+}
+/* Align the Menus page's first row closer to the avatar, as on the daily tab. */
+#player-panel #menus:not([hidden]){
+ position:relative!important;top:-12px!important;
+}
