@@ -1224,7 +1224,7 @@ async function loadPeriImports(){
   const drafts=all.filter(d=>d.status==="draft"),published=all.filter(d=>d.status==="published");
   const chosen=drafts[0]||published[0];
   const active=result.active?.[kind]?.options;
-  const section=document.createElement("details");section.className="peri-plan-section";section.open=periExpandedKind===kind;
+  const section=document.createElement("details");section.className="peri-plan-section";section.dataset.periKind=kind;section.open=periExpandedKind===kind;
   section.addEventListener("toggle",()=>{if(section.open)periExpandedKind=kind;else if(periExpandedKind===kind)periExpandedKind=null;});
   const summary=document.createElement("summary");summary.className="peri-summary";const headline=document.createElement("strong");headline.textContent=title;const state=document.createElement("span");state.className="peri-state";state.textContent=drafts.length?"Em revisão":active?"Publicado":"Sem plano";const meta=document.createElement("span");meta.className="peri-summary-text";meta.append(headline,state);summary.append(meta);section.append(summary);
   const controls=document.createElement("div");controls.className="event-admin-row peri-plan-actions";
@@ -1338,7 +1338,7 @@ function renderPeriDraft(draft,editing=false){
       periMessage("Plano publicado. As refeições passam a ser consideradas nos eventos futuros.");
       await loadPeriImports();const refreshed=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(refreshed.draft);
     }catch(e){periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
-  };const actionBar=document.createElement("div");actionBar.className="peri-publication-bar";actionBar.append(pub);root.prepend(actionBar);
+  };const targetSection=[...document.querySelectorAll(".peri-plan-section")].find(el=>el.dataset.periKind===draft.kind);const actionBar=targetSection?.querySelector(".peri-plan-actions");if(actionBar){actionBar.append(pub);}else{const fallback=document.createElement("div");fallback.className="peri-publication-bar";fallback.append(pub);root.prepend(fallback);}
  }
 }
 $("peri-import").addEventListener("click",async()=>{
