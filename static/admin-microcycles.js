@@ -742,7 +742,7 @@ async function loadPlanDrafts(){
     const info=document.createElement("div");info.className="plan-simple-info";
     const name=document.createElement("strong");name.textContent=colors[entry.color]||entry.color;
     const state=document.createElement("small");
-    state.textContent=latest?.status==="validated"?"Validado · por publicar":entry.publication?"Publicado":latest?"Em revisão":"Sem plano";state.classList.toggle("is-published",Boolean(entry.publication)&&latest?.status!=="validated");
+    state.textContent=entry.publication?"Publicado":latest?(latest.status==="validated"?"Validado · por publicar":"Em revisão"):"Sem plano";state.classList.toggle("is-published",Boolean(entry.publication));
     info.append(name,state);row.appendChild(info);
     if(latest){
       row.classList.add("plan-selectable");row.tabIndex=0;row.setAttribute("role","button");
