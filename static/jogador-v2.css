@@ -2298,3 +2298,6 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .meal-collapsible-note{background:rgba(255,255,255,.055)!important;border:0!important;border-radius:10px!important;margin:10px 0 3px!important;box-shadow:none!important}
 #weekly-view .meal-collapsible-note>summary{background:transparent!important;min-height:36px!important;padding:8px 12px!important;font-size:14px!important;font-weight:500!important}
 #weekly-view .meal-collapsible-note>.meal-note-body{padding:4px 12px 12px!important}
+
+/* Preserve existing player design; only further reduce collapsed note height. */
+#overview .meal-collapsible-note>summary{min-height:27px!important;padding:3px 11px!important}
