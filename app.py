@@ -284,6 +284,9 @@ def read_dish_image(c, filename):
     return file.read_bytes() if file.is_file() else None
 
 
+from functools import lru_cache
+
+@lru_cache(maxsize=32)
 def player_menu_photo(image_bytes):
     """Remove only near-black edge-connected matte; preserve the opaque food."""
     from collections import deque
