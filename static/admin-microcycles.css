@@ -376,3 +376,22 @@
 #assessments-admin-panel #assessment-publish{background:white;color:#18181c;border:0;border-radius:999px;padding:12px 20px;font-weight:550}
 #assessments-admin-panel .assessment-history-row{display:block;width:100%;text-align:left;background:#27272e;border:0;border-radius:10px;margin:7px 0;padding:11px 14px;color:#dddde4}
 @media(max-width:650px){#assessments-admin-panel .assessment-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#assessments-admin-panel .assessment-review-top{grid-template-columns:1fr}}
+
+
+/* Compact plan import line editor (visual only; nutrient totals remain unchanged). */
+.option-editor .meal-line-editor{position:relative;padding:16px 14px 12px;margin:12px 0;border:1px solid rgba(255,255,255,.13);border-radius:10px;min-width:0}
+.option-editor .meal-line-editor>.meal-line-type{display:block;width:100%;margin-bottom:12px}
+.option-editor .meal-food-main{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:10px;align-items:end}
+.option-editor .meal-food-main label{min-width:0}
+.option-editor .meal-nutrient-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:6px}
+.option-editor .meal-nutrient-row label{min-width:0}
+.option-editor .meal-nutrient-row input{width:100%;min-width:0;padding:9px 6px;text-align:center}
+.option-editor .meal-nutrient-kcal{color:#70c69c}
+.option-editor .meal-nutrient-protein_g{color:#77acef}
+.option-editor .meal-nutrient-carbs_g{color:#eca36b}
+.option-editor .meal-nutrient-fat_g{color:#eac96f}
+.option-editor .meal-note-description textarea{display:block;width:100%;min-height:104px;margin-top:6px;resize:vertical;background:#242428;color:#fff;border:1px solid #39393d;border-radius:9px;padding:11px;font:inherit;white-space:pre-wrap}
+.option-editor .meal-line-remove{display:flex;align-items:center;justify-content:center;width:29px;height:29px;padding:4px;margin-left:auto;margin-top:4px;border:0;background:transparent;color:#92929b;border-radius:7px}
+.option-editor .meal-line-remove:hover{background:rgba(255,255,255,.07);color:#e5a4a4}
+.option-editor .meal-line-editor [hidden]{display:none!important}
+@media(max-width:520px){.option-editor .meal-food-main{grid-template-columns:minmax(80px,1fr) minmax(0,1.6fr)}.option-editor .meal-line-editor{padding:12px 9px}.option-editor .meal-nutrient-row{gap:4px}}
