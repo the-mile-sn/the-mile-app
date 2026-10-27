@@ -2208,14 +2208,14 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .weekly-calendar-grid.has-weekly-selection::before{
  content:"";position:absolute;z-index:-1;pointer-events:none;
  top:0;bottom:0;
- left:calc(var(--selected-weekday-index) * (100% + 4px) / 7);
+ left:var(--selected-column-left);
  width:calc((100% - 24px) / 7);
  background:rgba(255,255,255,.035);border-radius:10px;
 }
 #weekly-view .weekly-calendar-grid>.weekly-selected-column::after{display:none!important;}
 @media(max-width:420px){
  #weekly-view .weekly-calendar-grid.has-weekly-selection::before{
- left:calc(var(--selected-weekday-index) * (100% + 3px) / 7);
+ left:var(--selected-column-left-mobile);
  width:calc((100% - 18px) / 7);
  }
 }
