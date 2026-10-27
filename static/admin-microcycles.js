@@ -780,6 +780,7 @@ async function loadPlanDrafts(){
 
 }
 let planPendingSaves=[];
+const periUnchangedCopies=new Set();
 function coloredNutrition(values){
   const out=document.createElement("span");out.className="nutrient-colors";
   for(const [key,prefix,klass] of [["kcal","","nutrient-kcal"],["protein_g","P ","nutrient-protein"],["carbs_g","HC ","nutrient-carbs"],["fat_g","G ","nutrient-fat"]]){
@@ -1236,12 +1237,13 @@ async function loadPeriImports(){
      const data=chosen.status==="draft"
       ?await request(periEndpoint()+"/"+encodeURIComponent(chosen.id))
       :await request(periEndpoint()+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});
+     if(chosen.status!=="draft")periUnchangedCopies.add(data.draft.id);
      periExpandedKind=kind;await loadPeriImports();renderPeriDraft(data.draft,true);periMessage("");
     }catch(e){periMessage("Erro ao editar: "+e.message);}
    };
    controls.append(edit);
   }
-  if(drafts.length){const publishState=document.createElement("span");publishState.className="peri-pending-label";publishState.textContent="Alterações por publicar";controls.append(publishState);}
+  if(drafts.length&&!drafts.every(d=>periUnchangedCopies.has(d.id))){const publishState=document.createElement("span");publishState.className="peri-pending-label";publishState.textContent="Alterações por publicar";controls.append(publishState);}
   const groups=active||{};
   for(const [phase,phaseLabel] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
    const options=groups[phase]||[];if(!options.length)continue;
@@ -1324,6 +1326,7 @@ function renderPeriDraft(draft,editing=false){
     }};
     try{
       await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
+      periUnchangedCopies.delete(draft.id);
       periMessage("");
     }catch(e){periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
    };const actions=document.createElement("div");actions.className="peri-editor-footer";actions.append(save);card.append(actions);root.append(card);
@@ -1336,6 +1339,7 @@ function renderPeriDraft(draft,editing=false){
     pub.disabled=true;try{
       await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:$("athlete").value})});
       periMessage("");
+      periUnchangedCopies.delete(draft.id);
       await loadPeriImports();root.replaceChildren();
     }catch(e){periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
   };const targetSection=[...document.querySelectorAll(".peri-plan-section")].find(el=>el.dataset.periKind===draft.kind);const actionBar=targetSection?.querySelector(".peri-plan-actions");if(actionBar){actionBar.append(pub);}else{const fallback=document.createElement("div");fallback.className="peri-publication-bar";fallback.append(pub);root.prepend(fallback);}
