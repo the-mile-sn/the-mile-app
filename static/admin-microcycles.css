@@ -442,3 +442,40 @@
  .option-editor .meal-line-editor[data-line-kind="note"]>.option-remove-line,
  .option-editor .meal-line-editor[data-line-kind="collapsible_note"]>.option-remove-line{grid-column:1}
 }
+
+
+/* Final editor alignment: delete at the top-right of every line. */
+.option-editor .meal-line-editor{position:relative;padding-right:52px}
+.option-editor .meal-line-editor>.option-remove-line,
+.option-editor .meal-line-editor[data-line-kind="note"]>.option-remove-line,
+.option-editor .meal-line-editor[data-line-kind="collapsible_note"]>.option-remove-line{
+ position:absolute!important;top:10px;right:12px;grid-column:auto!important;margin:0!important;
+}
+/* Consultation rows: create breathing room under the option heading. */
+#import-review .import-option>.import-structured-line:first-of-type{margin-top:13px!important;padding-top:10px!important}
+#import-review .import-option>.plan-option-summary{margin-bottom:8px}
+/* Plan actions: publish remains at top right; validate ends the edit panel. */
+.plan-detail-header{display:flex;align-items:center;gap:12px}
+.plan-detail-header>h3{margin-right:auto}
+.plan-detail-header>button{flex:none}
+.plan-editor-footer{display:flex;justify-content:flex-end;margin:20px 0 4px}
+.plan-editor-footer .plan-validate-action,.peri-option-validate{
+ background:#236a47!important;color:#fff!important;border:1px solid #36885c!important;
+ border-radius:999px;padding:10px 23px
+}
+/* Peri plan form uses the meal-plan hierarchy: title and foods on left, nutrition on right. */
+.peri-editor-option>.peri-editor-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:20px;align-items:start;margin-top:16px}
+.peri-editor-left{display:flex;flex-direction:column;gap:14px;min-width:0}
+.peri-editor-left>label{display:block;width:100%;min-width:0}
+.peri-editor-left input,.peri-editor-left textarea{width:100%}
+.peri-editor-option .peri-option-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;min-width:0}
+.peri-editor-option .peri-option-grid label{min-width:0;font-size:12px}
+.peri-editor-option .peri-option-grid input{width:100%;min-width:0;padding:10px 5px;text-align:center}
+.peri-editor-option .peri-option-grid label:nth-child(1){color:#75cfa2}
+.peri-editor-option .peri-option-grid label:nth-child(2){color:#80b6ed}
+.peri-editor-option .peri-option-grid label:nth-child(3){color:#eea671}
+.peri-editor-option .peri-option-grid label:nth-child(4){color:#efd477}
+.peri-editor-footer,.peri-publication-bar{display:flex;justify-content:flex-end;margin-top:15px}
+.peri-publication-bar{margin:0 0 14px}
+.peri-publish-action{border-radius:999px;background:#35333b;color:#fff}
+@media(max-width:800px){.peri-editor-option>.peri-editor-body{grid-template-columns:minmax(0,1fr)}.peri-editor-option .peri-option-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
