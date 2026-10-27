@@ -274,7 +274,7 @@ def update_option(c, athlete_id, draft_id, group_index, option_index, payload):
         note_title = item.get("title", "") if kind == "collapsible_note" else ""
         if not isinstance(note_title, str) or len(note_title) > 120:
             raise ValueError("invalid_note_title")
-        if any(not isinstance(v, str) or len(v) > 600 for v in (text, name, quantity)):
+        if not isinstance(text, str) or len(text) > (4000 if kind == "collapsible_note" else 600) or any(not isinstance(v, str) or len(v) > 600 for v in (name, quantity)):
             raise ValueError("invalid_item")
         if kind == "food" and (not name.strip() or not quantity.strip()):
             raise ValueError("invalid_food")
