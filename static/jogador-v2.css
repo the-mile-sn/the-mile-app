@@ -2050,3 +2050,8 @@ body.profile-active .player-top{display:none!important}
 #plans #plans-assessments .assessment-metric-name,
 #plans #plans-assessments .assessment-metric-right strong{font-size:13px!important}
 #plans #plans-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
+
+/* Match the standard closed meal-card height in Avaliações. */
+#plans #plans-assessments details.assessment-measure-card > summary{
+ height:65px!important;min-height:65px!important;max-height:65px!important;
+}
