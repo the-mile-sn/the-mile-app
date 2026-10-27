@@ -2551,3 +2551,76 @@ body.profile-active .player-top{display:none!important}
 /* Show some context above the selected menu card when jumping from the calendar. */
 #menus #menu-days .day-menu{scroll-margin-top:128px}
 #menus #menu-days .day-menu.is-selected{background:rgba(255,255,255,.15)!important}
+
+
+/* Plans library: Fitness-inspired compact filter navigation and clean headings. */
+#plans #plans-prescriptions .plans-page-heading{
+ display:flex;flex-direction:column;align-items:flex-start;gap:26px;
+ margin:4px 0 22px;
+}
+#plans #plans-prescriptions .plans-page-heading h1{
+ margin:0 0 0 4px;font-size:clamp(27px,7vw,34px);
+ font-weight:650;line-height:1.15;letter-spacing:-.025em;color:#f5f5f7;
+}
+#plans #plans-prescriptions button.plans-back-round{
+ width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+ box-sizing:border-box!important;border-radius:50%!important;
+ border:1px solid #414148!important;background:#242428!important;
+ display:grid!important;place-items:center!important;padding:0!important;margin:0 0 0 3px!important;
+ box-shadow:none!important;line-height:1!important;
+}
+#plans #plans-prescriptions button.plans-back-round span{
+ font-size:31px!important;font-weight:350!important;line-height:1!important;
+ position:relative;top:-2px;left:-1px;
+}
+#plans #plan-colors.plans-filters{
+ display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:9px!important;
+ width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain;
+ -webkit-overflow-scrolling:touch;scrollbar-width:none;
+ padding:2px 1px 9px!important;margin:0 0 14px!important;
+}
+#plans #plan-colors.plans-filters::-webkit-scrollbar{display:none}
+#plans #plan-colors.plans-filters button.plans-filter{
+ flex:0 0 auto!important;min-width:0!important;min-height:42px!important;
+ border:0!important;outline:0!important;border-radius:999px!important;
+ padding:10px 17px!important;background:#252529!important;
+ color:#e7e7ea!important;font-size:14px!important;font-weight:550!important;
+ box-shadow:none!important;white-space:nowrap!important;line-height:1.2!important;
+}
+#plans #plan-colors.plans-filters button.plans-filter.selected{
+ background:#f0f0f2!important;color:#16161a!important;
+}
+#plans #plan-subfilters.plans-subfilters{
+ display:flex!important;flex-wrap:wrap!important;gap:8px!important;
+ margin:0 0 19px!important;
+}
+#plans #plan-subfilters:empty{display:none!important}
+#plans #plan-subfilters.plans-subfilters button.plans-subfilter{
+ border:0!important;border-radius:999px!important;background:#29292e!important;
+ color:#dddde3!important;min-height:35px!important;padding:8px 13px!important;
+ font-size:13px!important;font-weight:500!important;box-shadow:none!important;
+}
+#plans #plan-subfilters.plans-subfilters button.plans-subfilter.selected{
+ background:#44444b!important;color:#fff!important;
+}
+#plans #plan-detail .plans-all-group{
+ border:0!important;background:#242428!important;border-radius:14px!important;
+ margin:0 0 10px!important;overflow:hidden!important;
+}
+#plans #plan-detail .plans-all-group > summary{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ min-height:65px;padding:13px 17px;list-style:none;cursor:pointer;
+ font-size:16px;font-weight:550;color:#f3f3f5;
+}
+#plans #plan-detail .plans-all-group > summary::-webkit-details-marker{display:none}
+#plans #plan-detail .plans-all-group > summary::after{
+ content:""!important;width:9px!important;height:9px!important;
+ border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
+ transform:rotate(45deg)!important;transition:transform .18s!important;
+ margin-right:3px;flex:none;background:none!important;
+}
+#plans #plan-detail .plans-all-group[open] > summary::after{
+ transform:rotate(225deg)!important;
+}
+#plans #plan-detail .plans-all-body{padding:0 8px 10px}
+#plans #plan-detail .plans-all-body .meal{margin:9px 0!important}
