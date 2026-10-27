@@ -524,3 +524,12 @@
 .peri-plan-actions>button{min-height:39px!important;padding:8px 17px!important;font-size:14px!important;line-height:1.25!important}
 .plan-publish-action.is-pending,.peri-publish-action.is-pending{background:#7d6225!important}
 #peri-import-controls select,#peri-import-controls input[type=file],#peri-import-controls button{min-height:43px}
+
+
+/* Match file-import control heights in both plan sections. */
+#peri-panel>.calendar-add,#plan-import-panel>.calendar-add{align-items:end!important;gap:12px}
+#peri-panel>.calendar-add select,#peri-panel>.calendar-add input[type="file"],#peri-panel>.calendar-add button,
+#plan-import-panel>.calendar-add select,#plan-import-panel>.calendar-add input[type="file"],#plan-import-panel>.calendar-add button{
+ height:46px!important;min-height:46px!important;box-sizing:border-box!important;margin:0!important;
+}
+#peri-panel>.calendar-add button,#plan-import-panel>.calendar-add button{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
