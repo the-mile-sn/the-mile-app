@@ -2291,3 +2291,10 @@ body.profile-active .player-top{display:none!important}
 #overview .meal-collapsible-note>summary{min-height:35px!important;padding:6px 13px!important;font-size:13px!important}
 .meal-collapsible-note{border-radius:10px}
 #overview .meal-collapsible-note>.meal-note-body{padding:5px 13px 12px}
+
+
+/* Daily note: slim, subtle secondary row. Weekly note: match the dish/category row. */
+#overview .meal-collapsible-note>summary{min-height:30px!important;padding:4px 12px!important;font-size:13px!important}
+#weekly-view .meal-collapsible-note{background:rgba(255,255,255,.055)!important;border:0!important;border-radius:10px!important;margin:10px 0 3px!important;box-shadow:none!important}
+#weekly-view .meal-collapsible-note>summary{background:transparent!important;min-height:36px!important;padding:8px 12px!important;font-size:14px!important;font-weight:500!important}
+#weekly-view .meal-collapsible-note>.meal-note-body{padding:4px 12px 12px!important}
