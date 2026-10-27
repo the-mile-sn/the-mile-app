@@ -136,7 +136,7 @@ def validated_meal_options(c, athlete_id):
                               if item.get("kind") == "title"), ""),
                         "totals": option.get("totals"), "items": [
                             {"kind": item.get("kind"), "name": item.get("name"),
-                             "quantity": item.get("quantity"), "text": item.get("text")}
+                             "quantity": item.get("quantity"), "text": item.get("text"), "title":item.get("title","")}
                             for item in option.get("items", []) if item.get("kind") != "title"
                         ]
                     })
