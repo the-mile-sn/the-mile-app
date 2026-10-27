@@ -394,3 +394,38 @@
 .option-editor .option-remove-line{display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin:4px 0 0 auto;padding:5px;background:transparent;color:#9b9ba4;border:0;border-radius:7px}
 .option-editor .option-remove-line:hover{background:rgba(255,255,255,.07);color:#e6a4a4}
 @media(max-width:520px){.option-editor .meal-line-editor{padding:12px 9px}.option-editor .meal-food-row{grid-template-columns:minmax(80px,1fr) minmax(0,1.6fr)}.option-editor .meal-nutrient-row{gap:4px}}
+
+
+/* Plan editor refinement: compact type, roomy food description, macros on the right. */
+.option-editor .meal-line-editor{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.62fr);
+ column-gap:14px;row-gap:10px;align-items:end;padding:15px 16px 11px;
+}
+.option-editor .meal-line-editor>.meal-line-kind{
+ grid-column:1/-1;width:min(290px,100%);max-width:100%;margin:0;
+}
+.option-editor .meal-line-editor>.meal-line-kind select{width:100%;padding:9px 12px}
+.option-editor .meal-line-editor>.meal-food-row{
+ grid-column:1;display:grid;grid-template-columns:minmax(125px,.7fr) minmax(0,2.3fr);
+ gap:10px;align-items:end;min-width:0;
+}
+.option-editor .meal-line-editor>.meal-nutrient-row{
+ grid-column:2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:8px;align-items:end;min-width:0;margin:0;
+}
+.option-editor .meal-line-editor>.meal-food-row input,
+.option-editor .meal-line-editor>.meal-nutrient-row input{width:100%;min-width:0}
+.option-editor .meal-line-editor>.meal-note-description{grid-column:1/-1;width:calc(100% - 45px);margin:0}
+.option-editor .meal-line-editor>.meal-note-description textarea{width:100%}
+.option-editor .meal-line-editor>.option-remove-line{
+ grid-column:2;justify-self:end;margin:0;align-self:center;
+}
+.option-editor .meal-line-editor:has(>.meal-note-description:not([style*="display: none"]))>.option-remove-line{
+ grid-column:2;justify-self:end;
+}
+@media(max-width:830px){
+ .option-editor .meal-line-editor{grid-template-columns:minmax(0,1fr)}
+ .option-editor .meal-line-editor>.meal-food-row,
+ .option-editor .meal-line-editor>.meal-nutrient-row{grid-column:1}
+ .option-editor .meal-line-editor>.option-remove-line{grid-column:1;justify-self:end}
+}
