@@ -1648,6 +1648,14 @@ function renderAssessmentForm(data={}){
   }
   section.append(grid);box.append(section);
  }
+ const numberOf=(key)=>{const raw=$("assess-field-"+key)?.value.trim().replace(",",".");return raw!==""&&Number.isFinite(Number(raw))?Number(raw):null;};
+ const recompute=()=>{
+  for(const [target,parts] of [["sum_8",["back","triceps","biceps","suprailiac","supraspinal","abdominal_skin","thigh_skin","calf_skin"]],["sum_perimeters",["arm_muscle","thigh_muscle","calf_muscle"]]]){
+   const values=parts.map(numberOf);const field=$("assess-field-"+target);
+   if(values.every(v=>v!==null))field.value=String(Math.round(values.reduce((a,b)=>a+b,0)*1000)/1000).replace(".",",");
+  }
+ };
+ box.addEventListener("input",recompute);
  $("assess-field-height").value=String(data.measurements?.height??"");
  $("assessment-date").value=data.assessed_on||"";
  $("assessment-formula").value=data.formula_note||"";
