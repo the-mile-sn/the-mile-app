@@ -153,7 +153,16 @@ def rows(c,athlete_id,public=False):
  if public:sql+=" AND status='published'"
  sql+=" ORDER BY assessed_on ASC"
  data=c.execute(sql,(athlete_id,)).fetchall()
- return [{**dict(r),"measurements":json.loads(r["measurements"]),"averages":json.loads(r["averages"])} for r in data]
+ result=[]
+ for r in data:
+  measurement=json.loads(r["measurements"])
+  # Historical sheets may have received muscle perimeters after import.
+  # Derive missing total for display only: never replace stored measurements.
+  keys=("arm_muscle","thigh_muscle","calf_muscle")
+  if measurement.get("sum_perimeters") is None and all(measurement.get(k) is not None for k in keys):
+   measurement["sum_perimeters"]=round(sum(float(measurement[k]) for k in keys),3)
+  result.append({**dict(r),"measurements":measurement,"averages":json.loads(r["averages"])})
+ return result
 
 def save(c,athlete_id,payload,user_id):
  from datetime import date
