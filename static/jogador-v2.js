@@ -162,8 +162,8 @@ let profileUsername="";
 async function session(){const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("landing");if(t==="menus")await menusView();}
 
-async function renderSupplementPlan(){
- const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
+async function renderSupplementPlan(target){
+ const data=await api("/api/v2/player/supplements"),root=target||$("plan-detail");if(!root.isConnected)return;root.replaceChildren();
  if(!data.plan.length){root.textContent="Ainda não existe plano de suplementação publicado.";return;}
  const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
  for(const item of data.plan){
@@ -598,41 +598,26 @@ function openPlansSection(section){
  if(section==="prescriptions")renderPlans();
  if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});
 }
-function renderPlans(){
- const root=$("plan-colors"),detail=$("plan-detail");root.replaceChildren();detail.replaceChildren();
- const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
- for(const color of available){
-  const b=document.createElement("button"),dot=document.createElement("span");dot.className="color-dot "+color;
-  b.append(dot,document.createTextNode(colorNames[color]));b.className=selectedColor===color?"selected":"";
-  b.onclick=()=>{selectedColor=selectedColor===color?null:color;renderPlans();};root.append(b);
- }
- for(const [kind,label] of [["training","Peri-treino"],["match","Peri-jogo"]]){
-  const published=periPlans[kind]?.options;
-  if(!published||!Object.values(published).some(options=>options.length))continue;
-  const key="peri-"+kind,b=document.createElement("button");b.textContent=label;
-  b.className=selectedColor===key?"selected":"";
-  b.onclick=()=>{selectedColor=selectedColor===key?null:key;renderPlans();};root.append(b);
- }
- const supplementButton=document.createElement("button");supplementButton.textContent="Suplementação";supplementButton.className=selectedColor==="supplements"?"selected":"";
- supplementButton.onclick=()=>{selectedColor=selectedColor==="supplements"?null:"supplements";renderPlans();};root.append(supplementButton);
- if(!selectedColor)return;
- if(selectedColor==="supplements"){renderSupplementPlan().catch(error);return;}
- if(selectedColor.startsWith("peri-")){
-  const kind=selectedColor.slice(5),published=periPlans[kind]?.options||{};
+let plansCategory="todos",planPhase=null;
+function renderPlanContent(key,target){
+ if(key==="supplements"){renderSupplementPlan(target).catch(error);return;}
+ if(key.startsWith("peri-")){
+  const kind=key.slice(5),published=periPlans[kind]?.options||{};
   for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+   if(planPhase&&planPhase!==phase)continue;
    const opts=published[phase]||[];if(!opts.length)continue;
    const section=document.createElement("section");section.className="meal plan-meal";
    const header=document.createElement("div");header.className="option";
    const heading=document.createElement("h3");heading.textContent=label;header.append(heading);
    const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);
    opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});
-   detail.append(section);
+   target.append(section);
   }
   return;
  }
- if(!plans[selectedColor])return;
+ if(!plans[key])return;
  for(const meal of ["breakfast","lunch","snack","dinner","supper"]){
-  const opts=plans[selectedColor][meal]||[];if(!opts.length)continue;
+  const opts=plans[key][meal]||[];if(!opts.length)continue;
   const section=document.createElement("details");section.className="meal daily-meal plan-overview-meal tone-"+selectedColor;
   const header=document.createElement("summary");header.className="daily-meal-head";
   const h=document.createElement("strong");h.textContent=names[meal];header.append(h);decorateLabel(header,meal);
@@ -643,7 +628,56 @@ function renderPlans(){
    appendMealItems(body,opts[0].items);
    section.append(body);
   }else opts.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
-  detail.append(section);
+  target.append(section);
+ }
+}
+function renderPlans(){
+ const nav=$("plan-colors"),sub=$("plan-subfilters"),detail=$("plan-detail");
+ nav.replaceChildren();sub.replaceChildren();detail.replaceChildren();
+ const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
+ const hasPeri=kind=>Object.values(periPlans[kind]?.options||{}).some(options=>options?.length);
+ const categories=[["todos","Todos"],["cores","Cores"],["treino","Treino"],["jogo","Jogo"],["suplementacao","Suplementação"]];
+ for(const [id,label] of categories){
+  const b=document.createElement("button");b.type="button";b.textContent=label;
+  b.className="plans-filter"+(plansCategory===id?" selected":"");
+  b.setAttribute("aria-pressed",String(plansCategory===id));
+  b.onclick=()=>{plansCategory=id;selectedColor=null;planPhase=null;renderPlans();};
+  nav.append(b);
+ }
+ const addSub=(key,label,cb)=>{
+  const btn=document.createElement("button");btn.type="button";btn.textContent=label;
+  btn.className="plans-subfilter"+(selectedColor===key?" selected":"");
+  btn.setAttribute("aria-pressed",String(selectedColor===key));
+  btn.onclick=cb;sub.append(btn);
+ };
+ if(plansCategory==="cores"){
+  for(const color of available)addSub(color,colorNames[color]||color,()=>{selectedColor=color;renderPlans();});
+  if(!available.length){detail.textContent="Ainda não existem planos alimentares publicados.";return;}
+  if(!available.includes(selectedColor))selectedColor=available[0];
+  // Update the active subfilter after picking the default.
+  for(const b of sub.children){b.classList.toggle("selected",b.textContent===(colorNames[selectedColor]||selectedColor));b.setAttribute("aria-pressed",String(b.classList.contains("selected")));}
+  renderPlanContent(selectedColor,detail);
+  return;
+ }
+ if(plansCategory==="treino"||plansCategory==="jogo"){
+  const kind=plansCategory==="treino"?"training":"match";
+  if(!hasPeri(kind)){detail.textContent="Ainda não existem planos publicados nesta categoria.";return;}
+  const phases=[["pre",kind==="match"?"Pré-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]];
+  if(!planPhase)planPhase=phases.find(([p])=>(periPlans[kind]?.options?.[p]||[]).length)?.[0]||"pre";
+  for(const [phase,label] of phases){if(!(periPlans[kind]?.options?.[phase]||[]).length)continue;addSub("peri-"+kind+":"+phase,label,()=>{planPhase=phase;renderPlans();});}
+  sub.querySelectorAll("button").forEach(b=>{const match=b.textContent===phases.find(([p])=>p===planPhase)?.[1];b.classList.toggle("selected",match);b.setAttribute("aria-pressed",String(match));});
+  renderPlanContent("peri-"+kind,detail);
+  return;
+ }
+ if(plansCategory==="suplementacao"){renderPlanContent("supplements",detail);return;}
+ // Todos: a compact list of published plan categories, each expandable on demand.
+ const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training","Treino"]]:[]),...(hasPeri("match")?[["peri-match","Jogo"]]:[]),["supplements","Suplementação"]];
+ for(const [key,label] of entries){
+  const group=document.createElement("details");group.className="plans-all-group";
+  const heading=document.createElement("summary");heading.textContent=label;group.append(heading);
+  const content=document.createElement("div");content.className="plans-all-body";group.append(content);
+  group.addEventListener("toggle",()=>{if(group.open&&!content.dataset.loaded){content.dataset.loaded="true";planPhase=null;renderPlanContent(key,content);}});
+  detail.append(group);
  }
 }
 const dishPhotoCache=new Map();
