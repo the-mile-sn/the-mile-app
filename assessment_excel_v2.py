@@ -56,6 +56,7 @@ def preview(encoded):
     value=rawrow[i] if i<len(rawrow) else None
     if value is None or str(value).strip()=="":continue
     try:
+     if key=="body_fat" and isinstance(value,(int,float)) and 0<=value<=1:value=value*100
      normalized=assessments_v2.normalize({key:value})
      measurements.update(normalized)
     except ValueError:warnings.append("Valor inválido na coluna "+column)
