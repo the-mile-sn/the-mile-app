@@ -1293,12 +1293,47 @@ def application(env, start_response):
                 classes={row['name']:row['meals'] for row in model_data['classifications']}
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
                 days=calendar_v2.classify_range(start,end,[m['match_date'] for m in matches])
+                # Optional, read-only scenario simulation. Some deployments do not
+                # have the admin monitoring schema yet. Never create tables here.
+                required={'v2_scenario_cells','v2_post_match_responses','v2_monitoring_audit'}
+                present={r['name'] for r in c.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?,?)",
+                    tuple(sorted(required))).fetchall()}
+                scenario_available=(present==required)
+                scenario_cells={}
+                responses=[]
+                if scenario_available:
+                    scenario_cells={(r['classification'],r['scenario'],r['meal']):r['color']
+                        for r in c.execute(
+                            "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",
+                            (aid,)).fetchall()}
+                    for response in c.execute(
+                        "SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",
+                        (aid,)).fetchall():
+                        raw=dict(response)
+                        audit=[dict(event) for event in c.execute(
+                            "SELECT id,record_type,record_id,new_json,created_at FROM v2_monitoring_audit "
+                            "WHERE athlete_id=? AND record_type='post_match' AND record_id=? ORDER BY created_at,id",
+                            (aid,raw['id'])).fetchall()]
+                        responses.append({'match_id':raw['match_id'],
+                            'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
                 output=[]
                 for row in days:
                     day=row['date'];classification=row['classification']
-                    colors=prescription_effective_v2.resolve_day(day,classification,classes.get(classification,{}),manual,{},matches,[],today.isoformat())
-                    output.append({'date':day,'classification':classification,'colors':{meal:colors[meal]['color'] for meal in model_data['meals']}})
-                return respond(200,{'days':output,'preview_only':True,'scenario_automation_enabled':False})
+                    base=classes.get(classification,{})
+                    colors=prescription_effective_v2.resolve_day(
+                        day,classification,base,manual,{},matches,[],today.isoformat())
+                    entry={'date':day,'classification':classification,
+                        'colors':{meal:colors[meal]['color'] for meal in model_data['meals']}}
+                    if scenario_available:
+                        simulated=prescription_effective_v2.resolve_day(
+                            day,classification,base,manual,scenario_cells,matches,responses,today.isoformat())
+                        entry['simulated_colors']={meal:simulated[meal]['color'] for meal in model_data['meals']}
+                        entry['simulation_sources']={meal:simulated[meal]['source'] for meal in model_data['meals']}
+                    output.append(entry)
+                return respond(200,{'days':output,'preview_only':True,
+                    'scenario_data_available':scenario_available,
+                    'scenario_automation_enabled':False})
             if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
