@@ -726,6 +726,53 @@ def application(env, start_response):
                 binary=base64.b64decode(image)
                 mime='image/png' if binary.startswith(b'\\x89PNG') else 'image/jpeg' if binary.startswith(b'\\xff\\xd8') else 'image/webp'
                 return respond(200,binary,mime)
+            # Admin-only post-match records: no automatic microcycle changes.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/game') and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=6 or parts[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                athlete_id=parts[3]
+                body=read_json(env)
+                action=body.get('action')
+                match_id=body.get('match_id')
+                match=c.execute("SELECT id FROM v2_match_events WHERE id=? AND athlete_id=?",(match_id,athlete_id)).fetchone()
+                if not match:raise Problem(404,'match_not_found')
+                prior=c.execute("SELECT * FROM v2_post_match_responses WHERE athlete_id=? AND match_id=?",(athlete_id,match_id)).fetchone()
+                if action=='save':
+                    minutes_raw=body.get('minutes')
+                    try:
+                        if minutes_raw=='not_played':
+                            minutes=None
+                            scenario='very_low'
+                        else:
+                            minutes=int(minutes_raw)
+                            if str(minutes)!=str(minutes_raw) or minutes not in range(5,121,5):raise ValueError()
+                            scenario=monitoring_v2.scenario_for_minutes(minutes)
+                    except (ValueError,TypeError):raise Problem(400,'invalid_match_minutes')
+                    answers=body.get('answers',{})
+                    if not isinstance(answers,dict) or len(json.dumps(answers))>10000:raise Problem(400,'invalid_match_answers')
+                    import time as monitor_time
+                    import secrets as monitor_secrets
+                    now=int(monitor_time.time())
+                    if prior:
+                        record_id=prior['id']
+                        c.execute("UPDATE v2_post_match_responses SET minutes=?,scenario=?,answers_json=?,updated_at=? WHERE id=? AND athlete_id=?",(minutes,scenario,json.dumps(answers),now,record_id,athlete_id))
+                    else:
+                        record_id=monitor_secrets.token_hex(16)
+                        c.execute("INSERT INTO v2_post_match_responses(id,athlete_id,match_id,minutes,scenario,answers_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",(record_id,athlete_id,match_id,minutes,scenario,json.dumps(answers),now,now))
+                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(monitor_secrets.token_hex(16),athlete_id,'post_match',record_id,user['id'],json.dumps(dict(prior)) if prior else None,json.dumps({'match_id':match_id,'minutes':minutes,'scenario':scenario,'answers':answers}),now))
+                    c.commit()
+                    return respond(200,{'ok':True,'scenario':scenario})
+                if action=='delete':
+                    if body.get('confirm')!='ELIMINAR_POS_JOGO' or not prior:raise Problem(400,'invalid_game_delete')
+                    import time as monitor_time
+                    import secrets as monitor_secrets
+                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(monitor_secrets.token_hex(16),athlete_id,'post_match',prior['id'],user['id'],json.dumps(dict(prior)),json.dumps({'deleted':True}),int(monitor_time.time())))
+                    c.execute("DELETE FROM v2_post_match_responses WHERE id=? AND athlete_id=?",(prior['id'],athlete_id))
+                    c.commit()
+                    return respond(200,{'ok':True})
+                raise Problem(400,'invalid_game_action')
             # Admin-only weight entry, correction and deletion; no prescription side effects.
             if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/weight') and method=='POST':
                 if not user:raise Problem(401,'unauthorized')
@@ -782,13 +829,14 @@ def application(env, start_response):
                 weights=[dict(row) for row in c.execute(
                     "SELECT weigh_date,weight_kg,menstruating FROM v2_daily_weighins WHERE athlete_id=? ORDER BY weigh_date DESC LIMIT 100",(aid,)).fetchall()]
                 games=[dict(row) for row in c.execute(
-                    """SELECT r.id,m.match_date,r.minutes,r.scenario,r.created_at,r.updated_at
+                    """SELECT r.id,r.match_id,m.match_date,r.minutes,r.scenario,r.answers_json,r.created_at,r.updated_at
                        FROM v2_post_match_responses r JOIN v2_match_events m
                        ON m.id=r.match_id AND m.athlete_id=r.athlete_id
                        WHERE r.athlete_id=? ORDER BY m.match_date DESC LIMIT 100""",(aid,)).fetchall()]
                 from datetime import date as monitoring_date
                 reference=monitoring_v2.reference_weight(c,aid,monitoring_date.today().isoformat())
-                return respond(200,{"weights":weights,"games":games,"weight_reference":reference})
+                matches=[dict(row) for row in c.execute("SELECT id,match_date FROM v2_match_events WHERE athlete_id=? ORDER BY match_date DESC",(aid,)).fetchall()]
+                return respond(200,{"weights":weights,"games":games,"matches":matches,"weight_reference":reference})
             # Supplementation: published routine and calendar day exceptions.
             if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
                 if not user:raise Problem(401,'unauthorized')
