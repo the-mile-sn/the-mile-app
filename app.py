@@ -17,6 +17,7 @@ import microcycles_v2
 import calendar_v2
 import events_v2
 import day_colors_v2
+import prescription_effective_v2
 import peri_v2
 import supplements_v2
 import assessments_v2
@@ -1268,6 +1269,36 @@ def application(env, start_response):
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'player': dict(link)})
+            # Read-only player color parity probe; excludes post-match scenarios.
+            # No dependency on admin monitoring tables, no writes or UI changes.
+            if path == '/api/v2/player/effective-colors-preview' and method == 'GET':
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                query=parse_qs(env.get('QUERY_STRING',''))
+                start=(query.get('start') or [''])[0]
+                end=(query.get('end') or [''])[0]
+                try:
+                    first=calendar_v2.parse_day(start)
+                    last=calendar_v2.parse_day(end)
+                    if last<first or (last-first).days>6:raise ValueError()
+                except ValueError:raise Problem(400,'invalid_preview_range')
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                if first<today-timedelta(days=365) or last>today+timedelta(days=60):
+                    raise Problem(400,'invalid_preview_range')
+                matches=microcycles_v2.list_matches(c,aid)
+                model_data=microcycles_v2.get_model(c,aid)
+                classes={row['name']:row['meals'] for row in model_data['classifications']}
+                manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
+                days=calendar_v2.classify_range(start,end,[m['match_date'] for m in matches])
+                output=[]
+                for row in days:
+                    day=row['date'];classification=row['classification']
+                    colors=prescription_effective_v2.resolve_day(day,classification,classes.get(classification,{}),manual,{},matches,[],today.isoformat())
+                    output.append({'date':day,'classification':classification,'colors':{meal:colors[meal]['color'] for meal in model_data['meals']}})
+                return respond(200,{'days':output,'preview_only':True,'scenario_automation_enabled':False})
             if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
