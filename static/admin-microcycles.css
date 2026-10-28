@@ -588,3 +588,9 @@
 #scenario-editor .scenario-matrix td:first-child{font-weight:600;white-space:nowrap}
 #scenario-editor .scenario-matrix td:nth-child(2){white-space:nowrap}
 #scenario-editor .scenario-matrix select{width:100%;min-width:104px}
+
+#scenario-editor .scenario-preview{margin:18px 0;padding:16px;border:1px solid #383840;border-radius:10px}
+#scenario-editor .scenario-preview-controls{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:12px 0}
+#scenario-editor .scenario-preview-controls label{display:flex;flex-direction:column;gap:6px}
+#scenario-preview-output{overflow-x:auto}
+#scenario-preview-output table{min-width:540px}
