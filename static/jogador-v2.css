@@ -2835,3 +2835,6 @@ body.profile-active .player-top{display:none!important}
  content:"";position:absolute;left:4px;top:0px;width:4px;height:8px;border:solid #242529;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)
 }
 .post-match-inline-form .post-match-options label{gap:10px;min-height:30px}
+
+/* Pending questionnaire: subtle amber status only */
+.post-match-inline:not(.answered) .post-match-inline-status{color:#dfc477!important}
