@@ -22,6 +22,7 @@ import supplements_v2
 import assessments_v2
 import monitoring_v2
 import prescription_effective_v2
+import effective_nutrition_v2
 import assessment_excel_v2
 import plan_import_v2
 import time
@@ -780,7 +781,13 @@ def application(env, start_response):
                         (aid,raw['id'])).fetchall()]
                     responses.append({'match_id':raw['match_id'],'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
                 colors=prescription_effective_v2.resolve_day(day,classification,base_row,overrides,scenarios,matches,responses,current.isoformat())
-                return respond(200,{'date':day,'classification':classification,'meals':colors,'preview_only':True})
+                published_options=plan_import_v2.published_meal_options(c,aid)
+                effective_totals=effective_nutrition_v2.calculate_day(colors,published_options)
+                baseline_colors={meal:{'color':overrides.get((day,meal),base_row.get(meal))} for meal in microcycles_v2.MEALS}
+                baseline_totals=effective_nutrition_v2.calculate_day(baseline_colors,published_options)
+                return respond(200,{'date':day,'classification':classification,'meals':colors,
+                                    'nutrition_preview':effective_totals,
+                                    'nutrition_current':baseline_totals,'preview_only':True})
             # Admin-only post-match records: no automatic microcycle changes.
             if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/game') and method=='POST':
                 if not user:raise Problem(401,'unauthorized')
