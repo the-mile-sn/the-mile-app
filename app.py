@@ -22,6 +22,7 @@ import peri_v2
 import supplements_v2
 import assessments_v2
 import plan_import_v2
+import nutrition_preview_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -1271,7 +1272,7 @@ def application(env, start_response):
                 return respond(200, {'player': dict(link)})
             # Read-only player color parity probe; excludes post-match scenarios.
             # No dependency on admin monitoring tables, no writes or UI changes.
-            if path == '/api/v2/player/effective-colors-preview' and method == 'GET':
+            if path in ('/api/v2/player/effective-colors-preview', '/api/v2/player/effective-nutrition-preview') and method == 'GET':
                 if not user:raise Problem(401,'unauthorized')
                 if user['role']!='player':raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
@@ -1323,6 +1324,11 @@ def application(env, start_response):
                             (aid,raw['id'])).fetchall()]
                         responses.append({'match_id':raw['match_id'],
                             'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
+                nutrition_mode=(path == '/api/v2/player/effective-nutrition-preview')
+                if nutrition_mode:
+                    published=plan_import_v2.published_meal_options(c,aid)
+                    event_data=events_v2.list_events(c,aid,start,end)
+                    peri_meals=peri_v2.list_event_meals(c,aid,start,end,event_data)
                 output=[]
                 for row in days:
                     day=row['date'];classification=row['classification']
@@ -1340,6 +1346,13 @@ def application(env, start_response):
                             if entry['colors'][meal]!=entry['simulated_colors'][meal]]
                         entry['manual_priority_meals']=[meal for meal in model_data['meals']
                             if simulated[meal]['source']=='manual']
+                    if nutrition_mode:
+                        current=nutrition_preview_v2.totals(entry['colors'],published,peri_meals,day,model_data['meals'])
+                        entry['current_nutrition']=current
+                        if scenario_available:
+                            alternative=nutrition_preview_v2.totals(entry['simulated_colors'],published,peri_meals,day,model_data['meals'])
+                            entry['simulated_nutrition']=alternative
+                            entry['nutrition_delta']=({key:alternative['totals'][key]-current['totals'][key] for key in nutrition_preview_v2.KEYS} if current['complete'] and alternative['complete'] else None)
                     output.append(entry)
                 return respond(200,{'days':output,'preview_only':True,
                     'scenario_data_available':scenario_available,
