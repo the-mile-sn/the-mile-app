@@ -120,6 +120,48 @@ $("scenario-week-run").addEventListener("click",async()=>{
  }catch(e){label.textContent="Falha na consulta semanal: "+e.message;}
  finally{button.disabled=false;}
 });
+// Read-only comparison of validated admin options and active player publications.
+$("scenario-parity-run").addEventListener("click",async()=>{
+ const aid=model?.athlete?.id,day=$("scenario-preview-date").value;
+ const output=$("scenario-parity-output"),status=$("scenario-parity-status"),button=$("scenario-parity-run");
+ if(!aid||!day){status.textContent="Seleciona primeiro uma data.";return;}
+ button.disabled=true;output.replaceChildren();status.textContent="A comparar fontes nutricionais…";
+ try{
+  const response=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/nutrition-source-parity?date="+encodeURIComponent(day));
+  if(model?.athlete?.id!==aid)return;
+  status.textContent="Semana de "+monitoringDate(response.start)+" a "+monitoringDate(response.end)+" · Diagnóstico de leitura.";
+  const fmt=(value)=>Number.isFinite(value)?value.toLocaleString("pt-PT",{maximumFractionDigits:1,minimumFractionDigits:0}):"—";
+  const namesNutrition=[["kcal","kcal"],["protein_g","P (g)"],["carbs_g","HC (g)"],["fat_g","G (g)"]];
+  for(const row of (response.days||[])){
+   const section=document.createElement("section");section.className="scenario-week-preview";
+   const h=document.createElement("h4");h.textContent=monitoringDate(row.date)+" · "+(row.classification||"—");section.append(h);
+   const table=document.createElement("table");table.className="scenario-matrix";
+   const header=document.createElement("tr");
+   for(const text of ["Nutriente","Atual validado","Atual publicado","Simulado validado","Simulado publicado","Desvio simulado"]){
+    const th=document.createElement("th");th.textContent=text;header.append(th);
+   }
+   table.append(header);
+   for(const [key,name] of namesNutrition){
+    const a=row.sources?.validated?.current,b=row.sources?.published?.current;
+    const c=row.sources?.validated?.simulated,d=row.sources?.published?.simulated;
+    const delta=row.comparison?.simulated?.delta?.[key];
+    const tr=document.createElement("tr");
+    const fields=[name,a?.state==="complete"?fmt(a.total?.[key]):"Incompleto",b?.state==="complete"?fmt(b.total?.[key]):"Incompleto",c?.state==="complete"?fmt(c.total?.[key]):"Incompleto",d?.state==="complete"?fmt(d.total?.[key]):"Incompleto",delta==null?"Não comparável":(delta>0?"+":"")+fmt(delta)];
+    for(const value of fields){const td=document.createElement("td");td.textContent=value;tr.append(td);}
+    table.append(tr);
+   }
+   section.append(table);
+   const issues=[];
+   for(const src of ["validated","published"]){for(const variant of ["current","simulated"]){
+    const item=row.sources?.[src]?.[variant];if(item?.state==="partial")issues.push(src+" / "+variant+": "+(item.missing||[]).map(String).join(", "));
+   }}
+   const hint=document.createElement("p");hint.className="hint";
+   hint.textContent="Peri: "+(row.peri_count||0)+" · "+(issues.length?("Dados incompletos: "+issues.join(" · ")):"Sem dados em falta nas duas fontes.");
+   section.append(hint);output.append(section);
+  }
+ }catch(error){status.textContent="Falha na comparação: "+error.message;}
+ finally{button.disabled=false;}
+});
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
 const scenarioVariants=[["very_low","Very low"],["low","Low"],["medium","Medium"]];
 let scenarioCells=[];
