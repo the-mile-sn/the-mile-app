@@ -571,7 +571,7 @@ function injectPostMatchCard(){
    }
    function draw(){
     heading.replaceChildren();content.replaceChildren();
-    const top=document.createElement("div");top.textContent=(step+1)+" de 3";heading.append(top);
+    
     const bars=document.createElement("div");bars.className="post-match-progress-bars";
     for(let i=0;i<3;i++){const bar=document.createElement("span");if(i<=step)bar.className="active";bars.append(bar);}heading.append(bars);
     if(step===0){
