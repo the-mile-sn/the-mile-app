@@ -742,7 +742,9 @@ def application(env, start_response):
                        FROM v2_post_match_responses r JOIN v2_match_events m
                        ON m.id=r.match_id AND m.athlete_id=r.athlete_id
                        WHERE r.athlete_id=? ORDER BY m.match_date DESC LIMIT 100""",(aid,)).fetchall()]
-                return respond(200,{"weights":weights,"games":games})
+                from datetime import date as monitoring_date
+                reference=monitoring_v2.reference_weight(c,aid,monitoring_date.today().isoformat())
+                return respond(200,{"weights":weights,"games":games,"weight_reference":reference})
             # Supplementation: published routine and calendar day exceptions.
             if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
                 if not user:raise Problem(401,'unauthorized')
