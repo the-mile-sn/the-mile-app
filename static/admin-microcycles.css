@@ -572,3 +572,10 @@
 #profile-monitoring .monitoring-entry{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
 #profile-monitoring .monitoring-row-actions{display:flex;gap:6px}
 #profile-monitoring .monitoring-row-actions button{font-size:12px;padding:6px 10px}
+
+#scenario-editor{margin-top:16px}
+#scenario-editor .scenario-toolbar{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+#scenario-editor .scenario-toolbar label,#scenario-editor .scenario-field{display:flex;flex-direction:column;gap:7px;min-width:190px}
+#scenario-editor .scenario-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+#scenario-editor .scenario-field{padding:12px;border:1px solid #34343c;border-radius:10px;background:#1b1b20}
+#scenario-editor select{width:100%;max-width:100%}
