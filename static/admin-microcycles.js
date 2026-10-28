@@ -79,7 +79,7 @@ async function runScenarioPreview(){
   }
   out.append(table);
   const summary=document.createElement("div");summary.className="scenario-nutrition-comparison";
-  const heading=document.createElement("h4");heading.textContent="Comparação nutricional · Refeições principais";summary.append(heading);
+  const heading=document.createElement("h4");heading.textContent="Comparação nutricional · Total diário";summary.append(heading);
   const matrix=document.createElement("table");matrix.className="scenario-matrix";
   const header2=document.createElement("tr");for(const label of ["Nutriente","Prescrição atual","Cenário simulado"]){const th=document.createElement("th");th.textContent=label;header2.append(th);}matrix.append(header2);
   const current=data.nutrition_current||{},effective=data.nutrition_preview||{};
@@ -97,6 +97,29 @@ async function runScenarioPreview(){
  finally{button.disabled=false;}
 }
 $("scenario-preview-run").addEventListener("click",runScenarioPreview);
+$("scenario-week-run").addEventListener("click",async()=>{
+ const aid=model?.athlete?.id,day=$("scenario-preview-date").value;
+ const out=$("scenario-week-output"),label=$("scenario-week-status"),button=$("scenario-week-run");
+ if(!aid||!day){label.textContent="Seleciona primeiro uma data.";return;}
+ button.disabled=true;out.replaceChildren();label.textContent="A consultar semana…";
+ try{
+  const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/prescription-week-preview?date="+encodeURIComponent(day));
+  if(model?.athlete?.id!==aid)return;
+  label.textContent="Semana de "+monitoringDate(data.start)+" a "+monitoringDate(data.end)+" · Apenas leitura.";
+  const table=document.createElement("table");table.className="scenario-matrix";
+  const head=document.createElement("tr");
+  for(const txt of ["Dia","Classificação","Atual · kcal","Simulado · kcal","Diferença","Menus com cor diferente"]){const th=document.createElement("th");th.textContent=txt;head.append(th);}table.append(head);
+  for(const item of data.days){
+   const a=item.current?.total?.kcal,b=item.simulated?.total?.kcal;
+   const menuChanges=(item.menu_colors||[]).filter(m=>m.current_color!==m.simulated_color);
+   const tr=document.createElement("tr");
+   for(const txt of [monitoringDate(item.date),item.classification||"—",a==null?"—":Math.round(a)+" kcal",b==null?"—":Math.round(b)+" kcal",a==null||b==null?"—":(b-a>=0?"+":"")+Math.round(b-a)+" kcal",menuChanges.length?menuChanges.map(x=>names[x.meal]||x.meal).join(", "):"—"]){const td=document.createElement("td");td.textContent=txt;tr.append(td);}table.append(tr);
+  }
+  out.append(table);
+  const note=document.createElement("p");note.className="hint";note.textContent="Os totais parciais podem omitir refeições com dados em falta. Os menus são comparados apenas por cor, sem alterar pratos nem prescrições.";out.append(note);
+ }catch(e){label.textContent="Falha na consulta semanal: "+e.message;}
+ finally{button.disabled=false;}
+});
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
 const scenarioVariants=[["very_low","Very low"],["low","Low"],["medium","Medium"]];
 let scenarioCells=[];
