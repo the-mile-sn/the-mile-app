@@ -525,27 +525,84 @@ function injectPostMatchCard(){
   if(game.answered){card.classList.add("answered");}
   {
    const form=document.createElement("form");form.className="post-match-inline-form";form.hidden=true;
-   const hint=document.createElement("p");hint.textContent="Preencher após o jogo";
-   const label=document.createElement("label");label.textContent="Minutos jogados";
+   const answers={...(game.answers||{})};
+   const section=document.createElement("section");section.className="post-match-questionnaire";
+   let step=0;
+   const steps=["Participação e bem-estar","Alimentação","Suplementação"];
+   const heading=document.createElement("div");heading.className="post-match-progress";
+   const content=document.createElement("div");content.className="post-match-questions";
+   const nav=document.createElement("div");nav.className="post-match-navigation";
+   const back=document.createElement("button");back.type="button";back.textContent="Anterior";
+   const next=document.createElement("button");next.type="button";
+   const msg=document.createElement("p");msg.setAttribute("role","status");
    const select=document.createElement("select");select.required=true;
    const start=document.createElement("option");start.value="";start.textContent="Selecionar";select.append(start);
    const none=document.createElement("option");none.value="not_played";none.textContent="Não joguei";select.append(none);
    for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
    if(game.answered)select.value=game.minutes==null?"not_played":String(game.minutes);
-   label.append(select);
-   const submit=document.createElement("button");submit.type="submit";submit.textContent=game.answered?"Guardar alteração":"Enviar resposta";
-   const msg=document.createElement("p");msg.setAttribute("role","status");
-   form.append(hint,label,submit,msg);card.append(form);
+   function question(title,control){const wrap=document.createElement("div");wrap.className="post-match-question";const h=document.createElement("label");h.textContent=title;wrap.append(h,control);content.append(wrap);return wrap;}
+   function radio(name,title,items){
+    const group=document.createElement("div");group.className="post-match-options";
+    for(const [value,label] of items){const row=document.createElement("label");const input=document.createElement("input");input.type="radio";input.name="pm-"+game.id+"-"+name;input.checked=answers[name]===value;input.onchange=()=>{answers[name]=value;if(name==="gi_level")draw();};row.append(input,document.createTextNode(label));group.append(row);}
+    question(title,group);
+   }
+   function multiple(name,title,items,exclusive=false){
+    const group=document.createElement("div");group.className="post-match-options";
+    for(const [value,label] of items){const row=document.createElement("label");const input=document.createElement("input");input.type="checkbox";input.checked=(answers[name]||[]).includes(value);input.onchange=()=>{
+      const old=new Set(answers[name]||[]);
+      if(input.checked){if(exclusive&&value==="none")old.clear();else old.delete("none");old.add(value);}else old.delete(value);
+      answers[name]=[...old];draw();
+    };row.append(input,document.createTextNode(label));group.append(row);}
+    question(title,group);
+   }
+   function scale(name,title,left,right){
+    const wrap=document.createElement("div");wrap.className="post-match-question";
+    const h=document.createElement("label");h.textContent=title;
+    const value=document.createElement("strong");value.textContent=answers[name]==null?"—":answers[name]+"/10";
+    const line=document.createElement("div");line.className="post-match-scale";
+    const input=document.createElement("input");input.type="range";input.min=1;input.max=10;input.step=1;input.value=answers[name]||5;
+    input.oninput=()=>{answers[name]=Number(input.value);value.textContent=input.value+"/10";};
+    line.append(input);const ends=document.createElement("div");ends.className="post-match-scale-ends";ends.innerHTML="<span></span><span></span>";ends.children[0].textContent=left;ends.children[1].textContent=right;
+    wrap.append(h,value,line,ends);content.append(wrap);
+   }
+   function draw(){
+    heading.replaceChildren();content.replaceChildren();
+    const top=document.createElement("div");top.textContent=steps[step]+" · "+(step+1)+" de 3";heading.append(top);
+    const bars=document.createElement("div");bars.className="post-match-progress-bars";
+    for(let i=0;i<3;i++){const bar=document.createElement("span");if(i<=step)bar.className="active";bars.append(bar);}heading.append(bars);
+    if(step===0){
+     question("1. Quantos minutos jogaste?",select);
+     if(select.value!=="not_played"){
+      scale("feeling","2. Como te sentiste no jogo?","Horrível","Incrível");
+      scale("effort","3. Perceção do esforço","Muito leve","Esforço máximo");
+      radio("gi_level","4. Como te sentiste a nível gastrointestinal?",[["none","Sem sintomas"],["mild","Desconforto ligeiro"],["moderate","Desconforto moderado"],["severe","Desconforto intenso"]]);
+      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms","Que sintomas sentiste?",[["nausea","Náuseas"],["abdominal_pain","Dor abdominal"],["bloating","Inchaço abdominal"],["reflux","Refluxo / azia"],["urgency","Urgência para evacuar / diarreia"],["vomiting","Vómitos"],["other","Outro"]]);
+      multiple("game_symptoms","Durante o jogo, TIVESTE algum destes sintomas?",[["none","Nenhum"],["cramps","Cãibras"],["muscle_pain","Dores musculares"],["injury","Lesão"],["weakness_dizziness","Sensação de fraqueza / tonturas"],["other","Outro"]],true);
+     }
+    }else if(step===1){
+     for(const [name,title] of [["food_pre","O que comeste na refeição pré-jogo?"],["food_between","O que consumiste entre a última refeição e o início do jogo, incluindo o aquecimento?"],["food_during","O que consumiste durante o jogo, incluindo primeira parte, intervalo e segunda parte?"]]){
+      const field=document.createElement("textarea");field.rows=3;field.maxLength=2000;field.value=answers[name]||"";field.oninput=()=>answers[name]=field.value;question(title,field);
+     }
+    }else{
+     for(const [name,title] of [["caffeine_pre","Tomaste cafeína (cápsula ou shot) antes do jogo?"],["caffeine_half","Tomaste cafeína (cápsula ou shot) no intervalo?"],["nitrates_pre","Tomaste nitratos antes do jogo?"],["recovery_shake","Tomaste um batido recovery após o jogo?"]])radio(name,title,[[true,"Sim"],[false,"Não"]]);
+    }
+    back.hidden=step===0;
+    next.textContent=select.value==="not_played"||step===2?(game.answered?"Guardar alteração":"Enviar resposta"):"Continuar";
+   }
+   select.onchange=()=>draw();
+   back.onclick=()=>{step=Math.max(0,step-1);draw();};
+   next.onclick=()=>{if(!select.value){msg.textContent="Seleciona os minutos jogados.";return;}if(step<2&&select.value!=="not_played"){step++;draw();}else form.requestSubmit();};
+   nav.append(back,next);section.append(heading,content,nav,msg);form.append(section);card.append(form);draw();
    button.setAttribute("aria-expanded","false");
    button.onclick=()=>{form.hidden=!form.hidden;button.setAttribute("aria-expanded",String(!form.hidden));};
    form.onsubmit=async e=>{
-    e.preventDefault();if(!select.value)return;submit.disabled=true;msg.textContent="";
+    e.preventDefault();if(!select.value)return;next.disabled=true;msg.textContent="";
     try{
      await api("/api/v2/player/post-match",{method:"POST",
       headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
-      body:JSON.stringify({match_id:game.id,minutes:select.value,local_date:iso(new Date())})});
+      body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
      await overview();
-    }catch(err){msg.textContent="Não foi possível guardar: "+err.message;submit.disabled=false;}
+    }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
    };
   }
   if(anchor){anchor.after(card);}else root.append(card);
