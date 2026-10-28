@@ -249,7 +249,7 @@ function renderWeekly(mon,r,weekMenus=[]){
  const nav=document.createElement("div");nav.className="weekly-date-nav";
  const prev=document.createElement("button");prev.type="button";prev.textContent="‹";prev.setAttribute("aria-label","Semana anterior");
 
- const next=document.createElement("button");next.type="button";next.textContent="›";next.setAttribute("aria-label","Semana seguinte");
+ const next=document.createElement("button");next.type="button";next.setAttribute("aria-label","Continuar ou concluir");next.textContent="›";next.setAttribute("aria-label","Semana seguinte");
  prev.onclick=()=>{day.setDate(day.getDate()-7);weeklySelection=null;overview().catch(error);};
  next.onclick=()=>{day.setDate(day.getDate()+7);weeklySelection=null;overview().catch(error);};
  nav.append(prev,next);root.append(nav);
@@ -505,6 +505,13 @@ function appendWeeklyEvents(host,dates,session){
 
 // Post-match form, ordered by game date. Admin corrections remain available.
 let playerPostMatchRecords=[];
+function showPostMatchSuccess(){
+ const old=document.querySelector(".post-match-success");if(old)old.remove();
+ const el=document.createElement("div");el.className="post-match-success";el.setAttribute("role","status");el.textContent="✓ Questionário guardado com sucesso";
+ const root=$("day-details");const card=root?.querySelector(".post-match-inline");if(card)card.after(el);else root?.append(el);
+ const close=document.createElement("button");close.type="button";close.textContent="Fechar";close.onclick=()=>el.remove();el.append(close);
+}
+
 function injectPostMatchCard(){
  const root=$("day-details");
  if(!root||root.hidden)return;
@@ -520,7 +527,8 @@ function injectPostMatchCard(){
   const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6M9 9h6M9 13h6M9 17h3"/></svg>';
   const title=document.createElement("span");title.textContent="Questionário pós-jogo";
   const status=document.createElement("span");status.className="post-match-inline-status";
-  status.textContent=game.answered?"✓ Preenchido · Editar ›":"Por preencher ›";
+  status.textContent=game.answered?"✓ Preenchido":"Por preencher";
+  if(game.answered){const pencil=document.createElement("span");pencil.className="post-match-pencil";pencil.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>';button.append(pencil);}
   button.append(icon,title,status);card.append(button);
   if(game.answered){card.classList.add("answered");}
   {
@@ -532,7 +540,7 @@ function injectPostMatchCard(){
    const heading=document.createElement("div");heading.className="post-match-progress";
    const content=document.createElement("div");content.className="post-match-questions";
    const nav=document.createElement("div");nav.className="post-match-navigation";
-   const back=document.createElement("button");back.type="button";back.textContent="Anterior";
+   const back=document.createElement("button");back.type="button";back.textContent="‹";back.setAttribute("aria-label","Anterior");
    const next=document.createElement("button");next.type="button";
    const msg=document.createElement("p");msg.setAttribute("role","status");
    const select=document.createElement("select");select.required=true;
@@ -567,17 +575,17 @@ function injectPostMatchCard(){
    }
    function draw(){
     heading.replaceChildren();content.replaceChildren();
-    const top=document.createElement("div");top.textContent=steps[step]+" · "+(step+1)+" de 3";heading.append(top);
+    const top=document.createElement("div");top.textContent=(step+1)+" de 3";heading.append(top);
     const bars=document.createElement("div");bars.className="post-match-progress-bars";
     for(let i=0;i<3;i++){const bar=document.createElement("span");if(i<=step)bar.className="active";bars.append(bar);}heading.append(bars);
     if(step===0){
      question("1. Quantos minutos jogaste?",select);
      if(select.value!=="not_played"){
-      scale("feeling","2. Como te sentiste no jogo?","Horrível","Incrível");
+      scale("feeling","2. Como te sentiste no jogo?","Horrível","Muito bem");
       scale("effort","3. Perceção do esforço","Muito leve","Esforço máximo");
       radio("gi_level","4. Como te sentiste a nível gastrointestinal?",[["none","Sem sintomas"],["mild","Desconforto ligeiro"],["moderate","Desconforto moderado"],["severe","Desconforto intenso"]]);
-      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms","Que sintomas sentiste?",[["nausea","Náuseas"],["abdominal_pain","Dor abdominal"],["bloating","Inchaço abdominal"],["reflux","Refluxo / azia"],["urgency","Urgência para evacuar / diarreia"],["vomiting","Vómitos"],["other","Outro"]]);
-      multiple("game_symptoms","Durante o jogo, TIVESTE algum destes sintomas?",[["none","Nenhum"],["cramps","Cãibras"],["muscle_pain","Dores musculares"],["injury","Lesão"],["weakness_dizziness","Sensação de fraqueza / tonturas"],["other","Outro"]],true);
+      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms","Que sintomas tiveste?",[["nausea","Náuseas"],["abdominal_pain","Dor abdominal"],["bloating","Inchaço abdominal"],["reflux","Refluxo / azia"],["urgency","Urgência para evacuar / diarreia"],["vomiting","Vómitos"],["other","Outro"]]);
+      multiple("game_symptoms","Durante o jogo, tiveste algum destes sintomas?",[["none","Nenhum"],["cramps","Cãibras"],["muscle_pain","Dores musculares"],["injury","Lesão"],["weakness_dizziness","Sensação de fraqueza / tonturas"],["other","Outro"]],true);
      }
     }else if(step===1){
      for(const [name,title] of [["food_pre","O que comeste na refeição pré-jogo?"],["food_between","O que consumiste entre a última refeição e o início do jogo, incluindo o aquecimento?"],["food_during","O que consumiste durante o jogo, incluindo primeira parte, intervalo e segunda parte?"]]){
@@ -587,7 +595,7 @@ function injectPostMatchCard(){
      for(const [name,title] of [["caffeine_pre","Tomaste cafeína (cápsula ou shot) antes do jogo?"],["caffeine_half","Tomaste cafeína (cápsula ou shot) no intervalo?"],["nitrates_pre","Tomaste nitratos antes do jogo?"],["recovery_shake","Tomaste um batido recovery após o jogo?"]])radio(name,title,[[true,"Sim"],[false,"Não"]]);
     }
     back.hidden=step===0;
-    next.textContent=select.value==="not_played"||step===2?(game.answered?"Guardar alteração":"Enviar resposta"):"Continuar";
+    next.textContent=select.value==="not_played"||step===2?"✓":"›";next.setAttribute("aria-label",select.value==="not_played"||step===2?(game.answered?"Guardar alteração":"Concluir e enviar"):"Continuar");
    }
    select.onchange=()=>draw();
    back.onclick=()=>{step=Math.max(0,step-1);draw();};
@@ -602,6 +610,7 @@ function injectPostMatchCard(){
       headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
      await overview();
+     showPostMatchSuccess();
     }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
    };
   }
