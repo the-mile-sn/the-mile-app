@@ -2946,3 +2946,12 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-form-actions{display:flex;justify-content:flex-end;gap:10px}
 .daily-weight-form-actions button{border:0;border-radius:9px;padding:9px 14px;background:#454751;color:white;font:inherit}
 .daily-weight-form-actions button:last-child{background:#e4e7ea;color:#202227}
+
+/* Weight and form card typography aligned to daily meal headings */
+.daily-weight-label,.post-match-inline-trigger>span:nth-child(2){
+ font-family:inherit!important;font-size:16px!important;font-weight:400!important;letter-spacing:normal!important;
+}
+.daily-weight-header{min-height:56px;gap:13px}
+.daily-weight-action{width:31px;height:31px;flex:0 0 31px;font-size:22px}
+.daily-weight-form-actions{justify-content:flex-end}
+.daily-weight-form-actions button:last-child{min-width:42px;min-height:36px;padding:5px 14px;background:#e9e9ec;color:#222;border-radius:22px}
