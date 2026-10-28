@@ -1336,6 +1336,10 @@ def application(env, start_response):
                             day,classification,base,manual,scenario_cells,matches,responses,today.isoformat())
                         entry['simulated_colors']={meal:simulated[meal]['color'] for meal in model_data['meals']}
                         entry['simulation_sources']={meal:simulated[meal]['source'] for meal in model_data['meals']}
+                        entry['changed_meals']=[meal for meal in model_data['meals']
+                            if entry['colors'][meal]!=entry['simulated_colors'][meal]]
+                        entry['manual_priority_meals']=[meal for meal in model_data['meals']
+                            if simulated[meal]['source']=='manual']
                     output.append(entry)
                 return respond(200,{'days':output,'preview_only':True,
                     'scenario_data_available':scenario_available,
