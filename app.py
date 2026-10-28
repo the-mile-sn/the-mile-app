@@ -750,6 +750,44 @@ def application(env, start_response):
                     c.execute("INSERT INTO v2_scenario_cells(athlete_id,classification,scenario,meal,color) VALUES(?,?,?,?,?)",(aid,classification,scenario,meal,color))
                 c.commit()
                 return respond(200,{'ok':True})
+            # Seven-day read-only nutrition and menu preview (not used by published views).
+            if path.startswith('/api/v2/athletes/') and path.endswith('/prescription-week-preview') and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                aid=path.strip('/').split('/')[3]
+                query=parse_qs(env.get('QUERY_STRING',''))
+                try: selected=calendar_v2.parse_day((query.get('date') or [''])[0])
+                except ValueError:raise Problem(400,'invalid_preview_date')
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                if selected<today-timedelta(days=365) or selected>today+timedelta(days=60):raise Problem(400,'invalid_preview_range')
+                start=selected-timedelta(days=selected.weekday())
+                first=start.isoformat();last=(start+timedelta(days=6)).isoformat()
+                model_data=microcycles_v2.get_model(c,aid)
+                if not model_data:raise Problem(404,'not_found')
+                matches=microcycles_v2.list_matches(c,aid)
+                model_rows={r['name']:r['meals'] for r in model_data['classifications']}
+                days=calendar_v2.classify_range(first,last,[m['match_date'] for m in matches])
+                manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,first,last)}
+                variants={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute("SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
+                responses=[]
+                for record in c.execute("SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall():
+                    raw=dict(record)
+                    audit=[dict(a) for a in c.execute("SELECT id,record_type,record_id,new_json,created_at FROM v2_monitoring_audit WHERE athlete_id=? AND record_type='post_match' AND record_id=? ORDER BY created_at,id",(aid,raw['id'])).fetchall()]
+                    responses.append({'match_id':raw['match_id'],'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
+                options=plan_import_v2.validated_meal_options(c,aid)
+                events=events_v2.list_events(c,aid,first,last)
+                peri=peri_v2.list_event_meals(c,aid,first,last,events)
+                menus=microcycles_v2.list_menus(c,aid,first,last)
+                rows=[]
+                for item in days:
+                    day=item['date'];classification=item['classification']
+                    baseline=model_rows.get(classification,{})
+                    current={meal:{'color':manual.get((day,meal),baseline.get(meal))} for meal in microcycles_v2.MEALS}
+                    simulated=prescription_effective_v2.resolve_day(day,classification,baseline,manual,variants,matches,responses,today.isoformat())
+                    peri_today=[p for p in peri if p['event_date']==day]
+                    menu_colors=[{'meal':m['meal'],'current_color':None if current[m['meal']]['color']=='none' else current[m['meal']]['color'],'simulated_color':simulated[m['meal']]['color']} for m in menus if m['menu_date']==day and m['meal'] in current]
+                    rows.append({'date':day,'classification':classification,'current':effective_nutrition_v2.calculate_day(current,options,peri_today),'simulated':effective_nutrition_v2.calculate_day(simulated,options,peri_today),'menu_colors':menu_colors,'peri_count':len(peri_today)})
+                return respond(200,{'start':first,'end':last,'days':rows,'preview_only':True})
             # Read-only preview of effective post-match colors; not consumed by live views.
             if path.startswith('/api/v2/athletes/') and path.endswith('/prescription-preview') and method=='GET':
                 if not user:raise Problem(401,'unauthorized')
