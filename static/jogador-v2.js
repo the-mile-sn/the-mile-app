@@ -644,7 +644,7 @@ async function renderWeightCard(root,date){
   action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
   action.setAttribute("aria-label","Ver evolução do peso");
  }else{
-  action.textContent="+";action.setAttribute("aria-label","Registar peso em jejum");
+  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';action.setAttribute("aria-label","Registar peso em jejum");
  }
  function editor(){
   panel.replaceChildren();
@@ -664,7 +664,7 @@ async function renderWeightCard(root,date){
   grams.value=String(base===null?0:Math.round((base-Math.floor(base+0.00001))*10)*100);
   const limit=()=>{for(const option of grams.options)option.disabled=kg.value==="140"&&option.value!=="0";if(kg.value==="140")grams.value="0";};
   kg.addEventListener("change",limit);limit();
-  const save=document.createElement("button");save.type="submit";save.textContent="Guardar";
+  const save=document.createElement("button");save.type="submit";save.textContent="✓";save.setAttribute("aria-label","Guardar peso");save.className="daily-weight-save";
   const errorText=document.createElement("p");errorText.setAttribute("role","alert");
   form.append(picker);
   if(String(me?.sex||"").toUpperCase()==="F"){
