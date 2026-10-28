@@ -2767,3 +2767,26 @@ body.profile-active .player-top{display:none!important}
 .post-match-scale-ends{display:flex;justify-content:space-between;font-size:12px;color:#aeb7b1}
 .post-match-navigation{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .post-match-inline-form .post-match-navigation button:last-child{margin-left:auto;background:#e8eaec;color:#17191b}
+
+/* Compact, readable post-match forms */
+.post-match-inline:not(.answered){background:#242528}
+.post-match-inline:not(.answered) .post-match-inline-icon{color:#d0d2d5}
+.post-match-inline-trigger{font-size:16px;gap:9px}
+.post-match-inline-status{margin-left:auto;font-size:12px;color:#b5b7bd}
+.post-match-pencil{display:grid;place-items:center;margin-left:4px;color:#e0e3e4}
+.post-match-questionnaire{gap:12px}
+.post-match-questions{gap:9px}
+.post-match-question{background:rgba(0,0,0,.10);border-radius:9px;padding:12px;gap:9px}
+.post-match-question>label{font-size:14px;line-height:1.35;font-weight:500;margin:0}
+.post-match-question>strong{top:12px;right:12px}
+.post-match-options{gap:3px;display:flex;flex-direction:column;align-items:stretch}
+.post-match-options label,.post-match-inline-form .post-match-options label{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:11px;margin:0;min-height:32px;font-size:14px;text-align:left}
+.post-match-options input{flex:0 0 auto;width:18px;height:18px;margin:0}
+.post-match-question textarea{margin:0;min-height:76px}
+.post-match-scale{margin-top:12px}
+.post-match-navigation{margin-top:8px}
+.post-match-inline-form .post-match-navigation button{min-width:42px;min-height:36px;border-radius:22px;font-size:24px;line-height:1;padding:4px 12px}
+.post-match-inline-form .post-match-navigation button:first-child{background:#313536;color:#bfc5c4}
+.post-match-inline-form .post-match-navigation button:last-child{background:#e9e9ec;color:#222}
+.post-match-success{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 0;border-radius:9px;background:#17382b;color:#79dfb1;font-size:14px}
+.post-match-success button{margin-left:auto;border:0;border-radius:7px;background:#28493c;color:#dcefe5;padding:6px 9px}
