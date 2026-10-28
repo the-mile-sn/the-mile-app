@@ -726,6 +726,28 @@ def application(env, start_response):
                 binary=base64.b64decode(image)
                 mime='image/png' if binary.startswith(b'\\x89PNG') else 'image/jpeg' if binary.startswith(b'\\xff\\xd8') else 'image/webp'
                 return respond(200,binary,mime)
+            # Scenario configuration is isolated from the currently published High model.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/scenario-cells') and method in ('GET','PUT'):
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                pieces=path.strip('/').split('/')
+                if len(pieces)!=5 or pieces[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                aid=pieces[3]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():raise Problem(404,'not_found')
+                if method=='GET':
+                    rows=[dict(row) for row in c.execute("SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()]
+                    return respond(200,{'cells':rows})
+                body=read_json(env)
+                classification=body.get('classification');scenario=body.get('scenario')
+                meal=body.get('meal');color=body.get('color')
+                allowed=('MD+1','MD+2','MD+1/-3','MD+2/-2','MD+1/-2','MD+2/-1')
+                if classification not in allowed or scenario not in ('very_low','low','medium') or meal not in microcycles_v2.MEALS or color not in (*microcycles_v2.COLORS,None):
+                    raise Problem(400,'invalid_scenario_cell')
+                c.execute("DELETE FROM v2_scenario_cells WHERE athlete_id=? AND classification=? AND scenario=? AND meal=?",(aid,classification,scenario,meal))
+                if color is not None:
+                    c.execute("INSERT INTO v2_scenario_cells(athlete_id,classification,scenario,meal,color) VALUES(?,?,?,?,?)",(aid,classification,scenario,meal,color))
+                c.commit()
+                return respond(200,{'ok':True})
             # Admin-only post-match records: no automatic microcycle changes.
             if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/game') and method=='POST':
                 if not user:raise Problem(401,'unauthorized')
