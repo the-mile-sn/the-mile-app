@@ -557,3 +557,11 @@
 
 .assessment-missing-row{padding:12px 0;border-bottom:1px solid rgba(128,128,128,.22)}
 .assessment-missing-row ul{margin:9px 0 0;padding-left:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px 18px;color:#c9c9d0;font-size:13px}
+
+/* Read-only profile monitoring */
+#profile-monitoring .monitoring-choices{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 20px}
+#profile-monitoring .monitoring-choices button[aria-pressed="true"]{background:#383b44;border-color:#696d79;color:#fff}
+#profile-monitoring .monitoring-reference{font-size:14px;color:#c5cbd3;margin:8px 0 16px}
+#profile-monitoring .monitoring-weight-chart{max-width:750px;border:1px solid #33353d;border-radius:10px;padding:12px;margin-bottom:16px}
+#profile-monitoring .monitoring-weight-chart svg{width:100%;height:auto;max-height:240px;display:block}
+#profile-monitoring .monitoring-entry{padding:12px 2px;border-bottom:1px solid #34343b;font-size:14px;color:#e7e7e9}
