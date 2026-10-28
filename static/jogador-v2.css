@@ -2959,3 +2959,9 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0}
 .daily-weight-picker-column{display:grid;gap:8px;text-align:center;color:#bfc2c9;font-size:13px}
 .daily-weight-picker-column select{width:100%;min-height:48px;text-align:center;text-align-last:center;font-size:21px;font-weight:500;border-radius:12px;background:#292b30!important;color:#f1f2f4;border:1px solid #45474c}
+
+/* Weight controls: compact centered icons */
+.daily-weight-action{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;line-height:1!important}
+.daily-weight-action svg{display:block;width:19px;height:19px;flex:none}
+.daily-weight-picker-column select{font-size:17px!important;font-weight:500!important}
+.daily-weight-form-actions .daily-weight-save{display:flex!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important;background:#e9e9ec!important;color:#202227!important;font-size:25px!important;line-height:1!important;font-weight:500!important}
