@@ -504,47 +504,65 @@ function appendWeeklyEvents(host,dates,session){
 }
 
 // Post-match form, ordered by game date. Admin corrections remain available.
-async function loadPlayerPostMatch(){
- const host=$("post-match-form-area");
- if(!host)return;
- host.hidden=true;host.replaceChildren();
- let data;
- try{data=await api("/api/v2/player/post-match");}catch{return;}
- if(!data.available)return;
- const pending=(data.matches||[]).filter(m=>m.can_answer&&!m.answered)
-  .sort((a,b)=>a.date.localeCompare(b.date));
- if(!pending.length)return;
- const title=document.createElement("h3");title.textContent="Questionário pós-jogo";host.append(title);
- for(const match of pending){
-  const form=document.createElement("form");form.className="post-match-response";
-  const heading=document.createElement("p");heading.textContent="Jogo · "+new Date(match.date+"T12:00:00").toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric"});
-  const label=document.createElement("label");label.textContent="Minutos jogados";
-  const select=document.createElement("select");select.required=true;
-  const first=document.createElement("option");first.value="";first.textContent="Selecionar";select.append(first);
-  const absent=document.createElement("option");absent.value="not_played";absent.textContent="Não joguei";select.append(absent);
-  for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
-  label.append(select);
-  const submit=document.createElement("button");submit.type="submit";submit.textContent="Enviar resposta";
-  const message=document.createElement("p");message.setAttribute("role","status");
-  form.append(heading,label,submit,message);
-  form.addEventListener("submit",async event=>{
-   event.preventDefault();
-   if(!select.value)return;
-   submit.disabled=true;message.textContent="";
-   try{
-    await api("/api/v2/player/post-match",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
-      body:JSON.stringify({match_id:match.id,minutes:select.value})});
-    await loadPlayerPostMatch();await overview();
-   }catch(error){message.textContent="Não foi possível guardar: "+error.message;submit.disabled=false;}
-  });
-  host.append(form);
+let playerPostMatchRecords=[];
+function injectPostMatchCard(){
+ const root=$("day-details");
+ if(!root||root.hidden)return;
+ root.querySelectorAll(".post-match-inline").forEach(n=>n.remove());
+ const date=iso(day);
+ const games=playerPostMatchRecords.filter(m=>m.date===date&&m.can_answer);
+ if(!games.length)return;
+ const matchCards=Array.from(root.querySelectorAll(".daily-event-card,.daily-match-with-intra,details")).filter(n=>n.textContent?.includes("Jogo"));
+ let anchor=matchCards[matchCards.length-1]||null;
+ for(const game of games){
+  const card=document.createElement("div");card.className="post-match-inline";
+  const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger";
+  const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.textContent="☑";
+  const title=document.createElement("span");title.textContent="Questionário pós-jogo";
+  const status=document.createElement("span");status.className="post-match-inline-status";
+  status.textContent=game.answered?"✓ Preenchido":"Por preencher ›";
+  button.append(icon,title,status);card.append(button);
+  if(game.answered){button.disabled=true;card.classList.add("answered");}
+  else{
+   const form=document.createElement("form");form.className="post-match-inline-form";form.hidden=true;
+   const hint=document.createElement("p");hint.textContent="Preencher após o jogo";
+   const label=document.createElement("label");label.textContent="Minutos jogados";
+   const select=document.createElement("select");select.required=true;
+   const start=document.createElement("option");start.value="";start.textContent="Selecionar";select.append(start);
+   const none=document.createElement("option");none.value="not_played";none.textContent="Não joguei";select.append(none);
+   for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
+   label.append(select);
+   const submit=document.createElement("button");submit.type="submit";submit.textContent="Enviar resposta";
+   const msg=document.createElement("p");msg.setAttribute("role","status");
+   form.append(hint,label,submit,msg);card.append(form);
+   button.setAttribute("aria-expanded","false");
+   button.onclick=()=>{form.hidden=!form.hidden;button.setAttribute("aria-expanded",String(!form.hidden));};
+   form.onsubmit=async e=>{
+    e.preventDefault();if(!select.value)return;submit.disabled=true;msg.textContent="";
+    try{
+     await api("/api/v2/player/post-match",{method:"POST",
+      headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
+      body:JSON.stringify({match_id:game.id,minutes:select.value,local_date:iso(new Date())})});
+     await overview();
+    }catch(err){msg.textContent="Não foi possível guardar: "+err.message;submit.disabled=false;}
+   };
+  }
+  if(anchor){anchor.after(card);}else root.append(card);
+  anchor=card;
  }
- host.hidden=false;
+}
+async function loadPlayerPostMatch(){
+ const host=$("post-match-form-area");if(host){host.hidden=true;host.replaceChildren();}
+ try{
+  const result=await api("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
+  playerPostMatchRecords=result.available?(result.matches||[]):[];
+ }catch{playerPostMatchRecords=[];}
+ injectPostMatchCard();
 }
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
- void loadPlayerPostMatch();
+ await loadPlayerPostMatch();
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
@@ -693,6 +711,7 @@ async function overview(){
   root.append(section);
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
+ injectPostMatchCard();
 }
 function openPlansSection(section){
  $("plans-landing").hidden=section!=="landing";
