@@ -21,6 +21,7 @@ import peri_v2
 import supplements_v2
 import assessments_v2
 import monitoring_v2
+import prescription_effective_v2
 import assessment_excel_v2
 import plan_import_v2
 import time
@@ -748,6 +749,38 @@ def application(env, start_response):
                     c.execute("INSERT INTO v2_scenario_cells(athlete_id,classification,scenario,meal,color) VALUES(?,?,?,?,?)",(aid,classification,scenario,meal,color))
                 c.commit()
                 return respond(200,{'ok':True})
+            # Read-only preview of effective post-match colors; not consumed by live views.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/prescription-preview') and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5 or parts[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                aid=parts[3]
+                query=parse_qs(env.get('QUERY_STRING',''))
+                day=(query.get('date') or [''])[0]
+                try:
+                    target=calendar_v2.parse_day(day)
+                except ValueError:raise Problem(400,'invalid_preview_date')
+                current=datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                if target>current+timedelta(days=60) or target<current-timedelta(days=365):
+                    raise Problem(400,'invalid_preview_range')
+                model_data=microcycles_v2.get_model(c,aid)
+                if model_data is None:raise Problem(404,'not_found')
+                matches=microcycles_v2.list_matches(c,aid)
+                classification=calendar_v2.classify_calendar_day(day,[m['match_date'] for m in matches])['classification']
+                base_row=next((r['meals'] for r in model_data['classifications'] if r['name']==classification),{})
+                overrides={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,day,day)}
+                scenarios={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute(
+                    "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
+                responses=[]
+                for record in c.execute("SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall():
+                    raw=dict(record)
+                    audit=[dict(a) for a in c.execute(
+                        "SELECT id,record_type,record_id,new_json,created_at FROM v2_monitoring_audit WHERE athlete_id=? AND record_type='post_match' AND record_id=? ORDER BY created_at,id",
+                        (aid,raw['id'])).fetchall()]
+                    responses.append({'match_id':raw['match_id'],'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
+                colors=prescription_effective_v2.resolve_day(day,classification,base_row,overrides,scenarios,matches,responses,current.isoformat())
+                return respond(200,{'date':day,'classification':classification,'meals':colors,'preview_only':True})
             # Admin-only post-match records: no automatic microcycle changes.
             if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/game') and method=='POST':
                 if not user:raise Problem(401,'unauthorized')
