@@ -2955,3 +2955,7 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-action{width:31px;height:31px;flex:0 0 31px;font-size:22px}
 .daily-weight-form-actions{justify-content:flex-end}
 .daily-weight-form-actions button:last-child{min-width:42px;min-height:36px;padding:5px 14px;background:#e9e9ec;color:#222;border-radius:22px}
+
+.daily-weight-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0}
+.daily-weight-picker-column{display:grid;gap:8px;text-align:center;color:#bfc2c9;font-size:13px}
+.daily-weight-picker-column select{width:100%;min-height:48px;text-align:center;text-align-last:center;font-size:21px;font-weight:500;border-radius:12px;background:#292b30!important;color:#f1f2f4;border:1px solid #45474c}
