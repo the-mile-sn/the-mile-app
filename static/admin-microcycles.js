@@ -56,8 +56,8 @@ $("admin-signout").onclick=async()=>{
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
 async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
+const scenarioVariants=[["very_low","Very low"],["low","Low"],["medium","Medium"]];
 let scenarioCells=[];
-for(const type of scenarioTypes){const option=document.createElement("option");option.value=type;option.textContent=type;$("scenario-classification").append(option);}
 async function loadScenarioEditor(){
  if(!model)return;
  const athleteId=model.athlete.id;
@@ -71,35 +71,48 @@ async function loadScenarioEditor(){
 function renderScenarioEditor(){
  if(!model)return;
  const target=$("scenario-cells");target.replaceChildren();
- const type=$("scenario-classification").value,scenario=$("scenario-choice").value;
- const baseline=model.classifications.find(row=>row.name===type);
- for(const meal of model.meals){
-  const field=document.createElement("label");field.className="scenario-field";
-  const label=document.createElement("span");label.textContent=names[meal];field.append(label);
-  const select=document.createElement("select");
-  const base=baseline?.meals?.[meal]||null;
-  const current=scenarioCells.find(x=>x.classification===type&&x.scenario===scenario&&x.meal===meal);
-  for(const [value,text] of [["","Igual ao High"+(base?" ("+(colors[base]||base)+")":" (sem refeição)")],...model.colors.map(c=>[c,colors[c]||c])]){
-   const option=document.createElement("option");option.value=value;option.textContent=text;select.append(option);
-  }
-  select.value=scenario==="high"?"":current?.color||"";
-  select.disabled=scenario==="high";
-  select.dataset.color=current?.color||base||"none";
-  select.addEventListener("change",async()=>{
-   const previous=current?.color||"";const next=select.value||null;select.disabled=true;
-   try{
-    await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/scenario-cells",{method:"PUT",body:JSON.stringify({classification:type,scenario,meal,color:next})});
-    scenarioCells=scenarioCells.filter(x=>!(x.classification===type&&x.scenario===scenario&&x.meal===meal));
-    if(next)scenarioCells.push({classification:type,scenario,meal,color:next});
-    $("scenario-feedback").textContent="Guardado: "+type+" · "+scenario+" · "+names[meal]+". Sem alterações à prescrição atual.";
-    renderScenarioEditor();
-   }catch(error){select.value=previous;$("scenario-feedback").textContent="Erro ao guardar: "+error.message;select.disabled=false;}
-  });
-  field.append(select);target.append(field);
+ const table=document.createElement("table");table.className="scenario-matrix";
+ const head=document.createElement("tr");
+ for(const title of ["Classificação","Cenário",...model.meals.map(meal=>names[meal])]){
+  const th=document.createElement("th");th.textContent=title;head.append(th);
  }
+ table.append(head);
+ for(const type of scenarioTypes){
+  const baseline=model.classifications.find(row=>row.name===type);
+  for(const [scenario,scenarioLabel] of scenarioVariants){
+   const tr=document.createElement("tr");
+   const dayCell=document.createElement("td");dayCell.textContent=type;tr.append(dayCell);
+   const scenarioCell=document.createElement("td");scenarioCell.textContent=scenarioLabel;tr.append(scenarioCell);
+   for(const meal of model.meals){
+    const td=document.createElement("td"),select=document.createElement("select");
+    const base=baseline?.meals?.[meal]||null;
+    const current=scenarioCells.find(x=>x.classification===type&&x.scenario===scenario&&x.meal===meal);
+    const existing=current?.color||"";
+    select.setAttribute("aria-label",type+" "+scenarioLabel+" "+names[meal]);
+    const defaultOption=document.createElement("option");defaultOption.value="";
+    defaultOption.textContent="Igual ao High"+(base?" · "+(colors[base]||base):" · sem refeição");
+    select.append(defaultOption);
+    for(const color of model.colors){const option=document.createElement("option");option.value=color;option.textContent=colors[color]||color;select.append(option);}
+    select.value=existing;select.dataset.color=existing||base||"none";
+    select.className="microcycle-color-select";
+    select.addEventListener("change",async()=>{
+     const next=select.value||null;select.disabled=true;
+     try{
+      await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/scenario-cells",{method:"PUT",body:JSON.stringify({classification:type,scenario,meal,color:next})});
+      scenarioCells=scenarioCells.filter(x=>!(x.classification===type&&x.scenario===scenario&&x.meal===meal));
+      if(next)scenarioCells.push({classification:type,scenario,meal,color:next});
+      select.dataset.color=next||base||"none";
+      $("scenario-feedback").textContent="Guardado: "+type+" · "+scenarioLabel+" · "+names[meal]+". A prescrição atual não foi alterada.";
+     }catch(error){select.value=existing;$("scenario-feedback").textContent="Não foi possível guardar: "+error.message;}
+     finally{select.disabled=false;}
+    });
+    td.append(select);tr.append(td);
+   }
+   table.append(tr);
+  }
+ }
+ target.append(table);
 }
-$("scenario-classification").addEventListener("change",renderScenarioEditor);
-$("scenario-choice").addEventListener("change",renderScenarioEditor);
 function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.classList.add("microcycle-color-select");sel.dataset.color=sel.value||"none";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;sel.dataset.color=next||"none";row.configured=true;title.textContent="● "+row.name;status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=false;}
 $("filipe-activate").addEventListener("click",async()=>{
   const button=$("filipe-activate"),feedback=$("admin-access-feedback");
