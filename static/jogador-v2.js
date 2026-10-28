@@ -192,6 +192,18 @@ function assignedColor(date,meal,classification){
 }
 // Read-only nutritional parity check, never rendered and never persisted.
 let scenarioNutritionPreviewByDay={};
+let scenarioNutritionParityByDay={};
+const SCENARIO_NUTRITION_KEYS=["kcal","protein_g","carbs_g","fat_g"];
+function nutritionPreviewParity(local,remote){
+ if(!local||!remote?.complete||!remote?.totals)return null;
+ const differences={};
+ for(const key of SCENARIO_NUTRITION_KEYS){
+  const expected=Number(remote.totals[key]),actual=Number(local[key]);
+  if(!Number.isFinite(expected)||!Number.isFinite(actual))return null;
+  differences[key]=actual-expected;
+ }
+ return {matches:Object.values(differences).every(value=>Math.abs(value)<0.01),differences};
+}
 function previewNutritionForColors(entry,colorMap,planData,periData,mealKeys){
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
  for(const meal of mealKeys){
@@ -496,19 +508,22 @@ async function overview(){
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
  // An explicit future activation must separately enable POST_MATCH_DISPLAY_ENABLED.
- void api("/api/v2/player/effective-colors-preview?start="+iso(mon)+"&end="+iso(end))
+ void api("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
   .then(preview=>{
    if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
-   // A previous week request may finish after navigation: ignore stale data.
    if(iso(monday(day))!==iso(mon))return;
    for(const entry of preview.days||[]){
     if(!entry.date||!entry.simulated_colors||!entry.colors)continue;
     effectiveScenarioColorsByDay[entry.date]=entry.simulated_colors;
     const current=previewNutritionForColors(entry,entry.colors,plans,periMeals,meals);
     const simulated=previewNutritionForColors(entry,entry.simulated_colors,plans,periMeals,meals);
+    const currentParity=nutritionPreviewParity(current,entry.current_nutrition);
+    const simulatedParity=nutritionPreviewParity(simulated,entry.simulated_nutrition);
+    scenarioNutritionParityByDay[entry.date]={current:currentParity,simulated:simulatedParity,
+     verified:currentParity?.matches===true&&simulatedParity?.matches===true};
     if(current&&simulated){
      scenarioNutritionPreviewByDay[entry.date]={current,simulated,
-      delta:Object.fromEntries(Object.keys(current).map(key=>[key,simulated[key]-current[key]]))};
+      delta:Object.fromEntries(SCENARIO_NUTRITION_KEYS.map(key=>[key,simulated[key]-current[key]]))};
     }
    }
   }).catch(()=>{});
