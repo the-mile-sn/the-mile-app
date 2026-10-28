@@ -731,7 +731,7 @@ def application(env, start_response):
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
                 seg=path.strip('/').split('/')
-                if len(seg)!=5 or seg[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                if len(seg)!=6 or seg[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
                 aid=seg[3]
                 if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():
                     raise Problem(404,'not_found')
