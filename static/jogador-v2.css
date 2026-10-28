@@ -2807,3 +2807,5 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form .post-match-options label{min-height:27px;gap:9px}
 .post-match-inline-form select{padding:6px 8px;max-width:145px;font-size:14px}
 .post-match-inline-form .post-match-question textarea{font-family:inherit}
+
+.post-match-inline-confirm-close{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:9px;color:#dce7e1;font-size:19px;cursor:pointer}
