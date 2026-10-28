@@ -750,6 +750,42 @@ def application(env, start_response):
                     c.execute("INSERT INTO v2_scenario_cells(athlete_id,classification,scenario,meal,color) VALUES(?,?,?,?,?)",(aid,classification,scenario,meal,color))
                 c.commit()
                 return respond(200,{'ok':True})
+            # Player-scoped staging feed; expressly NOT used by live player cards.
+            if path == '/api/v2/player/effective-colors-preview' and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                q=parse_qs(env.get('QUERY_STRING',''))
+                start=(q.get('start') or [''])[0];end=(q.get('end') or [''])[0]
+                try:
+                    first=calendar_v2.parse_day(start);last=calendar_v2.parse_day(end)
+                    if last<first or (last-first).days>6:raise ValueError()
+                except ValueError:raise Problem(400,'invalid_preview_range')
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                if first<today-timedelta(days=365) or last>today+timedelta(days=60):
+                    raise Problem(400,'invalid_preview_range')
+                model_data=microcycles_v2.get_model(c,aid)
+                matches=microcycles_v2.list_matches(c,aid)
+                rows=calendar_v2.classify_range(start,end,[m['match_date'] for m in matches])
+                classes={r['name']:r['meals'] for r in model_data['classifications']}
+                manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
+                scenarios={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute(
+                    "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
+                responses=[]
+                for record in c.execute("SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall():
+                    raw=dict(record)
+                    audit=[dict(a) for a in c.execute(
+                        "SELECT id,record_type,record_id,new_json,created_at FROM v2_monitoring_audit WHERE athlete_id=? AND record_type='post_match' AND record_id=? ORDER BY created_at,id",(aid,raw['id'])).fetchall()]
+                    responses.append({'match_id':raw['match_id'],'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
+                result=[]
+                for row in rows:
+                    day=row['date'];classification=row['classification'];base=classes.get(classification,{})
+                    effective=prescription_effective_v2.resolve_day(day,classification,base,manual,scenarios,matches,responses,today.isoformat())
+                    current={meal:None if manual.get((day,meal),base.get(meal))=='none' else manual.get((day,meal),base.get(meal)) for meal in microcycles_v2.MEALS}
+                    result.append({'date':day,'classification':classification,'current_colors':current,'simulated_colors':{meal:effective[meal]['color'] for meal in microcycles_v2.MEALS}})
+                return respond(200,{'days':result,'preview_only':True,'automation_enabled':False})
             # Seven-day read-only nutrition and menu preview (not used by published views).
             if path.startswith('/api/v2/athletes/') and path.endswith('/prescription-week-preview') and method=='GET':
                 if not user:raise Problem(401,'unauthorized')
