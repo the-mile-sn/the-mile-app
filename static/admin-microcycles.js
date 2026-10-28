@@ -77,21 +77,49 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
 let monitoringRequestVersion=0;
+const monitoringDate=iso=>/^\\d{4}-\\d{2}-\\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
+const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
+function renderMonitoringWeightChart(rows){
+ const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=rows.length===0;
+ if(!rows.length)return;
+ const points=rows.slice(0,30).reverse(),width=620,height=190,pad=30;
+ const vals=points.map(x=>Number(x.weight_kg)),min=Math.min(...vals),max=Math.max(...vals),spread=Math.max(0.5,max-min);
+ const lo=min-spread*.2,hi=max+spread*.2;
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+ svg.setAttribute("viewBox","0 0 "+width+" "+height);svg.setAttribute("role","img");
+ svg.setAttribute("aria-label","Evolução do peso dos últimos "+points.length+" registos");
+ const coords=points.map((p,i)=>[pad+(width-2*pad)*(points.length===1?.5:i/(points.length-1)),height-pad-(Number(p.weight_kg)-lo)/(hi-lo)*(height-2*pad)]);
+ const poly=document.createElementNS(ns,"polyline");poly.setAttribute("points",coords.map(p=>p.join(",")).join(" "));
+ poly.setAttribute("fill","none");poly.setAttribute("stroke","#9CA9BA");poly.setAttribute("stroke-width","2.5");poly.setAttribute("stroke-linecap","round");poly.setAttribute("stroke-linejoin","round");svg.append(poly);
+ coords.forEach((p,i)=>{const circle=document.createElementNS(ns,"circle");circle.setAttribute("cx",p[0]);circle.setAttribute("cy",p[1]);circle.setAttribute("r",i===coords.length-1?"5":"3");circle.setAttribute("fill",i===coords.length-1?"#5AA7E9":"#A8B2BE");const tip=document.createElementNS(ns,"title");tip.textContent=monitoringDate(points[i].weigh_date)+": "+monitoringDecimal(points[i].weight_kg)+" kg";circle.append(tip);svg.append(circle);});
+ host.append(svg);
+ const note=document.createElement("p");note.className="hint";note.textContent="Evolução dos últimos "+points.length+" registos disponíveis · sem estimar dias sem pesagem";host.append(note);
+}
 async function openMonitoring(kind){
  const athleteId=model?.athlete?.id;if(!athleteId)return;
  const version=++monitoringRequestVersion;
- for(const k of ["weight","game"]){$("monitoring-"+k+"-content").hidden=k!==kind;}
+ for(const k of ["weight","game"]){$("monitoring-"+k+"-content").hidden=k!==kind;$("monitoring-"+k+"-button").setAttribute("aria-pressed",String(k===kind));}
  const info=$("monitoring-"+kind+"-status"),list=$("monitoring-"+kind+"-list");
  info.textContent="A carregar…";list.replaceChildren();
+ if(kind==="weight"){$("monitoring-reference").replaceChildren();$("monitoring-weight-chart").replaceChildren();$("monitoring-weight-chart").hidden=true;}
  try{
   const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/monitoring");
   if(version!==monitoringRequestVersion||model?.athlete?.id!==athleteId)return;
   const rows=kind==="weight"?data.weights:data.games;
+  if(kind==="weight"){
+   const ref=data.weight_reference,sourceNames={"7_day_average":"Média dos últimos 7 dias","latest_recent":"Último registo recente","latest_older":"Último registo disponível","assessment":"Última avaliação antropométrica"};
+   $("monitoring-reference").textContent=ref?"Peso de referência: "+monitoringDecimal(ref.weight_kg)+" kg · "+(sourceNames[ref.source]||ref.source):"Peso de referência: ainda sem dados disponíveis";
+   renderMonitoringWeightChart(rows);
+  }
   if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
   info.textContent=rows.length+" registo(s)";
   for(const record of rows){
-   const line=document.createElement("p");line.className="monitoring-entry";
-   line.textContent=kind==="weight"?assessmentPtDate(record.weigh_date)+" · "+String(record.weight_kg).replace(".",",")+" kg":assessmentPtDate(record.match_date)+" · "+(record.minutes==null?"Não joguei":record.minutes+" min")+" · "+record.scenario;
+   const line=document.createElement("div");line.className="monitoring-entry";
+   if(kind==="weight")line.textContent=monitoringDate(record.weigh_date)+" · "+monitoringDecimal(record.weight_kg)+" kg";
+   else {
+    const scenarios={very_low:"Very low",low:"Low",medium:"Medium",high:"High"};
+    line.textContent=monitoringDate(record.match_date)+" · "+(record.minutes==null?"Não joguei":record.minutes+" min")+" · "+(scenarios[record.scenario]||record.scenario);
+   }
    list.append(line);
   }
  }catch(e){if(version===monitoringRequestVersion)info.textContent="Não foi possível carregar os registos."; }
