@@ -2743,3 +2743,9 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .post-match-inline-form select{max-width:150px;padding:9px;border-radius:8px;background:#292c2c;color:#fff;border:1px solid #454947}
 .post-match-inline-form button{border:0;border-radius:9px;padding:10px 14px;background:#31483e;color:#fff;font:inherit}
+
+/* Compact post-match card aligned with daily meal typography */
+.post-match-inline{margin:6px 0 9px;border-radius:10px}
+.post-match-inline-trigger{min-height:46px;padding:8px 13px;gap:11px;font-size:16px;font-weight:500}
+.post-match-inline-icon{display:grid;place-items:center;flex:none;width:39px;height:39px;border-radius:9px;background:rgba(0,0,0,.16);color:#53d6a2}
+.post-match-inline-status{font-size:12px}
