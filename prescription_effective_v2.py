@@ -12,57 +12,58 @@ SCENARIOS=("very_low","low","medium","high")
 
 def resolve_day(day, classification, baseline, overrides, scenario_cells,
                 matches, responses, today):
-    """Return {meal: {color, source, match_id, scenario}} for one date.
+    """Resolve a day without writing prescriptions or changing past days.
 
-    The response must be linked to the preceding match ID, and cannot affect
-    dates before the response was submitted. Only the first two dates after
-    that match can be influenced. Existing explicit meal overrides always win.
-
-    today is the date of the as-of query; once applied, an automatic choice\n    remains visible in historical views rather than disappearing tomorrow.\n    A later submission never changes days preceding its submission date.
-    Submission date is a calendar date provided by the caller; timestamps
-    must be normalized to the appropriate agreed timezone before invocation.
+    Each response can contain revisions [{effective_date, scenario}].
+    For a historical day, use only the revision known at that date.
+    A response without revisions uses its original submitted_date.
+    Dates are local calendar dates provided by the caller.
     """
     target=date.fromisoformat(day)
     current=date.fromisoformat(today)
     match_index={m["id"]:date.fromisoformat(m["match_date"]) for m in matches}
     eligible_response=None
+    eligible_scenario=None
     if classification in ELIGIBLE:
-        candidates=[]
-        for record in responses:
-            match_day=match_index.get(record.get("match_id"))
-            if match_day is None or (target-match_day).days not in (1,2):
-                continue
-            submitted=record.get("submitted_date")
-            if not submitted:
-                continue
-            submitted_day=date.fromisoformat(submitted)
-            if submitted_day>target or submitted_day>current:
-                continue
-            scenario=record.get("scenario")
-            if scenario not in SCENARIOS:
-                continue
-            candidates.append((match_day,record))
-        if candidates:
-            eligible_response=max(candidates,key=lambda item:item[0])[1]
+        # Only the most recent game before this day can control recovery.
+        previous=[(match_date,match_id) for match_id,match_date in match_index.items()
+                  if match_date<target]
+        previous_match=max(previous,default=None)
+        if previous_match and (target-previous_match[0]).days in (1,2):
+            match_id=previous_match[1]
+            records=[r for r in responses if r.get("match_id")==match_id]
+            if records:
+                record=records[-1]
+                revisions=record.get("revisions")
+                if revisions is None:
+                    revisions=[{"effective_date":record.get("submitted_date"),
+                                "scenario":record.get("scenario")}]
+                valid=[]
+                for revision in revisions:
+                    effective=revision.get("effective_date")
+                    scenario=revision.get("scenario")
+                    if not effective or scenario not in SCENARIOS:
+                        continue
+                    effective_day=date.fromisoformat(effective)
+                    if effective_day<=target and effective_day<=current:
+                        valid.append((effective_day,scenario))
+                if valid:
+                    eligible_response=record
+                    eligible_scenario=max(valid,key=lambda item:item[0])[1]
     resolved={}
     for meal in MEALS:
-        base=baseline.get(meal)
-        color=base
+        color=baseline.get(meal)
         source="base"
-        scenario=None
-        match_id=None
-        if eligible_response is not None:
-            scenario=eligible_response["scenario"]
-            match_id=eligible_response["match_id"]
-            if scenario!="high":
-                setting=scenario_cells.get((classification,scenario,meal))
-                if setting is not None:
-                    color=setting
-                    source="scenario"
-        key=(day,meal)
-        if key in overrides:
-            color=overrides[key]
+        if eligible_response is not None and eligible_scenario!="high":
+            setting=scenario_cells.get((classification,eligible_scenario,meal))
+            if setting is not None:
+                color=setting
+                source="scenario"
+        if (day,meal) in overrides:
+            color=overrides[(day,meal)]
             source="manual"
         resolved[meal]={"color":None if color=="none" else color,
-                        "source":source,"scenario":scenario,"match_id":match_id}
+                        "source":source,
+                        "scenario":eligible_scenario,
+                        "match_id":eligible_response["match_id"] if eligible_response else None}
     return resolved
