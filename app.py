@@ -1376,8 +1376,8 @@ def application(env, start_response):
                         raw=match.get('match_time')
                         if not raw:return False
                         hour,minute=map(int,raw[:5].split(':'))
-                        end=datetime.combine(game_day,local_time(hour,minute),ZoneInfo('Europe/Lisbon'))+timedelta(hours=3)
-                        return today>=end
+                        start=datetime.combine(game_day,local_time(hour,minute),ZoneInfo('Europe/Lisbon'))
+                        return today>=start
                     except (ValueError,TypeError,AttributeError):
                         return False
                 if method=='GET':
