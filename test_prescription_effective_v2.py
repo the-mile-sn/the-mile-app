@@ -1,6 +1,7 @@
 """Focused regression tests for the inactive scenario resolver."""
 import unittest
-from prescription_effective_v2 import resolve_day
+from prescription_effective_v2 import resolve_day, revisions_from_audit
+from datetime import datetime, timezone
 
 class EffectiveColorTests(unittest.TestCase):
     def setUp(self):
@@ -71,6 +72,31 @@ class EffectiveColorTests(unittest.TestCase):
     def test_missing_match_keeps_baseline(self):
         self.matches=[]
         self.assertEqual(self.resolve()["lunch"]["color"],"blue")
+
+    def test_audit_revisions_keep_first_submission_and_edits(self):
+        timestamp=lambda value:int(datetime.fromisoformat(value).replace(tzinfo=timezone.utc).timestamp())
+        response={"id":"r1","match_id":"match-A","scenario":"medium","created_at":timestamp("2026-11-09T10:00:00")}
+        audit=[
+            {"id":"a1","record_type":"post_match","record_id":"r1","created_at":timestamp("2026-11-09T10:00:00"),"new_json":'{"match_id":"match-A","scenario":"low"}'},
+            {"id":"a2","record_type":"post_match","record_id":"r1","created_at":timestamp("2026-11-10T10:00:00"),"new_json":'{"match_id":"match-A","scenario":"medium"}'}]
+        revisions=revisions_from_audit(response,audit)
+        self.assertEqual([r["scenario"] for r in revisions],["low","medium"])
+        self.cells[("MD+2/-2","medium","lunch")]="green"
+        payload=[{"match_id":"match-A","revisions":revisions}]
+        self.assertEqual(self.resolve(responses=payload,today="2026-11-10")["lunch"]["color"],"yellow")
+        self.assertEqual(self.resolve(day="2026-11-10",classification="MD+2/-2",responses=payload,today="2026-11-10")["lunch"]["color"],"green")
+
+    def test_same_day_second_edit_takes_priority(self):
+        revisions=[{"effective_date":"2026-11-09","scenario":"medium"},
+                   {"effective_date":"2026-11-09","scenario":"low"}]
+        result=self.resolve(responses=[{"match_id":"match-A","revisions":revisions}])
+        self.assertEqual(result["lunch"]["color"],"yellow")
+
+    def test_portugal_local_day_near_midnight(self):
+        timestamp=int(datetime(2026,10,28,0,30,tzinfo=timezone.utc).timestamp())
+        response={"id":"r1","match_id":"match-A","scenario":"low","created_at":timestamp}
+        revisions=revisions_from_audit(response,[])
+        self.assertEqual(revisions[0]["effective_date"],"2026-10-28")
 
     def test_unrelated_match_response_ignored(self):
         other=[{"match_id":"match-B","scenario":"low","submitted_date":"2026-11-09"}]
