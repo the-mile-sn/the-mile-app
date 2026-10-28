@@ -18,7 +18,7 @@ def resolve_day(day, classification, baseline, overrides, scenario_cells,
     dates before the response was submitted. Only the first two dates after
     that match can be influenced. Existing explicit meal overrides always win.
 
-    today is supplied by the caller to avoid implicit server time / timezone.
+    today is the date of the as-of query; once applied, an automatic choice\n    remains visible in historical views rather than disappearing tomorrow.\n    A later submission never changes days preceding its submission date.
     Submission date is a calendar date provided by the caller; timestamps
     must be normalized to the appropriate agreed timezone before invocation.
     """
@@ -26,14 +26,17 @@ def resolve_day(day, classification, baseline, overrides, scenario_cells,
     current=date.fromisoformat(today)
     match_index={m["id"]:date.fromisoformat(m["match_date"]) for m in matches}
     eligible_response=None
-    if classification in ELIGIBLE and target>=current:
+    if classification in ELIGIBLE:
         candidates=[]
         for record in responses:
             match_day=match_index.get(record.get("match_id"))
             if match_day is None or (target-match_day).days not in (1,2):
                 continue
             submitted=record.get("submitted_date")
-            if not submitted or date.fromisoformat(submitted)>target:
+            if not submitted:
+                continue
+            submitted_day=date.fromisoformat(submitted)
+            if submitted_day>target or submitted_day>current:
                 continue
             scenario=record.get("scenario")
             if scenario not in SCENARIOS:
