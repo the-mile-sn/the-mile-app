@@ -76,6 +76,25 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   try{await navigator.clipboard.writeText(input.value);$("admin-access-feedback").textContent="Ligação copiada. Envia-a em privado ao Filipe.";}
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
+let monitoringSavedWeights=[];
+const monitoringWeightDate=()=>$("monitoring-weight-date").value;
+$("monitoring-weight-date").max=new Date().toISOString().slice(0,10);
+$("monitoring-weight-date").value=new Date().toISOString().slice(0,10);
+$("monitoring-weight-form").addEventListener("submit",async e=>{
+ e.preventDefault();const aid=model?.athlete?.id;if(!aid)return;
+ const button=e.submitter||$("monitoring-weight-form").querySelector('[type="submit"]');button.disabled=true;
+ try{
+  await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"save",date:monitoringWeightDate(),weight:$("monitoring-weight-value").value})});
+  $("monitoring-weight-feedback").textContent="Registo guardado.";
+  $("monitoring-weight-cancel").hidden=true;await openMonitoring("weight");
+ }catch(err){$("monitoring-weight-feedback").textContent="Não foi possível guardar: "+err.message;}finally{button.disabled=false;}
+});
+$("monitoring-weight-cancel").addEventListener("click",()=>{$("monitoring-weight-value").value="";$("monitoring-weight-date").value=new Date().toISOString().slice(0,10);$("monitoring-weight-cancel").hidden=true;});
+async function deleteMonitoringWeight(date){
+ const aid=model?.athlete?.id;if(!aid||!window.confirm("Eliminar o registo de peso de "+monitoringDate(date)+"? Esta ação não afeta avaliações antropométricas."))return;
+ try{await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"delete",date,confirm:"ELIMINAR_PESO"})});$("monitoring-weight-feedback").textContent="Registo eliminado.";await openMonitoring("weight");}
+ catch(err){$("monitoring-weight-feedback").textContent="Não foi possível eliminar: "+err.message;}
+}
 let monitoringRequestVersion=0;
 const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
@@ -119,6 +138,12 @@ async function openMonitoring(kind){
    else {
     const scenarios={very_low:"Very low",low:"Low",medium:"Medium",high:"High"};
     line.textContent=monitoringDate(record.match_date)+" · "+(record.minutes==null?"Não joguei":record.minutes+" min")+" · "+(scenarios[record.scenario]||record.scenario);
+   }
+   if(kind==="weight"){
+    const actions=document.createElement("span");actions.className="monitoring-row-actions";
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;$("monitoring-weight-value").focus();};
+    const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringWeight(record.weigh_date);
+    actions.append(edit,remove);line.append(actions);
    }
    list.append(line);
   }
