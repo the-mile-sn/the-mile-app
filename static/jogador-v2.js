@@ -621,6 +621,79 @@ async function loadPlayerPostMatch(){
  }catch{playerPostMatchRecords=[];}
  injectPostMatchCard();
 }
+async function renderWeightCard(root,date){
+ const card=document.createElement("section");card.className="daily-weight-card";
+ const header=document.createElement("div");header.className="daily-weight-header";
+ const glyph=document.createElement("span");glyph.className="daily-weight-icon";glyph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
+ const label=document.createElement("span");label.className="daily-weight-label";label.textContent="Peso em jejum";
+ const value=document.createElement("span");value.className="daily-weight-value";
+ const action=document.createElement("button");action.type="button";action.className="daily-weight-action";
+ header.append(glyph,label,value,action);card.append(header);
+ const panel=document.createElement("div");panel.className="daily-weight-panel";panel.hidden=true;card.append(panel);
+ root.append(card);
+ let data;
+ try{data=await api("/api/v2/player/weight?date="+date);}catch{card.remove();return;}
+ if(iso(day)!==date||overviewMode!=="day"){card.remove();return;}
+ const current=data.entries?.find(x=>x.weigh_date===date);
+ const previous=data.previous;
+ const format=x=>Number(x).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+ const existing=!!current;
+ if(existing){
+  const top=document.createElement("strong");top.textContent=format(current.weight_kg)+" kg";value.append(top);
+  if(previous){const difference=Number(current.weight_kg)-Number(previous.weight_kg);const small=document.createElement("small");small.textContent=(difference>0?"+":"")+format(difference)+" kg";value.append(small);}
+  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  action.setAttribute("aria-label","Ver evolução do peso");
+ }else{
+  const sub=document.createElement("small");sub.textContent="Regista o teu peso de hoje";value.append(sub);
+  action.textContent="+";action.setAttribute("aria-label","Registar peso em jejum");
+ }
+ function editor(){
+  panel.replaceChildren();
+  const form=document.createElement("form");form.className="daily-weight-form";
+  const title=document.createElement("strong");title.textContent="Peso em jejum (kg)";
+  const select=document.createElement("select");select.required=true;
+  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar peso";select.append(empty);
+  for(let n=400;n<=1400;n++){const option=document.createElement("option");option.value=(n/10).toFixed(1);option.textContent=format(n/10);select.append(option);}
+  select.value=current?Number(current.weight_kg).toFixed(1):"";
+  const save=document.createElement("button");save.type="submit";save.textContent="Guardar";
+  const close=document.createElement("button");close.type="button";close.textContent="Cancelar";close.onclick=()=>{panel.hidden=true;panel.replaceChildren();};
+  const errorText=document.createElement("p");errorText.setAttribute("role","alert");
+  form.append(title,select);
+  if(String(me?.sex||"").toUpperCase()==="F"){
+   const group=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
+   for(const [v,t] of [["","Não responder"],["yes","Sim"],["no","Não"]]){
+    const l=document.createElement("label"),input=document.createElement("input");input.type="radio";input.name="weight-menstruating";input.value=v;input.checked=current?(current.menstruating===null?v==="":current.menstruating?v==="yes":v==="no"):v==="";l.append(input,document.createTextNode(t));group.append(l);
+   }form.append(group);
+  }
+  const buttons=document.createElement("div");buttons.className="daily-weight-form-actions";buttons.append(close,save);form.append(buttons,errorText);panel.append(form);
+  form.onsubmit=async e=>{
+   e.preventDefault();save.disabled=true;errorText.textContent="";
+   try{
+    const checked=form.querySelector('input[name="weight-menstruating"]:checked');
+    const menstruating=checked?checked.value==="yes"?true:checked.value==="no"?false:null:null;
+    await api("/api/v2/player/weight",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
+      body:JSON.stringify({date,weight:select.value,menstruating})});
+    await overview();
+   }catch(err){errorText.textContent="Não foi possível guardar: "+err.message;save.disabled=false;}
+  };
+ }
+ function chart(){
+  panel.replaceChildren();
+  const heading=document.createElement("div");heading.className="daily-weight-chart-heading";
+  const t=document.createElement("strong");t.textContent="Evolução do peso (últimos 10 dias)";
+  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=editor;heading.append(t,edit);panel.append(heading);
+  const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
+  if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(p);return;}
+  const values=items.map(x=>Number(x.weight_kg));const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 320 145");svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução do peso nos últimos dez dias");
+  const n=items.length,range=Math.max(1,high-low);
+  const coords=items.map((x,i)=>[18+i*284/Math.max(1,n-1),115-(Number(x.weight_kg)-low)/range*90]);
+  const path=document.createElementNS(svg.namespaceURI,"polyline");path.setAttribute("points",coords.map(p=>p.join(",")).join(" "));path.setAttribute("fill","none");path.setAttribute("stroke","#aeb7c2");path.setAttribute("stroke-width","2");svg.append(path);
+  coords.forEach((p,i)=>{const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);dot.setAttribute("r",i===n-1?"4":"2.7");dot.setAttribute("fill",i===n-1?"#5da8ed":"#c4cbd2");svg.append(dot);const tx=document.createElementNS(svg.namespaceURI,"text");tx.setAttribute("x",p[0]);tx.setAttribute("y","137");tx.setAttribute("text-anchor","middle");tx.setAttribute("fill","#9ca3af");tx.setAttribute("font-size","10");tx.textContent=items[i].weigh_date.slice(-2);svg.append(tx);});
+  panel.append(svg);
+ }
+ action.onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden){existing?chart():editor();}};
+}
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
@@ -748,6 +821,7 @@ async function overview(){
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }
+ await renderWeightCard(root,d);
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
