@@ -1496,7 +1496,18 @@ def application(env, start_response):
                 last=(q.get('end') or [''])[0]
                 try:
                     if path.endswith('/menus'):
-                        return respond(200, {'menus': microcycles_v2.list_menus(c, link['athlete_id'], first, last)})
+                        menus=microcycles_v2.list_menus(c,link['athlete_id'],first,last)
+                        classes=calendar_v2.classify_range(first,last,[m['match_date'] for m in microcycles_v2.list_matches(c,link['athlete_id'])])
+                        class_by_day={d['date']:d['classification'] for d in classes}
+                        model_data=microcycles_v2.get_model(c,link['athlete_id'])
+                        class_meals={row['name']:row['meals'] for row in model_data['classifications']}
+                        overrides={(x['meal_date'],x['meal']):x['color'] for x in day_colors_v2.list_colors(c,link['athlete_id'],first,last)}
+                        for menu in menus:
+                            key=(menu['menu_date'],menu['meal'])
+                            base=class_meals.get(class_by_day.get(menu['menu_date']),{}).get(menu['meal'])
+                            color=overrides.get(key,base)
+                            menu['effective_color']=None if color=='none' else color
+                        return respond(200,{'menus':menus})
                     days = calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])])
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
