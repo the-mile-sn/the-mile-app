@@ -41,17 +41,17 @@ def resolve_day(day, classification, baseline, overrides, scenario_cells,
                     revisions=[{"effective_date":record.get("submitted_date"),
                                 "scenario":record.get("scenario")}]
                 valid=[]
-                for revision in revisions:
+                for index,revision in enumerate(revisions):
                     effective=revision.get("effective_date")
                     scenario=revision.get("scenario")
                     if not effective or scenario not in SCENARIOS:
                         continue
                     effective_day=date.fromisoformat(effective)
                     if effective_day<=target and effective_day<=current:
-                        valid.append((effective_day,scenario))
+                        valid.append((effective_day,index,scenario))
                 if valid:
                     eligible_response=record
-                    eligible_scenario=max(valid,key=lambda item:item[0])[1]
+                    eligible_scenario=max(valid,key=lambda item:(item[0],item[1]))[2]
     resolved={}
     for meal in MEALS:
         color=baseline.get(meal)
