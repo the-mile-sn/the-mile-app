@@ -55,6 +55,33 @@ $("admin-signout").onclick=async()=>{
 };
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
 async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
+async function runScenarioPreview(){
+ const aid=model?.athlete?.id,day=$("scenario-preview-date").value;
+ const out=$("scenario-preview-output"),info=$("scenario-preview-status");
+ if(!aid||!day){info.textContent="Seleciona uma data.";return;}
+ const button=$("scenario-preview-run");button.disabled=true;info.textContent="A consultar…";out.replaceChildren();
+ try{
+  const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/prescription-preview?date="+encodeURIComponent(day));
+  if(model?.athlete?.id!==aid)return;
+  info.textContent="Classificação: "+(data.classification||"Sem classificação")+" · Pré-visualização, sem alterações guardadas.";
+  const table=document.createElement("table");table.className="scenario-matrix";
+  const header=document.createElement("tr");
+  for(const name of ["Refeição","Cor efetiva","Origem","Cenário"]){const th=document.createElement("th");th.textContent=name;header.append(th);}
+  table.append(header);
+  const sourceLabels={base:"Modelo base",manual:"Alteração manual",scenario:"Cenário pós-jogo"};
+  for(const meal of model.meals){
+   const item=data.meals?.[meal]||{};
+   const tr=document.createElement("tr");
+   for(const value of [names[meal],item.color?(colors[item.color]||item.color):"Sem refeição",sourceLabels[item.source]||"—",item.scenario||"—"]){
+    const td=document.createElement("td");td.textContent=value;tr.append(td);
+   }
+   table.append(tr);
+  }
+  out.append(table);
+ }catch(e){info.textContent="Não foi possível consultar: "+e.message;}
+ finally{button.disabled=false;}
+}
+$("scenario-preview-run").addEventListener("click",runScenarioPreview);
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
 const scenarioVariants=[["very_low","Very low"],["low","Low"],["medium","Medium"]];
 let scenarioCells=[];
