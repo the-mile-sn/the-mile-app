@@ -76,6 +76,28 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   try{await navigator.clipboard.writeText(input.value);$("admin-access-feedback").textContent="Ligação copiada. Envia-a em privado ao Filipe.";}
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
+let monitoringRequestVersion=0;
+async function openMonitoring(kind){
+ const athleteId=model?.athlete?.id;if(!athleteId)return;
+ const version=++monitoringRequestVersion;
+ for(const k of ["weight","game"]){$("monitoring-"+k+"-content").hidden=k!==kind;}
+ const info=$("monitoring-"+kind+"-status"),list=$("monitoring-"+kind+"-list");
+ info.textContent="A carregar…";list.replaceChildren();
+ try{
+  const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/monitoring");
+  if(version!==monitoringRequestVersion||model?.athlete?.id!==athleteId)return;
+  const rows=kind==="weight"?data.weights:data.games;
+  if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
+  info.textContent=rows.length+" registo(s)";
+  for(const record of rows){
+   const line=document.createElement("p");line.className="monitoring-entry";
+   line.textContent=kind==="weight"?assessmentPtDate(record.weigh_date)+" · "+String(record.weight_kg).replace(".",",")+" kg":assessmentPtDate(record.match_date)+" · "+(record.minutes==null?"Não joguei":record.minutes+" min")+" · "+record.scenario;
+   list.append(line);
+  }
+ }catch(e){if(version===monitoringRequestVersion)info.textContent="Não foi possível carregar os registos."; }
+}
+$("monitoring-weight-button").addEventListener("click",()=>openMonitoring("weight"));
+$("monitoring-game-button").addEventListener("click",()=>openMonitoring("game"));
 let profileEditing=false;
 function renderProfileSummary(){
   if(!model)return;
