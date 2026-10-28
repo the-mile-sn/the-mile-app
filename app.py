@@ -783,12 +783,15 @@ def application(env, start_response):
                 colors=prescription_effective_v2.resolve_day(day,classification,base_row,overrides,scenarios,matches,responses,current.isoformat())
                 # Match the existing ADMIN nutrition preview: validated plan options, not only player publications.
                 validated_options=plan_import_v2.validated_meal_options(c,aid)
-                effective_totals=effective_nutrition_v2.calculate_day(colors,validated_options)
+                # Peri meals are identical for both scenarios and must be included in both totals.
+                event_data=events_v2.list_events(c,aid,day,day)
+                peri_meals=peri_v2.list_event_meals(c,aid,day,day,event_data)
+                effective_totals=effective_nutrition_v2.calculate_day(colors,validated_options,peri_meals)
                 baseline_colors={meal:{'color':overrides.get((day,meal),base_row.get(meal))} for meal in microcycles_v2.MEALS}
-                baseline_totals=effective_nutrition_v2.calculate_day(baseline_colors,validated_options)
+                baseline_totals=effective_nutrition_v2.calculate_day(baseline_colors,validated_options,peri_meals)
                 return respond(200,{'date':day,'classification':classification,'meals':colors,
                                     'nutrition_preview':effective_totals,
-                                    'nutrition_current':baseline_totals,'nutrition_source':'validated_admin_plans','preview_only':True})
+                                    'nutrition_current':baseline_totals,'nutrition_source':'validated_admin_plans','peri_count':len(peri_meals),'preview_only':True})
             # Admin-only post-match records: no automatic microcycle changes.
             if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/game') and method=='POST':
                 if not user:raise Problem(401,'unauthorized')
