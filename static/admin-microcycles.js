@@ -83,6 +83,7 @@ function renderProfileSummary(){
   root.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:18px 0";
   const fields=[
     ["Nome","name",athlete.name,"text"],
+    ["Sexo","sex",athlete.sex,"sex"],
     ["Peso atual","weight_kg",athlete.weight_kg,"number"],
     ["Altura","height_cm",athlete.height_cm,"number"],
     ["Notas internas","profile_notes",athlete.profile_notes,"textarea"]
@@ -93,8 +94,9 @@ function renderProfileSummary(){
     const caption=document.createElement("small");caption.textContent=label;caption.style.color="#a9a9b2";
     let field;
     if(profileEditing){
-      field=type==="textarea"?document.createElement("textarea"):document.createElement("input");
-      if(type!=="textarea"){field.type=type;if(type==="number"){field.step=".1";field.min=key==="weight_kg"?"20":"100";field.max=key==="weight_kg"?"250":"230";}}
+      field=type==="textarea"?document.createElement("textarea"):document.createElement(type==="sex"?"select":"input");
+      if(type==="sex"){for(const [v,t] of [["","Por definir"],["F","Feminino"],["M","Masculino"]]){const opt=document.createElement("option");opt.value=v;opt.textContent=t;field.append(opt);}}
+      if(type!=="textarea"&&type!=="sex"){field.type=type;if(type==="number"){field.step=".1";field.min=key==="weight_kg"?"20":"100";field.max=key==="weight_kg"?"250":"230";}}
       field.value=value??"";field.dataset.profileField=key;field.setAttribute("aria-label",label);
       field.style.cssText="width:100%;box-sizing:border-box;min-width:0";
       if(type==="textarea")field.rows=3;
@@ -117,7 +119,7 @@ $("save-athlete-profile").addEventListener("click",async()=>{
     const get=key=>document.querySelector('[data-profile-field="'+key+'"]').value;
     const raw=get("weight_kg"),height=get("height_cm");
     const result=await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/profile",{method:"PUT",body:JSON.stringify({
-      name:get("name").trim(),weight_kg:raw===""?null:Number(raw),height_cm:height===""?null:Number(height),profile_notes:get("profile_notes")
+      name:get("name").trim(),sex:get("sex")||null,weight_kg:raw===""?null:Number(raw),height_cm:height===""?null:Number(height),profile_notes:get("profile_notes")
     })});
     model.athlete=result.athlete;profileEditing=false;renderProfileSummary();
     const active=$("athlete").selectedOptions[0];if(active)active.textContent=result.athlete.name;
