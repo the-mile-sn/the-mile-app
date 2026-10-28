@@ -505,13 +505,6 @@ function appendWeeklyEvents(host,dates,session){
 
 // Post-match form, ordered by game date. Admin corrections remain available.
 let playerPostMatchRecords=[];
-function showPostMatchSuccess(matchId){
- const card=Array.from(document.querySelectorAll(".post-match-inline")).find(x=>x.dataset.matchId===matchId);
- if(!card)return;
- const notice=document.createElement("span");notice.className="post-match-inline-confirm";notice.setAttribute("role","status");notice.textContent="✓ Guardado com sucesso";
- const status=card.querySelector(".post-match-inline-status");if(status){status.replaceWith(notice);const close=document.createElement("span");close.className="post-match-inline-confirm-close";close.textContent="×";close.setAttribute("role","button");close.setAttribute("tabindex","0");close.setAttribute("aria-label","Fechar confirmação");const dismiss=()=>notice.replaceWith(status);close.onclick=e=>{e.stopPropagation();dismiss();};close.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();dismiss();}};notice.append(close);}
-}
-
 function injectPostMatchCard(){
  const root=$("day-details");
  if(!root||root.hidden)return;
@@ -613,7 +606,6 @@ function injectPostMatchCard(){
       headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
      await overview();
-     showPostMatchSuccess(game.id);
     }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
    };
   }
