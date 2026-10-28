@@ -2920,3 +2920,29 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form .post-match-options input[type="radio"],.post-match-inline-form .post-match-options input[type="checkbox"]{width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;max-width:17px!important;max-height:17px!important;flex-basis:17px!important}
 .post-match-inline-form .post-match-options input[type="radio"]:checked:after{inset:4px!important}
 .post-match-inline-form .post-match-options input[type="checkbox"]:checked:after{left:5px!important;top:2px!important;width:4px!important;height:8px!important}
+
+/* Fasting weight card: matches daily nutrition and meal card surfaces */
+.daily-weight-card{background:#25262b;color:#f1f1f4;border-radius:12px;margin:8px 0 12px;overflow:hidden;font:inherit}
+.daily-weight-header{display:flex;align-items:center;min-height:61px;padding:9px 13px;gap:13px}
+.daily-weight-icon{width:40px;height:40px;flex:0 0 40px;border-radius:10px;background:#1e2025;display:grid;place-items:center}
+.daily-weight-icon svg{width:25px;height:25px}
+.daily-weight-label{font-size:16px;font-weight:500;flex:1;min-width:0}
+.daily-weight-value{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
+.daily-weight-value strong{font-size:16px;font-weight:600}
+.daily-weight-value small{font-size:12px;color:#aaaeb8;font-weight:400}
+.daily-weight-action{width:41px;height:41px;flex:0 0 41px;border:none;border-radius:50%;background:#3a3c43;color:#f3f3f4;display:grid;place-items:center;font:inherit;font-size:26px;cursor:pointer}
+.daily-weight-action svg{width:20px;height:20px}
+.daily-weight-panel{padding:16px 17px 20px;border-top:1px solid #33353b}
+.daily-weight-panel[hidden]{display:none}
+.daily-weight-chart-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;font-size:13px}
+.daily-weight-chart-heading button{border:0;background:#373941;color:#d9dce2;padding:7px 12px;border-radius:8px}
+.daily-weight-panel svg{display:block;width:100%;max-height:200px}
+.daily-weight-form{display:grid;gap:12px;font-size:14px}
+.daily-weight-form select{width:100%;padding:10px;background:#1c1e23;border:1px solid #484a50;border-radius:9px;color:#fff;font:inherit}
+.daily-weight-form fieldset{border:0;padding:0;margin:2px 0;display:grid;gap:8px}
+.daily-weight-form legend{margin-bottom:8px;color:#d0d2d8}
+.daily-weight-form fieldset label{display:flex;align-items:center;gap:10px}
+.daily-weight-form fieldset input{accent-color:#dde4eb}
+.daily-weight-form-actions{display:flex;justify-content:flex-end;gap:10px}
+.daily-weight-form-actions button{border:0;border-radius:9px;padding:9px 14px;background:#454751;color:white;font:inherit}
+.daily-weight-form-actions button:last-child{background:#e4e7ea;color:#202227}
