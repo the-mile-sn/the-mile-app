@@ -1235,10 +1235,30 @@ def application(env, start_response):
                     raise Problem(400, 'invalid_calendar_range')
                 event_data=events_v2.list_events(c,aid,start,end)
                 override_rows=c.execute("SELECT match_id,phase,state FROM v2_match_peri_overrides WHERE athlete_id=?",(aid,)).fetchall()
+                model_data=microcycles_v2.get_model(c,aid)
+                base_rows={row['name']:row['meals'] for row in model_data['classifications']} if model_data else {}
+                manual={(row['meal_date'],row['meal']):row['color'] for row in day_colors_v2.list_colors(c,aid,start,end)}
+                variants={(row['classification'],row['scenario'],row['meal']):row['color'] for row in c.execute(
+                    "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
+                responses=[]
+                for response in c.execute("SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall():
+                    raw=dict(response)
+                    audit=[dict(row) for row in c.execute(
+                        "SELECT id,record_type,record_id,new_json,created_at FROM v2_monitoring_audit WHERE athlete_id=? AND record_type='post_match' AND record_id=? ORDER BY created_at,id",(aid,raw['id'])).fetchall()]
+                    responses.append({'match_id':raw['match_id'],'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                effective_colors={}
+                for item in days:
+                    resolved=prescription_effective_v2.resolve_day(
+                        item['date'],item['classification'],base_rows.get(item['classification'],{}),
+                        manual,variants,matches,responses,today)
+                    effective_colors[item['date']]={meal:{'color':value['color'],'source':value['source']}
+                        for meal,value in resolved.items()}
                 return respond(200, {'matches': matches, 'days': days,'events':event_data,
                                      'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
-                                     'match_peri_overrides':[dict(r) for r in override_rows]})
+                                     'match_peri_overrides':[dict(r) for r in override_rows],
+                                     'effective_colors':effective_colors})
             if path == '/api/v2/dishes/photo' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
