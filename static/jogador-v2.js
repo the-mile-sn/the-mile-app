@@ -649,13 +649,24 @@ async function renderWeightCard(root,date){
  function editor(){
   panel.replaceChildren();
   const form=document.createElement("form");form.className="daily-weight-form";
-  const select=document.createElement("select");select.required=true;
-  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar peso";select.append(empty);
-  for(let n=400;n<=1400;n++){const option=document.createElement("option");option.value=(n/10).toFixed(1);option.textContent=format(n/10);select.append(option);}
-  select.value=current?Number(current.weight_kg).toFixed(1):"";
+  const picker=document.createElement("div");picker.className="daily-weight-picker";
+  const createWheel=(caption,values)=>{
+   const col=document.createElement("label");col.className="daily-weight-picker-column";
+   const label=document.createElement("span");label.textContent=caption;
+   const select=document.createElement("select");select.required=true;
+   for(const [value,text] of values){const option=document.createElement("option");option.value=String(value);option.textContent=text;select.append(option);}
+   col.append(label,select);picker.append(col);return select;
+  };
+  const kg=createWheel("kg",Array.from({length:101},(_,i)=>[40+i,String(40+i)]));
+  const grams=createWheel("g",Array.from({length:10},(_,i)=>[i*100,String(i*100)]));
+  const base=current?Number(current.weight_kg):null;
+  kg.value=String(base===null?Math.max(40,Math.min(140,Math.floor(Number(me?.weight_kg)||75))):Math.floor(base+0.00001));
+  grams.value=String(base===null?0:Math.round((base-Math.floor(base+0.00001))*10)*100);
+  const limit=()=>{for(const option of grams.options)option.disabled=kg.value==="140"&&option.value!=="0";if(kg.value==="140")grams.value="0";};
+  kg.addEventListener("change",limit);limit();
   const save=document.createElement("button");save.type="submit";save.textContent="Guardar";
   const errorText=document.createElement("p");errorText.setAttribute("role","alert");
-  form.append(select);
+  form.append(picker);
   if(String(me?.sex||"").toUpperCase()==="F"){
    const group=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
    for(const [v,t] of [["","Não responder"],["yes","Sim"],["no","Não"]]){
@@ -669,7 +680,7 @@ async function renderWeightCard(root,date){
     const checked=form.querySelector('input[name="weight-menstruating"]:checked');
     const menstruating=checked?checked.value==="yes"?true:checked.value==="no"?false:null:null;
     await api("/api/v2/player/weight",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
-      body:JSON.stringify({date,weight:select.value,menstruating})});
+      body:JSON.stringify({date,weight:(Number(kg.value)+Number(grams.value)/1000).toFixed(1),menstruating})});
     await overview();
    }catch(err){errorText.textContent="Não foi possível guardar: "+err.message;save.disabled=false;}
   };
