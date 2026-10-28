@@ -1398,8 +1398,7 @@ def application(env, start_response):
                 match=next((m for m in matches if m['id']==body.get('match_id')),None)
                 if not match:raise Problem(404,'match_not_found')
                 if not available(match):raise Problem(403,'post_match_not_open')
-                prior=c.execute("SELECT id FROM v2_post_match_responses WHERE athlete_id=? AND match_id=?",(aid,match['id'])).fetchone()
-                if prior:raise Problem(409,'already_answered')
+                prior=c.execute("SELECT * FROM v2_post_match_responses WHERE athlete_id=? AND match_id=?",(aid,match['id'])).fetchone()
                 raw=body.get('minutes')
                 if raw=='not_played':
                     minutes=None;scenario='very_low'
@@ -1410,12 +1409,19 @@ def application(env, start_response):
                         if str(minutes)!=str(raw) or minutes not in range(5,121,5):raise ValueError()
                     except (TypeError,ValueError):raise Problem(400,'invalid_match_minutes')
                     scenario='low' if minutes<30 else 'medium' if minutes<60 else 'high'
-                stamp=int(time.time());record_id=secrets.token_hex(16)
-                c.execute("INSERT INTO v2_post_match_responses(id,athlete_id,match_id,minutes,scenario,answers_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-                          (record_id,aid,match['id'],minutes,scenario,'{}',stamp,stamp))
+                stamp=int(time.time())
+                if prior:
+                    record_id=prior['id']
+                    c.execute("UPDATE v2_post_match_responses SET minutes=?,scenario=?,answers_json=?,updated_at=? WHERE id=? AND athlete_id=?",
+                              (minutes,scenario,prior['answers_json'],stamp,record_id,aid))
+                else:
+                    record_id=secrets.token_hex(16)
+                    c.execute("INSERT INTO v2_post_match_responses(id,athlete_id,match_id,minutes,scenario,answers_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+                              (record_id,aid,match['id'],minutes,scenario,'{}',stamp,stamp))
                 c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
-                          (secrets.token_hex(16),aid,'post_match',record_id,user['id'],None,
-                           json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':{}}),stamp))
+                          (secrets.token_hex(16),aid,'post_match',record_id,user['id'],
+                           json.dumps(dict(prior)) if prior else None,
+                           json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':json.loads(prior['answers_json']) if prior else {}}),stamp))
                 c.commit()
                 return respond(200,{'ok':True,'scenario':scenario})
             if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
