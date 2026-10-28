@@ -726,6 +726,50 @@ def application(env, start_response):
                 binary=base64.b64decode(image)
                 mime='image/png' if binary.startswith(b'\\x89PNG') else 'image/jpeg' if binary.startswith(b'\\xff\\xd8') else 'image/webp'
                 return respond(200,binary,mime)
+            # Admin-only weight entry, correction and deletion; no prescription side effects.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring/weight') and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)!=6 or seg[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                aid=seg[3]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():raise Problem(404,'not_found')
+                body=read_json(env)
+                action=body.get('action')
+                from datetime import date as weight_date
+                try:
+                    day=weight_date.fromisoformat(body.get('date',''))
+                    if day.isoformat()!=body.get('date') or day>weight_date.today():raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight_date')
+                previous=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,day.isoformat())).fetchone()
+                if action=='save':
+                    try:
+                        value=float(str(body.get('weight')).replace(',','.'))
+                        import math
+                        if not math.isfinite(value) or not 40<=value<=140 or round(value,1)!=value:raise ValueError()
+                    except (TypeError,ValueError):raise Problem(400,'invalid_weight')
+                    import secrets as weight_secrets
+                    import time as weight_time
+                    now=int(weight_time.time())
+                    if previous:
+                        c.execute("UPDATE v2_daily_weighins SET weight_kg=?,updated_at=? WHERE id=?",(value,now,previous['id']))
+                        entry_id=previous['id']
+                    else:
+                        entry_id=weight_secrets.token_hex(16)
+                        c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",(entry_id,aid,day.isoformat(),value,None,now,now))
+                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(weight_secrets.token_hex(16),aid,'weight',entry_id,user['id'],json.dumps(dict(previous)) if previous else None,json.dumps({'date':day.isoformat(),'weight_kg':value}),now))
+                    c.commit()
+                    return respond(200,{'ok':True})
+                if action=='delete':
+                    if body.get('confirm')!='ELIMINAR_PESO' or not previous:raise Problem(400,'invalid_weight_delete')
+                    import secrets as weight_secrets
+                    import time as weight_time
+                    now=int(weight_time.time())
+                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(weight_secrets.token_hex(16),aid,'weight',previous['id'],user['id'],json.dumps(dict(previous)),json.dumps({'deleted':True}),now))
+                    c.execute("DELETE FROM v2_daily_weighins WHERE id=? AND athlete_id=?",(previous['id'],aid))
+                    c.commit()
+                    return respond(200,{'ok':True})
+                raise Problem(400,'invalid_weight_action')
             # Read-only monitoring foundation, available only to authorised admins.
             if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring') and method=='GET':
                 if not user:raise Problem(401,'unauthorized')
