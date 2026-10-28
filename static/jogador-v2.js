@@ -174,7 +174,17 @@ async function renderSupplementPlan(target){
   box.append(title,meta);if(item.note){const note=document.createElement("small");note.textContent=item.note;box.append(note);}root.append(box);
  }
 }
+// Inactive integration seam: the live player UI always uses its existing
+// prescription until an explicitly reviewed activation enables this flag.
+const POST_MATCH_DISPLAY_ENABLED=false;
+let effectiveScenarioColorsByDay={};
 function assignedColor(date,meal,classification){
+ if(POST_MATCH_DISPLAY_ENABLED){
+  const simulated=effectiveScenarioColorsByDay[date];
+  if(simulated&&Object.prototype.hasOwnProperty.call(simulated,meal)){
+   return simulated[meal]==="none"?null:simulated[meal];
+  }
+ }
  const own=dayColorOverrides[date+"|"+meal];
  if(own==="none")return null;
  if(own)return own;
