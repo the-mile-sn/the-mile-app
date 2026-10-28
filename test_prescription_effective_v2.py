@@ -43,6 +43,35 @@ class EffectiveColorTests(unittest.TestCase):
         high=[{"match_id":"match-A","scenario":"high","submitted_date":"2026-11-09"}]
         self.assertEqual(self.resolve(responses=high)["lunch"]["color"],"blue")
 
+    def test_edit_on_md2_preserves_md1_and_updates_md2(self):
+        self.cells[("MD+2/-2","medium","lunch")]="green"
+        revised=[{"match_id":"match-A","revisions":[
+            {"effective_date":"2026-11-09","scenario":"low"},
+            {"effective_date":"2026-11-10","scenario":"medium"}]}]
+        self.assertEqual(self.resolve(responses=revised,today="2026-11-10")["lunch"]["color"],"yellow")
+        self.assertEqual(self.resolve(day="2026-11-10",classification="MD+2/-2",
+                                      responses=revised,today="2026-11-10")["lunch"]["color"],"green")
+
+    def test_late_original_response_only_affects_md2(self):
+        self.cells[("MD+2/-2","low","lunch")]="green"
+        late=[{"match_id":"match-A","scenario":"low","submitted_date":"2026-11-10"}]
+        self.assertEqual(self.resolve(responses=late,today="2026-11-10")["lunch"]["color"],"blue")
+        self.assertEqual(self.resolve(day="2026-11-10",classification="MD+2/-2",
+                                      responses=late,today="2026-11-10")["lunch"]["color"],"green")
+
+    def test_only_nearest_preceding_match_controls(self):
+        # A response linked to an older match must not override a newer match.
+        self.matches=[{"id":"A","match_date":"2026-11-08"},
+                      {"id":"B","match_date":"2026-11-09"}]
+        result=self.resolve(day="2026-11-10",classification="MD+1/-3",
+                            responses=[{"match_id":"A","scenario":"low","submitted_date":"2026-11-09"}],
+                            today="2026-11-10")
+        self.assertEqual(result["lunch"]["color"],"blue")
+
+    def test_missing_match_keeps_baseline(self):
+        self.matches=[]
+        self.assertEqual(self.resolve()["lunch"]["color"],"blue")
+
     def test_unrelated_match_response_ignored(self):
         other=[{"match_id":"match-B","scenario":"low","submitted_date":"2026-11-09"}]
         self.assertEqual(self.resolve(responses=other)["lunch"]["color"],"blue")
