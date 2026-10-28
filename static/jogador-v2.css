@@ -2729,3 +2729,17 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details .peri-meal > .daily-meal-head > .meal-leading-icon > .mile-icon svg{
  transform:none!important;
 }
+
+/* Post-match: discreet chronological card, subordinate to meal cards */
+.post-match-inline{margin:8px 0 12px;border-radius:10px;background:#15211d;overflow:hidden}
+.post-match-inline-trigger{appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:13px 16px;border:0;background:transparent;color:#f0f2ef;text-align:left;font:inherit;font-weight:500;cursor:pointer}
+.post-match-inline-icon{flex:none;color:#4fd29c;font-size:19px}
+.post-match-inline-status{margin-left:auto;color:#b9c3bd;font-size:13px;font-weight:400;white-space:nowrap}
+.post-match-inline.answered .post-match-inline-status{color:#4fd29c}
+.post-match-inline-trigger:disabled{cursor:default;opacity:1}
+.post-match-inline-form{padding:0 16px 16px;color:#d3d8d4}
+.post-match-inline-form[hidden]{display:none}
+.post-match-inline-form p{font-size:13px;color:#b9c3bd;margin:0 0 12px}
+.post-match-inline-form label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.post-match-inline-form select{max-width:150px;padding:9px;border-radius:8px;background:#292c2c;color:#fff;border:1px solid #454947}
+.post-match-inline-form button{border:0;border-radius:9px;padding:10px 14px;background:#31483e;color:#fff;font:inherit}
