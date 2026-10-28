@@ -1357,6 +1357,71 @@ def application(env, start_response):
                 return respond(200,{'days':output,'preview_only':True,
                     'scenario_data_available':scenario_available,
                     'scenario_automation_enabled':False})
+            # Player post-match minutes: shared records with admin monitoring.
+            # No edits or deletion by players; admins retain correction controls.
+            if path == '/api/v2/player/post-match' and method in ('GET','POST'):
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                matches=microcycles_v2.list_matches(c,aid)
+                today=datetime.now(ZoneInfo('Europe/Lisbon'))
+                def available(match):
+                    try:
+                        from datetime import time as local_time
+                        game_day=datetime.fromisoformat(match['match_date']).date()
+                        if game_day<today.date():return True
+                        if game_day>today.date():return False
+                        raw=match.get('match_time')
+                        if not raw:return False
+                        hour,minute=map(int,raw[:5].split(':'))
+                        end=datetime.combine(game_day,local_time(hour,minute),ZoneInfo('Europe/Lisbon'))+timedelta(hours=3)
+                        return today>=end
+                    except (ValueError,TypeError,AttributeError):
+                        return False
+                if method=='GET':
+                    required={'v2_post_match_responses','v2_monitoring_audit'}
+                    if isinstance(c,PgConnection):
+                        present={row['table_name'] for row in c.execute(
+                            "SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema() AND table_name IN (?,?)",
+                            tuple(sorted(required))).fetchall()}
+                    else:
+                        present={row['name'] for row in c.execute(
+                            "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?)",
+                            tuple(sorted(required))).fetchall()}
+                    if present!=required:return respond(200,{'matches':[],'available':False})
+                    rows=c.execute("SELECT match_id,minutes,scenario FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall()
+                    saved={row['match_id']:dict(row) for row in rows}
+                    return respond(200,{'available':True,'matches':[
+                        {'id':m['id'],'date':m['match_date'],'can_answer':available(m),
+                         'answered':m['id'] in saved,'minutes':saved.get(m['id'],{}).get('minutes')}
+                        for m in matches if m['match_date']>= (today.date()-timedelta(days=30)).isoformat()
+                        and m['match_date']<=today.date().isoformat()]})
+                body=read_json(env)
+                match=next((m for m in matches if m['id']==body.get('match_id')),None)
+                if not match:raise Problem(404,'match_not_found')
+                if not available(match):raise Problem(403,'post_match_not_open')
+                prior=c.execute("SELECT id FROM v2_post_match_responses WHERE athlete_id=? AND match_id=?",(aid,match['id'])).fetchone()
+                if prior:raise Problem(409,'already_answered')
+                raw=body.get('minutes')
+                if raw=='not_played':
+                    minutes=None;scenario='very_low'
+                else:
+                    try:
+                        if isinstance(raw,bool):raise ValueError()
+                        minutes=int(raw)
+                        if str(minutes)!=str(raw) or minutes not in range(5,121,5):raise ValueError()
+                    except (TypeError,ValueError):raise Problem(400,'invalid_match_minutes')
+                    scenario='low' if minutes<30 else 'medium' if minutes<60 else 'high'
+                stamp=int(time.time());record_id=secrets.token_hex(16)
+                c.execute("INSERT INTO v2_post_match_responses(id,athlete_id,match_id,minutes,scenario,answers_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+                          (record_id,aid,match['id'],minutes,scenario,'{}',stamp,stamp))
+                c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                          (secrets.token_hex(16),aid,'post_match',record_id,user['id'],None,
+                           json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':{}}),stamp))
+                c.commit()
+                return respond(200,{'ok':True,'scenario':scenario})
             if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
