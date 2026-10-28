@@ -506,6 +506,8 @@ function appendWeeklyEvents(host,dates,session){
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
+ // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
+ effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
  // An explicit future activation must separately enable POST_MATCH_DISPLAY_ENABLED.
  await api("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
