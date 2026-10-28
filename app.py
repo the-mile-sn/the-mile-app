@@ -1388,11 +1388,12 @@ def application(env, start_response):
                             "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?)",
                             tuple(sorted(required))).fetchall()}
                     if present!=required:return respond(200,{'matches':[],'available':False})
-                    rows=c.execute("SELECT match_id,minutes,scenario FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall()
+                    rows=c.execute("SELECT match_id,minutes,scenario,answers_json FROM v2_post_match_responses WHERE athlete_id=?",(aid,)).fetchall()
                     saved={row['match_id']:dict(row) for row in rows}
                     return respond(200,{'available':True,'matches':[
                         {'id':m['id'],'date':m['match_date'],'can_answer':available(m),
-                         'answered':m['id'] in saved,'minutes':saved.get(m['id'],{}).get('minutes')}
+                         'answered':m['id'] in saved,'minutes':saved.get(m['id'],{}).get('minutes'),
+                         'answers':json.loads(saved[m['id']]['answers_json']) if m['id'] in saved else {}}
                         for m in matches if m['match_date']>= (local_day-timedelta(days=30)).isoformat()
                         and m['match_date']<=local_day.isoformat()]})
                 match=next((m for m in matches if m['id']==body.get('match_id')),None)
@@ -1409,19 +1410,54 @@ def application(env, start_response):
                         if str(minutes)!=str(raw) or minutes not in range(5,121,5):raise ValueError()
                     except (TypeError,ValueError):raise Problem(400,'invalid_match_minutes')
                     scenario='low' if minutes<30 else 'medium' if minutes<60 else 'high'
+                answers=body.get('answers',{})
+                if not isinstance(answers,dict):raise Problem(400,'invalid_match_answers')
+                allowed={'feeling','effort','gi_level','gi_symptoms','game_symptoms',
+                         'food_pre','food_between','food_during','caffeine_pre',
+                         'caffeine_half','nitrates_pre','recovery_shake'}
+                if set(answers)-allowed:raise Problem(400,'invalid_match_answers')
+                if minutes is None:answers={}
+                for name in ('feeling','effort'):
+                    value=answers.get(name)
+                    if value is not None and (type(value)!=int or value not in range(1,11)):
+                        raise Problem(400,'invalid_match_answers')
+                if answers.get('gi_level') not in (None,'none','mild','moderate','severe'):
+                    raise Problem(400,'invalid_match_answers')
+                choices={'nausea','abdominal_pain','bloating','reflux','urgency','vomiting','other'}
+                symptoms={'none','cramps','muscle_pain','injury','weakness_dizziness','other'}
+                for name,options in (('gi_symptoms',choices),('game_symptoms',symptoms)):
+                    value=answers.get(name)
+                    if value is not None and (not isinstance(value,list) or
+                       len(value)!=len(set(str(x) for x in value)) or
+                       any(not isinstance(x,str) or x not in options for x in value)):
+                        raise Problem(400,'invalid_match_answers')
+                if answers.get('gi_level') not in ('mild','moderate','severe'):
+                    answers.pop('gi_symptoms',None)
+                if 'none' in (answers.get('game_symptoms') or []) and len(answers['game_symptoms'])>1:
+                    raise Problem(400,'invalid_match_answers')
+                for name in ('food_pre','food_between','food_during'):
+                    value=answers.get(name)
+                    if value is not None and (not isinstance(value,str) or len(value)>2000):
+                        raise Problem(400,'invalid_match_answers')
+                for name in ('caffeine_pre','caffeine_half','nitrates_pre','recovery_shake'):
+                    if answers.get(name) not in (None,True,False):
+                        raise Problem(400,'invalid_match_answers')
+                if len(json.dumps(answers,ensure_ascii=False))>10000:
+                    raise Problem(400,'invalid_match_answers')
+                answers_json=json.dumps(answers,ensure_ascii=False)
                 stamp=int(time.time())
                 if prior:
                     record_id=prior['id']
                     c.execute("UPDATE v2_post_match_responses SET minutes=?,scenario=?,answers_json=?,updated_at=? WHERE id=? AND athlete_id=?",
-                              (minutes,scenario,prior['answers_json'],stamp,record_id,aid))
+                              (minutes,scenario,answers_json,stamp,record_id,aid))
                 else:
                     record_id=secrets.token_hex(16)
                     c.execute("INSERT INTO v2_post_match_responses(id,athlete_id,match_id,minutes,scenario,answers_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-                              (record_id,aid,match['id'],minutes,scenario,'{}',stamp,stamp))
+                              (record_id,aid,match['id'],minutes,scenario,answers_json,stamp,stamp))
                 c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
                           (secrets.token_hex(16),aid,'post_match',record_id,user['id'],
                            json.dumps(dict(prior)) if prior else None,
-                           json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':json.loads(prior['answers_json']) if prior else {}}),stamp))
+                           json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':answers}),stamp))
                 c.commit()
                 return respond(200,{'ok':True,'scenario':scenario})
             if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
