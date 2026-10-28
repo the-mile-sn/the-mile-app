@@ -1357,6 +1357,62 @@ def application(env, start_response):
                 return respond(200,{'days':output,'preview_only':True,
                     'scenario_data_available':scenario_available,
                     'scenario_automation_enabled':False})
+            # Player daily fasting weight; uses the same monitoring records as Backoffice.
+            if path == '/api/v2/player/weight' and method in ('GET','POST'):
+                if not user:raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                aid=link['athlete_id']
+                from datetime import date as weight_date
+                current=weight_date.today()
+                if method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    selected=(q.get('date') or [current.isoformat()])[0]
+                else:
+                    payload=read_json(env)
+                    selected=payload.get('date')
+                try:
+                    target=weight_date.fromisoformat(selected)
+                    if target.isoformat()!=selected or target>current+timedelta(days=1) or target<current-timedelta(days=60):raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight_date')
+                first=(target-timedelta(days=9)).isoformat()
+                last=(target+timedelta(days=1)).isoformat()
+                if method=='GET':
+                    rows=[dict(row) for row in c.execute(
+                        "SELECT weigh_date,weight_kg,menstruating FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date BETWEEN ? AND ? ORDER BY weigh_date",
+                        (aid,first,last)).fetchall()]
+                    previous=c.execute(
+                        "SELECT weight_kg,weigh_date FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date<? ORDER BY weigh_date DESC LIMIT 1",
+                        (aid,selected)).fetchone()
+                    return respond(200,{'date':selected,'entries':rows,'previous':dict(previous) if previous else None})
+                if selected>current.isoformat():raise Problem(400,'future_weight_date')
+                raw=payload.get('weight')
+                try:
+                    weight=float(str(raw).replace(',','.'))
+                    if not 40<=weight<=140 or abs(weight*10-round(weight*10))>0.00001:raise ValueError()
+                except (TypeError,ValueError):raise Problem(400,'invalid_weight')
+                sex_row=c.execute("SELECT sex FROM v2_athletes WHERE id=?",(aid,)).fetchone()
+                is_f=bool(sex_row and str(sex_row['sex'] or '').upper()=='F')
+                menstruating=payload.get('menstruating')
+                if menstruating is not None and type(menstruating)!=bool:raise Problem(400,'invalid_menstruation')
+                if not is_f:menstruating=None
+                before=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,selected)).fetchone()
+                now=int(time.time())
+                if before:
+                    entry_id=before['id']
+                    c.execute("UPDATE v2_daily_weighins SET weight_kg=?,menstruating=?,updated_at=? WHERE id=? AND athlete_id=?",
+                              (weight,menstruating,now,entry_id,aid))
+                else:
+                    entry_id=secrets.token_hex(16)
+                    c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",
+                              (entry_id,aid,selected,weight,menstruating,now,now))
+                c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                          (secrets.token_hex(16),aid,'weight',entry_id,user['id'],
+                           json.dumps(dict(before)) if before else None,
+                           json.dumps({'date':selected,'weight_kg':weight,'menstruating':menstruating}),now))
+                c.commit()
+                return respond(200,{'ok':True})
             # Player post-match minutes: shared records with admin monitoring.
             # No edits or deletion by players; admins retain correction controls.
             if path == '/api/v2/player/post-match' and method in ('GET','POST'):
