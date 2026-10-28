@@ -2900,3 +2900,18 @@ body.profile-active .player-top{display:none!important}
  border-width:0 1px 1px 0!important;transform:rotate(45deg)!important;
 }
 .post-match-inline-form .post-match-options label{min-height:29px!important;gap:10px!important}
+
+/* Final optical alignment with meal cards and balanced iOS choice controls */
+.post-match-inline-trigger{padding-left:16px!important;gap:14px!important}
+.post-match-inline-icon{width:40px!important;height:40px!important;flex-basis:40px!important}
+.post-match-inline-trigger>span:nth-child(2){font-size:16px!important;line-height:1.25!important}
+.post-match-inline-form .post-match-options input[type="radio"],
+.post-match-inline-form .post-match-options input[type="checkbox"]{
+ width:14px!important;height:14px!important;min-width:14px!important;min-height:14px!important;
+ max-width:14px!important;max-height:14px!important;flex-basis:14px!important;
+}
+.post-match-inline-form .post-match-options input[type="radio"]:checked:after{inset:4px!important}
+.post-match-inline-form .post-match-options input[type="checkbox"]:checked:after{
+ left:4px!important;top:1px!important;width:4px!important;height:7px!important;
+ border-width:0 1.5px 1.5px 0!important;
+}
