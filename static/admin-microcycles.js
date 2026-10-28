@@ -397,7 +397,7 @@ $("save-athlete-profile").addEventListener("click",async()=>{
   }catch(e){status("Erro ao guardar perfil: "+e.message,"warn");}
   finally{button.disabled=false;}
 });
-let selectedNutritionWeek=null,periByDay={},dayColorOverrides={};
+let selectedNutritionWeek=null,periByDay={},dayColorOverrides={},effectiveAdminColorsByDay={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 async function loadMenus(){
@@ -594,6 +594,7 @@ async function loadPlayerSimulation(){
   ]);
   publishedSimulation=plans.options_by_color;
   dayColorOverrides=colorOverrideLookup(calendar.meal_color_overrides);
+  effectiveAdminColorsByDay=calendar.effective_colors||{};
   const strip=$("player-week-strip");strip.replaceChildren();
   const monday=weekStart(simulationDay);
   for(let i=0;i<7;i++){
@@ -699,7 +700,9 @@ function colorForDay(day,meal,overrides=dayColorOverrides){
   const row=model&&model.classifications.find(r=>r.name===day.classification);
   const fallback=row?.meals?.[meal]||null;
   const selected=overrides[day.date+"|"+meal];
-  return selected==="none"?null:(selected||fallback);
+  if(Object.hasOwn(overrides,day.date+"|"+meal))return selected==="none"?null:selected;
+  if(overrides===dayColorOverrides){const resolved=effectiveAdminColorsByDay[day.date]?.[meal];if(resolved)return resolved.color;}
+  return fallback;
 }
 function mealColorsForDay(day,overrides=dayColorOverrides){
   return model.meals.map(meal=>({meal,color:colorForDay(day,meal,overrides)}));
@@ -875,6 +878,7 @@ async function loadCalendar(){
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
+  effectiveAdminColorsByDay=data.effective_colors||{};
   periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
   const menuData=await request(matchBase()+"/menus?start="+isoDay(first)+"&end="+isoDay(last));
   menuLookup=Object.fromEntries(menuData.menus.map(m=>[m.menu_date+"|"+m.meal,m]));
