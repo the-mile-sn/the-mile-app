@@ -4,6 +4,7 @@ Not wired to player APIs. Missing nutritional options produce partial output
 rather than invented zero values. Peri-training entries are additive.
 """
 from prescription_effective_v2 import MEALS
+import math
 
 KEYS=("kcal","protein_g","carbs_g","fat_g")
 
@@ -17,9 +18,15 @@ def average_options(options):
             return None
         for key in KEYS:
             number=totals.get(key)
-            if isinstance(number,bool) or not isinstance(number,(int,float)):
+            if isinstance(number,bool) or number is None:
                 return None
-            values[key]+=number
+            try:
+                parsed=float(str(number).strip().replace(",","."))
+            except (TypeError,ValueError):
+                return None
+            if not math.isfinite(parsed) or parsed<0:
+                return None
+            values[key]+=parsed
     return {key:value/len(options) for key,value in values.items()}
 
 def calculate_day(effective_meals, options_by_color, peri=()):
