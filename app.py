@@ -1296,9 +1296,15 @@ def application(env, start_response):
                 # Optional, read-only scenario simulation. Some deployments do not
                 # have the admin monitoring schema yet. Never create tables here.
                 required={'v2_scenario_cells','v2_post_match_responses','v2_monitoring_audit'}
-                present={r['name'] for r in c.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?,?)",
-                    tuple(sorted(required))).fetchall()}
+                if isinstance(c, PgConnection):
+                    present={r['table_name'] for r in c.execute(
+                        "SELECT table_name FROM information_schema.tables "
+                        "WHERE table_schema=current_schema() AND table_name IN (?,?,?)",
+                        tuple(sorted(required))).fetchall()}
+                else:
+                    present={r['name'] for r in c.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name IN (?,?,?)",
+                        tuple(sorted(required))).fetchall()}
                 scenario_available=(present==required)
                 scenario_cells={}
                 responses=[]
