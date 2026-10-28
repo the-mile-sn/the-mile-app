@@ -644,28 +644,25 @@ async function renderWeightCard(root,date){
   action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
   action.setAttribute("aria-label","Ver evolução do peso");
  }else{
-  const sub=document.createElement("small");sub.textContent="Regista o teu peso de hoje";value.append(sub);
   action.textContent="+";action.setAttribute("aria-label","Registar peso em jejum");
  }
  function editor(){
   panel.replaceChildren();
   const form=document.createElement("form");form.className="daily-weight-form";
-  const title=document.createElement("strong");title.textContent="Peso em jejum (kg)";
   const select=document.createElement("select");select.required=true;
   const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar peso";select.append(empty);
   for(let n=400;n<=1400;n++){const option=document.createElement("option");option.value=(n/10).toFixed(1);option.textContent=format(n/10);select.append(option);}
   select.value=current?Number(current.weight_kg).toFixed(1):"";
   const save=document.createElement("button");save.type="submit";save.textContent="Guardar";
-  const close=document.createElement("button");close.type="button";close.textContent="Cancelar";close.onclick=()=>{panel.hidden=true;panel.replaceChildren();};
   const errorText=document.createElement("p");errorText.setAttribute("role","alert");
-  form.append(title,select);
+  form.append(select);
   if(String(me?.sex||"").toUpperCase()==="F"){
    const group=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
    for(const [v,t] of [["","Não responder"],["yes","Sim"],["no","Não"]]){
     const l=document.createElement("label"),input=document.createElement("input");input.type="radio";input.name="weight-menstruating";input.value=v;input.checked=current?(current.menstruating===null?v==="":current.menstruating?v==="yes":v==="no"):v==="";l.append(input,document.createTextNode(t));group.append(l);
    }form.append(group);
   }
-  const buttons=document.createElement("div");buttons.className="daily-weight-form-actions";buttons.append(close,save);form.append(buttons,errorText);panel.append(form);
+  const buttons=document.createElement("div");buttons.className="daily-weight-form-actions";buttons.append(save);form.append(buttons,errorText);panel.append(form);
   form.onsubmit=async e=>{
    e.preventDefault();save.disabled=true;errorText.textContent="";
    try{
