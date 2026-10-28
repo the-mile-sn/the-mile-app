@@ -579,3 +579,12 @@
 #scenario-editor .scenario-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
 #scenario-editor .scenario-field{padding:12px;border:1px solid #34343c;border-radius:10px;background:#1b1b20}
 #scenario-editor select{width:100%;max-width:100%}
+
+/* All scenarios remain visible in rows, like the base microcycle model. */
+#scenario-editor .scenario-cells{display:block;overflow-x:auto;max-width:100%}
+#scenario-editor .scenario-matrix{width:100%;border-collapse:separate;border-spacing:0 4px;min-width:850px}
+#scenario-editor .scenario-matrix th,#scenario-editor .scenario-matrix td{padding:7px 8px;text-align:left;vertical-align:middle}
+#scenario-editor .scenario-matrix th{font-size:12px;color:#b9b9c3}
+#scenario-editor .scenario-matrix td:first-child{font-weight:600;white-space:nowrap}
+#scenario-editor .scenario-matrix td:nth-child(2){white-space:nowrap}
+#scenario-editor .scenario-matrix select{width:100%;min-width:104px}
