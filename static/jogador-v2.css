@@ -2838,3 +2838,65 @@ body.profile-active .player-top{display:none!important}
 
 /* Pending questionnaire: subtle amber status only */
 .post-match-inline:not(.answered) .post-match-inline-status{color:#dfc477!important}
+
+/* Post-match final alignment: match the existing meal/event header grid */
+.post-match-inline{align-items:center;box-sizing:border-box}
+.post-match-inline-trigger{
+ display:flex!important;align-items:center!important;flex:1 1 0!important;
+ width:auto!important;min-width:0!important;margin:0!important;
+ padding:8px 0 8px 16px!important;gap:12px!important;
+ font-family:inherit!important;font-size:inherit!important;
+ line-height:1.25!important;text-align:left!important;
+}
+.post-match-inline-icon{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:36px!important;height:36px!important;flex:0 0 36px!important;
+ margin:0!important;padding:0!important;box-sizing:border-box!important;
+}
+.post-match-inline-icon svg{width:19px!important;height:19px!important;display:block!important}
+.post-match-inline-trigger>span:nth-child(2){
+ display:block!important;min-width:0!important;flex:1 1 auto!important;
+ font-size:16px!important;font-weight:500!important;line-height:1.25!important;
+ white-space:normal!important;margin:0!important;
+}
+.post-match-inline-status{flex:0 0 auto!important;margin-left:auto!important}
+.post-match-edit{display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 44px!important;width:44px!important;height:44px!important;
+ margin:0 10px 0 3px!important;padding:0!important;align-self:center!important;
+}
+.post-match-edit svg{display:block!important;width:21px!important;height:21px!important}
+.post-match-inline-form{background:#25262b!important}
+.post-match-inline-form .post-match-question{background:#202126!important}
+.post-match-inline-form select,
+.post-match-inline-form .post-match-question select,
+.post-match-inline-form textarea,
+.post-match-inline-form .post-match-question textarea{
+ background:#202126!important;color:#eee!important;border:1px solid #45474d!important;
+ box-shadow:none!important;-webkit-appearance:none;appearance:none;
+}
+.post-match-inline-form select{appearance:auto;-webkit-appearance:menulist}
+.post-match-inline-form .post-match-options input[type="radio"],
+.post-match-inline-form .post-match-options input[type="checkbox"]{
+ display:inline-block!important;box-sizing:border-box!important;
+ -webkit-appearance:none!important;appearance:none!important;
+ width:10px!important;height:10px!important;min-width:10px!important;min-height:10px!important;
+ max-width:10px!important;max-height:10px!important;flex:0 0 10px!important;
+ padding:0!important;margin:0!important;vertical-align:middle!important;
+ border:1px solid #a5a7ad!important;background:transparent!important;box-shadow:none!important;
+}
+.post-match-inline-form .post-match-options input[type="radio"]{border-radius:50%!important}
+.post-match-inline-form .post-match-options input[type="checkbox"]{border-radius:2px!important}
+.post-match-inline-form .post-match-options input[type="radio"]:checked{border-color:#f0f1f3!important;background:#f0f1f3!important}
+.post-match-inline-form .post-match-options input[type="radio"]:checked:after{
+ content:""!important;position:absolute!important;inset:2px!important;
+ border-radius:50%!important;background:#292a30!important;
+}
+.post-match-inline-form .post-match-options input[type="checkbox"]:checked{
+ background:#f0f1f3!important;border-color:#f0f1f3!important;
+}
+.post-match-inline-form .post-match-options input[type="checkbox"]:checked:after{
+ content:""!important;position:absolute!important;left:2px!important;top:0!important;
+ width:3px!important;height:5px!important;border:solid #292a30!important;
+ border-width:0 1px 1px 0!important;transform:rotate(45deg)!important;
+}
+.post-match-inline-form .post-match-options label{min-height:29px!important;gap:10px!important}
