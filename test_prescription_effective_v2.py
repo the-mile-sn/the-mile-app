@@ -33,8 +33,11 @@ class EffectiveColorTests(unittest.TestCase):
         self.assertEqual(self.resolve(responses=responses)["lunch"]["color"],"blue")
         self.assertEqual(self.resolve(day="2026-11-10",classification="MD+2/-2",responses=responses)["lunch"]["color"],"blue")
 
-    def test_past_days_unchanged(self):
-        self.assertEqual(self.resolve(today="2026-11-10")["lunch"]["color"],"blue")
+    def test_historical_colors_stay_consistent(self):
+        self.assertEqual(self.resolve(today="2026-11-10")["lunch"]["color"],"yellow")
+
+    def test_future_submission_does_not_apply_yet(self):
+        self.assertEqual(self.resolve(today="2026-11-08")["lunch"]["color"],"blue")
 
     def test_high_uses_base(self):
         high=[{"match_id":"match-A","scenario":"high","submitted_date":"2026-11-09"}]
