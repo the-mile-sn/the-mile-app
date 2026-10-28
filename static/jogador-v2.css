@@ -2809,3 +2809,29 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form .post-match-question textarea{font-family:inherit}
 
 .post-match-inline-confirm-close{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:9px;color:#dce7e1;font-size:19px;cursor:pointer}
+
+/* Final neutral, compact post-match form treatment */
+.post-match-inline,.post-match-inline.answered{background:#222328!important;border-radius:10px}
+.post-match-inline-trigger{min-height:0;padding:7px 0 7px 14px;gap:12px;font-family:inherit!important;font-size:inherit!important;font-weight:inherit!important;line-height:1.25}
+.post-match-inline-trigger>span:nth-child(2){font-size:inherit!important;font-weight:500;white-space:nowrap;letter-spacing:normal}
+.post-match-inline-icon{width:36px;height:36px;border-radius:8px;background:#1b1c20}
+.post-match-inline-icon svg{width:20px;height:20px}
+.post-match-edit{height:38px;width:38px;flex-basis:38px;margin-right:8px}
+.post-match-inline-status{font-size:12px}
+.post-match-inline-form{background:#25262b;color:#e4e5e9}
+.post-match-questionnaire,.post-match-question,.post-match-questions,.post-match-progress{background:transparent!important;color:inherit}
+.post-match-question{background:#202126!important;border-radius:9px}
+.post-match-inline-form .post-match-options input[type=radio],.post-match-inline-form .post-match-options input[type=checkbox]{
+ appearance:none;-webkit-appearance:none;box-sizing:border-box;width:15px;height:15px;flex:0 0 15px;
+ margin:0;border:1.5px solid #92969f;border-radius:50%;background:transparent;position:relative;
+}
+.post-match-inline-form .post-match-options input[type=checkbox]{border-radius:4px}
+.post-match-inline-form .post-match-options input[type=radio]:checked{border-color:#e6e8ed}
+.post-match-inline-form .post-match-options input[type=radio]:checked:after{
+ content:"";position:absolute;inset:3px;border-radius:50%;background:#e6e8ed
+}
+.post-match-inline-form .post-match-options input[type=checkbox]:checked{border-color:#e6e8ed;background:#e6e8ed}
+.post-match-inline-form .post-match-options input[type=checkbox]:checked:after{
+ content:"";position:absolute;left:4px;top:0px;width:4px;height:8px;border:solid #242529;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)
+}
+.post-match-inline-form .post-match-options label{gap:10px;min-height:30px}
