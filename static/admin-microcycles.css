@@ -565,3 +565,10 @@
 #profile-monitoring .monitoring-weight-chart{max-width:750px;border:1px solid #33353d;border-radius:10px;padding:12px;margin-bottom:16px}
 #profile-monitoring .monitoring-weight-chart svg{width:100%;height:auto;max-height:240px;display:block}
 #profile-monitoring .monitoring-entry{padding:12px 2px;border-bottom:1px solid #34343b;font-size:14px;color:#e7e7e9}
+
+#profile-monitoring .monitoring-entry-form{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:12px 0 14px}
+#profile-monitoring .monitoring-entry-form label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#c8c8d0}
+#profile-monitoring .monitoring-entry-form input{max-width:180px}
+#profile-monitoring .monitoring-entry{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+#profile-monitoring .monitoring-row-actions{display:flex;gap:6px}
+#profile-monitoring .monitoring-row-actions button{font-size:12px;padding:6px 10px}
