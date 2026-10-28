@@ -190,6 +190,24 @@ function assignedColor(date,meal,classification){
  if(own)return own;
  return model.find(c=>c.name===classification)?.meals?.[meal]||null;
 }
+// Read-only nutritional parity check, never rendered and never persisted.
+let scenarioNutritionPreviewByDay={};
+function previewNutritionForColors(entry,colorMap,planData,periData,mealKeys){
+ const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
+ for(const meal of mealKeys){
+  const color=colorMap?.[meal];
+  if(!color||color==="none")continue;
+  const avg=average(planData[color]?.[meal]||[]);
+  if(!avg)return null;
+  count++;for(const key in total)total[key]+=avg[key];
+ }
+ for(const item of periData.filter(x=>x.event_date===entry.date)){
+  const avg=average(item.options||[]);
+  if(!avg)return null;
+  count++;for(const key in total)total[key]+=avg[key];
+ }
+ return count?total:null;
+}
 function weeklyDayTotal(entry){
  const cls=model.find(x=>x.name===entry?.classification);
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
@@ -481,8 +499,17 @@ async function overview(){
  void api("/api/v2/player/effective-colors-preview?start="+iso(mon)+"&end="+iso(end))
   .then(preview=>{
    if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
+   // A previous week request may finish after navigation: ignore stale data.
+   if(iso(monday(day))!==iso(mon))return;
    for(const entry of preview.days||[]){
-    if(entry.date&&entry.simulated_colors)effectiveScenarioColorsByDay[entry.date]=entry.simulated_colors;
+    if(!entry.date||!entry.simulated_colors||!entry.colors)continue;
+    effectiveScenarioColorsByDay[entry.date]=entry.simulated_colors;
+    const current=previewNutritionForColors(entry,entry.colors,plans,periMeals,meals);
+    const simulated=previewNutritionForColors(entry,entry.simulated_colors,plans,periMeals,meals);
+    if(current&&simulated){
+     scenarioNutritionPreviewByDay[entry.date]={current,simulated,
+      delta:Object.fromEntries(Object.keys(current).map(key=>[key,simulated[key]-current[key]]))};
+    }
    }
   }).catch(()=>{});
 
