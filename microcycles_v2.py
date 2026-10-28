@@ -89,7 +89,7 @@ def initialize(c):
     athlete_columns = _table_columns(c, "v2_athletes")
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
-    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT")):
+    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("sex","TEXT")):
         if name not in athlete_columns:
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
     if "match_time" not in columns:
@@ -116,7 +116,7 @@ def create_athlete(c, name):
 
 
 def get_model(c, athlete_id):
-    athlete = c.execute("SELECT id,name,weight_kg,height_cm,profile_notes FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone()
+    athlete = c.execute("SELECT id,name,weight_kg,height_cm,profile_notes,sex FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone()
     if not athlete:
         return None
     configured = c.execute(
@@ -293,7 +293,7 @@ def create_dish(c, name_pt, name_en, category, image_filename):
     return dish_id
 
 
-def update_athlete_profile(c, athlete_id, name, weight, height, notes):
+def update_athlete_profile(c, athlete_id, name, weight, height, notes, sex=None):
     if not isinstance(name,str) or not 2 <= len(name.strip()) <= 120:
         raise ValueError("invalid_athlete_profile")
     def numeric(value, lower, upper):
@@ -305,8 +305,9 @@ def update_athlete_profile(c, athlete_id, name, weight, height, notes):
     weight=numeric(weight,20,250)
     height=numeric(height,100,230)
     if not isinstance(notes,str) or len(notes)>3000: raise ValueError("invalid_athlete_profile")
-    row=c.execute("UPDATE v2_athletes SET name=?,weight_kg=?,height_cm=?,profile_notes=? WHERE id=?",
-       (name.strip(),weight,height,notes.strip(),athlete_id))
+    if sex not in (None,"M","F"):raise ValueError("invalid_athlete_profile")
+    row=c.execute("UPDATE v2_athletes SET name=?,weight_kg=?,height_cm=?,profile_notes=?,sex=? WHERE id=?",
+       (name.strip(),weight,height,notes.strip(),sex,athlete_id))
     if not row.rowcount: return None
     c.commit()
-    return {"id":athlete_id,"name":name.strip(),"weight_kg":weight,"height_cm":height,"profile_notes":notes.strip()}
+    return {"id":athlete_id,"name":name.strip(),"weight_kg":weight,"height_cm":height,"profile_notes":notes.strip(),"sex":sex}
