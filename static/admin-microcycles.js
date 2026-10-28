@@ -95,6 +95,23 @@ async function deleteMonitoringWeight(date){
  try{await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"delete",date,confirm:"ELIMINAR_PESO"})});$("monitoring-weight-feedback").textContent="Registo eliminado.";await openMonitoring("weight");}
  catch(err){$("monitoring-weight-feedback").textContent="Não foi possível eliminar: "+err.message;}
 }
+const gameMinutesSelect=$("monitoring-game-minutes");
+for(const [value,label] of [["not_played","Não joguei"],...Array.from({length:24},(_,i)=>[String((i+1)*5),String((i+1)*5)+" min"])]){const option=document.createElement("option");option.value=value;option.textContent=label;gameMinutesSelect.append(option);}
+$("monitoring-game-form").addEventListener("submit",async event=>{
+ event.preventDefault();const aid=model?.athlete?.id;if(!aid)return;
+ const button=$("monitoring-game-form").querySelector('[type="submit"]');button.disabled=true;
+ try{
+  await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/game",{method:"POST",body:JSON.stringify({action:"save",match_id:$("monitoring-game-match").value,minutes:$("monitoring-game-minutes").value,answers:{}})});
+  $("monitoring-game-feedback").textContent="Resposta guardada. Nenhuma prescrição foi alterada.";
+  $("monitoring-game-cancel").hidden=true;await openMonitoring("game");
+ }catch(err){$("monitoring-game-feedback").textContent="Não foi possível guardar: "+err.message;}finally{button.disabled=false;}
+});
+$("monitoring-game-cancel").addEventListener("click",()=>{$("monitoring-game-cancel").hidden=true;$("monitoring-game-minutes").value="not_played";});
+async function deleteMonitoringGame(matchId,date){
+ const aid=model?.athlete?.id;if(!aid||!window.confirm("Eliminar a resposta pós-jogo de "+monitoringDate(date)+"? O jogo e o microciclo não serão eliminados."))return;
+ try{await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/game",{method:"POST",body:JSON.stringify({action:"delete",match_id:matchId,confirm:"ELIMINAR_POS_JOGO"})});$("monitoring-game-feedback").textContent="Resposta eliminada.";await openMonitoring("game");}
+ catch(err){$("monitoring-game-feedback").textContent="Não foi possível eliminar: "+err.message;}
+}
 let monitoringRequestVersion=0;
 const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
@@ -124,6 +141,12 @@ async function openMonitoring(kind){
  try{
   const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/monitoring");
   if(version!==monitoringRequestVersion||model?.athlete?.id!==athleteId)return;
+  if(kind==="game"){
+   const select=$("monitoring-game-match"),selected=select.value;select.replaceChildren();
+   for(const match of data.matches||[]){const option=document.createElement("option");option.value=match.id;option.textContent=monitoringDate(match.match_date);select.append(option);}
+   if([...select.options].some(x=>x.value===selected))select.value=selected;
+   $("monitoring-game-form").hidden=select.options.length===0;
+  }
   const rows=kind==="weight"?data.weights:data.games;
   if(kind==="weight"){
    const ref=data.weight_reference,sourceNames={"7_day_average":"Média dos últimos 7 dias","latest_recent":"Último registo recente","latest_older":"Último registo disponível","assessment":"Última avaliação antropométrica"};
@@ -138,6 +161,13 @@ async function openMonitoring(kind){
    else {
     const scenarios={very_low:"Very low",low:"Low",medium:"Medium",high:"High"};
     line.textContent=monitoringDate(record.match_date)+" · "+(record.minutes==null?"Não joguei":record.minutes+" min")+" · "+(scenarios[record.scenario]||record.scenario);
+   }
+   if(kind==="game"){
+    const actions=document.createElement("span");actions.className="monitoring-row-actions";
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
+    edit.onclick=()=>{$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
+    const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringGame(record.match_id,record.match_date);
+    actions.append(edit,remove);line.append(actions);
    }
    if(kind==="weight"){
     const actions=document.createElement("span");actions.className="monitoring-row-actions";
