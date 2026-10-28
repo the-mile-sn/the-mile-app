@@ -503,9 +503,48 @@ function appendWeeklyEvents(host,dates,session){
  }
 }
 
+// Post-match form, ordered by game date. Admin corrections remain available.
+async function loadPlayerPostMatch(){
+ const host=$("post-match-form-area");
+ if(!host)return;
+ host.hidden=true;host.replaceChildren();
+ let data;
+ try{data=await api("/api/v2/player/post-match");}catch{return;}
+ if(!data.available)return;
+ const pending=(data.matches||[]).filter(m=>m.can_answer&&!m.answered)
+  .sort((a,b)=>a.date.localeCompare(b.date));
+ if(!pending.length)return;
+ const title=document.createElement("h3");title.textContent="Questionário pós-jogo";host.append(title);
+ for(const match of pending){
+  const form=document.createElement("form");form.className="post-match-response";
+  const heading=document.createElement("p");heading.textContent="Jogo · "+new Date(match.date+"T12:00:00").toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const label=document.createElement("label");label.textContent="Minutos jogados";
+  const select=document.createElement("select");select.required=true;
+  const first=document.createElement("option");first.value="";first.textContent="Selecionar";select.append(first);
+  const absent=document.createElement("option");absent.value="not_played";absent.textContent="Não joguei";select.append(absent);
+  for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
+  label.append(select);
+  const submit=document.createElement("button");submit.type="submit";submit.textContent="Enviar resposta";
+  const message=document.createElement("p");message.setAttribute("role","status");
+  form.append(heading,label,submit,message);
+  form.addEventListener("submit",async event=>{
+   event.preventDefault();
+   if(!select.value)return;
+   submit.disabled=true;message.textContent="";
+   try{
+    await api("/api/v2/player/post-match",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
+      body:JSON.stringify({match_id:match.id,minutes:select.value})});
+    await loadPlayerPostMatch();await overview();
+   }catch(error){message.textContent="Não foi possível guardar: "+error.message;submit.disabled=false;}
+  });
+  host.append(form);
+ }
+ host.hidden=false;
+}
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
+ void loadPlayerPostMatch();
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
