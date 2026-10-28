@@ -946,6 +946,8 @@ def application(env, start_response):
                             scenario=monitoring_v2.scenario_for_minutes(minutes)
                     except (ValueError,TypeError):raise Problem(400,'invalid_match_minutes')
                     answers=body.get('answers',{})
+                    # A minutes-only admin correction must not erase player monitoring answers.
+                    if prior and answers=={}:answers=json.loads(prior['answers_json'] or '{}')
                     if not isinstance(answers,dict) or len(json.dumps(answers))>10000:raise Problem(400,'invalid_match_answers')
                     import time as monitor_time
                     import secrets as monitor_secrets
