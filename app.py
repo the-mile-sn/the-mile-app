@@ -726,6 +726,23 @@ def application(env, start_response):
                 binary=base64.b64decode(image)
                 mime='image/png' if binary.startswith(b'\\x89PNG') else 'image/jpeg' if binary.startswith(b'\\xff\\xd8') else 'image/webp'
                 return respond(200,binary,mime)
+            # Read-only monitoring foundation, available only to authorised admins.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/monitoring') and method=='GET':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                seg=path.strip('/').split('/')
+                if len(seg)!=5 or seg[:3]!=['api','v2','athletes']:raise Problem(404,'not_found')
+                aid=seg[3]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'not_found')
+                weights=[dict(row) for row in c.execute(
+                    "SELECT weigh_date,weight_kg,menstruating FROM v2_daily_weighins WHERE athlete_id=? ORDER BY weigh_date DESC LIMIT 100",(aid,)).fetchall()]
+                games=[dict(row) for row in c.execute(
+                    """SELECT r.id,m.match_date,r.minutes,r.scenario,r.created_at,r.updated_at
+                       FROM v2_post_match_responses r JOIN v2_match_events m
+                       ON m.id=r.match_id AND m.athlete_id=r.athlete_id
+                       WHERE r.athlete_id=? ORDER BY m.match_date DESC LIMIT 100""",(aid,)).fetchall()]
+                return respond(200,{"weights":weights,"games":games})
             # Supplementation: published routine and calendar day exceptions.
             if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
                 if not user:raise Problem(401,'unauthorized')
