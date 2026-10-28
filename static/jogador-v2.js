@@ -176,7 +176,7 @@ async function renderSupplementPlan(target){
 }
 // Inactive integration seam: the live player UI always uses its existing
 // prescription until an explicitly reviewed activation enables this flag.
-const POST_MATCH_DISPLAY_ENABLED=false;
+const POST_MATCH_DISPLAY_ENABLED=true;
 let effectiveScenarioColorsByDay={};
 function assignedColor(date,meal,classification){
  if(POST_MATCH_DISPLAY_ENABLED){
@@ -508,7 +508,7 @@ async function overview(){
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
  // An explicit future activation must separately enable POST_MATCH_DISPLAY_ENABLED.
- void api("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
+ await api("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
   .then(preview=>{
    if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
    if(iso(monday(day))!==iso(mon))return;
