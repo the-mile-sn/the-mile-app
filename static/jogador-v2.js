@@ -523,7 +523,7 @@ function injectPostMatchCard(){
   status.textContent=game.answered?"✓ Preenchido":"Por preencher";
   button.append(icon,title,status);
   const action=document.createElement("button");action.type="button";action.className="post-match-edit";action.setAttribute("aria-label",game.answered?"Editar questionário pós-jogo":"Preencher questionário pós-jogo");
-  action.innerHTML=game.answered?'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>';
+  action.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>';
   card.append(button,action);
   button.disabled=true;
   if(game.answered){card.classList.add("answered");}
