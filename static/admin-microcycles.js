@@ -77,7 +77,7 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
 let monitoringRequestVersion=0;
-const monitoringDate=iso=>/^\\d{4}-\\d{2}-\\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
+const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
 function renderMonitoringWeightChart(rows){
  const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=rows.length===0;
