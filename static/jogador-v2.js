@@ -509,7 +509,7 @@ function showPostMatchSuccess(matchId){
  const card=Array.from(document.querySelectorAll(".post-match-inline")).find(x=>x.dataset.matchId===matchId);
  if(!card)return;
  const notice=document.createElement("span");notice.className="post-match-inline-confirm";notice.setAttribute("role","status");notice.textContent="✓ Guardado com sucesso";
- const status=card.querySelector(".post-match-inline-status");if(status)status.replaceWith(notice);
+ const status=card.querySelector(".post-match-inline-status");if(status){status.replaceWith(notice);const close=document.createElement("span");close.className="post-match-inline-confirm-close";close.textContent="×";close.setAttribute("role","button");close.setAttribute("tabindex","0");close.setAttribute("aria-label","Fechar confirmação");const dismiss=()=>notice.replaceWith(status);close.onclick=e=>{e.stopPropagation();dismiss();};close.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();dismiss();}};notice.append(close);}
 }
 
 function injectPostMatchCard(){
