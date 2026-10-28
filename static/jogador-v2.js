@@ -476,6 +476,16 @@ function appendWeeklyEvents(host,dates,session){
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
+ // Shadow-read the simulation independently; never blocks rendering or changes UI.
+ // An explicit future activation must separately enable POST_MATCH_DISPLAY_ENABLED.
+ void api("/api/v2/player/effective-colors-preview?start="+iso(mon)+"&end="+iso(end))
+  .then(preview=>{
+   if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
+   for(const entry of preview.days||[]){
+    if(entry.date&&entry.simulated_colors)effectiveScenarioColorsByDay[entry.date]=entry.simulated_colors;
+   }
+  }).catch(()=>{});
+
  model=r.classifications;meals=r.meals;dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
