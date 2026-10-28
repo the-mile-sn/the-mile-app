@@ -1366,20 +1366,17 @@ def application(env, start_response):
                 if not link:raise Problem(404,'player_not_linked')
                 aid=link['athlete_id']
                 matches=microcycles_v2.list_matches(c,aid)
-                today=datetime.now(ZoneInfo('Europe/Lisbon'))
+                # The player UI sends its local calendar date. Validate the
+                # date against UTC to prevent arbitrary future-day unlocking.
+                utc_today=datetime.now(ZoneInfo('UTC')).date()
+                query=parse_qs(env.get('QUERY_STRING',''))
+                body=read_json(env) if method=='POST' else None
+                raw_date=(body.get('local_date') if body is not None else (query.get('local_date') or [''])[0])
+                try:local_day=datetime.fromisoformat(raw_date).date()
+                except (TypeError,ValueError):raise Problem(400,'invalid_local_date')
+                if abs((local_day-utc_today).days)>1:raise Problem(400,'invalid_local_date')
                 def available(match):
-                    try:
-                        from datetime import time as local_time
-                        game_day=datetime.fromisoformat(match['match_date']).date()
-                        if game_day<today.date():return True
-                        if game_day>today.date():return False
-                        raw=match.get('match_time')
-                        if not raw:return False
-                        hour,minute=map(int,raw[:5].split(':'))
-                        start=datetime.combine(game_day,local_time(hour,minute),ZoneInfo('Europe/Lisbon'))
-                        return today>=start
-                    except (ValueError,TypeError,AttributeError):
-                        return False
+                    return match['match_date']<=local_day.isoformat()
                 if method=='GET':
                     required={'v2_post_match_responses','v2_monitoring_audit'}
                     if isinstance(c,PgConnection):
@@ -1396,9 +1393,8 @@ def application(env, start_response):
                     return respond(200,{'available':True,'matches':[
                         {'id':m['id'],'date':m['match_date'],'can_answer':available(m),
                          'answered':m['id'] in saved,'minutes':saved.get(m['id'],{}).get('minutes')}
-                        for m in matches if m['match_date']>= (today.date()-timedelta(days=30)).isoformat()
-                        and m['match_date']<=today.date().isoformat()]})
-                body=read_json(env)
+                        for m in matches if m['match_date']>= (local_day-timedelta(days=30)).isoformat()
+                        and m['match_date']<=local_day.isoformat()]})
                 match=next((m for m in matches if m['id']==body.get('match_id')),None)
                 if not match:raise Problem(404,'match_not_found')
                 if not available(match):raise Problem(403,'post_match_not_open')
