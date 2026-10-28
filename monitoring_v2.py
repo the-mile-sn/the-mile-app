@@ -54,7 +54,7 @@ def initialize(c):
     """)
 
 def scenario_for_minutes(minutes):
-    if minutes is None:
+    if minutes == "not_played":
         return "very_low"
     if isinstance(minutes,bool) or not isinstance(minutes,int) or not 1<=minutes<=130:
         raise ValueError("invalid_minutes")
