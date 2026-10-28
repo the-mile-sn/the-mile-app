@@ -505,11 +505,11 @@ function appendWeeklyEvents(host,dates,session){
 
 // Post-match form, ordered by game date. Admin corrections remain available.
 let playerPostMatchRecords=[];
-function showPostMatchSuccess(){
- const old=document.querySelector(".post-match-success");if(old)old.remove();
- const el=document.createElement("div");el.className="post-match-success";el.setAttribute("role","status");el.textContent="✓ Questionário guardado com sucesso";
- const root=$("day-details");const card=root?.querySelector(".post-match-inline");if(card)card.after(el);else root?.append(el);
- const close=document.createElement("button");close.type="button";close.textContent="Fechar";close.onclick=()=>el.remove();el.append(close);
+function showPostMatchSuccess(matchId){
+ const card=Array.from(document.querySelectorAll(".post-match-inline")).find(x=>x.dataset.matchId===matchId);
+ if(!card)return;
+ const notice=document.createElement("span");notice.className="post-match-inline-confirm";notice.setAttribute("role","status");notice.textContent="✓ Guardado com sucesso";
+ const status=card.querySelector(".post-match-inline-status");if(status)status.replaceWith(notice);
 }
 
 function injectPostMatchCard(){
@@ -522,14 +522,17 @@ function injectPostMatchCard(){
  const matchCards=Array.from(root.querySelectorAll(".daily-event-card,.daily-match-with-intra,details")).filter(n=>n.textContent?.includes("Jogo"));
  let anchor=matchCards[matchCards.length-1]||null;
  for(const game of games){
-  const card=document.createElement("div");card.className="post-match-inline";
+  const card=document.createElement("div");card.className="post-match-inline";card.dataset.matchId=game.id;
   const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger";
   const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6M9 9h6M9 13h6M9 17h3"/></svg>';
   const title=document.createElement("span");title.textContent="Questionário pós-jogo";
   const status=document.createElement("span");status.className="post-match-inline-status";
   status.textContent=game.answered?"✓ Preenchido":"Por preencher";
-  if(game.answered){const pencil=document.createElement("span");pencil.className="post-match-pencil";pencil.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>';button.append(pencil);}
-  button.append(icon,title,status);card.append(button);
+  button.append(icon,title,status);
+  const action=document.createElement("button");action.type="button";action.className="post-match-edit";action.setAttribute("aria-label",game.answered?"Editar questionário pós-jogo":"Preencher questionário pós-jogo");
+  action.innerHTML=game.answered?'<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>':'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6M12 5h7v7"/></svg>';
+  card.append(button,action);
+  button.disabled=true;
   if(game.answered){card.classList.add("answered");}
   {
    const form=document.createElement("form");form.className="post-match-inline-form";form.hidden=true;
@@ -601,8 +604,8 @@ function injectPostMatchCard(){
    back.onclick=()=>{step=Math.max(0,step-1);draw();};
    next.onclick=()=>{if(!select.value){msg.textContent="Seleciona os minutos jogados.";return;}if(step<2&&select.value!=="not_played"){step++;draw();}else form.requestSubmit();};
    nav.append(back,next);section.append(heading,content,nav,msg);form.append(section);card.append(form);draw();
-   button.setAttribute("aria-expanded","false");
-   button.onclick=()=>{form.hidden=!form.hidden;button.setAttribute("aria-expanded",String(!form.hidden));};
+   action.setAttribute("aria-expanded","false");
+   action.onclick=()=>{form.hidden=!form.hidden;action.setAttribute("aria-expanded",String(!form.hidden));};
    form.onsubmit=async e=>{
     e.preventDefault();if(!select.value)return;next.disabled=true;msg.textContent="";
     try{
@@ -610,7 +613,7 @@ function injectPostMatchCard(){
       headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
      await overview();
-     showPostMatchSuccess();
+     showPostMatchSuccess(game.id);
     }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
    };
   }
