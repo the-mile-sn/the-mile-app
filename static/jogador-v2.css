@@ -2790,3 +2790,20 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form .post-match-navigation button:last-child{background:#e9e9ec;color:#222}
 .post-match-success{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 0;border-radius:9px;background:#17382b;color:#79dfb1;font-size:14px}
 .post-match-success button{margin-left:auto;border:0;border-radius:7px;background:#28493c;color:#dcefe5;padding:6px 9px}
+
+/* Unified questionnaire card: neutral surface, meal-aligned icon, pencil-only editing */
+.post-match-inline,.post-match-inline.answered{background:#2d2f34!important;border-radius:10px}
+.post-match-inline-trigger{font-family:inherit!important;font-size:inherit;font-weight:500;display:flex;min-width:0;flex:1;min-height:56px;padding:10px 0 10px 16px;cursor:default}
+.post-match-inline-trigger:disabled{opacity:1;color:#f0f2ef}
+.post-match-inline-icon{width:42px;height:42px;border-radius:10px;background:rgba(0,0,0,.18);color:#f0f2ef!important;flex-shrink:0}
+.post-match-inline-status{color:#55d4a0!important;font-size:13px;white-space:nowrap}
+.post-match-inline:not(.answered) .post-match-inline-status{color:#bfc1c7!important}
+.post-match-inline{display:flex;flex-wrap:wrap;align-items:center}
+.post-match-inline-form{width:100%;flex-basis:100%;box-sizing:border-box}
+.post-match-edit{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;margin-right:10px;border:0;border-radius:24px;background:transparent;color:#eee;cursor:pointer}
+.post-match-edit:focus-visible{outline:2px solid #c6d3e2}
+.post-match-inline-confirm{font-size:12px;color:#55d4a0;margin-left:auto}
+.post-match-inline-form .post-match-options input[type="radio"],.post-match-inline-form .post-match-options input[type="checkbox"]{width:15px;height:15px;flex:0 0 15px}
+.post-match-inline-form .post-match-options label{min-height:27px;gap:9px}
+.post-match-inline-form select{padding:6px 8px;max-width:145px;font-size:14px}
+.post-match-inline-form .post-match-question textarea{font-family:inherit}
