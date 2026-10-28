@@ -78,6 +78,21 @@ async function runScenarioPreview(){
    table.append(tr);
   }
   out.append(table);
+  const summary=document.createElement("div");summary.className="scenario-nutrition-comparison";
+  const heading=document.createElement("h4");heading.textContent="Comparação nutricional · Refeições principais";summary.append(heading);
+  const matrix=document.createElement("table");matrix.className="scenario-matrix";
+  const header2=document.createElement("tr");for(const label of ["Nutriente","Prescrição atual","Cenário simulado"]){const th=document.createElement("th");th.textContent=label;header2.append(th);}matrix.append(header2);
+  const current=data.nutrition_current||{},effective=data.nutrition_preview||{};
+  for(const [key,label,unit] of [["kcal","Energia","kcal"],["protein_g","Proteína","g"],["carbs_g","Hidratos","g"],["fat_g","Gordura","g"]]){
+   const tr=document.createElement("tr");
+   for(const value of [label,...[current,effective].map(x=>x.total?Number(x.total[key]).toLocaleString("pt-PT",{maximumFractionDigits:key==="kcal"?0:1})+" "+unit:"—")]){const td=document.createElement("td");td.textContent=value;tr.append(td);}
+   matrix.append(tr);
+  }
+  summary.append(matrix);
+  const note=document.createElement("p");note.className="hint";
+  note.textContent="Cálculo de teste com médias das opções publicadas das refeições principais; não inclui peri-treino ou peri-jogo. "+
+    ((current.state==="partial"||effective.state==="partial")?"Atenção: existem refeições sem dados completos; os totais são parciais.":"");
+  summary.append(note);out.append(summary);
  }catch(e){info.textContent="Não foi possível consultar: "+e.message;}
  finally{button.disabled=false;}
 }
