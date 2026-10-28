@@ -88,7 +88,7 @@ function renderMonitoringWeightChart(rows){
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
  svg.setAttribute("viewBox","0 0 "+width+" "+height);svg.setAttribute("role","img");
  svg.setAttribute("aria-label","Evolução do peso dos últimos "+points.length+" registos");
- const coords=points.map((p,i)=>[pad+(width-2*pad)*(points.length===1?.5:i/(points.length-1)),height-pad-(Number(p.weight_kg)-lo)/(hi-lo)*(height-2*pad)]);
+ const coords=points.map((p,i)=>[pad+(width-2*pad)*(points.length===1 ? 0.5 : i/(points.length-1)),height-pad-(Number(p.weight_kg)-lo)/(hi-lo)*(height-2*pad)]);
  const poly=document.createElementNS(ns,"polyline");poly.setAttribute("points",coords.map(p=>p.join(",")).join(" "));
  poly.setAttribute("fill","none");poly.setAttribute("stroke","#9CA9BA");poly.setAttribute("stroke-width","2.5");poly.setAttribute("stroke-linecap","round");poly.setAttribute("stroke-linejoin","round");svg.append(poly);
  coords.forEach((p,i)=>{const circle=document.createElementNS(ns,"circle");circle.setAttribute("cx",p[0]);circle.setAttribute("cy",p[1]);circle.setAttribute("r",i===coords.length-1?"5":"3");circle.setAttribute("fill",i===coords.length-1?"#5AA7E9":"#A8B2BE");const tip=document.createElementNS(ns,"title");tip.textContent=monitoringDate(points[i].weigh_date)+": "+monitoringDecimal(points[i].weight_kg)+" kg";circle.append(tip);svg.append(circle);});
