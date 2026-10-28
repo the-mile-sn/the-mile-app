@@ -517,13 +517,13 @@ function injectPostMatchCard(){
  for(const game of games){
   const card=document.createElement("div");card.className="post-match-inline";
   const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger";
-  const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.textContent="☑";
+  const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6M9 9h6M9 13h6M9 17h3"/></svg>';
   const title=document.createElement("span");title.textContent="Questionário pós-jogo";
   const status=document.createElement("span");status.className="post-match-inline-status";
-  status.textContent=game.answered?"✓ Preenchido":"Por preencher ›";
+  status.textContent=game.answered?"✓ Preenchido · Editar ›":"Por preencher ›";
   button.append(icon,title,status);card.append(button);
-  if(game.answered){button.disabled=true;card.classList.add("answered");}
-  else{
+  if(game.answered){card.classList.add("answered");}
+  {
    const form=document.createElement("form");form.className="post-match-inline-form";form.hidden=true;
    const hint=document.createElement("p");hint.textContent="Preencher após o jogo";
    const label=document.createElement("label");label.textContent="Minutos jogados";
@@ -531,8 +531,9 @@ function injectPostMatchCard(){
    const start=document.createElement("option");start.value="";start.textContent="Selecionar";select.append(start);
    const none=document.createElement("option");none.value="not_played";none.textContent="Não joguei";select.append(none);
    for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
+   if(game.answered)select.value=game.minutes==null?"not_played":String(game.minutes);
    label.append(select);
-   const submit=document.createElement("button");submit.type="submit";submit.textContent="Enviar resposta";
+   const submit=document.createElement("button");submit.type="submit";submit.textContent=game.answered?"Guardar alteração":"Enviar resposta";
    const msg=document.createElement("p");msg.setAttribute("role","status");
    form.append(hint,label,submit,msg);card.append(form);
    button.setAttribute("aria-expanded","false");
