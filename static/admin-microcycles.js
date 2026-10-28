@@ -90,7 +90,7 @@ async function runScenarioPreview(){
   }
   summary.append(matrix);
   const note=document.createElement("p");note.className="hint";
-  note.textContent="Cálculo de teste com médias das opções publicadas das refeições principais; não inclui peri-treino ou peri-jogo. "+
+  note.textContent="Cálculo de teste com opções validadas e refeições peri-treino/peri-jogo aplicáveis ("+(data.peri_count||0)+"). "+
     ((current.state==="partial"||effective.state==="partial")?"Atenção: existem refeições sem dados completos; os totais são parciais.":"");
   summary.append(note);out.append(summary);
  }catch(e){info.textContent="Não foi possível consultar: "+e.message;}
