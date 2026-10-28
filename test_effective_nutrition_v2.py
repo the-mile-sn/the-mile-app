@@ -14,6 +14,13 @@ class EffectiveNutritionTests(unittest.TestCase):
         self.base={meal:{"color":None} for meal in ("breakfast","lunch","snack","dinner","supper")}
         self.base["breakfast"]={"color":"blue"}
         self.base["lunch"]={"color":"blue"}
+    def test_validated_nutrition_string_totals(self):
+        self.options["blue"]["breakfast"]=[option("681","37,9","96,1","12,7")]
+        result=calculate_day(self.base,self.options)
+        self.assertEqual(result["state"],"complete")
+        self.assertAlmostEqual(result["total"]["kcal"],1381)
+        self.assertAlmostEqual(result["total"]["protein_g"],77.9)
+
     def test_base_totals(self):
         result=calculate_day(self.base,self.options)
         self.assertEqual(result["total"]["kcal"],1100)
