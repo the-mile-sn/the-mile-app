@@ -649,7 +649,8 @@ async function renderWeightCard(root,date){
  function editor(){
   panel.replaceChildren();
   const form=document.createElement("form");form.className="daily-weight-form";
-  const picker=document.createElement("div");picker.className="daily-weight-picker";
+  const picker=document.createElement("div");picker.className="daily-weight-picker daily-weight-wheel-group";
+  const sharedBand=document.createElement("div");sharedBand.className="daily-weight-wheel-selection";sharedBand.setAttribute("aria-hidden","true");picker.append(sharedBand);
   const existingWeight=current?Number(current.weight_kg):Number(data.previous?.weight_kg??me?.weight_kg??75);
   const initial=Math.max(50,Math.min(110,Math.round(existingWeight*10)/10));
   const makeWheel=(caption,values,chosen)=>{
@@ -657,7 +658,6 @@ async function renderWeightCard(root,date){
    const label=document.createElement("div");label.className="daily-weight-wheel-label";label.textContent=caption;
    const viewport=document.createElement("div");viewport.className="daily-weight-wheel";
    viewport.tabIndex=0;viewport.setAttribute("role","listbox");viewport.setAttribute("aria-label",caption);
-   const selection=document.createElement("div");selection.className="daily-weight-wheel-selection";selection.setAttribute("aria-hidden","true");
    const rail=document.createElement("div");rail.className="daily-weight-wheel-rail";
    const pad=()=>{const d=document.createElement("div");d.className="daily-weight-wheel-pad";rail.append(d);};
    pad();
@@ -666,7 +666,7 @@ async function renderWeightCard(root,date){
     const el=document.createElement("div");el.className="daily-weight-wheel-option";el.textContent=String(v);
     el.setAttribute("role","option");el.onclick=()=>choose(i,true);rail.append(el);return el;
    });
-   pad();viewport.append(rail,selection);col.append(label,viewport);picker.append(col);
+   pad();viewport.append(rail);col.append(label,viewport);picker.append(col);
    function choose(i,smooth=false){
     index=Math.max(0,Math.min(values.length-1,i));
     entries.forEach((el,k)=>{el.classList.toggle("selected",k===index);el.setAttribute("aria-selected",String(k===index));});
@@ -676,7 +676,7 @@ async function renderWeightCard(root,date){
    let ticking=false;
    viewport.addEventListener("scroll",()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{ticking=false;const next=Math.max(0,Math.min(values.length-1,Math.round(viewport.scrollTop/44)));if(next!==index){index=next;entries.forEach((el,k)=>{el.classList.toggle("selected",k===index);el.setAttribute("aria-selected",String(k===index));});viewport.setAttribute("aria-valuetext",String(values[index])+" "+caption);}});},{passive:true});
    viewport.addEventListener("keydown",e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();choose(index+(e.key==="ArrowDown"?1:-1),true);}});
-   requestAnimationFrame(()=>choose(index));
+   requestAnimationFrame(()=>{choose(index);});
    return {get value(){return values[index];}};
   };
   const kg=makeWheel("kg",Array.from({length:61},(_,i)=>50+i),Math.floor(initial));
