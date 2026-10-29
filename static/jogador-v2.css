@@ -2965,3 +2965,15 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-action svg{display:block;width:19px;height:19px;flex:none}
 .daily-weight-picker-column select{font-size:17px!important;font-weight:500!important}
 .daily-weight-form-actions .daily-weight-save{display:flex!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important;background:#e9e9ec!important;color:#202227!important;font-size:25px!important;line-height:1!important;font-weight:500!important}
+
+/* iOS-style dual wheel for fasting weight */
+.daily-weight-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 12px}
+.daily-weight-wheel-column{min-width:0;text-align:center}
+.daily-weight-wheel-label{color:#b8bbc4;font-size:13px;margin-bottom:8px}
+.daily-weight-wheel{height:220px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;scrollbar-width:none;position:relative;touch-action:pan-y;border-radius:12px}
+.daily-weight-wheel::-webkit-scrollbar{display:none}
+.daily-weight-wheel-rail{position:relative;z-index:1}
+.daily-weight-wheel-pad{height:88px}
+.daily-weight-wheel-option{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;color:#7f828a;font-size:23px;font-weight:400;user-select:none;-webkit-user-select:none}
+.daily-weight-wheel-option.selected{color:#f3f4f6;font-weight:500}
+.daily-weight-wheel-selection{position:sticky;bottom:88px;height:44px;z-index:0;border-radius:12px;background:#383a40;pointer-events:none;margin-top:-44px}
