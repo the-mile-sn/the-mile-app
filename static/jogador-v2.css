@@ -2977,3 +2977,15 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-wheel-option{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;color:#7f828a;font-size:23px;font-weight:400;user-select:none;-webkit-user-select:none}
 .daily-weight-wheel-option.selected{color:#f3f4f6;font-weight:500}
 .daily-weight-wheel-selection{position:sticky;bottom:88px;height:44px;z-index:0;border-radius:12px;background:#383a40;pointer-events:none;margin-top:-44px}
+
+/* One fixed selection band spanning both wheel columns */
+.daily-weight-picker.daily-weight-wheel-group{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 12px}
+.daily-weight-wheel-group>.daily-weight-wheel-selection{
+ position:absolute!important;top:calc(24px + 88px)!important;left:0!important;right:0!important;
+ bottom:auto!important;width:auto!important;height:44px!important;margin:0!important;
+ border-radius:12px!important;background:#383a40!important;z-index:1!important;pointer-events:none!important;
+}
+.daily-weight-wheel-group .daily-weight-wheel-column{position:relative;z-index:2;min-width:0}
+.daily-weight-wheel-group .daily-weight-wheel{background:transparent!important;scroll-behavior:auto;scroll-padding:88px 0}
+.daily-weight-wheel-group .daily-weight-wheel-rail{position:relative;z-index:2}
+.daily-weight-wheel-group .daily-weight-wheel-option{position:relative;z-index:3}
