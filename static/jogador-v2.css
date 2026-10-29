@@ -2989,3 +2989,35 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-wheel-group .daily-weight-wheel{background:transparent!important;scroll-behavior:auto;scroll-padding:88px 0}
 .daily-weight-wheel-group .daily-weight-wheel-rail{position:relative;z-index:2}
 .daily-weight-wheel-group .daily-weight-wheel-option{position:relative;z-index:3}
+
+/* Wheel picker refinement: one stationary rounded rail, compact value spacing */
+.daily-weight-picker.daily-weight-wheel-group{
+ width:min(100%,340px)!important;max-width:340px!important;
+ margin:0 auto 12px!important;gap:0!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ position:relative!important;isolation:isolate;
+}
+.daily-weight-wheel-group>.daily-weight-wheel-selection{
+ position:absolute!important;top:calc(21px + 8px + 88px)!important;
+ left:0!important;right:0!important;height:44px!important;
+ margin:0!important;border-radius:10px!important;
+ background:#383a40!important;z-index:1!important;pointer-events:none!important;
+ transform:none!important;
+}
+.daily-weight-wheel-group .daily-weight-wheel-column{
+ position:relative!important;z-index:2!important;min-width:0!important;
+ background:transparent!important;
+}
+.daily-weight-wheel-group .daily-weight-wheel{
+ height:220px!important;overflow-x:hidden!important;overflow-y:auto!important;
+ border-radius:0!important;background:transparent!important;
+ scroll-snap-type:y proximity!important;-webkit-overflow-scrolling:touch;
+}
+.daily-weight-wheel-group .daily-weight-wheel-rail,
+.daily-weight-wheel-group .daily-weight-wheel-option{
+ background:transparent!important;position:relative!important;
+}
+.daily-weight-wheel-group .daily-weight-wheel-option{
+ height:44px!important;line-height:44px!important;
+ scroll-snap-align:center!important;scroll-snap-stop:normal!important;
+}
