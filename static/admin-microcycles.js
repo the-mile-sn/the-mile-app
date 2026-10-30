@@ -440,6 +440,12 @@ function renderProfileSummary(){
   $("edit-athlete-profile").hidden=profileEditing;
   $("profile-inline-actions").hidden=!profileEditing;
 }
+window.tmSyncPlanningAthleteProfile=athlete=>{
+ if(!athlete)return;
+ if(model?.athlete?.id===athlete.id){model.athlete=athlete;if(!profileEditing)renderProfileSummary();}
+ const choice=Array.from($("athlete").options).find(option=>option.value===athlete.id);
+ if(choice)choice.textContent=athlete.name;
+};
 $("edit-athlete-profile").addEventListener("click",()=>{profileEditing=true;renderProfileSummary();});
 $("cancel-athlete-profile").addEventListener("click",()=>{profileEditing=false;renderProfileSummary();});
 $("save-athlete-profile").addEventListener("click",async()=>{

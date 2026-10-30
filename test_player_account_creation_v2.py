@@ -57,6 +57,17 @@ class PlayerAccountCreationTests(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT sex FROM users").fetchone()[0],"M")
         self.assertIsNone(self.db.execute("SELECT sex FROM v2_athletes").fetchone()[0])
 
+    def test_profile_name_stays_in_sync_with_linked_login(self):
+        athlete=self.create_linked()
+        microcycles_v2.update_athlete_profile(self.db,athlete["id"],"Nome Atualizado",76,180,"Nota",sex="F")
+        athlete_row=self.db.execute("SELECT name,weight_kg FROM v2_athletes WHERE id=?",(athlete["id"],)).fetchone()
+        user_row=self.db.execute("SELECT name,sex,username FROM users WHERE id=?",("user-jogador",)).fetchone()
+        self.assertEqual(athlete_row["name"],"Nome Atualizado")
+        self.assertEqual(athlete_row["weight_kg"],76)
+        self.assertEqual(user_row["name"],"Nome Atualizado")
+        self.assertEqual(user_row["sex"],"F")
+        self.assertEqual(user_row["username"],"jogador")
+
     def test_missing_profile_name_is_rejected(self):
         with self.assertRaises(ValueError):
             self.create_linked(name="x")
