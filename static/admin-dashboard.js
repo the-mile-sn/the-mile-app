@@ -110,7 +110,7 @@
  $("tm-players-access").addEventListener("change",renderPlayers);
  $("tm-players-new").addEventListener("click",()=>{
   openPlanning();
-  const input=$("new-name");if(input){input.focus();input.scrollIntoView({behavior:"smooth",block:"center"});}
+  if(typeof window.tmOpenPlanningCreate==="function")window.tmOpenPlanningCreate();
  });
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
  function paintEvents(data){
