@@ -1,7 +1,7 @@
 "use strict";
 (()=> {
  const $=id=>document.getElementById(id);
- const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players");
+ const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning");
  if(!section||!legacy||!dash)return;
  const meals=["breakfast","lunch","snack","dinner","supper"];
  const icons=["coffee","restaurant","veg","restaurant","moon"];
@@ -20,7 +20,7 @@
  function openDashboard(){if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
  async function openPlayers(aid,day,monitoringKind){
- section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(playersBtn);
+ section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
  try{
   if(aid&&$("athlete")){
    const choice=$("athlete");
@@ -61,6 +61,15 @@
  }
  dash.addEventListener("click",openDashboard);
  playersBtn.addEventListener("click",openPlayersList);
+ function openPlanning(){
+  if($("admin-workspace").hidden)return;
+  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
+  $("admin-account-panel").hidden=true;
+  $("admin-account-toggle").setAttribute("aria-expanded","false");
+  window.scrollTo({top:0,behavior:"smooth"});
+ }
+ planningBtn.addEventListener("click",openPlanning);
+ window.tmOpenAdminPlanning=openPlanning;
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playersData=[],playersLoaded=false;
  function normalized(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();}
@@ -100,7 +109,7 @@
  $("tm-players-filter").addEventListener("input",renderPlayers);
  $("tm-players-access").addEventListener("change",renderPlayers);
  $("tm-players-new").addEventListener("click",()=>{
-  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(playersBtn);
+  openPlanning();
   const input=$("new-name");if(input){input.focus();input.scrollIntoView({behavior:"smooth",block:"center"});}
  });
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
