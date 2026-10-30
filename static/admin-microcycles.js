@@ -848,7 +848,7 @@ function renderDayPreview(day,host){
   window.currentNutritionDay=day;
 
   const heading=document.createElement("h3");
-  heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
+  heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Geral automático · por definir");
   host.appendChild(heading);
   const grid=document.createElement("div");grid.className="day-meals";
   const detail=document.createElement("section");detail.className="meal-options-detail";
@@ -996,9 +996,9 @@ async function loadCalendar(){
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
   for(const day of data.days){
-    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"");
+    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback");if(!day.classification){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
     const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);
-    const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"—";el.appendChild(type);
+    const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
     if(data.matches.some(m=>m.match_date===day.date)){el.classList.add("calendar-match");}
     const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date);
@@ -1016,7 +1016,7 @@ async function loadCalendar(){
     }
     el.appendChild(strip);
     el.setAttribute("role","button");el.tabIndex=0;
-    el.setAttribute("aria-label","Ver cores das refeições de "+day.date);
+    el.setAttribute("aria-label","Ver cores das refeições de "+day.date+(day.classification?"":" · Geral aplicado automaticamente, dia por definir"));
     const selectDay=()=>{
       const wasSelected=selectedCalendarDay===day.date;
       selectedCalendarDay=wasSelected?null:day.date;
