@@ -97,4 +97,12 @@ def reference_weight(c,athlete_id,on_date):
     if previous:
         return {"weight_kg":previous["weight_kg"],"source":"latest_older",
                 "record_count":1,"source_date":previous["weigh_date"]}
+    # Final fallback only: initial profile weight, never preferred to a
+    # dated weigh-in or assessment. No historical measurement exists.
+    profile=c.execute("SELECT weight_kg FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone()
+    if profile:
+        value=profile["weight_kg"]
+        if isinstance(value,(int,float)) and not isinstance(value,bool) and math.isfinite(value) and value>0:
+            return {"weight_kg":value,"source":"profile_fallback","record_count":0,
+                    "source_date":None}
     return None
