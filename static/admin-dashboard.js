@@ -41,7 +41,7 @@
  function syncClinicalPicker(kind){
   const select=$("tm-"+kind+"-player"),search=$("tm-"+kind+"-search"),avatar=$("tm-"+kind+"-avatar");
   const name=select.selectedOptions[0]?.textContent||"";
-  search.value=name;avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+  search.value="";search.placeholder=name?"Pesquisar jogador · "+name:"Pesquisar jogador";avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
   $("tm-"+kind+"-results").hidden=true;search.setAttribute("aria-expanded","false");
  }
  function drawClinicalResults(kind){
@@ -81,6 +81,7 @@
    if(kind==="assessments"){
     if(typeof showBackofficeView==="function")showBackofficeView("assessments");
     $("tm-assessments-slot").append(assessmentPanel);assessmentPanel.hidden=false;
+    if(typeof window.tmRefreshAssessmentRegistry==="function")window.tmRefreshAssessmentRegistry().catch(e=>{feedback.textContent="Não foi possível carregar a tabela global: "+e.message;});
    }else{
     if(typeof showBackofficeView==="function")showBackofficeView("profile");
     $("tm-forms-slot").append(monitoringPanel);monitoringPanel.hidden=false;

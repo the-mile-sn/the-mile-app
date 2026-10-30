@@ -899,3 +899,50 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-form-answer-field small{display:block;font-size:12px;color:#a4a9b3;margin-bottom:6px}
 .tm-form-answer-field strong{display:block;font-size:13px;font-weight:550;color:#eceef2}
 @media(max-width:620px){.tm-clinical-picker{padding:10px}.tm-clinical-avatar{width:42px;height:42px;flex-basis:42px}#admin-workspace .tm-admin-side-icon{width:23px;height:23px}}
+
+/* Clinical priority: nine metrics, one chart, shared registry and form matrix. */
+#admin-workspace .tm-admin-nav-link{font-size:15px;min-height:50px;gap:15px;font-weight:500}
+#admin-workspace .tm-admin-nav-icon{width:30px;min-width:30px}
+#admin-workspace .tm-admin-side-icon{height:29px;width:29px}
+#tm-admin-nav-players .tm-admin-side-icon{height:32px;width:32px}
+.tm-clinical-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tm-clinical-metric{padding:14px;min-height:91px}
+.tm-clinical-metric-primary{border-color:#647b93;background:#252d38}
+.tm-clinical-metric-primary strong{font-size:24px}
+.tm-assessment-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 15px}
+.tm-assessment-detail{background:#1d1f25;border:1px solid #353740;border-radius:11px;min-width:0;padding:12px}
+.tm-assessment-detail summary{cursor:pointer;font-size:13px;font-weight:600;color:#eceef2}
+.tm-assessment-bars{display:grid;gap:9px;margin-top:14px}
+.tm-assessment-bar-row{display:grid;grid-template-columns:minmax(90px,1.1fr) 2fr 65px;align-items:center;gap:10px;font-size:12px}
+.tm-assessment-bar-row strong{text-align:right;font-size:12px;font-weight:500}
+.tm-assessment-bar-track{height:7px;border-radius:7px;background:#33353d;overflow:hidden}
+.tm-assessment-bar-fill{display:block;height:100%;background:#8faac9;border-radius:7px}
+.tm-assessment-chart-stage{position:relative;max-width:100%}
+.tm-assessment-hover{position:absolute;z-index:2;pointer-events:none;transform:translate(-25%,-100%);background:#303642;padding:7px 10px;border-radius:8px;font-size:12px;white-space:nowrap;color:#fff}
+.tm-assessment-hover[hidden]{display:none!important}
+.tm-assessment-registry-panel{border:1px solid #32343c;border-radius:13px;padding:18px;margin:14px 0;background:#191a1f}
+.tm-assessment-registry-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.tm-assessment-registry-heading h3{font-size:16px;margin:0}
+.tm-assessment-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px}
+.tm-assessment-filter{min-width:140px;flex:1 1 160px}
+.tm-assessment-filter input,.tm-assessment-filter select{width:100%;height:38px;padding:8px 10px;border:1px solid #3b3d46;border-radius:8px;background:#22242a;color:#efeff2;font-size:12px}
+.tm-assessment-table-scroll,.tm-form-table-scroll{overflow-x:auto;max-width:100%;border-radius:9px}
+.tm-assessment-table,.tm-weight-records,.tm-postmatch-matrix{border-collapse:collapse;width:100%;font-size:12px;color:#e4e5e9}
+.tm-assessment-table th,.tm-weight-records th,.tm-postmatch-matrix th{text-align:left;background:#272930;color:#b7bac3;padding:10px 9px;white-space:nowrap;font-size:11px;font-weight:600}
+.tm-assessment-table td,.tm-weight-records td,.tm-postmatch-matrix td{padding:10px 9px;border-bottom:1px solid #33353d;vertical-align:middle}
+.tm-clinical-row-actions{white-space:nowrap;text-align:right}
+.tm-clinical-row-actions button{font-size:11px;padding:7px 9px;margin-left:5px;border-radius:8px}
+.tm-unanswered{color:#8f929e;font-style:italic}
+.tm-postmatch-matrix{min-width:1100px}
+.tm-postmatch-matrix td:not(:last-child){min-width:75px}
+.tm-postmatch-matrix .tm-form-answer-grid{margin:4px 0}
+.tm-weight-records th:last-child{text-align:right}
+.tm-clinical-page #profile-monitoring #monitoring-weight-content>h4{display:none}
+.tm-clinical-page #monitoring-weight-form{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.tm-clinical-page #monitoring-weight-form>label{margin:0}
+.tm-clinical-page #monitoring-weight-form>button{align-self:end}
+.tm-assessment-import-section{margin:17px 0 0}
+.tm-assessment-import-section .assessment-excel-import{margin:0}
+.tm-assessment-legacy-list{display:none}
+.tm-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(max-width:800px){.tm-clinical-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.tm-assessment-details{grid-template-columns:1fr}#admin-workspace .tm-admin-nav-link{font-size:13px}}
