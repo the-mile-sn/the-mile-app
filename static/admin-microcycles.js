@@ -371,18 +371,42 @@ async function openMonitoring(kind){
   const body=document.createElement("tbody");
   const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
   const alternatives={none:"Nenhum",mild:"Ligeiro",moderate:"Moderado",severe:"Intenso",cramps:"Cãibras",muscle_pain:"Dores musculares",injury:"Lesão",weakness_dizziness:"Fraqueza/tonturas"};
+  const visualTone=(key,value)=>{
+   if(value===undefined||value===null||value===""||(Array.isArray(value)&&!value.length))return "missing";
+   if(key==="feeling"){const n=Number(value);return n>=7?"positive":n>=4?"caution":"negative";}
+   if(key==="effort"){const n=Number(value);return n<=3?"positive":n<=7?"caution":"negative";}
+   if(key==="gi_level"){const n=Number(value);return value==="none"||n===0?"positive":value==="mild"||n<=2?"caution":"negative";}
+   if(key==="gi_symptoms"||key==="game_symptoms")return value==="none"||Array.isArray(value)&&value.includes("none")?"positive":"negative";
+   if(key==="recovery_shake")return value===true?"positive":value===false?"neutral":"neutral";
+   return "neutral";
+  };
+  const visualIcon=(key,value)=>{
+   if(key==="feeling")return "♡";
+   if(key==="effort")return "◷";
+   if(key==="gi_level"||key==="gi_symptoms")return "◇";
+   if(key==="game_symptoms")return "✧";
+   if(key==="food_pre"||key==="food_during")return "◉";
+   if(key==="caffeine_pre"||key==="caffeine_half")return "☕";
+   if(key==="recovery_shake")return "✓";
+   return "•";
+  };
+  const visualValue=(key,value,label)=>{
+   const badge=document.createElement("span");badge.className="tm-answer-badge tm-answer-"+visualTone(key,value);
+   const icon=document.createElement("span");icon.className="tm-answer-icon";icon.textContent=visualIcon(key,value);icon.setAttribute("aria-hidden","true");
+   const body=document.createElement("span");body.textContent=label;badge.append(icon,body);return badge;
+  };
   const fmt=(value,key)=>value===undefined||value===null||value===""||Array.isArray(value)&&!value.length?"Não preenchido":Array.isArray(value)?value.map(v=>alternatives[v]||String(v)).join(", "):typeof value==="boolean"?(value?"Sim":"Não"):alternatives[value]||String(value)+(["feeling","effort"].includes(key)?"/10":"");
   for(const record of rows){
    const tr=document.createElement("tr"),answers=(()=>{try{return JSON.parse(record.answers_json||"{}")}catch{return {};}})();
    for(const [key] of fields){
     const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":fmt(answers[key],key);
-    const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";td.append(value);tr.append(td);
+    const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";if(kind==="game"&&!["match_date","minutes"].includes(key))td.append(visualValue(key,answers[key],v));else td.append(value);tr.append(td);
    }
    const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
    if(kind==="game"){
     const extra=document.createElement("tr");extra.hidden=true;const cell=document.createElement("td");cell.colSpan=fields.length+1;
     const grid=document.createElement("div");grid.className="tm-form-answer-grid";
-    for(const [key,label]of Object.entries(answerLabels)){const item=document.createElement("div");item.className="tm-form-answer-field";const small=document.createElement("small");small.textContent=label;const strong=document.createElement("strong");strong.textContent=fmt(answers[key],key);if(strong.textContent==="Não preenchido")strong.className="tm-unanswered";item.append(small,strong);grid.append(item);}
+    for(const [key,label]of Object.entries(answerLabels)){const item=document.createElement("div");item.className="tm-form-answer-field";const small=document.createElement("small");small.textContent=label;const strong=document.createElement("strong");strong.textContent=fmt(answers[key],key);if(strong.textContent==="Não preenchido")strong.className="tm-unanswered";item.append(small,visualValue(key,answers[key],strong.textContent));grid.append(item);}
     cell.append(grid);extra.append(cell);
     const details=document.createElement("button");details.type="button";details.textContent="Detalhes";details.setAttribute("aria-expanded","false");details.onclick=()=>{extra.hidden=!extra.hidden;details.textContent=extra.hidden?"Detalhes":"Recolher";details.setAttribute("aria-expanded",String(!extra.hidden));};actions.append(details);
     const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
