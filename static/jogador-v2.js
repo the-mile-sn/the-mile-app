@@ -176,7 +176,7 @@ async function renderSupplementPlan(target){
 }
 // Inactive integration seam: the live player UI always uses its existing
 // prescription until an explicitly reviewed activation enables this flag.
-const POST_MATCH_DISPLAY_ENABLED=true;
+const POST_MATCH_DISPLAY_ENABLED=false;
 let effectiveScenarioColorsByDay={};
 function assignedColor(date,meal,classification){
  if(POST_MATCH_DISPLAY_ENABLED){
@@ -271,7 +271,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
   dates.push(key);classes.push(model.find(c=>c.name===entry?.classification));totals.push(weeklyDayTotal(entry||{date:key,classification:null}));
   const header=document.createElement("button");header.type="button";header.className="weekly-day-header";header.setAttribute("aria-label","Abrir vista diária: "+dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
-  for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["number",String(dt.getDate())],["classification",entry?.classification||"—"]]){
+  for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["number",String(dt.getDate())],["classification",entry?.classification||"Geral"]]){
    const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
   }
   markWeeklyColumn(header,key);header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};if(key===iso(new Date()))header.classList.add("today");grid.append(header);
@@ -304,7 +304,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const section=document.createElement("section");section.className="weekly-detail tone-"+color;
   const dayData=r.days.find(x=>x.date===date);
   const top=document.createElement("div");top.className="weekly-detail-heading";
-  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"—");
+  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"Geral");
   const title=document.createElement("strong");title.textContent=names[meal]||meal;
   const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
   const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
@@ -730,8 +730,7 @@ async function renderWeightCard(root,date){
 }
 async function overview(){
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
- const r=await api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
- await loadPlayerPostMatch();
+ const [r]=await Promise.all([api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end)),loadPlayerPostMatch()]);
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
@@ -774,7 +773,7 @@ async function overview(){
   const button=document.createElement("button");button.type="button";button.className="week-day"+(iso(dt)===d?" selected":"")+(iso(dt)===iso(new Date())?" today":"");
   button.setAttribute("aria-pressed",String(iso(dt)===d));
   button.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+dayInfo.classification:""));
-  for(const [cls,text] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",dayInfo?.classification||"—"]]){
+  for(const [cls,text] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",dayInfo?.classification||"Geral"]]){
    const span=document.createElement("span");span.className=cls;span.textContent=text;button.append(span);
   }
   button.onclick=()=>{day=dt;overview().catch(error);};strip.append(button);
