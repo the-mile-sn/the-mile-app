@@ -2191,7 +2191,7 @@ async function saveAssessmentAdmin(publish){
   await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments",{method:"POST",body:JSON.stringify(payload)});
   msg.textContent=publish?"Avaliação publicada.":"Rascunho guardado.";
   assessmentPdf="";assessmentUploadedFor="";
-  await loadAssessmentsAdmin();
+  await loadAssessmentsAdmin();refreshAssessmentRegistry().catch(()=>{});
  }catch(e){msg.textContent="Erro ao guardar: "+e.message;}
 }
 $("assessment-review-form").addEventListener("submit",e=>{e.preventDefault();saveAssessmentAdmin(true);});
