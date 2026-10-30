@@ -220,16 +220,25 @@ function previewNutritionForColors(entry,colorMap,planData,periData,mealKeys){
  }
  return count?total:null;
 }
-function weeklyDayTotal(entry){
- const cls=model.find(x=>x.name===entry?.classification);
+function dayNutritionTotal(entry){
+ if(!entry)return null;
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
- for(const meal of meals){const color=assignedColor(entry?.date,meal,entry?.classification);if(!color)continue;count++;
-  const avg=average(plans[color]?.[meal]||[]);if(!avg)return null;
-  for(const k in total)total[k]+=avg[k];
+ for(const meal of meals){
+  const color=assignedColor(entry.date,meal,entry.classification);
+  if(!color)continue;
+  const avg=average(plans[color]?.[meal]||[]);
+  if(!avg)return null;
+  count++;for(const k in total)total[k]+=avg[k];
  }
- for(const item of periMeals.filter(x=>x.event_date===entry?.date)){const avg=average(item.options||[]);if(!avg)return null;count++;for(const k in total)total[k]+=avg[k];}
+ for(const item of periMeals.filter(x=>x.event_date===entry.date)){
+  const avg=average(item.options||[]);
+  if(!avg)return null;
+  count++;for(const k in total)total[k]+=avg[k];
+ }
  return count?total:null;
 }
+function weeklyDayTotal(entry){return dayNutritionTotal(entry);}
+
 function weeklySummary(data,relativeMeans={}){
  const section=document.createElement("section");section.className="weekly-average-summary";
  const hasWeight=false; // Relative weekly means are computed day by day below.
@@ -774,9 +783,11 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length){root.textContent="Sem programação definida para este dia.";return;}
 
- const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let complete=true,assigned=0;
- for(const meal of meals){const color=assignedColor(d,meal,entry?.classification);if(!color)continue;assigned++;const avg=average(plans[color]?.[meal]||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
- for(const item of periMeals.filter(x=>x.event_date===d)){assigned++;const avg=average(item.options||[]);if(!avg){complete=false;continue;}for(const key in total)total[key]+=avg[key];}
+ const dailyTotal=dayNutritionTotal(entry);
+ const assigned=meals.filter(meal=>assignedColor(d,meal,entry?.classification)).length+periMeals.filter(x=>x.event_date===d).length;
+ const complete=!!dailyTotal;
+ const total=dailyTotal;
+
  if(assigned){
   const summary=document.createElement("section");summary.className="daily-nutrition nutrition-donut-summary";
   if(complete){
