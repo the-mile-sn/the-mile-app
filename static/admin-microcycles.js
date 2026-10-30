@@ -56,22 +56,47 @@ $("admin-signout").onclick=async()=>{
  }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
 };
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
+const planningSearch=$("tm-planning-search"),planningResults=$("tm-planning-results"),planningPicker=$("tm-planning-picker");
+const planningNormalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
 function updatePlanningPlayerControls(){
  const select=$("athlete"),avatar=$("tm-planning-avatar");
  if(!select||!avatar)return;
  const name=select.selectedOptions[0]?.textContent||"";
  avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(v=>v[0]).join("").toLocaleUpperCase("pt-PT")||"—";
- $("tm-planning-prev").disabled=select.selectedIndex<=0;
- $("tm-planning-next").disabled=select.selectedIndex<0||select.selectedIndex>=select.options.length-1;
+ planningSearch.value=name;
+ closePlanningResults();
 }
-function switchPlanningPlayer(offset){
- const select=$("athlete"),next=select.selectedIndex+offset;
- if(next<0||next>=select.options.length)return;
- select.selectedIndex=next;
- select.dispatchEvent(new Event("change"));
+function closePlanningResults(){planningResults.hidden=true;planningSearch.setAttribute("aria-expanded","false");planningResults.replaceChildren();}
+function renderPlanningResults(){
+ const select=$("athlete");
+ const query=planningNormalize(planningSearch.value);
+ const words=query.split(/\s+/).filter(Boolean);
+ planningResults.replaceChildren();
+ let count=0;
+ for(const option of select.options){
+  const name=planningNormalize(option.textContent);
+  if(!words.every(term=>name.split(/\s+/).some(part=>part.startsWith(term))))continue;
+  const item=document.createElement("button");item.type="button";item.className="tm-planning-result";item.setAttribute("role","option");
+  item.setAttribute("aria-selected",String(option.value===select.value));
+  item.textContent=option.textContent;
+  item.addEventListener("mousedown",event=>event.preventDefault());
+  item.addEventListener("click",()=>{
+   const previous=select.value;select.value=option.value;closePlanningResults();
+   planningSearch.value=option.textContent;
+   if(previous!==select.value)select.dispatchEvent(new Event("change",{bubbles:true}));
+  });
+  planningResults.append(item);count++;
+ }
+ if(!count){const empty=document.createElement("div");empty.className="tm-planning-result-empty";empty.textContent="Nenhum jogador encontrado.";planningResults.append(empty);}
+ planningResults.hidden=false;planningSearch.setAttribute("aria-expanded","true");
 }
-$("tm-planning-prev").addEventListener("click",()=>switchPlanningPlayer(-1));
-$("tm-planning-next").addEventListener("click",()=>switchPlanningPlayer(1));
+planningSearch.addEventListener("focus",renderPlanningResults);
+planningSearch.addEventListener("input",renderPlanningResults);
+planningSearch.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){closePlanningResults();planningSearch.value=$("athlete").selectedOptions[0]?.textContent||"";}
+ if(event.key==="Enter"&&!planningResults.hidden){event.preventDefault();const first=planningResults.querySelector("button");if(first)first.click();}
+});
+document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target))closePlanningResults();});
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-planning-new-player").hidden=true;$("new-name").value="";});
 window.tmOpenPlanningCreate=()=>{$("tm-planning-new-player").hidden=false;$("new-name").focus();$("tm-planning-new-player").scrollIntoView({behavior:"smooth",block:"center"});};
 async function loadModel(){updatePlanningPlayerControls();if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
