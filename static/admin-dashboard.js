@@ -125,7 +125,7 @@
    playerProfile=result.athlete;playerProfileEditing=false;displayPlayerProfile();
    $("tm-players-profile-feedback").textContent="Perfil guardado.";
    await loadPlayers();
-   if(typeof window.tmRefreshPlanningPlayer==="function")await window.tmRefreshPlanningPlayer(playerProfile.id);
+   if(typeof window.tmSyncPlanningAthleteProfile==="function")window.tmSyncPlanningAthleteProfile(playerProfile);
   }catch(e){$("tm-players-profile-feedback").textContent="Não foi possível guardar: "+e.message;}
   finally{button.disabled=false;}
  });
