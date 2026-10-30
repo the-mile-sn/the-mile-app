@@ -71,6 +71,64 @@
  planningBtn.addEventListener("click",openPlanning);
  window.tmOpenAdminPlanning=openPlanning;
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
+ let playerProfile=null,playerProfileEditing=false;
+ const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)");
+ const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Altura (cm)","height_cm","number"],["Notas internas","profile_notes","textarea"]];
+ function displayPlayerProfile(){
+  if(!playerProfile)return;
+  const athlete=playerProfile,host=$("tm-players-profile-fields");host.replaceChildren();
+  $("tm-players-profile-title").textContent=athlete.name;
+  host.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin:18px 0";
+  for(const [caption,key,type] of profileFields){
+   const wrapper=el("label","profile-info-card");wrapper.style.cssText="display:flex;flex-direction:column;gap:8px;padding:15px;border:1px solid #36363c;border-radius:12px;min-width:0";
+   wrapper.append(el("small","",caption));
+   if(!playerProfileEditing){
+    const v=athlete[key];wrapper.append(el("strong","",v==null||v===""?"Por preencher":key==="sex"?(v==="F"?"Feminino":v==="M"?"Masculino":"Por definir"):String(v)+(key==="weight_kg"?" kg":key==="height_cm"?" cm":"")));
+   }else{
+    const field=type==="textarea"?el("textarea"):type==="sex"?el("select"):el("input");
+    if(type==="sex"){for(const [v,t] of [["","Por definir"],["F","Feminino"],["M","Masculino"]]){const o=el("option","",t);o.value=v;field.append(o);}}
+    else if(type!=="textarea"){field.type=type;if(type==="number"){field.min=key==="weight_kg"?"20":"100";field.max=key==="weight_kg"?"250":"230";field.step="0.1";}}
+    field.value=athlete[key]??"";field.dataset.playerProfileField=key;field.style.width="100%";wrapper.append(field);
+   }
+   host.append(wrapper);
+  }
+  $("tm-players-profile-edit").hidden=playerProfileEditing;
+  $("tm-players-profile-save").hidden=!playerProfileEditing;
+  $("tm-players-profile-cancel").hidden=!playerProfileEditing;
+ }
+ function closePlayerProfile(){
+  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;
+  $("tm-players-profile-feedback").textContent="";
+ }
+ async function openPlayerProfile(aid){
+  playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;
+  $("tm-players-profile-title").textContent="A carregar perfil…";$("tm-players-profile-fields").replaceChildren();
+  $("tm-players-profile-feedback").textContent="";
+  try{
+   const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/microcycles");
+   if(profilePanel.hidden)return;
+   playerProfile=data.athlete;displayPlayerProfile();
+  }catch(e){$("tm-players-profile-feedback").textContent="Não foi possível carregar o perfil: "+e.message;}
+ }
+ $("tm-players-profile-back").addEventListener("click",closePlayerProfile);
+ $("tm-players-profile-edit").addEventListener("click",()=>{if(!playerProfile)return;playerProfileEditing=true;displayPlayerProfile();});
+ $("tm-players-profile-cancel").addEventListener("click",()=>{playerProfileEditing=false;displayPlayerProfile();});
+ $("tm-players-profile-save").addEventListener("click",async()=>{
+  if(!playerProfile)return;
+  const button=$("tm-players-profile-save");button.disabled=true;
+  const get=k=>profilePanel.querySelector('[data-player-profile-field="'+k+'"]').value;
+  const rawWeight=get("weight_kg"),rawHeight=get("height_cm");
+  try{
+   const result=await request("/api/v2/athletes/"+encodeURIComponent(playerProfile.id)+"/profile",{method:"PUT",body:JSON.stringify({
+    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:rawHeight===""?null:Number(rawHeight),profile_notes:get("profile_notes")
+   })});
+   playerProfile=result.athlete;playerProfileEditing=false;displayPlayerProfile();
+   $("tm-players-profile-feedback").textContent="Perfil guardado.";
+   await loadPlayers();
+   if(typeof window.tmRefreshPlanningPlayer==="function")await window.tmRefreshPlanningPlayer(playerProfile.id);
+  }catch(e){$("tm-players-profile-feedback").textContent="Não foi possível guardar: "+e.message;}
+  finally{button.disabled=false;}
+ });
  let playersData=[],playersLoaded=false;
  function normalized(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();}
  function matchesName(name,query){const words=normalized(name).split(/\s+/).filter(Boolean);return normalized(query).split(/\s+/).filter(Boolean).every(part=>words.some(word=>word.startsWith(part)));}
@@ -89,12 +147,12 @@
     const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
    }
    const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
-   link.append(avatar,person);link.addEventListener("click",()=>openPlayers(p.id));first.append(link);row.append(first);
+   link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));first.append(link);row.append(first);
    const statusCell=el("td");statusCell.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));row.append(statusCell);
    const game=el("td");game.append(el("span","",p.next_match?fullDate(p.next_match.date):"—"));if(p.next_match?.time)game.append(el("small","tm-p-muted",p.next_match.time));row.append(game);
    const weight=el("td");if(p.latest_weight){weight.append(el("span","",Number(p.latest_weight.weight_kg).toLocaleString("pt-PT",{maximumFractionDigits:1})+" kg"),el("small","tm-p-muted",fullDate(p.latest_weight.date)));}else weight.textContent="—";row.append(weight);
    const reply=el("td");if(p.last_player_response){const isWeight=p.last_player_response.type==="weight";reply.append(el("span","",isWeight?"Peso":"Pós-jogo"),el("small","tm-p-muted",new Date(p.last_player_response.timestamp*1000).toLocaleDateString("pt-PT")));}else reply.textContent="—";row.append(reply);
-   const action=el("td");const go=el("button","tm-p-go","Abrir");go.type="button";go.addEventListener("click",()=>openPlayers(p.id));action.append(go);row.append(action);body.append(row);
+   const action=el("td");const go=el("button","tm-p-go","Abrir");go.type="button";go.addEventListener("click",()=>openPlayerProfile(p.id));action.append(go);row.append(action);body.append(row);
   }
   if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=6;row.append(cell);body.append(row);}
  }
@@ -103,6 +161,7 @@
  function openPlayersList(){
   if($("admin-workspace").hidden)return;
   section.hidden=true;legacy.hidden=true;playersPage.hidden=false;navActive(playersBtn);
+  closePlayerProfile();
   $("tm-players-error").textContent="";
   loadPlayers().catch(e=>{$("tm-players-error").textContent="Não foi possível carregar os jogadores: "+e.message;});
   window.scrollTo({top:0,behavior:"smooth"});
