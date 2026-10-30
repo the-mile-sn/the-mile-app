@@ -188,7 +188,7 @@ function assignedColor(date,meal,classification){
  const own=dayColorOverrides[date+"|"+meal];
  if(own==="none")return null;
  if(own)return own;
- return model.find(c=>c.name===classification)?.meals?.[meal]||null;
+ return model.find(c=>c.name===(classification||"Geral"))?.meals?.[meal]||null;
 }
 // Read-only nutritional parity check, never rendered and never persisted.
 let scenarioNutritionPreviewByDay={};
