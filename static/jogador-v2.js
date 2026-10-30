@@ -179,7 +179,7 @@ function decorateLabel(el,key){
 }
 
 let profileUsername="";
-async function session(){const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+async function session(){const epoch=playerSessionEpoch;const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");if(epoch!==playerSessionEpoch)return;plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("landing");if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(target){
@@ -770,7 +770,7 @@ function cachedOverviewRead(path){
  return promise;
 }
 async function overview(){
- const requestId=++overviewRequestId;
+ const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  // Read all weekly data together; changes of selected day reuse this bounded cache.
  const [r,weekMenus,weekWeights]=await Promise.all([
@@ -778,7 +778,7 @@ async function overview(){
   cachedOverviewRead("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),
   cachedOverviewRead("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))
  ]);
- if(requestId!==overviewRequestId)return;
+ if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  loadPlayerPostMatch().catch(()=>{});
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
@@ -910,7 +910,7 @@ async function overview(){
   root.append(summary);
  }
  renderWeightCard(root,d).catch(()=>{});
- if(requestId!==overviewRequestId)return;
+ if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
@@ -1048,7 +1048,7 @@ function openDishPhoto(src,alt){
  close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss();};document.addEventListener("keydown",onKey);
  overlay.append(close,image);document.body.append(overlay);close.focus();
 }
-async function menusView(){const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));
+async function menusView(){const epoch=playerSessionEpoch;const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);if(epoch!==playerSessionEpoch)return;const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));
  const strip=$("menu-week-strip");strip.querySelectorAll(".week-day").forEach(el=>el.remove());
  const todayKey=iso(new Date()),isCurrentWeek=todayKey>=iso(start)&&todayKey<=iso(end);
  if(!menuSelectedDate||menuSelectedDate<iso(start)||menuSelectedDate>iso(end))menuSelectedDate=isCurrentWeek?todayKey:iso(start);
@@ -1081,8 +1081,8 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
   const photo=document.createElement("img");photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";const dishId=dishMap.get(menu.value);cachedDishPhoto(dishId).then(src=>{if(!src)return;photo.src=src;photo.classList.add("dish-photo-ready");photo.tabIndex=0;photo.setAttribute("role","button");photo.setAttribute("aria-label","Ampliar fotografia: "+menu.value);photo.onclick=()=>openDishPhoto(src,menu.value);photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,menu.value);}};});body.append(photo);
  }
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken)root.replaceChildren(fragment);}
-function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+function error(e){if(e.stale||e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{revokePlayerView();await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
 $("profile-password-toggle").onclick=()=>{const form=$("profile-password-form");form.hidden=!form.hidden;};
 $("profile-password-form").onsubmit=async e=>{
  e.preventDefault();const feedback=$("profile-password-feedback"),button=e.currentTarget.querySelector('button[type="submit"]');
@@ -1114,8 +1114,10 @@ let assessmentRecords=[],assessmentFields={},assessmentAverages=[],assessmentGro
 const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
+ const epoch=playerSessionEpoch;
  $("assessment-measurements").textContent="A carregar avaliações…";
  const response=await api("/api/v2/player/assessments");
+ if(epoch!==playerSessionEpoch)return;
  assessmentRecords=response.assessments||[];
  assessmentFields=response.fields||{};
  assessmentAverages=response.averages_fields||[];
