@@ -71,9 +71,11 @@ def reference_weight(c,athlete_id,on_date):
         ORDER BY weigh_date DESC""",(athlete_id,start,on_date)).fetchall()
     if len(rows)>=3:
         return {"weight_kg":round(sum(r["weight_kg"] for r in rows)/len(rows),3),
-                "source":"7_day_average","record_count":len(rows)}
+                "source":"7_day_average","record_count":len(rows),
+                "source_date":rows[0]["weigh_date"],"window_start":start,"window_end":on_date}
     if rows:
-        return {"weight_kg":rows[0]["weight_kg"],"source":"latest_recent","record_count":len(rows)}
+        return {"weight_kg":rows[0]["weight_kg"],"source":"latest_recent","record_count":len(rows),
+                "source_date":rows[0]["weigh_date"]}
     previous=c.execute("""SELECT weigh_date,weight_kg FROM v2_daily_weighins
         WHERE athlete_id=? AND weigh_date<=? ORDER BY weigh_date DESC LIMIT 1""",
         (athlete_id,on_date)).fetchone()
