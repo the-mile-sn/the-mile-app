@@ -1,17 +1,37 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
+let playerSessionEpoch=0;
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
-function revokePlayerView(){for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});dishPhotoCache.clear();menuRenderToken++;document.body.classList.remove("profile-active");
- me=null;playerCsrf='';plans={};periPlans={};model=[];meals=[];calendarEvents=[];periMeals=[];dayColorOverrides={};selectedColor=null;
- for(const id of ["day-details","week-strip","plan-colors","plan-detail","menu-days"])$(id).replaceChildren();
- $("player-name").textContent="";$("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
+function revokePlayerView(){
+ // An account switch must invalidate cached data and every old request.
+ ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
+ overviewReadCache.clear();
+ for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
+ dishPhotoCache.clear();document.body.classList.remove("profile-active");
+ me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
+ calendarEvents=[];periMeals=[];dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
+ effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
+ assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
+ weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];selectedColor=null;
+ tab="overview";overviewMode="day";day=new Date();menuWeek=new Date();
+ for(const id of ["day-details","week-strip","weekly-view","plan-colors","plan-detail","menu-days","assessment-measurements","assessment-most-recent","post-match-form-area"]){
+  const el=$(id);if(el)el.replaceChildren();
+ }
+ document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
+ const photo=$("profile-photo");photo.hidden=true;photo.removeAttribute("src");
+ $("profile-photo-initials").hidden=false;
+ $("player-name").textContent="";$("profile-display-name").textContent="";$("profile-display-username").textContent="";
+ $("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
 }
 async function api(path,opts={}){
+ const epoch=playerSessionEpoch;
  const r=await fetch(path,{credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},...opts});
  const data=await r.json().catch(()=>({}));
+ // Never pass a response from a previous account to a new player's interface.
+ if(epoch!==playerSessionEpoch){const err=new Error("stale_session");err.stale=true;throw err;}
  if(!r.ok){
   if((r.status===401||r.status===403)&&path!=="/api/login"&&path!=="/api/logout")revokePlayerView();
   const err=new Error(data.error||data.code||"Pedido indisponível");err.status=r.status;throw err;
@@ -159,7 +179,7 @@ function decorateLabel(el,key){
 }
 
 let profileUsername="";
-async function session(){const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+async function session(){const epoch=playerSessionEpoch;const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");if(epoch!==playerSessionEpoch)return;plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("landing");if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(target){
@@ -623,11 +643,14 @@ function injectPostMatchCard(){
  }
 }
 async function loadPlayerPostMatch(){
+ const epoch=playerSessionEpoch;
  const host=$("post-match-form-area");if(host){host.hidden=true;host.replaceChildren();}
  try{
   const result=await api("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
+  if(epoch!==playerSessionEpoch)return;
   playerPostMatchRecords=result.available?(result.matches||[]):[];
- }catch{playerPostMatchRecords=[];}
+ }catch{if(epoch!==playerSessionEpoch)return;playerPostMatchRecords=[];}
+ if(epoch!==playerSessionEpoch)return;
  injectPostMatchCard();
 }
 async function renderWeightCard(root,date){
@@ -744,13 +767,13 @@ const overviewReadCache=new Map();
 function cachedOverviewRead(path){
  const now=Date.now(),old=overviewReadCache.get(path);
  if(old&&now-old.time<15000)return old.promise;
- const promise=api(path).catch(err=>{overviewReadCache.delete(path);throw err;});
+ const promise=api(path).catch(err=>{if(overviewReadCache.get(path)?.promise===promise)overviewReadCache.delete(path);throw err;});
  overviewReadCache.set(path,{time:now,promise});
  if(overviewReadCache.size>30)overviewReadCache.delete(overviewReadCache.keys().next().value);
  return promise;
 }
 async function overview(){
- const requestId=++overviewRequestId;
+ const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  // Read all weekly data together; changes of selected day reuse this bounded cache.
  const [r,weekMenus,weekWeights]=await Promise.all([
@@ -758,7 +781,7 @@ async function overview(){
   cachedOverviewRead("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),
   cachedOverviewRead("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))
  ]);
- if(requestId!==overviewRequestId)return;
+ if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  loadPlayerPostMatch().catch(()=>{});
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
@@ -767,7 +790,7 @@ async function overview(){
  cachedOverviewRead("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
   .then(preview=>{
    if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
-   if(iso(monday(day))!==iso(mon))return;
+   if(epoch!==playerSessionEpoch||iso(monday(day))!==iso(mon))return;
    for(const entry of preview.days||[]){
     if(!entry.date||!entry.simulated_colors||!entry.colors)continue;
     effectiveScenarioColorsByDay[entry.date]=entry.simulated_colors;
@@ -890,7 +913,7 @@ async function overview(){
   root.append(summary);
  }
  renderWeightCard(root,d).catch(()=>{});
- if(requestId!==overviewRequestId)return;
+ if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
@@ -1028,7 +1051,7 @@ function openDishPhoto(src,alt){
  close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss();};document.addEventListener("keydown",onKey);
  overlay.append(close,image);document.body.append(overlay);close.focus();
 }
-async function menusView(){const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));
+async function menusView(){const epoch=playerSessionEpoch;const start=monday(menuWeek),end=new Date(start);end.setDate(end.getDate()+6);const [m,c,dishResponse]=await Promise.all([api("/api/v2/player/menus?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/calendar?start="+iso(start)+"&end="+iso(end)),api("/api/v2/player/dishes")]);if(epoch!==playerSessionEpoch)return;const dishMap=new Map(dishResponse.dishes.map(x=>[x.name_pt,x.id]));
  const strip=$("menu-week-strip");strip.querySelectorAll(".week-day").forEach(el=>el.remove());
  const todayKey=iso(new Date()),isCurrentWeek=todayKey>=iso(start)&&todayKey<=iso(end);
  if(!menuSelectedDate||menuSelectedDate<iso(start)||menuSelectedDate>iso(end))menuSelectedDate=isCurrentWeek?todayKey:iso(start);
@@ -1061,8 +1084,8 @@ async function menusView(){const start=monday(menuWeek),end=new Date(start);end.
   const photo=document.createElement("img");photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";const dishId=dishMap.get(menu.value);cachedDishPhoto(dishId).then(src=>{if(!src)return;photo.src=src;photo.classList.add("dish-photo-ready");photo.tabIndex=0;photo.setAttribute("role","button");photo.setAttribute("aria-label","Ampliar fotografia: "+menu.value);photo.onclick=()=>openDishPhoto(src,menu.value);photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,menu.value);}};});body.append(photo);
  }
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken)root.replaceChildren(fragment);}
-function error(e){if(e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{await api("/api/login",{method:"POST",body:JSON.stringify({identifier:$("username").value.trim().toLowerCase(),password:$("password").value})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+function error(e){if(e.stale||e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
 $("profile-password-toggle").onclick=()=>{const form=$("profile-password-form");form.hidden=!form.hidden;};
 $("profile-password-form").onsubmit=async e=>{
  e.preventDefault();const feedback=$("profile-password-feedback"),button=e.currentTarget.querySelector('button[type="submit"]');
@@ -1094,8 +1117,10 @@ let assessmentRecords=[],assessmentFields={},assessmentAverages=[],assessmentGro
 const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
+ const epoch=playerSessionEpoch;
  $("assessment-measurements").textContent="A carregar avaliações…";
  const response=await api("/api/v2/player/assessments");
+ if(epoch!==playerSessionEpoch)return;
  assessmentRecords=response.assessments||[];
  assessmentFields=response.fields||{};
  assessmentAverages=response.averages_fields||[];
