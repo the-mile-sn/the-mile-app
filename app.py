@@ -15,6 +15,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import calendar_v2
+import dashboard_v2
 import events_v2
 import day_colors_v2
 import peri_v2
@@ -1484,6 +1485,17 @@ def application(env, start_response):
                     raise Problem(404, 'not_found')
                 return respond(200, {'ok': True})
 
+            if path == '/api/v2/admin/dashboard' and method == 'GET':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                query=parse_qs(env.get('QUERY_STRING',''))
+                week=(query.get('week') or [''])[0]
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                try:
+                    result=dashboard_v2.snapshot(c,week,today)
+                except ValueError:
+                    raise Problem(400,'invalid_dashboard_week')
+                return respond(200,result)
             if path == '/api/v2/athletes':
                 if not user:
                     raise Problem(401, 'unauthorized')
