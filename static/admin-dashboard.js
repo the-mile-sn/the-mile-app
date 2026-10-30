@@ -17,9 +17,57 @@
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
  function navActive(target){for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
- function openDashboard(){if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
+ const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
+ const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
+ const assessmentHome=document.createComment("assessments-original"),monitoringHome=document.createComment("forms-original");
+ assessmentPanel.before(assessmentHome);monitoringPanel.before(monitoringHome);
+ let clinicalToken=0;
+ function closeClinical(){
+  ++clinicalToken;
+  for(const page of Object.values(clinicalPages))page.hidden=true;
+  if(assessmentHome.parentNode)assessmentHome.after(assessmentPanel);
+  if(monitoringHome.parentNode)monitoringHome.after(monitoringPanel);
+ }
+ function syncClinicalSelectors(){
+  const original=$("athlete");
+  for(const kind of ["assessments","forms"]){
+   const select=$("tm-"+kind+"-player"),value=original.value;select.replaceChildren();
+   for(const option of original.options){const o=document.createElement("option");o.value=option.value;o.textContent=option.textContent;select.append(o);}
+   if(value)select.value=value;
+  }
+ }
+ async function openClinical(kind,aid){
+  if($("admin-workspace").hidden)return;
+  closeClinical();const token=++clinicalToken;
+  section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
+  const page=clinicalPages[kind],feedback=$("tm-"+kind+"-error");page.hidden=false;navActive($("tm-admin-nav-"+kind));feedback.textContent="";
+  syncClinicalSelectors();const original=$("athlete");
+  if(aid&&Array.from(original.options).some(o=>o.value===aid))original.value=aid;
+  $("tm-"+kind+"-player").value=original.value;
+  if(!original.value){feedback.textContent="Ainda não existem jogadores.";return;}
+  try{
+   if(typeof loadModel==="function")await loadModel();
+   if(token!==clinicalToken)return;
+   if(kind==="assessments"){
+    if(typeof showBackofficeView==="function")showBackofficeView("assessments");
+    $("tm-assessments-slot").append(assessmentPanel);assessmentPanel.hidden=false;
+   }else{
+    if(typeof showBackofficeView==="function")showBackofficeView("profile");
+    $("tm-forms-slot").append(monitoringPanel);monitoringPanel.hidden=false;
+    if(typeof openMonitoring==="function")await openMonitoring("weight");
+   }
+  }catch(err){if(token===clinicalToken)feedback.textContent="Não foi possível carregar: "+err.message;}
+  if(token===clinicalToken)window.scrollTo({top:0,behavior:"smooth"});
+ }
+ for(const kind of ["assessments","forms"]){
+  $("tm-admin-nav-"+kind).addEventListener("click",()=>openClinical(kind));
+  $("tm-"+kind+"-player").addEventListener("change",e=>{const aid=e.target.value;if(aid&&$("athlete").value!==aid){$("athlete").value=aid;openClinical(kind,aid);}});
+ }
+ window.tmOpenAdminAssessments=aid=>openClinical("assessments",aid);
+ window.tmOpenAdminForms=aid=>openClinical("forms",aid);
+ function openDashboard(){closeClinical();if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
- async function openPlayers(aid,day,monitoringKind){
+ async function openPlayers(aid,day,monitoringKind){closeClinical();
  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
  try{
   if(aid&&$("athlete")){
@@ -61,7 +109,7 @@
  }
  dash.addEventListener("click",openDashboard);
  playersBtn.addEventListener("click",openPlayersList);
- function openPlanning(){
+ function openPlanning(){closeClinical();
   if($("admin-workspace").hidden)return;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
   $("admin-account-panel").hidden=true;
@@ -70,7 +118,7 @@
  }
  planningBtn.addEventListener("click",openPlanning);
  window.tmOpenAdminPlanning=openPlanning;
- const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
+ const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null;
  const accessIdentity=$("tm-players-access-identity"),accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
  function paintPlayerAccess(){
@@ -188,7 +236,7 @@
  }
  async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
  window.tmRefreshPlayersList=()=>loadPlayers();
- function openPlayersList(){
+ function openPlayersList(){closeClinical();
   if($("admin-workspace").hidden)return;
   section.hidden=true;legacy.hidden=true;playersPage.hidden=false;navActive(playersBtn);
   closePlayerProfile();
