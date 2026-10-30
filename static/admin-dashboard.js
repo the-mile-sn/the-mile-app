@@ -34,6 +34,7 @@
    const select=$("tm-"+kind+"-player"),value=original.value;select.replaceChildren();
    for(const option of original.options){const o=document.createElement("option");o.value=option.value;o.textContent=option.textContent;select.append(o);}
    if(value)select.value=value;
+   syncClinicalPicker(kind);
   }
  }
  const normalizedClinicalName=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
