@@ -99,6 +99,7 @@
   if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=6;row.append(cell);body.append(row);}
  }
  async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
+ window.tmRefreshPlayersList=()=>loadPlayers();
  function openPlayersList(){
   if($("admin-workspace").hidden)return;
   section.hidden=true;legacy.hidden=true;playersPage.hidden=false;navActive(playersBtn);
@@ -109,8 +110,7 @@
  $("tm-players-filter").addEventListener("input",renderPlayers);
  $("tm-players-access").addEventListener("change",renderPlayers);
  $("tm-players-new").addEventListener("click",()=>{
-  openPlanning();
-  if(typeof window.tmOpenPlanningCreate==="function")window.tmOpenPlanningCreate();
+  if(typeof window.tmOpenPlayerCreate==="function")window.tmOpenPlayerCreate();
  });
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
  function paintEvents(data){

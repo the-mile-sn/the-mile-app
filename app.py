@@ -1531,11 +1531,30 @@ def application(env, start_response):
                 if method == 'GET':
                     return respond(200, {'athletes': microcycles_v2.list_athletes(c)})
                 if method == 'POST':
+                    body=read_json(env)
+                    name=str(body.get('name','')).strip()
+                    username=str(body.get('username','')).strip().lower()
+                    password=body.get('password','')
+                    sex=body.get('sex')
+                    if not 2<=len(name)<=120 or sex not in ('M','F'):
+                        raise Problem(400,'invalid_athlete_profile')
+                    if not re.fullmatch(r'[a-z]{4,40}',username) or not isinstance(password,str) or not 12<=len(password)<=256:
+                        raise Problem(400,'invalid_credentials')
+                    if c.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone():
+                        raise Problem(409,'username_exists')
                     try:
-                        athlete = microcycles_v2.create_athlete(c, read_json(env).get('name', ''))
-                    except ValueError:
-                        raise Problem(400, 'invalid_athlete_name')
-                    return respond(201, {'athlete': athlete})
+                        athlete=microcycles_v2.create_athlete(c,name,commit=False)
+                        uid=secrets.token_hex(16)
+                        email='v2-'+uid+'@accounts.internal.invalid'
+                        c.execute("""INSERT INTO users(id,name,email,username,role,password,active,sex)
+                                     VALUES(?,?,?,?,?,?,1,?)""",(uid,name,email,username,'player',password_hash(password),sex))
+                        c.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES(?,?,?)",
+                                  (uid,athlete['id'],int(time.time())))
+                        c.commit()
+                    except Exception:
+                        c.rollback()
+                        raise
+                    return respond(201,{'athlete':athlete,'access':{'id':uid,'username':username,'active':1}})
             if path.startswith('/api/v2/athletes/'):
                 if not user:
                     raise Problem(401, 'unauthorized')

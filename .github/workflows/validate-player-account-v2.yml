@@ -1,0 +1,19 @@
+name: Validate player account creation V2
+on:
+  push:
+    branches:
+      - refactor/sex-single-source-admin-20261030
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python syntax
+        run: python -m compileall -q app.py microcycles_v2.py test_player_account_creation_v2.py
+      - name: Backoffice JS syntax
+        run: node --check static/admin-microcycles.js
+      - name: Player profile/account tests
+        run: python -m unittest -v test_player_account_creation_v2
