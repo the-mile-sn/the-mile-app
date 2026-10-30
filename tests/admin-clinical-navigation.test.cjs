@@ -23,3 +23,10 @@ test("legacy clinical and account functions remain available",()=>{
  assert.match(admin,/async function openMonitoring\(kind\)/);
  assert.match(admin,/async function loadAssessmentsAdmin\(\)/);
 });
+
+test("dashboard shortcuts target clinical main pages, not legacy planning",()=>{
+ assert.match(dashboard,/target==="assessments"\?openClinical\("assessments",item\.athlete_id\)/);
+ assert.match(dashboard,/openClinical\("forms",item\.athlete_id,kind==="pitch"\?"game":"weight"/);
+ assert.match(dashboard,/row\.dataset\.monitoringDate===recordDate/);
+ assert.doesNotMatch(html,/Os formulários ainda não estão ativos/);
+});
