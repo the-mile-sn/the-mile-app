@@ -643,11 +643,14 @@ function injectPostMatchCard(){
  }
 }
 async function loadPlayerPostMatch(){
+ const epoch=playerSessionEpoch;
  const host=$("post-match-form-area");if(host){host.hidden=true;host.replaceChildren();}
  try{
   const result=await api("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
+  if(epoch!==playerSessionEpoch)return;
   playerPostMatchRecords=result.available?(result.matches||[]):[];
- }catch{playerPostMatchRecords=[];}
+ }catch{if(epoch!==playerSessionEpoch)return;playerPostMatchRecords=[];}
+ if(epoch!==playerSessionEpoch)return;
  injectPostMatchCard();
 }
 async function renderWeightCard(root,date){
@@ -787,7 +790,7 @@ async function overview(){
  cachedOverviewRead("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
   .then(preview=>{
    if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
-   if(iso(monday(day))!==iso(mon))return;
+   if(epoch!==playerSessionEpoch||iso(monday(day))!==iso(mon))return;
    for(const entry of preview.days||[]){
     if(!entry.date||!entry.simulated_colors||!entry.colors)continue;
     effectiveScenarioColorsByDay[entry.date]=entry.simulated_colors;
