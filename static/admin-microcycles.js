@@ -758,7 +758,7 @@ for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
   button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
 }
 $("athlete").addEventListener("change",()=>loadModel().catch(e=>status(e.message,"warn")));
-$("create").addEventListener("click",async()=>{const name=$("new-name").value.trim();if(!name)return status("Escreve o nome do jogador.","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name})});$("new-name").value="";await loadAthletes(r.athlete.id);$("tm-planning-new-player").hidden=true;status("Jogador criado.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
+$("create").addEventListener("click",async()=>{const name=$("new-name").value.trim(),sex=$("new-sex").value,username=$("new-username").value.trim().toLowerCase(),password=$("new-password").value;if(!name||!sex||!/^[a-z]{4,40}$/.test(username)||password.length<12)return status("Preenche o nome, sexo, utilizador (4–40 letras) e palavra-passe (mínimo 12 caracteres).","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name,sex,username,password})});for(const id of ["new-name","new-username","new-password"])$(id).value="";$("new-sex").value="";await loadAthletes(r.athlete.id);$("tm-planning-new-player").hidden=true;status("Jogador e acesso criados.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
 start();
 
 function isoDay(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");}
