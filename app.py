@@ -16,6 +16,7 @@ import sqlite3
 import microcycles_v2
 import calendar_v2
 import dashboard_v2
+import admin_players_v2
 import events_v2
 import day_colors_v2
 import peri_v2
@@ -1486,6 +1487,11 @@ def application(env, start_response):
                     raise Problem(404, 'not_found')
                 return respond(200, {'ok': True})
 
+            if path == '/api/v2/admin/players-overview' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                return respond(200,admin_players_v2.overview(c,today,access_valid))
             if path == '/api/v2/admin/dashboard' and method == 'GET':
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
