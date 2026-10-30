@@ -1,0 +1,17 @@
+name: Validate admin clinical navigation
+on:
+  push:
+    branches: [feature/admin-assessments-forms-main-sections-20261030]
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/admin-dashboard.js
+      - run: node --check static/admin-microcycles.js
+      - run: node --test tests/admin-clinical-navigation.test.cjs
+      - run: python -m unittest -v test_player_account_creation_v2
