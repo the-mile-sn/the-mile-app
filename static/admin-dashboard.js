@@ -36,7 +36,7 @@
    if(value)select.value=value;
   }
  }
- async function openClinical(kind,aid){
+ async function openClinical(kind,aid,monitoringKind,recordDate){
   if($("admin-workspace").hidden)return;
   closeClinical();const token=++clinicalToken;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
@@ -45,6 +45,7 @@
   if(aid&&Array.from(original.options).some(o=>o.value===aid))original.value=aid;
   $("tm-"+kind+"-player").value=original.value;
   if(!original.value){feedback.textContent="Ainda não existem jogadores.";return;}
+  let deepLinked=false;
   try{
    if(typeof loadModel==="function")await loadModel();
    if(token!==clinicalToken)return;
@@ -54,10 +55,17 @@
    }else{
     if(typeof showBackofficeView==="function")showBackofficeView("profile");
     $("tm-forms-slot").append(monitoringPanel);monitoringPanel.hidden=false;
-    if(typeof openMonitoring==="function")await openMonitoring("weight");
+    const selectedKind=monitoringKind==="game"?"game":"weight";
+    if(typeof openMonitoring==="function")await openMonitoring(selectedKind);
+    if(token!==clinicalToken)return;
+    if(recordDate){
+     const content=$("monitoring-"+selectedKind+"-content");
+     const entry=Array.from(content?.querySelectorAll(".monitoring-entry")||[]).find(row=>row.dataset.monitoringDate===recordDate);
+     if(entry){entry.classList.add("tm-monitoring-target");entry.scrollIntoView({behavior:"smooth",block:"center"});deepLinked=true;}
+    }
    }
   }catch(err){if(token===clinicalToken)feedback.textContent="Não foi possível carregar: "+err.message;}
-  if(token===clinicalToken)window.scrollTo({top:0,behavior:"smooth"});
+  if(token===clinicalToken&&!deepLinked)window.scrollTo({top:0,behavior:"smooth"});
  }
  for(const kind of ["assessments","forms"]){
   $("tm-admin-nav-"+kind).addEventListener("click",()=>openClinical(kind));
@@ -253,19 +261,19 @@
  function paintEvents(data){
   const host=$("tm-db-events"),recentHost=$("tm-db-recent");host.replaceChildren();recentHost.replaceChildren();
   const t=data.today_events||{};
-  const makeItem=(item,label,day,highlight=false)=>{
+  const makeItem=(item,label,day,highlight=false,target="planning")=>{
    const btn=el("button","tm-db-event"+(highlight?" tm-db-birthday":""));btn.type="button";
    btn.append(el("span","",item.name),el("small","",label));
-   btn.addEventListener("click",()=>openPlayers(item.athlete_id,day||data.today));return btn;
+   btn.addEventListener("click",()=>target==="assessments"?openClinical("assessments",item.athlete_id):openPlayers(item.athlete_id,day||data.today));return btn;
   };
   const events=[
    ...(t.games||[]).map(item=>({item,label:item.time?"Jogo · "+item.time:"Jogo agendado",day:data.today})),
    ...(t.events||[]).map(item=>({item,label:item.title||"Evento",day:data.today})),
-   ...(t.assessments_today||[]).map(item=>({item,label:"Avaliação registada hoje",day:item.date})),
+   ...(t.assessments_today||[]).map(item=>({item,label:"Avaliação registada hoje",day:item.date,target:"assessments"})),
    ...(t.birthdays||[]).map(item=>({item,label:"🎂 Aniversário",day:data.today,birthday:true}))
   ];
   if(!events.length)host.append(el("p","tm-db-none","Sem nada hoje."));
-  else for(const entry of events)host.append(makeItem(entry.item,entry.label,entry.day,entry.birthday));
+  else for(const entry of events)host.append(makeItem(entry.item,entry.label,entry.day,entry.birthday,entry.target));
   const recent=t.recent_responses||[];
   if(!recent.length)recentHost.append(el("p","tm-db-none","Sem respostas recentes."));
   else for(const item of recent){
@@ -280,7 +288,7 @@
    time.dateTime=new Date(item.timestamp*1000).toISOString();
    btn.setAttribute("aria-label",item.name+" · "+(kind==="pitch"?"Formulário pós-jogo":"Registo de peso")+" · "+detail+" · submetido em "+shortTime);
    btn.append(iconSlot,details,time);
-   btn.addEventListener("click",()=>openPlayers(item.athlete_id,kind==="pitch"?item.match_date:item.weigh_date,kind==="pitch"?"game":"weight"));
+   btn.addEventListener("click",()=>openClinical("forms",item.athlete_id,kind==="pitch"?"game":"weight",kind==="pitch"?item.match_date:item.weigh_date));
    recentHost.append(btn);
   }
  }
