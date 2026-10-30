@@ -3,6 +3,20 @@ import json
 import math
 from datetime import date, timedelta
 
+def ensure_weighins_table(c):
+    """Create only the player-weight table; never initialize post-match automation."""
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_daily_weighins (
+      id TEXT PRIMARY KEY,
+      athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+      weigh_date TEXT NOT NULL,
+      weight_kg REAL NOT NULL,
+      menstruating INTEGER,
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL,
+      UNIQUE(athlete_id,weigh_date)
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_weighins_lookup ON v2_daily_weighins(athlete_id,weigh_date)")
+
 def reference_weight(c,athlete_id,on_date):
     """As-of historical reference. Never use a weigh-in from the future."""
     target=date.fromisoformat(on_date)
