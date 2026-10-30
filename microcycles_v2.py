@@ -101,13 +101,19 @@ def list_athletes(c):
     return [dict(r) for r in rows]
 
 
-def create_athlete(c, name, commit=True):
+def create_athlete(c, name, commit=True, weight_kg=None):
     name = str(name).strip()
     if not 2 <= len(name) <= 120:
         raise ValueError("invalid_athlete_name")
+    try:
+        weight = float(str(weight_kg).replace(",", "."))
+    except (TypeError, ValueError):
+        raise ValueError("invalid_initial_weight")
+    if not 20 <= weight <= 250 or weight != weight or weight in (float("inf"), float("-inf")):
+        raise ValueError("invalid_initial_weight")
     athlete_id = secrets.token_hex(16)
-    c.execute("INSERT INTO v2_athletes(id,name,created_at) VALUES(?,?,?)",
-              (athlete_id, name, int(time.time())))
+    c.execute("INSERT INTO v2_athletes(id,name,created_at,weight_kg) VALUES(?,?,?,?)",
+              (athlete_id, name, int(time.time()), weight))
     for classification in TYPES:
         c.execute("INSERT INTO v2_microcycle_rows(athlete_id,classification,configured) VALUES(?,?,0)",
                   (athlete_id, classification))
