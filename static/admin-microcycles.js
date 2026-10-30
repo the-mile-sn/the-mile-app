@@ -18,6 +18,8 @@ async function loadAdminAccounts(){
   host.append(row);
  }
 }
+$("tm-admin-nav-account").addEventListener("click",()=>{$("admin-account-toggle").click();if(!$("admin-account-panel").hidden)$("admin-account-panel").scrollIntoView({behavior:"smooth",block:"start"});});
+$("tm-admin-nav-players").addEventListener("click",()=>{$("admin-account-panel").hidden=true;$("admin-account-toggle").setAttribute("aria-expanded","false");$("backoffice-nav").scrollIntoView({behavior:"smooth",block:"start"});});
 $("admin-account-toggle").onclick=async()=>{
  const panel=$("admin-account-panel");panel.hidden=!panel.hidden;
  $("admin-account-toggle").setAttribute("aria-expanded",String(!panel.hidden));
