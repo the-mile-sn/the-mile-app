@@ -341,7 +341,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Média diária";heading.append(h);root.append(heading);
  const valid=totals.filter(Boolean);
  if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
- else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;const ratios={};for(const k in avg){const values=totals.flatMap((t,i)=>{const w=Number(weeklyWeights[dates[i]]?.weight_kg);return t&&Number.isFinite(w)&&w>0?[t[k]/w]:[];});if(values.length===valid.length)ratios[k]=values.reduce((a,b)=>a+b,0)/values.length;}root.append(weeklySummary(avg,ratios));}
+ else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;const ratios={};for(const k in avg){const values=totals.flatMap((t,i)=>{const rawWeight=weeklyWeights[dates[i]]?.weight_kg;const w=rawWeight==null?NaN:Number(rawWeight);return t&&Number.isFinite(w)&&w>0?[t[k]/w]:[];});if(values.length===valid.length)ratios[k]=values.reduce((a,b)=>a+b,0)/values.length;}root.append(weeklySummary(avg,ratios));}
  const weeklySupplements=new Map();
  for(const date of dates){
   for(const item of supplementsByDay[date]||[]){
@@ -763,7 +763,8 @@ async function overview(){
  if(isWeek){const [weekMenus,refs]=await Promise.all([api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),api("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))]);renderWeekly(mon,r,weekMenus.menus||[],refs.weights_by_date||{});return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
  const dateWeights=await api("/api/v2/player/reference-weights?start="+d+"&end="+d);
- const dailyReferenceWeight=Number(dateWeights.weights_by_date?.[d]?.weight_kg);
+ const dailyReferenceRaw=dateWeights.weights_by_date?.[d]?.weight_kg;
+ const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
  const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
