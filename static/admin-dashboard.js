@@ -1,7 +1,7 @@
 "use strict";
 (()=> {
  const $=id=>document.getElementById(id);
- const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players");
+ const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players");
  if(!section||!legacy||!dash)return;
  const meals=["breakfast","lunch","snack","dinner","supper"];
  const icons=["coffee","restaurant","veg","restaurant","moon"];
@@ -17,10 +17,10 @@
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
  function navActive(target){for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
- function openDashboard(){if($("admin-workspace").hidden)return;legacy.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
+ function openDashboard(){if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
  async function openPlayers(aid,day,monitoringKind){
- section.hidden=true;legacy.hidden=false;navActive(playersBtn);
+ section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(playersBtn);
  try{
   if(aid&&$("athlete")){
    const choice=$("athlete");
@@ -60,8 +60,49 @@
  window.scrollTo({top:0,behavior:"smooth"});
  }
  dash.addEventListener("click",openDashboard);
- playersBtn.addEventListener("click",()=>openPlayers());
- const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
+ playersBtn.addEventListener("click",openPlayersList);
+ const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
+ let playersData=[],playersLoaded=false;
+ function normalized(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();}
+ function matchesName(name,query){const words=normalized(name).split(/\s+/).filter(Boolean);return normalized(query).split(/\s+/).filter(Boolean).every(part=>words.some(word=>word.startsWith(part)));}
+ const playerStatus={active:"Ativo",no_account:"Sem conta",inactive:"Inativo",expired:"Expirado"};
+ const fullDate=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4):"—";
+ function renderPlayers(){
+  const body=$("tm-players-body");body.replaceChildren();
+  const term=$("tm-players-filter").value,filter=$("tm-players-access").value;
+  const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&matchesName(p.name,term));
+  $("tm-players-count").textContent=items.length+" jogador"+(items.length===1?"":"es");
+  for(const p of items){
+   const row=el("tr"),first=el("td");
+   const link=el("button","tm-p-player");
+   const avatar=el("span","tm-p-avatar",p.name.split(/\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
+   if(p.has_photo&&p.user_id){
+    const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
+   }
+   const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
+   link.append(avatar,person);link.addEventListener("click",()=>openPlayers(p.id));first.append(link);row.append(first);
+   const statusCell=el("td");statusCell.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));row.append(statusCell);
+   const game=el("td");game.append(el("span","",p.next_match?fullDate(p.next_match.date):"—"));if(p.next_match?.time)game.append(el("small","tm-p-muted",p.next_match.time));row.append(game);
+   const weight=el("td");if(p.latest_weight){weight.append(el("span","",Number(p.latest_weight.weight_kg).toLocaleString("pt-PT",{maximumFractionDigits:1})+" kg"),el("small","tm-p-muted",fullDate(p.latest_weight.date)));}else weight.textContent="—";row.append(weight);
+   const reply=el("td");if(p.last_player_response){const isWeight=p.last_player_response.type==="weight";reply.append(el("span","",isWeight?"Peso":"Pós-jogo"),el("small","tm-p-muted",new Date(p.last_player_response.timestamp*1000).toLocaleDateString("pt-PT")));}else reply.textContent="—";row.append(reply);
+   const action=el("td");const go=el("button","tm-p-go","Abrir");go.type="button";go.addEventListener("click",()=>openPlayers(p.id));action.append(go);row.append(action);body.append(row);
+  }
+  if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=6;row.append(cell);body.append(row);}
+ }
+ async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
+ function openPlayersList(){
+  if($("admin-workspace").hidden)return;
+  section.hidden=true;legacy.hidden=true;playersPage.hidden=false;navActive(playersBtn);
+  $("tm-players-error").textContent="";
+  loadPlayers().catch(e=>{$("tm-players-error").textContent="Não foi possível carregar os jogadores: "+e.message;});
+  window.scrollTo({top:0,behavior:"smooth"});
+ }
+ $("tm-players-filter").addEventListener("input",renderPlayers);
+ $("tm-players-access").addEventListener("change",renderPlayers);
+ $("tm-players-new").addEventListener("click",()=>{
+  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(playersBtn);
+  const input=$("new-name");if(input){input.focus();input.scrollIntoView({behavior:"smooth",block:"center"});}
+ });
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
  function paintEvents(data){
   const host=$("tm-db-events"),recentHost=$("tm-db-recent");host.replaceChildren();recentHost.replaceChildren();
