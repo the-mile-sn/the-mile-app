@@ -221,7 +221,7 @@ function previewNutritionForColors(entry,colorMap,planData,periData,mealKeys){
  return count?total:null;
 }
 function dayNutritionTotal(entry){
- if(!entry)return null;
+ if(!entry?.date)return null;
  const total={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let count=0;
  for(const meal of meals){
   const color=assignedColor(entry.date,meal,entry.classification);
@@ -784,7 +784,7 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length){root.textContent="Sem programação definida para este dia.";return;}
 
- const dailyTotal=dayNutritionTotal(entry);
+ const dailyTotal=dayNutritionTotal(entry||{date:d,classification:null});
  const assigned=meals.filter(meal=>assignedColor(d,meal,entry?.classification)).length+periMeals.filter(x=>x.event_date===d).length;
  const complete=!!dailyTotal;
  const total=dailyTotal;
