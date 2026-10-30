@@ -9,6 +9,8 @@ class ReferenceWeightTests(unittest.TestCase):
     def setUp(self):
         self.db=sqlite3.connect(":memory:")
         self.db.row_factory=sqlite3.Row
+        self.db.execute("CREATE TABLE v2_athletes (id TEXT PRIMARY KEY, weight_kg REAL)")
+        self.db.execute("INSERT INTO v2_athletes VALUES (?,?)",(self.athlete,85))
         self.db.execute("CREATE TABLE v2_daily_weighins (athlete_id TEXT, weigh_date TEXT, weight_kg REAL)")
         self.db.execute("CREATE TABLE v2_body_assessments (athlete_id TEXT, assessed_on TEXT, measurements TEXT, status TEXT)")
         self.athlete="athlete"
@@ -55,7 +57,8 @@ class ReferenceWeightTests(unittest.TestCase):
     def test_no_future_measurements(self):
         self.weigh("2026-10-31",81)
         self.assess("2026-11-01",82)
-        self.assertIsNone(self.result())
+        self.assertEqual(self.result()["source"],"profile_fallback")
+        self.assertEqual(self.result()["weight_kg"],85)
 
     def test_historical_weight_is_stable_after_new_weighin(self):
         self.weigh("2026-10-10",84)
@@ -65,6 +68,15 @@ class ReferenceWeightTests(unittest.TestCase):
         again=monitoring_v2.reference_weight(self.db,self.athlete,"2026-10-25")
         self.assertEqual(first,again)
         self.assertEqual(again["weight_kg"],82)
+
+    def test_assessment_precedes_profile(self):
+        self.assess("2026-10-10",82)
+        self.assertEqual(self.result()["weight_kg"],82)
+        self.assertEqual(self.result()["source"],"assessment")
+
+    def test_missing_profile_and_history(self):
+        self.db.execute("UPDATE v2_athletes SET weight_kg=NULL WHERE id=?",(self.athlete,))
+        self.assertIsNone(self.result())
 
     def test_no_history(self):
         self.assertIsNone(self.result())
