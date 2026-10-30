@@ -56,7 +56,25 @@ $("admin-signout").onclick=async()=>{
  }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
 };
 async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
-async function loadModel(){if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
+function updatePlanningPlayerControls(){
+ const select=$("athlete"),avatar=$("tm-planning-avatar");
+ if(!select||!avatar)return;
+ const name=select.selectedOptions[0]?.textContent||"";
+ avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(v=>v[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+ $("tm-planning-prev").disabled=select.selectedIndex<=0;
+ $("tm-planning-next").disabled=select.selectedIndex<0||select.selectedIndex>=select.options.length-1;
+}
+function switchPlanningPlayer(offset){
+ const select=$("athlete"),next=select.selectedIndex+offset;
+ if(next<0||next>=select.options.length)return;
+ select.selectedIndex=next;
+ select.dispatchEvent(new Event("change"));
+}
+$("tm-planning-prev").addEventListener("click",()=>switchPlanningPlayer(-1));
+$("tm-planning-next").addEventListener("click",()=>switchPlanningPlayer(1));
+$("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-planning-new-player").hidden=true;$("new-name").value="";});
+window.tmOpenPlanningCreate=()=>{$("tm-planning-new-player").hidden=false;$("new-name").focus();$("tm-planning-new-player").scrollIntoView({behavior:"smooth",block:"center"});};
+async function loadModel(){updatePlanningPlayerControls();if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
 async function runScenarioPreview(){
  const aid=model?.athlete?.id,day=$("scenario-preview-date").value;
  const out=$("scenario-preview-output"),info=$("scenario-preview-status");
@@ -707,7 +725,7 @@ for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
   button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
 }
 $("athlete").addEventListener("change",()=>loadModel().catch(e=>status(e.message,"warn")));
-$("create").addEventListener("click",async()=>{const name=$("new-name").value.trim();if(!name)return status("Escreve o nome do jogador.","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name})});$("new-name").value="";await loadAthletes(r.athlete.id);status("Jogador de teste criado.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
+$("create").addEventListener("click",async()=>{const name=$("new-name").value.trim();if(!name)return status("Escreve o nome do jogador.","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name})});$("new-name").value="";await loadAthletes(r.athlete.id);$("tm-planning-new-player").hidden=true;status("Jogador criado.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
 start();
 
 function isoDay(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");}
