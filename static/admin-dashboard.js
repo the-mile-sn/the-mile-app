@@ -18,6 +18,7 @@
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
  function navActive(target){for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
  function openDashboard(){if($("admin-workspace").hidden)return;legacy.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
+ window.tmOpenAdminDashboard=openDashboard;
  async function openPlayers(aid,day,monitoringKind){
  section.hidden=true;legacy.hidden=false;navActive(playersBtn);
  try{
