@@ -71,7 +71,35 @@
  planningBtn.addEventListener("click",openPlanning);
  window.tmOpenAdminPlanning=openPlanning;
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
- let playerProfile=null,playerProfileEditing=false,profileLoadToken=0;
+ let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null;
+ const accessIdentity=$("tm-players-access-identity"),accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
+ function paintPlayerAccess(){
+  accessToggle.hidden=!playerAccess;
+  accessIdentity.textContent=playerAccess?"Utilizador: @"+playerAccess.username+" · "+(playerAccess.active?"Acesso ativo":"Acesso bloqueado"):"Ainda não existe uma conta associada.";
+  if(playerAccess)accessToggle.textContent=playerAccess.active?"Bloquear acesso":"Reativar acesso";
+ }
+ async function loadPlayerAccess(aid,token){
+  accessIdentity.textContent="A consultar conta associada…";accessFeedback.textContent="";accessToggle.hidden=true;playerAccess=null;
+  try{
+   const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/access");
+   if(token!==profileLoadToken||profilePanel.hidden)return;
+   playerAccess=data.access;paintPlayerAccess();
+  }catch(e){if(token===profileLoadToken&&!profilePanel.hidden)accessIdentity.textContent="Não foi possível consultar o acesso: "+e.message;}
+ }
+ accessToggle.addEventListener("click",async()=>{
+  if(!playerProfile||!playerAccess)return;
+  const athleteId=playerProfile.id,accessId=playerAccess.id,active=!Boolean(playerAccess.active);
+  if(!window.confirm((active?"Reativar":"Bloquear")+" o acesso de "+playerProfile.name+" à App do Jogador?"+(active?"":" As sessões ativas serão terminadas.")))return;
+  const token=profileLoadToken;accessToggle.disabled=true;accessFeedback.textContent="";
+  try{
+   const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/access",{method:"PUT",body:JSON.stringify({active})});
+   if(token!==profileLoadToken||playerProfile?.id!==athleteId||playerAccess?.id!==accessId)return;
+   playerAccess=data.access;paintPlayerAccess();accessFeedback.textContent=active?"Acesso reativado.":"Acesso bloqueado; sessões terminadas.";
+   loadPlayers().catch(()=>{});
+  }catch(e){if(token===profileLoadToken)accessFeedback.textContent="Não foi possível alterar o acesso: "+e.message;}
+  finally{accessToggle.disabled=false;}
+ });
+
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Notas internas","profile_notes","textarea"]];
  function displayPlayerProfile(){
@@ -98,7 +126,7 @@
  }
  function closePlayerProfile(){
   ++profileLoadToken;
-  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;
+  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
@@ -109,7 +137,7 @@
   try{
    const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/microcycles");
    if(profilePanel.hidden||token!==profileLoadToken)return;
-   playerProfile=data.athlete;displayPlayerProfile();
+   playerProfile=data.athlete;displayPlayerProfile();loadPlayerAccess(aid,token);
   }catch(e){if(token===profileLoadToken)$("tm-players-profile-feedback").textContent="Não foi possível carregar o perfil: "+e.message;}
  }
  $("tm-players-profile-back").addEventListener("click",closePlayerProfile);
