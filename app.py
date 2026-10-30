@@ -265,6 +265,7 @@ def initialize():
         peri_v2.initialize(c)
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
+        weight_reference_v2.ensure_weighins_table(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
         # Preserve scheduled weekly activation timestamps across application restarts.
         c.execute("""UPDATE users SET current_weekly_document_id=(SELECT d.id FROM documents d WHERE d.user_id=users.id AND d.folder='weekly' ORDER BY d.updated DESC LIMIT 1) WHERE role='player' AND weekly_status='available' AND current_weekly_document_id IS NULL""")
