@@ -37,22 +37,38 @@
  playersBtn.addEventListener("click",()=>openPlayers());
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
- function paintEvents(data){const host=$("tm-db-events");host.replaceChildren();const eventData=data.today_events||{};const groups=[
- ["Jogos de hoje",eventData.games||[],"game"],
- ["Aniversários",eventData.birthdays||[],"birthday"],
- ["Respostas recentes",eventData.recent_responses||[],"response"],
- ["Pesagens de hoje",eventData.weighins||[],"weight"]];
- let hasItems=false;
- for(const [title,items,type] of groups){if(!items.length)continue;hasItems=true;const group=el("div","tm-db-event-group");group.append(el("h3","",title));for(const item of items){const btn=el("button","tm-db-event");btn.type="button";const label=type==="game"?(item.time?"Jogo às "+item.time:"Jogo agendado"):type==="birthday"?"Aniversário":type==="response"?(item.kind==="post_match"?"Resposta pós-jogo":"Avaliação publicada"):Number(item.weight_kg).toLocaleString("pt-PT",{maximumFractionDigits:1})+" kg";const line=el("span","",item.name);const meta=el("small","",label);btn.append(line,meta);btn.addEventListener("click",()=>openPlayers(item.athlete_id,type==="game"?data.today:type==="response"?(item.match_date||item.assessed_on):data.today));group.append(btn);}host.append(group);}
- if(!hasItems)host.append(el("p","tm-db-none","Sem acontecimentos ou respostas recentes a apresentar."));
+ function paintEvents(data){
+  const host=$("tm-db-events"),recentHost=$("tm-db-recent");host.replaceChildren();recentHost.replaceChildren();
+  const t=data.today_events||{};
+  const makeItem=(item,label,day,highlight=false)=>{
+   const btn=el("button","tm-db-event"+(highlight?" tm-db-birthday":""));btn.type="button";
+   btn.append(el("span","",item.name),el("small","",label));
+   btn.addEventListener("click",()=>openPlayers(item.athlete_id,day||data.today));return btn;
+  };
+  const events=[
+   ...(t.games||[]).map(item=>({item,label:item.time?"Jogo · "+item.time:"Jogo agendado",day:data.today})),
+   ...(t.events||[]).map(item=>({item,label:item.title||"Evento",day:data.today})),
+   ...(t.assessments_today||[]).map(item=>({item,label:"Avaliação registada hoje",day:item.date})),
+   ...(t.birthdays||[]).map(item=>({item,label:"🎂 Aniversário",day:data.today,birthday:true}))
+  ];
+  if(!events.length)host.append(el("p","tm-db-none","Sem nada hoje."));
+  else for(const entry of events)host.append(makeItem(entry.item,entry.label,entry.day,entry.birthday));
+  const recent=t.recent_responses||[];
+  if(!recent.length)recentHost.append(el("p","tm-db-none","Sem respostas recentes."));
+  else for(const item of recent){
+   let label=item.kind==="post_match"?"Pós-jogo":"Avaliação";
+   if(item.kind==="assessment"&&item.count>1)label+=" · "+item.count+" registos";
+   const local=new Date(item.timestamp*1000).toLocaleDateString("pt-PT",{day:"2-digit",month:"short"});
+   recentHost.append(makeItem(item,label+" · "+local,item.match_date||item.assessed_on));
+  }
  }
  function renderTable(data){const head=$("tm-db-thead"),body=$("tm-db-tbody");head.replaceChildren();body.replaceChildren();const today=data.today;const header=el("tr");const name=el("th","tm-db-name-cell");const search=el("input","tm-db-search");search.type="search";search.placeholder="Filtrar jogador";search.setAttribute("aria-label","Filtrar jogadores da matriz");name.append(el("span","tm-db-name-heading","Jogador"),search);header.append(name);
- const days=Array.from({length:7},(_,i)=>shifted(weekMonday,i));for(const [i,day] of days.entries()){const th=el("th",day===today?"tm-db-today":"");const lab=el("div","tm-db-date",["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"][i]);const d=el("div","tm-db-day",dateLabel(day));const ico=el("div","tm-db-icon-row");for(const icon of icons)ico.append(el("span","",icon));th.append(lab,d,ico);header.append(th);}head.append(header);
- for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name.toLocaleLowerCase("pt-PT");const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name",player.name);btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const cell=el("button","tm-db-cell");cell.type="button";cell.setAttribute("aria-label",player.name+", "+item.date+", "+(item.classification||"sem MD"));if(selected&&selected.id===player.id&&selected.date===item.date)cell.classList.add("tm-db-selected");cell.append(el("span","tm-db-md",item.classification||"—"));const dots=el("span","tm-db-dots");for(const meal of meals){const value=item.colors?.[meal];const dot=el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot"));dot.title=(names&&names[meal]||meal)+": "+(value||"não prescrito");dots.append(dot);}cell.append(dots);cell.addEventListener("click",()=>{selected={id:player.id,date:item.date};openPlayers(player.id,item.date);});td.append(cell);tr.append(td);}body.append(tr);}
+ const days=Array.from({length:7},(_,i)=>shifted(weekMonday,i));for(const [i,day] of days.entries()){const th=el("th",day===today?"tm-db-today":"");const lab=el("div","tm-db-date",["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"][i]);const d=el("div","tm-db-day",dateLabel(day));const ico=el("div","tm-db-five-cols tm-db-icon-row");for(const icon of icons)ico.append(el("span","",icon));th.append(lab,d,ico);header.append(th);}head.append(header);
+ for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name.toLocaleLowerCase("pt-PT");const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name",player.name);btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const cell=el("button","tm-db-cell"+(item.classification==="MD"?" tm-db-match":""));cell.type="button";cell.setAttribute("aria-label",player.name+", "+item.date+", "+(item.classification||"sem MD"));if(selected&&selected.id===player.id&&selected.date===item.date)cell.classList.add("tm-db-selected");cell.append(el("span","tm-db-md",item.classification||"—"));const dots=el("span","tm-db-five-cols tm-db-dots");for(const meal of meals){const value=item.colors?.[meal];const dot=el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot"));dot.title=(names&&names[meal]||meal)+": "+(value||"não prescrito");dots.append(dot);}cell.append(dots);cell.addEventListener("click",()=>{selected={id:player.id,date:item.date};openPlayers(player.id,item.date);});td.append(cell);tr.append(td);}body.append(tr);}
  search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase("pt-PT");let count=0;for(const tr of body.children){tr.hidden=!!q&&!tr.dataset.name.includes(q);if(!tr.hidden)count++;}$("tm-db-count").textContent=count+" jogador"+(count===1?"":"es");});$("tm-db-count").textContent=(data.players||[]).length+" jogadores";
  $("tm-db-week-title").textContent=dateLabel(days[0])+" – "+dateLabel(days[6]);$("tm-db-today-date").textContent=new Intl.DateTimeFormat("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(today+"T12:00:00Z"));
  }
- async function load(){const id=++seq;if(!weekMonday)weekMonday=monday(dateParts(new Date()));$("tm-db-error").textContent="";$("tm-db-events").textContent="A consultar…";const res=await request("/api/v2/admin/dashboard?week="+encodeURIComponent(weekMonday));if(id!==seq)return;cache=res;renderTable(res);paintEvents(res);}
+ async function load(){const id=++seq;if(!weekMonday)weekMonday=monday(dateParts(new Date()));$("tm-db-error").textContent="";$("tm-db-events").textContent="A consultar…";$("tm-db-recent").textContent="A consultar…";const res=await request("/api/v2/admin/dashboard?week="+encodeURIComponent(weekMonday));if(id!==seq)return;cache=res;renderTable(res);paintEvents(res);}
  $("tm-db-prev").addEventListener("click",()=>{weekMonday=shifted(weekMonday,-7);load().catch(showError);});
  $("tm-db-next").addEventListener("click",()=>{weekMonday=shifted(weekMonday,7);load().catch(showError);});
  $("tm-db-go-today").addEventListener("click",()=>{weekMonday=monday(dateParts(new Date()));load().catch(showError);});
