@@ -754,3 +754,6 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 
 /* Anchor selected meal details below the sticky viewport edge. */
 #tm-admin-legacy #day-preview{scroll-margin-top:22px}
+
+/* Slightly larger weekly meal indicators, preserving 5-column alignment. */
+#tm-dashboard .tm-db-dots .tm-db-dot{width:14px!important;height:14px!important;flex:0 0 14px!important}
