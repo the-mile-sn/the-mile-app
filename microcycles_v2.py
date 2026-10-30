@@ -101,7 +101,7 @@ def list_athletes(c):
     return [dict(r) for r in rows]
 
 
-def create_athlete(c, name):
+def create_athlete(c, name, commit=True):
     name = str(name).strip()
     if not 2 <= len(name) <= 120:
         raise ValueError("invalid_athlete_name")
@@ -111,7 +111,7 @@ def create_athlete(c, name):
     for classification in TYPES:
         c.execute("INSERT INTO v2_microcycle_rows(athlete_id,classification,configured) VALUES(?,?,0)",
                   (athlete_id, classification))
-    c.commit()
+    if commit: c.commit()
     return {"id": athlete_id, "name": name}
 
 
