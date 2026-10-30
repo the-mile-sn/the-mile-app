@@ -972,7 +972,7 @@ async function loadCalendar(){
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
   const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
-  dayWeightReferences=weeklyRefs.weights_by_date||{};
+  dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
   const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
   const weeklyColors=colorOverrideLookup(weeklyData.meal_color_overrides);
   const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri,weeklyColors));
