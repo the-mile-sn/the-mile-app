@@ -16,7 +16,7 @@ def average(options):
                 value=float(str(values.get(key,"")).replace(",","."))
             except (ValueError,TypeError):
                 return None
-            if not math.isfinite(value):
+            if not math.isfinite(value) or value<0:
                 return None
             total[key]+=value/len(options)
     return total
