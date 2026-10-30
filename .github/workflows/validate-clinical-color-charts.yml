@@ -1,0 +1,17 @@
+name: Validate clinical classification and charts
+on:
+  push:
+    branches: [ui/clinical-assessments-color-chart-forms-20261030]
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/admin-microcycles.js
+      - run: node --check static/admin-dashboard.js
+      - run: node --test tests/clinical-color-chart-ui.test.cjs tests/admin-assessments-forms-refresh.test.cjs tests/admin-clinical-navigation.test.cjs
+      - run: python -m unittest -v test_player_account_creation_v2
