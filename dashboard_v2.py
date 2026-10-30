@@ -99,17 +99,6 @@ def snapshot(c, week, today):
     todays_games.sort(key=lambda x: (x["time"] is None, x["time"] or "", x["name"].lower()))
     todays_events.sort(key=lambda x: (x["session"] == "afternoon", x["name"].lower()))
 
-    # Completed assessments only; these are records, not future appointments.
-    todays_assessments = [
-        {"athlete_id": row["athlete_id"], "name": row["name"],
-         "date": row["assessed_on"]}
-        for row in c.execute(
-            "SELECT a.id AS athlete_id,a.name,b.assessed_on "
-            "FROM v2_body_assessments b JOIN v2_athletes a ON a.id=b.athlete_id "
-            "WHERE b.assessed_on=? AND b.status='published' ORDER BY a.name",
-            (today,)).fetchall()
-    ]
-
     birthdays = []
     for row in c.execute(
         "SELECT a.id,a.name,u.birth_date FROM v2_athletes a "
@@ -122,53 +111,51 @@ def snapshot(c, week, today):
             birthdays.append({"athlete_id": row["id"], "name": row["name"]})
     birthdays.sort(key=lambda x: x["name"].lower())
 
-    # A recent response is the latest submitted or corrected post-match answer.
+    # Player-submitted forms only. Audit actor_id distinguishes an athlete's
+    # submission from an administrator entering/correcting a monitoring record.
+    # The timestamp is the latest PLAYER action, not an admin correction.
     cutoff = int((datetime.now(timezone.utc) - timedelta(days=7)).timestamp())
     recent = [
         {
             "athlete_id": r["athlete_id"], "name": r["name"],
-            "kind": "post_match", "timestamp": r["updated_at"],
+            "kind": "post_match", "timestamp": r["submitted_at"],
             "match_date": r["match_date"]
         }
         for r in c.execute(
-            "SELECT a.id AS athlete_id,a.name,r.updated_at,m.match_date "
+            "SELECT a.id AS athlete_id,a.name,m.match_date,"
+            " MAX(aud.created_at) AS submitted_at "
             "FROM v2_post_match_responses r "
             "JOIN v2_athletes a ON a.id=r.athlete_id "
             "JOIN v2_match_events m ON m.id=r.match_id AND m.athlete_id=r.athlete_id "
-            "WHERE r.updated_at>=? ORDER BY r.updated_at DESC LIMIT 40",
+            "JOIN v2_monitoring_audit aud ON aud.athlete_id=r.athlete_id "
+            "AND aud.record_type='post_match' AND aud.record_id=r.id "
+            "JOIN users actor ON actor.id=aud.actor_id AND actor.role='player' "
+            "WHERE aud.created_at>=? "
+            "GROUP BY a.id,a.name,m.match_date,r.id "
+            "ORDER BY submitted_at DESC LIMIT 40",
             (cutoff,)).fetchall()
     ]
     recent.extend([
         {
             "athlete_id": r["athlete_id"], "name": r["name"],
-            "kind": "assessment", "timestamp": r["created_at"],
-            "assessed_on": r["assessed_on"]
+            "kind": "weight", "timestamp": r["submitted_at"],
+            "weigh_date": r["weigh_date"], "weight_kg": r["weight_kg"]
         }
         for r in c.execute(
-            "SELECT a.id AS athlete_id,a.name,b.created_at,b.assessed_on "
-            "FROM v2_body_assessments b "
-            "JOIN v2_athletes a ON a.id=b.athlete_id "
-            "WHERE b.status='published' AND b.created_at>=? "
-            "ORDER BY b.created_at DESC LIMIT 60",
+            "SELECT a.id AS athlete_id,a.name,w.weigh_date,w.weight_kg,"
+            " MAX(aud.created_at) AS submitted_at "
+            "FROM v2_daily_weighins w "
+            "JOIN v2_athletes a ON a.id=w.athlete_id "
+            "JOIN v2_monitoring_audit aud ON aud.athlete_id=w.athlete_id "
+            "AND aud.record_type='weight' AND aud.record_id=w.id "
+            "JOIN users actor ON actor.id=aud.actor_id AND actor.role='player' "
+            "WHERE aud.created_at>=? "
+            "GROUP BY a.id,a.name,w.weigh_date,w.weight_kg,w.id "
+            "ORDER BY submitted_at DESC LIMIT 40",
             (cutoff,)).fetchall()
     ])
-    # Group same-day batches of assessments per player; a bulk historical
-    # import must not fill the whole recent-responses column with duplicates.
     recent.sort(key=lambda x: x["timestamp"], reverse=True)
-    grouped_recent = []
-    assessment_batches = {}
-    for item in recent:
-        if item["kind"] == "assessment":
-            batch_day = datetime.fromtimestamp(
-                item["timestamp"], ZoneInfo("Europe/Lisbon")).date().isoformat()
-            key = (item["athlete_id"], batch_day)
-            if key in assessment_batches:
-                assessment_batches[key]["count"] += 1
-                continue
-            item["count"] = 1
-            assessment_batches[key] = item
-        grouped_recent.append(item)
-    recent = grouped_recent[:8]
+    recent = recent[:8]
 
     weights = [
         {"athlete_id": r["athlete_id"], "name": r["name"], "weight_kg": r["weight_kg"]}
@@ -185,7 +172,7 @@ def snapshot(c, week, today):
         "players": week_rows,
         "today_events": {
             "games": todays_games, "birthdays": birthdays,
-            "events": todays_events, "assessments_today": todays_assessments,
+            "events": todays_events,
             "recent_responses": recent, "weighins": weights
         },
         "read_only": True
