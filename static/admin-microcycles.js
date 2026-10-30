@@ -766,7 +766,7 @@ function matchBase(){return "/api/v2/athletes/"+encodeURIComponent(model.athlete
 
 // An explicit per-day exception takes precedence over the microcycle model.
 function colorForDay(day,meal,overrides=dayColorOverrides){
-  const row=model&&model.classifications.find(r=>r.name===day.classification);
+  const row=model&&model.classifications.find(r=>r.name===(day.classification||"Geral"));
   const fallback=row?.meals?.[meal]||null;
   const selected=overrides[day.date+"|"+meal];
   if(Object.hasOwn(overrides,day.date+"|"+meal))return selected==="none"?null:selected;
@@ -800,7 +800,7 @@ function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
 function plannedDayTotals(day,periLookup=periByDay,colorLookup=dayColorOverrides){
-  if((!day.classification||day.needs_review)&&!(periLookup[day.date]||[]).length&&!Object.keys(colorLookup).some(key=>key.startsWith(day.date+"|")))return {state:"unclassified",count:0,missing:[],total:null};
+  // Days without a specific classification inherit the configured Geral meal colors.
   const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   const missing=[];let count=0;
   for(const entry of mealColorsForDay(day,colorLookup)){
