@@ -99,6 +99,7 @@
   if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=6;row.append(cell);body.append(row);}
  }
  async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
+ window.tmRefreshPlayersList=()=>loadPlayers();
  function openPlayersList(){
   if($("admin-workspace").hidden)return;
   section.hidden=true;legacy.hidden=true;playersPage.hidden=false;navActive(playersBtn);
