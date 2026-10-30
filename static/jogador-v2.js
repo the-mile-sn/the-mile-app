@@ -230,21 +230,21 @@ function weeklyDayTotal(entry){
  for(const item of periMeals.filter(x=>x.event_date===entry?.date)){const avg=average(item.options||[]);if(!avg)return null;count++;for(const k in total)total[k]+=avg[k];}
  return count?total:null;
 }
-function weeklySummary(data){
+function weeklySummary(data,relativeMeans={}){
  const section=document.createElement("section");section.className="weekly-average-summary";
- const weight=Number(me?.weight_kg||me?.weight||me?.body_weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
+ const hasWeight=false; // Relative weekly means are computed day by day below.
  for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
   const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?"":" g");
   item.append(title,value);
-  if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(data[key]/weight,1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
+  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(relativeMeans[key],1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
   section.append(item);
  }
  return section;
 }
-function renderWeekly(mon,r,weekMenus=[]){
- weeklyContext={mon,r,weekMenus};
+function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
+ weeklyContext={mon,r,weekMenus,weeklyWeights};
  const root=$("weekly-view");root.replaceChildren();
  const nav=document.createElement("div");nav.className="weekly-date-nav";
  const prev=document.createElement("button");prev.type="button";prev.textContent="‹";prev.setAttribute("aria-label","Semana anterior");
@@ -278,7 +278,7 @@ function renderWeekly(mon,r,weekMenus=[]){
    const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq Alm.":names[meal]||meal;b.append(label);
    if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
    b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
-   b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus);};grid.append(b);
+   b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus,weeklyWeights);};grid.append(b);
   }
  }
  for(let i=0;i<7;i++){
@@ -332,7 +332,7 @@ function renderWeekly(mon,r,weekMenus=[]){
  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Média diária";heading.append(h);root.append(heading);
  const valid=totals.filter(Boolean);
  if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
- else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;root.append(weeklySummary(avg));}
+ else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;const ratios={};for(const k in avg){const values=totals.flatMap((t,i)=>{const w=Number(weeklyWeights[dates[i]]?.weight_kg);return t&&Number.isFinite(w)&&w>0?[t[k]/w]:[];});if(values.length===valid.length)ratios[k]=values.reduce((a,b)=>a+b,0)/values.length;}root.append(weeklySummary(avg,ratios));}
  const weeklySupplements=new Map();
  for(const date of dates){
   for(const item of supplementsByDay[date]||[]){
@@ -366,7 +366,7 @@ function makePeriCard(item,compact=false){
   section.setAttribute("aria-pressed",String(active));
   section.onclick=()=>{
     weeklySelection=active?null:{date:item.event_date,periEventId:item.event_id,phase:item.phase};
-    if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus);
+    if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);
   };
   const title=document.createElement("span");title.textContent=item.title;
   section.append(title);
@@ -751,7 +751,7 @@ async function overview(){
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
- if(isWeek){const weekMenus=await api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end));renderWeekly(mon,r,weekMenus.menus||[]);return;}
+ if(isWeek){const [weekMenus,refs]=await Promise.all([api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),api("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))]);renderWeekly(mon,r,weekMenus.menus||[],refs.weights_by_date||{});return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
  const dateWeights=await api("/api/v2/player/reference-weights?start="+d+"&end="+d);
  const dailyReferenceWeight=Number(dateWeights.weights_by_date?.[d]?.weight_kg);
