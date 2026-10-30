@@ -48,7 +48,7 @@
    if(typeof showBackofficeView==="function")await showBackofficeView("calendar");
    const preview=$("day-preview");
    if(preview&&!preview.hidden&&preview.querySelector(".day-meals")){
-    preview.scrollIntoView({behavior:"smooth",block:"start"});
+    preview.scrollIntoView({behavior:"smooth",block:"center"});
     return;
    }
    const calendar=$("calendar-section");
