@@ -1,17 +1,37 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
+let playerSessionEpoch=0;
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
-function revokePlayerView(){for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});dishPhotoCache.clear();menuRenderToken++;document.body.classList.remove("profile-active");
- me=null;playerCsrf='';plans={};periPlans={};model=[];meals=[];calendarEvents=[];periMeals=[];dayColorOverrides={};selectedColor=null;
- for(const id of ["day-details","week-strip","plan-colors","plan-detail","menu-days"])$(id).replaceChildren();
- $("player-name").textContent="";$("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
+function revokePlayerView(){
+ // An account switch must invalidate cached data and every old request.
+ ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
+ overviewReadCache.clear();
+ for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
+ dishPhotoCache.clear();document.body.classList.remove("profile-active");
+ me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
+ calendarEvents=[];periMeals=[];dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
+ effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
+ assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
+ weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];selectedColor=null;
+ tab="overview";overviewMode="day";day=new Date();menuWeek=new Date();
+ for(const id of ["day-details","week-strip","weekly-view","plan-colors","plan-detail","menu-days","assessment-measurements","assessment-most-recent","post-match-form-area"]){
+  const el=$(id);if(el)el.replaceChildren();
+ }
+ document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
+ const photo=$("profile-photo");photo.hidden=true;photo.removeAttribute("src");
+ $("profile-photo-initials").hidden=false;
+ $("player-name").textContent="";$("profile-display-name").textContent="";$("profile-display-username").textContent="";
+ $("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
 }
 async function api(path,opts={}){
+ const epoch=playerSessionEpoch;
  const r=await fetch(path,{credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json"},...opts});
  const data=await r.json().catch(()=>({}));
+ // Never pass a response from a previous account to a new player's interface.
+ if(epoch!==playerSessionEpoch){const err=new Error("stale_session");err.stale=true;throw err;}
  if(!r.ok){
   if((r.status===401||r.status===403)&&path!=="/api/login"&&path!=="/api/logout")revokePlayerView();
   const err=new Error(data.error||data.code||"Pedido indisponível");err.status=r.status;throw err;
