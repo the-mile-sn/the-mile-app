@@ -116,7 +116,7 @@ def create_athlete(c, name):
 
 
 def get_model(c, athlete_id):
-    athlete = c.execute("SELECT id,name,weight_kg,height_cm,profile_notes,sex FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone()
+    athlete = c.execute("SELECT a.id,a.name,a.weight_kg,a.height_cm,a.profile_notes,u.sex FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id LEFT JOIN users u ON u.id=l.user_id WHERE a.id=?", (athlete_id,)).fetchone()
     if not athlete:
         return None
     configured = c.execute(
@@ -306,8 +306,9 @@ def update_athlete_profile(c, athlete_id, name, weight, height, notes, sex=None)
     height=numeric(height,100,230)
     if not isinstance(notes,str) or len(notes)>3000: raise ValueError("invalid_athlete_profile")
     if sex not in (None,"M","F"):raise ValueError("invalid_athlete_profile")
-    row=c.execute("UPDATE v2_athletes SET name=?,weight_kg=?,height_cm=?,profile_notes=?,sex=? WHERE id=?",
-       (name.strip(),weight,height,notes.strip(),sex,athlete_id))
+    row=c.execute("UPDATE v2_athletes SET name=?,weight_kg=?,height_cm=?,profile_notes=? WHERE id=?",
+       (name.strip(),weight,height,notes.strip(),athlete_id))
+    c.execute("UPDATE users SET sex=? WHERE id IN (SELECT user_id FROM v2_player_links WHERE athlete_id=?) AND role='player'",(sex,athlete_id))
     if not row.rowcount: return None
     c.commit()
     return {"id":athlete_id,"name":name.strip(),"weight_kg":weight,"height_cm":height,"profile_notes":notes.strip(),"sex":sex}
