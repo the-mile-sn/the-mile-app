@@ -323,7 +323,7 @@ async function openMonitoring(kind){
   if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
   info.textContent=rows.length+" registo(s)";
   for(const record of rows){
-   const line=document.createElement("div");line.className="monitoring-entry";
+   const line=document.createElement("div");line.className="monitoring-entry";line.dataset.monitoringDate=kind==="weight"?record.weigh_date:record.match_date;
    if(kind==="weight")line.textContent=monitoringDate(record.weigh_date)+" · "+monitoringDecimal(record.weight_kg)+" kg";
    else {
     const scenarios={very_low:"Very low",low:"Low",medium:"Medium",high:"High"};
