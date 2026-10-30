@@ -1271,7 +1271,9 @@ def application(env, start_response):
                                     JOIN v2_athletes a ON a.id=l.athlete_id
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                return respond(200, {'player': dict(link)})
+                player=dict(link)
+                player['sex']=user['sex']
+                return respond(200, {'player': player})
             if path == '/api/v2/player/reference-weights' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
