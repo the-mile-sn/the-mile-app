@@ -680,6 +680,13 @@ async function loadPlayerSimulation(){
     if(!average){complete=false;continue;}
     hasValues=true;for(const key of Object.keys(publishedTotals))publishedTotals[key]+=average[key];
   }
+  for(const peri of calendar.peri_meals||[]){
+    if(peri.event_date!==d)continue;
+    const avg=averageMealNutrition(peri.options||[]);
+    if(!avg){complete=false;continue;}
+    hasValues=true;
+    for(const key of Object.keys(publishedTotals))publishedTotals[key]+=avg[key];
+  }
   if(hasValues){
     const caption=document.createElement("small");caption.textContent=complete?"Resumo nutricional do dia":"Resumo parcial · faltam planos publicados";summary.appendChild(caption);
     nutritionCards(summary,publishedTotals,refs.weights_by_date?.[d]?.weight_kg);
@@ -818,7 +825,7 @@ function nutritionCards(host,totals,referenceWeight=null,relativeMeans=null){
     const caption=document.createElement("small");caption.textContent=label;card.appendChild(caption);
     const value=document.createElement("strong");value.style.cssText="display:block;font-size:1.35em;margin-top:6px";
     value.textContent=formatNutrition(totals[key],digits)+" "+unit;card.appendChild(value);
-    const weight=Number(referenceWeight);
+    const weight=referenceWeight==null?NaN:Number(referenceWeight);
     const rel=relativeMeans?relativeMeans[key]:(Number.isFinite(weight)&&weight>0?totals[key]/weight:null);
     if(rel!==null&&Number.isFinite(rel)){const relative=document.createElement("small");relative.style.cssText="display:block;margin-top:6px";relative.textContent=formatNutrition(rel,key==="kcal"?1:2)+(key==="kcal"?" kcal/kg":" g/kg");card.appendChild(relative);}
     grid.appendChild(card);
