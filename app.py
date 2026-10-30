@@ -1543,7 +1543,7 @@ def application(env, start_response):
                     if c.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone():
                         raise Problem(409,'username_exists')
                     try:
-                        athlete=microcycles_v2.create_athlete(c,name,commit=False)
+                        athlete=microcycles_v2.create_athlete(c,name,commit=False,weight_kg=body.get('weight_kg'))
                         uid=secrets.token_hex(16)
                         email='v2-'+uid+'@accounts.internal.invalid'
                         c.execute("""INSERT INTO users(id,name,email,username,role,password,active,sex)
@@ -1551,6 +1551,9 @@ def application(env, start_response):
                         c.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES(?,?,?)",
                                   (uid,athlete['id'],int(time.time())))
                         c.commit()
+                    except ValueError:
+                        c.rollback()
+                        raise Problem(400,'invalid_initial_weight')
                     except Exception:
                         c.rollback()
                         raise
