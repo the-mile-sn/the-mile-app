@@ -640,9 +640,19 @@ async function renderWeightCard(root,date){
  header.append(glyph,label,value,action);card.append(header);
  const panel=document.createElement("div");panel.className="daily-weight-panel";panel.hidden=true;card.append(panel);
  root.append(card);
+ // Future dates are visible in the calendar but cannot have a weight entry yet.
+ // Do not issue a request that the API deliberately rejects for future dates.
+ if(date>iso(new Date())){
+  const notice=document.createElement("small");notice.textContent="Disponível no próprio dia";value.append(notice);
+  action.disabled=true;action.setAttribute("aria-label","Registo de peso disponível no próprio dia");
+  return;
+ }
  let data;
- try{data=await api("/api/v2/player/weight?date="+date);}catch{card.remove();return;}
- if(iso(day)!==date||overviewMode!=="day"){card.remove();return;}
+ try{data=await api("/api/v2/player/weight?date="+date);}catch{
+  if(card.isConnected){const notice=document.createElement("small");notice.textContent="Peso indisponível";value.append(notice);action.disabled=true;}
+  return;
+ }
+ if(iso(day)!==date||overviewMode!=="day"||!card.isConnected){card.remove();return;}
  const current=data.entries?.find(x=>x.weigh_date===date);
  const previous=data.previous;
  const format=x=>Number(x).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -872,7 +882,7 @@ async function overview(){
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }
- await renderWeightCard(root,d);
+ renderWeightCard(root,d).catch(()=>{});
  if(requestId!==overviewRequestId)return;
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
