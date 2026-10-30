@@ -834,3 +834,21 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-admin-legacy #backoffice-nav button:hover:not([aria-pressed="true"]){background:#24262b;color:#e9eaf0}
 #tm-admin-legacy #backoffice-nav button:focus-visible{outline:2px solid #90b8d8;outline-offset:-2px}
 @media(max-width:620px){#tm-admin-legacy .tm-planning-header{margin-bottom:12px}#tm-admin-legacy .tm-planning-header h1{font-size:23px}#tm-admin-legacy .tm-planning-player-toolbar{padding:12px;gap:9px}#tm-admin-legacy #tm-planning-avatar{width:35px;height:35px;flex-basis:35px}#tm-admin-legacy .tm-planning-switcher button{width:31px;height:35px}#tm-admin-legacy #backoffice-nav{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}#tm-admin-legacy #backoffice-nav::-webkit-scrollbar{display:none}}
+
+/* Compact Planning player search, preserving existing native select for application logic. */
+#tm-admin-legacy .tm-planning-header-account-only{justify-content:flex-end;margin:0 0 10px}
+#tm-admin-legacy .tm-planning-player-toolbar{padding:13px 16px;justify-content:flex-start}
+#tm-admin-legacy #tm-planning-avatar{width:56px;height:56px;flex-basis:56px;font-size:16px}
+#tm-admin-legacy .tm-planning-player-select{max-width:480px;position:relative;z-index:5}
+#tm-admin-legacy .tm-planning-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+#tm-admin-legacy .tm-planning-native-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;clip-path:inset(50%)!important;padding:0!important;border:0!important}
+#tm-admin-legacy .tm-planning-search-wrap{position:relative}
+#tm-admin-legacy .tm-planning-search-icon{position:absolute;top:50%;left:13px;transform:translateY(-50%);width:17px;height:17px;color:#a5a7b0;pointer-events:none}
+#tm-admin-legacy #tm-planning-search{width:100%;height:44px;padding:10px 14px 10px 39px;border-radius:10px;background:#23252b;border:1px solid #3a3d45;font-size:13px}
+#tm-admin-legacy #tm-planning-search:focus{outline:2px solid #789ebb;outline-offset:0;border-color:transparent}
+#tm-admin-legacy .tm-planning-results{position:absolute;top:calc(100% + 5px);left:0;right:0;max-height:280px;overflow:auto;z-index:15;background:#22242a;border:1px solid #393c44;border-radius:11px;padding:5px;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+#tm-admin-legacy .tm-planning-results[hidden]{display:none!important}
+#tm-admin-legacy .tm-planning-result{width:100%;display:block;text-align:left;padding:11px 12px;background:transparent;border:none;border-radius:7px;font-size:13px;color:#eee}
+#tm-admin-legacy .tm-planning-result:hover,#tm-admin-legacy .tm-planning-result[aria-selected="true"]{background:#363941}
+#tm-admin-legacy .tm-planning-result-empty{font-size:12px;color:#a5a7b0;padding:14px}
+@media(max-width:620px){#tm-admin-legacy #tm-planning-avatar{width:46px;height:46px;flex-basis:46px;font-size:14px}#tm-admin-legacy .tm-planning-player-select{max-width:none}}
