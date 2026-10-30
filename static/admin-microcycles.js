@@ -371,18 +371,42 @@ async function openMonitoring(kind){
   const body=document.createElement("tbody");
   const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
   const alternatives={none:"Nenhum",mild:"Ligeiro",moderate:"Moderado",severe:"Intenso",cramps:"Cãibras",muscle_pain:"Dores musculares",injury:"Lesão",weakness_dizziness:"Fraqueza/tonturas"};
+  const visualTone=(key,value)=>{
+   if(value===undefined||value===null||value===""||(Array.isArray(value)&&!value.length))return "missing";
+   if(key==="feeling"){const n=Number(value);return n>=7?"positive":n>=4?"caution":"negative";}
+   if(key==="effort"){const n=Number(value);return n<=3?"positive":n<=7?"caution":"negative";}
+   if(key==="gi_level"){const n=Number(value);return value==="none"||n===0?"positive":value==="mild"||n<=2?"caution":"negative";}
+   if(key==="gi_symptoms"||key==="game_symptoms")return value==="none"||Array.isArray(value)&&value.includes("none")?"positive":"negative";
+   if(key==="recovery_shake")return value===true?"positive":value===false?"neutral":"neutral";
+   return "neutral";
+  };
+  const visualIcon=(key,value)=>{
+   if(key==="feeling")return "♡";
+   if(key==="effort")return "◷";
+   if(key==="gi_level"||key==="gi_symptoms")return "◇";
+   if(key==="game_symptoms")return "✧";
+   if(key==="food_pre"||key==="food_during")return "◉";
+   if(key==="caffeine_pre"||key==="caffeine_half")return "☕";
+   if(key==="recovery_shake")return "✓";
+   return "•";
+  };
+  const visualValue=(key,value,label)=>{
+   const badge=document.createElement("span");badge.className="tm-answer-badge tm-answer-"+visualTone(key,value);
+   const icon=document.createElement("span");icon.className="tm-answer-icon";icon.textContent=visualIcon(key,value);icon.setAttribute("aria-hidden","true");
+   const body=document.createElement("span");body.textContent=label;badge.append(icon,body);return badge;
+  };
   const fmt=(value,key)=>value===undefined||value===null||value===""||Array.isArray(value)&&!value.length?"Não preenchido":Array.isArray(value)?value.map(v=>alternatives[v]||String(v)).join(", "):typeof value==="boolean"?(value?"Sim":"Não"):alternatives[value]||String(value)+(["feeling","effort"].includes(key)?"/10":"");
   for(const record of rows){
    const tr=document.createElement("tr"),answers=(()=>{try{return JSON.parse(record.answers_json||"{}")}catch{return {};}})();
    for(const [key] of fields){
     const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":fmt(answers[key],key);
-    const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";td.append(value);tr.append(td);
+    const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";if(kind==="game"&&!["match_date","minutes"].includes(key))td.append(visualValue(key,answers[key],v));else td.append(value);tr.append(td);
    }
    const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
    if(kind==="game"){
     const extra=document.createElement("tr");extra.hidden=true;const cell=document.createElement("td");cell.colSpan=fields.length+1;
     const grid=document.createElement("div");grid.className="tm-form-answer-grid";
-    for(const [key,label]of Object.entries(answerLabels)){const item=document.createElement("div");item.className="tm-form-answer-field";const small=document.createElement("small");small.textContent=label;const strong=document.createElement("strong");strong.textContent=fmt(answers[key],key);if(strong.textContent==="Não preenchido")strong.className="tm-unanswered";item.append(small,strong);grid.append(item);}
+    for(const [key,label]of Object.entries(answerLabels)){const item=document.createElement("div");item.className="tm-form-answer-field";const small=document.createElement("small");small.textContent=label;const strong=document.createElement("strong");strong.textContent=fmt(answers[key],key);if(strong.textContent==="Não preenchido")strong.className="tm-unanswered";item.append(small,visualValue(key,answers[key],strong.textContent));grid.append(item);}
     cell.append(grid);extra.append(cell);
     const details=document.createElement("button");details.type="button";details.textContent="Detalhes";details.setAttribute("aria-expanded","false");details.onclick=()=>{extra.hidden=!extra.hidden;details.textContent=extra.hidden?"Detalhes":"Recolher";details.setAttribute("aria-expanded",String(!extra.hidden));};actions.append(details);
     const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
@@ -2056,66 +2080,180 @@ const assessmentPtDate=(iso)=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10
 const assessmentMetrics=ASSESSMENT_GROUPS[1][2];
 const clinicalNumber=v=>v==null||v===""?null:(Number.isFinite(Number(String(v).replace(",",".")))?Number(String(v).replace(",",".")):null);
 const clinicalFormat=v=>v==null?"—":v.toLocaleString("pt-PT",{maximumFractionDigits:2});
+// Classification thresholds supplied by the clinical team. Exactly 45 belongs
+// to dark green, 55 to yellow and 65 to red. Never infer cutoffs for other metrics.
+function tmSkinfoldCategory(value){
+ const n=clinicalNumber(value);
+ if(n===null)return null;
+ if(n>=65)return {color:"#E17878",label:"Vermelho · ≥ 65 mm",code:"red"};
+ if(n>=55)return {color:"#E7C268",label:"Amarelo · 55 a < 65 mm",code:"yellow"};
+ if(n>45)return {color:"#A4D9AE",label:"Verde claro · > 45 a < 55 mm",code:"light-green"};
+ return {color:"#4A9879",label:"Verde escuro · ≤ 45 mm",code:"dark-green"};
+}
+const tmClinicalDirections={sum_8:-1,body_fat:-1,muscle_index:1,arm_muscle:1,thigh_muscle:1,calf_muscle:1,sum_perimeters:1};
+// These are qualitative trends configured by the clinical team; weight and BMI
+// remain contextual. Do not assign a medical judgement to unchanged values.
+function tmClinicalTrend(key,current,previous){
+ if(current===null||previous===null)return "unknown";
+ const direction=tmClinicalDirections[key]||0,change=current-previous;
+ if(!direction)return "context";
+ if(Math.abs(change)<0.0005)return "steady";
+ return change*direction>0?"favourable":"unfavourable";
+}
+function tmAssessmentSvg(tag,attrs={},value){
+ const node=document.createElementNS("http://www.w3.org/2000/svg",tag);
+ for(const [k,v]of Object.entries(attrs))node.setAttribute(k,String(v));
+ if(value!==undefined)node.textContent=String(value);
+ return node;
+}
 function renderAssessmentDashboard(records){
- const host=$("tm-assessment-dashboard");if(!host)return;host.replaceChildren();
+ const host=$("tm-assessment-dashboard");if(!host)return;
+ host.replaceChildren();
+ // Visualisation is read-only and uses published values only. The assessment
+ // editor continues to calculate sum_8 and sum_perimeters as before.
  const published=records.filter(r=>r.status==="published").slice().sort((a,b)=>a.assessed_on.localeCompare(b.assessed_on));
- const metrics=document.createElement("div");metrics.className="tm-clinical-metrics";
+ if(!published.length){
+  const note=document.createElement("p");note.className="hint";note.textContent="Sem avaliações publicadas para apresentar o dashboard.";host.append(note);return;
+ }
+ const metricGrid=document.createElement("div");metricGrid.className="tm-clinical-metrics";
  for(const [key,label,unit] of assessmentMetrics){
-  const readings=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(x=>x.value!==null);
-  const card=document.createElement("div");card.className="tm-clinical-metric";
+  const values=published.map(r=>clinicalNumber(r.measurements?.[key])).filter(v=>v!==null);
+  const current=values.length?values.at(-1):null,previous=values.length>1?values.at(-2):null;
+  const trend=tmClinicalTrend(key,current,previous);
+  const card=document.createElement("div");card.className="tm-clinical-metric tm-clinical-trend-"+trend;
   if(key==="sum_8")card.classList.add("tm-clinical-metric-primary");
-  const heading=document.createElement("small");heading.textContent=label;
-  const value=document.createElement("strong");value.textContent=readings.length?clinicalFormat(readings.at(-1).value)+(unit?" "+unit:""):"—";
-  const delta=document.createElement("em");delta.textContent=readings.length>1?((readings.at(-1).value-readings.at(-2).value)>0?"+":"")+clinicalFormat(readings.at(-1).value-readings.at(-2).value)+(unit?" "+unit:"")+" vs. anterior":readings.length?"Primeira medição":"Sem medições";
-  card.append(heading,value,delta);metrics.append(card);
- }
- host.append(metrics);
- const details=document.createElement("div");details.className="tm-assessment-details";
- for(const [group,title] of [["pregas","Pregas cutâneas"],["perimetros","Perímetros"]]){
-  const section=document.createElement("details");section.className="tm-assessment-detail";const summary=document.createElement("summary");summary.textContent=title;section.append(summary);
-  const grid=document.createElement("div");grid.className="tm-assessment-bars";
-  for(const [key,label,unit] of ASSESSMENT_GROUPS.find(g=>g[0]===group)[2]){
-   const latest=published.slice().reverse().find(r=>clinicalNumber(r.measurements?.[key])!==null);
-   const value=latest?clinicalNumber(latest.measurements[key]):null;
-   const row=document.createElement("div");row.className="tm-assessment-bar-row";
-   const name=document.createElement("span");name.textContent=label;
-   const bar=document.createElement("div");bar.className="tm-assessment-bar-track";
-   const fill=document.createElement("span");fill.className="tm-assessment-bar-fill";
-   const max=Math.max(1,...ASSESSMENT_GROUPS.find(g=>g[0]===group)[2].map(([k])=>clinicalNumber(latest?.measurements?.[k])||0));
-   fill.style.width=(value==null?0:Math.max(0,Math.min(100,value/max*100)))+"%";bar.append(fill);
-   const labelValue=document.createElement("strong");labelValue.textContent=value==null?"—":clinicalFormat(value)+" "+unit;
-   row.append(name,bar,labelValue);grid.append(row);
+  const title=document.createElement("small");title.textContent=label;card.append(title);
+  if(key==="sum_8"&&current!==null){
+   const category=tmSkinfoldCategory(current),dot=document.createElement("span");
+   dot.className="tm-skinfold-category-dot";dot.style.backgroundColor=category.color;
+   dot.setAttribute("aria-label",category.label);dot.title=category.label;
+   title.append(dot);
   }
-  section.append(grid);details.append(section);
+  const number=document.createElement("strong");number.textContent=current===null?"—":clinicalFormat(current)+(unit?" "+unit:"");
+  const diff=document.createElement("em");
+  if(previous===null)diff.textContent=current===null?"Sem medições":"Primeira medição";
+  else{
+   const delta=current-previous,arrow=Math.abs(delta)<0.0005?"→":delta>0?"↑":"↓";
+   diff.textContent=arrow+" "+(delta>0?"+":delta<0?"−":"")+clinicalFormat(Math.abs(delta))+(unit?" "+unit:"")+" vs. anterior";
+  }
+  if(trend==="favourable")diff.title="Evolução favorável segundo o sentido definido pela equipa";
+  if(trend==="unfavourable")diff.title="Evolução desfavorável segundo o sentido definido pela equipa";
+  card.append(number,diff);metricGrid.append(card);
  }
- host.append(details);
+ host.append(metricGrid);
+ // Detail panels show the history of ONE selected skinfold or perimeter:
+ // one horizontal bar per real dated measurement, dates at the left.
+ const detailGrid=document.createElement("div");detailGrid.className="tm-assessment-details";
+ for(const [group,title]of [["pregas","Pregas cutâneas"],["perimetros","Perímetros musculares e antropométricos"]]){
+  const details=document.createElement("details");details.className="tm-assessment-detail";
+  const summary=document.createElement("summary");summary.textContent=title;details.append(summary);
+  const content=document.createElement("div");content.className="tm-assessment-detail-body";
+  const selector=document.createElement("select");selector.setAttribute("aria-label","Escolher "+title.toLocaleLowerCase("pt-PT"));
+  const extra=group==="pregas"?[["sum_8","Soma de 8 pregas","mm"]]:[["sum_perimeters","Soma de perímetros","cm"]];
+  const fields=[...extra,...ASSESSMENT_GROUPS.find(g=>g[0]===group)[2]];
+  fields.forEach(([key,name])=>{const opt=document.createElement("option");opt.value=key;opt.textContent=name;selector.append(opt);});
+  // A single skinfold or perimeter is shown initially; sum_8 is also
+  // selectable so the agreed category palette can be seen on historic bars.
+  selector.value=group==="pregas"?"back":"arm_muscle";
+  const graphic=document.createElement("div");graphic.className="tm-assessment-history-bars";
+  const drawBars=()=>{
+   graphic.replaceChildren();
+   const key=selector.value,unit=fields.find(f=>f[0]===key)?.[2]||"";
+   const observations=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(o=>o.value!==null);
+   if(!observations.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem medições publicadas desta variável.";graphic.append(p);return;}
+   const max=Math.max(...observations.map(o=>o.value),0.01);
+   for(const point of observations){
+    const row=document.createElement("div");row.className="tm-assessment-history-bar-row";
+    const date=document.createElement("time");date.dateTime=point.date;date.textContent=assessmentPtDate(point.date);
+    const track=document.createElement("div");track.className="tm-assessment-bar-track";
+    const fill=document.createElement("span");fill.className="tm-assessment-bar-fill";
+    fill.style.width=Math.max(0,Math.min(100,point.value/max*100))+"%";
+    if(key==="sum_8"){const category=tmSkinfoldCategory(point.value);fill.style.backgroundColor=category.color;fill.title=category.label;}
+    track.append(fill);
+    const value=document.createElement("strong");value.textContent=clinicalFormat(point.value)+(unit?" "+unit:"");
+    row.append(date,track,value);graphic.append(row);
+   }
+  };
+  selector.addEventListener("change",drawBars);drawBars();
+  content.append(selector,graphic);details.append(content);detailGrid.append(details);
+ }
+ host.append(detailGrid);
+ // One chart with direct hit testing across the full plot, keyboard-focusable
+ // data points, visible data labels and a historical mean reference line.
  const visual=document.createElement("section");visual.className="tm-assessment-visual";
- const head=document.createElement("div");head.className="tm-assessment-visual-head";
+ const header=document.createElement("div");header.className="tm-assessment-visual-head";
  const heading=document.createElement("h3");heading.textContent="Evolução";
  const select=document.createElement("select");select.setAttribute("aria-label","Métrica do gráfico");
- for(const [key,label] of [...assessmentMetrics,...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]]){const o=document.createElement("option");o.value=key;o.textContent=label;select.append(o);}
- head.append(heading,select);visual.append(head);
- const canvas=document.createElement("div");visual.append(canvas);
- const draw=()=>{
-  canvas.replaceChildren();const key=select.value,label=select.selectedOptions[0]?.textContent||key;
-  const group=[...assessmentMetrics,...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]];
-  const unit=group.find(g=>g[0]===key)?.[2]||"";
-  const points=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(r=>r.value!==null);
-  if(points.length<2){const p=document.createElement("p");p.className="hint";p.textContent="São necessárias duas avaliações publicadas com esta métrica.";canvas.append(p);return;}
-  const w=760,h=218,px=34,py=28,vals=points.map(p=>p.value),lo0=Math.min(...vals),hi0=Math.max(...vals),spread=Math.max(.5,hi0-lo0),lo=lo0-spread*.2,hi=hi0+spread*.2;
-  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 "+w+" "+h);svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução de "+label);svg.classList.add("tm-assessment-trend-svg");
-  const coords=points.map((p,i)=>[px+(w-2*px)*i/(points.length-1),h-py-(p.value-lo)/(hi-lo)*(h-2*py)]);
-  const line=document.createElementNS(svg.namespaceURI,"polyline");line.setAttribute("points",coords.map(p=>p.join(",")).join(" "));line.setAttribute("fill","none");line.setAttribute("stroke","#a1b9d1");line.setAttribute("stroke-width","2.6");svg.append(line);
+ const available=[...assessmentMetrics,...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]];
+ for(const [key,label]of available){const option=document.createElement("option");option.value=key;option.textContent=label;select.append(option);}
+ header.append(heading,select);visual.append(header);
+ const graph=document.createElement("div");graph.className="tm-assessment-plot";visual.append(graph);
+ const drawChart=()=>{
+  graph.replaceChildren();
+  const key=select.value,unit=available.find(m=>m[0]===key)?.[2]||"";
+  const points=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(p=>p.value!==null);
+  if(points.length<2){const p=document.createElement("p");p.className="hint";p.textContent="São necessárias duas avaliações publicadas com esta métrica.";graph.append(p);return;}
+  const W=760,H=250,left=43,right=23,top=34,bottom=39;
+  const vals=points.map(p=>p.value),lowest=Math.min(...vals),highest=Math.max(...vals);
+  const spread=Math.max(0.6,highest-lowest),lo=lowest-spread*.21,hi=highest+spread*.21;
+  const plotRight=W-right,plotBottom=H-bottom,chartHeight=plotBottom-top;
+  const x=i=>left+(plotRight-left)*i/(points.length-1);
+  const y=v=>top+(hi-v)/(hi-lo)*chartHeight;
+  const coords=points.map((p,i)=>({x:x(i),y:y(p.value)}));
+  const svg=tmAssessmentSvg("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Evolução de "+select.selectedOptions[0].textContent,class:"tm-assessment-trend-svg"});
+  svg.style.touchAction="pan-y";
+  const hit=tmAssessmentSvg("rect",{x:0,y:0,width:W,height:H,fill:"transparent","pointer-events":"all"});svg.append(hit);
+  for(let i=0;i<=4;i++){
+   const level=lo+(hi-lo)*i/4,cy=y(level);
+   svg.append(tmAssessmentSvg("line",{x1:left,y1:cy,x2:plotRight,y2:cy,stroke:"#41434c","stroke-width":"1","stroke-dasharray":"3 5",opacity:".65"}));
+   svg.append(tmAssessmentSvg("text",{x:left-8,y:cy+4,"text-anchor":"end",fill:"#9fa6b2","font-size":"11"},clinicalFormat(level)));
+  }
+  const avg=vals.reduce((total,value)=>total+value,0)/vals.length,meanY=y(avg);
+  svg.append(tmAssessmentSvg("line",{x1:left,y1:meanY,x2:plotRight,y2:meanY,stroke:"#a5aab5","stroke-width":"1.2","stroke-dasharray":"6 6",opacity:".84"}));
+  const line=tmAssessmentSvg("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#A6D9BD","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"});svg.append(line);
+  // Only a few x-axis dates, avoiding collisions on small screens.
+  const labelIndices=Array.from(new Set([0,Math.floor((points.length-1)/2),points.length-1]));
+  for(const i of labelIndices)svg.append(tmAssessmentSvg("text",{x:coords[i].x,y:H-13,"text-anchor":i===0?"start":i===points.length-1?"end":"middle",fill:"#a9aeb7","font-size":"11"},assessmentPtDate(points[i].date)));
+  const vertical=tmAssessmentSvg("line",{x1:coords.at(-1).x,y1:top,x2:coords.at(-1).x,y2:plotBottom,stroke:"#8fa8b4","stroke-dasharray":"4 5",opacity:"0"});
+  const focusPoint=tmAssessmentSvg("circle",{cx:coords.at(-1).x,cy:coords.at(-1).y,r:8,stroke:"#dff4ea","stroke-width":"2",fill:"none",opacity:0});
+  svg.append(vertical,focusPoint);
   const tooltip=document.createElement("div");tooltip.className="tm-assessment-hover";tooltip.hidden=true;
-  coords.forEach((c,i)=>{const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",c[0]);dot.setAttribute("cy",c[1]);dot.setAttribute("r",i===coords.length-1?"5":"3.5");dot.setAttribute("fill",i===coords.length-1?"#65b2e7":"#b1bfce");
-   const tip=document.createElementNS(svg.namespaceURI,"title");tip.textContent=assessmentPtDate(points[i].date)+" · "+clinicalFormat(points[i].value)+" "+unit;dot.append(tip);
-   const show=()=>{tooltip.hidden=false;tooltip.textContent=assessmentPtDate(points[i].date)+" · "+clinicalFormat(points[i].value)+(unit?" "+unit:"");tooltip.style.left=Math.max(2,Math.min(75,c[0]/w*100))+"%";tooltip.style.top=Math.max(0,c[1]/h*100-18)+"%";};
-   dot.addEventListener("mouseenter",show);dot.addEventListener("focus",show);dot.addEventListener("mouseleave",()=>{tooltip.hidden=true;});dot.addEventListener("blur",()=>{tooltip.hidden=true;});dot.setAttribute("tabindex","0");svg.append(dot);
+  let pinned=false;
+  const show=i=>{
+   const c=coords[i];vertical.setAttribute("x1",c.x);vertical.setAttribute("x2",c.x);vertical.setAttribute("opacity",".8");
+   focusPoint.setAttribute("cx",c.x);focusPoint.setAttribute("cy",c.y);focusPoint.setAttribute("opacity","1");
+   tooltip.textContent=assessmentPtDate(points[i].date)+" · "+clinicalFormat(points[i].value)+(unit?" "+unit:"");
+   if(key==="sum_8"){const category=tmSkinfoldCategory(points[i].value);tooltip.style.borderColor=category.color;}else tooltip.style.borderColor="#8497a8";
+   tooltip.style.left=Math.max(8,Math.min(79,c.x/W*100))+"%";
+   tooltip.style.top=Math.max(8,c.y/H*100-7)+"%";tooltip.hidden=false;
+  };
+  let nearest=points.length-1;
+  const lookup=e=>{
+   const box=svg.getBoundingClientRect();
+   if(!box.width)return;
+   const coord=(e.clientX-box.left)/box.width*W;
+   nearest=coords.reduce((best,p,i)=>Math.abs(p.x-coord)<Math.abs(coords[best].x-coord)?i:best,0);show(nearest);
+  };
+  svg.addEventListener("pointermove",lookup);
+  svg.addEventListener("pointerleave",()=>{if(!pinned){tooltip.hidden=true;vertical.setAttribute("opacity",0);focusPoint.setAttribute("opacity",0);}});
+  svg.addEventListener("click",e=>{lookup(e);pinned=!pinned;});
+  const step=Math.max(1,Math.ceil(points.length/14));
+  coords.forEach((c,i)=>{
+   const color=key==="sum_8"?tmSkinfoldCategory(points[i].value).color:"#9fd8ba";
+   const dot=tmAssessmentSvg("circle",{cx:c.x,cy:c.y,r:4.6,fill:"#1a1b20",stroke:color,"stroke-width":"2.5",tabindex:"0",role:"button","aria-label":assessmentPtDate(points[i].date)+": "+clinicalFormat(points[i].value)+" "+unit});
+   dot.addEventListener("focus",()=>{nearest=i;show(i);});
+   dot.addEventListener("blur",()=>{if(!pinned)tooltip.hidden=true;});
+   dot.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pinned=!pinned;show(i);}});
+   svg.append(dot);
+   if(i%step===0||i===coords.length-1){
+    svg.append(tmAssessmentSvg("text",{x:c.x,y:Math.max(17,c.y-13),"text-anchor":"middle",fill:key==="sum_8"?color:"#c8ead6","font-size":"11","font-weight":"600","pointer-events":"none"},clinicalFormat(points[i].value)));
+   }
   });
-  const wrap=document.createElement("div");wrap.className="tm-assessment-chart-stage";wrap.append(svg,tooltip);canvas.append(wrap);
-  const note=document.createElement("p");note.className="tm-assessment-trend-note";note.textContent=points.length+" avaliações publicadas · sem estimar valores em falta";canvas.append(note);
+  const stage=document.createElement("div");stage.className="tm-assessment-chart-stage";stage.append(svg,tooltip);graph.append(stage);
+  const caption=document.createElement("p");caption.className="tm-assessment-trend-note";
+  caption.textContent="Média: "+clinicalFormat(avg)+(unit?" "+unit:"")+" · "+points.length+" avaliações publicadas · sem estimar valores em falta";graph.append(caption);
  };
- select.addEventListener("change",draw);draw();host.append(visual);
+ select.addEventListener("change",drawChart);drawChart();host.append(visual);
 }
 let assessmentRegistryCache=[];
 function renderAssessmentRegistry(){
