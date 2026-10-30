@@ -14,7 +14,25 @@
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
  function navActive(target){for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
  function openDashboard(){if($("admin-workspace").hidden)return;legacy.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
- function openPlayers(aid,day){section.hidden=true;legacy.hidden=false;navActive(playersBtn);if(aid&&$("athlete")){const choice=$("athlete");if([...choice.options].some(o=>o.value===aid)&&choice.value!==aid){choice.value=aid;choice.dispatchEvent(new Event("change"));}}if(day){window.tmDashboardDay=day;const d=new Date(day+"T12:00:00Z");if(typeof calendarMonth!=="undefined")calendarMonth=new Date(d.getUTCFullYear(),d.getUTCMonth(),1);if(typeof selectedCalendarDay!=="undefined")selectedCalendarDay=day;if(typeof showBackofficeView==="function")showBackofficeView("calendar");}window.scrollTo({top:0,behavior:"smooth"});}
+ async function openPlayers(aid,day){
+ section.hidden=true;legacy.hidden=false;navActive(playersBtn);
+ try{
+  if(aid&&$("athlete")){
+   const choice=$("athlete");
+   if([...choice.options].some(o=>o.value===aid)&&choice.value!==aid){
+    choice.value=aid;
+    if(typeof loadModel==="function")await loadModel();
+   }
+  }
+  if(day){
+   const d=new Date(day+"T12:00:00Z");
+   if(typeof calendarMonth!=="undefined")calendarMonth=new Date(d.getUTCFullYear(),d.getUTCMonth(),1);
+   if(typeof selectedCalendarDay!=="undefined")selectedCalendarDay=day;
+   if(typeof showBackofficeView==="function")showBackofficeView("calendar");
+  }
+ }catch(err){if(typeof status==="function")status("Não foi possível abrir o jogador: "+err.message,"warn");}
+ window.scrollTo({top:0,behavior:"smooth"});
+ }
  dash.addEventListener("click",openDashboard);
  playersBtn.addEventListener("click",()=>openPlayers());
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
