@@ -29,6 +29,13 @@ class ReferenceWeightTests(unittest.TestCase):
     def result(self):
         return weight_reference_v2.reference_weight(self.db,self.athlete,self.day)
 
+    def test_weighins_schema_initialize_idempotent(self):
+        self.db.execute("DROP TABLE v2_daily_weighins")
+        weight_reference_v2.ensure_weighins_table(self.db)
+        weight_reference_v2.ensure_weighins_table(self.db)
+        columns={row["name"] for row in self.db.execute("PRAGMA table_info(v2_daily_weighins)")}
+        self.assertTrue({"id","athlete_id","weigh_date","weight_kg","menstruating","created_at","updated_at"}.issubset(columns))
+
     def test_three_recent_weighins_are_averaged(self):
         self.weigh("2026-10-24",81)
         self.weigh("2026-10-27",82)
