@@ -399,7 +399,7 @@ async function openMonitoring(kind){
       const text=document.createElement("strong");text.textContent=formatted;
       row.append(name,text);answerGrid.append(row);
      }
-     line.append(details);
+     details.append(answerGrid);line.append(details);
     }
 
    }
