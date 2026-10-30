@@ -314,7 +314,10 @@ def update_athlete_profile(c, athlete_id, name, weight, height, notes, sex=None)
     if sex not in (None,"M","F"):raise ValueError("invalid_athlete_profile")
     row=c.execute("UPDATE v2_athletes SET name=?,weight_kg=?,height_cm=?,profile_notes=? WHERE id=?",
        (name.strip(),weight,height,notes.strip(),athlete_id))
-    c.execute("UPDATE users SET sex=? WHERE id IN (SELECT user_id FROM v2_player_links WHERE athlete_id=?) AND role='player'",(sex,athlete_id))
     if not row.rowcount: return None
+    # Keep the linked login identity in sync with the single athlete profile.
+    # Do not change user ids, usernames, passwords or account access.
+    c.execute("UPDATE users SET name=?,sex=? WHERE id IN (SELECT user_id FROM v2_player_links WHERE athlete_id=?) AND role='player'",
+       (name.strip(),sex,athlete_id))
     c.commit()
     return {"id":athlete_id,"name":name.strip(),"weight_kg":weight,"height_cm":height,"profile_notes":notes.strip(),"sex":sex}
