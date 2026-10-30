@@ -269,7 +269,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  const dates=[],classes=[],totals=[];
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
-  dates.push(key);classes.push(model.find(c=>c.name===entry?.classification));totals.push(weeklyDayTotal(entry));
+  dates.push(key);classes.push(model.find(c=>c.name===entry?.classification));totals.push(weeklyDayTotal(entry||{date:key,classification:null}));
   const header=document.createElement("button");header.type="button";header.className="weekly-day-header";header.setAttribute("aria-label","Abrir vista diária: "+dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
   for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["number",String(dt.getDate())],["classification",entry?.classification||"—"]]){
    const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
