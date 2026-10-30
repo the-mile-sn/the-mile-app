@@ -109,8 +109,7 @@
  $("tm-players-filter").addEventListener("input",renderPlayers);
  $("tm-players-access").addEventListener("change",renderPlayers);
  $("tm-players-new").addEventListener("click",()=>{
-  openPlanning();
-  if(typeof window.tmOpenPlanningCreate==="function")window.tmOpenPlanningCreate();
+  if(typeof window.tmOpenPlayerCreate==="function")window.tmOpenPlayerCreate();
  });
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
  function paintEvents(data){
