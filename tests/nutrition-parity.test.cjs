@@ -65,3 +65,15 @@ test("weekly per-day function matches daily for Geral",()=>{
  const literal=JSON.stringify(day);
  assert.deepEqual(comparable(vm.runInContext("dayNutritionTotal("+literal+")",p)),comparable(vm.runInContext("weeklyDayTotal("+literal+")",p)));
 });
+
+test("Backoffice distinguishes automatic Geral from explicit prescription",()=>{
+ assert.match(admin,/Geral · por definir/);
+ assert.match(admin,/calendar-general-fallback/);
+ assert.match(admin,/day\.classification\?"":" calendar-general-fallback"/);
+});
+test("explicit Geral classification is not marked undefined",()=>{
+ const {p,a}=contexts(),day={date:"2026-10-30",classification:"Geral"};
+ const pResult=vm.runInContext("dayNutritionTotal("+JSON.stringify(day)+")",p);
+ const aResult=vm.runInContext("plannedDayTotals("+JSON.stringify(day)+").total",a);
+ assert.deepEqual(comparable(pResult),comparable(aResult));
+});
