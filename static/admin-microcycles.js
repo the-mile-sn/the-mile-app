@@ -380,15 +380,24 @@ async function openMonitoring(kind){
     actions.append(edit,remove);line.append(actions);
     let answers={};try{answers=JSON.parse(record.answers_json||"{}");}catch{}
     if(Object.keys(answers).length){
+     const quick=document.createElement("div");quick.className="tm-form-answer-summary";
+     for(const [key,label] of [["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"]]){
+      const value=answers[key];if(value===null||value===undefined||value==="")continue;
+      const pill=document.createElement("span");pill.textContent=label+": "+String(value)+(key==="feeling"||key==="effort"?"/10":"");quick.append(pill);
+     }
+     if(quick.children.length)line.append(quick);
      const details=document.createElement("details");details.style.cssText="width:100%;margin-top:10px;padding:12px;border-radius:9px;background:#212126";
-     const summary=document.createElement("summary");summary.textContent="Ver respostas ao questionário";details.append(summary);
+     const summary=document.createElement("summary");summary.textContent="Ver todas as respostas";details.append(summary);
+     const answerGrid=document.createElement("div");answerGrid.className="tm-form-answer-grid";
      const labels={feeling:"Como te sentiste no jogo?",effort:"Perceção do esforço",gi_level:"Avaliação gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e início do jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína antes do jogo",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Batido recovery"};
      const options={none:"Nenhum / sem sintomas",mild:"Desconforto ligeiro",moderate:"Desconforto moderado",severe:"Desconforto intenso",nausea:"Náuseas",abdominal_pain:"Dor abdominal",bloating:"Inchaço abdominal",reflux:"Refluxo / azia",urgency:"Urgência para evacuar / diarreia",vomiting:"Vómitos",other:"Outro",cramps:"Cãibras",muscle_pain:"Dores musculares",injury:"Lesão",weakness_dizziness:"Fraqueza / tonturas"};
      for(const [key,label] of Object.entries(labels)){
       if(!Object.hasOwn(answers,key)||answers[key]===null||answers[key]==="")continue;
-      const row=document.createElement("p");row.style.cssText="margin:10px 0 0;font-size:13px;line-height:1.5";
+      const row=document.createElement("div");row.className="tm-form-answer-field";
       const val=answers[key],formatted=Array.isArray(val)?val.map(x=>options[x]||x).join(", "):typeof val==="boolean"?(val?"Sim":"Não"):options[val]||String(val)+(key==="feeling"||key==="effort"?"/10":"");
-      row.textContent=label+": "+formatted;details.append(row);
+      const name=document.createElement("small");name.textContent=label;
+      const text=document.createElement("strong");text.textContent=formatted;
+      row.append(name,text);answerGrid.append(row);
      }
      line.append(details);
     }
