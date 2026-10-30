@@ -73,7 +73,7 @@
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playerProfile=null,playerProfileEditing=false,profileLoadToken=0;
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)");
- const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Altura (cm)","height_cm","number"],["Notas internas","profile_notes","textarea"]];
+ const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Notas internas","profile_notes","textarea"]];
  function displayPlayerProfile(){
   if(!playerProfile)return;
   const athlete=playerProfile,host=$("tm-players-profile-fields");host.replaceChildren();
@@ -119,10 +119,10 @@
   if(!playerProfile)return;
   const button=$("tm-players-profile-save");button.disabled=true;
   const get=k=>profilePanel.querySelector('[data-player-profile-field="'+k+'"]').value;
-  const rawWeight=get("weight_kg"),rawHeight=get("height_cm");
+  const rawWeight=get("weight_kg");
   try{
    const result=await request("/api/v2/athletes/"+encodeURIComponent(playerProfile.id)+"/profile",{method:"PUT",body:JSON.stringify({
-    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:rawHeight===""?null:Number(rawHeight),profile_notes:get("profile_notes")
+    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes")
    })});
    playerProfile=result.athlete;playerProfileEditing=false;displayPlayerProfile();
    $("tm-players-profile-feedback").textContent="Perfil guardado.";
