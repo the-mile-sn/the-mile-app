@@ -81,6 +81,7 @@
    if(kind==="assessments"){
     if(typeof showBackofficeView==="function")showBackofficeView("assessments");
     $("tm-assessments-slot").append(assessmentPanel);assessmentPanel.hidden=false;
+    if(typeof window.tmRefreshAssessmentRegistry==="function")window.tmRefreshAssessmentRegistry().catch(e=>{feedback.textContent="Não foi possível carregar a tabela global: "+e.message;});
    }else{
     if(typeof showBackofficeView==="function")showBackofficeView("profile");
     $("tm-forms-slot").append(monitoringPanel);monitoringPanel.hidden=false;
