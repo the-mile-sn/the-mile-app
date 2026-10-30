@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import calendar_v2
+import events_v2
 import day_colors_v2
 import microcycles_v2
 import prescription_effective_v2
@@ -24,6 +25,7 @@ def snapshot(c, week, today):
     players = microcycles_v2.list_athletes(c)
     week_rows = []
     todays_games = []
+    todays_events = []
 
     for athlete in players:
         aid = athlete["id"]
@@ -82,7 +84,31 @@ def snapshot(c, week, today):
                     "match_id": match["id"], "time": match.get("match_time")
                 })
 
+        # Ordinary calendar events can supply real activities and reminders.
+        # Do not repeat games or every regular training session in the overview.
+        for event in events_v2.list_events(c, aid, today, today):
+            if event["kind"] not in ("other", "travel"):
+                continue
+            todays_events.append({
+                "athlete_id": aid, "name": athlete["name"],
+                "event_id": event["id"], "kind": event["kind"],
+                "title": event.get("title") or ("Viagem" if event["kind"] == "travel" else "Evento"),
+                "session": event.get("session")
+            })
+
     todays_games.sort(key=lambda x: (x["time"] is None, x["time"] or "", x["name"].lower()))
+    todays_events.sort(key=lambda x: (x["session"] == "afternoon", x["name"].lower()))
+
+    # Completed assessments only; these are records, not future appointments.
+    todays_assessments = [
+        {"athlete_id": row["athlete_id"], "name": row["name"],
+         "date": row["assessed_on"]}
+        for row in c.execute(
+            "SELECT a.id AS athlete_id,a.name,b.assessed_on "
+            "FROM v2_body_assessments b JOIN v2_athletes a ON a.id=b.athlete_id "
+            "WHERE b.assessed_on=? AND b.status='published' ORDER BY a.name",
+            (today,)).fetchall()
+    ]
 
     birthdays = []
     for row in c.execute(
@@ -109,7 +135,7 @@ def snapshot(c, week, today):
             "FROM v2_post_match_responses r "
             "JOIN v2_athletes a ON a.id=r.athlete_id "
             "JOIN v2_match_events m ON m.id=r.match_id AND m.athlete_id=r.athlete_id "
-            "WHERE r.updated_at>=? ORDER BY r.updated_at DESC LIMIT 8",
+            "WHERE r.updated_at>=? ORDER BY r.updated_at DESC LIMIT 40",
             (cutoff,)).fetchall()
     ]
     recent.extend([
@@ -123,11 +149,26 @@ def snapshot(c, week, today):
             "FROM v2_body_assessments b "
             "JOIN v2_athletes a ON a.id=b.athlete_id "
             "WHERE b.status='published' AND b.created_at>=? "
-            "ORDER BY b.created_at DESC LIMIT 8",
+            "ORDER BY b.created_at DESC LIMIT 60",
             (cutoff,)).fetchall()
     ])
+    # Group same-day batches of assessments per player; a bulk historical
+    # import must not fill the whole recent-responses column with duplicates.
     recent.sort(key=lambda x: x["timestamp"], reverse=True)
-    recent = recent[:8]
+    grouped_recent = []
+    assessment_batches = {}
+    for item in recent:
+        if item["kind"] == "assessment":
+            batch_day = datetime.fromtimestamp(
+                item["timestamp"], ZoneInfo("Europe/Lisbon")).date().isoformat()
+            key = (item["athlete_id"], batch_day)
+            if key in assessment_batches:
+                assessment_batches[key]["count"] += 1
+                continue
+            item["count"] = 1
+            assessment_batches[key] = item
+        grouped_recent.append(item)
+    recent = grouped_recent[:8]
 
     weights = [
         {"athlete_id": r["athlete_id"], "name": r["name"], "weight_kg": r["weight_kg"]}
@@ -144,6 +185,7 @@ def snapshot(c, week, today):
         "players": week_rows,
         "today_events": {
             "games": todays_games, "birthdays": birthdays,
+            "events": todays_events, "assessments_today": todays_assessments,
             "recent_responses": recent, "weighins": weights
         },
         "read_only": True
