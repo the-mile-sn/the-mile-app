@@ -643,8 +643,7 @@ async function renderWeightCard(root,date){
  // Future dates are visible in the calendar but cannot have a weight entry yet.
  // Do not issue a request that the API deliberately rejects for future dates.
  if(date>iso(new Date())){
-  const notice=document.createElement("small");notice.textContent="Disponível no próprio dia";value.append(notice);
-  action.disabled=true;action.setAttribute("aria-label","Registo de peso disponível no próprio dia");
+  action.remove(); // Future dates display the weight card without any action.
   return;
  }
  let data;
