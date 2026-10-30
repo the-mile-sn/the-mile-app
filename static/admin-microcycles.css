@@ -751,3 +751,6 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-dashboard .tm-db-search{margin:0 auto!important}
 #tm-dashboard .tm-db-count-sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 #tm-admin-legacy .monitoring-entry.tm-monitoring-target{background:#29333d;box-shadow:inset 0 0 0 1px #83aecf;border-radius:10px}
+
+/* Anchor selected meal details below the sticky viewport edge. */
+#tm-admin-legacy #day-preview{scroll-margin-top:22px}
