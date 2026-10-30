@@ -1037,6 +1037,27 @@ def application(env, start_response):
                 reference=monitoring_v2.reference_weight(c,aid,monitoring_date.today().isoformat())
                 matches=[dict(row) for row in c.execute("SELECT id,match_date FROM v2_match_events WHERE athlete_id=? ORDER BY match_date DESC",(aid,)).fetchall()]
                 return respond(200,{"weights":weights,"games":games,"matches":matches,"weight_reference":reference})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/reference-weights') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                bits=path.strip('/').split('/')
+                if len(bits)!=5 or bits[:3]!=['api','v2','athletes']: raise Problem(404,'not_found')
+                aid=bits[3]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():raise Problem(404,'not_found')
+                q=parse_qs(env.get('QUERY_STRING',''))
+                first=(q.get('start') or [''])[0]
+                last=(q.get('end') or [''])[0]
+                try:
+                    from datetime import date as ref_date, timedelta as ref_delta
+                    start_day=ref_date.fromisoformat(first)
+                    end_day=ref_date.fromisoformat(last)
+                    if end_day<start_day or (end_day-start_day).days>31:raise ValueError()
+                except ValueError:raise Problem(400,'invalid_date_range')
+                weights={}
+                for offset in range((end_day-start_day).days+1):
+                    current=(start_day+ref_delta(days=offset)).isoformat()
+                    weights[current]=monitoring_v2.reference_weight(c,aid,current)
+                return respond(200,{'weights_by_date':weights})
             # Supplementation: published routine and calendar day exceptions.
             if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
                 if not user:raise Problem(401,'unauthorized')
