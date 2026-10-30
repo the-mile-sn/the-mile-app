@@ -96,10 +96,25 @@
    recentHost.append(btn);
   }
  }
- function renderTable(data){const head=$("tm-db-thead"),body=$("tm-db-tbody");head.replaceChildren();body.replaceChildren();const today=data.today;const header=el("tr");const name=el("th","tm-db-name-cell");const search=el("input","tm-db-search");search.type="search";search.placeholder="Filtrar jogador";search.setAttribute("aria-label","Filtrar jogadores da matriz");name.append(search);header.append(name);
+ const normalizeSearch=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
+ const matchesPlayer=(fullName,query)=>{
+  const words=normalizeSearch(fullName).split(/\s+/).filter(Boolean);
+  return normalizeSearch(query).split(/\s+/).filter(Boolean).every(term=>words.some(word=>word.startsWith(term)));
+ };
+ let playerQuery="";
+ function renderTable(data){const head=$("tm-db-thead"),body=$("tm-db-tbody");head.replaceChildren();body.replaceChildren();const today=data.today;const header=el("tr");const name=el("th","tm-db-name-cell");const search=el("input","tm-db-search");search.type="search";search.placeholder="Filtrar jogador";search.setAttribute("aria-label","Filtrar jogadores da matriz");search.value=playerQuery;name.append(search);header.append(name);
  const days=Array.from({length:7},(_,i)=>shifted(weekMonday,i));for(const [i,day] of days.entries()){const th=el("th",day===today?"tm-db-today":"");const lab=el("div","tm-db-date",["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"][i]);const d=el("div","tm-db-day",dateLabel(day));const ico=el("div","tm-db-five-cols tm-db-icon-row");for(const kind of icons){const slot=el("span");slot.append(hugeIcon(kind));ico.append(slot);}th.append(lab,d,ico);header.append(th);}head.append(header);
- for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name.toLocaleLowerCase("pt-PT");const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name");const avatar=el("span","tm-db-avatar");avatar.setAttribute("aria-hidden","true");avatar.textContent=player.name.split(/\s+/).slice(0,2).map(n=>n[0]||"").join("").toUpperCase();btn.append(avatar,el("span","tm-db-player-text",player.name));btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const cell=el("button","tm-db-cell"+(item.classification==="MD"?" tm-db-match":""));cell.type="button";cell.setAttribute("aria-label",player.name+", "+item.date+", "+(item.classification||"sem MD"));cell.append(el("span","tm-db-md",item.classification||"—"));const dots=el("span","tm-db-five-cols tm-db-dots");for(const meal of meals){const value=item.colors?.[meal];const dot=el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot"));dot.title=({breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"}[meal]||meal)+": "+(value||"não prescrito");dots.append(dot);}cell.append(dots);cell.addEventListener("click",()=>openPlayers(player.id,item.date));td.append(cell);tr.append(td);}body.append(tr);}
- search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase("pt-PT");let count=0;for(const tr of body.children){tr.hidden=!!q&&!tr.dataset.name.includes(q);if(!tr.hidden)count++;}$("tm-db-count").textContent=count+" jogador"+(count===1?"":"es");});$("tm-db-count").textContent=(data.players||[]).length+" jogadores";
+ for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name;const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name");const avatar=el("span","tm-db-avatar");avatar.setAttribute("aria-hidden","true");avatar.textContent=player.name.split(/\s+/).slice(0,2).map(n=>n[0]||"").join("").toUpperCase();btn.append(avatar,el("span","tm-db-player-text",player.name));btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const cell=el("button","tm-db-cell"+(item.classification==="MD"?" tm-db-match":""));cell.type="button";cell.setAttribute("aria-label",player.name+", "+item.date+", "+(item.classification||"sem MD"));cell.append(el("span","tm-db-md",item.classification||"—"));const dots=el("span","tm-db-five-cols tm-db-dots");for(const meal of meals){const value=item.colors?.[meal];const dot=el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot"));dot.title=({breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"}[meal]||meal)+": "+(value||"não prescrito");dots.append(dot);}cell.append(dots);cell.addEventListener("click",()=>openPlayers(player.id,item.date));td.append(cell);tr.append(td);}body.append(tr);}
+ const applyPlayerFilter=()=>{
+  let count=0;
+  for(const tr of body.children){
+   tr.hidden=!matchesPlayer(tr.dataset.name,playerQuery);
+   if(!tr.hidden)count++;
+  }
+  $("tm-db-count").textContent=count+" jogador"+(count===1?"":"es");
+ };
+ search.addEventListener("input",()=>{playerQuery=search.value;applyPlayerFilter();});
+ applyPlayerFilter();
  $("tm-db-week-title").textContent=dateLabel(days[0])+" – "+dateLabel(days[6]);$("tm-db-today-date").textContent=new Intl.DateTimeFormat("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(today+"T12:00:00Z"));
  }
  async function load(){const id=++seq;if(!weekMonday)weekMonday=monday(dateParts(new Date()));$("tm-db-error").textContent="";$("tm-db-events").textContent="A consultar…";$("tm-db-recent").textContent="A consultar…";const res=await request("/api/v2/admin/dashboard?week="+encodeURIComponent(weekMonday));if(id!==seq)return;cache=res;renderTable(res);paintEvents(res);}
