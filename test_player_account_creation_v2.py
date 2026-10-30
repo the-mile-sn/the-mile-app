@@ -20,7 +20,7 @@ class PlayerAccountCreationTests(unittest.TestCase):
 
     def create_linked(self, name="Teste",username="jogador",sex="F",fail=False):
         try:
-            athlete=microcycles_v2.create_athlete(self.db,name,commit=False)
+            athlete=microcycles_v2.create_athlete(self.db,name,commit=False,weight_kg=75.5)
             self.db.execute("INSERT INTO users(id,name,username,sex,role) VALUES(?,?,?,?,?)",("user-"+username,name,username,sex,"player"))
             if fail:
                 raise RuntimeError("simulated failure before link")
@@ -35,6 +35,7 @@ class PlayerAccountCreationTests(unittest.TestCase):
         athlete=self.create_linked()
         row=microcycles_v2.get_model(self.db,athlete["id"])["athlete"]
         self.assertEqual(row["sex"],"F")
+        self.assertEqual(row["weight_kg"],75.5)
         self.assertEqual(self.db.execute("SELECT count(*) FROM v2_player_links").fetchone()[0],1)
 
     def test_failure_rolls_back_athlete_and_account(self):
@@ -60,6 +61,13 @@ class PlayerAccountCreationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.create_linked(name="x")
         self.assertEqual(self.db.execute("SELECT count(*) FROM users").fetchone()[0],0)
+
+    def test_weight_required_and_invalid_weight_creates_no_profile(self):
+        for value in (None,"",0,19,251,"not a number",float("nan"),float("inf")):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    microcycles_v2.create_athlete(self.db,"Jogador",commit=False,weight_kg=value)
+                self.assertEqual(self.db.execute("SELECT count(*) FROM v2_athletes").fetchone()[0],0)
 
     def test_endpoint_source_requires_atomic_credentials(self):
         source=(ROOT/"app.py").read_text()
