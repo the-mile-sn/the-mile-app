@@ -694,13 +694,14 @@ function showBackofficeView(view){
   }
   $("admin-access-panel").hidden=view!=="profile";
   if(view==="profile"&&model)loadV2Access().catch(e=>status(e.message,"warn"));
-  if(view==="calendar"){loadCalendar().catch(e=>status(e.message,"warn"));}
+  const calendarReady=view==="calendar"?loadCalendar().catch(e=>{status(e.message,"warn");}):null;
   if(view==="supplements"&&model)loadSupplementEditor().catch(e=>status(e.message,"warn"));
   if(view==="plans"&&model)loadPeriImports().catch(e=>status(e.message,"warn"));
   if(view==="assessments"&&model)loadAssessmentsAdmin().catch(e=>status(e.message,"warn"));
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
   if(view==="matrix"&&model)loadScenarioEditor();
+  return calendarReady;
 }
 for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
   button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
