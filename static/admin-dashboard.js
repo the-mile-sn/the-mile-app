@@ -36,6 +36,34 @@
    if(value)select.value=value;
   }
  }
+ const normalizedClinicalName=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
+ function syncClinicalPicker(kind){
+  const select=$("tm-"+kind+"-player"),search=$("tm-"+kind+"-search"),avatar=$("tm-"+kind+"-avatar");
+  const name=select.selectedOptions[0]?.textContent||"";
+  search.value=name;avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+  $("tm-"+kind+"-results").hidden=true;search.setAttribute("aria-expanded","false");
+ }
+ function drawClinicalResults(kind){
+  const select=$("tm-"+kind+"-player"),list=$("tm-"+kind+"-results"),search=$("tm-"+kind+"-search"),query=normalizedClinicalName(search.value);
+  const words=query.split(/\s+/).filter(Boolean);list.replaceChildren();
+  for(const option of select.options){
+   if(!words.every(w=>normalizedClinicalName(option.textContent).split(/\s+/).some(part=>part.startsWith(w))))continue;
+   const btn=el("button","tm-clinical-option",option.textContent);btn.type="button";btn.setAttribute("role","option");
+   btn.setAttribute("aria-selected",String(option.value===select.value));
+   btn.onmousedown=e=>e.preventDefault();
+   btn.onclick=()=>{if(select.value!==option.value){select.value=option.value;select.dispatchEvent(new Event("change",{bubbles:true}));}syncClinicalPicker(kind);};
+   list.append(btn);
+  }
+  if(!list.children.length)list.append(el("div","tm-clinical-empty","Nenhum jogador encontrado."));
+  list.hidden=false;search.setAttribute("aria-expanded","true");
+ }
+ for(const kind of ["assessments","forms"]){
+  const search=$("tm-"+kind+"-search");
+  search.addEventListener("focus",()=>drawClinicalResults(kind));
+  search.addEventListener("input",()=>drawClinicalResults(kind));
+  search.addEventListener("keydown",e=>{if(e.key==="Escape"){syncClinicalPicker(kind);}else if(e.key==="Enter"){const first=$("tm-"+kind+"-results").querySelector("button");if(first&&!$("tm-"+kind+"-results").hidden){e.preventDefault();first.click();}}});
+ }
+ document.addEventListener("pointerdown",e=>{for(const kind of ["assessments","forms"]){if(!e.target.closest('[data-clinical-picker="'+kind+'"]')){$("tm-"+kind+"-results").hidden=true;$("tm-"+kind+"-search").setAttribute("aria-expanded","false");}}});
  async function openClinical(kind,aid,monitoringKind,recordDate){
   if($("admin-workspace").hidden)return;
   closeClinical();const token=++clinicalToken;
@@ -43,7 +71,7 @@
   const page=clinicalPages[kind],feedback=$("tm-"+kind+"-error");page.hidden=false;navActive($("tm-admin-nav-"+kind));feedback.textContent="";
   syncClinicalSelectors();const original=$("athlete");
   if(aid&&Array.from(original.options).some(o=>o.value===aid))original.value=aid;
-  $("tm-"+kind+"-player").value=original.value;
+  $("tm-"+kind+"-player").value=original.value;syncClinicalPicker(kind);
   if(!original.value){feedback.textContent="Ainda não existem jogadores.";return;}
   let deepLinked=false;
   try{
