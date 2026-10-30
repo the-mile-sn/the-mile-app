@@ -57,6 +57,15 @@ class ReferenceWeightTests(unittest.TestCase):
         self.assess("2026-11-01",82)
         self.assertIsNone(self.result())
 
+    def test_historical_weight_is_stable_after_new_weighin(self):
+        self.weigh("2026-10-10",84)
+        self.assess("2026-10-20",82)
+        first=monitoring_v2.reference_weight(self.db,self.athlete,"2026-10-25")
+        self.weigh("2026-11-05",79)
+        again=monitoring_v2.reference_weight(self.db,self.athlete,"2026-10-25")
+        self.assertEqual(first,again)
+        self.assertEqual(again["weight_kg"],82)
+
     def test_no_history(self):
         self.assertIsNone(self.result())
 
