@@ -56,6 +56,11 @@ class PlayerAccountCreationTests(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT sex FROM users").fetchone()[0],"M")
         self.assertIsNone(self.db.execute("SELECT sex FROM v2_athletes").fetchone()[0])
 
+    def test_missing_profile_name_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.create_linked(name="x")
+        self.assertEqual(self.db.execute("SELECT count(*) FROM users").fetchone()[0],0)
+
     def test_endpoint_source_requires_atomic_credentials(self):
         source=(ROOT/"app.py").read_text()
         start=source.index("if path == '/api/v2/athletes':")
