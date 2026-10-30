@@ -306,7 +306,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const top=document.createElement("div");top.className="weekly-detail-heading";
   const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"—");
   const title=document.createElement("strong");title.textContent=names[meal]||meal;
-  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus);};
+  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
   const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
   const options=plans[color]?.[meal]||[],avg=average(options);
   if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
@@ -328,7 +328,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
     const top=document.createElement("div");top.className="weekly-detail-heading";
     const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"});
     const title=document.createElement("strong");title.textContent=item.phase==="pre"&&calendarEvents.some(e=>e.id===item.event_id&&e.kind==="match")?"Jogo":item.title;
-    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus);};
+    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
     const group=document.createElement("div");group.className="weekly-detail-titles";group.append(caption,title);top.append(group,close);section.append(top);
     const opts=item.options||[],avg=average(opts);
     if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
@@ -782,7 +782,7 @@ async function overview(){
  const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+7);overview().catch(error);};strip.append(next);
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
- if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length){root.textContent="Sem programação definida para este dia.";return;}
+ if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){root.textContent="Sem programação definida para este dia.";return;}
 
  const dailyTotal=dayNutritionTotal(entry||{date:d,classification:null});
  const assigned=meals.filter(meal=>assignedColor(d,meal,entry?.classification)).length+periMeals.filter(x=>x.event_date===d).length;
