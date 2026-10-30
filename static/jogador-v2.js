@@ -728,14 +728,27 @@ async function renderWeightCard(root,date){
  }
  action.onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden){existing?chart():editor();}};
 }
+let overviewRequestId=0;
+const overviewReadCache=new Map();
+function cachedOverviewRead(path){
+ const now=Date.now(),old=overviewReadCache.get(path);
+ if(old&&now-old.time<15000)return old.promise;
+ const promise=api(path).catch(err=>{overviewReadCache.delete(path);throw err;});
+ overviewReadCache.set(path,{time:now,promise});
+ if(overviewReadCache.size>30)overviewReadCache.delete(overviewReadCache.keys().next().value);
+ return promise;
+}
 async function overview(){
+ const requestId=++overviewRequestId;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
- const [r]=await Promise.all([api("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end)),loadPlayerPostMatch()]);
+ const r=await cachedOverviewRead("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
+ if(requestId!==overviewRequestId)return;
+ loadPlayerPostMatch().catch(()=>{});
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
  // An explicit future activation must separately enable POST_MATCH_DISPLAY_ENABLED.
- await api("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
+ cachedOverviewRead("/api/v2/player/effective-nutrition-preview?start="+iso(mon)+"&end="+iso(end))
   .then(preview=>{
    if(!preview?.preview_only||preview.scenario_automation_enabled!==false||!preview.scenario_data_available)return;
    if(iso(monday(day))!==iso(mon))return;
@@ -759,9 +772,9 @@ async function overview(){
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
- if(isWeek){const [weekMenus,refs]=await Promise.all([api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),api("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))]);renderWeekly(mon,r,weekMenus.menus||[],refs.weights_by_date||{});return;}
- const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
- const dateWeights=await api("/api/v2/player/reference-weights?start="+d+"&end="+d);
+ if(isWeek){const [weekMenus,refs]=await Promise.all([cachedOverviewRead("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),cachedOverviewRead("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))]);if(requestId!==overviewRequestId)return;renderWeekly(mon,r,weekMenus.menus||[],refs.weights_by_date||{});return;}
+ const [menus,dateWeights]=await Promise.all([cachedOverviewRead("/api/v2/player/menus?start="+d+"&end="+d),cachedOverviewRead("/api/v2/player/reference-weights?start="+d+"&end="+d)]);
+ if(requestId!==overviewRequestId)return;
  const dailyReferenceRaw=dateWeights.weights_by_date?.[d]?.weight_kg;
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
@@ -860,6 +873,7 @@ async function overview(){
   root.append(summary);
  }
  await renderWeightCard(root,d);
+ if(requestId!==overviewRequestId)return;
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
