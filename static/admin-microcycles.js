@@ -365,52 +365,35 @@ async function openMonitoring(kind){
   }
   if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
   info.textContent=rows.length+" registo(s)";
+  const table=document.createElement("table");table.className=kind==="game"?"tm-postmatch-matrix":"tm-weight-records";
+  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"]];
+  const head=document.createElement("tr");for(const [,label]of fields){const th=document.createElement("th");th.textContent=label;head.append(th);}const th=document.createElement("th");th.textContent="Ações";head.append(th);const thead=document.createElement("thead");thead.append(head);table.append(thead);
+  const body=document.createElement("tbody");
+  const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
+  const alternatives={none:"Nenhum",mild:"Ligeiro",moderate:"Moderado",severe:"Intenso",cramps:"Cãibras",muscle_pain:"Dores musculares",injury:"Lesão",weakness_dizziness:"Fraqueza/tonturas"};
+  const fmt=(value,key)=>value===undefined||value===null||value===""||Array.isArray(value)&&!value.length?"Não preenchido":Array.isArray(value)?value.map(v=>alternatives[v]||String(v)).join(", "):typeof value==="boolean"?(value?"Sim":"Não"):alternatives[value]||String(value)+(["feeling","effort"].includes(key)?"/10":"");
   for(const record of rows){
-   const line=document.createElement("div");line.className="monitoring-entry";line.dataset.monitoringDate=kind==="weight"?record.weigh_date:record.match_date;
-   if(kind==="weight")line.textContent=monitoringDate(record.weigh_date)+" · "+monitoringDecimal(record.weight_kg)+" kg";
-   else {
-    const scenarios={very_low:"Very low",low:"Low",medium:"Medium",high:"High"};
-    line.textContent=monitoringDate(record.match_date)+" · "+(record.minutes==null?"Não joguei":record.minutes+" min")+" · "+(scenarios[record.scenario]||record.scenario);
+   const tr=document.createElement("tr"),answers=(()=>{try{return JSON.parse(record.answers_json||"{}")}catch{return {};}})();
+   for(const [key] of fields){
+    const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":fmt(answers[key],key);
+    const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";td.append(value);tr.append(td);
    }
+   const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
    if(kind==="game"){
-    const actions=document.createElement("span");actions.className="monitoring-row-actions";
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
-    edit.onclick=()=>{$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
-    const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringGame(record.match_id,record.match_date);
-    actions.append(edit,remove);line.append(actions);
-    let answers={};try{answers=JSON.parse(record.answers_json||"{}");}catch{}
-    if(Object.keys(answers).length){
-     const quick=document.createElement("div");quick.className="tm-form-answer-summary";
-     for(const [key,label] of [["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"]]){
-      const value=answers[key];if(value===null||value===undefined||value==="")continue;
-      const pill=document.createElement("span");pill.textContent=label+": "+String(value)+(key==="feeling"||key==="effort"?"/10":"");quick.append(pill);
-     }
-     if(quick.children.length)line.append(quick);
-     const details=document.createElement("details");details.style.cssText="width:100%;margin-top:10px;padding:12px;border-radius:9px;background:#212126";
-     const summary=document.createElement("summary");summary.textContent="Ver todas as respostas";details.append(summary);
-     const answerGrid=document.createElement("div");answerGrid.className="tm-form-answer-grid";
-     const labels={feeling:"Como te sentiste no jogo?",effort:"Perceção do esforço",gi_level:"Avaliação gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e início do jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína antes do jogo",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Batido recovery"};
-     const options={none:"Nenhum / sem sintomas",mild:"Desconforto ligeiro",moderate:"Desconforto moderado",severe:"Desconforto intenso",nausea:"Náuseas",abdominal_pain:"Dor abdominal",bloating:"Inchaço abdominal",reflux:"Refluxo / azia",urgency:"Urgência para evacuar / diarreia",vomiting:"Vómitos",other:"Outro",cramps:"Cãibras",muscle_pain:"Dores musculares",injury:"Lesão",weakness_dizziness:"Fraqueza / tonturas"};
-     for(const [key,label] of Object.entries(labels)){
-      if(!Object.hasOwn(answers,key)||answers[key]===null||answers[key]==="")continue;
-      const row=document.createElement("div");row.className="tm-form-answer-field";
-      const val=answers[key],formatted=Array.isArray(val)?val.map(x=>options[x]||x).join(", "):typeof val==="boolean"?(val?"Sim":"Não"):options[val]||String(val)+(key==="feeling"||key==="effort"?"/10":"");
-      const name=document.createElement("small");name.textContent=label;
-      const text=document.createElement("strong");text.textContent=formatted;
-      row.append(name,text);answerGrid.append(row);
-     }
-     details.append(answerGrid);line.append(details);
-    }
-
-   }
-   if(kind==="weight"){
-    const actions=document.createElement("span");actions.className="monitoring-row-actions";
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;$("monitoring-weight-value").focus();};
+    const extra=document.createElement("tr");extra.hidden=true;const cell=document.createElement("td");cell.colSpan=fields.length+1;
+    const grid=document.createElement("div");grid.className="tm-form-answer-grid";
+    for(const [key,label]of Object.entries(answerLabels)){const item=document.createElement("div");item.className="tm-form-answer-field";const small=document.createElement("small");small.textContent=label;const strong=document.createElement("strong");strong.textContent=fmt(answers[key],key);if(strong.textContent==="Não preenchido")strong.className="tm-unanswered";item.append(small,strong);grid.append(item);}
+    cell.append(grid);extra.append(cell);
+    const details=document.createElement("button");details.type="button";details.textContent="Detalhes";details.setAttribute("aria-expanded","false");details.onclick=()=>{extra.hidden=!extra.hidden;details.textContent=extra.hidden?"Detalhes":"Recolher";details.setAttribute("aria-expanded",String(!extra.hidden));};actions.append(details);
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
+    const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringGame(record.match_id,record.match_date);actions.append(edit,remove);tr.append(actions);body.append(tr,extra);
+   }else{
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringWeight(record.weigh_date);
-    actions.append(edit,remove);line.append(actions);
+    actions.append(edit,remove);tr.append(actions);body.append(tr);
    }
-   list.append(line);
   }
+  table.append(body);const overflow=document.createElement("div");overflow.className="tm-form-table-scroll";overflow.append(table);list.append(overflow);
  }catch(e){if(version===monitoringRequestVersion)info.textContent="Não foi possível carregar os registos."; }
 }
 $("monitoring-weight-button").addEventListener("click",()=>openMonitoring("weight"));
