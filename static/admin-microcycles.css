@@ -757,3 +757,17 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 
 /* Slightly larger weekly meal indicators, preserving 5-column alignment. */
 #tm-dashboard .tm-db-dots .tm-db-dot{width:14px!important;height:14px!important;flex:0 0 14px!important}
+
+/* Compact admin sidebar; leave navigation hierarchy accessible through landmark labels. */
+#admin-workspace .tm-admin-brand{padding:3px 12px 24px}
+#admin-workspace .tm-admin-side-nav:first-of-type{margin-top:0}
+#admin-workspace .tm-admin-side-icon{width:20px;height:20px;display:block;flex:none}
+#admin-workspace .tm-admin-nav-icon{align-items:center;min-width:21px}
+#admin-workspace .tm-admin-sidebar{gap:10px}
+#admin-workspace .tm-admin-sidebar-spacer{min-height:40px}
+#admin-workspace .tm-admin-work-area:has(#tm-dashboard:not([hidden])){max-width:none;padding:26px clamp(16px,2vw,34px)}
+@media(max-width:830px){
+ #admin-workspace .tm-admin-brand{padding:4px 8px 9px}
+ #admin-workspace .tm-admin-sidebar-spacer{display:none}
+ #admin-workspace .tm-admin-work-area:has(#tm-dashboard:not([hidden])){padding:19px 12px}
+}
