@@ -7,13 +7,13 @@ import monitoring_v2
 
 class ReferenceWeightTests(unittest.TestCase):
     def setUp(self):
+        self.athlete="athlete"
         self.db=sqlite3.connect(":memory:")
         self.db.row_factory=sqlite3.Row
         self.db.execute("CREATE TABLE v2_athletes (id TEXT PRIMARY KEY, weight_kg REAL)")
         self.db.execute("INSERT INTO v2_athletes VALUES (?,?)",(self.athlete,85))
         self.db.execute("CREATE TABLE v2_daily_weighins (athlete_id TEXT, weigh_date TEXT, weight_kg REAL)")
         self.db.execute("CREATE TABLE v2_body_assessments (athlete_id TEXT, assessed_on TEXT, measurements TEXT, status TEXT)")
-        self.athlete="athlete"
         self.day="2026-10-30"
 
     def tearDown(self):
@@ -79,7 +79,8 @@ class ReferenceWeightTests(unittest.TestCase):
         self.assertIsNone(self.result())
 
     def test_no_history(self):
-        self.assertIsNone(self.result())
+        self.assertEqual(self.result()["source"],"profile_fallback")
+        self.assertEqual(self.result()["weight_kg"],85)
 
     def test_assessment_with_invalid_weight_is_skipped(self):
         self.assess("2026-10-28",None)
