@@ -985,7 +985,7 @@ async function loadCalendar(){
     const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
     for(const result of results)for(const key of Object.keys(sums))sums[key]+=result.total[key];
     const average=Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7]));
-    const relativeMeans={};for(const key of Object.keys(sums)){const ratios=results.map((result,i)=>{const w=Number(dayWeightReferences[weeklyData.days[i]?.date]?.weight_kg);return Number.isFinite(w)&&w>0?result.total[key]/w:null;});if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/ratios.length;}
+    const relativeMeans={};for(const key of Object.keys(sums)){const ratios=results.map((result,i)=>{const rawWeight=dayWeightReferences[weeklyData.days[i]?.date]?.weight_kg;const w=rawWeight==null?NaN:Number(rawWeight);return Number.isFinite(w)&&w>0?result.total[key]/w:null;});if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/ratios.length;}
     nutritionCards(weekly,average,null,relativeMeans);
   }else{
     const warning=document.createElement("p");
