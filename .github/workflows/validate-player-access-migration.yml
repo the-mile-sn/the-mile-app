@@ -1,0 +1,16 @@
+name: Validate player access migration
+on:
+  push:
+    branches: [feature/player-access-in-jogadores-20261030]
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/admin-dashboard.js
+      - run: node --check static/admin-microcycles.js
+      - run: python -m unittest -v test_player_account_creation_v2
