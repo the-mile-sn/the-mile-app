@@ -2070,44 +2070,69 @@ function renderAssessmentForm(data={}){
  $("assessment-review-form").hidden=false;
 }
 const assessmentPtDate=(iso)=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
-const assessmentMetrics=[["weight","Peso corporal","kg"],["body_fat","Gordura corporal","%"],["sum_8","Soma de 8 pregas","mm"],["bmi","IMC",""]];
+const assessmentMetrics=ASSESSMENT_GROUPS[1][2];
+const clinicalNumber=v=>v==null||v===""?null:(Number.isFinite(Number(String(v).replace(",",".")))?Number(String(v).replace(",",".")):null);
+const clinicalFormat=v=>v==null?"—":v.toLocaleString("pt-PT",{maximumFractionDigits:2});
 function renderAssessmentDashboard(records){
  const host=$("tm-assessment-dashboard");if(!host)return;host.replaceChildren();
  const published=records.filter(r=>r.status==="published").slice().sort((a,b)=>a.assessed_on.localeCompare(b.assessed_on));
- if(!published.length){const note=document.createElement("p");note.className="hint";note.textContent="Os gráficos estarão disponíveis após a publicação de avaliações.";host.append(note);return;}
  const metrics=document.createElement("div");metrics.className="tm-clinical-metrics";
- const number=v=>Number(String(v).replace(",","."));
- const valid=r=>r!==null&&r!==undefined&&r!==""&&Number.isFinite(number(r));
  for(const [key,label,unit] of assessmentMetrics){
-  const readings=published.map(r=>({date:r.assessed_on,value:r.measurements?.[key]})).filter(r=>valid(r.value));
-  const box=document.createElement("div");box.className="tm-clinical-metric";
-  const heading=document.createElement("small");heading.textContent=label;box.append(heading);
-  const primary=document.createElement("strong");
-  primary.textContent=readings.length?number(readings[readings.length-1].value).toLocaleString("pt-PT",{maximumFractionDigits:2})+(unit?" "+unit:""):"—";box.append(primary);
-  const delta=document.createElement("em");
-  if(readings.length>=2){const diff=number(readings[readings.length-1].value)-number(readings[readings.length-2].value);delta.textContent=(diff>0?"+":diff<0?"−":"")+Math.abs(diff).toLocaleString("pt-PT",{maximumFractionDigits:2})+(unit?" "+unit:"")+" vs. anterior";}
-  else delta.textContent=readings.length?"Primeira medição":"Sem medições";
-  box.append(delta);metrics.append(box);
+  const readings=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(x=>x.value!==null);
+  const card=document.createElement("div");card.className="tm-clinical-metric";
+  if(key==="sum_8")card.classList.add("tm-clinical-metric-primary");
+  const heading=document.createElement("small");heading.textContent=label;
+  const value=document.createElement("strong");value.textContent=readings.length?clinicalFormat(readings.at(-1).value)+(unit?" "+unit:""):"—";
+  const delta=document.createElement("em");delta.textContent=readings.length>1?((readings.at(-1).value-readings.at(-2).value)>0?"+":"")+clinicalFormat(readings.at(-1).value-readings.at(-2).value)+(unit?" "+unit:"")+" vs. anterior":readings.length?"Primeira medição":"Sem medições";
+  card.append(heading,value,delta);metrics.append(card);
  }
  host.append(metrics);
- const card=document.createElement("section");card.className="tm-assessment-visual";
- const heading=document.createElement("div");heading.className="tm-assessment-visual-head";const title=document.createElement("h3");title.textContent="Evolução das avaliações";
- const select=document.createElement("select");select.setAttribute("aria-label","Indicador do gráfico");
- for(const [key,label] of assessmentMetrics){const option=document.createElement("option");option.value=key;option.textContent=label;select.append(option);}
- heading.append(title,select);card.append(heading);
- const canvas=document.createElement("div");card.append(canvas);
+ const details=document.createElement("div");details.className="tm-assessment-details";
+ for(const [group,title] of [["pregas","Pregas cutâneas"],["perimetros","Perímetros"]]){
+  const section=document.createElement("details");section.className="tm-assessment-detail";const summary=document.createElement("summary");summary.textContent=title;section.append(summary);
+  const grid=document.createElement("div");grid.className="tm-assessment-bars";
+  for(const [key,label,unit] of ASSESSMENT_GROUPS.find(g=>g[0]===group)[2]){
+   const latest=published.slice().reverse().find(r=>clinicalNumber(r.measurements?.[key])!==null);
+   const value=latest?clinicalNumber(latest.measurements[key]):null;
+   const row=document.createElement("div");row.className="tm-assessment-bar-row";
+   const name=document.createElement("span");name.textContent=label;
+   const bar=document.createElement("div");bar.className="tm-assessment-bar-track";
+   const fill=document.createElement("span");fill.className="tm-assessment-bar-fill";
+   const max=Math.max(1,...ASSESSMENT_GROUPS.find(g=>g[0]===group)[2].map(([k])=>clinicalNumber(latest?.measurements?.[k])||0));
+   fill.style.width=(value==null?0:Math.max(0,Math.min(100,value/max*100)))+"%";bar.append(fill);
+   const labelValue=document.createElement("strong");labelValue.textContent=value==null?"—":clinicalFormat(value)+" "+unit;
+   row.append(name,bar,labelValue);grid.append(row);
+  }
+  section.append(grid);details.append(section);
+ }
+ host.append(details);
+ const visual=document.createElement("section");visual.className="tm-assessment-visual";
+ const head=document.createElement("div");head.className="tm-assessment-visual-head";
+ const heading=document.createElement("h3");heading.textContent="Evolução";
+ const select=document.createElement("select");select.setAttribute("aria-label","Métrica do gráfico");
+ for(const [key,label] of [...assessmentMetrics,...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]]){const o=document.createElement("option");o.value=key;o.textContent=label;select.append(o);}
+ head.append(heading,select);visual.append(head);
+ const canvas=document.createElement("div");visual.append(canvas);
  const draw=()=>{
-  canvas.replaceChildren();const item=assessmentMetrics.find(m=>m[0]===select.value),key=item[0];
-  const points=published.map(r=>({date:r.assessed_on,value:r.measurements?.[key]})).filter(r=>valid(r.value)).map(r=>({date:r.date,value:number(r.value)}));
-  if(points.length<2){const p=document.createElement("p");p.className="tm-assessment-trend-note";p.textContent="São necessárias duas avaliações com este indicador para apresentar a evolução.";canvas.append(p);return;}
-  const width=640,height=194,padX=32,padY=26,values=points.map(p=>p.value),minimum=Math.min(...values),maximum=Math.max(...values),spread=Math.max(.5,maximum-minimum),lo=minimum-spread*.15,hi=maximum+spread*.15;
-  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 "+width+" "+height);svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução de "+item[1]);
-  const coords=points.map((p,i)=>[padX+(width-padX*2)*i/(points.length-1),height-padY-(p.value-lo)/(hi-lo)*(height-2*padY)]);
-  const line=document.createElementNS(svg.namespaceURI,"polyline");line.setAttribute("points",coords.map(p=>p.join(",")).join(" "));line.setAttribute("fill","none");line.setAttribute("stroke","#9bb4ce");line.setAttribute("stroke-width","2.7");line.setAttribute("stroke-linecap","round");line.setAttribute("stroke-linejoin","round");svg.append(line);
-  coords.forEach((c,i)=>{const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",c[0]);dot.setAttribute("cy",c[1]);dot.setAttribute("r",i===coords.length-1?"5":"3");dot.setAttribute("fill",i===coords.length-1?"#6eb5ee":"#afbac8");const tip=document.createElementNS(svg.namespaceURI,"title");tip.textContent=points[i].date+" · "+points[i].value.toLocaleString("pt-PT",{maximumFractionDigits:2})+" "+item[2];dot.append(tip);svg.append(dot);});
-  canvas.append(svg);const note=document.createElement("p");note.className="tm-assessment-trend-note";note.textContent=points.length+" medições publicadas · sem interpolar valores em falta";canvas.append(note);
+  canvas.replaceChildren();const key=select.value,label=select.selectedOptions[0]?.textContent||key;
+  const group=[...assessmentMetrics,...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]];
+  const unit=group.find(g=>g[0]===key)?.[2]||"";
+  const points=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(r=>r.value!==null);
+  if(points.length<2){const p=document.createElement("p");p.className="hint";p.textContent="São necessárias duas avaliações publicadas com esta métrica.";canvas.append(p);return;}
+  const w=760,h=218,px=34,py=28,vals=points.map(p=>p.value),lo0=Math.min(...vals),hi0=Math.max(...vals),spread=Math.max(.5,hi0-lo0),lo=lo0-spread*.2,hi=hi0+spread*.2;
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 "+w+" "+h);svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução de "+label);svg.classList.add("tm-assessment-trend-svg");
+  const coords=points.map((p,i)=>[px+(w-2*px)*i/(points.length-1),h-py-(p.value-lo)/(hi-lo)*(h-2*py)]);
+  const line=document.createElementNS(svg.namespaceURI,"polyline");line.setAttribute("points",coords.map(p=>p.join(",")).join(" "));line.setAttribute("fill","none");line.setAttribute("stroke","#a1b9d1");line.setAttribute("stroke-width","2.6");svg.append(line);
+  const tooltip=document.createElement("div");tooltip.className="tm-assessment-hover";tooltip.hidden=true;
+  coords.forEach((c,i)=>{const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",c[0]);dot.setAttribute("cy",c[1]);dot.setAttribute("r",i===coords.length-1?"5":"3.5");dot.setAttribute("fill",i===coords.length-1?"#65b2e7":"#b1bfce");
+   const tip=document.createElementNS(svg.namespaceURI,"title");tip.textContent=assessmentPtDate(points[i].date)+" · "+clinicalFormat(points[i].value)+" "+unit;dot.append(tip);
+   const show=()=>{tooltip.hidden=false;tooltip.textContent=assessmentPtDate(points[i].date)+" · "+clinicalFormat(points[i].value)+(unit?" "+unit:"");tooltip.style.left=Math.max(2,Math.min(75,c[0]/w*100))+"%";tooltip.style.top=Math.max(0,c[1]/h*100-18)+"%";};
+   dot.addEventListener("mouseenter",show);dot.addEventListener("focus",show);dot.addEventListener("mouseleave",()=>{tooltip.hidden=true;});dot.addEventListener("blur",()=>{tooltip.hidden=true;});dot.setAttribute("tabindex","0");svg.append(dot);
+  });
+  const wrap=document.createElement("div");wrap.className="tm-assessment-chart-stage";wrap.append(svg,tooltip);canvas.append(wrap);
+  const note=document.createElement("p");note.className="tm-assessment-trend-note";note.textContent=points.length+" avaliações publicadas · sem estimar valores em falta";canvas.append(note);
  };
- select.addEventListener("change",draw);draw();host.append(card);
+ select.addEventListener("change",draw);draw();host.append(visual);
 }
 async function loadAssessmentsAdmin(){
  const athleteId=$("athlete").value;if(!athleteId)return;
