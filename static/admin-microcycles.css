@@ -808,3 +808,29 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-p-empty{font-size:13px;color:#a6a8b2;text-align:center!important;padding:25px!important}
 .tm-players-error{font-size:12px;color:#ec9a8c;margin:10px 0 0}
 @media(max-width:830px){.tm-players-panel{padding:12px}.tm-players-toolbar{align-items:stretch}.tm-players-count{margin:0}}
+
+/* Planning navigation: visual-only refactor preserving all existing editor modules. */
+#tm-admin-legacy .tm-planning-header{margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#tm-admin-legacy .tm-planning-header h1{font-size:27px;margin:0 0 5px;letter-spacing:-.035em}
+#tm-admin-legacy .tm-planning-header p{font-size:12px;margin:0;color:#92959e}
+#tm-admin-legacy .tm-planning-account-link{padding:8px 12px;font-size:12px;background:#24262c;border-color:#34363d}
+#tm-admin-legacy .tm-planning-player-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px 17px;background:#17181d;border:1px solid #313239;border-radius:14px;margin-bottom:12px}
+#tm-admin-legacy .tm-planning-player-identity{display:flex;align-items:center;gap:13px;min-width:0;flex:1}
+#tm-admin-legacy #tm-planning-avatar{width:43px;height:43px;flex:0 0 43px;border-radius:50%;background:#30333a;color:#dfe1e6;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+#tm-admin-legacy .tm-planning-player-select{min-width:0;flex:1;max-width:420px}
+#tm-admin-legacy .tm-planning-player-select label{margin:0 0 5px;font-size:10px;color:#a6a8b0}
+#tm-admin-legacy .tm-planning-player-select select{width:100%;height:39px;padding:8px 12px;border-radius:9px;background:#24262c;border:1px solid #3b3d45;font-size:13px}
+#tm-admin-legacy .tm-planning-switcher{display:flex;gap:7px}
+#tm-admin-legacy .tm-planning-switcher button{width:37px;height:37px;display:flex;align-items:center;justify-content:center;padding:0;font-size:23px;border-radius:9px;background:#272930;border:1px solid #3a3c44}
+#tm-admin-legacy .tm-planning-switcher button:disabled{opacity:.28}
+#tm-admin-legacy .tm-planning-create[hidden]{display:none!important}
+#tm-admin-legacy .tm-planning-create{display:flex;align-items:end;gap:9px;flex-wrap:wrap;padding:15px 17px;margin:0 0 12px;background:#1d2025;border:1px solid #383d45;border-radius:12px}
+#tm-admin-legacy .tm-planning-create label{flex:0 0 100%;font-size:11px;margin:0}
+#tm-admin-legacy .tm-planning-create input{max-width:300px;flex:1 1 220px;font-size:13px;padding:10px}
+#tm-admin-legacy .tm-planning-create button{font-size:12px;padding:10px 13px}
+#tm-admin-legacy #backoffice-nav{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px;margin:0 0 20px;border-radius:12px;background:#17181d;border:1px solid #313239}
+#tm-admin-legacy #backoffice-nav button{border:0;background:transparent;color:#aeb0b9;padding:11px 13px;font-size:12px;border-radius:9px;white-space:nowrap}
+#tm-admin-legacy #backoffice-nav button[aria-pressed="true"]{background:#30323a;color:#fff;font-weight:650}
+#tm-admin-legacy #backoffice-nav button:hover:not([aria-pressed="true"]){background:#24262b;color:#e9eaf0}
+#tm-admin-legacy #backoffice-nav button:focus-visible{outline:2px solid #90b8d8;outline-offset:-2px}
+@media(max-width:620px){#tm-admin-legacy .tm-planning-header{margin-bottom:12px}#tm-admin-legacy .tm-planning-header h1{font-size:23px}#tm-admin-legacy .tm-planning-player-toolbar{padding:12px;gap:9px}#tm-admin-legacy #tm-planning-avatar{width:35px;height:35px;flex-basis:35px}#tm-admin-legacy .tm-planning-switcher button{width:31px;height:35px}#tm-admin-legacy #backoffice-nav{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}#tm-admin-legacy #backoffice-nav::-webkit-scrollbar{display:none}}
