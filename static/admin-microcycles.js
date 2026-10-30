@@ -2134,6 +2134,37 @@ function renderAssessmentDashboard(records){
  };
  select.addEventListener("change",draw);draw();host.append(visual);
 }
+let assessmentRegistryCache=[];
+function renderAssessmentRegistry(){
+ const host=$("tm-assessment-registry");if(!host)return;host.replaceChildren();
+ const text=$("tm-assessment-filter-text").value.toLocaleLowerCase("pt-PT").trim(),athlete=$("tm-assessment-filter-player").value,status=$("tm-assessment-filter-status").value,date=$("tm-assessment-filter-date").value;
+ const rows=assessmentRegistryCache.filter(r=>(!athlete||r.athlete_id===athlete)&&(!status||r.status===status)&&(!date||r.assessed_on===date)&&(!text||(r.athlete_name+" "+r.assessed_on).toLocaleLowerCase("pt-PT").includes(text)));
+ const table=document.createElement("table");table.className="tm-assessment-table";
+ const head=document.createElement("tr");for(const label of ["Data","Jogador","Estado","Soma 8 pregas","Peso","Gordura corporal","IMC","Ações"]){const th=document.createElement("th");th.textContent=label;head.append(th);}const thead=document.createElement("thead");thead.append(head);table.append(thead);
+ const body=document.createElement("tbody");for(const r of rows){
+  const row=document.createElement("tr");
+  for(const v of [assessmentPtDate(r.assessed_on),r.athlete_name,r.status==="published"?"Publicada":"Rascunho",...["sum_8","weight","body_fat","bmi"].map(k=>clinicalFormat(clinicalNumber(r.measurements?.[k])))]){const td=document.createElement("td");td.textContent=v;row.append(td);}
+  const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
+  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=async()=>{if($("athlete").value!==r.athlete_id){$("athlete").value=r.athlete_id;await loadModel();await window.tmOpenAdminAssessments(r.athlete_id);}assessmentPdf="";assessmentUploadedFor="";renderAssessmentForm(r);$("assessment-review-form").scrollIntoView({behavior:"smooth",block:"nearest"});};
+  const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.className="assessment-delete-button";
+  remove.onclick=async()=>{if(!window.confirm("Eliminar definitivamente a avaliação de "+assessmentPtDate(r.assessed_on)+" de "+r.athlete_name+"?"))return;remove.disabled=true;try{await request("/api/v2/athletes/"+encodeURIComponent(r.athlete_id)+"/assessments/delete",{method:"POST",body:JSON.stringify({id:r.id})});await refreshAssessmentRegistry();if($("athlete").value===r.athlete_id)await loadAssessmentsAdmin();}catch(e){$("assessment-excel-feedback").textContent="Erro ao eliminar: "+e.message;remove.disabled=false;}};
+  actions.append(edit,remove);row.append(actions);body.append(row);
+ }
+ table.append(body);host.append(table);if(!rows.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem avaliações para os filtros selecionados.";host.append(p);}
+}
+async function refreshAssessmentRegistry(){
+ const select=$("tm-assessment-filter-player"),source=$("athlete"),prior=select.value;
+ select.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Todos os jogadores";select.append(option);
+ const athletes=Array.from(source.options).filter(o=>o.value);
+ for(const a of athletes){const copy=document.createElement("option");copy.value=a.value;copy.textContent=a.textContent;select.append(copy);}
+ select.value=Array.from(select.options).some(o=>o.value===prior)?prior:"";
+ const response=await Promise.allSettled(athletes.map(a=>request("/api/v2/athletes/"+encodeURIComponent(a.value)+"/assessments")));
+ assessmentRegistryCache=[];
+ response.forEach((item,i)=>{if(item.status==="fulfilled")for(const r of item.value.assessments||[])assessmentRegistryCache.push({...r,athlete_id:athletes[i].value,athlete_name:athletes[i].textContent});});
+ assessmentRegistryCache.sort((a,b)=>b.assessed_on.localeCompare(a.assessed_on));renderAssessmentRegistry();
+}
+for(const id of ["tm-assessment-filter-text","tm-assessment-filter-player","tm-assessment-filter-status","tm-assessment-filter-date"])$(id).addEventListener("input",renderAssessmentRegistry);
+window.tmRefreshAssessmentRegistry=refreshAssessmentRegistry;
 async function loadAssessmentsAdmin(){
  const athleteId=$("athlete").value;if(!athleteId)return;
  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments");
