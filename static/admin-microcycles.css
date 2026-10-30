@@ -733,3 +733,21 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-dashboard .tm-db-form-player{font-size:12px;font-weight:600;line-height:1.25}
 #tm-dashboard .tm-db-form-sub{font-size:11px;line-height:1.35;color:#a9abb5}
 #tm-dashboard .tm-db-form-time{font-size:10px;color:#9396a0;white-space:nowrap;align-self:center}
+
+/* Aligned weekly cards: full-height hit targets with no visible table lines. */
+#tm-dashboard .tm-db-table{border-spacing:4px 5px!important}
+#tm-dashboard .tm-db-table tbody tr{height:76px}
+#tm-dashboard .tm-db-table tbody td{height:76px!important;vertical-align:middle!important;padding:0!important;background:transparent}
+#tm-dashboard .tm-db-table tbody td.tm-db-name-cell{background:transparent!important}
+#tm-dashboard .tm-db-table tbody td.tm-db-today{background:#242d33!important}
+#tm-dashboard .tm-db-table tbody td .tm-db-cell{height:76px!important;min-height:76px!important;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between}
+#tm-dashboard .tm-db-table tbody td .tm-db-player-name{height:76px!important;min-height:76px!important;width:100%!important;box-sizing:border-box;background:#1d1e22!important;border-radius:10px!important;display:flex;align-items:center;padding:10px 12px!important}
+#tm-dashboard .tm-db-table tbody td .tm-db-player-name:hover{background:#2b3038!important}
+#tm-dashboard .tm-db-table tbody td .tm-db-player-name.tm-db-player-selected{background:#2b3641!important;box-shadow:inset 0 0 0 1px #83aecf!important}
+#tm-dashboard .tm-db-table tbody td .tm-db-player-name:focus-visible{outline:2px solid #83aecf;outline-offset:0}
+#tm-dashboard .tm-db-table tbody td.tm-db-today .tm-db-cell{background:#303940}
+#tm-dashboard .tm-db-table tbody td.tm-db-today .tm-db-cell.tm-db-match{background:#193126!important}
+#tm-dashboard .tm-db-table thead th.tm-db-name-cell{height:96px!important;vertical-align:middle!important}
+#tm-dashboard .tm-db-search{margin:0 auto!important}
+#tm-dashboard .tm-db-count-sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+#tm-admin-legacy .monitoring-entry.tm-monitoring-target{background:#29333d;box-shadow:inset 0 0 0 1px #83aecf;border-radius:10px}
