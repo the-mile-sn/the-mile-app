@@ -1,0 +1,35 @@
+name: Validate admin V2 nutrition parity
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/reference-weight-consistency-20261030
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout admin changes
+        uses: actions/checkout@v4
+      - name: Checkout player changes for side-by-side comparison
+        uses: actions/checkout@v4
+        with:
+          ref: fix/player-historical-weight-20261030
+          path: player-branch
+      - name: Check Python syntax
+        run: python -m compileall -q app.py monitoring_v2.py
+      - name: Check JavaScript syntax
+        run: |
+          node --check static/admin-microcycles.js
+          node --check player-branch/static/jogador-v2.js
+      - name: Run admin weight reference regressions
+        run: python -m unittest -v test_reference_weight_v2
+      - name: Run player weight and nutritional regressions
+        working-directory: player-branch
+        run: python -m unittest -v test_reference_weight_v2 test_nutrition_totals_v2
+      - name: Compare current player/admin actual JavaScript functions
+        working-directory: player-branch
+        env:
+          THE_MILE_ADMIN_JS: ../static/admin-microcycles.js
+        run: node --test tests/nutrition-parity.test.cjs
