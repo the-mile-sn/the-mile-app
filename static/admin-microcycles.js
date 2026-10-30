@@ -647,10 +647,11 @@ async function loadPlayerSimulation(){
   if(!model)return;
   const d=isoDay(simulationDay);
   $("player-preview-date").textContent=simulationDay.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const [plans,calendar,menus]=await Promise.all([
+  const [plans,calendar,menus,refs]=await Promise.all([
     request(matchBase()+"/plan-imports/published-preview"),
     request(matchBase()+"/calendar?start="+d+"&end="+d),
-    request(matchBase()+"/menus?start="+d+"&end="+d)
+    request(matchBase()+"/menus?start="+d+"&end="+d),
+    request(matchBase()+"/reference-weights?start="+d+"&end="+d)
   ]);
   publishedSimulation=plans.options_by_color;
   dayColorOverrides=colorOverrideLookup(calendar.meal_color_overrides);
@@ -679,9 +680,16 @@ async function loadPlayerSimulation(){
     if(!average){complete=false;continue;}
     hasValues=true;for(const key of Object.keys(publishedTotals))publishedTotals[key]+=average[key];
   }
+  for(const peri of calendar.peri_meals||[]){
+    if(peri.event_date!==d)continue;
+    const avg=averageMealNutrition(peri.options||[]);
+    if(!avg){complete=false;continue;}
+    hasValues=true;
+    for(const key of Object.keys(publishedTotals))publishedTotals[key]+=avg[key];
+  }
   if(hasValues){
     const caption=document.createElement("small");caption.textContent=complete?"Resumo nutricional do dia":"Resumo parcial · faltam planos publicados";summary.appendChild(caption);
-    nutritionCards(summary,publishedTotals);
+    nutritionCards(summary,publishedTotals,refs.weights_by_date?.[d]?.weight_kg);
   }
 
   for(const entry of mealColorsForDay(day)){
@@ -758,7 +766,7 @@ function matchBase(){return "/api/v2/athletes/"+encodeURIComponent(model.athlete
 
 // An explicit per-day exception takes precedence over the microcycle model.
 function colorForDay(day,meal,overrides=dayColorOverrides){
-  const row=model&&model.classifications.find(r=>r.name===day.classification);
+  const row=model&&model.classifications.find(r=>r.name===(day.classification||"Geral"));
   const fallback=row?.meals?.[meal]||null;
   const selected=overrides[day.date+"|"+meal];
   if(Object.hasOwn(overrides,day.date+"|"+meal))return selected==="none"?null:selected;
@@ -792,7 +800,7 @@ function nutritionSummary(average){
   return formatNutrition(average.kcal,0)+" kcal · P "+formatNutrition(average.protein_g)+" g · HC "+formatNutrition(average.carbs_g)+" g · G "+formatNutrition(average.fat_g)+" g";
 }
 function plannedDayTotals(day,periLookup=periByDay,colorLookup=dayColorOverrides){
-  if((!day.classification||day.needs_review)&&!(periLookup[day.date]||[]).length&&!Object.keys(colorLookup).some(key=>key.startsWith(day.date+"|")))return {state:"unclassified",count:0,missing:[],total:null};
+  // Days without a specific classification inherit the configured Geral meal colors.
   const totals={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   const missing=[];let count=0;
   for(const entry of mealColorsForDay(day,colorLookup)){
@@ -810,26 +818,27 @@ function plannedDayTotals(day,periLookup=periByDay,colorLookup=dayColorOverrides
   }
   return {state:missing.length?"partial":"complete",count,missing,total:count?totals:null};
 }
-function nutritionCards(host,totals){
+function nutritionCards(host,totals,referenceWeight=null,relativeMeans=null){
   const grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:12px 0";
   for(const [key,label,unit,digits] of [["kcal","Energia","kcal",0],["protein_g","Proteína","g",1],["carbs_g","Hidratos","g",1],["fat_g","Gordura","g",1]]){
     const card=document.createElement("div");card.style.cssText="border:1px solid #414148;border-radius:12px;padding:14px";
     const caption=document.createElement("small");caption.textContent=label;card.appendChild(caption);
     const value=document.createElement("strong");value.style.cssText="display:block;font-size:1.35em;margin-top:6px";
     value.textContent=formatNutrition(totals[key],digits)+" "+unit;card.appendChild(value);
-    const weight=Number(model?.athlete?.weight_kg);
-    if(Number.isFinite(weight)&&weight>0){const relative=document.createElement("small");relative.style.cssText="display:block;margin-top:6px";relative.textContent=formatNutrition(totals[key]/weight,key==="kcal"?1:2)+(key==="kcal"?" kcal/kg":" g/kg");card.appendChild(relative);}
+    const weight=referenceWeight==null?NaN:Number(referenceWeight);
+    const rel=relativeMeans?relativeMeans[key]:(Number.isFinite(weight)&&weight>0?totals[key]/weight:null);
+    if(rel!==null&&Number.isFinite(rel)){const relative=document.createElement("small");relative.style.cssText="display:block;margin-top:6px";relative.textContent=formatNutrition(rel,key==="kcal"?1:2)+(key==="kcal"?" kcal/kg":" g/kg");card.appendChild(relative);}
     grid.appendChild(card);
   }
   host.appendChild(grid);
 }
-function renderNutritionTotals(host,label,result){
+function renderNutritionTotals(host,label,result,referenceWeight=null){
   const block=document.createElement("section");block.className="import-validation-progress";
   const heading=document.createElement("h3");heading.textContent=label;block.appendChild(heading);
   const description=document.createElement("p");
   description.textContent=result.state==="unclassified"?"Sem classificação nutricional definida.":result.state==="complete"?"Total planeado · Todas as refeições atribuídas têm valores disponíveis.":result.total?"Subtotal incompleto · Existem refeições atribuídas sem valores disponíveis.":"Ainda não existem valores nutricionais calculáveis.";
   block.appendChild(description);
-  if(result.total)nutritionCards(block,result.total);
+  if(result.total)nutritionCards(block,result.total,referenceWeight);
   if(result.missing.length){const note=document.createElement("p");note.textContent="Em falta: "+result.missing.join("; ");block.appendChild(note);}
   host.appendChild(block);
 }
@@ -839,7 +848,7 @@ function renderDayPreview(day,host){
   window.currentNutritionDay=day;
 
   const heading=document.createElement("h3");
-  heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Sem classificação");
+  heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Geral automático · por definir");
   host.appendChild(heading);
   const grid=document.createElement("div");grid.className="day-meals";
   const detail=document.createElement("section");detail.className="meal-options-detail";
@@ -928,11 +937,12 @@ function renderDayPreview(day,host){
     }
     host.append(area);
   }
-  renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day));
+  renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
   host.appendChild(detail);
   const hint=document.createElement("p");hint.textContent="Pré-visualização administrativa. Os planos ainda não estão publicados aos jogadores.";host.appendChild(hint);
 }
 
+let dayWeightReferences={};
 async function loadCalendar(){
   if(!model)return;
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
@@ -961,7 +971,8 @@ async function loadCalendar(){
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
-  const weeklyData=await request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday));
+  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
+  dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
   const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
   const weeklyColors=colorOverrideLookup(weeklyData.meal_color_overrides);
   const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri,weeklyColors));
@@ -974,7 +985,8 @@ async function loadCalendar(){
     const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
     for(const result of results)for(const key of Object.keys(sums))sums[key]+=result.total[key];
     const average=Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7]));
-    nutritionCards(weekly,average);
+    const relativeMeans={};for(const key of Object.keys(sums)){const ratios=results.map((result,i)=>{const rawWeight=dayWeightReferences[weeklyData.days[i]?.date]?.weight_kg;const w=rawWeight==null?NaN:Number(rawWeight);return Number.isFinite(w)&&w>0?result.total[key]/w:null;});if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/ratios.length;}
+    nutritionCards(weekly,average,null,relativeMeans);
   }else{
     const warning=document.createElement("p");
     warning.textContent="Média diária semanal indisponível: faltam prescrições ou valores nutricionais para completar os sete dias.";
@@ -984,9 +996,9 @@ async function loadCalendar(){
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
   for(const day of data.days){
-    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"");
+    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback");if(!day.classification){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
     const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);
-    const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"—";el.appendChild(type);
+    const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
     if(data.matches.some(m=>m.match_date===day.date)){el.classList.add("calendar-match");}
     const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date);
@@ -1004,7 +1016,7 @@ async function loadCalendar(){
     }
     el.appendChild(strip);
     el.setAttribute("role","button");el.tabIndex=0;
-    el.setAttribute("aria-label","Ver cores das refeições de "+day.date);
+    el.setAttribute("aria-label","Ver cores das refeições de "+day.date+(day.classification?"":" · Geral aplicado automaticamente, dia por definir"));
     const selectDay=()=>{
       const wasSelected=selectedCalendarDay===day.date;
       selectedCalendarDay=wasSelected?null:day.date;
