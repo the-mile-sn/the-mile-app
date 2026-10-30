@@ -1,0 +1,15 @@
+name: Validate clinical Dashboard links
+on:
+  push:
+    branches: [fix/admin-dashboard-clinical-links-20261030]
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/admin-dashboard.js
+      - run: node --test tests/admin-clinical-navigation.test.cjs
