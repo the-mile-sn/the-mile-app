@@ -1413,8 +1413,8 @@ def application(env, start_response):
                     weight=float(str(raw).replace(',','.'))
                     if not 40<=weight<=140 or abs(weight*10-round(weight*10))>0.00001:raise ValueError()
                 except (TypeError,ValueError):raise Problem(400,'invalid_weight')
-                sex_row=c.execute("SELECT sex FROM v2_athletes WHERE id=?",(aid,)).fetchone()
-                is_f=bool(sex_row and str(sex_row['sex'] or '').upper()=='F')
+                # Single source of truth: sex belongs to the linked player account.
+                is_f=str(user['sex'] or '').upper()=='F'
                 menstruating=payload.get('menstruating')
                 if menstruating is not None and type(menstruating)!=bool:raise Problem(400,'invalid_menstruation')
                 if not is_f:menstruating=None
