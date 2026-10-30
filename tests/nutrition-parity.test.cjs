@@ -5,7 +5,7 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const vm=require("node:vm");
 const player=fs.readFileSync("static/jogador-v2.js","utf8");
-const admin=fs.readFileSync("tests/fixtures/admin-microcycles.js","utf8");
+const admin=fs.readFileSync(process.env.THE_MILE_ADMIN_JS||"admin-branch/static/admin-microcycles.js","utf8");
 function extract(source,name){
  const start=source.indexOf("function "+name+"(");
  assert.notEqual(start,-1,"missing function "+name);
