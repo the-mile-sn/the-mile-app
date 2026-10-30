@@ -2943,6 +2943,12 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-form legend{margin-bottom:8px;color:#d0d2d8}
 .daily-weight-form fieldset label{display:flex;align-items:center;gap:10px}
 .daily-weight-form fieldset input{accent-color:#dde4eb}
+/* Reset the global full-width input/label styles for the compact menstruation choices. */
+.daily-weight-form .daily-weight-menstruation{display:flex;flex-direction:column;align-items:stretch;min-width:0;gap:8px;margin:8px 0 0;padding:0;border:0}
+.daily-weight-form .daily-weight-menstruation legend{float:none;display:block;width:auto;margin:0 0 9px;padding:0;font-size:14px;line-height:1.4;color:#d0d2d8}
+.daily-weight-form .daily-weight-menstruation label{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:11px;width:100%;min-height:34px;margin:0;padding:2px 0;font-size:14px;line-height:1.35;white-space:normal;text-align:left;color:#e2e3e8}
+.daily-weight-form .daily-weight-menstruation input[type="radio"]{appearance:auto;-webkit-appearance:radio;display:block;position:static;box-sizing:border-box;flex:0 0 18px;width:18px;min-width:18px;max-width:18px;height:18px;min-height:18px;max-height:18px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;accent-color:#e3e6ed}
+.daily-weight-form .daily-weight-menstruation .daily-weight-radio-label{display:block;flex:1;min-width:0;overflow-wrap:anywhere}
 .daily-weight-form-actions{display:flex;justify-content:flex-end;gap:10px}
 .daily-weight-form-actions button{border:0;border-radius:9px;padding:9px 14px;background:#454751;color:white;font:inherit}
 .daily-weight-form-actions button:last-child{background:#e4e7ea;color:#202227}

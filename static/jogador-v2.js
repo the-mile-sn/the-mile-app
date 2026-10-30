@@ -703,9 +703,9 @@ async function renderWeightCard(root,date){
   const errorText=document.createElement("p");errorText.setAttribute("role","alert");
   form.append(picker);
   if(String(me?.sex||"").toUpperCase()==="F"){
-   const group=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
+   const group=document.createElement("fieldset");group.className="daily-weight-menstruation";const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
    for(const [v,t] of [["","Não responder"],["yes","Sim"],["no","Não"]]){
-    const l=document.createElement("label"),input=document.createElement("input");input.type="radio";input.name="weight-menstruating";input.value=v;input.checked=current?(current.menstruating===null?v==="":current.menstruating?v==="yes":v==="no"):v==="";l.append(input,document.createTextNode(t));group.append(l);
+    const l=document.createElement("label"),input=document.createElement("input");input.type="radio";input.name="weight-menstruating";input.value=v;input.checked=current?(current.menstruating===null?v==="":current.menstruating?v==="yes":v==="no"):v==="";const caption=document.createElement("span");caption.className="daily-weight-radio-label";caption.textContent=t;l.append(input,caption);group.append(l);
    }form.append(group);
   }
   const buttons=document.createElement("div");buttons.className="daily-weight-form-actions";buttons.append(save);form.append(buttons,errorText);panel.append(form);
