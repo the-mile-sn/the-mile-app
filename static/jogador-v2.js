@@ -753,6 +753,8 @@ async function overview(){
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
  if(isWeek){const weekMenus=await api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end));renderWeekly(mon,r,weekMenus.menus||[]);return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
+ const dateWeights=await api("/api/v2/player/reference-weights?start="+d+"&end="+d);
+ const dailyReferenceWeight=Number(dateWeights.weights_by_date?.[d]?.weight_kg);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
  const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
@@ -783,7 +785,7 @@ async function overview(){
    const label=document.createElement("small");label.textContent="kcal";
    const value=document.createElement("strong");value.textContent=fmt(total.kcal,0);
    energy.append(label,value);
-   const weight=Number(me?.weight_kg),hasWeight=Number.isFinite(weight)&&weight>0;
+   const weight=dailyReferenceWeight,hasWeight=Number.isFinite(weight)&&weight>0;
    if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,1)+" kcal/kg";energy.append(ratio);}
    hero.append(energy);summary.append(hero);
    const macros=document.createElement("div");macros.className="nutrition-macro-row";
