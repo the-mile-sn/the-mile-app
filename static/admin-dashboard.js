@@ -71,7 +71,7 @@
  planningBtn.addEventListener("click",openPlanning);
  window.tmOpenAdminPlanning=openPlanning;
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
- let playerProfile=null,playerProfileEditing=false;
+ let playerProfile=null,playerProfileEditing=false,profileLoadToken=0;
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Altura (cm)","height_cm","number"],["Notas internas","profile_notes","textarea"]];
  function displayPlayerProfile(){
@@ -97,18 +97,20 @@
   $("tm-players-profile-cancel").hidden=!playerProfileEditing;
  }
  function closePlayerProfile(){
+  ++profileLoadToken;
   profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
+  const token=++profileLoadToken;
   playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;
   $("tm-players-profile-title").textContent="A carregar perfil…";$("tm-players-profile-fields").replaceChildren();
   $("tm-players-profile-feedback").textContent="";
   try{
    const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/microcycles");
-   if(profilePanel.hidden)return;
+   if(profilePanel.hidden||token!==profileLoadToken)return;
    playerProfile=data.athlete;displayPlayerProfile();
-  }catch(e){$("tm-players-profile-feedback").textContent="Não foi possível carregar o perfil: "+e.message;}
+  }catch(e){if(token===profileLoadToken)$("tm-players-profile-feedback").textContent="Não foi possível carregar o perfil: "+e.message;}
  }
  $("tm-players-profile-back").addEventListener("click",closePlayerProfile);
  $("tm-players-profile-edit").addEventListener("click",()=>{if(!playerProfile)return;playerProfileEditing=true;displayPlayerProfile();});
@@ -124,8 +126,8 @@
    })});
    playerProfile=result.athlete;playerProfileEditing=false;displayPlayerProfile();
    $("tm-players-profile-feedback").textContent="Perfil guardado.";
-   await loadPlayers();
    if(typeof window.tmSyncPlanningAthleteProfile==="function")window.tmSyncPlanningAthleteProfile(playerProfile);
+   loadPlayers().catch(e=>{$("tm-players-error").textContent="Atualiza a lista de jogadores: "+e.message;});
   }catch(e){$("tm-players-profile-feedback").textContent="Não foi possível guardar: "+e.message;}
   finally{button.disabled=false;}
  });
