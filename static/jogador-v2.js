@@ -717,6 +717,7 @@ async function renderWeightCard(root,date){
     const menstruating=checked?checked.value==="yes"?true:checked.value==="no"?false:null:null;
     await api("/api/v2/player/weight",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({date,weight:(Number(kg.value)+Number(grams.value)/1000).toFixed(1),menstruating})});
+    overviewReadCache.clear(); // The reference-weight values can change after saving.
     await overview();
    }catch(err){errorText.textContent="Não foi possível guardar: "+err.message;save.disabled=false;}
   };
@@ -751,7 +752,12 @@ function cachedOverviewRead(path){
 async function overview(){
  const requestId=++overviewRequestId;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
- const r=await cachedOverviewRead("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end));
+ // Read all weekly data together; changes of selected day reuse this bounded cache.
+ const [r,weekMenus,weekWeights]=await Promise.all([
+  cachedOverviewRead("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end)),
+  cachedOverviewRead("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),
+  cachedOverviewRead("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))
+ ]);
  if(requestId!==overviewRequestId)return;
  loadPlayerPostMatch().catch(()=>{});
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
@@ -782,10 +788,8 @@ async function overview(){
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
- if(isWeek){const [weekMenus,refs]=await Promise.all([cachedOverviewRead("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),cachedOverviewRead("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))]);if(requestId!==overviewRequestId)return;renderWeekly(mon,r,weekMenus.menus||[],refs.weights_by_date||{});return;}
- const [menus,dateWeights]=await Promise.all([cachedOverviewRead("/api/v2/player/menus?start="+d+"&end="+d),cachedOverviewRead("/api/v2/player/reference-weights?start="+d+"&end="+d)]);
- if(requestId!==overviewRequestId)return;
- const dailyReferenceRaw=dateWeights.weights_by_date?.[d]?.weight_kg;
+ if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}
+ const dailyReferenceRaw=weekWeights.weights_by_date?.[d]?.weight_kg;
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
@@ -804,7 +808,10 @@ async function overview(){
  const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+7);overview().catch(error);};strip.append(next);
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
- if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){root.textContent="Sem programação definida para este dia.";return;}
+ if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
+  renderWeightCard(root,d).catch(()=>{});
+  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);return;
+ }
 
  const dailyTotal=dayNutritionTotal(entry||{date:d,classification:null});
  const assigned=meals.filter(meal=>assignedColor(d,meal,entry?.classification)).length+periMeals.filter(x=>x.event_date===d).length;
@@ -887,7 +894,7 @@ async function overview(){
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
-  const color=assignedColor(d,meal,entry?.classification),menu=(meal==="lunch"||meal==="dinner")?menus.menus.find(x=>x.meal===meal):null;
+  const color=assignedColor(d,meal,entry?.classification),menu=(meal==="lunch"||meal==="dinner")?(weekMenus.menus||[]).find(x=>x.menu_date===d&&x.meal===meal):null;
   if(!color&&!menu)continue;
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
   const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
