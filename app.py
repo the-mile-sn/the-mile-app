@@ -21,6 +21,7 @@ import prescription_effective_v2
 import peri_v2
 import supplements_v2
 import assessments_v2
+import weight_reference_v2
 import plan_import_v2
 import nutrition_preview_v2
 import time
@@ -1270,6 +1271,25 @@ def application(env, start_response):
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'player': dict(link)})
+            if path == '/api/v2/player/reference-weights' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                q=parse_qs(env.get('QUERY_STRING',''))
+                first=(q.get('start') or [''])[0]
+                last=(q.get('end') or [''])[0]
+                try:
+                    from datetime import date as reference_date, timedelta as reference_delta
+                    start_day=reference_date.fromisoformat(first)
+                    end_day=reference_date.fromisoformat(last)
+                    if end_day<start_day or (end_day-start_day).days>31: raise ValueError()
+                except ValueError: raise Problem(400,'invalid_date_range')
+                weights={}
+                for offset in range((end_day-start_day).days+1):
+                    on_day=(start_day+reference_delta(days=offset)).isoformat()
+                    weights[on_day]=weight_reference_v2.reference_weight(c,link['athlete_id'],on_day)
+                return respond(200,{'weights_by_date':weights})
             # Read-only player color parity probe; excludes post-match scenarios.
             # No dependency on admin monitoring tables, no writes or UI changes.
             if path in ('/api/v2/player/effective-colors-preview', '/api/v2/player/effective-nutrition-preview') and method == 'GET':
