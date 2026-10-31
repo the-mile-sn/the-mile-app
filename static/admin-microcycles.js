@@ -2137,7 +2137,7 @@ function renderAssessmentDashboard(records){
   const current=values.length?values.at(-1):null,previous=values.length>1?values.at(-2):null;
   const trend=tmClinicalTrend(key,current,previous);
   const card=document.createElement("div");card.className="tm-clinical-metric tm-clinical-trend-"+trend;
-  if(key==="sum_8"){const category=tmSkinfoldCategory(current,model?.athlete?.field_position);if(category){card.style.backgroundColor=category.color+"26";card.style.borderColor=category.color;card.classList.remove("tm-clinical-trend-"+trend);}}
+  if(key==="sum_8"){const category=tmSkinfoldCategory(current,model?.athlete?.field_position);if(category){card.classList.add("tm-skinfold-solid");card.style.setProperty("--tm-skinfold-color",category.color);card.style.borderColor=category.color;card.classList.remove("tm-clinical-trend-"+trend);}}
   const title=document.createElement("small");title.textContent=label;card.append(title);
   if(key==="sum_8"&&current!==null){
    const category=tmSkinfoldCategory(current,model?.athlete?.field_position);title.title=category.label;
@@ -2199,12 +2199,14 @@ function renderAssessmentDashboard(records){
  const select=document.createElement("select");select.setAttribute("aria-label","Métrica do gráfico");
  const available=[...assessmentMetrics,...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]];
  for(const [key,label]of available){const option=document.createElement("option");option.value=key;option.textContent=label;select.append(option);}
- header.append(heading,select);visual.append(header);
+ const range=document.createElement("select");range.setAttribute("aria-label","Intervalo de avaliações");for(const [value,label] of [["10","Últimas 10"],["all","Todas"]]){const option=document.createElement("option");option.value=value;option.textContent=label;range.append(option);}
+ const controls=document.createElement("div");controls.className="tm-assessment-chart-controls";controls.append(range,select);header.append(heading,controls);visual.append(header);
  const graph=document.createElement("div");graph.className="tm-assessment-plot";visual.append(graph);
  const drawChart=()=>{
   graph.replaceChildren();
   const key=select.value,unit=available.find(m=>m[0]===key)?.[2]||"";
-  const points=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(p=>p.value!==null);
+  const pointsAll=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(p=>p.value!==null);
+  const points=range.value==="10"?pointsAll.slice(-10):pointsAll;
   if(points.length<2){const p=document.createElement("p");p.className="hint";p.textContent="São necessárias duas avaliações publicadas com esta métrica.";graph.append(p);return;}
   const W=760,H=250,left=43,right=23,top=34,bottom=39;
   const vals=points.map(p=>p.value),lowest=Math.min(...vals),highest=Math.max(...vals);
@@ -2223,6 +2225,7 @@ function renderAssessmentDashboard(records){
   }
   const avg=vals.reduce((total,value)=>total+value,0)/vals.length,meanY=y(avg);
   svg.append(tmAssessmentSvg("line",{x1:left,y1:meanY,x2:plotRight,y2:meanY,stroke:"#a5aab5","stroke-width":"1.2","stroke-dasharray":"6 6",opacity:".84"}));
+  svg.append(tmAssessmentSvg("text",{x:plotRight-5,y:Math.max(top+12,meanY-7),"text-anchor":"end",fill:"#c1c6d0","font-size":"11"},"Média "+clinicalFormat(avg)+(unit?" "+unit:"")));
   const line=tmAssessmentSvg("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#8DAFC6","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"});svg.append(line);
   // Only a few x-axis dates, avoiding collisions on small screens.
   const labelIndices=Array.from(new Set([0,Math.floor((points.length-1)/2),points.length-1]));
@@ -2266,7 +2269,7 @@ function renderAssessmentDashboard(records){
   const caption=document.createElement("p");caption.className="tm-assessment-trend-note";
   caption.textContent="Média: "+clinicalFormat(avg)+(unit?" "+unit:"")+" · "+points.length+" avaliações publicadas · sem estimar valores em falta";graph.append(caption);
  };
- select.addEventListener("change",drawChart);drawChart();host.append(visual);
+ select.addEventListener("change",drawChart);range.addEventListener("change",drawChart);drawChart();host.append(visual);
 }
 let assessmentRegistryCache=[];
 function renderAssessmentRegistry(){
