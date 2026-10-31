@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.ok(legend,"Modelo legend must have its own ID");
  assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
  assert.equal(html.split('id="model-legend"').length-1,1);
- assert.match(html,/admin-microcycles\.js\?v=18215/);
+ assert.match(html,/admin-microcycles\.js\?v=18216/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
