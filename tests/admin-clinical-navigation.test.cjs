@@ -13,7 +13,9 @@ test("shared editors stay singular, not duplicated",()=>{
  assert.match(dashboard,/tm-forms-slot/);
 });
 test("player identity remains tied to existing model selection",()=>{
- assert.match(dashboard,/\$\("athlete"\)\.value=aid/);
+ assert.match(dashboard,/original\.value=selected\.value/);
+ assert.match(dashboard,/if\(!selected\.value\)\{/);
+ assert.match(dashboard,/if\(aid\)\{openClinical\(kind,aid\);\}/);
  assert.match(dashboard,/if\(typeof loadModel==="function"\)await loadModel\(\)/);
  assert.match(dashboard,/if\(token!==clinicalToken\)return/);
 });

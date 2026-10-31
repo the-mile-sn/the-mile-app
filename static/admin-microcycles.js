@@ -2274,10 +2274,11 @@ function renderAssessmentRegistry(){
  const text=$("tm-assessment-filter-text").value.toLocaleLowerCase("pt-PT").trim(),athlete=$("tm-assessment-filter-player").value,status=$("tm-assessment-filter-status").value,date=$("tm-assessment-filter-date").value;
  const rows=assessmentRegistryCache.filter(r=>(!athlete||r.athlete_id===athlete)&&(!status||r.status===status)&&(!date||r.assessed_on===date)&&(!text||(r.athlete_name+" "+r.assessed_on).toLocaleLowerCase("pt-PT").includes(text)));
  const table=document.createElement("table");table.className="tm-assessment-table";
- const head=document.createElement("tr");for(const label of ["Data","Jogador","Estado","Soma 8 pregas","Peso","Gordura corporal","IMC","Ações"]){const th=document.createElement("th");th.textContent=label;head.append(th);}const thead=document.createElement("thead");thead.append(head);table.append(thead);
+ const registryFields=[["weight","Peso","kg"],...ASSESSMENT_GROUPS[2][2],...ASSESSMENT_GROUPS[3][2]];
+ const head=document.createElement("tr");for(const label of ["Data","Jogador",...registryFields.map(([,label,unit])=>label+(unit?" ("+unit+")":"")),"Estado","Ações"]){const th=document.createElement("th");th.textContent=label;head.append(th);}const thead=document.createElement("thead");thead.append(head);table.append(thead);
  const body=document.createElement("tbody");for(const r of rows){
   const row=document.createElement("tr");
-  for(const v of [assessmentPtDate(r.assessed_on),r.athlete_name,r.status==="published"?"Publicada":"Rascunho",...["sum_8","weight","body_fat","bmi"].map(k=>clinicalFormat(clinicalNumber(r.measurements?.[k])))]){const td=document.createElement("td");td.textContent=v;row.append(td);}
+  for(const v of [assessmentPtDate(r.assessed_on),r.athlete_name,...registryFields.map(([key])=>clinicalFormat(clinicalNumber(r.measurements?.[key]))),r.status==="published"?"Publicada":"Rascunho"]){const td=document.createElement("td");td.textContent=v;row.append(td);}
   const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=async()=>{if($("athlete").value!==r.athlete_id){$("athlete").value=r.athlete_id;await loadModel();await window.tmOpenAdminAssessments(r.athlete_id);}assessmentPdf="";assessmentUploadedFor="";renderAssessmentForm(r);$("assessment-review-form").scrollIntoView({behavior:"smooth",block:"nearest"});};
   const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.className="assessment-delete-button";

@@ -31,16 +31,17 @@
  function syncClinicalSelectors(){
   const original=$("athlete");
   for(const kind of ["assessments","forms"]){
-   const select=$("tm-"+kind+"-player"),value=original.value;select.replaceChildren();
+   const select=$("tm-"+kind+"-player"),value=select.value;select.replaceChildren();
+   const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar jogador";select.append(empty);
    for(const option of original.options){const o=document.createElement("option");o.value=option.value;o.textContent=option.textContent;select.append(o);}
-   if(value)select.value=value;
+   select.value=value&&Array.from(select.options).some(o=>o.value===value)?value:"";
    syncClinicalPicker(kind);
   }
  }
  const normalizedClinicalName=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
  function syncClinicalPicker(kind){
   const select=$("tm-"+kind+"-player"),search=$("tm-"+kind+"-search"),avatar=$("tm-"+kind+"-avatar");
-  const name=select.selectedOptions[0]?.textContent||"";
+  const name=select.value?(select.selectedOptions[0]?.textContent||""):"";
   search.value=name;search.placeholder="Pesquisar jogador";avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
   $("tm-"+kind+"-results").hidden=true;search.setAttribute("aria-expanded","false");
  }
@@ -48,6 +49,7 @@
   const select=$("tm-"+kind+"-player"),list=$("tm-"+kind+"-results"),search=$("tm-"+kind+"-search"),query=normalizedClinicalName(search.value);
   const words=query.split(/\s+/).filter(Boolean);list.replaceChildren();
   for(const option of select.options){
+   if(!option.value)continue;
    if(!words.every(w=>normalizedClinicalName(option.textContent).split(/\s+/).some(part=>part.startsWith(w))))continue;
    const btn=el("button","tm-clinical-option",option.textContent);btn.type="button";btn.setAttribute("role","option");
    btn.setAttribute("aria-selected",String(option.value===select.value));
@@ -60,7 +62,7 @@
  }
  for(const kind of ["assessments","forms"]){
   const search=$("tm-"+kind+"-search");
-  search.addEventListener("focus",()=>drawClinicalResults(kind));
+  search.addEventListener("focus",()=>{if($("tm-"+kind+"-player").value&&search.value===$("tm-"+kind+"-player").selectedOptions[0]?.textContent)search.select();drawClinicalResults(kind);});
   search.addEventListener("input",()=>drawClinicalResults(kind));
   search.addEventListener("keydown",e=>{if(e.key==="Escape"){syncClinicalPicker(kind);}else if(e.key==="Enter"){const first=$("tm-"+kind+"-results").querySelector("button");if(first&&!$("tm-"+kind+"-results").hidden){e.preventDefault();first.click();}}});
  }
@@ -71,9 +73,11 @@
   section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
   const page=clinicalPages[kind],feedback=$("tm-"+kind+"-error");page.hidden=false;navActive($("tm-admin-nav-"+kind));feedback.textContent="";
   syncClinicalSelectors();const original=$("athlete");
-  if(aid&&Array.from(original.options).some(o=>o.value===aid))original.value=aid;
-  $("tm-"+kind+"-player").value=original.value;syncClinicalPicker(kind);
-  if(!original.value){feedback.textContent="Ainda não existem jogadores.";return;}
+  const selected=$("tm-"+kind+"-player");
+  if(aid&&Array.from(original.options).some(o=>o.value===aid))selected.value=aid;
+  syncClinicalPicker(kind);
+  if(!selected.value){feedback.textContent="Seleciona um jogador para consultar os respetivos dados.";return;}
+  original.value=selected.value;
   let deepLinked=false;
   try{
    if(typeof loadModel==="function")await loadModel();
@@ -99,7 +103,7 @@
  }
  for(const kind of ["assessments","forms"]){
   $("tm-admin-nav-"+kind).addEventListener("click",()=>openClinical(kind));
-  $("tm-"+kind+"-player").addEventListener("change",e=>{const aid=e.target.value;if(aid&&$("athlete").value!==aid){$("athlete").value=aid;openClinical(kind,aid);}});
+  $("tm-"+kind+"-player").addEventListener("change",e=>{const aid=e.target.value;if(aid){openClinical(kind,aid);}});
  }
  window.tmOpenAdminAssessments=aid=>openClinical("assessments",aid);
  window.tmOpenAdminForms=aid=>openClinical("forms",aid);
