@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.ok(legend,"Modelo legend must have its own ID");
  assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
  assert.equal(html.split('id="model-legend"').length-1,1);
- assert.match(html,/admin-microcycles\.js\?v=18215/);
+ assert.match(html,/admin-microcycles\.js\?v=18216/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
@@ -126,4 +126,37 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  ctx.backofficeView="matrix";
  render();
  assert.equal(elements.matrix.hidden,false,"model refresh remains visible in Modelo");
+});
+
+
+test("Microciclos loads the calendar once per athlete refresh and never exposes it in other tabs",async()=>{
+ const vm=require("node:vm");
+ const source=admin.split("\n").find(line=>line.startsWith("async function loadModel(){"));
+ assert.ok(source,"loadModel must exist");
+ assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
+ assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
+ assert.match(html,/admin-microcycles\.js\?v=18216/);
+ for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
+  const calls=[];
+  const ctx={
+   backofficeView:view,selectedCalendarDay:"previous",selectedNutritionWeek:"previous",
+   model:null,profileEditing:true,
+   $:id=>id==="athlete"?{value:"athlete-1"}:null,
+   updatePlanningPlayerControls:()=>calls.push("picker"),
+   request:async path=>{calls.push("model");assert.match(path,/\/api\/v2\/athletes\/athlete-1\/microcycles/);return {athlete:{id:"athlete-1"},classifications:[],meals:[],colors:[]};},
+   render:()=>calls.push("matrix"),
+   renderProfileSummary:()=>calls.push("profile"),
+   loadPlanDrafts:async()=>calls.push("plans"),
+   loadCalendar:async()=>calls.push("calendar"),
+   showBackofficeView:chosen=>{calls.push("show:"+chosen);if(chosen==="calendar")return ctx.loadCalendar();return null;}
+  };
+  const fn=vm.runInNewContext(source+"\nloadModel",ctx);
+  await fn();
+  assert.equal(calls.filter(x=>x==="calendar").length,1,view+" should load calendar exactly once");
+  assert.equal(calls.filter(x=>x==="show:"+view).length,1,view+" should restore selected area");
+  assert.equal(ctx.selectedCalendarDay,null);
+  assert.equal(ctx.selectedNutritionWeek,null);
+  assert.equal(ctx.model.athlete.id,"athlete-1");
+  assert.ok(calls.indexOf("plans")<calls.indexOf("calendar"),view+" plans must initialize before calendar");
+ }
 });
