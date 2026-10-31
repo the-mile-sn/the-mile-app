@@ -7,8 +7,9 @@ test("main navigation has real clinical pages",()=>{
 });
 test("shared editors stay singular, not duplicated",()=>{
  for(const id of ["assessments-admin-panel","profile-monitoring","assessment-review-form","monitoring-weight-form","monitoring-game-form"])assert.equal(html.split('id="'+id+'"').length-1,1,id);
- assert.match(dashboard,/assessmentHome\.after\(assessmentPanel\)/);
- assert.match(dashboard,/monitoringHome\.after\(monitoringPanel\)/);
+ assert.match(dashboard,/\$\("tm-assessments-slot"\)\.append\(assessmentPanel\)/);
+ assert.match(dashboard,/\$\("tm-forms-slot"\)\.append\(monitoringPanel\)/);
+ assert.doesNotMatch(dashboard,/assessmentHome|monitoringHome/);
  assert.match(dashboard,/tm-assessments-slot/);
  assert.match(dashboard,/tm-forms-slot/);
 });
@@ -49,4 +50,14 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
  assert.match(html,/admin-microcycles\.css\?v=88/);
+});
+
+test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
+ assert.equal(dashboard.split('$("tm-assessments-slot").append(assessmentPanel)').length-1,1);
+ assert.equal(dashboard.split('$("tm-forms-slot").append(monitoringPanel)').length-1,1);
+ assert.doesNotMatch(dashboard,/showBackofficeView\("profile"\)/);
+ assert.doesNotMatch(admin,/assessments:\["assessments-admin-panel"\]/);
+ assert.doesNotMatch(admin,/if\(view==="assessments"&&model\)loadAssessmentsAdmin/);
+ assert.match(dashboard,/if\(typeof showBackofficeView==="function"\)showBackofficeView\("assessments"\)/);
+ assert.match(dashboard,/monitoringPanel.hidden=false/);
 });
