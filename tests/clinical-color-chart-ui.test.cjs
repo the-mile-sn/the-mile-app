@@ -18,7 +18,7 @@ test("clinical directions preserve contextual indicators and three-muscle perime
  assert.match(source,/\["sum_perimeters",\["arm_muscle","thigh_muscle","calf_muscle"\]\]/);
 });
 test("interactive chart has broad pointer targeting and historical mean",()=>{
- for(const name of ["pointermove","pointerleave","tm-assessment-hover","tmAssessmentSvg(\"line\"","Média: ","tabindex:\"0\"","tmSkinfoldCategory(points[i].value,model?.athlete?.field_position)"]) assert.ok(source.includes(name),name);
+ for(const name of ["pointermove","pointerleave","tm-assessment-hover","tmAssessmentSvg(\"line\"","Média "+clinicalFormat(avg),"tabindex:\"0\"","tmSkinfoldCategory(points[i].value,model?.athlete?.field_position)"]) assert.ok(source.includes(name),name);
 });
 test("dated measurement bars preserve all published values",()=>{
  for(const name of ["tm-assessment-history-bar-row","assessmentPtDate(point.date)","drawBars","tm-assessment-history-bars"])assert.ok(source.includes(name),name);
