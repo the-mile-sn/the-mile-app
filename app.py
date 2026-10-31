@@ -1405,8 +1405,10 @@ def application(env, start_response):
                 admin(user)
                 athlete_id=path.split('/')[4]
                 body=read_json(env)
+                current_profile=c.execute('SELECT field_position,arm_point,thigh_point FROM v2_athletes WHERE id=?',(athlete_id,)).fetchone()
+                if current_profile is None: raise Problem(404,'not_found')
                 try:
-                    result=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''),body.get('sex'),body.get('field_position'),body.get('arm_point'),body.get('thigh_point'))
+                    result=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''),body.get('sex'),body.get('field_position', current_profile['field_position']),body.get('arm_point', current_profile['arm_point']),body.get('thigh_point', current_profile['thigh_point']))
                 except ValueError: raise Problem(400,'invalid_athlete_profile')
                 if result is None: raise Problem(404,'not_found')
                 return respond(200,{'athlete':result})
