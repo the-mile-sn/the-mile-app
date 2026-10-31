@@ -355,7 +355,7 @@ async function openMonitoring(kind){
    const select=$("monitoring-game-match"),selected=select.value;select.replaceChildren();
    for(const match of data.matches||[]){const option=document.createElement("option");option.value=match.id;option.textContent=monitoringDate(match.match_date);select.append(option);}
    if([...select.options].some(x=>x.value===selected))select.value=selected;
-   $("monitoring-game-form").hidden=select.options.length===0;
+   $("monitoring-game-register").disabled=select.options.length===0;if(!select.options.length)$("monitoring-game-form").hidden=true;
   }
   const rows=kind==="weight"?data.weights:data.games;
   if(kind==="weight"){
@@ -409,16 +409,22 @@ async function openMonitoring(kind){
     for(const [key,label]of Object.entries(answerLabels)){const item=document.createElement("div");item.className="tm-form-answer-field";const small=document.createElement("small");small.textContent=label;const strong=document.createElement("strong");strong.textContent=fmt(answers[key],key);if(strong.textContent==="Não preenchido")strong.className="tm-unanswered";item.append(small,visualValue(key,answers[key],strong.textContent));grid.append(item);}
     cell.append(grid);extra.append(cell);
     const details=document.createElement("button");details.type="button";details.textContent="Detalhes";details.setAttribute("aria-expanded","false");details.onclick=()=>{extra.hidden=!extra.hidden;details.textContent=extra.hidden?"Detalhes":"Recolher";details.setAttribute("aria-expanded",String(!extra.hidden));};actions.append(details);
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-form").hidden=false;$("monitoring-game-register").setAttribute("aria-expanded","true");$("monitoring-game-register").textContent="Fechar registo";$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringGame(record.match_id,record.match_date);actions.append(edit,remove);tr.append(actions);body.append(tr,extra);
    }else{
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;};
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-form").hidden=false;$("monitoring-weight-register").setAttribute("aria-expanded","true");$("monitoring-weight-register").textContent="Fechar registo";$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringWeight(record.weigh_date);
     actions.append(edit,remove);tr.append(actions);body.append(tr);
    }
   }
   table.append(body);const overflow=document.createElement("div");overflow.className="tm-form-table-scroll";overflow.append(table);list.append(overflow);
  }catch(e){if(version===monitoringRequestVersion)info.textContent="Não foi possível carregar os registos."; }
+}
+for(const kind of ["weight","game"]){
+ const toggle=$("monitoring-"+kind+"-register"),form=$("monitoring-"+kind+"-form");
+ const setOpen=open=>{form.hidden=!open;toggle.setAttribute("aria-expanded",String(open));toggle.textContent=open?"Fechar registo":"+ Registar";};
+ toggle.addEventListener("click",()=>setOpen(form.hidden));
+ form.addEventListener("submit",()=>{setOpen(false);});
 }
 $("monitoring-weight-button").addEventListener("click",()=>openMonitoring("weight"));
 $("monitoring-game-button").addEventListener("click",()=>openMonitoring("game"));
