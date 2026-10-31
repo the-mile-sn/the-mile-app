@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.ok(legend,"Modelo legend must have its own ID");
  assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
  assert.equal(html.split('id="model-legend"').length-1,1);
- assert.match(html,/admin-microcycles\.js\?v=18216/);
+ assert.match(html,/admin-microcycles\.js\?v=18217/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
@@ -131,17 +131,19 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
 
 test("Microciclos loads the calendar once per athlete refresh and never exposes it in other tabs",async()=>{
  const vm=require("node:vm");
- const source=admin.split("\n").find(line=>line.startsWith("async function loadModel(){"));
- assert.ok(source,"loadModel must exist");
+ const start=admin.indexOf("async function loadModel(){"),end=admin.indexOf("\nasync function runScenarioPreview()",start);
+ assert.ok(start>=0&&end>start,"loadModel must exist");
+ const source=admin.slice(start,end);
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
- assert.match(html,/admin-microcycles\.js\?v=18216/);
+ assert.match(html,/admin-microcycles\.js\?v=18217/);
  for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
   const calls=[];
   const ctx={
    backofficeView:view,selectedCalendarDay:"previous",selectedNutritionWeek:"previous",
    model:null,profileEditing:true,
    $:id=>id==="athlete"?{value:"athlete-1"}:null,
+   resetPlanReviewForAthlete:aid=>calls.push("reset:"+aid),
    updatePlanningPlayerControls:()=>calls.push("picker"),
    request:async path=>{calls.push("model");assert.match(path,/\/api\/v2\/athletes\/athlete-1\/microcycles/);return {athlete:{id:"athlete-1"},classifications:[],meals:[],colors:[]};},
    render:()=>calls.push("matrix"),
@@ -159,4 +161,16 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
   assert.equal(ctx.model.athlete.id,"athlete-1");
   assert.ok(calls.indexOf("plans")<calls.indexOf("calendar"),view+" plans must initialize before calendar");
  }
+});
+
+
+test("Planos clears stale player reviews and ignores late replies from another athlete",()=>{
+ assert.match(admin,/function resetPlanReviewForAthlete\(athleteId\)/);
+ assert.match(admin,/selectedPlanId=null;selectedPlanMode="consult";[\s\S]*?\$\("import-review"\)\.replaceChildren\(\)/);
+ assert.match(admin,/resetPlanReviewForAthlete\(athleteId\);[\s\S]*?const nextModel=await request/);
+ assert.match(admin,/if\(\$\("athlete"\)\.value!==athleteId\)return;/);
+ assert.match(admin,/const stillCurrent=\(\)=>revision===planDraftReadRevision&&stillOnAthlete\(\)/);
+ assert.match(admin,/const data=await request\(path\+"\/plan-imports"\);\s*if\(!stillCurrent\(\)\)return/);
+ assert.match(admin,/const historyData=await request\(path\+"\/plan-imports\/publication-history"\);\s*if\(!stillCurrent\(\)\)return/);
+ assert.match(admin,/const result=await request\(path\+"\/plan-imports\/"\+encodeURIComponent\(latest.id\)\);\s*if\(!stillOnAthlete\(\)\)return/);
 });
