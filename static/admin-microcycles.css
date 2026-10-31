@@ -836,7 +836,7 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 @media(max-width:620px){#tm-admin-legacy .tm-planning-header{margin-bottom:12px}#tm-admin-legacy .tm-planning-header h1{font-size:23px}#tm-admin-legacy .tm-planning-player-toolbar{padding:12px;gap:9px}#tm-admin-legacy #tm-planning-avatar{width:35px;height:35px;flex-basis:35px}#tm-admin-legacy .tm-planning-switcher button{width:31px;height:35px}#tm-admin-legacy #backoffice-nav{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}#tm-admin-legacy #backoffice-nav::-webkit-scrollbar{display:none}}
 
 /* Compact Planning player search, preserving existing native select for application logic. */
-#tm-admin-legacy .tm-planning-header-account-only{justify-content:flex-end;margin:0 0 10px}
+#tm-admin-legacy .tm-planning-header-account-only{display:none} /* Minha conta is accessed from its sidebar entry. */
 #tm-admin-legacy .tm-planning-player-toolbar{padding:13px 16px;justify-content:flex-start}
 #tm-admin-legacy #tm-planning-avatar{width:56px;height:56px;flex-basis:56px;font-size:16px}
 #tm-admin-legacy .tm-planning-player-select{max-width:480px;position:relative;z-index:5}

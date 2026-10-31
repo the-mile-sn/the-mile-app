@@ -32,3 +32,21 @@ test("dashboard shortcuts target clinical main pages, not legacy planning",()=>{
  assert.match(dashboard,/row\.dataset\.monitoringDate===recordDate/);
  assert.doesNotMatch(html,/Os formulários ainda não estão ativos/);
 });
+
+
+test("Planeamento has only planning tabs; migrated controls remain single and usable elsewhere",()=>{
+ const match=html.match(/<nav class="calendar-panel" id="backoffice-nav"[^>]*>([\s\S]*?)<\/nav>/);
+ assert.ok(match,"Planning navigation is present");
+ const tabs=[...match[1].matchAll(/data-view="([^"]+)"/g)].map(v=>v[1]);
+ assert.deepEqual(tabs,["calendar","plans","supplements","matrix","menus","player-preview"]);
+ for(const id of ["athlete-weight-panel","profile-monitoring","assessments-admin-panel","admin-account-toggle","admin-access-panel"]){
+  assert.equal(html.split('id="'+id+'"').length-1,1,id+" must remain mounted once");
+ }
+ assert.match(dashboard,/function ensurePlanningOnlyView\(\)/);
+ assert.equal(dashboard.split("ensurePlanningOnlyView();").length-1,2,"both entry points should normalize the Planning view");
+ assert.match(dashboard,/if\(monitoringKind\)return openClinical\("forms",aid,monitoringKind,day\)/);
+ assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
+ assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
+ assert.match(dashboard,/activationPanel\.hidden=false/);
+ assert.match(html,/admin-microcycles\.css\?v=88/);
+});
