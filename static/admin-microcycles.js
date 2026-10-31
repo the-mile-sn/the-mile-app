@@ -2091,8 +2091,8 @@ const clinicalNumber=v=>v==null||v===""?null:(Number.isFinite(Number(String(v).r
 const clinicalFormat=v=>v==null?"—":v.toLocaleString("pt-PT",{maximumFractionDigits:2});
 // Classification thresholds supplied by the clinical team. Exactly 45 belongs
 // to dark green, 55 to yellow and 65 to red. Never infer cutoffs for other metrics.
-function tmSkinfoldCategory(value){
- const offset=String(model?.athlete?.field_position||"").toUpperCase()==="GR"?5:0;
+function tmSkinfoldCategory(value, fieldPosition=""){
+ const offset=String(fieldPosition||"").trim().toUpperCase()==="GR"?5:0;
  const n=clinicalNumber(value);
  if(n===null)return null;
  if(n>=65+offset)return {color:"#E17878",label:"Vermelho · ≥ "+(65+offset)+" mm",code:"red"};
@@ -2131,10 +2131,10 @@ function renderAssessmentDashboard(records){
   const current=values.length?values.at(-1):null,previous=values.length>1?values.at(-2):null;
   const trend=tmClinicalTrend(key,current,previous);
   const card=document.createElement("div");card.className="tm-clinical-metric tm-clinical-trend-"+trend;
-  if(key==="sum_8"){const category=tmSkinfoldCategory(current);if(category){card.style.backgroundColor=category.color+"26";card.style.borderColor=category.color;card.classList.remove("tm-clinical-trend-"+trend);}}
+  if(key==="sum_8"){const category=tmSkinfoldCategory(current,model?.athlete?.field_position);if(category){card.style.backgroundColor=category.color+"26";card.style.borderColor=category.color;card.classList.remove("tm-clinical-trend-"+trend);}}
   const title=document.createElement("small");title.textContent=label;card.append(title);
   if(key==="sum_8"&&current!==null){
-   const category=tmSkinfoldCategory(current);title.title=category.label;
+   const category=tmSkinfoldCategory(current,model?.athlete?.field_position);title.title=category.label;
   }
   const number=document.createElement("strong");number.textContent=current===null?"—":clinicalFormat(current)+(unit?" "+unit:"");
   const diff=document.createElement("em");
@@ -2175,7 +2175,7 @@ function renderAssessmentDashboard(records){
     const track=document.createElement("div");track.className="tm-assessment-bar-track";
     const fill=document.createElement("span");fill.className="tm-assessment-bar-fill";
     fill.style.width=Math.max(0,Math.min(100,point.value/max*100))+"%";
-    if(key==="sum_8"){const category=tmSkinfoldCategory(point.value);fill.style.backgroundColor=category.color;fill.title=category.label;}
+    if(key==="sum_8"){const category=tmSkinfoldCategory(point.value,model?.athlete?.field_position);fill.style.backgroundColor=category.color;fill.title=category.label;}
     track.append(fill);
     const value=document.createElement("strong");value.textContent=clinicalFormat(point.value)+(unit?" "+unit:"");
     row.append(date,track,value);graphic.append(row);
@@ -2230,7 +2230,7 @@ function renderAssessmentDashboard(records){
    const c=coords[i];vertical.setAttribute("x1",c.x);vertical.setAttribute("x2",c.x);vertical.setAttribute("opacity",".8");
    focusPoint.setAttribute("cx",c.x);focusPoint.setAttribute("cy",c.y);focusPoint.setAttribute("opacity","1");
    tooltip.textContent=assessmentPtDate(points[i].date)+" · "+clinicalFormat(points[i].value)+(unit?" "+unit:"");
-   if(key==="sum_8"){const category=tmSkinfoldCategory(points[i].value);tooltip.style.borderColor=category.color;}else tooltip.style.borderColor="#8497a8";
+   if(key==="sum_8"){const category=tmSkinfoldCategory(points[i].value,model?.athlete?.field_position);tooltip.style.borderColor=category.color;}else tooltip.style.borderColor="#8497a8";
    tooltip.style.left=Math.max(8,Math.min(79,c.x/W*100))+"%";
    tooltip.style.top=Math.max(8,c.y/H*100-7)+"%";tooltip.hidden=false;
   };
@@ -2246,7 +2246,7 @@ function renderAssessmentDashboard(records){
   svg.addEventListener("click",e=>{lookup(e);pinned=!pinned;});
   const step=Math.max(1,Math.ceil(points.length/14));
   coords.forEach((c,i)=>{
-   const color=key==="sum_8"?tmSkinfoldCategory(points[i].value).color:"#9fd8ba";
+   const color=key==="sum_8"?tmSkinfoldCategory(points[i].value,model?.athlete?.field_position).color:"#9fd8ba";
    const dot=tmAssessmentSvg("circle",{cx:c.x,cy:c.y,r:4.6,fill:"#1a1b20",stroke:color,"stroke-width":"2.5",tabindex:"0",role:"button","aria-label":assessmentPtDate(points[i].date)+": "+clinicalFormat(points[i].value)+" "+unit});
    dot.addEventListener("focus",()=>{nearest=i;show(i);});
    dot.addEventListener("blur",()=>{if(!pinned)tooltip.hidden=true;});
