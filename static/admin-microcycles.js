@@ -2131,13 +2131,10 @@ function renderAssessmentDashboard(records){
   const current=values.length?values.at(-1):null,previous=values.length>1?values.at(-2):null;
   const trend=tmClinicalTrend(key,current,previous);
   const card=document.createElement("div");card.className="tm-clinical-metric tm-clinical-trend-"+trend;
-  if(key==="sum_8")card.classList.add("tm-clinical-metric-primary");
+  if(key==="sum_8"){const category=tmSkinfoldCategory(current);if(category){card.style.backgroundColor=category.color+"26";card.style.borderColor=category.color;card.classList.remove("tm-clinical-trend-"+trend);}}
   const title=document.createElement("small");title.textContent=label;card.append(title);
   if(key==="sum_8"&&current!==null){
-   const category=tmSkinfoldCategory(current),dot=document.createElement("span");
-   dot.className="tm-skinfold-category-dot";dot.style.backgroundColor=category.color;
-   dot.setAttribute("aria-label",category.label);dot.title=category.label;
-   title.append(dot);
+   const category=tmSkinfoldCategory(current);title.title=category.label;
   }
   const number=document.createElement("strong");number.textContent=current===null?"—":clinicalFormat(current)+(unit?" "+unit:"");
   const diff=document.createElement("em");
@@ -2220,7 +2217,7 @@ function renderAssessmentDashboard(records){
   }
   const avg=vals.reduce((total,value)=>total+value,0)/vals.length,meanY=y(avg);
   svg.append(tmAssessmentSvg("line",{x1:left,y1:meanY,x2:plotRight,y2:meanY,stroke:"#a5aab5","stroke-width":"1.2","stroke-dasharray":"6 6",opacity:".84"}));
-  const line=tmAssessmentSvg("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#A6D9BD","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"});svg.append(line);
+  const line=tmAssessmentSvg("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#8DAFC6","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"});svg.append(line);
   // Only a few x-axis dates, avoiding collisions on small screens.
   const labelIndices=Array.from(new Set([0,Math.floor((points.length-1)/2),points.length-1]));
   for(const i of labelIndices)svg.append(tmAssessmentSvg("text",{x:coords[i].x,y:H-13,"text-anchor":i===0?"start":i===points.length-1?"end":"middle",fill:"#a9aeb7","font-size":"11"},assessmentPtDate(points[i].date)));
