@@ -2,7 +2,7 @@ const test=require("node:test"),assert=require("node:assert/strict"),fs=require(
 const source=fs.readFileSync("static/admin-microcycles.js","utf8"),style=fs.readFileSync("static/admin-microcycles.css","utf8");
 function extract(name,after){const at=source.indexOf(after);assert.ok(at>=0);const end=source.indexOf("\n}",at);assert.ok(end>at);return source.slice(at,end+2);}
 test("skin fold cutoff boundaries are unambiguous",()=>{
- const fn=extract("tmSkinfoldCategory","function tmSkinfoldCategory(value, fieldPosition=""){");
+ const fn=extract("tmSkinfoldCategory",'function tmSkinfoldCategory(value, fieldPosition=""){');
  const f=vm.runInNewContext("const clinicalNumber=v=>Number(v);"+fn+";tmSkinfoldCategory");
  assert.equal(f(44.9).code,"dark-green");assert.equal(f(45).code,"dark-green");
  assert.equal(f(45.01).code,"light-green");assert.equal(f(54.99).code,"light-green");
