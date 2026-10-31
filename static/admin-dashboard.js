@@ -110,6 +110,10 @@
    if(kind==="assessments"){
     if(typeof showBackofficeView==="function")showBackofficeView("assessments");
     assessmentPanel.hidden=false;
+    // Restore the assessment dashboard/cards: dedicated navigation owns this load.
+    if(typeof loadAssessmentsAdmin!=="function")throw new Error("Editor de avaliações indisponível.");
+    await loadAssessmentsAdmin();
+    if(token!==clinicalToken)return;
     if(typeof window.tmRefreshAssessmentRegistry==="function")window.tmRefreshAssessmentRegistry().catch(e=>{feedback.textContent="Não foi possível carregar a tabela global: "+e.message;});
    }else{
     // No legacy profile switch or account fetch is needed for Formulários.

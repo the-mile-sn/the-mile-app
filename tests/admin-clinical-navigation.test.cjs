@@ -61,3 +61,17 @@ test("Clinical editors remain in their definitive homes without reparenting or a
  assert.match(dashboard,/if\(typeof showBackofficeView==="function"\)showBackofficeView\("assessments"\)/);
  assert.match(dashboard,/monitoringPanel.hidden=false/);
 });
+
+
+test("Avaliações restores its cards and chart dashboard when opened from the dedicated area",()=>{
+ // PR #40 moved the editor permanently but accidentally removed the data load.
+ // The dashboard must load before the global registry refresh, for every athlete selection.
+ assert.match(dashboard,/if\(kind==="assessments"\)\{[\s\S]*?assessmentPanel\.hidden=false;\s*[\s\S]*?await loadAssessmentsAdmin\(\);\s*if\(token!==clinicalToken\)return;\s*if\(typeof window\.tmRefreshAssessmentRegistry/);
+ assert.match(admin,/async function loadAssessmentsAdmin\(\)\{[\s\S]*?renderAssessmentDashboard\(result\.assessments\);/);
+ assert.match(admin,/function renderAssessmentDashboard\(records\)\{/);
+ assert.match(admin,/host\.append\(metricGrid\)/);
+ assert.match(admin,/host\.append\(detailGrid\)/);
+ assert.match(admin,/host\.append\(visual\)/);
+ assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
+ assert.match(html,/admin-dashboard\.js\?v=21/); // Force browsers to load the fix.
+});
