@@ -16,7 +16,32 @@
  function dateLabel(d){return new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(d+"T12:00:00Z"));}
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
- function navActive(target){legacy.classList.toggle("tm-account-only",target?.id==="tm-admin-nav-account");for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
+ const settingsPage=$("tm-admin-settings"),settingsAdmin=$("tm-settings-admins");
+ const accountPanel=$("admin-account-panel"),activationPanel=$("admin-access-panel");
+ const adminList=$("admin-users-list"),inviteForm=$("admin-invite-form");
+ const activationHome=document.createComment("admin-activation-original");
+ const listHome=document.createComment("admin-list-original"),inviteHome=document.createComment("admin-invite-original");
+ if(activationPanel)activationPanel.before(activationHome);
+ if(adminList)adminList.before(listHome);
+ if(inviteForm)inviteForm.before(inviteHome);
+ function moveAdminControls(toSettings){
+  if(toSettings&&settingsAdmin){
+   settingsAdmin.append(adminList,inviteForm,activationPanel);
+   activationPanel.hidden=false;
+  }else{
+   if(listHome.parentNode)listHome.after(adminList);
+   if(inviteHome.parentNode)inviteHome.after(inviteForm);
+   if(activationHome.parentNode)activationHome.after(activationPanel);
+   activationPanel.hidden=true;
+  }
+ }
+ function navActive(target){
+  const id=target?.id,accountView=id==="tm-admin-nav-account",settingsView=id==="tm-admin-nav-settings";
+  moveAdminControls(settingsView);
+  if(settingsPage)settingsPage.hidden=!settingsView;
+  legacy.classList.toggle("tm-account-only",accountView);
+  for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
+ }
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
  const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
  const assessmentHome=document.createComment("assessments-original"),monitoringHome=document.createComment("forms-original");
@@ -169,6 +194,7 @@
  }
  planningBtn.addEventListener("click",openPlanning);
  window.tmOpenAdminPlanning=openPlanning;
+ const chooseSettings=$("tm-admin-nav-settings");if(chooseSettings)chooseSettings.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;navActive(chooseSettings);if(typeof loadAdminAccounts==="function")loadAdminAccounts().catch(()=>{});});
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null;
  const accessIdentity=$("tm-players-access-identity"),accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
