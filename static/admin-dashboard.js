@@ -187,7 +187,7 @@
  });
 
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)");
- const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Notas internas","profile_notes","textarea"]];
+ const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Notas internas","profile_notes","textarea"]];
  function displayPlayerProfile(){
   if(!playerProfile)return;
   const athlete=playerProfile,host=$("tm-players-profile-fields");host.replaceChildren();
@@ -199,9 +199,9 @@
    if(!playerProfileEditing){
     const v=athlete[key];wrapper.append(el("strong","",v==null||v===""?"Por preencher":key==="sex"?(v==="F"?"Feminino":v==="M"?"Masculino":"Por definir"):String(v)+(key==="weight_kg"?" kg":key==="height_cm"?" cm":"")));
    }else{
-    const field=type==="textarea"?el("textarea"):type==="sex"?el("select"):el("input");
+    const field=type==="textarea"?el("textarea"):type==="sex"||type==="position"?el("select"):el("input");
     if(type==="sex"){for(const [v,t] of [["","Por definir"],["F","Feminino"],["M","Masculino"]]){const o=el("option","",t);o.value=v;field.append(o);}}
-    else if(type!=="textarea"){field.type=type;if(type==="number"){field.min=key==="weight_kg"?"20":"100";field.max=key==="weight_kg"?"250":"230";field.step="0.1";}}
+    else if(type==="position"){for(const v of ["","GR","DD","DE","DC","MDC","MC","MOC","ED","EE","PL","Outro"]){const o=el("option","",v||"Por definir");o.value=v;field.append(o);}} else if(type!=="textarea"){field.type=type;if(type==="number"){field.min=key==="weight_kg"?"20":"0";field.max=key==="weight_kg"?"250":key==="arm_point"?"100":key==="thigh_point"?"150":"230";field.step="0.1";}}
     field.value=athlete[key]??"";field.dataset.playerProfileField=key;field.style.width="100%";wrapper.append(field);
    }
    host.append(wrapper);
@@ -236,7 +236,7 @@
   const rawWeight=get("weight_kg");
   try{
    const result=await request("/api/v2/athletes/"+encodeURIComponent(playerProfile.id)+"/profile",{method:"PUT",body:JSON.stringify({
-    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes")
+    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point"))
    })});
    playerProfile=result.athlete;playerProfileEditing=false;displayPlayerProfile();
    $("tm-players-profile-feedback").textContent="Perfil guardado.";
