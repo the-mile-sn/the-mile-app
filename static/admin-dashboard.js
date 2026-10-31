@@ -41,7 +41,7 @@
  function syncClinicalPicker(kind){
   const select=$("tm-"+kind+"-player"),search=$("tm-"+kind+"-search"),avatar=$("tm-"+kind+"-avatar");
   const name=select.selectedOptions[0]?.textContent||"";
-  search.value="";search.placeholder=name?"Pesquisar jogador · "+name:"Pesquisar jogador";avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+  search.value=name;search.placeholder="Pesquisar jogador";avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
   $("tm-"+kind+"-results").hidden=true;search.setAttribute("aria-expanded","false");
  }
  function drawClinicalResults(kind){
