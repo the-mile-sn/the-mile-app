@@ -99,7 +99,20 @@ planningSearch.addEventListener("keydown",event=>{
 document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target))closePlanningResults();});
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
 window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
-async function loadModel(){updatePlanningPlayerControls();if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();if(backofficeView==="calendar")await showBackofficeView("calendar");else{await loadCalendar();showBackofficeView(backofficeView);}}
+async function loadModel(){
+ updatePlanningPlayerControls();
+ const athleteId=$("athlete").value;
+ if(!athleteId)return;
+ resetPlanReviewForAthlete(athleteId);
+ selectedCalendarDay=null;selectedNutritionWeek=null;
+ const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
+ if($("athlete").value!==athleteId)return;
+ model=nextModel;profileEditing=false;render();renderProfileSummary();
+ await loadPlanDrafts();
+ if($("athlete").value!==athleteId)return;
+ if(backofficeView==="calendar")await showBackofficeView("calendar");
+ else{await loadCalendar();showBackofficeView(backofficeView);}
+}
 async function runScenarioPreview(){
  const aid=model?.athlete?.id,day=$("scenario-preview-date").value;
  const out=$("scenario-preview-output"),info=$("scenario-preview-status");
@@ -1150,16 +1163,38 @@ async function loadCalendar(){
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 $("calendar-next").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 
-let selectedPlanId=null,selectedPlanMode="consult";
+let selectedPlanId=null,selectedPlanMode="consult",planReviewAthleteId=null,planDraftReadRevision=0;
+function resetPlanReviewForAthlete(athleteId){
+ if(planReviewAthleteId===athleteId)return;
+ planReviewAthleteId=athleteId;
+ ++planDraftReadRevision;
+ selectedPlanId=null;selectedPlanMode="consult";
+ $("import-review").replaceChildren();
+ $("publication-readiness").replaceChildren();
+ $("import-list").replaceChildren();
+ $("import-feedback").textContent="";
+ const history=$("plan-publication-history");
+ if(history)history.replaceChildren();
+}
 async function loadPlanDrafts(){
-  if(!model)return;
-  const data=await request(matchBase()+"/plan-imports");
-  const readiness=await request(matchBase()+"/plan-imports/publication-status");
-  validatedPlansByColor=Object.fromEntries(readiness.colors.map(entry=>[entry.color,entry.validated_count>0]));
-  const mealData=await request(matchBase()+"/plan-imports/meal-options");
-  mealOptionsByColor=mealData.options_by_color;
-  const historyData=await request(matchBase()+"/plan-imports/publication-history");
-  const panel=$("publication-readiness");panel.replaceChildren();
+ if(!model)return;
+ const athleteId=model.athlete.id;
+ const stillOnAthlete=()=>planReviewAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId;
+ if(!stillOnAthlete())return;
+ const revision=++planDraftReadRevision;
+ const stillCurrent=()=>revision===planDraftReadRevision&&stillOnAthlete();
+ const path="/api/v2/athletes/"+encodeURIComponent(athleteId);
+ const data=await request(path+"/plan-imports");
+ if(!stillCurrent())return;
+ const readiness=await request(path+"/plan-imports/publication-status");
+ if(!stillCurrent())return;
+ const mealData=await request(path+"/plan-imports/meal-options");
+ if(!stillCurrent())return;
+ const historyData=await request(path+"/plan-imports/publication-history");
+ if(!stillCurrent())return;
+ validatedPlansByColor=Object.fromEntries(readiness.colors.map(entry=>[entry.color,entry.validated_count>0]));
+ mealOptionsByColor=mealData.options_by_color;
+ const panel=$("publication-readiness");panel.replaceChildren();
   const title=document.createElement("h3");title.textContent="Planos alimentares";panel.appendChild(title);
   const list=$("import-list");list.replaceChildren();
   const drafts=data.drafts||[];
@@ -1176,11 +1211,13 @@ async function loadPlanDrafts(){
       row.classList.add("plan-selectable");row.tabIndex=0;row.setAttribute("role","button");
       row.setAttribute("aria-expanded",selectedPlanId===latest.id?"true":"false");
       const toggle=async()=>{
+        if(!stillOnAthlete())return;
         if(selectedPlanId===latest.id){selectedPlanId=null;selectedPlanMode="consult";$("import-review").replaceChildren();await loadPlanDrafts();return;}
         try{
-          const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(latest.id));
+          const result=await request(path+"/plan-imports/"+encodeURIComponent(latest.id));
+          if(!stillOnAthlete())return;
           selectedPlanId=latest.id;selectedPlanMode="consult";showImportedDraft(result.draft);await loadPlanDrafts();
-        }catch(e){$("import-feedback").textContent="Erro ao abrir plano: "+e.message;}
+        }catch(e){if(stillOnAthlete())$("import-feedback").textContent="Erro ao abrir plano: "+e.message;}
       };
       row.addEventListener("click",toggle);
       row.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
