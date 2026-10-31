@@ -2046,6 +2046,12 @@ const ASSESSMENT_GROUPS=[
 const ASSESSMENT_AVERAGES=[["avg_skinfolds","Média da soma de pregas","mm"],["avg_weight","Peso médio","kg"],["avg_body_fat","Gordura corporal média","%"]];
 let assessmentPdf="",assessmentUploadedFor="";
 let assessmentHistoryAverages={};
+let assessmentPriorRecords=[];
+function previousAssessmentValue(key, assessedOn, excludeId){
+ const earlier=assessmentPriorRecords.filter(r=>r.id!==excludeId&&(!assessedOn||r.assessed_on<assessedOn)).sort((a,b)=>b.assessed_on.localeCompare(a.assessed_on));
+ const record=earlier.find(r=>r.measurements?.[key]!==undefined&&r.measurements?.[key]!==null&&String(r.measurements[key]).trim()!=="");
+ return record?{value:record.measurements[key],date:record.assessed_on}:null;
+}
 const assessmentValue=(id)=>$(id)?.value.trim()||"";
 function renderAssessmentForm(data={}){
  const box=$("assessment-review-fields");box.replaceChildren();
@@ -2058,7 +2064,9 @@ function renderAssessmentForm(data={}){
    const input=document.createElement("input");input.type="text";input.inputMode="decimal";input.autocomplete="off";
    if(["avg_skinfolds","avg_weight","avg_body_fat","sum_8","sum_perimeters"].includes(key)){input.readOnly=true;input.setAttribute("aria-readonly","true");}
    input.id="assess-field-"+key;input.value=String((data.measurements||{})[key]??(key.startsWith("avg_")?assessmentHistoryAverages[key]:(data.averages||{})[key])??"");
-   row.append(input);grid.append(row);
+   row.append(input);
+   if(!key.startsWith("avg_")){const previous=previousAssessmentValue(key,data.assessed_on,data.id);const note=document.createElement("small");note.className="tm-assessment-prior-value";note.textContent=previous?"Anterior: "+previous.value+(unit?" "+unit:"")+" · "+previous.date:"Anterior: sem registo";row.append(note);}
+   grid.append(row);
   }
   section.append(grid);box.append(section);
  }
@@ -2290,7 +2298,8 @@ async function loadAssessmentsAdmin(){
  const athleteId=$("athlete").value;if(!athleteId)return;
  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/assessments");
  const wrap=$("assessment-history");wrap.replaceChildren();
- const published=result.assessments.filter(x=>x.status==="published");
+ assessmentPriorRecords=result.assessments.filter(x=>x.status==="published");
+ const published=assessmentPriorRecords;
  renderAssessmentDashboard(result.assessments);
  assessmentHistoryAverages={};
  for(const [key,source] of [["avg_skinfolds","sum_8"],["avg_weight","weight"],["avg_body_fat","body_fat"]]){
