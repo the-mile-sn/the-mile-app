@@ -105,6 +105,7 @@ async function loadModel(){
  if(!athleteId)return;
  resetPlanReviewForAthlete(athleteId);
  resetMenusForAthlete(athleteId);
+ resetSupplementForAthlete(athleteId);
  selectedCalendarDay=null;selectedNutritionWeek=null;
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
@@ -1855,13 +1856,52 @@ $("peri-import").addEventListener("click",async()=>{
 let supplementDraft={plan:[],overrides:{}};
 let publishedSupplementSnapshot="[]";
 let supplementMatches=[];
+let supplementAthleteId=null,supplementLoadRevision=0,supplementEditorReady=false;
+function setSupplementEditorReady(ready){
+ supplementEditorReady=ready;
+ for(const id of ["supp-save","supp-add","supp-lib-assign"]){
+  const button=$(id);if(button)button.disabled=!ready;
+ }
+}
+function resetSupplementForAthlete(athleteId){
+ if(supplementAthleteId===athleteId)return;
+ supplementAthleteId=athleteId;
+ ++supplementLoadRevision;
+ supplementDraft={plan:[],overrides:{}};
+ publishedSupplementSnapshot="[]";supplementMatches=[];
+ $("supp-base-list").replaceChildren();
+ $("supp-match-exclusions").replaceChildren();
+ $("supp-feedback").textContent="";
+ setSupplementEditorReady(false);
+}
 function supplementPublishedKey(){return JSON.stringify(supplementDraft.plan);}
 function supplementPending(){return supplementPublishedKey()!==publishedSupplementSnapshot;}
 async function loadSupplementEditor(){
- supplementDraft=await request(matchBase()+"/supplements");publishedSupplementSnapshot=supplementPublishedKey();await loadSupplementLibrary();
- const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1);const last=new Date(first);last.setDate(last.getDate()+55);
- const calendar=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));supplementMatches=calendar.matches||[];
- renderSupplementEditor();
+ if(!model||$("athlete").value!==model.athlete.id)return;
+ const athleteId=model.athlete.id;
+ resetSupplementForAthlete(athleteId);
+ const revision=++supplementLoadRevision;
+ const stillCurrent=()=>supplementLoadRevision===revision&&supplementAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId;
+ const base="/api/v2/athletes/"+encodeURIComponent(athleteId);
+ setSupplementEditorReady(false);
+ try{
+  const draft=await request(base+"/supplements");
+  if(!stillCurrent())return;
+  await loadSupplementLibrary();
+  if(!stillCurrent())return;
+  const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1);const last=new Date(first);last.setDate(last.getDate()+55);
+  const calendar=await request(base+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  if(!stillCurrent())return;
+  supplementDraft=draft;publishedSupplementSnapshot=supplementPublishedKey();
+  supplementMatches=calendar.matches||[];
+  renderSupplementEditor();
+  $("supp-feedback").textContent="";
+  setSupplementEditorReady(true);
+ }catch(e){
+  if(!stillCurrent())return;
+  $("supp-feedback").textContent="Não foi possível carregar a suplementação: "+e.message;
+  throw e;
+ }
 }
 function renderSupplementMatchExclusions(){
  const host=$("supp-match-exclusions");if(!host)return;host.replaceChildren();
@@ -1938,14 +1978,27 @@ function renderSupplementEditor(){
  }
 }
 $("supp-add").onclick=()=>{
+ if(!supplementEditorReady)return;
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
  if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
  supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
  $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
 };
 $("supp-save").onclick=async()=>{
- try{supplementDraft=await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});publishedSupplementSnapshot=supplementPublishedKey();renderSupplementEditor();$("supp-feedback").textContent="Suplementação publicada para o jogador.";}
- catch(e){$("supp-feedback").textContent="Não foi possível guardar: "+e.message;}
+ const athleteId=supplementAthleteId,revision=supplementLoadRevision;
+ const stillCurrent=()=>supplementLoadRevision===revision&&supplementAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId;
+ if(!supplementEditorReady||!athleteId||!stillCurrent())return;
+ setSupplementEditorReady(false);
+ try{
+  const published=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});
+  if(!stillCurrent())return;
+  supplementDraft=published;publishedSupplementSnapshot=supplementPublishedKey();
+  renderSupplementEditor();$("supp-feedback").textContent="Suplementação publicada para o jogador.";
+ }catch(e){
+  if(stillCurrent())$("supp-feedback").textContent="Não foi possível guardar: "+e.message;
+ }finally{
+  if(stillCurrent())setSupplementEditorReady(true);
+ }
 };
 
 let libraryPrescriptionRows=[];
@@ -2016,6 +2069,7 @@ $("supp-lib-save").onclick=async()=>{
  }catch(e){$("supp-lib-feedback").textContent=e.message;}finally{button.disabled=false;}
 };
 $("supp-lib-assign").onclick=()=>{
+ if(!supplementEditorReady)return;
  const query=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");const item=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===query);
  if(!item){$("supp-feedback").textContent="Seleciona uma sugestão exata da lista.";return;}
  if(!item.prescriptions?.length && /MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){$("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";return;}
