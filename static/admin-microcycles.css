@@ -1012,3 +1012,14 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-assessment-detail[open] summary:after{content:"−"}
 .tm-assessment-detail summary:focus-visible{outline:2px solid #8eafcc;outline-offset:-3px}
 .tm-assessment-detail-body{padding:0 16px 16px;margin-top:0}
+
+/* Clinical disclosures use chevrons, not add/remove symbols. */
+.tm-assessment-detail summary:after{content:"";display:block;width:9px;height:9px;border-right:2px solid #a5bad0;border-bottom:2px solid #a5bad0;transform:rotate(45deg);margin-right:5px;transition:transform .16s}
+.tm-assessment-detail[open] summary:after{content:"";transform:rotate(225deg)}
+/* Weight evolution uses the same visual language as assessment charts. */
+#profile-monitoring .monitoring-weight-chart{max-width:none;width:100%;box-sizing:border-box;padding:18px 20px}
+.tm-weight-chart-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.tm-weight-chart-head strong{font-size:15px;color:#f0f2f5}
+.tm-weight-chart-controls{display:flex;gap:8px;flex-wrap:wrap}
+.tm-weight-chart-controls select{background:#292c34;border:1px solid #474b56;border-radius:8px;color:#f1f2f4;padding:8px 10px}
+#profile-monitoring .monitoring-weight-chart svg{width:100%;height:auto;max-height:none}
