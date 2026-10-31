@@ -10,7 +10,8 @@ test("assessment page orders dashboard then registry then import",()=>{
 test("metric priority, one chart with selectable complete assessments and no thresholds",()=>{
  assert.match(js,/const assessmentMetrics=ASSESSMENT_GROUPS\[1\]\[2\]/);
  assert.match(js,/for\(const \[key,label,unit\] of assessmentMetrics\)/);
- assert.match(js,/card\.style\.backgroundColor=category\.color/);
+ assert.match(js,/card\.classList\.add\("tm-skinfold-solid"\)/);
+ assert.match(css,/\.tm-clinical-metric\.tm-skinfold-solid/);
  assert.match(js,/const published=records\.filter\(r=>r\.status==="published"\)/);
  assert.match(js,/\[\.\.\.assessmentMetrics,\.\.\.ASSESSMENT_GROUPS\[2\]\[2\],\.\.\.ASSESSMENT_GROUPS\[3\]\[2\]\]/);
  assert.match(js,/className="tm-assessment-hover"/);
