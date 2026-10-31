@@ -821,7 +821,7 @@ function showBackofficeView(view){
   for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
     button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
   }
-  $("admin-access-panel").hidden=view!=="profile";
+  // Administrator activation stays in Definições and must not be hidden by Planning.
   if(view==="profile"&&model)loadV2Access().catch(e=>status(e.message,"warn"));
   const calendarReady=view==="calendar"?loadCalendar().catch(e=>{status(e.message,"warn");}):null;
   if(view==="supplements"&&model)loadSupplementEditor().catch(e=>status(e.message,"warn"));
@@ -833,14 +833,7 @@ function showBackofficeView(view){
   return calendarReady;
 }
 for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
-  button.addEventListener("click",()=>{
-    // Route clinical navigation to its definitive area, keeping legacy editor available as fallback.
-    if(button.dataset.view==="assessments"&&typeof window.tmOpenAdminAssessments==="function"){
-      window.tmOpenAdminAssessments(model?.athlete?.id);
-      return;
-    }
-    showBackofficeView(button.dataset.view);
-  });
+  button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
 }
 $("athlete").addEventListener("change",()=>loadModel().catch(e=>status(e.message,"warn")));
 $("create").addEventListener("click",async()=>{const name=$("new-name").value.trim(),sex=$("new-sex").value,weightRaw=$("new-weight").value.trim(),weight=Number(weightRaw.replace(",",".")),username=$("new-username").value.trim().toLowerCase(),password=$("new-password").value;if(!name||!sex||weightRaw===""||!Number.isFinite(weight)||weight<20||weight>250||!/^[a-z]{4,40}$/.test(username)||password.length<12)return status("Preenche o nome, sexo, utilizador (4–40 letras) e palavra-passe (mínimo 12 caracteres).","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name,sex,weight_kg:weight,username,password})});for(const id of ["new-name","new-weight","new-username","new-password"])$(id).value="";$("new-sex").value="";await loadAthletes(r.athlete.id);$("tm-players-create-form").hidden=true;if(typeof window.tmRefreshPlayersList==="function")await window.tmRefreshPlayersList();status("Jogador e acesso criados.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
