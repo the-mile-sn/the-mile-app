@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.ok(legend,"Modelo legend must have its own ID");
  assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
  assert.equal(html.split('id="model-legend"').length-1,1);
- assert.match(html,/admin-microcycles\.js\?v=18216/);
+ assert.match(html,/admin-microcycles\.js\?v=18217/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
@@ -135,7 +135,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
  assert.ok(source,"loadModel must exist");
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
- assert.match(html,/admin-microcycles\.js\?v=18216/);
+ assert.match(html,/admin-microcycles\.js\?v=18217/);
  for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
   const calls=[];
   const ctx={
@@ -159,4 +159,16 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
   assert.equal(ctx.model.athlete.id,"athlete-1");
   assert.ok(calls.indexOf("plans")<calls.indexOf("calendar"),view+" plans must initialize before calendar");
  }
+});
+
+
+test("Planos clears stale player reviews and ignores late replies from another athlete",()=>{
+ assert.match(admin,/function resetPlanReviewForAthlete\(athleteId\)/);
+ assert.match(admin,/selectedPlanId=null;selectedPlanMode="consult";[\s\S]*?\$\("import-review"\)\.replaceChildren\(\)/);
+ assert.match(admin,/resetPlanReviewForAthlete\(athleteId\);[\s\S]*?const nextModel=await request/);
+ assert.match(admin,/if\(\$\("athlete"\)\.value!==athleteId\)return;/);
+ assert.match(admin,/const stillCurrent=\(\)=>revision===planDraftReadRevision&&stillOnAthlete\(\)/);
+ assert.match(admin,/const data=await request\(path\+"\/plan-imports"\);\s*if\(!stillCurrent\(\)\)return/);
+ assert.match(admin,/const historyData=await request\(path\+"\/plan-imports\/publication-history"\);\s*if\(!stillCurrent\(\)\)return/);
+ assert.match(admin,/const result=await request\(path\+"\/plan-imports\/"\+encodeURIComponent\(latest.id\)\);\s*if\(!stillOnAthlete\(\)\)return/);
 });
