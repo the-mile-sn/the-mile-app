@@ -99,7 +99,7 @@ planningSearch.addEventListener("keydown",event=>{
 document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target))closePlanningResults();});
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
 window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
-async function loadModel(){updatePlanningPlayerControls();if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();await loadCalendar();showBackofficeView(backofficeView);}
+async function loadModel(){updatePlanningPlayerControls();if(!$("athlete").value)return;selectedCalendarDay=null;selectedNutritionWeek=null;model=await request("/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/microcycles");profileEditing=false;render();renderProfileSummary();await loadPlanDrafts();if(backofficeView==="calendar")await showBackofficeView("calendar");else{await loadCalendar();showBackofficeView(backofficeView);}}
 async function runScenarioPreview(){
  const aid=model?.athlete?.id,day=$("scenario-preview-date").value;
  const out=$("scenario-preview-output"),info=$("scenario-preview-status");
@@ -1145,7 +1145,7 @@ async function loadCalendar(){
    };
    card.append(label,edit);list.append(card);
   }
-  $("calendar-section").hidden=false;
+  $("calendar-section").hidden=backofficeView!=="calendar";
 }
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 $("calendar-next").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
