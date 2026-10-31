@@ -134,8 +134,17 @@
  window.tmOpenAdminForms=aid=>openClinical("forms",aid);
  function openDashboard(){closeClinical();if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
- async function openPlayers(aid,day,monitoringKind){closeClinical();
+function ensurePlanningOnlyView(){
+ // Clinical and personal panels are mounted in dedicated sidebar areas, not Planeamento.
+ if(typeof backofficeView!=="undefined"&&(backofficeView==="profile"||backofficeView==="assessments")&&typeof showBackofficeView==="function"){
+  showBackofficeView("calendar");
+ }
+}
+ async function openPlayers(aid,day,monitoringKind){
+  if(monitoringKind)return openClinical("forms",aid,monitoringKind,day);
+  closeClinical();
  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
+  ensurePlanningOnlyView();
  try{
   if(aid&&$("athlete")){
    const choice=$("athlete");
@@ -143,19 +152,6 @@
     choice.value=aid;
     if(typeof loadModel==="function")await loadModel();
    }
-  }
-  if(monitoringKind){
-   if(typeof showBackofficeView==="function")showBackofficeView("profile");
-   const dateInput=$("monitoring-"+monitoringKind+"-date");
-   if(dateInput&&day)dateInput.value=day;
-   if(typeof openMonitoring==="function")await openMonitoring(monitoringKind);
-   // Both forms use the already-existing monitoring panels in the profile.
-   const root=$("monitoring-"+monitoringKind+"-content");
-   if(root)root.scrollIntoView({behavior:"smooth",block:"center"});
-   const matching=root&&Array.from(root.querySelectorAll(".monitoring-entry")).find(row=>
-    row.dataset.monitoringDate===day);
-   if(matching){matching.classList.add("tm-monitoring-target");matching.scrollIntoView({behavior:"smooth",block:"center"});}
-   return;
   }
   if(day){
    const d=new Date(day+"T12:00:00Z");
@@ -179,6 +175,7 @@
  function openPlanning(){closeClinical();
   if($("admin-workspace").hidden)return;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
+  ensurePlanningOnlyView();
   $("admin-account-panel").hidden=true;
   $("admin-account-toggle").setAttribute("aria-expanded","false");
   window.scrollTo({top:0,behavior:"smooth"});
