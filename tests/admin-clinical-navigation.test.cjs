@@ -75,3 +75,55 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
  assert.match(html,/admin-dashboard\.js\?v=21/); // Force browsers to load the fix.
 });
+
+test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
+ const vm=require("node:vm");
+ const legend=html.match(/<p\b[^>]*\bid="model-legend"[^>]*>/);
+ assert.ok(legend,"Modelo legend must have its own ID");
+ assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
+ assert.equal(html.split('id="model-legend"').length-1,1);
+ assert.match(html,/admin-microcycles\.js\?v=18215/);
+ const elements={};
+ for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
+  elements[id]={hidden:true};
+ }
+ const tabs=["calendar","plans","supplements","matrix","menus","player-preview"].map(view=>({dataset:{view},setAttribute(k,v){this[k]=v;}}));
+ const ctx={
+  $:id=>elements[id],
+  document:{querySelectorAll:()=>tabs},
+  model:{athlete:{id:"test"},classifications:[],meals:[],colors:[]},
+  backofficeView:"calendar",
+  loadCalendar:async()=>{},loadV2Access:async()=>{},loadSupplementEditor:async()=>{},
+  loadPeriImports:async()=>{},loadMenus:async()=>{},loadScenarioEditor:()=>{},
+  showPlayerView:async()=>{},playerView:"overview",status:()=>{}
+ };
+ const start=admin.indexOf("function showBackofficeView(view){");
+ const end=admin.indexOf('\n}\nfor(const button of document.querySelectorAll("#backoffice-nav [data-view]"))',start);
+ assert.ok(start>=0&&end>start,"View controller found");
+ const show=vm.runInNewContext(admin.slice(start,end+2)+"\nshowBackofficeView",ctx);
+ show("plans");
+ assert.equal(elements["plan-import-panel"].hidden,false);
+ assert.equal(elements["model-legend"].hidden,true);
+ assert.equal(elements.matrix.hidden,true);
+ show("matrix");
+ assert.equal(elements["model-legend"].hidden,false);
+ assert.equal(elements.matrix.hidden,false);
+ assert.equal(elements["scenario-editor"].hidden,false);
+ show("menus");
+ assert.equal(elements["model-legend"].hidden,true);
+ assert.equal(elements.matrix.hidden,true);
+ assert.equal(elements["menus-panel"].hidden,false);
+ const renderAt=admin.indexOf("function render(){"),renderEnd=admin.indexOf("\n",renderAt);
+ assert.ok(renderAt>=0&&renderEnd>renderAt);
+ const renderSource=admin.slice(renderAt,renderEnd);
+ const node=()=>({children:[],appendChild(child){this.children.push(child);}});
+ elements.matrix={...node(),hidden:true,replaceChildren(){this.children=[];}};
+ ctx.document.createElement=()=>node();
+ const render=vm.runInNewContext(renderSource+"\nrender",ctx);
+ ctx.backofficeView="plans";
+ render();
+ assert.equal(elements.matrix.hidden,true,"model refresh must not flash matrix inside Planos");
+ ctx.backofficeView="matrix";
+ render();
+ assert.equal(elements.matrix.hidden,false,"model refresh remains visible in Modelo");
+});
