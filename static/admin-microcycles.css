@@ -980,3 +980,8 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 
 /* A closed manual entry must remain hidden despite the flex form layout. */
 #profile-monitoring .monitoring-entry-form[hidden]{display:none!important}
+
+/* Clinical classification is a solid status card, distinct from trend cards. */
+.tm-clinical-metric.tm-skinfold-solid{background:color-mix(in srgb,var(--tm-skinfold-color) 36%,#171b20)!important;border:2px solid var(--tm-skinfold-color)!important;border-left-width:2px!important}
+.tm-clinical-metric.tm-skinfold-solid small,.tm-clinical-metric.tm-skinfold-solid strong,.tm-clinical-metric.tm-skinfold-solid em{color:#f4f5f5!important}
+.tm-assessment-chart-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}

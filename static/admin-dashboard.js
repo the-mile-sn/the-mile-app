@@ -63,7 +63,16 @@
  for(const kind of ["assessments","forms"]){
   const search=$("tm-"+kind+"-search");
   search.addEventListener("focus",()=>{if($("tm-"+kind+"-player").value&&search.value===$("tm-"+kind+"-player").selectedOptions[0]?.textContent)search.select();drawClinicalResults(kind);});
-  search.addEventListener("input",()=>drawClinicalResults(kind));
+  search.addEventListener("input",()=>{
+   if(!search.value.trim()&&$("tm-"+kind+"-player").value){
+    $("tm-"+kind+"-player").value="";
+    syncClinicalPicker(kind);
+    if(kind==="assessments"){$("assessments-admin-panel").hidden=true;}else{$("profile-monitoring").hidden=true;}
+    $("tm-"+kind+"-error").textContent="Seleciona um jogador para consultar os respetivos dados.";
+    return;
+   }
+   drawClinicalResults(kind);
+  });
   search.addEventListener("keydown",e=>{if(e.key==="Escape"){syncClinicalPicker(kind);}else if(e.key==="Enter"){const first=$("tm-"+kind+"-results").querySelector("button");if(first&&!$("tm-"+kind+"-results").hidden){e.preventDefault();first.click();}}});
  }
  document.addEventListener("pointerdown",e=>{for(const kind of ["assessments","forms"]){if(!e.target.closest('[data-clinical-picker="'+kind+'"]')){$("tm-"+kind+"-results").hidden=true;$("tm-"+kind+"-search").setAttribute("aria-expanded","false");}}});
