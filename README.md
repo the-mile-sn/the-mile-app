@@ -80,3 +80,20 @@ Oito testes automatizados cobrem separação entre jogadores, acesso anónimo, l
 Estes testes verificam o servidor. A interface ainda requer uma passagem de verificação visual num browser após instalação. O pacote não foi instalado nem testado num alojamento remoto.
 
 Fazer cópias de segurança cifradas de todo o diretório de dados, com a aplicação parada ou através de um snapshot consistente. Testar o restauro antes de carregar documentos reais. Os PDFs são ficheiros privados protegidos por permissões, mas não existe análise antivírus nesta versão. A retenção de dados e o serviço de alojamento devem ser definidos antes do uso com jogadores.
+
+
+## Backoffice V2 — migração progressiva de Planeamento (31/10/2026)
+
+Este inventário é uma referência para migração **sem remoção de funcionalidades nem dados**. As áreas antigas só podem ser ocultadas ou removidas depois de a nova localização passar testes automáticos e validação visual no Render.
+
+| Funcionalidade | Origem na interface antiga | Destino / estado | Dependências a preservar |
+| --- | --- | --- | --- |
+| Dados do jogador e posição / pontos auxiliares | `athlete-weight-panel` | `tm-players-profile` em Jogadores: edição existente e validada | `/api/v2/athletes/:id/profile`, ligação a contas, outros editores antigos |
+| Gestão de acesso do jogador | `v2-access-box` no perfil de Planeamento | `tm-players-access-management` em Jogadores: fluxo novo disponível | Bloqueio imediato, identidade associada, permissões e feedback |
+| Avaliações antropométricas | `assessments-admin-panel` | `tm-assessments-page`: painel partilhado, não duplicado | Histórico, rascunhos/publicação, cálculos, importação Excel, PDF |
+| Formulários de peso e pós-jogo | `profile-monitoring` | `tm-forms-page`: painel partilhado, não duplicado | Pesagens, respostas incompletas, edição, auditoria, gráfico, cafeína |
+| Conta do administrador | `admin-account-panel` | Navegação «Minha conta»: requer rever visibilidade e eventuais controlos legados | Autenticação, convite, palavra-passe e logout |
+| Ativação de administradores de testes | `admin-access-panel` na área de perfil | **Pendente**: decidir consolidação com «Minha conta» antes de mover | Ligações temporárias e respetivas permissões |
+| Microciclos, planos, suplementação, calendário, menus e pré-visualização | `backoffice-nav` e painéis antigos | **Manter em Planeamento** até haver destino funcional aprovado | Prescrições, regras nutricionais, importações e calendário |
+
+**Critérios de conclusão de cada migração:** mesma API e permissões; sem dados duplicados; botões e rotas funcionais na nova área; ações de edição, eliminação e publicação preservadas; testes CI aprovados; deploy manual e confirmação visual; só então ponderar remover controlos antigos. Esta tabela não autoriza migração ou eliminação automática.
