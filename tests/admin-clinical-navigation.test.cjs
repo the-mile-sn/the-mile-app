@@ -131,8 +131,9 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
 
 test("Microciclos loads the calendar once per athlete refresh and never exposes it in other tabs",async()=>{
  const vm=require("node:vm");
- const source=admin.split("\n").find(line=>line.startsWith("async function loadModel(){"));
- assert.ok(source,"loadModel must exist");
+ const start=admin.indexOf("async function loadModel(){"),end=admin.indexOf("\nasync function runScenarioPreview()",start);
+ assert.ok(start>=0&&end>start,"loadModel must exist");
+ const source=admin.slice(start,end);
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
  assert.match(html,/admin-microcycles\.js\?v=18217/);
@@ -142,6 +143,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
    backofficeView:view,selectedCalendarDay:"previous",selectedNutritionWeek:"previous",
    model:null,profileEditing:true,
    $:id=>id==="athlete"?{value:"athlete-1"}:null,
+   resetPlanReviewForAthlete:aid=>calls.push("reset:"+aid),
    updatePlanningPlayerControls:()=>calls.push("picker"),
    request:async path=>{calls.push("model");assert.match(path,/\/api\/v2\/athletes\/athlete-1\/microcycles/);return {athlete:{id:"athlete-1"},classifications:[],meals:[],colors:[]};},
    render:()=>calls.push("matrix"),
