@@ -977,3 +977,6 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-answer-icon{font-weight:750;font-size:14px;line-height:1}
 .tm-form-answer-field .tm-answer-badge{margin-top:3px}
 @media(max-width:620px){.tm-assessment-history-bar-row{grid-template-columns:85px minmax(50px,1fr) 50px;gap:5px}.tm-assessment-detail-body select{font-size:12px}}
+
+/* A closed manual entry must remain hidden despite the flex form layout. */
+#profile-monitoring .monitoring-entry-form[hidden]{display:none!important}
