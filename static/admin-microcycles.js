@@ -327,7 +327,7 @@ const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
 function renderMonitoringWeightChart(rows){
  const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=false;
- const dated=rows.filter(r=>/^\\d{4}-\\d{2}-\\d{2}$/.test(r.weigh_date||"")&&Number.isFinite(Number(r.weight_kg))).slice().sort((a,b)=>a.weigh_date.localeCompare(b.weigh_date));
+ const dated=rows.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.weigh_date||"")&&Number.isFinite(Number(r.weight_kg))).slice().sort((a,b)=>a.weigh_date.localeCompare(b.weigh_date));
  const header=document.createElement("div");header.className="tm-weight-chart-head";
  const title=document.createElement("strong");title.textContent="Evolução do peso";
  const controls=document.createElement("div");controls.className="tm-weight-chart-controls";
