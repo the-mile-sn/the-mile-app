@@ -35,14 +35,14 @@
  }
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
  const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
- const assessmentHome=document.createComment("assessments-original"),monitoringHome=document.createComment("forms-original");
- assessmentPanel.before(assessmentHome);monitoringPanel.before(monitoringHome);
+ // Clinical editors have a single permanent home outside Planeamento.
+ $("tm-assessments-slot").append(assessmentPanel);
+ $("tm-forms-slot").append(monitoringPanel);
  let clinicalToken=0;
  function closeClinical(){
   ++clinicalToken;
   for(const page of Object.values(clinicalPages))page.hidden=true;
-  if(assessmentHome.parentNode)assessmentHome.after(assessmentPanel);
-  if(monitoringHome.parentNode)monitoringHome.after(monitoringPanel);
+  // Hide the destinations, without moving their existing editor nodes.
  }
  function syncClinicalSelectors(){
   const original=$("athlete");
@@ -109,11 +109,11 @@
    if(token!==clinicalToken)return;
    if(kind==="assessments"){
     if(typeof showBackofficeView==="function")showBackofficeView("assessments");
-    $("tm-assessments-slot").append(assessmentPanel);assessmentPanel.hidden=false;
+    assessmentPanel.hidden=false;
     if(typeof window.tmRefreshAssessmentRegistry==="function")window.tmRefreshAssessmentRegistry().catch(e=>{feedback.textContent="Não foi possível carregar a tabela global: "+e.message;});
    }else{
-    if(typeof showBackofficeView==="function")showBackofficeView("profile");
-    $("tm-forms-slot").append(monitoringPanel);monitoringPanel.hidden=false;
+    // No legacy profile switch or account fetch is needed for Formulários.
+    monitoringPanel.hidden=false;
     const selectedKind=monitoringKind==="game"?"game":"weight";
     if(typeof openMonitoring==="function")await openMonitoring(selectedKind);
     if(token!==clinicalToken)return;

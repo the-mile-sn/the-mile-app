@@ -814,7 +814,7 @@ $("v2-access-toggle").onclick=async()=>{
 };
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],assessments:["assessments-admin-panel"],supplements:["supplements-panel"],matrix:["matrix","scenario-editor"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix","scenario-editor"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -826,7 +826,7 @@ function showBackofficeView(view){
   const calendarReady=view==="calendar"?loadCalendar().catch(e=>{status(e.message,"warn");}):null;
   if(view==="supplements"&&model)loadSupplementEditor().catch(e=>status(e.message,"warn"));
   if(view==="plans"&&model)loadPeriImports().catch(e=>status(e.message,"warn"));
-  if(view==="assessments"&&model)loadAssessmentsAdmin().catch(e=>status(e.message,"warn"));
+  // Avaliações is loaded by its dedicated navigation controller.
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
   if(view==="matrix"&&model)loadScenarioEditor();
