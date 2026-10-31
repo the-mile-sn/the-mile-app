@@ -432,7 +432,7 @@ function renderProfileSummary(){
     ["Sexo","sex",athlete.sex,"sex"],
     ["Peso atual","weight_kg",athlete.weight_kg,"number"],
     ["Altura","height_cm",athlete.height_cm,"number"],
-    ["Notas internas","profile_notes",athlete.profile_notes,"textarea"]
+    ["Posição em campo","field_position",athlete.field_position,"position"],["Ponto braço (cm)","arm_point",athlete.arm_point,"number"],["Ponto coxa (cm)","thigh_point",athlete.thigh_point,"number"],["Notas internas","profile_notes",athlete.profile_notes,"textarea"]
   ];
   for(const [label,key,value,type] of fields){
     const card=document.createElement("div");card.className="profile-info-card";
@@ -440,9 +440,9 @@ function renderProfileSummary(){
     const caption=document.createElement("small");caption.textContent=label;caption.style.color="#a9a9b2";
     let field;
     if(profileEditing){
-      field=type==="textarea"?document.createElement("textarea"):document.createElement(type==="sex"?"select":"input");
-      if(type==="sex"){for(const [v,t] of [["","Por definir"],["F","Feminino"],["M","Masculino"]]){const opt=document.createElement("option");opt.value=v;opt.textContent=t;field.append(opt);}}
-      if(type!=="textarea"&&type!=="sex"){field.type=type;if(type==="number"){field.step=".1";field.min=key==="weight_kg"?"20":"100";field.max=key==="weight_kg"?"250":"230";}}
+      field=type==="textarea"?document.createElement("textarea"):document.createElement(type==="sex"||type==="position"?"select":"input");
+      if(type==="sex"||type==="position"){const options=type==="sex"?[["","Por definir"],["F","Feminino"],["M","Masculino"]]:["","GR","DD","DE","DC","MDC","MC","MOC","ED","EE","PL","Outro"].map(v=>[v,v||"Por definir"]);for(const [v,t] of options){const opt=document.createElement("option");opt.value=v;opt.textContent=t;field.append(opt);}}
+      if(type!=="textarea"&&type!=="sex"&&type!=="position"){field.type=type;if(type==="number"){field.step=".1";field.min=key==="weight_kg"?"20":key==="height_cm"?"100":"0";field.max=key==="weight_kg"?"250":key==="height_cm"?"230":key==="arm_point"?"100":"150";}}
       field.value=value??"";field.dataset.profileField=key;field.setAttribute("aria-label",label);
       field.style.cssText="width:100%;box-sizing:border-box;min-width:0";
       if(type==="textarea")field.rows=3;
@@ -471,7 +471,7 @@ $("save-athlete-profile").addEventListener("click",async()=>{
     const get=key=>document.querySelector('[data-profile-field="'+key+'"]').value;
     const raw=get("weight_kg"),height=get("height_cm");
     const result=await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/profile",{method:"PUT",body:JSON.stringify({
-      name:get("name").trim(),sex:get("sex")||null,weight_kg:raw===""?null:Number(raw),height_cm:height===""?null:Number(height),profile_notes:get("profile_notes")
+      name:get("name").trim(),sex:get("sex")||null,weight_kg:raw===""?null:Number(raw),height_cm:height===""?null:Number(height),profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point"))
     })});
     model.athlete=result.athlete;profileEditing=false;renderProfileSummary();
     const active=$("athlete").selectedOptions[0];if(active)active.textContent=result.athlete.name;
@@ -2055,6 +2055,7 @@ function previousAssessmentValue(key, assessedOn, excludeId){
 const assessmentValue=(id)=>$(id)?.value.trim()||"";
 function renderAssessmentForm(data={}){
  const box=$("assessment-review-fields");box.replaceChildren();
+ const auxiliary=document.createElement("p");auxiliary.className="hint";auxiliary.textContent="Pontos auxiliares do perfil · Braço: "+(model?.athlete?.arm_point??"por preencher")+" cm · Coxa: "+(model?.athlete?.thigh_point??"por preencher")+" cm";box.append(auxiliary);
  for(const [,title,fields] of ASSESSMENT_GROUPS.filter(g=>g[0]!=="geral").concat([["medias","Médias do histórico · cálculo automático",ASSESSMENT_AVERAGES]])){
   const section=document.createElement("section");section.className="assessment-review-group";
   const heading=document.createElement("h3");heading.textContent=title;section.append(heading);
@@ -2091,12 +2092,13 @@ const clinicalFormat=v=>v==null?"—":v.toLocaleString("pt-PT",{maximumFractionD
 // Classification thresholds supplied by the clinical team. Exactly 45 belongs
 // to dark green, 55 to yellow and 65 to red. Never infer cutoffs for other metrics.
 function tmSkinfoldCategory(value){
+ const offset=String(model?.athlete?.field_position||"").toUpperCase()==="GR"?5:0;
  const n=clinicalNumber(value);
  if(n===null)return null;
- if(n>=65)return {color:"#E17878",label:"Vermelho · ≥ 65 mm",code:"red"};
- if(n>=55)return {color:"#E7C268",label:"Amarelo · 55 a < 65 mm",code:"yellow"};
- if(n>45)return {color:"#A4D9AE",label:"Verde claro · > 45 a < 55 mm",code:"light-green"};
- return {color:"#4A9879",label:"Verde escuro · ≤ 45 mm",code:"dark-green"};
+ if(n>=65+offset)return {color:"#E17878",label:"Vermelho · ≥ "+(65+offset)+" mm",code:"red"};
+ if(n>=55+offset)return {color:"#E7C268",label:"Amarelo · "+(55+offset)+" a < "+(65+offset)+" mm",code:"yellow"};
+ if(n>45+offset)return {color:"#A4D9AE",label:"Verde claro · > "+(45+offset)+" a < "+(55+offset)+" mm",code:"light-green"};
+ return {color:"#4A9879",label:"Verde escuro · ≤ "+(45+offset)+" mm",code:"dark-green"};
 }
 const tmClinicalDirections={sum_8:-1,body_fat:-1,muscle_index:1,arm_muscle:1,thigh_muscle:1,calf_muscle:1,sum_perimeters:1};
 // These are qualitative trends configured by the clinical team; weight and BMI
