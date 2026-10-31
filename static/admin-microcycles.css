@@ -985,3 +985,9 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-clinical-metric.tm-skinfold-solid{background:color-mix(in srgb,var(--tm-skinfold-color) 36%,#171b20)!important;border:2px solid var(--tm-skinfold-color)!important;border-left-width:2px!important}
 .tm-clinical-metric.tm-skinfold-solid small,.tm-clinical-metric.tm-skinfold-solid strong,.tm-clinical-metric.tm-skinfold-solid em{color:#f4f5f5!important}
 .tm-assessment-chart-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* Solid clinical classification: opaque category fill rather than a tinted surface. */
+.tm-clinical-metric.tm-skinfold-solid{background:var(--tm-skinfold-color)!important;border-color:var(--tm-skinfold-color)!important}
+.tm-clinical-metric.tm-skinfold-solid small,.tm-clinical-metric.tm-skinfold-solid strong,.tm-clinical-metric.tm-skinfold-solid em{color:#16201d!important}
+.tm-assessment-plot{min-width:0;overflow-x:auto;overflow-y:visible}
+.tm-assessment-chart-stage{min-width:max-content}
