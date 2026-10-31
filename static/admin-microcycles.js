@@ -104,6 +104,7 @@ async function loadModel(){
  const athleteId=$("athlete").value;
  if(!athleteId)return;
  resetPlanReviewForAthlete(athleteId);
+ resetMenusForAthlete(athleteId);
  selectedCalendarDay=null;selectedNutritionWeek=null;
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
@@ -550,30 +551,57 @@ $("save-athlete-profile").addEventListener("click",async()=>{
 });
 let selectedNutritionWeek=null,periByDay={},dayColorOverrides={},effectiveAdminColorsByDay={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
+let menusAthleteId=null,menusLoadRevision=0;
+function resetMenusForAthlete(athleteId){
+ if(menusAthleteId===athleteId)return;
+ menusAthleteId=athleteId;
+ ++menusLoadRevision;
+ $("menu-grid").replaceChildren();
+ $("menu-week").textContent="";
+ const save=$("save-menu-week");save.disabled=true;save.onclick=null;
+ $("menu-save-feedback").textContent="";
+}
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 async function loadMenus(){
   if(!model)return;
+  const athleteId=model.athlete.id;
+  resetMenusForAthlete(athleteId);
   const start=weekStart(menuWeek),finish=new Date(start);finish.setDate(start.getDate()+6);
-  const begin=isoDay(start),end=isoDay(finish);
+  const begin=isoDay(start),end=isoDay(finish),revision=++menusLoadRevision;
+  const base="/api/v2/athletes/"+encodeURIComponent(athleteId);
+  const stillCurrent=()=>menusLoadRevision===revision&&menusAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&isoDay(weekStart(menuWeek))===begin;
+  const root=$("menu-grid"),saveWeek=$("save-menu-week"),feedback=$("menu-save-feedback");
+  root.replaceChildren();saveWeek.disabled=true;saveWeek.onclick=null;
+  feedback.textContent="A carregar semana…";
   $("menu-week").textContent=begin+" — "+end;
-  const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
-  dishLibrary=(await request("/api/v2/dishes")).dishes;
+  const data=await request(base+"/menus?start="+begin+"&end="+end);
+  if(!stillCurrent())return;
+  const dishes=await request("/api/v2/dishes");
+  if(!stillCurrent())return;
+  const calendarData=await request(base+"/calendar?start="+begin+"&end="+end);
+  if(!stillCurrent())return;
+  dishLibrary=dishes.dishes;
   renderDishEditor();refreshDishCategories();
-  const calendarData=await request(matchBase()+"/calendar?start="+begin+"&end="+end);
   const calendar=calendarData.days;
   const menuColorOverrides=colorOverrideLookup(calendarData.meal_color_overrides);
-  const root=$("menu-grid");root.replaceChildren();
   const pending=new Map();
-  const saveWeek=$("save-menu-week");
-  const feedback=$("menu-save-feedback");
   saveWeek.disabled=true;feedback.textContent="";
-  const mark=(key,entry)=>{pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
+  const mark=(key,entry)=>{if(!stillCurrent())return;pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
   saveWeek.onclick=async()=>{
+    if(!stillCurrent()||!pending.size)return;
     saveWeek.disabled=true;feedback.textContent="A guardar a semana…";
-    try{await request(matchBase()+"/menus/batch",{method:"PUT",body:JSON.stringify({items:[...pending.values()]})});
-      feedback.textContent="Semana guardada com sucesso.";await loadMenus();
-      feedback.textContent="Semana guardada com sucesso.";status("Menus da semana guardados.","success");
-    }catch(e){feedback.textContent="Erro ao guardar: "+e.message;saveWeek.disabled=false;}
+    try{
+      await request(base+"/menus/batch",{method:"PUT",body:JSON.stringify({items:[...pending.values()]})});
+      if(!stillCurrent())return;
+      await loadMenus();
+      if(menusAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&isoDay(weekStart(menuWeek))===begin){
+        feedback.textContent="Semana guardada com sucesso.";status("Menus da semana guardados.","success");
+      }
+    }catch(e){
+      if(menusAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&isoDay(weekStart(menuWeek))===begin){
+        feedback.textContent="Erro ao guardar: "+e.message;saveWeek.disabled=false;
+      }
+    }
   };
   for(let i=0;i<7;i++){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
