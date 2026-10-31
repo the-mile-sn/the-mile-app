@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.ok(legend,"Modelo legend must have its own ID");
  assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
  assert.equal(html.split('id="model-legend"').length-1,1);
- assert.match(html,/admin-microcycles\.js\?v=18217/);
+ assert.match(html,/admin-microcycles\.js\?v=18218/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
@@ -136,7 +136,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
  const source=admin.slice(start,end);
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
- assert.match(html,/admin-microcycles\.js\?v=18217/);
+ assert.match(html,/admin-microcycles\.js\?v=18218/);
  for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
   const calls=[];
   const ctx={
@@ -144,6 +144,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
    model:null,profileEditing:true,
    $:id=>id==="athlete"?{value:"athlete-1"}:null,
    resetPlanReviewForAthlete:aid=>calls.push("reset:"+aid),
+   resetMenusForAthlete:aid=>calls.push("reset-menus:"+aid),
    updatePlanningPlayerControls:()=>calls.push("picker"),
    request:async path=>{calls.push("model");assert.match(path,/\/api\/v2\/athletes\/athlete-1\/microcycles/);return {athlete:{id:"athlete-1"},classifications:[],meals:[],colors:[]};},
    render:()=>calls.push("matrix"),
@@ -173,4 +174,17 @@ test("Planos clears stale player reviews and ignores late replies from another a
  assert.match(admin,/const data=await request\(path\+"\/plan-imports"\);\s*if\(!stillCurrent\(\)\)return/);
  assert.match(admin,/const historyData=await request\(path\+"\/plan-imports\/publication-history"\);\s*if\(!stillCurrent\(\)\)return/);
  assert.match(admin,/const result=await request\(path\+"\/plan-imports\/"\+encodeURIComponent\(latest.id\)\);\s*if\(!stillOnAthlete\(\)\)return/);
+});
+
+
+test("Menus loads and saves only for its selected athlete and current week",()=>{
+ assert.match(admin,/function resetMenusForAthlete\(athleteId\)/);
+ assert.match(admin,/resetMenusForAthlete\(athleteId\);[\s\S]*?const nextModel=await request/);
+ assert.match(admin,/const athleteId=model\.athlete\.id;\s*resetMenusForAthlete\(athleteId\)/);
+ assert.match(admin,/const stillCurrent=\(\)=>menusLoadRevision===revision&&menusAthleteId===athleteId/);
+ assert.match(admin,/const data=await request\(base\+"\/menus\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
+ assert.match(admin,/const calendarData=await request\(base\+"\/calendar\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
+ assert.match(admin,/saveWeek\.onclick=async\(\)=>\{\s*if\(!stillCurrent\(\)\|\|!pending\.size\)return/);
+ assert.match(admin,/await request\(base\+"\/menus\/batch"/);
+ assert.match(html,/admin-microcycles\.js\?v=18218/);
 });
