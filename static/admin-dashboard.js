@@ -16,7 +16,15 @@
  function dateLabel(d){return new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(d+"T12:00:00Z"));}
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
- function navActive(target){legacy.classList.toggle("tm-account-only",target?.id==="tm-admin-nav-account");for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
+ function navActive(target){const accountView=target?.id==="tm-admin-nav-account";moveAdminActivation(accountView);legacy.classList.toggle("tm-account-only",accountView);for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
+ const activationPanel=$("admin-access-panel"),accountPanel=$("admin-account-panel");
+ const activationHome=document.createComment("admin-activation-original");
+ if(activationPanel)activationPanel.before(activationHome);
+ function moveAdminActivation(toAccount){
+  if(!activationPanel||!accountPanel)return;
+  if(toAccount){accountPanel.append(activationPanel);activationPanel.hidden=false;}
+  else if(activationHome.parentNode){activationHome.after(activationPanel);activationPanel.hidden=true;}
+ }
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
  const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
  const assessmentHome=document.createComment("assessments-original"),monitoringHome=document.createComment("forms-original");
