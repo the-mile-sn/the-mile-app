@@ -996,3 +996,19 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-assessment-plot{overflow-x:visible}
 .tm-assessment-chart-stage{min-width:0;width:100%}
 .tm-assessment-trend-svg{width:100%;max-width:100%}
+
+/* Compact, unified clinical segmented selector. */
+.tm-clinical-page #profile-monitoring>.monitoring-choices{display:inline-flex;gap:3px;padding:4px;margin:0 0 18px;border:1px solid #3d424b;background:#22252c;border-radius:12px}
+.tm-clinical-page #profile-monitoring>.monitoring-choices button{margin:0;border:0!important;box-shadow:none!important;border-radius:9px!important;padding:9px 17px;background:transparent;color:#adb5c1;font-size:13px;font-weight:600;transition:background .16s,color .16s}
+.tm-clinical-page #profile-monitoring>.monitoring-choices button[aria-pressed="true"]{background:#434956;color:#fff}
+.tm-clinical-page #profile-monitoring>.monitoring-choices button:focus-visible{outline:2px solid #8eafcc;outline-offset:2px}
+/* Collapsed measurement panels with clearer hierarchy and subtle emphasis. */
+.tm-assessment-detail{background:#21252c;border:1px solid #444b58;border-radius:12px;padding:0;overflow:hidden;transition:border-color .18s,background .18s}
+.tm-assessment-detail:hover{border-color:#77889b;background:#262b34}
+.tm-assessment-detail[open]{border-color:#687c91}
+.tm-assessment-detail summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;padding:15px 18px;font-size:14px;font-weight:650;color:#f0f2f5;cursor:pointer}
+.tm-assessment-detail summary::-webkit-details-marker{display:none}
+.tm-assessment-detail summary:after{content:"+";font-size:19px;line-height:1;color:#9bb4cd;font-weight:400}
+.tm-assessment-detail[open] summary:after{content:"−"}
+.tm-assessment-detail summary:focus-visible{outline:2px solid #8eafcc;outline-offset:-3px}
+.tm-assessment-detail-body{padding:0 16px 16px;margin-top:0}
