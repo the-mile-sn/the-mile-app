@@ -358,8 +358,25 @@ function renderMonitoringWeightChart(rows){
   const coords=points.map((p,i)=>({x:x(i),y:y(Number(p.weight_kg))}));
   svg.append(node("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#8DAFC6","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"}));
   for(const i of new Set([0,Math.floor((points.length-1)/2),points.length-1]))svg.append(node("text",{x:coords[i].x,y:H-12,"text-anchor":i===0?"start":i===points.length-1?"end":"middle",fill:"#a3afbb","font-size":"11"},monitoringDate(points[i].weigh_date)));
-  coords.forEach((p,i)=>{const dot=node("circle",{cx:p.x,cy:p.y,r:4.5,fill:"#1b2027",stroke:"#a5c7de","stroke-width":"2.5"});dot.append(node("title",{},monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"));svg.append(dot);});
-  plot.append(svg);
+  const tooltip=document.createElement("div");tooltip.className="tm-weight-point-tooltip";tooltip.hidden=true;
+  const showPoint=i=>{
+   const p=coords[i];tooltip.textContent=monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg";
+   tooltip.style.left=Math.max(12,Math.min(86,p.x/W*100))+"%";
+   tooltip.style.top=Math.max(7,p.y/H*100-9)+"%";tooltip.hidden=false;
+  };
+  coords.forEach((p,i)=>{
+   const hit=node("circle",{cx:p.x,cy:p.y,r:13,fill:"transparent",stroke:"none",tabindex:"0",role:"button","aria-label":monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"});
+   const dot=node("circle",{cx:p.x,cy:p.y,r:4.5,fill:"#1b2027",stroke:"#a5c7de","stroke-width":"2.5","pointer-events":"none"});
+   hit.addEventListener("pointerenter",()=>showPoint(i));
+   hit.addEventListener("pointermove",()=>showPoint(i));
+   hit.addEventListener("click",()=>showPoint(i));
+   hit.addEventListener("focus",()=>showPoint(i));
+   hit.addEventListener("blur",()=>{tooltip.hidden=true;});
+   hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(i);}});
+   svg.append(dot,hit);
+  });
+  svg.addEventListener("pointerleave",()=>{tooltip.hidden=true;});
+  plot.append(svg,tooltip);
  };
  period.addEventListener("change",draw);month.addEventListener("change",draw);draw();
 }
