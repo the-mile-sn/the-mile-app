@@ -991,3 +991,8 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-clinical-metric.tm-skinfold-solid small,.tm-clinical-metric.tm-skinfold-solid strong,.tm-clinical-metric.tm-skinfold-solid em{color:#16201d!important}
 .tm-assessment-plot{min-width:0;overflow-x:auto;overflow-y:visible}
 .tm-assessment-chart-stage{min-width:max-content}
+
+/* Restore full-width responsive chart after reverting dense date labels. */
+.tm-assessment-plot{overflow-x:visible}
+.tm-assessment-chart-stage{min-width:0;width:100%}
+.tm-assessment-trend-svg{width:100%;max-width:100%}

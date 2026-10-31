@@ -2208,7 +2208,7 @@ function renderAssessmentDashboard(records){
   const pointsAll=published.map(r=>({date:r.assessed_on,value:clinicalNumber(r.measurements?.[key])})).filter(p=>p.value!==null);
   const points=range.value==="10"?pointsAll.slice(-10):pointsAll;
   if(points.length<2){const p=document.createElement("p");p.className="hint";p.textContent="São necessárias duas avaliações publicadas com esta métrica.";graph.append(p);return;}
-  const W=Math.max(760,points.length*82),H=293,left=43,right=23,top=34,bottom=82;
+  const W=760,H=250,left=43,right=23,top=34,bottom=39;
   const vals=points.map(p=>p.value),lowest=Math.min(...vals),highest=Math.max(...vals);
   const spread=Math.max(0.6,highest-lowest),lo=lowest-spread*.21,hi=highest+spread*.21;
   const plotRight=W-right,plotBottom=H-bottom,chartHeight=plotBottom-top;
@@ -2216,7 +2216,7 @@ function renderAssessmentDashboard(records){
   const y=v=>top+(hi-v)/(hi-lo)*chartHeight;
   const coords=points.map((p,i)=>({x:x(i),y:y(p.value)}));
   const svg=tmAssessmentSvg("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":"Evolução de "+select.selectedOptions[0].textContent,class:"tm-assessment-trend-svg"});
-  svg.style.touchAction="pan-y";svg.style.width=W+"px";svg.style.maxWidth="none";
+  svg.style.touchAction="pan-y";
   const hit=tmAssessmentSvg("rect",{x:0,y:0,width:W,height:H,fill:"transparent","pointer-events":"all"});svg.append(hit);
   for(let i=0;i<=4;i++){
    const level=lo+(hi-lo)*i/4,cy=y(level);
@@ -2227,8 +2227,9 @@ function renderAssessmentDashboard(records){
   svg.append(tmAssessmentSvg("line",{x1:left,y1:meanY,x2:plotRight,y2:meanY,stroke:"#a5aab5","stroke-width":"1.2","stroke-dasharray":"6 6",opacity:".84"}));
   svg.append(tmAssessmentSvg("text",{x:plotRight-5,y:Math.max(top+12,meanY-7),"text-anchor":"end",fill:"#c1c6d0","font-size":"11"},"Média "+clinicalFormat(avg)+(unit?" "+unit:"")));
   const line=tmAssessmentSvg("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#8DAFC6","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"});svg.append(line);
-  // Each assessment date is displayed; the chart scrolls horizontally when necessary.
-  coords.forEach((c,i)=>svg.append(tmAssessmentSvg("text",{x:c.x,y:plotBottom+15,transform:"rotate(-45 "+c.x+" "+(plotBottom+15)+")","text-anchor":"end",fill:"#a9aeb7","font-size":"11"},assessmentPtDate(points[i].date))));
+  // Show a small number of reference dates to preserve graph readability.
+  const labelIndices=Array.from(new Set([0,Math.floor((points.length-1)/2),points.length-1]));
+  for(const i of labelIndices)svg.append(tmAssessmentSvg("text",{x:coords[i].x,y:H-13,"text-anchor":i===0?"start":i===points.length-1?"end":"middle",fill:"#a9aeb7","font-size":"11"},assessmentPtDate(points[i].date)));
   const vertical=tmAssessmentSvg("line",{x1:coords.at(-1).x,y1:top,x2:coords.at(-1).x,y2:plotBottom,stroke:"#8fa8b4","stroke-dasharray":"4 5",opacity:"0"});
   const focusPoint=tmAssessmentSvg("circle",{cx:coords.at(-1).x,cy:coords.at(-1).y,r:8,stroke:"#dff4ea","stroke-width":"2",fill:"none",opacity:0});
   svg.append(vertical,focusPoint);
