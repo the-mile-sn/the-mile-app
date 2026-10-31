@@ -144,6 +144,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
    model:null,profileEditing:true,
    $:id=>id==="athlete"?{value:"athlete-1"}:null,
    resetPlanReviewForAthlete:aid=>calls.push("reset:"+aid),
+   resetMenusForAthlete:aid=>calls.push("reset-menus:"+aid),
    updatePlanningPlayerControls:()=>calls.push("picker"),
    request:async path=>{calls.push("model");assert.match(path,/\/api\/v2\/athletes\/athlete-1\/microcycles/);return {athlete:{id:"athlete-1"},classifications:[],meals:[],colors:[]};},
    render:()=>calls.push("matrix"),
