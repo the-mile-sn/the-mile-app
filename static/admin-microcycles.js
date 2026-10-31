@@ -326,20 +326,42 @@ let monitoringRequestVersion=0;
 const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
 function renderMonitoringWeightChart(rows){
- const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=rows.length===0;
- if(!rows.length)return;
- const points=rows.slice(0,30).reverse(),width=620,height=190,pad=30;
- const vals=points.map(x=>Number(x.weight_kg)),min=Math.min(...vals),max=Math.max(...vals),spread=Math.max(0.5,max-min);
- const lo=min-spread*.2,hi=max+spread*.2;
- const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
- svg.setAttribute("viewBox","0 0 "+width+" "+height);svg.setAttribute("role","img");
- svg.setAttribute("aria-label","Evolução do peso dos últimos "+points.length+" registos");
- const coords=points.map((p,i)=>[pad+(width-2*pad)*(points.length===1 ? 0.5 : i/(points.length-1)),height-pad-(Number(p.weight_kg)-lo)/(hi-lo)*(height-2*pad)]);
- const poly=document.createElementNS(ns,"polyline");poly.setAttribute("points",coords.map(p=>p.join(",")).join(" "));
- poly.setAttribute("fill","none");poly.setAttribute("stroke","#9CA9BA");poly.setAttribute("stroke-width","2.5");poly.setAttribute("stroke-linecap","round");poly.setAttribute("stroke-linejoin","round");svg.append(poly);
- coords.forEach((p,i)=>{const circle=document.createElementNS(ns,"circle");circle.setAttribute("cx",p[0]);circle.setAttribute("cy",p[1]);circle.setAttribute("r",i===coords.length-1?"5":"3");circle.setAttribute("fill",i===coords.length-1?"#5AA7E9":"#A8B2BE");const tip=document.createElementNS(ns,"title");tip.textContent=monitoringDate(points[i].weigh_date)+": "+monitoringDecimal(points[i].weight_kg)+" kg";circle.append(tip);svg.append(circle);});
- host.append(svg);
- const note=document.createElement("p");note.className="hint";note.textContent="Evolução dos últimos "+points.length+" registos disponíveis · sem estimar dias sem pesagem";host.append(note);
+ const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=false;
+ const dated=rows.filter(r=>/^\\d{4}-\\d{2}-\\d{2}$/.test(r.weigh_date||"")&&Number.isFinite(Number(r.weight_kg))).slice().sort((a,b)=>a.weigh_date.localeCompare(b.weigh_date));
+ const header=document.createElement("div");header.className="tm-weight-chart-head";
+ const title=document.createElement("strong");title.textContent="Evolução do peso";
+ const controls=document.createElement("div");controls.className="tm-weight-chart-controls";
+ const period=document.createElement("select");period.setAttribute("aria-label","Período do gráfico de peso");
+ for(const [value,label] of [["7","7 dias"],["15","15 dias"],["month","Mensal"]]){const option=document.createElement("option");option.value=value;option.textContent=label;period.append(option);}
+ const month=document.createElement("select");month.setAttribute("aria-label","Mês do gráfico de peso");
+ const months=[...new Set(dated.map(r=>r.weigh_date.slice(0,7)))].sort().reverse();
+ const formatter=new Intl.DateTimeFormat("pt-PT",{month:"long",year:"numeric",timeZone:"UTC"});
+ for(const m of months){const opt=document.createElement("option");opt.value=m;opt.textContent=formatter.format(new Date(m+"-01T12:00:00Z"));month.append(opt);}
+ month.hidden=true;controls.append(period,month);header.append(title,controls);host.append(header);
+ const plot=document.createElement("div");plot.className="tm-weight-chart-plot";host.append(plot);
+ const draw=()=>{
+  month.hidden=period.value!=="month";plot.replaceChildren();
+  const today=new Date(),end=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const cutoff=new Date(end);cutoff.setDate(end.getDate()-(Number(period.value)||7)+1);
+  const localIso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+  const points=dated.filter(r=>period.value==="month"?r.weigh_date.startsWith(month.value):r.weigh_date>=localIso(cutoff)&&r.weigh_date<=localIso(end));
+  if(!points.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem pesagens registadas neste período.";plot.append(p);return;}
+  const W=760,H=250,left=46,right=24,top=34,bottom=40,ns="http://www.w3.org/2000/svg";
+  const values=points.map(p=>Number(p.weight_kg)),min=Math.min(...values),max=Math.max(...values),span=Math.max(.5,max-min),lo=min-span*.22,hi=max+span*.22;
+  const x=i=>left+(W-left-right)*(points.length===1?.5:i/(points.length-1));
+  const y=value=>top+(hi-value)/(hi-lo)*(H-top-bottom);
+  const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução do peso em "+period.selectedOptions[0].textContent);
+  const node=(name,attrs,text)=>{const n=document.createElementNS(ns,name);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=String(text);return n;};
+  for(let i=0;i<=4;i++){const value=lo+(hi-lo)*i/4,cy=y(value);svg.append(node("line",{x1:left,y1:cy,x2:W-right,y2:cy,stroke:"#3d444d","stroke-dasharray":"3 5"}),node("text",{x:left-7,y:cy+4,"text-anchor":"end",fill:"#a3afbb","font-size":"11"},monitoringDecimal(value)));}
+  const average=values.reduce((a,b)=>a+b,0)/values.length,meanY=y(average);
+  svg.append(node("line",{x1:left,y1:meanY,x2:W-right,y2:meanY,stroke:"#b5bec9","stroke-dasharray":"6 6"}),node("text",{x:W-right-4,y:Math.max(top+11,meanY-8),"text-anchor":"end",fill:"#cbd4dd","font-size":"11"},"Média "+monitoringDecimal(average)+" kg"));
+  const coords=points.map((p,i)=>({x:x(i),y:y(Number(p.weight_kg))}));
+  svg.append(node("polyline",{points:coords.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:"#8DAFC6","stroke-width":"2.6","stroke-linecap":"round","stroke-linejoin":"round"}));
+  for(const i of new Set([0,Math.floor((points.length-1)/2),points.length-1]))svg.append(node("text",{x:coords[i].x,y:H-12,"text-anchor":i===0?"start":i===points.length-1?"end":"middle",fill:"#a3afbb","font-size":"11"},monitoringDate(points[i].weigh_date)));
+  coords.forEach((p,i)=>{const dot=node("circle",{cx:p.x,cy:p.y,r:4.5,fill:"#1b2027",stroke:"#a5c7de","stroke-width":"2.5"});dot.append(node("title",{},monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"));svg.append(dot);});
+  plot.append(svg);
+ };
+ period.addEventListener("change",draw);month.addEventListener("change",draw);draw();
 }
 async function openMonitoring(kind){
  const athleteId=model?.athlete?.id;if(!athleteId)return;
