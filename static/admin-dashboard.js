@@ -19,22 +19,13 @@
  const settingsPage=$("tm-admin-settings"),settingsAdmin=$("tm-settings-admins");
  const accountPanel=$("admin-account-panel"),activationPanel=$("admin-access-panel");
  const adminList=$("admin-users-list"),inviteForm=$("admin-invite-form");
- const activationHome=document.createComment("admin-activation-original");
- const listHome=document.createComment("admin-list-original"),inviteHome=document.createComment("admin-invite-original");
- if(activationPanel)activationPanel.before(activationHome);
- if(adminList)adminList.before(listHome);
- if(inviteForm)inviteForm.before(inviteHome);
- function moveAdminControls(toSettings){
-  if(toSettings&&settingsAdmin){
-   settingsAdmin.append(adminList,inviteForm,activationPanel);
-   activationPanel.hidden=false;
-  }else{
-   if(listHome.parentNode)listHome.after(adminList);
-   if(inviteHome.parentNode)inviteHome.after(inviteForm);
-   if(activationHome.parentNode)activationHome.after(activationPanel);
-   activationPanel.hidden=true;
-  }
+ // Keep the existing administrator controls in Settings at all times.
+ // Navigation only changes visibility; it must never return these to Minha conta.
+ if(settingsAdmin&&adminList&&inviteForm&&activationPanel){
+  settingsAdmin.append(adminList,inviteForm,activationPanel);
+  activationPanel.hidden=false;
  }
+ function moveAdminControls(){/* Existing controls remain mounted in Settings. */}
  function navActive(target){
   const id=target?.id,accountView=id==="tm-admin-nav-account",settingsView=id==="tm-admin-nav-settings";
   moveAdminControls(settingsView);
