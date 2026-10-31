@@ -1027,3 +1027,8 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-weight-chart-plot{position:relative}
 .tm-weight-point-tooltip{position:absolute;z-index:5;pointer-events:none;transform:translate(-50%,-100%);padding:8px 11px;border:1px solid #718ba3;border-radius:8px;background:#252b34;color:#f3f6f9;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 5px 18px #0006}
 .tm-weight-point-tooltip[hidden]{display:none!important}
+
+/* Sidebar account view must not expose Planning content beneath the account panel. */
+#tm-admin-legacy.tm-account-only > :not(header){display:none!important}
+#tm-admin-legacy.tm-account-only #admin-account-panel:not([hidden]){display:block!important}
+#tm-admin-legacy.tm-account-only > header{display:none!important}

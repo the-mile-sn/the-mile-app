@@ -16,7 +16,7 @@
  function dateLabel(d){return new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(d+"T12:00:00Z"));}
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
- function navActive(target){for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
+ function navActive(target){legacy.classList.toggle("tm-account-only",target?.id==="tm-admin-nav-account");for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}}
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
  const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
  const assessmentHome=document.createComment("assessments-original"),monitoringHome=document.createComment("forms-original");
