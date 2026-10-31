@@ -2323,6 +2323,7 @@ async function loadAssessmentsAdmin(){
   row.append(remove);wrap.append(row);
  }
 }
+$("assessment-close").onclick=()=>{if(window.confirm("Fechar a avaliação? As alterações não guardadas serão perdidas."))$("assessment-review-form").hidden=true;};
 $("assessment-new").onclick=()=>{assessmentPdf="";assessmentUploadedFor="";renderAssessmentForm({});$("assessment-review-form").scrollIntoView({behavior:"smooth",block:"start"});};
 async function saveAssessmentAdmin(publish){
  const msg=$("assessment-save-feedback"),athleteId=$("athlete").value;msg.textContent="";
