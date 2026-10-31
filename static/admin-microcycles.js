@@ -416,10 +416,10 @@ async function openMonitoring(kind){
   if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
   info.textContent=rows.length+" registo(s)";
   const table=document.createElement("table");table.className=kind==="game"?"tm-postmatch-matrix":"tm-weight-records";
-  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"]];
+  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína pré-jogo"],["caffeine_half","Cafeína ao intervalo"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"]];
   const head=document.createElement("tr");for(const [,label]of fields){const th=document.createElement("th");th.textContent=label;head.append(th);}const th=document.createElement("th");th.textContent="Ações";head.append(th);const thead=document.createElement("thead");thead.append(head);table.append(thead);
   const body=document.createElement("tbody");
-  const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
+  const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína pré-jogo",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
   const alternatives={none:"Nenhum",mild:"Ligeiro",moderate:"Moderado",severe:"Intenso",cramps:"Cãibras",muscle_pain:"Dores musculares",injury:"Lesão",weakness_dizziness:"Fraqueza/tonturas"};
   const visualTone=(key,value)=>{
    if(value===undefined||value===null||value===""||(Array.isArray(value)&&!value.length))return "missing";
