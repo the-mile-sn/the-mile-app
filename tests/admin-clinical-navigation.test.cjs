@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=88/);
+ assert.match(html,/admin-microcycles\.css\?v=89/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
