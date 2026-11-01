@@ -1057,21 +1057,21 @@ function renderDayPreview(day,host){
  host.replaceChildren();
  window.currentNutritionDay=day;
  const heading=document.createElement("h3");
- heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Geral automático · por definir");
+ heading.textContent=day.date+" · "+(day.classification||"Geral · por definir");
  host.appendChild(heading);
  const grid=document.createElement("div");grid.className="day-meals";
  for(const entry of mealColorsForDay(day)){
   const cell=document.createElement("div");cell.className="day-meal";
-  const label=document.createElement("span");label.textContent=names[entry.meal];
-  const colorBar=document.createElement("strong");colorBar.className="day-meal-color"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
-  colorBar.textContent=entry.color?" ":"—";cell.append(label,colorBar);
+  const colorBar=document.createElement("div");colorBar.className="day-meal-color day-meal-header"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
+  const label=document.createElement("span");label.className="day-meal-label";label.textContent=names[entry.meal];
+  colorBar.append(label);cell.append(colorBar);
   const modelRow=model.classifications.find(r=>r.name===day.classification);
   const baseline=modelRow?.meals?.[entry.meal]||null;
   const isOverride=Object.hasOwn(dayColorOverrides,day.date+"|"+entry.meal);
   const choose=document.createElement("select");choose.className="day-color-select";
   choose.setAttribute("aria-label","Alterar cor de "+names[entry.meal]+" apenas em "+day.date);
   const inherit=document.createElement("option");inherit.value="";
-  inherit.textContent="Modelo"+(baseline?" · "+(colors[baseline]||baseline):" · sem cor");choose.append(inherit);
+  inherit.textContent=entry.color?(colors[entry.color]||entry.color):"Sem cor";inherit.title="Manter a cor atribuída pelo modelo";choose.append(inherit);
   const noMeal=document.createElement("option");noMeal.value="none";noMeal.textContent="Nenhuma · remover refeição";choose.append(noMeal);
   for(const [colorName,colorLabel] of Object.entries(colors)){
    const option=document.createElement("option");option.value=colorName;option.textContent=colorLabel;choose.append(option);
@@ -1086,22 +1086,21 @@ function renderDayPreview(day,host){
     await loadCalendar();
    }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
   });
-  cell.append(choose);
+  colorBar.append(choose);
   const average=entry.color?averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]):null;
   if(average){
    const macros=document.createElement("div");macros.className="day-meal-nutrients";
-   for(const [klass,value] of [
-    ["nutrient-kcal",formatNutrition(average.kcal,0)+" kcal"],
-    ["nutrient-protein","P "+formatNutrition(average.protein_g)+" g"],
-    ["nutrient-carbs","HC "+formatNutrition(average.carbs_g)+" g"],
-    ["nutrient-fat","G "+formatNutrition(average.fat_g)+" g"]
-   ]){
-    const item=document.createElement("span");item.className=klass;item.textContent=value;macros.append(item);
-   }
+   macros.textContent=[
+    formatNutrition(average.kcal,0)+" kcal",
+    formatNutrition(average.protein_g)+" g",
+    formatNutrition(average.carbs_g)+" g",
+    formatNutrition(average.fat_g)+" g"
+   ].join(" · ");
+   macros.setAttribute("aria-label",names[entry.meal]+": "+formatNutrition(average.kcal,0)+" quilocalorias, "+formatNutrition(average.protein_g)+" gramas de proteína, "+formatNutrition(average.carbs_g)+" gramas de hidratos e "+formatNutrition(average.fat_g)+" gramas de gordura");
    cell.append(macros);
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
-   unavailable.textContent=entry.color?"Valores nutricionais indisponíveis":"Sem refeição atribuída";cell.append(unavailable);
+   unavailable.textContent=entry.color?"Valores nutricionais indisponíveis":"—";if(!entry.color)unavailable.setAttribute("aria-label","Sem refeição atribuída");cell.append(unavailable);
   }
   grid.appendChild(cell);
  }
@@ -1137,7 +1136,9 @@ async function loadCalendar(){
     selectedNutritionWeek=isoDay(weekStart(anchor));
   }
   let weekly=$("nutrition-weekly-summary");
-  if(!weekly){weekly=document.createElement("section");weekly.id="nutrition-weekly-summary";weekly.className="import-validation-progress";$("calendar-matches").insertAdjacentElement("afterend",weekly);}
+  if(!weekly){weekly=document.createElement("section");weekly.id="nutrition-weekly-summary";weekly.className="import-validation-progress";}
+  // Keep the weekly summary outside the collapsible month-events details.
+  $("calendar-month-events").insertAdjacentElement("afterend",weekly);
   weekly.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation";
@@ -1156,9 +1157,8 @@ async function loadCalendar(){
   const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri,weeklyColors));
   const covered=results.filter(item=>item.total).length;
   const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
-  const progress=document.createElement("p");
+  const progress=document.createElement("p");progress.className="calendar-week-coverage";
   progress.textContent=covered+"/7 dias com valores nutricionais disponíveis";
-  weekly.appendChild(progress);
   if(complete){
     const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
     for(const result of results)for(const key of Object.keys(sums))sums[key]+=result.total[key];
@@ -1170,6 +1170,7 @@ async function loadCalendar(){
     warning.textContent="Média diária semanal indisponível: faltam prescrições ou valores nutricionais para completar os sete dias.";
     weekly.appendChild(warning);
   }
+  weekly.appendChild(progress);
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
