@@ -427,20 +427,18 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const dayData=r.days.find(x=>x.date===date);
   const top=document.createElement("div");top.className="weekly-detail-heading";
   const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"Geral");
+  const title=document.createElement("strong");title.textContent=names[meal]||meal;
   const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
-  top.append(caption,close);section.append(top);
+  const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
   const options=plans[color]?.[meal]||[],avg=average(options);
-  const head=document.createElement("div");head.className="weekly-color-meal-head";
-  const title=document.createElement("strong");title.textContent=names[meal]||meal;head.append(title);decorateLabel(head,meal);
-  if(avg){const totals=document.createElement("span");totals.className="meal-average meal-average-inline";totals.append(nutrition(avg));head.append(totals);}
-  section.append(head);
+  if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
   if(meal==="lunch"||meal==="dinner"){
    const menu=weekMenus.find(x=>x.menu_date===date&&x.meal===meal);
    if(menu){const line=document.createElement("div");line.className="weekly-menu-line";line.textContent=menu.value;section.append(line);}
   }
   if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent="Plano ainda não publicado.";section.append(note);}
   else if(options.length===1){
-   const body=document.createElement("div");body.className="weekly-color-single-option";appendMealItems(body,options[0].items);section.append(body);
+   appendMealItems(section,options[0].items);
   }else options.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("weekly-option-card");section.append(item);});
   attachSupplements(section,(supplementsByDay[date]||[]).filter(x=>x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner")));
   detail.append(section);
