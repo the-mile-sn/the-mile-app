@@ -400,3 +400,7 @@ html[data-admin-theme="light"] #calendar-section .nutrition-metric-value.nutrien
 html[data-admin-theme="light"] #calendar-section .nutrition-metric-value.nutrient-fat{color:#887029}
 html[data-admin-theme="light"] #calendar-section .calendar-day-peri{border-color:#d7dfe8}
 html[data-admin-theme="light"] #calendar-section .calendar-event-count{color:#617084}
+
+html[data-admin-theme="light"] #calendar-section .day-preview .day-meal-nutrients{color:#637083}
+html[data-admin-theme="light"] #calendar-section #nutrition-weekly-summary .calendar-week-coverage{color:#637083}
+html[data-admin-theme="light"] #calendar-section .day-preview .day-meal-no-color{background:#edf0f4;color:#4c5b6c}
