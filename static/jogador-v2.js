@@ -1169,7 +1169,7 @@ for(const icon of document.querySelectorAll("#tabs .mile-icon")){const name=[...
 updateOfficialIcons();
 $("plans-open-prescriptions").onclick=()=>openPlansSection("prescriptions");
 
-$("plans-back-prescriptions").onclick=()=>openPlansSection("landing");
+
 
 session().catch(()=>{$("login-panel").hidden=false;});
 
