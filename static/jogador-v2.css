@@ -3472,3 +3472,43 @@ body.profile-active .player-top{display:none!important}
 @media(max-width:620px){
  #week-strip.week,#menu-week-strip.week{grid-template-columns:repeat(7,minmax(0,1fr))!important}
 }
+
+/* Weekly calendar header shares the daily / Menus day-chip language. */
+#weekly-view .weekly-calendar-grid>.weekly-day-header.week-day{
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:6px!important;
+ min-width:0!important;min-height:87px!important;padding:9px 0!important;
+ border:0!important;background:transparent!important;box-shadow:none!important;
+ border-radius:10px!important;color:#f2f2f4!important;overflow:visible!important;
+}
+#weekly-view .weekly-day-header.week-day .weekday,
+#weekly-view .weekly-day-header.week-day .day-classification{
+ font-size:10px!important;font-weight:400!important;color:#aaaab4!important;
+ line-height:1.2!important;max-width:100%;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap;
+}
+#weekly-view .weekly-day-header.week-day .day-number{
+ font-size:18px!important;font-weight:720!important;line-height:1!important;
+ width:35px!important;height:35px!important;display:grid!important;
+ place-items:center!important;border-radius:50%!important;margin:0 auto!important;
+ background:transparent!important;color:#f2f2f4!important;
+}
+#weekly-view .weekly-day-header.week-day.selected .day-number{
+ background:#f3f3f5!important;color:#17171b!important;
+}
+#weekly-view .weekly-day-header.week-day.today:not(.selected) .day-number{
+ color:#7bb8fa!important;
+}
+#weekly-view .weekly-day-header.week-day.today.selected .day-number{
+ background:#f3f3f5!important;color:#2070bb!important;
+}
+/* Energy carries visual priority; macros remain compact, secondary figures. */
+#weekly-view .weekly-day-total .weekly-total-kcal{
+ font-size:clamp(12px,2.8vw,17px)!important;
+ font-weight:650!important;line-height:1.25!important;
+ color:#a4d6ad!important;letter-spacing:-.15px!important;
+}
+#weekly-view .weekly-day-total .weekly-total-macros{
+ font-size:clamp(7px,1.5vw,9px)!important;font-weight:400!important;
+ opacity:.76!important;line-height:1.2!important;
+}
