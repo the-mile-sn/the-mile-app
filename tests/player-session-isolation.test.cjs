@@ -19,7 +19,7 @@ test('responses from prior session never reach current UI',()=>{
  assert.match(source,/requestId!==overviewRequestId\|\|epoch!==playerSessionEpoch/);
 });
 test('login preserves input credentials across cache reset',()=>{
- assert.match(source,/const identifier=\$\("username"\)\.value\.trim\(\)\.toLowerCase\(\),password=\$\("password"\)\.value;revokePlayerView\(\);await api\("\/api\/login"/);
+ assert.match(source,/const identifier=\$\("username"\)\.value\.trim\(\)\.toLowerCase\(\),password=\$\("password"\)\.value;revokePlayerView\(\);\$\("status"\)\.textContent="";await api\("\/api\/login"/);
 });
 test('stale rejected cached promises cannot evict new account reads',()=>{
  assert.match(source,/if\(overviewReadCache\.get\(path\)\?\.promise===promise\)overviewReadCache\.delete\(path\)/);
