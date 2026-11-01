@@ -34,7 +34,7 @@
  function dateLabel(d){return new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(d+"T12:00:00Z"));}
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
- const settingsPage=$("tm-admin-settings"),settingsAdmin=$("tm-settings-admins");
+ const settingsPage=$("tm-admin-settings"),settingsAdmin=$("tm-settings-admins"),dashboardReturn=$("tm-dashboard-return");
  const accountPanel=$("admin-account-panel"),activationPanel=$("admin-access-panel");
  const adminList=$("admin-users-list"),inviteForm=$("admin-invite-form");
  // Keep the existing administrator controls in Settings at all times.
@@ -49,6 +49,7 @@
   moveAdminControls(settingsView);
   if(settingsPage)settingsPage.hidden=!settingsView;
   legacy.classList.toggle("tm-account-only",accountView);
+  if(dashboardReturn)dashboardReturn.hidden=target===dash||!$("tm-players-profile").hidden;
   for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
  }
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
@@ -156,6 +157,8 @@
  window.tmOpenAdminForms=aid=>openClinical("forms",aid);
  function openDashboard(){closeClinical();if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
+ $("tm-dashboard-return-button").addEventListener("click",openDashboard);
+ $("tm-admin-brand-home").addEventListener("click",openDashboard);
 function ensurePlanningOnlyView(){
  // Clinical and personal panels are mounted in dedicated sidebar areas, not Planeamento.
  if(typeof backofficeView!=="undefined"&&(backofficeView==="profile"||backofficeView==="assessments")&&typeof showBackofficeView==="function"){
@@ -262,12 +265,14 @@ function ensurePlanningOnlyView(){
  function closePlayerProfile(){
   ++profileLoadToken;
   profileNav.hidden=true;playersHeader.hidden=false;
+  if(dashboardReturn)dashboardReturn.hidden=false;
   profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
   const token=++profileLoadToken;
   playersHeader.hidden=true;profileNav.hidden=false;
+  if(dashboardReturn)dashboardReturn.hidden=true;
   playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;
   window.scrollTo({top:0,behavior:"smooth"});
   $("tm-players-profile-title").textContent="A carregar perfil…";$("tm-players-profile-fields").replaceChildren();
