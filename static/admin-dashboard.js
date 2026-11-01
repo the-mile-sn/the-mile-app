@@ -235,7 +235,7 @@ function ensurePlanningOnlyView(){
   finally{accessToggle.disabled=false;}
  });
 
- const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)");
+ const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)"),profileNav=$("tm-players-profile-nav"),playersHeader=playersPage.querySelector(".tm-players-heading-minimal");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Notas internas","profile_notes","textarea"]];
  function displayPlayerProfile(){
   if(!playerProfile)return;
@@ -261,12 +261,15 @@ function ensurePlanningOnlyView(){
  }
  function closePlayerProfile(){
   ++profileLoadToken;
+  profileNav.hidden=true;playersHeader.hidden=false;
   profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
   const token=++profileLoadToken;
+  playersHeader.hidden=true;profileNav.hidden=false;
   playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;
+  window.scrollTo({top:0,behavior:"smooth"});
   $("tm-players-profile-title").textContent="A carregar perfil…";$("tm-players-profile-fields").replaceChildren();
   $("tm-players-profile-feedback").textContent="";
   try{

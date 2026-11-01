@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=22/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=23/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -240,8 +240,8 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=1/);
- assert.match(html,/\/admin-dashboard\.js\?v=22/);
+ assert.match(html,/\/admin-light-theme\.css\?v=2/);
+ assert.match(html,/\/admin-dashboard\.js\?v=23/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -258,7 +258,26 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=1"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=2"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
  assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
+});
+
+
+test("Player profile uses a top-left back arrow outside the detail card",()=>{
+ assert.match(html,/id="tm-players-profile-nav" class="tm-subpage-nav" hidden/);
+ assert.ok(html.indexOf('id="tm-players-profile-back"')<html.indexOf('id="tm-players-profile"'));
+ assert.match(html,/id="tm-players-profile-back" class="tm-subpage-back" aria-label="Voltar à lista de jogadores"/);
+ assert.match(dashboard,/profileNav\.hidden=true;playersHeader\.hidden=false;/);
+ assert.match(dashboard,/playersHeader\.hidden=true;profileNav\.hidden=false;/);
+ assert.match(dashboard,/\$\("tm-players-profile-back"\)\.addEventListener\("click",closePlayerProfile\)/);
+ const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
+ assert.match(css,/\.tm-subpage-nav\[hidden\]/);
+});
+test("Light Formulários panel and chart point centers have dedicated contrast styles",()=>{
+ const css=require("node:fs").readFileSync("static/admin-light-theme.css","utf8");
+ assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
+ assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
+ assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
+ assert.match(html,/admin-light-theme\.css\?v=2/);
 });
