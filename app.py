@@ -2,7 +2,7 @@
 import base64
 import csv
 import io
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 import zipfile
 import hashlib
 import hmac
@@ -332,6 +332,35 @@ def player_menu_photo(image_bytes):
             return buf.getvalue()
     except (OSError,UnidentifiedImageError):
         return image_bytes
+
+
+def player_avatar_photo(image_data, mime):
+    """Serve a smaller private avatar without modifying the original stored photo."""
+    if len(image_data) <= 120_000:
+        return image_data, mime
+    try:
+        with Image.open(io.BytesIO(image_data)) as original:
+            # Do not expand unusually large or malformed uploads.
+            if original.width * original.height > 32_000_000:
+                return image_data, mime
+            photo = ImageOps.exif_transpose(original)
+            photo.thumbnail((480, 480), Image.Resampling.LANCZOS)
+            if "A" in photo.getbands() or "transparency" in photo.info:
+                rgba = photo.convert("RGBA")
+                background = Image.new("RGB", rgba.size, (17, 17, 19))
+                background.paste(rgba, mask=rgba.getchannel("A"))
+                photo = background
+            else:
+                photo = photo.convert("RGB")
+            output = io.BytesIO()
+            photo.save(output, format="JPEG", quality=82, optimize=True)
+            result = output.getvalue()
+            if len(result) < len(image_data):
+                return result, "image/jpeg"
+    except (OSError, ValueError, Image.DecompressionBombError):
+        # Preserve the existing API if legacy photo bytes cannot be decoded.
+        pass
+    return image_data, mime
 
 
 def digest(value):
@@ -1173,7 +1202,8 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 photo = c.execute("SELECT photo,photo_mime FROM users WHERE id=? AND active=1 AND role='player'", (user['id'],)).fetchone()
                 if not photo or not photo['photo']: raise Problem(404, 'not_found')
-                return respond(200, bytes(photo['photo']), photo['photo_mime'] or 'image/jpeg')
+                avatar_bytes, avatar_mime = player_avatar_photo(bytes(photo['photo']), photo['photo_mime'] or 'image/jpeg')
+                return respond(200, avatar_bytes, avatar_mime)
 
             if path == '/api/v2/player/assessments' and method == 'GET':
                 if not user or user['role'] != 'player': raise Problem(403,'forbidden')
