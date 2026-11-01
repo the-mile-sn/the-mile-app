@@ -23,7 +23,8 @@ test('header uses official Backoffice wordmark and right-side private avatar',()
 });
 test('profile notifications are a noninteractive placeholder without network calls',()=>{
  assert.match(html,/class="profile-notifications-card"/);
- assert.match(html,/<details class="profile-notifications-card">/);
+ assert.match(html,/id="profile-notifications-open"/);
+ assert.match(html,/id="profile-notifications-page"/);
  assert.match(html,/>Notificações<\/span>/);
  assert.match(html,/class="profile-notification-indicator" hidden/);
  assert.doesNotMatch(html,/id="profile-notifications-toggle"/);

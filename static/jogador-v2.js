@@ -20,6 +20,7 @@ function revokePlayerView(){
   const el=$(id);if(el)el.replaceChildren();
  }
  document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
+ resetProfileSubpage();
  for(const id of ["profile-photo","header-player-photo"]){const image=$(id);image.hidden=true;image.removeAttribute("src");image.onload=null;image.onerror=null;}
  $("profile-photo-initials").hidden=false;$("avatar-initials").hidden=false;
  $("profile-plan-value").textContent="Por definir";$("profile-renewal-date").textContent="Por definir";
@@ -221,7 +222,7 @@ async function session(){
  $("logout").hidden=false;
  await show(tab);
 }
-async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("prescriptions");if(t==="assessments")openPlansSection("assessments");if(t==="menus")await menusView();}
+async function show(t){if(t!=="profile")resetProfileSubpage();tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("prescriptions");if(t==="assessments")openPlansSection("assessments");if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(target){
  const data=await api("/api/v2/player/supplements"),root=target||$("plan-detail");if(!root.isConnected)return;root.replaceChildren();
@@ -1127,7 +1128,27 @@ async function menusView(){const epoch=playerSessionEpoch;const start=monday(men
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken)root.replaceChildren(fragment);}
 function error(e){if(e.stale||e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
 $("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
-$("profile-password-toggle").onclick=()=>{const form=$("profile-password-form");form.hidden=!form.hidden;};
+function resetProfilePassword(){
+ $("profile-password-form").reset();
+ $("profile-password-feedback").textContent="";
+}
+function resetProfileSubpage(){
+ resetProfilePassword();
+ $("profile-main").hidden=false;
+ $("profile-notifications-page").hidden=true;
+ $("profile-password-page").hidden=true;
+}
+function openProfileSubpage(page){
+ resetProfilePassword();
+ $("profile-main").hidden=true;
+ $("profile-notifications-page").hidden=page!=="notifications";
+ $("profile-password-page").hidden=page!=="password";
+ window.scrollTo?.(0,0);
+}
+$("profile-notifications-open").onclick=()=>openProfileSubpage("notifications");
+$("profile-password-open").onclick=()=>openProfileSubpage("password");
+$("profile-notifications-back").onclick=resetProfileSubpage;
+$("profile-password-back").onclick=resetProfileSubpage;
 $("profile-password-form").onsubmit=async e=>{
  e.preventDefault();const feedback=$("profile-password-feedback"),button=e.currentTarget.querySelector('button[type="submit"]');
  const current=$("profile-current-password").value,next=$("profile-new-password").value,confirm=$("profile-confirm-password").value;
@@ -1136,7 +1157,7 @@ $("profile-password-form").onsubmit=async e=>{
  if(!profileUsername){feedback.textContent="Não foi possível identificar a conta. Volta a iniciar sessão.";return;}
  button.disabled=true;feedback.textContent="";
  try{await api("/api/change-password",{method:"POST",body:JSON.stringify({identifier:profileUsername,current_password:current,new_password:next})});
- $("profile-current-password").value="";$("profile-new-password").value="";$("profile-confirm-password").value="";
+ resetProfilePassword();
  revokePlayerView();$("status").textContent="Palavra-passe alterada. Inicia sessão novamente.";
  }catch(err){feedback.textContent="Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente.";}finally{button.disabled=false;}
 };

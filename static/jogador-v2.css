@@ -3048,14 +3048,25 @@ body.profile-active .player-top{display:none!important}
 .player-top #player-avatar{margin-left:auto!important;z-index:1}
 #tabs button[data-tab="assessments"] .mile-icon{width:21px;height:21px}
 #plans #plans-assessments .assessments-page-heading{font-size:20px;font-weight:550;margin:6px 5px 22px}
-#profile .profile-notifications-card{display:block;min-height:0;margin:0 0 16px;padding:0;border:0;border-radius:17px;background:#242429;overflow:hidden}
-#profile .profile-notifications-trigger{display:flex;align-items:center;gap:13px;min-height:64px;padding:18px 19px;list-style:none;cursor:pointer;color:#f1f1f3;font-size:15px;font-weight:450}
-#profile .profile-notifications-trigger::-webkit-details-marker{display:none}
-#profile .profile-notification-icon{width:22px;height:22px;flex:0 0 22px;display:inline-flex;align-items:center;justify-content:center}
-#profile .profile-notification-icon svg{display:block;width:22px;height:22px;max-width:22px;max-height:22px}
-#profile .profile-notification-chevron{width:9px;height:9px;border:solid #9f9fa7;border-width:0 1.7px 1.7px 0;transform:rotate(45deg);margin-left:auto;margin-right:5px;transition:transform .18s}
-#profile .profile-notifications-card[open] .profile-notification-chevron{transform:rotate(225deg)}
-#profile .profile-notification-indicator:not([hidden]){display:block;width:7px;height:7px;border-radius:50%;background:#c8d9cd;margin-left:auto}
-#profile .profile-notification-indicator:not([hidden])+.profile-notification-chevron{margin-left:0}
-#profile .profile-notifications-content{border-top:1px solid rgba(255,255,255,.12);padding:13px 19px 18px;color:#a9a9b1;font-size:13px}
-#profile .profile-notifications-content p{margin:0}
+
+/* Profile: page navigation instead of disclosure cards. */
+#profile button.profile-notifications-card{display:flex!important;align-items:center!important;gap:13px!important;width:100%!important;min-height:64px!important;margin:0 0 16px!important;padding:18px 19px!important;border:0!important;border-radius:17px!important;background:#242429!important;color:#f1f1f3!important;box-shadow:none!important;text-align:left!important;font-size:15px!important;font-weight:450!important;cursor:pointer}
+#profile .profile-notification-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;width:22px;height:22px}
+#profile .profile-notification-icon svg{display:block;width:22px!important;height:22px!important;max-width:22px;max-height:22px}
+#profile .profile-notification-label{flex:1;min-width:0}
+#profile .profile-notifications-card .profile-action-chevron{font-size:25px;line-height:1;color:#9f9fa7}
+#profile .profile-notification-indicator:not([hidden]){display:block;width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#c8d9cd}
+#profile .profile-subpage{padding:0 0 45px}
+#profile .profile-subpage-header{display:flex;align-items:center;gap:13px;margin:4px 3px 25px;min-height:40px}
+#profile .profile-subpage-header h2{margin:0;color:#f5f5f7;font-size:20px;font-weight:550;line-height:1.25;letter-spacing:-.02em}
+#profile button.profile-page-back{display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;padding:0!important;border:1px solid #414148!important;border-radius:50%!important;background:#242428!important;color:#ededf0!important;box-shadow:none!important}
+#profile .profile-page-back span{position:relative;top:-2px;left:-1px;font-size:26px;font-weight:350;line-height:1}
+#profile .profile-notifications-empty{padding:23px 20px;border-radius:17px;background:#242429}
+#profile .profile-notifications-empty p{margin:0;color:#aaaab3;font-size:14px;line-height:1.5}
+#profile .profile-password-intro{margin:0 5px 17px;color:#aaaab3;font-size:13px;line-height:1.55}
+#profile .profile-password-page-form{display:flex;flex-direction:column;gap:17px;padding:20px 18px;margin:0;border:0;border-radius:17px;background:#242429}
+#profile .profile-password-page-form label{margin:0;display:flex;flex-direction:column;gap:8px;font-size:13px;color:#bcbcc3}
+#profile .profile-password-page-form input{margin:0!important;display:block;width:100%!important;max-width:none!important;min-height:48px!important;height:48px!important;padding:11px 13px!important;border:1px solid #4c4c53!important;border-radius:11px!important;background:#313139!important;color:#fff!important;font-size:16px!important}
+#profile .profile-password-page-form #profile-password-feedback{margin:0;color:#e8b48b;font-size:12px;line-height:1.45}
+#profile .profile-password-page-form #profile-password-feedback:empty{display:none}
+#profile .profile-password-page-form button.profile-password-save{align-self:stretch!important;margin-top:2px!important;padding:13px 17px!important;min-height:46px!important;font-size:14px!important}
