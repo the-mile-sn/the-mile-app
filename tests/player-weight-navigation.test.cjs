@@ -6,14 +6,14 @@ test("future dates avoid rejected weight fetch and remove action button",()=>{
  assert.match(source,/if\(date>iso\(new Date\(\)\)\)\{/);
  assert.match(source,/action\.remove\(\); \/\/ Future dates display the weight card without any action\./);
  assert.doesNotMatch(source,/Disponível no próprio dia/);
- assert.ok(source.indexOf("if(date>iso(new Date()))") < source.indexOf('api("/api/v2/player/weight?date="+date)'));
+ assert.ok(source.indexOf("if(date>iso(new Date()))") < source.indexOf('cachedOverviewRead("/api/v2/player/weight?date="+date)'));
 });
 test("weight request cannot block meal rendering",()=>{
  assert.match(source,/renderWeightCard\(root,d\)\.catch\(\(\)=>\{\}\);/);
  assert.doesNotMatch(source,/await renderWeightCard\(root,d\)/);
 });
 test("weekly reference weights and menu data are shared across daily and weekly views",()=>{
- assert.match(source,/const \[r,weekMenus,weekWeights\]=await Promise\.all/);
+ assert.match(source,/\[r,weekMenus,weekWeights\]=await Promise\.all/);
  assert.match(source,/weekWeights\.weights_by_date\?\.\[d\]/);
  assert.match(source,/x\.menu_date===d&&x\.meal===meal/);
 });
