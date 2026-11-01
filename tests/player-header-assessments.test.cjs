@@ -12,7 +12,7 @@ test('assessments are a standalone view connected to the original published data
  assert.match(html,/<div id="plans-assessments">/);
  assert.match(html,/id="assessment-measurements"/);
  assert.match(js,/if\(t==="assessments"\)openPlansSection\("assessments"\)/);
- assert.match(js,/api\("\/api\/v2\/player\/assessments"\)/);
+ assert.match(js,/cachedOverviewRead\("\/api\/v2\/player\/assessments"\)/);
  assert.match(js,/renderPlayerAssessments\(\)/);
 });
 test('header uses official Backoffice wordmark and right-side private avatar',()=>{
