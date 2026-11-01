@@ -668,7 +668,7 @@ async function loadMenus(){
       for(const [value,name] of [["category","Categoria"],["dish","Prato completo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=name;kind.appendChild(opt);}
       kind.value=existing?.kind||"category";kind.className="menu-kind";line.appendChild(kind);
       const category=document.createElement("select");
-      const categoryNames=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix"];
+      const categoryNames=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"];
       const previousCategory=existing?.kind==="category"?existing.value:"";
       const categories=previousCategory&&!categoryNames.includes(previousCategory)?[previousCategory,...categoryNames]:categoryNames;
       const chooseCategory=document.createElement("option");chooseCategory.value="";chooseCategory.textContent="Selecionar categoria…";category.appendChild(chooseCategory);

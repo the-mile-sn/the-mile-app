@@ -1434,7 +1434,7 @@ def application(env, start_response):
                         kind=item.get('kind')
                         value=item.get('value')
                         if meal not in ('lunch','dinner') or kind not in ('category','dish') or not isinstance(value,str) or not value.strip() or len(value)>200: raise ValueError()
-                        if kind=='category' and value.strip() not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix'): raise ValueError()
+                        if kind=='category' and value.strip() not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix','CT','Estágio'): raise ValueError()
                         validated.append((date,meal,kind,value.strip()))
                     if len(set((v[0],v[1]) for v in validated))!=len(validated): raise ValueError()
                 except (ValueError,TypeError,AttributeError):
