@@ -3098,3 +3098,46 @@ body.profile-active .player-top{display:none!important}
 #menus .menu-skeleton{margin:8px 0 18px}
 #menus .menu-skeleton-range{display:block;text-align:center;color:#a5a5b0;font-size:13px;margin:8px 0 15px}
 #menus .menu-skeleton-card{height:85px;border-radius:13px;margin:10px 0}
+
+/* Weekly peri-training and peri-match protocols mirror neutral Docs cards.
+   Scoped to peri-only details: colored nutrition-plan meals remain untouched. */
+#weekly-view .peri-weekly-detail{
+ background:#18181b!important;
+ color:#f3f3f5;
+ border-radius:16px;
+ box-shadow:none!important;
+}
+#weekly-view .peri-weekly-detail .weekly-meal-average{
+ background:transparent!important;
+}
+#weekly-view .peri-weekly-detail .weekly-option-card{
+ background:rgba(255,255,255,.05)!important;
+ border:0!important;
+ border-radius:11px!important;
+ box-shadow:none!important;
+ padding:12px 13px!important;
+ margin:9px 0!important;
+}
+#weekly-view .peri-weekly-detail .weekly-option-card .plan-option-label small{
+ color:#b8b8c0!important;
+}
+#weekly-view .peri-weekly-detail .weekly-option-card .plan-option-label strong{
+ color:#f3f3f5!important;
+}
+#weekly-view .peri-weekly-detail .weekly-option-card .option:after{
+ color:#bbbcc4!important;
+}
+#weekly-view .peri-weekly-detail .foods{
+ background:transparent!important;
+ border-bottom:1px solid rgba(255,255,255,.09)!important;
+}
+#weekly-view .peri-weekly-detail>.foods:last-child,
+#weekly-view .peri-weekly-detail .weekly-option-card .foods:last-child{
+ border-bottom:0!important;
+}
+#weekly-view .weekly-peri-card,
+#weekly-view .weekly-match-with-intra,
+#weekly-view .weekly-event-card{
+ background:#35363b!important;
+ color:#f3f3f5!important;
+}
