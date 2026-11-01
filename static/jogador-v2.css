@@ -3402,3 +3402,38 @@ body.profile-active .player-top{display:none!important}
  #overview #day-details .nutrition-comparison-stat small{font-size:9px}
  #overview #day-details .nutrition-comparison-stats{padding-right:15px;gap:6px}
 }
+
+/* Keep the approved dual halo as the permanent header in both states. */
+#overview #day-details .nutrition-donut-summary,
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]),
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])){
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ padding:15px 12px 14px!important;gap:0!important;align-items:stretch!important;
+}
+#overview #day-details .nutrition-donut-summary>.nutrition-hero,
+#overview #day-details .nutrition-donut-summary>.nutrition-macro-row{display:none!important}
+#overview #day-details .nutrition-donut-summary .nutrition-comparison,
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])) .nutrition-comparison{
+ display:grid!important;grid-column:1!important;grid-row:1!important;
+ grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)!important;
+}
+#overview #day-details .nutrition-donut-summary>.nutrition-weekly-charts{
+ grid-column:1!important;grid-row:2!important;
+ width:100%!important;max-width:100%!important;margin-right:0!important;
+ padding:19px 3px 5px!important;
+}
+#overview #day-details .nutrition-donut-summary .nutrition-expand,
+#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"],
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-expand{
+ position:absolute!important;top:auto!important;bottom:18px!important;right:7px!important;
+ transform:none!important;width:28px!important;height:28px!important;
+ background:transparent!important;border:none!important;box-shadow:none!important;
+}
+#overview #day-details .nutrition-comparison-macro:last-child{padding-right:22px}
+#overview #day-details .nutrition-weekly-charts:not([hidden]) .nutrition-chart-section>strong,
+#overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-heading{
+ font-size:16px!important;font-weight:650!important;line-height:1.35!important;
+}
+#overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-header+div>.nutrition-chart-section>strong{
+ font-size:12px!important;font-weight:400!important;line-height:1.35!important;
+}

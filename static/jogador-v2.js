@@ -1072,9 +1072,9 @@ async function overview(){
    const validDays=weekDays.filter(x=>x.found&&x.total.kcal>0);
    const mean=validDays.length?validDays.reduce((n,x)=>n+x.total.kcal,0)/validDays.length:null;
    const yesterday=new Date(d+"T12:00:00");yesterday.setDate(yesterday.getDate()-1);
-   const previous=weekDays.find(x=>x.key===iso(yesterday)&&x.found&&x.total.kcal>0);
+   let previous=weekDays.find(x=>x.key===iso(yesterday)&&x.found&&x.total.kcal>0);
    const change=reference=>reference>0?100*(total.kcal-reference)/reference:null;
-   const deviationMean=change(mean),deviationPrevious=change(previous?.total.kcal);
+   const deviationMean=change(mean);let deviationPrevious=change(previous?.total.kcal);
    const visual=document.createElement("div");visual.className="nutrition-comparison";
    const gauge=document.createElement("div");gauge.className="nutrition-comparison-gauge";
    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 160 160");svg.setAttribute("aria-hidden","true");
@@ -1090,8 +1090,8 @@ async function overview(){
     path.setAttribute("stroke",delta>0?pos:neg);path.setAttribute("fill","none");
     path.setAttribute("stroke-width","9");path.setAttribute("stroke-linecap","round");svg.append(path);
    };
-   ring(68,deviationMean,"#66d7a4","#ff996e");
-   ring(50,deviationPrevious,"#c4e5dc","#ffb69b");
+   const paintRings=()=>{svg.replaceChildren();ring(68,deviationMean,"#66d7a4","#ff996e");ring(50,deviationPrevious,"#c4e5dc","#ffb69b");};
+   paintRings();
    gauge.append(svg);
    const center=document.createElement("div");center.className="nutrition-comparison-center";
    const number=document.createElement("strong");number.textContent=fmt(total.kcal,0);
@@ -1117,6 +1117,44 @@ async function overview(){
     compactMacros.append(cell);
    }
    visual.append(compactMacros);summary.insertBefore(visual,summary.querySelector(".nutrition-expand"));
+   // A Monday compares with the preceding Sunday, even though it belongs to another weekly calendar response.
+   // Fetch in the background to avoid delaying the daily view.
+   if(!previous&&yesterday.getDay()===0){
+    const priorMon=monday(yesterday),priorSunday=iso(yesterday);
+    cachedOverviewRead("/api/v2/player/calendar?start="+iso(priorMon)+"&end="+priorSunday).then(previousCalendar=>{
+     if(requestId!==overviewRequestId||epoch!==playerSessionEpoch||!summary.isConnected)return;
+     const last=previousCalendar?.days?.find(x=>x.date===priorSunday);
+     if(!last)return;
+     const overrides=Object.fromEntries((previousCalendar.meal_color_overrides||[]).map(x=>[x.meal_date+"|"+x.meal,x.color]));
+     const sum={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let assignedCount=0;
+     for(const meal of previousCalendar.meals||[]){
+      const own=overrides[priorSunday+"|"+meal];
+      const color=own==="none"?null:own||(previousCalendar.classifications||[]).find(x=>x.name===(last.classification||"Geral"))?.meals?.[meal];
+      if(!color)continue;
+      const portion=average(plans[color]?.[meal]||[]);
+      if(!portion)return;
+      for(const nutrient in sum)sum[nutrient]+=portion[nutrient];
+      assignedCount++;
+     }
+     for(const peri of (previousCalendar.peri_meals||[]).filter(x=>x.event_date===priorSunday)){
+      const portion=average(peri.options||[]);
+      if(!portion)return;
+      for(const nutrient in sum)sum[nutrient]+=portion[nutrient];
+      assignedCount++;
+     }
+     if(!assignedCount||sum.kcal<=0)return;
+     previous={key:priorSunday,total:sum,found:true};
+     deviationPrevious=change(sum.kcal);
+     const stat=comparisons.querySelector(".nutrition-comparison-stat.prior");
+     const number=stat?.querySelector("strong");
+     if(stat&&number){
+      stat.classList.remove("above","below","neutral");
+      stat.classList.add(deviationPrevious>0?"above":deviationPrevious<0?"below":"neutral");
+      number.textContent=(deviationPrevious>0?"+":"")+fmt(deviationPrevious,1)+"%";
+     }
+     paintRings();
+    }).catch(()=>{});
+   }
    function buildBars(title,key,color,scale,decimals=0){
     const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
     const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
@@ -1151,7 +1189,7 @@ async function overview(){
    };
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
    renderMacroMode("g");
-   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));};
+   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");};
    summary.append(expand,weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
