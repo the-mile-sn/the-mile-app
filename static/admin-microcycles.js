@@ -1229,7 +1229,7 @@ async function loadCalendar(){
     })),
     ...(data.events||[])
   ].sort((a,b)=>a.event_date.localeCompare(b.event_date)||(a.session===b.session?0:a.session==="morning"?-1:1));
-  if(!combined.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem eventos neste mês.";list.append(p);}
+  let monthEventCount=combined.length;
   for(const ev of combined)list.append(renderUnifiedEvent(ev));
   const supplementation=await request(matchBase()+"/supplements");
   for(const [date,entry] of Object.entries(supplementation.overrides||{})){
@@ -1243,8 +1243,10 @@ async function loadCalendar(){
     syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
     $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
    };
-   card.append(label,edit);list.append(card);
+   card.append(label,edit);list.append(card);monthEventCount++;
   }
+  if(!monthEventCount){const empty=document.createElement("p");empty.className="hint";empty.textContent="Sem eventos neste mês.";list.append(empty);}
+  $("calendar-month-count").textContent=monthEventCount+" evento"+(monthEventCount===1?"":"s");
   $("calendar-section").hidden=backofficeView!=="calendar";
 }
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
@@ -1777,6 +1779,7 @@ function syncCalendarEventForm(){
  $("calendar-new-title-wrap").hidden=kind!=="travel";
  $("calendar-pre-wrap").hidden=!(game||training);
  $("calendar-post-wrap").hidden=!(game||training);
+  $("calendar-peri-flags").hidden=!(game||training);
  $("calendar-pre-label").textContent=game?"Intra-jogo":"Pré-treino";
  $("calendar-post-label").textContent=game?"Pós-jogo":"Pós-treino";
 }
