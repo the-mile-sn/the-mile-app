@@ -1246,3 +1246,18 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #calendar-section .calendar-event-list[open]>.calendar-event-toggle:before{transform:rotate(90deg)}
 #calendar-section .calendar-event-count{font-size:12px;color:#999faa;font-weight:450}
 @media(max-width:780px){#calendar-section .calendar-peri-flags{flex:1 1 100%;flex-wrap:wrap}}
+
+/* Calendar meal cards: a colored header with a small manual override, and one discreet nutrition line. */
+#calendar-section .day-preview .day-meal{gap:0;padding:9px;min-width:0;align-items:stretch}
+#calendar-section .day-preview .day-meal-header{display:flex;align-items:center;justify-content:space-between;gap:5px;min-height:49px;height:auto;padding:7px 9px;border-radius:8px;box-sizing:border-box;text-align:left;min-width:0}
+#calendar-section .day-preview .day-meal-header .day-meal-label{font-size:12px;font-weight:650;color:inherit;min-width:0;flex:1}
+#calendar-section .day-preview .day-meal-header .day-color-select{flex:0 1 48%;min-width:0;max-width:125px;width:auto;height:30px;min-height:30px;margin:0;padding:4px 5px;border-radius:7px;font-size:11px;font-weight:550;background:rgba(255,255,255,.88)!important;color:#26313b!important;border:1px solid rgba(40,50,60,.16)!important}
+#calendar-section .day-preview .day-meal-nutrients{display:block;margin-top:9px;padding:0 4px;color:#9299a5;font-size:11px;font-weight:500;line-height:1.35;white-space:nowrap;letter-spacing:-.015em}
+#calendar-section .day-preview .day-meal-nutrition-empty{margin-top:9px;padding:0 4px}
+#calendar-section .day-preview .day-meal-no-color{background:#292b31;color:#a8adb5}
+#calendar-section .day-preview .day-meal-no-color .day-meal-label{color:inherit}
+#calendar-section .day-preview .day-meal-header.meal-vp{background:#28543e!important;color:#fff!important}
+#calendar-section #nutrition-weekly-summary{margin-top:24px!important}
+#calendar-section #nutrition-weekly-summary .calendar-week-coverage{font-size:11px;color:#9299a5;text-align:right;margin:8px 0 0!important}
+@media(max-width:1100px){#calendar-section .day-preview .day-meal-header{flex-wrap:wrap}#calendar-section .day-preview .day-meal-header .day-color-select{flex:1 1 100%;max-width:none}}
+@media(max-width:720px){#calendar-section .day-preview .day-meal-nutrients{white-space:normal}}
