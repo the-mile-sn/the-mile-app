@@ -36,3 +36,12 @@ test('Original assessment CSS and module are preserved, no duplicated partial ru
  assert.match(html,/<div id="plans-assessments">/);
  assert.ok(js.includes('$("plans-assessments").hidden=section!=="assessments"'));
 });
+
+test('Docs opens Plans directly without an obsolete back button',()=>{
+ assert.match(html,/id="plans-prescriptions"/);
+ assert.match(html,/<h1>Planos<\/h1>/);
+ assert.doesNotMatch(html,/id="plans-back-prescriptions"/);
+ assert.doesNotMatch(js,/plans-back-prescriptions/);
+ assert.match(js,/if\(t==="plans"\)openPlansSection\("prescriptions"\)/);
+ assert.match(js,/\$\("plans-landing"\)\.hidden=true/);
+});
