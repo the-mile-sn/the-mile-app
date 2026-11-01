@@ -91,3 +91,19 @@ test("all player calendars use horizontal swipe navigation without arrow control
  assert.doesNotMatch(html,/id="menu-prev"|id="menu-next"/);
  assert.match(css,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)!important/);
 });
+
+test("week navigation always selects Sunday backward and Monday forward",()=>{
+ assert.match(source,/function swipeWeekBoundary\(current,offset\)/);
+ assert.match(source,/start\.setDate\(start\.getDate\(\)\+\(offset<0\?-1:7\)\)/);
+ assert.match(source,/enableWeekSwipe\(root,offset=>\{day=swipeWeekBoundary\(day,offset\)/);
+ assert.match(source,/enableWeekSwipe\(strip,offset=>\{day=swipeWeekBoundary\(day,offset\)/);
+ assert.match(source,/menuWeek=swipeWeekBoundary\(menuWeek,offset\);menuSelectedDate=iso\(menuWeek\)/);
+});
+test("weekly day chips match daily and energy visually outranks macro totals",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(source,/header\.className="weekly-day-header week-day"/);
+ assert.match(source,/\["day-number",String\(dt\.getDate\(\)\)\]/);
+ assert.match(css,/#weekly-view \.weekly-day-header\.week-day\.selected \.day-number/);
+ assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-kcal/);
+ assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-macros/);
+});
