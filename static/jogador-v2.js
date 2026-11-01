@@ -983,6 +983,7 @@ async function overview(){
  injectPostMatchCard();
 }
 function openPlansSection(section){
+ $("plans-landing").hidden=true;
  $("plans-prescriptions").hidden=section!=="prescriptions";
  if(section==="prescriptions")renderPlans();
 }
