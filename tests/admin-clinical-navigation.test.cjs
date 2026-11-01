@@ -240,7 +240,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=4/);
+ assert.match(html,/\/admin-light-theme\.css\?v=5/);
  assert.match(html,/\/admin-dashboard\.js\?v=26/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
@@ -258,7 +258,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=4"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=5"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
  assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
 });
@@ -279,7 +279,7 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
  assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
  assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
  assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
- assert.match(html,/admin-light-theme\.css\?v=4/);
+ assert.match(html,/admin-light-theme\.css\?v=5/);
 });
 
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
