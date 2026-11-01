@@ -1177,3 +1177,34 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
  line-height:1.3!important;
  border-radius:7px!important;
 }
+
+/* Bottle-green VP and stronger, compact meal cells in both model matrices. */
+#matrix .model-effective-matrix,
+#scenario-editor .scenario-day-matrix{
+ width:100%!important;
+ max-width:1380px!important;
+ table-layout:fixed!important;
+ margin-left:0!important;
+}
+#matrix .model-effective-matrix{min-width:900px!important}
+#scenario-editor .scenario-day-matrix{min-width:900px!important}
+#matrix .model-effective-matrix th:first-child,
+#matrix .model-effective-matrix td:first-child{width:160px!important}
+#scenario-editor .scenario-day-matrix th:first-child,
+#scenario-editor .scenario-day-matrix td:first-child{width:150px!important}
+#matrix .model-effective-matrix td:not(:first-child),
+#scenario-editor .scenario-day-matrix tbody td{padding:5px 4px!important}
+#matrix .model-effective-matrix td .microcycle-color-select,
+#scenario-editor .scenario-day-matrix tbody td .microcycle-color-select{
+ min-height:46px!important;
+ padding:10px 12px!important;
+ font-size:14px!important;
+ font-weight:600!important;
+ border-radius:8px!important;
+}
+#matrix .microcycle-color-select[data-color="vp"],
+#scenario-editor .microcycle-color-select[data-color="vp"]{
+ background:#28543e!important;
+ color:#f5faf6!important;
+ border-color:#28543e!important;
+}
