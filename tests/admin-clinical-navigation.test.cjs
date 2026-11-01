@@ -354,7 +354,7 @@ test("Modelo places effective colors before grouped post-match scenarios and hid
  assert.ok(first>=0&&second>first);
  assert.match(html,/class="scenario-diagnostics" hidden/);
  assert.match(admin,/className="scenario-day-group"/);
- assert.match(admin,/className="scenario-day-matrix"/);
+ assert.match(admin,/className="scenario-matrix scenario-day-matrix"/);
  assert.match(admin,/select\.dataset\.color=savedColor\|\|base\|\|"none"/);
  assert.match(admin,/heading\.textContent="Modelo efetivo"/);
  const css=fs.readFileSync("static/admin-microcycles.css","utf8");
