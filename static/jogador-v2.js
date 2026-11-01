@@ -221,7 +221,7 @@ async function session(){
  $("logout").hidden=false;
  await show(tab);
 }
-async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("prescriptions");if(t==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});if(t==="menus")await menusView();}
+async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("prescriptions");if(t==="assessments")openPlansSection("assessments");if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(target){
  const data=await api("/api/v2/player/supplements"),root=target||$("plan-detail");if(!root.isConnected)return;root.replaceChildren();
@@ -985,6 +985,8 @@ async function overview(){
 function openPlansSection(section){
  $("plans-landing").hidden=true;
  $("plans-prescriptions").hidden=section!=="prescriptions";
+ $("plans-assessments").hidden=section!=="assessments";
+ if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});
  if(section==="prescriptions")renderPlans();
 }
 let plansCategory="todos",planPhase=null;
