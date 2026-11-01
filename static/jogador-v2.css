@@ -3361,3 +3361,44 @@ body.profile-active .player-top{display:none!important}
  font-weight:500!important;
  line-height:1.35!important;
 }
+
+/* Dual comparison halo is a closed-card preview only. Expanded card keeps original charts and g/kg. */
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]){
+ display:grid!important;grid-template-columns:1fr!important;
+ padding:15px 12px 14px!important;gap:0!important;
+}
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden])>.nutrition-hero,
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden])>.nutrition-macro-row{display:none!important}
+#overview #day-details .nutrition-donut-summary .nutrition-comparison{
+ display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);
+ align-items:center;gap:8px 12px;width:100%;color:#f1f2f4;
+}
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])) .nutrition-comparison{display:none!important}
+#overview #day-details .nutrition-comparison-gauge{position:relative;width:min(100%,166px);aspect-ratio:1;margin:auto}
+#overview #day-details .nutrition-comparison-gauge>svg{display:block;width:100%;height:100%}
+#overview #day-details .nutrition-comparison-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+#overview #day-details .nutrition-comparison-center strong{font-size:clamp(23px,5.3vw,34px);font-weight:650;line-height:1.05;letter-spacing:-.6px}
+#overview #day-details .nutrition-comparison-center small{font-size:12px;color:#cbcdd2}
+#overview #day-details .nutrition-comparison-center .per-kg{font-size:10px;color:#a6a8ae}
+#overview #day-details .nutrition-comparison-stats{display:flex;flex-direction:column;gap:10px;min-width:0;padding-right:22px}
+#overview #day-details .nutrition-comparison-stat{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.075);border-radius:14px;padding:9px 7px;text-align:center;min-width:0}
+#overview #day-details .nutrition-comparison-stat strong{display:block;font-size:clamp(15px,4.2vw,23px);font-weight:650;white-space:nowrap}
+#overview #day-details .nutrition-comparison-stat.mean.above strong{color:#79dbad}
+#overview #day-details .nutrition-comparison-stat.mean.below strong{color:#ff9d73}
+#overview #day-details .nutrition-comparison-stat.prior.above strong{color:#cee9e1}
+#overview #day-details .nutrition-comparison-stat.prior.below strong{color:#ffc0a4}
+#overview #day-details .nutrition-comparison-stat small{font-size:10px;color:#b2b4bc;white-space:nowrap}
+#overview #day-details .nutrition-comparison-macros{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(255,255,255,.1);padding-top:12px;gap:4px}
+#overview #day-details .nutrition-comparison-macro{text-align:center;min-width:0;border-right:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:4px}
+#overview #day-details .nutrition-comparison-macro:last-child{border:0}
+#overview #day-details .nutrition-comparison-macro small{color:#afb0ba;font-size:11px}
+#overview #day-details .nutrition-comparison-macro strong{font-size:clamp(14px,3.8vw,20px);font-weight:600;white-space:nowrap}
+#overview #day-details .nutrition-comparison-macro.protein strong{color:#86c7f5}
+#overview #day-details .nutrition-comparison-macro.carbs strong{color:#f0a177}
+#overview #day-details .nutrition-comparison-macro.fat strong{color:#efd27c}
+#overview #day-details .nutrition-comparison-macro .per-kg{font-size:10px;white-space:nowrap;color:#a1a4ac}
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-expand{top:9px!important;right:8px!important}
+@media(max-width:360px){
+ #overview #day-details .nutrition-comparison-stat small{font-size:9px}
+ #overview #day-details .nutrition-comparison-stats{padding-right:15px;gap:6px}
+}
