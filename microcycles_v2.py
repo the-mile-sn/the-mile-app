@@ -89,7 +89,7 @@ def initialize(c):
     athlete_columns = _table_columns(c, "v2_athletes")
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
-    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("sex","TEXT"),("field_position","TEXT"),("arm_point","REAL"),("thigh_point","REAL")):
+    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("sex","TEXT"),("field_position","TEXT"),("arm_point","REAL"),("thigh_point","REAL"),("followup_plan","TEXT"),("followup_renewal_date","TEXT")):
         if name not in athlete_columns:
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
     if "match_time" not in columns:
@@ -299,7 +299,7 @@ def create_dish(c, name_pt, name_en, category, image_filename):
     return dish_id
 
 
-def update_athlete_profile(c, athlete_id, name, weight, height, notes, sex=None, field_position=None, arm_point=None, thigh_point=None):
+def update_athlete_profile(c, athlete_id, name, weight, height, notes, sex=None, field_position=None, arm_point=None, thigh_point=None, commit=True):
     if not isinstance(name,str) or not 2 <= len(name.strip()) <= 120:
         raise ValueError("invalid_athlete_profile")
     def numeric(value, lower, upper):
@@ -323,5 +323,5 @@ def update_athlete_profile(c, athlete_id, name, weight, height, notes, sex=None,
     # Do not change user ids, usernames, passwords or account access.
     c.execute("UPDATE users SET name=?,sex=? WHERE id IN (SELECT user_id FROM v2_player_links WHERE athlete_id=?) AND role='player'",
        (name.strip(),sex,athlete_id))
-    c.commit()
+    if commit: c.commit()
     return {"id":athlete_id,"name":name.strip(),"weight_kg":weight,"height_cm":height,"profile_notes":notes.strip(),"sex":sex,"field_position":field_position or None,"arm_point":arm_point,"thigh_point":thigh_point}
