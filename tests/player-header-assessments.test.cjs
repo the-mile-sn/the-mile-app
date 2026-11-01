@@ -37,11 +37,20 @@ test('Original assessment CSS and module are preserved, no duplicated partial ru
  assert.ok(js.includes('$("plans-assessments").hidden=section!=="assessments"'));
 });
 
-test('Docs opens Plans directly without an obsolete back button',()=>{
+test('Planos navigation opens prescriptions directly without a redundant page heading',()=>{
+ assert.match(html,/data-tab="plans"[^>]*>.*<span>Planos<\/span>/);
  assert.match(html,/id="plans-prescriptions"/);
- assert.match(html,/<h1>Planos<\/h1>/);
+ assert.doesNotMatch(html,/<h1>Planos<\/h1>/);
+ assert.doesNotMatch(html,/<h2 class="assessments-page-heading">Avaliações<\/h2>/);
  assert.doesNotMatch(html,/id="plans-back-prescriptions"/);
  assert.doesNotMatch(js,/plans-back-prescriptions/);
  assert.match(js,/if\(t==="plans"\)openPlansSection\("prescriptions"\)/);
  assert.match(js,/\$\("plans-landing"\)\.hidden=true/);
+});
+test('assessment notes preserve the timestamp below metrics and the formula inside body fat details',()=>{
+ assert.match(html,/id="assessment-measurements"><\/div><div class="assessment-most-recent" id="assessment-most-recent"/);
+ assert.match(js,/stamp\.textContent="Última avaliação/);
+ assert.match(js,/key==="body_fat"&&recent\.formula_note/);
+ assert.match(js,/details\.append\(note\)/);
+ assert.doesNotMatch(js,/target\.append\(note\)/);
 });
