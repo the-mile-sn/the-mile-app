@@ -401,7 +401,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  const root=$("weekly-view");root.replaceChildren();
  enableWeekSwipe(root,offset=>{day=swipeWeekBoundary(day,offset);weeklySelection=null;overview().catch(error);});
  const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
- const selectedWeeklyDate=weeklySelection?.date||null;
+ const selectedWeeklyDate=weeklySelection?.date||iso(day);
  if(selectedWeeklyDate){const selectedIndex=Math.round((new Date(selectedWeeklyDate+"T12:00:00")-new Date(iso(mon)+"T12:00:00"))/86400000);if(selectedIndex>=0&&selectedIndex<7){grid.classList.add("has-weekly-selection");grid.style.setProperty("--selected-column-left",`calc(${selectedIndex} * (100% - 24px) / 7 + ${selectedIndex*4}px)`);grid.style.setProperty("--selected-column-left-mobile",`calc(${selectedIndex} * (100% - 18px) / 7 + ${selectedIndex*3}px)`);}}
  const markWeeklyColumn=(el,date)=>{if(date===selectedWeeklyDate)el.classList.add("weekly-selected-column");};
  const dates=[],classes=[],totals=[];

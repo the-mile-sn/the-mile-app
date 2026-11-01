@@ -3512,3 +3512,64 @@ body.profile-active .player-top{display:none!important}
  font-size:clamp(7px,1.5vw,9px)!important;font-weight:400!important;
  opacity:.76!important;line-height:1.2!important;
 }
+
+/* Weekly grid polish: consistent compact cells without modifying plan colours. */
+#weekly-view .weekly-calendar-grid{
+ grid-template-columns:repeat(7,minmax(0,1fr))!important;
+ column-gap:4px!important;row-gap:6px!important;
+ align-items:stretch!important;
+}
+#weekly-view .weekly-meal,
+#weekly-view .weekly-event-card,
+#weekly-view .weekly-match-with-intra,
+#weekly-view .weekly-peri-card{
+ box-sizing:border-box!important;min-height:42px!important;
+ border-radius:9px!important;padding:5px 2px!important;
+ border:0!important;box-shadow:none!important;
+}
+#weekly-view .weekly-meal{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex-direction:column!important;gap:2px!important;text-align:center!important;
+}
+#weekly-view .weekly-meal-name,#weekly-view .weekly-meal-kcal{
+ font-weight:500!important;line-height:1.15!important;
+}
+#weekly-view .weekly-empty{
+ min-height:42px!important;height:100%!important;box-sizing:border-box!important;
+ background:transparent!important;
+}
+#weekly-view .weekly-event-slot{min-height:42px!important;box-sizing:border-box!important;}
+#weekly-view .weekly-event-slot:empty{min-height:12px!important;height:12px!important;}
+#weekly-view .weekly-event-card:not(.weekly-match-with-intra){background:#35363b!important;}
+#weekly-view .weekly-event-card.weekly-match-with-intra{background:#414248!important;}
+#weekly-view .weekly-day-total{
+ min-height:42px!important;padding:5px 1px!important;
+ border-radius:9px!important;gap:3px!important;background:#22242a!important;
+ border:0!important;box-shadow:none!important;
+}
+#weekly-view .weekly-day-total .weekly-total-kcal{
+ font-size:clamp(12px,2.8vw,16px)!important;font-weight:650!important;
+ line-height:1.2!important;color:#a4d6ad!important;
+}
+#weekly-view .weekly-day-total .weekly-total-macros{
+ display:flex!important;width:100%!important;gap:1px!important;
+ justify-content:space-evenly!important;align-items:center!important;
+ font-size:clamp(7px,1.5vw,9px)!important;line-height:1.2!important;
+ font-weight:400!important;opacity:.85!important;letter-spacing:-.15px!important;
+}
+#weekly-view .weekly-day-total .weekly-total-macros span{min-width:0!important;white-space:nowrap!important;}
+/* One neutral full-height backdrop; meal fills remain untouched. */
+#weekly-view .weekly-calendar-grid.has-weekly-selection::before{
+ background:rgba(255,255,255,.04)!important;
+ border-radius:9px!important;
+}
+@media(max-width:420px){
+ #weekly-view .weekly-calendar-grid{column-gap:3px!important;row-gap:5px!important;}
+ #weekly-view .weekly-meal,#weekly-view .weekly-event-card,
+ #weekly-view .weekly-match-with-intra,#weekly-view .weekly-peri-card{
+  padding:5px 1px!important;
+ }
+ #weekly-view .weekly-day-total .weekly-total-macros{
+  font-size:clamp(7px,1.7vw,8px)!important;letter-spacing:-.25px!important;
+ }
+}

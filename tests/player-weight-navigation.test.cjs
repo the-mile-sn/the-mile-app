@@ -107,3 +107,18 @@ test("weekly day chips match daily and energy visually outranks macro totals",()
  assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-kcal/);
  assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-macros/);
 });
+
+test("weekly selected day is highlighted without requiring expanded meal",()=>{
+ assert.match(source,/const selectedWeeklyDate=weeklySelection\?\.date\|\|iso\(day\)/);
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#weekly-view \.weekly-calendar-grid\.has-weekly-selection::before/);
+ assert.match(css,/background:rgba\(255,255,255,\.04\)!important/);
+});
+test("compact weekly styles keep seven columns and separate energy from macros",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)!important/);
+ assert.match(css,/#weekly-view \.weekly-meal,[\s\S]*?#weekly-view \.weekly-peri-card\{/);
+ assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-kcal\{/);
+ assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-macros\{/);
+ assert.match(css,/column-gap:3px!important;row-gap:5px!important/);
+});
