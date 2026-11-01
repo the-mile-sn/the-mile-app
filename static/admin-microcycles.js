@@ -284,49 +284,65 @@ async function loadScenarioEditor(){
 function renderScenarioEditor(){
  if(!model)return;
  const target=$("scenario-cells");target.replaceChildren();
- const table=document.createElement("table");table.className="scenario-matrix";
- const head=document.createElement("tr");
- for(const title of ["Classificação","Cenário",...model.meals.map(meal=>names[meal])]){
-  const th=document.createElement("th");th.textContent=title;head.append(th);
- }
- table.append(head);
+ const athleteId=model.athlete.id;
  for(const type of scenarioTypes){
+  const group=document.createElement("section");group.className="scenario-day-group";
+  const groupHeader=document.createElement("div");groupHeader.className="scenario-day-heading";
+  const heading=document.createElement("h4");heading.textContent=type;
+  const count=document.createElement("small");count.textContent="3 cenários";
+  groupHeader.append(heading,count);group.append(groupHeader);
+  const scroller=document.createElement("div");scroller.className="scenario-day-scroll";
+  const table=document.createElement("table");table.className="scenario-matrix scenario-day-matrix";
+  table.setAttribute("aria-label","Cenários pós-jogo "+type);
+  const thead=document.createElement("thead"),head=document.createElement("tr");
+  for(const title of ["Cenário",...model.meals.map(meal=>names[meal])]){
+   const th=document.createElement("th");th.scope="col";th.textContent=title;head.append(th);
+  }
+  thead.append(head);table.append(thead);
+  const tbody=document.createElement("tbody");
   const baseline=model.classifications.find(row=>row.name===type);
   for(const [scenario,scenarioLabel] of scenarioVariants){
-   const tr=document.createElement("tr");
-   const dayCell=document.createElement("td");dayCell.textContent=type;tr.append(dayCell);
-   const scenarioCell=document.createElement("td");scenarioCell.textContent=scenarioLabel;tr.append(scenarioCell);
+   const tr=document.createElement("tr");tr.className="scenario-variant-row";
+   const scenarioCell=document.createElement("th");scenarioCell.scope="row";scenarioCell.textContent=scenarioLabel;tr.append(scenarioCell);
    for(const meal of model.meals){
     const td=document.createElement("td"),select=document.createElement("select");
     const base=baseline?.meals?.[meal]||null;
     const current=scenarioCells.find(x=>x.classification===type&&x.scenario===scenario&&x.meal===meal);
-    const existing=current?.color||"";
+    let savedColor=current?.color||"";
+    select.className="microcycle-color-select";
     select.setAttribute("aria-label",type+" "+scenarioLabel+" "+names[meal]);
     const defaultOption=document.createElement("option");defaultOption.value="";
     defaultOption.textContent="Igual ao High"+(base?" · "+(colors[base]||base):" · sem refeição");
     select.append(defaultOption);
-    for(const color of model.colors){const option=document.createElement("option");option.value=color;option.textContent=colors[color]||color;select.append(option);}
-    select.value=existing;select.dataset.color=existing||base||"none";
-    select.className="microcycle-color-select";
+    for(const color of model.colors){
+     const option=document.createElement("option");option.value=color;option.textContent=colors[color]||color;select.append(option);
+    }
+    select.value=savedColor;select.dataset.color=savedColor||base||"none";
     select.addEventListener("change",async()=>{
      const next=select.value||null;select.disabled=true;
      try{
-      await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/scenario-cells",{method:"PUT",body:JSON.stringify({classification:type,scenario,meal,color:next})});
+      await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/scenario-cells",{
+       method:"PUT",body:JSON.stringify({classification:type,scenario,meal,color:next})
+      });
+      if(model?.athlete?.id!==athleteId)return;
       scenarioCells=scenarioCells.filter(x=>!(x.classification===type&&x.scenario===scenario&&x.meal===meal));
       if(next)scenarioCells.push({classification:type,scenario,meal,color:next});
-      select.dataset.color=next||base||"none";
+      savedColor=next||"";
+      select.dataset.color=savedColor||base||"none";
       $("scenario-feedback").textContent="Guardado: "+type+" · "+scenarioLabel+" · "+names[meal]+". A prescrição atual não foi alterada.";
-     }catch(error){select.value=existing;$("scenario-feedback").textContent="Não foi possível guardar: "+error.message;}
-     finally{select.disabled=false;}
+     }catch(error){
+      select.value=savedColor;select.dataset.color=savedColor||base||"none";
+      if(model?.athlete?.id===athleteId)$("scenario-feedback").textContent="Não foi possível guardar: "+error.message;
+     }finally{select.disabled=false;}
     });
     td.append(select);tr.append(td);
    }
-   table.append(tr);
+   tbody.append(tr);
   }
+  table.append(tbody);scroller.append(table);group.append(scroller);target.append(group);
  }
- target.append(table);
 }
-function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.classList.add("microcycle-color-select");sel.dataset.color=sel.value||"none";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;sel.dataset.color=next||"none";row.configured=true;title.textContent="● "+row.name;status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=backofficeView!=="matrix";}
+function render(){const root=$("matrix");root.replaceChildren();const heading=document.createElement("h3");heading.className="model-effective-title";heading.textContent="Modelo efetivo";const tbl=document.createElement("table");tbl.className="model-effective-matrix";const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.classList.add("microcycle-color-select");sel.dataset.color=sel.value||"none";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;sel.dataset.color=next||"none";row.configured=true;title.textContent="● "+row.name;status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.append(heading,tbl);root.hidden=backofficeView!=="matrix";}
 $("filipe-activate").addEventListener("click",async()=>{
   const button=$("filipe-activate"),feedback=$("admin-access-feedback");
   button.disabled=true;feedback.textContent="A verificar a conta do Filipe...";
