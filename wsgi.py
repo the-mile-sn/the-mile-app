@@ -1,5 +1,5 @@
 from app import application, initialize
 
-# Test environment: renewal notification scheduler is deliberately disabled.
-# Keep database initialization and the WSGI application unchanged.
+# Renewals are informational. Do not start the legacy notification scheduler.
+# Database initialization and the WSGI application remain unchanged.
 initialize()

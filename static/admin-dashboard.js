@@ -329,7 +329,7 @@ function ensurePlanningOnlyView(){
  let playersData=[],playersLoaded=false;
  function normalized(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();}
  function matchesName(name,query){const words=normalized(name).split(/\s+/).filter(Boolean);return normalized(query).split(/\s+/).filter(Boolean).every(part=>words.some(word=>word.startsWith(part)));}
- const playerStatus={active:"Ativo",no_account:"Sem conta",inactive:"Inativo",expired:"Expirado"};
+ const playerStatus={active:"Ativo",no_account:"Sem conta",inactive:"Inativo"};
  const fullDate=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4):"—";
  function renderPlayers(){
   const body=$("tm-players-body");body.replaceChildren();

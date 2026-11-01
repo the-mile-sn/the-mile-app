@@ -1,0 +1,21 @@
+name: Validate informational renewal access
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+  workflow_dispatch:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app.py admin_players_v2.py wsgi.py test_renewal_access_informational.py
+      - run: node --check static/app.js
+      - run: node --check static/admin-dashboard.js
+      - run: node --check static/admin-microcycles.js
+      - run: python -m unittest -v test_renewal_access_informational test_player_account_creation_v2
