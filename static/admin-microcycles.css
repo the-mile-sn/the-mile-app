@@ -1045,3 +1045,16 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-players-page .tm-subpage-back svg{width:19px;height:19px;flex:none}
 #tm-players-page .tm-subpage-back:hover{background:#23262e;color:#f1f3f6}
 #tm-players-page .tm-subpage-back:focus-visible{outline:2px solid #90b8d8;outline-offset:2px}
+
+/* Branding: the original The Mile proportions, traced from supplied transparent PNG. */
+#admin-workspace .tm-admin-brand{padding:12px 12px 30px}
+#admin-workspace .tm-admin-brand-home{display:block;border:0;background:transparent;padding:0;cursor:pointer;color:#f5f6f7;line-height:0}
+#admin-workspace .tm-admin-brand-home:hover{opacity:.78}
+#admin-workspace .tm-admin-brand-home:focus-visible{outline:2px solid #90b8d8;outline-offset:6px;border-radius:3px}
+#admin-workspace .tm-admin-brand-wordmark{display:block;width:min(168px,100%);height:auto;aspect-ratio:1605/244}
+#admin-workspace .tm-dashboard-return{margin-bottom:17px}
+#admin-workspace .tm-dashboard-return .tm-subpage-back{min-height:37px;border:0;background:transparent;color:#aeb7c4;display:inline-flex;gap:5px;align-items:center;padding:6px 10px 6px 2px;font-size:13px;font-weight:600;cursor:pointer;border-radius:9px}
+#admin-workspace .tm-dashboard-return .tm-subpage-back svg{width:19px;height:19px}
+#admin-workspace .tm-dashboard-return .tm-subpage-back:hover{background:#23262e;color:#f1f3f6}
+#admin-workspace .tm-dashboard-return .tm-subpage-back:focus-visible{outline:2px solid #90b8d8;outline-offset:2px}
+@media(max-width:830px){#admin-workspace .tm-admin-brand{padding:6px 8px 10px}}
