@@ -7,7 +7,7 @@ function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);r
 function revokePlayerView(){
  // An account switch must invalidate cached data and every old request.
  ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
- overviewReadCache.clear();
+ overviewReadCache.clear();overviewSnapshot=null;
  for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
@@ -202,7 +202,7 @@ async function session(){
  const sessionData=await api("/api/me");
  profileUsername=sessionData.user?.username||"";
  playerCsrf=sessionData.csrf||"";
- const r=await api("/api/v2/player/me");
+ const [r,p]=await Promise.all([api("/api/v2/player/me"),api("/api/v2/player/plans")]);
  me=r.player;
  if(epoch!==playerSessionEpoch)return;
  const plan=String(me.followup_plan||"").trim();
@@ -213,7 +213,6 @@ async function session(){
  $("profile-display-name").textContent=me.name;
  $("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";
  paintPlayerPhoto(!!sessionData.user?.has_photo,initials,epoch);
- const p=await api("/api/v2/player/plans");
  if(epoch!==playerSessionEpoch)return;
  plans=p.options_by_color;
  periPlans=p.peri_plans||{};
@@ -711,12 +710,17 @@ async function renderWeightCard(root,date){
   action.remove(); // Future dates display the weight card without any action.
   return;
  }
+ // Render the + immediately; only enable interaction once the weight data is confirmed.
+ action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+ action.setAttribute("aria-label","A carregar peso em jejum");
+ action.disabled=true;
  let data;
- try{data=await api("/api/v2/player/weight?date="+date);}catch{
-  if(card.isConnected){const notice=document.createElement("small");notice.textContent="Peso indisponível";value.append(notice);action.disabled=true;}
+ try{data=await cachedOverviewRead("/api/v2/player/weight?date="+date);}catch{
+  if(card.isConnected){const notice=document.createElement("small");notice.textContent="Peso indisponível";value.append(notice);action.remove();}
   return;
  }
  if(iso(day)!==date||overviewMode!=="day"||!card.isConnected){card.remove();return;}
+ action.disabled=false;
  const current=data.entries?.find(x=>x.weigh_date===date);
  const previous=data.previous;
  const format=x=>Number(x).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -783,6 +787,7 @@ async function renderWeightCard(root,date){
     await api("/api/v2/player/weight",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({date,weight:(Number(kg.value)+Number(grams.value)/1000).toFixed(1),menstruating})});
     overviewReadCache.clear(); // The reference-weight values can change after saving.
+    overviewSnapshot=null;
     await overview();
    }catch(err){errorText.textContent="Não foi possível guardar: "+err.message;save.disabled=false;}
   };
@@ -805,10 +810,21 @@ async function renderWeightCard(root,date){
  action.onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden){existing?chart():editor();}};
 }
 let overviewRequestId=0;
+const OVERVIEW_CACHE_MS=60000;
+let overviewSnapshot=null;
 const overviewReadCache=new Map();
+function reusableOverviewSnapshot(weekKey,now=Date.now()){
+ const snapshot=overviewSnapshot;
+ return snapshot&&snapshot.weekKey===weekKey&&now>=snapshot.time&&now-snapshot.time<OVERVIEW_CACHE_MS?snapshot:null;
+}
+function setOverviewLoading(loading){
+ const indicator=$("overview-loading");
+ if(indicator)indicator.hidden=!loading;
+ $("overview").toggleAttribute("aria-busy",loading);
+}
 function cachedOverviewRead(path){
  const now=Date.now(),old=overviewReadCache.get(path);
- if(old&&now-old.time<15000)return old.promise;
+ if(old&&now-old.time<OVERVIEW_CACHE_MS)return old.promise;
  const promise=api(path).catch(err=>{if(overviewReadCache.get(path)?.promise===promise)overviewReadCache.delete(path);throw err;});
  overviewReadCache.set(path,{time:now,promise});
  if(overviewReadCache.size>30)overviewReadCache.delete(overviewReadCache.keys().next().value);
@@ -817,14 +833,35 @@ function cachedOverviewRead(path){
 async function overview(){
  const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
- // Read all weekly data together; changes of selected day reuse this bounded cache.
- const [r,weekMenus,weekWeights]=await Promise.all([
-  cachedOverviewRead("/api/v2/player/calendar?start="+iso(mon)+"&end="+iso(end)),
-  cachedOverviewRead("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end)),
-  cachedOverviewRead("/api/v2/player/reference-weights?start="+iso(mon)+"&end="+iso(end))
- ]);
+ const weekKey=iso(mon),snapshot=reusableOverviewSnapshot(weekKey);
+ // Start weight reading alongside the calendar, not after all its requests.
+ if(overviewMode==="day"&&d<=iso(new Date()))
+  cachedOverviewRead("/api/v2/player/weight?date="+d).catch(()=>{});
+ let r,weekMenus,weekWeights;
+ if(snapshot){
+  ({r,weekMenus,weekWeights}=snapshot);
+ }else{
+  setOverviewLoading(true);
+  for(const button of document.querySelectorAll("#overview-mode button"))
+   button.setAttribute("aria-pressed",String(button.dataset.view===overviewMode));
+  try{
+   [r,weekMenus,weekWeights]=await Promise.all([
+    cachedOverviewRead("/api/v2/player/calendar?start="+weekKey+"&end="+iso(end)),
+    cachedOverviewRead("/api/v2/player/menus?start="+weekKey+"&end="+iso(end)),
+    cachedOverviewRead("/api/v2/player/reference-weights?start="+weekKey+"&end="+iso(end))
+   ]);
+  }catch(err){
+   if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
+   setOverviewLoading(false);
+   throw err;
+  }
+  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
+  overviewSnapshot={weekKey,time:Date.now(),r,weekMenus,weekWeights};
+ }
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
+ setOverviewLoading(false);
  loadPlayerPostMatch().catch(()=>{});
+ if(!snapshot){
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  // Shadow-read the simulation independently; never blocks rendering or changes UI.
@@ -849,6 +886,7 @@ async function overview(){
    }
   }).catch(()=>{});
 
+ }
  model=r.classifications;meals=r.meals;dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
