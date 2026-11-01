@@ -388,3 +388,15 @@ html[data-admin-theme="light"] #matrix .model-effective-matrix tr:nth-child(even
 html[data-admin-theme="light"] #matrix .model-effective-matrix tr:nth-child(odd) td{background:#f9fafb!important}
 html[data-admin-theme="light"] #scenario-editor{background:transparent!important;border:0!important}
 html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix tbody th{color:#283341!important}
+
+html[data-admin-theme="light"] #calendar-section .calendar-peri-flags .calendar-peri-check{background:#f4f6f8;border-color:#d7dfe8;color:#334155}
+html[data-admin-theme="light"] #calendar-section .calendar-peri-flags input[type=checkbox]{border-color:#8592a1}
+html[data-admin-theme="light"] #calendar-section .calendar-peri-flags input[type=checkbox]:checked{background:#70bf91;border-color:#70bf91}
+html[data-admin-theme="light"] #calendar-section .day-meal-no-color{background:#edf0f4;color:#637083}
+html[data-admin-theme="light"] #calendar-section .nutrition-metric-card{background:#f8f9fb;border-color:#d8dfe7!important}
+html[data-admin-theme="light"] #calendar-section .nutrition-metric-value.nutrient-kcal{color:#22734d}
+html[data-admin-theme="light"] #calendar-section .nutrition-metric-value.nutrient-protein{color:#27639e}
+html[data-admin-theme="light"] #calendar-section .nutrition-metric-value.nutrient-carbs{color:#a45e2b}
+html[data-admin-theme="light"] #calendar-section .nutrition-metric-value.nutrient-fat{color:#887029}
+html[data-admin-theme="light"] #calendar-section .calendar-day-peri{border-color:#d7dfe8}
+html[data-admin-theme="light"] #calendar-section .calendar-event-count{color:#617084}
