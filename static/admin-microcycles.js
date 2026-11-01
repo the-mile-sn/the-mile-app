@@ -106,6 +106,7 @@ async function loadModel(){
  resetPlanReviewForAthlete(athleteId);
  resetMenusForAthlete(athleteId);
  resetSupplementForAthlete(athleteId);
+ resetPlayerPreviewForAthlete(athleteId);
  selectedCalendarDay=null;selectedNutritionWeek=null;
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
@@ -684,6 +685,18 @@ $("menu-next").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWe
 
 let simulationDay=new Date(),publishedSimulation={};
 let playerView="overview",playerSelectedPlan=null,playerMenuWeek=new Date();
+let previewAthleteId=null,playerPreviewRevision=0;
+function resetPlayerPreviewForAthlete(athleteId){
+ if(previewAthleteId===athleteId)return;
+ previewAthleteId=athleteId;
+ ++playerPreviewRevision;
+ playerSelectedPlan=null;publishedSimulation={};
+ for(const id of ["player-week-strip","player-day-summary","player-preview-meals","player-plan-list","player-plan-detail","player-menu-days"]){
+  $(id).replaceChildren();
+ }
+ $("player-menu-week").textContent="";
+ $("player-preview-date").textContent="";
+}
 function playerFormattedNutrition(values){
  const root=document.createElement("span");root.className="nutrient-colors player-formatted-nutrition";
  for(const [key,prefix,cls,digits] of [["kcal","","nutrient-kcal",0],["protein_g","P ","nutrient-protein",1],["carbs_g","HC ","nutrient-carbs",1],["fat_g","G ","nutrient-fat",1]]){
@@ -701,8 +714,14 @@ function playerOption(option,index){
  return details;
 }
 async function playerShowPlans(){
- const [data,periData]=await Promise.all([request(matchBase()+"/plan-imports/published-preview"),request(matchBase()+"/peri-imports")]),root=$("player-plan-list"),detail=$("player-plan-detail");
+ if(!model||$("athlete").value!==model.athlete.id)return;
+ const athleteId=model.athlete.id,revision=++playerPreviewRevision;
+ const current=()=>revision===playerPreviewRevision&&previewAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&playerView==="plans";
+ const root=$("player-plan-list"),detail=$("player-plan-detail");
  root.replaceChildren();detail.replaceChildren();
+ const base="/api/v2/athletes/"+encodeURIComponent(athleteId);
+ const [data,periData]=await Promise.all([request(base+"/plan-imports/published-preview"),request(base+"/peri-imports")]);
+ if(!current())return;
  const available=Object.entries(data.options_by_color).filter(([,meals])=>Object.values(meals).some(options=>options.length));
  for(const [color] of available){
   const button=document.createElement("button");button.className="player-plan-button"+(playerSelectedPlan===color?" active":"");
@@ -733,10 +752,16 @@ async function playerShowPlans(){
  for(const meal of model.meals){if(!meals[meal]?.length)continue;const section=document.createElement("section");section.className="player-sim-meal";const header=document.createElement("div");header.className="player-meal-header";const title=document.createElement("h3");title.textContent=names[meal];header.appendChild(title);const average=averageMealNutrition(meals[meal]);if(average)header.appendChild(playerFormattedNutrition(average));section.appendChild(header);meals[meal].forEach((option,i)=>section.appendChild(playerOption(option,i)));detail.appendChild(section);}
 }
 async function playerShowMenus(){
+ if(!model||$("athlete").value!==model.athlete.id)return;
+ const athleteId=model.athlete.id,revision=++playerPreviewRevision;
  const monday=weekStart(playerMenuWeek),last=new Date(monday);last.setDate(monday.getDate()+6);
- const begin=isoDay(monday),end=isoDay(last);$("player-menu-week").textContent=begin+" — "+end;
- const [menus,calendar,dishes]=await Promise.all([request(matchBase()+"/menus?start="+begin+"&end="+end),request(matchBase()+"/calendar?start="+begin+"&end="+end),request("/api/v2/dishes")]);
+ const begin=isoDay(monday),end=isoDay(last);
+ const current=()=>revision===playerPreviewRevision&&previewAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&playerView==="menus"&&isoDay(weekStart(playerMenuWeek))===begin;
  const root=$("player-menu-days");root.replaceChildren();
+ $("player-menu-week").textContent=begin+" — "+end;
+ const base="/api/v2/athletes/"+encodeURIComponent(athleteId);
+ const [menus,calendar,dishes]=await Promise.all([request(base+"/menus?start="+begin+"&end="+end),request(base+"/calendar?start="+begin+"&end="+end),request("/api/v2/dishes")]);
+ if(!current())return;
  for(let i=0;i<7;i++){
   const date=new Date(monday);date.setDate(monday.getDate()+i);const key=isoDay(date),day=calendar.days.find(item=>item.date===key);
   const section=document.createElement("section");section.className="player-menu-day";
@@ -757,22 +782,29 @@ async function playerShowMenus(){
  }
 }
 async function showPlayerView(view){
- playerView=view;for(const [key,id] of [["overview","player-overview"],["plans","player-full-plans"],["menus","player-full-menus"]])$(id).hidden=key!==view;
+ playerView=view;++playerPreviewRevision;
+ for(const [key,id] of [["overview","player-overview"],["plans","player-full-plans"],["menus","player-full-menus"]])$(id).hidden=key!==view;
  for(const button of document.querySelectorAll("[data-player-view]"))button.setAttribute("aria-pressed",button.dataset.playerView===view?"true":"false");
  if(view==="overview")await loadPlayerSimulation();if(view==="plans")await playerShowPlans();if(view==="menus")await playerShowMenus();
 }
 for(const button of document.querySelectorAll("[data-player-view]"))button.addEventListener("click",()=>showPlayerView(button.dataset.playerView).catch(e=>status(e.message,"warn")));
 for(const [id,delta] of [["player-menu-prev",-7],["player-menu-next",7]])$(id).addEventListener("click",()=>{playerMenuWeek.setDate(playerMenuWeek.getDate()+delta);playerShowMenus().catch(e=>status(e.message,"warn"));});
 async function loadPlayerSimulation(){
-  if(!model)return;
-  const d=isoDay(simulationDay);
+  if(!model||$("athlete").value!==model.athlete.id)return;
+  const athleteId=model.athlete.id,revision=++playerPreviewRevision,d=isoDay(simulationDay);
+  const current=()=>revision===playerPreviewRevision&&previewAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&playerView==="overview"&&isoDay(simulationDay)===d;
+  $("player-week-strip").replaceChildren();
+  $("player-day-summary").replaceChildren();
+  $("player-preview-meals").replaceChildren();
   $("player-preview-date").textContent=simulationDay.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const base="/api/v2/athletes/"+encodeURIComponent(athleteId);
   const [plans,calendar,menus,refs]=await Promise.all([
-    request(matchBase()+"/plan-imports/published-preview"),
-    request(matchBase()+"/calendar?start="+d+"&end="+d),
-    request(matchBase()+"/menus?start="+d+"&end="+d),
-    request(matchBase()+"/reference-weights?start="+d+"&end="+d)
+    request(base+"/plan-imports/published-preview"),
+    request(base+"/calendar?start="+d+"&end="+d),
+    request(base+"/menus?start="+d+"&end="+d),
+    request(base+"/reference-weights?start="+d+"&end="+d)
   ]);
+  if(!current())return;
   publishedSimulation=plans.options_by_color;
   dayColorOverrides=colorOverrideLookup(calendar.meal_color_overrides);
   effectiveAdminColorsByDay=calendar.effective_colors||{};
