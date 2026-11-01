@@ -1197,6 +1197,27 @@ function renderPlans(){
 }
 const dishPhotoCache=new Map();
 let menuRenderToken=0;
+const dishPhotoObserver=typeof IntersectionObserver==="function"?new IntersectionObserver(entries=>{
+ for(const entry of entries){
+  if(!entry.isIntersecting)continue;
+  dishPhotoObserver.unobserve(entry.target);
+  activateDishPhoto(entry.target);
+ }
+},{rootMargin:"180px 0px"}):null;
+function activateDishPhoto(photo){
+ const epoch=Number(photo.dataset.playerEpoch),dishId=photo.dataset.dishId;
+ if(!dishId||epoch!==playerSessionEpoch||!photo.isConnected)return;
+ cachedDishPhoto(dishId).then(src=>{
+  if(!src||epoch!==playerSessionEpoch||!photo.isConnected)return;
+  photo.src=src;
+  photo.classList.add("dish-photo-ready");
+  photo.tabIndex=0;
+  photo.setAttribute("role","button");
+  photo.setAttribute("aria-label","Ampliar fotografia: "+photo.alt);
+  photo.onclick=()=>openDishPhoto(src,photo.alt);
+  photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,photo.alt);}};
+ });
+}
 function cachedDishPhoto(id){
  const key=String(id);
  if(!dishPhotoCache.has(key)){
@@ -1262,7 +1283,7 @@ async function menusView(){
   button.onclick=()=>{selectMenuDay(key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
   strip.insertBefore(button,$("menu-next"));
  }
- const root=$("menu-days");const fragment=document.createDocumentFragment();for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
+ const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===dayClass?.classification);const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal]);
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";
@@ -1271,10 +1292,17 @@ async function menusView(){
  const body=document.createElement("div");body.className="menu-entry-body";
  const name=document.createElement("span");name.className="value";name.textContent=menu.value;body.append(name);
  if(menu.kind==="dish"&&dishMap.has(menu.value)){
-  const photo=document.createElement("img");photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";const dishId=dishMap.get(menu.value);cachedDishPhoto(dishId).then(src=>{if(!src)return;photo.src=src;photo.classList.add("dish-photo-ready");photo.tabIndex=0;photo.setAttribute("role","button");photo.setAttribute("aria-label","Ampliar fotografia: "+menu.value);photo.onclick=()=>openDishPhoto(src,menu.value);photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,menu.value);}};});body.append(photo);
+  const photo=document.createElement("img");
+  photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";
+  photo.dataset.dishId=dishMap.get(menu.value);photo.dataset.playerEpoch=String(epoch);
+  body.append(photo);photosToObserve.push(photo);
  }
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken){
   root.replaceChildren(fragment);
+  if(dishPhotoObserver){
+   dishPhotoObserver.disconnect();
+   for(const photo of photosToObserve)dishPhotoObserver.observe(photo);
+  }else for(const photo of photosToObserve)activateDishPhoto(photo);
   root.hidden=false;
   $("menu-loading").hidden=true;
   lastMenuPresentationWeek=startKey;
