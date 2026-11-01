@@ -77,3 +77,17 @@ test("open and close use same chevron inside persistent halo preview",()=>{
  assert.match(css,/\.nutrition-comparison>\.nutrition-expand\[aria-expanded="true"\]/);
  assert.match(css,/position:absolute!important;top:auto!important;bottom:0!important;right:0!important/);
 });
+
+test("all player calendars use horizontal swipe navigation without arrow controls",()=>{
+ const html=fs.readFileSync("static/jogador-v2.html","utf8");
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(source,/function enableWeekSwipe\(element,onShift\)/);
+ assert.match(source,/Math\.abs\(dx\)<55\|\|Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
+ assert.match(source,/enableWeekSwipe\(root,offset=>\{day\.setDate/);
+ assert.match(source,/enableWeekSwipe\(strip,offset=>\{day\.setDate/);
+ assert.match(source,/enableWeekSwipe\(\$\("menu-week-strip"\),offset=>/);
+ assert.doesNotMatch(source,/className="week-arrow"/);
+ assert.doesNotMatch(source,/className="weekly-date-nav"/);
+ assert.doesNotMatch(html,/id="menu-prev"|id="menu-next"/);
+ assert.match(css,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)!important/);
+});
