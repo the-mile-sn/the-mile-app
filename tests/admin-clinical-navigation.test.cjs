@@ -342,3 +342,9 @@ test("opening imported option editor does not reference obsolete index parameter
  assert.match(block,/remove\.setAttribute\("aria-label","Remover linha"\)/);
  assert.match(admin,/edit\.legend\.textContent="Linha "\+\(index\+1\)/);
 });
+
+test("Menus includes CT and Estágio in selector and API allowlist",()=>{
+ const app=require("node:fs").readFileSync("app.py","utf8");
+ assert.match(admin,/const categoryNames=\[[^\]]*"CT","Estágio"\]/);
+ assert.match(app,/if kind==\x27category\x27 and value\.strip\(\) not in \([^\)]*\x27CT\x27,\x27Estágio\x27\)/);
+});
