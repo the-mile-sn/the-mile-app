@@ -133,3 +133,14 @@ test("daily and weekly selector keeps equal full-height Screen Time-style segmen
  assert.match(css,/#overview #overview-mode button\[aria-pressed="true"\]\{[\s\S]*?min-height:48px!important/);
  assert.match(css,/#overview #overview-mode button\[aria-pressed="true"\]\{background:#55555b!important/);
 });
+
+test("match with intra and training cells have the same 42px height",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#weekly-view \.weekly-event-slot>\.weekly-event-card\.weekly-match-with-intra/);
+ assert.match(css,/min-height:42px!important;\s*height:42px!important;/);
+});
+test("Day and Week selector uses compact 38px iPhone proportions",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview #overview-mode\{\s*min-height:38px!important;\s*height:38px!important/);
+ assert.match(css,/height:32px!important;\s*padding:4px 8px!important;\s*font-size:13px!important/);
+});
