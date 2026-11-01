@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=25/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=26/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -241,7 +241,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
  assert.match(html,/\/admin-light-theme\.css\?v=3/);
- assert.match(html,/\/admin-dashboard\.js\?v=25/);
+ assert.match(html,/\/admin-dashboard\.js\?v=26/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -292,7 +292,7 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=25/);
+ assert.match(html,/admin-dashboard\.js\?v=26/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
@@ -312,5 +312,11 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=25/);
+ assert.match(html,/admin-dashboard\.js\?v=26/);
+});
+
+test("Jogadores follow-up is a select with Pro and Elite only",()=>{
+ assert.match(dashboard,/type==="sex"\|\|type==="position"\|\|type==="followup"\?el\("select"\):el\("input"\)/);
+ assert.match(dashboard,/type==="followup"\)\{for\(const v of \["","Pro","Elite"\]\)/);
+ assert.match(dashboard,/followup_plan:get\("followup_plan"\)/);
 });
