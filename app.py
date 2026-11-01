@@ -575,7 +575,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js')
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/supplement-library')
@@ -596,7 +596,7 @@ def application(env, start_response):
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
-            '/admin-dashboard.js': 'admin-dashboard.js',
+            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-light-theme.css': 'admin-light-theme.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':

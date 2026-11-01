@@ -254,3 +254,11 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(light,/\.tm-clinical-metric/);
  assert.match(light,/#tm-admin-legacy/);
 });
+
+
+test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
+ const backend=require("node:fs").readFileSync("app.py","utf8");
+ assert.match(html,/href="\/admin-light-theme\.css\?v=1"/);
+ assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
+ assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
+});

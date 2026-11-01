@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from urllib.parse import urlparse, parse_qs
 
 temp = tempfile.TemporaryDirectory()
@@ -98,6 +99,20 @@ class PortalTest(unittest.TestCase):
         client=Client()
         for i in range(10):self.assertEqual(client.request('/api/login','POST',{'email':'unknown@example.com','password':'invalid-password'})['status'],401)
         self.assertEqual(client.request('/api/login','POST',{'email':'unknown@example.com','password':'invalid-password'})['status'],429)
+    def test_admin_light_theme_css_is_served_and_not_exposed_on_player_site(self):
+        # A CSS file linked from the admin HTML must be reachable at its exact URL.
+        with patch.object(app, 'SITE_ROLE', 'admin'):
+            page = Client().request('/')
+            self.assertEqual(page['status'], 200)
+            self.assertIn(b'/admin-light-theme.css?v=1', page['body'])
+            response = Client().request('/admin-light-theme.css?v=1')
+            self.assertEqual(response['status'], 200)
+            self.assertEqual(response['headers']['Content-Type'], 'text/css')
+            self.assertIn(b'html[data-admin-theme="light"]', response['body'])
+            self.assertIn(b'.tm-appearance-choices', response['body'])
+        with patch.object(app, 'SITE_ROLE', 'player'):
+            self.assertEqual(Client().request('/admin-light-theme.css?v=1')['status'], 404)
+
     def test_no_data_files_served_and_session_security_headers(self):
         self.assertEqual(Client().request('/data/mile.sqlite3')['status'],404)
         self.assertEqual(Client().request('/logo.png')['status'],200)
