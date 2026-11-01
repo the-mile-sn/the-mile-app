@@ -23,3 +23,17 @@ test("saving weight invalidates cached relative nutrition references",()=>{
 test("days with no published meals still render weight card",()=>{
  assert.match(source,/renderWeightCard\(root,d\)\.catch\(\(\)=>\{\}\);\s*const note=document\.createElement\("p"\)/);
 });
+
+test("expanded weight action becomes close X for editor and chart, with accessible state",()=>{
+ assert.match(source,/const collapsedIcon=action\.innerHTML,collapsedLabel=action\.getAttribute\("aria-label"\)/);
+ assert.match(source,/const closeIcon=.*M6 6l12 12M18 6L6 18/);
+ assert.match(source,/action\.innerHTML=expanded\?closeIcon:collapsedIcon/);
+ assert.match(source,/action\.setAttribute\("aria-expanded",String\(expanded\)\)/);
+ assert.match(source,/if\(expanded\)\{existing\?chart\(\):editor\(\);\}/);
+});
+test("weekly macro chart typography does not affect the collapsed summary",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-heading\{/);
+ assert.match(css,/font-size:16px!important;\s*font-weight:650!important/);
+ assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/);
+});
