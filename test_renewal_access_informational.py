@@ -4,12 +4,12 @@ from datetime import date, timedelta
 from unittest.mock import patch
 
 import app
-from test_app import PortalTest, Client, PDF
+import test_app as fixture_module
 
 
 class RenewalAccessRegression(unittest.TestCase):
     def setUp(self):
-        self.fixture = PortalTest(methodName="test_deactivation_revokes_session")
+        self.fixture = fixture_module.PortalTest(methodName="test_deactivation_revokes_session")
         self.fixture.setUp()
         self.admin = self.fixture.admin
         created = self.admin.request(
@@ -26,7 +26,7 @@ class RenewalAccessRegression(unittest.TestCase):
             ).fetchone()["user_id"]
 
     def _login(self):
-        p = Client()
+        p = fixture_module.Client()
         r = p.request(
             "/api/login", "POST",
             {"identifier": "renovacaoteste", "password": "player-password-123"}
@@ -47,7 +47,7 @@ class RenewalAccessRegression(unittest.TestCase):
         self.assertEqual(p.request("/api/documents")["status"], 200)
         upload = self.admin.request(
             "/api/documents?player=" + self.uid + "&folder=nutrition&title=Plan.pdf",
-            "POST", PDF
+            "POST", fixture_module.PDF
         )
         self.assertEqual(upload["status"], 201, upload)
         self.assertEqual(
