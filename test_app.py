@@ -54,6 +54,40 @@ class PortalTest(unittest.TestCase):
         return client,client.request('/api/me')['body']['user']['id']
     def upload(self,uid,pdf=PDF):
         return self.admin.request('/api/documents?player='+uid+'&folder=nutrition&title=Plan.pdf','POST',pdf)
+    def test_v2_followup_details_and_birthday_do_not_change_access(self):
+        created=self.admin.request('/api/v2/athletes','POST',{'name':'Jogadora Perfil','username':'perfiltest','password':'password-secure-123','sex':'F','weight_kg':70})
+        self.assertEqual(created['status'],201,created)
+        aid=created['body']['athlete']['id']
+        base='/api/v2/athletes/'+aid+'/profile'
+        initial=self.admin.request(base)
+        self.assertEqual(initial['status'],200,initial)
+        self.assertIsNone(initial['body']['details']['followup_plan'])
+        self.assertIsNone(initial['body']['details']['followup_renewal_date'])
+        self.assertIsNone(initial['body']['details']['birth_date'])
+        payload={'name':'Jogadora Perfil','weight_kg':70,'height_cm':None,'profile_notes':'','sex':'F','followup_plan':'Elite','followup_renewal_date':'2027-05-20','birth_date':'2001-11-01'}
+        saved=self.admin.request(base,'PUT',payload)
+        self.assertEqual(saved['status'],200,saved)
+        details=self.admin.request(base)['body']['details']
+        self.assertEqual(details['followup_plan'],'Elite')
+        self.assertEqual(details['followup_renewal_date'],'2027-05-20')
+        self.assertEqual(details['birth_date'],'2001-11-01')
+        with app.connect() as c:
+            user=c.execute("SELECT u.renewal_date,u.access_until,u.birth_date FROM users u JOIN v2_player_links l ON l.user_id=u.id WHERE l.athlete_id=?",(aid,)).fetchone()
+            self.assertIsNone(user['renewal_date'])
+            self.assertIsNone(user['access_until'])
+            self.assertEqual(user['birth_date'],'2001-11-01')
+        # Legacy saves must not erase follow-up data.
+        legacy=self.admin.request(base,'PUT',{'name':'Jogadora Perfil','weight_kg':70,'height_cm':None,'profile_notes':'','sex':'F'})
+        self.assertEqual(legacy['status'],200,legacy)
+        self.assertEqual(self.admin.request(base)['body']['details']['followup_plan'],'Elite')
+        invalid=self.admin.request(base,'PUT',{**payload,'followup_plan':'Basic'})
+        self.assertEqual(invalid['status'],400)
+        self.assertEqual(self.admin.request(base)['body']['details']['followup_plan'],'Elite')
+        invalid_date=self.admin.request(base,'PUT',{**payload,'followup_renewal_date':'2027-02-30'})
+        self.assertEqual(invalid_date['status'],400)
+        self.assertEqual(self.admin.request(base)['body']['details']['followup_renewal_date'],'2027-05-20')
+        self.assertEqual(Client().request(base)['status'],401)
+
     def test_admin_seed_and_no_shared_password(self):
         with app.connect() as c:
             rows=c.execute("SELECT email,password FROM users WHERE role='admin'").fetchall()
