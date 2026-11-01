@@ -1577,7 +1577,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
       for(const input of Object.values(nutrients))input.parentElement.style.display=kind==="food"?"":"none";
     };
     type.addEventListener("change",updateFields);updateFields();
-    const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg>';remove.title="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
+    const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg>';remove.title="Remover linha";remove.setAttribute("aria-label","Remover linha");
     box.appendChild(remove);
     const edit={type,name,noteTitle,noteTextarea,quantity,nutrients,box,legend,up,down,insert,remove};
     if(afterEdit){
