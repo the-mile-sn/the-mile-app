@@ -718,6 +718,7 @@ function injectPostMatchCard(){
      await api("/api/v2/player/post-match",{method:"POST",
       headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
+     overviewReadCache.delete("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
      await overview();
     }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
    };
@@ -730,7 +731,7 @@ async function loadPlayerPostMatch(){
  const epoch=playerSessionEpoch;
  const host=$("post-match-form-area");if(host){host.hidden=true;host.replaceChildren();}
  try{
-  const result=await api("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
+  const result=await cachedOverviewRead("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
   if(epoch!==playerSessionEpoch)return;
   playerPostMatchRecords=result.available?(result.matches||[]):[];
  }catch{if(epoch!==playerSessionEpoch)return;playerPostMatchRecords=[];}
@@ -1333,8 +1334,8 @@ const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionD
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
  const epoch=playerSessionEpoch;
- $("assessment-measurements").textContent="A carregar avaliações…";
- const response=await api("/api/v2/player/assessments");
+ if(!assessmentRecords.length)$("assessment-measurements").textContent="A carregar avaliações…";
+ const response=await cachedOverviewRead("/api/v2/player/assessments");
  if(epoch!==playerSessionEpoch)return;
  assessmentRecords=response.assessments||[];
  assessmentFields=response.fields||{};
