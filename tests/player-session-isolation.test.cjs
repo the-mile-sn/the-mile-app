@@ -24,3 +24,30 @@ test('login preserves input credentials across cache reset',()=>{
 test('stale rejected cached promises cannot evict new account reads',()=>{
  assert.match(source,/if\(overviewReadCache\.get\(path\)\?\.promise===promise\)overviewReadCache\.delete\(path\)/);
 });
+
+test('an anonymous /api/me response is a normal signed-out state, without an expiration banner',()=>{
+ const start=source.indexOf('async function session(){');
+ const end=source.indexOf('async function show(',start);
+ const body=source.slice(start,end);
+ assert.match(body,/if\(!sessionData\.user\)\{/);
+ assert.match(body,/\$\("status"\)\.textContent="";\s*\$\("login-panel"\)\.hidden=false/);
+ assert.match(body,/if\(epoch!==playerSessionEpoch\)return/);
+ assert.match(body,/\$\("login-panel"\)\.hidden=true;\s*\$\("player-panel"\)\.hidden=false;\s*\$\("logout"\)\.hidden=false;\s*\$\("status"\)\.textContent=""/);
+});
+test('only unauthorized responses revoke the player view, not forbidden actions',()=>{
+ const start=source.indexOf('async function api(');
+ const end=source.indexOf('function fmt(',start);
+ const body=source.slice(start,end);
+ assert.match(body,/if\(r\.status===401&&path!=="\/api\/login"&&path!=="\/api\/logout"\)revokePlayerView\(\)/);
+ assert.doesNotMatch(body,/r\.status===403.*revokePlayerView/);
+ assert.match(source,/function revokePlayerView\(\)/);
+});
+test('optional startup weight read no longer competes with identity and calendar initialization',()=>{
+ const start=source.indexOf('async function session(){');
+ const end=source.indexOf('async function show(',start);
+ const body=source.slice(start,end);
+ assert.match(body,/const profilePromise=api\("\/api\/v2\/player\/me"\)/);
+ assert.match(body,/const plansPromise=api\("\/api\/v2\/player\/plans"\)/);
+ assert.match(body,/const \[r,p\]=await Promise\.all\(\[profilePromise,plansPromise\]\)/);
+ assert.doesNotMatch(body,/\/api\/v2\/player\/weight\?date/);
+});
