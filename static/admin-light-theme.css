@@ -363,3 +363,7 @@ html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-trend-svg cir
 }
 html[data-admin-theme="light"] #tm-players-page .tm-subpage-back{color:#4f657c}
 html[data-admin-theme="light"] #tm-players-page .tm-subpage-back:hover{background:#e6ebf2;color:#1c3854}
+
+html[data-admin-theme="light"] #admin-workspace .tm-admin-brand-home{color:#1d242c}
+html[data-admin-theme="light"] #admin-workspace .tm-dashboard-return .tm-subpage-back{color:#4f657c}
+html[data-admin-theme="light"] #admin-workspace .tm-dashboard-return .tm-subpage-back:hover{background:#e6ebf2;color:#1c3854}
