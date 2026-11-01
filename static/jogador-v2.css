@@ -3331,3 +3331,20 @@ body.profile-active .player-top{display:none!important}
 @media(max-width:390px){
  #weekly-view .weekly-color-detail{padding:15px!important}
 }
+
+/* Assessments: footer timestamp and formula note only in expanded body-fat card.
+   Existing metric cards, charts and navigation remain unchanged. */
+#plans #plans-assessments .assessment-most-recent{
+ margin:16px 0 8px;
+ padding:0 7px;
+ color:#a8a8b1;
+ font-size:13px;
+}
+#plans #plans-assessments .assessment-measure-card>.assessment-formula{
+ margin:0 16px 16px;
+ padding:8px 0 0;
+ border-top:1px solid rgba(255,255,255,.09);
+ color:#a8a8b1;
+ font-size:12px;
+ line-height:1.45;
+}

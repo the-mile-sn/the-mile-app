@@ -1474,13 +1474,18 @@ function renderPlayerAssessments(){
   else change.textContent=current?"Primeira medição":"Sem dados";
   right.append(change);
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
-  summary.append(left,right,arrow);details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined));target.append(details);
+  summary.append(left,right,arrow);
+  details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined));
+  if(assessmentGroup==="resumo"&&key==="body_fat"&&recent.formula_note){
+   const note=document.createElement("p");note.className="assessment-formula";note.textContent="Gordura corporal: "+recent.formula_note;details.append(note);
+  }
+  target.append(details);
  }
  if(assessmentGroup==="resumo"){
   const recentAverages=recent.averages||{},known=assessmentAverages.filter(([key])=>recentAverages[key]!==undefined);
   if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent="Médias do relatório";averages.append(head);
    for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=label;v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
-  if(recent.formula_note){const note=document.createElement("p");note.className="assessment-formula";note.textContent="Gordura corporal: "+recent.formula_note;target.append(note);}
+
  }
  if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem medições publicadas nesta categoria.";target.append(empty);}
 }
