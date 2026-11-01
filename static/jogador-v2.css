@@ -3088,13 +3088,13 @@ body.profile-active .player-top{display:none!important}
 #assessments .assessment-metric-name,
 #assessments .assessment-metric-right strong{font-size:14px!important}
 #assessments .assessment-change{font-size:10px!important}
-#assessments #assessments-assessments details.assessment-measure-card{
-#assessments #assessments-assessments details.assessment-measure-card > summary{
-#assessments #assessments-assessments .assessment-metric-right{gap:6px!important}
-#assessments #assessments-assessments .assessment-metric-name,
-#assessments #assessments-assessments .assessment-metric-right strong{font-size:13px!important}
-#assessments #assessments-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
-#assessments #assessments-assessments details.assessment-measure-card > summary{
+#assessments #plans-assessments details.assessment-measure-card{
+#assessments #plans-assessments details.assessment-measure-card > summary{
+#assessments #plans-assessments .assessment-metric-right{gap:6px!important}
+#assessments #plans-assessments .assessment-metric-name,
+#assessments #plans-assessments .assessment-metric-right strong{font-size:13px!important}
+#assessments #plans-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
+#assessments #plans-assessments details.assessment-measure-card > summary{
 #assessments .assessment-trend>svg{display:block;width:100%;height:auto;max-height:270px;overflow:visible;touch-action:pan-y;user-select:none}
 #assessments .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:.7;stroke-dasharray:2 4}
 #assessments .assessment-chart-tick{fill:#9496a1;font-size:10px;font-weight:500}
@@ -3129,10 +3129,10 @@ body.profile-active .player-top{display:none!important}
 #assessments .assessment-metric-right{gap:9px;justify-content:center}
 #assessments .assessment-metric-right strong{font-weight:600;line-height:1.15}
 #assessments .assessment-change{line-height:1.15}
-#assessments #assessments-assessments button.plans-back-round{
-#assessments #assessments-assessments button.plans-back-round span{
-#assessments #assessments-assessments > button.plans-back-round{margin-top:3px!important;margin-bottom:11px!important}
-#assessments #assessments-assessments .assessment-tabs{margin-top:0!important}
+#assessments #plans-assessments button.plans-back-round{
+#assessments #plans-assessments button.plans-back-round span{
+#assessments #plans-assessments > button.plans-back-round{margin-top:3px!important;margin-bottom:11px!important}
+#assessments #plans-assessments .assessment-tabs{margin-top:0!important}
 #assessments .assessment-trend>svg{width:100%;height:auto;display:block}
 #assessments .assessment-chart-point.is-selected{fill:#fff;stroke:#fff}
 #profile .profile-notifications-card{display:flex;align-items:center;gap:13px;min-height:64px;padding:17px 19px;margin-bottom:16px;border-radius:17px;background:#242429;color:#f1f1f3;font-size:15px}
@@ -3222,21 +3222,24 @@ body.profile-active .player-top{display:none!important}
 #assessments .assessment-metric-name,
 #assessments .assessment-metric-right strong{font-size:14px!important}
 #assessments .assessment-change{font-size:10px!important}
-#assessments #assessments-assessments details.assessment-measure-card{
+#assessments #plans-assessments details.assessment-measure-card{
  margin:5px 0!important;padding:0!important;min-height:0!important;
 }
-#assessments #assessments-assessments details.assessment-measure-card > summary{
+#assessments #plans-assessments details.assessment-measure-card > summary{
  height:44px!important;min-height:44px!important;max-height:44px!important;
  padding:5px 11px 5px 13px!important;box-sizing:border-box!important;
  gap:7px!important;line-height:1.15!important;
 }
-#assessments #assessments-assessments .assessment-metric-right{gap:6px!important}
-#assessments #assessments-assessments .assessment-metric-name,
-#assessments #assessments-assessments .assessment-metric-right strong{font-size:13px!important}
-#assessments #assessments-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
+#assessments #plans-assessments .assessment-metric-right{gap:6px!important}
+#assessments #plans-assessments .assessment-metric-name,
+#assessments #plans-assessments .assessment-metric-right strong{font-size:13px!important}
+#assessments #plans-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
 
 /* Match the standard closed meal-card height in Avaliações. */
-#assessments #assessments-assessments details.assessment-measure-card > summary{
+#assessments #plans-assessments details.assessment-measure-card > summary{
  height:65px!important;min-height:65px!important;max-height:65px!important;
 }
 #assessments .assessment-trend>svg{max-height:none!important;width:100%!important;height:auto!important}
+
+#profile .profile-notifications-card .profile-notification-icon{width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center}
+#profile .profile-notifications-card .profile-notification-icon svg{width:100%;height:100%}
