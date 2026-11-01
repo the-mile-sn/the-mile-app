@@ -3437,3 +3437,25 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-header+div>.nutrition-chart-section>strong{
  font-size:12px!important;font-weight:400!important;line-height:1.35!important;
 }
+
+/* Energy heading and stable chevron: controls stay anchored to the halo preview
+   whether the weekly chart section is open or closed. */
+#overview #day-details .nutrition-donut-summary .nutrition-comparison{
+ position:relative!important;
+}
+#overview #day-details .nutrition-comparison-heading{
+ grid-column:1/-1!important;margin:0 0 2px 5px!important;
+ font-size:14px!important;font-weight:500!important;line-height:1.35!important;
+ color:#b8bac1!important;
+}
+#overview #day-details .nutrition-comparison-center{gap:4px!important}
+#overview #day-details .nutrition-comparison-center .per-kg{
+ font-size:12px!important;color:#a6a8ae!important;
+}
+#overview #day-details .nutrition-comparison>.nutrition-expand,
+#overview #day-details .nutrition-comparison>.nutrition-expand[aria-expanded="true"],
+#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-comparison>.nutrition-expand{
+ position:absolute!important;top:auto!important;bottom:0!important;right:0!important;
+ transform:none!important;width:28px!important;height:28px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
