@@ -320,3 +320,15 @@ test("Jogadores follow-up is a select with Pro and Elite only",()=>{
  assert.match(dashboard,/type==="followup"\)\{for\(const v of \["","Pro","Elite"\]\)/);
  assert.match(dashboard,/followup_plan:get\("followup_plan"\)/);
 });
+
+test("Plan option lines support insertion and reorder with durable payload order",()=>{
+ assert.match(admin,/function movePlanEditorLine\(edits,edit,direction\)/);
+ assert.match(admin,/function insertPlanEditorLine\(edits,afterEdit,edit\)/);
+ assert.match(admin,/const up=tool\("↑","meal-line-move"/);
+ assert.match(admin,/const down=tool\("↓","meal-line-move"/);
+ assert.match(admin,/const insert=tool\("\+ Inserir abaixo","meal-line-insert"/);
+ assert.match(admin,/if\(addLine\)form\.insertBefore\(box,addLine\)/);
+ assert.match(admin,/const entries=edits\.map\(edit=>\{/);
+ assert.match(admin,/edit\.legend\.textContent="Linha "\+\(index\+1\)/);
+ assert.match(admin,/const pending=saveChain;planPendingSaves\.push\(pending\)/);
+});
