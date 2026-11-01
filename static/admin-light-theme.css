@@ -367,3 +367,6 @@ html[data-admin-theme="light"] #tm-players-page .tm-subpage-back:hover{backgroun
 html[data-admin-theme="light"] #admin-workspace .tm-admin-brand-home{color:#1d242c}
 html[data-admin-theme="light"] #admin-workspace .tm-dashboard-return .tm-subpage-back{color:#4f657c}
 html[data-admin-theme="light"] #admin-workspace .tm-dashboard-return .tm-subpage-back:hover{background:#e6ebf2;color:#1c3854}
+
+html[data-admin-theme="light"] .tm-player-photo-placeholder{background:#e8edf3;border-color:#cfdae7;color:#425a73}
+html[data-admin-theme="light"] .tm-player-photo-control{color:#4b5c6f}

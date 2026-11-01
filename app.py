@@ -1400,18 +1400,46 @@ def application(env, start_response):
                 image_data=read_dish_image(c,dish['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
                 return respond(200,image_data,'image/webp')
-            if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method == 'PUT':
+            if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method in ('GET', 'PUT'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 athlete_id=path.split('/')[4]
+                linked=c.execute("SELECT u.id,u.birth_date,u.photo_mime FROM v2_player_links l JOIN users u ON u.id=l.user_id AND u.role='player' WHERE l.athlete_id=?",(athlete_id,)).fetchone()
+                details=c.execute("SELECT followup_plan,followup_renewal_date FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone()
+                if details is None: raise Problem(404,'not_found')
+                if method=='GET':
+                    return respond(200,{'details':{'birth_date':linked['birth_date'] if linked else None,'has_photo':bool(linked and linked['photo_mime']),'user_id':linked['id'] if linked else None,'followup_plan':details['followup_plan'],'followup_renewal_date':details['followup_renewal_date']}})
                 body=read_json(env)
-                current_profile=c.execute('SELECT field_position,arm_point,thigh_point FROM v2_athletes WHERE id=?',(athlete_id,)).fetchone()
-                if current_profile is None: raise Problem(404,'not_found')
+                followup=body.get('followup_plan',details['followup_plan'])
+                if followup in ('',None): followup=None
+                if followup not in (None,'Pro','Elite'): raise Problem(400,'invalid_followup_plan')
+                renewal=body.get('followup_renewal_date',details['followup_renewal_date'])
+                if renewal in ('',None):renewal=None
+                if renewal is not None:
+                    try: renewal=datetime.strptime(renewal,'%Y-%m-%d').date().isoformat()
+                    except (TypeError,ValueError): raise Problem(400,'invalid_followup_date')
+                birth=body.get('birth_date')
+                if birth in ('',None):birth=None
+                if birth is not None:
+                    try: birth_date=datetime.strptime(birth,'%Y-%m-%d').date()
+                    except (TypeError,ValueError): raise Problem(400,'invalid_birth_date')
+                    if birth_date > datetime.now(ZoneInfo('Europe/Lisbon')).date() or birth_date.year<1900: raise Problem(400,'invalid_birth_date')
+                photo=body.get('photo',None)
+                photo_bytes=photo_mime=None
+                if photo is not None and photo!='':
+                    photo_bytes,photo_mime=parse_photo(photo)
+                if (birth is not None or photo is not None) and linked is None: raise Problem(409,'player_account_not_linked')
+                current=c.execute('SELECT field_position,arm_point,thigh_point FROM v2_athletes WHERE id=?',(athlete_id,)).fetchone()
                 try:
-                    result=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''),body.get('sex'),body.get('field_position', current_profile['field_position']),body.get('arm_point', current_profile['arm_point']),body.get('thigh_point', current_profile['thigh_point']))
+                    athlete=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''),body.get('sex'),body.get('field_position', current['field_position']),body.get('arm_point', current['arm_point']),body.get('thigh_point', current['thigh_point']),commit=False)
                 except ValueError: raise Problem(400,'invalid_athlete_profile')
-                if result is None: raise Problem(404,'not_found')
-                return respond(200,{'athlete':result})
+                c.execute("UPDATE v2_athletes SET followup_plan=?,followup_renewal_date=? WHERE id=?",(followup,renewal,athlete_id))
+                if linked:
+                    if birth is not None:c.execute("UPDATE users SET birth_date=? WHERE id=? AND role='player'",(birth,linked['id']))
+                    if photo_bytes is not None:c.execute("UPDATE users SET photo=?,photo_mime=? WHERE id=? AND role='player'",(photo_bytes,photo_mime,linked['id']))
+                c.commit()
+                athlete.update({'followup_plan':followup,'followup_renewal_date':renewal,'birth_date':birth,'has_photo':bool(photo_bytes or linked and linked['photo_mime']),'user_id':linked['id'] if linked else None})
+                return respond(200,{'athlete':athlete})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/batch') and method == 'PUT':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)

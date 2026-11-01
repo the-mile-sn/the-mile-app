@@ -209,7 +209,7 @@ function ensurePlanningOnlyView(){
  window.tmOpenAdminPlanning=openPlanning;
  const chooseSettings=$("tm-admin-nav-settings");if(chooseSettings)chooseSettings.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;navActive(chooseSettings);if(typeof loadAdminAccounts==="function")loadAdminAccounts().catch(()=>{});});
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
- let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null;
+ let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null,playerDetails=null,playerPhotoData=null;
  const accessIdentity=$("tm-players-access-identity"),accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
  function paintPlayerAccess(){
   accessToggle.hidden=!playerAccess;
@@ -239,10 +239,19 @@ function ensurePlanningOnlyView(){
  });
 
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)"),profileNav=$("tm-players-profile-nav"),playersHeader=playersPage.querySelector(".tm-players-heading-minimal");
- const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Notas internas","profile_notes","textarea"]];
+ const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Data de nascimento","birth_date","date"],["Plano de acompanhamento","followup_plan","followup"],["Data de renovação do acompanhamento","followup_renewal_date","date"],["Notas internas","profile_notes","textarea"]];
  function displayPlayerProfile(){
   if(!playerProfile)return;
-  const athlete=playerProfile,host=$("tm-players-profile-fields");host.replaceChildren();
+  const athlete={...playerProfile,...(playerDetails||{})},host=$("tm-players-profile-fields");host.replaceChildren();
+  const photoHost=$("tm-players-profile-photo");photoHost.replaceChildren();
+  const accountId=playerDetails?.user_id;
+  const avatar=el("span","tm-player-photo-placeholder",(athlete.name||"").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase());
+  if(accountId&&playerDetails.has_photo){
+   const img=el("img","tm-player-photo-preview");img.src="/api/players/"+encodeURIComponent(accountId)+"/photo?reload="+Date.now();img.alt="Fotografia de "+athlete.name;img.onerror=()=>img.remove();avatar.append(img);
+  }
+  photoHost.append(avatar);
+  const photoControl=$("tm-players-profile-photo-upload");photoControl.hidden=!playerProfileEditing;
+  photoControl.disabled=!accountId;
   $("tm-players-profile-title").textContent=athlete.name;
   host.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin:18px 0";
   for(const [caption,key,type] of profileFields){
@@ -253,7 +262,9 @@ function ensurePlanningOnlyView(){
    }else{
     const field=type==="textarea"?el("textarea"):type==="sex"||type==="position"?el("select"):el("input");
     if(type==="sex"){for(const [v,t] of [["","Por definir"],["F","Feminino"],["M","Masculino"]]){const o=el("option","",t);o.value=v;field.append(o);}}
-    else if(type==="position"){for(const v of ["","GR","DD","DE","DC","MDC","MC","MOC","ED","EE","PL","Outro"]){const o=el("option","",v||"Por definir");o.value=v;field.append(o);}} else if(type!=="textarea"){field.type=type;if(type==="number"){field.min=key==="weight_kg"?"20":"0";field.max=key==="weight_kg"?"250":key==="arm_point"?"100":key==="thigh_point"?"150":"230";field.step="0.1";}}
+    else if(type==="position"){for(const v of ["","GR","DD","DE","DC","MDC","MC","MOC","ED","EE","PL","Outro"]){const o=el("option","",v||"Por definir");o.value=v;field.append(o);}}
+    else if(type==="followup"){for(const v of ["","Pro","Elite"]){const o=el("option","",v||"Por definir");o.value=v;field.append(o);}}
+    else if(type!=="textarea"){field.type=type;if(type==="number"){field.min=key==="weight_kg"?"20":"0";field.max=key==="weight_kg"?"250":key==="arm_point"?"100":key==="thigh_point"?"150":"230";field.step="0.1";}}
     field.value=athlete[key]??"";field.dataset.playerProfileField=key;field.style.width="100%";wrapper.append(field);
    }
    host.append(wrapper);
@@ -266,36 +277,49 @@ function ensurePlanningOnlyView(){
   ++profileLoadToken;
   profileNav.hidden=true;playersHeader.hidden=false;
   if(dashboardReturn)dashboardReturn.hidden=false;
-  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;
+  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerDetails=null;playerPhotoData=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
   const token=++profileLoadToken;
   playersHeader.hidden=true;profileNav.hidden=false;
   if(dashboardReturn)dashboardReturn.hidden=true;
-  playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;
+  playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;playerDetails=null;playerPhotoData=null;
   window.scrollTo({top:0,behavior:"smooth"});
   $("tm-players-profile-title").textContent="A carregar perfil…";$("tm-players-profile-fields").replaceChildren();
   $("tm-players-profile-feedback").textContent="";
   try{
-   const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/microcycles");
+   const [data,additional]=await Promise.all([request("/api/v2/athletes/"+encodeURIComponent(aid)+"/microcycles"),request("/api/v2/athletes/"+encodeURIComponent(aid)+"/profile")]);
    if(profilePanel.hidden||token!==profileLoadToken)return;
-   playerProfile=data.athlete;displayPlayerProfile();loadPlayerAccess(aid,token);
+   playerProfile=data.athlete;playerDetails=additional.details;displayPlayerProfile();loadPlayerAccess(aid,token);
   }catch(e){if(token===profileLoadToken)$("tm-players-profile-feedback").textContent="Não foi possível carregar o perfil: "+e.message;}
  }
  $("tm-players-profile-back").addEventListener("click",closePlayerProfile);
- $("tm-players-profile-edit").addEventListener("click",()=>{if(!playerProfile)return;playerProfileEditing=true;displayPlayerProfile();});
- $("tm-players-profile-cancel").addEventListener("click",()=>{playerProfileEditing=false;displayPlayerProfile();});
+ $("tm-players-profile-edit").addEventListener("click",()=>{if(!playerProfile)return;playerProfileEditing=true;playerPhotoData=null;displayPlayerProfile();});
+ $("tm-players-profile-photo-upload").addEventListener("change",async event=>{
+  const file=event.target.files?.[0];if(!file)return;
+  const feedback=$("tm-players-profile-feedback");
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024){feedback.textContent="Usa uma fotografia JPG, PNG ou WebP até 3 MB.";event.target.value="";return;}
+  try{
+   const value=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("Não foi possível ler a fotografia."));reader.readAsDataURL(file);});
+   if(!playerProfileEditing)return;
+   playerPhotoData=value;feedback.textContent="Fotografia pronta. Guarda o perfil para aplicar.";
+  }catch(e){feedback.textContent=e.message;}
+ });
+ $("tm-players-profile-cancel").addEventListener("click",()=>{playerProfileEditing=false;playerPhotoData=null;$("tm-players-profile-photo-upload").value="";displayPlayerProfile();});
  $("tm-players-profile-save").addEventListener("click",async()=>{
   if(!playerProfile)return;
   const button=$("tm-players-profile-save");button.disabled=true;
   const get=k=>profilePanel.querySelector('[data-player-profile-field="'+k+'"]').value;
   const rawWeight=get("weight_kg");
   try{
-   const result=await request("/api/v2/athletes/"+encodeURIComponent(playerProfile.id)+"/profile",{method:"PUT",body:JSON.stringify({
-    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point"))
+   const selectedId=playerProfile.id,selectedToken=profileLoadToken;
+   const result=await request("/api/v2/athletes/"+encodeURIComponent(selectedId)+"/profile",{method:"PUT",body:JSON.stringify({
+    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point")),birth_date:get("birth_date"),followup_plan:get("followup_plan"),followup_renewal_date:get("followup_renewal_date"),...(playerPhotoData?{photo:playerPhotoData}:{})
    })});
-   playerProfile=result.athlete;playerProfileEditing=false;displayPlayerProfile();
+   if(selectedToken!==profileLoadToken||playerProfile?.id!==selectedId)return;
+   playerProfile=result.athlete;playerDetails={...playerDetails,birth_date:result.athlete.birth_date,followup_plan:result.athlete.followup_plan,followup_renewal_date:result.athlete.followup_renewal_date,has_photo:result.athlete.has_photo,user_id:result.athlete.user_id};
+   playerProfileEditing=false;playerPhotoData=null;$("tm-players-profile-photo-upload").value="";displayPlayerProfile();
    $("tm-players-profile-feedback").textContent="Perfil guardado.";
    if(typeof window.tmSyncPlanningAthleteProfile==="function")window.tmSyncPlanningAthleteProfile(playerProfile);
    loadPlayers().catch(e=>{$("tm-players-error").textContent="Atualiza a lista de jogadores: "+e.message;});
