@@ -1472,6 +1472,23 @@ function showImportedDraft(draft){
   if(selectedPlanMode==="edit"){edit.classList.add("plan-validate-action");const footer=document.createElement("div");footer.className="plan-editor-footer";footer.append(edit);root.append(footer);}
 }
 
+// Synchronize visual and submitted order without rebuilding editable fields.
+function movePlanEditorLine(edits,edit,direction){
+ if(direction!==-1&&direction!==1)return false;
+ const from=edits.indexOf(edit),to=from+direction;
+ if(from<0||to<0||to>=edits.length)return false;
+ const neighbour=edits[to];
+ if(direction<0)neighbour.box.before(edit.box);else neighbour.box.after(edit.box);
+ edits.splice(from,1);edits.splice(to,0,edit);
+ return true;
+}
+function insertPlanEditorLine(edits,afterEdit,edit){
+ const index=edits.indexOf(afterEdit);
+ if(index<0)return false;
+ afterEdit.box.after(edit.box);
+ edits.splice(index+1,0,edit);
+ return true;
+}
 function showOptionEditor(draft,groupIndex,optionIndex,details){
   const option=draft.extracted.groups[groupIndex].options[optionIndex];
   const existing=details.querySelector(".option-editor");if(existing){existing.remove();return;}
@@ -1502,8 +1519,36 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     totals[key]=field("Total · "+label,option.totals?.[key]||"");
   }
   const edits=[];
-  const addPlanLine=(item,index)=>{
-    const box=document.createElement("fieldset");box.className="meal-line-editor";const legend=document.createElement("legend");legend.textContent="Linha "+(index+1);box.appendChild(legend);
+  let addLine=null;
+  const syncLineOrder=()=>{
+    edits.forEach((edit,index)=>{
+      const label="linha "+(index+1);
+      edit.legend.textContent="Linha "+(index+1);
+      edit.up.disabled=index===0;
+      edit.down.disabled=index===edits.length-1;
+      edit.up.setAttribute("aria-label","Mover "+label+" para cima");
+      edit.down.setAttribute("aria-label","Mover "+label+" para baixo");
+      edit.insert.setAttribute("aria-label","Inserir linha abaixo da "+label);
+      edit.remove.setAttribute("aria-label","Remover "+label);
+    });
+  };
+  const moveLine=(edit,direction)=>{
+    if(!movePlanEditorLine(edits,edit,direction))return;
+    syncLineOrder();
+    persist();
+  };
+  const addPlanLine=(item,afterEdit=null)=>{
+    const box=document.createElement("fieldset");box.className="meal-line-editor";
+    const legend=document.createElement("legend");legend.textContent="Linha";box.appendChild(legend);
+    const controls=document.createElement("div");controls.className="meal-line-order-controls";
+    const tool=(text,klass,title)=>{
+      const button=document.createElement("button");button.type="button";button.className=klass;
+      button.textContent=text;button.title=title;return button;
+    };
+    const up=tool("↑","meal-line-move","Mover linha para cima");
+    const down=tool("↓","meal-line-move","Mover linha para baixo");
+    const insert=tool("+ Inserir abaixo","meal-line-insert","Inserir linha abaixo desta linha");
+    controls.append(up,down,insert);box.append(controls);
     const type=document.createElement("select");
     for(const [value,label] of [["food","Alimento"],["note","Nota"],["collapsible_note","Nota colapsável"]]){
       const el=document.createElement("option");el.value=value;el.textContent=label;type.appendChild(el);
@@ -1534,16 +1579,29 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     type.addEventListener("change",updateFields);updateFields();
     const remove=document.createElement("button");remove.type="button";remove.className="option-remove-line";remove.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg>';remove.title="Remover linha";remove.setAttribute("aria-label","Remover linha "+(index+1));
     box.appendChild(remove);
-    form.appendChild(box);
-    const edit={type,name,noteTitle,noteTextarea,quantity,nutrients,box,removed:false};edits.push(edit);
-    remove.onclick=()=>{edit.removed=true;box.remove();persist();};
+    const edit={type,name,noteTitle,noteTextarea,quantity,nutrients,box,legend,up,down,insert,remove};
+    if(afterEdit){
+      if(!insertPlanEditorLine(edits,afterEdit,edit))return;
+    }else{
+      edits.push(edit);
+      if(addLine)form.insertBefore(box,addLine);else form.appendChild(box);
+    }
+    up.onclick=()=>moveLine(edit,-1);
+    down.onclick=()=>moveLine(edit,1);
+    insert.onclick=()=>addPlanLine({kind:"note",text:""},edit);
+    remove.onclick=()=>{
+      const index=edits.indexOf(edit);if(index<0)return;
+      edits.splice(index,1);box.remove();syncLineOrder();persist();
+    };
+    syncLineOrder();
   };
-  (option.items||[]).filter(item=>item.kind!=="title").forEach(addPlanLine);
-  const addLine=document.createElement("button");addLine.type="button";addLine.textContent="+ Adicionar linha";addLine.onclick=()=>addPlanLine({kind:"note",text:""},edits.length);form.appendChild(addLine);
+  (option.items||[]).filter(item=>item.kind!=="title").forEach(item=>addPlanLine(item));
+  addLine=document.createElement("button");addLine.type="button";addLine.textContent="+ Adicionar linha";
+  addLine.onclick=()=>addPlanLine({kind:"note",text:""});form.appendChild(addLine);
   const feedback=document.createElement("p");feedback.className="hint";feedback.textContent="As alterações são guardadas automaticamente ao sair de cada campo.";form.appendChild(feedback);
   let saveChain=Promise.resolve();
   const persist=()=>{
-    const entries=edits.filter(edit=>!edit.removed).map(edit=>{
+    const entries=edits.map(edit=>{
       const kind=edit.type.value;
       const nutrients=Object.fromEntries(Object.entries(edit.nutrients).map(([key,input])=>[key,input.value.trim()]));
       return {kind,text:kind==="collapsible_note"?edit.noteTextarea.value:edit.name.value.trim(),name:kind==="food"?edit.name.value.trim():"",quantity:kind==="food"?edit.quantity.value.trim():"",nutrients:kind==="food"&&Object.values(nutrients).some(Boolean)?nutrients:null,...(kind==="collapsible_note"?{title:edit.noteTitle.value.trim()}:{})};
@@ -1556,8 +1614,8 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
       option.items=response.option.items;option.title=response.option.title;option.totals=response.option.totals;option.reviewed=response.option.reviewed;
       feedback.textContent="Alterações guardadas automaticamente.";
     }).catch(e=>{feedback.textContent="Erro ao guardar: "+e.message;throw e;});
-    planPendingSaves.push(saveChain);
-    saveChain.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==saveChain);}).catch(()=>{});
+    const pending=saveChain;planPendingSaves.push(pending);
+    pending.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==pending);}).catch(()=>{});
   };
   form.addEventListener("change",event=>{if(event.target.matches("input,select,textarea"))persist();});
   form.appendChild(removeOption);
