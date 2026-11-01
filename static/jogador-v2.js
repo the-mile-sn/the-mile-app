@@ -20,8 +20,9 @@ function revokePlayerView(){
   const el=$(id);if(el)el.replaceChildren();
  }
  document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
- const photo=$("profile-photo");photo.hidden=true;photo.removeAttribute("src");
- $("profile-photo-initials").hidden=false;
+ for(const id of ["profile-photo","header-player-photo"]){const image=$(id);image.hidden=true;image.removeAttribute("src");image.onload=null;image.onerror=null;}
+ $("profile-photo-initials").hidden=false;$("avatar-initials").hidden=false;
+ $("profile-plan-value").textContent="Por definir";$("profile-renewal-date").textContent="Por definir";
  $("player-name").textContent="";$("profile-display-name").textContent="";$("profile-display-username").textContent="";
  $("player-panel").hidden=true;$("login-panel").hidden=false;$("logout").hidden=true;
  $("password").value="";$("status").textContent="Sessão terminada. Inicia sessão novamente.";
@@ -179,7 +180,47 @@ function decorateLabel(el,key){
 }
 
 let profileUsername="";
-async function session(){const epoch=playerSessionEpoch;const sessionData=await api("/api/me");profileUsername=sessionData.user?.username||"";const plan=String(sessionData.user?.plan_name||"").trim();$("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();$("avatar-initials").textContent=initials;$("profile-photo-initials").textContent=initials;$("profile-display-name").textContent=me.name;$("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";const profilePhoto=$("profile-photo");profilePhoto.hidden=true;profilePhoto.onerror=()=>{profilePhoto.hidden=true;$("profile-photo-initials").hidden=false;};if(sessionData.user?.has_photo){profilePhoto.onload=()=>{profilePhoto.hidden=false;$("profile-photo-initials").hidden=true;};profilePhoto.src="/api/v2/player/profile-photo";}else{$("profile-photo-initials").hidden=false;}const p=await api("/api/v2/player/plans");if(epoch!==playerSessionEpoch)return;plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
+function paintPlayerPhoto(hasPhoto,initials,epoch){
+ const pairs=[["profile-photo","profile-photo-initials"],["header-player-photo","avatar-initials"]];
+ for(const [imageId,fallbackId] of pairs){
+  const image=$(imageId),fallback=$(fallbackId);
+  fallback.textContent=initials;
+  image.onload=null;image.onerror=null;image.hidden=true;image.removeAttribute("src");fallback.hidden=false;
+  if(!hasPhoto)continue;
+  image.onload=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=false;fallback.hidden=true;};
+  image.onerror=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=true;fallback.hidden=false;};
+  image.src="/api/v2/player/profile-photo?session="+epoch+"-"+Date.now();
+ }
+}
+function displayPlayerRenewal(value){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return "Por definir";
+ return value.slice(8,10)+"/"+value.slice(5,7)+"/"+value.slice(0,4);
+}
+async function session(){
+ const epoch=playerSessionEpoch;
+ const sessionData=await api("/api/me");
+ profileUsername=sessionData.user?.username||"";
+ playerCsrf=sessionData.csrf||"";
+ const r=await api("/api/v2/player/me");
+ me=r.player;
+ if(epoch!==playerSessionEpoch)return;
+ const plan=String(me.followup_plan||"").trim();
+ $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";
+ $("profile-renewal-date").textContent=displayPlayerRenewal(me.followup_renewal_date);
+ $("player-name").textContent=me.name;
+ const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+ $("profile-display-name").textContent=me.name;
+ $("profile-display-username").textContent=profileUsername?"@"+profileUsername:"";
+ paintPlayerPhoto(!!sessionData.user?.has_photo,initials,epoch);
+ const p=await api("/api/v2/player/plans");
+ if(epoch!==playerSessionEpoch)return;
+ plans=p.options_by_color;
+ periPlans=p.peri_plans||{};
+ $("login-panel").hidden=true;
+ $("player-panel").hidden=false;
+ $("logout").hidden=false;
+ await show(tab);
+}
 async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("landing");if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(target){

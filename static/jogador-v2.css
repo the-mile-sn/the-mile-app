@@ -3029,3 +3029,14 @@ body.profile-active .player-top{display:none!important}
  height:44px!important;line-height:44px!important;
  scroll-snap-align:center!important;scroll-snap-stop:normal!important;
 }
+
+/* Read-only athlete follow-up card. The date never changes account access. */
+#profile .profile-plan-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px}
+#profile .profile-plan-detail{display:flex;flex-direction:column;gap:7px;min-width:0}
+#profile .profile-renewal-detail{align-items:flex-end;text-align:right}
+#profile .profile-plan-detail>span{color:#aeb0b8;font-size:12px;line-height:1.35}
+#profile .profile-plan-detail>strong{color:#f4f4f5;font-size:15px;font-weight:550;overflow-wrap:anywhere}
+#player-avatar{position:relative;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden}
+#player-avatar #header-player-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+#player-avatar [hidden]{display:none!important}
+@media(max-width:360px){#profile .profile-plan-card{gap:8px;padding:16px 15px}}
