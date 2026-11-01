@@ -41,6 +41,7 @@ test('only unauthorized responses revoke the player view, not forbidden actions'
  assert.match(body,/if\(r\.status===401&&path!=="\/api\/login"&&path!=="\/api\/logout"\)revokePlayerView\(\)/);
  assert.doesNotMatch(body,/r\.status===403.*revokePlayerView/);
  assert.match(source,/function revokePlayerView\(\)/);
+ assert.match(source,/function error\(e\)\{if\(e.stale\|\|e.status===401\)return/);
 });
 test('optional startup weight read no longer competes with identity and calendar initialization',()=>{
  const start=source.indexOf('async function session(){');
