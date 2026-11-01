@@ -9,6 +9,9 @@ function revokePlayerView(){
  ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
  overviewReadCache.clear();overviewSnapshot=null;lastOverviewPresentation=null;lastMenuPresentationWeek=null;
  setOverviewLoading(false);$("menu-loading").hidden=true;
+ if(profilePhotoController){profilePhotoController.abort();profilePhotoController=null;}
+ if(profilePhotoObjectUrl){URL.revokeObjectURL(profilePhotoObjectUrl);profilePhotoObjectUrl=null;}
+ if(dishPhotoObserver)dishPhotoObserver.disconnect();
  for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
@@ -182,17 +185,31 @@ function decorateLabel(el,key){
 }
 
 let profileUsername="";
+let profilePhotoController=null,profilePhotoObjectUrl=null;
 function paintPlayerPhoto(hasPhoto,initials,epoch){
  const pairs=[["profile-photo","profile-photo-initials"],["header-player-photo","avatar-initials"]];
+ if(profilePhotoController){profilePhotoController.abort();profilePhotoController=null;}
+ if(profilePhotoObjectUrl){URL.revokeObjectURL(profilePhotoObjectUrl);profilePhotoObjectUrl=null;}
  for(const [imageId,fallbackId] of pairs){
   const image=$(imageId),fallback=$(fallbackId);
   fallback.textContent=initials;
   image.onload=null;image.onerror=null;image.hidden=true;image.removeAttribute("src");fallback.hidden=false;
-  if(!hasPhoto)continue;
-  image.onload=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=false;fallback.hidden=true;};
-  image.onerror=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=true;fallback.hidden=false;};
-  image.src="/api/v2/player/profile-photo?session="+epoch+"-"+Date.now();
  }
+ if(!hasPhoto)return;
+ // One authenticated request and a shared private object URL for both avatars.
+ const controller=new AbortController();profilePhotoController=controller;
+ fetch("/api/v2/player/profile-photo",{credentials:"same-origin",cache:"no-store",signal:controller.signal})
+  .then(r=>{if(!r.ok)throw Error("photo_unavailable");return r.blob();})
+  .then(blob=>{
+   if(epoch!==playerSessionEpoch||controller.signal.aborted)return;
+   const url=URL.createObjectURL(blob);profilePhotoObjectUrl=url;
+   for(const [imageId,fallbackId] of pairs){
+    const image=$(imageId),fallback=$(fallbackId);
+    image.onload=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=false;fallback.hidden=true;};
+    image.onerror=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=true;fallback.hidden=false;};
+    image.src=url;
+   }
+  }).catch(()=>{});
 }
 function displayPlayerRenewal(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return "Por definir";
@@ -701,6 +718,7 @@ function injectPostMatchCard(){
      await api("/api/v2/player/post-match",{method:"POST",
       headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
+     overviewReadCache.delete("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
      await overview();
     }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
    };
@@ -713,7 +731,7 @@ async function loadPlayerPostMatch(){
  const epoch=playerSessionEpoch;
  const host=$("post-match-form-area");if(host){host.hidden=true;host.replaceChildren();}
  try{
-  const result=await api("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
+  const result=await cachedOverviewRead("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
   if(epoch!==playerSessionEpoch)return;
   playerPostMatchRecords=result.available?(result.matches||[]):[];
  }catch{if(epoch!==playerSessionEpoch)return;playerPostMatchRecords=[];}
@@ -1179,6 +1197,27 @@ function renderPlans(){
 }
 const dishPhotoCache=new Map();
 let menuRenderToken=0;
+const dishPhotoObserver=typeof IntersectionObserver==="function"?new IntersectionObserver(entries=>{
+ for(const entry of entries){
+  if(!entry.isIntersecting)continue;
+  dishPhotoObserver.unobserve(entry.target);
+  activateDishPhoto(entry.target);
+ }
+},{rootMargin:"180px 0px"}):null;
+function activateDishPhoto(photo){
+ const epoch=Number(photo.dataset.playerEpoch),dishId=photo.dataset.dishId;
+ if(!dishId||epoch!==playerSessionEpoch||!photo.isConnected)return;
+ cachedDishPhoto(dishId).then(src=>{
+  if(!src||epoch!==playerSessionEpoch||!photo.isConnected)return;
+  photo.src=src;
+  photo.classList.add("dish-photo-ready");
+  photo.tabIndex=0;
+  photo.setAttribute("role","button");
+  photo.setAttribute("aria-label","Ampliar fotografia: "+photo.alt);
+  photo.onclick=()=>openDishPhoto(src,photo.alt);
+  photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,photo.alt);}};
+ });
+}
 function cachedDishPhoto(id){
  const key=String(id);
  if(!dishPhotoCache.has(key)){
@@ -1244,7 +1283,7 @@ async function menusView(){
   button.onclick=()=>{selectMenuDay(key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
   strip.insertBefore(button,$("menu-next"));
  }
- const root=$("menu-days");const fragment=document.createDocumentFragment();for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
+ const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===dayClass?.classification);const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal]);
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";
@@ -1253,10 +1292,17 @@ async function menusView(){
  const body=document.createElement("div");body.className="menu-entry-body";
  const name=document.createElement("span");name.className="value";name.textContent=menu.value;body.append(name);
  if(menu.kind==="dish"&&dishMap.has(menu.value)){
-  const photo=document.createElement("img");photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";const dishId=dishMap.get(menu.value);cachedDishPhoto(dishId).then(src=>{if(!src)return;photo.src=src;photo.classList.add("dish-photo-ready");photo.tabIndex=0;photo.setAttribute("role","button");photo.setAttribute("aria-label","Ampliar fotografia: "+menu.value);photo.onclick=()=>openDishPhoto(src,menu.value);photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,menu.value);}};});body.append(photo);
+  const photo=document.createElement("img");
+  photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";
+  photo.dataset.dishId=dishMap.get(menu.value);photo.dataset.playerEpoch=String(epoch);
+  body.append(photo);photosToObserve.push(photo);
  }
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken){
   root.replaceChildren(fragment);
+  if(dishPhotoObserver){
+   dishPhotoObserver.disconnect();
+   for(const photo of photosToObserve)dishPhotoObserver.observe(photo);
+  }else for(const photo of photosToObserve)activateDishPhoto(photo);
   root.hidden=false;
   $("menu-loading").hidden=true;
   lastMenuPresentationWeek=startKey;
@@ -1316,8 +1362,8 @@ const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionD
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
  const epoch=playerSessionEpoch;
- $("assessment-measurements").textContent="A carregar avaliações…";
- const response=await api("/api/v2/player/assessments");
+ if(!assessmentRecords.length)$("assessment-measurements").textContent="A carregar avaliações…";
+ const response=await cachedOverviewRead("/api/v2/player/assessments");
  if(epoch!==playerSessionEpoch)return;
  assessmentRecords=response.assessments||[];
  assessmentFields=response.fields||{};

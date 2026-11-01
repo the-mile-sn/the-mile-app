@@ -74,6 +74,34 @@ class PlayerProfileBridgeTests(unittest.TestCase):
         self.assertIsNone(other.request("/api/v2/player/me")["body"]["player"]["followup_plan"])
         self.assertIsNone(other.request("/api/v2/player/me")["body"]["player"]["followup_renewal_date"])
 
+    def test_large_player_photo_is_optimized_only_for_private_display(self):
+        aid,uid,username=self.accounts[0]
+        # Noise creates a real, nontrivial image larger than an avatar needs.
+        image=Image.effect_noise((720,720),90).convert("RGB")
+        raw=io.BytesIO()
+        image.save(raw,format="PNG")
+        original=raw.getvalue()
+        self.assertGreater(len(original),120_000)
+        with app.connect() as c:
+            c.execute("UPDATE users SET photo=?,photo_mime=? WHERE id=?",
+                      (original,"image/png",uid))
+            c.commit()
+        player=self.login(username)
+        response=player.request("/api/v2/player/profile-photo")
+        self.assertEqual(response["status"],200,response)
+        self.assertEqual(response["headers"]["Content-Type"],"image/jpeg")
+        self.assertEqual(response["headers"]["Cache-Control"],"no-store")
+        self.assertLess(len(response["body"]),len(original))
+        with Image.open(io.BytesIO(response["body"])) as compact:
+            self.assertLessEqual(max(compact.size),480)
+        with app.connect() as c:
+            kept=c.execute("SELECT photo,photo_mime FROM users WHERE id=?",(uid,)).fetchone()
+            self.assertEqual(bytes(kept["photo"]),original)
+            self.assertEqual(kept["photo_mime"],"image/png")
+        other=self.login(self.accounts[1][2])
+        self.assertEqual(other.request("/api/v2/player/profile-photo")["status"],404)
+        self.assertEqual(other.request("/api/players/"+uid+"/photo")["status"],403)
+
     def test_historical_dates_do_not_expire_account_or_documents(self):
         aid,uid,username=self.accounts[0]
         with app.connect() as c:
