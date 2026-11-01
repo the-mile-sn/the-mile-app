@@ -9,6 +9,9 @@ function revokePlayerView(){
  ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
  overviewReadCache.clear();overviewSnapshot=null;lastOverviewPresentation=null;lastMenuPresentationWeek=null;
  setOverviewLoading(false);$("menu-loading").hidden=true;
+ if(profilePhotoController){profilePhotoController.abort();profilePhotoController=null;}
+ if(profilePhotoObjectUrl){URL.revokeObjectURL(profilePhotoObjectUrl);profilePhotoObjectUrl=null;}
+ if(dishPhotoObserver)dishPhotoObserver.disconnect();
  for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
@@ -182,17 +185,31 @@ function decorateLabel(el,key){
 }
 
 let profileUsername="";
+let profilePhotoController=null,profilePhotoObjectUrl=null;
 function paintPlayerPhoto(hasPhoto,initials,epoch){
  const pairs=[["profile-photo","profile-photo-initials"],["header-player-photo","avatar-initials"]];
+ if(profilePhotoController){profilePhotoController.abort();profilePhotoController=null;}
+ if(profilePhotoObjectUrl){URL.revokeObjectURL(profilePhotoObjectUrl);profilePhotoObjectUrl=null;}
  for(const [imageId,fallbackId] of pairs){
   const image=$(imageId),fallback=$(fallbackId);
   fallback.textContent=initials;
   image.onload=null;image.onerror=null;image.hidden=true;image.removeAttribute("src");fallback.hidden=false;
-  if(!hasPhoto)continue;
-  image.onload=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=false;fallback.hidden=true;};
-  image.onerror=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=true;fallback.hidden=false;};
-  image.src="/api/v2/player/profile-photo?session="+epoch+"-"+Date.now();
  }
+ if(!hasPhoto)return;
+ // One authenticated request and a shared private object URL for both avatars.
+ const controller=new AbortController();profilePhotoController=controller;
+ fetch("/api/v2/player/profile-photo",{credentials:"same-origin",cache:"no-store",signal:controller.signal})
+  .then(r=>{if(!r.ok)throw Error("photo_unavailable");return r.blob();})
+  .then(blob=>{
+   if(epoch!==playerSessionEpoch||controller.signal.aborted)return;
+   const url=URL.createObjectURL(blob);profilePhotoObjectUrl=url;
+   for(const [imageId,fallbackId] of pairs){
+    const image=$(imageId),fallback=$(fallbackId);
+    image.onload=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=false;fallback.hidden=true;};
+    image.onerror=()=>{if(epoch!==playerSessionEpoch)return;image.hidden=true;fallback.hidden=false;};
+    image.src=url;
+   }
+  }).catch(()=>{});
 }
 function displayPlayerRenewal(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return "Por definir";
