@@ -1,4 +1,22 @@
 "use strict";
+
+/* The Mile Backoffice appearance is local to this browser, never to a player account. */
+(() => {
+ const key="tm-admin-theme";
+ const buttons=[...document.querySelectorAll("[data-admin-theme-choice]")];
+ const apply=(value,save=false)=>{
+  const theme=value==="light"?"light":"dark";
+  document.documentElement.dataset.adminTheme=theme;
+  for(const button of buttons)button.setAttribute("aria-pressed",String(button.dataset.adminThemeChoice===theme));
+  if(save){try{window.localStorage.setItem(key,theme);}catch(_error){/* Private browsing keeps the theme for this page. */}}
+ };
+ let saved="dark";
+ try{saved=window.localStorage.getItem(key)||"dark";}catch(_error){/* Storage may be disabled. */}
+ apply(saved);
+ for(const button of buttons){
+  button.addEventListener("click",()=>apply(button.dataset.adminThemeChoice,true));
+ }
+})();
 (()=> {
  const $=id=>document.getElementById(id);
  const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning");
