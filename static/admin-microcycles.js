@@ -1031,11 +1031,11 @@ function plannedDayTotals(day,periLookup=periByDay,colorLookup=dayColorOverrides
   return {state:missing.length?"partial":"complete",count,missing,total:count?totals:null};
 }
 function nutritionCards(host,totals,referenceWeight=null,relativeMeans=null){
-  const grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:12px 0";
+  const grid=document.createElement("div");grid.className="nutrition-metric-grid";grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:12px 0";
   for(const [key,label,unit,digits] of [["kcal","Energia","kcal",0],["protein_g","Proteína","g",1],["carbs_g","Hidratos","g",1],["fat_g","Gordura","g",1]]){
-    const card=document.createElement("div");card.style.cssText="border:1px solid #414148;border-radius:12px;padding:14px";
+    const card=document.createElement("div");card.className="nutrition-metric-card";card.style.cssText="border:1px solid #414148;border-radius:12px;padding:14px";
     const caption=document.createElement("small");caption.textContent=label;card.appendChild(caption);
-    const value=document.createElement("strong");value.style.cssText="display:block;font-size:1.35em;margin-top:6px";
+    const value=document.createElement("strong");value.className="nutrition-metric-value "+({kcal:"nutrient-kcal",protein_g:"nutrient-protein",carbs_g:"nutrient-carbs",fat_g:"nutrient-fat"}[key]);value.style.cssText="display:block;font-size:1.35em;margin-top:6px";
     value.textContent=formatNutrition(totals[key],digits)+" "+unit;card.appendChild(value);
     const weight=referenceWeight==null?NaN:Number(referenceWeight);
     const rel=relativeMeans?relativeMeans[key]:(Number.isFinite(weight)&&weight>0?totals[key]/weight:null);
@@ -1045,115 +1045,81 @@ function nutritionCards(host,totals,referenceWeight=null,relativeMeans=null){
   host.appendChild(grid);
 }
 function renderNutritionTotals(host,label,result,referenceWeight=null){
-  const block=document.createElement("section");block.className="import-validation-progress";
+  const block=document.createElement("section");block.className="calendar-day-totals";
   const heading=document.createElement("h3");heading.textContent=label;block.appendChild(heading);
-  const description=document.createElement("p");
-  description.textContent=result.state==="unclassified"?"Sem classificação nutricional definida.":result.state==="complete"?"Total planeado · Todas as refeições atribuídas têm valores disponíveis.":result.total?"Subtotal incompleto · Existem refeições atribuídas sem valores disponíveis.":"Ainda não existem valores nutricionais calculáveis.";
-  block.appendChild(description);
   if(result.total)nutritionCards(block,result.total,referenceWeight);
+  else {const note=document.createElement("p");note.className="hint";note.textContent="Valores nutricionais indisponíveis.";block.appendChild(note);}
   if(result.missing.length){const note=document.createElement("p");note.textContent="Em falta: "+result.missing.join("; ");block.appendChild(note);}
   host.appendChild(block);
 }
 
 function renderDayPreview(day,host){
-  host.replaceChildren();
-  window.currentNutritionDay=day;
-
-  const heading=document.createElement("h3");
-  heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Geral automático · por definir");
-  host.appendChild(heading);
-  const grid=document.createElement("div");grid.className="day-meals";
-  const detail=document.createElement("section");detail.className="meal-options-detail";
-  for(const entry of mealColorsForDay(day)){
-    const cell=document.createElement("div");cell.className="day-meal";
-    const label=document.createElement("span");label.textContent=names[entry.meal];
-    const value=document.createElement("strong");
-    value.textContent=entry.color?" ":"";
-    if(entry.color)value.className="meal-"+entry.color;
-    cell.append(label,value);
-    const modelRow=model.classifications.find(r=>r.name===day.classification);
-    const baseline=modelRow?.meals?.[entry.meal]||null;
-    const isOverride=Object.hasOwn(dayColorOverrides,day.date+"|"+entry.meal);
-    const choose=document.createElement("select");
-    choose.className="day-color-select";choose.setAttribute("aria-label","Alterar cor de "+names[entry.meal]+" apenas em "+day.date);
-    const inherit=document.createElement("option");inherit.value="";inherit.textContent="Modelo"+(baseline?" · "+(colors[baseline]||baseline):" · sem cor");choose.append(inherit);
-    const noMeal=document.createElement("option");noMeal.value="none";noMeal.textContent="Nenhuma · remover refeição";choose.append(noMeal);
-    for(const [colorName,labelText] of Object.entries(colors)){
-      const option=document.createElement("option");option.value=colorName;option.textContent=labelText;choose.append(option);
-    }
-    choose.value=isOverride?dayColorOverrides[day.date+"|"+entry.meal]:"";
-    choose.addEventListener("change",async()=>{
-      choose.disabled=true;
-      try{
-        await request(matchBase()+"/calendar/meal-color",{method:"PUT",body:JSON.stringify({date:day.date,meal:entry.meal,color:choose.value||null})});
-        selectedCalendarDay=day.date;
-        status((choose.value==="none"?"Refeição removida":choose.value?"Cor atualizada":"Reposta a cor do Modelo")+" apenas para "+names[entry.meal]+" em "+day.date+".","success");
-        await loadCalendar();
-      }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
-    });
-    cell.append(choose);
-    if(isOverride){const hint=document.createElement("small");hint.className="day-color-exception";hint.textContent="Exceção deste dia";cell.append(hint);}
-    if(entry.meal==="lunch"||entry.meal==="dinner"){const menu=menuLookup[day.date+"|"+entry.meal];if(menu){const note=document.createElement("small");note.textContent="Menu: "+menu.value;cell.appendChild(note);}}
-    if(entry.color){
-      const options=mealOptionsByColor[entry.color]?.[entry.meal]||[];
-      const available=Boolean(validatedPlansByColor[entry.color]);
-      const availability=document.createElement("small");
-      availability.textContent=!available?"Plano "+(colors[entry.color]||entry.color)+" em falta":options.length?options.length+" opções disponíveis":"Refeição não encontrada no plano";
-      cell.appendChild(availability);
-      if(available&&options.length){
-        const average=averageMealNutrition(options);
-        const avg=document.createElement("small");
-        avg.textContent=average?"Média planeada: "+nutritionSummary(average):"Média indisponível: verificar totais das opções";
-        cell.appendChild(avg);
-      }
-      if(available&&options.length){
-        const view=document.createElement("button");view.type="button";view.textContent="Ver opções";
-        view.addEventListener("click",()=>{
-          detail.replaceChildren();
-          const title=document.createElement("h3");title.textContent=names[entry.meal]+" · "+(colors[entry.color]||entry.color)+" · "+day.date;detail.appendChild(title);
-          const average=averageMealNutrition(options);
-          const avgLine=document.createElement("p");
-          avgLine.textContent=average?"Média planeada das "+options.length+" opções: "+nutritionSummary(average):"Não é possível calcular a média: uma ou mais opções têm valores em falta.";
-          detail.appendChild(avgLine);
-          for(const option of options){
-            const box=document.createElement("details");box.className="import-option";
-            const caption=document.createElement("summary");
-            caption.textContent="Opção "+option.number+(option.title?" · "+option.title:"");
-            box.appendChild(caption);
-            if(option.totals){
-              const totals=document.createElement("p");
-              totals.textContent=option.totals.kcal+" kcal · P "+option.totals.protein_g+" g · HC "+option.totals.carbs_g+" g · G "+option.totals.fat_g+" g";
-              box.appendChild(totals);
-            }
-            for(const item of option.items||[]){
-              const line=document.createElement("div");line.className="import-structured-line";
-              line.textContent=item.kind==="food"?(item.quantity||"")+" · "+(item.name||""):"Nota: "+(item.text||"");
-              box.appendChild(line);
-            }
-            detail.appendChild(box);
-          }
-        });
-        cell.appendChild(view);
-      }
-    }
-    grid.appendChild(cell);
+ host.replaceChildren();
+ window.currentNutritionDay=day;
+ const heading=document.createElement("h3");
+ heading.textContent="Refeições · "+day.date+" · "+(day.classification||"Geral automático · por definir");
+ host.appendChild(heading);
+ const grid=document.createElement("div");grid.className="day-meals";
+ for(const entry of mealColorsForDay(day)){
+  const cell=document.createElement("div");cell.className="day-meal";
+  const label=document.createElement("span");label.textContent=names[entry.meal];
+  const colorBar=document.createElement("strong");colorBar.className="day-meal-color"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
+  colorBar.textContent=entry.color?" ":"—";cell.append(label,colorBar);
+  const modelRow=model.classifications.find(r=>r.name===day.classification);
+  const baseline=modelRow?.meals?.[entry.meal]||null;
+  const isOverride=Object.hasOwn(dayColorOverrides,day.date+"|"+entry.meal);
+  const choose=document.createElement("select");choose.className="day-color-select";
+  choose.setAttribute("aria-label","Alterar cor de "+names[entry.meal]+" apenas em "+day.date);
+  const inherit=document.createElement("option");inherit.value="";
+  inherit.textContent="Modelo"+(baseline?" · "+(colors[baseline]||baseline):" · sem cor");choose.append(inherit);
+  const noMeal=document.createElement("option");noMeal.value="none";noMeal.textContent="Nenhuma · remover refeição";choose.append(noMeal);
+  for(const [colorName,colorLabel] of Object.entries(colors)){
+   const option=document.createElement("option");option.value=colorName;option.textContent=colorLabel;choose.append(option);
   }
-  host.appendChild(grid);
-  if((periByDay[day.date]||[]).length){
-    const area=document.createElement("div");area.className="import-validation-progress";
-    const head=document.createElement("h3");head.textContent="Refeições peri-treino e peri-jogo";area.append(head);
-    for(const item of periByDay[day.date]){
-      const avg=averageMealNutrition(item.options||[]);const p=document.createElement("p");
-      p.textContent=item.title+" · "+(item.session==="morning"?"Manhã":"Tarde")+(avg?" · "+nutritionSummary(avg):" · Valores indisponíveis");
-      area.append(p);
-    }
-    host.append(area);
+  choose.value=isOverride?dayColorOverrides[day.date+"|"+entry.meal]:"";
+  choose.addEventListener("change",async()=>{
+   choose.disabled=true;
+   try{
+    await request(matchBase()+"/calendar/meal-color",{method:"PUT",body:JSON.stringify({date:day.date,meal:entry.meal,color:choose.value||null})});
+    selectedCalendarDay=day.date;
+    status((choose.value==="none"?"Refeição removida":choose.value?"Cor atualizada":"Reposta a cor do Modelo")+" apenas para "+names[entry.meal]+" em "+day.date+".","success");
+    await loadCalendar();
+   }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
+  });
+  cell.append(choose);
+  const average=entry.color?averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]):null;
+  if(average){
+   const macros=document.createElement("div");macros.className="day-meal-nutrients";
+   for(const [klass,value] of [
+    ["nutrient-kcal",formatNutrition(average.kcal,0)+" kcal"],
+    ["nutrient-protein","P "+formatNutrition(average.protein_g)+" g"],
+    ["nutrient-carbs","HC "+formatNutrition(average.carbs_g)+" g"],
+    ["nutrient-fat","G "+formatNutrition(average.fat_g)+" g"]
+   ]){
+    const item=document.createElement("span");item.className=klass;item.textContent=value;macros.append(item);
+   }
+   cell.append(macros);
+  }else{
+   const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
+   unavailable.textContent=entry.color?"Valores nutricionais indisponíveis":"Sem refeição atribuída";cell.append(unavailable);
   }
-  renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
-  host.appendChild(detail);
-  const hint=document.createElement("p");hint.textContent="Pré-visualização administrativa. Os planos ainda não estão publicados aos jogadores.";host.appendChild(hint);
+  grid.appendChild(cell);
+ }
+ host.appendChild(grid);
+ // A collapsed protocol summary preserves access to peri details without cluttering the five meal cards.
+ const peri=periByDay[day.date]||[];
+ if(peri.length){
+  const details=document.createElement("details");details.className="calendar-day-peri";
+  const summary=document.createElement("summary");summary.textContent="Protocolos de treino e jogo";details.append(summary);
+  for(const item of peri){
+   const avg=averageMealNutrition(item.options||[]),line=document.createElement("p");
+   line.textContent=item.title+" · "+(item.session==="morning"?"Manhã":"Tarde")+(avg?" · "+nutritionSummary(avg):" · Valores indisponíveis");
+   details.append(line);
+  }
+  host.append(details);
+ }
+ renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
 }
-
 let dayWeightReferences={};
 async function loadCalendar(){
   if(!model)return;
@@ -1263,7 +1229,7 @@ async function loadCalendar(){
     })),
     ...(data.events||[])
   ].sort((a,b)=>a.event_date.localeCompare(b.event_date)||(a.session===b.session?0:a.session==="morning"?-1:1));
-  if(!combined.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem eventos neste mês.";list.append(p);}
+  let monthEventCount=combined.length;
   for(const ev of combined)list.append(renderUnifiedEvent(ev));
   const supplementation=await request(matchBase()+"/supplements");
   for(const [date,entry] of Object.entries(supplementation.overrides||{})){
@@ -1277,8 +1243,10 @@ async function loadCalendar(){
     syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
     $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
    };
-   card.append(label,edit);list.append(card);
+   card.append(label,edit);list.append(card);monthEventCount++;
   }
+  if(!monthEventCount){const empty=document.createElement("p");empty.className="hint";empty.textContent="Sem eventos neste mês.";list.append(empty);}
+  $("calendar-month-count").textContent=monthEventCount+" evento"+(monthEventCount===1?"":"s");
   $("calendar-section").hidden=backofficeView!=="calendar";
 }
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
@@ -1811,6 +1779,7 @@ function syncCalendarEventForm(){
  $("calendar-new-title-wrap").hidden=kind!=="travel";
  $("calendar-pre-wrap").hidden=!(game||training);
  $("calendar-post-wrap").hidden=!(game||training);
+  $("calendar-peri-flags").hidden=!(game||training);
  $("calendar-pre-label").textContent=game?"Intra-jogo":"Pré-treino";
  $("calendar-post-label").textContent=game?"Pós-jogo":"Pós-treino";
 }

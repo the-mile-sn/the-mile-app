@@ -1208,3 +1208,41 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
  color:#f5faf6!important;
  border-color:#28543e!important;
 }
+
+/* Planning calendar: compact event form and simplified meal preview. */
+#calendar-section .calendar-event-form{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+#calendar-section .calendar-event-form>div:not(#calendar-supp-options):not(.calendar-peri-flags){flex:1 1 180px;min-width:150px}
+#calendar-section .calendar-event-form>div:not(#calendar-supp-options):not(.calendar-peri-flags) :is(input,select){height:44px;min-height:44px;width:100%;box-sizing:border-box}
+#calendar-section .calendar-event-form>button{height:44px;min-height:44px}
+#calendar-section .calendar-peri-flags{display:flex;gap:7px;align-items:end;flex:0 0 auto;min-height:44px}
+#calendar-section .calendar-peri-flags[hidden]{display:none!important}
+#calendar-section .calendar-peri-flags .calendar-peri-check{display:flex;align-items:center;gap:7px;min-height:44px;margin:0;padding:0 11px;border:1px solid #3a3e46;border-radius:10px;background:#24262d;font-size:12px;cursor:pointer}
+#calendar-section .calendar-peri-flags .calendar-peri-check[hidden]{display:none!important}
+#calendar-section .calendar-peri-flags input[type=checkbox]{appearance:none;width:18px;height:18px;flex:0 0 18px;margin:0;border:1px solid #6e7785;border-radius:6px;background:transparent;position:relative}
+#calendar-section .calendar-peri-flags input[type=checkbox]:checked{background:#70bf91;border-color:#70bf91}
+#calendar-section .calendar-peri-flags input[type=checkbox]:checked:after{content:"";position:absolute;width:8px;height:4px;left:3px;top:4px;border-left:2px solid #183523;border-bottom:2px solid #183523;transform:rotate(-45deg)}
+#calendar-section .calendar-peri-flags input[type=checkbox]:focus-visible{outline:2px solid #88acdb;outline-offset:2px}
+#calendar-section .day-preview .day-meals{gap:10px}
+#calendar-section .day-preview .day-meal{padding:13px;gap:10px;min-width:0}
+#calendar-section .day-preview .day-meal-color{display:block;height:38px;min-height:38px;border-radius:8px}
+#calendar-section .day-preview .day-meal-no-color{background:#292b31;color:#a8adb5}
+#calendar-section .day-preview .day-color-select{min-height:39px;margin-top:0}
+#calendar-section .day-meal-nutrients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 5px;align-items:center}
+#calendar-section .day-meal-nutrients .nutrient-kcal{grid-column:1/-1;font-size:17px;font-weight:700}
+#calendar-section .day-meal-nutrients span{font-size:11px;font-weight:600;white-space:nowrap}
+#calendar-section .day-meal-nutrition-empty{font-size:11px;color:#a9abb3}
+#calendar-section .calendar-day-peri{margin:14px 0;padding:11px 14px;border:1px solid #363940;border-radius:11px}
+#calendar-section .calendar-day-peri summary{cursor:pointer;font-weight:600}
+#calendar-section .calendar-day-totals{margin-top:16px}
+#calendar-section .nutrition-metric-card{background:#202228;border-color:#343842!important}
+#calendar-section .nutrition-metric-value.nutrient-kcal{color:#9fc9af}
+#calendar-section .nutrition-metric-value.nutrient-protein{color:#9bbbd6}
+#calendar-section .nutrition-metric-value.nutrient-carbs{color:#d9b19b}
+#calendar-section .nutrition-metric-value.nutrient-fat{color:#d9cb98}
+#calendar-section .calendar-event-list{margin-top:19px;margin-bottom:24px}
+#calendar-section .calendar-event-toggle{list-style:none;display:flex;align-items:center;gap:8px;font-size:16px;font-weight:650;cursor:pointer;padding:13px 0}
+#calendar-section .calendar-event-toggle::-webkit-details-marker{display:none}
+#calendar-section .calendar-event-toggle:before{content:"›";font-size:22px;line-height:14px;transform-origin:center;transition:transform .15s}
+#calendar-section .calendar-event-list[open]>.calendar-event-toggle:before{transform:rotate(90deg)}
+#calendar-section .calendar-event-count{font-size:12px;color:#999faa;font-weight:450}
+@media(max-width:780px){#calendar-section .calendar-peri-flags{flex:1 1 100%;flex-wrap:wrap}}
