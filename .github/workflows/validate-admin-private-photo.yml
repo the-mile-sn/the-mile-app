@@ -1,0 +1,32 @@
+name: Validate private administrator profile photo
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+    paths:
+      - app.py
+      - static/admin-microcycles.html
+      - static/admin-microcycles.js
+      - static/admin-microcycles.css
+      - test_admin_private_photo.py
+      - .github/workflows/validate-admin-private-photo.yml
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Check Python and JavaScript syntax
+        run: |
+          python -m compileall -q app.py test_admin_private_photo.py
+          node --check static/admin-microcycles.js
+          node --check static/admin-dashboard.js
+      - name: Test photo privacy and access regressions
+        run: |
+          python -m unittest -v test_admin_private_photo test_renewal_access_informational test_player_account_creation_v2 test_app.PortalTest.test_v2_followup_details_and_birthday_do_not_change_access

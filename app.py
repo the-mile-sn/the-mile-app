@@ -2,7 +2,7 @@
 import base64
 import csv
 import io
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 import zipfile
 import hashlib
 import hmac
@@ -334,6 +334,27 @@ def parse_photo(value):
     if not blob or len(blob) > MAX_PHOTO:
         raise Problem(400, 'photo')
     return blob, mime
+
+def prepare_admin_photo(value):
+    """Validate, orient and re-encode a private profile photo without metadata."""
+    blob, mime = parse_photo(value)
+    formats = {'image/jpeg': 'JPEG', 'image/png': 'PNG', 'image/webp': 'WEBP'}
+    try:
+        with Image.open(io.BytesIO(blob)) as source:
+            if source.format != formats[mime] or source.width * source.height > 16_000_000:
+                raise ValueError('invalid image type or dimensions')
+            image = ImageOps.exif_transpose(source)
+            image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+            transparent = image.mode == 'RGBA' or 'transparency' in image.info
+            image = image.convert('RGBA' if transparent else 'RGB')
+            output = io.BytesIO()
+            image.save(output, format='WEBP', quality=85)
+            sanitized = output.getvalue()
+        if not sanitized or len(sanitized) > MAX_PHOTO:
+            raise ValueError('invalid processed image')
+    except (OSError, ValueError, UnidentifiedImageError, Image.DecompressionBombError) as exc:
+        raise Problem(400, 'photo') from exc
+    return sanitized, 'image/webp'
 
 
 def clean_player_payload(body, require_password=False, require_photo=False):
@@ -1751,7 +1772,7 @@ def application(env, start_response):
                     data['weight_form_url'] = WEIGHT_FORM_M if user['sex'] == 'M' else WEIGHT_FORM_F if user['sex'] == 'F' else ''
                     data['game_form_url'] = GAME_FORM
                 else:
-                    data = {'id': user['id'], 'name': user['name'], 'email': user['email'], 'role': user['role']}
+                    data = {'id': user['id'], 'name': user['name'], 'email': user['email'], 'role': user['role'], 'has_photo': bool(user['photo'])}
                 return respond(200, {'user': data, 'csrf': user['csrf']})
 
             if path in ('/api/login', '/api/activate') and method == 'POST':
@@ -1810,6 +1831,23 @@ def application(env, start_response):
 
             if not user:
                 raise Problem(401, 'login_required')
+
+            if path == '/api/admin/me/photo' and method in ('GET', 'PUT', 'DELETE'):
+                # This URL has no user id: even administrators can modify only themselves.
+                admin(user)
+                if method == 'GET':
+                    if not user['photo']:
+                        raise Problem(404, 'not_found')
+                    return respond(200, bytes(user['photo']), user['photo_mime'] or 'image/webp')
+                if method == 'PUT':
+                    photo, mime = prepare_admin_photo(read_json(env).get('photo'))
+                    c.execute("UPDATE users SET photo=?,photo_mime=? WHERE id=? AND role='admin'",
+                              (photo, mime, user['id']))
+                    c.commit()
+                    return respond(200, {'ok': True, 'has_photo': True})
+                c.execute("UPDATE users SET photo=NULL,photo_mime=NULL WHERE id=? AND role='admin'", (user['id'],))
+                c.commit()
+                return respond(200, {'ok': True, 'has_photo': False})
 
             if path == '/api/logout' and method == 'POST':
                 c.execute('DELETE FROM sessions WHERE token=?', (digest(token),))

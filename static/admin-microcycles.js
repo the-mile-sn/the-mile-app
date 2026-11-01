@@ -6,9 +6,53 @@ let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
-async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;$("admin-login-panel").hidden=true;$("tm-admin-legacy").hidden=true;$("admin-workspace").hidden=false;await loadAthletes();if(typeof window.tmOpenAdminDashboard==="function")window.tmOpenAdminDashboard();status("Backoffice pronto.");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
+async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;paintMyPhoto(me.user.has_photo,me.user.name);$("admin-login-panel").hidden=true;$("tm-admin-legacy").hidden=true;$("admin-workspace").hidden=false;await loadAthletes();if(typeof window.tmOpenAdminDashboard==="function")window.tmOpenAdminDashboard();status("Backoffice pronto.");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
 $("admin-login-form").addEventListener("submit",async e=>{e.preventDefault();const feedback=$("admin-login-error");feedback.textContent="";try{await fetch("/api/login",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({identifier:$("admin-login-email").value.trim().toLowerCase(),password:$("admin-login-password").value})}).then(async r=>{if(!r.ok)throw Error("invalid_login");});$("admin-login-password").value="";await start();}catch(err){feedback.textContent="Não foi possível iniciar sessão. Confirma as credenciais.";}});
 let administratorIdentity=null;
+let myAdminPhotoName='';
+function paintMyPhoto(hasPhoto,name){
+ myAdminPhotoName=name||myAdminPhotoName;
+ const initials=$("admin-my-photo-initials"),photo=$("admin-my-photo-image");
+ initials.textContent=myAdminPhotoName.trim().split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+ photo.hidden=!hasPhoto;initials.hidden=!!hasPhoto;
+ $("admin-my-photo-remove").hidden=!hasPhoto;
+ if(hasPhoto){
+  photo.onerror=()=>{photo.hidden=true;initials.hidden=false;};
+  photo.src="/api/admin/me/photo?updated="+Date.now();
+ }else photo.removeAttribute("src");
+}
+$("admin-my-photo-input").addEventListener("change",async event=>{
+ const input=event.currentTarget,file=input.files?.[0],feedback=$("admin-my-photo-feedback");
+ if(!file)return;
+ feedback.textContent="";
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024){
+  feedback.textContent="Escolhe uma fotografia JPG, PNG ou WebP até 3 MB.";input.value="";return;
+ }
+ input.disabled=true;$("admin-my-photo-remove").disabled=true;
+ try{
+  const photo=await new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=()=>resolve(reader.result);
+   reader.onerror=()=>reject(new Error("Não foi possível ler a fotografia."));
+   reader.readAsDataURL(file);
+  });
+  const result=await request("/api/admin/me/photo",{method:"PUT",body:JSON.stringify({photo})});
+  paintMyPhoto(result.has_photo,myAdminPhotoName);
+  feedback.textContent="Fotografia de perfil guardada.";
+ }catch(error){feedback.textContent="Não foi possível guardar a fotografia. Verifica o formato e tenta novamente.";}
+ finally{input.value="";input.disabled=false;$("admin-my-photo-remove").disabled=false;}
+});
+$("admin-my-photo-remove").addEventListener("click",async()=>{
+ if(!confirm("Remover a tua fotografia de perfil?"))return;
+ const button=$("admin-my-photo-remove"),feedback=$("admin-my-photo-feedback");
+ button.disabled=true;feedback.textContent="";
+ try{
+  const result=await request("/api/admin/me/photo",{method:"DELETE"});
+  paintMyPhoto(result.has_photo,myAdminPhotoName);
+  feedback.textContent="Fotografia removida.";
+ }catch(error){feedback.textContent="Não foi possível remover a fotografia.";}
+ finally{button.disabled=false;}
+});
 async function loadAdminAccounts(){
  const res=await request("/api/admins");
  const host=$("admin-users-list");host.replaceChildren();
