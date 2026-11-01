@@ -764,7 +764,7 @@ async function renderWeightCard(root,date){
  const value=document.createElement("span");value.className="daily-weight-value";
  const action=document.createElement("button");action.type="button";action.className="daily-weight-action";
  header.append(glyph,label,value,action);card.append(header);
- const panel=document.createElement("div");panel.className="daily-weight-panel";panel.hidden=true;card.append(panel);
+ const panel=document.createElement("div");panel.className="daily-weight-panel";panel.id="daily-weight-panel-"+date;panel.hidden=true;card.append(panel);
  root.append(card);
  // Future dates are visible in the calendar but cannot have a weight entry yet.
  // Do not issue a request that the API deliberately rejects for future dates.
@@ -869,7 +869,19 @@ async function renderWeightCard(root,date){
   coords.forEach((p,i)=>{const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);dot.setAttribute("r",i===n-1?"4":"2.7");dot.setAttribute("fill",i===n-1?"#5da8ed":"#c4cbd2");svg.append(dot);const tx=document.createElementNS(svg.namespaceURI,"text");tx.setAttribute("x",p[0]);tx.setAttribute("y","137");tx.setAttribute("text-anchor","middle");tx.setAttribute("fill","#9ca3af");tx.setAttribute("font-size","10");tx.textContent=items[i].weigh_date.slice(-2);svg.append(tx);});
   panel.append(svg);
  }
- action.onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden){existing?chart():editor();}};
+ // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
+ const collapsedIcon=action.innerHTML,collapsedLabel=action.getAttribute("aria-label");
+ const closeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+ action.setAttribute("aria-controls",panel.id);
+ action.setAttribute("aria-expanded","false");
+ action.onclick=()=>{
+  panel.hidden=!panel.hidden;
+  const expanded=!panel.hidden;
+  action.innerHTML=expanded?closeIcon:collapsedIcon;
+  action.setAttribute("aria-label",expanded?(existing?"Fechar evolução do peso":"Fechar registo de peso"):collapsedLabel);
+  action.setAttribute("aria-expanded",String(expanded));
+  if(expanded){existing?chart():editor();}
+ };
 }
 let overviewRequestId=0;
 const OVERVIEW_CACHE_MS=60000;
