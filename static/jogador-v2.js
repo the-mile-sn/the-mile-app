@@ -1076,6 +1076,7 @@ async function overview(){
    const change=reference=>reference>0?100*(total.kcal-reference)/reference:null;
    const deviationMean=change(mean);let deviationPrevious=change(previous?.total.kcal);
    const visual=document.createElement("div");visual.className="nutrition-comparison";
+   const heading=document.createElement("h3");heading.className="nutrition-comparison-heading";heading.textContent="Energia (kcal)";visual.append(heading);
    const gauge=document.createElement("div");gauge.className="nutrition-comparison-gauge";
    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 160 160");svg.setAttribute("aria-hidden","true");
    const ring=(radius,delta,pos,neg)=>{
@@ -1095,8 +1096,8 @@ async function overview(){
    gauge.append(svg);
    const center=document.createElement("div");center.className="nutrition-comparison-center";
    const number=document.createElement("strong");number.textContent=fmt(total.kcal,0);
-   const unit=document.createElement("small");unit.textContent="kcal";center.append(number,unit);
-   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,1)+" kcal/kg";center.append(per);}
+   center.append(number);
+   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,1)+" /kg";center.append(per);}
    gauge.append(center);visual.append(gauge);
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
    for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
@@ -1190,7 +1191,7 @@ async function overview(){
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
    renderMacroMode("g");
    expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");};
-   summary.append(expand,weeklyCharts);
+   visual.append(expand);summary.append(weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }

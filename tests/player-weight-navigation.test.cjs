@@ -64,3 +64,16 @@ test("expanded nutrition keeps the dual ring and displays only the original char
  assert.match(css,/bottom:18px!important;right:7px!important/);
  assert.match(source,/expand\.setAttribute\("aria-label",weeklyCharts\.hidden\?"Expandir resumo nutricional":"Fechar gráficos nutricionais"\)/);
 });
+
+test("energy label and compact relative amount replace separate kcal unit inside halo",()=>{
+ assert.match(source,/heading\.textContent="Energia \(kcal\)"/);
+ assert.match(source,/center\.append\(number\)/);
+ assert.match(source,/fmt\(total\.kcal\/weight,1\)\+" \/kg"/);
+ assert.doesNotMatch(source,/unit\.textContent="kcal";center\.append\(number,unit\)/);
+});
+test("open and close use same chevron inside persistent halo preview",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(source,/visual\.append\(expand\);summary\.append\(weeklyCharts\)/);
+ assert.match(css,/\.nutrition-comparison>\.nutrition-expand\[aria-expanded="true"\]/);
+ assert.match(css,/position:absolute!important;top:auto!important;bottom:0!important;right:0!important/);
+});
