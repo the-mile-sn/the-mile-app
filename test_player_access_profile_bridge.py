@@ -139,6 +139,33 @@ class PlayerProfileBridgeTests(unittest.TestCase):
             self.assertEqual(row["renewal_date"],renewal)
             self.assertEqual(row["access_until"],"2020-01-15")
 
+    def test_editing_legacy_dates_does_not_log_out_an_active_player(self):
+        athlete_id, uid, username = self.accounts[0]
+        with app.connect() as c:
+            c.execute("UPDATE users SET access_until=? WHERE id=?", ("2020-01-15", uid))
+            c.commit()
+        player = self.login(username)
+        result = self.admin.request("/api/players/" + uid, "PUT", {
+            "name": "Jogador Teste",
+            "username": username,
+            "birth_date": "2001-01-01",
+            "sex": "M",
+            "height": 178,
+            "weight": 77,
+            "plan_name": "Pro",
+            "renewal_date": "2027-01-01",
+            "access_until": "2028-01-01",
+            "menus_enabled": False,
+            "anthropometry_enabled": False,
+        })
+        self.assertEqual(result["status"], 200, result)
+        self.assertEqual(player.request("/api/v2/player/me")["status"], 200)
+        with app.connect() as c:
+            row = c.execute("SELECT renewal_date, access_until FROM users WHERE id=?", (uid,)).fetchone()
+            self.assertEqual(row["renewal_date"], "2027-01-01")
+            self.assertEqual(row["access_until"], "2028-01-01")
+
+
     def test_followup_fields_initialize_idempotently_without_data_loss(self):
         aid,uid,_=self.accounts[0]
         with app.connect() as c:
