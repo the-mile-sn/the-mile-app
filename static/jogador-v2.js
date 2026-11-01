@@ -1068,6 +1068,55 @@ async function overview(){
     for(const peri of periMeals.filter(x=>x.event_date===key)){const a=average(peri.options||[]);if(a){found=true;for(const nutrient of Object.keys(sum))sum[nutrient]+=Number(a[nutrient]||0);}}
     weekDays.push({date,key,total:sum,found});
    }
+   // Dual comparison rings: signed, fixed +/-30% reference range; published daily totals only.
+   const validDays=weekDays.filter(x=>x.found&&x.total.kcal>0);
+   const mean=validDays.length?validDays.reduce((n,x)=>n+x.total.kcal,0)/validDays.length:null;
+   const yesterday=new Date(d+"T12:00:00");yesterday.setDate(yesterday.getDate()-1);
+   const previous=weekDays.find(x=>x.key===iso(yesterday)&&x.found&&x.total.kcal>0);
+   const change=reference=>reference>0?100*(total.kcal-reference)/reference:null;
+   const deviationMean=change(mean),deviationPrevious=change(previous?.total.kcal);
+   const visual=document.createElement("div");visual.className="nutrition-comparison";
+   const gauge=document.createElement("div");gauge.className="nutrition-comparison-gauge";
+   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 160 160");svg.setAttribute("aria-hidden","true");
+   const ring=(radius,delta,pos,neg)=>{
+    const track=document.createElementNS(svg.namespaceURI,"circle");
+    for(const [key,value] of [["cx",80],["cy",80],["r",radius],["stroke-width",9],["stroke","#484b52"],["fill","none"]])track.setAttribute(key,String(value));
+    svg.append(track);if(delta===null||Math.abs(delta)<.05)return;
+    const magnitude=Math.min(180,Math.abs(delta)/30*180),direction=delta>=0?1:-1;
+    const point=angle=>{const t=(angle-90)*Math.PI/180;return [80+radius*Math.cos(t),80+radius*Math.sin(t)]};
+    const [x,y]=point(0),[endX,endY]=point(direction*magnitude);
+    const path=document.createElementNS(svg.namespaceURI,"path");
+    path.setAttribute("d",`M ${x} ${y} A ${radius} ${radius} 0 0 ${direction>0?1:0} ${endX} ${endY}`);
+    path.setAttribute("stroke",delta>0?pos:neg);path.setAttribute("fill","none");
+    path.setAttribute("stroke-width","9");path.setAttribute("stroke-linecap","round");svg.append(path);
+   };
+   ring(68,deviationMean,"#66d7a4","#ff996e");
+   ring(50,deviationPrevious,"#c4e5dc","#ffb69b");
+   gauge.append(svg);
+   const center=document.createElement("div");center.className="nutrition-comparison-center";
+   const number=document.createElement("strong");number.textContent=fmt(total.kcal,0);
+   const unit=document.createElement("small");unit.textContent="kcal";center.append(number,unit);
+   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,1)+" kcal/kg";center.append(per);}
+   gauge.append(center);visual.append(gauge);
+   const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
+   for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
+    const stat=document.createElement("div");stat.className="nutrition-comparison-stat "+cls;
+    const figure=document.createElement("strong");figure.textContent=delta===null?"—":(delta>0?"+":"")+fmt(delta,1)+"%";
+    if(delta!==null)stat.classList.add(delta>0?"above":delta<0?"below":"neutral");
+    const label=document.createElement("small");label.textContent=name;
+    stat.append(figure,label);comparisons.append(stat);
+   }
+   visual.append(comparisons);
+   const compactMacros=document.createElement("div");compactMacros.className="nutrition-comparison-macros";
+   for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+    const cell=document.createElement("div");cell.className="nutrition-comparison-macro "+cls;
+    const label=document.createElement("small");label.textContent=title;
+    const value=document.createElement("strong");value.textContent=fmt(total[key],0)+" g";
+    cell.append(label,value);
+    if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total[key]/weight,1)+" g/kg";cell.append(per);}
+    compactMacros.append(cell);
+   }
+   visual.append(compactMacros);summary.insertBefore(visual,summary.querySelector(".nutrition-expand"));
    function buildBars(title,key,color,scale,decimals=0){
     const wrap=document.createElement("section");wrap.className="nutrition-chart-section";
     const heading=document.createElement("strong");heading.textContent=title;wrap.append(heading);
