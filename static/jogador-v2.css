@@ -3459,3 +3459,16 @@ body.profile-active .player-top{display:none!important}
  transform:none!important;width:28px!important;height:28px!important;
  background:transparent!important;border:0!important;box-shadow:none!important;
 }
+
+/* Seven full-width day columns; week navigation now uses native touch swipes. */
+#week-strip.week,
+#menu-week-strip.week{
+ grid-template-columns:repeat(7,minmax(0,1fr))!important;
+ touch-action:pan-y;
+ overscroll-behavior-x:contain;
+}
+#weekly-view .weekly-calendar-grid{touch-action:pan-y;overscroll-behavior-x:contain}
+#weekly-view{touch-action:pan-y}
+@media(max-width:620px){
+ #week-strip.week,#menu-week-strip.week{grid-template-columns:repeat(7,minmax(0,1fr))!important}
+}

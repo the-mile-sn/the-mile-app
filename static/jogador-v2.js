@@ -4,6 +4,24 @@ let playerSessionEpoch=0;
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
+// Week navigation: horizontal touch gestures only; vertical scrolling and day taps stay native.
+function enableWeekSwipe(element,onShift){
+ if(element.dataset.weekSwipeBound)return;
+ element.dataset.weekSwipeBound="true";
+ let start=null;
+ element.addEventListener("touchstart",event=>{
+  if(event.touches.length!==1){start=null;return;}
+  const touch=event.touches[0];start={x:touch.clientX,y:touch.clientY,at:Date.now()};
+ },{passive:true});
+ element.addEventListener("touchcancel",()=>{start=null;},{passive:true});
+ element.addEventListener("touchend",event=>{
+  if(!start||event.changedTouches.length!==1){start=null;return;}
+  const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+  start=null;
+  if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4)return;
+  event.preventDefault();onShift(dx<0?7:-7);
+ },{passive:false});
+}
 function revokePlayerView(){
  // An account switch must invalidate cached data and every old request.
  ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
@@ -377,13 +395,7 @@ function weeklySummary(data,relativeMeans={}){
 function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  weeklyContext={mon,r,weekMenus,weeklyWeights};
  const root=$("weekly-view");root.replaceChildren();
- const nav=document.createElement("div");nav.className="weekly-date-nav";
- const prev=document.createElement("button");prev.type="button";prev.textContent="‹";prev.setAttribute("aria-label","Semana anterior");
-
- const next=document.createElement("button");next.type="button";next.setAttribute("aria-label","Continuar ou concluir");next.textContent="›";next.setAttribute("aria-label","Semana seguinte");
- prev.onclick=()=>{day.setDate(day.getDate()-7);weeklySelection=null;overview().catch(error);};
- next.onclick=()=>{day.setDate(day.getDate()+7);weeklySelection=null;overview().catch(error);};
- nav.append(prev,next);root.append(nav);
+ enableWeekSwipe(root,offset=>{day.setDate(day.getDate()+offset);weeklySelection=null;overview().catch(error);});
  const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
  const selectedWeeklyDate=weeklySelection?.date||null;
  if(selectedWeeklyDate){const selectedIndex=Math.round((new Date(selectedWeeklyDate+"T12:00:00")-new Date(iso(mon)+"T12:00:00"))/86400000);if(selectedIndex>=0&&selectedIndex<7){grid.classList.add("has-weekly-selection");grid.style.setProperty("--selected-column-left",`calc(${selectedIndex} * (100% - 24px) / 7 + ${selectedIndex*4}px)`);grid.style.setProperty("--selected-column-left-mobile",`calc(${selectedIndex} * (100% - 18px) / 7 + ${selectedIndex*3}px)`);}}
@@ -894,12 +906,7 @@ function reusableOverviewSnapshot(weekKey,now=Date.now()){
 let lastOverviewPresentation=null;
 function renderPendingCalendar(mon,dateKey){
  const strip=$("week-strip");strip.replaceChildren();
- const shift=offset=>{const nextDate=new Date(day);nextDate.setDate(nextDate.getDate()+offset);day=nextDate;overview().catch(error);};
- const arrow=(glyph,offset,label)=>{
-  const button=document.createElement("button");button.type="button";button.className="week-arrow";button.textContent=glyph;
-  button.setAttribute("aria-label",label);button.onclick=()=>shift(offset);return button;
- };
- strip.append(arrow("‹",-7,"Semana anterior"));
+ enableWeekSwipe(strip,offset=>{const nextDate=new Date(day);nextDate.setDate(nextDate.getDate()+offset);day=nextDate;overview().catch(error);});
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);
   const key=iso(dt),b=document.createElement("button");b.type="button";
@@ -912,7 +919,6 @@ function renderPendingCalendar(mon,dateKey){
   ]){const span=document.createElement("span");span.className=cls;span.textContent=label;b.append(span);}
   b.onclick=()=>{day=new Date(dt);overview().catch(error);};strip.append(b);
  }
- strip.append(arrow("›",7,"Semana seguinte"));
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
 }
 function setOverviewLoading(loading,mon=null,dateKey=null){
@@ -1011,7 +1017,7 @@ async function overview(){
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
- const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
+ enableWeekSwipe(strip,offset=>{day.setDate(day.getDate()+offset);overview().catch(error);});
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);
   const dayInfo=r.days.find(x=>x.date===iso(dt));
@@ -1023,7 +1029,7 @@ async function overview(){
   }
   button.onclick=()=>{day=dt;overview().catch(error);};strip.append(button);
  }
- const next=document.createElement("button");next.type="button";next.className="week-arrow";next.textContent="›";next.setAttribute("aria-label","Dia seguinte");next.onclick=()=>{day.setDate(day.getDate()+7);overview().catch(error);};strip.append(next);
+
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
@@ -1399,7 +1405,7 @@ async function menusView(){
    const span=document.createElement("span");span.className=cls;span.textContent=value;button.append(span);
   }
   button.onclick=()=>{selectMenuDay(key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
-  strip.insertBefore(button,$("menu-next"));
+  strip.append(button);
  }
  const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
  const label=document.createElement("strong");label.textContent=names[meal];
@@ -1427,7 +1433,7 @@ async function menusView(){
  }
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek.setDate(menuWeek.getDate()+offset);menusView().catch(error);});for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
 function resetProfilePassword(){
  $("profile-password-form").reset();
  $("profile-password-feedback").textContent="";
