@@ -1410,10 +1410,10 @@ def application(env, start_response):
                 if method=='GET':
                     return respond(200,{'details':{'birth_date':linked['birth_date'] if linked else None,'has_photo':bool(linked and linked['photo_mime']),'user_id':linked['id'] if linked else None,'followup_plan':details['followup_plan'],'followup_renewal_date':details['followup_renewal_date']}})
                 body=read_json(env)
-                followup=body.get('followup_plan')
+                followup=body.get('followup_plan',details['followup_plan'])
                 if followup in ('',None): followup=None
                 if followup not in (None,'Pro','Elite'): raise Problem(400,'invalid_followup_plan')
-                renewal=body.get('followup_renewal_date')
+                renewal=body.get('followup_renewal_date',details['followup_renewal_date'])
                 if renewal in ('',None):renewal=None
                 if renewal is not None:
                     try: renewal=datetime.strptime(renewal,'%Y-%m-%d').date().isoformat()
