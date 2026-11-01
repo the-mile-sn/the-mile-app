@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.ok(legend,"Modelo legend must have its own ID");
  assert.match(legend[0],/\bhidden\b/,"Modelo legend starts hidden");
  assert.equal(html.split('id="model-legend"').length-1,1);
- assert.match(html,/admin-microcycles\.js\?v=18224/);
+ assert.match(html,/admin-microcycles\.js\?v=18225/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","model-legend","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
@@ -136,7 +136,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
  const source=admin.slice(start,end);
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
- assert.match(html,/admin-microcycles\.js\?v=18224/);
+ assert.match(html,/admin-microcycles\.js\?v=18225/);
  for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
   const calls=[];
   const ctx={
@@ -189,7 +189,7 @@ test("Menus loads and saves only for its selected athlete and current week",()=>
  assert.match(admin,/const calendarData=await request\(base\+"\/calendar\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
  assert.match(admin,/saveWeek\.onclick=async\(\)=>\{\s*if\(!stillCurrent\(\)\|\|!pending\.size\)return/);
  assert.match(admin,/await request\(base\+"\/menus\/batch"/);
- assert.match(html,/admin-microcycles\.js\?v=18224/);
+ assert.match(html,/admin-microcycles\.js\?v=18225/);
 });
 
 
@@ -203,7 +203,7 @@ test("Suplementação invalidates old-player reads and binds publication to the 
  assert.match(admin,/if\(!stillCurrent\(\)\)return;\s*supplementDraft=draft/);
  assert.match(admin,/if\(!supplementEditorReady\|\|!athleteId\|\|!stillCurrent\(\)\)return/);
  assert.match(admin,/await request\("\/api\/v2\/athletes\/"\+encodeURIComponent\(athleteId\)\+"\/supplements",\{method:"PUT"/);
- assert.match(html,/admin-microcycles\.js\?v=18224/);
+ assert.match(html,/admin-microcycles\.js\?v=18225/);
 });
 
 
@@ -218,7 +218,7 @@ test("Vista jogador ignores delayed reads after changing athlete, day, week or t
  assert.match(admin,/async function showPlayerView\(view\)\{\s*playerView=view;\+\+playerPreviewRevision/);
  assert.match(admin,/isoDay\(weekStart\(playerMenuWeek\)\)===begin/);
  assert.match(admin,/isoDay\(simulationDay\)===d/);
- assert.match(html,/admin-microcycles\.js\?v=18224/);
+ assert.match(html,/admin-microcycles\.js\?v=18225/);
 });
 
 test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
@@ -230,7 +230,7 @@ test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
  assert.match(admin,/confirmation:"PUBLICAR",athlete_id:athleteId/);
  assert.match(admin,/await request\(periEndpoint\(athleteId\)\+"\/"\+encodeURIComponent\(draft.id\)\+"\/option"/);
  assert.match(admin,/if\(!periIsCurrent\(athleteId\)\)return;\s*const result=await request\(periEndpoint\(athleteId\),\{method:"POST"/);
- assert.match(html,/admin-microcycles\.js\?v=18224/);
+ assert.match(html,/admin-microcycles\.js\?v=18225/);
 });
 
 
