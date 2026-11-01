@@ -3074,3 +3074,27 @@ body.profile-active .player-top{display:none!important}
 /* Non-blocking navigation feedback only while another week is loading. */
 #overview .overview-loading{margin:6px 5px 13px;color:#aaaab3;font-size:13px;line-height:1.35}
 #overview .overview-loading[hidden]{display:none!important}
+
+/* Transient loading placeholders: no previous-week prescriptions or blank screen. */
+#overview .overview-loading{margin:6px 0 13px;padding:0;color:#a9a9b2;font-size:13px}
+#overview .overview-loading[hidden],#menus .menu-skeleton[hidden]{display:none!important}
+.loading-accessible-label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#overview .overview-skeleton-inner{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+#overview .overview-skeleton-week-label{display:none}
+#overview .overview-loading.week-pending .overview-skeleton-week-label{display:block;width:58%;height:25px;margin:5px 3px 3px}
+#overview .overview-skeleton-macros{display:grid;grid-template-columns:1.2fr repeat(3,minmax(0,1fr));gap:5px}
+#overview .overview-skeleton-macros span{min-height:69px;border-radius:10px}
+#overview .overview-skeleton-weight{height:62px;border-radius:12px;margin-top:1px}
+#overview .overview-skeleton-meal{height:56px;border-radius:10px;margin-top:2px}
+#overview .overview-skeleton-macros span,
+#overview .overview-skeleton-week-label,
+#overview .overview-skeleton-weight,
+#overview .overview-skeleton-meal,
+#menus .menu-skeleton-card{background:#25262b;opacity:.68}
+#overview .overview-loading.week-pending .overview-skeleton-macros{grid-template-columns:repeat(7,minmax(0,1fr))}
+#overview .overview-loading.week-pending .overview-skeleton-macros span{min-height:50px}
+#overview .overview-loading.week-pending .overview-skeleton-macros::after{content:"";min-height:50px;border-radius:10px;background:#25262b;opacity:.68;grid-column:span 3}
+#overview .overview-loading.week-pending .overview-skeleton-meal{height:84px}
+#menus .menu-skeleton{margin:8px 0 18px}
+#menus .menu-skeleton-range{display:block;text-align:center;color:#a5a5b0;font-size:13px;margin:8px 0 15px}
+#menus .menu-skeleton-card{height:85px;border-radius:13px;margin:10px 0}
