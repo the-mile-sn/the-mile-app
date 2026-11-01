@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=96/);
+ assert.match(html,/admin-microcycles\.css\?v=97/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -299,7 +299,7 @@ test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=96/);
+ assert.match(html,/admin-microcycles\.css\?v=97/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -379,4 +379,14 @@ test("meal selectors fill both effective and post-match matrix cells",()=>{
  assert.match(css,/#scenario-editor \.scenario-day-matrix tbody td \.microcycle-color-select/);
  assert.match(css,/width:100%!important;/);
  assert.match(css,/min-height:40px!important;/);
+});
+
+test("Bottle-green VP and compact high-visibility meal controls apply to both matrices",()=>{
+ const css=fs.readFileSync("static/admin-microcycles.css","utf8");
+ assert.match(css,/#matrix \.microcycle-color-select\[data-color="vp"\],/);
+ assert.match(css,/#scenario-editor \.microcycle-color-select\[data-color="vp"\]/);
+ assert.match(css,/background:#28543e!important/);
+ assert.match(css,/#matrix \.model-effective-matrix,\s*#scenario-editor \.scenario-day-matrix/);
+ assert.match(css,/max-width:1380px!important/);
+ assert.match(css,/min-height:46px!important/);
 });
