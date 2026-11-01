@@ -1141,3 +1141,16 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #scenario-editor .microcycle-color-select[data-color=green]{background:#92cfa4!important;color:#183524!important;border-color:#92cfa4!important}
 #scenario-editor .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
 #scenario-editor .scenario-diagnostics[hidden]{display:none!important}
+
+/* Model refinement: neutral zebra rows, taller meal controls and flat scenario layout. */
+#matrix .model-effective-matrix td{padding-top:13px!important;padding-bottom:13px!important}
+#matrix .model-effective-matrix tr:nth-child(even) td{background:#292a30!important}
+#matrix .model-effective-matrix tr:nth-child(odd) td{background:#202126!important}
+#matrix .model-effective-matrix td select{min-height:34px!important;padding:8px 10px!important;font-size:13px!important;font-weight:550!important}
+#scenario-editor{border:0!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+#scenario-editor>h3{font-size:19px;margin:24px 0 17px}
+#scenario-editor #scenario-cells{border:0!important;background:transparent!important;padding:0!important;overflow:visible!important}
+#scenario-editor .scenario-day-group{margin:0;border-radius:13px}
+#scenario-editor .scenario-day-matrix tbody th{width:132px!important;color:inherit!important;font-size:13px!important;font-weight:600!important}
+#scenario-editor .scenario-day-matrix th,#scenario-editor .scenario-day-matrix td{padding-top:12px!important;padding-bottom:12px!important}
+#scenario-editor .scenario-day-matrix select{min-height:34px!important;font-size:13px!important;font-weight:550!important}
