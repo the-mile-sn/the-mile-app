@@ -111,13 +111,7 @@ function formatRenewal(value){
 function playerFolderIcon(folder){
   return playerIcon(folder);
 }
-function planExpired(value){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return false;
-  const [y,m,d]=String(value).split('-').map(Number),now=new Date();
-  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  return new Date(y,m-1,d)<today;
-}
-
+function planExpired(value){ return false; }
 async function api(path,{method='GET',body=null,binary=false}={}){
   const options={method,credentials:'same-origin',headers:{}};
   if(method!=='GET'&&csrf) options.headers['X-CSRF-Token']=csrf;
@@ -325,14 +319,6 @@ async function refresh(){
 }
 async function openPlayer(id){ selected=players.find(p=>p.id===id); docs=(await api('/documents?player='+encodeURIComponent(id))).documents; folder=null;mode='';render(); }
 
-function renewalGraceDate(iso){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||''))return '';
-  const dt=new Date(iso+'T12:00:00Z');
-  if(Number.isNaN(dt.getTime()))return '';
-  dt.setUTCDate(dt.getUTCDate()+7);
-  return dt.toISOString().slice(0,10);
-}
-
 function playerForm(w,p=null){
   if(!p){
     return `<form class="inline-form">
@@ -396,7 +382,6 @@ function playerForm(w,p=null){
       <div class="admin-edit-card admin-edit-grid admin-edit-plan">
         <div><label>${w.planName}</label><input name="plan_name" maxlength="80" value="${esc(p.plan_name||'')}" required></div>
         <div><label>${w.renewalDate}</label><input name="renewal_date" type="date" value="${esc(p.renewal_date||'')}" required></div>
-        <div><label>${lang==='pt'?'Acesso até':'Access until'}</label><input name="access_until" type="date" data-default="${p.access_until?'0':'1'}" value="${esc(p.access_until||renewalGraceDate(p.renewal_date))}"></div><div class="access-extension-controls"><button class="secondary" type="button" id="extend-access">${lang==='pt'?'Prolongar acesso':'Extend access'}</button></div>
       </div>
     </section>
 
@@ -432,7 +417,7 @@ function playerForm(w,p=null){
 }
 async function payloadFromForm(f){
   return {name:f.get('name'),username:String(f.get('username')||'').toLowerCase(),password:f.get('password')||'',photo:await fileToDataURL(f.get('photo')),
-    birth_date:f.get('birth_date'),sex:f.get('sex'),height:Number(f.get('height')),weight:Number(f.get('weight')),plan_name:f.get('plan_name'),renewal_date:f.get('renewal_date'),access_until:f.get('access_until')||null,
+    birth_date:f.get('birth_date'),sex:f.get('sex'),height:Number(f.get('height')),weight:Number(f.get('weight')),plan_name:f.get('plan_name'),renewal_date:f.get('renewal_date')
     menus_enabled:f.get('menus_enabled')==='on',anthropometry_enabled:f.get('anthropometry_enabled')==='on'};
 }
 
@@ -547,10 +532,6 @@ function renderDashboard(w){
 
   const attention=[];
   players.forEach(p=>{
-    if(p.renewal_date===today){
-      attention.push({id:p.id,title:p.name,text:lang==='pt'?'Renovação hoje':'Renewal today',tone:'renewal'});
-    }
-
     if(p.birth_date){
       const parts=String(p.birth_date).split('-');
       if(parts.length===3&&Number(parts[1])===todayDate.getMonth()+1&&Number(parts[2])===todayDate.getDate()){
@@ -863,26 +844,6 @@ function renderPlayer(w){
     ui.root.innerHTML=`<button class="back" id="back">${w.back}</button>${playerForm(w,owner)}`;
     bind('back',()=>{mode='';render();});bind('cancel',()=>{mode='';render();});
     bind('change-password',()=>{mode='password';render();});
-    const renewalField=ui.root.querySelector('[name="renewal_date"]');
-    const accessField=ui.root.querySelector('[name="access_until"]');
-    if(renewalField&&accessField){
-      renewalField.addEventListener('input',()=>{
-        if(accessField.dataset.default==='1')accessField.value=renewalGraceDate(renewalField.value);
-      });
-      accessField.addEventListener('input',()=>{accessField.dataset.default='0';});
-    }
-    bind('extend-access',async()=>{
-      const days=prompt(lang==='pt'?'Quantos dias queres acrescentar? (3, 7, 15 ou 30)':'Add how many days? (3, 7, 15 or 30)','7');
-      if(days===null)return;
-      const amount=Number(days);
-      if(![3,7,15,30].includes(amount)){notify('The Mile',lang==='pt'?'Escolhe 3, 7, 15 ou 30 dias.':'Choose 3, 7, 15 or 30 days.');return;}
-      try{
-        const result=await api('/players/'+owner.id+'/access-extension',{method:'POST',body:{days:amount}});
-        owner.access_until=result.access_until;
-        const updated=players.find(p=>p.id===owner.id);if(updated)updated.access_until=result.access_until;
-        render();
-      }catch(e){error(e);}
-    });
     bind('status',async()=>{if(!confirm(w.statusConfirm))return;await api('/players/'+owner.id+'/status',{method:'POST',body:{active:!owner.active}});selected=null;await refresh();});
     bind('delete-player',async()=>{if(!confirm(w.deletePlayerConfirm))return;await api('/players/'+owner.id,{method:'DELETE'});selected=null;folder=null;await refresh();});
     submit(async f=>{if(accessField?.dataset.default==='1')f.set('access_until','');await api('/players/'+owner.id,{method:'PUT',body:await payloadFromForm(f)});selected=null;mode='';await refresh();});return;

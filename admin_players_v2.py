@@ -1,7 +1,7 @@
 """Read-only player management overview.
 
 The individual player editor, account management and nutrition engines are
-unchanged. Login eligibility is delegated to app.access_valid.
+unchanged. Access state is based solely on explicit admin activation.
 """
 
 
@@ -9,7 +9,6 @@ def overview(c, today, access_is_valid):
     rows = c.execute("""
         SELECT a.id, a.name, a.weight_kg AS profile_weight,
                l.user_id, u.username, u.active, u.role,
-               u.renewal_date, u.access_until,
                (u.photo IS NOT NULL) AS has_photo
           FROM v2_athletes a
           LEFT JOIN v2_player_links l ON l.athlete_id=a.id
@@ -61,8 +60,6 @@ def overview(c, today, access_is_valid):
             access = "no_account"
         elif not row["active"]:
             access = "inactive"
-        elif not access_is_valid(row):
-            access = "expired"
         else:
             access = "active"
 
