@@ -260,7 +260,7 @@ function ensurePlanningOnlyView(){
    if(!playerProfileEditing){
     const v=athlete[key];wrapper.append(el("strong","",v==null||v===""?"Por preencher":key==="sex"?(v==="F"?"Feminino":v==="M"?"Masculino":"Por definir"):String(v)+(key==="weight_kg"?" kg":key==="height_cm"?" cm":"")));
    }else{
-    const field=type==="textarea"?el("textarea"):type==="sex"||type==="position"?el("select"):el("input");
+    const field=type==="textarea"?el("textarea"):type==="sex"||type==="position"||type==="followup"?el("select"):el("input");
     if(type==="sex"){for(const [v,t] of [["","Por definir"],["F","Feminino"],["M","Masculino"]]){const o=el("option","",t);o.value=v;field.append(o);}}
     else if(type==="position"){for(const v of ["","GR","DD","DE","DC","MDC","MC","MOC","ED","EE","PL","Outro"]){const o=el("option","",v||"Por definir");o.value=v;field.append(o);}}
     else if(type==="followup"){for(const v of ["","Pro","Elite"]){const o=el("option","",v||"Por definir");o.value=v;field.append(o);}}
