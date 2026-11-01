@@ -1110,3 +1110,34 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
  #import-review .option-editor .meal-line-editor>.meal-line-order-controls{gap:4px;margin-right:36px}
  #import-review .option-editor .meal-line-order-controls button{padding:5px 7px!important}
 }
+
+
+/* Modelo: readable alternating rows and grouped post-match scenarios. */
+#matrix{display:block;overflow-x:auto}
+#matrix[hidden]{display:none!important}
+#matrix .model-effective-title{font-size:17px;margin:8px 16px 18px;font-weight:650}
+#matrix .model-effective-matrix{border-collapse:separate;border-spacing:0;min-width:840px}
+#matrix .model-effective-matrix th{background:#25282d;text-align:left}
+#matrix .model-effective-matrix td{background:#202126;border-bottom:1px solid #363940}
+#matrix .model-effective-matrix tr:nth-child(even) td{background:#273340}
+#matrix .model-effective-matrix td:first-child{font-weight:650}
+#scenario-editor .scenario-cells{display:grid;grid-template-columns:1fr;gap:16px;overflow:visible}
+#scenario-editor .scenario-day-group{border:1px solid #3c4049;border-radius:13px;overflow:hidden;background:#1c1e23;min-width:0}
+#scenario-editor .scenario-day-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#292d34}
+#scenario-editor .scenario-day-heading h4{margin:0;font-size:16px;font-weight:700}
+#scenario-editor .scenario-day-heading small{color:#aaafba;font-size:12px}
+#scenario-editor .scenario-day-scroll{overflow-x:auto}
+#scenario-editor .scenario-day-matrix{border-collapse:collapse;border-spacing:0;width:100%;min-width:780px}
+#scenario-editor .scenario-day-matrix th,#scenario-editor .scenario-day-matrix td{padding:10px 12px;border-bottom:1px solid #383b44;text-align:left}
+#scenario-editor .scenario-day-matrix thead th{background:#22262c;font-size:12px;color:#c2c6ce}
+#scenario-editor .scenario-day-matrix tbody tr:nth-child(odd)>*{background:#22262b}
+#scenario-editor .scenario-day-matrix tbody tr:nth-child(even)>*{background:#2a2e34}
+#scenario-editor .scenario-day-matrix tbody tr:last-child>*{border-bottom:0}
+#scenario-editor .scenario-day-matrix tbody th{width:105px;font-size:13px;font-weight:550;white-space:nowrap}
+#scenario-editor .scenario-day-matrix select{width:100%;min-width:105px;font-size:12px;padding:9px 8px;border-radius:7px}
+#scenario-editor .microcycle-color-select[data-color=yellow]{background:#e9c95b!important;color:#302609!important;border-color:#e9c95b!important}
+#scenario-editor .microcycle-color-select[data-color=orange]{background:#e6a66c!important;color:#30200e!important;border-color:#e6a66c!important}
+#scenario-editor .microcycle-color-select[data-color=blue]{background:#85b5e5!important;color:#11243b!important;border-color:#85b5e5!important}
+#scenario-editor .microcycle-color-select[data-color=green]{background:#92cfa4!important;color:#183524!important;border-color:#92cfa4!important}
+#scenario-editor .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
+#scenario-editor .scenario-diagnostics[hidden]{display:none!important}

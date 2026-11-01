@@ -370,3 +370,16 @@ html[data-admin-theme="light"] #admin-workspace .tm-dashboard-return .tm-subpage
 
 html[data-admin-theme="light"] .tm-player-photo-placeholder{background:#e8edf3;border-color:#cfdae7;color:#425a73}
 html[data-admin-theme="light"] .tm-player-photo-control{color:#4b5c6f}
+
+
+/* Model grouping in light mode */
+html[data-admin-theme="light"] #matrix .model-effective-matrix th{background:#e9edf2;color:#556274}
+html[data-admin-theme="light"] #matrix .model-effective-matrix td{background:#f7f8fa;border-color:#dce2ea}
+html[data-admin-theme="light"] #matrix .model-effective-matrix tr:nth-child(even) td{background:#e6f0fa}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-group{background:#fff;border-color:#d8dfe8}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-heading{background:#e6edf5}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-heading small{color:#667589}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix thead th{background:#eff2f6;color:#526176}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix tbody tr:nth-child(odd)>*{background:#fbfcfd}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix tbody tr:nth-child(even)>*{background:#e9f1f9}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix td,html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix th{border-color:#dce2ea}
