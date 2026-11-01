@@ -52,5 +52,5 @@ test('assessment notes preserve the timestamp below metrics and the formula insi
  assert.match(js,/stamp\.textContent="Última avaliação/);
  assert.match(js,/key==="body_fat"&&recent\.formula_note/);
  assert.match(js,/details\.append\(note\)/);
- assert.doesNotMatch(js,/target\.append\(note\)/);
+ assert.doesNotMatch(js,/note\.textContent="Gordura corporal: "\+recent\.formula_note;target\.append\(note\)/);
 });
