@@ -122,3 +122,14 @@ test("compact weekly styles keep seven columns and separate energy from macros",
  assert.match(css,/#weekly-view \.weekly-day-total \.weekly-total-macros\{/);
  assert.match(css,/column-gap:3px!important;row-gap:5px!important/);
 });
+
+test("weekly training and match corners equal nine-pixel meal card corners",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#weekly-view \.weekly-event-slot>\.weekly-event-card,[\s\S]*?#weekly-view \.weekly-match-with-intra\{\s*border-radius:9px!important/);
+});
+test("daily and weekly selector keeps equal full-height Screen Time-style segments",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview #overview-mode\{[\s\S]*?min-height:54px!important/);
+ assert.match(css,/#overview #overview-mode button\[aria-pressed="true"\]\{[\s\S]*?min-height:48px!important/);
+ assert.match(css,/#overview #overview-mode button\[aria-pressed="true"\]\{background:#55555b!important/);
+});
