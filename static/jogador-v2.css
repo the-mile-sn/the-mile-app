@@ -3040,3 +3040,203 @@ body.profile-active .player-top{display:none!important}
 #player-avatar #header-player-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
 #player-avatar [hidden]{display:none!important}
 @media(max-width:360px){#profile .profile-plan-card{gap:8px;padding:16px 15px}}
+
+/* Player header and standalone assessments. */
+.player-top{position:relative!important;justify-content:flex-end!important}
+.player-header-brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:88px;color:#f4f4f7;pointer-events:none}
+.player-header-wordmark{width:100%;height:auto;display:block;fill:currentColor}
+.player-top #player-avatar{margin-left:auto!important;z-index:1}
+#tabs button[data-tab="assessments"] .mile-icon{width:21px;height:21px}
+#assessments[hidden]{display:none!important}
+#assessments{padding:10px 0 115px}
+#assessments .assessments-page-heading{font-size:20px;font-weight:550;margin:6px 5px 22px}
+#assessments .plans-assessments-empty{
+#assessments .assessment-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;border-radius:999px;background:#212126;padding:4px;margin:4px 0 16px}
+#assessments .assessment-tabs button{background:transparent!important;color:#b8b8bf!important;border:0!important;border-radius:999px!important;font-size:13px!important;font-weight:450!important;padding:11px 4px!important;min-width:0!important}
+#assessments .assessment-tabs button[aria-pressed="true"]{background:#53545c!important;color:#fff!important}
+#assessments .assessment-most-recent{color:#a8a8b1;font-size:13px;padding:0 5px;margin:0 0 15px}
+#assessments .assessment-measure-card{background:#242429;border-radius:15px;margin:8px 0;overflow:hidden;border:0}
+#assessments .assessment-measure-card>summary{display:flex;align-items:center;gap:10px;padding:14px 13px 14px 16px;min-height:64px;list-style:none;cursor:pointer}
+#assessments .assessment-measure-card>summary::-webkit-details-marker{display:none}
+#assessments .assessment-metric-name{flex:1;min-width:0;color:#f1f1f4;font-size:15px;font-weight:450;line-height:1.3}
+#assessments .assessment-metric-right{flex:none;text-align:right;display:flex;flex-direction:column;gap:3px;max-width:48%;align-items:flex-end}
+#assessments .assessment-metric-right strong{font-size:15px;font-weight:550;color:#f5f5f6;white-space:nowrap}
+#assessments .assessment-change{font-size:11px;color:#abaeb8;white-space:nowrap;font-weight:400}
+#assessments .assessment-expander{font-size:21px;font-weight:400;color:#bbbcc5;transition:transform .18s;line-height:20px;margin-left:3px}
+#assessments details[open]>summary .assessment-expander{transform:rotate(180deg)}
+#assessments .assessment-trend{margin:0 10px 10px;background:#1b1b20;border-radius:13px;padding:16px 12px 14px}
+#assessments .assessment-trend>p:first-child{margin:0 0 9px;font-size:13px;font-weight:550}
+#assessments .assessment-trend svg{width:100%;height:135px;display:block;overflow:visible}
+#assessments .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:1;stroke-dasharray:3 5}
+#assessments .assessment-chart-line{fill:none;stroke:#a2ddc0;stroke-width:2.3;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+#assessments .assessment-chart-point{stroke:#1b1b20;stroke-width:1.5;fill:#bbefd3;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-labels{display:flex;justify-content:space-between;color:#aaaab3;font-size:11px;padding:0 3px;margin-top:5px}
+#assessments .assessment-chart-range{font-size:11px;color:#a3a3af;margin:8px 3px 14px}
+#assessments .assessment-trend-note{font-size:12px;color:#afafb7}
+#assessments .assessment-history-points{border-top:1px solid #34343b;padding-top:9px}
+#assessments .assessment-history-points>div{display:flex;justify-content:space-between;gap:10px;color:#aeb0b8;font-size:12px;margin:7px 0}
+#assessments .assessment-history-points strong{color:#eeeef1;font-weight:500}
+#assessments .assessment-averages{background:#242429;border-radius:15px;padding:16px;margin:14px 0}
+#assessments .assessment-averages h3{font-size:14px;margin:0 0 12px}
+#assessments .assessment-averages>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #38383f;font-size:13px}
+#assessments .assessment-averages strong{font-weight:500}
+#assessments .assessment-empty-state{background:#25252b;color:#b7b7c0;border-radius:15px;padding:25px 17px;font-size:14px;text-align:center}
+#assessments .assessment-formula{color:#92929d;font-size:12px;padding:0 7px}
+#assessments .assessment-measure-card{margin:6px 0!important;border-radius:13px!important}
+#assessments .assessment-measure-card > summary{
+#assessments .assessment-metric-right{gap:1px!important}
+#assessments .assessment-metric-name,
+#assessments .assessment-metric-right strong{font-size:14px!important}
+#assessments .assessment-change{font-size:10px!important}
+#assessments #assessments-assessments details.assessment-measure-card{
+#assessments #assessments-assessments details.assessment-measure-card > summary{
+#assessments #assessments-assessments .assessment-metric-right{gap:6px!important}
+#assessments #assessments-assessments .assessment-metric-name,
+#assessments #assessments-assessments .assessment-metric-right strong{font-size:13px!important}
+#assessments #assessments-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
+#assessments #assessments-assessments details.assessment-measure-card > summary{
+#assessments .assessment-trend>svg{display:block;width:100%;height:auto;max-height:270px;overflow:visible;touch-action:pan-y;user-select:none}
+#assessments .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:.7;stroke-dasharray:2 4}
+#assessments .assessment-chart-tick{fill:#9496a1;font-size:10px;font-weight:500}
+#assessments .assessment-chart-value{fill:#d7f0e2;font-size:10.5px;font-weight:600;paint-order:stroke;stroke:#202025;stroke-width:2.5px;stroke-linejoin:round}
+#assessments .assessment-chart-value.is-selected{fill:#fff;font-weight:700}
+#assessments .assessment-chart-mean{stroke:#b6b8bf;stroke-width:1.3;stroke-dasharray:5 4;opacity:.75;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-guide{stroke:#e7ecea;stroke-width:1;stroke-dasharray:3 3;opacity:.65;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-selected{fill:#d5f6e2;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-focus{font-size:12px;color:#dfeee6;min-height:18px;text-align:center;margin:5px 0}
+#assessments .assessment-chart-average{font-size:11px;color:#aeb0b8;text-align:right;margin:4px 3px 14px}
+#assessments .assessment-history-card{background:#25252b;border-radius:10px;padding:10px 13px;margin-top:8px}
+#assessments .assessment-history-card>summary{cursor:pointer;color:#dadbe0;font-size:12px;font-weight:500;list-style:none;display:flex;justify-content:space-between;align-items:center}
+#assessments .assessment-history-card>summary::-webkit-details-marker{display:none}
+#assessments .assessment-history-card>summary:after{content:"⌄";font-size:18px;line-height:1;color:#aeb0b8;transition:transform .18s}
+#assessments .assessment-history-card[open]>summary:after{transform:rotate(180deg)}
+#assessments .assessment-history-card .assessment-history-points{margin-top:10px;max-height:360px;overflow-y:auto}
+#assessments .assessment-chart-point{fill:rgba(162,221,192,.65);stroke:#a2ddc0;stroke-width:1.3;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-point{fill:#a2ddc0;fill-opacity:.7;stroke:#a2ddc0;stroke-width:1;vector-effect:non-scaling-stroke;transition:fill-opacity .12s,stroke-width .12s}
+#assessments .assessment-chart-point.is-selected{fill:#bff6d7;fill-opacity:1;stroke:#e5ffef;stroke-width:2.5;filter:drop-shadow(0 0 2px rgba(162,221,192,.5))}
+#assessments .assessment-trend{margin:0 5px 10px;padding:13px 8px 14px}
+#assessments .assessment-trend>svg{width:100%;max-height:none;display:block}
+#assessments .assessment-chart-point{fill:#1b1b20;fill-opacity:1;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke;filter:none}
+#assessments .assessment-chart-point.is-selected{fill:#fff;fill-opacity:1;stroke:#fff;stroke-width:1.5;filter:none}
+#assessments .assessment-chart-focus:empty{min-height:0;margin:0}
+#assessments .assessment-metric-right{gap:8px}
+#assessments .assessment-measure-card>summary{align-items:center}
+#assessments .assessment-expander,
+#assessments .assessment-history-card>summary::after{
+#assessments .assessment-measure-card[open]>summary .assessment-expander,
+#assessments .assessment-history-card[open]>summary::after{
+#assessments .assessment-history-card>summary{min-height:23px;align-items:center}
+#assessments .assessment-metric-right{gap:9px;justify-content:center}
+#assessments .assessment-metric-right strong{font-weight:600;line-height:1.15}
+#assessments .assessment-change{line-height:1.15}
+#assessments #assessments-assessments button.plans-back-round{
+#assessments #assessments-assessments button.plans-back-round span{
+#assessments #assessments-assessments > button.plans-back-round{margin-top:3px!important;margin-bottom:11px!important}
+#assessments #assessments-assessments .assessment-tabs{margin-top:0!important}
+#assessments .assessment-trend>svg{width:100%;height:auto;display:block}
+#assessments .assessment-chart-point.is-selected{fill:#fff;stroke:#fff}
+#profile .profile-notifications-card{display:flex;align-items:center;gap:13px;min-height:64px;padding:17px 19px;margin-bottom:16px;border-radius:17px;background:#242429;color:#f1f1f3;font-size:15px}
+#profile .profile-notifications-card .mile-icon{width:22px;height:22px;flex:none;display:inline-flex}
+#profile .profile-notifications-card .mile-icon svg{width:100%;height:100%}
+#profile .profile-notifications-card small{margin-left:auto;color:#a4a4ad;font-size:12px}
+
+/* Preserve the existing assessment charts and metric detail layouts in the new tab. */
+/* Three-way assessments navigation and expandable metric history. */
+#assessments .assessment-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;border-radius:999px;background:#212126;padding:4px;margin:4px 0 16px}
+#assessments .assessment-tabs button{background:transparent!important;color:#b8b8bf!important;border:0!important;border-radius:999px!important;font-size:13px!important;font-weight:450!important;padding:11px 4px!important;min-width:0!important}
+#assessments .assessment-tabs button[aria-pressed="true"]{background:#53545c!important;color:#fff!important}
+#assessments .assessment-most-recent{color:#a8a8b1;font-size:13px;padding:0 5px;margin:0 0 15px}
+#assessments .assessment-measure-card{background:#242429;border-radius:15px;margin:8px 0;overflow:hidden;border:0}
+#assessments .assessment-measure-card>summary{display:flex;align-items:center;gap:10px;padding:14px 13px 14px 16px;min-height:64px;list-style:none;cursor:pointer}
+#assessments .assessment-measure-card>summary::-webkit-details-marker{display:none}
+#assessments .assessment-metric-name{flex:1;min-width:0;color:#f1f1f4;font-size:15px;font-weight:450;line-height:1.3}
+#assessments .assessment-metric-right{flex:none;text-align:right;display:flex;flex-direction:column;gap:3px;max-width:48%;align-items:flex-end}
+#assessments .assessment-metric-right strong{font-size:15px;font-weight:550;color:#f5f5f6;white-space:nowrap}
+#assessments .assessment-change{font-size:11px;color:#abaeb8;white-space:nowrap;font-weight:400}
+#assessments .assessment-expander{font-size:21px;font-weight:400;color:#bbbcc5;transition:transform .18s;line-height:20px;margin-left:3px}
+#assessments details[open]>summary .assessment-expander{transform:rotate(180deg)}
+#assessments .assessment-trend{margin:0 10px 10px;background:#1b1b20;border-radius:13px;padding:16px 12px 14px}
+#assessments .assessment-trend>p:first-child{margin:0 0 9px;font-size:13px;font-weight:550}
+#assessments .assessment-trend svg{width:100%;height:135px;display:block;overflow:visible}
+#assessments .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:1;stroke-dasharray:3 5}
+#assessments .assessment-chart-line{fill:none;stroke:#a2ddc0;stroke-width:2.3;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+#assessments .assessment-chart-point{stroke:#1b1b20;stroke-width:1.5;fill:#bbefd3;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-labels{display:flex;justify-content:space-between;color:#aaaab3;font-size:11px;padding:0 3px;margin-top:5px}
+#assessments .assessment-chart-range{font-size:11px;color:#a3a3af;margin:8px 3px 14px}
+#assessments .assessment-trend-note{font-size:12px;color:#afafb7}
+#assessments .assessment-history-points{border-top:1px solid #34343b;padding-top:9px}
+#assessments .assessment-history-points>div{display:flex;justify-content:space-between;gap:10px;color:#aeb0b8;font-size:12px;margin:7px 0}
+#assessments .assessment-history-points strong{color:#eeeef1;font-weight:500}
+#assessments .assessment-averages{background:#242429;border-radius:15px;padding:16px;margin:14px 0}
+#assessments .assessment-averages h3{font-size:14px;margin:0 0 12px}
+#assessments .assessment-averages>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #38383f;font-size:13px}
+#assessments .assessment-averages strong{font-weight:500}
+#assessments .assessment-empty-state{background:#25252b;color:#b7b7c0;border-radius:15px;padding:25px 17px;font-size:14px;text-align:center}
+#assessments .assessment-formula{color:#92929d;font-size:12px;padding:0 7px}
+/* Assessment trend: compact, tactile, and readable on mobile. */
+#assessments .assessment-trend>svg{display:block;width:100%;height:auto;max-height:270px;overflow:visible;touch-action:pan-y;user-select:none}
+#assessments .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:.7;stroke-dasharray:2 4}
+#assessments .assessment-chart-tick{fill:#9496a1;font-size:10px;font-weight:500}
+#assessments .assessment-chart-value{fill:#d7f0e2;font-size:10.5px;font-weight:600;paint-order:stroke;stroke:#202025;stroke-width:2.5px;stroke-linejoin:round}
+#assessments .assessment-chart-value.is-selected{fill:#fff;font-weight:700}
+#assessments .assessment-chart-mean{stroke:#b6b8bf;stroke-width:1.3;stroke-dasharray:5 4;opacity:.75;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-guide{stroke:#e7ecea;stroke-width:1;stroke-dasharray:3 3;opacity:.65;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-selected{fill:#d5f6e2;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke}
+#assessments .assessment-chart-focus{font-size:12px;color:#dfeee6;min-height:18px;text-align:center;margin:5px 0}
+#assessments .assessment-chart-average{font-size:11px;color:#aeb0b8;text-align:right;margin:4px 3px 14px}
+#assessments .assessment-history-card{background:#25252b;border-radius:10px;padding:10px 13px;margin-top:8px}
+#assessments .assessment-history-card>summary{cursor:pointer;color:#dadbe0;font-size:12px;font-weight:500;list-style:none;display:flex;justify-content:space-between;align-items:center}
+#assessments .assessment-history-card>summary::-webkit-details-marker{display:none}
+#assessments .assessment-history-card>summary:after{content:"⌄";font-size:18px;line-height:1;color:#aeb0b8;transition:transform .18s}
+#assessments .assessment-history-card[open]>summary:after{transform:rotate(180deg)}
+#assessments .assessment-history-card .assessment-history-points{margin-top:10px;max-height:360px;overflow-y:auto}
+#assessments .assessment-chart-point{fill:rgba(162,221,192,.65);stroke:#a2ddc0;stroke-width:1.3;vector-effect:non-scaling-stroke}
+
+/* Markers sit over the trend line; only the touched point gains emphasis. */
+#assessments .assessment-chart-point{fill:#a2ddc0;fill-opacity:.7;stroke:#a2ddc0;stroke-width:1;vector-effect:non-scaling-stroke;transition:fill-opacity .12s,stroke-width .12s}
+#assessments .assessment-chart-point.is-selected{fill:#bff6d7;fill-opacity:1;stroke:#e5ffef;stroke-width:2.5;filter:drop-shadow(0 0 2px rgba(162,221,192,.5))}
+
+/* Assessment refinements: maximise chart width and keep points visually above line. */
+#assessments .assessment-trend{margin:0 5px 10px;padding:13px 8px 14px}
+#assessments .assessment-trend>svg{width:100%;max-height:none;display:block}
+#assessments .assessment-chart-point{fill:#1b1b20;fill-opacity:1;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke;filter:none}
+#assessments .assessment-chart-point.is-selected{fill:#fff;fill-opacity:1;stroke:#fff;stroke-width:1.5;filter:none}
+#assessments .assessment-chart-focus:empty{min-height:0;margin:0}
+
+/* Assessment: clearer value hierarchy and identical centered expand chevrons. */
+#assessments .assessment-metric-right{gap:8px}
+#assessments .assessment-measure-card>summary{align-items:center}
+#assessments .assessment-expander,
+#assessments .assessment-history-card>summary::after{
+ content:"";
+ display:block;
+ box-sizing:border-box;
+ width:9px;
+/* Assessment metric rows are denser without losing label/delta hierarchy. */
+#assessments .assessment-measure-card{margin:6px 0!important;border-radius:13px!important}
+#assessments .assessment-measure-card > summary{
+ min-height:49px!important;padding:9px 12px 9px 14px!important;
+ gap:8px!important;
+}
+#assessments .assessment-metric-right{gap:1px!important}
+#assessments .assessment-metric-name,
+#assessments .assessment-metric-right strong{font-size:14px!important}
+#assessments .assessment-change{font-size:10px!important}
+#assessments #assessments-assessments details.assessment-measure-card{
+ margin:5px 0!important;padding:0!important;min-height:0!important;
+}
+#assessments #assessments-assessments details.assessment-measure-card > summary{
+ height:44px!important;min-height:44px!important;max-height:44px!important;
+ padding:5px 11px 5px 13px!important;box-sizing:border-box!important;
+ gap:7px!important;line-height:1.15!important;
+}
+#assessments #assessments-assessments .assessment-metric-right{gap:6px!important}
+#assessments #assessments-assessments .assessment-metric-name,
+#assessments #assessments-assessments .assessment-metric-right strong{font-size:13px!important}
+#assessments #assessments-assessments .assessment-change{font-size:10px!important;line-height:1.05!important}
+
+/* Match the standard closed meal-card height in Avaliações. */
+#assessments #assessments-assessments details.assessment-measure-card > summary{
+ height:65px!important;min-height:65px!important;max-height:65px!important;
+}
+#assessments .assessment-trend>svg{max-height:none!important;width:100%!important;height:auto!important}

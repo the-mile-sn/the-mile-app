@@ -221,7 +221,7 @@ async function session(){
  $("logout").hidden=false;
  await show(tab);
 }
-async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","menus","new","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("landing");if(t==="menus")await menusView();}
+async function show(t){tab=t;document.body.classList.toggle("profile-active",t==="profile");for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));document.querySelector(".welcome").hidden=true;if(t==="overview")await overview();if(t==="plans")openPlansSection("prescriptions");if(t==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});if(t==="menus")await menusView();}
 
 async function renderSupplementPlan(target){
  const data=await api("/api/v2/player/supplements"),root=target||$("plan-detail");if(!root.isConnected)return;root.replaceChildren();
@@ -983,11 +983,8 @@ async function overview(){
  injectPostMatchCard();
 }
 function openPlansSection(section){
- $("plans-landing").hidden=section!=="landing";
  $("plans-prescriptions").hidden=section!=="prescriptions";
- $("plans-assessments").hidden=section!=="assessments";
  if(section==="prescriptions")renderPlans();
- if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});
 }
 let plansCategory="todos",planPhase=null;
 function renderPlanContent(key,target){
@@ -1147,9 +1144,9 @@ for(const icon of document.querySelectorAll("#plans-landing .mile-icon")){const 
 for(const icon of document.querySelectorAll("#tabs .mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)icon.replaceWith(mealIcon(name));}
 updateOfficialIcons();
 $("plans-open-prescriptions").onclick=()=>openPlansSection("prescriptions");
-$("plans-open-assessments").onclick=()=>openPlansSection("assessments");
+
 $("plans-back-prescriptions").onclick=()=>openPlansSection("landing");
-$("plans-back-assessments").onclick=()=>openPlansSection("landing");
+
 session().catch(()=>{$("login-panel").hidden=false;});
 
 
