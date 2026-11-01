@@ -3617,3 +3617,34 @@ body.profile-active .player-top{display:none!important}
  background-clip:padding-box!important;
  box-shadow:none!important;
 }
+
+/* iPhone Screen Time reference: compact control, not the oversized 54px switch. */
+#overview #overview-mode{
+ min-height:38px!important;
+ height:38px!important;
+ padding:3px!important;
+ gap:3px!important;
+ border-radius:999px!important;
+}
+#overview #overview-mode button,
+#overview #overview-mode button[aria-pressed="true"]{
+ min-height:32px!important;
+ height:32px!important;
+ padding:4px 8px!important;
+ font-size:13px!important;
+ line-height:1.1!important;
+ border-radius:999px!important;
+}
+/* Match cards with intra content had a legacy 68px min-height.
+   Both match and training event tiles now use the same compact row height. */
+#weekly-view .weekly-event-slot>.weekly-event-card,
+#weekly-view .weekly-event-slot>.weekly-event-card.weekly-match-with-intra,
+#weekly-view .weekly-event-slot>.weekly-match-with-intra{
+ box-sizing:border-box!important;
+ min-height:42px!important;
+ height:42px!important;
+ padding:5px 1px!important;
+ gap:2px!important;
+ border-radius:9px!important;
+ align-self:stretch!important;
+}
