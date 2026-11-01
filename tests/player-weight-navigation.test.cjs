@@ -40,7 +40,7 @@ test("weekly macro chart typography does not affect the collapsed summary",()=>{
 
 test("daily energy comparison has signed fixed-scale rings and preserves original kg data",()=>{
  assert.match(source,/const weeklyPct|const deviationMean=change\(mean\)/);
- assert.match(source,/const previous=weekDays\.find/);
+ assert.match(source,/let previous=weekDays\.find/);
  assert.match(source,/Math\.min\(180,Math\.abs\(delta\)\/30\*180\)/);
  assert.match(source,/direction=delta>=0\?1:-1/);
  assert.match(source,/className="nutrition-comparison"/);
