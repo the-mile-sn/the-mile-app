@@ -232,3 +232,25 @@ test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
  assert.match(admin,/if\(!periIsCurrent\(athleteId\)\)return;\s*const result=await request\(periEndpoint\(athleteId\),\{method:"POST"/);
  assert.match(html,/admin-microcycles\.js\?v=18221/);
 });
+
+
+test("Appearance is in Definições, uses locally persisted two-state control, and preserves dark CSS",()=>{
+ const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
+ const light=require("node:fs").readFileSync("static/admin-light-theme.css","utf8");
+ assert.match(html,/id="tm-settings-appearance"/);
+ assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
+ assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
+ assert.match(html,/\/admin-light-theme\.css\?v=1/);
+ assert.match(html,/\/admin-dashboard\.js\?v=22/);
+ assert.match(dashboard,/tm-admin-theme/);
+ assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
+ assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
+ assert.match(dashboard,/document\.documentElement\.dataset\.adminTheme=theme/);
+ assert.match(dashboard,/button\.setAttribute\("aria-pressed"/);
+ assert.match(css,/:root\{color-scheme:dark/);
+ assert.match(light,/html\[data-admin-theme="light"\]/);
+ assert.doesNotMatch(light,/:root\s*\{/);
+ assert.match(light,/\.tm-dashboard/);
+ assert.match(light,/\.tm-clinical-metric/);
+ assert.match(light,/#tm-admin-legacy/);
+});
