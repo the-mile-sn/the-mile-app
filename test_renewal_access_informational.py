@@ -51,7 +51,7 @@ class RenewalAccessRegression(unittest.TestCase):
         )
         self.assertEqual(upload["status"], 201, upload)
         self.assertEqual(
-            p.request("/api/documents/" + upload["body"]["id"])["body"], PDF
+            p.request("/api/documents/" + upload["body"]["id"])["body"], fixture_module.PDF
         )
         overview = self.admin.request("/api/v2/admin/players-overview")
         row = next(x for x in overview["body"]["players"] if x["id"] == self.athlete)
