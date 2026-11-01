@@ -107,6 +107,7 @@ async function loadModel(){
  resetMenusForAthlete(athleteId);
  resetSupplementForAthlete(athleteId);
  resetPlayerPreviewForAthlete(athleteId);
+ resetPeriForAthlete(athleteId);
  selectedCalendarDay=null;selectedNutritionWeek=null;
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
@@ -1738,12 +1739,27 @@ $("calendar-event-form").addEventListener("submit",async e=>{
  finally{button.disabled=false;}
 });
 
-function periEndpoint(){return "/api/v2/athletes/"+encodeURIComponent($("athlete").value)+"/peri-imports";}
+function periEndpoint(athleteId=$("athlete").value){return "/api/v2/athletes/"+encodeURIComponent(athleteId)+"/peri-imports";}
 function periMessage(value){$("peri-feedback").textContent=value;}
-let periExpandedKind=null;
+let periExpandedKind=null,periAthleteId=null,periLoadRevision=0;
+function periIsCurrent(athleteId){
+ return periAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId;
+}
+function resetPeriForAthlete(athleteId){
+ if(periAthleteId===athleteId)return;
+ periAthleteId=athleteId;
+ ++periLoadRevision;
+ periExpandedKind=null;
+ for(const id of ["peri-current","peri-list","peri-review"])$(id).replaceChildren();
+ periMessage("");
+}
 async function loadPeriImports(){
- if(!model)return;
- const result=await request(periEndpoint());
+ if(!model||$("athlete").value!==model.athlete.id)return;
+ const athleteId=model.athlete.id;
+ resetPeriForAthlete(athleteId);
+ const revision=++periLoadRevision;
+ const result=await request(periEndpoint(athleteId));
+ if(revision!==periLoadRevision||!periIsCurrent(athleteId))return;
  $("peri-current").replaceChildren();
  const list=$("peri-list");list.replaceChildren();
  for(const [kind,title] of [["training","Peri-treino"],["match","Peri-jogo"]]){
@@ -1759,13 +1775,17 @@ async function loadPeriImports(){
   if(chosen){
    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
    edit.onclick=async()=>{
+    if(!periIsCurrent(athleteId))return;
     try{
      const data=chosen.status==="draft"
-      ?await request(periEndpoint()+"/"+encodeURIComponent(chosen.id))
-      :await request(periEndpoint()+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});
+      ?await request(periEndpoint(athleteId)+"/"+encodeURIComponent(chosen.id))
+      :await request(periEndpoint(athleteId)+"/"+encodeURIComponent(chosen.id)+"/copy",{method:"POST",body:JSON.stringify({})});
+     if(!periIsCurrent(athleteId))return;
      if(chosen.status!=="draft")periUnchangedCopies.add(data.draft.id);
-     periExpandedKind=kind;await loadPeriImports();renderPeriDraft(data.draft,true);periMessage("");
-    }catch(e){periMessage("Erro ao editar: "+e.message);}
+     periExpandedKind=kind;await loadPeriImports();
+     if(!periIsCurrent(athleteId))return;
+     renderPeriDraft(data.draft,true,athleteId);periMessage("");
+    }catch(e){if(periIsCurrent(athleteId))periMessage("Erro ao editar: "+e.message);}
    };
    controls.append(edit);
   }
@@ -1793,12 +1813,13 @@ async function loadPeriImports(){
  for(const draft of published){
   const row=document.createElement("div");row.className="event-admin-row";
   const label=document.createElement("span");label.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";
-  const button=document.createElement("button");button.type="button";button.textContent="Ver versão";button.onclick=async()=>{try{const data=await request(periEndpoint()+"/"+encodeURIComponent(draft.id));renderPeriDraft(data.draft);}catch(e){periMessage(e.message);}};
+  const button=document.createElement("button");button.type="button";button.textContent="Ver versão";button.onclick=async()=>{if(!periIsCurrent(athleteId))return;try{const data=await request(periEndpoint(athleteId)+"/"+encodeURIComponent(draft.id));if(periIsCurrent(athleteId))renderPeriDraft(data.draft,false,athleteId);}catch(e){if(periIsCurrent(athleteId))periMessage(e.message);}};
   row.append(label,button);history.append(row);
  }
  list.append(history);
 }
-function renderPeriDraft(draft,editing=false){
+function renderPeriDraft(draft,editing=false,athleteId=periAthleteId){
+ if(!periIsCurrent(athleteId))return;
  const root=$("peri-review");root.replaceChildren();
  const heading=document.createElement("h3");heading.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";root.append(heading);
  
@@ -1845,44 +1866,54 @@ function renderPeriDraft(draft,editing=false){
    /* Validation is confirmed explicitly by the save action, without a redundant checkbox. */
    const save=document.createElement("button");save.type="button";save.textContent="Validar";save.className="peri-option-validate";save.disabled=draft.status!=="draft";
    save.onclick=async()=>{
+    if(!periIsCurrent(athleteId))return;
     save.disabled=true;
     const payload={group_index:gi,option_index:oi,option:{
       totals:Object.fromEntries(Object.entries(fields).map(([k,input])=>[k,input.value.trim()])),
       title:titleInput.value.trim(),lines:intra?timingRows.map(r=>r.input.value).filter(x=>x.trim()):textarea.value.split(/\r?\n/),...(intra?{timings:timingRows.filter(r=>r.input.value.trim()).map(r=>r.select.value)}:{}),reviewed:true
     }};
     try{
-      await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
+      await request(periEndpoint(athleteId)+"/"+encodeURIComponent(draft.id)+"/option",{method:"PUT",body:JSON.stringify(payload)});
+      if(!periIsCurrent(athleteId))return;
       periUnchangedCopies.delete(draft.id);
       periMessage("");
-    }catch(e){periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
+    }catch(e){if(periIsCurrent(athleteId))periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
    };const actions=document.createElement("div");actions.className="peri-editor-footer";actions.append(save);card.append(actions);root.append(card);
   });
  });
  if(editing&&draft.status==="draft"){
   const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar";pub.className="peri-publish-action is-pending";
   pub.onclick=async()=>{
+    if(!periIsCurrent(athleteId))return;
     if(!confirm("Confirmas a publicação? As refeições serão aplicadas aos eventos futuros, respeitando as remoções manuais."))return;
+    if(!periIsCurrent(athleteId))return;
     pub.disabled=true;try{
-      await request(periEndpoint()+"/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:$("athlete").value})});
+      await request(periEndpoint(athleteId)+"/"+encodeURIComponent(draft.id)+"/publish",{method:"POST",body:JSON.stringify({confirmation:"PUBLICAR",athlete_id:athleteId})});
+      if(!periIsCurrent(athleteId))return;
       periMessage("");
       periUnchangedCopies.delete(draft.id);
-      await loadPeriImports();root.replaceChildren();
-    }catch(e){periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
+      await loadPeriImports();if(periIsCurrent(athleteId))root.replaceChildren();
+    }catch(e){if(periIsCurrent(athleteId))periMessage("Publicação bloqueada: "+e.message);}finally{pub.disabled=false;}
   };const targetSection=[...document.querySelectorAll(".peri-plan-section")].find(el=>el.dataset.periKind===draft.kind);const actionBar=targetSection?.querySelector(".peri-plan-actions");if(actionBar){actionBar.append(pub);}else{const fallback=document.createElement("div");fallback.className="peri-publication-bar";fallback.append(pub);root.prepend(fallback);}
  }
 }
 $("peri-import").addEventListener("click",async()=>{
  if(!model)return;
+ const athleteId=model.athlete.id;
+ if(!periIsCurrent(athleteId))return;
  const file=$("peri-pdf").files?.[0];
  if(!file||file.size>3*1024*1024||!file.name.toLowerCase().endsWith(".pdf")){periMessage("Seleciona um PDF até 3 MB.");return;}
  const button=$("peri-import");button.disabled=true;periMessage("A interpretar o PDF...");
  try{
   const bytes=new Uint8Array(await file.arrayBuffer());let binary="";
   for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
-  const result=await request(periEndpoint(),{method:"POST",body:JSON.stringify({kind:$("peri-kind").value,filename:file.name,pdf_base64:btoa(binary)})});
+  if(!periIsCurrent(athleteId))return;
+  const result=await request(periEndpoint(athleteId),{method:"POST",body:JSON.stringify({kind:$("peri-kind").value,filename:file.name,pdf_base64:btoa(binary)})});
+  if(!periIsCurrent(athleteId))return;
   periMessage("Rascunho importado. Confirma os alimentos e os valores nutricionais antes de publicar.");
-  await loadPeriImports();renderPeriDraft(result.draft,true);
- }catch(e){periMessage("Erro ao importar: "+e.message);}finally{button.disabled=false;}
+  await loadPeriImports();
+  if(periIsCurrent(athleteId))renderPeriDraft(result.draft,true,athleteId);
+ }catch(e){if(periIsCurrent(athleteId))periMessage("Erro ao importar: "+e.message);}finally{button.disabled=false;}
 });
 
 let supplementDraft={plan:[],overrides:{}};
