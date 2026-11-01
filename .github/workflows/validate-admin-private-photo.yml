@@ -8,6 +8,8 @@ on:
       - static/admin-microcycles.js
       - static/admin-microcycles.css
       - test_admin_private_photo.py
+      - test_plan_import_v2.py
+      - plan_import_v2.py
       - .github/workflows/validate-admin-private-photo.yml
   workflow_dispatch:
 jobs:
@@ -29,4 +31,4 @@ jobs:
           node --check static/admin-dashboard.js
       - name: Test photo privacy and access regressions
         run: |
-          python -m unittest -v test_admin_private_photo test_renewal_access_informational test_player_account_creation_v2 test_app.PortalTest.test_v2_followup_details_and_birthday_do_not_change_access
+          python -m unittest -v test_admin_private_photo test_renewal_access_informational test_player_account_creation_v2 test_app.PortalTest.test_v2_followup_details_and_birthday_do_not_change_access test_plan_import_v2
