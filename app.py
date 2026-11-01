@@ -1718,8 +1718,8 @@ def application(env, start_response):
                     sql += ' WHERE id=?'
                     fields.append(uid)
                     c.execute(sql, tuple(fields))
-                    # Revoke all active sessions when access or credentials change.
-                    if p['password'] or (access_until != player['access_until']):
+                    # Renewal and access dates are informational; only credential changes revoke sessions.
+                    if p['password']:
                         c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
                     c.commit()
                     return respond(200, {'ok': True})
