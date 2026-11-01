@@ -383,3 +383,8 @@ html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix thead th{ba
 html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix tbody tr:nth-child(odd)>*{background:#fbfcfd}
 html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix tbody tr:nth-child(even)>*{background:#e9f1f9}
 html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix td,html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix th{border-color:#dce2ea}
+
+html[data-admin-theme="light"] #matrix .model-effective-matrix tr:nth-child(even) td{background:#eceef1!important}
+html[data-admin-theme="light"] #matrix .model-effective-matrix tr:nth-child(odd) td{background:#f9fafb!important}
+html[data-admin-theme="light"] #scenario-editor{background:transparent!important;border:0!important}
+html[data-admin-theme="light"] #scenario-editor .scenario-day-matrix tbody th{color:#283341!important}
