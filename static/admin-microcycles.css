@@ -1032,3 +1032,16 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-admin-legacy.tm-account-only > :not(header){display:none!important}
 #tm-admin-legacy.tm-account-only #admin-account-panel:not([hidden]){display:block!important}
 #tm-admin-legacy.tm-account-only > header{display:none!important}
+
+
+/* Shared upper-left return control for secondary Backoffice views. */
+.tm-subpage-nav{display:flex;align-items:center;margin:0 0 12px}
+.tm-subpage-nav[hidden],#tm-players-page .tm-players-heading-minimal[hidden]{display:none!important}
+#tm-players-page .tm-subpage-back{
+ display:inline-flex;align-items:center;gap:5px;min-height:40px;
+ padding:8px 10px 8px 2px;border:0;border-radius:9px;
+ background:transparent;color:#aeb7c4;font-size:13px;font-weight:600;
+}
+#tm-players-page .tm-subpage-back svg{width:19px;height:19px;flex:none}
+#tm-players-page .tm-subpage-back:hover{background:#23262e;color:#f1f3f6}
+#tm-players-page .tm-subpage-back:focus-visible{outline:2px solid #90b8d8;outline-offset:2px}
