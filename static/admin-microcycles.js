@@ -1476,6 +1476,22 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
   const option=draft.extracted.groups[groupIndex].options[optionIndex];
   const existing=details.querySelector(".option-editor");if(existing){existing.remove();return;}
   const form=document.createElement("div");form.className="option-editor";
+  const removeOption=document.createElement("button");removeOption.type="button";
+  removeOption.className="option-delete-complete";removeOption.textContent="Eliminar opção";
+  removeOption.setAttribute("aria-label","Eliminar opção "+option.number);
+  removeOption.onclick=async()=>{
+    if(!window.confirm("Eliminar a Opção "+option.number+" e todas as suas linhas deste rascunho? As restantes opções serão preservadas. Os planos publicados não são alterados."))return;
+    removeOption.disabled=true;feedback.textContent="A eliminar opção…";
+    try{
+      await Promise.all(planPendingSaves);
+      if(selectedPlanId!==draft.id||selectedPlanMode!=="edit"||model?.athlete?.id!==planReviewAthleteId)throw Error("O plano selecionado mudou.");
+      const result=await request(matchBase()+"/plan-imports/"+encodeURIComponent(draft.id),{
+        method:"DELETE",body:JSON.stringify({group_index:groupIndex,option_index:optionIndex})
+      });
+      showImportedDraft(result.draft);await loadPlanDrafts();
+      $("import-feedback").textContent="Opção eliminada do rascunho. Publicações anteriores preservadas.";
+    }catch(error){feedback.textContent="Erro ao eliminar opção: "+error.message;removeOption.disabled=false;}
+  };
   const field=(label,value,parent=form)=>{
     const wrap=document.createElement("label");wrap.textContent=label;
     const input=document.createElement("input");input.value=value||"";wrap.appendChild(input);parent.appendChild(wrap);return input;
@@ -1544,6 +1560,7 @@ function showOptionEditor(draft,groupIndex,optionIndex,details){
     saveChain.finally(()=>{planPendingSaves=planPendingSaves.filter(p=>p!==saveChain);}).catch(()=>{});
   };
   form.addEventListener("change",event=>{if(event.target.matches("input,select,textarea"))persist();});
+  form.appendChild(removeOption);
   details.appendChild(form);
 }
 $("import-submit").addEventListener("click",async()=>{

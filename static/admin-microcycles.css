@@ -1085,3 +1085,7 @@ html[data-admin-theme="light"] #admin-account-panel .tm-admin-my-photo{backgroun
 html[data-admin-theme="light"] #admin-account-panel .tm-admin-my-photo-avatar{background:#e4eaf1;border-color:#c6d4e2;color:#425a70}
 html[data-admin-theme="light"] #admin-account-panel .tm-admin-my-photo-controls #admin-my-photo-feedback{color:#2e7451}
 @media(max-width:580px){#admin-account-panel .tm-admin-my-photo{gap:14px;padding:14px}#admin-account-panel .tm-admin-my-photo-avatar{flex-basis:82px;width:82px;height:82px;font-size:20px}}
+/* Delete an imported option only in edit mode; separate from row removal. */
+#import-review .option-editor .option-delete-complete{grid-column:1/-1;justify-self:end;background:transparent!important;border:1px solid rgba(231,150,150,.32)!important;color:#e1a6a6!important;font-size:12px!important;font-weight:500!important;padding:8px 13px!important;border-radius:999px!important;margin-top:8px!important}
+#import-review .option-editor .option-delete-complete:hover{background:rgba(213,89,89,.1)!important}
+#import-review .option-editor .option-delete-complete:disabled{opacity:.55;cursor:wait}

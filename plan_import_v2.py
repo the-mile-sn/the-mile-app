@@ -295,6 +295,39 @@ def update_option(c, athlete_id, draft_id, group_index, option_index, payload):
     return option
 
 
+
+def delete_option(c, athlete_id, draft_id, group_index, option_index):
+    """Remove one option from a draft only; published snapshots remain immutable."""
+    draft = get_draft(c, athlete_id, draft_id)
+    if draft is None:
+        return None
+    if draft["status"] != "draft":
+        raise ValueError("plan_not_in_review")
+    groups = draft["extracted"]["groups"]
+    if type(group_index) is not int or type(option_index) is not int:
+        raise ValueError("invalid_option")
+    if not 0 <= group_index < len(groups):
+        raise ValueError("invalid_option")
+    options = groups[group_index]["options"]
+    if not 0 <= option_index < len(options):
+        raise ValueError("invalid_option")
+
+    options.pop(option_index)
+    # Renumber only the remaining options in the selected meal group.
+    for number, option in enumerate(options, 1):
+        option["number"] = number
+    # Removing a group's last option also removes its now-empty meal group.
+    draft["extracted"]["groups"] = [group for group in groups if group["options"]]
+    result = c.execute(
+        "UPDATE v2_plan_imports SET extracted_json=? WHERE id=? AND athlete_id=? AND status='draft'",
+        (json.dumps(draft["extracted"], ensure_ascii=False), draft_id, athlete_id),
+    )
+    if result.rowcount != 1:
+        raise ValueError("status_changed")
+    c.commit()
+    return get_draft(c, athlete_id, draft_id)
+
+
 def set_review_status(c, athlete_id, draft_id, action):
     """Approve a fully reviewed plan or reopen it; never publish to players."""
     draft = get_draft(c, athlete_id, draft_id)
