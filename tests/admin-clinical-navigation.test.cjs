@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=89/);
+ assert.match(html,/admin-microcycles\.css\?v=90/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -293,4 +293,11 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
  assert.match(html,/admin-dashboard\.js\?v=24/);
+});
+
+test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
+ const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
+ assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
+ assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
+ assert.match(html,/admin-microcycles\.css\?v=90/);
 });
