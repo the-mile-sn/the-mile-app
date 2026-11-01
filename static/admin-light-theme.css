@@ -315,3 +315,51 @@ html[data-admin-theme="light"] .tm-appearance-choices button[aria-pressed="true"
 }
 html[data-admin-theme="light"] .tm-settings-appearance{background:#fff;border-color:var(--tm-light-border)}
 @media(max-width:520px){.tm-appearance-choices button{flex:1;min-width:125px}}
+
+
+/* Restore the Formulários editor: the original ID-based rule otherwise
+   outranks the first version of the opt-in light styles. */
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring{
+ background:var(--tm-light-surface);color:var(--tm-light-text);
+ border-color:var(--tm-light-border);
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring>.monitoring-choices{
+ background:var(--tm-light-surface-muted);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring>.monitoring-choices button{
+ background:transparent;color:var(--tm-light-muted)
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring>.monitoring-choices button[aria-pressed="true"]{
+ background:#dfe9f3;color:#294763
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .monitoring-weight-chart{
+ background:var(--tm-light-surface);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-weight-chart-head strong,
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-weight-records,
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-postmatch-matrix,
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .monitoring-entry{
+ color:var(--tm-light-text)
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .monitoring-entry,
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-weight-records td,
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-postmatch-matrix td{
+ border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-weight-chart-controls select{
+ background:var(--tm-light-surface);color:var(--tm-light-text);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .tm-weight-chart-plot svg circle[role="button"]{
+ fill:#ffffff
+}
+html[data-admin-theme="light"] #tm-forms-page #profile-monitoring .monitoring-reference{
+ color:var(--tm-light-muted)
+}
+
+/* Assessment points: hollow-looking markers on white, preserving clinical
+   outlines; the unchanged dark theme still uses its original fills. */
+html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-trend-svg circle[role="button"]{
+ fill:#ffffff
+}
+html[data-admin-theme="light"] #tm-players-page .tm-subpage-back{color:#4f657c}
+html[data-admin-theme="light"] #tm-players-page .tm-subpage-back:hover{background:#e6ebf2;color:#1c3854}
