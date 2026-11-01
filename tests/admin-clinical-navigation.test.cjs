@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=21/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=22/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
