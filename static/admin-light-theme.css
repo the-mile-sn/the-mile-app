@@ -1,0 +1,317 @@
+/* The Mile Backoffice: opt-in light appearance.
+   All rules are scoped; the existing dark appearance remains unchanged.
+   Meal colours and clinical risk/category colours retain their meaning. */
+html[data-admin-theme="light"]{
+  color-scheme:light;
+  --tm-light-bg:#f5f6f8;
+  --tm-light-surface:#ffffff;
+  --tm-light-surface-muted:#f0f2f6;
+  --tm-light-surface-hover:#e7ebf1;
+  --tm-light-text:#1c2633;
+  --tm-light-muted:#596675;
+  --tm-light-border:#d9dfe7;
+  --tm-light-focus:#4a789d;
+  background:var(--tm-light-bg);
+  color:var(--tm-light-text);
+}
+html[data-admin-theme="light"] body{background:var(--tm-light-bg);color:var(--tm-light-text)}
+html[data-admin-theme="light"] p,
+html[data-admin-theme="light"] label,
+html[data-admin-theme="light"] .hint,
+html[data-admin-theme="light"] .tag{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] :where(input,select,textarea,button){
+  background:var(--tm-light-surface);
+  color:var(--tm-light-text);
+  border-color:var(--tm-light-border);
+}
+html[data-admin-theme="light"] :where(input,select,textarea)::placeholder{color:#7d8999}
+html[data-admin-theme="light"] :where(input,select,textarea,button):focus-visible{
+  outline:2px solid var(--tm-light-focus);
+  outline-offset:2px;
+}
+html[data-admin-theme="light"] button:hover:not(:disabled){border-color:#9eacbc}
+html[data-admin-theme="light"] :where(.calendar-panel,.day-preview,.menu-day-card,.menu-meal-card,.menu-library-card,.menu-planning-card,.peri-editor-option,.calendar-event-form,.calendar-unified-event,.option-editor,.player-sim-menu,.player-meal-average,.player-plan-meal,.scenario-field,.tm-clinical-page #profile-monitoring){
+  background:var(--tm-light-surface);
+  border-color:var(--tm-light-border);
+  color:var(--tm-light-text);
+}
+html[data-admin-theme="light"] :where(.gridbox,.day-meal,.import-option,.meal-line-editor,.meal-nutrient-row,.calendar-day,.calendar-match-item,.meal-meal-row,.option-editor fieldset,.meal-note-description textarea,.player-menu-day,.player-sim-meal,.supp-associated-row,.event-admin-row,.peri-plan-section,.peri-history){
+  border-color:var(--tm-light-border);
+}
+html[data-admin-theme="light"] :where(th,.calendar-day span,.day-meal span,#import-review pre,.import-structured-line,.player-sim-menu small,.player-meal-average small,.calendar-unified-heading span,.peri-state){
+  color:var(--tm-light-muted);
+}
+html[data-admin-theme="light"] :where(th,.tm-assessment-table th){border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] :where(td,.import-structured-line,.plan-simple-row,.monitoring-entry){border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] td select,
+html[data-admin-theme="light"] .option-editor select,
+html[data-admin-theme="light"] .option-editor textarea,
+html[data-admin-theme="light"] .peri-editor-option textarea,
+html[data-admin-theme="light"] .meal-note-description textarea,
+html[data-admin-theme="light"] #matrix .microcycle-color-select option{
+ background:var(--tm-light-surface);color:var(--tm-light-text);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #admin-login-panel[style]{
+  background:var(--tm-light-surface)!important;color:var(--tm-light-text)!important;
+  border-color:var(--tm-light-border)!important;
+}
+html[data-admin-theme="light"] .status,
+html[data-admin-theme="light"] .calendar-top p{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] .status.warn{color:#946214}
+html[data-admin-theme="light"] .status.success{color:#276c46}
+html[data-admin-theme="light"] .calendar-day.calendar-match{
+  background:#e7f4ea;border-color:#70bd91
+}
+html[data-admin-theme="light"] .calendar-day.calendar-review{
+  background:#fff5df;border-color:#d9a94d
+}
+html[data-admin-theme="light"] .calendar-day.calendar-review span{color:#805d24}
+html[data-admin-theme="light"] .calendar-day.calendar-selected{box-shadow:inset 0 0 0 1px #79869a}
+html[data-admin-theme="light"] .day-color-dot{background:#cbd2de}
+html[data-admin-theme="light"] .menu-color-label:not([class*="meal-"]){background:#e6eaf0!important;color:#465263}
+html[data-admin-theme="light"] .menu-suggestions,
+html[data-admin-theme="light"] .tm-planning-results,
+html[data-admin-theme="light"] .tm-clinical-results{
+  background:var(--tm-light-surface);border-color:var(--tm-light-border);
+  box-shadow:0 12px 28px rgba(30,46,67,.1);
+}
+html[data-admin-theme="light"] .menu-suggestion,
+html[data-admin-theme="light"] .tm-planning-result,
+html[data-admin-theme="light"] .tm-clinical-option{color:var(--tm-light-text)}
+html[data-admin-theme="light"] .menu-suggestion:hover,
+html[data-admin-theme="light"] .tm-clinical-option:hover,
+html[data-admin-theme="light"] .tm-clinical-option[aria-selected="true"],
+html[data-admin-theme="light"] .tm-planning-result:hover,
+html[data-admin-theme="light"] .tm-planning-result[aria-selected="true"]{background:var(--tm-light-surface-hover)}
+html[data-admin-theme="light"] .profile-info-card[style]{
+  background:var(--tm-light-surface)!important;border-color:var(--tm-light-border)!important
+}
+html[data-admin-theme="light"] .profile-info-card small[style]{color:var(--tm-light-muted)!important}
+html[data-admin-theme="light"] .plan-active-row{
+  background:#e8f1ec!important;border-color:#a5c2ad!important;box-shadow:none!important
+}
+html[data-admin-theme="light"] .plan-selectable:hover{background:var(--tm-light-surface-muted)}
+html[data-admin-theme="light"] .plan-meal-mapping label{background:var(--tm-light-surface-muted);border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] .player-day-pill.active,
+html[data-admin-theme="light"] .player-view-nav button[aria-pressed=true],
+html[data-admin-theme="light"] .player-plan-button.active{
+  background:#dfe9f2;color:#1e3b56;border-color:#aac3d8
+}
+html[data-admin-theme="light"] .player-menu-day{background:var(--tm-light-surface)}
+html[data-admin-theme="light"] .peri-plan-section,
+html[data-admin-theme="light"] .peri-history,
+html[data-admin-theme="light"] .option-editor,
+html[data-admin-theme="light"] .assessment-review-group,
+html[data-admin-theme="light"] .calendar-unified-event{background:var(--tm-light-surface-muted)}
+html[data-admin-theme="light"] #peri-panel .peri-state{color:#79581f}
+html[data-admin-theme="light"] .plan-simple-info small.is-published,
+html[data-admin-theme="light"] .peri-plan-section .peri-state.is-published{color:#28744a!important}
+html[data-admin-theme="light"] .nutrient-kcal{color:#22734d}
+html[data-admin-theme="light"] .nutrient-protein{color:#27639e}
+html[data-admin-theme="light"] .nutrient-carbs{color:#a45e2b}
+html[data-admin-theme="light"] .nutrient-fat{color:#887029}
+html[data-admin-theme="light"] #supplements-panel .supp-associated-row,
+html[data-admin-theme="light"] .supp-match-exclusion{background:var(--tm-light-surface);border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] #assessments-admin-panel label,
+html[data-admin-theme="light"] #profile-monitoring .monitoring-entry,
+html[data-admin-theme="light"] #profile-monitoring .monitoring-entry-form label{color:var(--tm-light-text)}
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-top input,
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-grid input{
+  background:var(--tm-light-surface);color:var(--tm-light-text);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #assessments-admin-panel #assessment-publish{
+  background:#253c50;color:#fff
+}
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-history-row{
+  background:var(--tm-light-surface-muted);color:var(--tm-light-text)
+}
+html[data-admin-theme="light"] #profile-monitoring .monitoring-choices button[aria-pressed="true"]{
+  background:#dce7f1;color:#1e3b56;border-color:#a9bed0
+}
+html[data-admin-theme="light"] #profile-monitoring .monitoring-reference{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] #scenario-editor .scenario-field{background:var(--tm-light-surface-muted);border-color:var(--tm-light-border)}
+
+/* Sidebar and shared navigation */
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar{
+  background:#fff;border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-nav-link{color:#465363}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-nav-link:hover:not(:disabled){background:#eff2f6}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-nav-link.is-active{background:#e6edf4;color:#172c40}
+html[data-admin-theme="light"] .tm-admin-nav-icon{color:#596879}
+html[data-admin-theme="light"] .tm-admin-sidebar-footer{border-color:var(--tm-light-border);color:var(--tm-light-muted)}
+html[data-admin-theme="light"] .tm-admin-brand-copy small{color:var(--tm-light-muted)}
+
+/* Dashboard: retain dot and match colours; recolour only neutral surfaces. */
+html[data-admin-theme="light"] .tm-dashboard{
+  --tm-bg:#f7f8fa;--tm-border:#d9dfe7;--tm-muted:#5c6878;--tm-fg:#1c2633
+}
+html[data-admin-theme="light"] .tm-db-panel,
+html[data-admin-theme="light"] .tm-players-panel{
+  background:var(--tm-light-surface);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] .tm-db-event-group,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-today-main,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-today-recent{background:#f0f2f6}
+html[data-admin-theme="light"] .tm-db-event-group h3,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-today-columns h3{color:#263343}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-event{color:var(--tm-light-text)}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-event:hover{background:#e3e7ee}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-controls button{
+  background:var(--tm-light-surface-muted);border-color:var(--tm-light-border);color:var(--tm-light-text)
+}
+html[data-admin-theme="light"] .tm-db-controls strong{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] .tm-db-grid-scroll{border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] .tm-db-table th{background:#edf0f4}
+html[data-admin-theme="light"] .tm-db-table td{background:#fff}
+html[data-admin-theme="light"] .tm-db-table th.tm-db-name-cell,
+html[data-admin-theme="light"] .tm-db-table td.tm-db-name-cell,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table .tm-db-name-cell{background:#edf0f4}
+html[data-admin-theme="light"] .tm-db-table th.tm-db-today{background:#e0ecf6!important}
+html[data-admin-theme="light"] .tm-db-table td.tm-db-today,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td.tm-db-today{background:#e5f0f9!important}
+html[data-admin-theme="light"] .tm-db-name-heading,
+html[data-admin-theme="light"] .tm-db-date{color:#2f3e4f}
+html[data-admin-theme="light"] .tm-db-day,
+html[data-admin-theme="light"] .tm-db-icon-row{color:#687587}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-search{
+  background:#fff;border-color:var(--tm-light-border);color:var(--tm-light-text)
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-player-name{color:#203042}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td .tm-db-player-name{
+  background:#eef1f5!important;color:#243143
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td .tm-db-player-name:hover{background:#e0e7ef!important}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td .tm-db-player-name.tm-db-player-selected{
+  background:#dceaf7!important;border-color:#7ba8cb!important
+}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell{
+  background:#f0f2f6;color:#243143
+}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell:hover{background:#e4eaf1}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-today .tm-db-cell{background:#dae9f5}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td.tm-db-today .tm-db-cell{background:#dae9f5}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-match,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-today button.tm-db-cell.tm-db-match{
+  background:#e5f3e9!important;color:#245437!important;border-color:#75bb90!important
+}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-match:hover{background:#d9ecdf!important}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-none-dot{background:#a5aebc}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-avatar,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-form-icon{
+  background:#e0e6ee;color:#4e6176
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-form-sub,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-form-time{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-birthday{
+  background:#fff0ce!important
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-birthday span{color:#78571a}
+
+/* Players, Planning, assessments and forms */
+html[data-admin-theme="light"] .tm-players-page,
+html[data-admin-theme="light"] .tm-clinical-page{color:var(--tm-light-text)}
+html[data-admin-theme="light"] .tm-players-heading p,
+html[data-admin-theme="light"] .tm-players-select-label,
+html[data-admin-theme="light"] .tm-players-count{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] #tm-players-page .tm-players-control,
+html[data-admin-theme="light"] .tm-players-search-label input,
+html[data-admin-theme="light"] .tm-players-select-label select{
+  background:var(--tm-light-surface);border-color:var(--tm-light-border);color:var(--tm-light-text)
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table th{
+  background:#eef1f5;color:#526173
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table th,
+html[data-admin-theme="light"] #tm-players-page .tm-players-table td{border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr:hover{background:#f2f5f9}
+html[data-admin-theme="light"] #tm-players-page button.tm-p-player{color:var(--tm-light-text)}
+html[data-admin-theme="light"] #tm-players-page .tm-p-player:hover{background:var(--tm-light-surface-muted)}
+html[data-admin-theme="light"] #tm-players-page .tm-p-avatar{background:#e5eaf1;color:#4e6074}
+html[data-admin-theme="light"] .tm-p-status{background:#e8ecf1;color:#425365}
+html[data-admin-theme="light"] .tm-p-active{background:#e0f2e8;color:#246c46}
+html[data-admin-theme="light"] .tm-p-inactive,
+html[data-admin-theme="light"] .tm-p-expired{background:#ffebe8;color:#a0463d}
+html[data-admin-theme="light"] #tm-players-page button.tm-p-go{background:#eef1f5;border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-player-toolbar,
+html[data-admin-theme="light"] #tm-admin-legacy #backoffice-nav,
+html[data-admin-theme="light"] .tm-clinical-picker{
+  background:var(--tm-light-surface);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #tm-admin-legacy #tm-planning-avatar,
+html[data-admin-theme="light"] .tm-clinical-avatar{
+  background:#e6ebf3;color:#466078
+}
+html[data-admin-theme="light"] #tm-admin-legacy #tm-planning-search,
+html[data-admin-theme="light"] .tm-clinical-search-wrap input{
+  background:var(--tm-light-surface);color:var(--tm-light-text);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] #tm-admin-legacy #backoffice-nav button{color:#576477}
+html[data-admin-theme="light"] #tm-admin-legacy #backoffice-nav button[aria-pressed="true"]{
+  background:#e4edf6;color:#213c57
+}
+html[data-admin-theme="light"] #tm-admin-legacy #backoffice-nav button:hover:not([aria-pressed="true"]){
+  background:#f1f4f7;color:#243649
+}
+html[data-admin-theme="light"] .tm-clinical-selector,
+html[data-admin-theme="light"] .tm-clinical-metric small,
+html[data-admin-theme="light"] .tm-clinical-metric em{color:var(--tm-light-muted)}
+html[data-admin-theme="light"] .tm-clinical-metric,
+html[data-admin-theme="light"] .tm-assessment-detail,
+html[data-admin-theme="light"] .tm-assessment-visual,
+html[data-admin-theme="light"] .tm-assessment-registry-panel,
+html[data-admin-theme="light"] .tm-form-answer-field{
+  background:var(--tm-light-surface);border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] .tm-clinical-metric strong,
+html[data-admin-theme="light"] .tm-assessment-detail summary,
+html[data-admin-theme="light"] .tm-form-answer-field strong{color:var(--tm-light-text)}
+html[data-admin-theme="light"] .tm-clinical-metric-primary{background:#e6eef7;border-color:#a8bfd5}
+html[data-admin-theme="light"] .tm-clinical-trend-favourable{background:#e9f5ed}
+html[data-admin-theme="light"] .tm-clinical-trend-steady{background:#fff7e7}
+html[data-admin-theme="light"] .tm-clinical-trend-unfavourable{background:#fff0e9}
+html[data-admin-theme="light"] .tm-clinical-trend-favourable em{color:#28724e}
+html[data-admin-theme="light"] .tm-clinical-trend-steady em{color:#866624}
+html[data-admin-theme="light"] .tm-clinical-trend-unfavourable em{color:#9e542e}
+html[data-admin-theme="light"] .tm-assessment-visual-head select,
+html[data-admin-theme="light"] .tm-assessment-detail-body select,
+html[data-admin-theme="light"] .tm-assessment-filter input,
+html[data-admin-theme="light"] .tm-assessment-filter select,
+html[data-admin-theme="light"] .tm-clinical-selector select{
+  background:var(--tm-light-surface);border-color:var(--tm-light-border);color:var(--tm-light-text)
+}
+html[data-admin-theme="light"] :where(.tm-assessment-table,.tm-weight-records,.tm-postmatch-matrix){color:var(--tm-light-text)}
+html[data-admin-theme="light"] :where(.tm-assessment-table th,.tm-weight-records th,.tm-postmatch-matrix th){
+  background:#eef1f5;color:#526173
+}
+html[data-admin-theme="light"] :where(.tm-assessment-table td,.tm-weight-records td,.tm-postmatch-matrix td){border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] .tm-form-answer-field{background:#f1f3f7}
+html[data-admin-theme="light"] .tm-form-answer-summary span,
+html[data-admin-theme="light"] .tm-answer-badge{background:#e9edf3;color:#3a4b5e}
+html[data-admin-theme="light"] .tm-answer-positive{background:#dff2e5;color:#246e45}
+html[data-admin-theme="light"] .tm-answer-caution{background:#fff0c9;color:#7b6020}
+html[data-admin-theme="light"] .tm-answer-negative{background:#fde6e3;color:#a5433b}
+html[data-admin-theme="light"] .tm-answer-neutral{background:#e1edf9;color:#305b84}
+html[data-admin-theme="light"] .tm-answer-missing{background:#edf0f3;color:#687486}
+html[data-admin-theme="light"] .tm-assessment-bar-track{background:#e8edf2}
+html[data-admin-theme="light"] .tm-assessment-history-bar-row .tm-assessment-bar-track{background:#e8edf2}
+html[data-admin-theme="light"] .tm-assessment-hover{background:#263d54;color:#fff}
+
+/* Settings: small, accessible two-choice segmented selector. */
+.tm-settings-appearance p{margin:6px 0 16px;max-width:570px}
+.tm-appearance-choices{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tm-appearance-choices button{
+  min-width:140px;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:11px 16px;border:1px solid #41434b;border-radius:11px;background:#26272d;
+  color:#ebedf0;font-size:13px;font-weight:600
+}
+.tm-appearance-choices button[aria-pressed="true"]{background:#424950;border-color:#8ea6bd;color:#fff}
+.tm-appearance-choices svg{width:17px;height:17px;flex:none}
+html[data-admin-theme="light"] .tm-appearance-choices button{
+  background:#fff;color:#475567;border-color:var(--tm-light-border)
+}
+html[data-admin-theme="light"] .tm-appearance-choices button[aria-pressed="true"]{
+  background:#e2edf7;color:#23405b;border-color:#94b6d1
+}
+html[data-admin-theme="light"] .tm-settings-appearance{background:#fff;border-color:var(--tm-light-border)}
+@media(max-width:520px){.tm-appearance-choices button{flex:1;min-width:125px}}
