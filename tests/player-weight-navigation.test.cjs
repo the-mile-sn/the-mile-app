@@ -37,3 +37,15 @@ test("weekly macro chart typography does not affect the collapsed summary",()=>{
  assert.match(css,/font-size:16px!important;\s*font-weight:650!important/);
  assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/);
 });
+
+test("daily energy comparison has signed fixed-scale rings and preserves original kg data",()=>{
+ assert.match(source,/const weeklyPct|const deviationMean=change\(mean\)/);
+ assert.match(source,/const previous=weekDays\.find/);
+ assert.match(source,/Math\.min\(180,Math\.abs\(delta\)\/30\*180\)/);
+ assert.match(source,/direction=delta>=0\?1:-1/);
+ assert.match(source,/className="nutrition-comparison"/);
+ assert.match(source,/fmt\(total\[key\]\/weight,1\)\+" g\/kg"/);
+ assert.match(source,/renderMacroMode\("g"\)/);
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/\.nutrition-weekly-charts:not\(\[hidden\]\)\) \.nutrition-comparison\{display:none!important\}/);
+});
