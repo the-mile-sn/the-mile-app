@@ -457,81 +457,24 @@ def send_player_push(c, user_id, title, message, notification_id):
 
 
 def create_due_renewal_notifications(c, today=None):
-    """Create idempotent in-app renewal reminders based on Lisbon calendar days."""
-    today = today or datetime.now(ZoneInfo('Europe/Lisbon')).date()
-    now = int(time.time())
-    players = c.execute("SELECT id,renewal_date FROM users WHERE role='player' AND active=1 AND renewal_date IS NOT NULL AND renewal_date<>''").fetchall()
-    created = 0
-    for player in players:
-        try:
-            renewal = datetime.strptime(player['renewal_date'], '%Y-%m-%d').date()
-        except (TypeError, ValueError):
-            continue
-        remaining = (renewal - today).days
-        if remaining == 7:
-            stage = 'before'
-            title = 'Renovação do acompanhamento'
-            message = 'O teu acompanhamento The Mile aproxima-se da data de renovação.'
-        elif remaining == -1:
-            stage = 'after'
-            title = 'Renovação pendente'
-            message = 'O teu acompanhamento The Mile aguarda renovação. Contacta a nossa equipa para regularizares a situação.'
-        else:
-            continue
-        identity = 'renewal:' + player['id'] + ':' + player['renewal_date'] + ':' + stage
-        nid = hashlib.sha256(identity.encode('utf-8')).hexdigest()[:32]
-        exists = c.execute("SELECT id FROM notifications WHERE id=?", (nid,)).fetchone()
-        if exists:
-            continue
-        c.execute(
-            "INSERT INTO notifications(id,user_id,title,message,category,document_id,folder,created,read_at,document_opened_at,created_by) VALUES(?,?,?,?,?,NULL,NULL,?,NULL,NULL,NULL) ON CONFLICT(id) DO NOTHING",
-            (nid, player['id'], title, message, 'renewal', now))
-        c.commit()
-        send_player_push(c, player['id'], title, message, nid)
-        created += 1
-    c.commit()
-    return created
+    """Compatibility no-op. Renewal dates are informational only."""
+    return 0
 
 
 def start_renewal_notification_scheduler():
-    """Best-effort daily check in the paid web process, independent of logins."""
-    import threading
-
-    def loop():
-        last_checked = None
-        while True:
-            day = datetime.now(ZoneInfo('Europe/Lisbon')).date()
-            if day != last_checked:
-                try:
-                    with connect() as c:
-                        create_due_renewal_notifications(c, day)
-                    last_checked = day
-                except Exception:
-                    logging.exception('Renewal notification check failed')
-            time.sleep(3600)
-
-    threading.Thread(target=loop, name='mile-renewal-check', daemon=True).start()
+    """Renewal reminders are intentionally disabled until explicitly activated."""
+    return None
 
 
 def access_valid(row):
-    if row['role'] != 'player':
-        return True
-    reference = row['access_until'] or row['renewal_date']
-    if not reference:
-        return True
-    try:
-        deadline = datetime.strptime(reference, '%Y-%m-%d').date()
-        if not row['access_until']:
-            deadline += timedelta(days=7)
-    except (TypeError, ValueError):
-        return False
-    return datetime.now(ZoneInfo('Europe/Lisbon')).date() <= deadline
+    """Keep dates out of access decisions; sessions enforce users.active."""
+    return True
 
 
 def player_dict(row, include_private=True):
     data = {
         'id': row['id'], 'name': row['name'], 'username': row['username'], 'role': row['role'],
-        'active': bool(row['active']), 'access_expired': not access_valid(row), 'menus_enabled': bool(row['menus_enabled']),
+        'active': bool(row['active']), 'access_expired': False, 'menus_enabled': bool(row['menus_enabled']),
         'anthropometry_enabled': bool(row['anthropometry_enabled']),
         'has_photo': bool(row['photo_mime']),
     }
@@ -1267,7 +1210,7 @@ def application(env, start_response):
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
-                link = c.execute("""SELECT a.id,a.name,a.weight_kg FROM v2_player_links l
+                link = c.execute("""SELECT a.id,a.name,a.weight_kg,a.followup_plan,a.followup_renewal_date FROM v2_player_links l
                                     JOIN v2_athletes a ON a.id=l.athlete_id
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
@@ -1738,29 +1681,8 @@ def application(env, start_response):
 
             if path.startswith('/api/players/') and path.endswith('/access-extension') and method == 'POST':
                 admin(user)
-                parts = path.split('/')
-                if len(parts) != 5:
-                    raise Problem(404, 'not_found')
-                target = c.execute("SELECT id,renewal_date,access_until FROM users WHERE id=? AND role='player'", (parts[3],)).fetchone()
-                if not target:
-                    raise Problem(404, 'not_found')
-                body = read_json(env)
-                try:
-                    extra = int(body.get('days', 0))
-                except (ValueError, TypeError):
-                    raise Problem(400, 'invalid_request')
-                if extra not in (3, 7, 15, 30):
-                    raise Problem(400, 'invalid_request')
-                today = datetime.now(ZoneInfo('Europe/Lisbon')).date()
-                base_text = target['access_until'] or target['renewal_date']
-                try:
-                    base = datetime.strptime(base_text, '%Y-%m-%d').date() + timedelta(days=7 if not target['access_until'] else 0)
-                except (TypeError, ValueError):
-                    raise Problem(400, 'invalid_request')
-                until = max(today, base) + timedelta(days=extra)
-                c.execute('UPDATE users SET access_until=? WHERE id=?', (until.isoformat(), target['id']))
-                c.commit()
-                return respond(200, {'ok': True, 'access_until': until.isoformat()})
+                # Historical access and renewal deadlines cannot be extended or enforced.
+                raise Problem(409, 'access_expiry_disabled')
 
             if path.startswith('/api/players/') and method in ('PUT', 'DELETE'):
                 admin(user)
@@ -1774,7 +1696,7 @@ def application(env, start_response):
                 if method == 'PUT':
                     body = read_json(env)
                     p = clean_player_payload(body)
-                    access_until = body.get('access_until')
+                    access_until = body.get('access_until', player['access_until'])
                     if access_until in (None, ''):
                         access_until = None
                     else:
@@ -1933,8 +1855,7 @@ def application(env, start_response):
                     return respond(200, {'ok':True})
 
             if path == '/api/documents':
-                if user and user['role']=='player' and not access_valid(user):
-                    raise Problem(403, 'access_expired')
+                # Only explicit account activation and document permissions control access.
                 qs = parse_qs(env.get('QUERY_STRING', ''))
                 uid = qs.get('player', [user['id']])[0]
                 authorize_owner(user, uid)
@@ -1971,8 +1892,7 @@ def application(env, start_response):
                     return respond(201, {'id': did})
 
             if path.startswith('/api/documents/'):
-                if user and user['role']=='player' and not access_valid(user):
-                    raise Problem(403, 'access_expired')
+                # No date-driven restrictions on individual documents.
                 did = path.split('/')[-1]
                 d = c.execute('SELECT * FROM documents WHERE id=?', (did,)).fetchone()
                 if not d:
