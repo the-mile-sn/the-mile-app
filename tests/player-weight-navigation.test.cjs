@@ -13,7 +13,7 @@ test("weight request cannot block meal rendering",()=>{
  assert.doesNotMatch(source,/await renderWeightCard\(root,d\)/);
 });
 test("weekly reference weights and menu data are shared across daily and weekly views",()=>{
- assert.match(source,/const \[r,weekMenus,weekWeights\]=await Promise\.all/);
+ assert.match(source,/\[r,weekMenus,weekWeights\]=await Promise\.all/);
  assert.match(source,/weekWeights\.weights_by_date\?\.\[d\]/);
  assert.match(source,/x\.menu_date===d&&x\.meal===meal/);
 });
