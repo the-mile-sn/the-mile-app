@@ -83,8 +83,8 @@ test("all player calendars use horizontal swipe navigation without arrow control
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
  assert.match(source,/function enableWeekSwipe\(element,onShift\)/);
  assert.match(source,/Math\.abs\(dx\)<55\|\|Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
- assert.match(source,/enableWeekSwipe\(root,offset=>\{day\.setDate/);
- assert.match(source,/enableWeekSwipe\(strip,offset=>\{day\.setDate/);
+ assert.match(source,/enableWeekSwipe\(root,offset=>\{day=swipeWeekBoundary/);
+ assert.match(source,/enableWeekSwipe\(strip,offset=>\{day=swipeWeekBoundary/);
  assert.match(source,/enableWeekSwipe\(\$\("menu-week-strip"\),offset=>/);
  assert.doesNotMatch(source,/className="week-arrow"/);
  assert.doesNotMatch(source,/className="weekly-date-nav"/);
