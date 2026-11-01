@@ -1,7 +1,9 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
 const js=fs.readFileSync("static/jogador-v2.js","utf8"),html=fs.readFileSync("static/jogador-v2.html","utf8");
 test("initial independent profile and plan reads run together",()=>{
- assert.match(js,/const \[r,p\]=await Promise\.all\(\[api\("\/api\/v2\/player\/me"\),api\("\/api\/v2\/player\/plans"\)\]\)/);
+ assert.match(js,/const profilePromise=api\("\/api\/v2\/player\/me"\)/);
+ assert.match(js,/const plansPromise=api\("\/api\/v2\/player\/plans"\)/);
+ assert.match(js,/const \[r,p\]=await Promise\.all\(\[profilePromise,plansPromise\]\)/);
 });
 test("same-week navigation uses short-lived session-local snapshot",()=>{
  assert.match(js,/const OVERVIEW_CACHE_MS=60000/);

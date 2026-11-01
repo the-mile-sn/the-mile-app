@@ -3,6 +3,7 @@ const js=fs.readFileSync('static/jogador-v2.js','utf8'),html=fs.readFileSync('st
 test('initial session prefetches independent week data',()=>{
  assert.match(js,/if\(sessionData\.user\?\.role==="player"\)/);
  assert.match(js,/cachedOverviewRead\(path\)\.catch\(\(\)=>\{\}\)/);
+ assert.doesNotMatch(js,/"\/api\/v2\/player\/weight\?date="\+iso\(day\)\s*\]\)cachedOverviewRead/);
  assert.match(js,/const \[r,p\]=await Promise\.all/);
 });
 test('calendar stays navigable when fetching an uncached week',()=>{

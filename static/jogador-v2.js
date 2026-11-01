@@ -39,7 +39,7 @@ async function api(path,opts={}){
  // Never pass a response from a previous account to a new player's interface.
  if(epoch!==playerSessionEpoch){const err=new Error("stale_session");err.stale=true;throw err;}
  if(!r.ok){
-  if((r.status===401||r.status===403)&&path!=="/api/login"&&path!=="/api/logout")revokePlayerView();
+  if(r.status===401&&path!=="/api/login"&&path!=="/api/logout")revokePlayerView();
   const err=new Error(data.error||data.code||"Pedido indisponível");err.status=r.status;throw err;
  }
  return data;
@@ -218,22 +218,39 @@ function displayPlayerRenewal(value){
 async function session(){
  const epoch=playerSessionEpoch;
  const sessionData=await api("/api/me");
- profileUsername=sessionData.user?.username||"";
+ if(epoch!==playerSessionEpoch)return;
+ // /api/me intentionally returns 200 with user:null for an anonymous visitor.
+ // Do not treat an ordinary first opening as an expired session.
+ if(!sessionData.user){
+  $("status").textContent="";
+  $("login-panel").hidden=false;
+  $("player-panel").hidden=true;
+  $("logout").hidden=true;
+  return;
+ }
+ if(sessionData.user.role!=="player"){
+  $("login-panel").hidden=false;
+  $("status").textContent="Este acesso não pertence à área do jogador.";
+  return;
+ }
+ profileUsername=sessionData.user.username||"";
  playerCsrf=sessionData.csrf||"";
- // Begin calendar, menu and reference-weight reads while profile/plans load.
- // A session-local cache deduplicates these when overview() starts.
+ // The server has four request threads. Give the two required identity/plan
+ // reads a head start before background navigation prefetch can occupy them.
+ const profilePromise=api("/api/v2/player/me");
+ const plansPromise=api("/api/v2/player/plans");
  if(sessionData.user?.role==="player"){
   const weekStart=monday(day),weekEnd=new Date(weekStart);
   weekEnd.setDate(weekStart.getDate()+6);
   const weekFrom=iso(weekStart),weekTo=iso(weekEnd);
+  // Weight is noncritical and overview() loads it when required.
   for(const path of [
    "/api/v2/player/calendar?start="+weekFrom+"&end="+weekTo,
    "/api/v2/player/menus?start="+weekFrom+"&end="+weekTo,
-   "/api/v2/player/reference-weights?start="+weekFrom+"&end="+weekTo,
-   "/api/v2/player/weight?date="+iso(day)
+   "/api/v2/player/reference-weights?start="+weekFrom+"&end="+weekTo
   ])cachedOverviewRead(path).catch(()=>{});
  }
- const [r,p]=await Promise.all([api("/api/v2/player/me"),api("/api/v2/player/plans")]);
+ const [r,p]=await Promise.all([profilePromise,plansPromise]);
  me=r.player;
  if(epoch!==playerSessionEpoch)return;
  const plan=String(me.followup_plan||"").trim();
@@ -250,6 +267,7 @@ async function session(){
  $("login-panel").hidden=true;
  $("player-panel").hidden=false;
  $("logout").hidden=false;
+ $("status").textContent=""; // Never keep a stale pre-login session warning on screen.
  await show(tab);
 }
 async function show(t){
@@ -1308,8 +1326,8 @@ async function menusView(){
   lastMenuPresentationWeek=startKey;
  }
 }
-function error(e){if(e.stale||e.status===401||e.status===403)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
+function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);for(const [id,n] of [["menu-prev",-7],["menu-next",7]])$(id).onclick=()=>{menuWeek.setDate(menuWeek.getDate()+n);menusView().catch(error);};for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("player-avatar").onclick=()=>show("profile").catch(error);$("profile-logout").onclick=()=>$("logout").click();
 function resetProfilePassword(){
  $("profile-password-form").reset();
  $("profile-password-feedback").textContent="";
