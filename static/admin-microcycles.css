@@ -1089,3 +1089,24 @@ html[data-admin-theme="light"] #admin-account-panel .tm-admin-my-photo-controls 
 #import-review .option-editor .option-delete-complete{grid-column:1/-1;justify-self:end;background:transparent!important;border:1px solid rgba(231,150,150,.32)!important;color:#e1a6a6!important;font-size:12px!important;font-weight:500!important;padding:8px 13px!important;border-radius:999px!important;margin-top:8px!important}
 #import-review .option-editor .option-delete-complete:hover{background:rgba(213,89,89,.1)!important}
 #import-review .option-editor .option-delete-complete:disabled{opacity:.55;cursor:wait}
+
+/* Compact option line ordering actions for desktop and touch screens. */
+#import-review .option-editor .meal-line-editor>.meal-line-order-controls{
+ grid-column:1/-1;display:flex;align-items:center;gap:5px;justify-self:start;
+ margin:0 42px 4px 0;min-width:0;flex-wrap:wrap;
+}
+#import-review .option-editor .meal-line-order-controls button{
+ min-width:30px!important;min-height:30px!important;padding:5px 9px!important;
+ background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.1)!important;
+ border-radius:8px!important;color:#c9c9d0!important;font-size:13px!important;
+ line-height:1.2!important;box-shadow:none!important;
+}
+#import-review .option-editor .meal-line-order-controls button:disabled{opacity:.3!important;cursor:default!important}
+#import-review .option-editor .meal-line-order-controls .meal-line-move{font-size:16px!important}
+html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-controls button{
+ background:#f0f1f4!important;border-color:#d8dce3!important;color:#444b56!important;
+}
+@media(max-width:520px){
+ #import-review .option-editor .meal-line-editor>.meal-line-order-controls{gap:4px;margin-right:36px}
+ #import-review .option-editor .meal-line-order-controls button{padding:5px 7px!important}
+}
