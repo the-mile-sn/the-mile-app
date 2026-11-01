@@ -1185,6 +1185,16 @@ def application(env, start_response):
                     if state is None:
                         raise Problem(404, 'not_found')
                     return respond(200, {'status': state})
+                if len(segments) == 6 and method == 'DELETE':
+                    body = read_json(env)
+                    try:
+                        draft = plan_import_v2.delete_option(c, athlete_id, segments[5],
+                            body.get('group_index'), body.get('option_index'))
+                    except ValueError:
+                        raise Problem(400, 'invalid_option_or_plan_status')
+                    if draft is None:
+                        raise Problem(404, 'not_found')
+                    return respond(200, {'draft': draft})
                 if len(segments) == 6 and method == 'PUT':
                     body = read_json(env)
                     try:
