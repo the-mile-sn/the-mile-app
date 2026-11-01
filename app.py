@@ -1440,18 +1440,6 @@ def application(env, start_response):
                 c.commit()
                 athlete.update({'followup_plan':followup,'followup_renewal_date':renewal,'birth_date':birth,'has_photo':bool(photo_bytes or linked and linked['photo_mime']),'user_id':linked['id'] if linked else None})
                 return respond(200,{'athlete':athlete})
-            if False and path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method == 'PUT':
-                if not user: raise Problem(401,'unauthorized')
-                admin(user)
-                athlete_id=path.split('/')[4]
-                body=read_json(env)
-                current_profile=c.execute('SELECT field_position,arm_point,thigh_point FROM v2_athletes WHERE id=?',(athlete_id,)).fetchone()
-                if current_profile is None: raise Problem(404,'not_found')
-                try:
-                    result=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''),body.get('sex'),body.get('field_position', current_profile['field_position']),body.get('arm_point', current_profile['arm_point']),body.get('thigh_point', current_profile['thigh_point']))
-                except ValueError: raise Problem(400,'invalid_athlete_profile')
-                if result is None: raise Problem(404,'not_found')
-                return respond(200,{'athlete':result})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/batch') and method == 'PUT':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
