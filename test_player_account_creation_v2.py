@@ -104,9 +104,9 @@ class PlayerAccountCreationTests(unittest.TestCase):
 
     def test_profile_api_preserves_auxiliary_fields_when_omitted(self):
         source=(ROOT/"app.py").read_text()
-        self.assertIn("body.get('field_position', current_profile['field_position'])",source)
-        self.assertIn("body.get('arm_point', current_profile['arm_point'])",source)
-        self.assertIn("body.get('thigh_point', current_profile['thigh_point'])",source)
+        self.assertIn("body.get('field_position', current['field_position'])",source)
+        self.assertIn("body.get('arm_point', current['arm_point'])",source)
+        self.assertIn("body.get('thigh_point', current['thigh_point'])",source)
 
     def test_endpoint_source_requires_atomic_credentials(self):
         source=(ROOT/"app.py").read_text()
