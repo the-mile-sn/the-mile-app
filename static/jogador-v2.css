@@ -3967,3 +3967,21 @@ body.profile-active .player-top{display:none!important}
  width:auto;max-width:none;height:176px;max-height:none;
  display:block;overflow:visible;touch-action:pan-x;user-select:none;
 }
+
+/* Shared meal hierarchy — Daily, expanded Weekly, and Plans. No grid resize. */
+#overview #day-details .daily-meal>.daily-meal-head>strong,
+#plans #plan-detail .plan-overview-meal>.daily-meal-head>strong,
+#plans #plan-detail .plan-overview-meal>summary.daily-meal-head>strong,
+#weekly-view .weekly-color-detail .weekly-color-meal-head>strong{
+ font-size:16px!important;font-weight:500!important;
+}
+#overview #day-details .daily-meal .plan-option-label>strong,
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal) .plan-option-label>strong,
+#weekly-view .weekly-color-detail .plan-option-label>strong{
+ font-size:15px!important;font-weight:500!important;
+}
+#overview #day-details .daily-meal .plan-option-label>small,
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal) .plan-option-label>small,
+#weekly-view .weekly-color-detail .plan-option-label>small{
+ font-size:12px!important;font-weight:400!important;
+}
