@@ -1288,3 +1288,42 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #tm-players-page #tm-players-archived-feedback{margin:0 22px 12px;font-size:12px}
 #tm-players-page:has(#tm-players-profile:not([hidden])) .tm-players-archived-panel{display:none}
 @media(max-width:830px){#tm-players-page #tm-players-archived-box summary{padding:17px 14px}#tm-players-page #tm-players-archived-list{padding:4px 14px}}
+
+
+/* Player profile: approved The Mile access management hierarchy. */
+#tm-players-page #tm-players-profile>.tm-players-heading{margin-bottom:12px}
+#tm-players-page #tm-players-profile>.tm-players-heading h3{margin:0;font-size:20px}
+#tm-players-page .tm-player-profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+#tm-players-page .tm-players-access-management{margin-top:24px;padding:22px 24px;border-radius:15px;background:#1b1d23;border:1px solid #34363f}
+#tm-players-page .tm-players-access-management h4{display:flex;align-items:center;gap:11px;font-size:18px;font-weight:650;margin:0 0 20px}
+#tm-players-page .tm-players-access-management svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#tm-players-page .tm-player-access-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#tm-players-page .tm-player-access-actions .tm-players-control{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:10px 16px;font-size:13px;font-weight:600;border-radius:10px;transition:background .15s,border-color .15s}
+#tm-players-page .tm-player-access-actions .tm-players-control[hidden],#tm-players-page .tm-access-password-form[hidden]{display:none!important}
+#tm-players-page .tm-player-access-actions .tm-access-block{color:#fa8b84;background:#452627;border:1px solid #754144}
+#tm-players-page .tm-player-access-actions .tm-access-block:hover{background:#573033}
+#tm-players-page .tm-access-block .tm-icon-unblock{display:none}
+#tm-players-page .tm-access-block.is-unblocking{color:#78d49a;background:#1c3a2b;border-color:#326649}
+#tm-players-page .tm-access-block.is-unblocking .tm-icon-block{display:none}
+#tm-players-page .tm-access-block.is-unblocking .tm-icon-unblock{display:block}
+#tm-players-page .tm-player-access-actions .tm-access-change{background:#292b32;color:#edf0f5;border:1px solid #454a55}
+#tm-players-page .tm-player-access-actions .tm-access-archive{background:#634919;color:#ffdf81;border:1px solid #8d6c2b}
+#tm-players-page .tm-player-access-actions .tm-access-archive:hover{background:#795721}
+#tm-players-page .tm-access-password-form{margin-top:18px;padding:20px 22px;border-radius:13px;background:#202229;border:1px solid #393d47;display:flex;flex-direction:column;gap:15px}
+#tm-players-page .tm-access-password-field{display:flex;flex-direction:column;gap:8px}
+#tm-players-page .tm-access-password-field>label{font-size:12px;color:#bcc3ce}
+#tm-players-page .tm-access-password-input{position:relative}
+#tm-players-page .tm-access-password-input input{box-sizing:border-box;display:block;width:100%;height:46px;min-height:46px;padding:10px 48px 10px 13px;border-radius:9px;border:1px solid #4a505d;background:#15171c;color:#f3f5f8;font-size:14px}
+#tm-players-page .tm-access-password-input input:focus{border-color:#83a7c9;outline:2px solid rgba(104,156,206,.25)}
+#tm-players-page .tm-access-visibility-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:#a3abb7;cursor:pointer;border-radius:8px}
+#tm-players-page .tm-access-visibility-toggle:hover{color:#f4f6f9}
+#tm-players-page .tm-access-visibility-toggle .tm-eye-show{display:none}
+#tm-players-page .tm-access-visibility-toggle[aria-pressed="true"] .tm-eye-show{display:block}
+#tm-players-page .tm-access-visibility-toggle[aria-pressed="true"] .tm-eye-hide{display:none}
+#tm-players-page .tm-access-password-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:3px}
+#tm-players-page #tm-players-password-save{background:#138743;border:1px solid #15994d;color:white;border-radius:9px;padding:10px 22px;font-weight:650;min-height:42px}
+#tm-players-page #tm-players-password-save:hover{background:#0f793a}
+#tm-players-page #tm-players-password-cancel{background:transparent;border:1px solid #4a505c;color:inherit;border-radius:9px;padding:10px 20px;min-height:42px}
+#tm-players-page #tm-players-access-feedback:empty{display:none}
+#tm-players-page #tm-players-access-feedback{font-size:12px;margin:12px 0 0;color:inherit}
+@media(max-width:680px){#tm-players-page .tm-players-access-management{padding:18px 14px}#tm-players-page .tm-access-password-form{padding:16px 12px}#tm-players-page .tm-player-access-actions{gap:8px}}
