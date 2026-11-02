@@ -76,3 +76,13 @@ test('assessment last value label stays within the horizontal chart bounds',()=>
  assert.match(chart,/const left=27,right=width-40,top=22,bottom=148/);
  assert.match(chart,/x=i=>left\+\(right-left\)\*i/);
 });
+
+test('login uses the approved minimal brand layout without changing credentials or authentication wiring',()=>{
+ assert.match(html,/class="login-tagline">Start now\. Get consistent\./);
+ assert.match(html,/id="username" autocomplete="username"/);
+ assert.match(html,/id="password" type="password" autocomplete="current-password"/);
+ assert.match(html,/id="login-form"/);
+ assert.match(html,/id="login-error" class="error" role="alert"/);
+ assert.match(css,/#login-panel\{background:transparent!important;border:0!important/);
+ assert.match(css,/#login-form \.login-input input\{/);
+});
