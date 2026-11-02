@@ -3932,3 +3932,13 @@ body.profile-active .player-top{display:none!important}
 #profile .profile-password-page-form label.profile-password-field input:focus::placeholder{
  color:transparent!important;
 }
+
+/* Assessments: compact mode selection, unchanged recent chart, vertical all-history. */
+#plans .assessment-trend-switch{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;background:#28282e;border-radius:999px;margin:0 0 13px}
+#plans .assessment-trend-switch button{border:0;border-radius:999px;background:transparent;color:#aeb0b8;font-size:12px;font-weight:500;padding:9px 6px;min-height:36px}
+#plans .assessment-trend-switch button[aria-pressed="true"]{background:#52525a;color:#fff}
+#plans .assessment-trend>svg[hidden],#plans .assessment-trend-vertical-scroll[hidden]{display:none!important}
+#plans .assessment-trend-vertical-scroll{max-height:420px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin}
+#plans .assessment-trend-vertical-scroll svg{width:100%;height:auto;max-height:none;display:block;overflow:visible}
+#plans .assessment-trend-vertical-scroll .assessment-chart-tick{font-size:9px}
+#plans .assessment-trend-vertical-scroll .assessment-chart-value{font-size:10px}
