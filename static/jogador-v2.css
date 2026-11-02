@@ -3685,10 +3685,10 @@ body.profile-active .player-top{display:none!important}
  --meal-orange-text:#FFA078;--meal-yellow-text:#FFD76F;
  --meal-green-text:#77E3A4;--meal-blue-text:#8DD0FF;
 }
-.tone-orange{--meal-ink:var(--meal-orange-text);--meal-inner:color-mix(in srgb,var(--meal-orange) 79%,white)}
-.tone-yellow{--meal-ink:var(--meal-yellow-text);--meal-inner:color-mix(in srgb,var(--meal-yellow) 79%,white)}
-.tone-green{--meal-ink:var(--meal-green-text);--meal-inner:color-mix(in srgb,var(--meal-green) 79%,white)}
-.tone-blue{--meal-ink:var(--meal-blue-text);--meal-inner:color-mix(in srgb,var(--meal-blue) 79%,white)}
+.tone-orange{--meal-ink:var(--meal-orange-text);--meal-inner:#623324}
+.tone-yellow{--meal-ink:var(--meal-yellow-text);--meal-inner:#57451E}
+.tone-green{--meal-ink:var(--meal-green-text);--meal-inner:#24543E}
+.tone-blue{--meal-ink:var(--meal-blue-text);--meal-inner:#284D6C}
 /* Meal labels, kcal and arrows use the corresponding approved palette B ink. */
 #overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head,
 #plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head,
@@ -3724,5 +3724,47 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details .daily-event-card.match-intra-card>.daily-meal-head,
 #overview #day-details .daily-event-card.match-intra-card>.daily-meal-head strong,
 #weekly-view .weekly-event-card.weekly-match-with-intra .weekly-meal-kcal{
+ color:#22232A!important;
+}
+
+
+/* Palette B — option A: deep tone-on-tone, readable hue-matched text, quiet separators. */
+:is(#overview .daily-meal,#plans #plan-detail .plan-meal,#plans #plan-detail .plan-overview-meal,#weekly-view .weekly-color-detail):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue){
+ --option-base:var(--meal-inner)!important;
+ --option-label:color-mix(in srgb,var(--meal-ink) 75%,white);
+ --option-body:color-mix(in srgb,var(--meal-ink) 58%,white);
+ --option-divider:color-mix(in srgb,var(--meal-ink) 22%,transparent);
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head :is(.kcal,.meal-average-inline .kcal),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.meal-average-inline .kcal,.meal-average .kcal),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head .macro>.kcal{
+ color:var(--meal-ink)!important;
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.player-meal-option-subcard,.single-meal-option),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.plan-option-card,.player-meal-option-subcard),
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.weekly-option-card,.weekly-meal-average){
+ color:var(--option-body)!important;
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.plan-option-label strong,.plan-option-label small,.foods,.meal-collapsible-note,.single-meal-option),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.plan-option-label strong,.plan-option-label small,.foods,.meal-collapsible-note),
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.weekly-menu-line span,.weekly-menu-line small,.plan-option-label strong,.plan-option-label small,.foods){
+ color:var(--option-body)!important;
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.plan-option-label strong,.plan-option-label small),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.plan-option-label strong,.plan-option-label small){
+ color:var(--option-label)!important;
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) :is(.foods,.supplement-in-meal),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .foods,
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .foods{
+ border-bottom-color:var(--option-divider)!important;
+}
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .plan-option-card,
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.player-meal-option-subcard{
+ background:var(--meal-inner)!important;
+}
+#overview #day-details .daily-event-card.match-intra-card :is(.meal-average-inline .kcal,.meal-average .kcal,.weekly-match-kcal),
+#overview #day-details .daily-event-card.match-intra-card>.daily-meal-head .macro>.kcal,
+#weekly-view .weekly-event-card.weekly-match-with-intra :is(.weekly-match-kcal,.weekly-meal-kcal){
  color:#22232A!important;
 }
