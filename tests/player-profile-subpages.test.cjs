@@ -44,3 +44,14 @@ test('password inputs have accessible inline placeholders and hide hints on focu
  assert.match(html,/autocomplete="current-password"/);
  assert.match(html,/autocomplete="new-password"/);
 });
+
+test('assessment charts preserve recent-ten horizontal mode and offer scrollable vertical full history',()=>{
+ assert.match(js,/const visible=points\.slice\(-10\)/);
+ assert.match(js,/recentButton\.textContent="Últimas 10"/);
+ assert.match(js,/allButton\.textContent="Todas"/);
+ assert.match(js,/const fullPoints=points\.slice\(\)\.reverse\(\)/);
+ assert.match(js,/vertical\.setAttribute\("viewBox","0 0 344 "\+fullHeight\)/);
+ assert.match(js,/hit\.setAttribute\("aria-label"/);
+ assert.match(css,/\.assessment-trend-vertical-scroll\{max-height:420px;overflow-y:auto/);
+ assert.doesNotMatch(js,/history\.append\(rows\)/);
+});
