@@ -187,3 +187,13 @@ test("shared typography tokens and Plans meal kcal colour replace legacy neutral
  assert.match(css,/\.plan-overview-meal:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\)>\.daily-meal-head \.meal-average-inline \.macro>\.kcal/);
  assert.match(css,/color:var\(--meal-ink\)!important/);
 });
+
+test("expanded food lists use whitespace rather than dividing lines",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview \.daily-meal \.foods,[\s\S]*?#weekly-view \.weekly-option-card \.foods\{\s*border-bottom:0!important;\s*border-top:0!important/);
+});
+test("raw accompaniments keep newline formatting with more comfortable line spacing",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview \.meal-collapsible-note>\.meal-note-body,[\s\S]*?#weekly-view \.meal-collapsible-note>\.meal-note-body\{\s*white-space:pre-wrap!important;\s*line-height:1\.75!important/);
+ assert.match(css,/margin-top:6px!important/);
+});

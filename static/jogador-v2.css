@@ -3826,3 +3826,27 @@ body.profile-active .player-top{display:none!important}
 #profile .profile-plan-detail>span{font-weight:var(--mile-type-regular)!important}
 #tabs button,#tabs button>span:not(.profile-tab-avatar),
 #tabs button[data-tab="profile"]>span:last-child{font-weight:var(--mile-type-regular)!important}
+
+/* Cleaner expanded meal prescriptions: spacing replaces food-row divider rules.
+   Scoped to food lists; controls, option boundaries and game timing remain intact. */
+#overview .daily-meal .foods,
+#overview .peri-meal .foods,
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal) .foods,
+#weekly-view :is(.weekly-color-detail,.peri-weekly-detail) .foods,
+#weekly-view .weekly-option-card .foods{
+ border-bottom:0!important;
+ border-top:0!important;
+}
+/* Multi-line raw accompaniment note uses preserved line breaks, but a more
+   generous reading line-height across Daily, Weekly and Plans. */
+#overview .meal-collapsible-note>.meal-note-body,
+#plans #plan-detail .meal-collapsible-note>.meal-note-body,
+#weekly-view .meal-collapsible-note>.meal-note-body{
+ white-space:pre-wrap!important;
+ line-height:1.75!important;
+}
+#overview .meal-collapsible-note>.meal-note-body>*+*,
+#plans #plan-detail .meal-collapsible-note>.meal-note-body>*+*,
+#weekly-view .meal-collapsible-note>.meal-note-body>*+*{
+ margin-top:6px!important;
+}
