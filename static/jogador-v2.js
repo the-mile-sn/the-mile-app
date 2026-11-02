@@ -311,7 +311,30 @@ async function session(){
  $("status").textContent=""; // Never keep a stale pre-login session warning on screen.
  await show(tab);
 }
+/* Adaptive navigation: hysteresis prevents flicker on short scroll gestures. */
+let mileLastScrollY=0,mileScrollAccum=0,mileScrollDirection=0,mileScrollFrame=0;
+function updateAdaptiveNav(){
+ mileScrollFrame=0;
+ const nav=$("tabs");
+ if(!nav||$("player-panel").hidden)return;
+ const y=Math.max(0,window.scrollY||document.documentElement.scrollTop||0);
+ const delta=y-mileLastScrollY;
+ mileLastScrollY=y;
+ if(y<32){nav.classList.remove("tabs-compact");mileScrollAccum=0;return;}
+ if(Math.abs(delta)<1)return;
+ const direction=Math.sign(delta);
+ if(direction!==mileScrollDirection){mileScrollDirection=direction;mileScrollAccum=0;}
+ mileScrollAccum+=Math.abs(delta);
+ if(mileScrollAccum>=28){
+  nav.classList.toggle("tabs-compact",direction>0);
+  mileScrollAccum=0;
+ }
+}
+window.addEventListener("scroll",()=>{
+ if(!mileScrollFrame)mileScrollFrame=window.requestAnimationFrame(updateAdaptiveNav);
+},{passive:true});
 async function show(t){
+ $("tabs").classList.remove("tabs-compact");mileScrollAccum=0;mileLastScrollY=Math.max(0,window.scrollY||0);
  if(t!=="profile")resetProfileSubpage();
  if(t!=="overview"){++overviewRequestId;setOverviewLoading(false);}
  if(t!=="menus"){++menuRenderToken;$("menu-loading").hidden=true;}
