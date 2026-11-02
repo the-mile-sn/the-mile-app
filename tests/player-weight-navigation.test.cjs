@@ -68,7 +68,7 @@ test("expanded nutrition keeps the dual ring and displays only the original char
 test("energy label and compact relative amount replace separate kcal unit inside halo",()=>{
  assert.match(source,/heading\.textContent="Energia \(kcal\)"/);
  assert.match(source,/center\.append\(number\)/);
- assert.match(source,/fmt\(total\.kcal\/weight,1\)\+" \/kg"/);
+ assert.match(source,/fmt\(total\.kcal\/weight,0\)\+" \/kg"/);
  assert.doesNotMatch(source,/unit\.textContent="kcal";center\.append\(number,unit\)/);
 });
 test("open and close use same chevron inside persistent halo preview",()=>{
@@ -143,4 +143,13 @@ test("Day and Week selector uses compact 38px iPhone proportions",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
  assert.match(css,/#overview #overview-mode\{\s*min-height:38px!important;\s*height:38px!important/);
  assert.match(css,/height:32px!important;\s*padding:4px 8px!important;\s*font-size:13px!important/);
+});
+
+test("kcal per kg and daily comparison percentages use whole units while macros remain at one decimal",()=>{
+ assert.match(source,/fmt\(relativeMeans\[key\],key==="kcal"\?0:1\)/);
+ assert.match(source,/fmt\(total\.kcal\/weight,0\)\+" kcal\/kg"/);
+ assert.match(source,/fmt\(total\.kcal\/weight,0\)\+" \/kg"/);
+ assert.match(source,/fmt\(delta,0\)\+"%"/);
+ assert.match(source,/fmt\(deviationPrevious,0\)\+"%"/);
+ assert.match(source,/fmt\(total\[key\]\/weight,1\)\+" g\/kg"/);
 });

@@ -391,7 +391,7 @@ function weeklySummary(data,relativeMeans={}){
   const title=document.createElement("small");title.textContent=label;
   const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?"":" g");
   item.append(title,value);
-  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(relativeMeans[key],1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
+  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(relativeMeans[key],key==="kcal"?0:1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
   section.append(item);
  }
  return section;
@@ -1055,7 +1055,7 @@ async function overview(){
    const value=document.createElement("strong");value.textContent=fmt(total.kcal,0);
    energy.append(label,value);
    const weight=dailyReferenceWeight,hasWeight=Number.isFinite(weight)&&weight>0;
-   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,1)+" kcal/kg";energy.append(ratio);}
+   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,0)+" kcal/kg";energy.append(ratio);}
    hero.append(energy);summary.append(hero);
    const macros=document.createElement("div");macros.className="nutrition-macro-row";
    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
@@ -1107,12 +1107,12 @@ async function overview(){
    const center=document.createElement("div");center.className="nutrition-comparison-center";
    const number=document.createElement("strong");number.textContent=fmt(total.kcal,0);
    center.append(number);
-   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,1)+" /kg";center.append(per);}
+   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,0)+" /kg";center.append(per);}
    gauge.append(center);visual.append(gauge);
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
    for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
     const stat=document.createElement("div");stat.className="nutrition-comparison-stat "+cls;
-    const figure=document.createElement("strong");figure.textContent=delta===null?"—":(delta>0?"+":"")+fmt(delta,1)+"%";
+    const figure=document.createElement("strong");figure.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
     if(delta!==null)stat.classList.add(delta>0?"above":delta<0?"below":"neutral");
     const label=document.createElement("small");label.textContent=name;
     stat.append(figure,label);comparisons.append(stat);
@@ -1161,7 +1161,7 @@ async function overview(){
      if(stat&&number){
       stat.classList.remove("above","below","neutral");
       stat.classList.add(deviationPrevious>0?"above":deviationPrevious<0?"below":"neutral");
-      number.textContent=(deviationPrevious>0?"+":"")+fmt(deviationPrevious,1)+"%";
+      number.textContent=(Math.round(deviationPrevious)>0?"+":"")+fmt(deviationPrevious,0)+"%";
      }
      paintRings();
     }).catch(()=>{});
