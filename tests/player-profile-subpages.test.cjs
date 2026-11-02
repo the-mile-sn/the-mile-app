@@ -93,3 +93,15 @@ test('login group is vertically centred without affecting authenticated player p
  assert.match(css,/display:flex;flex-direction:column;justify-content:center/);
  assert.match(css,/safe-area-inset-bottom/);
 });
+
+test('login logo is larger and the former tagline is removed',()=>{
+ assert.doesNotMatch(html,/Start now\. Get consistent\./);
+ assert.match(css,/player-header-brand\{width:174px!important/);
+});
+test('tab switching slides content in navigation direction and respects reduced motion',()=>{
+ assert.match(js,/const tabOrder=\["overview","plans","assessments","menus","profile"\]/);
+ assert.match(js,/direction=oldIndex<newIndex\?1:-1/);
+ assert.match(js,/prefers-reduced-motion: reduce/);
+ assert.match(js,/destination\.animate\(\[/);
+ assert.match(js,/duration:220/);
+});
