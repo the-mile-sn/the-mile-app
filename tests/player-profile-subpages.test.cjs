@@ -78,7 +78,7 @@ test('assessment last value label stays within the horizontal chart bounds',()=>
 });
 
 test('login uses the approved minimal brand layout without changing credentials or authentication wiring',()=>{
- assert.match(html,/class="login-tagline">Start now\. Get consistent\./);
+ assert.doesNotMatch(html,/class="login-tagline">Start now\. Get consistent\./);
  assert.match(html,/id="username" autocomplete="username"/);
  assert.match(html,/id="password" type="password" autocomplete="current-password"/);
  assert.match(html,/id="login-form"/);
