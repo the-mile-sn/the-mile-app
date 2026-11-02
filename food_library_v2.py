@@ -96,3 +96,23 @@ def nutrients_for_quantity(food, grams):
     grams=number(grams)
     fraction=number(food.get("edible_fraction",1),zero=False) if food.get("variant")=="gross" else 1
     return {key:number(food[key])*grams*fraction/100 for key in FIELDS}
+
+def import_batch(c, records):
+    """Atomic import of a prepared catalogue; reject entire batch on invalid data."""
+    if not isinstance(records,list) or not (1 <= len(records) <= 2000):
+        raise ValueError("invalid_batch")
+    validated=[]
+    keys=set()
+    for food in records:
+        data=validate(food)
+        key=(str(food.get("source_key") or "").strip(),data["variant"])
+        if not key[0] or key in keys:
+            raise ValueError("duplicate_source_variant")
+        keys.add(key)
+        validated.append(dict(food,**data))
+    for item in validated:
+        existing=c.execute("SELECT id FROM v2_food_library WHERE source_key=? AND variant=?", (item["source_key"],item["variant"])).fetchone()
+        if existing:
+            item["id"]=existing["id"]
+        upsert(c,item)
+    return len(validated)
