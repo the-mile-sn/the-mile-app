@@ -48,8 +48,8 @@ test('password inputs have accessible inline placeholders and hide hints on focu
 
 
 test('only selected assessment mode renders and password page has no outer grey card',()=>{
- assert.match(js,/svg\.hidden=all;fullScroll\.hidden=!all/);
- assert.match(css,/\.assessment-trend > svg\[hidden\],[\s\S]*?display:none!important/);
+ assert.doesNotMatch(js,/svg\.hidden=all;fullScroll\.hidden=!all/);
+ assert.match(css,/\.assessment-trend-horizontal-scroll\{[\s\S]*?overflow-x:auto/);
  assert.match(css,/#profile \.profile-password-page-form\{\s*background:transparent!important;/);
  assert.match(css,/border-radius:0!important;\s*padding:0!important/);
 });
