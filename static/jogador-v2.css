@@ -3999,3 +3999,15 @@ body:has(#login-panel:not([hidden])) .player-header-brand{width:126px!important;
 #login-form .login-input input:focus::placeholder{color:transparent!important}
 #login-form>button[type="submit"]{min-height:54px!important;margin-top:10px!important;border:0!important;border-radius:999px!important;background:#f5f5f7!important;color:#16161a!important;font-size:16px!important;font-weight:600!important;width:100%!important}
 #login-panel #login-error{min-height:1.3em!important;margin:12px 4px!important}
+
+/* Centre the complete logged-out entry group in the available viewport. */
+body:has(#login-panel:not([hidden])) .shell{
+ min-height:100vh;min-height:100dvh;
+ display:flex;flex-direction:column;justify-content:center;
+ padding-top:max(20px,env(safe-area-inset-top))!important;
+ padding-bottom:max(20px,env(safe-area-inset-bottom))!important;
+}
+body:has(#login-panel:not([hidden])) .player-top{
+ width:100%;flex:none;padding-top:0!important;padding-bottom:0!important;
+}
+body:has(#login-panel:not([hidden])) #login-panel{width:100%!important;flex:none!important}
