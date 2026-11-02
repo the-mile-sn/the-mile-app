@@ -64,7 +64,7 @@ def validate(food):
                 edible_fraction=fraction,reference_g=reference,**nutrients)
 
 def list_foods(c, query="", category=None, limit=100, offset=0):
-    limit=max(1,min(250,int(limit)))
+    limit=max(1,min(2000,int(limit)))
     offset=max(0,int(offset))
     sql="SELECT * FROM v2_food_library WHERE active=1"
     params=[]
