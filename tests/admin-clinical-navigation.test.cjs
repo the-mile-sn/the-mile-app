@@ -499,7 +499,7 @@ test("Dashboard uses photo metadata, with initials fallback, and MD-green game e
  assert.match(py,/u\.photo IS NOT NULL/);
  assert.match(py,/week_rows\.append\(\{"id": aid,[\s\S]*?"has_photo": False/);
  assert.match(dashboard,/if\(player\.has_photo&&player\.user_id\)/);
- assert.match(dashboard,/img\.src="\/api\/players\/"+encodeURIComponent\(player\.user_id\)+"\/photo"/);
+ assert.ok(dashboard.includes('img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo"'));
  assert.match(dashboard,/img\.addEventListener\("error",\(\)=>img\.remove\(\)\)/);
  assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
  assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
