@@ -1560,7 +1560,20 @@ def application(env, start_response):
                     raise Problem(401, 'unauthorized')
                 admin(user)
                 if method == 'GET':
-                    return respond(200, {'athletes': microcycles_v2.list_athletes(c)})
+                    # Admin-only metadata for the shared player pickers. No photo blobs in JSON.
+                    roster = microcycles_v2.list_athletes(c)
+                    linked_photos = {
+                        row['athlete_id']: row for row in c.execute(
+                            """SELECT l.athlete_id,l.user_id,(u.photo IS NOT NULL) AS has_photo
+                               FROM v2_player_links l JOIN users u ON u.id=l.user_id
+                               WHERE u.role='player'"""
+                        ).fetchall()
+                    }
+                    for athlete in roster:
+                        linked = linked_photos.get(athlete['id'])
+                        athlete['user_id'] = linked['user_id'] if linked else None
+                        athlete['has_photo'] = bool(linked and linked['has_photo'])
+                    return respond(200, {'athletes': roster})
                 if method == 'POST':
                     body=read_json(env)
                     name=str(body.get('name','')).strip()
