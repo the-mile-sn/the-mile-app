@@ -3876,3 +3876,28 @@ body.profile-active .player-top{display:none!important}
 #overview .meal-collapsible-note>.meal-note-body,
 #plans #plan-detail .meal-collapsible-note>.meal-note-body,
 #weekly-view .meal-collapsible-note>.meal-note-body{line-height:1.75!important}
+
+/* Final daily meal override: all options, including single-option meals, regardless
+   of where the tone class is attached. Keep game/training protocols untouched. */
+#overview #day-details .daily-meal .foods,
+#overview #day-details .daily-meal details .foods,
+#overview #day-details .daily-meal .single-meal-option .foods,
+#overview #day-details .daily-meal .player-meal-option-subcard .foods{
+ border:0!important;
+ border-top:0!important;
+ border-bottom:0!important;
+ box-shadow:none!important;
+ padding-top:5px!important;
+ padding-bottom:5px!important;
+ margin-top:0!important;
+ margin-bottom:0!important;
+}
+/* Raw accompaniments: match ingredient 14px size, retain approved 1.75 rhythm. */
+#overview .meal-collapsible-note>.meal-note-body,
+#plans #plan-detail .meal-collapsible-note>.meal-note-body,
+#weekly-view .meal-collapsible-note>.meal-note-body{
+ font-size:14px!important;
+ font-weight:var(--mile-type-regular)!important;
+ line-height:1.75!important;
+ white-space:pre-wrap!important;
+}
