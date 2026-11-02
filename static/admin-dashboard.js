@@ -210,20 +210,19 @@ function ensurePlanningOnlyView(){
  const chooseSettings=$("tm-admin-nav-settings");if(chooseSettings)chooseSettings.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;navActive(chooseSettings);if(typeof loadAdminAccounts==="function")loadAdminAccounts().catch(()=>{});});
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null,playerDetails=null,playerPhotoData=null;
- const accessIdentity=$("tm-players-access-identity"),accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
+ const accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
  function paintPlayerAccess(){
   accessToggle.hidden=!playerAccess;
   $("tm-players-password-toggle").hidden=!playerAccess;
-  accessIdentity.textContent=playerAccess?"":"Ainda não existe uma conta associada.";
   if(playerAccess){accessToggle.querySelector(".tm-access-action-text").textContent=playerAccess.active?"Bloquear acesso":"Reativar acesso";accessToggle.classList.toggle("is-unblocking",!playerAccess.active);}
  }
  async function loadPlayerAccess(aid,token){
-  accessIdentity.textContent="A consultar conta associada…";accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
+  accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
   try{
    const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/access");
    if(token!==profileLoadToken||profilePanel.hidden)return;
    playerAccess=data.access;paintPlayerAccess();
-  }catch(e){if(token===profileLoadToken&&!profilePanel.hidden)accessIdentity.textContent="Não foi possível consultar o acesso: "+e.message;}
+  }catch(e){if(token===profileLoadToken&&!profilePanel.hidden)accessFeedback.textContent="Não foi possível consultar o acesso: "+e.message;}
  }
  accessToggle.addEventListener("click",async()=>{
   if(!playerProfile||!playerAccess)return;
