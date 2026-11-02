@@ -63,3 +63,10 @@ test('assessments use one scrollable horizontal chart for all historical points'
  assert.doesNotMatch(js,/assessment-trend-vertical-scroll/);
  assert.match(css,/\.assessment-trend-horizontal-scroll\{[\s\S]*?overflow-x:auto/);
 });
+
+test('scrolling assessment plots omit vertical axis labels without losing grid and mean',()=>{
+ const code=js.slice(js.indexOf('function buildAssessmentTrend('),js.indexOf('function renderPlayerAssessments()'));
+ assert.doesNotMatch(code,/assessment-chart-tick/);
+ assert.match(code,/assessment-chart-grid/);
+ assert.match(code,/assessment-chart-mean/);
+});
