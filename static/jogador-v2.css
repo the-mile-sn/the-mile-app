@@ -3955,3 +3955,15 @@ body.profile-active .player-top{display:none!important}
  border-radius:0!important;
  padding:0!important;
 }
+
+/* One assessment chart for the full history, initially scrolled to latest ten. */
+#plans .assessment-trend-horizontal-scroll{
+ width:100%;overflow-x:auto;overflow-y:hidden;
+ overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+ touch-action:pan-x;scrollbar-width:none;
+}
+#plans .assessment-trend-horizontal-scroll::-webkit-scrollbar{display:none}
+#plans .assessment-trend-horizontal-scroll>svg{
+ width:auto;max-width:none;height:176px;max-height:none;
+ display:block;overflow:visible;touch-action:pan-x;user-select:none;
+}
