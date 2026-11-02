@@ -1533,6 +1533,12 @@ def application(env, start_response):
                     raise Problem(404, 'not_found')
                 return respond(200, {'ok': True})
 
+            if path == '/api/v2/admin/archived-players' and method == 'GET':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                archived=[dict(row) for row in c.execute(
+                    "SELECT id,name,archived_at FROM v2_athletes WHERE archived_at IS NOT NULL ORDER BY name,id").fetchall()]
+                return respond(200,{'players':archived})
             if path == '/api/v2/admin/players-overview' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
