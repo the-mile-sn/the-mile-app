@@ -18,7 +18,7 @@ test('assessments are a standalone view connected to the original published data
 test('header uses official Backoffice wordmark and right-side private avatar',()=>{
  assert.match(html,/viewBox="0 0 1605 244"/);
  assert.match(html,/class="player-header-wordmark"/);
- assert.match(css,/\.player-top #player-avatar\{margin-left:auto!important/);
+ assert.match(css,/#tabs button\[data-tab="profile"\] \.profile-tab-avatar\{/);
  assert.match(html,/id="header-player-photo"/);
 });
 test('profile notifications are a noninteractive placeholder without network calls',()=>{
@@ -53,4 +53,12 @@ test('assessment notes preserve the timestamp below metrics and the formula insi
  assert.match(js,/key==="body_fat"&&recent\.formula_note/);
  assert.match(js,/details\.append\(note\)/);
  assert.doesNotMatch(js,/note\.textContent="Gordura corporal: "\+recent\.formula_note;target\.append\(note\)/);
+});
+
+test("profile tab shows the existing private photo and header has only the brand",()=>{
+ assert.match(html,/<button data-tab="profile"[^>]*><span class="profile-tab-avatar"/);
+ assert.match(html,/id="header-player-photo"/);
+ assert.match(html,/id="avatar-initials"/);
+ assert.doesNotMatch(html,/id="player-avatar"/);
+ assert.match(css,/#tabs button\[data-tab="profile"\] \.profile-tab-avatar img\{/);
 });
