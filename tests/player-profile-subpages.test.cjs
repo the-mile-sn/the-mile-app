@@ -74,5 +74,5 @@ test('scrolling assessment plots omit vertical axis labels without losing grid a
 test('assessment last value label stays within the horizontal chart bounds',()=>{
  const chart=js.slice(js.indexOf('function buildAssessmentTrend('),js.indexOf('function renderPlayerAssessments()'));
  assert.match(chart,/const left=27,right=width-40,top=22,bottom=148/);
- assert.match(chart,/x:i=>left/);
+ assert.match(chart,/x=i=>left\+\(right-left\)\*i/);
 });
