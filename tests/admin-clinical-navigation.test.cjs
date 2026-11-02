@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=100/);
+ assert.match(html,/admin-microcycles\.css\?v=101/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=26/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=27/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -240,8 +240,8 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=8/);
- assert.match(html,/\/admin-dashboard\.js\?v=26/);
+ assert.match(html,/\/admin-light-theme\.css\?v=9/);
+ assert.match(html,/\/admin-dashboard\.js\?v=27/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -258,7 +258,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=8"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=9"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
  assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
 });
@@ -279,7 +279,7 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
  assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
  assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
  assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
- assert.match(html,/admin-light-theme\.css\?v=8/);
+ assert.match(html,/admin-light-theme\.css\?v=9/);
 });
 
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
@@ -292,14 +292,14 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=26/);
+ assert.match(html,/admin-dashboard\.js\?v=27/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=100/);
+ assert.match(html,/admin-microcycles\.css\?v=101/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -312,7 +312,7 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=26/);
+ assert.match(html,/admin-dashboard\.js\?v=27/);
 });
 
 test("Jogadores follow-up is a select with Pro and Elite only",()=>{
@@ -441,7 +441,7 @@ test("Light mode assessment editing and Planning picker keep readable surfaces",
  assert.match(rules,/html\[data-admin-theme="light"\]/);
  assert.match(rules,/background:var\(--tm-light-surface\)/);
  assert.match(rules,/background:#e9eef5/);
- assert.match(html,/admin-light-theme\.css\?v=8/);
+ assert.match(html,/admin-light-theme\.css\?v=9/);
  assert.match(html,/id="assessment-review-form"/);
  assert.match(html,/id="tm-planning-results"/);
 });
@@ -461,4 +461,24 @@ test("archived players have their own collapsible card below the active list",()
  assert.match(dark,/\.tm-archived-row\{/);
  assert.match(dark,/#tm-players-page:has\(#tm-players-profile:not\(\[hidden\]\)\)/);
  assert.match(light,/tm-players-archived-box\[open\]/);
+});
+
+test("Player Gerir acesso uses approved hierarchy and preserves secure actions",()=>{
+ const profile=html.slice(html.indexOf('id="tm-players-profile"'),html.indexOf('id="tm-players-profile"')+6500);
+ assert.match(profile,/Gerir acesso/);
+ assert.doesNotMatch(profile,/Dados do jogador · geridos em Jogadores|Oculta o jogador das listas|Utilizador: @|Acesso à App do Jogador/);
+ for(const id of ["tm-players-archive","tm-players-access-toggle","tm-players-password-toggle","tm-players-password-new","tm-players-password-confirm","tm-players-password-save","tm-players-password-cancel"])
+   assert.equal(profile.split('id="'+id+'"').length-1,1,id);
+ assert.ok(profile.indexOf('id="tm-players-archive"')>profile.indexOf('id="tm-players-access-management"'));
+ assert.equal((profile.match(/class="tm-access-visibility-toggle"/g)||[]).length,2);
+ assert.match(dashboard,/resetPasswordForm\(\)/);
+ assert.match(dashboard,/data-password-target/);
+ assert.match(dashboard,/accessToggle\.classList\.toggle\("is-unblocking"/);
+ assert.match(dashboard,/confirmation:"ARQUIVAR"/);
+ assert.match(dashboard,/password-reset/);
+ const css=fs.readFileSync("static/admin-microcycles.css","utf8");
+ const light=fs.readFileSync("static/admin-light-theme.css","utf8");
+ for(const selector of [".tm-access-archive",".tm-access-block",".tm-access-password-form",".tm-access-password-actions"])assert.ok(css.includes(selector));
+ assert.match(light,/\.tm-access-archive/);
+ assert.match(light,/\.tm-access-password-form/);
 });
