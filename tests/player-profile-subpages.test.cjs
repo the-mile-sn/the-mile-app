@@ -45,20 +45,21 @@ test('password inputs have accessible inline placeholders and hide hints on focu
  assert.match(html,/autocomplete="new-password"/);
 });
 
-test('assessment charts preserve recent-ten horizontal mode and offer scrollable vertical full history',()=>{
- assert.match(js,/const visible=points\.slice\(-10\)/);
- assert.match(js,/recentButton\.textContent="Últimas 10"/);
- assert.match(js,/allButton\.textContent="Todas"/);
- assert.match(js,/const fullPoints=points\.slice\(\)\.reverse\(\)/);
- assert.match(js,/vertical\.setAttribute\("viewBox","0 0 344 "\+fullHeight\)/);
- assert.match(js,/hit\.setAttribute\("aria-label"/);
- assert.match(css,/\.assessment-trend-vertical-scroll\{max-height:420px;overflow-y:auto/);
- assert.doesNotMatch(js,/history\.append\(rows\)/);
-});
+
 
 test('only selected assessment mode renders and password page has no outer grey card',()=>{
  assert.match(js,/svg\.hidden=all;fullScroll\.hidden=!all/);
  assert.match(css,/\.assessment-trend > svg\[hidden\],[\s\S]*?display:none!important/);
  assert.match(css,/#profile \.profile-password-page-form\{\s*background:transparent!important;/);
  assert.match(css,/border-radius:0!important;\s*padding:0!important/);
+});
+
+test('assessments use one scrollable horizontal chart for all historical points',()=>{
+ assert.match(js,/const visible=points,values=visible\.map/);
+ assert.match(js,/const width=344\+Math\.max\(0,visible\.length-10\)/);
+ assert.match(js,/className="assessment-trend-horizontal-scroll"/);
+ assert.match(js,/scroll\.scrollLeft=scroll\.scrollWidth-scroll\.clientWidth/);
+ assert.doesNotMatch(js,/recentButton\.textContent|allButton\.textContent/);
+ assert.doesNotMatch(js,/assessment-trend-vertical-scroll/);
+ assert.match(css,/\.assessment-trend-horizontal-scroll\{[\s\S]*?overflow-x:auto/);
 });
