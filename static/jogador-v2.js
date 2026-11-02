@@ -1528,12 +1528,12 @@ async function loadPlayerAssessments(){
 
 function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const holder=document.createElement("div");holder.className="assessment-trend";
- const history=document.createElement("details");history.className="assessment-history-card";
- const historySummary=document.createElement("summary");historySummary.textContent="Todas as avaliações ("+points.length+")";history.append(historySummary);
- const rows=document.createElement("div");rows.className="assessment-history-points";
- points.slice().reverse().forEach(p=>{const row=document.createElement("div"),date=document.createElement("span"),value=document.createElement("strong");date.textContent=assessmentDate(p.date);value.textContent=assessNumber(p.value)+(unit?" "+unit:"");row.append(date,value);rows.append(row);});history.append(rows);
+ const switcher=document.createElement("div");switcher.className="assessment-trend-switch";
+ const recentButton=document.createElement("button");recentButton.type="button";recentButton.textContent="Últimas 10";recentButton.setAttribute("aria-pressed","true");
+ const allButton=document.createElement("button");allButton.type="button";allButton.textContent="Todas";allButton.setAttribute("aria-pressed","false");
+ switcher.append(recentButton,allButton);
  if(points.length<2){
-  const note=document.createElement("p");note.className="assessment-trend-note";note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";holder.append(note,history);return holder;
+  const note=document.createElement("p");note.className="assessment-trend-note";note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";holder.append(note);return holder;
  }
  const visible=points.slice(-10),values=visible.map(p=>p.value);
  const step=axisStep||(unit==="kg"||unit==="cm"?1:unit==="mm"?5:1);
@@ -1592,7 +1592,67 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  svg.addEventListener("pointercancel",clear);
  svg.addEventListener("pointerleave",event=>{if(event.pointerType==="mouse")clear();});
  clear();
- holder.append(svg,focus,avg,history);
+ // The established horizontal plot remains untouched for the latest ten.
+ // The full-history view reuses its SVG classes, point colours and mean line,
+ // rotating the time axis vertically to keep every measurement readable.
+ const fullScroll=document.createElement("div");fullScroll.className="assessment-trend-vertical-scroll";fullScroll.hidden=true;
+ const fullPoints=points.slice().reverse(),n=fullPoints.length;
+ const fullHeight=Math.max(176,36+n*46),vTop=18,vBottom=fullHeight-22,vLeft=94,vRight=312;
+ const fullValues=fullPoints.map(p=>p.value);
+ const fullMin=Math.min(...fullValues),fullMax=Math.max(...fullValues);
+ let fullLow=Math.floor(fullMin/step)*step,fullHigh=Math.ceil(fullMax/step)*step;
+ if(fullLow===fullHigh){fullLow-=step;fullHigh+=step;}
+ const fullMean=fullValues.reduce((a,b)=>a+b,0)/n;
+ const fx=v=>vLeft+(v-fullLow)/(fullHigh-fullLow)*(vRight-vLeft);
+ const fy=i=>vTop+(vBottom-vTop)*i/(n-1);
+ const vertical=document.createElementNS(ns,"svg");
+ vertical.setAttribute("viewBox","0 0 344 "+fullHeight);
+ vertical.setAttribute("role","img");
+ vertical.setAttribute("aria-label","Histórico completo de "+n+" avaliações, da mais recente à mais antiga.");
+ const vadd=(tag,attrs,kind,label)=>{
+  const el=document.createElementNS(ns,tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
+  if(kind)el.setAttribute("class",kind);
+  if(label!==undefined)el.textContent=label;
+  vertical.append(el);return el;
+ };
+ for(let i=0;i<=4;i++){
+  const v=fullLow+(fullHigh-fullLow)*i/4,xx=fx(v);
+  vadd("line",{x1:xx,y1:vTop,x2:xx,y2:vBottom},"assessment-chart-grid");
+  vadd("text",{x:xx,y:fullHeight-4,"text-anchor":"middle"},"assessment-chart-tick",assessNumber(v));
+ }
+ vadd("line",{x1:fx(fullMean),y1:vTop,x2:fx(fullMean),y2:vBottom},"assessment-chart-mean");
+ vadd("polyline",{points:fullPoints.map((p,i)=>fx(p.value)+","+fy(i)).join(" ")},"assessment-chart-line");
+ const verticalDots=[];
+ fullPoints.forEach((p,i)=>{
+  const cy=fy(i),cx=fx(p.value),category=isSkinfoldSum?playerSkinfoldCategory(p.value,me?.field_position,me?.sex):null;
+  vadd("text",{x:5,y:cy+4},"assessment-chart-tick",assessmentDate(p.date));
+  const dot=vadd("circle",{cx,cy,r:4.5},"assessment-chart-point");
+  if(category){dot.style.stroke=category.color;dot.dataset.category=category.code;}
+  const value=vadd("text",{x:cx+9,y:cy-9},"assessment-chart-value",assessNumber(p.value));
+  if(category){value.style.fill=category.color;value.dataset.category=category.code;}
+  verticalDots.push({dot,value,point:p});
+  const hit=vadd("rect",{x:vLeft-4,y:cy-19,width:vRight-vLeft+22,height:38,fill:"transparent"});
+  hit.setAttribute("role","button");hit.setAttribute("tabindex","0");
+  hit.setAttribute("aria-label",assessmentDate(p.date)+": "+assessNumber(p.value)+(unit?" "+unit:""));
+  const select=()=>{
+   verticalDots.forEach(o=>{o.dot.classList.remove("is-selected");o.value.classList.remove("is-selected")});
+   dot.classList.add("is-selected");value.classList.add("is-selected");
+   focus.textContent=assessmentDate(p.date)+" · "+assessNumber(p.value)+(unit?" "+unit:"");
+  };
+  hit.addEventListener("click",select);
+  hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}});
+ });
+ fullScroll.append(vertical);
+ const setRange=all=>{
+  recentButton.setAttribute("aria-pressed",String(!all));
+  allButton.setAttribute("aria-pressed",String(all));
+  svg.hidden=all;fullScroll.hidden=!all;
+  avg.textContent="— Média: "+assessNumber(all?fullMean:mean)+(unit?" "+unit:"");
+  focus.textContent="";
+ };
+ recentButton.onclick=()=>setRange(false);allButton.onclick=()=>setRange(true);
+ holder.append(switcher,svg,fullScroll,focus,avg);
  return holder;
 }
 function renderPlayerAssessments(){
