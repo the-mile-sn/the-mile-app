@@ -1528,14 +1528,12 @@ async function loadPlayerAssessments(){
 
 function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const holder=document.createElement("div");holder.className="assessment-trend";
- const switcher=document.createElement("div");switcher.className="assessment-trend-switch";
- const recentButton=document.createElement("button");recentButton.type="button";recentButton.textContent="Últimas 10";recentButton.setAttribute("aria-pressed","true");
- const allButton=document.createElement("button");allButton.type="button";allButton.textContent="Todas";allButton.setAttribute("aria-pressed","false");
- switcher.append(recentButton,allButton);
  if(points.length<2){
-  const note=document.createElement("p");note.className="assessment-trend-note";note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";holder.append(note);return holder;
+  const note=document.createElement("p");note.className="assessment-trend-note";
+  note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";
+  holder.append(note);return holder;
  }
- const visible=points.slice(-10),values=visible.map(p=>p.value);
+ const visible=points,values=visible.map(p=>p.value);
  const step=axisStep||(unit==="kg"||unit==="cm"?1:unit==="mm"?5:1);
  const minimum=Math.min(...values),maximum=Math.max(...values);
  let low=Math.floor(minimum/step)*step,high=Math.ceil(maximum/step)*step;
@@ -1543,15 +1541,28 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const tickCount=Math.round((high-low)/step);
  const mean=values.reduce((sum,value)=>sum+value,0)/values.length;
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
- svg.setAttribute("viewBox","0 0 344 176");svg.setAttribute("preserveAspectRatio","xMidYMid meet");
- svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução das últimas "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
- const left=27,right=338,top=22,bottom=148;
+ // Keep the original 344x176 chart proportions for the latest ten points.
+ // Older assessments extend leftwards in a scrollable horizontal plot.
+ const width=344+Math.max(0,visible.length-10)*(311/9);
+ svg.setAttribute("viewBox","0 0 "+width+" 176");
+ svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+ svg.setAttribute("role","img");
+ svg.setAttribute("aria-label","Evolução de todas as "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
+ svg.style.width=width+"px";
+ const left=27,right=width-6,top=22,bottom=148;
  const y=v=>bottom-(v-low)/(high-low)*(bottom-top),x=i=>left+(right-left)*i/(visible.length-1);
- const add=(tag,attributes,css,text)=>{const node=document.createElementNS(ns,tag);for(const [name,value]of Object.entries(attributes||{}))node.setAttribute(name,String(value));if(css)node.setAttribute("class",css);if(text!==undefined)node.textContent=text;svg.append(node);return node;};
+ const add=(tag,attributes,css,text)=>{
+  const node=document.createElementNS(ns,tag);
+  for(const [name,value] of Object.entries(attributes||{}))node.setAttribute(name,String(value));
+  if(css)node.setAttribute("class",css);
+  if(text!==undefined)node.textContent=text;
+  svg.append(node);return node;
+ };
  for(let i=0;i<=tickCount;i++){
   const v=low+i*step,yy=y(v);
   add("line",{x1:left,y1:yy,x2:right,y2:yy},"assessment-chart-grid");
-  add("text",{x:left-8,y:yy+3.5,"text-anchor":"end"},"assessment-chart-tick",String(Math.round(v)));
+  // Repeat axis labels near the latest ten assessments for scroll readability.
+  add("text",{x:Math.max(left-8,width-344+19),y:yy+3.5,"text-anchor":"end"},"assessment-chart-tick",String(Math.round(v)));
  }
  add("line",{x1:left,y1:y(mean),x2:right,y2:y(mean)},"assessment-chart-mean");
  const coords=visible.map((p,i)=>[x(i),y(p.value)]);
@@ -1573,86 +1584,31 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  let active=-1;
  const highlight=index=>{
   active=index;
-  const p=visible[index];guide.setAttribute("x1",coords[index][0]);guide.setAttribute("x2",coords[index][0]);
+  const p=visible[index];
+  guide.setAttribute("x1",coords[index][0]);guide.setAttribute("x2",coords[index][0]);
   guide.style.display="";
   dots.forEach((dot,i)=>dot.classList.toggle("is-selected",i===index));
-  focus.textContent=assessmentDate(p.date);
+  focus.textContent=assessmentDate(p.date)+" · "+assessNumber(p.value)+(unit?" "+unit:"");
   labels.forEach((label,i)=>label.classList.toggle("is-selected",i===index));
  };
  const clear=()=>{active=-1;guide.style.display="none";dots.forEach(dot=>dot.classList.remove("is-selected"));focus.textContent="";labels.forEach(l=>l.classList.remove("is-selected"));};
  const move=event=>{
   const rect=svg.getBoundingClientRect();if(!rect.width)return;
-  const px=(event.clientX-rect.left)/rect.width*344;
-  let nearest=0;for(let i=1;i<coords.length;i++)if(Math.abs(coords[i][0]-px)<Math.abs(coords[nearest][0]-px))nearest=i;
+  const px=(event.clientX-rect.left)/rect.width*width;
+  let nearest=0;
+  for(let i=1;i<coords.length;i++)if(Math.abs(coords[i][0]-px)<Math.abs(coords[nearest][0]-px))nearest=i;
   if(nearest!==active)highlight(nearest);
  };
- svg.addEventListener("pointerdown",event=>{if(svg.setPointerCapture)svg.setPointerCapture(event.pointerId);move(event);});
- svg.addEventListener("pointermove",event=>{if(event.pointerType==="mouse"&&event.buttons===0&&active===-1)return;move(event);});
- svg.addEventListener("pointerup",()=>{});
- svg.addEventListener("pointercancel",clear);
+ svg.addEventListener("pointerdown",event=>{if(event.pointerType==="mouse")move(event);});
+ svg.addEventListener("pointermove",event=>{if(event.pointerType==="mouse"&&event.buttons)move(event);});
  svg.addEventListener("pointerleave",event=>{if(event.pointerType==="mouse")clear();});
+ svg.addEventListener("click",move);
  clear();
- // The established horizontal plot remains untouched for the latest ten.
- // The full-history view reuses its SVG classes, point colours and mean line,
- // rotating the time axis vertically to keep every measurement readable.
- const fullScroll=document.createElement("div");fullScroll.className="assessment-trend-vertical-scroll";fullScroll.hidden=true;
- const fullPoints=points.slice().reverse(),n=fullPoints.length;
- const fullHeight=Math.max(176,36+n*46),vTop=18,vBottom=fullHeight-22,vLeft=94,vRight=312;
- const fullValues=fullPoints.map(p=>p.value);
- const fullMin=Math.min(...fullValues),fullMax=Math.max(...fullValues);
- let fullLow=Math.floor(fullMin/step)*step,fullHigh=Math.ceil(fullMax/step)*step;
- if(fullLow===fullHigh){fullLow-=step;fullHigh+=step;}
- const fullMean=fullValues.reduce((a,b)=>a+b,0)/n;
- const fx=v=>vLeft+(v-fullLow)/(fullHigh-fullLow)*(vRight-vLeft);
- const fy=i=>vTop+(vBottom-vTop)*i/(n-1);
- const vertical=document.createElementNS(ns,"svg");
- vertical.setAttribute("viewBox","0 0 344 "+fullHeight);
- vertical.setAttribute("role","img");
- vertical.setAttribute("aria-label","Histórico completo de "+n+" avaliações, da mais recente à mais antiga.");
- const vadd=(tag,attrs,kind,label)=>{
-  const el=document.createElementNS(ns,tag);
-  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
-  if(kind)el.setAttribute("class",kind);
-  if(label!==undefined)el.textContent=label;
-  vertical.append(el);return el;
- };
- for(let i=0;i<=4;i++){
-  const v=fullLow+(fullHigh-fullLow)*i/4,xx=fx(v);
-  vadd("line",{x1:xx,y1:vTop,x2:xx,y2:vBottom},"assessment-chart-grid");
-  vadd("text",{x:xx,y:fullHeight-4,"text-anchor":"middle"},"assessment-chart-tick",assessNumber(v));
- }
- vadd("line",{x1:fx(fullMean),y1:vTop,x2:fx(fullMean),y2:vBottom},"assessment-chart-mean");
- vadd("polyline",{points:fullPoints.map((p,i)=>fx(p.value)+","+fy(i)).join(" ")},"assessment-chart-line");
- const verticalDots=[];
- fullPoints.forEach((p,i)=>{
-  const cy=fy(i),cx=fx(p.value),category=isSkinfoldSum?playerSkinfoldCategory(p.value,me?.field_position,me?.sex):null;
-  vadd("text",{x:5,y:cy+4},"assessment-chart-tick",assessmentDate(p.date));
-  const dot=vadd("circle",{cx,cy,r:4.5},"assessment-chart-point");
-  if(category){dot.style.stroke=category.color;dot.dataset.category=category.code;}
-  const value=vadd("text",{x:cx+9,y:cy-9},"assessment-chart-value",assessNumber(p.value));
-  if(category){value.style.fill=category.color;value.dataset.category=category.code;}
-  verticalDots.push({dot,value,point:p});
-  const hit=vadd("rect",{x:vLeft-4,y:cy-19,width:vRight-vLeft+22,height:38,fill:"transparent"});
-  hit.setAttribute("role","button");hit.setAttribute("tabindex","0");
-  hit.setAttribute("aria-label",assessmentDate(p.date)+": "+assessNumber(p.value)+(unit?" "+unit:""));
-  const select=()=>{
-   verticalDots.forEach(o=>{o.dot.classList.remove("is-selected");o.value.classList.remove("is-selected")});
-   dot.classList.add("is-selected");value.classList.add("is-selected");
-   focus.textContent=assessmentDate(p.date)+" · "+assessNumber(p.value)+(unit?" "+unit:"");
-  };
-  hit.addEventListener("click",select);
-  hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}});
- });
- fullScroll.append(vertical);
- const setRange=all=>{
-  recentButton.setAttribute("aria-pressed",String(!all));
-  allButton.setAttribute("aria-pressed",String(all));
-  svg.hidden=all;fullScroll.hidden=!all;
-  avg.textContent="— Média: "+assessNumber(all?fullMean:mean)+(unit?" "+unit:"");
-  focus.textContent="";
- };
- recentButton.onclick=()=>setRange(false);allButton.onclick=()=>setRange(true);
- holder.append(switcher,svg,fullScroll,focus,avg);
+ const scroll=document.createElement("div");scroll.className="assessment-trend-horizontal-scroll";
+ scroll.append(svg);
+ holder.append(scroll,focus,avg);
+ // Open with the latest ten points in view, while earlier points remain to the left.
+ if(width>344)requestAnimationFrame(()=>{scroll.scrollLeft=scroll.scrollWidth-scroll.clientWidth;});
  return holder;
 }
 function renderPlayerAssessments(){
