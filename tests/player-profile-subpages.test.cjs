@@ -33,3 +33,14 @@ test('original assessment navigation and CSS continue unchanged',()=>{
  assert.match(css,/#plans #plans-assessments details\.assessment-measure-card > summary/);
  assert.equal(css.split('{').length,css.split('}').length);
 });
+
+test('password inputs have accessible inline placeholders and hide hints on focus',()=>{
+ for(const label of ['Palavra-passe atual','Nova palavra-passe','Confirmar nova palavra-passe']){
+  assert.ok(html.includes('placeholder="'+label+'"'));
+  assert.ok(html.includes('<span class="profile-password-visually-hidden">'+label+'</span>'));
+ }
+ assert.match(css,/label\.profile-password-field input:focus::placeholder/);
+ assert.match(css,/color:transparent!important/);
+ assert.match(html,/autocomplete="current-password"/);
+ assert.match(html,/autocomplete="new-password"/);
+});
