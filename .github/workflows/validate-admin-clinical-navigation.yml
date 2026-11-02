@@ -15,3 +15,4 @@ jobs:
       - run: node --check static/admin-microcycles.js
       - run: node --test tests/admin-clinical-navigation.test.cjs
       - run: python -m unittest -v test_player_account_creation_v2
+      - run: python -m unittest discover -s tests -p "test_peri_events_v2.py" -v
