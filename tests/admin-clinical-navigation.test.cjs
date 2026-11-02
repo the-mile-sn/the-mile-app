@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=29/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=30/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -241,7 +241,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
  assert.match(html,/\/admin-light-theme\.css\?v=10/);
- assert.match(html,/\/admin-dashboard\.js\?v=29/);
+ assert.match(html,/\/admin-dashboard\.js\?v=30/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -292,7 +292,7 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=29/);
+ assert.match(html,/admin-dashboard\.js\?v=30/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
@@ -312,7 +312,7 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=29/);
+ assert.match(html,/admin-dashboard\.js\?v=30/);
 });
 
 test("Jogadores follow-up is a select with Pro and Elite only",()=>{
@@ -504,5 +504,20 @@ test("Dashboard uses photo metadata, with initials fallback, and MD-green game e
  assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
  assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
  assert.match(lightCss,/\.tm-db-event\.tm-db-game\{background:#e5f3e9!important/);
- assert.match(html,/admin-dashboard\.js\?v=29/);
+ assert.match(html,/admin-dashboard\.js\?v=30/);
+});
+
+test("Player picker photos share linked account metadata while retaining initials fallback",()=>{
+ const app=fs.readFileSync("app.py","utf8");
+ const css=fs.readFileSync("static/admin-microcycles.css","utf8");
+ assert.match(app,/athlete\['has_photo'\] = bool\(linked and linked\['has_photo'\]\)/);
+ assert.match(admin,/o\.dataset\.userId=a\.user_id\|\|""/);
+ assert.match(admin,/chosen\?\.dataset\.hasPhoto==="true"/);
+ assert.match(dashboard,/o\.dataset\.userId=option\.dataset\.userId\|\|""/);
+ assert.match(dashboard,/option\?\.dataset\.hasPhoto==="true"/);
+ assert.match(dashboard,/avatar\.textContent=name\.trim\(\)/);
+ assert.match(css,/\.tm-picker-photo\{/);
+ assert.match(css,/#tm-dashboard \.tm-db-avatar\{width:38px/);
+ assert.match(css,/#tm-players-page \.tm-p-avatar\{width:46px/);
+ assert.match(html,/admin-microcycles\.js\?v=18230/);
 });
