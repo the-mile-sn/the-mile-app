@@ -153,3 +153,18 @@ test("kcal per kg and daily comparison percentages use whole units while macros 
  assert.match(source,/fmt\(deviationPrevious,0\)\+"%"/);
  assert.match(source,/fmt\(total\[key\]\/weight,1\)\+" g\/kg"/);
 });
+
+test("approved palette B is shared by daily, weekly and plan meal views",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ for(const [token,hex] of [["orange","#54281B"],["yellow","#493713"],["green","#174631"],["blue","#193F60"]]){
+  assert.match(css,new RegExp("--meal-"+token+":"+hex,"i"));
+ }
+ for(const [token,hex] of [["orange","#FFA078"],["yellow","#FFD76F"],["green","#77E3A4"],["blue","#8DD0FF"]]){
+  assert.match(css,new RegExp("--meal-"+token+"-text:"+hex,"i"));
+ }
+ assert.match(css,/#weekly-view \.weekly-meal:is\(/);
+ assert.match(css,/#plans #plan-detail \.plan-overview-meal:is\(/);
+ assert.match(css,/#overview \.daily-meal:is\(/);
+ assert.match(css,/--meal-inner:color-mix/);
+ assert.match(css,/\.weekly-event-card\.weekly-match-with-intra\{\s*background:#F2F2F4!important/);
+});
