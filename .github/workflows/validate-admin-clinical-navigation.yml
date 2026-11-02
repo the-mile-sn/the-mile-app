@@ -16,4 +16,4 @@ jobs:
       - run: node --test tests/admin-clinical-navigation.test.cjs
       - run: python -m unittest -v test_player_account_creation_v2
       - run: python -m pip install -r requirements.txt
-      - run: PYTHONPATH=tests:. python -m unittest -v test_peri_events_v2.PeriOptionDraftEditingTests
+      - run: PYTHONPATH=tests:. python -m unittest -v test_peri_events_v2.PeriOptionDraftEditingTests test_peri_events_v2.EmptyTrainingDraftRecoveryTests
