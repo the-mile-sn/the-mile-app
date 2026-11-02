@@ -2,7 +2,9 @@
 import unittest
 from test_app import PortalTest, Client, app
 
-class PlayerLifecycleTests(PortalTest):
+class PlayerLifecycleTests(unittest.TestCase):
+    def setUp(self):
+        PortalTest.setUp(self)
     def create_player(self,name="Jogador Teste",username="jogadornovo"):
         response=self.admin.request("/api/v2/athletes","POST",{
             "name":name,"username":username,"password":"initial-player-pass-123","sex":"M","weight_kg":75
