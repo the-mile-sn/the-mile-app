@@ -2011,9 +2011,8 @@ function renderPeriDraft(draft,editing=false,athleteId=periAthleteId){
   }
  });
  if(editing&&draft.status==="draft"){
-  const existing=new Set(draft.extracted.groups.flatMap(group=>group.meals||[]));
-  for(const [phase,label] of [["pre",draft.kind==="match"?"Intra-jogo":"Pré-treino"],["post",draft.kind==="match"?"Pós-jogo":"Pós-treino"]]){
-   if(existing.has(phase))continue;
+  const sectionTypes=draft.kind==="match"?[["pre_match","Pré-jogo"],["pre","Intra-jogo"],["post","Pós-jogo"]]:[["pre","Pré-treino"],["post","Pós-treino"]];
+  for(const [phase,label] of sectionTypes){
    const add=document.createElement("button");add.type="button";add.className="peri-add-option peri-add-phase";add.textContent="+ Adicionar opção · "+label;
    add.onclick=()=>changeOptions("option-add",{phase});
    root.append(add);
