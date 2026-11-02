@@ -685,7 +685,7 @@ def application(env, start_response):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 if method == 'GET':
-                    return respond(200,{'foods':food_library_v2.list_foods(c,limit=250,offset=0)})
+                    return respond(200,{'foods':food_library_v2.list_foods(c,limit=2000,offset=0)})
                 try:
                     ident=food_library_v2.upsert(c,read_json(env),actor=user['id'])
                 except ValueError:
