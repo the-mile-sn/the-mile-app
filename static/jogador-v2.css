@@ -968,11 +968,7 @@ header{padding:10px 0 24px}
 #plan-colors button:has(.color-dot.vp):not(.selected){background:color-mix(in srgb,var(--meal-vp) 48%,#1c1c20)!important}
 #plan-colors button.selected{box-shadow:none!important;outline:none!important;border:0!important}
 #plan-colors button .color-dot{display:none!important}
-/* Closed Planos meal kcal must match the neutral kcal text in Overview. */
-#plans #plan-detail .plan-overview-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal,
-#plans #plan-detail .plan-overview-meal:not([open])>.daily-meal-head .meal-average-inline .macro>.kcal *{
- color:#dedee3!important;
-}
+/* Removed legacy neutral kcal override: coloured plans use their palette ink. */
 
 /* Weekly grid: tighter meal/event heights; match follows identical cell rhythm. */
 #weekly-view .weekly-meal{
@@ -3768,3 +3764,37 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .weekly-event-card.weekly-match-with-intra :is(.weekly-match-kcal,.weekly-meal-kcal){
  color:#22232A!important;
 }
+
+/* The Mile typography tokens — apply selectively to component roles. */
+:root{--mile-type-regular:400;--mile-type-medium:500;--mile-type-semibold:600;--mile-type-bold:700}
+/* Daily and Plans: identical meal, kcal and option hierarchy. */
+#overview .daily-meal>.daily-meal-head>strong,
+#plans #plan-detail .plan-overview-meal>.daily-meal-head>strong,
+#weekly-view .weekly-color-meal-head>strong,
+#weekly-view .weekly-meal-name{font-weight:var(--mile-type-medium)!important}
+#overview .daily-meal>.daily-meal-head .meal-average-inline .macro>.kcal,
+#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline .macro>.kcal,
+#plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline .macro>.kcal *,
+#weekly-view .weekly-meal-kcal{font-weight:var(--mile-type-medium)!important}
+#plans #plan-detail .plan-overview-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head .meal-average-inline .macro>.kcal,
+#plans #plan-detail .plan-overview-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head .meal-average-inline .macro>.kcal *{color:var(--meal-ink)!important}
+#overview .daily-meal .plan-option-label>strong,
+#plans #plan-detail :is(.plan-option-card,.player-meal-option-subcard) .plan-option-label>strong,
+#weekly-view .weekly-color-detail .plan-option-label>strong{font-weight:var(--mile-type-medium)!important}
+#overview .daily-meal :is(.foods,.meal-collapsible-note .meal-note-body),
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal) .foods,
+#weekly-view .weekly-color-detail .foods{font-weight:var(--mile-type-regular)!important}
+#overview .daily-event-card>span:not(.meal-leading-icon),
+#overview .peri-meal>.daily-meal-head>strong,
+#overview .match-intra-card>.daily-meal-head>strong,
+#weekly-view .weekly-event-card>span:first-child,
+#weekly-view .weekly-peri-card>span:first-child{font-weight:var(--mile-type-medium)!important}
+#weekly-view .weekly-day-total .weekly-total-kcal,
+#weekly-view .weekly-average-metric>strong,
+#overview #day-details .nutrition-comparison-macro>strong,
+#overview #day-details .nutrition-comparison-stat>strong,
+#overview #day-details .nutrition-weekly-charts:not([hidden]) :is(.macro-chart-heading,.nutrition-chart-section>strong){font-weight:var(--mile-type-semibold)!important}
+#overview #day-details .nutrition-comparison-center>strong{font-weight:var(--mile-type-bold)!important}
+#weekly-view .weekly-color-detail .weekly-detail-titles>strong{font-weight:var(--mile-type-semibold)!important}
+#weekly-view .weekly-day-total .weekly-total-macros,
+#overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-header+div>.nutrition-chart-section>strong{font-weight:var(--mile-type-regular)!important}
