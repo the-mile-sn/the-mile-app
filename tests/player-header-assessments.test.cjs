@@ -84,3 +84,14 @@ test('8-skinfold graph colours reflect sex and goalkeeper cutoffs',()=>{
  assert.match(js,/dot\.style\.stroke=category\.color/);
  assert.match(js,/label\.style\.fill=category\.color/);
 });
+
+test("Assessments, Menus, Profile and bottom navigation share approved typography tokens",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#plans #plans-assessments \.assessment-metric-name/);
+ assert.match(css,/#menus \.day-menu \.menu-entry-heading strong/);
+ assert.match(css,/#profile \.profile-action,#profile \.profile-password-save/);
+ assert.match(css,/#tabs button,#tabs button>span:not\(\.profile-tab-avatar\)/);
+ assert.match(css,/font-weight:var\(--mile-type-medium\)!important/);
+ assert.match(css,/font-weight:var\(--mile-type-semibold\)!important/);
+ assert.match(css,/font-weight:var\(--mile-type-regular\)!important/);
+});
