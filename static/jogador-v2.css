@@ -3677,3 +3677,52 @@ body.profile-active .player-top{display:none!important}
 #overview .match-intra-card .peri-timing-heading{font-weight:600;color:inherit;margin-bottom:9px;line-height:1.35}
 #overview .match-intra-card .peri-timing-lines{display:flex;flex-direction:column;gap:9px}
 #overview .match-intra-card .peri-timing-line{color:inherit;opacity:.82;line-height:1.45;overflow-wrap:anywhere}
+
+/* Approved palette B: opaque deep plan surfaces and matching brighter labels.
+   One set of tokens is shared by Daily, Weekly and Plans. */
+:root{
+ --meal-orange:#54281B;--meal-yellow:#493713;--meal-green:#174631;--meal-blue:#193F60;
+ --meal-orange-text:#FFA078;--meal-yellow-text:#FFD76F;
+ --meal-green-text:#77E3A4;--meal-blue-text:#8DD0FF;
+}
+.tone-orange{--meal-ink:var(--meal-orange-text);--meal-inner:color-mix(in srgb,var(--meal-orange) 79%,white)}
+.tone-yellow{--meal-ink:var(--meal-yellow-text);--meal-inner:color-mix(in srgb,var(--meal-yellow) 79%,white)}
+.tone-green{--meal-ink:var(--meal-green-text);--meal-inner:color-mix(in srgb,var(--meal-green) 79%,white)}
+.tone-blue{--meal-ink:var(--meal-blue-text);--meal-inner:color-mix(in srgb,var(--meal-blue) 79%,white)}
+/* Meal labels, kcal and arrows use the corresponding approved palette B ink. */
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head,
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head,
+#weekly-view .weekly-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue),
+#menus .menu-entry:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue){
+ color:var(--meal-ink)!important;
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head strong,
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head .kcal,
+#plans #plan-detail :is(.plan-meal,.plan-overview-meal):is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head strong,
+#weekly-view .weekly-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .weekly-meal-name,
+#weekly-view .weekly-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .weekly-meal-kcal,
+#menus .menu-entry:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .menu-entry-heading strong{
+ color:var(--meal-ink)!important;
+}
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.daily-meal-head::after,
+#plans #plan-detail .plan-overview-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>summary.daily-meal-head::after{
+ color:var(--meal-ink)!important;
+}
+/* Expanded option surfaces are a lighter shade of their parent hue. */
+#overview .daily-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>details.player-meal-option-subcard,
+#plans #plan-detail .plan-overview-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>details.player-meal-option-subcard,
+#plans #plan-detail .plan-meal:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) details.plan-option-card,
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .weekly-meal-average,
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue) .weekly-option-card{
+ background:var(--meal-inner)!important;
+}
+/* Keep training/peri-training neutral; match cards become white for contrast. */
+#overview #day-details .daily-event-card.match-intra-card,
+#weekly-view .weekly-event-card.weekly-match-with-intra{
+ background:#F2F2F4!important;color:#22232A!important;
+}
+#overview #day-details .daily-event-card.match-intra-card>.daily-meal-head,
+#overview #day-details .daily-event-card.match-intra-card>.daily-meal-head strong,
+#weekly-view .weekly-event-card.weekly-match-with-intra .weekly-meal-kcal{
+ color:#22232A!important;
+}
