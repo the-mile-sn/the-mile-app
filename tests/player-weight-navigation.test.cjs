@@ -165,7 +165,7 @@ test("approved palette B is shared by daily, weekly and plan meal views",()=>{
  assert.match(css,/#weekly-view \.weekly-meal:is\(/);
  assert.match(css,/#plans #plan-detail \.plan-overview-meal:is\(/);
  assert.match(css,/#overview \.daily-meal:is\(/);
- assert.match(css,/--meal-inner:color-mix/);
+ for(const inner of ["#623324","#57451E","#24543E","#284D6C"])assert.ok(css.includes("--meal-inner:"+inner));
  assert.match(css,/\.weekly-event-card\.weekly-match-with-intra\{\s*background:#F2F2F4!important/);
 });
 
