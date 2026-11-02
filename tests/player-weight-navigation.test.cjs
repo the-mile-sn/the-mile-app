@@ -224,3 +224,13 @@ test("weekly coloured meal kcal and macro strips have no tinted background",()=>
  assert.match(css,/#weekly-view \.weekly-color-detail:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\)>\.weekly-meal-average/);
  assert.match(css,/\.weekly-option-card \.option-expanded-macros,[\s\S]*?background:transparent!important;\s*background-color:transparent!important;\s*background-image:none!important/);
 });
+
+test("Daily, Weekly detail and Plans share meal heading, option title and option index hierarchy",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview #day-details \.daily-meal>\.daily-meal-head>strong/);
+ assert.match(css,/#plans #plan-detail \.plan-overview-meal>\.daily-meal-head>strong/);
+ assert.match(css,/#weekly-view \.weekly-color-detail \.weekly-color-meal-head>strong/);
+ assert.match(css,/font-size:16px!important;font-weight:500!important/);
+ assert.match(css,/font-size:15px!important;font-weight:500!important/);
+ assert.match(css,/font-size:12px!important;font-weight:400!important/);
+});
