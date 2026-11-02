@@ -162,9 +162,12 @@ def add_option(c,athlete_id,identifier,group_index=None,phase=None):
             raise ValueError("invalid_option")
         group=groups[group_index]
     else:
-        if phase not in PHASES or any(phase in g.get("meals",[]) for g in groups) or len(groups)>=80:
+        headings={"training":{"pre":"Pré-treino","post":"Pós-treino"},
+                  "match":{"pre":"Intra-jogo","post":"Pós-jogo","pre_match":"Pré-jogo"}}
+        if phase not in headings[doc["kind"]] or len(groups)>=80:
             raise ValueError("invalid_phase")
-        group={"heading":LABELS[doc["kind"]][phase],"meals":[phase],"options":[]}
+        internal_phase="pre" if phase=="pre_match" else phase
+        group={"heading":headings[doc["kind"]][phase],"meals":[internal_phase],"options":[]}
         groups.append(group)
     options=group["options"]
     if len(options)>=80:raise ValueError("too_many_options")
