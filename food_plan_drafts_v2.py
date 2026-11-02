@@ -30,7 +30,7 @@ def validate(value):
                 foods.append({"id":fid,"grams":grams})
             options.append({"foods":foods})
         clean.append({"name":title,"options":options})
-    return {"name":name,"meals":clean}
+    return {"id":str(value.get("id") or ""), "name":name,"meals":clean}
 
 def list_drafts(c):
     return [dict(r) for r in c.execute("SELECT id,name,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()]
