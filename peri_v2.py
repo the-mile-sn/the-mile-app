@@ -82,6 +82,60 @@ def get_import(c,athlete_id,identifier):
     doc=dict(row);doc["extracted"]=json.loads(doc.pop("extracted_json"))
     return doc
 
+def _groups_from_published_snapshot(c,athlete_id,kind):
+    """Recover editable options from the immutable active release, without writing to it."""
+    row=c.execute("""SELECT snapshot_json FROM v2_peri_publications
+                     WHERE athlete_id=? AND kind=? AND replaced_at IS NULL
+                     ORDER BY published_at DESC LIMIT 1""",(athlete_id,kind)).fetchone()
+    if not row:return []
+    snapshot=json.loads(row["snapshot_json"])
+    if not isinstance(snapshot,dict):raise ValueError("invalid_published_plan")
+    groups=[]
+    for phase in PHASES:
+        options=snapshot.get(phase,[])
+        if not isinstance(options,list) or len(options)>80:raise ValueError("invalid_published_plan")
+        if not options:continue
+        restored=[]
+        for number,option in enumerate(options,1):
+            if not isinstance(option,dict):raise ValueError("invalid_published_plan")
+            items=option.get("items",[])
+            if not isinstance(items,list) or len(items)>80:raise ValueError("invalid_published_plan")
+            lines=[]
+            timings=[]
+            for item in items:
+                if not isinstance(item,dict):raise ValueError("invalid_published_plan")
+                if item.get("kind")=="food":
+                    line=" ".join(str(item.get(k) or "").strip() for k in ("quantity","name")).strip()
+                else:
+                    line=str(item.get("text") or "").strip()
+                if not line:continue
+                lines.append(line)
+                timings.append(str(item.get("timing") or ""))
+            editable={"number":number,"title":str(option.get("title") or ""),
+                      "totals":option.get("totals"),
+                      "items":items,"lines":lines,"reviewed":False}
+            if kind=="match" and phase=="pre":editable["timings"]=timings
+            restored.append(editable)
+        groups.append({"heading":LABELS[kind][phase],"meals":[phase],"options":restored})
+    return groups
+
+
+def restore_empty_draft(c,athlete_id,identifier):
+    """Restore a blank draft on explicit request; preserve the active publication."""
+    doc=get_import(c,athlete_id,identifier)
+    if doc is None:return None
+    if doc["status"]!="draft":raise ValueError("not_editable")
+    if any(group.get("options") for group in doc["extracted"].get("groups",[])):
+        raise ValueError("draft_has_options")
+    restored=_groups_from_published_snapshot(c,athlete_id,doc["kind"])
+    if not restored:raise ValueError("no_published_options")
+    doc["extracted"]["groups"]=restored
+    c.execute("""UPDATE v2_peri_imports SET extracted_json=?
+                 WHERE id=? AND athlete_id=? AND status='draft'""",
+              (json.dumps(doc["extracted"],ensure_ascii=False),identifier,athlete_id))
+    return get_import(c,athlete_id,identifier)
+
+
 def copy_as_draft(c,athlete_id,identifier):
     """Create an editable copy; the already published release stays immutable."""
     doc=get_import(c,athlete_id,identifier)
@@ -89,6 +143,9 @@ def copy_as_draft(c,athlete_id,identifier):
     if doc["status"]=="draft":return doc
     identity=secrets.token_hex(16)
     extracted=json.loads(json.dumps(doc["extracted"],ensure_ascii=False))
+    if not any(group.get("options") for group in extracted.get("groups",[])):
+        recovered=_groups_from_published_snapshot(c,athlete_id,doc["kind"])
+        if recovered:extracted["groups"]=recovered
     c.execute("""INSERT INTO v2_peri_imports(id,athlete_id,kind,filename,status,extracted_json,created_at)
                  VALUES(?,?,?,?,?,?,?)""",(identity,athlete_id,doc["kind"],doc["filename"],"draft",json.dumps(extracted,ensure_ascii=False),int(time.time())))
     return get_import(c,athlete_id,identity)

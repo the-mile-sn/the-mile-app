@@ -1077,6 +1077,11 @@ def application(env, start_response):
                     except ValueError:raise Problem(400,'invalid_peri_option')
                     if option is None:raise Problem(404,'not_found')
                     return respond(200,{'option':option})
+                if len(seg)==7 and seg[6]=='restore-empty' and method=='POST':
+                    try: draft=peri_v2.restore_empty_draft(c,aid,seg[5])
+                    except ValueError:raise Problem(400,'peri_draft_restore_unavailable')
+                    if draft is None:raise Problem(404,'not_found')
+                    return respond(200,{'draft':draft})
                 if len(seg)==7 and seg[6]=='option-add' and method=='POST':
                     body=read_json(env)
                     try: draft=peri_v2.add_option(c,aid,seg[5],body.get('group_index'),body.get('phase'))

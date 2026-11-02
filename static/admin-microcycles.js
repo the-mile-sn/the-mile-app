@@ -1927,6 +1927,27 @@ function renderPeriDraft(draft,editing=false,athleteId=periAthleteId){
  const root=$("peri-review");root.replaceChildren();
  const heading=document.createElement("h3");heading.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";root.append(heading);
  
+ if(editing&&draft.status==="draft"&&!draft.extracted.groups.some(group=>(group.options||[]).length)){
+  const notice=document.createElement("p");notice.className="hint peri-empty-draft-note";
+  notice.textContent="Este rascunho não tem opções. Podes criar secções novas ou recuperar as opções da última versão publicada, se existir.";
+  root.append(notice);
+  const restore=document.createElement("button");restore.type="button";restore.className="peri-add-option";
+  restore.textContent="Recuperar opções da última publicação";
+  restore.onclick=async()=>{
+   if(!periIsCurrent(athleteId))return;
+   if(!confirm("Recuperar as opções da última publicação para este rascunho vazio? As opções recuperadas terão de ser validadas. A publicação atual não será alterada."))return;
+   restore.disabled=true;
+   try{
+    const response=await request(periEndpoint(athleteId)+"/"+encodeURIComponent(draft.id)+"/restore-empty",{method:"POST",body:"{}"});
+    if(!periIsCurrent(athleteId))return;
+    periUnchangedCopies.delete(draft.id);
+    await loadPeriImports();
+    if(periIsCurrent(athleteId))renderPeriDraft(response.draft,true,athleteId);
+   }catch(error){if(periIsCurrent(athleteId))periMessage("Não foi possível recuperar: "+error.message);}
+   finally{restore.disabled=false;}
+  };
+  root.append(restore);
+ }
  const changeOptions=async(action,body)=>{
   if(!periIsCurrent(athleteId)||draft.status!=="draft")return;
   if(!confirm("As alterações ainda não validadas neste editor não serão guardadas. Queres continuar?"))return;
