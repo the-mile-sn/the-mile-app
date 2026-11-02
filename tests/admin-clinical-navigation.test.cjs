@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=101/);
+ assert.match(html,/admin-microcycles\.css\?v=102/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=28/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=29/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -240,8 +240,8 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=9/);
- assert.match(html,/\/admin-dashboard\.js\?v=28/);
+ assert.match(html,/\/admin-light-theme\.css\?v=10/);
+ assert.match(html,/\/admin-dashboard\.js\?v=29/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -258,7 +258,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=9"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=10"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
  assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
 });
@@ -279,7 +279,7 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
  assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
  assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
  assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
- assert.match(html,/admin-light-theme\.css\?v=9/);
+ assert.match(html,/admin-light-theme\.css\?v=10/);
 });
 
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
@@ -292,14 +292,14 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=28/);
+ assert.match(html,/admin-dashboard\.js\?v=29/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=101/);
+ assert.match(html,/admin-microcycles\.css\?v=102/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -312,7 +312,7 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=28/);
+ assert.match(html,/admin-dashboard\.js\?v=29/);
 });
 
 test("Jogadores follow-up is a select with Pro and Elite only",()=>{
@@ -441,7 +441,7 @@ test("Light mode assessment editing and Planning picker keep readable surfaces",
  assert.match(rules,/html\[data-admin-theme="light"\]/);
  assert.match(rules,/background:var\(--tm-light-surface\)/);
  assert.match(rules,/background:#e9eef5/);
- assert.match(html,/admin-light-theme\.css\?v=9/);
+ assert.match(html,/admin-light-theme\.css\?v=10/);
  assert.match(html,/id="assessment-review-form"/);
  assert.match(html,/id="tm-planning-results"/);
 });
@@ -490,4 +490,19 @@ test("Player access loader never uses removed identity element",()=>{
  assert.match(dashboard,/\$\("tm-players-password-toggle"\)\.hidden=!playerAccess/);
  assert.match(dashboard,/if\(playerAccess\)\{accessToggle\.querySelector/);
  assert.match(dashboard,/accessFeedback\.textContent="Não foi possível consultar o acesso:/);
+});
+
+test("Dashboard uses photo metadata, with initials fallback, and MD-green game events",()=>{
+ const py=fs.readFileSync("dashboard_v2.py","utf8");
+ const dark=fs.readFileSync("static/admin-microcycles.css","utf8");
+ const lightCss=fs.readFileSync("static/admin-light-theme.css","utf8");
+ assert.match(py,/u\.photo IS NOT NULL/);
+ assert.match(py,/week_rows\.append\(\{"id": aid,[\s\S]*?"has_photo": False/);
+ assert.match(dashboard,/if\(player\.has_photo&&player\.user_id\)/);
+ assert.match(dashboard,/img\.src="\/api\/players\/"+encodeURIComponent\(player\.user_id\)+"\/photo"/);
+ assert.match(dashboard,/img\.addEventListener\("error",\(\)=>img\.remove\(\)\)/);
+ assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
+ assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
+ assert.match(lightCss,/\.tm-db-event\.tm-db-game\{background:#e5f3e9!important/);
+ assert.match(html,/admin-dashboard\.js\?v=29/);
 });
