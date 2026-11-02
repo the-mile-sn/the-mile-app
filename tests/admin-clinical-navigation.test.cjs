@@ -482,3 +482,12 @@ test("Player Gerir acesso uses approved hierarchy and preserves secure actions",
  assert.match(light,/\.tm-access-archive/);
  assert.match(light,/\.tm-access-password-form/);
 });
+
+test("Player access loader never uses removed identity element",()=>{
+ assert.doesNotMatch(dashboard,/accessIdentity|tm-players-access-identity/);
+ assert.match(dashboard,/playerAccess=data\.access;paintPlayerAccess\(\)/);
+ assert.match(dashboard,/accessToggle\.hidden=!playerAccess/);
+ assert.match(dashboard,/\$\("tm-players-password-toggle"\)\.hidden=!playerAccess/);
+ assert.match(dashboard,/if\(playerAccess\)\{accessToggle\.querySelector/);
+ assert.match(dashboard,/accessFeedback\.textContent="Não foi possível consultar o acesso:/);
+});
