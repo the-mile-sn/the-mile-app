@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=99/);
+ assert.match(html,/admin-microcycles\.css\?v=100/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -299,7 +299,7 @@ test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=99/);
+ assert.match(html,/admin-microcycles\.css\?v=100/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -444,4 +444,21 @@ test("Light mode assessment editing and Planning picker keep readable surfaces",
  assert.match(html,/admin-light-theme\.css\?v=8/);
  assert.match(html,/id="assessment-review-form"/);
  assert.match(html,/id="tm-planning-results"/);
+});
+
+test("archived players have their own collapsible card below the active list",()=>{
+ const list=html.indexOf('id="tm-players-body"');
+ const end=html.indexOf('id="tm-players-error"');
+ const archive=html.indexOf('id="tm-players-archived-panel"');
+ assert.ok(list>=0&&end>list&&archive>end,"archive card follows the player table");
+ assert.equal(html.split('id="tm-players-archived-box"').length-1,1);
+ assert.match(html,/id="tm-players-archived-panel" class="tm-players-panel tm-players-archived-panel"/);
+ assert.match(dashboard,/async function loadArchivedPlayers\(\)/);
+ assert.match(dashboard,/tm-players-archived-box/);
+ const dark=fs.readFileSync("static/admin-microcycles.css","utf8");
+ const light=fs.readFileSync("static/admin-light-theme.css","utf8");
+ assert.match(dark,/\.tm-players-archived-panel\{margin-top:18px/);
+ assert.match(dark,/\.tm-archived-row\{/);
+ assert.match(dark,/#tm-players-page:has\(#tm-players-profile:not\(\[hidden\]\)\)/);
+ assert.match(light,/tm-players-archived-box\[open\]/);
 });

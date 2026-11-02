@@ -1270,3 +1270,21 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #peri-panel .peri-add-option{display:block;width:100%;margin:0 0 18px;padding:11px 14px;border:1px solid rgba(150,160,175,.45);border-radius:999px;background:transparent;color:inherit;cursor:pointer}
 #peri-panel .peri-add-option:hover{background:rgba(130,140,155,.10)}
 #peri-panel .peri-add-phase{margin-top:16px}
+
+
+/* Archive is a secondary, collapsible card below the active players table. */
+#tm-players-page .tm-players-archived-panel{margin-top:18px;padding:0;overflow:hidden}
+#tm-players-page .tm-players-archived-panel[hidden]{display:none!important}
+#tm-players-page #tm-players-archived-box{display:block}
+#tm-players-page #tm-players-archived-box summary{display:flex;align-items:center;gap:10px;padding:20px 22px;cursor:pointer;list-style:none;font-size:14px;font-weight:600;color:inherit}
+#tm-players-page #tm-players-archived-box summary::-webkit-details-marker{display:none}
+#tm-players-page #tm-players-archived-box summary::before{content:"";width:7px;height:7px;flex:none;border-right:1.7px solid currentColor;border-bottom:1.7px solid currentColor;transform:rotate(-45deg);transition:transform .2s;opacity:.65}
+#tm-players-page #tm-players-archived-box[open] summary::before{transform:rotate(45deg)}
+#tm-players-page #tm-players-archived-box[open] summary{border-bottom:1px solid #303139}
+#tm-players-page #tm-players-archived-list{padding:4px 22px}
+#tm-players-page .tm-archived-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:13px 0;font-size:13px;border-bottom:1px solid #292b31}
+#tm-players-page .tm-archived-row:last-child{border-bottom:0}
+#tm-players-page .tm-archived-row .tm-players-control{font-size:12px}
+#tm-players-page #tm-players-archived-feedback{margin:0 22px 12px;font-size:12px}
+#tm-players-page:has(#tm-players-profile:not([hidden])) .tm-players-archived-panel{display:none}
+@media(max-width:830px){#tm-players-page #tm-players-archived-box summary{padding:17px 14px}#tm-players-page #tm-players-archived-list{padding:4px 14px}}

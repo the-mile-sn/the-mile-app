@@ -444,3 +444,10 @@ html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result:focus-visibl
 html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result-empty{
  color:var(--tm-light-muted);
 }
+
+
+/* Archived-player card follows the active-list surface in light mode. */
+html[data-admin-theme="light"] #tm-players-page #tm-players-archived-box[open] summary,
+html[data-admin-theme="light"] #tm-players-page .tm-archived-row{border-color:var(--tm-light-border)}
+html[data-admin-theme="light"] #tm-players-page #tm-players-archived-box summary{color:var(--tm-light-text)}
+html[data-admin-theme="light"] #tm-players-page #tm-players-archived-feedback{color:var(--tm-light-muted)}
