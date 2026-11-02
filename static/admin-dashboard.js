@@ -68,7 +68,7 @@
   for(const kind of ["assessments","forms"]){
    const select=$("tm-"+kind+"-player"),value=select.value;select.replaceChildren();
    const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar jogador";select.append(empty);
-   for(const option of original.options){const o=document.createElement("option");o.value=option.value;o.textContent=option.textContent;select.append(o);}
+   for(const option of original.options){const o=document.createElement("option");o.value=option.value;o.textContent=option.textContent;o.dataset.userId=option.dataset.userId||"";o.dataset.hasPhoto=option.dataset.hasPhoto||"false";select.append(o);}
    select.value=value&&Array.from(select.options).some(o=>o.value===value)?value:"";
    syncClinicalPicker(kind);
   }
@@ -78,6 +78,7 @@
   const select=$("tm-"+kind+"-player"),search=$("tm-"+kind+"-search"),avatar=$("tm-"+kind+"-avatar");
   const name=select.value?(select.selectedOptions[0]?.textContent||""):"";
   search.value=name;search.placeholder="Pesquisar jogador";avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+  const option=select.selectedOptions[0];if(option?.dataset.hasPhoto==="true"&&option.dataset.userId){const img=el("img","tm-picker-photo");img.src="/api/players/"+encodeURIComponent(option.dataset.userId)+"/photo";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
   $("tm-"+kind+"-results").hidden=true;search.setAttribute("aria-expanded","false");
  }
  function drawClinicalResults(kind){
