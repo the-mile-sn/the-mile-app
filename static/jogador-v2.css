@@ -3985,3 +3985,17 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .weekly-color-detail .plan-option-label>small{
  font-size:12px!important;font-weight:400!important;
 }
+
+/* Login-only premium entry: original logo above an unboxed form. */
+body:has(#login-panel:not([hidden])) .player-top{padding-top:42px!important;padding-bottom:0!important}
+body:has(#login-panel:not([hidden])) .player-header-brand{width:126px!important;max-width:48vw!important}
+#login-panel{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0 auto!important;max-width:440px!important}
+#login-panel .login-tagline{color:#a4a4ae!important;text-align:center!important;font-size:15px!important;font-weight:400!important;letter-spacing:.01em;margin:20px 0 40px!important}
+#login-form{display:grid!important;gap:14px!important}
+#login-form .login-input{display:block!important;margin:0!important}
+#login-form .login-sr-label{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+#login-form .login-input input{width:100%!important;max-width:none!important;min-height:56px!important;margin:0!important;border:0!important;outline-offset:2px!important;border-radius:20px!important;padding:0 18px!important;background:#242429!important;color:#f6f6f8!important;font-size:16px!important;font-weight:400!important}
+#login-form .login-input input::placeholder{color:#aeb0ba!important;opacity:1!important}
+#login-form .login-input input:focus::placeholder{color:transparent!important}
+#login-form>button[type="submit"]{min-height:54px!important;margin-top:10px!important;border:0!important;border-radius:999px!important;background:#f5f5f7!important;color:#16161a!important;font-size:16px!important;font-weight:600!important;width:100%!important}
+#login-panel #login-error{min-height:1.3em!important;margin:12px 4px!important}
