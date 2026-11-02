@@ -681,6 +681,15 @@ def application(env, start_response):
                 try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
                 except ValueError:raise Problem(400,'invalid_supplement_package')
                 return respond(200,result)
+            if path == '/api/v2/food-library/import' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                try:
+                    payload=read_json(env)
+                    count=food_library_v2.import_batch(c,payload.get('foods'))
+                except ValueError:
+                    raise Problem(400,'invalid_food_import')
+                return respond(200,{'imported':count})
             if path == '/api/v2/food-library' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
