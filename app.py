@@ -28,6 +28,7 @@ import effective_nutrition_v2
 import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
+import food_plan_drafts_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -268,6 +269,7 @@ def initialize():
         microcycles_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
+        food_plan_drafts_v2.initialize(c)
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
@@ -568,7 +570,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-light-theme.css': 'admin-light-theme.css',
-            '/food-library': 'food-library.html', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
+            '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
@@ -681,6 +683,20 @@ def application(env, start_response):
                 try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
                 except ValueError:raise Problem(400,'invalid_supplement_package')
                 return respond(200,result)
+            if path == '/api/v2/food-plan-drafts' and method in ('GET','POST'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200,{'drafts':food_plan_drafts_v2.list_drafts(c)})
+                try: ident=food_plan_drafts_v2.save(c,read_json(env))
+                except ValueError: raise Problem(400,'invalid_plan')
+                return respond(200,{'id':ident})
+            if path.startswith('/api/v2/food-plan-drafts/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                draft=food_plan_drafts_v2.get(c,path.rsplit('/',1)[-1])
+                if draft is None: raise Problem(404,'not_found')
+                return respond(200,{'draft':draft})
             if path == '/api/v2/food-library/import' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
