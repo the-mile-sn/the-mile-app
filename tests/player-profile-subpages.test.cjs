@@ -103,5 +103,11 @@ test('tab switching slides content in navigation direction and respects reduced 
  assert.match(js,/direction=oldIndex<newIndex\?1:-1/);
  assert.match(js,/prefers-reduced-motion: reduce/);
  assert.match(js,/destination\.animate\(\[/);
- assert.match(js,/duration:220/);
+ assert.match(js,/duration:500/);
+});
+
+test('floating navigation has frosted glass styling with a clear selected state',()=>{
+ assert.match(css,/backdrop-filter:blur\(22px\) saturate\(145%\)/);
+ assert.match(css,/#player-panel #tabs button\[aria-pressed="true"\]/);
+ assert.match(js,/duration:500/);
 });

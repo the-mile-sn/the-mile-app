@@ -329,7 +329,7 @@ async function show(t){
   destination.animate([
    {transform:"translateX("+(direction*24)+"px)",opacity:0.55},
    {transform:"translateX(0)",opacity:1}
-  ],{duration:220,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+  ],{duration:500,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
  }
  if(t==="overview")await overview();
  if(t==="plans")openPlansSection("prescriptions");
