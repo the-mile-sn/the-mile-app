@@ -1487,6 +1487,17 @@ session().catch(()=>{$("login-panel").hidden=false;});
 /* Player anthropometry data. Only clinician-published measurements are shown. */
 let assessmentRecords=[],assessmentFields={},assessmentAverages=[],assessmentGroup="resumo";
 const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+// Clinical sum-of-8 skinfold colours, matching the Backoffice.
+function playerSkinfoldCategory(value,fieldPosition="",sex="M"){
+ const n=Number(value);if(value===null||value===""||!Number.isFinite(n))return null;
+ const base=String(sex||"").trim().toUpperCase()==="F"?[65,70,80]:[45,55,60];
+ const offset=String(fieldPosition||"").trim().toUpperCase()==="GR"?5:0;
+ const [darkMax,yellowMin,redMin]=base.map(limit=>limit+offset);
+ if(n>=redMin)return {color:"#E17878",code:"red"};
+ if(n>=yellowMin)return {color:"#E7C268",code:"yellow"};
+ if(n>darkMax)return {color:"#A4D9AE",code:"light-green"};
+ return {color:"#4A9879",code:"dark-green"};
+}
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
  const epoch=playerSessionEpoch;
@@ -1499,7 +1510,7 @@ async function loadPlayerAssessments(){
  renderPlayerAssessments();
 }
 
-function buildAssessmentTrend(points,unit,axisStep){
+function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const holder=document.createElement("div");holder.className="assessment-trend";
  const history=document.createElement("details");history.className="assessment-history-card";
  const historySummary=document.createElement("summary");historySummary.textContent="Todas as avaliações ("+points.length+")";history.append(historySummary);
@@ -1531,8 +1542,13 @@ function buildAssessmentTrend(points,unit,axisStep){
  add("polyline",{points:coords.map(p=>p.join(",")).join(" ")},"assessment-chart-line");
  const labels=[],dots=[];
  coords.forEach(([cx,cy],i)=>{
-  dots.push(add("circle",{cx,cy,r:4.5},"assessment-chart-point"));
-  labels.push(add("text",{x:cx,y:Math.max(12,cy-10),"text-anchor":"middle"},"assessment-chart-value",assessNumber(visible[i].value)));
+  const category=isSkinfoldSum?playerSkinfoldCategory(visible[i].value,me?.field_position,me?.sex):null;
+  const dot=add("circle",{cx,cy,r:4.5},"assessment-chart-point");
+  if(category){dot.style.stroke=category.color;dot.dataset.category=category.code;}
+  dots.push(dot);
+  const label=add("text",{x:cx,y:Math.max(12,cy-10),"text-anchor":"middle"},"assessment-chart-value",assessNumber(visible[i].value));
+  if(category){label.style.fill=category.color;label.dataset.category=category.code;}
+  labels.push(label);
  });
  const guide=add("line",{x1:left,y1:top,x2:left,y2:bottom},"assessment-chart-guide");
  guide.style.display="none";
@@ -1585,7 +1601,7 @@ function renderPlayerAssessments(){
   right.append(change);
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
   summary.append(left,right,arrow);
-  details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined));
+  details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined,key==="sum_8"));
   if(assessmentGroup==="resumo"&&key==="body_fat"&&recent.formula_note){
    const note=document.createElement("p");note.className="assessment-formula";note.textContent="Gordura corporal: "+recent.formula_note;details.append(note);
   }
