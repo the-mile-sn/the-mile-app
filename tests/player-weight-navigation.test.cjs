@@ -68,7 +68,7 @@ test("expanded nutrition keeps the dual ring and displays only the original char
 test("energy label and compact relative amount replace separate kcal unit inside halo",()=>{
  assert.match(source,/heading\.textContent="Energia \(kcal\)"/);
  assert.match(source,/center\.append\(number\)/);
- assert.match(source,/fmt\(total\.kcal\/weight,1\)\+" \/kg"/);
+ assert.match(source,/fmt\(total\.kcal\/weight,0\)\+" \/kg"/);
  assert.doesNotMatch(source,/unit\.textContent="kcal";center\.append\(number,unit\)/);
 });
 test("open and close use same chevron inside persistent halo preview",()=>{
