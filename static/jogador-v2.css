@@ -4011,3 +4011,7 @@ body:has(#login-panel:not([hidden])) .player-top{
  width:100%;flex:none;padding-top:0!important;padding-bottom:0!important;
 }
 body:has(#login-panel:not([hidden])) #login-panel{width:100%!important;flex:none!important}
+
+/* Login-only logo: larger, without tagline; the centered group stays intact. */
+body:has(#login-panel:not([hidden])) .player-header-brand{width:174px!important;max-width:60vw!important}
+body:has(#login-panel:not([hidden])) #login-panel{margin-top:38px!important}

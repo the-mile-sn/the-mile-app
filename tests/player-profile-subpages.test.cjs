@@ -78,7 +78,7 @@ test('assessment last value label stays within the horizontal chart bounds',()=>
 });
 
 test('login uses the approved minimal brand layout without changing credentials or authentication wiring',()=>{
- assert.match(html,/class="login-tagline">Start now\. Get consistent\./);
+ assert.doesNotMatch(html,/class="login-tagline">Start now\. Get consistent\./);
  assert.match(html,/id="username" autocomplete="username"/);
  assert.match(html,/id="password" type="password" autocomplete="current-password"/);
  assert.match(html,/id="login-form"/);
@@ -92,4 +92,16 @@ test('login group is vertically centred without affecting authenticated player p
  assert.match(css,/min-height:100vh;min-height:100dvh/);
  assert.match(css,/display:flex;flex-direction:column;justify-content:center/);
  assert.match(css,/safe-area-inset-bottom/);
+});
+
+test('login logo is larger and the former tagline is removed',()=>{
+ assert.doesNotMatch(html,/Start now\. Get consistent\./);
+ assert.match(css,/player-header-brand\{width:174px!important/);
+});
+test('tab switching slides content in navigation direction and respects reduced motion',()=>{
+ assert.match(js,/const tabOrder=\["overview","plans","assessments","menus","profile"\]/);
+ assert.match(js,/direction=oldIndex<newIndex\?1:-1/);
+ assert.match(js,/prefers-reduced-motion: reduce/);
+ assert.match(js,/destination\.animate\(\[/);
+ assert.match(js,/duration:220/);
 });
