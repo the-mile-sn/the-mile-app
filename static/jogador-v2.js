@@ -70,12 +70,30 @@ function fmt(v,d=1){return Number(v).toLocaleString("pt-PT",{minimumFractionDigi
 function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
-function periItemBlock(food){
- const box=document.createElement("div");box.className="peri-timed-item";box.style.cssText="";
- const label=periTimingLabels[food.timing];
- if(label){const head=document.createElement("div");head.textContent=label;head.style.cssText="font-weight:600;margin-bottom:7px;color:inherit";box.append(head);}
- const line=document.createElement("div");line.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" ").trim():food.text||"";line.style.cssText="color:inherit;opacity:.82";box.append(line);
- return box;
+// Group the already prescribed intra-match items by their timing, keeping
+// the first-seen timing order and each item's original position within its group.
+function groupPeriItemsByTiming(items){
+ const groups=new Map();
+ for(const food of items||[]){
+  const timing=food.timing||"";
+  if(!groups.has(timing))groups.set(timing,[]);
+  groups.get(timing).push(food);
+ }
+ return Array.from(groups,([timing,foods])=>({timing,foods}));
+}
+function appendGroupedPeriItems(host,items){
+ for(const {timing,foods} of groupPeriItemsByTiming(items)){
+  const group=document.createElement("div");group.className="peri-timing-group";
+  const label=periTimingLabels[timing];
+  if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=label;group.append(heading);}
+  const lines=document.createElement("div");lines.className="peri-timing-lines";
+  for(const food of foods){
+   const line=document.createElement("div");line.className="peri-timing-line";
+   line.textContent=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" ").trim():food.text||"";
+   lines.append(line);
+  }
+  group.append(lines);host.append(group);
+ }
 }
 function periFoodText(food){const content=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";return (periTimingLabels[food.timing]?periTimingLabels[food.timing]+" — ":"")+content;}
 function mealNoteCard(food){
@@ -88,7 +106,7 @@ function appendMealItems(host,items){
  for(const food of items||[]){if(food.kind==="collapsible_note")continue;const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);host.append(p);}
  for(const food of items||[]){if(food.kind==="collapsible_note")host.append(mealNoteCard(food));}
 }
-function optionEl(o,i,planView=false){
+function optionEl(o,i,planView=false,groupPeriTiming=false){
  const details=document.createElement("details"),summary=document.createElement("summary"),line=document.createElement("div");
  line.className="option"+(planView?"":" day-option");
  const label=document.createElement("span");label.className="plan-option-label";
@@ -96,7 +114,8 @@ function optionEl(o,i,planView=false){
  if(o.title){const name=document.createElement("strong");name.textContent=o.title;label.append(name);}
  line.append(label);summary.append(line);details.append(summary);
  if(o.totals){const value=document.createElement("div");value.className="option-expanded-macros";value.append(nutrition(o.totals));details.append(value);}
- appendMealItems(details,o.items);
+ if(groupPeriTiming)appendGroupedPeriItems(details,o.items);
+ else appendMealItems(details,o.items);
  return details;
 }
 
@@ -581,11 +600,8 @@ function matchWithIntraCard(event,item){
   totals.append(nutrition(avg));head.append(totals);
  }
  section.append(head);
- if(opts.length===1){
-  for(const food of opts[0].items||[]){
-   section.append(periItemBlock(food));
-  }
- }else opts.forEach((option,index)=>section.append(optionEl(option,index)));
+ if(opts.length===1)appendGroupedPeriItems(section,opts[0].items);
+ else opts.forEach((option,index)=>section.append(optionEl(option,index,false,true)));
  return section;
 }
 
