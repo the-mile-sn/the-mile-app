@@ -3663,3 +3663,17 @@ body.profile-active .player-top{display:none!important}
 #tabs button[data-tab="profile"] .profile-tab-avatar span{font-size:10px!important;font-weight:600!important}
 .player-top{justify-content:center!important}
 .player-top .player-header-brand{position:static!important;transform:none!important;margin:auto!important}
+
+/* Intra-game nutrition: group products under each unique ingestion timing. */
+#overview .match-intra-card > .peri-timing-group,
+#overview .match-intra-card .option > .peri-timing-group,
+#overview .match-intra-card details > .peri-timing-group{
+ display:block!important;box-sizing:border-box;min-width:0;
+ margin:0 18px!important;padding:17px 0 19px!important;
+ border-bottom:1px solid rgba(200,200,205,.15);
+}
+#overview .match-intra-card > .peri-timing-group:last-child,
+#overview .match-intra-card details > .peri-timing-group:last-child{border-bottom:0;padding-bottom:22px!important}
+#overview .match-intra-card .peri-timing-heading{font-weight:600;color:inherit;margin-bottom:9px;line-height:1.35}
+#overview .match-intra-card .peri-timing-lines{display:flex;flex-direction:column;gap:9px}
+#overview .match-intra-card .peri-timing-line{color:inherit;opacity:.82;line-height:1.45;overflow-wrap:anywhere}
