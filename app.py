@@ -27,6 +27,7 @@ import prescription_effective_v2
 import effective_nutrition_v2
 import assessment_excel_v2
 import plan_import_v2
+import food_library_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -266,6 +267,7 @@ def initialize():
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
         plan_import_v2.initialize(c)
+        food_library_v2.initialize(c)
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
@@ -546,6 +548,7 @@ def application(env, start_response):
             if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
+                    or path.startswith('/api/v2/food-library')
                     or path.startswith('/api/v2/supplement-library')
                     or path.startswith('/api/v2/dishes/edit')
                     or path.startswith('/api/v2/dishes/photo')
@@ -565,6 +568,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-light-theme.css': 'admin-light-theme.css',
+            '/food-library': 'food-library.html', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
@@ -677,6 +681,25 @@ def application(env, start_response):
                 try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
                 except ValueError:raise Problem(400,'invalid_supplement_package')
                 return respond(200,result)
+            if path == '/api/v2/food-library/import' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                try:
+                    payload=read_json(env)
+                    count=food_library_v2.import_batch(c,payload.get('foods'))
+                except ValueError:
+                    raise Problem(400,'invalid_food_import')
+                return respond(200,{'imported':count})
+            if path == '/api/v2/food-library' and method in ('GET','POST'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200,{'foods':food_library_v2.list_foods(c,limit=2000,offset=0)})
+                try:
+                    ident=food_library_v2.upsert(c,read_json(env),actor=user['id'])
+                except ValueError:
+                    raise Problem(400,'invalid_food')
+                return respond(200,{'id':ident})
             if path == '/api/v2/supplement-library' and method in ('GET','POST'):
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
