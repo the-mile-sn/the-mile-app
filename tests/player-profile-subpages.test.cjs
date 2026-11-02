@@ -55,3 +55,10 @@ test('assessment charts preserve recent-ten horizontal mode and offer scrollable
  assert.match(css,/\.assessment-trend-vertical-scroll\{max-height:420px;overflow-y:auto/);
  assert.doesNotMatch(js,/history\.append\(rows\)/);
 });
+
+test('only selected assessment mode renders and password page has no outer grey card',()=>{
+ assert.match(js,/svg\.hidden=all;fullScroll\.hidden=!all/);
+ assert.match(css,/\.assessment-trend > svg\[hidden\],[\s\S]*?display:none!important/);
+ assert.match(css,/#profile \.profile-password-page-form\{\s*background:transparent!important;/);
+ assert.match(css,/border-radius:0!important;\s*padding:0!important/);
+});

@@ -3942,3 +3942,16 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-trend-vertical-scroll svg{width:100%;height:auto;max-height:none;display:block;overflow:visible}
 #plans .assessment-trend-vertical-scroll .assessment-chart-tick{font-size:9px}
 #plans .assessment-trend-vertical-scroll .assessment-chart-value{font-size:10px}
+
+/* Only one assessment chart mode is rendered at a time, regardless of parent tab. */
+.assessment-trend > svg[hidden],
+.assessment-trend > .assessment-trend-vertical-scroll[hidden],
+.assessment-trend > .assessment-trend-vertical-scroll[hidden] svg{display:none!important}
+/* Password inputs remain separate, but the enclosing form has no card surface. */
+#profile .profile-password-page-form{
+ background:transparent!important;
+ border:0!important;
+ box-shadow:none!important;
+ border-radius:0!important;
+ padding:0!important;
+}
