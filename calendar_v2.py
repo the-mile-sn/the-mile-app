@@ -1,7 +1,7 @@
 """Pure, read-only match-day classification helpers for The Mile v2.
 
 Calendar classifications do not modify an athlete's microcycle model.
-Known combined classifications and explicit recovery/preparation priorities
+Known combined classifications and recovery-first priorities
 are applied automatically; rest days and manual overrides remain separate.
 """
 from datetime import date, timedelta
@@ -54,14 +54,12 @@ def classify_calendar_day(day, match_dates):
                     if days_after is not None and days_before is not None else None)
         if combined in combinations:
             classification = combined
-        elif days_after == 1:
-            # Recovery always wins over MD-6 (normal seven-day gap).
-            classification = "MD+1"
-        elif days_before is not None and 1 <= days_before <= 6:
-            # Preparation wins over MD+2 (e.g. MD-5 in a normal week).
-            classification = f"MD-{days_before}"
         elif days_after is not None and 1 <= days_after <= 2:
+            # Outside the configured combined types, both recovery days win
+            # over preparation (MD-6/-5/-4/-3 can overlap with MD+2).
             classification = f"MD+{days_after}"
+        elif days_before is not None and 1 <= days_before <= 6:
+            classification = f"MD-{days_before}"
         else:
             classification = None
     return {"date": day, "classification": classification,
