@@ -27,7 +27,7 @@ class CalendarV2Tests(unittest.TestCase):
         matches = ["2026-10-25", "2026-11-01"]
         days = classify_range("2026-10-25", "2026-11-01", matches)
         self.assertEqual([d["classification"] for d in days],
-                         ["MD", "MD+1", "MD-5", "MD-4", "MD-3",
+                         ["MD", "MD+1", "MD+2", "MD-4", "MD-3",
                           "MD-2", "MD-1", "MD"])
         self.assertFalse(any(d["needs_review"] for d in days))
 
@@ -47,7 +47,22 @@ class CalendarV2Tests(unittest.TestCase):
         matches = ["2026-10-25", "2026-10-30"]
         days = classify_range("2026-10-25", "2026-10-30", matches)
         self.assertEqual([d["classification"] for d in days],
-                         ["MD", "MD+1", "MD-3", "MD-2", "MD-1", "MD"])
+                         ["MD", "MD+1", "MD+2", "MD-2", "MD-1", "MD"])
+
+    def test_md_plus_two_wins_over_uncombined_pre_match_overlap(self):
+        from datetime import date, timedelta
+        previous=date(2026,10,25)
+        for before in (3,4,5,6):
+            next_match=previous+timedelta(days=before+2)
+            day=(previous+timedelta(days=2)).isoformat()
+            result=classify_calendar_day(day,[previous.isoformat(),next_match.isoformat()])
+            self.assertEqual(result["classification"],"MD+2",f"overlap with MD-{before}")
+            self.assertFalse(result["needs_review"])
+
+    def test_md_plus_one_and_combined_days_stay_unchanged(self):
+        self.assertEqual(classify_calendar_day("2026-10-26",["2026-10-25","2026-11-02"])["classification"],"MD+1")
+        self.assertEqual(classify_calendar_day("2026-10-27",["2026-10-25","2026-10-29"])["classification"],"MD+2/-2")
+        self.assertEqual(classify_calendar_day("2026-10-27",["2026-10-25","2026-10-28"])["classification"],"MD+2/-1")
 
     def test_day_range(self):
         result = classify_range("2026-11-07", "2026-11-09", ["2026-11-08"])
