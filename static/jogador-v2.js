@@ -315,10 +315,22 @@ async function show(t){
  if(t!=="profile")resetProfileSubpage();
  if(t!=="overview"){++overviewRequestId;setOverviewLoading(false);}
  if(t!=="menus"){++menuRenderToken;$("menu-loading").hidden=true;}
+ const tabOrder=["overview","plans","assessments","menus","profile"];
+ const oldIndex=tabOrder.indexOf(tab),newIndex=tabOrder.indexOf(t);
+ const direction=oldIndex<newIndex?1:-1;
+ const animateTransition=oldIndex!==newIndex&&oldIndex>=0;
  tab=t;document.body.classList.toggle("profile-active",t==="profile");
  for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);
  for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));
  document.querySelector(".welcome").hidden=true;
+ if(animateTransition&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+  const destination=$(t==="assessments"?"plans":t);
+  destination.getAnimations().forEach(animation=>animation.cancel());
+  destination.animate([
+   {transform:"translateX("+(direction*24)+"px)",opacity:0.55},
+   {transform:"translateX(0)",opacity:1}
+  ],{duration:220,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+ }
  if(t==="overview")await overview();
  if(t==="plans")openPlansSection("prescriptions");
  if(t==="assessments")openPlansSection("assessments");
