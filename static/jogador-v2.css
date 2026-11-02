@@ -3901,3 +3901,14 @@ body.profile-active .player-top{display:none!important}
  line-height:1.75!important;
  white-space:pre-wrap!important;
 }
+
+/* Weekly expanded meal nutrition: no tinted band behind kcal / macros.
+   Keep numeric colours, typography and the card's own palette intact. */
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.weekly-meal-average,
+#weekly-view .weekly-color-detail:is(.tone-orange,.tone-yellow,.tone-green,.tone-blue)>.weekly-option-card .option-expanded-macros,
+#weekly-view .weekly-color-detail>.weekly-meal-average{
+ background:transparent!important;
+ background-color:transparent!important;
+ background-image:none!important;
+ box-shadow:none!important;
+}
