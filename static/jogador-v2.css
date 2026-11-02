@@ -3648,3 +3648,18 @@ body.profile-active .player-top{display:none!important}
  border-radius:9px!important;
  align-self:stretch!important;
 }
+
+/* The player's private photo becomes the Profile navigation glyph. */
+#tabs button[data-tab="profile"] .profile-tab-avatar{
+ position:relative;display:flex;align-items:center;justify-content:center;
+ flex:0 0 25px;width:25px;height:25px;border-radius:50%;
+ background:#45464c;color:#fff;overflow:hidden;font-size:10px;font-weight:600;
+ line-height:1;
+}
+#tabs button[data-tab="profile"] .profile-tab-avatar img{
+ position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;
+}
+#tabs button[data-tab="profile"] .profile-tab-avatar [hidden]{display:none!important}
+#tabs button[data-tab="profile"] .profile-tab-avatar span{font-size:10px!important;font-weight:600!important}
+.player-top{justify-content:center!important}
+.player-top .player-header-brand{position:static!important;transform:none!important;margin:auto!important}
