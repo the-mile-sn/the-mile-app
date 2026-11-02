@@ -1610,6 +1610,15 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  if(width>344)requestAnimationFrame(()=>{scroll.scrollLeft=scroll.scrollWidth-scroll.clientWidth;});
  return holder;
 }
+// Provenance from an Excel import is not a clinical body-fat formula.
+function playerBodyFatFormulaNote(value){
+ const note=String(value||"").trim();
+ if(!note)return "";
+ const normalized=note.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ if(/^(?:(?:historico|dados|valores)\s+)?importad[oa]s?\s+d(?:e|o)\s+(?:ficheiro\s+)?(?:excel|csv)\s*[.!]?$/.test(normalized))return "";
+ if(/^(?:excel|csv)\s*[.!]?$/.test(normalized))return "";
+ return note;
+}
 function renderPlayerAssessments(){
  for(const button of document.querySelectorAll("[data-assessment-tab]"))button.setAttribute("aria-pressed",String(button.dataset.assessmentTab===assessmentGroup));
  const target=$("assessment-measurements"),stamp=$("assessment-most-recent");target.replaceChildren();stamp.replaceChildren();
@@ -1633,8 +1642,13 @@ function renderPlayerAssessments(){
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
   summary.append(left,right,arrow);
   details.append(summary,buildAssessmentTrend(readings,unit,assessmentGroup==="pregas"&&unit==="mm"?2:assessmentGroup==="resumo"&&unit==="mm"?5:undefined,key==="sum_8"));
-  if(assessmentGroup==="resumo"&&key==="body_fat"&&recent.formula_note){
-   const note=document.createElement("p");note.className="assessment-formula";note.textContent="Gordura corporal: "+recent.formula_note;details.append(note);
+  if(assessmentGroup==="resumo"&&key==="body_fat"){
+   const source=assessmentRecords.slice().reverse().find(record=>Number.isFinite(record.measurements?.body_fat));
+   const formula=playerBodyFatFormulaNote(source?.formula_note);
+   if(formula){
+    const note=document.createElement("p");note.className="assessment-formula";
+    note.textContent="Gordura corporal: "+formula;details.append(note);
+   }
   }
   target.append(details);
  }
