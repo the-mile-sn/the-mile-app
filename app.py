@@ -1619,7 +1619,7 @@ def application(env, start_response):
                 parts=path.strip('/').split('/')
                 if len(parts)!=5: raise Problem(404,'not_found')
                 aid=parts[3]
-                athlete=c.execute("SELECT id,name FROM v2_athletes WHERE id=?",(aid,)).fetchone()
+                athlete=c.execute("SELECT id,name FROM v2_athletes WHERE id=? AND archived_at IS NULL",(aid,)).fetchone()
                 if not athlete: raise Problem(404,'not_found')
                 existing=c.execute("""SELECT u.id,u.username,u.active FROM v2_player_links l
                    JOIN users u ON u.id=l.user_id WHERE l.athlete_id=?""",(aid,)).fetchone()
@@ -1650,6 +1650,53 @@ def application(env, start_response):
                     if not active: c.execute("DELETE FROM sessions WHERE user_id=?",(existing['id'],))
                     c.commit()
                     return respond(200,{'access':{'id':existing['id'],'username':existing['username'],'active':active}})
+            # Admin-only credential reset and reversible player archival.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/password-reset') and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5:raise Problem(404,'not_found')
+                body=read_json(env);new_password=body.get('password')
+                if not isinstance(new_password,str) or not 12<=len(new_password)<=256:raise Problem(400,'password_length')
+                target=c.execute("""SELECT u.id FROM users u JOIN v2_player_links l ON l.user_id=u.id
+                    JOIN v2_athletes a ON a.id=l.athlete_id
+                    WHERE a.id=? AND a.archived_at IS NULL AND u.role='player'""",(parts[3],)).fetchone()
+                if not target:raise Problem(404,'access_not_found')
+                c.execute("UPDATE users SET password=? WHERE id=? AND role='player'",(password_hash(new_password),target['id']))
+                c.execute("DELETE FROM sessions WHERE user_id=?",(target['id'],))
+                c.execute("DELETE FROM activations WHERE user_id=?",(target['id'],))
+                c.commit()
+                return respond(200,{'ok':True,'sessions_revoked':True})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/archive') and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5:raise Problem(404,'not_found')
+                body=read_json(env)
+                if body.get('confirmation')!='ARQUIVAR':raise Problem(400,'invalid_confirmation')
+                target=c.execute("SELECT id,name,archived_at FROM v2_athletes WHERE id=?",(parts[3],)).fetchone()
+                if not target:raise Problem(404,'not_found')
+                if target['archived_at'] is not None:raise Problem(409,'already_archived')
+                c.execute("UPDATE v2_athletes SET archived_at=?,archived_by=? WHERE id=? AND archived_at IS NULL",(int(time.time()),user['id'],parts[3]))
+                linked=c.execute("SELECT user_id FROM v2_player_links WHERE athlete_id=?",(parts[3],)).fetchone()
+                if linked:
+                    c.execute("UPDATE users SET active=0 WHERE id=? AND role='player'",(linked['user_id'],))
+                    c.execute("DELETE FROM sessions WHERE user_id=?",(linked['user_id'],))
+                    c.execute("DELETE FROM activations WHERE user_id=?",(linked['user_id'],))
+                c.commit()
+                return respond(200,{'ok':True,'archived':True})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/restore') and method=='POST':
+                if not user:raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5:raise Problem(404,'not_found')
+                target=c.execute("SELECT archived_at FROM v2_athletes WHERE id=?",(parts[3],)).fetchone()
+                if not target:raise Problem(404,'not_found')
+                if target['archived_at'] is None:raise Problem(409,'not_archived')
+                c.execute("UPDATE v2_athletes SET archived_at=NULL,archived_by=NULL WHERE id=?",(parts[3],))
+                # Access remains blocked until the admin reactivates it explicitly.
+                c.commit()
+                return respond(200,{'ok':True,'archived':False})
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
             if path == '/api/v2/player/assessments' and method == 'GET':
