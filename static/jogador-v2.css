@@ -4031,3 +4031,35 @@ body:has(#login-panel:not([hidden])) #login-panel{margin-top:38px!important}
 @supports not (backdrop-filter:blur(1px)){
  #player-panel #tabs{background:rgba(30,30,36,.95)!important}
 }
+
+/* Adaptive frosted navigation on scroll: visually compact, tappable controls. */
+#player-panel #tabs{
+ transition:padding .25s ease,left .25s ease,right .25s ease,bottom .25s ease,border-radius .25s ease!important;
+}
+#player-panel #tabs button{
+ transition:padding .25s ease,gap .25s ease,background-color .25s ease!important;
+}
+#player-panel #tabs .mile-icon,#player-panel #tabs .profile-tab-avatar{
+ transition:transform .25s ease!important;
+}
+#player-panel #tabs button>span:last-child{
+ transition:font-size .25s ease!important;
+}
+#player-panel #tabs.tabs-compact{
+ left:24px!important;right:24px!important;
+ padding:3px!important;
+}
+#player-panel #tabs.tabs-compact button{
+ padding:5px 2px!important;gap:2px!important;
+ min-height:44px!important;
+}
+#player-panel #tabs.tabs-compact .mile-icon,
+#player-panel #tabs.tabs-compact .profile-tab-avatar{
+ transform:scale(.87)!important;
+}
+#player-panel #tabs.tabs-compact button>span:last-child{font-size:8px!important}
+@media(prefers-reduced-motion:reduce){
+ #player-panel #tabs,#player-panel #tabs button,
+ #player-panel #tabs .mile-icon,#player-panel #tabs .profile-tab-avatar,
+ #player-panel #tabs button>span:last-child{transition:none!important}
+}
