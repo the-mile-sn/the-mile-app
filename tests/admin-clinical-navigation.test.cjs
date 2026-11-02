@@ -240,7 +240,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=7/);
+ assert.match(html,/\/admin-light-theme\.css\?v=8/);
  assert.match(html,/\/admin-dashboard\.js\?v=26/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
@@ -258,7 +258,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=7"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=8"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
  assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
 });
@@ -279,7 +279,7 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
  assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
  assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
  assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
- assert.match(html,/admin-light-theme\.css\?v=7/);
+ assert.match(html,/admin-light-theme\.css\?v=8/);
 });
 
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
@@ -422,4 +422,26 @@ test("Weekly average is outside month-event accordion and meal controls stay edi
  assert.match(admin,/renderNutritionTotals\(host,"Resumo nutricional do dia",plannedDayTotals\(day\)/);
  assert.match(admin,/nutritionCards\(weekly,average,null,relativeMeans\)/);
  assert.match(admin,/calendar\/meal-color/);
+});
+
+test("Light mode assessment editing and Planning picker keep readable surfaces",()=>{
+ const light=fs.readFileSync("static/admin-light-theme.css","utf8");
+ const start=light.indexOf("/* Light theme: assessment editor surfaces and Planning's searchable player list.");
+ assert.ok(start>=0,"Scoped light theme fixes are present");
+ const rules=light.slice(start);
+ for(const selector of [
+  '#assessments-admin-panel .assessment-review-group',
+  '#assessments-admin-panel .assessment-review-grid label',
+  '#assessments-admin-panel .assessment-review-grid .tm-assessment-prior-value',
+  '#assessments-admin-panel .assessment-review-grid input[readonly]',
+  '#tm-admin-legacy .tm-planning-results',
+  '#tm-admin-legacy .tm-planning-result[aria-selected="true"]',
+  '#tm-admin-legacy .tm-planning-result-empty'
+ ])assert.ok(rules.includes(selector),selector);
+ assert.match(rules,/html\[data-admin-theme="light"\]/);
+ assert.match(rules,/background:var\(--tm-light-surface\)/);
+ assert.match(rules,/background:#e9eef5/);
+ assert.match(html,/admin-light-theme\.css\?v=8/);
+ assert.match(html,/id="assessment-review-form"/);
+ assert.match(html,/id="tm-planning-results"/);
 });
