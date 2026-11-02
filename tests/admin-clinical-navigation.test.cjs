@@ -472,7 +472,7 @@ test("Player Gerir acesso uses approved hierarchy and preserves secure actions",
  assert.ok(profile.indexOf('id="tm-players-archive"')>profile.indexOf('id="tm-players-access-management"'));
  assert.equal((profile.match(/class="tm-access-visibility-toggle"/g)||[]).length,2);
  assert.match(dashboard,/resetPasswordForm\(\)/);
- assert.match(dashboard,/data-password-target/);
+ assert.match(dashboard,/dataset\.passwordTarget/);
  assert.match(dashboard,/accessToggle\.classList\.toggle\("is-unblocking"/);
  assert.match(dashboard,/confirmation:"ARQUIVAR"/);
  assert.match(dashboard,/password-reset/);
