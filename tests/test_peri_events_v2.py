@@ -126,7 +126,21 @@ class PeriOptionDraftEditingTests(unittest.TestCase):
         result=peri_v2.add_option(self.c,'player','draft',phase='post')
         self.assertEqual(result['extracted']['groups'][-1]['heading'],'Pós-jogo')
         self.assertEqual(result['extracted']['groups'][-1]['meals'],['post'])
-        with self.assertRaises(ValueError):peri_v2.add_option(self.c,'player','draft',phase='post')
+        repeated=peri_v2.add_option(self.c,'player','draft',phase='post')
+        self.assertEqual(repeated['extracted']['groups'][-1]['heading'],'Pós-jogo')
+        pre=peri_v2.add_option(self.c,'player','draft',phase='pre_match')
+        self.assertEqual(pre['extracted']['groups'][-1]['heading'],'Pré-jogo')
+        self.assertEqual(pre['extracted']['groups'][-1]['meals'],['pre'])
+        intra=peri_v2.add_option(self.c,'player','draft',phase='pre')
+        self.assertEqual(intra['extracted']['groups'][-1]['heading'],'Intra-jogo')
+
+    def test_training_can_add_sections_already_present(self):
+        self.c.execute("UPDATE v2_peri_imports SET kind='training' WHERE id='draft'")
+        pre=peri_v2.add_option(self.c,'player','draft',phase='pre')
+        self.assertEqual(pre['extracted']['groups'][-1]['heading'],'Pré-treino')
+        post=peri_v2.add_option(self.c,'player','draft',phase='post')
+        self.assertEqual(post['extracted']['groups'][-1]['heading'],'Pós-treino')
+        with self.assertRaises(ValueError):peri_v2.add_option(self.c,'player','draft',phase='pre_match')
 
     def test_wrong_athlete_published_or_invalid_indices_do_not_mutate(self):
         self.assertIsNone(peri_v2.add_option(self.c,'other','draft',0))
