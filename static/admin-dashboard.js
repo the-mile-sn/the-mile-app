@@ -214,11 +214,11 @@ function ensurePlanningOnlyView(){
  function paintPlayerAccess(){
   accessToggle.hidden=!playerAccess;
   $("tm-players-password-toggle").hidden=!playerAccess;
-  accessIdentity.textContent=playerAccess?"Utilizador: @"+playerAccess.username+" · "+(playerAccess.active?"Acesso ativo":"Acesso bloqueado"):"Ainda não existe uma conta associada.";
-  if(playerAccess)accessToggle.textContent=playerAccess.active?"Bloquear acesso":"Reativar acesso";
+  accessIdentity.textContent=playerAccess?"":"Ainda não existe uma conta associada.";
+  if(playerAccess){accessToggle.querySelector(".tm-access-action-text").textContent=playerAccess.active?"Bloquear acesso":"Reativar acesso";accessToggle.classList.toggle("is-unblocking",!playerAccess.active);}
  }
  async function loadPlayerAccess(aid,token){
-  accessIdentity.textContent="A consultar conta associada…";accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;$("tm-players-password-form").hidden=true;playerAccess=null;
+  accessIdentity.textContent="A consultar conta associada…";accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
   try{
    const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/access");
    if(token!==profileLoadToken||profilePanel.hidden)return;
@@ -241,7 +241,9 @@ function ensurePlanningOnlyView(){
 
  const passwordForm=$("tm-players-password-form");
  $("tm-players-password-toggle").addEventListener("click",()=>{passwordForm.hidden=!passwordForm.hidden;if(!passwordForm.hidden)$("tm-players-password-new").focus();});
- $("tm-players-password-cancel").addEventListener("click",()=>{passwordForm.reset();passwordForm.hidden=true;});
+ function resetPasswordForm(){passwordForm.reset();passwordForm.hidden=true;for(const button of passwordForm.querySelectorAll(".tm-access-visibility-toggle")){const input=$(button.dataset.passwordTarget);input.type="password";button.setAttribute("aria-pressed","false");button.setAttribute("aria-label","Mostrar "+button.dataset.passwordLabel);}}
+  $("tm-players-password-cancel").addEventListener("click",resetPasswordForm);
+  for(const button of passwordForm.querySelectorAll(".tm-access-visibility-toggle"))button.addEventListener("click",()=>{const input=$(button.dataset.passwordTarget),visible=input.type==="password";input.type=visible?"text":"password";button.setAttribute("aria-pressed",String(visible));button.setAttribute("aria-label",(visible?"Ocultar ":"Mostrar ")+button.dataset.passwordLabel);});
  passwordForm.addEventListener("submit",async e=>{
   e.preventDefault();if(!playerProfile||!playerAccess)return;
   const pwd=$("tm-players-password-new").value,confirmPwd=$("tm-players-password-confirm").value;
@@ -250,7 +252,7 @@ function ensurePlanningOnlyView(){
   const aid=playerProfile.id,token=profileLoadToken,btn=$("tm-players-password-save");btn.disabled=true;accessFeedback.textContent="";
   try{await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/password-reset",{method:"POST",body:JSON.stringify({password:pwd})});
    if(token!==profileLoadToken||playerProfile?.id!==aid)return;
-   passwordForm.reset();passwordForm.hidden=true;accessFeedback.textContent="Palavra-passe alterada; sessões anteriores terminadas.";
+   resetPasswordForm();accessFeedback.textContent="Palavra-passe alterada; sessões anteriores terminadas.";
   }catch(err){if(token===profileLoadToken)accessFeedback.textContent="Não foi possível alterar: "+err.message;}
   finally{btn.disabled=false;}
  });
@@ -325,7 +327,7 @@ function ensurePlanningOnlyView(){
   ++profileLoadToken;
   profileNav.hidden=true;playersHeader.hidden=false;
   if(dashboardReturn)dashboardReturn.hidden=false;
-  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerDetails=null;playerPhotoData=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;$("tm-players-password-form").hidden=true;
+  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerDetails=null;playerPhotoData=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
