@@ -404,3 +404,43 @@ html[data-admin-theme="light"] #calendar-section .calendar-event-count{color:#61
 html[data-admin-theme="light"] #calendar-section .day-preview .day-meal-nutrients{color:#637083}
 html[data-admin-theme="light"] #calendar-section #nutrition-weekly-summary .calendar-week-coverage{color:#637083}
 html[data-admin-theme="light"] #calendar-section .day-preview .day-meal-no-color{background:#edf0f4;color:#4c5b6c}
+
+
+/* Light theme: assessment editor surfaces and Planning's searchable player list.
+   The base dark styles use ID selectors, so these overrides need equivalent scope. */
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-group{
+ background:#f3f5f8;
+ border:1px solid var(--tm-light-border);
+ color:var(--tm-light-text);
+}
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-group h3,
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-grid label{
+ color:var(--tm-light-text);
+}
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-grid .tm-assessment-prior-value{
+ color:var(--tm-light-muted);
+}
+html[data-admin-theme="light"] #assessments-admin-panel .assessment-review-grid input[readonly]{
+ background:#e9edf3;
+ color:var(--tm-light-text);
+ border-color:var(--tm-light-border);
+ opacity:1;
+}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-results{
+ background:var(--tm-light-surface);
+ border-color:var(--tm-light-border);
+ box-shadow:0 12px 28px rgba(30,46,67,.12);
+}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result{
+ background:transparent;
+ color:var(--tm-light-text);
+}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result:hover,
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result[aria-selected="true"],
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result:focus-visible{
+ background:#e9eef5;
+ color:#243c56;
+}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-result-empty{
+ color:var(--tm-light-muted);
+}
