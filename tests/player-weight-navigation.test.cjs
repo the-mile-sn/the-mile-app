@@ -144,3 +144,12 @@ test("Day and Week selector uses compact 38px iPhone proportions",()=>{
  assert.match(css,/#overview #overview-mode\{\s*min-height:38px!important;\s*height:38px!important/);
  assert.match(css,/height:32px!important;\s*padding:4px 8px!important;\s*font-size:13px!important/);
 });
+
+test("kcal per kg and daily comparison percentages use whole units while macros remain at one decimal",()=>{
+ assert.match(source,/fmt\(relativeMeans\[key\],key==="kcal"\?0:1\)/);
+ assert.match(source,/fmt\(total\.kcal\/weight,0\)\+" kcal\/kg"/);
+ assert.match(source,/fmt\(total\.kcal\/weight,0\)\+" \/kg"/);
+ assert.match(source,/fmt\(delta,0\)\+"%"/);
+ assert.match(source,/fmt\(deviationPrevious,0\)\+"%"/);
+ assert.match(source,/fmt\(total\[key\]\/weight,1\)\+" g\/kg"/);
+});
