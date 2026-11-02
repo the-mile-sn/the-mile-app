@@ -14,3 +14,4 @@ jobs:
       - run: node --check static/jogador-v2.js
       - run: node --test tests/player-session-isolation.test.cjs tests/player-weight-navigation.test.cjs
       - run: python -m unittest -v test_player_sex_source_v2 test_reference_weight_v2
+      - run: python -m unittest -v test_calendar_v2
