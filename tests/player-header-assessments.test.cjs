@@ -50,7 +50,8 @@ test('Planos navigation opens prescriptions directly without a redundant page he
 test('assessment notes preserve the timestamp below metrics and the formula inside body fat details',()=>{
  assert.match(html,/id="assessment-measurements"><\/div><div class="assessment-most-recent" id="assessment-most-recent"/);
  assert.match(js,/stamp\.textContent="Última avaliação/);
- assert.match(js,/key==="body_fat"&&recent\.formula_note/);
+ assert.match(js,/key==="body_fat"/);
+  assert.match(js,/playerBodyFatFormulaNote\(source\?\.formula_note\)/);
  assert.match(js,/details\.append\(note\)/);
  assert.doesNotMatch(js,/note\.textContent="Gordura corporal: "\+recent\.formula_note;target\.append\(note\)/);
 });
@@ -94,4 +95,15 @@ test("Assessments, Menus, Profile and bottom navigation share approved typograph
  assert.match(css,/font-weight:var\(--mile-type-medium\)!important/);
  assert.match(css,/font-weight:var\(--mile-type-semibold\)!important/);
  assert.match(css,/font-weight:var\(--mile-type-regular\)!important/);
+});
+
+test('body fat formula note excludes Excel provenance but preserves clinical methods',()=>{
+ const begin=js.indexOf('function playerBodyFatFormulaNote('),end=js.indexOf('\n}',begin);
+ assert.ok(begin>=0&&end>begin);
+ const formula=vm.runInNewContext(js.slice(begin,end+2)+';playerBodyFatFormulaNote');
+ for(const value of ['Histórico importado de Excel','historico importado de excel','Importado de Excel','Dados importados de CSV','Excel'])
+  assert.equal(formula(value),'',value);
+ for(const value of ['Média de 4','Jackson & Pollock','Média de 4 pregas'])
+  assert.equal(formula(value),value);
+ assert.equal(formula(''),'');
 });
