@@ -1336,3 +1336,10 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #tm-dashboard button.tm-db-event.tm-db-game small{color:#abd5b9}
 #tm-dashboard .tm-db-avatar{position:relative}
 #tm-dashboard .tm-db-avatar-photo{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
+
+/* Larger, consistent player avatars throughout the Backoffice. */
+#tm-dashboard .tm-db-avatar{width:38px;height:38px;flex:0 0 38px;font-size:12px}
+#tm-players-page .tm-p-avatar{width:46px;height:46px;flex:0 0 46px;font-size:14px}
+#tm-admin-legacy #tm-planning-avatar{position:relative;overflow:hidden}
+.tm-clinical-avatar{position:relative;overflow:hidden}
+.tm-picker-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}

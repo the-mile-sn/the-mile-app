@@ -99,7 +99,7 @@ $("admin-signout").onclick=async()=>{
   $("admin-login-password").value="";
  }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
 };
-async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
+async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
 const planningSearch=$("tm-planning-search"),planningResults=$("tm-planning-results"),planningPicker=$("tm-planning-picker");
 const planningNormalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
 function updatePlanningPlayerControls(){
@@ -107,6 +107,7 @@ function updatePlanningPlayerControls(){
  if(!select||!avatar)return;
  const name=select.selectedOptions[0]?.textContent||"";
  avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(v=>v[0]).join("").toLocaleUpperCase("pt-PT")||"—";
+ const chosen=select.selectedOptions[0];if(chosen?.dataset.hasPhoto==="true"&&chosen.dataset.userId){const img=document.createElement("img");img.className="tm-picker-photo";img.src="/api/players/"+encodeURIComponent(chosen.dataset.userId)+"/photo";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
  planningSearch.value=name;
  closePlanningResults();
 }
