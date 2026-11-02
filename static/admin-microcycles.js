@@ -1927,11 +1927,31 @@ function renderPeriDraft(draft,editing=false,athleteId=periAthleteId){
  const root=$("peri-review");root.replaceChildren();
  const heading=document.createElement("h3");heading.textContent=draft.kind==="training"?"Peri-treino":"Peri-jogo";root.append(heading);
  
+ const changeOptions=async(action,body)=>{
+  if(!periIsCurrent(athleteId)||draft.status!=="draft")return;
+  if(!confirm("As alterações ainda não validadas neste editor não serão guardadas. Queres continuar?"))return;
+  try{
+   const response=await request(periEndpoint(athleteId)+"/"+encodeURIComponent(draft.id)+"/"+action,{method:"POST",body:JSON.stringify(body)});
+   if(!periIsCurrent(athleteId))return;
+   periUnchangedCopies.delete(draft.id);
+   periExpandedKind=draft.kind;
+   await loadPeriImports();
+   if(periIsCurrent(athleteId)){renderPeriDraft(response.draft,true,athleteId);periMessage("");}
+  }catch(error){if(periIsCurrent(athleteId))periMessage("Não foi possível alterar a opção: "+error.message);}
+ };
  draft.extracted.groups.forEach((group,gi)=>{
   const title=document.createElement("h3");title.textContent=group.heading;root.append(title);
   group.options.forEach((option,oi)=>{
    const card=document.createElement("section");card.className="peri-editor-option";
-   const title=document.createElement("strong");title.textContent="Opção "+option.number;card.append(title);
+   const top=document.createElement("div");top.className="peri-editor-option-heading";
+   const title=document.createElement("strong");title.textContent="Opção "+(option.number||oi+1);top.append(title);
+   if(editing&&draft.status==="draft"){
+    const removeOption=document.createElement("button");removeOption.type="button";removeOption.className="peri-remove-option";removeOption.textContent="Remover opção";
+    removeOption.setAttribute("aria-label","Remover opção "+(oi+1)+" de "+group.heading);
+    removeOption.onclick=()=>changeOptions("option-delete",{group_index:gi,option_index:oi});
+    top.append(removeOption);
+   }
+   card.append(top);
    if(!editing){const info=document.createElement("p");info.textContent="kcal "+(Number.isFinite(Number(String(option.totals?.kcal??"").replace(",",".")))?Math.round(Number(String(option.totals?.kcal).replace(",","."))):"—")+" · P "+(option.totals?.protein_g??"—")+" g · HC "+(option.totals?.carbs_g??"—")+" g · G "+(option.totals?.fat_g??"—")+" g";card.append(info);const name=document.createElement("p");name.textContent=option.title||"";card.append(name);(option.lines||[]).forEach((line,i)=>{if(!line.trim())return;const item=document.createElement("p");const labels={pre_warmup:"Pré-aquecimento",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",throughout:"Ao longo do jogo"};item.textContent=(labels[option.timings?.[i]]?labels[option.timings[i]]+" — ":"")+line;card.append(item);});root.append(card);return;}
    const form=document.createElement("div");form.className="peri-option-grid";
    const fields={};
@@ -1984,7 +2004,21 @@ function renderPeriDraft(draft,editing=false,athleteId=periAthleteId){
     }catch(e){if(periIsCurrent(athleteId))periMessage(e.message);}finally{save.disabled=draft.status!=="draft";}
    };const actions=document.createElement("div");actions.className="peri-editor-footer";actions.append(save);card.append(actions);root.append(card);
   });
+  if(editing&&draft.status==="draft"){
+   const add=document.createElement("button");add.type="button";add.className="peri-add-option";add.textContent="+ Adicionar opção";
+   add.onclick=()=>changeOptions("option-add",{group_index:gi});
+   root.append(add);
+  }
  });
+ if(editing&&draft.status==="draft"){
+  const existing=new Set(draft.extracted.groups.flatMap(group=>group.meals||[]));
+  for(const [phase,label] of [["pre",draft.kind==="match"?"Intra-jogo":"Pré-treino"],["post",draft.kind==="match"?"Pós-jogo":"Pós-treino"]]){
+   if(existing.has(phase))continue;
+   const add=document.createElement("button");add.type="button";add.className="peri-add-option peri-add-phase";add.textContent="+ Adicionar opção · "+label;
+   add.onclick=()=>changeOptions("option-add",{phase});
+   root.append(add);
+  }
+ }
  if(editing&&draft.status==="draft"){
   const pub=document.createElement("button");pub.type="button";pub.textContent="Publicar";pub.className="peri-publish-action is-pending";
   pub.onclick=async()=>{
