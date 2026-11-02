@@ -1561,8 +1561,6 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  for(let i=0;i<=tickCount;i++){
   const v=low+i*step,yy=y(v);
   add("line",{x1:left,y1:yy,x2:right,y2:yy},"assessment-chart-grid");
-  // Repeat axis labels near the latest ten assessments for scroll readability.
-  add("text",{x:Math.max(left-8,width-344+19),y:yy+3.5,"text-anchor":"end"},"assessment-chart-tick",String(Math.round(v)));
  }
  add("line",{x1:left,y1:y(mean),x2:right,y2:y(mean)},"assessment-chart-mean");
  const coords=visible.map((p,i)=>[x(i),y(p.value)]);
