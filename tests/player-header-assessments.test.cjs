@@ -1,4 +1,4 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync('static/jogador-v2.html','utf8');
 const js=fs.readFileSync('static/jogador-v2.js','utf8');
 const css=fs.readFileSync('static/jogador-v2.css','utf8');
@@ -61,4 +61,26 @@ test("profile tab shows the existing private photo and header has only the brand
  assert.match(html,/id="avatar-initials"/);
  assert.doesNotMatch(html,/id="player-avatar"/);
  assert.match(css,/#tabs button\[data-tab="profile"\] \.profile-tab-avatar img\{/);
+});
+
+test('8-skinfold graph colours reflect sex and goalkeeper cutoffs',()=>{
+ const start=js.indexOf('function playerSkinfoldCategory(');
+ const end=js.indexOf('\n}',start);
+ assert.ok(start>=0&&end>start);
+ const fn=vm.runInNewContext(js.slice(start,end+2)+';playerSkinfoldCategory');
+ for(const [sex,pos,limits] of [['M','',[45,55,60]],['M','GR',[50,60,65]],['F','',[65,70,80]],['F','GR',[70,75,85]]]){
+  const [dark,yellow,red]=limits;
+  for(const [value,expected] of [[dark,'dark-green'],[dark+.1,'light-green'],[yellow-.1,'light-green'],[yellow,'yellow'],[red-.1,'yellow'],[red,'red'],[red+5,'red']]){
+   assert.equal(fn(value,pos,sex).code,expected,sex+' '+pos+' '+value);
+  }
+ }
+ assert.equal(fn(62.5,'','M').code,'red');
+ assert.equal(fn(62.5,'GR','M').code,'yellow');
+ assert.equal(fn(80,'','F').color,'#E17878');
+ assert.equal(fn(85,'GR','F').color,'#E17878');
+ assert.equal(fn(null,'','F'),null);
+ assert.equal(fn(60,'',null).code,'red');
+ assert.match(js,/buildAssessmentTrend\(readings,unit,[^\n]*key==="sum_8"\)/);
+ assert.match(js,/dot\.style\.stroke=category\.color/);
+ assert.match(js,/label\.style\.fill=category\.color/);
 });
