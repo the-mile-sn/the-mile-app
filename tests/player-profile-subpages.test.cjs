@@ -86,3 +86,10 @@ test('login uses the approved minimal brand layout without changing credentials 
  assert.match(css,/#login-panel\{background:transparent!important;border:0!important/);
  assert.match(css,/#login-form \.login-input input\{/);
 });
+
+test('login group is vertically centred without affecting authenticated player pages',()=>{
+ assert.match(css,/body:has\(#login-panel:not\(\[hidden\]\)\) \.shell\{/);
+ assert.match(css,/min-height:100vh;min-height:100dvh/);
+ assert.match(css,/display:flex;flex-direction:column;justify-content:center/);
+ assert.match(css,/safe-area-inset-bottom/);
+});
