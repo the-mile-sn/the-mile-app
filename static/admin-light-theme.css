@@ -451,3 +451,19 @@ html[data-admin-theme="light"] #tm-players-page #tm-players-archived-box[open] s
 html[data-admin-theme="light"] #tm-players-page .tm-archived-row{border-color:var(--tm-light-border)}
 html[data-admin-theme="light"] #tm-players-page #tm-players-archived-box summary{color:var(--tm-light-text)}
 html[data-admin-theme="light"] #tm-players-page #tm-players-archived-feedback{color:var(--tm-light-muted)}
+
+
+/* Separate Gerir acesso card and accessible light-mode action colours. */
+html[data-admin-theme="light"] #tm-players-page .tm-players-access-management{background:#f1f3f6;border-color:#e0e5ec;color:#1b2736}
+html[data-admin-theme="light"] #tm-players-page .tm-players-access-management h4{color:#1b2736}
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-access-block{background:#fff0f0;border-color:#f1c4c4;color:#bb2525}
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-access-block.is-unblocking{background:#e8f5ec;border-color:#b8dec3;color:#207447}
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-access-change{background:#fff;border-color:#cbd4e1;color:#233245}
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-access-archive{background:#ffefb3;border-color:#e9ce73;color:#89550b}
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-access-archive:hover{background:#ffe49a}
+html[data-admin-theme="light"] #tm-players-page .tm-access-password-form{background:#fff;border-color:#e0e5eb}
+html[data-admin-theme="light"] #tm-players-page .tm-access-password-field>label{color:#4b596c}
+html[data-admin-theme="light"] #tm-players-page .tm-access-password-input input{background:#fff;border-color:#d1dbe6;color:#203044}
+html[data-admin-theme="light"] #tm-players-page .tm-access-visibility-toggle{color:#647287}
+html[data-admin-theme="light"] #tm-players-page #tm-players-password-save{background:#138d45;border-color:#12853e;color:#fff}
+html[data-admin-theme="light"] #tm-players-page #tm-players-password-cancel{background:#fff;border-color:#cbd4e1;color:#28384c}
