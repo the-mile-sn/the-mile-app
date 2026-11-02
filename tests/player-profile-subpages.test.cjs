@@ -111,3 +111,14 @@ test('floating navigation has frosted glass styling with a clear selected state'
  assert.match(css,/#player-panel #tabs button\[aria-pressed="true"\]/);
  assert.match(js,/duration:500/);
 });
+
+test('adaptive bottom navigation responds to scroll and resets on tab change',()=>{
+ assert.match(js,/window\.addEventListener\("scroll"/);
+ assert.match(js,/mileScrollAccum>=28/);
+ assert.match(js,/y<32/);
+ assert.match(js,/nav\.classList\.toggle\("tabs-compact",direction>0\)/);
+ assert.match(js,/\$\("tabs"\)\.classList\.remove\("tabs-compact"\)/);
+ assert.match(css,/#player-panel #tabs\.tabs-compact\{/);
+ assert.match(css,/min-height:44px!important/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+});
