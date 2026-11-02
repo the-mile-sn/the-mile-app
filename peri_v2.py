@@ -150,6 +150,55 @@ def update_option(c,athlete_id,identifier,group_index,option_index,payload):
               (json.dumps(doc["extracted"],ensure_ascii=False),identifier,athlete_id))
     return option
 
+
+def add_option(c,athlete_id,identifier,group_index=None,phase=None):
+    """Add an unreviewed option to a draft group, or restore a missing phase."""
+    doc=get_import(c,athlete_id,identifier)
+    if doc is None:return None
+    if doc["status"]!="draft":raise ValueError("not_editable")
+    groups=doc["extracted"]["groups"]
+    if group_index is not None:
+        if (type(group_index)!=int or not 0<=group_index<len(groups) or phase is not None):
+            raise ValueError("invalid_option")
+        group=groups[group_index]
+    else:
+        if phase not in PHASES or any(phase in g.get("meals",[]) for g in groups) or len(groups)>=80:
+            raise ValueError("invalid_phase")
+        group={"heading":LABELS[doc["kind"]][phase],"meals":[phase],"options":[]}
+        groups.append(group)
+    options=group["options"]
+    if len(options)>=80:raise ValueError("too_many_options")
+    options.append({"number":len(options)+1,"title":"","totals":None,
+                    "lines":[],"items":[],"reviewed":False})
+    # Numbers are display labels, not stable database keys.
+    for index,option in enumerate(options):option["number"]=index+1
+    c.execute("UPDATE v2_peri_imports SET extracted_json=? WHERE id=? AND athlete_id=? AND status='draft'",
+              (json.dumps(doc["extracted"],ensure_ascii=False),identifier,athlete_id))
+    return get_import(c,athlete_id,identifier)
+
+
+def delete_option(c,athlete_id,identifier,group_index,option_index):
+    """Remove one complete draft option, leaving past publications untouched."""
+    doc=get_import(c,athlete_id,identifier)
+    if doc is None:return None
+    if doc["status"]!="draft":raise ValueError("not_editable")
+    groups=doc["extracted"]["groups"]
+    if (type(group_index)!=int or type(option_index)!=int
+        or not 0<=group_index<len(groups)
+        or not 0<=option_index<len(groups[group_index]["options"])):
+        raise ValueError("invalid_option")
+    options=groups[group_index]["options"]
+    options.pop(option_index)
+    if not options:
+        # An accidentally imported phase (e.g. Pre-jogo) must disappear.
+        groups.pop(group_index)
+    else:
+        for index,option in enumerate(options):option["number"]=index+1
+    c.execute("UPDATE v2_peri_imports SET extracted_json=? WHERE id=? AND athlete_id=? AND status='draft'",
+              (json.dumps(doc["extracted"],ensure_ascii=False),identifier,athlete_id))
+    return get_import(c,athlete_id,identifier)
+
+
 def _snapshot(doc):
     groups=doc["extracted"]["groups"]
     if not groups:raise ValueError("missing_meals")

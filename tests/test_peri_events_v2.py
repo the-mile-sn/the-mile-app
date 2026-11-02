@@ -81,5 +81,64 @@ class EventAndPeriTest(unittest.TestCase):
         self.assertFalse(peri_v2.update_match_override(self.c,"player","missing","post","off"))
 
 
+class PeriOptionDraftEditingTests(unittest.TestCase):
+    def setUp(self):
+        self.c=sqlite3.connect(":memory:")
+        self.c.row_factory=sqlite3.Row
+        self.c.execute("PRAGMA foreign_keys=ON")
+        self.c.execute("CREATE TABLE v2_athletes(id TEXT PRIMARY KEY)")
+        self.c.execute("INSERT INTO v2_athletes(id) VALUES('player'),('other')")
+        peri_v2.initialize(self.c)
+        self.data={"groups":[
+            {"heading":"Pré-jogo","meals":["pre"],"options":[{"number":1,"title":"Imported","totals":{"kcal":"117","protein_g":"1","carbs_g":"27","fat_g":"0"},"reviewed":True,"items":[],"lines":[]}]},
+            {"heading":"Intra-jogo","meals":["pre"],"options":[{"number":1,"title":"Correct","totals":{"kcal":"323","protein_g":"2","carbs_g":"76","fat_g":"0"},"reviewed":True,"items":[],"lines":[]}]},
+            {"heading":"Pós-jogo","meals":["post"],"options":[{"number":1,"title":"Post","totals":{"kcal":"100","protein_g":"10","carbs_g":"10","fat_g":"0"},"reviewed":True,"items":[],"lines":[]}]}
+        ]}
+        for id,athlete,status in [('draft','player','draft'),('other-draft','other','draft'),('published','player','published')]:
+            self.c.execute("INSERT INTO v2_peri_imports(id,athlete_id,kind,filename,status,extracted_json,created_at) VALUES(?,?,?,?,?,?,?)",
+                           (id,athlete,'match','a.pdf',status,json.dumps(self.data),1))
+        self.c.execute("INSERT INTO v2_peri_publications(id,athlete_id,kind,source_import_id,snapshot_json,published_at,published_by,replaced_at) VALUES(?,?,?,?,?,?,?,NULL)",
+                       ('publication','player','match','published',json.dumps({'pre':[{'title':'Published'}],'post':[]}),1,'admin'))
+        self.c.commit()
+
+    def tearDown(self):self.c.close()
+
+    def test_removes_wrong_pre_game_group_without_affecting_intra_or_published(self):
+        draft=peri_v2.delete_option(self.c,'player','draft',0,0)
+        groups=draft['extracted']['groups']
+        self.assertEqual([g['heading'] for g in groups],['Intra-jogo','Pós-jogo'])
+        self.assertEqual(groups[0]['options'][0]['title'],'Correct')
+        self.assertEqual(peri_v2.current(self.c,'player')['match']['options']['pre'][0]['title'],'Published')
+        self.assertEqual(len(peri_v2.get_import(self.c,'other','other-draft')['extracted']['groups']),3)
+
+    def test_add_option_unreviewed_and_renumber_after_delete(self):
+        first=peri_v2.add_option(self.c,'player','draft',1)
+        self.assertEqual([x['number'] for x in first['extracted']['groups'][1]['options']],[1,2])
+        self.assertFalse(first['extracted']['groups'][1]['options'][-1]['reviewed'])
+        with self.assertRaises(ValueError):peri_v2._snapshot(first)
+        second=peri_v2.delete_option(self.c,'player','draft',1,0)
+        self.assertEqual(second['extracted']['groups'][1]['options'][0]['number'],1)
+        self.assertEqual(second['extracted']['groups'][1]['options'][0]['title'],'')
+        with self.assertRaises(ValueError):peri_v2._snapshot(second)
+
+    def test_phase_can_be_recreated_after_last_option_is_deleted(self):
+        peri_v2.delete_option(self.c,'player','draft',2,0)
+        result=peri_v2.add_option(self.c,'player','draft',phase='post')
+        self.assertEqual(result['extracted']['groups'][-1]['heading'],'Pós-jogo')
+        self.assertEqual(result['extracted']['groups'][-1]['meals'],['post'])
+        with self.assertRaises(ValueError):peri_v2.add_option(self.c,'player','draft',phase='post')
+
+    def test_wrong_athlete_published_or_invalid_indices_do_not_mutate(self):
+        self.assertIsNone(peri_v2.add_option(self.c,'other','draft',0))
+        self.assertIsNone(peri_v2.delete_option(self.c,'other','draft',0,0))
+        with self.assertRaises(ValueError):peri_v2.add_option(self.c,'player','published',0)
+        with self.assertRaises(ValueError):peri_v2.delete_option(self.c,'player','published',0,0)
+        for gi,oi in [(True,0),(0,False),(-1,0),(100,0),(0,100)]:
+            with self.assertRaises(ValueError):peri_v2.delete_option(self.c,'player','draft',gi,oi)
+        for gi in [True,-1,100]:
+            with self.assertRaises(ValueError):peri_v2.add_option(self.c,'player','draft',gi)
+
+
+
 if __name__=="__main__":
     unittest.main()

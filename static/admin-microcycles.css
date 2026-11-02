@@ -1261,3 +1261,12 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #calendar-section #nutrition-weekly-summary .calendar-week-coverage{font-size:11px;color:#9299a5;text-align:right;margin:8px 0 0!important}
 @media(max-width:1100px){#calendar-section .day-preview .day-meal-header{flex-wrap:wrap}#calendar-section .day-preview .day-meal-header .day-color-select{flex:1 1 100%;max-width:none}}
 @media(max-width:720px){#calendar-section .day-preview .day-meal-nutrients{white-space:normal}}
+
+
+/* Peri draft: full option controls (light and dark themes). */
+#peri-panel .peri-editor-option-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#peri-panel .peri-remove-option{background:transparent;color:inherit;border:1px solid currentColor;opacity:.75;padding:6px 12px;font-size:12px;border-radius:999px;cursor:pointer}
+#peri-panel .peri-remove-option:hover{opacity:1}
+#peri-panel .peri-add-option{display:block;width:100%;margin:0 0 18px;padding:11px 14px;border:1px solid rgba(150,160,175,.45);border-radius:999px;background:transparent;color:inherit;cursor:pointer}
+#peri-panel .peri-add-option:hover{background:rgba(130,140,155,.10)}
+#peri-panel .peri-add-phase{margin-top:16px}
