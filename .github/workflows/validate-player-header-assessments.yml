@@ -14,3 +14,4 @@ jobs:
       - run: node --test tests/player-header-assessments.test.cjs tests/player-session-isolation.test.cjs tests/player-weight-navigation.test.cjs
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest -v test_player_access_profile_bridge
+      - run: python -m unittest -v test_player_historical_perimeters_v2
