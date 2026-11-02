@@ -3798,3 +3798,31 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .weekly-color-detail .weekly-detail-titles>strong{font-weight:var(--mile-type-semibold)!important}
 #weekly-view .weekly-day-total .weekly-total-macros,
 #overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-header+div>.nutrition-chart-section>strong{font-weight:var(--mile-type-regular)!important}
+
+/* Shared type hierarchy: Assessments, Menus, Profile and bottom navigation.
+   Restrict changes to weights: preserve sizing, chart geometry and interaction. */
+#plans #plans-assessments .assessment-metric-name,
+#plans .assessment-tabs button,
+#plans .assessment-history-card>summary{font-weight:var(--mile-type-medium)!important}
+#plans #plans-assessments .assessment-metric-right>strong,
+#plans .assessment-trend>p:first-child,
+#plans .assessment-chart-value,
+#plans .assessment-chart-value.is-selected{font-weight:var(--mile-type-semibold)!important}
+#plans .assessment-change,
+#plans .assessment-chart-tick,
+#plans .assessment-chart-labels,
+#plans .assessment-history-points{font-weight:var(--mile-type-regular)!important}
+#menus .date-nav strong{font-weight:var(--mile-type-medium)!important}
+#menus .menu-day-heading h3{font-weight:var(--mile-type-semibold)!important}
+#menus .menu-day-heading .menu-day-subtitle{font-weight:var(--mile-type-medium)!important}
+#menus .day-menu .menu-entry-heading strong,
+#menus .day-menu .menu-entry-body .value{font-weight:var(--mile-type-medium)!important}
+#menus .day-menu .menu-entry-body :is(small,.menu-entry-note){font-weight:var(--mile-type-regular)!important}
+#profile>h2,#profile .profile-subpage-header h2,
+#profile .profile-identity>strong,#profile .profile-plan-card>strong,
+#profile .profile-plan-detail>strong{font-weight:var(--mile-type-semibold)!important}
+#profile .profile-action,#profile .profile-password-save{font-weight:var(--mile-type-medium)!important}
+#profile .profile-plan-card>span,#profile .profile-identity>span,
+#profile .profile-plan-detail>span{font-weight:var(--mile-type-regular)!important}
+#tabs button,#tabs button>span:not(.profile-tab-avatar),
+#tabs button[data-tab="profile"]>span:last-child{font-weight:var(--mile-type-regular)!important}
