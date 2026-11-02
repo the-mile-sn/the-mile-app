@@ -197,3 +197,12 @@ test("raw accompaniments keep newline formatting with more comfortable line spac
  assert.match(css,/#overview \.meal-collapsible-note>\.meal-note-body,[\s\S]*?#weekly-view \.meal-collapsible-note>\.meal-note-body\{\s*white-space:pre-wrap!important;\s*line-height:1\.75!important/);
  assert.match(css,/margin-top:6px!important/);
 });
+
+test("all color plan options have compact divider-free food rows while raw notes keep spacing",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview \.daily-meal:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\) \.foods/);
+ assert.match(css,/#plans #plan-detail :is\(\.plan-meal,\.plan-overview-meal\):is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\) \.foods/);
+ assert.match(css,/#weekly-view \.weekly-color-detail:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\) \.foods/);
+ assert.match(css,/border-bottom:0!important;\s*box-shadow:none!important;\s*padding-top:5px!important;\s*padding-bottom:5px!important/);
+ assert.match(css,/\.meal-collapsible-note>\.meal-note-body\{line-height:1\.75!important\}/);
+});
