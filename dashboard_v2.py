@@ -23,6 +23,15 @@ def snapshot(c, week, today):
     last = first + timedelta(days=6)
     start_iso, end_iso = first.isoformat(), last.isoformat()
     players = microcycles_v2.list_athletes(c)
+    photos = {
+        row["athlete_id"]: {"user_id": row["user_id"], "has_photo": bool(row["has_photo"])}
+        for row in c.execute(
+            """SELECT l.athlete_id,u.id AS user_id,
+                      (u.photo IS NOT NULL) AS has_photo
+               FROM v2_player_links l JOIN users u ON u.id=l.user_id
+               WHERE u.role='player'"""
+        ).fetchall()
+    }
     week_rows = []
     todays_games = []
     todays_events = []
@@ -76,7 +85,7 @@ def snapshot(c, week, today):
                 "classification": classification,
                 "colors": {meal: effective[meal]["color"] for meal in MEALS}
             })
-        week_rows.append({"id": aid, "name": athlete["name"], "days": days})
+        week_rows.append({"id": aid, "name": athlete["name"], "days": days, **photos.get(aid, {"user_id": None, "has_photo": False})})
         for match in matches:
             if match["match_date"] == today:
                 todays_games.append({
