@@ -179,3 +179,11 @@ test("tone-on-tone meal options keep palette B and remove harsh white option tex
  assert.match(css,/#weekly-view \.weekly-color-detail:is\(/);
  assert.match(css,/\.daily-event-card\.match-intra-card :is\(\.meal-average-inline \.kcal/);
 });
+
+test("shared typography tokens and Plans meal kcal colour replace legacy neutral override",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/--mile-type-regular:400;--mile-type-medium:500;--mile-type-semibold:600;--mile-type-bold:700/);
+ assert.doesNotMatch(css,/\.plan-overview-meal:not\(\[open\]\)>\.daily-meal-head \.meal-average-inline \.macro>\.kcal,\s*#plans/);
+ assert.match(css,/\.plan-overview-meal:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\)>\.daily-meal-head \.meal-average-inline \.macro>\.kcal/);
+ assert.match(css,/color:var\(--meal-ink\)!important/);
+});
