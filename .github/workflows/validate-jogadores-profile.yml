@@ -14,3 +14,5 @@ jobs:
       - run: node --check static/admin-dashboard.js
       - run: node --check static/admin-microcycles.js
       - run: python -m unittest -v test_player_account_creation_v2
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest -v test_player_admin_lifecycle_v2

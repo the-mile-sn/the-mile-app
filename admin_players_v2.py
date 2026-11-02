@@ -13,6 +13,7 @@ def overview(c, today, access_is_valid):
           FROM v2_athletes a
           LEFT JOIN v2_player_links l ON l.athlete_id=a.id
           LEFT JOIN users u ON u.id=l.user_id AND u.role='player'
+         WHERE a.archived_at IS NULL
          ORDER BY a.name, a.id
     """).fetchall()
 

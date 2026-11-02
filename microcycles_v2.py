@@ -89,7 +89,7 @@ def initialize(c):
     athlete_columns = _table_columns(c, "v2_athletes")
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
-    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("sex","TEXT"),("field_position","TEXT"),("arm_point","REAL"),("thigh_point","REAL"),("followup_plan","TEXT"),("followup_renewal_date","TEXT")):
+    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("sex","TEXT"),("field_position","TEXT"),("arm_point","REAL"),("thigh_point","REAL"),("followup_plan","TEXT"),("followup_renewal_date","TEXT"),("archived_at","BIGINT"),("archived_by","TEXT")):
         if name not in athlete_columns:
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
     if "match_time" not in columns:
@@ -97,7 +97,7 @@ def initialize(c):
 
 
 def list_athletes(c):
-    rows = c.execute("SELECT id,name,weight_kg FROM v2_athletes ORDER BY name").fetchall()
+    rows = c.execute("SELECT id,name,weight_kg FROM v2_athletes WHERE archived_at IS NULL ORDER BY name").fetchall()
     return [dict(r) for r in rows]
 
 
@@ -122,7 +122,7 @@ def create_athlete(c, name, commit=True, weight_kg=None):
 
 
 def get_model(c, athlete_id):
-    athlete = c.execute("SELECT a.id,a.name,a.weight_kg,a.height_cm,a.profile_notes,a.field_position,a.arm_point,a.thigh_point,u.sex FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id LEFT JOIN users u ON u.id=l.user_id WHERE a.id=?", (athlete_id,)).fetchone()
+    athlete = c.execute("SELECT a.id,a.name,a.weight_kg,a.height_cm,a.profile_notes,a.field_position,a.arm_point,a.thigh_point,a.archived_at,u.sex FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id LEFT JOIN users u ON u.id=l.user_id WHERE a.id=?", (athlete_id,)).fetchone()
     if not athlete:
         return None
     configured = c.execute(

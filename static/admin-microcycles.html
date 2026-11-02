@@ -23,7 +23,7 @@
  <section class="tm-db-panel"><div class="tm-db-heading tm-db-week-heading"><div><h2>Microciclo semanal</h2><span id="tm-db-count" class="tm-db-count-sr" aria-live="polite"></span></div><div class="tm-db-controls"><button type="button" id="tm-db-go-today">Hoje</button><button type="button" id="tm-db-prev" aria-label="Semana anterior">‹</button><button type="button" id="tm-db-next" aria-label="Semana seguinte">›</button><strong id="tm-db-week-title"></strong></div></div><div class="tm-db-grid-scroll" tabindex="0" role="region" aria-label="Grelha semanal dos jogadores"><table class="tm-db-table"><thead id="tm-db-thead"></thead><tbody id="tm-db-tbody"></tbody></table></div><p id="tm-db-error" class="tm-db-error" role="status"></p></section>
 </section>
 <section id="tm-players-page" class="tm-players-page" hidden aria-label="Gestão de jogadores">
-  <div class="tm-players-heading tm-players-heading-minimal"><button type="button" id="tm-players-new" class="tm-players-control">+ Criar jogador</button></div>
+  <div class="tm-players-heading tm-players-heading-minimal"><button type="button" id="tm-players-new" class="tm-players-control">+ Criar jogador</button></div><details id="tm-players-archived-box"><summary>Jogadores arquivados</summary><div id="tm-players-archived-list"></div><p id="tm-players-archived-feedback" role="status"></p></details>
   <div id="tm-players-create-form" class="tm-planning-create tm-players-create" hidden><label for="new-name">Novo jogador</label><input id="new-name" placeholder="Nome completo" maxlength="120"><label for="new-weight">Peso inicial (kg)</label><input id="new-weight" type="number" min="20" max="250" step="0.1" inputmode="decimal" required placeholder="Ex.: 75,0"><label for="new-sex">Sexo</label><select id="new-sex"><option value="">Selecionar</option><option value="M">Masculino</option><option value="F">Feminino</option></select><label for="new-username">Utilizador</label><input id="new-username" autocomplete="off" maxlength="40" placeholder="Só letras minúsculas"><label for="new-password">Palavra-passe inicial</label><input id="new-password" type="password" autocomplete="new-password" minlength="12" placeholder="Mínimo 12 caracteres"><button id="create" type="button">Criar jogador</button><button id="tm-planning-cancel-create" type="button">Cancelar</button></div>
   <div id="tm-players-profile-nav" class="tm-subpage-nav" hidden>
     <button type="button" id="tm-players-profile-back" class="tm-subpage-back" aria-label="Voltar à lista de jogadores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>Jogadores</span></button>
@@ -33,11 +33,17 @@
     <div class="tm-player-photo-row"><div id="tm-players-profile-photo" aria-label="Fotografia de perfil"></div><label class="tm-player-photo-control">Fotografia de perfil<input type="file" accept="image/jpeg,image/png,image/webp" id="tm-players-profile-photo-upload" hidden></label></div>
     <div id="tm-players-profile-fields" class="profile-summary" aria-live="polite"></div>
     <div><button type="button" id="tm-players-profile-edit">Editar perfil</button><button type="button" id="tm-players-profile-save" hidden>Guardar perfil</button><button type="button" id="tm-players-profile-cancel" hidden>Cancelar</button></div>
-    <p id="tm-players-profile-feedback" role="status"></p>
+    <p id="tm-players-profile-feedback" role="status"></p><div class="tm-player-danger-zone"><button type="button" id="tm-players-archive" class="tm-players-control">Arquivar jogador</button><p class="hint">Oculta o jogador das listas, preserva o histórico e bloqueia o acesso à App. Podes recuperá-lo mais tarde.</p></div>
     <section id="tm-players-access-management" class="tm-players-access-management" aria-label="Gestão de acesso do jogador">
       <h4>Acesso à App do Jogador</h4>
       <p id="tm-players-access-identity" class="hint" aria-live="polite">A consultar conta associada…</p>
-      <button id="tm-players-access-toggle" class="tm-players-control" type="button" hidden></button>
+      <button id="tm-players-access-toggle" class="tm-players-control" type="button" hidden></button><button id="tm-players-password-toggle" class="tm-players-control" type="button" hidden>Alterar palavra-passe</button>
+      <form id="tm-players-password-form" hidden autocomplete="off">
+        <label>Nova palavra-passe <input id="tm-players-password-new" type="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+        <label>Confirmar nova palavra-passe <input id="tm-players-password-confirm" type="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+        <button type="submit" id="tm-players-password-save">Guardar nova palavra-passe</button>
+        <button type="button" id="tm-players-password-cancel">Cancelar</button>
+      </form>
       <p id="tm-players-access-feedback" role="status"></p>
     </section>
   </section>
