@@ -206,3 +206,15 @@ test("all color plan options have compact divider-free food rows while raw notes
  assert.match(css,/border-bottom:0!important;\s*box-shadow:none!important;\s*padding-top:5px!important;\s*padding-bottom:5px!important/);
  assert.match(css,/\.meal-collapsible-note>\.meal-note-body\{line-height:1\.75!important\}/);
 });
+
+test("daily meal option foods have no separators, including single option and multi option",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview #day-details \.daily-meal \.single-meal-option \.foods/);
+ assert.match(css,/#overview #day-details \.daily-meal \.player-meal-option-subcard \.foods/);
+ assert.match(css,/border-bottom:0!important;\s*box-shadow:none!important;\s*padding-top:5px!important/);
+});
+test("raw accompaniment font size matches normal ingredient font, retaining line spacing",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#overview \.meal-collapsible-note>\.meal-note-body,[\s\S]*?#weekly-view \.meal-collapsible-note>\.meal-note-body\{\s*font-size:14px!important;/);
+ assert.match(css,/font-weight:var\(--mile-type-regular\)!important;\s*line-height:1\.75!important/);
+});
