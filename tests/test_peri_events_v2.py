@@ -154,5 +154,46 @@ class PeriOptionDraftEditingTests(unittest.TestCase):
 
 
 
+class EmptyTrainingDraftRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.c=sqlite3.connect(":memory:")
+        self.c.row_factory=sqlite3.Row
+        self.c.execute("CREATE TABLE v2_athletes(id TEXT PRIMARY KEY)")
+        self.c.execute("INSERT INTO v2_athletes(id) VALUES('player'),('other')")
+        peri_v2.initialize(self.c)
+        for aid,kind,identifier,groups in [
+            ("player","training","empty",[]),
+            ("player","training","full",[{"heading":"Pré-treino","meals":["pre"],"options":[{"number":1,"title":"Existing"}]}]),
+            ("other","training","other-empty",[])]:
+            self.c.execute("INSERT INTO v2_peri_imports(id,athlete_id,kind,filename,status,extracted_json,created_at) VALUES(?,?,?,?,?,?,?)",
+                           (identifier,aid,kind,"a.pdf","draft",json.dumps({"groups":groups}),1))
+        source={"pre":[{"number":1,"title":"SIS","totals":{"kcal":"100","protein_g":"0","carbs_g":"25","fat_g":"0"},
+                        "items":[{"kind":"food","quantity":"1 un","name":"Gel"}]}],
+                "post":[{"number":1,"title":"Recuperação","totals":{"kcal":"80","protein_g":"20","carbs_g":"0","fat_g":"0"},
+                         "items":[{"kind":"food","quantity":"200 ml","name":"Bebida"}]}]}
+        self.source=source
+        self.c.execute("INSERT INTO v2_peri_imports(id,athlete_id,kind,filename,status,extracted_json,created_at) VALUES(?,?,?,?,?,?,?)",
+                       ("published","player","training","a.pdf","published",json.dumps({"groups":[]}),1))
+        self.c.execute("INSERT INTO v2_peri_publications(id,athlete_id,kind,source_import_id,snapshot_json,published_at,published_by,replaced_at) VALUES(?,?,?,?,?,?,?,NULL)",
+                       ("release","player","training","published",json.dumps(source),2,"admin"))
+        self.c.commit()
+
+    def tearDown(self):self.c.close()
+
+    def test_restores_full_training_history_into_empty_draft_only(self):
+        restored=peri_v2.restore_empty_draft(self.c,"player","empty")
+        groups=restored["extracted"]["groups"]
+        self.assertEqual([x["heading"] for x in groups],["Pré-treino","Pós-treino"])
+        self.assertEqual(groups[0]["options"][0]["lines"],["1 un Gel"])
+        self.assertFalse(groups[0]["options"][0]["reviewed"])
+        self.assertEqual(peri_v2.current(self.c,"player")["training"]["options"],self.source)
+        self.assertEqual(peri_v2.get_import(self.c,"other","other-empty")["extracted"]["groups"],[])
+
+    def test_never_replaces_existing_draft_or_wrong_athlete(self):
+        with self.assertRaises(ValueError):peri_v2.restore_empty_draft(self.c,"player","full")
+        self.assertIsNone(peri_v2.restore_empty_draft(self.c,"other","empty"))
+        with self.assertRaises(ValueError):peri_v2.restore_empty_draft(self.c,"other","other-empty")
+
+
 if __name__=="__main__":
     unittest.main()
