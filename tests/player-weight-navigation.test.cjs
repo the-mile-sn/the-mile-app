@@ -168,3 +168,14 @@ test("approved palette B is shared by daily, weekly and plan meal views",()=>{
  assert.match(css,/--meal-inner:color-mix/);
  assert.match(css,/\.weekly-event-card\.weekly-match-with-intra\{\s*background:#F2F2F4!important/);
 });
+
+test("tone-on-tone meal options keep palette B and remove harsh white option texts",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ for(const hex of ["#623324","#57451E","#24543E","#284D6C"])assert.ok(css.includes(hex));
+ assert.match(css,/--option-label:color-mix/);
+ assert.match(css,/--option-body:color-mix/);
+ assert.match(css,/--option-divider:color-mix/);
+ assert.match(css,/#plans #plan-detail :is\(\.plan-meal,\.plan-overview-meal\)/);
+ assert.match(css,/#weekly-view \.weekly-color-detail:is\(/);
+ assert.match(css,/\.daily-event-card\.match-intra-card :is\(\.meal-average-inline \.kcal/);
+});
