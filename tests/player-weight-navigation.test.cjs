@@ -218,3 +218,9 @@ test("raw accompaniment font size matches normal ingredient font, retaining line
  assert.match(css,/#overview \.meal-collapsible-note>\.meal-note-body,[\s\S]*?#weekly-view \.meal-collapsible-note>\.meal-note-body\{\s*font-size:14px!important;/);
  assert.match(css,/font-weight:var\(--mile-type-regular\)!important;\s*line-height:1\.75!important/);
 });
+
+test("weekly coloured meal kcal and macro strips have no tinted background",()=>{
+ const css=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/#weekly-view \.weekly-color-detail:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\)>\.weekly-meal-average/);
+ assert.match(css,/\.weekly-option-card \.option-expanded-macros,[\s\S]*?background:transparent!important;\s*background-color:transparent!important;\s*background-image:none!important/);
+});
