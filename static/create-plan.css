@@ -206,3 +206,17 @@
 .option-tabs button.current .macro-values b,.option-tabs button.current .macro-values small{color:#fff!important}
 .shell,.shell input,.shell select,.shell button,.shell textarea{font-family:inherit!important}
 @media(max-width:600px){.option-tabs button{min-width:145px!important}}
+
+/* Compact notes and in-option drag handles. */
+.nutrition-list .nutrition-row{grid-template-columns:22px minmax(140px,1fr) minmax(130px,26%) minmax(290px,40%) 58px!important;min-height:54px!important;gap:9px!important;align-items:center!important;padding:8px 10px!important}
+.nutrition-list .drag-handle{cursor:grab;color:#939397;font-size:20px;line-height:1;user-select:none;touch-action:none}
+.nutrition-list .drag-handle:active{cursor:grabbing}
+.nutrition-list .drag-over{box-shadow:inset 0 2px #7ba1be!important;background:#7ba1be12!important}
+.nutrition-list .note-row textarea{min-height:34px!important;height:34px!important;line-height:22px!important;resize:vertical!important;padding:5px 0!important;border:0!important;background:transparent!important;outline:0!important;overflow:auto!important;font:inherit!important;font-size:13px!important}
+.nutrition-list .note-row{grid-template-columns:22px minmax(140px,1fr) minmax(130px,26%) minmax(290px,40%) 30px 22px!important}
+.nutrition-list .note-row .note-label{grid-column:3/5;justify-self:end}
+.nutrition-list .confirm-note{grid-column:5;border:0!important;background:transparent!important;color:#939397!important;font-size:19px;cursor:pointer;padding:4px}
+.nutrition-list .confirm-note.confirmed{color:#6eac81!important}
+.nutrition-list .note-row .remove-row{grid-column:6}
+.nutrition-list .food-row .food-actions{grid-column:5}
+@media(max-width:1050px){.nutrition-list .nutrition-row,.nutrition-list .note-row{display:flex!important;flex-wrap:wrap!important}.nutrition-list .food-identity,.nutrition-list .note-row textarea{flex:1!important}.nutrition-list .food-reference-note{flex:1!important}.nutrition-list .note-label{margin-left:auto}}
