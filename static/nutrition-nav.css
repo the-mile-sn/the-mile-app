@@ -1,0 +1,16 @@
+/* Shared nutrition navigation matching the main Backoffice sidebar. */
+.tm-library-layout{grid-template-columns:232px minmax(0,1fr)}
+.tm-library-layout .tm-admin-sidebar{position:sticky;top:0;height:100vh;min-height:640px;background:#121215;border-right:1px solid #29292e;padding:24px 13px;display:flex;flex-direction:column;gap:10px;z-index:3}
+.tm-library-layout .tm-admin-brand{display:flex;align-items:center;gap:12px;padding:9px 12px 32px}
+.tm-library-layout .tm-admin-brand-home{display:block;border:0;background:transparent;padding:0;color:#f5f6f7;line-height:0}
+.tm-library-layout .tm-admin-brand-wordmark{display:block;width:min(168px,100%);height:auto;aspect-ratio:1605/244}
+.tm-library-layout .tm-admin-side-nav{display:flex;flex-direction:column;gap:3px}
+.tm-library-layout .tm-admin-nav-link{box-sizing:border-box;border:0;border-radius:10px;background:transparent;padding:12px;display:flex;gap:11px;align-items:center;text-align:left;color:#d6d6dc;font-size:13px;font-weight:500;width:100%;min-height:44px;text-decoration:none;line-height:1.35}
+.tm-library-layout .tm-admin-nav-link:hover{background:#25252a;color:#fff}
+.tm-library-layout .tm-admin-nav-link.is-active{background:#292b31;color:#fff;font-weight:600}
+.tm-library-layout .tm-admin-nav-icon{width:21px;min-width:21px;display:inline-flex;align-items:center;justify-content:center;color:#bbbcc4}
+.tm-library-layout .tm-admin-side-icon{width:20px;height:20px;display:block;flex:none}
+.tm-library-layout .tm-admin-sidebar-spacer{flex:1;min-height:40px}
+.tm-library-layout .tm-admin-sidebar-footer{border-top:1px solid #29292e;margin:12px 10px 0;padding-top:17px;color:#777781;font-size:10px;letter-spacing:.1em}
+.tm-library-layout .shell{max-width:none;width:100%;padding:26px clamp(16px,2vw,34px)}
+@media(max-width:830px){.tm-library-layout{display:block}.tm-library-layout .tm-admin-sidebar{position:relative;height:auto;min-height:0;padding:12px}.tm-library-layout .tm-admin-brand{padding:4px 8px 9px}.tm-library-layout .tm-admin-side-nav{flex-direction:row;flex-wrap:wrap}.tm-library-layout .tm-admin-nav-link{width:auto}.tm-library-layout .tm-admin-sidebar-spacer,.tm-library-layout .tm-admin-sidebar-footer{display:none}}
