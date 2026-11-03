@@ -242,7 +242,13 @@
    $("recipe-photo-file").value="";
    const photo=$("recipe-photo-preview");photo.hidden=!current.photo_key;
    if(current.photo_key)photo.src="/api/v2/recipes/image/"+encodeURIComponent(current.id)+"?v="+Date.now();
-  }catch(error){editorMessage("Não foi possível guardar: "+error.message);}
+  }catch(error){
+   editorMessage(error.message==="cyclic_recipe_reference"?
+    "Esta associação criaria uma referência circular entre receitas.":
+    error.message==="invalid_recipe_reference"?
+    "A receita associada não existe ou deixou de estar disponível.":
+    "Não foi possível guardar: "+error.message);
+  }
   finally{busy=false;$("recipe-save").disabled=false;}
  }
  async function deleteRecipe(recipe){
@@ -254,7 +260,11 @@
    if(openedId===recipe.id)closeEditor();
    await loadLibrary();
    alertMessage("Receita eliminada.");
-  }catch(error){alertMessage("Não foi possível eliminar a receita: "+error.message);}
+  }catch(error){
+   alertMessage(error.message==="recipe_in_use"?
+    "Esta receita está associada a outra receita. Remove primeiro essa associação.":
+    "Não foi possível eliminar a receita: "+error.message);
+  }
   finally{busy=false;}
  }
  async function loadLibrary(){
@@ -596,7 +606,13 @@
    $("recipe-pdf-feedback").textContent=result.created.length+
     " receitas guardadas como rascunho."+
     (result.skipped.length?" "+result.skipped.length+" duplicadas ignoradas.":"");
-  }catch(error){$("recipe-pdf-feedback").textContent="Não foi possível guardar: "+error.message;}
+  }catch(error){
+   $("recipe-pdf-feedback").textContent=error.message==="invalid_recipe_reference"?
+    "Verifica as receitas associadas: todas as referências do mesmo PDF têm de estar selecionadas para importar.":
+    error.message==="cyclic_recipe_reference"?
+    "Existem referências circulares entre receitas. Corrige as associações antes de guardar.":
+    "Não foi possível guardar: "+error.message;
+  }
   finally{pdfBusy=false;$("recipe-pdf-save").disabled=false;}
  }
  $("recipe-pdf-toggle").addEventListener("click",()=>togglePdfPanel($("recipe-pdf-panel").hidden));
