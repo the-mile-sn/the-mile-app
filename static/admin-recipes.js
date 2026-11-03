@@ -128,6 +128,44 @@
   buildOptions();
   return wrap;
  }
+ let recipeLinkActionCount=0;
+ function inlineRecipeLink(ingredient,options={}){
+  const panel=paintRecipeLink(ingredient,options);
+  panel.id="recipe-link-panel-"+(++recipeLinkActionCount);
+  const trigger=node("button","recipe-link-toggle");
+  trigger.type="button";
+  trigger.setAttribute("aria-controls",panel.id);
+  trigger.setAttribute("aria-expanded","false");
+  const icon=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  icon.setAttribute("viewBox","0 0 24 24");
+  icon.setAttribute("width","18");icon.setAttribute("height","18");
+  icon.setAttribute("fill","none");icon.setAttribute("stroke","currentColor");
+  icon.setAttribute("stroke-width","1.7");
+  icon.setAttribute("stroke-linecap","round");icon.setAttribute("stroke-linejoin","round");
+  icon.setAttribute("aria-hidden","true");
+  const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+  path.setAttribute("d","M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71");
+  icon.append(path);trigger.append(icon);
+  const update=()=>{
+   const linked=!!(ingredient.recipe_ref_id||ingredient.recipe_ref_page!=null);
+   const description=linked?panel.querySelector("summary").textContent:"Associar receita";
+   trigger.classList.toggle("is-linked",linked);
+   trigger.title=description;
+   trigger.setAttribute("aria-label",linked?"Alterar "+description:
+    "Associar receita ao alimento "+(ingredient.name||""));
+   trigger.setAttribute("aria-expanded",String(panel.open));
+  };
+  trigger.addEventListener("click",()=>{
+   panel.open=!panel.open;
+   update();
+   if(panel.open)panel.querySelector('input[type="search"]').focus();
+  });
+  panel.querySelector("select").addEventListener("change",()=>{
+   panel.open=false;update();trigger.focus();
+  });
+  update();
+  return {button:trigger,panel};
+ }
  function paintSections(){
   const host=$("recipe-sections");host.replaceChildren();
   current.sections.forEach((section,si)=>{
@@ -148,9 +186,10 @@
      input.addEventListener("input",()=>{ingredient[key]=input.value;});
      row.append(input);
     }
-    row.append(button("×",()=>{section.ingredients.splice(ii,1);paintSections();},"recipe-remove"));
-    box.append(row);
-    box.append(paintRecipeLink(ingredient,{ownerId:current.id}));
+    const link=inlineRecipeLink(ingredient,{ownerId:current.id});
+    const actions=node("div","recipe-ingredient-actions");
+    actions.append(link.button,button("×",()=>{section.ingredients.splice(ii,1);paintSections();},"recipe-remove"));
+    row.append(actions);box.append(row,link.panel);
    });
    box.append(button("+ Ingrediente",()=>{section.ingredients.push({name:"",quantity:"",unit:""});paintSections();},"recipe-inline-add"));
    host.append(box);
@@ -369,8 +408,10 @@
      section.ingredients.splice(ii,1);paintPdfDetail(recipe,detail);
     },"recipe-pdf-remove");
     remove.setAttribute("aria-label","Remover alimento "+(ii+1)+" do bloco "+(si+1));
-    row.append(remove);block.append(row);
-    block.append(paintRecipeLink(ingredient,{pdfRecipe:recipe}));
+    const link=inlineRecipeLink(ingredient,{pdfRecipe:recipe});
+    const actions=node("div","recipe-ingredient-actions");
+    actions.append(link.button,remove);
+    row.append(actions);block.append(row,link.panel);
    });
    block.append(button("+ Adicionar alimento",()=>{
     if(section.ingredients.length>=45){pdfReviewLimit("Cada bloco permite até 45 alimentos.");return;}
