@@ -1640,6 +1640,13 @@ async function uploadDishPhoto(file,fields){
   const image=await photoAsWebp(file);
   return request("/api/v2/dishes/photo",{method:"POST",body:JSON.stringify({...fields,image})});
 }
+async function loadDishLibrary(){
+ const data=await request("/api/v2/dishes");
+ dishLibrary=data.dishes||[];
+ renderDishEditor();
+ refreshDishCategories();
+}
+window.tmLoadDishLibrary=loadDishLibrary;
 $("create-dish").addEventListener("click",async()=>{
   const button=$("create-dish"),feedback=$("dish-new-feedback");
   const name_pt=$("new-dish-pt").value.trim(),name_en=$("new-dish-en").value.trim(),category=$("new-dish-category").value.trim(),photo=$("new-dish-photo").files[0];
@@ -1664,8 +1671,8 @@ function renderDishEditor(){
     const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.appendChild(photoInput);fields.appendChild(photoLabel);
     const photoButton=document.createElement("button");photoButton.type="button";photoButton.textContent="Atualizar fotografia";
     photoButton.onclick=async()=>{if(!photoInput.files[0])return;photoButton.disabled=true;
-      try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photoInput.value="";photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();status("Fotografia atualizada.","success");}
-      catch(e){status("Erro: "+e.message,"warn");}finally{photoButton.disabled=false;}
+      try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photoInput.value="";photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();$("dish-catalog-feedback").textContent="Fotografia atualizada.";}
+      catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;}finally{photoButton.disabled=false;}
     };fields.appendChild(photoButton);
     const inputs=[];
     for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
@@ -1676,8 +1683,8 @@ function renderDishEditor(){
     save.onclick=async()=>{save.disabled=true;try{
       await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:true})});
       dish.name_pt=inputs[0].value;dish.name_en=inputs[1].value;dish.category=inputs[2].value;dish.active=1;
-      status("Prato atualizado na biblioteca universal.","success");
-    }catch(e){status("Erro: "+e.message,"warn");}finally{save.disabled=false;}};
+      $("dish-catalog-feedback").textContent="Prato atualizado na biblioteca universal.";
+    }catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;}finally{save.disabled=false;}};
     fields.appendChild(save);card.appendChild(fields);host.appendChild(card);
   }
   if(!matches.length)host.textContent="Nenhum prato encontrado.";
@@ -1691,7 +1698,7 @@ $("dish-catalog-import").addEventListener("click",async()=>{
     const response=await fetch("/api/v2/dishes/import",{method:"POST",credentials:"same-origin",headers:{"X-CSRF-Token":csrf},body:file});
     const data=await response.json();if(!response.ok)throw Error(data.error||"Erro na importação");
     feedback.textContent=data.imported+" pratos importados com fotografias.";
-    await loadMenus();
+    await loadDishLibrary();
   }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
 });
 

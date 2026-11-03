@@ -1,0 +1,16 @@
+name: Validate Menus e Receitas navigation
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  navigation-regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/admin-dashboard.js
+      - run: node --check static/admin-microcycles.js
+      - run: node --test tests/admin-menus-recipes-navigation.test.cjs
+      - run: node --test tests/admin-clinical-navigation.test.cjs
+      - run: python -m unittest -v test_menu_color_parity_v2 test_calendar_v2
