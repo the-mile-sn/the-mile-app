@@ -56,7 +56,7 @@ test("recipe category management opens from toolbar in compact separate panel",(
  const search=html.indexOf('id="recipe-search"',start);
  const category=html.indexOf('id="recipe-category-manage"',start);
  const table=html.indexOf('id="recipe-list"',start);
- assert.ok(search>start&&category>search&&table>category);
+ assert.ok(table>start&&search>table&&category>search);
  assert.match(html,/id="recipe-category-toggle"[^>]*aria-expanded="false"/);
  assert.match(html,/id="recipe-category-manage"[^>]*hidden/);
  assert.match(ui,/function setRecipeCategoriesOpen\(open\)/);
@@ -89,7 +89,7 @@ test("PDF importer remains a review-first admin workflow",()=>{
 });
 
 test("recipe list offers confirmed deletion using admin-only endpoint",()=>{
- assert.match(ui,/button\("Eliminar",\(\)=>deleteRecipe\(r\),"recipe-delete"\)/);
+ assert.match(ui,/button\("",\(\)=>deleteRecipe\(r\),"recipe-icon-button recipe-delete"\)/);
  assert.match(ui,/window\.confirm\(/);
  assert.match(ui,/method:"DELETE"/);
  assert.match(ui,/await loadLibrary\(\)/);
@@ -208,8 +208,13 @@ test("recipe toolbar filters all displayed metadata and keeps actions secondary"
  assert.match(ui,/status===r\.status/);
  assert.doesNotMatch(html,/id="recipe-filter-photo"/);
  assert.doesNotMatch(ui,/recipe-filter-photo/);
- assert.match(ui,/\["Categoria","Fotografia","Receita","Tipo","Estado",""\]/);
+ assert.match(html,/class="recipe-table-filter-row"/);
+ assert.match(html,/id="recipe-list-body"/);
+ assert.match(html,/id="recipe-list-empty"/);
+ assert.match(ui,/const host=\$\("recipe-list-body"\);host\.replaceChildren\(\)/);
  assert.match(ui,/recipe-category-cell/);
+ assert.match(ui,/recipeCategoryBadge\(r\.category_id,r\.category\)/);
+ assert.match(ui,/function recipeCategoryTone\(categoryId\)/);
  assert.match(ui,/norm\(r\.name\)\.includes\(q\)/);
  assert.match(ui,/function activeRecipeFilters\(\)/);
  assert.match(ui,/recipe-clear-filters"\)\.addEventListener\("click"/);
@@ -223,6 +228,9 @@ test("read-only recipe view uses real saved fields and lets linked recipes be op
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
  assert.match(ui,/button\("Ver",\(\)=>openReadRecipe\(r\.id\),"recipe-view"\)/);
+ assert.match(ui,/recipeListIcon\("edit"\)/);
+ assert.match(ui,/recipeListIcon\("trash"\)/);
+ assert.match(html,/class="recipe-reader-panel"/);
  assert.match(ui,/async function openReadRecipe\(id,linked=false\)/);
  assert.match(ui,/await request\("\/api\/v2\/recipes\/"\+encodeURIComponent\(id\)\)/);
  assert.match(ui,/recipe\.sections\|\|\[\]/);
@@ -246,4 +254,40 @@ test("recipe reader typography increases content size while quantities stay subt
  assert.match(css,/\.recipe-reader-ingredient-link\{font-size:14px!important;font-weight:400!important/);
  assert.match(css,/\.recipe-reader-steps li\{font-size:14px/);
  assert.match(css,/\.recipe-reader-notes p\{font-size:14px/);
+});
+
+test("table header is also the first interactive filter row, with compact action icons",()=>{
+ const start=html.indexOf('id="recipe-library-toolbar"');
+ const table=html.indexOf('id="recipe-list"',start);
+ const end=html.indexOf('id="recipe-list-body"',table);
+ const content=html.slice(table,end);
+ assert.ok(start>=0&&table>start&&end>table);
+ const toolbar=html.slice(start,table);
+ assert.doesNotMatch(toolbar,/id="recipe-search"|id="recipe-filter-category"|id="recipe-filter-type"|id="recipe-filter-status"/);
+ assert.match(toolbar,/id="recipe-pdf-toggle"/);
+ assert.match(toolbar,/id="recipe-add"/);
+ for(const id of ["recipe-filter-category","recipe-search","recipe-filter-type","recipe-filter-status"]){
+  assert.ok(content.includes('id="'+id+'"'),id);
+ }
+ assert.ok(content.indexOf('id="recipe-filter-category"')<content.indexOf('id="recipe-search"'));
+ assert.ok(content.indexOf('id="recipe-search"')<content.indexOf('id="recipe-filter-type"'));
+ assert.ok(content.indexOf('id="recipe-filter-type"')<content.indexOf('id="recipe-filter-status"'));
+ assert.match(ui,/tr\.append\(actions\);host\.append\(tr\)/);
+ assert.match(ui,/recipe-icon-button recipe-edit-action/);
+ assert.match(ui,/recipe-icon-button recipe-delete/);
+ assert.match(ui,/edit\.setAttribute\("aria-label","Editar receita "\+r\.name\)/);
+ assert.match(ui,/remove\.setAttribute\("aria-label","Eliminar receita "\+r\.name\)/);
+ assert.match(ui,/window\.confirm\("Eliminar definitivamente/);
+ assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
+});
+test("recipe categories keep stable semantic colors and are accessible in both themes",()=>{
+ const css=fs.readFileSync("static/admin-recipes.css","utf8");
+ assert.match(ui,/\["carne branca","rose"\]/);
+ assert.match(ui,/\["carne vermelha","red"\]/);
+ assert.match(ui,/recipeCategoryBadge\(recipe\.category_id,recipe\.category\)/);
+ assert.match(css,/\.recipe-category-rose\{/);
+ assert.match(css,/\.recipe-category-red\{/);
+ assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-category-rose/);
+ assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-category-red/);
+ assert.match(css,/\.recipe-table-filter-row input:focus-visible/);
 });

@@ -23,6 +23,45 @@
   for(const item of options){const opt=node("option","",item.name);opt.value=item.id;input.append(opt);}
   if(options.some(x=>x.id===before))input.value=before;
  }
+ const categoryPalette=["rose","red","teal","blue","amber","violet","mint","orange","indigo","cyan","lime","slate"];
+ function recipeCategoryTone(categoryId){
+  const selected=categories.find(item=>item.id===categoryId);
+  if(!selected)return "slate";
+  const assigned=new Map(),used=new Set();
+  // Keep the team's familiar culinary categories recognisable.
+  const names=[
+   ["carne branca","rose"],["carne vermelha","red"],
+   ["peixe magro","teal"],["peixe gordo","blue"],
+   ["peixe","cyan"]
+  ];
+  for(const cat of categories){
+   const exact=names.find(([name])=>norm(cat.name)===name);
+   if(exact){assigned.set(cat.id,exact[1]);used.add(exact[1]);}
+  }
+  const free=categoryPalette.filter(tone=>!used.has(tone));
+  const rest=categories.filter(cat=>!assigned.has(cat.id)).slice().sort((a,b)=>a.id.localeCompare(b.id));
+  rest.forEach((cat,index)=>assigned.set(cat.id,free[index%free.length]||"slate"));
+  return assigned.get(categoryId)||"slate";
+ }
+ function recipeCategoryBadge(categoryId,name){
+  return node("span","recipe-category-badge recipe-category-"+recipeCategoryTone(categoryId),
+   name||"Sem categoria");
+ }
+ function recipeListIcon(kind){
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 24 24");
+  svg.setAttribute("width","17");svg.setAttribute("height","17");
+  svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
+  svg.setAttribute("stroke-width","1.7");svg.setAttribute("stroke-linecap","round");
+  svg.setAttribute("stroke-linejoin","round");svg.setAttribute("aria-hidden","true");
+  const paths=kind==="edit"?
+   ["M12 20h9","M16.5 3.5a2.12 2.12 0 0 1 3 3L10 16l-4 1 1-4 9.5-9.5Z"]:
+   ["M3 6h18","M8 6V4h8v2","M6 6l1 14h10l1-14","M10 10v7","M14 10v7"];
+  for(const d of paths){
+   const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);svg.append(p);
+  }
+  return svg;
+ }
  function paintCategoryOptions(){
   updateSelect("recipe-category",categories,"Selecionar categoria");
   updateSelect("recipe-filter-category",categories,"Todas as categorias");
@@ -30,7 +69,7 @@
   const host=$("recipe-categories");host.replaceChildren();
   for(const entry of categories){
    const item=node("div","recipe-category-item");
-   item.append(node("span","recipe-category-pill",entry.name));
+   item.append(recipeCategoryBadge(entry.id,entry.name));
    const edit=button("Editar",()=>editCategory(entry),"recipe-category-small");
    edit.setAttribute("aria-label","Editar categoria "+entry.name);
    const remove=button("Eliminar",()=>removeCategory(entry),"recipe-category-small recipe-category-danger");
@@ -50,42 +89,46 @@
    (!type||type===r.recipe_type)&&(!status||status===r.status);
  }
  function paintList(){
-  const host=$("recipe-list");host.replaceChildren();
+  // Repaint only tbody: retain search focus, filter selections and table width.
+  const host=$("recipe-list-body");host.replaceChildren();
   const visible=recipes.filter(matchesRecipe);
   $("recipe-result-count").textContent=visible.length===recipes.length?
    recipes.length+" receitas":visible.length+" de "+recipes.length+" receitas";
   $("recipe-clear-filters").hidden=!activeRecipeFilters();
-  if(!visible.length){
-   host.append(node("p","recipe-empty",recipes.length?"Nenhuma receita corresponde aos filtros.":"A biblioteca está vazia. Adiciona a primeira receita ou cria uma categoria."));
-   return;
-  }
-  const table=node("table","recipe-table"),thead=node("thead"),head=node("tr");
-  for(const label of ["Categoria","Fotografia","Receita","Tipo","Estado",""]){head.append(node("th","",label));}
-  thead.append(head);table.append(thead);
-  const tbody=node("tbody");
+  const empty=$("recipe-list-empty");
+  empty.hidden=visible.length>0;
+  empty.textContent=visible.length?"":recipes.length?
+   "Nenhuma receita corresponde aos filtros.":"A biblioteca está vazia. Adiciona a primeira receita ou cria uma categoria.";
   for(const r of visible){
    const tr=node("tr");
-   tr.append(node("td","recipe-category-cell",r.category));
+   const categoryCell=node("td","recipe-category-cell");
+   categoryCell.append(recipeCategoryBadge(r.category_id,r.category));tr.append(categoryCell);
    const photoCell=node("td");
-   if(r.photo_key){const photo=node("img","recipe-thumb");photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id);photo.loading="lazy";photo.alt="";photoCell.append(photo);}
-   else photoCell.append(node("div","recipe-thumb recipe-thumb-empty","—"));
+   if(r.photo_key){
+    const photo=node("img","recipe-thumb");
+    photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id);
+    photo.loading="lazy";photo.alt="";photoCell.append(photo);
+   }else photoCell.append(node("div","recipe-thumb recipe-thumb-empty","—"));
    tr.append(photoCell);
    for(const [value,cls] of [[r.name,"recipe-name"],[r.recipe_type==="adaptable"?"Adaptável":"Padrão",""]]){
     tr.append(node("td",cls,value));
    }
-   const stateCell=node("td"),state=node("span","recipe-status-tag "+(r.status==="draft"?"recipe-status-draft":"recipe-status-published"),
+   const stateCell=node("td"),state=node("span","recipe-status-tag "+
+    (r.status==="draft"?"recipe-status-draft":"recipe-status-published"),
     r.status==="draft"?"Rascunho":"Publicada");
    stateCell.append(state);tr.append(stateCell);
    const actions=node("td","recipe-row-actions");
    const see=button("Ver",()=>openReadRecipe(r.id),"recipe-view");
    see.setAttribute("aria-label","Ver receita "+r.name);
-   actions.append(see,button("Editar",()=>openRecipe(r.id)));
-   const remove=button("Eliminar",()=>deleteRecipe(r),"recipe-delete");
-   remove.setAttribute("aria-label","Eliminar receita "+r.name);
-   actions.append(remove);
-   tr.append(actions);tbody.append(tr);
+   const edit=button("",()=>openRecipe(r.id),"recipe-icon-button recipe-edit-action");
+   edit.append(recipeListIcon("edit"));
+   edit.title="Editar";edit.setAttribute("aria-label","Editar receita "+r.name);
+   const remove=button("",()=>deleteRecipe(r),"recipe-icon-button recipe-delete");
+   remove.append(recipeListIcon("trash"));
+   remove.title="Eliminar";remove.setAttribute("aria-label","Eliminar receita "+r.name);
+   actions.append(see,edit,remove);
+   tr.append(actions);host.append(tr);
   }
-  table.append(tbody);const scroll=node("div","recipe-table-scroll");scroll.append(table);host.append(scroll);
  }
  function recipeReaderStatus(recipe){
   return node("span","recipe-status-tag "+(recipe.status==="published"?
@@ -109,7 +152,7 @@
   hero.append(media);
   const intro=node("div","recipe-reader-intro");
   const eyebrow=node("div","recipe-reader-eyebrow");
-  eyebrow.append(node("span","",recipe.category||"Sem categoria"),recipeReaderStatus(recipe));
+  eyebrow.append(recipeCategoryBadge(recipe.category_id,recipe.category),recipeReaderStatus(recipe));
   intro.append(eyebrow,node("h2","",recipe.name));
   const chips=node("div","recipe-reader-chips");
   chips.append(node("span","","Doses · "+recipe.servings));
