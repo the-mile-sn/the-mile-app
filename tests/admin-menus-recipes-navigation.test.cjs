@@ -9,7 +9,9 @@ test("Menus e Receitas is a separate admin page, with two intended subsections",
  for(const id of ["tm-admin-nav-menus-recipes","tm-admin-recipes-subnav","tm-admin-nav-dishes","tm-menu-recipes-page"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
- assert.match(html,/Biblioteca de receitas <small>Em breve<\/small>/);
+ assert.match(html,/id="tm-admin-nav-recipe-library"/);
+ assert.match(html,/id="tm-recipe-library-page"/);
+ assert.doesNotMatch(html,/Biblioteca de receitas <small>Em breve<\/small>/);
  assert.match(html,/id="tm-admin-recipes-subnav" hidden/);
  assert.match(html,/id="tm-menu-recipes-page"[^>]* hidden/);
 });
@@ -67,4 +69,14 @@ test("dish add panel toggles from the table toolbar and rows are aligned left",(
  assert.match(admin,/setDishAddPanel\(\$\("dish-add-panel"\)\.hidden\)/);
  assert.match(admin,/setDishAddPanel\(false\)/);
  assert.match(css,/\.dish-library-table th,#tm-menu-recipes-page \.dish-library-table td\{text-align:left!important\}/);
+});
+
+test("recipe library switches independently from dish catalogue and Planning",()=>{
+ assert.match(dashboard,/function openRecipeLibrary\(\)/);
+ assert.match(dashboard,/recipesPage\.hidden=true/);
+ assert.match(dashboard,/recipeLibraryPage\.hidden=false/);
+ assert.match(dashboard,/window\.tmLoadRecipeLibrary\(\)/);
+ assert.match(dashboard,/recipeLibraryBtn\.addEventListener\("click",openRecipeLibrary\)/);
+ assert.match(html,/admin-recipes\.js\?v=1/);
+ assert.match(html,/admin-recipes\.css\?v=1/);
 });

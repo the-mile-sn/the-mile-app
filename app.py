@@ -14,6 +14,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import recipe_library_v2
 import calendar_v2
 import dashboard_v2
 import admin_players_v2
@@ -267,6 +268,7 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
         food_plan_drafts_v2.initialize(c)
@@ -547,7 +549,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css')
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -555,6 +557,7 @@ def application(env, start_response):
                     or path.startswith('/api/v2/dishes/edit')
                     or path.startswith('/api/v2/dishes/photo')
                     or path.startswith('/api/v2/dishes/import')
+                    or path.startswith('/api/v2/recipes')
                     or path.startswith('/api/players')
                     or path.startswith('/api/admins')):
                 raise Problem(404, 'not_found')
@@ -569,7 +572,7 @@ def application(env, start_response):
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
-            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-light-theme.css': 'admin-light-theme.css',
+            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css',
             '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
@@ -1322,6 +1325,79 @@ def application(env, start_response):
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
                                      'effective_colors':effective_colors})
+            # Admin-only culinary catalogue. This route family is never exposed
+            # to players and never changes meal plans or nutrition calculations.
+            if path.startswith('/api/v2/recipes'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                if path == '/api/v2/recipes/categories':
+                    if method == 'GET':
+                        return respond(200, {'categories':recipe_library_v2.list_categories(c)})
+                    if method == 'POST':
+                        body=read_json(env)
+                        try:
+                            category=recipe_library_v2.create_category(c,body.get('name'))
+                        except ValueError:
+                            raise Problem(400,'invalid_recipe_category')
+                        return respond(200,{'category':category})
+                if path == '/api/v2/recipes':
+                    if method == 'GET':
+                        return respond(200,{'recipes':recipe_library_v2.list_recipes(c)})
+                    if method == 'POST':
+                        try:
+                            recipe=recipe_library_v2.create_recipe(c,read_json(env))
+                        except ValueError as exc:
+                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe') else 'invalid_recipe')
+                        return respond(201,{'recipe':recipe})
+                if path.startswith('/api/v2/recipes/image/') and method == 'GET':
+                    recipe_id=path.rsplit('/',1)[-1]
+                    recipe=recipe_library_v2.get_recipe(c,recipe_id)
+                    if not recipe or not recipe['photo_key']: raise Problem(404,'not_found')
+                    photo=read_dish_image(c,recipe['photo_key'])
+                    if photo is None: raise Problem(404,'not_found')
+                    return respond(200,photo,'image/webp')
+                if path.startswith('/api/v2/recipes/photo/') and method == 'POST':
+                    recipe_id=path.rsplit('/',1)[-1]
+                    recipe=recipe_library_v2.get_recipe(c,recipe_id)
+                    if not recipe: raise Problem(404,'not_found')
+                    body=read_json(env)
+                    payload=body.get('image')
+                    if not isinstance(payload,str) or len(payload)>4200000: raise Problem(400,'invalid_image')
+                    try:
+                        raw=base64.b64decode(payload,validate=True)
+                        if len(raw)>3000000: raise ValueError()
+                        source=Image.open(io.BytesIO(raw))
+                        source.verify()
+                        source=Image.open(io.BytesIO(raw))
+                        if source.width>8000 or source.height>8000 or source.width*source.height>32000000: raise ValueError()
+                        source=ImageOps.exif_transpose(source).convert('RGB')
+                        source.thumbnail((1100,1100))
+                        image_file=io.BytesIO()
+                        source.save(image_file,format='WEBP',quality=78,method=4)
+                        raw=image_file.getvalue()
+                        if len(raw)>1200000: raise ValueError()
+                    except (ValueError,UnidentifiedImageError,OSError,base64.binascii.Error):
+                        raise Problem(400,'invalid_image')
+                    image_key=recipe_library_v2.photo_key(recipe_id)
+                    store_dish_image(c,image_key,raw)
+                    recipe_library_v2.set_photo(c,recipe_id)
+                    return respond(200,{'ok':True})
+                if path.startswith('/api/v2/recipes/') and not path.startswith(('/api/v2/recipes/photo/','/api/v2/recipes/image/')):
+                    recipe_id=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-f0-9]{24}',recipe_id):
+                        raise Problem(404,'not_found')
+                    if method == 'GET':
+                        recipe=recipe_library_v2.get_recipe(c,recipe_id)
+                        if not recipe: raise Problem(404,'not_found')
+                        return respond(200,{'recipe':recipe})
+                    if method == 'PUT':
+                        try:
+                            recipe=recipe_library_v2.update_recipe(c,recipe_id,read_json(env))
+                        except ValueError as exc:
+                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe') else 'invalid_recipe')
+                        if not recipe: raise Problem(404,'not_found')
+                        return respond(200,{'recipe':recipe})
+                raise Problem(404,'not_found')
             if path == '/api/v2/dishes/photo' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)

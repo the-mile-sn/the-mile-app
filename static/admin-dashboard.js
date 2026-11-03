@@ -19,7 +19,7 @@
 })();
 (()=> {
  const $=id=>document.getElementById(id);
- const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning"),recipesBtn=$("tm-admin-nav-menus-recipes"),recipesSubnav=$("tm-admin-recipes-subnav"),recipesPage=$("tm-menu-recipes-page"),dishesBtn=$("tm-admin-nav-dishes");
+ const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning"),recipesBtn=$("tm-admin-nav-menus-recipes"),recipesSubnav=$("tm-admin-recipes-subnav"),recipesPage=$("tm-menu-recipes-page"),recipeLibraryPage=$("tm-recipe-library-page"),dishesBtn=$("tm-admin-nav-dishes"),recipeLibraryBtn=$("tm-admin-nav-recipe-library");
  if(!section||!legacy||!dash)return;
  const meals=["breakfast","lunch","snack","dinner","supper"];
  const icons=["coffee","restaurant","veg","restaurant","moon"];
@@ -49,9 +49,11 @@
   moveAdminControls(settingsView);
   if(settingsPage)settingsPage.hidden=!settingsView;
   if(recipesPage)recipesPage.hidden=target!==recipesBtn;
+  if(recipeLibraryPage)recipeLibraryPage.hidden=true;
   if(recipesSubnav)recipesSubnav.hidden=target!==recipesBtn;
   if(recipesBtn)recipesBtn.setAttribute("aria-expanded",String(target===recipesBtn));
   if(dishesBtn){dishesBtn.classList.toggle("is-active",target===recipesBtn);if(target===recipesBtn)dishesBtn.setAttribute("aria-current","page");else dishesBtn.removeAttribute("aria-current");}
+  if(recipeLibraryBtn){recipeLibraryBtn.classList.remove("is-active");recipeLibraryBtn.removeAttribute("aria-current");}
   legacy.classList.toggle("tm-account-only",accountView);
   if(dashboardReturn)dashboardReturn.hidden=target===dash||!$("tm-players-profile").hidden;
   for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
@@ -224,6 +226,19 @@ function ensurePlanningOnlyView(){
  }
  if(recipesBtn&&dishesBtn){recipesBtn.addEventListener("click",openMenusRecipes);dishesBtn.addEventListener("click",openMenusRecipes);}
  window.tmOpenAdminMenusRecipes=openMenusRecipes;
+ function openRecipeLibrary(){
+  if($("admin-workspace").hidden)return;
+  closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
+  navActive(recipesBtn);
+  recipesPage.hidden=true;
+  recipeLibraryPage.hidden=false;
+  dishesBtn.classList.remove("is-active");dishesBtn.removeAttribute("aria-current");
+  recipeLibraryBtn.classList.add("is-active");recipeLibraryBtn.setAttribute("aria-current","page");
+  if(typeof window.tmLoadRecipeLibrary==="function")window.tmLoadRecipeLibrary();
+  window.scrollTo({top:0,behavior:"smooth"});
+ }
+ if(recipeLibraryBtn)recipeLibraryBtn.addEventListener("click",openRecipeLibrary);
+ window.tmOpenAdminRecipeLibrary=openRecipeLibrary;
  const chooseSettings=$("tm-admin-nav-settings");if(chooseSettings)chooseSettings.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;navActive(chooseSettings);if(typeof loadAdminAccounts==="function")loadAdminAccounts().catch(()=>{});});
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null,playerDetails=null,playerPhotoData=null;
