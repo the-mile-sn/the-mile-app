@@ -145,7 +145,7 @@ test("both recipe editors offer stable linked-recipe search and retain identifie
  assert.match(ui,/function paintRecipeLink\(ingredient,options=/);
  assert.match(ui,/inlineRecipeLink\(ingredient,\{ownerId:current\.id\}\)/);
  assert.match(ui,/inlineRecipeLink\(ingredient,\{pdfRecipe:recipe\}\)/);
- assert.match(ui,/actions\.append\(link\.button,remove\)/);
+ assert.match(ui,/actions\.append\(link\.button,ingredientMoveButtons\(section,ii,\(\)=>paintPdfDetail\(recipe,detail\)\),remove\)/);
  assert.match(ui,/row\.append\(actions\);block\.append\(row,link\.panel\)/);
  assert.match(ui,/row\.append\(actions\);box\.append\(row,link\.panel\)/);
  assert.match(ui,/trigger\.classList\.toggle\("is-linked",linked\)/);
@@ -184,4 +184,17 @@ test("only draft and published statuses use restrained colored tags",()=>{
  assert.match(ui,/r\.status==="draft"\?"Rascunho":"Publicada"/);
  assert.match(html,/<option value="published">Publicada<\/option>/);
  assert.doesNotMatch(html,/Aprovada para utilização futura/);
+});
+
+test("manual editor and PDF review reorder ingredients without recreating IDs",()=>{
+ assert.match(ui,/function moveRecipeIngredient\(ingredients,index,offset,onMove\)/);
+ assert.match(ui,/ingredients\.splice\(next,0,ingredients\.splice\(index,1\)\[0\]\)/);
+ assert.match(ui,/ingredientMoveButtons\(section,ii,paintSections\)/);
+ assert.match(ui,/ingredientMoveButtons\(section,ii,\(\)=>paintPdfDetail\(recipe,detail\)\)/);
+ assert.match(ui,/action\.disabled=delta<0\?index===0:index===section\.ingredients\.length-1/);
+ assert.match(ui,/Mover ingrediente para /);
+ assert.match(ui,/recipe-ingredient-movers/);
+ assert.match(ui,/recipe-move-button/);
+ assert.match(ui,/recipe_ref_id:i\.recipe_ref_id\|\|null/);
+ assert.match(model,/ingredients_json|sections_json/);
 });
