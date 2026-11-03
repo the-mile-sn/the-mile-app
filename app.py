@@ -1415,6 +1415,10 @@ def application(env, start_response):
                             raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe') else 'invalid_recipe')
                         if not recipe: raise Problem(404,'not_found')
                         return respond(200,{'recipe':recipe})
+                    if method == 'DELETE':
+                        if not recipe_library_v2.delete_recipe(c,recipe_id):
+                            raise Problem(404,'not_found')
+                        return respond(200,{'deleted':True})
                 raise Problem(404,'not_found')
             if path == '/api/v2/dishes/photo' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
