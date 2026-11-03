@@ -72,7 +72,7 @@ class PdfRecipeImportTests(unittest.TestCase):
         result=pdf.preview_pdf(raw,"papas.pdf")["recipes"][0]
         self.assertEqual(result["steps"],["Misturar os ingredientes.","Cozinhar e servir."])
         self.assertEqual(result["notes"],
-                         "Ajustar a quantidade de água.\\nAdicionar a whey apenas no final.")
+                         "Ajustar a quantidade de água.\nAdicionar a whey apenas no final.")
 
     def test_extracts_tips_with_separate_heading(self):
         doc=fitz.open()
