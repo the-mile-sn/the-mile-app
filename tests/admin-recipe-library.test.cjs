@@ -87,3 +87,14 @@ test("PDF importer remains a review-first admin workflow",()=>{
  assert.match(backend,/recipe_pdf_import_v2\.commit_drafts/);
  assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
 });
+
+test("recipe list offers confirmed deletion using admin-only endpoint",()=>{
+ assert.match(ui,/button\("Eliminar",\(\)=>deleteRecipe\(r\),"recipe-delete"\)/);
+ assert.match(ui,/window\.confirm\(/);
+ assert.match(ui,/method:"DELETE"/);
+ assert.match(ui,/await loadLibrary\(\)/);
+ assert.match(backend,/recipe_library_v2\.delete_recipe\(c,recipe_id\)/);
+ assert.match(model,/def delete_recipe\(c, recipe_id\):/);
+ assert.match(model,/DELETE FROM v2_shared_images WHERE image_key=/);
+ assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
+});

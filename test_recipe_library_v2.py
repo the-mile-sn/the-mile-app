@@ -97,6 +97,32 @@ class RecipeLibraryTests(unittest.TestCase):
                 ]}
             ]))
 
+    def test_delete_only_target_recipe_and_its_own_photo(self):
+        self.c.execute("CREATE TABLE v2_shared_images(image_key TEXT PRIMARY KEY,image_data BLOB NOT NULL)")
+        first = recipes.create_recipe(self.c, self.data(name="Primeira receita"))
+        second = recipes.create_recipe(self.c, self.data(name="Segunda receita"))
+        first_key = recipes.set_photo(self.c, first["id"])
+        second_key = recipes.set_photo(self.c, second["id"])
+        self.c.execute("INSERT INTO v2_shared_images VALUES(?,?)", (first_key, b"first"))
+        self.c.execute("INSERT INTO v2_shared_images VALUES(?,?)", (second_key, b"second"))
+        self.c.execute("INSERT INTO v2_shared_images VALUES(?,?)", ("dish-keep.webp", b"dish"))
+        self.c.commit()
+        self.assertTrue(recipes.delete_recipe(self.c, first["id"]))
+        self.assertIsNone(recipes.get_recipe(self.c, first["id"]))
+        self.assertIsNotNone(recipes.get_recipe(self.c, second["id"]))
+        keys = {row["image_key"] for row in self.c.execute("SELECT image_key FROM v2_shared_images")}
+        self.assertNotIn(first_key, keys)
+        self.assertIn(second_key, keys)
+        self.assertIn("dish-keep.webp", keys)
+        self.assertFalse(recipes.delete_recipe(self.c, first["id"]))
+        self.assertFalse(recipes.delete_recipe(self.c, "invalid"))
+
+    def test_recipe_without_photo_deletes_without_modifying_other_data(self):
+        first = recipes.create_recipe(self.c, self.data(name="Sem foto"))
+        second = recipes.create_recipe(self.c, self.data(name="Outra"))
+        self.assertTrue(recipes.delete_recipe(self.c, first["id"]))
+        self.assertEqual([r["id"] for r in recipes.list_recipes(self.c)], [second["id"]])
+
     def test_photo_key_cannot_overlap_dish_ids(self):
         recipe = recipes.create_recipe(self.c, self.data())
         self.assertEqual(recipes.photo_key(recipe["id"]), "recipe-" + recipe["id"] + ".webp")

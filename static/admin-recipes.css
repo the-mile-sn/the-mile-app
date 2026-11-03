@@ -17,7 +17,11 @@
 #tm-recipe-library-page .recipe-thumb{display:block;width:60px;height:54px;object-fit:cover;border-radius:9px;background:#2c2f36}
 #tm-recipe-library-page .recipe-thumb-empty{display:flex;align-items:center;justify-content:center;color:var(--recipe-muted)}
 #tm-recipe-library-page .recipe-name{font-weight:600;min-width:180px;overflow-wrap:anywhere}
-#tm-recipe-library-page .recipe-row-actions{text-align:right!important}
+#tm-recipe-library-page .recipe-row-actions{text-align:right!important;white-space:nowrap}
+#tm-recipe-library-page .recipe-row-actions button+button{margin-left:7px}
+#tm-recipe-library-page .recipe-row-actions .recipe-delete{background:transparent;color:var(--recipe-muted);border:1px solid var(--recipe-border);font-weight:500}
+#tm-recipe-library-page .recipe-row-actions .recipe-delete:hover,#tm-recipe-library-page .recipe-row-actions .recipe-delete:focus-visible{color:#d67a7a;border-color:#b76b6b}
+
 #tm-recipe-library-page .recipe-empty{padding:20px 12px;text-align:center;color:var(--recipe-muted)}
 #tm-recipe-library-page .recipe-editor-panel{border:1px solid var(--recipe-border);border-radius:15px;background:var(--recipe-panel);padding:22px;margin:19px 0;scroll-margin-top:18px}
 #tm-recipe-library-page .recipe-editor-title{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
