@@ -1,6 +1,6 @@
 "use strict";(()=>{
 const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),fmt=v=>Number(v||0).toLocaleString("pt-PT",{maximumFractionDigits:1});
-let editingFood=-1,foods=[],plan={id:"",name:"Novo plano alimentar",plan_type:"",meals:[]},active=-1,option=0;
+let players=[],editingFood=-1,foods=[],plan={id:"",name:"Novo plano alimentar",player_id:"",player_name:"",plan_type:"",meals:[]},active=-1,option=0;
 const nutrients=["kcal","protein_g","carbs_g","fat_g"];
 const sum=items=>nutrients.map(k=>items.reduce((s,f)=>{const ref=foods.find(x=>x.id===f.id);return s+(ref?Number(ref[k])*Number(f.grams)/100*(ref.variant==="gross"?Number(ref.edible_fraction):1):0)},0));
 const average=meal=>nutrients.map((_,i)=>meal.options.reduce((s,o)=>s+sum(o.foods)[i],0)/meal.options.length);
@@ -9,7 +9,7 @@ const label=t=>t.map((n,i)=>fmt(n)+(i===0?" kcal":i===1?" g P":i===2?" g HC":" g
 const status=s=>$("status").textContent=s;
 const macro=(values)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+["kcal","P (g)","HC (g)","G (g)"][i]+'</small></span>').join("")+'</div>';
 function draw(){
-  $("plan-name").value=plan.name;
+  $("plan-player").value=plan.player_id||"";
   $("plan-type").value=plan.plan_type||"";
   $("delete-plan").disabled=!plan.id;
   const t=totals();["total-kcal","total-p","total-hc","total-g"].forEach((id,i)=>$(id).textContent=fmt(t[i]));
@@ -62,15 +62,15 @@ function addMeal(name){plan.meals.push({name:name||"Refeição "+(plan.meals.len
 const mealNames=["Pequeno almoço","Almoço","Lanche","Pós treino","Pré treino","Pós jogo","Intra Jogo","Pré aquecimento","Pós aquecimento","Jantar","Ceia"];
 function showMealPicker(){const panel=$("meal-picker");$("meal-choices").innerHTML=mealNames.map((name,i)=>'<button type="button" data-meal-choice="'+i+'">'+esc(name)+'</button>').join("");panel.hidden=false;panel.scrollIntoView({behavior:"smooth",block:"nearest"});panel.querySelectorAll("[data-meal-choice]").forEach(b=>b.onclick=()=>{addMeal(mealNames[Number(b.dataset.mealChoice)]);panel.hidden=true})}
 $("cancel-meal").onclick=()=>{$("meal-picker").hidden=true};
-$("assign-player").onclick=()=>status("A atribuição a jogadores ficará disponível após a integração validada com o Planeamento. Este rascunho ainda não altera jogadores.");
+$("assign-player").onclick=()=>{$("plan-player").focus();status("Seleciona um jogador e guarda o plano. Esta associação não altera o Planeamento.")};
 $("delete-plan").onclick=async()=>{if(!plan.id)return;if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",plan_type:"",meals:[]};active=-1;option=0;draw();status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+data.drafts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||""}
 $("add-meal").onclick=showMealPicker;$("new-plan").onclick=newPlan;
-$("plan-type").onchange=e=>{plan.plan_type=e.target.value};
-$("plan-name").onchange=e=>{plan.name=e.target.value.trim();draw()};
-$("draft-list").onchange=async e=>{if(!e.target.value)return;try{const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(e.target.value));plan=data.draft;plan.plan_type=plan.plan_type||"";plan.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));active=plan.meals.length?0:-1;option=0;draw();status("Rascunho carregado.")}catch(err){status("Não foi possível abrir o plano: "+err.message)}};
-$("save-plan").onclick=async()=>{plan.name=$("plan-name").value.trim();if(!plan.name){status("Indica o nome do plano.");return}if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){status("Preenche todas as opções antes de guardar.");return}try{const csrf=(await request("/api/me")).csrf||"";const r=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(plan)});plan.id=r.id;draw();await loadDrafts();status("Rascunho guardado. Não foi publicado.")}catch(err){status("Não foi possível guardar: "+err.message)}};
-(async()=>{try{const data=await request("/api/v2/food-library");foods=data.foods||[];await loadDrafts();addMeal();status("Biblioteca carregada: "+foods.length+" alimentos.")}catch(err){status("Não foi possível carregar os dados. Inicia sessão no Backoffice. "+err.message)}})();
+$("plan-type").onchange=e=>{plan.plan_type=e.target.value;plan.name=plan.player_name&&plan.plan_type?plan.player_name+" - "+plan.plan_type:"Novo plano alimentar"};
+$("plan-player").onchange=e=>{plan.player_id=e.target.value;plan.player_name=players.find(p=>p.id===plan.player_id)?.name||"";plan.name=plan.player_name&&plan.plan_type?plan.player_name+" - "+plan.plan_type:"Novo plano alimentar"};
+$("draft-list").onchange=async e=>{if(!e.target.value)return;try{const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(e.target.value));plan=data.draft;plan.player_id=plan.player_id||"";plan.player_name=plan.player_name||"";plan.plan_type=plan.plan_type||"";plan.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));active=plan.meals.length?0:-1;option=0;draw();status("Rascunho carregado.")}catch(err){status("Não foi possível abrir o plano: "+err.message)}};
+$("save-plan").onclick=async()=>{if(!plan.player_id||!plan.plan_type){status("Seleciona o jogador e o tipo de plano antes de guardar.");return}plan.name=plan.player_name+" - "+plan.plan_type;if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){status("Preenche todas as opções antes de guardar.");return}try{const csrf=(await request("/api/me")).csrf||"";const r=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(plan)});plan.id=r.id;draw();await loadDrafts();status("Rascunho guardado. Não foi publicado.")}catch(err){status("Não foi possível guardar: "+err.message)}};
+(async()=>{try{const data=await request("/api/v2/food-library");foods=data.foods||[];const roster=await request("/api/players");players=roster.players||[];$("plan-player").innerHTML='<option value="">Selecionar jogador</option>'+players.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");await loadDrafts();addMeal();status("Biblioteca carregada: "+foods.length+" alimentos.")}catch(err){status("Não foi possível carregar os dados. Inicia sessão no Backoffice. "+err.message)}})();
 })();
