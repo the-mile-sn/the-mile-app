@@ -346,7 +346,7 @@ test("opening imported option editor does not reference obsolete index parameter
 test("Menus includes CT and Estágio in selector and API allowlist",()=>{
  const app=require("node:fs").readFileSync("app.py","utf8");
  assert.match(admin,/const categoryNames=\[[^\]]*"CT","Estágio"\]/);
- assert.match(app,/if kind==\x27category\x27 and value\.strip\(\) not in \([^\)]*\x27CT\x27,\x27Estágio\x27\)/);
+ assert.match(app,/if kind==\x27category\x27 and value(?:\.strip\(\))? not in \([^\)]*\x27CT\x27,\x27Estágio\x27\)/);
 });
 
 test("Modelo places effective colors before grouped post-match scenarios and hides diagnostic UI",()=>{

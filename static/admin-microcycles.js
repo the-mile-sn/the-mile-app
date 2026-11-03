@@ -615,6 +615,14 @@ $("save-athlete-profile").addEventListener("click",async()=>{
 let selectedNutritionWeek=null,periByDay={},dayColorOverrides={},effectiveAdminColorsByDay={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 let menusAthleteId=null,menusLoadRevision=0;
+function resolveAdminMenuDish(existing,library){
+ if(!existing||existing.kind!=="dish")return null;
+ if(existing.dish_id)return library.find(item=>item.id===existing.dish_id)||null;
+ // A legacy display name can only pick a library entry when unique.
+ const matches=library.filter(item=>item.name_pt===existing.value);
+ return matches.length===1?matches[0]:null;
+}
+
 function resetMenusForAthlete(athleteId){
  if(menusAthleteId===athleteId)return;
  menusAthleteId=athleteId;
@@ -691,7 +699,7 @@ async function loadMenus(){
       for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
       category.value=previousCategory||"";category.className="menu-choice";line.appendChild(category);
       const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
-      const selectedDish=dishLibrary.find(x=>x.name_pt===existing?.value);
+      const selectedDish=resolveAdminMenuDish(existing,dishLibrary);
       const dishFilter=document.createElement("select");dishFilter.className="menu-choice";dishFilter.setAttribute("aria-label","Filtrar pratos por categoria");
       const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";dishFilter.appendChild(all);
       const libraryCategories=[...new Set(dishLibrary.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
@@ -733,7 +741,8 @@ async function loadMenus(){
         const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
         const selected=kind.value==="category"?category.value:(selectedDish?.name_pt||"");
         if(!selected)return;
-        mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected});
+        mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected,
+          ...(kind.value==="dish"?{dish_id:selectedDish.id}:{})});
       };
       kind.addEventListener("change",queue);category.addEventListener("change",queue);
       section.appendChild(line);
@@ -836,7 +845,7 @@ async function playerShowMenus(){
    const color=exception||baseline;
    if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
    const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
-   if(menu.kind==="dish"){const dish=dishes.dishes.find(item=>item.name_pt===menu.value);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
+   if(menu.kind==="dish"){const dish=resolveAdminMenuDish(menu,dishes.dishes);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
    section.appendChild(line);
   }
   root.appendChild(section);
