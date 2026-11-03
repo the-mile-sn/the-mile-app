@@ -145,7 +145,7 @@ test("both recipe editors offer stable linked-recipe search and retain identifie
  assert.match(ui,/function paintRecipeLink\(ingredient,options=/);
  assert.match(ui,/inlineRecipeLink\(ingredient,\{ownerId:current\.id\}\)/);
  assert.match(ui,/inlineRecipeLink\(ingredient,\{pdfRecipe:recipe\}\)/);
- assert.match(ui,/actions\.append\(link\.button,remove\)/);
+ assert.match(ui,/actions\.append\(link\.button,ingredientMoveButtons\(section,ii,\(\)=>paintPdfDetail\(recipe,detail\)\),remove\)/);
  assert.match(ui,/row\.append\(actions\);block\.append\(row,link\.panel\)/);
  assert.match(ui,/row\.append\(actions\);box\.append\(row,link\.panel\)/);
  assert.match(ui,/trigger\.classList\.toggle\("is-linked",linked\)/);
