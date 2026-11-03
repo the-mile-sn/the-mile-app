@@ -18,6 +18,7 @@ MAX_PHOTO_BYTES = 180000
 
 ING = re.compile(r"^ingredientes\s*:?$", re.I)
 PREP = re.compile(r"^(?:modo de (?:preparo|prepara(?:c|ç)[aã]o)|prepara(?:c|ç)[aã]o|confe(?:c|ç)[aã]o)\s*:?$", re.I)
+TIPS_END = re.compile(r"\b(?:dicas?\s+uteis|dicas?\s+e\s+observacoes|observacoes|notas?|sugestoes)\s*:?\s*$", re.I)
 BLOCK = re.compile(r"^(?:para\s+(?:o|a|os|as|um|uma)\s+.+|acompanhar\s+com\s*:?|para\s+(?:servir|acompanhar|finalizar)\s*:?)$", re.I)
 STEP = re.compile(r"^\s*(\d{1,2})\s*[.)]\s*(.*)$")
 QUANT = re.compile(r"^(?P<q>(?:\d+(?:[,.]\d+)?(?:\s*(?:g|kg|mg|ml|cl|l|un\.?|unid(?:ade)?s?\.?|c\.?\s*caf[eé]|c\.?\s*sopa))?(?:\s*/\s*\d+(?:[,.]\d+)?\s*(?:g|kg|ml|l|un))?|q\s*\.\s*b\s*\.|opcional))\s+(?P<food>.+)$", re.I)
@@ -140,15 +141,38 @@ def parse_page(doc, index):
     sections=[sec for sec in sections if sec["ingredients"]]
     step_region=[sp for sp in items if y_prep+6 < sp["top"] < page.rect.height-43
                  and sp["size"] >= 9.1 and sp["left"] < page.rect.width-30]
-    steps=[]
+    steps=[]; notes=[]; in_notes=False
     for row in rows(step_region):
         txt=row["text"]
+        if not in_notes:
+            marker=TIPS_END.search(normal(txt))
+            if marker:
+                preceding=txt[:marker.start()].strip()
+                # Canva sometimes places "Dicas úteis" on the same line as
+                # the final preparation step. Keep that step and separate tips.
+                if not preceding or preceding.endswith((".", "!", "?", ":")):
+                    if preceding:
+                        final_step=STEP.match(preceding)
+                        if final_step and final_step.group(2).strip():
+                            steps.append(final_step.group(2).strip())
+                        elif steps and len(preceding)>5:
+                            steps[-1]+=" "+preceding
+                    in_notes=True
+                    continue
         match=STEP.match(txt)
-        if match:
+        if in_notes:
+            if match and match.group(2).strip():
+                notes.append(match.group(2).strip())
+            elif notes and len(txt)>5:
+                notes[-1]+=" "+txt
+            elif len(txt)>5:
+                notes.append(txt)
+        elif match:
             steps.append(match.group(2).strip())
         elif steps and len(txt)>5:
             steps[-1]+=" "+txt
     steps=[st[:2000] for st in steps if st]
+    notes_text="\n".join(note.strip() for note in notes if note.strip())[:6000]
     if not steps and not sections:
         return None,"Ingredientes e preparação não reconhecidos"
     warnings=[]
@@ -161,7 +185,7 @@ def parse_page(doc, index):
     image=photo(doc,page)
     if not image: warnings.append("Fotografia não identificada")
     return {"page":index+1,"name":name,"sections":sections,"steps":steps,
-            "notes":"","servings":1,"photo_webp":image,"warnings":warnings},None
+            "notes":notes_text,"servings":1,"photo_webp":image,"warnings":warnings},None
 
 
 def preview_pdf(raw,filename):
