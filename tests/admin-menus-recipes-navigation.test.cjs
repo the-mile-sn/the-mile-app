@@ -15,7 +15,7 @@ test("Menus e Receitas is a separate admin page, with two intended subsections",
 });
 
 test("only one existing dish editor is mounted, outside individual planning",()=>{
- for(const id of ["dish-search","dish-editor-list","create-dish","dish-catalog-import","dish-catalog-file","new-dish-category","new-dish-photo","dish-new-feedback"]){
+ for(const id of ["dish-search","dish-category-filter","dish-editor-list","dish-library-count","create-dish","new-dish-category","new-dish-photo","dish-new-feedback"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
  const start=html.indexOf('id="tm-menu-recipes-page"');
@@ -23,7 +23,9 @@ test("only one existing dish editor is mounted, outside individual planning",()=
  assert.ok(start>0&&end>start);
  const library=html.slice(start,end);
  assert.match(library,/id="dish-editor-list"/);
- assert.match(library,/id="dish-catalog-import"/);
+ assert.match(library,/id="dish-category-filter"/);
+ assert.match(library,/id="dish-library-count"/);
+ assert.doesNotMatch(library,/id="dish-catalog-import"|id="dish-catalog-file"/);
  const menuStart=html.indexOf('id="menus-panel"');
  const menuEnd=html.indexOf('id="matrix"',menuStart);
  assert.ok(menuStart>0&&menuEnd>menuStart);
@@ -39,6 +41,9 @@ test("navigation loads dishes without requiring a selected player",()=>{
  assert.match(admin,/window\.tmLoadDishLibrary=loadDishLibrary/);
  assert.match(admin,/request\("\/api\/v2\/dishes"\)/);
  assert.match(admin,/await loadDishLibrary\(\)/);
+ assert.match(admin,/dish-library-table/);
+ assert.match(admin,/function refreshDishTableCategories\(\)/);
+ assert.doesNotMatch(admin,/\$\("dish-catalog-import"\)\.addEventListener/);
 });
 
 test("published plans and player-facing endpoints are not touched in navigation step",()=>{
