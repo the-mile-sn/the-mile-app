@@ -473,3 +473,51 @@ html[data-admin-theme="light"] #tm-players-page #tm-players-password-cancel{back
 html[data-admin-theme="light"] #tm-dashboard button.tm-db-event.tm-db-game{background:#e5f3e9!important;border-color:#75bb90!important;color:#245437!important}
 html[data-admin-theme="light"] #tm-dashboard button.tm-db-event.tm-db-game:hover{background:#d9ecdf!important}
 html[data-admin-theme="light"] #tm-dashboard button.tm-db-event.tm-db-game small{color:#477a58}
+
+/* Light-mode navigation: restore strong contrast against white sidebar.
+   The desktop navigation styles in admin-microcycles.css use !important. */
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link,
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link:not(:disabled){
+ color:#33465a!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link:hover:not(:disabled){
+ background:#e9edf2!important;color:#182838!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link.is-active{
+ background:#e6edf4!important;color:#172c40!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-icon{
+ color:#526b82!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-icon svg{
+ color:inherit!important;
+ stroke:currentColor;
+}
+html[data-admin-theme="light"] #admin-workspace #tm-admin-nav-menus-recipes .tm-admin-nav-chevron{
+ color:#526b82!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link{
+ color:#45566a!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link.is-active{
+ background:#e6edf4!important;color:#172c40!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link:disabled{
+ opacity:.7!important;color:#5b697b!important;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-library-table{
+ background:#fff;color:#1b2939;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-library-table th{
+ background:#f4f6f9;color:#506075;border-color:#dce3eb;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-library-table td{
+ color:#253447;border-color:#e3e8ef;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-detail td{
+ background:#f5f7fa;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-row:hover td{
+ background:#f7f9fc;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-empty{color:#64748b}
