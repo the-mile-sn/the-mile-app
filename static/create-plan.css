@@ -58,3 +58,23 @@
 .stats.four .stat strong{font-size:29px;line-height:1.1;font-weight:650;font-variant-numeric:tabular-nums}
 .stats.four .stat small{font-size:13px;line-height:1.2;white-space:nowrap}
 @media(max-width:700px){.stats.four .stat{min-height:66px;padding:13px 12px;gap:5px}.stats.four .stat strong{font-size:23px}.stats.four .stat small{font-size:11px;white-space:normal}}
+
+/* One continuous option surface with clear typographic hierarchy. */
+.option-content{background:var(--lib-panel-2);border-radius:12px;overflow:hidden;margin:10px 0 14px}
+.option-content .option-summary{background:transparent;border-radius:0;margin:0;padding:16px 14px 13px}
+.option-heading strong{font-size:11px;font-weight:550;opacity:.65;letter-spacing:.02em}
+.meal .option-title{font-size:17px!important;font-weight:700;line-height:1.35}
+.option-summary .macro b{font-size:17px;font-weight:650}
+.option-content .nutrition-list{background:transparent;border-radius:0;margin:0;padding:0 14px 8px}
+.option-content .nutrition-row{background:transparent;padding:12px 0;min-height:52px;border-radius:0}
+.option-content .nutrition-row:first-child{border-top:1px solid color-mix(in srgb,var(--lib-muted) 17%,transparent)}
+.option-content .nutrition-row+.nutrition-row{border-top:1px solid color-mix(in srgb,var(--lib-muted) 12%,transparent)}
+.option-content .food-row{grid-template-columns:minmax(150px,1fr) minmax(130px,1fr) minmax(330px,46%) 30px;gap:12px}
+.option-content .food-identity strong{font-size:12px;font-weight:550}
+.option-content .food-identity span{font-size:11px}
+.food-reference-note{font-size:11px;line-height:1.4;color:var(--lib-muted);overflow-wrap:anywhere;opacity:.88}
+.option-content .food-row .macro b{font-size:14px;font-weight:600}
+.option-content .food-row .macro small{font-size:10px}
+.option-content .note-row{grid-template-columns:minmax(180px,1fr) minmax(240px,52%) 34px}
+@media(max-width:1200px){.option-content .food-row{grid-template-columns:minmax(130px,1fr) minmax(100px,1fr) minmax(270px,46%) 28px}}
+@media(max-width:780px){.option-content .food-row{grid-template-columns:minmax(0,1fr) 28px;gap:7px}.option-content .food-identity{grid-column:1;grid-row:1}.option-content .food-reference-note{grid-column:1/-1;grid-row:2}.option-content .food-row .macro-values{grid-column:1/-1;grid-row:3}.option-content .food-row .remove-row{grid-column:2;grid-row:1}.option-content .option-summary{display:flex;flex-direction:column;align-items:stretch}.option-content .option-summary .macro-values{width:100%}}
