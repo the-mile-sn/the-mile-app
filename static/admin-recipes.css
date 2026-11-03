@@ -361,3 +361,22 @@ html[data-admin-theme="light"] #tm-recipe-library-page .recipe-row-actions .reci
  #tm-recipe-library-page .recipe-library-toolbar{justify-content:flex-end}
  #tm-recipe-library-page #recipe-list .recipe-table{min-width:830px}
 }
+
+
+/* A subtly filled header distinguishes in-table filters from recipe rows. */
+#tm-recipe-library-page .recipe-table-filter-row th{
+ background:#28313c;
+ border-bottom-color:#43505f;
+}
+#tm-recipe-library-page .recipe-table-filter-row input,
+#tm-recipe-library-page .recipe-table-filter-row select{
+ background:#212831;
+}
+html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row th{
+ background:#e6ebf2;
+ border-bottom-color:#cdd6e2;
+}
+html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row input,
+html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row select{
+ background:#fff;
+}
