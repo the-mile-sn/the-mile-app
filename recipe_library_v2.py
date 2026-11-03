@@ -41,6 +41,16 @@ def initialize(c):
     c.execute("""CREATE INDEX IF NOT EXISTS v2_recipe_library_category_status
         ON v2_recipe_library(category_id,status)""")
 
+    # Dishes are initialized before recipes in app.initialize(). Add their
+    # optional recipe reference only after the target table exists. Standalone
+    # recipe-library tests intentionally have no dish table.
+    from microcycles_v2 import _table_columns
+    dish_columns = _table_columns(c, "v2_dish_library")
+    if dish_columns:
+        if "recipe_id" not in dish_columns:
+            c.execute("ALTER TABLE v2_dish_library ADD COLUMN recipe_id TEXT REFERENCES v2_recipe_library(id)")
+        c.execute("CREATE INDEX IF NOT EXISTS v2_dish_library_recipe_id_idx ON v2_dish_library(recipe_id)")
+
 
 def _text(value, limit, required=False):
     if not isinstance(value, str):
@@ -269,6 +279,42 @@ def update_recipe(c, recipe_id, payload):
     return get_recipe(c, recipe_id)
 
 
+def list_dish_recipe_links(c):
+    """Admin-only lightweight association data, independent from menu assignments."""
+    rows = c.execute("""SELECT d.id AS dish_id,d.recipe_id,r.name AS recipe_name,
+                        r.status AS recipe_status
+                        FROM v2_dish_library d
+                        LEFT JOIN v2_recipe_library r ON r.id=d.recipe_id""").fetchall()
+    return {row["dish_id"]: {"recipe_id": row["recipe_id"],
+                              "recipe_name": row["recipe_name"],
+                              "recipe_status": row["recipe_status"]} for row in rows}
+
+
+def link_dish_recipe(c, dish_id, recipe_id):
+    """Link/unlink a dish by stable IDs; drafts remain admin-only."""
+    if not isinstance(dish_id, str) or not 4 <= len(dish_id) <= 60:
+        raise ValueError("invalid_dish")
+    if recipe_id is not None:
+        if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
+            raise ValueError("invalid_recipe_reference")
+        if not c.execute("SELECT id FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone():
+            raise ValueError("invalid_recipe_reference")
+    if not c.execute("SELECT 1 FROM v2_dish_library WHERE id=?", (dish_id,)).fetchone():
+        return None
+    c.execute("UPDATE v2_dish_library SET recipe_id=? WHERE id=?", (recipe_id, dish_id))
+    c.commit()
+    return list_dish_recipe_links(c)[dish_id]
+
+
+def _dish_has_recipe_link(c, recipe_id):
+    from microcycles_v2 import _table_columns
+    if "recipe_id" not in _table_columns(c, "v2_dish_library"):
+        return False
+    return bool(c.execute(
+        "SELECT 1 FROM v2_dish_library WHERE recipe_id=? LIMIT 1", (recipe_id,)
+    ).fetchone())
+
+
 def delete_recipe(c, recipe_id):
     """Delete only this recipe and its namespaced image, in one transaction."""
     if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
@@ -276,7 +322,9 @@ def delete_recipe(c, recipe_id):
     row = c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone()
     if row is None:
         return False
-    # Never leave another recipe with a dangling link to this recipe.
+    # Never leave a dish or another recipe with a dangling reference.
+    if _dish_has_recipe_link(c, recipe_id):
+        raise ValueError("recipe_in_use")
     for other in c.execute("SELECT id,sections_json FROM v2_recipe_library WHERE id<>?", (recipe_id,)).fetchall():
         if recipe_id in _reference_edges(json.loads(other["sections_json"])):
             raise ValueError("recipe_in_use")

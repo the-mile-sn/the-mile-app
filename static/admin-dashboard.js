@@ -234,8 +234,9 @@ function ensurePlanningOnlyView(){
   recipeLibraryPage.hidden=false;
   dishesBtn.classList.remove("is-active");dishesBtn.removeAttribute("aria-current");
   recipeLibraryBtn.classList.add("is-active");recipeLibraryBtn.setAttribute("aria-current","page");
-  if(typeof window.tmLoadRecipeLibrary==="function")window.tmLoadRecipeLibrary();
+  const loadPromise=typeof window.tmLoadRecipeLibrary==="function"?window.tmLoadRecipeLibrary():Promise.resolve();
   window.scrollTo({top:0,behavior:"smooth"});
+  return loadPromise;
  }
  if(recipeLibraryBtn)recipeLibraryBtn.addEventListener("click",openRecipeLibrary);
  window.tmOpenAdminRecipeLibrary=openRecipeLibrary;
