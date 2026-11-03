@@ -87,3 +87,23 @@ test("PDF importer remains a review-first admin workflow",()=>{
  assert.match(backend,/recipe_pdf_import_v2\.commit_drafts/);
  assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
 });
+
+test("PDF review always exposes editable ingredients, steps and tips",()=>{
+ assert.match(ui,/function preparePdfReview\(recipe\)/);
+ assert.match(ui,/function paintPdfDetail\(recipe,detail\)/);
+ assert.match(ui,/\+ Adicionar bloco/);
+ assert.match(ui,/Remover bloco/);
+ assert.match(ui,/\+ Adicionar alimento/);
+ assert.match(ui,/Remover alimento/);
+ assert.match(ui,/\+ Adicionar passo/);
+ assert.match(ui,/\+ Adicionar dica/);
+ assert.match(ui,/recipe\.reviewTips\.splice\(ti,1\)/);
+ assert.match(ui,/recipe\.sections\.splice\(si,1\)/);
+ assert.match(ui,/section\.ingredients\.splice\(ii,1\)/);
+ assert.match(ui,/recipe\.steps\.splice\(si,1\)/);
+ assert.match(ui,/preparePdfReview\(recipe\)/);
+ assert.match(ui,/syncPdfTips\(recipe\)/);
+ assert.match(ui,/notes:x\.notes\|\|""/);
+ assert.match(html,/id="recipe-notes"/);
+ assert.match(ui,/\$\("recipe-notes"\)\.value=current\.notes/);
+});

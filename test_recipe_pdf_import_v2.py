@@ -56,6 +56,40 @@ class PdfRecipeImportTests(unittest.TestCase):
         self.assertEqual(entry["steps"],["Misturar os ingredientes.","Cozinhar e servir."])
         self.assertIn("Confirmar manualmente as quantidades compostas",entry["warnings"])
 
+    def test_extracts_tips_after_final_step_and_preserves_existing_preparation(self):
+        doc=fitz.open()
+        page=doc.new_page(width=595,height=842)
+        page.insert_text((43,90),"Papas de aveia com whey",fontsize=15)
+        page.insert_text((97,148),"Ingredientes",fontsize=11)
+        page.insert_text((70,170),"30 g Flocos de aveia",fontsize=10)
+        page.insert_text((97,308),"Modo de preparo",fontsize=11)
+        page.insert_text((83,337),"1. Misturar os ingredientes.",fontsize=10)
+        page.insert_text((83,363),"2. Cozinhar e servir. Dicas úteis",fontsize=10)
+        page.insert_text((83,389),"3. Ajustar a quantidade de água.",fontsize=10)
+        page.insert_text((83,415),"4. Adicionar a whey apenas no final.",fontsize=10)
+        raw=doc.tobytes()
+        doc.close()
+        result=pdf.preview_pdf(raw,"papas.pdf")["recipes"][0]
+        self.assertEqual(result["steps"],["Misturar os ingredientes.","Cozinhar e servir."])
+        self.assertEqual(result["notes"],
+                         "Ajustar a quantidade de água.\nAdicionar a whey apenas no final.")
+
+    def test_extracts_tips_with_separate_heading(self):
+        doc=fitz.open()
+        page=doc.new_page(width=595,height=842)
+        page.insert_text((43,90),"Papas de aveia simples",fontsize=15)
+        page.insert_text((97,148),"Ingredientes",fontsize=11)
+        page.insert_text((70,170),"30 g Flocos de aveia",fontsize=10)
+        page.insert_text((97,308),"Modo de preparo",fontsize=11)
+        page.insert_text((83,337),"1. Misturar e aquecer.",fontsize=10)
+        page.insert_text((83,363),"Dicas úteis:",fontsize=10)
+        page.insert_text((83,389),"Para um creme mais líquido, adicionar água.",fontsize=10)
+        raw=doc.tobytes()
+        doc.close()
+        result=pdf.preview_pdf(raw,"papas.pdf")["recipes"][0]
+        self.assertEqual(result["steps"],["Misturar e aquecer."])
+        self.assertEqual(result["notes"],"Para um creme mais líquido, adicionar água.")
+
     def test_rejects_invalid_pdf(self):
         for payload in (b"",b"not a pdf",b"%PDF- corrupt"):
             with self.assertRaises(ValueError):
