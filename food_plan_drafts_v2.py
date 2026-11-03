@@ -32,7 +32,9 @@ def validate(value):
             if not isinstance(notes,list) or len(notes)>100: raise ValueError("invalid_notes")
             notes=[str(n).strip() for n in notes]
             if any(len(n)>4000 for n in notes): raise ValueError("invalid_note")
-            options.append({"foods":foods,"notes":notes})
+            title=str(option.get("title") or "").strip()
+            if len(title)>160: raise ValueError("invalid_option_title")
+            options.append({"title":title,"foods":foods,"notes":notes})
         clean.append({"name":title,"options":options})
     return {"id":str(value.get("id") or ""), "name":name,"meals":clean}
 
