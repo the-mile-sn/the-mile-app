@@ -556,6 +556,7 @@ def application(env, start_response):
                     or path.startswith('/api/v2/food-library')
                     or path.startswith('/api/v2/supplement-library')
                     or path.startswith('/api/v2/dishes/edit')
+                    or path.startswith('/api/v2/dishes/recipe-link')
                     or path.startswith('/api/v2/dishes/photo')
                     or path.startswith('/api/v2/dishes/import')
                     or path.startswith('/api/v2/recipes')
@@ -1496,6 +1497,21 @@ def application(env, start_response):
                 except ValueError: raise Problem(400,'invalid_dish')
                 if not ok: raise Problem(404,'not_found')
                 return respond(200,{'ok':True})
+            if path == '/api/v2/dishes/recipe-links' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, {'links': recipe_library_v2.list_dish_recipe_links(c)})
+            if path == '/api/v2/dishes/recipe-link' and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    linked=recipe_library_v2.link_dish_recipe(c,body.get('dish_id'),body.get('recipe_id'))
+                except ValueError as error:
+                    code=str(error)
+                    raise Problem(400,code if code in ('invalid_dish','invalid_recipe_reference') else 'invalid_recipe_reference')
+                if linked is None: raise Problem(404,'not_found')
+                return respond(200,{'link':linked})
             if path == '/api/v2/dishes/menu-id-audit' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
