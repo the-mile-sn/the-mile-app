@@ -104,3 +104,5 @@
 .meal-choices button,.meal-picker #cancel-meal{border:0;border-radius:9px;background:var(--lib-panel-2);color:var(--lib-fg);padding:12px;text-align:left;font-size:13px;cursor:pointer}
 .meal-choices button:hover{background:#548b6a;color:#fff}
 @media(max-width:720px){.meal-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.meal-picker{position:relative;padding-top:20px}.meal-picker #cancel-meal{position:absolute;top:10px;right:12px;min-width:34px;min-height:34px;padding:3px;text-align:center;font-size:22px;line-height:1;background:var(--lib-panel-2)}.meal-picker strong{padding-right:42px}.planhead select{width:100%;min-height:42px;border:0;border-radius:10px;background:var(--lib-panel-2);color:var(--lib-fg);padding:10px 12px}.plan-meta .danger:not(:disabled){background:#9f4a3826;color:#e79b87}
