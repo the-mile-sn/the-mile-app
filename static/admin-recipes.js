@@ -205,6 +205,159 @@
   }catch(error){output.textContent="Erro: "+error.message;}
   finally{action.disabled=false;}
  }
+
+ // PDF previews are deliberately ephemeral: never write anything until the
+ // administrator reviews individual drafts and confirms import.
+ let pdfPreview=null, pdfBusy=false;
+ function togglePdfPanel(open){
+  $("recipe-pdf-panel").hidden=!open;
+  $("recipe-pdf-toggle").setAttribute("aria-expanded",String(open));
+  if(open){
+   updateSelect("recipe-pdf-category",categories,"Selecionar categoria");
+   $("recipe-pdf-category").value=$("recipe-filter-category").value||"";
+  }
+ }
+ function resetPdfPreview(){
+  pdfPreview=null;
+  $("recipe-pdf-results").replaceChildren();
+  $("recipe-pdf-actions").hidden=true;
+  $("recipe-pdf-feedback").textContent="";
+ }
+ function pdfField(label,value,change){
+  const wrap=node("label","recipe-pdf-field");
+  wrap.append(node("span","",label));
+  const input=node("input");input.value=value||"";
+  input.addEventListener("input",()=>change(input.value));
+  wrap.append(input);return wrap;
+ }
+ function paintPdfPreview(){
+  const host=$("recipe-pdf-results");host.replaceChildren();
+  $("recipe-pdf-actions").hidden=!pdfPreview?.recipes?.length;
+  if(!pdfPreview)return;
+  const info=node("p","recipe-pdf-result-summary",pdfPreview.recipes.length+
+   " receitas identificadas em "+pdfPreview.total_pages+" páginas.");
+  host.append(info);
+  if(pdfPreview.skipped_pages?.length){
+   const skipped=node("p","recipe-pdf-skipped","Páginas ignoradas: "+
+    pdfPreview.skipped_pages.map(x=>x.page+" ("+x.reason+")").join("; "));
+   host.append(skipped);
+  }
+  pdfPreview.recipes.forEach((recipe,ri)=>{
+   const duplicate=recipes.some(existing=>norm(existing.name)===norm(recipe.name)&&existing.category_id===$("recipe-pdf-category").value);
+   const card=node("div","recipe-pdf-result"),header=node("div","recipe-pdf-result-head");
+   const checkbox=node("input");checkbox.type="checkbox";checkbox.checked=!!recipe.selected&&!duplicate;
+   checkbox.disabled=duplicate;
+   recipe.selected=checkbox.checked;
+   checkbox.setAttribute("aria-label","Importar "+recipe.name);
+   checkbox.addEventListener("change",()=>{recipe.selected=checkbox.checked;});
+   header.append(checkbox,node("strong","",recipe.name),node("span","recipe-pdf-page","Página "+recipe.page));
+   card.append(header);
+   if(duplicate)card.append(node("p","recipe-pdf-warning","Já existe uma receita com este nome na categoria; não será duplicada."));
+   const warnings=recipe.warnings||[];
+   for(const warn of warnings)card.append(node("p","recipe-pdf-warning",warn));
+   const fields=node("div","recipe-pdf-edit-fields");
+   fields.append(pdfField("Nome da receita",recipe.name,v=>{recipe.name=v;}));
+   const typeLabel=node("label","recipe-pdf-field");
+   typeLabel.append(node("span","","Tipo"));
+   const type=node("select");
+   for(const [value,label] of [["standard","Padrão"],["adaptable","Adaptável"]]){
+    const opt=node("option","",label);opt.value=value;type.append(opt);
+   }
+   type.value=recipe.recipe_type||"standard";
+   type.addEventListener("change",()=>{recipe.recipe_type=type.value;});
+   typeLabel.append(type);fields.append(typeLabel);
+   card.append(fields);
+   if(recipe.photo_webp){
+    const photo=node("img","recipe-pdf-thumb");
+    photo.alt="Fotografia extraída do PDF";
+    photo.src="data:image/webp;base64,"+recipe.photo_webp;card.append(photo);
+   }
+   const detail=node("details","recipe-pdf-details");
+   const summary=node("summary","", "Rever ingredientes e preparação");
+   detail.append(summary);
+   recipe.sections.forEach((sec,si)=>{
+    const title=node("h4","",sec.title||"Ingredientes");
+    detail.append(title);
+    sec.ingredients.forEach((ingredient,ii)=>{
+     const row=node("div","recipe-pdf-ingredient");
+     for(const [key,label] of [["quantity","Quantidade"],["unit","Unidade"],["name","Alimento"]]){
+      row.append(pdfField(label,ingredient[key],value=>{ingredient[key]=value;}));
+     }
+     detail.append(row);
+    });
+   });
+   detail.append(node("h4","","Preparação"));
+   recipe.steps.forEach((step,si)=>{
+    const label=node("label","recipe-pdf-field");label.append(node("span","","Passo "+(si+1)));
+    const field=node("textarea");field.value=step;field.rows=3;field.maxLength=2000;
+    field.addEventListener("input",()=>{recipe.steps[si]=field.value;});
+    label.append(field);detail.append(label);
+   });
+   card.append(detail);host.append(card);
+  });
+ }
+ async function analyzePdf(){
+  if(pdfBusy)return;
+  const file=$("recipe-pdf-file").files?.[0],category=$("recipe-pdf-category").value;
+  const feedback=$("recipe-pdf-feedback");
+  if(!category){feedback.textContent="Seleciona primeiro a categoria de destino.";return;}
+  if(!file){feedback.textContent="Seleciona um PDF.";return;}
+  if(file.size>20*1024*1024||file.size<5){feedback.textContent="O PDF deve ter menos de 20 MB. Divide os documentos maiores.";return;}
+  if(!file.name.toLowerCase().endsWith(".pdf")){feedback.textContent="Seleciona um ficheiro PDF.";return;}
+  pdfBusy=true;$("recipe-pdf-analyze").disabled=true;
+  resetPdfPreview();feedback.textContent="A analisar o documento…";
+  try{
+   const res=await fetch("/api/v2/recipes/pdf/preview",{
+    method:"POST",credentials:"same-origin",
+    headers:{"Content-Type":"application/pdf","X-CSRF-Token":csrf,
+             "X-Recipe-Filename":encodeURIComponent(file.name).slice(0,160)},
+    body:file
+   });
+   const result=await res.json();
+   if(!res.ok)throw Error(result.error||"Não foi possível analisar o documento.");
+   pdfPreview=result;
+   pdfPreview.filename=file.name.slice(0,180);
+   for(const recipe of pdfPreview.recipes){
+    recipe.selected=true;recipe.recipe_type="standard";
+   }
+   paintPdfPreview();
+   feedback.textContent=pdfPreview.recipes.length?
+    "Revê cada receita, confirma os ingredientes e seleciona as que pretendes importar.":
+    "Não foram encontradas receitas. O PDF pode precisar de revisão manual.";
+  }catch(error){feedback.textContent="Erro: "+error.message;}
+  finally{pdfBusy=false;$("recipe-pdf-analyze").disabled=false;}
+ }
+ async function savePdfDrafts(){
+  if(!pdfPreview||pdfBusy)return;
+  const category_id=$("recipe-pdf-category").value;
+  if(!category_id){$("recipe-pdf-feedback").textContent="Seleciona a categoria.";return;}
+  const selected=pdfPreview.recipes.filter(x=>x.selected);
+  if(!selected.length){$("recipe-pdf-feedback").textContent="Seleciona pelo menos uma receita.";return;}
+  if(selected.length>12){$("recipe-pdf-feedback").textContent="Importa no máximo 12 receitas de cada vez.";return;}
+  if(selected.some(x=>!x.name.trim())){$("recipe-pdf-feedback").textContent="Confirma os nomes das receitas.";return;}
+  pdfBusy=true;$("recipe-pdf-save").disabled=true;
+  $("recipe-pdf-feedback").textContent="A guardar rascunhos…";
+  try{
+   const result=await request("/api/v2/recipes/pdf/import",{method:"POST",
+    body:JSON.stringify({category_id,filename:pdfPreview.filename,
+     recipes:selected.map(x=>({page:x.page,name:x.name,recipe_type:x.recipe_type,
+       servings:x.servings||1,sections:x.sections,steps:x.steps,
+       notes:x.notes||"",photo_webp:x.photo_webp}))})});
+   await loadLibrary();
+   resetPdfPreview();
+   $("recipe-pdf-file").value="";
+   $("recipe-pdf-feedback").textContent=result.created.length+
+    " receitas guardadas como rascunho."+
+    (result.skipped.length?" "+result.skipped.length+" duplicadas ignoradas.":"");
+  }catch(error){$("recipe-pdf-feedback").textContent="Não foi possível guardar: "+error.message;}
+  finally{pdfBusy=false;$("recipe-pdf-save").disabled=false;}
+ }
+ $("recipe-pdf-toggle").addEventListener("click",()=>togglePdfPanel($("recipe-pdf-panel").hidden));
+ $("recipe-pdf-close").addEventListener("click",()=>togglePdfPanel(false));
+ $("recipe-pdf-analyze").addEventListener("click",analyzePdf);
+ $("recipe-pdf-cancel").addEventListener("click",resetPdfPreview);
+ $("recipe-pdf-save").addEventListener("click",savePdfDrafts);
+ $("recipe-pdf-category").addEventListener("change",()=>{if(pdfPreview)paintPdfPreview();});
  $("recipe-search").addEventListener("input",paintList);
  $("recipe-filter-category").addEventListener("change",paintList);
  $("recipe-filter-type").addEventListener("change",paintList);
