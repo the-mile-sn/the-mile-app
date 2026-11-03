@@ -268,3 +268,15 @@
 /* Secondary destructive controls, visually quiet until needed. */
 .meal-controls .delete-inline{background:#342629!important;color:#d99b9b!important;border:0!important;border-radius:10px!important;min-height:40px!important;font:inherit!important;font-size:12px!important;cursor:pointer!important}
 .meal-controls .delete-inline:hover{background:#493033!important}
+
+/* Meal removal next to rename control; no filled button. */
+.meal-name{display:flex!important;align-items:center!important;gap:10px!important}
+.meal-delete-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:3px!important;color:#939397!important;cursor:pointer!important}
+.meal-delete-icon:hover{color:#df8e8e!important}
+/* One shared macro rail for meal, option and food rows. */
+@media(min-width:1121px){
+.meal{--nutrition-rail:38%;--nutrition-actions:76px}
+.meal-header .meal-header-macros,.option-content .option-summary>.macro-values,.option-content .nutrition-list .food-row>.macro-values{position:absolute!important;right:var(--nutrition-actions)!important;top:50%!important;transform:translateY(-50%)!important;width:var(--nutrition-rail)!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;padding:0!important;margin:0!important}
+.meal-header .meal-header-macros>.macro-values,.option-content .option-summary>.macro-values,.option-content .nutrition-list .food-row>.macro-values{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0!important}
+.meal-header .meal-header-macros .macro,.option-content .option-summary .macro,.option-content .nutrition-list .food-row .macro{min-width:0!important;box-sizing:border-box!important}
+}
