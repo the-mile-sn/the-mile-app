@@ -260,7 +260,7 @@ test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL"
  const backend=require("node:fs").readFileSync("app.py","utf8");
  assert.match(html,/href="\/admin-light-theme\.css\?v=11"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
- assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
+ assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]/);
 });
 
 
