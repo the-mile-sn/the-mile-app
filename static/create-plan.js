@@ -1,6 +1,6 @@
 "use strict";(()=>{
 const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),fmt=v=>Number(v||0).toLocaleString("pt-PT",{maximumFractionDigits:1});
-let editingFood=-1,foods=[],plan={id:"",name:"Novo plano alimentar",meals:[]},active=-1,option=0;
+let editingFood=-1,foods=[],plan={id:"",name:"Novo plano alimentar",plan_type:"",meals:[]},active=-1,option=0;
 const nutrients=["kcal","protein_g","carbs_g","fat_g"];
 const sum=items=>nutrients.map(k=>items.reduce((s,f)=>{const ref=foods.find(x=>x.id===f.id);return s+(ref?Number(ref[k])*Number(f.grams)/100*(ref.variant==="gross"?Number(ref.edible_fraction):1):0)},0));
 const average=meal=>nutrients.map((_,i)=>meal.options.reduce((s,o)=>s+sum(o.foods)[i],0)/meal.options.length);
@@ -10,6 +10,8 @@ const status=s=>$("status").textContent=s;
 const macro=(values)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+["kcal","P (g)","HC (g)","G (g)"][i]+'</small></span>').join("")+'</div>';
 function draw(){
   $("plan-name").value=plan.name;
+  $("plan-type").value=plan.plan_type||"";
+  $("delete-plan").disabled=!plan.id;
   const t=totals();["total-kcal","total-p","total-hc","total-g"].forEach((id,i)=>$(id).textContent=fmt(t[i]));
   $("meals").innerHTML=plan.meals.map((m,mi)=>{
     const open=mi===active,o=m.options[option]||m.options[0];
@@ -54,15 +56,21 @@ function draw(){
   if($("add-food"))$("add-food").onclick=()=>{const id=selectedFoodId,grams=Number($("food-grams").value);if(!id||!Number.isFinite(grams)||grams<=0||grams>100000){status("Seleciona um alimento e uma quantidade válida.");return}plan.meals[active].options[option].foods.push({id,grams});draw()};
   if($("add-option"))$("add-option").onclick=()=>{plan.meals[active].options.push({title:"",foods:[],notes:[]});option=plan.meals[active].options.length-1;draw()};
   if($("add-note"))$("add-note").onclick=()=>{const o=plan.meals[active].options[option];o.notes=o.notes||[];o.notes.push("");draw();const fields=document.querySelectorAll("[data-note]");fields[fields.length-1]?.focus()};
-  if($("add-meal-inline"))$("add-meal-inline").onclick=addMeal;
+  if($("add-meal-inline"))$("add-meal-inline").onclick=showMealPicker;
 }
-function addMeal(){plan.meals.push({name:"Refeição "+(plan.meals.length+1),options:[{title:"",foods:[],notes:[]}]});active=plan.meals.length-1;option=0;draw()}
-function newPlan(){plan={id:"",name:"Novo plano alimentar",meals:[]};active=-1;option=0;draw();status("Novo plano iniciado.")}
+function addMeal(name){plan.meals.push({name:name||"Refeição "+(plan.meals.length+1),options:[{title:"",foods:[],notes:[]}]});active=plan.meals.length-1;option=0;draw()}
+const mealNames=["Pequeno almoço","Almoço","Lanche","Pós treino","Pré treino","Pós jogo","Intra Jogo","Pré aquecimento","Pós aquecimento","Jantar","Ceia"];
+function showMealPicker(){const panel=$("meal-picker");$("meal-choices").innerHTML=mealNames.map((name,i)=>'<button type="button" data-meal-choice="'+i+'">'+esc(name)+'</button>').join("");panel.hidden=false;panel.scrollIntoView({behavior:"smooth",block:"nearest"});panel.querySelectorAll("[data-meal-choice]").forEach(b=>b.onclick=()=>{addMeal(mealNames[Number(b.dataset.mealChoice)]);panel.hidden=true})}
+$("cancel-meal").onclick=()=>{$("meal-picker").hidden=true};
+$("assign-player").onclick=()=>status("A atribuição a jogadores ficará disponível após a integração validada com o Planeamento. Este rascunho ainda não altera jogadores.");
+$("delete-plan").onclick=async()=>{if(!plan.id)return;if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
+function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",meals:[]};active=-1;option=0;draw();status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+data.drafts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||""}
-$("add-meal").onclick=addMeal;$("new-plan").onclick=newPlan;
+$("add-meal").onclick=showMealPicker;$("new-plan").onclick=newPlan;
+$("plan-type").onchange=e=>{plan.plan_type=e.target.value};
 $("plan-name").onchange=e=>{plan.name=e.target.value.trim();draw()};
-$("draft-list").onchange=async e=>{if(!e.target.value)return;try{const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(e.target.value));plan=data.draft;plan.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));active=plan.meals.length?0:-1;option=0;draw();status("Rascunho carregado.")}catch(err){status("Não foi possível abrir o plano: "+err.message)}};
-$("save-plan").onclick=async()=>{plan.name=$("plan-name").value.trim();if(!plan.name){status("Indica o nome do plano.");return}if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){status("Preenche todas as opções antes de guardar.");return}try{const csrf=(await request("/api/me")).csrf||"";const r=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(plan)});plan.id=r.id;await loadDrafts();status("Rascunho guardado. Não foi publicado.")}catch(err){status("Não foi possível guardar: "+err.message)}};
+$("draft-list").onchange=async e=>{if(!e.target.value)return;try{const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(e.target.value));plan=data.draft;plan.plan_type=plan.plan_type||"";plan.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));active=plan.meals.length?0:-1;option=0;draw();status("Rascunho carregado.")}catch(err){status("Não foi possível abrir o plano: "+err.message)}};
+$("save-plan").onclick=async()=>{plan.name=$("plan-name").value.trim();if(!plan.name){status("Indica o nome do plano.");return}if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){status("Preenche todas as opções antes de guardar.");return}try{const csrf=(await request("/api/me")).csrf||"";const r=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(plan)});plan.id=r.id;draw();await loadDrafts();status("Rascunho guardado. Não foi publicado.")}catch(err){status("Não foi possível guardar: "+err.message)}};
 (async()=>{try{const data=await request("/api/v2/food-library");foods=data.foods||[];await loadDrafts();addMeal();status("Biblioteca carregada: "+foods.length+" alimentos.")}catch(err){status("Não foi possível carregar os dados. Inicia sessão no Backoffice. "+err.message)}})();
 })();
