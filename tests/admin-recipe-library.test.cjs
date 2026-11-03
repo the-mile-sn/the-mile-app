@@ -71,3 +71,19 @@ test("accessory paragraphs removed without changing explanatory field labels",()
  assert.match(html,/id="recipe-sections"/);
  assert.match(html,/id="recipe-steps"/);
 });
+
+test("PDF importer remains a review-first admin workflow",()=>{
+ for(const id of ["recipe-pdf-panel","recipe-pdf-toggle","recipe-pdf-file","recipe-pdf-category",
+                  "recipe-pdf-analyze","recipe-pdf-results","recipe-pdf-save","recipe-pdf-actions"]){
+  assert.equal(html.split('id="'+id+'"').length-1,1,id);
+ }
+ assert.match(html,/id="recipe-pdf-panel"[^>]*hidden/);
+ assert.match(ui,/function analyzePdf\(\)/);
+ assert.match(ui,/recipe-pdf-results/);
+ assert.match(ui,/preview.*PDF|pdf\/preview/);
+ assert.match(ui,/pdf\/import/);
+ assert.match(ui,/recipe\.recipe_type="standard"/);
+ assert.match(backend,/recipe_pdf_import_v2\.preview_pdf/);
+ assert.match(backend,/recipe_pdf_import_v2\.commit_drafts/);
+ assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
+});

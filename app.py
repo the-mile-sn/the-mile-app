@@ -15,6 +15,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import recipe_library_v2
+import recipe_pdf_import_v2
 import calendar_v2
 import dashboard_v2
 import admin_players_v2
@@ -35,7 +36,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from http.cookies import SimpleCookie
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, urlparse, unquote
 
 try:
     import psycopg
@@ -1330,6 +1331,23 @@ def application(env, start_response):
             if path.startswith('/api/v2/recipes'):
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
+                if path == '/api/v2/recipes/pdf/preview' and method == 'POST':
+                    raw=read_body(env,recipe_pdf_import_v2.MAX_PDF_BYTES)
+                    filename=unquote((env.get('HTTP_X_RECIPE_FILENAME') or 'receitas.pdf')[:180])
+                    try:
+                        preview=recipe_pdf_import_v2.preview_pdf(raw,filename)
+                    except ValueError as error:
+                        raise Problem(400,str(error))
+                    return respond(200,preview)
+                if path == '/api/v2/recipes/pdf/import' and method == 'POST':
+                    body=read_json(env)
+                    try:
+                        result=recipe_pdf_import_v2.commit_drafts(
+                            c,body.get('category_id'),body.get('filename'),
+                            body.get('recipes'),store_dish_image)
+                    except ValueError:
+                        raise Problem(400,'invalid_recipe_import')
+                    return respond(200,result)
                 if path == '/api/v2/recipes/categories':
                     if method == 'GET':
                         return respond(200, {'categories':recipe_library_v2.list_categories(c)})
