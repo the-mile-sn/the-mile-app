@@ -64,7 +64,7 @@ function showMealPicker(){const panel=$("meal-picker");$("meal-choices").innerHT
 $("cancel-meal").onclick=()=>{$("meal-picker").hidden=true};
 $("assign-player").onclick=()=>status("A atribuição a jogadores ficará disponível após a integração validada com o Planeamento. Este rascunho ainda não altera jogadores.");
 $("delete-plan").onclick=async()=>{if(!plan.id)return;if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
-function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",meals:[]};active=-1;option=0;draw();status("Novo plano iniciado.")}
+function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",plan_type:"",meals:[]};active=-1;option=0;draw();status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+data.drafts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||""}
 $("add-meal").onclick=showMealPicker;$("new-plan").onclick=newPlan;
