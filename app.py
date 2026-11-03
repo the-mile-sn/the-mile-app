@@ -549,7 +549,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css')
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
