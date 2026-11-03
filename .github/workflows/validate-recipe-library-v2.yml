@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python -m py_compile app.py recipe_library_v2.py
-      - run: python -m unittest -v test_recipe_library_v2 test_menu_color_parity_v2 test_calendar_v2
+      - run: python -m unittest -v test_recipe_library_v2 test_recipe_pdf_import_v2 test_menu_color_parity_v2 test_calendar_v2
       - run: node --check static/admin-recipes.js
       - run: node --check static/admin-dashboard.js
       - run: node --check static/admin-microcycles.js
