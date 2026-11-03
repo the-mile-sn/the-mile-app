@@ -86,6 +86,138 @@
   }
   table.append(tbody);const scroll=node("div","recipe-table-scroll");scroll.append(table);host.append(scroll);
  }
+ function recipeReaderStatus(recipe){
+  return node("span","recipe-status-tag "+(recipe.status==="published"?
+   "recipe-status-published":"recipe-status-draft"),
+   recipe.status==="published"?"Publicada":"Rascunho");
+ }
+ function paintReadRecipe(recipe){
+  const host=$("recipe-reader-content");
+  host.replaceChildren();
+  const hero=node("div","recipe-reader-hero");
+  const media=node("div","recipe-reader-media");
+  if(recipe.photo_key){
+   const photo=node("img","recipe-reader-image");photo.alt="Fotografia de "+recipe.name;
+   photo.src="/api/v2/recipes/image/"+encodeURIComponent(recipe.id);
+   media.append(photo);
+  }else{
+   const blank=node("div","recipe-reader-image-empty");
+   blank.append(node("span","","Sem fotografia"));
+   media.append(blank);
+  }
+  hero.append(media);
+  const intro=node("div","recipe-reader-intro");
+  const eyebrow=node("div","recipe-reader-eyebrow");
+  eyebrow.append(node("span","",recipe.category||"Sem categoria"),recipeReaderStatus(recipe));
+  intro.append(eyebrow,node("h2","",recipe.name));
+  const chips=node("div","recipe-reader-chips");
+  chips.append(node("span","","Doses · "+recipe.servings));
+  chips.append(node("span","",recipe.recipe_type==="adaptable"?"Adaptável ao plano":"Receita padrão"));
+  intro.append(chips);hero.append(intro);host.append(hero);
+
+  const content=node("div","recipe-reader-body");
+  const ingredients=node("section","recipe-reader-section");
+  ingredients.append(node("h3","","Ingredientes"));
+  let ingredientCount=0;
+  for(const section of recipe.sections||[]){
+   if(section.title)ingredients.append(node("h4","",section.title));
+   const list=node("div","recipe-reader-ingredients");
+   for(const item of section.ingredients||[]){
+    if(!item.name)continue;
+    ingredientCount++;
+    const row=node("div","recipe-reader-ingredient");
+    const quantity=[item.quantity,item.unit].filter(Boolean).join(" ");
+    row.append(node("span","recipe-reader-quantity",quantity||"—"));
+    const linkId=item.recipe_ref_id;
+    if(linkId){
+     const linked=recipes.find(r=>r.id===linkId);
+     const name=linked?.name||item.name.replace(/\([^)]*ver receita[^)]*\)/ig,"").trim()||item.name;
+     const action=button(name+" ↗",()=>openReadRecipe(linkId,true),"recipe-reader-ingredient-link");
+     action.title="Abrir receita associada";
+     action.setAttribute("aria-label","Ver receita associada: "+name);
+     row.append(action);
+    }else row.append(node("span","recipe-reader-food",item.name));
+    list.append(row);
+   }
+   ingredients.append(list);
+  }
+  if(!ingredientCount)ingredients.append(node("p","recipe-reader-muted","Ingredientes ainda não preenchidos."));
+  content.append(ingredients);
+  const procedure=node("section","recipe-reader-section");
+  procedure.append(node("h3","","Preparação"));
+  const steps=(recipe.steps||[]).filter(x=>String(x||"").trim());
+  if(steps.length){
+   const ordered=node("ol","recipe-reader-steps");
+   for(const step of steps){ordered.append(node("li","",step));}
+   procedure.append(ordered);
+  }else procedure.append(node("p","recipe-reader-muted","Preparação ainda não preenchida."));
+  content.append(procedure);
+  const notes=String(recipe.notes||"").trim();
+  if(notes){
+   const tips=node("section","recipe-reader-section recipe-reader-notes");
+   tips.append(node("h3","","Dicas e observações"));
+   for(const paragraph of notes.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))
+    tips.append(node("p","",paragraph));
+   content.append(tips);
+  }
+  host.append(content);
+  $("recipe-reader-back").textContent=recipeReaderHistory.length>1?
+   "← Voltar à receita anterior":"← Voltar à biblioteca";
+ }
+ async function openReadRecipe(id,linked=false){
+  if(busy)return;
+  const currentToken=++recipeReaderToken;
+  const backstack=linked?recipeReaderHistory.concat(id):[id];
+  const panel=$("recipe-reader-panel");
+  $("recipe-reader-feedback").textContent="A carregar receita…";
+  try{
+   let recipe=recipeReaderCache.get(id);
+   if(!recipe){
+    const response=await request("/api/v2/recipes/"+encodeURIComponent(id));
+    recipe=response.recipe;recipeReaderCache.set(id,recipe);
+   }
+   if(currentToken!==recipeReaderToken)return;
+   recipeReaderHistory=backstack;
+   if(panel.hidden)recipeReaderEditorVisible=!$("recipe-editor-panel").hidden;
+   $("recipe-editor-panel").hidden=true;
+   $("recipe-list").hidden=true;
+   $("recipe-library-toolbar").hidden=true;
+   $("recipe-list-meta").hidden=true;
+   $("recipe-category-manage").hidden=true;
+   $("recipe-pdf-panel").hidden=true;
+   panel.hidden=false;
+   paintReadRecipe(recipe);
+   $("recipe-reader-feedback").textContent="";
+   panel.scrollIntoView({behavior:"smooth",block:"start"});
+   panel.focus({preventScroll:true});
+  }catch(error){
+   if(currentToken===recipeReaderToken){
+    $("recipe-reader-feedback").textContent="";
+    alertMessage("Não foi possível visualizar a receita: "+error.message);
+   }
+  }
+ }
+ function closeReadRecipe(){
+  ++recipeReaderToken;
+  recipeReaderHistory=[];
+  $("recipe-reader-panel").hidden=true;
+  $("recipe-library-toolbar").hidden=false;
+  $("recipe-list-meta").hidden=false;
+  $("recipe-list").hidden=false;
+  $("recipe-editor-panel").hidden=!recipeReaderEditorVisible;
+  recipeReaderEditorVisible=false;
+  $("recipe-list-meta").scrollIntoView({behavior:"smooth",block:"start"});
+ }
+ async function readerBack(){
+  if(recipeReaderHistory.length<2){closeReadRecipe();return;}
+  const previous=recipeReaderHistory[recipeReaderHistory.length-2];
+  recipeReaderHistory.pop();
+  const recipe=recipeReaderCache.get(previous);
+  if(recipe){
+   paintReadRecipe(recipe);
+   $("recipe-reader-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }else await openReadRecipe(previous);
+ }
  function labelledInput(label,value,onChange,placeholder){
   const wrap=node("label","recipe-entry-field");
   wrap.append(node("span","",label));
