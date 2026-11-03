@@ -89,7 +89,7 @@ test("PDF importer remains a review-first admin workflow",()=>{
 });
 
 test("recipe list offers confirmed deletion using admin-only endpoint",()=>{
- assert.match(ui,/button\("Eliminar",\(\)=>deleteRecipe\(r\),"recipe-delete"\)/);
+ assert.match(ui,/button\("",\(\)=>deleteRecipe\(r\),"recipe-icon-button recipe-delete"\)/);
  assert.match(ui,/window\.confirm\(/);
  assert.match(ui,/method:"DELETE"/);
  assert.match(ui,/await loadLibrary\(\)/);
@@ -230,7 +230,7 @@ test("read-only recipe view uses real saved fields and lets linked recipes be op
  assert.match(ui,/button\("Ver",\(\)=>openReadRecipe\(r\.id\),"recipe-view"\)/);
  assert.match(ui,/recipeListIcon\("edit"\)/);
  assert.match(ui,/recipeListIcon\("trash"\)/);
- assert.match(ui,/class="recipe-reader-panel"/);
+ assert.match(html,/class="recipe-reader-panel"/);
  assert.match(ui,/async function openReadRecipe\(id,linked=false\)/);
  assert.match(ui,/await request\("\/api\/v2\/recipes\/"\+encodeURIComponent\(id\)\)/);
  assert.match(ui,/recipe\.sections\|\|\[\]/);
