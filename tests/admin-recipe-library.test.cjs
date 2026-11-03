@@ -291,3 +291,10 @@ test("recipe categories keep stable semantic colors and are accessible in both t
  assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-category-red/);
  assert.match(css,/\.recipe-table-filter-row input:focus-visible/);
 });
+
+test("in-table filter header has distinct subtle backgrounds in both themes",()=>{
+ const css=fs.readFileSync("static/admin-recipes.css","utf8");
+ assert.match(css,/\.recipe-table-filter-row th\{\s*background:#28313c/);
+ assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-table-filter-row th\{\s*background:#e6ebf2/);
+ assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-table-filter-row input/);
+});
