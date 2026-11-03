@@ -201,12 +201,15 @@ test("manual editor and PDF review reorder ingredients without recreating IDs",(
 
 test("recipe toolbar filters all displayed metadata and keeps actions secondary",()=>{
  for(const id of ["recipe-search","recipe-filter-category","recipe-filter-type","recipe-filter-status",
-                  "recipe-filter-photo","recipe-clear-filters","recipe-result-count","recipe-category-toggle"]){
+                  "recipe-clear-filters","recipe-result-count","recipe-category-toggle"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
- assert.match(ui,/const status=\$\("recipe-filter-status"\)\.value,photo=\$\("recipe-filter-photo"\)\.value/);
+ assert.match(ui,/const status=\$\("recipe-filter-status"\)\.value/);
  assert.match(ui,/status===r\.status/);
- assert.match(ui,/photo==="with"\?\!\!r\.photo_key:\!r\.photo_key/);
+ assert.doesNotMatch(html,/id="recipe-filter-photo"/);
+ assert.doesNotMatch(ui,/recipe-filter-photo/);
+ assert.match(ui,/\["Categoria","Fotografia","Receita","Tipo","Estado",""\]/);
+ assert.match(ui,/recipe-category-cell/);
  assert.match(ui,/norm\(r\.name\)\.includes\(q\)/);
  assert.match(ui,/function activeRecipeFilters\(\)/);
  assert.match(ui,/recipe-clear-filters"\)\.addEventListener\("click"/);
@@ -233,4 +236,14 @@ test("read-only recipe view uses real saved fields and lets linked recipes be op
  assert.match(ui,/recipe-reader-close"\)\.addEventListener\("click",closeReadRecipe\)/);
  assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
  assert.match(backend,/if path\.startswith\('\/api\/v2\/recipes'\):\s*if not user: raise Problem\(401, 'unauthorized'\)\s*admin\(user\)/);
+});
+
+test("recipe reader typography increases content size while quantities stay subtle",()=>{
+ const css=fs.readFileSync("static/admin-recipes.css","utf8");
+ assert.match(css,/\.recipe-reader-ingredient\{font-size:14px/);
+ assert.match(css,/\.recipe-reader-quantity\{font-size:13px;font-weight:400;color:var\(--recipe-muted\)/);
+ assert.match(css,/\.recipe-reader-food\{font-size:14px;font-weight:400/);
+ assert.match(css,/\.recipe-reader-ingredient-link\{font-size:14px!important;font-weight:400!important/);
+ assert.match(css,/\.recipe-reader-steps li\{font-size:14px/);
+ assert.match(css,/\.recipe-reader-notes p\{font-size:14px/);
 });
