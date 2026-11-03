@@ -1647,6 +1647,36 @@ async function loadDishLibrary(){
  refreshDishCategories();
 }
 window.tmLoadDishLibrary=loadDishLibrary;
+function setDishAddPanel(open){
+ const panel=$("dish-add-panel"),toggle=$("dish-add-toggle");
+ panel.hidden=!open;
+ toggle.setAttribute("aria-expanded",String(open));
+ if(open)$("new-dish-pt").focus();
+}
+$("dish-add-toggle").addEventListener("click",()=>setDishAddPanel($("dish-add-panel").hidden));
+$("dish-add-cancel").addEventListener("click",()=>{
+ for(const id of ["new-dish-pt","new-dish-en","new-dish-photo"])$(id).value="";
+ $("new-dish-category").value="";
+ $("dish-new-feedback").textContent="";
+ $("dish-photo-file-name").textContent="Arraste uma imagem ou clique para selecionar";
+ setDishAddPanel(false);
+});
+$("new-dish-photo").addEventListener("change",()=>{
+ const file=$("new-dish-photo").files?.[0];
+ $("dish-photo-file-name").textContent=file?file.name:"Arraste uma imagem ou clique para selecionar";
+});
+const dishDrop=$("dish-photo-dropzone");
+for(const type of ["dragenter","dragover"])dishDrop.addEventListener(type,event=>{event.preventDefault();dishDrop.classList.add("is-dragging");});
+for(const type of ["dragleave","drop"])dishDrop.addEventListener(type,event=>{event.preventDefault();dishDrop.classList.remove("is-dragging");});
+dishDrop.addEventListener("drop",event=>{
+ const file=event.dataTransfer?.files?.[0];
+ if(!file)return;
+ if(!file.type.startsWith("image/")){$("dish-new-feedback").textContent="Seleciona uma fotografia válida.";return;}
+ const input=$("new-dish-photo");
+ try{const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event("change",{bubbles:true}));}
+ catch(_error){$("dish-new-feedback").textContent="Não foi possível anexar a imagem; seleciona o ficheiro."; }
+});
+
 $("create-dish").addEventListener("click",async()=>{
  const button=$("create-dish"),feedback=$("dish-new-feedback");
  const name_pt=$("new-dish-pt").value.trim(),name_en=$("new-dish-en").value.trim(),category=$("new-dish-category").value.trim(),photo=$("new-dish-photo").files[0];
@@ -1656,7 +1686,9 @@ $("create-dish").addEventListener("click",async()=>{
   await uploadDishPhoto(photo,{name_pt,name_en,category});
   feedback.textContent="Prato adicionado à biblioteca.";
   $("new-dish-pt").value="";$("new-dish-en").value="";$("new-dish-category").value="";$("new-dish-photo").value="";
+  $("dish-photo-file-name").textContent="Arraste uma imagem ou clique para selecionar";
   await loadDishLibrary();
+  setDishAddPanel(false);
  }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
 });
 const normalizedDishText=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT");
@@ -1677,8 +1709,6 @@ function renderDishEditor(){
  const query=normalizedDishText($("dish-search").value).trim();
  const filter=$("dish-category-filter")?.value||"";
  const matches=dishLibrary.filter(d=>(!filter||d.category===filter)&&(!query||normalizedDishText([d.name_pt,d.name_en,d.category].join(" ")).includes(query)));
- const count=$("dish-library-count");
- if(count)count.textContent=matches.length+" de "+dishLibrary.length+" pratos";
  if(!matches.length){const empty=document.createElement("p");empty.className="dish-table-empty";empty.textContent=dishLibrary.length?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";host.append(empty);return;}
  const wrap=document.createElement("div");wrap.className="dish-table-scroll";
  const table=document.createElement("table");table.className="dish-library-table";

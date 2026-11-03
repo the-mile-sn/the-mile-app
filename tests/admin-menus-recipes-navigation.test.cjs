@@ -15,7 +15,7 @@ test("Menus e Receitas is a separate admin page, with two intended subsections",
 });
 
 test("only one existing dish editor is mounted, outside individual planning",()=>{
- for(const id of ["dish-search","dish-category-filter","dish-editor-list","dish-library-count","create-dish","new-dish-category","new-dish-photo","dish-new-feedback"]){
+ for(const id of ["dish-search","dish-category-filter","dish-editor-list","dish-add-toggle","dish-add-panel","dish-add-cancel","create-dish","new-dish-category","new-dish-photo","dish-new-feedback"]){
   assert.equal(html.split('id="'+id+'"').length-1,1,id);
  }
  const start=html.indexOf('id="tm-menu-recipes-page"');
@@ -24,7 +24,10 @@ test("only one existing dish editor is mounted, outside individual planning",()=
  const library=html.slice(start,end);
  assert.match(library,/id="dish-editor-list"/);
  assert.match(library,/id="dish-category-filter"/);
- assert.match(library,/id="dish-library-count"/);
+ assert.match(library,/id="dish-add-toggle"/);
+ assert.match(library,/id="dish-add-panel"[^>]*hidden/);
+ assert.doesNotMatch(library,/id="dish-library-count"/);
+ assert.doesNotMatch(library,/Exportar ZIP|Todos os pratos|<h3>Biblioteca de pratos<\/h3>/);
  assert.doesNotMatch(library,/id="dish-catalog-import"|id="dish-catalog-file"/);
  const menuStart=html.indexOf('id="menus-panel"');
  const menuEnd=html.indexOf('id="matrix"',menuStart);
@@ -54,4 +57,14 @@ test("published plans and player-facing endpoints are not touched in navigation 
  assert.match(admin,/function showBackofficeView\(view\)/);
  assert.match(css,/#tm-menu-recipes-page/);
  assert.match(css,/html\[data-admin-theme="light"\]/);
+});
+
+test("dish add panel toggles from the table toolbar and rows are aligned left",()=>{
+ const page=html.slice(html.indexOf('id="tm-menu-recipes-page"'),html.indexOf('id="tm-admin-legacy"'));
+ assert.ok(page.indexOf('id="dish-search"')<page.indexOf('id="dish-add-panel"'));
+ assert.ok(page.indexOf('id="dish-category-filter"')<page.indexOf('id="dish-add-panel"'));
+ assert.match(admin,/function setDishAddPanel\(open\)/);
+ assert.match(admin,/setDishAddPanel\(\$\("dish-add-panel"\)\.hidden\)/);
+ assert.match(admin,/setDishAddPanel\(false\)/);
+ assert.match(css,/\.dish-library-table th,#tm-menu-recipes-page \.dish-library-table td\{text-align:left!important\}/);
 });
