@@ -209,36 +209,41 @@
    "← Voltar à receita anterior":"← Voltar à biblioteca";
  }
  async function openReadRecipe(id,linked=false){
-  if(busy)return;
+  if(busy)throw Error("A edição da receita está em curso.");
   const currentToken=++recipeReaderToken;
   const backstack=linked?recipeReaderHistory.concat(id):[id];
   const panel=$("recipe-reader-panel");
+  if(panel.hidden)recipeReaderEditorVisible=!$("recipe-editor-panel").hidden;
+  // Present the reader before fetching: the clicked dish never lands on an
+  // apparently empty catalogue while waiting for this single recipe.
+  $("recipe-editor-panel").hidden=true;
+  $("recipe-list").hidden=true;
+  $("recipe-library-toolbar").hidden=true;
+  $("recipe-list-meta").hidden=true;
+  $("recipe-category-manage").hidden=true;
+  $("recipe-pdf-panel").hidden=true;
+  $("recipe-reader-content").replaceChildren();
   $("recipe-reader-feedback").textContent="A carregar receita…";
+  panel.hidden=false;
+  panel.scrollIntoView({behavior:"smooth",block:"start"});
+  panel.focus({preventScroll:true});
   try{
    let recipe=recipeReaderCache.get(id);
    if(!recipe){
     const response=await request("/api/v2/recipes/"+encodeURIComponent(id));
-    recipe=response.recipe;recipeReaderCache.set(id,recipe);
+    recipe=response.recipe;
+    if(!recipe)throw Error("Receita indisponível.");
+    recipeReaderCache.set(id,recipe);
    }
    if(currentToken!==recipeReaderToken)return;
    recipeReaderHistory=backstack;
-   if(panel.hidden)recipeReaderEditorVisible=!$("recipe-editor-panel").hidden;
-   $("recipe-editor-panel").hidden=true;
-   $("recipe-list").hidden=true;
-   $("recipe-library-toolbar").hidden=true;
-   $("recipe-list-meta").hidden=true;
-   $("recipe-category-manage").hidden=true;
-   $("recipe-pdf-panel").hidden=true;
-   panel.hidden=false;
    paintReadRecipe(recipe);
    $("recipe-reader-feedback").textContent="";
-   panel.scrollIntoView({behavior:"smooth",block:"start"});
-   panel.focus({preventScroll:true});
   }catch(error){
    if(currentToken===recipeReaderToken){
-    $("recipe-reader-feedback").textContent="";
-    alertMessage("Não foi possível visualizar a receita: "+error.message);
+    $("recipe-reader-feedback").textContent="Não foi possível abrir esta receita: "+error.message;
    }
+   throw error;
   }
  }
  function closeReadRecipe(){
@@ -995,7 +1000,9 @@
  window.tmOpenAdminDishRecipe=async id=>{
   if(typeof window.tmOpenAdminRecipeLibrary!=="function")
    throw Error("A navegação da biblioteca de receitas não está disponível.");
-  await window.tmOpenAdminRecipeLibrary();
+  // Navigation shows the correct section synchronously. Do NOT await the
+  // catalogue's full list/photos before opening the requested recipe.
+  window.tmOpenAdminRecipeLibrary();
   await openReadRecipe(id);
  };
  window.tmLoadRecipeLibrary=async()=>{
