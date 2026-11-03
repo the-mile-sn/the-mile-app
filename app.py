@@ -1496,6 +1496,10 @@ def application(env, start_response):
                 except ValueError: raise Problem(400,'invalid_dish')
                 if not ok: raise Problem(404,'not_found')
                 return respond(200,{'ok':True})
+            if path == '/api/v2/dishes/menu-id-audit' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, microcycles_v2.menu_dish_id_audit(c))
             if path == '/api/v2/dishes' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
@@ -1619,17 +1623,22 @@ def application(env, start_response):
                         meal=item.get('meal')
                         kind=item.get('kind')
                         value=item.get('value')
-                        if meal not in ('lunch','dinner') or kind not in ('category','dish') or not isinstance(value,str) or not value.strip() or len(value)>200: raise ValueError()
-                        if kind=='category' and value.strip() not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix','CT','Estágio'): raise ValueError()
-                        validated.append((date,meal,kind,value.strip()))
+                        if meal not in ('lunch','dinner') or kind not in ('category','dish'):
+                            raise ValueError()
+                        dish_id=item.get('dish_id')
+                        value,dish_id=microcycles_v2.resolve_menu_dish(c,kind,value,dish_id)
+                        if kind=='category' and value not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix','CT','Estágio'):
+                            raise ValueError()
+                        validated.append((date,meal,kind,value,dish_id))
                     if len(set((v[0],v[1]) for v in validated))!=len(validated): raise ValueError()
                 except (ValueError,TypeError,AttributeError):
                     raise Problem(400,'invalid_menu_batch')
                 if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
-                for date,meal,kind,value in validated:
-                    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
-                      VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
-                      kind=excluded.kind,value=excluded.value""",(aid,date,meal,kind,value))
+                for date,meal,kind,value,dish_id in validated:
+                    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
+                      VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
+                      kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
+                      (aid,date,meal,kind,value,dish_id))
                 c.commit()
                 return respond(200,{'saved':len(validated)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
@@ -1647,7 +1656,7 @@ def application(env, start_response):
                 if method == 'PUT':
                     body = read_json(env)
                     try:
-                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'))
+                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'), body.get('dish_id'))
                     except ValueError:
                         raise Problem(400, 'invalid_menu')
                     if item is None:
@@ -2003,7 +2012,11 @@ def application(env, start_response):
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link: raise Problem(404,'player_not_linked')
                 rows=c.execute("""SELECT DISTINCT d.id,d.name_pt FROM v2_dish_library d
-                  JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
+                  JOIN v2_weekly_menus m ON m.kind='dish' AND
+                    (m.dish_id=d.id OR
+                     (m.dish_id IS NULL AND m.value=d.name_pt AND
+                      (SELECT COUNT(*) FROM v2_dish_library exact
+                       WHERE exact.name_pt=m.value)=1))
                   WHERE m.athlete_id=? AND d.active=1""",(link['athlete_id'],)).fetchall()
                 return respond(200,{'dishes':[dict(row) for row in rows]})
             if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
@@ -2014,7 +2027,11 @@ def application(env, start_response):
                 identifier=path.rsplit('/',1)[-1]
                 if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
                 row=c.execute("""SELECT d.image_filename FROM v2_dish_library d
-                   JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
+                   JOIN v2_weekly_menus m ON m.kind='dish' AND
+                     (m.dish_id=d.id OR
+                      (m.dish_id IS NULL AND m.value=d.name_pt AND
+                       (SELECT COUNT(*) FROM v2_dish_library exact
+                        WHERE exact.name_pt=m.value)=1))
                    WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",(link['athlete_id'],identifier)).fetchone()
                 if not row: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,row['image_filename'])
