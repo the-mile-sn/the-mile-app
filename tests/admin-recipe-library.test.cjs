@@ -87,3 +87,12 @@ test("PDF importer remains a review-first admin workflow",()=>{
  assert.match(backend,/recipe_pdf_import_v2\.commit_drafts/);
  assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
 });
+
+test("PDF import preview exposes editable tips and preserves notes payload",()=>{
+ assert.match(ui,/tipsLabel\.append\(node\("span","","Dicas e observações"\)\)/);
+ assert.match(ui,/tips\.value=recipe\.notes\|\|""/);
+ assert.match(ui,/recipe\.notes=tips\.value/);
+ assert.match(ui,/notes:x\.notes\|\|""/);
+ assert.match(html,/id="recipe-notes"/);
+ assert.match(ui,/\$\("recipe-notes"\)\.value=current\.notes/);
+});
