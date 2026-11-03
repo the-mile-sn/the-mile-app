@@ -78,3 +78,16 @@
 .option-content .note-row{grid-template-columns:minmax(180px,1fr) minmax(240px,52%) 34px}
 @media(max-width:1200px){.option-content .food-row{grid-template-columns:minmax(130px,1fr) minmax(100px,1fr) minmax(270px,46%) 28px}}
 @media(max-width:780px){.option-content .food-row{grid-template-columns:minmax(0,1fr) 28px;gap:7px}.option-content .food-identity{grid-column:1;grid-row:1}.option-content .food-reference-note{grid-column:1/-1;grid-row:2}.option-content .food-row .macro-values{grid-column:1/-1;grid-row:3}.option-content .food-row .remove-row{grid-column:2;grid-row:1}.option-content .option-summary{display:flex;flex-direction:column;align-items:stretch}.option-content .option-summary .macro-values{width:100%}}
+
+/* Inline quantity editing and pre-addition portion guidance. */
+.food-actions{display:flex;align-items:center;justify-content:flex-end;gap:3px}
+.option-content .food-row{grid-template-columns:minmax(150px,1fr) minmax(130px,1fr) minmax(330px,46%) 68px}
+.option-content .food-row .food-actions button{background:transparent;min-height:30px;padding:4px 7px;color:var(--lib-muted);font-size:17px}
+.option-content .food-row .food-actions .edit-row:hover{color:var(--lib-fg)}
+.edit-quantity{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}
+.meal .edit-quantity input{width:84px;min-height:32px;padding:5px 8px;background:var(--lib-panel);font-size:12px}
+.meal .edit-quantity button{min-height:32px;padding:5px 8px;background:var(--lib-panel);font-size:11px}
+.selected-food-note{margin-top:7px;padding:9px 11px;border-radius:9px;background:var(--lib-panel-2);color:var(--lib-muted);font-size:12px;line-height:1.45}
+.selected-food-note[hidden]{display:none}
+@media(max-width:1200px){.option-content .food-row{grid-template-columns:minmax(130px,1fr) minmax(100px,1fr) minmax(270px,46%) 68px}}
+@media(max-width:780px){.option-content .food-row{grid-template-columns:minmax(0,1fr) 68px}.option-content .food-row .food-actions{grid-column:2;grid-row:1}}
