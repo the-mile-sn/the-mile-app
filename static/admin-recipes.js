@@ -259,6 +259,7 @@
   }
   if(!Array.isArray(recipe.steps))recipe.steps=[];
   if(!recipe.steps.length)recipe.steps.push("");
+  if(!Number.isInteger(recipe.servings)||recipe.servings<1||recipe.servings>100)recipe.servings=1;
   recipe.notes=typeof recipe.notes==="string"?recipe.notes:"";
   recipe.reviewTips=recipe.notes.split(/\r?\n/).map(tip=>tip.trim()).filter(Boolean);
  }
@@ -342,6 +343,38 @@
    detail.append(row);
   });
  }
+ async function pdfPhotoWebp(file){
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024||!file.size)
+   throw Error("Seleciona uma fotografia JPG, PNG ou WebP até 3 MB.");
+  const url=URL.createObjectURL(file);
+  try{
+   const image=await new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(Error("Não foi possível ler a fotografia."));
+    img.src=url;
+   });
+   if(!image.naturalWidth||!image.naturalHeight||image.naturalWidth*image.naturalHeight>32000000)
+    throw Error("As dimensões da fotografia não são suportadas.");
+   for(const size of [850,700,550,450]){
+    const scale=Math.min(1,size/Math.max(image.naturalWidth,image.naturalHeight));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+    canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+    const context=canvas.getContext("2d");
+    if(!context)throw Error("Não foi possível otimizar a fotografia.");
+    context.drawImage(image,0,0,canvas.width,canvas.height);
+    for(const quality of [0.78,0.65,0.52,0.4]){
+     const data=canvas.toDataURL("image/webp",quality);
+     if(!data.startsWith("data:image/webp;base64,"))
+      throw Error("O navegador não suporta a otimização de fotografias.");
+     const encoded=data.slice("data:image/webp;base64,".length);
+     if(encoded.length<=240000)return encoded;
+    }
+   }
+   throw Error("A fotografia é demasiado grande para a importação.");
+  }finally{URL.revokeObjectURL(url);}
+ }
  function paintPdfPreview(){
   const host=$("recipe-pdf-results");host.replaceChildren();
   $("recipe-pdf-actions").hidden=!pdfPreview?.recipes?.length;
@@ -367,25 +400,79 @@
    if(duplicate)card.append(node("p","recipe-pdf-warning","Já existe uma receita com este nome na categoria; não será duplicada."));
    const warnings=recipe.warnings||[];
    for(const warn of warnings)card.append(node("p","recipe-pdf-warning",warn));
-   const fields=node("div","recipe-pdf-edit-fields");
-   fields.append(pdfField("Nome da receita",recipe.name,v=>{recipe.name=v;heading.textContent=v||"Receita sem nome";}));
+   // Same header hierarchy as the manual "Adicionar nova receita" editor.
+   const fields=node("div","recipe-editor-grid recipe-pdf-edit-fields");
+   const nameField=pdfField("Nome da receita",recipe.name,v=>{recipe.name=v;heading.textContent=v||"Receita sem nome";});
+   nameField.classList.add("recipe-wide");fields.append(nameField);
+   const categoryLabel=node("label","recipe-pdf-field");
+   categoryLabel.append(node("span","","Categoria"));
+   const categorySelect=node("select");
+   const chosenCategory=categories.find(c=>c.id===$("recipe-pdf-category").value);
+   const categoryOption=node("option","",chosenCategory?.name||"Selecionar categoria");
+   categoryOption.value=chosenCategory?.id||"";
+   categorySelect.append(categoryOption);
+   categorySelect.disabled=true;
+   categorySelect.title="Altera a categoria de destino no início da importação.";
+   categoryLabel.append(categorySelect);fields.append(categoryLabel);
    const typeLabel=node("label","recipe-pdf-field");
    typeLabel.append(node("span","","Tipo"));
    const type=node("select");
-   for(const [value,label] of [["standard","Padrão"],["adaptable","Adaptável"]]){
+   for(const [value,label] of [["standard","Receita padrão"],["adaptable","Adaptável ao plano"]]){
     const opt=node("option","",label);opt.value=value;type.append(opt);
    }
    type.value=recipe.recipe_type||"standard";
    type.addEventListener("change",()=>{recipe.recipe_type=type.value;});
    typeLabel.append(type);fields.append(typeLabel);
+   const servingsLabel=node("label","recipe-pdf-field");
+   servingsLabel.append(node("span","","Doses"));
+   const servings=node("input");servings.type="number";servings.min="1";servings.max="100";servings.step="1";
+   servings.value=String(recipe.servings);
+   servings.addEventListener("input",()=>{recipe.servings=Number(servings.value);});
+   servingsLabel.append(servings);fields.append(servingsLabel);
+   const stateLabel=node("label","recipe-pdf-field");
+   stateLabel.append(node("span","","Estado"));
+   const state=node("select"),draft=node("option","","Rascunho");
+   draft.value="draft";state.append(draft);state.disabled=true;
+   state.title="As receitas importadas são sempre guardadas como rascunho.";
+   stateLabel.append(state);fields.append(stateLabel);
    card.append(fields);
+   const photoBox=node("div","recipe-edit-photo recipe-pdf-photo");
    if(recipe.photo_webp){
     const photo=node("img","recipe-pdf-thumb");
-    photo.alt="Fotografia extraída do PDF";
-    photo.src="data:image/webp;base64,"+recipe.photo_webp;card.append(photo);
+    photo.alt="Fotografia da receita";
+    photo.src="data:image/webp;base64,"+recipe.photo_webp;
+    photoBox.append(photo);
    }else{
-    card.append(node("div","recipe-pdf-thumb recipe-pdf-thumb-empty","Sem fotografia"));
+    photoBox.append(node("div","recipe-pdf-thumb recipe-pdf-thumb-empty","Sem fotografia"));
    }
+   const photoLabel=node("label","recipe-pdf-field");
+   photoLabel.append(node("span","","Fotografia da receita (vista de cima)"));
+   const photoFile=node("input");photoFile.type="file";photoFile.accept="image/jpeg,image/png,image/webp";
+   photoFile.setAttribute("aria-label","Fotografia da receita "+recipe.name);
+   photoFile.addEventListener("change",async()=>{
+    const file=photoFile.files?.[0];
+    if(!file)return;
+    if(pdfBusy){photoFile.value="";pdfReviewLimit("Conclui primeiro a operação em curso.");return;}
+    pdfBusy=true;photoFile.disabled=true;$("recipe-pdf-save").disabled=true;
+    try{
+     const converted=await pdfPhotoWebp(file);
+     recipe.photo_webp=converted;
+     paintPdfPreview();
+     pdfReviewLimit("Fotografia atualizada na pré-visualização.");
+    }catch(error){
+     photoFile.value="";
+     pdfReviewLimit("Não foi possível carregar a fotografia: "+error.message);
+    }finally{
+     pdfBusy=false;$("recipe-pdf-save").disabled=false;
+    }
+   });
+   photoLabel.append(photoFile);photoBox.append(photoLabel);
+   if(recipe.photo_webp){
+    photoBox.append(button("Remover fotografia",()=>{
+     recipe.photo_webp=null;paintPdfPreview();
+    },"recipe-pdf-remove"));
+   }
+   card.append(photoBox);
    const detail=node("details","recipe-pdf-details");detail.open=true;
    paintPdfDetail(recipe,detail);
    card.append(detail);host.append(card);
@@ -431,6 +518,9 @@
   if(!selected.length){$("recipe-pdf-feedback").textContent="Seleciona pelo menos uma receita.";return;}
   if(selected.length>12){$("recipe-pdf-feedback").textContent="Importa no máximo 12 receitas de cada vez.";return;}
   if(selected.some(x=>!x.name.trim())){$("recipe-pdf-feedback").textContent="Confirma os nomes das receitas.";return;}
+  if(selected.some(x=>!Number.isInteger(x.servings)||x.servings<1||x.servings>100)){
+   $("recipe-pdf-feedback").textContent="Indica um número de doses entre 1 e 100 em cada receita.";return;
+  }
   if(selected.some(x=>(x.reviewTips||[]).map(tip=>tip.trim()).filter(Boolean).join("\n").length>6000)){
    $("recipe-pdf-feedback").textContent="As dicas de uma receita ultrapassam 6000 caracteres.";return;
   }
@@ -441,7 +531,7 @@
    const result=await request("/api/v2/recipes/pdf/import",{method:"POST",
     body:JSON.stringify({category_id,filename:pdfPreview.filename,
      recipes:selected.map(x=>({page:x.page,name:x.name,recipe_type:x.recipe_type,
-       servings:x.servings||1,sections:x.sections,steps:x.steps,
+       servings:x.servings,sections:x.sections,steps:x.steps,
        notes:x.notes||"",photo_webp:x.photo_webp}))})});
    await loadLibrary();
    resetPdfPreview();
