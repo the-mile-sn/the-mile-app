@@ -4,6 +4,7 @@
  const $=id=>document.getElementById(id);
  const blank=()=>({id:"",name:"",category_id:"",recipe_type:"standard",status:"draft",servings:1,sections:[{title:"",ingredients:[{name:"",quantity:"",unit:""}]}],steps:[""],notes:"",photo_key:null});
  let categories=[],recipes=[],current=null,openedId=null,busy=false,loaded=false;
+ let recipeReaderHistory=[],recipeReaderCache=new Map(),recipeReaderToken=0,recipeReaderEditorVisible=false;
  const alertMessage=(message)=>{$("recipe-status-message").textContent=message;};
  const editorMessage=(message)=>{$("recipe-editor-feedback").textContent=message;};
  const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT");
@@ -37,14 +38,24 @@
    item.append(edit,remove);host.append(item);
   }
  }
+ function activeRecipeFilters(){
+  return !!($("recipe-search").value.trim()||$("recipe-filter-category").value||
+   $("recipe-filter-type").value||$("recipe-filter-status").value||$("recipe-filter-photo").value);
+ }
  function matchesRecipe(r){
   const q=norm($("recipe-search").value.trim());
   const category=$("recipe-filter-category").value,type=$("recipe-filter-type").value;
-  return (!q||norm([r.name,r.category].join(" ")).includes(q))&&(!category||category===r.category_id)&&(!type||type===r.recipe_type);
+  const status=$("recipe-filter-status").value,photo=$("recipe-filter-photo").value;
+  return (!q||norm(r.name).includes(q))&&(!category||category===r.category_id)&&
+   (!type||type===r.recipe_type)&&(!status||status===r.status)&&
+   (!photo||(photo==="with"?!!r.photo_key:!r.photo_key));
  }
  function paintList(){
   const host=$("recipe-list");host.replaceChildren();
   const visible=recipes.filter(matchesRecipe);
+  $("recipe-result-count").textContent=visible.length===recipes.length?
+   recipes.length+" receitas":visible.length+" de "+recipes.length+" receitas";
+  $("recipe-clear-filters").hidden=!activeRecipeFilters();
   if(!visible.length){
    host.append(node("p","recipe-empty",recipes.length?"Nenhuma receita corresponde aos filtros.":"A biblioteca está vazia. Adiciona a primeira receita ou cria uma categoria."));
    return;
@@ -65,7 +76,9 @@
     r.status==="draft"?"Rascunho":"Publicada");
    stateCell.append(state);tr.append(stateCell);
    const actions=node("td","recipe-row-actions");
-   actions.append(button("Editar",()=>openRecipe(r.id)));
+   const see=button("Ver",()=>openReadRecipe(r.id),"recipe-view");
+   see.setAttribute("aria-label","Ver receita "+r.name);
+   actions.append(see,button("Editar",()=>openRecipe(r.id)));
    const remove=button("Eliminar",()=>deleteRecipe(r),"recipe-delete");
    remove.setAttribute("aria-label","Eliminar receita "+r.name);
    actions.append(remove);
@@ -344,7 +357,7 @@
  }
  async function loadLibrary(){
   const [cat,data]=await Promise.all([request("/api/v2/recipes/categories"),request("/api/v2/recipes")]);
-  categories=cat.categories||[];recipes=data.recipes||[];
+  categories=cat.categories||[];recipes=data.recipes||[];recipeReaderCache.clear();
   paintCategoryOptions();paintList();loaded=true;
  }
  async function addCategory(){
@@ -774,6 +787,22 @@
  $("recipe-search").addEventListener("input",paintList);
  $("recipe-filter-category").addEventListener("change",paintList);
  $("recipe-filter-type").addEventListener("change",paintList);
+ $("recipe-filter-status").addEventListener("change",paintList);
+ $("recipe-filter-photo").addEventListener("change",paintList);
+ $("recipe-clear-filters").addEventListener("click",()=>{
+  $("recipe-search").value="";
+  for(const id of ["recipe-filter-category","recipe-filter-type","recipe-filter-status","recipe-filter-photo"])$(id).value="";
+  paintList();
+ });
+ $("recipe-reader-back").addEventListener("click",readerBack);
+ $("recipe-reader-close").addEventListener("click",closeReadRecipe);
+ $("recipe-reader-edit").addEventListener("click",()=>{
+  const id=recipeReaderHistory[recipeReaderHistory.length-1];
+  closeReadRecipe();openRecipe(id);
+ });
+ document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&!$("recipe-reader-panel").hidden)closeReadRecipe();
+ });
  $("recipe-add").addEventListener("click",()=>openRecipe(null));
  function setRecipeCategoriesOpen(open){
   $("recipe-category-manage").hidden=!open;
