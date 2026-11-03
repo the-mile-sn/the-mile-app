@@ -13,4 +13,4 @@ jobs:
       - run: node --check static/admin-microcycles.js
       - run: node --test tests/admin-menus-recipes-navigation.test.cjs
       - run: node --test tests/admin-clinical-navigation.test.cjs
-      - run: python -m unittest -v test_menu_color_parity_v2 test_calendar_v2
+      - run: python -m unittest -v test_menu_color_parity_v2 test_calendar_v2 test_menu_dish_ids_v2
