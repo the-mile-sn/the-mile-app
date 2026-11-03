@@ -318,10 +318,10 @@
 #calendar-supp-wrap{align-items:flex-start;text-align:left}
 #calendar-section .calendar-event-list{margin-bottom:24px}
 #calendar-section .calendar-event-list + *{margin-top:26px}
-#menus-panel .menu-library-section,#menus-panel .menu-create-section{margin-top:25px;padding:22px;border-radius:20px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025)}
-#menus-panel .menu-library-section h3,#menus-panel .menu-create-section h3{margin-top:0}
+#tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{margin-top:25px;padding:22px;border-radius:20px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025)}
+#tm-menu-recipes-page .menu-library-section h3,#tm-menu-recipes-page .menu-create-section h3{margin-top:0}
 #menus-panel #menu-grid{margin-bottom:12px}
-#calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button{border-radius:999px}
+#calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button,#tm-menu-recipes-page button{border-radius:999px}
 
 /* Fine spacing and compact editorial UI */
 #calendar-supp-options{align-self:stretch;padding:12px 0}
@@ -335,21 +335,21 @@
 #supplements-panel .supp-associated-row.supp-pending{background:rgba(222,162,75,.15)!important}
 #menus-panel .menu-color-label{display:inline-block!important;width:25px!important;min-width:25px!important;height:25px!important;padding:0!important;border-radius:9px!important;font-size:0!important}
 #menus-panel .menu-color-label:not([class*="meal-"]){background:#555!important}
-#menus-panel .menu-library-section,#menus-panel .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
-#menus-panel .menu-library-section{margin-top:46px!important}
-#menus-panel .dish-new{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
-#menus-panel .dish-new input,#menus-panel .dish-new select{min-height:46px;width:100%;min-width:0}
-#menus-panel .dish-new input[type=file]{padding:9px}
-#menus-panel .dish-new button{justify-self:start}
-#menus-panel .dish-new #dish-new-feedback{align-self:center}
-#menus-panel #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
-#menus-panel #dish-editor-list input[type=file]{min-height:42px}
-@media(max-width:650px){#menus-panel .dish-new{grid-template-columns:1fr}#menus-panel .menu-library-section,#menus-panel .menu-create-section{padding:18px!important}}
+#tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
+#tm-menu-recipes-page .menu-library-section{margin-top:46px!important}
+#tm-menu-recipes-page .dish-new{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+#tm-menu-recipes-page .dish-new input,#tm-menu-recipes-page .dish-new select{min-height:46px;width:100%;min-width:0}
+#tm-menu-recipes-page .dish-new input[type=file]{padding:9px}
+#tm-menu-recipes-page .dish-new button{justify-self:start}
+#tm-menu-recipes-page .dish-new #dish-new-feedback{align-self:center}
+#tm-menu-recipes-page #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
+#tm-menu-recipes-page #dish-editor-list input[type=file]{min-height:42px}
+@media(max-width:650px){#tm-menu-recipes-page .dish-new{grid-template-columns:1fr}#tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{padding:18px!important}}
 
-#menus-panel .menu-planning-card,#menus-panel .menu-library-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.025);border-radius:22px;padding:24px;margin-top:22px}
-#menus-panel .menu-planning-card>h3,#menus-panel .menu-library-card>h3{margin:0 0 20px}
-#menus-panel .menu-library-card>.menu-library-section,#menus-panel .menu-library-card>.menu-create-section{margin:18px 0!important;background:rgba(255,255,255,.025)}
-#menus-panel .menu-library-card>.menu-create-section{margin-top:22px!important}
+#menus-panel .menu-planning-card,#tm-menu-recipes-page .menu-library-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.025);border-radius:22px;padding:24px;margin-top:22px}
+#menus-panel .menu-planning-card>h3,#tm-menu-recipes-page .menu-library-card>h3{margin:0 0 20px}
+#tm-menu-recipes-page .menu-library-card>.menu-library-section,#tm-menu-recipes-page .menu-library-card>.menu-create-section{margin:18px 0!important;background:rgba(255,255,255,.025)}
+#tm-menu-recipes-page .menu-library-card>.menu-create-section{margin-top:22px!important}
 #plan-import-panel .calendar-add>div,#peri-panel .calendar-add>div{align-self:end}
 #plan-import-panel .calendar-add select,#peri-panel .calendar-add select{min-height:45px}
 #matrix .microcycle-color-select[data-color=yellow]{background:#e9c95b!important;color:#302609!important;border-color:#e9c95b!important}
@@ -358,7 +358,7 @@
 #matrix .microcycle-color-select[data-color=green]{background:#92cfa4!important;color:#183524!important;border-color:#92cfa4!important}
 #matrix .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
 #matrix .microcycle-color-select option{background:#232329;color:#fff}
-@media(max-width:650px){#menus-panel .menu-planning-card,#menus-panel .menu-library-card{padding:15px}}
+@media(max-width:650px){#menus-panel .menu-planning-card,#tm-menu-recipes-page .menu-library-card{padding:15px}}
 
 /* Assessment review workflow */
 #assessments-admin-panel .assessment-upload{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:18px 0}
@@ -1355,3 +1355,22 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #admin-workspace .tm-admin-nav-icon{width:21px!important;min-width:21px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
 #admin-workspace .tm-admin-side-icon,#tm-admin-nav-players .tm-admin-side-icon{width:20px!important;height:20px!important}
 }
+
+/* Menus e Receitas: existing shared dish editor in its own navigation area. */
+#tm-menu-recipes-page[hidden],#admin-workspace #tm-admin-recipes-subnav[hidden]{display:none!important}
+#tm-menu-recipes-page{min-width:0}
+#tm-menu-recipes-page>h2{margin:0 0 18px;font-size:24px;font-weight:650}
+#tm-menu-recipes-page .menu-library-card{margin-top:0}
+#admin-workspace .tm-admin-nav-chevron{width:15px;height:15px;margin-left:auto;flex:none;transition:transform .18s ease}
+#admin-workspace #tm-admin-nav-menus-recipes[aria-expanded="true"] .tm-admin-nav-chevron{transform:rotate(90deg)}
+#admin-workspace .tm-admin-recipes-subnav{display:flex;flex-direction:column;gap:3px;margin:0 4px 5px 32px;padding:2px 0 2px 12px;border-left:1px solid #383a41}
+#admin-workspace .tm-admin-subnav-link{display:flex;align-items:center;gap:7px;width:100%;border:0;border-radius:8px;padding:10px 9px;background:transparent;color:#c1c4cd;text-align:left;font:inherit;font-size:12px;cursor:pointer}
+#admin-workspace .tm-admin-subnav-link.is-active{color:#f5f5f7;font-weight:600;background:#292b31}
+#admin-workspace .tm-admin-subnav-link:not(:disabled):hover{background:#292b31}
+#admin-workspace .tm-admin-subnav-link:disabled{opacity:.5;cursor:default}
+#admin-workspace .tm-admin-subnav-link small{margin-left:auto;font-size:10px;font-weight:400}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-recipes-subnav{border-color:#d0d7df}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link{color:#4b5968}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link.is-active{color:#172c40;background:#e6edf4}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link:not(:disabled):hover{background:#eff2f6}
+@media(max-width:830px){#admin-workspace .tm-admin-recipes-subnav{margin:0 3px;padding-left:9px;border-left:1px solid #383a41;flex:0 1 auto}}
