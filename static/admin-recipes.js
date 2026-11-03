@@ -73,11 +73,11 @@
    head.append(title,button("Remover bloco",()=>{current.sections.splice(si,1);paintSections();}));
    box.append(head);
    const columns=node("div","recipe-ingredients-head");
-   for(const name of ["Ingrediente","Quantidade","Unidade",""]){columns.append(node("span","",name));}
+   for(const name of ["Quantidade","Unidade","Alimento",""]){columns.append(node("span","",name));}
    box.append(columns);
    section.ingredients.forEach((ingredient,ii)=>{
     const row=node("div","recipe-ingredient-row");
-    for(const [key,placeholder] of [["name","Ex.: Azeite"],["quantity","Ex.: 10 ou q.b."],["unit","Ex.: g, ml"]]){
+    for(const [key,placeholder] of [["quantity","Ex.: 10, q.b. ou 1 un / 120 g"],["unit","Ex.: g, ml, un"],["name","Ex.: Azeite"]]){
      const input=node("input");
      input.value=ingredient[key]||"";input.placeholder=placeholder;
      input.maxLength=key==="name"?180:45;
@@ -97,7 +97,7 @@
   current.steps.forEach((step,i)=>{
    const row=node("div","recipe-step-row");
    row.append(node("span","recipe-step-number",String(i+1)));
-   const area=node("textarea");area.rows=2;area.value=step;area.placeholder="Descreve o procedimento, sem indicar gramagens no texto.";
+   const area=node("textarea");area.rows=2;area.value=step;area.placeholder="Descreve o procedimento.";
    area.maxLength=2000;area.setAttribute("aria-label","Passo "+(i+1));area.addEventListener("input",()=>{current.steps[i]=area.value;});
    row.append(area,button("×",()=>{current.steps.splice(i,1);paintSteps();},"recipe-remove"));host.append(row);
   });
@@ -209,6 +209,13 @@
  $("recipe-filter-category").addEventListener("change",paintList);
  $("recipe-filter-type").addEventListener("change",paintList);
  $("recipe-add").addEventListener("click",()=>openRecipe(null));
+ function setRecipeCategoriesOpen(open){
+  $("recipe-category-manage").hidden=!open;
+  $("recipe-category-toggle").setAttribute("aria-expanded",String(open));
+  if(open)$("recipe-new-category").focus();
+ }
+ $("recipe-category-toggle").addEventListener("click",()=>setRecipeCategoriesOpen($("recipe-category-manage").hidden));
+ $("recipe-category-close").addEventListener("click",()=>setRecipeCategoriesOpen(false));
  $("recipe-close").addEventListener("click",closeEditor);
  $("recipe-cancel").addEventListener("click",closeEditor);
  $("recipe-save").addEventListener("click",saveRecipe);
