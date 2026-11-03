@@ -4,6 +4,7 @@
  const $=id=>document.getElementById(id);
  const blank=()=>({id:"",name:"",category_id:"",recipe_type:"standard",status:"draft",servings:1,sections:[{title:"",ingredients:[{name:"",quantity:"",unit:""}]}],steps:[""],notes:"",photo_key:null});
  let categories=[],recipes=[],current=null,openedId=null,busy=false,loaded=false;
+ let recipeReaderHistory=[],recipeReaderCache=new Map(),recipeReaderToken=0,recipeReaderEditorVisible=false;
  const alertMessage=(message)=>{$("recipe-status-message").textContent=message;};
  const editorMessage=(message)=>{$("recipe-editor-feedback").textContent=message;};
  const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT");
@@ -37,14 +38,24 @@
    item.append(edit,remove);host.append(item);
   }
  }
+ function activeRecipeFilters(){
+  return !!($("recipe-search").value.trim()||$("recipe-filter-category").value||
+   $("recipe-filter-type").value||$("recipe-filter-status").value||$("recipe-filter-photo").value);
+ }
  function matchesRecipe(r){
   const q=norm($("recipe-search").value.trim());
   const category=$("recipe-filter-category").value,type=$("recipe-filter-type").value;
-  return (!q||norm([r.name,r.category].join(" ")).includes(q))&&(!category||category===r.category_id)&&(!type||type===r.recipe_type);
+  const status=$("recipe-filter-status").value,photo=$("recipe-filter-photo").value;
+  return (!q||norm(r.name).includes(q))&&(!category||category===r.category_id)&&
+   (!type||type===r.recipe_type)&&(!status||status===r.status)&&
+   (!photo||(photo==="with"?!!r.photo_key:!r.photo_key));
  }
  function paintList(){
   const host=$("recipe-list");host.replaceChildren();
   const visible=recipes.filter(matchesRecipe);
+  $("recipe-result-count").textContent=visible.length===recipes.length?
+   recipes.length+" receitas":visible.length+" de "+recipes.length+" receitas";
+  $("recipe-clear-filters").hidden=!activeRecipeFilters();
   if(!visible.length){
    host.append(node("p","recipe-empty",recipes.length?"Nenhuma receita corresponde aos filtros.":"A biblioteca está vazia. Adiciona a primeira receita ou cria uma categoria."));
    return;
@@ -65,13 +76,147 @@
     r.status==="draft"?"Rascunho":"Publicada");
    stateCell.append(state);tr.append(stateCell);
    const actions=node("td","recipe-row-actions");
-   actions.append(button("Editar",()=>openRecipe(r.id)));
+   const see=button("Ver",()=>openReadRecipe(r.id),"recipe-view");
+   see.setAttribute("aria-label","Ver receita "+r.name);
+   actions.append(see,button("Editar",()=>openRecipe(r.id)));
    const remove=button("Eliminar",()=>deleteRecipe(r),"recipe-delete");
    remove.setAttribute("aria-label","Eliminar receita "+r.name);
    actions.append(remove);
    tr.append(actions);tbody.append(tr);
   }
   table.append(tbody);const scroll=node("div","recipe-table-scroll");scroll.append(table);host.append(scroll);
+ }
+ function recipeReaderStatus(recipe){
+  return node("span","recipe-status-tag "+(recipe.status==="published"?
+   "recipe-status-published":"recipe-status-draft"),
+   recipe.status==="published"?"Publicada":"Rascunho");
+ }
+ function paintReadRecipe(recipe){
+  const host=$("recipe-reader-content");
+  host.replaceChildren();
+  const hero=node("div","recipe-reader-hero");
+  const media=node("div","recipe-reader-media");
+  if(recipe.photo_key){
+   const photo=node("img","recipe-reader-image");photo.alt="Fotografia de "+recipe.name;
+   photo.src="/api/v2/recipes/image/"+encodeURIComponent(recipe.id);
+   media.append(photo);
+  }else{
+   const blank=node("div","recipe-reader-image-empty");
+   blank.append(node("span","","Sem fotografia"));
+   media.append(blank);
+  }
+  hero.append(media);
+  const intro=node("div","recipe-reader-intro");
+  const eyebrow=node("div","recipe-reader-eyebrow");
+  eyebrow.append(node("span","",recipe.category||"Sem categoria"),recipeReaderStatus(recipe));
+  intro.append(eyebrow,node("h2","",recipe.name));
+  const chips=node("div","recipe-reader-chips");
+  chips.append(node("span","","Doses · "+recipe.servings));
+  chips.append(node("span","",recipe.recipe_type==="adaptable"?"Adaptável ao plano":"Receita padrão"));
+  intro.append(chips);hero.append(intro);host.append(hero);
+
+  const content=node("div","recipe-reader-body");
+  const ingredients=node("section","recipe-reader-section");
+  ingredients.append(node("h3","","Ingredientes"));
+  let ingredientCount=0;
+  for(const section of recipe.sections||[]){
+   if(section.title)ingredients.append(node("h4","",section.title));
+   const list=node("div","recipe-reader-ingredients");
+   for(const item of section.ingredients||[]){
+    if(!item.name)continue;
+    ingredientCount++;
+    const row=node("div","recipe-reader-ingredient");
+    const quantity=[item.quantity,item.unit].filter(Boolean).join(" ");
+    row.append(node("span","recipe-reader-quantity",quantity||"—"));
+    const linkId=item.recipe_ref_id;
+    if(linkId){
+     const linked=recipes.find(r=>r.id===linkId);
+     const name=linked?.name||item.name.replace(/\([^)]*ver receita[^)]*\)/ig,"").trim()||item.name;
+     const action=button(name+" ↗",()=>openReadRecipe(linkId,true),"recipe-reader-ingredient-link");
+     action.title="Abrir receita associada";
+     action.setAttribute("aria-label","Ver receita associada: "+name);
+     row.append(action);
+    }else row.append(node("span","recipe-reader-food",item.name));
+    list.append(row);
+   }
+   ingredients.append(list);
+  }
+  if(!ingredientCount)ingredients.append(node("p","recipe-reader-muted","Ingredientes ainda não preenchidos."));
+  content.append(ingredients);
+  const procedure=node("section","recipe-reader-section");
+  procedure.append(node("h3","","Preparação"));
+  const steps=(recipe.steps||[]).filter(x=>String(x||"").trim());
+  if(steps.length){
+   const ordered=node("ol","recipe-reader-steps");
+   for(const step of steps){ordered.append(node("li","",step));}
+   procedure.append(ordered);
+  }else procedure.append(node("p","recipe-reader-muted","Preparação ainda não preenchida."));
+  content.append(procedure);
+  const notes=String(recipe.notes||"").trim();
+  if(notes){
+   const tips=node("section","recipe-reader-section recipe-reader-notes");
+   tips.append(node("h3","","Dicas e observações"));
+   for(const paragraph of notes.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))
+    tips.append(node("p","",paragraph));
+   content.append(tips);
+  }
+  host.append(content);
+  $("recipe-reader-back").textContent=recipeReaderHistory.length>1?
+   "← Voltar à receita anterior":"← Voltar à biblioteca";
+ }
+ async function openReadRecipe(id,linked=false){
+  if(busy)return;
+  const currentToken=++recipeReaderToken;
+  const backstack=linked?recipeReaderHistory.concat(id):[id];
+  const panel=$("recipe-reader-panel");
+  $("recipe-reader-feedback").textContent="A carregar receita…";
+  try{
+   let recipe=recipeReaderCache.get(id);
+   if(!recipe){
+    const response=await request("/api/v2/recipes/"+encodeURIComponent(id));
+    recipe=response.recipe;recipeReaderCache.set(id,recipe);
+   }
+   if(currentToken!==recipeReaderToken)return;
+   recipeReaderHistory=backstack;
+   if(panel.hidden)recipeReaderEditorVisible=!$("recipe-editor-panel").hidden;
+   $("recipe-editor-panel").hidden=true;
+   $("recipe-list").hidden=true;
+   $("recipe-library-toolbar").hidden=true;
+   $("recipe-list-meta").hidden=true;
+   $("recipe-category-manage").hidden=true;
+   $("recipe-pdf-panel").hidden=true;
+   panel.hidden=false;
+   paintReadRecipe(recipe);
+   $("recipe-reader-feedback").textContent="";
+   panel.scrollIntoView({behavior:"smooth",block:"start"});
+   panel.focus({preventScroll:true});
+  }catch(error){
+   if(currentToken===recipeReaderToken){
+    $("recipe-reader-feedback").textContent="";
+    alertMessage("Não foi possível visualizar a receita: "+error.message);
+   }
+  }
+ }
+ function closeReadRecipe(){
+  ++recipeReaderToken;
+  recipeReaderHistory=[];
+  $("recipe-reader-panel").hidden=true;
+  $("recipe-library-toolbar").hidden=false;
+  $("recipe-list-meta").hidden=false;
+  $("recipe-list").hidden=false;
+  $("recipe-editor-panel").hidden=!recipeReaderEditorVisible;
+  recipeReaderEditorVisible=false;
+  $("recipe-list-meta").scrollIntoView({behavior:"smooth",block:"start"});
+ }
+ async function readerBack(){
+  if(recipeReaderHistory.length<2){closeReadRecipe();return;}
+  const previous=recipeReaderHistory[recipeReaderHistory.length-2];
+  recipeReaderHistory.pop();
+  const recipe=recipeReaderCache.get(previous);
+  if(recipe){
+   paintReadRecipe(recipe);
+   $("recipe-reader-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }else await openReadRecipe(previous);
  }
  function labelledInput(label,value,onChange,placeholder){
   const wrap=node("label","recipe-entry-field");
@@ -344,7 +489,7 @@
  }
  async function loadLibrary(){
   const [cat,data]=await Promise.all([request("/api/v2/recipes/categories"),request("/api/v2/recipes")]);
-  categories=cat.categories||[];recipes=data.recipes||[];
+  categories=cat.categories||[];recipes=data.recipes||[];recipeReaderCache.clear();
   paintCategoryOptions();paintList();loaded=true;
  }
  async function addCategory(){
@@ -774,6 +919,22 @@
  $("recipe-search").addEventListener("input",paintList);
  $("recipe-filter-category").addEventListener("change",paintList);
  $("recipe-filter-type").addEventListener("change",paintList);
+ $("recipe-filter-status").addEventListener("change",paintList);
+ $("recipe-filter-photo").addEventListener("change",paintList);
+ $("recipe-clear-filters").addEventListener("click",()=>{
+  $("recipe-search").value="";
+  for(const id of ["recipe-filter-category","recipe-filter-type","recipe-filter-status","recipe-filter-photo"])$(id).value="";
+  paintList();
+ });
+ $("recipe-reader-back").addEventListener("click",readerBack);
+ $("recipe-reader-close").addEventListener("click",closeReadRecipe);
+ $("recipe-reader-edit").addEventListener("click",()=>{
+  const id=recipeReaderHistory[recipeReaderHistory.length-1];
+  closeReadRecipe();openRecipe(id);
+ });
+ document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&!$("recipe-reader-panel").hidden)closeReadRecipe();
+ });
  $("recipe-add").addEventListener("click",()=>openRecipe(null));
  function setRecipeCategoriesOpen(open){
   $("recipe-category-manage").hidden=!open;
