@@ -1333,7 +1333,7 @@ def application(env, start_response):
                 admin(user)
                 if path == '/api/v2/recipes/pdf/preview' and method == 'POST':
                     raw=read_body(env,recipe_pdf_import_v2.MAX_PDF_BYTES)
-                    filename=(env.get('HTTP_X_RECIPE_FILENAME') or 'receitas.pdf')[:180]
+                    filename=__import__('urllib.parse',fromlist=['unquote']).unquote((env.get('HTTP_X_RECIPE_FILENAME') or 'receitas.pdf')[:180])
                     try:
                         preview=recipe_pdf_import_v2.preview_pdf(raw,filename)
                     except ValueError as error:
