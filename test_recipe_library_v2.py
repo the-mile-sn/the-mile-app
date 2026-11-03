@@ -49,6 +49,37 @@ class RecipeLibraryTests(unittest.TestCase):
         self.assertEqual(same["id"], self.category["id"])
         self.assertEqual(len(recipes.list_categories(self.c)), 1)
 
+    def test_rename_category_keeps_id_and_all_recipes(self):
+        first = recipes.create_recipe(self.c, self.data())
+        changed = recipes.rename_category(self.c, self.category["id"], "Peixe magro")
+        self.assertEqual(changed, {"id": self.category["id"], "name": "Peixe magro"})
+        after = recipes.get_recipe(self.c, first["id"])
+        self.assertEqual(after["category_id"], self.category["id"])
+        self.assertEqual(after["category"], "Peixe magro")
+        self.assertEqual(len(recipes.list_categories(self.c)), 1)
+        self.assertEqual(recipes.rename_category(self.c, "bad", "Outra"), None)
+
+    def test_rename_category_rejects_duplicate_or_invalid_names(self):
+        other = recipes.create_category(self.c, "Peixe gordo")
+        with self.assertRaisesRegex(ValueError, "duplicate_recipe_category"):
+            recipes.rename_category(self.c, self.category["id"], "peixe GORDO")
+        with self.assertRaisesRegex(ValueError, "invalid_recipe_category"):
+            recipes.rename_category(self.c, self.category["id"], "  ")
+        self.assertEqual(other["name"], "Peixe gordo")
+        self.assertEqual(recipes.list_categories(self.c)[0]["name"], "Carne branca")
+
+    def test_only_empty_categories_can_be_deleted(self):
+        entry = recipes.create_recipe(self.c, self.data())
+        with self.assertRaisesRegex(ValueError, "category_in_use"):
+            recipes.delete_category(self.c, self.category["id"])
+        self.assertIsNotNone(recipes.get_recipe(self.c, entry["id"]))
+        other = recipes.create_category(self.c, "Peixe gordo")
+        updated = self.data(category_id=other["id"])
+        recipes.update_recipe(self.c, entry["id"], updated)
+        self.assertEqual(recipes.delete_category(self.c, self.category["id"]), {"deleted": True})
+        self.assertIsNone(recipes.delete_category(self.c, self.category["id"]))
+        self.assertEqual(recipes.get_recipe(self.c, entry["id"])["category_id"], other["id"])
+
     def test_create_edit_and_preserve_separate_ingredient_blocks(self):
         entry = recipes.create_recipe(self.c, self.data())
         self.assertEqual(entry["recipe_type"], "adaptable")
