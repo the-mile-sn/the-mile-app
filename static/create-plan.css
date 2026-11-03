@@ -220,3 +220,9 @@
 .nutrition-list .note-row .remove-row{grid-column:6}
 .nutrition-list .food-row .food-actions{grid-column:5}
 @media(max-width:1050px){.nutrition-list .nutrition-row,.nutrition-list .note-row{display:flex!important;flex-wrap:wrap!important}.nutrition-list .food-identity,.nutrition-list .note-row textarea{flex:1!important}.nutrition-list .food-reference-note{flex:1!important}.nutrition-list .note-label{margin-left:auto}}
+
+/* Notes are quiet, inline text with no textarea resize affordance. */
+.nutrition-list .note-row{grid-template-columns:22px minmax(0,1fr) 30px!important;gap:12px!important}
+.nutrition-list .note-row textarea{grid-column:2!important;width:100%!important;max-width:100%!important;color:#939397!important;resize:none!important;appearance:none!important;-webkit-appearance:none!important;overflow:hidden!important;min-height:34px!important;height:34px!important;box-shadow:none!important}
+.nutrition-list .note-row textarea::placeholder{color:#939397!important;opacity:.75}
+.nutrition-list .note-row .remove-row{grid-column:3!important}
