@@ -399,6 +399,7 @@
    pdfPreview.filename=file.name.slice(0,180);
    for(const recipe of pdfPreview.recipes){
     recipe.selected=true;recipe.recipe_type="standard";
+    preparePdfReview(recipe);
    }
    paintPdfPreview();
    feedback.textContent=pdfPreview.recipes.length?
@@ -415,6 +416,10 @@
   if(!selected.length){$("recipe-pdf-feedback").textContent="Seleciona pelo menos uma receita.";return;}
   if(selected.length>12){$("recipe-pdf-feedback").textContent="Importa no máximo 12 receitas de cada vez.";return;}
   if(selected.some(x=>!x.name.trim())){$("recipe-pdf-feedback").textContent="Confirma os nomes das receitas.";return;}
+  if(selected.some(x=>(x.reviewTips||[]).map(tip=>tip.trim()).filter(Boolean).join("\n").length>6000)){
+   $("recipe-pdf-feedback").textContent="As dicas de uma receita ultrapassam 6000 caracteres.";return;
+  }
+  for(const recipe of selected)syncPdfTips(recipe);
   pdfBusy=true;$("recipe-pdf-save").disabled=true;
   $("recipe-pdf-feedback").textContent="A guardar rascunhos…";
   try{
