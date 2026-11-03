@@ -41,7 +41,15 @@ def validate(value):
             if any(len(n)>4000 for n in notes): raise ValueError("invalid_note")
             title=str(option.get("title") or "").strip()
             if len(title)>160: raise ValueError("invalid_option_title")
-            options.append({"title":title,"foods":foods,"notes":notes})
+            order=option.get("order")
+            if order is None:
+                order=[{"type":"note","index":i} for i in range(len(notes))]+[{"type":"food","index":i} for i in range(len(foods))]
+            if not isinstance(order,list) or len(order)!=len(notes)+len(foods): raise ValueError("invalid_order")
+            expected={("note",i) for i in range(len(notes))}|{("food",i) for i in range(len(foods))}
+            try: actual=[(item["type"],item["index"]) for item in order]
+            except (TypeError,KeyError): raise ValueError("invalid_order")
+            if any(type(i) is not int for _,i in actual) or len(set(actual))!=len(actual) or set(actual)!=expected: raise ValueError("invalid_order")
+            options.append({"title":title,"foods":foods,"notes":notes,"order":order})
         clean.append({"name":meal_title,"options":options})
     return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"meals":clean}
 
