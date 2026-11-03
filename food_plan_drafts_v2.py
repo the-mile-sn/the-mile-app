@@ -7,7 +7,7 @@ def initialize(c):
         created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL
     )""")
 
-PLAN_TYPES = ("Plano laranja", "Plano amarelo", "Plano azul", "Plano verde", "Plano verde preparação", "Plano Peri-jogo", "Plano Peri-treino")
+PLAN_TYPES = ("Plano laranja", "Plano amarelo", "Plano azul", "Plano verde", "Plano verde preparação", "Plano Peri-jogo", "Plano Peri-treino", "Plano geral")
 
 def validate(value):
     if not isinstance(value,dict): raise ValueError("invalid_plan")
@@ -16,6 +16,9 @@ def validate(value):
     if not name or len(name)>160 or not isinstance(meals,list) or len(meals)>40: raise ValueError("invalid_plan")
     plan_type=str(value.get("plan_type") or "").strip()
     if plan_type and plan_type not in PLAN_TYPES: raise ValueError("invalid_plan_type")
+    player_id=str(value.get("player_id") or "").strip()
+    player_name=str(value.get("player_name") or "").strip()
+    if len(player_id)>100 or len(player_name)>160: raise ValueError("invalid_player")
     clean=[]
     for meal in meals:
         if not isinstance(meal,dict) or not isinstance(meal.get("options"),list) or not 1<=len(meal["options"])<=30: raise ValueError("invalid_meal")
@@ -40,7 +43,7 @@ def validate(value):
             if len(title)>160: raise ValueError("invalid_option_title")
             options.append({"title":title,"foods":foods,"notes":notes})
         clean.append({"name":meal_title,"options":options})
-    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"meals":clean}
+    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"meals":clean}
 
 def list_drafts(c):
     return [dict(r) for r in c.execute("SELECT id,name,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()]
@@ -55,6 +58,13 @@ def save(c, value):
     # Never trust client-provided identifiers for food composition.
     known={r["id"] for r in c.execute("SELECT id FROM v2_food_library WHERE active=1").fetchall()}
     if any(f["id"] not in known for m in value["meals"] for o in m["options"] for f in o["foods"]): raise ValueError("unknown_food")
+    if value["player_id"]:
+        player=c.execute("SELECT name FROM users WHERE id=? AND role='player'",(value["player_id"],)).fetchone()
+        if not player: raise ValueError("unknown_player")
+        value["player_name"]=player["name"]
+    else: value["player_name"]=""
+    if not value["player_id"] or not value["plan_type"]: raise ValueError("missing_player_or_type")
+    value["name"]=value["player_name"]+" - "+value["plan_type"]
     now=int(time.time())
     if c.execute("SELECT id FROM v2_food_plan_drafts WHERE id=?",(ident,)).fetchone():
         c.execute("UPDATE v2_food_plan_drafts SET name=?,content=?,updated_at=? WHERE id=?",(value["name"],json.dumps(value),now,ident))
