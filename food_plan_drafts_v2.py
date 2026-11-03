@@ -50,7 +50,10 @@ def list_drafts(c):
 
 def get(c, ident):
     r=c.execute("SELECT content FROM v2_food_plan_drafts WHERE id=?",(ident,)).fetchone()
-    return json.loads(r["content"]) if r else None
+    if not r: return None
+    value=json.loads(r["content"])
+    value["id"]=ident
+    return value
 
 def save(c, value):
     value=validate(value)
