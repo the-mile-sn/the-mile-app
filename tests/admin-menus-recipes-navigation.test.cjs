@@ -77,7 +77,7 @@ test("recipe library switches independently from dish catalogue and Planning",()
  assert.match(dashboard,/recipeLibraryPage\.hidden=false/);
  assert.match(dashboard,/window\.tmLoadRecipeLibrary\(\)/);
  assert.match(dashboard,/recipeLibraryBtn\.addEventListener\("click",openRecipeLibrary\)/);
- assert.match(html,/admin-recipes\.js\?v=11/);
+ assert.match(html,/admin-recipes\.js\?v=12/);
  assert.match(html,/admin-recipes\.css\?v=13/);
 });
 
@@ -97,4 +97,34 @@ test("menu chooser submits stable dish IDs while preserving legacy labels",()=>{
  assert.match(backend,/m\.dish_id IS NULL AND m\.value=d\.name_pt/);
  assert.match(model,/def menu_dish_id_audit\(c\):/);
  assert.match(model,/CREATE INDEX IF NOT EXISTS v2_weekly_menus_dish_id_idx/);
+});
+
+test("dish recipe association has a searchable, independent, admin-only editor",()=>{
+ const model=fs.readFileSync("recipe_library_v2.py","utf8");
+ const backend=fs.readFileSync("app.py","utf8");
+ const recipes=fs.readFileSync("static/admin-recipes.js","utf8");
+ const style=fs.readFileSync("static/admin-microcycles.css","utf8");
+ assert.match(admin,/let dishRecipeChoices=\[\],dishRecipeLinks=\{\}/);
+ assert.match(admin,/request\("\/api\/v2\/dishes\/recipe-links"\)/);
+ assert.match(admin,/request\("\/api\/v2\/recipes"\)/);
+ assert.match(admin,/dishRecipeLinks\[dish\.id\]/);
+ assert.match(admin,/associationSearch\.addEventListener\("input",renderAssociationOptions\)/);
+ assert.match(admin,/request\("\/api\/v2\/dishes\/recipe-link",\{method:"PUT"/);
+ assert.match(admin,/dish_id:dish\.id,recipe_id:recipeId/);
+ assert.match(admin,/window\.tmOpenAdminDishRecipe\(id\)/);
+ assert.match(recipes,/window\.tmOpenAdminDishRecipe=async id=>/);
+ assert.match(dashboard,/return loadPromise;/);
+ assert.match(model,/def link_dish_recipe\(c, dish_id, recipe_id\):/);
+ assert.match(model,/def list_dish_recipe_links\(c\):/);
+ assert.match(model,/if _dish_has_recipe_link\(c, recipe_id\):/);
+ assert.match(backend,/path == '\/api\/v2\/dishes\/recipe-links'/);
+ assert.match(backend,/path == '\/api\/v2\/dishes\/recipe-link'/);
+ assert.match(backend,/admin\(user\)/);
+ assert.match(backend,/path\.startswith\('\/api\/v2\/dishes\/recipe-link'\)/);
+ assert.match(style,/\.dish-recipe-association\{/);
+ assert.match(style,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
+ assert.match(html,/admin-recipes\.js\?v=12/);
+ assert.match(html,/admin-dashboard\.js\?v=33/);
+ assert.match(html,/admin-microcycles\.js\?v=18234/);
+ assert.match(html,/admin-microcycles\.css\?v=109/);
 });
