@@ -106,11 +106,15 @@ def _sections(raw):
                 raise ValueError("invalid_recipe")
             if not name:
                 continue
+            ref_id = ingredient.get("recipe_ref_id") or None
+            if ref_id is not None and (not isinstance(ref_id, str) or not _IDENTIFIER.fullmatch(ref_id)):
+                raise ValueError("invalid_recipe_reference")
             cleaned.append({
                 "id": _id(ingredient.get("id"), seen),
                 "name": name,
                 "quantity": quantity,
-                "unit": unit
+                "unit": unit,
+                "recipe_ref_id": ref_id
             })
         result.append({"id": section_id, "title": title, "ingredients": cleaned})
     return result
@@ -122,7 +126,40 @@ def _steps(raw):
     return [_text(step, 2000) for step in raw if _text(step, 2000)]
 
 
-def _validated(c, payload):
+def _reference_edges(sections):
+    return {ingredient["recipe_ref_id"] for section in sections
+            for ingredient in section["ingredients"] if ingredient.get("recipe_ref_id")}
+
+
+def _assert_reference_graph(c, replacements):
+    """Validate all targets and reject self-references and indirect cycles."""
+    graph = {}
+    for row in c.execute("SELECT id,sections_json FROM v2_recipe_library").fetchall():
+        data = json.loads(row["sections_json"])
+        graph[row["id"]] = {ingredient["recipe_ref_id"] for section in data
+            for ingredient in section.get("ingredients", []) if ingredient.get("recipe_ref_id")}
+    graph.update({rid: _reference_edges(sections) for rid, sections in replacements.items()})
+    for rid, targets in graph.items():
+        if not targets.issubset(graph):
+            raise ValueError("invalid_recipe_reference")
+    visited = set()
+    visiting = set()
+
+    def walk(rid):
+        if rid in visiting:
+            raise ValueError("cyclic_recipe_reference")
+        if rid in visited:
+            return
+        visiting.add(rid)
+        for target in graph[rid]:
+            walk(target)
+        visiting.remove(rid)
+        visited.add(rid)
+    for rid in graph:
+        walk(rid)
+
+
+def _validated(c, payload, recipe_id=None, allow_ref_ids=()):
     if not isinstance(payload, dict):
         raise ValueError("invalid_recipe")
     name = _text(payload.get("name", ""), 180, required=True)
@@ -139,6 +176,13 @@ def _validated(c, payload):
     sections = _sections(payload.get("sections", []))
     steps = _steps(payload.get("steps", []))
     notes = _text(payload.get("notes", ""), 6000)
+    if recipe_id is not None:
+        _assert_reference_graph(c, {recipe_id: sections})
+    else:
+        for target in _reference_edges(sections):
+            if target not in allow_ref_ids and not c.execute(
+                    "SELECT 1 FROM v2_recipe_library WHERE id=?", (target,)).fetchone():
+                raise ValueError("invalid_recipe_reference")
     if status == "published" and (not any(section["ingredients"] for section in sections) or not steps):
         raise ValueError("incomplete_recipe")
     return (category_id, name, recipe_type, status, servings,
@@ -168,8 +212,8 @@ def get_recipe(c, recipe_id):
 
 
 def create_recipe(c, payload):
-    fields = _validated(c, payload)
     recipe_id = secrets.token_hex(12)
+    fields = _validated(c, payload, recipe_id=recipe_id)
     now = int(time.time())
     c.execute("""INSERT INTO v2_recipe_library
         (id,category_id,name,recipe_type,status,servings,sections_json,steps_json,notes,created_at,updated_at)
@@ -181,7 +225,7 @@ def create_recipe(c, payload):
 def update_recipe(c, recipe_id, payload):
     if not c.execute("SELECT id FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone():
         return None
-    fields = _validated(c, payload)
+    fields = _validated(c, payload, recipe_id=recipe_id)
     c.execute("""UPDATE v2_recipe_library SET
         category_id=?,name=?,recipe_type=?,status=?,servings=?,sections_json=?,steps_json=?,notes=?,updated_at=?
         WHERE id=?""", (*fields, int(time.time()), recipe_id))
@@ -196,6 +240,10 @@ def delete_recipe(c, recipe_id):
     row = c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone()
     if row is None:
         return False
+    # Never leave another recipe with a dangling link to this recipe.
+    for other in c.execute("SELECT id,sections_json FROM v2_recipe_library WHERE id<>?", (recipe_id,)).fetchall():
+        if recipe_id in _reference_edges(json.loads(other["sections_json"])):
+            raise ValueError("recipe_in_use")
     c.execute("DELETE FROM v2_recipe_library WHERE id=?", (recipe_id,))
     # Guard against removing any shared dish image if data is malformed.
     own_photo = photo_key(recipe_id)

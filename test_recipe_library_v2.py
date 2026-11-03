@@ -123,6 +123,50 @@ class RecipeLibraryTests(unittest.TestCase):
         self.assertTrue(recipes.delete_recipe(self.c, first["id"]))
         self.assertEqual([r["id"] for r in recipes.list_recipes(self.c)], [second["id"]])
 
+    def test_recipe_reference_uses_stable_id_after_name_change(self):
+        panados = recipes.create_recipe(self.c, self.data(name="Panados de frango no forno"))
+        base = self.data(name="Salada com panados")
+        base["sections"][0]["ingredients"][0]["recipe_ref_id"] = panados["id"]
+        linked = recipes.create_recipe(self.c, base)
+        ingredient = linked["sections"][0]["ingredients"][0]
+        self.assertEqual(ingredient["recipe_ref_id"], panados["id"])
+        self.assertEqual(ingredient["quantity"], "180")
+        self.assertEqual(ingredient["unit"], "g")
+        recipes.update_recipe(self.c, panados["id"], self.data(name="Frango panado no forno"))
+        again = recipes.get_recipe(self.c, linked["id"])
+        self.assertEqual(again["sections"][0]["ingredients"][0]["recipe_ref_id"], panados["id"])
+
+    def test_invalid_self_and_circular_recipe_links_are_rejected(self):
+        first = recipes.create_recipe(self.c, self.data(name="A"))
+        second = recipes.create_recipe(self.c, self.data(name="B"))
+        a = self.data(name="A")
+        a["sections"][0]["ingredients"][0]["recipe_ref_id"] = second["id"]
+        recipes.update_recipe(self.c, first["id"], a)
+        b = self.data(name="B")
+        b["sections"][0]["ingredients"][0]["recipe_ref_id"] = first["id"]
+        with self.assertRaisesRegex(ValueError, "cyclic_recipe_reference"):
+            recipes.update_recipe(self.c, second["id"], b)
+        a["sections"][0]["ingredients"][0]["recipe_ref_id"] = first["id"]
+        with self.assertRaisesRegex(ValueError, "cyclic_recipe_reference"):
+            recipes.update_recipe(self.c, first["id"], a)
+        unknown = self.data(name="Invalid")
+        unknown["sections"][0]["ingredients"][0]["recipe_ref_id"] = "f"*24
+        with self.assertRaisesRegex(ValueError, "invalid_recipe_reference"):
+            recipes.create_recipe(self.c, unknown)
+        self.assertIsNone(recipes.get_recipe(self.c, second["id"])["sections"][0]["ingredients"][0].get("recipe_ref_id"))
+
+    def test_referenced_recipe_cannot_be_deleted_until_link_removed(self):
+        panados = recipes.create_recipe(self.c, self.data(name="Panados"))
+        linked_data = self.data(name="Salada")
+        linked_data["sections"][0]["ingredients"][0]["recipe_ref_id"] = panados["id"]
+        linked = recipes.create_recipe(self.c, linked_data)
+        with self.assertRaisesRegex(ValueError, "recipe_in_use"):
+            recipes.delete_recipe(self.c, panados["id"])
+        self.assertIsNotNone(recipes.get_recipe(self.c, panados["id"]))
+        linked_data["sections"][0]["ingredients"][0].pop("recipe_ref_id")
+        recipes.update_recipe(self.c, linked["id"], linked_data)
+        self.assertTrue(recipes.delete_recipe(self.c, panados["id"]))
+
     def test_photo_key_cannot_overlap_dish_ids(self):
         recipe = recipes.create_recipe(self.c, self.data())
         self.assertEqual(recipes.photo_key(recipe["id"]), "recipe-" + recipe["id"] + ".webp")

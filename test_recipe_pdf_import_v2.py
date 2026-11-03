@@ -126,6 +126,48 @@ class PdfRecipeImportTests(unittest.TestCase):
                               [valid,bad],lambda *_:None)
         self.assertEqual(recipes.list_recipes(self.db),[])
 
+    def test_same_pdf_links_forward_and_backward_by_page(self):
+        a = pdf.preview_pdf(self.make_pdf(), "bolo.pdf")["recipes"][0]
+        b = dict(a, name="Papas e bolo", page=3, sections=[{
+            "title": "", "ingredients": [{
+                "name": "Bolo de caneca", "quantity": "1", "unit": "un",
+                "recipe_ref_page": 2
+            }]
+        }], photo_webp=None)
+        # Forward references must work even if the target appears later in the batch.
+        result = pdf.commit_drafts(self.db, self.category["id"], "bolo.pdf",
+                                   [b, a], lambda *_: None)
+        self.assertEqual(len(result["created"]), 2)
+        by_page = {item["page"]: item["id"] for item in result["created"]}
+        self.assertEqual(recipes.get_recipe(self.db, by_page[3])["sections"][0]["ingredients"][0]["recipe_ref_id"], by_page[2])
+
+    def test_reject_circular_and_unselected_pdf_references_atomically(self):
+        a = pdf.preview_pdf(self.make_pdf(), "bolo.pdf")["recipes"][0]
+        b = dict(a, name="Outra receita", page=3,
+                 sections=[{"title": "", "ingredients": [
+                     {"name": "Bolo de caneca", "quantity": "1", "unit": "un",
+                      "recipe_ref_page": 2}]}],
+                 photo_webp=None)
+        a["sections"][0]["ingredients"][0]["recipe_ref_page"] = 3
+        with self.assertRaisesRegex(ValueError, "cyclic_recipe_reference"):
+            pdf.commit_drafts(self.db, self.category["id"], "bolo.pdf", [a, b], lambda *_: None)
+        self.assertEqual(recipes.list_recipes(self.db), [])
+        a["sections"][0]["ingredients"][0]["recipe_ref_page"] = 9
+        with self.assertRaisesRegex(ValueError, "invalid_recipe_reference"):
+            pdf.commit_drafts(self.db, self.category["id"], "bolo.pdf", [a], lambda *_: None)
+        self.assertEqual(recipes.list_recipes(self.db), [])
+
+    def test_pdf_link_to_existing_recipe(self):
+        existing = recipes.create_recipe(self.db, {
+            "name": "Panados no forno", "category_id": self.category["id"],
+            "status": "draft", "sections": [], "steps": [], "notes": ""
+        })
+        a = pdf.preview_pdf(self.make_pdf(), "bolo.pdf")["recipes"][0]
+        a["sections"][0]["ingredients"][0]["recipe_ref_id"] = existing["id"]
+        result = pdf.commit_drafts(self.db, self.category["id"], "bolo.pdf", [a], lambda *_: None)
+        linked = recipes.get_recipe(self.db, result["created"][0]["id"])
+        self.assertEqual(linked["sections"][0]["ingredients"][0]["recipe_ref_id"], existing["id"])
+
     def test_composite_and_culinary_quantities(self):
         for text,qty,unit in [
             ("1 un / 120 g Banana","1 un / 120 g",""),

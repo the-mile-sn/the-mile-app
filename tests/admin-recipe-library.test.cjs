@@ -140,3 +140,19 @@ test("PDF review header matches manual recipe fields including editable doses",(
  assert.match(ui,/servings:x\.servings,sections:x\.sections/);
  assert.match(html,/id="recipe-servings"/);
 });
+
+test("both recipe editors offer stable linked-recipe search and retain identifiers",()=>{
+ assert.match(ui,/function paintRecipeLink\(ingredient,options=/);
+ assert.match(ui,/box\.append\(paintRecipeLink\(ingredient,\{ownerId:current\.id\}\)\)/);
+ assert.match(ui,/block\.append\(paintRecipeLink\(ingredient,\{pdfRecipe:recipe\}\)\)/);
+ assert.match(ui,/recipe_ref_id:i\.recipe_ref_id\|\|null/);
+ assert.match(ui,/ingredient\.recipe_ref_page=Number\(value\.slice\(5\)\)/);
+ assert.match(ui,/ingredient\.recipe_ref_id=value\.slice\(3\)/);
+ assert.match(ui,/recipe\.selected=checkbox\.checked;paintPdfPreview\(\)/);
+ assert.match(ui,/ver receita\|receita anterior/);
+ assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
+ assert.match(backend,/cyclic_recipe_reference/);
+ assert.match(backend,/recipe_in_use/);
+ assert.match(model,/def _assert_reference_graph\(c, replacements\)/);
+ assert.match(model,/recipe_ref_id/);
+});
