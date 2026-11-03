@@ -7,11 +7,15 @@ def initialize(c):
         created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL
     )""")
 
+PLAN_TYPES = ("Plano laranja", "Plano amarelo", "Plano azul", "Plano verde", "Plano verde preparação", "Plano Peri-jogo", "Plano Peri-treino")
+
 def validate(value):
     if not isinstance(value,dict): raise ValueError("invalid_plan")
     name=str(value.get("name") or "").strip()
     meals=value.get("meals")
     if not name or len(name)>160 or not isinstance(meals,list) or len(meals)>40: raise ValueError("invalid_plan")
+    plan_type=str(value.get("plan_type") or "").strip()
+    if plan_type and plan_type not in PLAN_TYPES: raise ValueError("invalid_plan_type")
     clean=[]
     for meal in meals:
         if not isinstance(meal,dict) or not isinstance(meal.get("options"),list) or not 1<=len(meal["options"])<=30: raise ValueError("invalid_meal")
@@ -36,7 +40,7 @@ def validate(value):
             if len(title)>160: raise ValueError("invalid_option_title")
             options.append({"title":title,"foods":foods,"notes":notes})
         clean.append({"name":title,"options":options})
-    return {"id":str(value.get("id") or ""), "name":name,"meals":clean}
+    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"meals":clean}
 
 def list_drafts(c):
     return [dict(r) for r in c.execute("SELECT id,name,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()]
@@ -57,3 +61,8 @@ def save(c, value):
     else:
         c.execute("INSERT INTO v2_food_plan_drafts(id,name,content,created_at,updated_at) VALUES (?,?,?,?,?)",(ident,value["name"],json.dumps(value),now,now))
     return ident
+
+
+def delete(c, ident):
+    result=c.execute("DELETE FROM v2_food_plan_drafts WHERE id=?",(ident,))
+    return result.rowcount > 0
