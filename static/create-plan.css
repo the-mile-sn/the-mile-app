@@ -113,3 +113,14 @@
 .meal .meal-toggle:hover{background:transparent!important;color:var(--lib-fg)!important}
 .meal-picker #cancel-meal{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--lib-muted)!important}
 .meal-picker #cancel-meal:hover{background:transparent!important;color:var(--lib-fg)!important}
+
+/* Compact three-column plan selectors, no visible field headings. */
+.planhead.plan-selectors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0 10px}
+.planhead.plan-selectors label{display:block;min-width:0}
+.planhead.plan-selectors select{display:block;width:100%;height:50px;min-height:50px;padding:0 16px;border:0!important;border-radius:11px;background:var(--lib-panel-2);color:var(--lib-fg);font-size:14px;font-weight:500}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.plan-meta.plan-actions{display:flex;justify-content:flex-end;gap:10px;margin:0 0 18px}
+.plan-meta.plan-actions button{min-height:42px;padding:0 16px}
+.plan-meta.plan-actions #assign-player,.actions #add-meal{background:#f4f5f7!important;color:#1d2025!important;border:0!important;border-radius:10px!important;font-weight:600}
+.actions #save-plan{background:#3f526f!important;color:#fff!important;border:0!important;border-radius:10px!important;font-weight:600}
+@media(max-width:760px){.planhead.plan-selectors{grid-template-columns:1fr;gap:9px}.plan-meta.plan-actions{justify-content:flex-start;flex-wrap:wrap}}
