@@ -298,3 +298,14 @@ test("in-table filter header has distinct subtle backgrounds in both themes",()=
  assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-table-filter-row th\{\s*background:#e6ebf2/);
  assert.match(css,/html\[data-admin-theme="light"\] #tm-recipe-library-page \.recipe-table-filter-row input/);
 });
+
+test("recipe reader blocks are clean, quantities stay on one line and tips are legible",()=>{
+ const css=fs.readFileSync("static/admin-recipes.css","utf8");
+ assert.match(css,/\.recipe-reader-ingredient\{\s*grid-template-columns:135px minmax\(0,1fr\)/);
+ assert.match(css,/\.recipe-reader-quantity\{\s*white-space:nowrap/);
+ assert.match(css,/\.recipe-reader-ingredients \.recipe-reader-ingredient:last-child\{\s*border-bottom:0/);
+ assert.match(css,/\.recipe-reader-section h4\{\s*margin:14px 0 12px;\s*font-size:15px;\s*line-height:1\.45;\s*font-weight:400/);
+ assert.match(css,/\.recipe-reader-ingredients \+ h4\{\s*margin-top:29px/);
+ assert.match(css,/\.recipe-reader-notes p\{\s*font-size:15px/);
+ assert.match(css,/@media\(max-width:430px\)/);
+});
