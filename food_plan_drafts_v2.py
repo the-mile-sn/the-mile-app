@@ -28,7 +28,11 @@ def validate(value):
                 except (TypeError,ValueError): raise ValueError("invalid_quantity")
                 if not fid or not 0<grams<=100000: raise ValueError("invalid_quantity")
                 foods.append({"id":fid,"grams":grams})
-            options.append({"foods":foods})
+            notes=option.get("notes",[])
+            if not isinstance(notes,list) or len(notes)>100: raise ValueError("invalid_notes")
+            notes=[str(n).strip() for n in notes]
+            if any(len(n)>4000 for n in notes): raise ValueError("invalid_note")
+            options.append({"foods":foods,"notes":notes})
         clean.append({"name":title,"options":options})
     return {"id":str(value.get("id") or ""), "name":name,"meals":clean}
 
