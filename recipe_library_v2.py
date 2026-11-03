@@ -71,6 +71,42 @@ def create_category(c, name):
     return {"id": category_id, "name": name}
 
 
+def rename_category(c, category_id, name):
+    """Rename without changing the stable ID or any recipe association."""
+    if not isinstance(category_id, str) or not _IDENTIFIER.fullmatch(category_id):
+        return None
+    row = c.execute("SELECT id,name FROM v2_recipe_categories WHERE id=?", (category_id,)).fetchone()
+    if row is None:
+        return None
+    try:
+        name = _text(name, 90, required=True)
+    except ValueError:
+        raise ValueError("invalid_recipe_category") from None
+    for other in list_categories(c):
+        if other["id"] != category_id and other["name"].casefold() == name.casefold():
+            raise ValueError("duplicate_recipe_category")
+    if row["name"] != name:
+        c.execute("UPDATE v2_recipe_categories SET name=? WHERE id=?", (name, category_id))
+        c.commit()
+    return {"id": category_id, "name": name}
+
+
+def delete_category(c, category_id):
+    """Only empty categories can be removed; never alter or delete recipes."""
+    if not isinstance(category_id, str) or not _IDENTIFIER.fullmatch(category_id):
+        return None
+    if not c.execute("SELECT 1 FROM v2_recipe_categories WHERE id=?", (category_id,)).fetchone():
+        return None
+    count = c.execute(
+        "SELECT COUNT(*) AS n FROM v2_recipe_library WHERE category_id=?", (category_id,)
+    ).fetchone()["n"]
+    if count:
+        raise ValueError("category_in_use")
+    c.execute("DELETE FROM v2_recipe_categories WHERE id=?", (category_id,))
+    c.commit()
+    return {"deleted": True}
+
+
 def _id(value, seen):
     if isinstance(value, str) and _IDENTIFIER.fullmatch(value):
         result = value
