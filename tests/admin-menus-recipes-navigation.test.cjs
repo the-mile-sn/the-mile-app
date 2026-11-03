@@ -80,3 +80,21 @@ test("recipe library switches independently from dish catalogue and Planning",()
  assert.match(html,/admin-recipes\.js\?v=11/);
  assert.match(html,/admin-recipes\.css\?v=13/);
 });
+
+test("menu chooser submits stable dish IDs while preserving legacy labels",()=>{
+ const backend=fs.readFileSync("app.py","utf8");
+ const model=fs.readFileSync("microcycles_v2.py","utf8");
+ assert.match(admin,/function resolveAdminMenuDish\(existing,library\)/);
+ assert.match(admin,/if\(existing\.dish_id\)return library\.find\(item=>item\.id===existing\.dish_id\)/);
+ assert.match(admin,/const matches=library\.filter\(item=>item\.name_pt===existing\.value\)/);
+ assert.match(admin,/matches\.length===1\?matches\[0\]:null/);
+ assert.match(admin,/kind\.value==="dish"\?\{dish_id:selectedDish\.id\}/);
+ assert.match(admin,/resolveAdminMenuDish\(menu,dishes\.dishes\)/);
+ assert.match(backend,/microcycles_v2\.resolve_menu_dish\(c,kind,value,dish_id\)/);
+ assert.match(backend,/microcycles_v2\.menu_dish_id_audit\(c\)/);
+ assert.match(backend,/body\.get\('dish_id'\)/);
+ assert.match(backend,/m\.dish_id=d\.id/);
+ assert.match(backend,/m\.dish_id IS NULL AND m\.value=d\.name_pt/);
+ assert.match(model,/def menu_dish_id_audit\(c\):/);
+ assert.match(model,/CREATE INDEX IF NOT EXISTS v2_weekly_menus_dish_id_idx/);
+});
