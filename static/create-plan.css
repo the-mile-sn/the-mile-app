@@ -190,3 +190,19 @@
 .food-search:has(#selected-food-note:not([hidden])):after{opacity:.7}
 @media(max-width:980px){.plan-overview{grid-template-columns:1fr!important}.plan-overview .stats.four{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
 @media(max-width:540px){.plan-overview .stats.four{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
+/* Persistent outlined chevrons independent of native select rendering. */
+.plan-overview .planhead.plan-selectors label{position:relative;display:block}
+.plan-overview .planhead.plan-selectors label::after{content:"";position:absolute;right:17px;top:50%;width:10px;height:10px;border-right:2px solid #939397;border-bottom:2px solid #939397;transform:translateY(-70%) rotate(45deg);pointer-events:none;z-index:2}
+.plan-overview .planhead.plan-selectors select{background-image:none!important;padding-right:45px!important}
+.food-search::after{content:""!important;position:absolute!important;right:16px!important;top:17px!important;width:10px!important;height:10px!important;border-right:2px solid #939397!important;border-bottom:2px solid #939397!important;transform:rotate(45deg)!important;background:none!important;pointer-events:none!important;z-index:2}
+.food-search #food-search-input{padding-right:45px!important;font-size:13px!important}
+.option-tabs{display:flex!important;flex-wrap:wrap!important;gap:9px!important;align-items:stretch!important}
+.option-tabs button{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:5px!important;padding:10px 15px!important;border-radius:18px!important;min-width:185px!important;max-width:100%!important;font-family:inherit!important}
+.option-tabs button .macro-values{display:flex!important;gap:10px!important;align-items:baseline!important;flex-wrap:wrap!important;width:100%!important}
+.option-tabs button .macro-values .macro{display:inline-flex!important;align-items:baseline!important;gap:3px!important;min-width:0!important}
+.option-tabs button .macro-values b{font-size:13px!important;font-weight:650!important}
+.option-tabs button .macro-values small{font-size:10px!important}
+.option-tabs button.current .macro-values b,.option-tabs button.current .macro-values small{color:#fff!important}
+.shell,.shell input,.shell select,.shell button,.shell textarea{font-family:inherit!important}
+@media(max-width:600px){.option-tabs button{min-width:145px!important}}
