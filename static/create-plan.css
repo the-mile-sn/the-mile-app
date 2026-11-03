@@ -52,3 +52,9 @@
 .meal .food-result:hover,.meal .food-result:focus{background:#85858b2b}
 .food-no-results{padding:12px;font-size:12px;color:var(--lib-muted)}
 @media(max-width:700px){.macro b{font-size:15px}.macro small{font-size:10px}}
+
+/* Plan-level summary: large values and compact labels on a single baseline. */
+.stats.four .stat{display:flex;flex-direction:row;align-items:baseline;justify-content:flex-start;gap:9px;min-height:76px;padding:18px 20px}
+.stats.four .stat strong{font-size:29px;line-height:1.1;font-weight:650;font-variant-numeric:tabular-nums}
+.stats.four .stat small{font-size:13px;line-height:1.2;white-space:nowrap}
+@media(max-width:700px){.stats.four .stat{min-height:66px;padding:13px 12px;gap:5px}.stats.four .stat strong{font-size:23px}.stats.four .stat small{font-size:11px;white-space:normal}}
