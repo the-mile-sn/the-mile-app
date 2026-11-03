@@ -35,7 +35,7 @@ test("recipe fields support variable blocks, editable instructions, and no nutri
  assert.match(ui,/recipe-ingredient-row/);
  assert.match(ui,/recipe-step-row/);
  assert.match(ui,/recipe-photo-preview/);
- assert.match(ui,/recipe-category-create/);
+ assert.match(html,/class="recipe-category-create"/);
 });
 test("recipe editor remains separate from legacy dish and athlete menu state",()=>{
  assert.match(ui,/window\.tmLoadRecipeLibrary=/);
