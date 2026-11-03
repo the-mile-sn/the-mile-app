@@ -1343,3 +1343,15 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #tm-admin-legacy #tm-planning-avatar{position:relative;overflow:hidden}
 .tm-clinical-avatar{position:relative;overflow:hidden}
 .tm-picker-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+/* Consistent Backoffice navigation: match the compact Crear Plano sidebar. */
+@media(min-width:831px){
+#admin-workspace .tm-admin-sidebar{gap:10px!important;padding:24px 13px!important}
+#admin-workspace .tm-admin-brand{padding:9px 12px 32px!important}
+#admin-workspace .tm-admin-side-nav{gap:3px!important}
+#admin-workspace .tm-admin-nav-link{box-sizing:border-box!important;border:0!important;border-radius:10px!important;background:transparent!important;padding:12px!important;display:flex!important;align-items:center!important;gap:11px!important;text-align:left!important;color:#d6d6dc!important;font-size:13px!important;font-weight:500!important;min-height:44px!important;line-height:1.35!important;text-decoration:none!important}
+#admin-workspace .tm-admin-nav-link:hover:not(:disabled){background:#25252a!important;color:#fff!important}
+#admin-workspace .tm-admin-nav-link.is-active{background:transparent!important;color:#f5f5f7!important;font-weight:600!important}
+#admin-workspace .tm-admin-nav-icon{width:21px!important;min-width:21px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
+#admin-workspace .tm-admin-side-icon,#tm-admin-nav-players .tm-admin-side-icon{width:20px!important;height:20px!important}
+}
