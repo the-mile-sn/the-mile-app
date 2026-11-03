@@ -1374,13 +1374,12 @@ def application(env, start_response):
                         if not category: raise Problem(404,'not_found')
                         return respond(200,{'category':category})
                     if method == 'DELETE':
-                        body=read_json(env)
                         try:
-                            result=recipe_library_v2.delete_category(c,category_id,body.get('replacement_id'))
+                            result=recipe_library_v2.delete_category(c,category_id)
                         except ValueError as error:
                             code=str(error)
-                            raise Problem(409 if code in ('category_in_use','category_recipe_conflict') else 400,
-                                          code if code in ('category_in_use','category_recipe_conflict','invalid_recipe_category') else 'invalid_recipe_category')
+                            raise Problem(409 if code=='category_in_use' else 400,
+                                          code if code in ('category_in_use','invalid_recipe_category') else 'invalid_recipe_category')
                         if not result: raise Problem(404,'not_found')
                         return respond(200,result)
                 if path == '/api/v2/recipes':
