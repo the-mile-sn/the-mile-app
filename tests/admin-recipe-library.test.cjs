@@ -118,3 +118,25 @@ test("PDF review always exposes editable ingredients, steps and tips",()=>{
  assert.match(html,/id="recipe-notes"/);
  assert.match(ui,/\$\("recipe-notes"\)\.value=current\.notes/);
 });
+
+test("PDF review header matches manual recipe fields including editable doses",()=>{
+ const start=ui.indexOf('const fields=node("div","recipe-editor-grid recipe-pdf-edit-fields")');
+ const end=ui.indexOf('const detail=node("details","recipe-pdf-details")',start);
+ assert.ok(start>=0&&end>start);
+ const header=ui.slice(start,end);
+ for(const label of ["Nome da receita","Categoria","Tipo","Doses","Estado","Fotografia da receita (vista de cima)"]){
+  assert.ok(header.includes(label),label);
+ }
+ assert.match(header,/servings\.type="number"/);
+ assert.match(header,/servings\.min="1"/);
+ assert.match(header,/servings\.max="100"/);
+ assert.match(header,/recipe\.servings=Number\(servings\.value\)/);
+ assert.match(header,/categorySelect\.disabled=true/);
+ assert.match(header,/state\.disabled=true/);
+ assert.match(ui,/photoFile\.addEventListener\("change",async\(\)=>/);
+ assert.match(ui,/recipe\.photo_webp=converted/);
+ assert.match(ui,/recipe\.photo_webp=null/);
+ assert.match(ui,/!Number\.isInteger\(x\.servings\)/);
+ assert.match(ui,/servings:x\.servings,sections:x\.sections/);
+ assert.match(html,/id="recipe-servings"/);
+});
