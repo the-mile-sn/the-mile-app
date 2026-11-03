@@ -143,8 +143,13 @@ test("PDF review header matches manual recipe fields including editable doses",(
 
 test("both recipe editors offer stable linked-recipe search and retain identifiers",()=>{
  assert.match(ui,/function paintRecipeLink\(ingredient,options=/);
- assert.match(ui,/box\.append\(paintRecipeLink\(ingredient,\{ownerId:current\.id\}\)\)/);
- assert.match(ui,/block\.append\(paintRecipeLink\(ingredient,\{pdfRecipe:recipe\}\)\)/);
+ assert.match(ui,/inlineRecipeLink\(ingredient,\{ownerId:current\.id\}\)/);
+ assert.match(ui,/inlineRecipeLink\(ingredient,\{pdfRecipe:recipe\}\)/);
+ assert.match(ui,/actions\.append\(link\.button,remove\)/);
+ assert.match(ui,/row\.append\(actions\);block\.append\(row,link\.panel\)/);
+ assert.match(ui,/row\.append\(actions\);box\.append\(row,link\.panel\)/);
+ assert.match(ui,/trigger\.classList\.toggle\("is-linked",linked\)/);
+ assert.match(ui,/trigger\.setAttribute\("aria-expanded",String\(panel\.open\)\)/);
  assert.match(ui,/recipe_ref_id:i\.recipe_ref_id\|\|null/);
  assert.match(ui,/ingredient\.recipe_ref_page=Number\(value\.slice\(5\)\)/);
  assert.match(ui,/ingredient\.recipe_ref_id=value\.slice\(3\)/);

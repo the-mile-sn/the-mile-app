@@ -159,3 +159,24 @@ html[data-admin-theme="light"] #tm-recipe-library-page .recipe-pdf-warning{color
 #tm-recipe-library-page .recipe-section .recipe-reference{margin-left:0}
 #tm-recipe-library-page .recipe-pdf-block .recipe-reference{margin-bottom:13px}
 @media(max-width:650px){#tm-recipe-library-page .recipe-reference-heading{grid-template-columns:1fr}}
+
+
+/* Compact link action: one icon beside Remove, editor appears only on demand. */
+#tm-recipe-library-page .recipe-ingredient-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px;white-space:nowrap}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-link-toggle{width:34px;height:34px;min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--recipe-border);border-radius:8px;background:transparent;color:var(--recipe-muted);cursor:pointer}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-link-toggle:hover,#tm-recipe-library-page .recipe-ingredient-actions .recipe-link-toggle:focus-visible{color:var(--recipe-text);border-color:currentColor}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-link-toggle.is-linked{color:#43896f;border-color:#75b49a;background:rgba(67,137,111,.08)}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-link-toggle svg{pointer-events:none;flex:none}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-remove{height:34px}
+#tm-recipe-library-page .recipe-reference:not([open]){display:none!important}
+#tm-recipe-library-page .recipe-reference[open]{margin:4px 0 12px;padding:11px 12px}
+#tm-recipe-library-page .recipe-pdf-ingredient{grid-template-columns:minmax(100px,1fr) minmax(70px,.7fr) minmax(140px,2fr) auto}
+#tm-recipe-library-page .recipe-pdf-ingredient .recipe-ingredient-actions{margin-bottom:8px}
+#tm-recipe-library-page .recipe-ingredients-head,#tm-recipe-library-page .recipe-ingredient-row{grid-template-columns:minmax(135px,1.15fr) minmax(80px,.7fr) minmax(0,2fr) 78px}
+@media(max-width:650px){
+ #tm-recipe-library-page .recipe-ingredient-row{grid-template-columns:minmax(0,1fr) minmax(80px,.65fr) 78px}
+ #tm-recipe-library-page .recipe-ingredient-row input:first-child{grid-column:1}
+ #tm-recipe-library-page .recipe-ingredient-row input:nth-child(2){grid-column:2}
+ #tm-recipe-library-page .recipe-ingredient-row input:nth-child(3){grid-column:1/-1;grid-row:2}
+ #tm-recipe-library-page .recipe-ingredient-row .recipe-ingredient-actions{grid-column:3;grid-row:1}
+}
