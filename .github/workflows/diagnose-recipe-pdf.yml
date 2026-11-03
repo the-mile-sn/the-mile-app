@@ -1,0 +1,24 @@
+name: Diagnose PDF recipe tests
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    outputs:
+      failed: ${{ steps.capture.outputs.failed }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install PyMuPDF==1.26.7 Pillow==11.3.0
+      - id: capture
+        shell: bash
+        run: |
+          python -m unittest -v test_recipe_pdf_import_v2 > /tmp/pdf-log.txt 2>&1 || true
+          echo "failed=$(grep -m1 -E '^FAIL:|^ERROR:|^ImportError:|^SyntaxError:' /tmp/pdf-log.txt | cut -c 1-160)" >> "$GITHUB_OUTPUT"
+  result:
+    needs: [capture]
+    if: always()
+    runs-on: ubuntu-latest
+    name: "Failed ${{ needs.capture.outputs.failed }}"
+    steps:
+      - run: echo Diagnostic captured
