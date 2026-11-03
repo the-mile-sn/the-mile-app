@@ -91,49 +91,20 @@ def rename_category(c, category_id, name):
     return {"id": category_id, "name": name}
 
 
-def delete_category(c, category_id, replacement_id=None):
-    """Remove a category, optionally transferring its recipes first.
-
-    Never deletes any recipe, image or recipe-to-recipe reference.
-    """
+def delete_category(c, category_id):
+    """Only empty categories can be removed; never alter or delete recipes."""
     if not isinstance(category_id, str) or not _IDENTIFIER.fullmatch(category_id):
         return None
-    if not c.execute("SELECT id FROM v2_recipe_categories WHERE id=?", (category_id,)).fetchone():
+    if not c.execute("SELECT 1 FROM v2_recipe_categories WHERE id=?", (category_id,)).fetchone():
         return None
-    source_recipes = c.execute(
-        "SELECT id,name FROM v2_recipe_library WHERE category_id=?", (category_id,)
-    ).fetchall()
-    moved = len(source_recipes)
-    if replacement_id is not None:
-        if (not isinstance(replacement_id, str) or not _IDENTIFIER.fullmatch(replacement_id)
-                or replacement_id == category_id or not c.execute(
-                    "SELECT 1 FROM v2_recipe_categories WHERE id=?", (replacement_id,)
-                ).fetchone()):
-            raise ValueError("invalid_recipe_category")
-    if moved and not replacement_id:
+    count = c.execute(
+        "SELECT COUNT(*) AS n FROM v2_recipe_library WHERE category_id=?", (category_id,)
+    ).fetchone()["n"]
+    if count:
         raise ValueError("category_in_use")
-    if moved:
-        # Preserve name uniqueness for future PDF imports and avoid silently
-        # merging distinct recipes with the same name.
-        existing = {r["name"].casefold() for r in c.execute(
-            "SELECT name FROM v2_recipe_library WHERE category_id=?", (replacement_id,)
-        ).fetchall()}
-        moving = set()
-        for row in source_recipes:
-            name_key = row["name"].casefold()
-            if name_key in existing or name_key in moving:
-                raise ValueError("category_recipe_conflict")
-            moving.add(name_key)
-    try:
-        if moved:
-            c.execute("UPDATE v2_recipe_library SET category_id=? WHERE category_id=?",
-                      (replacement_id, category_id))
-        c.execute("DELETE FROM v2_recipe_categories WHERE id=?", (category_id,))
-        c.commit()
-    except Exception:
-        c.rollback()
-        raise
-    return {"deleted": True, "moved_count": moved}
+    c.execute("DELETE FROM v2_recipe_categories WHERE id=?", (category_id,))
+    c.commit()
+    return {"deleted": True}
 
 
 def _id(value, seen):
