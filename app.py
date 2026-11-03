@@ -1345,8 +1345,9 @@ def application(env, start_response):
                         result=recipe_pdf_import_v2.commit_drafts(
                             c,body.get('category_id'),body.get('filename'),
                             body.get('recipes'),store_dish_image)
-                    except ValueError:
-                        raise Problem(400,'invalid_recipe_import')
+                    except ValueError as error:
+                        code=str(error)
+                        raise Problem(400,code if code in ('invalid_recipe_reference','cyclic_recipe_reference') else 'invalid_recipe_import')
                     return respond(200,result)
                 if path == '/api/v2/recipes/categories':
                     if method == 'GET':
@@ -1365,7 +1366,7 @@ def application(env, start_response):
                         try:
                             recipe=recipe_library_v2.create_recipe(c,read_json(env))
                         except ValueError as exc:
-                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe') else 'invalid_recipe')
+                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe','invalid_recipe_reference','cyclic_recipe_reference') else 'invalid_recipe')
                         return respond(201,{'recipe':recipe})
                 if path.startswith('/api/v2/recipes/image/') and method == 'GET':
                     recipe_id=path.rsplit('/',1)[-1]
@@ -1412,12 +1413,17 @@ def application(env, start_response):
                         try:
                             recipe=recipe_library_v2.update_recipe(c,recipe_id,read_json(env))
                         except ValueError as exc:
-                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe') else 'invalid_recipe')
+                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe','invalid_recipe_reference','cyclic_recipe_reference') else 'invalid_recipe')
                         if not recipe: raise Problem(404,'not_found')
                         return respond(200,{'recipe':recipe})
                     if method == 'DELETE':
-                        if not recipe_library_v2.delete_recipe(c,recipe_id):
-                            raise Problem(404,'not_found')
+                        try:
+                            deleted=recipe_library_v2.delete_recipe(c,recipe_id)
+                        except ValueError as error:
+                            if str(error)=='recipe_in_use':
+                                raise Problem(409,'recipe_in_use')
+                            raise
+                        if not deleted: raise Problem(404,'not_found')
                         return respond(200,{'deleted':True})
                 raise Problem(404,'not_found')
             if path == '/api/v2/dishes/photo' and method == 'POST':
