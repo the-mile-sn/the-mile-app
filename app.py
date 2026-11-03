@@ -691,9 +691,12 @@ def application(env, start_response):
                 try: ident=food_plan_drafts_v2.save(c,read_json(env))
                 except ValueError: raise Problem(400,'invalid_plan')
                 return respond(200,{'id':ident})
-            if path.startswith('/api/v2/food-plan-drafts/') and method == 'GET':
+            if path.startswith('/api/v2/food-plan-drafts/') and method in ('GET','DELETE'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
+                if method == 'DELETE':
+                    if not food_plan_drafts_v2.delete(c,path.rsplit('/',1)[-1]): raise Problem(404,'not_found')
+                    return respond(200,{'deleted':True})
                 draft=food_plan_drafts_v2.get(c,path.rsplit('/',1)[-1])
                 if draft is None: raise Problem(404,'not_found')
                 return respond(200,{'draft':draft})
