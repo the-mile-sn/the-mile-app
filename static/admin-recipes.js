@@ -273,7 +273,7 @@
     photo.src="data:image/webp;base64,"+recipe.photo_webp;card.append(photo);
    }
    const detail=node("details","recipe-pdf-details");
-   const summary=node("summary","", "Rever ingredientes e preparação");
+   const summary=node("summary","", "Rever ingredientes, preparação e dicas");
    detail.append(summary);
    recipe.sections.forEach((sec,si)=>{
     const title=node("h4","",sec.title||"Ingredientes");
@@ -293,6 +293,13 @@
     field.addEventListener("input",()=>{recipe.steps[si]=field.value;});
     label.append(field);detail.append(label);
    });
+   const tipsLabel=node("label","recipe-pdf-field");
+   tipsLabel.append(node("span","","Dicas e observações"));
+   const tips=node("textarea");tips.rows=4;tips.maxLength=6000;
+   tips.value=recipe.notes||"";
+   tips.placeholder="Dicas úteis, conservação ou substituições culinárias";
+   tips.addEventListener("input",()=>{recipe.notes=tips.value;});
+   tipsLabel.append(tips);detail.append(tipsLabel);
    card.append(detail);host.append(card);
   });
  }
