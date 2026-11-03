@@ -76,6 +76,9 @@
   label.append(node("span","","Receita associada (opcional)"));
   const search=node("input");search.type="search";search.placeholder="Pesquisar receita da biblioteca";
   search.setAttribute("aria-label","Pesquisar receita associada");
+  if(/ver receita|receita anterior/i.test(ingredient.name||"")){
+   search.value=String(ingredient.name||"").replace(/\([^)]*ver receita[^)]*\)/ig,"").replace(/\bver receita anterior\b/ig,"").trim();
+  }
   const picker=node("select");
   picker.setAttribute("aria-label","Associar a uma receita");
   label.append(search,picker);wrap.append(label);
