@@ -223,12 +223,109 @@
   $("recipe-pdf-actions").hidden=true;
   $("recipe-pdf-feedback").textContent="";
  }
- function pdfField(label,value,change){
+ function pdfField(label,value,change,maxLength=180){
   const wrap=node("label","recipe-pdf-field");
   wrap.append(node("span","",label));
-  const input=node("input");input.value=value||"";
+  const input=node("input");input.value=value||"";input.maxLength=maxLength;
   input.addEventListener("input",()=>change(input.value));
   wrap.append(input);return wrap;
+ }
+ function preparePdfReview(recipe){
+  // Provide the same editable fields even when the PDF has missing data.
+  if(!Array.isArray(recipe.sections))recipe.sections=[];
+  if(!recipe.sections.length)recipe.sections.push({title:"",ingredients:[{quantity:"",unit:"",name:""}]});
+  for(const section of recipe.sections){
+   section.title=String(section.title||"");
+   if(!Array.isArray(section.ingredients))section.ingredients=[];
+   if(!section.ingredients.length)section.ingredients.push({quantity:"",unit:"",name:""});
+   for(const ingredient of section.ingredients){
+    for(const key of ["quantity","unit","name"])ingredient[key]=String(ingredient[key]||"");
+   }
+  }
+  if(!Array.isArray(recipe.steps))recipe.steps=[];
+  if(!recipe.steps.length)recipe.steps.push("");
+  recipe.notes=typeof recipe.notes==="string"?recipe.notes:"";
+  recipe.reviewTips=recipe.notes.split(/\r?\n/).map(tip=>tip.trim()).filter(Boolean);
+ }
+ function syncPdfTips(recipe){
+  recipe.notes=recipe.reviewTips.map(tip=>tip.trim()).filter(Boolean).join("\n");
+ }
+ function pdfReviewLimit(message){
+  $("recipe-pdf-feedback").textContent=message;
+ }
+ function paintPdfDetail(recipe,detail){
+  const opened=detail.open;
+  detail.replaceChildren(node("summary","","Rever ingredientes, preparação e dicas"));
+  detail.open=opened;
+
+  const ingredientsHeader=node("div","recipe-pdf-section-header");
+  ingredientsHeader.append(node("h4","","Ingredientes"),button("+ Adicionar bloco",()=>{
+   if(recipe.sections.length>=20){pdfReviewLimit("Cada receita permite até 20 blocos de ingredientes.");return;}
+   recipe.sections.push({title:"",ingredients:[{quantity:"",unit:"",name:""}]});
+   paintPdfDetail(recipe,detail);
+  },"recipe-pdf-add"));
+  detail.append(ingredientsHeader);
+  recipe.sections.forEach((section,si)=>{
+   const block=node("div","recipe-pdf-block");
+   const head=node("div","recipe-pdf-block-head");
+   head.append(pdfField("Bloco "+(si+1)+" · Título (opcional)",section.title,value=>{section.title=value;},100));
+   head.append(button("Remover bloco",()=>{
+    recipe.sections.splice(si,1);paintPdfDetail(recipe,detail);
+   },"recipe-pdf-remove"));
+   block.append(head);
+   section.ingredients.forEach((ingredient,ii)=>{
+    const row=node("div","recipe-pdf-ingredient");
+    for(const [key,label,maxLength] of [["quantity","Quantidade",45],["unit","Unidade",45],["name","Alimento",180]]){
+     row.append(pdfField(label,ingredient[key],value=>{ingredient[key]=value;},maxLength));
+    }
+    const remove=button("Remover",()=>{
+     section.ingredients.splice(ii,1);paintPdfDetail(recipe,detail);
+    },"recipe-pdf-remove");
+    remove.setAttribute("aria-label","Remover alimento "+(ii+1)+" do bloco "+(si+1));
+    row.append(remove);block.append(row);
+   });
+   block.append(button("+ Adicionar alimento",()=>{
+    if(section.ingredients.length>=45){pdfReviewLimit("Cada bloco permite até 45 alimentos.");return;}
+    section.ingredients.push({quantity:"",unit:"",name:""});
+    paintPdfDetail(recipe,detail);
+   },"recipe-pdf-add"));
+   detail.append(block);
+  });
+
+  const stepsHeader=node("div","recipe-pdf-section-header");
+  stepsHeader.append(node("h4","","Preparação"),button("+ Adicionar passo",()=>{
+   if(recipe.steps.length>=60){pdfReviewLimit("Cada receita permite até 60 passos.");return;}
+   recipe.steps.push("");paintPdfDetail(recipe,detail);
+  },"recipe-pdf-add"));
+  detail.append(stepsHeader);
+  recipe.steps.forEach((step,si)=>{
+   const row=node("div","recipe-pdf-text-row");
+   const label=node("label","recipe-pdf-field");label.append(node("span","","Passo "+(si+1)));
+   const field=node("textarea");field.value=step;field.rows=3;field.maxLength=2000;
+   field.addEventListener("input",()=>{recipe.steps[si]=field.value;});
+   label.append(field);row.append(label);
+   row.append(button("Remover",()=>{
+    recipe.steps.splice(si,1);paintPdfDetail(recipe,detail);
+   },"recipe-pdf-remove"));
+   detail.append(row);
+  });
+
+  const tipsHeader=node("div","recipe-pdf-section-header");
+  tipsHeader.append(node("h4","","Dicas e observações"),button("+ Adicionar dica",()=>{
+   recipe.reviewTips.push("");syncPdfTips(recipe);paintPdfDetail(recipe,detail);
+  },"recipe-pdf-add"));
+  detail.append(tipsHeader);
+  recipe.reviewTips.forEach((tip,ti)=>{
+   const row=node("div","recipe-pdf-text-row");
+   const label=node("label","recipe-pdf-field");label.append(node("span","","Dica "+(ti+1)));
+   const field=node("textarea");field.value=tip;field.rows=3;field.maxLength=6000;
+   field.addEventListener("input",()=>{recipe.reviewTips[ti]=field.value;syncPdfTips(recipe);});
+   label.append(field);row.append(label);
+   row.append(button("Remover",()=>{
+    recipe.reviewTips.splice(ti,1);syncPdfTips(recipe);paintPdfDetail(recipe,detail);
+   },"recipe-pdf-remove"));
+   detail.append(row);
+  });
  }
  function paintPdfPreview(){
   const host=$("recipe-pdf-results");host.replaceChildren();
@@ -246,17 +343,17 @@
    const duplicate=recipes.some(existing=>norm(existing.name)===norm(recipe.name)&&existing.category_id===$("recipe-pdf-category").value);
    const card=node("div","recipe-pdf-result"),header=node("div","recipe-pdf-result-head");
    const checkbox=node("input");checkbox.type="checkbox";checkbox.checked=!!recipe.selected&&!duplicate;
-   checkbox.disabled=duplicate;
-   recipe.selected=checkbox.checked;
+   checkbox.disabled=duplicate;recipe.selected=checkbox.checked;
    checkbox.setAttribute("aria-label","Importar "+recipe.name);
    checkbox.addEventListener("change",()=>{recipe.selected=checkbox.checked;});
-   header.append(checkbox,node("strong","",recipe.name),node("span","recipe-pdf-page","Página "+recipe.page));
+   const heading=node("strong","",recipe.name);
+   header.append(checkbox,heading,node("span","recipe-pdf-page","Página "+recipe.page));
    card.append(header);
    if(duplicate)card.append(node("p","recipe-pdf-warning","Já existe uma receita com este nome na categoria; não será duplicada."));
    const warnings=recipe.warnings||[];
    for(const warn of warnings)card.append(node("p","recipe-pdf-warning",warn));
    const fields=node("div","recipe-pdf-edit-fields");
-   fields.append(pdfField("Nome da receita",recipe.name,v=>{recipe.name=v;}));
+   fields.append(pdfField("Nome da receita",recipe.name,v=>{recipe.name=v;heading.textContent=v||"Receita sem nome";}));
    const typeLabel=node("label","recipe-pdf-field");
    typeLabel.append(node("span","","Tipo"));
    const type=node("select");
@@ -271,35 +368,11 @@
     const photo=node("img","recipe-pdf-thumb");
     photo.alt="Fotografia extraída do PDF";
     photo.src="data:image/webp;base64,"+recipe.photo_webp;card.append(photo);
+   }else{
+    card.append(node("div","recipe-pdf-thumb recipe-pdf-thumb-empty","Sem fotografia"));
    }
-   const detail=node("details","recipe-pdf-details");
-   const summary=node("summary","", "Rever ingredientes, preparação e dicas");
-   detail.append(summary);
-   recipe.sections.forEach((sec,si)=>{
-    const title=node("h4","",sec.title||"Ingredientes");
-    detail.append(title);
-    sec.ingredients.forEach((ingredient,ii)=>{
-     const row=node("div","recipe-pdf-ingredient");
-     for(const [key,label] of [["quantity","Quantidade"],["unit","Unidade"],["name","Alimento"]]){
-      row.append(pdfField(label,ingredient[key],value=>{ingredient[key]=value;}));
-     }
-     detail.append(row);
-    });
-   });
-   detail.append(node("h4","","Preparação"));
-   recipe.steps.forEach((step,si)=>{
-    const label=node("label","recipe-pdf-field");label.append(node("span","","Passo "+(si+1)));
-    const field=node("textarea");field.value=step;field.rows=3;field.maxLength=2000;
-    field.addEventListener("input",()=>{recipe.steps[si]=field.value;});
-    label.append(field);detail.append(label);
-   });
-   const tipsLabel=node("label","recipe-pdf-field");
-   tipsLabel.append(node("span","","Dicas e observações"));
-   const tips=node("textarea");tips.rows=4;tips.maxLength=6000;
-   tips.value=recipe.notes||"";
-   tips.placeholder="Dicas úteis, conservação ou substituições culinárias";
-   tips.addEventListener("input",()=>{recipe.notes=tips.value;});
-   tipsLabel.append(tips);detail.append(tipsLabel);
+   const detail=node("details","recipe-pdf-details");detail.open=true;
+   paintPdfDetail(recipe,detail);
    card.append(detail);host.append(card);
   });
  }
