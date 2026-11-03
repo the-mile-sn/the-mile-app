@@ -178,6 +178,24 @@
   update();
   return {button:trigger,panel};
  }
+ function moveRecipeIngredient(ingredients,index,offset,onMove){
+  const next=index+offset;
+  if(next<0||next>=ingredients.length)return;
+  // Move the original object (including its stable ID and linked recipe).
+  ingredients.splice(next,0,ingredients.splice(index,1)[0]);
+  onMove();
+ }
+ function ingredientMoveButtons(section,index,onMove){
+  const controls=node("div","recipe-ingredient-movers");
+  for(const [delta,symbol,label] of [[-1,"↑","cima"],[1,"↓","baixo"]]){
+   const action=button(symbol,()=>moveRecipeIngredient(section.ingredients,index,delta,onMove),"recipe-move-button");
+   action.title="Mover ingrediente para "+label;
+   action.setAttribute("aria-label","Mover "+(section.ingredients[index].name||"ingrediente")+" para "+label);
+   action.disabled=delta<0?index===0:index===section.ingredients.length-1;
+   controls.append(action);
+  }
+  return controls;
+ }
  function paintSections(){
   const host=$("recipe-sections");host.replaceChildren();
   current.sections.forEach((section,si)=>{
@@ -200,7 +218,8 @@
     }
     const link=inlineRecipeLink(ingredient,{ownerId:current.id});
     const actions=node("div","recipe-ingredient-actions");
-    actions.append(link.button,button("×",()=>{section.ingredients.splice(ii,1);paintSections();},"recipe-remove"));
+    actions.append(link.button,ingredientMoveButtons(section,ii,paintSections),
+     button("×",()=>{section.ingredients.splice(ii,1);paintSections();},"recipe-remove"));
     row.append(actions);box.append(row,link.panel);
    });
    box.append(button("+ Ingrediente",()=>{section.ingredients.push({name:"",quantity:"",unit:""});paintSections();},"recipe-inline-add"));
@@ -495,7 +514,7 @@
     remove.setAttribute("aria-label","Remover alimento "+(ii+1)+" do bloco "+(si+1));
     const link=inlineRecipeLink(ingredient,{pdfRecipe:recipe});
     const actions=node("div","recipe-ingredient-actions");
-    actions.append(link.button,remove);
+    actions.append(link.button,ingredientMoveButtons(section,ii,()=>paintPdfDetail(recipe,detail)),remove);
     row.append(actions);block.append(row,link.panel);
    });
    block.append(button("+ Adicionar alimento",()=>{
