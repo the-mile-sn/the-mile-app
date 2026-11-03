@@ -141,7 +141,7 @@
 </section>
 <section id="tm-recipe-library-page" class="tm-clinical-page tm-recipe-library-page" hidden aria-label="Biblioteca de receitas">
 <h2 class="recipe-sr-only">Biblioteca de receitas</h2>
-<div class="recipe-library-toolbar">
+<div id="recipe-library-toolbar" class="recipe-library-toolbar">
 <div class="recipe-library-filters">
 <label class="recipe-search-field">Receita<input id="recipe-search" type="search" placeholder="Pesquisar pelo nome" autocomplete="off"></label>
 <label>Categoria<select id="recipe-filter-category"><option value="">Todas as categorias</option></select></label>
@@ -154,7 +154,7 @@
 <button id="recipe-add" type="button" class="recipe-primary">+ Nova</button>
 </div>
 </div>
-<div class="recipe-list-meta"><span id="recipe-result-count" role="status"></span><button id="recipe-clear-filters" type="button" class="recipe-clear-filters" hidden>Limpar filtros</button><button id="recipe-category-toggle" type="button" class="recipe-category-toggle" aria-expanded="false" aria-controls="recipe-category-manage"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Gerir categorias</button></div>
+<div id="recipe-list-meta" class="recipe-list-meta"><span id="recipe-result-count" role="status"></span><button id="recipe-clear-filters" type="button" class="recipe-clear-filters" hidden>Limpar filtros</button><button id="recipe-category-toggle" type="button" class="recipe-category-toggle" aria-expanded="false" aria-controls="recipe-category-manage"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Gerir categorias</button></div>
 <section id="recipe-category-manage" class="recipe-category-manage" hidden aria-label="Gerir categorias">
 <div class="recipe-category-header"><h3>Gerir categorias</h3><button type="button" id="recipe-category-close" aria-label="Fechar gestão de categorias">Fechar</button></div>
 <div class="recipe-category-create"><label for="recipe-new-category">Nova categoria<input id="recipe-new-category" maxlength="90" placeholder="Nome da categoria"></label><button type="button" id="recipe-create-category">Adicionar categoria</button></div>
