@@ -71,7 +71,9 @@
  function paintRecipeLink(ingredient,options={}){
   // Link selection is explicit; text like "ver receita anterior" is never
   // assumed to identify the correct recipe.
-  const wrap=node("div","recipe-reference");
+  const wrap=node("details","recipe-reference");
+  const summary=node("summary","recipe-reference-summary","Associar receita (opcional)");
+  wrap.append(summary);
   const label=node("label","recipe-reference-heading");
   label.append(node("span","","Receita associada (opcional)"));
   const search=node("input");search.type="search";search.placeholder="Pesquisar receita da biblioteca";
@@ -108,6 +110,9 @@
     picker.append(missing);
    }
    picker.value=selected;
+   const chosen=candidates.find(c=>c.value===selected);
+   summary.textContent=selected?"Receita associada: "+(chosen?.label||"verificar ligação"):
+    "Associar receita (opcional)";
    hint.textContent=selected?
     "A associação utiliza o identificador da receita, não a posição no documento.":
     "Pesquisa e seleciona apenas se este alimento remeter para outra receita.";
