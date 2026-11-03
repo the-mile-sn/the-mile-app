@@ -42,3 +42,32 @@ test("recipe editor remains separate from legacy dish and athlete menu state",()
  assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications|\/api\/v2\/athletes\//);
  assert.match(backend,/if path == '\/api\/v2\/dishes' and method == 'GET'/);
 });
+
+test("ingredient editor renders quantity, unit, food in order without changing stored keys",()=>{
+ const head='for(const name of ["Quantidade","Unidade","Alimento",""])';
+ const row='[["quantity","Ex.: 10, q.b. ou 1 un / 120 g"],["unit","Ex.: g, ml, un"],["name","Ex.: Azeite"]]';
+ assert.ok(ui.includes(head));
+ assert.ok(ui.includes(row));
+ assert.match(ui,/ingredient\[key\]=input\.value/);
+ assert.match(ui,/quantity:i\.quantity,unit:i\.unit/);
+});
+test("recipe category management opens from toolbar in compact separate panel",()=>{
+ const start=html.indexOf('id="tm-recipe-library-page"');
+ const search=html.indexOf('id="recipe-search"',start);
+ const category=html.indexOf('id="recipe-category-manage"',start);
+ const table=html.indexOf('id="recipe-list"',start);
+ assert.ok(search>start&&category>search&&table>category);
+ assert.match(html,/id="recipe-category-toggle"[^>]*aria-expanded="false"/);
+ assert.match(html,/id="recipe-category-manage"[^>]*hidden/);
+ assert.match(ui,/function setRecipeCategoriesOpen\(open\)/);
+ assert.match(ui,/recipe-category-toggle"\)\.addEventListener\("click"/);
+ assert.doesNotMatch(html,/<details class="recipe-category-manage"/);
+});
+test("accessory paragraphs removed without changing explanatory field labels",()=>{
+ assert.doesNotMatch(html,/A fotografia é opcional no rascunho/);
+ assert.doesNotMatch(html,/Usa procedimentos simples, sem quantidades no texto/);
+ assert.doesNotMatch(html,/Uma receita simples pode ter um único bloco/);
+ assert.match(html,/Fotografia da receita \(vista de cima\)/);
+ assert.match(html,/id="recipe-sections"/);
+ assert.match(html,/id="recipe-steps"/);
+});
