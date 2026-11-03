@@ -189,6 +189,22 @@ def update_recipe(c, recipe_id, payload):
     return get_recipe(c, recipe_id)
 
 
+def delete_recipe(c, recipe_id):
+    """Delete only this recipe and its namespaced image, in one transaction."""
+    if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
+        return False
+    row = c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone()
+    if row is None:
+        return False
+    c.execute("DELETE FROM v2_recipe_library WHERE id=?", (recipe_id,))
+    # Guard against removing any shared dish image if data is malformed.
+    own_photo = photo_key(recipe_id)
+    if row["photo_key"] == own_photo:
+        c.execute("DELETE FROM v2_shared_images WHERE image_key=?", (own_photo,))
+    c.commit()
+    return True
+
+
 def photo_key(recipe_id):
     if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
         raise ValueError("invalid_recipe")
