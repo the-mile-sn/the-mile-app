@@ -17,8 +17,8 @@ function draw(){
     const notes=(o?.notes||[]).map((n,ni)=>'<div class="nutrition-row note-row"><textarea data-note="'+ni+'" rows="2" maxlength="4000" placeholder="Escreve uma indicação livre…">'+esc(n)+'</textarea><span class="note-label">Nota · sem valor nutricional</span><button class="remove-row" data-remove-note="'+ni+'" aria-label="Remover nota">×</button></div>').join("");
     return '<section class="meal"><div class="meal-header"><input aria-label="Nome da refeição" data-meal-name="'+mi+'" maxlength="120" value="'+esc(m.name)+'"><div class="meal-header-macros"><span class="summary-caption">Média da refeição</span>'+macro(average(m))+'</div><button data-toggle="'+mi+'">'+(open?"Fechar":"Editar")+'</button></div>'+
     (open?'<div class="option-toolbar"><div class="option-tabs">'+m.options.map((_,oi)=>'<button class="'+(oi===option?"current":"")+'" data-option="'+oi+'">Opção '+(oi+1)+'</button>').join("")+'</div><button id="add-option">+ Adicionar opção</button></div>'+
-    '<div class="option-summary"><strong>Opção '+(option+1)+'</strong>'+macro(sum(o.foods))+'</div>'+
-    '<div class="nutrition-list">'+rows+notes+'</div>'+
+    '<div class="option-summary"><div class="option-heading"><strong>Opção '+(option+1)+'</strong><input class="option-title" data-option-title maxlength="160" placeholder="Título da opção · Ex.: Ovos com pão" value="'+esc(o.title||'')+'"></div>'+macro(sum(o.foods))+'</div>'+
+    '<div class="nutrition-list">'+notes+rows+'</div>'+
     '<div class="food-add"><select id="food-picker" aria-label="Escolher alimento"><option value="">Selecionar alimento da biblioteca</option>'+foods.map(f=>'<option value="'+esc(f.id)+'">'+esc(f.display_name)+'</option>').join("")+'</select><input id="food-grams" type="number" min="0.1" max="100000" step="any" value="100" aria-label="Quantidade em gramas"><span class="unit">g</span><button id="add-food">+ Adicionar alimento</button></div>'+
     '<div class="meal-controls"><button id="add-note">+ Adicionar nota</button><button id="add-meal-inline">+ Adicionar refeição</button></div>'+
     '<div class="meal-average"><strong>Média da refeição</strong>'+macro(average(m))+'</div>':'')+'</section>';
@@ -27,14 +27,15 @@ function draw(){
   document.querySelectorAll("[data-meal-name]").forEach(el=>el.onchange=()=>{plan.meals[Number(el.dataset.mealName)].name=el.value.trim()||"Refeição";draw()});
   document.querySelectorAll("[data-option]").forEach(b=>b.onclick=()=>{option=Number(b.dataset.option);draw()});
   document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{plan.meals[active].options[option].foods.splice(Number(b.dataset.remove),1);draw()});
+  if(document.querySelector("[data-option-title]"))document.querySelector("[data-option-title]").oninput=e=>{plan.meals[active].options[option].title=e.target.value};
   document.querySelectorAll("[data-note]").forEach(el=>el.oninput=()=>{plan.meals[active].options[option].notes[Number(el.dataset.note)]=el.value});
   document.querySelectorAll("[data-remove-note]").forEach(b=>b.onclick=()=>{plan.meals[active].options[option].notes.splice(Number(b.dataset.removeNote),1);draw()});
   if($("add-food"))$("add-food").onclick=()=>{const id=$("food-picker").value,grams=Number($("food-grams").value);if(!id||!Number.isFinite(grams)||grams<=0||grams>100000){status("Seleciona um alimento e uma quantidade válida.");return}plan.meals[active].options[option].foods.push({id,grams});draw()};
-  if($("add-option"))$("add-option").onclick=()=>{plan.meals[active].options.push({foods:[],notes:[]});option=plan.meals[active].options.length-1;draw()};
+  if($("add-option"))$("add-option").onclick=()=>{plan.meals[active].options.push({title:"",foods:[],notes:[]});option=plan.meals[active].options.length-1;draw()};
   if($("add-note"))$("add-note").onclick=()=>{const o=plan.meals[active].options[option];o.notes=o.notes||[];o.notes.push("");draw();const fields=document.querySelectorAll("[data-note]");fields[fields.length-1]?.focus()};
   if($("add-meal-inline"))$("add-meal-inline").onclick=addMeal;
 }
-function addMeal(){plan.meals.push({name:"Refeição "+(plan.meals.length+1),options:[{foods:[],notes:[]}]});active=plan.meals.length-1;option=0;draw()}
+function addMeal(){plan.meals.push({name:"Refeição "+(plan.meals.length+1),options:[{title:"",foods:[],notes:[]}]});active=plan.meals.length-1;option=0;draw()}
 function newPlan(){plan={id:"",name:"Novo plano alimentar",meals:[]};active=-1;option=0;draw();status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+data.drafts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||""}
