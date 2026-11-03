@@ -526,7 +526,7 @@
    alertMessage("Receita eliminada.");
   }catch(error){
    alertMessage(error.message==="recipe_in_use"?
-    "Esta receita está associada a outra receita. Remove primeiro essa associação.":
+    "Esta receita está associada a outra receita ou a um prato. Remove primeiro a associação.":
     "Não foi possível eliminar a receita: "+error.message);
   }
   finally{busy=false;}
@@ -992,6 +992,12 @@
  $("recipe-create-category").addEventListener("click",addCategory);
  $("recipe-add-section").addEventListener("click",()=>{if(!current)return;current.sections.push({title:"",ingredients:[{name:"",quantity:"",unit:""}]});paintSections();});
  $("recipe-add-step").addEventListener("click",()=>{if(!current)return;current.steps.push("");paintSteps();});
+ window.tmOpenAdminDishRecipe=async id=>{
+  if(typeof window.tmOpenAdminRecipeLibrary!=="function")
+   throw Error("A navegação da biblioteca de receitas não está disponível.");
+  await window.tmOpenAdminRecipeLibrary();
+  await openReadRecipe(id);
+ };
  window.tmLoadRecipeLibrary=async()=>{
   if(!loaded)alertMessage("A carregar biblioteca…");
   try{await loadLibrary();alertMessage("");}
