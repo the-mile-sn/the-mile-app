@@ -1,0 +1,26 @@
+name: Diagnose recipe navigation regression
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    outputs:
+      clinical: ${{ steps.check.outputs.clinical }}
+      recipe: ${{ steps.check.outputs.recipe }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        shell: bash
+        run: |
+          node --test tests/admin-clinical-navigation.test.cjs > /tmp/clinical.txt 2>&1 || true
+          node --test tests/admin-recipe-library.test.cjs tests/admin-menus-recipes-navigation.test.cjs > /tmp/recipe.txt 2>&1 || true
+          echo "clinical=$(grep -m1 '^not ok' /tmp/clinical.txt | cut -c 1-150)" >> "$GITHUB_OUTPUT"
+          echo "recipe=$(grep -m1 '^not ok' /tmp/recipe.txt | cut -c 1-150)" >> "$GITHUB_OUTPUT"
+  first-failures:
+    needs: [capture]
+    if: always()
+    runs-on: ubuntu-latest
+    name: "Clinical ${{ needs.capture.outputs.clinical }} / Recipe ${{ needs.capture.outputs.recipe }}"
+    steps:
+      - run: echo "Diagnostics captured"
