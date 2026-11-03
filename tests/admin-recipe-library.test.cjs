@@ -161,3 +161,27 @@ test("both recipe editors offer stable linked-recipe search and retain identifie
  assert.match(model,/def _assert_reference_graph\(c, replacements\)/);
  assert.match(model,/recipe_ref_id/);
 });
+
+test("categories can be renamed by stable ID and empty ones removed safely",()=>{
+ assert.match(model,/def rename_category\(c, category_id, name\)/);
+ assert.match(model,/def delete_category\(c, category_id\)/);
+ assert.match(model,/raise ValueError\("category_in_use"\)/);
+ assert.match(ui,/async function editCategory\(entry\)/);
+ assert.match(ui,/async function removeCategory\(entry\)/);
+ assert.match(ui,/recipe-category-pending/);
+ assert.match(ui,/Editar receita/);
+ assert.match(ui,/method:"PUT",body:JSON\.stringify\(\{name\}\)/);
+ assert.match(ui,/method:"DELETE",body:"\{\}"/);
+ assert.match(html,/id="recipe-category-edit"/);
+ assert.match(backend,/recipe_library_v2\.rename_category\(c,category_id,body\.get\('name'\)\)/);
+ assert.match(backend,/recipe_library_v2\.delete_category\(c,category_id\)/);
+ assert.doesNotMatch(ui,/Transferir e eliminar/);
+});
+test("only draft and published statuses use restrained colored tags",()=>{
+ assert.match(ui,/recipe-status-tag/);
+ assert.match(ui,/recipe-status-draft/);
+ assert.match(ui,/recipe-status-published/);
+ assert.match(ui,/r\.status==="draft"\?"Rascunho":"Publicada"/);
+ assert.match(html,/<option value="published">Publicada<\/option>/);
+ assert.doesNotMatch(html,/Aprovada para utilização futura/);
+});
