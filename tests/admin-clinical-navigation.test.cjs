@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=107/);
+ assert.match(html,/admin-microcycles\.css\?v=108/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=31/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=32/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -241,7 +241,7 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
  assert.match(html,/\/admin-light-theme\.css\?v=11/);
- assert.match(html,/\/admin-dashboard\.js\?v=31/);
+ assert.match(html,/\/admin-dashboard\.js\?v=32/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -292,14 +292,14 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=31/);
+ assert.match(html,/admin-dashboard\.js\?v=32/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=107/);
+ assert.match(html,/admin-microcycles\.css\?v=108/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -312,7 +312,7 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=31/);
+ assert.match(html,/admin-dashboard\.js\?v=32/);
 });
 
 test("Jogadores follow-up is a select with Pro and Elite only",()=>{
@@ -504,7 +504,7 @@ test("Dashboard uses photo metadata, with initials fallback, and MD-green game e
  assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
  assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
  assert.match(lightCss,/\.tm-db-event\.tm-db-game\{background:#e5f3e9!important/);
- assert.match(html,/admin-dashboard\.js\?v=31/);
+ assert.match(html,/admin-dashboard\.js\?v=32/);
 });
 
 test("Player picker photos share linked account metadata while retaining initials fallback",()=>{
