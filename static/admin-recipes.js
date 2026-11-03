@@ -40,15 +40,14 @@
  }
  function activeRecipeFilters(){
   return !!($("recipe-search").value.trim()||$("recipe-filter-category").value||
-   $("recipe-filter-type").value||$("recipe-filter-status").value||$("recipe-filter-photo").value);
+   $("recipe-filter-type").value||$("recipe-filter-status").value);
  }
  function matchesRecipe(r){
   const q=norm($("recipe-search").value.trim());
   const category=$("recipe-filter-category").value,type=$("recipe-filter-type").value;
-  const status=$("recipe-filter-status").value,photo=$("recipe-filter-photo").value;
+  const status=$("recipe-filter-status").value;
   return (!q||norm(r.name).includes(q))&&(!category||category===r.category_id)&&
-   (!type||type===r.recipe_type)&&(!status||status===r.status)&&
-   (!photo||(photo==="with"?!!r.photo_key:!r.photo_key));
+   (!type||type===r.recipe_type)&&(!status||status===r.status);
  }
  function paintList(){
   const host=$("recipe-list");host.replaceChildren();
@@ -61,15 +60,17 @@
    return;
   }
   const table=node("table","recipe-table"),thead=node("thead"),head=node("tr");
-  for(const label of ["Fotografia","Receita","Categoria","Tipo","Estado",""]){head.append(node("th","",label));}
+  for(const label of ["Categoria","Fotografia","Receita","Tipo","Estado",""]){head.append(node("th","",label));}
   thead.append(head);table.append(thead);
   const tbody=node("tbody");
   for(const r of visible){
-   const tr=node("tr");const photoCell=node("td");
+   const tr=node("tr");
+   tr.append(node("td","recipe-category-cell",r.category));
+   const photoCell=node("td");
    if(r.photo_key){const photo=node("img","recipe-thumb");photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id);photo.loading="lazy";photo.alt="";photoCell.append(photo);}
    else photoCell.append(node("div","recipe-thumb recipe-thumb-empty","—"));
    tr.append(photoCell);
-   for(const [value,cls] of [[r.name,"recipe-name"],[r.category,""],[r.recipe_type==="adaptable"?"Adaptável":"Padrão",""]]){
+   for(const [value,cls] of [[r.name,"recipe-name"],[r.recipe_type==="adaptable"?"Adaptável":"Padrão",""]]){
     tr.append(node("td",cls,value));
    }
    const stateCell=node("td"),state=node("span","recipe-status-tag "+(r.status==="draft"?"recipe-status-draft":"recipe-status-published"),
@@ -920,10 +921,9 @@
  $("recipe-filter-category").addEventListener("change",paintList);
  $("recipe-filter-type").addEventListener("change",paintList);
  $("recipe-filter-status").addEventListener("change",paintList);
- $("recipe-filter-photo").addEventListener("change",paintList);
  $("recipe-clear-filters").addEventListener("click",()=>{
   $("recipe-search").value="";
-  for(const id of ["recipe-filter-category","recipe-filter-type","recipe-filter-status","recipe-filter-photo"])$(id).value="";
+  for(const id of ["recipe-filter-category","recipe-filter-type","recipe-filter-status"])$(id).value="";
   paintList();
  });
  $("recipe-reader-back").addEventListener("click",readerBack);
