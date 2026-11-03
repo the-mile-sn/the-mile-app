@@ -106,3 +106,10 @@
 @media(max-width:720px){.meal-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .meal-picker{position:relative;padding-top:20px}.meal-picker #cancel-meal{position:absolute;top:10px;right:12px;min-width:34px;min-height:34px;padding:3px;text-align:center;font-size:22px;line-height:1;background:var(--lib-panel-2)}.meal-picker strong{padding-right:42px}.planhead select{width:100%;min-height:42px;border:0;border-radius:10px;background:var(--lib-panel-2);color:var(--lib-fg);padding:10px 12px}.plan-meta .danger:not(:disabled){background:#9f4a3826;color:#e79b87}
+
+/* Consistent high-contrast add actions and unfilled close icons. */
+.meal .meal-controls #add-note,.meal .meal-controls #add-meal-inline,.meal .option-toolbar #add-option{background:#f4f5f7!important;color:#1d2025!important;border:0!important;min-height:42px!important;height:42px;padding:0 16px!important;border-radius:10px!important;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+.meal .meal-toggle{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--lib-muted)!important;min-width:34px;min-height:34px;padding:2px 7px;font-size:24px;line-height:1}
+.meal .meal-toggle:hover{background:transparent!important;color:var(--lib-fg)!important}
+.meal-picker #cancel-meal{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--lib-muted)!important}
+.meal-picker #cancel-meal:hover{background:transparent!important;color:var(--lib-fg)!important}
