@@ -25,8 +25,17 @@
  function paintCategoryOptions(){
   updateSelect("recipe-category",categories,"Selecionar categoria");
   updateSelect("recipe-filter-category",categories,"Todas as categorias");
+  updateSelect("recipe-pdf-category",categories,"Selecionar categoria");
   const host=$("recipe-categories");host.replaceChildren();
-  for(const entry of categories){host.append(node("span","recipe-category-pill",entry.name));}
+  for(const entry of categories){
+   const item=node("div","recipe-category-item");
+   item.append(node("span","recipe-category-pill",entry.name));
+   const edit=button("Editar",()=>editCategory(entry),"recipe-category-small");
+   edit.setAttribute("aria-label","Editar categoria "+entry.name);
+   const remove=button("Eliminar",()=>removeCategory(entry),"recipe-category-small recipe-category-danger");
+   remove.setAttribute("aria-label","Eliminar categoria "+entry.name);
+   item.append(edit,remove);host.append(item);
+  }
  }
  function matchesRecipe(r){
   const q=norm($("recipe-search").value.trim());
@@ -49,9 +58,12 @@
    if(r.photo_key){const photo=node("img","recipe-thumb");photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id);photo.loading="lazy";photo.alt="";photoCell.append(photo);}
    else photoCell.append(node("div","recipe-thumb recipe-thumb-empty","—"));
    tr.append(photoCell);
-   for(const [value,cls] of [[r.name,"recipe-name"],[r.category,""],[r.recipe_type==="adaptable"?"Adaptável":"Padrão",""],[r.status==="draft"?"Rascunho":"Aprovada",""]]){
+   for(const [value,cls] of [[r.name,"recipe-name"],[r.category,""],[r.recipe_type==="adaptable"?"Adaptável":"Padrão",""]]){
     tr.append(node("td",cls,value));
    }
+   const stateCell=node("td"),state=node("span","recipe-status-tag "+(r.status==="draft"?"recipe-status-draft":"recipe-status-published"),
+    r.status==="draft"?"Rascunho":"Publicada");
+   stateCell.append(state);tr.append(stateCell);
    const actions=node("td","recipe-row-actions");
    actions.append(button("Editar",()=>openRecipe(r.id)));
    const remove=button("Eliminar",()=>deleteRecipe(r),"recipe-delete");
@@ -329,6 +341,91 @@
    output.textContent="Categoria disponível na biblioteca.";
   }catch(error){output.textContent="Erro: "+error.message;}
   finally{action.disabled=false;}
+ }
+
+ async function editCategory(entry){
+  if(busy)return;
+  const form=$("recipe-category-edit");
+  form.hidden=false;
+  form.replaceChildren();
+  form.append(node("label","recipe-category-edit-label","Alterar nome da categoria"));
+  const field=node("input");field.type="text";field.maxLength=90;field.value=entry.name;
+  field.setAttribute("aria-label","Novo nome para "+entry.name);
+  form.append(field);
+  const actions=node("div","recipe-category-edit-actions");
+  const save=button("Guardar",async()=>{
+   const name=field.value.trim(),feedback=$("recipe-category-feedback");
+   if(!name){feedback.textContent="Indica o nome da categoria.";return;}
+   if(busy)return;
+   busy=true;save.disabled=true;
+   try{
+    await request("/api/v2/recipes/categories/"+encodeURIComponent(entry.id),{
+     method:"PUT",body:JSON.stringify({name})
+    });
+    const categoryId=current?.category_id;
+    await loadLibrary();
+    if(current&&categoryId)$("recipe-category").value=categoryId;
+    form.hidden=true;form.replaceChildren();
+    feedback.textContent="Categoria atualizada. As receitas mantêm a sua categoria e respetivos IDs.";
+   }catch(error){
+    feedback.textContent=error.message==="duplicate_recipe_category"?
+     "Já existe uma categoria com esse nome.":"Não foi possível alterar a categoria: "+error.message;
+   }finally{busy=false;save.disabled=false;}
+  },"recipe-primary");
+  const cancel=button("Cancelar",()=>{form.hidden=true;form.replaceChildren();});
+  actions.append(save,cancel);form.append(actions);
+  field.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();save.click();}});
+  field.focus();field.select();
+ }
+ async function removeCategory(entry){
+  if(busy)return;
+  const count=recipes.filter(r=>r.category_id===entry.id).length;
+  let replacementId=null;
+  if(count){
+   const form=$("recipe-category-edit");form.hidden=false;form.replaceChildren();
+   form.append(node("p","recipe-category-edit-info",
+    "A categoria «"+entry.name+"» contém "+count+" receitas. Seleciona outra categoria para as transferir antes de eliminar."));
+   const selector=node("select");selector.setAttribute("aria-label","Nova categoria para transferir receitas");
+   const empty=node("option","","Selecionar categoria de destino");empty.value="";selector.append(empty);
+   for(const category of categories.filter(c=>c.id!==entry.id)){
+    const option=node("option","",category.name);option.value=category.id;selector.append(option);
+   }
+   form.append(selector);
+   const actions=node("div","recipe-category-edit-actions");
+   const confirm=button("Transferir e eliminar",async()=>{
+    replacementId=selector.value;
+    if(!replacementId){$("recipe-category-feedback").textContent="Seleciona uma categoria de destino.";return;}
+    if(!window.confirm("Transferir "+count+" receitas para «"+(categories.find(c=>c.id===replacementId)?.name||"")+
+      "» e eliminar a categoria «"+entry.name+"»? As receitas não serão apagadas."))return;
+    await performRemoveCategory(entry,replacementId,form);
+   },"recipe-category-danger");
+   actions.append(confirm,button("Cancelar",()=>{form.hidden=true;form.replaceChildren();}));
+   form.append(actions);selector.focus();return;
+  }
+  if(!window.confirm("Eliminar a categoria vazia «"+entry.name+"»?"))return;
+  await performRemoveCategory(entry,null,$("recipe-category-edit"));
+ }
+ async function performRemoveCategory(entry,replacementId,form){
+  if(busy)return;
+  busy=true;
+  const feedback=$("recipe-category-feedback");
+  try{
+   const result=await request("/api/v2/recipes/categories/"+encodeURIComponent(entry.id),{
+    method:"DELETE",body:JSON.stringify({replacement_id:replacementId})
+   });
+   if(current?.category_id===entry.id)current.category_id=replacementId||"";
+   await loadLibrary();
+   if(current)$("recipe-category").value=current.category_id||"";
+   form.hidden=true;form.replaceChildren();
+   feedback.textContent="Categoria eliminada."+
+    (result.moved_count?" "+result.moved_count+" receitas transferidas sem perda de dados.":"");
+  }catch(error){
+   feedback.textContent=error.message==="category_in_use"?
+    "Esta categoria contém receitas. Seleciona uma categoria de destino.":
+    error.message==="category_recipe_conflict"?
+    "Há receitas com nomes iguais na categoria de destino. Revê-as antes de transferir.":
+    "Não foi possível eliminar a categoria: "+error.message;
+  }finally{busy=false;}
  }
 
  // PDF previews are deliberately ephemeral: never write anything until the
