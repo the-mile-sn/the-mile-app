@@ -1359,6 +1359,30 @@ def application(env, start_response):
                         except ValueError:
                             raise Problem(400,'invalid_recipe_category')
                         return respond(200,{'category':category})
+                if path.startswith('/api/v2/recipes/categories/'):
+                    category_id=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-f0-9]{24}',category_id):
+                        raise Problem(404,'not_found')
+                    if method == 'PUT':
+                        body=read_json(env)
+                        try:
+                            category=recipe_library_v2.rename_category(c,category_id,body.get('name'))
+                        except ValueError as error:
+                            code=str(error)
+                            raise Problem(409 if code=='duplicate_recipe_category' else 400,
+                                          code if code in ('duplicate_recipe_category','invalid_recipe_category') else 'invalid_recipe_category')
+                        if not category: raise Problem(404,'not_found')
+                        return respond(200,{'category':category})
+                    if method == 'DELETE':
+                        body=read_json(env)
+                        try:
+                            result=recipe_library_v2.delete_category(c,category_id,body.get('replacement_id'))
+                        except ValueError as error:
+                            code=str(error)
+                            raise Problem(409 if code in ('category_in_use','category_recipe_conflict') else 400,
+                                          code if code in ('category_in_use','category_recipe_conflict','invalid_recipe_category') else 'invalid_recipe_category')
+                        if not result: raise Problem(404,'not_found')
+                        return respond(200,result)
                 if path == '/api/v2/recipes':
                     if method == 'GET':
                         return respond(200,{'recipes':recipe_library_v2.list_recipes(c)})
