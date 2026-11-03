@@ -78,5 +78,5 @@ test("recipe library switches independently from dish catalogue and Planning",()
  assert.match(dashboard,/window\.tmLoadRecipeLibrary\(\)/);
  assert.match(dashboard,/recipeLibraryBtn\.addEventListener\("click",openRecipeLibrary\)/);
  assert.match(html,/admin-recipes\.js\?v=11/);
- assert.match(html,/admin-recipes\.css\?v=12/);
+ assert.match(html,/admin-recipes\.css\?v=13/);
 });
