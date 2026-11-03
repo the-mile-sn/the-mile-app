@@ -198,3 +198,39 @@ test("manual editor and PDF review reorder ingredients without recreating IDs",(
  assert.match(ui,/recipe_ref_id:i\.recipe_ref_id\|\|null/);
  assert.match(model,/ingredients_json|sections_json/);
 });
+
+test("recipe toolbar filters all displayed metadata and keeps actions secondary",()=>{
+ for(const id of ["recipe-search","recipe-filter-category","recipe-filter-type","recipe-filter-status",
+                  "recipe-filter-photo","recipe-clear-filters","recipe-result-count","recipe-category-toggle"]){
+  assert.equal(html.split('id="'+id+'"').length-1,1,id);
+ }
+ assert.match(ui,/const status=\$\("recipe-filter-status"\)\.value,photo=\$\("recipe-filter-photo"\)\.value/);
+ assert.match(ui,/status===r\.status/);
+ assert.match(ui,/photo==="with"\?\!\!r\.photo_key:\!r\.photo_key/);
+ assert.match(ui,/norm\(r\.name\)\.includes\(q\)/);
+ assert.match(ui,/function activeRecipeFilters\(\)/);
+ assert.match(ui,/recipe-clear-filters"\)\.addEventListener\("click"/);
+ assert.match(html,/id="recipe-add"[^>]*>\+ Nova<\/button>/);
+ assert.match(html,/id="recipe-pdf-toggle"[^>]*aria-label="Importar receitas de PDF"/);
+ assert.ok(html.indexOf('id="recipe-category-toggle"')>html.indexOf('class="recipe-library-utilities"'));
+});
+test("read-only recipe view uses real saved fields and lets linked recipes be opened",()=>{
+ for(const id of ["recipe-reader-panel","recipe-reader-back","recipe-reader-edit","recipe-reader-close",
+                  "recipe-reader-content","recipe-reader-feedback"]){
+  assert.equal(html.split('id="'+id+'"').length-1,1,id);
+ }
+ assert.match(ui,/button\("Ver",\(\)=>openReadRecipe\(r\.id\),"recipe-view"\)/);
+ assert.match(ui,/async function openReadRecipe\(id,linked=false\)/);
+ assert.match(ui,/await request\("\/api\/v2\/recipes\/"\+encodeURIComponent\(id\)\)/);
+ assert.match(ui,/recipe\.sections\|\|\[\]/);
+ assert.match(ui,/recipe\.steps\|\|\[\]/);
+ assert.match(ui,/recipe\.notes\|\|""/);
+ assert.match(ui,/recipe\.servings/);
+ assert.match(ui,/item\.recipe_ref_id/);
+ assert.match(ui,/openReadRecipe\(linkId,true\)/);
+ assert.match(ui,/recipeReaderHistory\.pop\(\)/);
+ assert.match(ui,/recipe-reader-back"\)\.addEventListener\("click",readerBack\)/);
+ assert.match(ui,/recipe-reader-close"\)\.addEventListener\("click",closeReadRecipe\)/);
+ assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
+ assert.match(backend,/if path\.startswith\('\/api\/v2\/recipes'\):\s*if not user: raise Problem\(401, 'unauthorized'\)\s*admin\(user\)/);
+});
