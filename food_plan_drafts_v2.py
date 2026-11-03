@@ -19,8 +19,8 @@ def validate(value):
     clean=[]
     for meal in meals:
         if not isinstance(meal,dict) or not isinstance(meal.get("options"),list) or not 1<=len(meal["options"])<=30: raise ValueError("invalid_meal")
-        title=str(meal.get("name") or "").strip()
-        if not title or len(title)>120: raise ValueError("invalid_meal")
+        meal_title=str(meal.get("name") or "").strip()
+        if not meal_title or len(meal_title)>120: raise ValueError("invalid_meal")
         options=[]
         for option in meal["options"]:
             if not isinstance(option,dict) or not isinstance(option.get("foods"),list) or len(option["foods"])>100: raise ValueError("invalid_option")
@@ -39,7 +39,7 @@ def validate(value):
             title=str(option.get("title") or "").strip()
             if len(title)>160: raise ValueError("invalid_option_title")
             options.append({"title":title,"foods":foods,"notes":notes})
-        clean.append({"name":title,"options":options})
+        clean.append({"name":meal_title,"options":options})
     return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"meals":clean}
 
 def list_drafts(c):
