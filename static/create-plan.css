@@ -226,3 +226,11 @@
 .nutrition-list .note-row textarea{grid-column:2!important;width:100%!important;max-width:100%!important;color:#939397!important;resize:none!important;appearance:none!important;-webkit-appearance:none!important;overflow:hidden!important;min-height:34px!important;height:34px!important;box-shadow:none!important}
 .nutrition-list .note-row textarea::placeholder{color:#939397!important;opacity:.75}
 .nutrition-list .note-row .remove-row{grid-column:3!important}
+
+/* Center note text exactly like the food identity rows. */
+.nutrition-list .note-row{align-items:center!important}
+.nutrition-list .note-row textarea{align-self:center!important;display:block!important;box-sizing:border-box!important;height:32px!important;min-height:32px!important;line-height:22px!important;padding:5px 0!important;margin:0!important;vertical-align:middle!important}
+.nutrition-list .note-row .drag-handle,.nutrition-list .note-row .remove-row{align-self:center!important}
+/* Neutral selected option: distinguish state without introducing green. */
+.option-tabs button.current{background:#505158!important;color:#f5f5f7!important;border-color:transparent!important}
+.option-tabs button.current .macro-values b,.option-tabs button.current .macro-values small{color:#f5f5f7!important}
