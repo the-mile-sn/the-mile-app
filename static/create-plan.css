@@ -249,3 +249,18 @@
 .option-content .nutrition-list .food-row .food-actions{grid-column:5!important;justify-self:end!important}
 .meal-header .macro-values,.option-summary .macro-values,.nutrition-list .food-row .macro-values{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
 }
+
+/* Exact common macro rail, independent of food-note and action column widths. */
+@media(min-width:1121px){
+.meal{--nutrition-rail:38%;--nutrition-actions:76px}
+.meal-header,.option-content .option-summary,.option-content .nutrition-list .food-row{position:relative!important;box-sizing:border-box!important}
+.meal-header{display:flex!important;padding-right:calc(var(--nutrition-rail) + var(--nutrition-actions))!important;min-height:46px}
+.meal-header-macros,.option-content .option-summary>.macro-values,.option-content .nutrition-list .food-row>.macro-values{position:absolute!important;right:var(--nutrition-actions)!important;width:var(--nutrition-rail)!important;top:50%!important;transform:translateY(-50%)!important;min-width:0!important;max-width:none!important;margin:0!important}
+.meal-header .meal-toggle{position:absolute!important;right:0!important;top:50%!important;transform:translateY(-50%)!important}
+.option-content .option-summary{display:flex!important;align-items:center!important;padding-right:calc(var(--nutrition-rail) + var(--nutrition-actions))!important;min-height:76px}
+.option-content .nutrition-list .food-row{display:grid!important;grid-template-columns:22px minmax(0,1fr) minmax(90px,23%)!important;padding-right:calc(var(--nutrition-rail) + var(--nutrition-actions))!important;column-gap:9px!important}
+.option-content .nutrition-list .food-row .food-identity{grid-column:2!important}
+.option-content .nutrition-list .food-row .food-reference-note{grid-column:3!important}
+.option-content .nutrition-list .food-row .food-actions{position:absolute!important;right:0!important;top:50%!important;transform:translateY(-50%)!important}
+.meal-header .macro-values,.option-content .option-summary>.macro-values,.option-content .nutrition-list .food-row>.macro-values{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+}
