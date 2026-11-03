@@ -77,7 +77,7 @@ test("recipe library switches independently from dish catalogue and Planning",()
  assert.match(dashboard,/recipeLibraryPage\.hidden=false/);
  assert.match(dashboard,/window\.tmLoadRecipeLibrary\(\)/);
  assert.match(dashboard,/recipeLibraryBtn\.addEventListener\("click",openRecipeLibrary\)/);
- assert.match(html,/admin-recipes\.js\?v=12/);
+ assert.match(html,/admin-recipes\.js\?v=13/);
  assert.match(html,/admin-recipes\.css\?v=13/);
 });
 
@@ -108,11 +108,26 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(admin,/request\("\/api\/v2\/dishes\/recipe-links"\)/);
  assert.match(admin,/request\("\/api\/v2\/recipes"\)/);
  assert.match(admin,/dishRecipeLinks\[dish\.id\]/);
- assert.match(admin,/associationSearch\.addEventListener\("input",renderAssociationOptions\)/);
+ assert.match(admin,/associationSearch\.addEventListener\("input",renderAssociationSuggestions\)/);
+ assert.match(admin,/associationSearch\.setAttribute\("role","combobox"\)/);
+ assert.match(admin,/associationSuggestions\.setAttribute\("role","listbox"\)/);
+ assert.match(admin,/const selectAssociation=async item=>/);
+ assert.match(admin,/await persistAssociation\(item\.id\)/);
+ assert.match(admin,/clearAssociation\.addEventListener\("click",async/);
+ assert.doesNotMatch(admin,/saveAssociation\.textContent="Guardar associação"/);
+ assert.doesNotMatch(admin,/associationPicker\.setAttribute/);
  assert.match(admin,/request\("\/api\/v2\/dishes\/recipe-link",\{method:"PUT"/);
  assert.match(admin,/dish_id:dish\.id,recipe_id:recipeId/);
+ assert.match(admin,/if\(savingAssociation\)return/);
+ assert.match(admin,/associationSearch\.value=selectedRecipe\(\)\?\.name/);
+ assert.match(admin,/associationSearch\.addEventListener\("keydown",event=>/);
  assert.match(admin,/window\.tmOpenAdminDishRecipe\(id\)/);
  assert.match(recipes,/window\.tmOpenAdminDishRecipe=async id=>/);
+ assert.match(recipes,/window\.tmOpenAdminRecipeLibrary\(\);\s*await openReadRecipe\(id\)/);
+ assert.doesNotMatch(recipes,/await window\.tmOpenAdminRecipeLibrary\(\)/);
+ assert.match(recipes,/panel\.hidden=false;\s*panel\.scrollIntoView/);
+ assert.match(recipes,/const response=await request\("\/api\/v2\/recipes\/"\+encodeURIComponent\(id\)\)/);
+ assert.match(recipes,/\$\("recipe-reader-content"\)\.replaceChildren\(\)/);
  assert.match(dashboard,/return loadPromise;/);
  assert.match(model,/def link_dish_recipe\(c, dish_id, recipe_id\):/);
  assert.match(model,/def list_dish_recipe_links\(c\):/);
@@ -123,8 +138,8 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(backend,/path\.startswith\('\/api\/v2\/dishes\/recipe-link'\)/);
  assert.match(style,/\.dish-recipe-association\{/);
  assert.match(style,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
- assert.match(html,/admin-recipes\.js\?v=12/);
+ assert.match(html,/admin-recipes\.js\?v=13/);
  assert.match(html,/admin-dashboard\.js\?v=33/);
- assert.match(html,/admin-microcycles\.js\?v=18234/);
- assert.match(html,/admin-microcycles\.css\?v=109/);
+ assert.match(html,/admin-microcycles\.js\?v=18235/);
+ assert.match(html,/admin-microcycles\.css\?v=110/);
 });
