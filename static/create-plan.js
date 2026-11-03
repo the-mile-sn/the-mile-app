@@ -19,7 +19,7 @@ function draw(){
     (open?'<div class="option-toolbar"><div class="option-tabs">'+m.options.map((_,oi)=>'<button class="'+(oi===option?"current":"")+'" data-option="'+oi+'">Opção '+(oi+1)+'</button>').join("")+'</div><button id="add-option">+ Adicionar opção</button></div>'+
     '<div class="option-summary"><div class="option-heading"><strong>Opção '+(option+1)+'</strong><input class="option-title" data-option-title maxlength="160" placeholder="Título da opção · Ex.: Ovos com pão" value="'+esc(o.title||'')+'"></div>'+macro(sum(o.foods))+'</div>'+
     '<div class="nutrition-list">'+notes+rows+'</div>'+
-    '<div class="food-add"><select id="food-picker" aria-label="Escolher alimento"><option value="">Selecionar alimento da biblioteca</option>'+foods.map(f=>'<option value="'+esc(f.id)+'">'+esc(f.display_name)+'</option>').join("")+'</select><input id="food-grams" type="number" min="0.1" max="100000" step="any" value="100" aria-label="Quantidade em gramas"><span class="unit">g</span><button id="add-food">+ Adicionar alimento</button></div>'+
+    '<div class="food-add"><div class="food-search"><input id="food-search-input" type="search" autocomplete="off" placeholder="Pesquisar alimento (ex.: carne)" aria-label="Pesquisar alimento da biblioteca"><div id="food-results" class="food-results" role="listbox" hidden></div></div>'<input id="food-grams" type="number" min="0.1" max="100000" step="any" value="100" aria-label="Quantidade em gramas"><span class="unit">g</span><button id="add-food">+ Adicionar alimento</button></div>'+
     '<div class="meal-controls"><button id="add-note">+ Adicionar nota</button><button id="add-meal-inline">+ Adicionar refeição</button></div>'+
     '<div class="meal-average"><strong>Média da refeição</strong>'+macro(average(m))+'</div>':'')+'</section>';
   }).join("");
@@ -30,7 +30,22 @@ function draw(){
   if(document.querySelector("[data-option-title]"))document.querySelector("[data-option-title]").oninput=e=>{plan.meals[active].options[option].title=e.target.value};
   document.querySelectorAll("[data-note]").forEach(el=>el.oninput=()=>{plan.meals[active].options[option].notes[Number(el.dataset.note)]=el.value});
   document.querySelectorAll("[data-remove-note]").forEach(b=>b.onclick=()=>{plan.meals[active].options[option].notes.splice(Number(b.dataset.removeNote),1);draw()});
-  if($("add-food"))$("add-food").onclick=()=>{const id=$("food-picker").value,grams=Number($("food-grams").value);if(!id||!Number.isFinite(grams)||grams<=0||grams>100000){status("Seleciona um alimento e uma quantidade válida.");return}plan.meals[active].options[option].foods.push({id,grams});draw()};
+  let selectedFoodId="";const search=$("food-search-input"),results=$("food-results");
+  if(search&&results){
+    const norm=v=>String(v||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
+    const renderMatches=()=>{
+      const q=norm(search.value.trim());selectedFoodId="";
+      if(!q){results.hidden=true;results.innerHTML="";return}
+      const matches=foods.filter(f=>norm(f.display_name).includes(q)).slice(0,60);
+      results.innerHTML=matches.length?matches.map(f=>'<button type="button" class="food-result" data-food-id="'+esc(f.id)+'">'+esc(f.display_name)+'</button>').join(""):'<div class="food-no-results">Sem resultados</div>';
+      results.hidden=false;
+      results.querySelectorAll("[data-food-id]").forEach(b=>b.onclick=()=>{selectedFoodId=b.dataset.foodId;search.value=foods.find(f=>f.id===selectedFoodId)?.display_name||"";results.hidden=true});
+    };
+    search.oninput=renderMatches;
+    search.onfocus=()=>{if(search.value&&!selectedFoodId)renderMatches()};
+    search.onkeydown=e=>{if(e.key==="Escape")results.hidden=true;if(e.key==="Enter"){const first=results.querySelector("[data-food-id]");if(first&&!results.hidden){e.preventDefault();first.click()}}};
+  }
+  if($("add-food"))$("add-food").onclick=()=>{const id=selectedFoodId,grams=Number($("food-grams").value);if(!id||!Number.isFinite(grams)||grams<=0||grams>100000){status("Seleciona um alimento e uma quantidade válida.");return}plan.meals[active].options[option].foods.push({id,grams});draw()};
   if($("add-option"))$("add-option").onclick=()=>{plan.meals[active].options.push({title:"",foods:[],notes:[]});option=plan.meals[active].options.length-1;draw()};
   if($("add-note"))$("add-note").onclick=()=>{const o=plan.meals[active].options[option];o.notes=o.notes||[];o.notes.push("");draw();const fields=document.querySelectorAll("[data-note]");fields[fields.length-1]?.focus()};
   if($("add-meal-inline"))$("add-meal-inline").onclick=addMeal;
