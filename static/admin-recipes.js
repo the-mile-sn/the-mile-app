@@ -54,6 +54,9 @@
    }
    const actions=node("td","recipe-row-actions");
    actions.append(button("Editar",()=>openRecipe(r.id)));
+   const remove=button("Eliminar",()=>deleteRecipe(r),"recipe-delete");
+   remove.setAttribute("aria-label","Eliminar receita "+r.name);
+   actions.append(remove);
    tr.append(actions);tbody.append(tr);
   }
   table.append(tbody);const scroll=node("div","recipe-table-scroll");scroll.append(table);host.append(scroll);
@@ -185,6 +188,18 @@
    if(current.photo_key)photo.src="/api/v2/recipes/image/"+encodeURIComponent(current.id)+"?v="+Date.now();
   }catch(error){editorMessage("Não foi possível guardar: "+error.message);}
   finally{busy=false;$("recipe-save").disabled=false;}
+ }
+ async function deleteRecipe(recipe){
+  if(busy)return;
+  if(!window.confirm("Eliminar definitivamente a receita «"+recipe.name+"» e a respetiva fotografia? Esta ação não pode ser desfeita."))return;
+  busy=true;alertMessage("A eliminar receita…");
+  try{
+   await request("/api/v2/recipes/"+encodeURIComponent(recipe.id),{method:"DELETE"});
+   if(openedId===recipe.id)closeEditor();
+   await loadLibrary();
+   alertMessage("Receita eliminada.");
+  }catch(error){alertMessage("Não foi possível eliminar a receita: "+error.message);}
+  finally{busy=false;}
  }
  async function loadLibrary(){
   const [cat,data]=await Promise.all([request("/api/v2/recipes/categories"),request("/api/v2/recipes")]);
