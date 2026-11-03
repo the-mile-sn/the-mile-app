@@ -82,7 +82,7 @@ test("PDF importer remains a review-first admin workflow",()=>{
  assert.match(ui,/recipe-pdf-results/);
  assert.match(ui,/preview.*PDF|pdf\/preview/);
  assert.match(ui,/pdf\/import/);
- assert.match(ui,/status:"draft"|recipe_type:"standard"/);
+ assert.match(ui,/recipe\.recipe_type="standard"/);
  assert.match(backend,/recipe_pdf_import_v2\.preview_pdf/);
  assert.match(backend,/recipe_pdf_import_v2\.commit_drafts/);
  assert.doesNotMatch(ui,/v2_weekly_menus|v2_plan_publications/);
