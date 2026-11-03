@@ -19,7 +19,7 @@ function draw(){
     (open?'<div class="option-toolbar"><div class="option-tabs">'+m.options.map((_,oi)=>'<button class="'+(oi===option?"current":"")+'" data-option="'+oi+'">Opção '+(oi+1)+'</button>').join("")+'</div><button id="add-option">+ Adicionar opção</button></div>'+
     '<div class="option-summary"><div class="option-heading"><strong>Opção '+(option+1)+'</strong><input class="option-title" data-option-title maxlength="160" placeholder="Título da opção · Ex.: Ovos com pão" value="'+esc(o.title||'')+'"></div>'+macro(sum(o.foods))+'</div>'+
     '<div class="nutrition-list">'+notes+rows+'</div>'+
-    '<div class="food-add"><div class="food-search"><input id="food-search-input" type="search" autocomplete="off" placeholder="Pesquisar alimento (ex.: carne)" aria-label="Pesquisar alimento da biblioteca"><div id="food-results" class="food-results" role="listbox" hidden></div></div>'<input id="food-grams" type="number" min="0.1" max="100000" step="any" value="100" aria-label="Quantidade em gramas"><span class="unit">g</span><button id="add-food">+ Adicionar alimento</button></div>'+
+    '<div class="food-add"><div class="food-search"><input id="food-search-input" type="search" autocomplete="off" placeholder="Pesquisar alimento (ex.: carne)" aria-label="Pesquisar alimento da biblioteca"><div id="food-results" class="food-results" role="listbox" hidden></div></div><input id="food-grams" type="number" min="0.1" max="100000" step="any" value="100" aria-label="Quantidade em gramas"><span class="unit">g</span><button id="add-food">+ Adicionar alimento</button></div>'+
     '<div class="meal-controls"><button id="add-note">+ Adicionar nota</button><button id="add-meal-inline">+ Adicionar refeição</button></div>'+
     '<div class="meal-average"><strong>Média da refeição</strong>'+macro(average(m))+'</div>':'')+'</section>';
   }).join("");
@@ -32,7 +32,7 @@ function draw(){
   document.querySelectorAll("[data-remove-note]").forEach(b=>b.onclick=()=>{plan.meals[active].options[option].notes.splice(Number(b.dataset.removeNote),1);draw()});
   let selectedFoodId="";const search=$("food-search-input"),results=$("food-results");
   if(search&&results){
-    const norm=v=>String(v||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
+    const norm=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     const renderMatches=()=>{
       const q=norm(search.value.trim());selectedFoodId="";
       if(!q){results.hidden=true;results.innerHTML="";return}
