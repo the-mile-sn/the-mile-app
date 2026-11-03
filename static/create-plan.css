@@ -124,3 +124,13 @@
 .plan-meta.plan-actions #assign-player,.actions #add-meal{background:#f4f5f7!important;color:#1d2025!important;border:0!important;border-radius:10px!important;font-weight:600}
 .actions #save-plan{background:#3f526f!important;color:#fff!important;border:0!important;border-radius:10px!important;font-weight:600}
 @media(max-width:760px){.planhead.plan-selectors{grid-template-columns:1fr;gap:9px}.plan-meta.plan-actions{justify-content:flex-start;flex-wrap:wrap}}
+
+/* Final header and action hierarchy. */
+.planhead.plan-selectors{margin-top:22px;margin-bottom:18px}
+.planhead.plan-selectors select{border-radius:17px!important;background:var(--lib-panel-2)!important;color:var(--lib-fg)!important;min-height:54px;height:54px;padding:0 17px}
+.actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap}
+.actions #assign-player{background:#f4f5f7!important;color:#1d2025!important;font-weight:650;border-radius:10px}
+.actions #delete-plan{background:#9f4a3826!important;color:#e79b87!important;border-radius:10px}
+.actions #delete-plan:disabled{opacity:.4;cursor:not-allowed}
+.actions #new-plan{margin-right:auto}
+.meal-header-macros .macro-values{margin-top:0}
