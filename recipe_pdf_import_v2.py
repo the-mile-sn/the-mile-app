@@ -4,6 +4,7 @@ Never exposes nutritional figures or writes to meal prescriptions.
 """
 import base64
 import io
+import json
 import re
 import secrets
 import time
@@ -210,63 +211,114 @@ def preview_pdf(raw,filename):
         raise ValueError("invalid_pdf") from None
 
 
-def commit_drafts(c,category_id,filename,entries,store_image):
-    """Validate the review payload and commit only new drafts, atomically."""
+def commit_drafts(c, category_id, filename, entries, store_image):
+    """Validate every reviewed draft and cross-recipe link before any write."""
     import recipe_library_v2
 
-    if not isinstance(category_id,str) or not c.execute(
-        "SELECT id FROM v2_recipe_categories WHERE id=?",(category_id,)).fetchone():
+    if not isinstance(category_id, str) or not c.execute(
+            "SELECT id FROM v2_recipe_categories WHERE id=?", (category_id,)).fetchone():
         raise ValueError("invalid_recipe_category")
-    if not isinstance(entries,list) or not 1<=len(entries)<=12:
+    if not isinstance(entries, list) or not 1 <= len(entries) <= 12:
         raise ValueError("invalid_recipe_import")
-    if not isinstance(filename,str) or not filename.strip():
+    if not isinstance(filename, str) or not filename.strip():
         raise ValueError("invalid_recipe_import")
-    filename=" ".join(filename.strip().split())[:180]
-    existing={normal(r["name"]) for r in c.execute(
-        "SELECT name FROM v2_recipe_library WHERE category_id=?",(category_id,)).fetchall()}
-    created=[];skipped=[];now=int(time.time())
+    filename = " ".join(filename.strip().split())[:180]
+    existing = {normal(r["name"]) for r in c.execute(
+        "SELECT name FROM v2_recipe_library WHERE category_id=?", (category_id,)).fetchall()}
+    created = []
+    skipped = []
+    now = int(time.time())
+    candidates = []
+    page_ids = {}
+
+    # First pass allocates stable IDs, including for recipes appearing later
+    # in the document. Duplicate/unchecked pages cannot be link targets.
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise ValueError("invalid_recipe_import")
+        name, page = entry.get("name", ""), entry.get("page")
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 180:
+            raise ValueError("invalid_recipe_import")
+        if isinstance(page, bool) or not isinstance(page, int) or not 1 <= page <= MAX_PAGES:
+            raise ValueError("invalid_recipe_import")
+        if page in page_ids or any(other["page"] == page for other in candidates):
+            raise ValueError("invalid_recipe_import")
+        if normal(name) in existing:
+            skipped.append({"name": name, "reason": "duplicate_name"})
+            continue
+        rid = secrets.token_hex(12)
+        candidates.append({"id": rid, "entry": entry, "page": page})
+        page_ids[page] = rid
+        existing.add(normal(name))
+
+    prepared = []
+    replacements = {}
+    for item in candidates:
+        entry = item["entry"]
+        sections = entry.get("sections", [])
+        if not isinstance(sections, list):
+            raise ValueError("invalid_recipe_import")
+        # Do not mutate the submitted preview while resolving page references.
+        sections = json.loads(json.dumps(sections))
+        for section in sections:
+            if not isinstance(section, dict):
+                raise ValueError("invalid_recipe_import")
+            ingredients = section.get("ingredients", [])
+            if not isinstance(ingredients, list):
+                raise ValueError("invalid_recipe_import")
+            for ingredient in ingredients:
+                if not isinstance(ingredient, dict):
+                    raise ValueError("invalid_recipe_import")
+                page = ingredient.pop("recipe_ref_page", None)
+                if page is not None:
+                    if isinstance(page, bool) or not isinstance(page, int) or page not in page_ids:
+                        raise ValueError("invalid_recipe_reference")
+                    if ingredient.get("recipe_ref_id"):
+                        raise ValueError("invalid_recipe_reference")
+                    ingredient["recipe_ref_id"] = page_ids[page]
+        fields = recipe_library_v2._validated(c, {
+            "category_id": category_id,
+            "name": entry["name"],
+            "recipe_type": entry.get("recipe_type", "standard"),
+            "status": "draft",
+            "servings": entry.get("servings", 1),
+            "sections": sections,
+            "steps": entry.get("steps", []),
+            "notes": entry.get("notes", "")
+        }, allow_ref_ids=page_ids.values())
+        replacements[item["id"]] = json.loads(fields[5])
+        image_b64 = entry.get("photo_webp")
+        data = None
+        if image_b64:
+            if not isinstance(image_b64, str) or len(image_b64) > 250000:
+                raise ValueError("invalid_recipe_image")
+            try:
+                data = base64.b64decode(image_b64, validate=True)
+                if not 0 < len(data) <= MAX_PHOTO_BYTES:
+                    raise ValueError()
+                with Image.open(io.BytesIO(data)) as img:
+                    if img.format != "WEBP" or img.width * img.height > 12000000:
+                        raise ValueError()
+                    img.verify()
+            except (OSError, ValueError, base64.binascii.Error):
+                raise ValueError("invalid_recipe_image") from None
+        prepared.append((item, fields, data))
+    recipe_library_v2._assert_reference_graph(c, replacements)
+
     try:
-        for entry in entries:
-            if not isinstance(entry,dict): raise ValueError("invalid_recipe_import")
-            name=entry.get("name","")
-            page=entry.get("page")
-            if not isinstance(name,str) or not name.strip() or len(name.strip())>180:
-                raise ValueError("invalid_recipe_import")
-            if isinstance(page,bool) or not isinstance(page,int) or not 1<=page<=MAX_PAGES:
-                raise ValueError("invalid_recipe_import")
-            if normal(name) in existing:
-                skipped.append({"name":name,"reason":"duplicate_name"})
-                continue
-            fields=recipe_library_v2._validated(c,{
-                "category_id":category_id,"name":name,"recipe_type":entry.get("recipe_type","standard"),
-                "status":"draft","servings":entry.get("servings",1),
-                "sections":entry.get("sections",[]),"steps":entry.get("steps",[]),
-                "notes":entry.get("notes","")})
-            image_b64=entry.get("photo_webp")
-            data=None
-            if image_b64:
-                if not isinstance(image_b64,str) or len(image_b64)>250000:
-                    raise ValueError("invalid_recipe_image")
-                try:
-                    data=base64.b64decode(image_b64,validate=True)
-                    if not 0<len(data)<=MAX_PHOTO_BYTES: raise ValueError()
-                    with Image.open(io.BytesIO(data)) as img:
-                        if img.format!="WEBP" or img.width*img.height>12000000: raise ValueError()
-                        img.verify()
-                except (OSError,ValueError,base64.binascii.Error):
-                    raise ValueError("invalid_recipe_image") from None
-            rid=secrets.token_hex(12)
-            photo_key=recipe_library_v2.photo_key(rid) if data else None
+        for item, fields, data in prepared:
+            rid = item["id"]
+            photo_key = recipe_library_v2.photo_key(rid) if data else None
             c.execute("""INSERT INTO v2_recipe_library
                 (id,category_id,name,recipe_type,status,servings,sections_json,steps_json,notes,
                  photo_key,source_document,source_page,created_at,updated_at)
                 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (rid,*fields,photo_key,filename,page,now,now))
-            if data: store_image(c,photo_key,data)
-            created.append({"id":rid,"name":name.strip(),"page":page})
-            existing.add(normal(name))
+                (rid, *fields, photo_key, filename, item["page"], now, now))
+            if data:
+                store_image(c, photo_key, data)
+            created.append({"id": rid, "name":item["entry"]["name"].strip(), "page":item["page"]})
         c.commit()
     except Exception:
         c.rollback()
         raise
-    return {"created":created,"skipped":skipped}
+    return {"created": created, "skipped": skipped}
