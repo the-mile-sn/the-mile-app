@@ -1405,3 +1405,42 @@ html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link:not(:disab
 html[data-admin-theme="light"] #tm-menu-recipes-page .dish-catalog-export{border-color:#d2dbe5;color:#2c3e52}
 html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-scroll{border-color:#dbe2eb}
 @media(max-width:700px){#tm-menu-recipes-page .dish-catalog-filters{grid-template-columns:1fr}#tm-menu-recipes-page .dish-table-editor{grid-template-columns:1fr}}
+
+/* Simplified dish library: search/filter live in the table's top control row. */
+#tm-menu-recipes-page .dish-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#tm-menu-recipes-page .menu-library-card{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin:0!important}
+#tm-menu-recipes-page .dish-catalog-surface{width:100%;min-width:0}
+#tm-menu-recipes-page .dish-catalog-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(165px,.9fr) auto;align-items:end;gap:14px;margin:0 0 14px!important}
+#tm-menu-recipes-page .dish-catalog-filters label{margin:0!important;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left}
+#tm-menu-recipes-page .dish-catalog-filters input,#tm-menu-recipes-page .dish-catalog-filters select{height:43px;min-height:43px;font-size:13px;border-radius:9px}
+#tm-menu-recipes-page .dish-catalog-filters .dish-catalog-add{height:43px;min-height:43px!important;padding:0 18px!important;border-radius:9px!important;background:#283d56!important;color:#fff!important;border:1px solid #283d56!important;font-weight:600;white-space:nowrap}
+#tm-menu-recipes-page .dish-catalog-filters .dish-catalog-add:hover{background:#344d68!important}
+#tm-menu-recipes-page #dish-catalog-feedback:empty{display:none}
+#tm-menu-recipes-page #dish-editor-list{margin-top:0}
+#tm-menu-recipes-page .dish-table-scroll{border-radius:12px}
+#tm-menu-recipes-page .dish-library-table,#tm-menu-recipes-page .dish-library-table th,#tm-menu-recipes-page .dish-library-table td{text-align:left!important}
+#tm-menu-recipes-page .dish-library-table .dish-table-actions{text-align:right!important}
+#tm-menu-recipes-page .dish-library-table th{vertical-align:middle}
+#tm-menu-recipes-page .menu-create-section{padding:20px!important;margin:0 0 16px!important;border:1px solid #41454f!important;border-radius:13px!important;background:rgba(120,130,145,.045)!important}
+#tm-menu-recipes-page .menu-create-section[hidden]{display:none!important}
+#tm-menu-recipes-page .menu-create-section h3{font-size:15px;margin:0 0 17px}
+#tm-menu-recipes-page .dish-new{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+#tm-menu-recipes-page .dish-new>label{display:flex;flex-direction:column;align-items:stretch;gap:7px;font-size:12px;min-width:0;margin:0}
+#tm-menu-recipes-page .dish-new>label input,#tm-menu-recipes-page .dish-new>label select{min-width:0;width:100%;height:42px;box-sizing:border-box}
+#tm-menu-recipes-page .dish-required{color:#cd665a}
+#tm-menu-recipes-page .dish-photo-label{position:relative}
+#tm-menu-recipes-page .dish-photo-dropzone{min-height:66px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border:1px dashed #8e9bad;border-radius:10px;padding:10px 12px;color:#aab3c0;text-align:center;cursor:pointer;font-size:11px}
+#tm-menu-recipes-page .dish-photo-dropzone svg{width:23px;height:23px;flex:none}
+#tm-menu-recipes-page .dish-photo-dropzone.is-dragging{border-color:#699bcb;background:rgba(100,150,200,.10)}
+#tm-menu-recipes-page .dish-photo-input{position:absolute;bottom:0;left:0;width:100%!important;height:66px!important;min-height:0!important;opacity:0;cursor:pointer;z-index:1}
+#tm-menu-recipes-page .dish-photo-input:focus-visible+.dish-photo-dropzone{outline:2px solid #628bb4}
+#tm-menu-recipes-page .dish-form-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:1px}
+#tm-menu-recipes-page .dish-form-actions #dish-new-feedback{margin-right:auto;font-size:12px}
+#tm-menu-recipes-page .dish-form-actions button{min-height:38px!important;padding:8px 15px!important;border-radius:9px!important}
+#tm-menu-recipes-page .dish-form-actions .dish-add-save{background:#283d56!important;border-color:#283d56!important;color:#fff!important;font-weight:600}
+#tm-menu-recipes-page .dish-form-actions .dish-add-cancel{background:transparent}
+html[data-admin-theme="light"] #tm-menu-recipes-page .menu-create-section{border-color:#d9dfe7!important;background:#f7f8fa!important}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-photo-dropzone{color:#506179;border-color:#c5d0dd}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-photo-dropzone.is-dragging{background:#e5eff9}
+@media(max-width:900px){#tm-menu-recipes-page .dish-new{grid-template-columns:repeat(2,minmax(0,1fr))}#tm-menu-recipes-page .dish-catalog-filters{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto}}
+@media(max-width:620px){#tm-menu-recipes-page .dish-new,#tm-menu-recipes-page .dish-catalog-filters{grid-template-columns:1fr}#tm-menu-recipes-page .dish-form-actions{flex-wrap:wrap}#tm-menu-recipes-page .dish-catalog-add{width:100%}}
