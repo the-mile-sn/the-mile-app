@@ -1553,3 +1553,38 @@ html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestion:foc
 html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestion-empty{
  color:#617184;
 }
+
+/* Compact individual recipe cards in the dish editor. */
+#tm-menu-recipes-page .dish-recipe-association-list{
+ grid-column:1/-1;display:grid;gap:9px;width:100%;min-width:0;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;
+ gap:12px;min-width:0;width:100%;box-sizing:border-box;
+ padding:10px 12px;border:1px solid #535d69;border-radius:11px;
+ background:rgba(255,255,255,.035);
+}
+#tm-menu-recipes-page .dish-recipe-card-name{
+ flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;font-weight:600;
+}
+#tm-menu-recipes-page .dish-recipe-card-buttons{
+ display:flex;align-items:center;flex-shrink:0;gap:7px;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions .dish-recipe-card-buttons button{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:36px;min-width:36px;height:36px;min-height:36px!important;
+ padding:0!important;border-radius:9px!important;
+}
+#tm-menu-recipes-page .dish-recipe-card-buttons button:focus-visible{
+ outline:2px solid #7aa5df;outline-offset:2px;
+}
+#tm-menu-recipes-page .dish-recipe-association-state:empty{display:none;}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-actions{
+ background:#fff;border-color:#d6dfe9;
+}
+@media(max-width:540px){
+ #tm-menu-recipes-page .dish-recipe-association-actions{padding:8px;gap:7px;}
+ #tm-menu-recipes-page .dish-recipe-association-actions .dish-recipe-card-buttons button{
+  width:34px;min-width:34px;height:34px;min-height:34px!important;
+ }
+}
