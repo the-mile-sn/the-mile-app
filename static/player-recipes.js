@@ -133,8 +133,9 @@
    parent.append(ingredients);
   }
  }
- function detail(recipe,includePhoto=true){
+ function detail(recipe,includePhoto=true,standalone=true){
   const root=node("div","recipe-detail");
+  if(standalone)root.classList.add("recipe-detail-standalone");
   if(includePhoto&&recipe.has_photo)root.append(thumb(recipe.id,true));
   root.append(node("h2","",recipe.name||""));
   root.append(node("div","recipe-servings",
@@ -158,7 +159,7 @@
   try{
    const response=await request("/api/v2/player/recipes/"+encodeURIComponent(recipeId));
    if(epoch!==current()||!shouldRender())return;
-   root.replaceChildren(detail(response.recipe));
+   root.replaceChildren(detail(response.recipe,true,!root.closest(".recipe-accordion")));
   }catch(err){
    if(epoch===current()&&shouldRender())root.replaceChildren(node("p","recipe-message","Receita indisponível."));
   }
@@ -178,7 +179,7 @@
  async function openDish(dishId,dishName,dishPhotoUrl){
   returnScroll=position();
   mode="menus";screen={kind:"dish",dishId,dishName};
-  const render=++token;syncMode();message("A carregar receitas…");
+  const render=++token;syncMode();scrollTop();message("A carregar receitas…");
   try{
    const data=await request("/api/v2/player/dish-recipes/"+encodeURIComponent(dishId));
    if(render!==token||screen.kind!=="dish")return;
