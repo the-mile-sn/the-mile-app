@@ -1772,7 +1772,7 @@ function renderDishEditor(){
     field.append(input);editor.append(field);inputs.push(input);
    }
    const association=document.createElement("section");association.className="dish-recipe-association";
-   const associationHeading=document.createElement("h4");associationHeading.textContent="Receita associada";
+   const associationHeading=document.createElement("h4");associationHeading.textContent="Receitas associadas";
    const associationHint=document.createElement("p");associationHint.className="dish-recipe-association-hint";
    associationHint.textContent="Pesquisa e seleciona uma receita para associar automaticamente a este prato.";
    const associationSearchLabel=document.createElement("label");associationSearchLabel.className="dish-recipe-combobox-label";
@@ -1794,57 +1794,62 @@ function renderDishEditor(){
    associationSearchLabel.append(associationCombo);
    const associationState=document.createElement("p");associationState.className="dish-recipe-association-state";
    associationState.setAttribute("role","status");
-   const associationActions=document.createElement("div");associationActions.className="dish-recipe-association-actions";
-   const clearAssociation=document.createElement("button");clearAssociation.type="button";
-   clearAssociation.textContent="Desassociar";clearAssociation.className="dish-recipe-association-clear";
-   const seeAssociation=document.createElement("button");seeAssociation.type="button";
-   seeAssociation.textContent="Ver receita";seeAssociation.className="dish-recipe-association-view";
-   let savingAssociation=false,associationSearchFocused=false;
-   const selectedRecipe=()=>dishRecipeChoices.find(item=>item.id===dishRecipeLinks[dish.id]?.recipe_id);
+   const associationList=document.createElement("div");associationList.className="dish-recipe-association-list";
+   let savingAssociation=false;
+   const linkedRecipes=()=>dishRecipeLinks[dish.id]?.recipes||[];
    const recipeLabel=item=>item?item.name+" · "+item.category+(item.status==="draft"?" · Rascunho":""):"";
    const paintAssociationState=()=>{
-    const linked=dishRecipeLinks[dish.id];
-    const selected=selectedRecipe();
-    associationState.textContent=linked?.recipe_id?
-      "Associada: "+(selected?.name||linked.recipe_name||"Receita")+" · "+(selected?.status==="draft"?"Rascunho":"Publicada"):
-      "Sem receita associada.";
-    clearAssociation.hidden=!linked?.recipe_id;
-    seeAssociation.hidden=!linked?.recipe_id;
+    const linked=linkedRecipes();
+    associationList.replaceChildren();
+    associationState.textContent=linked.length?linked.length+" receita(s) associada(s).":"Sem receitas associadas.";
+    for(const item of linked){
+     const line=document.createElement("div");line.className="dish-recipe-association-actions";
+     const name=document.createElement("span");name.textContent=item.recipe_name+(item.recipe_status==="draft"?" · Rascunho":"");
+     const view=document.createElement("button");view.type="button";view.textContent="Ver receita";
+     view.className="dish-recipe-association-view";
+     view.addEventListener("click",async()=>{
+      if(typeof window.tmOpenAdminDishRecipe!=="function"){
+       associationState.textContent="A vista de receitas está indisponível.";return;
+      }
+      view.disabled=true;
+      try{await window.tmOpenAdminDishRecipe(item.recipe_id);}
+      catch(error){associationState.textContent="Não foi possível abrir: "+error.message;}
+      finally{view.disabled=false;}
+     });
+     const remove=document.createElement("button");remove.type="button";
+     remove.textContent="Desassociar";remove.className="dish-recipe-association-clear";
+     remove.addEventListener("click",()=>persistAssociation(item.recipe_id,"DELETE"));
+     line.append(name,view,remove);associationList.append(line);
+    }
+    const rowTag=tr.querySelector(".dish-recipe-indicator");
+    if(rowTag){rowTag.hidden=!linked.length;rowTag.textContent=linked.length?linked.length+" receita(s) associada(s)":"";}
    };
    const closeAssociationSuggestions=()=>{
     associationSuggestions.hidden=true;associationSearch.setAttribute("aria-expanded","false");
    };
    const associationMatches=()=>dishRecipeChoices.filter(item=>{
     const q=normalizedDishText(associationSearch.value.trim());
-    return !q||normalizedDishText(item.name+" "+item.category).includes(q);
+    return !linkedRecipes().some(link=>link.recipe_id===item.id)
+     &&(!q||normalizedDishText(item.name+" "+item.category).includes(q));
    }).slice(0,25);
-   const persistAssociation=async recipeId=>{
+   const persistAssociation=async(recipeId,method="POST")=>{
     if(savingAssociation)return;
-    savingAssociation=true;associationSearch.disabled=true;clearAssociation.disabled=true;
-    associationState.textContent=recipeId?"A associar receita…":"A remover associação…";
+    savingAssociation=true;associationSearch.disabled=true;
+    associationState.textContent=method==="POST"?"A associar receita…":"A remover associação…";
     try{
-     const result=await request("/api/v2/dishes/recipe-link",{method:"PUT",
+     const result=await request("/api/v2/dishes/recipe-link-item",{method,
        body:JSON.stringify({dish_id:dish.id,recipe_id:recipeId})});
      dishRecipeLinks[dish.id]=result.link;
-     const chosen=selectedRecipe();
-     associationSearch.value=chosen?.name||result.link?.recipe_name||"";
+     associationSearch.value="";
      paintAssociationState();
-     const rowTag=tr.querySelector(".dish-recipe-indicator");
-     if(rowTag){rowTag.hidden=!result.link?.recipe_id;
-      rowTag.textContent=result.link?.recipe_id?"Receita associada":"";}
-     $("dish-catalog-feedback").textContent=recipeId?"Receita associada ao prato.":"Associação removida do prato.";
+     $("dish-catalog-feedback").textContent=method==="POST"?"Receita associada ao prato.":"Associação removida do prato.";
     }catch(error){
-     associationSearch.value=selectedRecipe()?.name||dishRecipeLinks[dish.id]?.recipe_name||"";
      paintAssociationState();
      associationState.textContent="Não foi possível guardar: "+error.message;
-    }finally{
-     savingAssociation=false;associationSearch.disabled=false;clearAssociation.disabled=false;
-    }
+    }finally{savingAssociation=false;associationSearch.disabled=false;}
    };
    const selectAssociation=async item=>{
-    closeAssociationSuggestions();
-    associationSearchFocused=false;
-    associationSearch.value=item.name;
+    closeAssociationSuggestions();associationSearch.value="";
     await persistAssociation(item.id);
    };
    const renderAssociationSuggestions=()=>{
@@ -1860,14 +1865,11 @@ function renderDishEditor(){
     }
     if(!items.length){
      const empty=document.createElement("div");empty.className="dish-recipe-suggestion-empty";
-     empty.textContent="Nenhuma receita encontrada.";associationSuggestions.append(empty);
+     empty.textContent="Nenhuma receita disponível.";associationSuggestions.append(empty);
     }
     associationSuggestions.hidden=false;associationSearch.setAttribute("aria-expanded","true");
    };
-   associationSearch.addEventListener("focus",()=>{
-    associationSearchFocused=true;associationSearch.select();
-    associationSearch.value="";renderAssociationSuggestions();
-   });
+   associationSearch.addEventListener("focus",()=>{associationSearch.value="";renderAssociationSuggestions();});
    associationSearch.addEventListener("input",renderAssociationSuggestions);
    associationSearch.addEventListener("keydown",event=>{
     if(event.key==="Escape"){closeAssociationSuggestions();associationSearch.blur();}
@@ -1875,49 +1877,25 @@ function renderDishEditor(){
      event.preventDefault();associationSuggestions.querySelector("button")?.focus();
     }
     if(event.key==="Enter"&&!associationSuggestions.hidden){
-     event.preventDefault();const item=associationMatches()[0];
-     if(item)selectAssociation(item);
+     event.preventDefault();const item=associationMatches()[0];if(item)selectAssociation(item);
     }
    });
    associationSuggestions.addEventListener("keydown",event=>{
     if(event.key==="Escape"){closeAssociationSuggestions();associationSearch.focus();}
     if(event.key==="ArrowDown"||event.key==="ArrowUp"){
-     event.preventDefault();
-     const choices=[...associationSuggestions.querySelectorAll("button")];
+     event.preventDefault();const choices=[...associationSuggestions.querySelectorAll("button")];
      const index=choices.indexOf(document.activeElement);
-     const next=event.key==="ArrowDown"?index+1:index-1;
-     (choices[(next+choices.length)%choices.length]||associationSearch).focus();
+     (choices[(index+(event.key==="ArrowDown"?1:-1)+choices.length)%choices.length]||associationSearch).focus();
     }
    });
    associationSearch.addEventListener("blur",()=>{
-    associationSearchFocused=false;
-    setTimeout(()=>{
-     if(!associationCombo.contains(document.activeElement)){
-      closeAssociationSuggestions();
-      associationSearch.value=selectedRecipe()?.name||dishRecipeLinks[dish.id]?.recipe_name||"";
-     }
-    },125);
+    setTimeout(()=>{if(!associationCombo.contains(document.activeElement)){
+     closeAssociationSuggestions();associationSearch.value="";
+    }},125);
    });
-   clearAssociation.addEventListener("click",async()=>{
-    closeAssociationSuggestions();
-    await persistAssociation(null);
-   });
-   seeAssociation.addEventListener("click",async()=>{
-    const id=dishRecipeLinks[dish.id]?.recipe_id;
-    if(!id)return;
-    if(typeof window.tmOpenAdminDishRecipe!=="function"){
-     associationState.textContent="A vista de receitas está indisponível.";return;
-    }
-    seeAssociation.disabled=true;
-    try{await window.tmOpenAdminDishRecipe(id);}
-    catch(error){associationState.textContent="Não foi possível abrir: "+error.message;}
-    finally{seeAssociation.disabled=false;}
-   });
-   associationActions.append(clearAssociation,seeAssociation);
    association.append(associationHeading,associationHint,associationSearchLabel,
-    associationActions,associationState);
+    associationList,associationState);
    editor.append(association);
-   associationSearch.value=selectedRecipe()?.name||dishRecipeLinks[dish.id]?.recipe_name||"";
    paintAssociationState();
    const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";
    save.onclick=async()=>{save.disabled=true;
