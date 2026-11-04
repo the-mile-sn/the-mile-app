@@ -21,5 +21,5 @@ jobs:
         run: python -m compileall -q app.py microcycles_v2.py player_recipes_v2.py test_player_recipes_v2.py
       - name: Test recipe IDs and permissions
         run: python -m unittest -v test_player_recipes_v2
-      - name: Check existing player API regression
-        run: python -m unittest -v test_app test_player_access_profile_bridge
+      - name: Check existing linked-player API regression
+        run: python -m unittest -v test_player_access_profile_bridge
