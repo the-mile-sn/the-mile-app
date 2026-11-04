@@ -106,3 +106,173 @@
 #menus .recipe-accordion .recipe-detail h3:first-of-type{
  margin-top:12px;
 }
+
+/* Recipe-only refinement: no extra cards, outlines or dividers in read-only content. */
+#menus .recipe-detail,
+#menus .recipe-detail-standalone{
+ background:transparent;
+ border:0;
+ box-shadow:none;
+ padding:0;
+ margin:0 0 28px;
+ border-radius:0;
+}
+#menus .recipe-identity{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:16px;
+ margin:2px 0 29px;
+ min-height:70px;
+}
+#menus .recipe-identity-copy{
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ flex:1 1 auto;
+ min-width:0;
+}
+#menus .recipe-identity h2{
+ margin:0 0 10px;
+ font-size:clamp(20px,5.3vw,23px);
+ font-weight:var(--mile-type-semibold,600);
+ line-height:1.24;
+ overflow-wrap:break-word;
+}
+#menus .recipe-identity .recipe-servings{
+ margin:0;
+ font-size:13px;
+ font-weight:var(--mile-type-regular,400);
+ color:#aaaab2;
+}
+#menus .recipe-detail-photo{
+ width:clamp(76px,23vw,92px);
+ height:clamp(76px,23vw,92px);
+ flex:0 0 auto;
+ object-fit:cover;
+ border-radius:15px;
+ display:block;
+}
+#menus .recipe-content-section{
+ margin:0 0 27px;
+ padding:0;
+ background:transparent;
+ border:0;
+ box-shadow:none;
+}
+#menus .recipe-content-section:last-child{margin-bottom:0;}
+#menus .recipe-content-section .recipe-section-title{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ margin:0 0 13px;
+ font-size:18px;
+ font-weight:var(--mile-type-semibold,600);
+ line-height:1.3;
+ color:#f4f4f7;
+}
+#menus .recipe-section-title .mile-icon,
+#menus .recipe-section-title .recipe-section-icon{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ width:22px;
+ height:22px;
+ flex:0 0 22px;
+ color:#c3c3ca;
+}
+#menus .recipe-section-title svg{width:100%;height:100%;display:block;}
+#menus .recipe-content-section .recipe-ingredient{
+ border:0;
+ padding:4px 0;
+ min-height:27px;
+ gap:12px;
+}
+#menus .recipe-content-section .recipe-ingredient:last-child{border:0;}
+#menus .recipe-content-section .recipe-step{
+ margin:0 0 12px;
+ line-height:1.52;
+}
+#menus .recipe-content-section .recipe-step:last-child{margin-bottom:0;}
+#menus .recipe-content-section .recipe-notes{
+ margin:0;
+ color:#d5d5dc;
+}
+/* Multi-recipe cards mirror the filled, borderless Assessment surfaces. */
+#menus details.recipe-accordion{
+ display:block;
+ padding:0;
+ margin:0 0 9px;
+ background:#242429;
+ border:0;
+ box-shadow:none;
+ border-radius:15px;
+ overflow:hidden;
+}
+#menus details.recipe-accordion>summary{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ width:100%;
+ min-height:65px;
+ height:auto;
+ padding:13px 16px;
+ gap:14px;
+ background:transparent;
+ border:0;
+ color:inherit;
+ list-style:none;
+ cursor:pointer;
+}
+#menus details.recipe-accordion>summary::-webkit-details-marker{display:none;}
+#menus .recipe-accordion-label{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;}
+#menus .recipe-accordion-label strong{
+ font-size:15px;
+ font-weight:var(--mile-type-medium,500);
+ color:#f1f1f4;
+ line-height:1.3;
+}
+#menus .recipe-accordion-label small{
+ font-size:12px;
+ font-weight:var(--mile-type-regular,400);
+ color:#aaaab2;
+ line-height:1.25;
+}
+#menus details.recipe-accordion>summary:after{
+ content:"";
+ display:block;
+ box-sizing:border-box;
+ width:9px;
+ height:9px;
+ flex:0 0 9px;
+ border:solid #bfc0c9;
+ border-width:0 2px 2px 0;
+ border-radius:1px;
+ background:none;
+ transform:rotate(45deg);
+ transition:transform .18s ease;
+ margin:0 4px 5px 4px;
+ align-self:center;
+}
+#menus details.recipe-accordion[open]>summary:after{
+ transform:rotate(225deg);
+ margin-top:5px;
+ margin-bottom:0;
+}
+#menus details.recipe-accordion .recipe-detail{
+ background:transparent;
+ border:0;
+ margin:0;
+ padding:7px 16px 20px;
+}
+#menus details.recipe-accordion .recipe-content-section{
+ margin-bottom:23px;
+}
+#menus details.recipe-accordion .recipe-content-section:last-child{margin-bottom:0;}
+#menus details.recipe-accordion .recipe-content-section .recipe-section-title{
+ margin:0 0 12px;
+}
+@media(max-width:390px){
+ #menus .recipe-identity{gap:12px;}
+ #menus details.recipe-accordion .recipe-detail{padding:7px 14px 18px;}
+}
