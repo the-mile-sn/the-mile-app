@@ -63,7 +63,7 @@
     if(page.isConnected&&page===area.firstElementChild)callback();
    };
    page.addEventListener("animationend",finish,{once:true});
-   window.setTimeout(finish,450);
+   window.setTimeout(finish,245);
   };
   header.append(back);return header;
  }
@@ -329,26 +329,36 @@
    startLibrary();
   });
  }
- // Optional edge-swipe back for recipe subpages; ignore normal vertical scroll.
+ // Listen at document level: the left swipe starts in the page's outer gutter,
+ // outside #player-recipes-area on iPhone. Never intercept vertical scrolling.
  let touchStart=null;
- area.addEventListener("touchstart",event=>{
-  if(event.touches.length!==1||!["list","detail","dish","dish-detail"].includes(screen.kind)){
+ document.addEventListener("touchstart",event=>{
+  if(event.touches.length!==1||area.hidden||
+   !["list","detail","dish","dish-detail"].includes(screen.kind)){
    touchStart=null;return;
   }
   const p=event.touches[0];
-  // Use a generous left-edge zone on iPhone; ignore taps on controls.
-  touchStart=p.clientX<=86&&!event.target.closest("button,a,input,textarea,select")
-   ?{x:p.clientX,y:p.clientY,kind:screen.kind}:null;
- },{passive:true});
- area.addEventListener("touchend",event=>{
+  const excluded=event.target.closest&&event.target.closest("input,textarea,select");
+  touchStart=p.clientX<=Math.min(145,window.innerWidth*.4)&&!excluded
+   ?{x:p.clientX,y:p.clientY,kind:screen.kind,swiping:false}:null;
+ },{passive:true,capture:true});
+ document.addEventListener("touchmove",event=>{
+  if(!touchStart||event.touches.length!==1)return;
+  const p=event.touches[0],dx=p.clientX-touchStart.x,dy=p.clientY-touchStart.y;
+  if(dx>22&&Math.abs(dy)<dx*.65){
+   touchStart.swiping=true;
+   if(event.cancelable)event.preventDefault();
+  }else if(Math.abs(dy)>22&&!touchStart.swiping)touchStart=null;
+ },{passive:false,capture:true});
+ document.addEventListener("touchend",event=>{
   if(!touchStart||event.changedTouches.length!==1)return;
   const p=event.changedTouches[0],start=touchStart;touchStart=null;
-  if(start.kind!==screen.kind||p.clientX-start.x<85||
-    Math.abs(p.clientY-start.y)>65||
-    p.clientX-start.x<Math.abs(p.clientY-start.y)*1.5)return;
+  const dx=p.clientX-start.x,dy=p.clientY-start.y;
+  if(start.kind!==screen.kind||dx<72||Math.abs(dy)>55||
+    dx<Math.abs(dy)*1.5)return;
   const back=area.querySelector(".recipe-topline .recipe-back");
   if(back)back.click();
- },{passive:true});
- area.addEventListener("touchcancel",()=>{touchStart=null;},{passive:true});
+ },{passive:true,capture:true});
+ document.addEventListener("touchcancel",()=>{touchStart=null;},{passive:true,capture:true});
  window.themileRecipes={mode:()=>mode,openDish,reset,onShow:syncMode};
 })();
