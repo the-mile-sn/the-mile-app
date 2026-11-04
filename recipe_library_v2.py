@@ -41,6 +41,12 @@ def initialize(c):
     c.execute("""CREATE INDEX IF NOT EXISTS v2_recipe_library_category_status
         ON v2_recipe_library(category_id,status)""")
 
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_athlete_recipe_category_access (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        category_id TEXT NOT NULL REFERENCES v2_recipe_categories(id),
+        PRIMARY KEY (athlete_id, category_id)
+    )""")
+
     # Dishes are initialized before recipes in app.initialize(). Add their
     # optional recipe reference only after the target table exists. Standalone
     # recipe-library tests intentionally have no dish table.
@@ -469,3 +475,42 @@ def audit_dish_recipe_associations(c):
         "multiple_recipe_dishes": multi_linked_dishes,
         "invalid_associations": invalid_links,
     }
+
+
+def athlete_recipe_categories(c, athlete_id):
+    return [row["category_id"] for row in c.execute(
+        "SELECT category_id FROM v2_athlete_recipe_category_access WHERE athlete_id=? ORDER BY category_id", (athlete_id,)).fetchall()]
+
+
+def set_athlete_recipe_categories(c, athlete_id, category_ids):
+    if not isinstance(category_ids, list) or len(category_ids) != len(set(map(str, category_ids))):
+        raise ValueError("invalid_recipe_categories")
+    if any(not isinstance(cid, str) or not _IDENTIFIER.fullmatch(cid) for cid in category_ids):
+        raise ValueError("invalid_recipe_categories")
+    if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
+        return None
+    if category_ids:
+        placeholders=",".join("?" for _ in category_ids)
+        count=c.execute("SELECT COUNT(*) AS n FROM v2_recipe_categories WHERE id IN ("+placeholders+")", tuple(category_ids)).fetchone()["n"]
+        if count!=len(category_ids):
+            raise ValueError("invalid_recipe_categories")
+    c.execute("DELETE FROM v2_athlete_recipe_category_access WHERE athlete_id=?", (athlete_id,))
+    for cid in category_ids:
+        c.execute("INSERT INTO v2_athlete_recipe_category_access(athlete_id,category_id) VALUES(?,?)",(athlete_id,cid))
+    c.commit()
+    return athlete_recipe_categories(c, athlete_id)
+
+
+def published_for_athlete(c, athlete_id):
+    return [dict(row) for row in c.execute("""SELECT r.id,r.name,r.category_id,cat.name AS category,
+        r.recipe_type,r.servings,r.photo_key,r.updated_at FROM v2_recipe_library r
+        JOIN v2_recipe_categories cat ON cat.id=r.category_id
+        JOIN v2_athlete_recipe_category_access a ON a.category_id=r.category_id
+        WHERE a.athlete_id=? AND r.status='published' ORDER BY cat.name,r.name""",(athlete_id,)).fetchall()]
+
+
+def published_recipe_for_athlete(c, athlete_id, recipe_id):
+    allowed=c.execute("""SELECT 1 FROM v2_recipe_library r
+        JOIN v2_athlete_recipe_category_access a ON a.category_id=r.category_id
+        WHERE a.athlete_id=? AND r.id=? AND r.status='published'""",(athlete_id,recipe_id)).fetchone()
+    return get_recipe(c,recipe_id) if allowed else None
