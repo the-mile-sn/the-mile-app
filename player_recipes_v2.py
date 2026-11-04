@@ -11,6 +11,45 @@ import re
 RECIPE_ID = re.compile(r"^[a-f0-9]{24}$")
 
 
+def initialize(c):
+    """Create only the shared recipe structures when a player deployment starts.
+
+    This is additive and does not edit any existing recipe or permission.
+    """
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_recipe_categories (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at BIGINT NOT NULL
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_recipe_library (
+        id TEXT PRIMARY KEY,
+        category_id TEXT NOT NULL REFERENCES v2_recipe_categories(id),
+        name TEXT NOT NULL,
+        recipe_type TEXT NOT NULL CHECK(recipe_type IN ('standard','adaptable')),
+        status TEXT NOT NULL CHECK(status IN ('draft','published')),
+        servings INTEGER NOT NULL DEFAULT 1,
+        sections_json TEXT NOT NULL DEFAULT '[]',
+        steps_json TEXT NOT NULL DEFAULT '[]',
+        notes TEXT NOT NULL DEFAULT '',
+        photo_key TEXT,
+        source_document TEXT NOT NULL DEFAULT '',
+        source_page INTEGER,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_athlete_recipe_category_access (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        category_id TEXT NOT NULL REFERENCES v2_recipe_categories(id),
+        PRIMARY KEY (athlete_id, category_id)
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_dish_recipe_links (
+        dish_id TEXT NOT NULL REFERENCES v2_dish_library(id),
+        recipe_id TEXT NOT NULL REFERENCES v2_recipe_library(id),
+        position INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (dish_id,recipe_id)
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_recipe_library_category_status ON v2_recipe_library(category_id,status)")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_dish_recipe_links_recipe_idx ON v2_dish_recipe_links(recipe_id)")
+
+
 def library_for_athlete(c, athlete_id):
     """Independent library: only published recipes in allowed categories."""
     rows = c.execute("""SELECT r.id,r.name,r.category_id,cat.name AS category,
