@@ -133,11 +133,13 @@
    parent.append(ingredients);
   }
  }
- function detail(recipe,includePhoto=true,standalone=true){
+ // The independent library has a photograph; menu-linked recipes deliberately do not.
+ // An accordion summary already names the recipe, so avoid a second title inside it.
+ function detail(recipe,{includePhoto=true,includeTitle=true,standalone=true}={}){
   const root=node("div","recipe-detail");
   if(standalone)root.classList.add("recipe-detail-standalone");
   if(includePhoto&&recipe.has_photo)root.append(thumb(recipe.id,true));
-  root.append(node("h2","",recipe.name||""));
+  if(includeTitle)root.append(node("h2","",recipe.name||""));
   root.append(node("div","recipe-servings",
    Number(recipe.servings)===1?"1 porção":String(recipe.servings)+" porções"));
   root.append(node("h3","","Ingredientes"));
@@ -154,12 +156,12 @@
   }
   return root;
  }
- async function loadDetail(recipeId,root,shouldRender){
+ async function loadDetail(recipeId,root,shouldRender,options={}){
   const epoch=current();
   try{
    const response=await request("/api/v2/player/recipes/"+encodeURIComponent(recipeId));
    if(epoch!==current()||!shouldRender())return;
-   root.replaceChildren(detail(response.recipe,true,!root.closest(".recipe-accordion")));
+   root.replaceChildren(detail(response.recipe,options));
   }catch(err){
    if(epoch===current()&&shouldRender())root.replaceChildren(node("p","recipe-message","Receita indisponível."));
   }
@@ -176,7 +178,7 @@
   root.append(content);area.replaceChildren(root);
   loadDetail(r.recipeId,content,()=>render===token&&screen.kind==="detail");
  }
- async function openDish(dishId,dishName,dishPhotoUrl){
+ async function openDish(dishId,dishName){
   returnScroll=position();
   mode="menus";screen={kind:"dish",dishId,dishName};
   const render=++token;syncMode();scrollTop();message("A carregar receitas…");
@@ -191,14 +193,12 @@
     const detailRoot=node("div","");
     root.append(detailRoot);
     area.replaceChildren(root);
-    loadDetail(entries[0].id,detailRoot,()=>render===token&&screen.kind==="dish");
+    loadDetail(entries[0].id,detailRoot,()=>render===token&&screen.kind==="dish",
+     {includePhoto:false});
     return;
    }
-   // Multi-recipe presentation reuses the existing expandable-card pattern.
-   if(dishPhotoUrl){
-    const photo=node("img","recipe-hero");photo.alt=dishName;photo.src=dishPhotoUrl;
-    root.append(photo);
-   }
+   // A menu dish already has its photograph on its original card.
+   // Multiple recipe panels show only their own instructions, never extra photos.
    for(const entry of entries){
     const section=node("details","recipe-accordion");
     const summary=node("summary","",entry.name);
@@ -208,7 +208,8 @@
      if(!section.open||section.dataset.loaded)return;
      section.dataset.loaded="true";
      body.append(node("p","recipe-message","A carregar receita…"));
-     loadDetail(entry.id,body,()=>render===token&&section.isConnected);
+     loadDetail(entry.id,body,()=>render===token&&section.isConnected,
+      {includePhoto:false,includeTitle:false,standalone:false});
     });
     root.append(section);
    }
