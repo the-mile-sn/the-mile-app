@@ -47,7 +47,7 @@ test("bottom navigation remains in original layout",()=>{
 
 test("menu-linked recipe details omit duplicate photographs and titles",()=>{
  assert.match(js,/\{includePhoto:false\}/);
- assert.match(js,/\{includePhoto:false,includeTitle:false,includeServings:false,standalone:false\}/);
+ assert.match(js,/\{includePhoto:false,includeTitle:false,includeServings:true,standalone:false\}/);
  assert.doesNotMatch(js,/if\(dishPhotoUrl\)/);
  assert.match(js,/if\(includePhoto&&recipe\.has_photo\)identity\.append\(thumb\(recipe\.id,true\)\)/);
 });
@@ -66,21 +66,32 @@ test("library recipe header places a small photo next to name and portions",()=>
  assert.match(css,/#menus \.recipe-identity\{/);
  assert.match(css,/width:clamp\(76px,23vw,92px\)/);
 });
-test("recipe sections use outline icons, no enclosing cards or ingredient lines",()=>{
+test("recipe sections have subtle cards and separated ingredients",()=>{
  assert.match(js,/sectionTitle\("Ingredientes","ingredients"\)/);
  assert.match(js,/sectionTitle\("Preparação","preparation"\)/);
  assert.match(js,/sectionTitle\("Dicas úteis","tips"\)/);
  assert.match(js,/if\(recipe\.notes&&recipe\.notes\.trim\(\)\)/);
  assert.match(css,/#menus \.recipe-content-section \.recipe-ingredient\{/);
- assert.match(css,/border:0;\s*padding:4px 0;/);
+ assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.09\)/);
  assert.match(css,/#menus \.recipe-content-section\{/);
- assert.match(css,/background:transparent;\s*border:0;\s*box-shadow:none;/);
+ assert.match(css,/background:rgba\(255,255,255,\.035\);\s*border:0;\s*box-shadow:none;/);
 });
 test("multiple linked recipes reuse borderless Assessment-style cards",()=>{
  assert.match(js,/const label=node\("span","recipe-accordion-label"\)/);
- assert.match(js,/label\.append\(node\("strong","",entry\.name\),node\("small","",portions\(entry\.servings\)\)\)/);
+ assert.match(js,/label\.append\(node\("strong","",entry\.name\)\)/);
  assert.match(css,/#menus details\.recipe-accordion\{/);
  assert.match(css,/background:#242429;\s*border:0;/);
  assert.match(css,/#menus details\.recipe-accordion>summary:after\{/);
  assert.match(css,/border-width:0 2px 2px 0;/);
+});
+
+test("portions only appear after expanding a multi-recipe entry",()=>{
+ assert.match(js,/label\.append\(node\("strong","",entry\.name\)\)/);
+ assert.doesNotMatch(js,/label\.append\(node\("strong","",entry\.name\),node\("small"/);
+ assert.match(js,/includeServings:true,standalone:false/);
+ assert.match(js,/if\(includeServings\)copy\.append\(node\("div","recipe-servings"/);
+});
+test("the final ingredient does not have a divider",()=>{
+ assert.match(css,/#menus \.recipe-content-section \.recipe-ingredient:last-child\{\s*border-bottom:0;/);
+ assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.09\)/);
 });
