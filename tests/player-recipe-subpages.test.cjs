@@ -30,7 +30,7 @@ test("recipe body retains ingredient values, portions and plain numbered steps",
 });
 
 test("back swipe is edge-only and does not capture ordinary vertical scrolling",()=>{
- assert.match(js,/p\.clientX<=38/);
+ assert.match(js,/p\.clientX<=86/);
  assert.match(js,/p\.clientX-start\.x<90/);
  assert.match(js,/Math\.abs\(p\.clientY-start\.y\)>65/);
  assert.match(js,/restoreScroll\(listScroll\)/);
@@ -171,4 +171,16 @@ test("menu recipe pressed state is applied on initial touch and survives until n
  assert.match(css,/#menus \.menu-entry-body \.menu-view-recipe\.is-pressed\{/);
  assert.match(css,/#menus \.menu-entry-body \.dish-photo-zoom\{\s*border:0!important;/);
  assert.match(html,/jogador-v2\.js\?v=147/);
+});
+
+test("recipe subpages support left-edge swipe and horizontal page transitions",()=>{
+ assert.match(js,/p\.clientX<=86/);
+ assert.match(js,/p\.clientX-start\.x<85/);
+ assert.match(js,/function showRecipePage\(root\)/);
+ assert.match(js,/page\.classList\.add\("recipe-page-leave"\)/);
+ assert.match(css,/animation:recipe-subpage-enter 500ms/);
+ assert.match(css,/animation:recipe-subpage-leave 380ms/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ assert.match(html,/player-recipes\.css\?v=13/);
+ assert.match(html,/player-recipes\.js\?v=8/);
 });
