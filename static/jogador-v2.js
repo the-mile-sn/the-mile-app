@@ -27,6 +27,7 @@ function enableWeekSwipe(element,onShift){
  },{passive:false});
 }
 function revokePlayerView(){
+ window.themileRecipes?.reset();
  // An account switch must invalidate cached data and every old request.
  ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
  overviewReadCache.clear();overviewSnapshot=null;lastOverviewPresentation=null;lastMenuPresentationWeek=null;
@@ -357,7 +358,10 @@ async function show(t){
  if(t==="overview")await overview();
  if(t==="plans")openPlansSection("prescriptions");
  if(t==="assessments")openPlansSection("assessments");
- if(t==="menus")await menusView();
+ if(t==="menus"){
+  window.themileRecipes?.onShow();
+  if(window.themileRecipes?.mode()!=="recipes")await menusView();
+ }
 }
 
 async function renderSupplementPlan(target){
@@ -1392,9 +1396,13 @@ function activateDishPhoto(photo){
   photo.classList.add("dish-photo-ready");
   photo.tabIndex=0;
   photo.setAttribute("role","button");
-  photo.setAttribute("aria-label","Ampliar fotografia: "+photo.alt);
-  photo.onclick=()=>openDishPhoto(src,photo.alt);
-  photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDishPhoto(src,photo.alt);}};
+  const recipeCount=Number(photo.dataset.recipeCount||0);
+  const activate=()=>recipeCount>0&&window.themileRecipes
+   ?window.themileRecipes.openDish(dishId,photo.alt,src)
+   :openDishPhoto(src,photo.alt);
+  photo.setAttribute("aria-label",(recipeCount>0?"Ver receitas: ":"Ampliar fotografia: ")+photo.alt);
+  photo.onclick=activate;
+  photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();activate();}};
  });
 }
 function cachedDishPhoto(id){
@@ -1441,7 +1449,11 @@ async function menusView(){
   throw err;
  }
  if(epoch!==playerSessionEpoch||renderToken!==menuRenderToken||tab!=="menus")return;
- const dishMap=new Map((dishResponse.dishes||[]).map(x=>[x.name_pt,x.id]));
+ const dishes=dishResponse.dishes||[];
+ const dishById=new Map(dishes.map(d=>[d.id,d]));
+ const dishNameCounts=new Map();
+ for(const dish of dishes)dishNameCounts.set(dish.name_pt,(dishNameCounts.get(dish.name_pt)||0)+1);
+ const uniqueDishByName=new Map(dishes.filter(d=>dishNameCounts.get(d.name_pt)===1).map(d=>[d.name_pt,d]));
  const strip=$("menu-week-strip");strip.querySelectorAll(".week-day").forEach(el=>el.remove());
  const todayKey=iso(new Date()),isCurrentWeek=todayKey>=iso(start)&&todayKey<=iso(end);
  if(!menuSelectedDate||menuSelectedDate<iso(start)||menuSelectedDate>iso(end))menuSelectedDate=isCurrentWeek?todayKey:iso(start);
@@ -1470,11 +1482,15 @@ async function menusView(){
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
  const name=document.createElement("span");name.className="value";name.textContent=menu.value;body.append(name);
- if(menu.kind==="dish"&&dishMap.has(menu.value)){
-  const photo=document.createElement("img");
-  photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";
-  photo.dataset.dishId=dishMap.get(menu.value);photo.dataset.playerEpoch=String(epoch);
-  body.append(photo);photosToObserve.push(photo);
+ if(menu.kind==="dish"){
+  const dish=menu.dish_id?dishById.get(menu.dish_id):uniqueDishByName.get(menu.value);
+  if(dish){
+   const photo=document.createElement("img");
+   photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";
+   photo.dataset.dishId=dish.id;photo.dataset.recipeCount=String(dish.recipe_count||0);
+   photo.dataset.playerEpoch=String(epoch);
+   body.append(photo);photosToObserve.push(photo);
+  }
  }
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken){
   root.replaceChildren(fragment);
