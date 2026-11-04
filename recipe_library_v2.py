@@ -50,6 +50,19 @@ def initialize(c):
         if "recipe_id" not in dish_columns:
             c.execute("ALTER TABLE v2_dish_library ADD COLUMN recipe_id TEXT REFERENCES v2_recipe_library(id)")
         c.execute("CREATE INDEX IF NOT EXISTS v2_dish_library_recipe_id_idx ON v2_dish_library(recipe_id)")
+        c.execute("""CREATE TABLE IF NOT EXISTS v2_dish_recipe_links (
+            dish_id TEXT NOT NULL REFERENCES v2_dish_library(id),
+            recipe_id TEXT NOT NULL REFERENCES v2_recipe_library(id),
+            position INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (dish_id,recipe_id)
+        )""")
+        c.execute("CREATE INDEX IF NOT EXISTS v2_dish_recipe_links_recipe_idx ON v2_dish_recipe_links(recipe_id)")
+        # Backfill legacy links without replacing or removing existing associations.
+        c.execute("""INSERT INTO v2_dish_recipe_links(dish_id,recipe_id,position)
+            SELECT d.id,d.recipe_id,0 FROM v2_dish_library d
+            WHERE d.recipe_id IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM v2_dish_recipe_links l
+                WHERE l.dish_id=d.id AND l.recipe_id=d.recipe_id)""")
 
 
 def _text(value, limit, required=False):
@@ -280,28 +293,82 @@ def update_recipe(c, recipe_id, payload):
 
 
 def list_dish_recipe_links(c):
-    """Admin-only lightweight association data, independent from menu assignments."""
+    """Admin-only associations; legacy singular fields retained for older clients."""
+    from microcycles_v2 import _table_columns
+    if "id" not in _table_columns(c, "v2_dish_library"):
+        return {}
     rows = c.execute("""SELECT d.id AS dish_id,d.recipe_id,r.name AS recipe_name,
                         r.status AS recipe_status
                         FROM v2_dish_library d
                         LEFT JOIN v2_recipe_library r ON r.id=d.recipe_id""").fetchall()
-    return {row["dish_id"]: {"recipe_id": row["recipe_id"],
-                              "recipe_name": row["recipe_name"],
-                              "recipe_status": row["recipe_status"]} for row in rows}
+    result = {row["dish_id"]: {"recipe_id": row["recipe_id"],
+              "recipe_name": row["recipe_name"], "recipe_status": row["recipe_status"],
+              "recipes": []} for row in rows}
+    for row in c.execute("""SELECT l.dish_id,l.recipe_id,r.name AS recipe_name,
+                            r.status AS recipe_status
+                            FROM v2_dish_recipe_links l
+                            JOIN v2_recipe_library r ON r.id=l.recipe_id
+                            ORDER BY l.dish_id,l.position,l.recipe_id""").fetchall():
+        if row["dish_id"] in result:
+            result[row["dish_id"]]["recipes"].append({
+                "recipe_id": row["recipe_id"], "recipe_name": row["recipe_name"],
+                "recipe_status": row["recipe_status"]})
+    return result
 
 
 def link_dish_recipe(c, dish_id, recipe_id):
-    """Link/unlink a dish by stable IDs; drafts remain admin-only."""
+    """Legacy replace/unlink API, retained for compatibility."""
     if not isinstance(dish_id, str) or not 4 <= len(dish_id) <= 60:
         raise ValueError("invalid_dish")
     if recipe_id is not None:
-        if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
-            raise ValueError("invalid_recipe_reference")
-        if not c.execute("SELECT id FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone():
-            raise ValueError("invalid_recipe_reference")
+        _validate_recipe_reference(c, recipe_id)
     if not c.execute("SELECT 1 FROM v2_dish_library WHERE id=?", (dish_id,)).fetchone():
         return None
     c.execute("UPDATE v2_dish_library SET recipe_id=? WHERE id=?", (recipe_id, dish_id))
+    if recipe_id is not None:
+        c.execute("""INSERT INTO v2_dish_recipe_links(dish_id,recipe_id,position)
+            SELECT ?,?,COALESCE(MAX(position)+1,0) FROM v2_dish_recipe_links WHERE dish_id=?
+            ON CONFLICT(dish_id,recipe_id) DO NOTHING""", (dish_id, recipe_id, dish_id))
+    c.commit()
+    return list_dish_recipe_links(c)[dish_id]
+
+
+def _validate_recipe_reference(c, recipe_id):
+    if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
+        raise ValueError("invalid_recipe_reference")
+    if not c.execute("SELECT 1 FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone():
+        raise ValueError("invalid_recipe_reference")
+
+
+def add_dish_recipe(c, dish_id, recipe_id):
+    """Add one association, preserving all existing links."""
+    if not isinstance(dish_id, str) or not 4 <= len(dish_id) <= 60:
+        raise ValueError("invalid_dish")
+    _validate_recipe_reference(c, recipe_id)
+    if not c.execute("SELECT 1 FROM v2_dish_library WHERE id=?", (dish_id,)).fetchone():
+        return None
+    c.execute("""INSERT INTO v2_dish_recipe_links(dish_id,recipe_id,position)
+        SELECT ?,?,COALESCE(MAX(position)+1,0) FROM v2_dish_recipe_links WHERE dish_id=?
+        ON CONFLICT(dish_id,recipe_id) DO NOTHING""", (dish_id, recipe_id, dish_id))
+    c.commit()
+    return list_dish_recipe_links(c)[dish_id]
+
+
+def remove_dish_recipe(c, dish_id, recipe_id):
+    """Remove only the requested association; maintain legacy pointer."""
+    if not isinstance(dish_id, str) or not 4 <= len(dish_id) <= 60:
+        raise ValueError("invalid_dish")
+    _validate_recipe_reference(c, recipe_id)
+    if not c.execute("SELECT 1 FROM v2_dish_library WHERE id=?", (dish_id,)).fetchone():
+        return None
+    c.execute("DELETE FROM v2_dish_recipe_links WHERE dish_id=? AND recipe_id=?",
+              (dish_id, recipe_id))
+    old = c.execute("SELECT recipe_id FROM v2_dish_library WHERE id=?", (dish_id,)).fetchone()
+    if old["recipe_id"] == recipe_id:
+        next_row = c.execute("""SELECT recipe_id FROM v2_dish_recipe_links
+            WHERE dish_id=? ORDER BY position,recipe_id LIMIT 1""", (dish_id,)).fetchone()
+        c.execute("UPDATE v2_dish_library SET recipe_id=? WHERE id=?",
+                  (next_row["recipe_id"] if next_row else None, dish_id))
     c.commit()
     return list_dish_recipe_links(c)[dish_id]
 
@@ -311,8 +378,9 @@ def _dish_has_recipe_link(c, recipe_id):
     if "recipe_id" not in _table_columns(c, "v2_dish_library"):
         return False
     return bool(c.execute(
-        "SELECT 1 FROM v2_dish_library WHERE recipe_id=? LIMIT 1", (recipe_id,)
-    ).fetchone())
+        """SELECT 1 FROM v2_dish_library WHERE recipe_id=?
+           UNION SELECT 1 FROM v2_dish_recipe_links WHERE recipe_id=? LIMIT 1""",
+        (recipe_id, recipe_id)).fetchone())
 
 
 def delete_recipe(c, recipe_id):
