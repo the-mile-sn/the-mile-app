@@ -6,6 +6,10 @@
  const switcher=document.getElementById("menus-recipe-switch");
  let mode="menus",screen={kind:"categories"},library=null,token=0;
  const photos=new Map();
+ let returnScroll=0,categoryScroll=0,listScroll=0;
+ const position=()=>Math.max(0,window.scrollY||0);
+ const scrollTop=()=>window.scrollTo({top:0,behavior:"instant"});
+ const restoreScroll=y=>window.requestAnimationFrame(()=>window.scrollTo({top:y,behavior:"instant"}));
  const node=(tag,cls,content)=>{
   const el=document.createElement(tag);
   if(cls)el.className=cls;
@@ -36,14 +40,11 @@
   });
   return img;
  }
- function goBack(label,callback,subtitle=""){
+ function goBack(callback){
   const header=node("div","recipe-topline");
   const back=node("button","recipe-back","‹");back.type="button";
   back.setAttribute("aria-label","Voltar");back.onclick=callback;
-  const info=node("div","");
-  info.append(node("h2","",label));
-  if(subtitle)info.append(node("p","recipe-subtitle",subtitle));
-  header.append(back,info);return header;
+  header.append(back);return header;
  }
  function card(name,small,photoId,callback){
   const button=node("button","recipe-item");button.type="button";button.onclick=callback;
@@ -57,12 +58,15 @@
  function startLibrary(){
   library=null;
   mode="recipes";screen={kind:"categories"};
+  scrollTop();
   syncMode();renderCategories();
  }
  function syncMode(){
   for(const btn of switcher.querySelectorAll("button")){
    btn.setAttribute("aria-pressed",String(btn.dataset.menuMode===mode));
   }
+  const secondary=screen.kind==="list"||screen.kind==="detail"||screen.kind==="dish";
+  switcher.hidden=secondary;
   menuContent.hidden=mode!=="menus"||screen.kind==="dish";
   area.hidden=mode==="menus"&&screen.kind!=="dish";
  }
@@ -88,7 +92,10 @@
     const representative=group.items.find(x=>x.has_photo);
     root.append(card(group.name,
      group.items.length===1?"1 receita":group.items.length+" receitas",
-     representative?.id,()=>{screen={kind:"list",group};renderList();}));
+     representative?.id,()=>{
+      categoryScroll=position();
+      screen={kind:"list",group};renderList();scrollTop();
+     }));
    }
    area.replaceChildren(root);
   }catch(err){
@@ -100,12 +107,14 @@
   ++token;syncMode();
   const group=screen.group;
   const root=node("div","");
-  root.append(goBack(group.name,()=>{screen={kind:"categories"};renderCategories();},
-   group.items.length===1?"1 receita":group.items.length+" receitas"));
+  root.append(goBack(()=>{
+   screen={kind:"categories"};renderCategories().then(()=>restoreScroll(categoryScroll));
+  }));
   const list=node("div","recipe-list");
   for(const r of group.items){
    list.append(card(r.name,"",r.has_photo?r.id:null,()=>{
-    screen={kind:"detail",recipeId:r.id,group};renderDetail();
+    listScroll=position();
+    screen={kind:"detail",recipeId:r.id,group};renderDetail();scrollTop();
    }));
   }
   root.append(list);area.replaceChildren(root);
@@ -158,13 +167,16 @@
   const render=++token;syncMode();
   const r=screen;
   const root=node("div","");
-  root.append(goBack("Receita",()=>{screen={kind:"list",group:r.group};renderList();}));
+  root.append(goBack(()=>{
+   screen={kind:"list",group:r.group};renderList();restoreScroll(listScroll);
+  }));
   const content=node("div","");
   content.append(node("p","recipe-message","A carregar receita…"));
   root.append(content);area.replaceChildren(root);
   loadDetail(r.recipeId,content,()=>render===token&&screen.kind==="detail");
  }
  async function openDish(dishId,dishName,dishPhotoUrl){
+  returnScroll=position();
   mode="menus";screen={kind:"dish",dishId,dishName};
   const render=++token;syncMode();message("A carregar receitas…");
   try{
@@ -173,7 +185,7 @@
    const entries=data.recipes||[];
    if(!entries.length){closeDish();return;}
    const root=node("div","");
-   root.append(goBack(dishName,closeDish));
+   root.append(goBack(closeDish));
    if(entries.length===1){
     const detailRoot=node("div","");
     root.append(detailRoot);
@@ -205,11 +217,14 @@
   }
  }
  function closeDish(){
+  const wasDish=screen.kind==="dish";
   ++token;screen={kind:"categories"};mode="menus";syncMode();
   area.replaceChildren();
+  if(wasDish)restoreScroll(returnScroll);
  }
  function reset(){
   ++token;mode="menus";screen={kind:"categories"};library=null;
+  returnScroll=0;categoryScroll=0;listScroll=0;
   for(const pending of photos.values())pending.then(src=>{if(src)URL.revokeObjectURL(src);});
   photos.clear();area.replaceChildren();syncMode();
  }
@@ -220,5 +235,23 @@
    startLibrary();
   });
  }
+ // Optional edge-swipe back for recipe subpages; ignore normal vertical scroll.
+ let touchStart=null;
+ area.addEventListener("touchstart",event=>{
+  if(event.touches.length!==1||!["list","detail","dish"].includes(screen.kind)){
+   touchStart=null;return;
+  }
+  const p=event.touches[0];
+  touchStart=p.clientX<=38?{x:p.clientX,y:p.clientY,kind:screen.kind}:null;
+ },{passive:true});
+ area.addEventListener("touchend",event=>{
+  if(!touchStart||event.changedTouches.length!==1)return;
+  const p=event.changedTouches[0],start=touchStart;touchStart=null;
+  if(start.kind!==screen.kind||p.clientX-start.x<90||
+    Math.abs(p.clientY-start.y)>65)return;
+  const back=area.querySelector(".recipe-topline .recipe-back");
+  if(back)back.click();
+ },{passive:true});
+ area.addEventListener("touchcancel",()=>{touchStart=null;},{passive:true});
  window.themileRecipes={mode:()=>mode,openDish,reset,onShow:syncMode};
 })();
