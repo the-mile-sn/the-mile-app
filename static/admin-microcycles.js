@@ -144,6 +144,30 @@ planningSearch.addEventListener("keydown",event=>{
 document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target))closePlanningResults();});
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
 window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
+let recipeAccessToken=0;
+async function loadRecipeCategoryAccess(athleteId){
+ const token=++recipeAccessToken,host=$("profile-recipe-category-list"),feedback=$("profile-recipe-category-feedback");
+ host.replaceChildren();feedback.textContent="A carregar categorias…";
+ try{
+  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories");
+  if(token!==recipeAccessToken||$("athlete").value!==athleteId)return;
+  for(const category of result.categories){
+   const label=document.createElement("label");label.style.cssText="display:flex;gap:9px;align-items:center;margin:9px 0";
+   const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.value=category.id;
+   checkbox.checked=result.category_ids.includes(category.id);label.append(checkbox,document.createTextNode(category.name));host.append(label);
+  }
+  feedback.textContent=result.categories.length?"":"Não existem categorias de receitas.";
+ }catch(error){if(token===recipeAccessToken)feedback.textContent="Não foi possível carregar as categorias: "+error.message;}
+}
+$("profile-recipe-category-save").addEventListener("click",async()=>{
+ const athleteId=$("athlete").value,feedback=$("profile-recipe-category-feedback");
+ const category_ids=Array.from($("profile-recipe-category-list").querySelectorAll('input[type="checkbox"]:checked')).map(el=>el.value);
+ const button=$("profile-recipe-category-save");button.disabled=true;feedback.textContent="A guardar…";
+ try{await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories",{method:"PUT",body:JSON.stringify({category_ids})});
+  if($("athlete").value===athleteId)feedback.textContent="Acesso às receitas guardado.";
+ }catch(error){feedback.textContent="Não foi possível guardar: "+error.message;}
+ finally{button.disabled=false;}
+});
 async function loadModel(){
  updatePlanningPlayerControls();
  const athleteId=$("athlete").value;
@@ -157,6 +181,7 @@ async function loadModel(){
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
  model=nextModel;profileEditing=false;render();renderProfileSummary();
+ loadRecipeCategoryAccess(athleteId);
  await loadPlanDrafts();
  if($("athlete").value!==athleteId)return;
  if(backofficeView==="calendar")await showBackofficeView("calendar");
