@@ -314,3 +314,19 @@
 .search-player-results button{border:0;background:var(--lib-panel);color:var(--lib-fg);text-align:left;padding:12px;cursor:pointer}
 .search-player-results button:hover{background:var(--lib-panel-2)}
 @media(max-width:680px){.plan-entry{grid-template-columns:1fr}}
+
+/* Unified compact entry and editable editor selectors. */
+.plan-entry{gap:12px}
+.plan-entry .entry-choice{min-height:54px;display:flex;align-items:center;justify-content:center;padding:15px 20px;background:var(--lib-panel-2);color:var(--lib-muted);font-size:14px;font-weight:500;text-align:center}
+.plan-entry .entry-choice:hover{color:var(--lib-fg)}
+.plan-editor-heading{display:flex;align-items:center;margin:14px 0 0}
+.plan-back{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;border-radius:10px;background:var(--lib-panel-2);color:var(--lib-fg);font-size:22px;cursor:pointer}
+.plan-back:hover{filter:brightness(1.1)}
+#plan-search-selection{gap:12px}
+.plan-search-field{position:relative}
+.plan-search-field input{padding-right:44px}
+.plan-chevron{position:absolute;right:17px;top:50%;transform:translateY(-57%);pointer-events:none;color:var(--lib-muted);font-size:20px}
+#plan-search-selection select,.plan-selectors select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23929298' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:17px;background-position:right 14px center;padding-right:40px}
+#plan-editor .plan-selectors{margin:16px 0}
+.search-player-results button{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.search-player-results button::after{content:'›';font-size:20px;color:var(--lib-muted)}
