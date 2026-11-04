@@ -110,3 +110,24 @@ test("library photo aligns to the top of recipe name; menu-linked details remain
  assert.match(js,/includePhoto:false,includeTitle:false,includeServings:true,standalone:false/);
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.045\)/);
 });
+
+test("final heading hierarchy is smaller in every recipe detail",()=>{
+ const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
+ assert.match(finalRules,/#menus \.recipe-content-section \.recipe-section-title\{\s*font-size:16px;/);
+ assert.match(finalRules,/font-weight:var\(--mile-type-medium,500\)/);
+ assert.doesNotMatch(finalRules,/#tabs[\s.{>]/);
+});
+
+test("multiple-recipe insets match the dark Assessment expanded inset",()=>{
+ const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
+ assert.match(finalRules,/#menus details\.recipe-accordion \.recipe-content-section\{\s*background:#1b1b20;/);
+ assert.match(css,/#menus details\.recipe-accordion\{[\s\S]*?background:#242429;/);
+ assert.match(js,/\{includePhoto:false,includeTitle:false,includeServings:true,standalone:false\}/);
+});
+
+test("the library image gets optical top alignment only in standalone details",()=>{
+ const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
+ assert.match(finalRules,/#menus \.recipe-detail-standalone \.recipe-identity \.recipe-detail-photo\{\s*margin-top:7px;/);
+ assert.doesNotMatch(finalRules,/#menus details\.recipe-accordion \.recipe-detail-photo/);
+ assert.match(js,/if\(includePhoto&&recipe\.has_photo\)identity\.append\(thumb\(recipe\.id,true\)\)/);
+});
