@@ -245,7 +245,7 @@
     const section=node("details","recipe-accordion");
     const summary=node("summary","");
     const label=node("span","recipe-accordion-label");
-    label.append(node("strong","",entry.name),node("small","",portions(entry.servings)));
+    label.append(node("strong","",entry.name));
     summary.append(label);
     const body=node("div","");
     section.append(summary,body);
@@ -254,7 +254,7 @@
      section.dataset.loaded="true";
      body.append(node("p","recipe-message","A carregar receita…"));
      loadDetail(entry.id,body,()=>render===token&&section.isConnected,
-      {includePhoto:false,includeTitle:false,includeServings:false,standalone:false});
+      {includePhoto:false,includeTitle:false,includeServings:true,standalone:false});
     });
     root.append(section);
    }
