@@ -1772,11 +1772,11 @@ function renderDishEditor(){
     field.append(input);editor.append(field);inputs.push(input);
    }
    const association=document.createElement("section");association.className="dish-recipe-association";
-   const associationHeading=document.createElement("h4");associationHeading.textContent="Receitas associadas";
+   const associationHeading=document.createElement("h4");associationHeading.textContent="Associar receita";
    const associationHint=document.createElement("p");associationHint.className="dish-recipe-association-hint";
-   associationHint.textContent="Pesquisa e seleciona uma receita para associar automaticamente a este prato.";
+   associationHint.textContent="";
    const associationSearchLabel=document.createElement("label");associationSearchLabel.className="dish-recipe-combobox-label";
-   associationSearchLabel.textContent="Pesquisar ou associar receita";
+   associationSearchLabel.textContent="";
    const associationCombo=document.createElement("div");associationCombo.className="dish-recipe-combobox";
    const associationSearch=document.createElement("input");associationSearch.type="search";
    associationSearch.placeholder="Pesquisar receita pelo nome ou categoria";
@@ -1801,11 +1801,11 @@ function renderDishEditor(){
    const paintAssociationState=()=>{
     const linked=linkedRecipes();
     associationList.replaceChildren();
-    associationState.textContent=linked.length?linked.length+" receita(s) associada(s).":"Sem receitas associadas.";
+    associationState.textContent="";
     for(const item of linked){
      const line=document.createElement("div");line.className="dish-recipe-association-actions";
-     const name=document.createElement("span");name.textContent=item.recipe_name+(item.recipe_status==="draft"?" · Rascunho":"");
-     const view=document.createElement("button");view.type="button";view.textContent="Ver receita";
+     const name=document.createElement("span");name.className="dish-recipe-card-name";name.textContent=item.recipe_name+(item.recipe_status==="draft"?" · Rascunho":"");
+     const view=document.createElement("button");view.type="button";view.textContent="";view.setAttribute("aria-label","Ver receita: "+item.recipe_name);view.title="Ver receita";view.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
      view.className="dish-recipe-association-view";
      view.addEventListener("click",async()=>{
       if(typeof window.tmOpenAdminDishRecipe!=="function"){
@@ -1817,9 +1817,9 @@ function renderDishEditor(){
       finally{view.disabled=false;}
      });
      const remove=document.createElement("button");remove.type="button";
-     remove.textContent="Desassociar";remove.className="dish-recipe-association-clear";
+     remove.textContent="";remove.className="dish-recipe-association-clear";remove.setAttribute("aria-label","Desassociar receita: "+item.recipe_name);remove.title="Desassociar receita";remove.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
      remove.addEventListener("click",()=>persistAssociation(item.recipe_id,"DELETE"));
-     line.append(name,view,remove);associationList.append(line);
+     const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(view,remove);line.append(name,actions);associationList.append(line);
     }
     const rowTag=tr.querySelector(".dish-recipe-indicator");
     if(rowTag){rowTag.hidden=!linked.length;rowTag.textContent=linked.length?linked.length+" receita(s) associada(s)":"";}
@@ -1893,7 +1893,7 @@ function renderDishEditor(){
      closeAssociationSuggestions();associationSearch.value="";
     }},125);
    });
-   association.append(associationHeading,associationHint,associationSearchLabel,
+   association.append(associationHeading,associationSearchLabel,
     associationList,associationState);
    editor.append(association);
    paintAssociationState();
