@@ -420,3 +420,52 @@ def set_photo(c, recipe_id):
               (key, int(time.time()), recipe_id))
     c.commit()
     return key
+
+
+def audit_dish_recipe_associations(c):
+    """Read-only inventory of dish/recipe coverage; no changes to associations."""
+    dishes = [dict(row) for row in c.execute(
+        "SELECT id,name_pt,category,active FROM v2_dish_library ORDER BY name_pt,id"
+    ).fetchall()]
+    recipes = [dict(row) for row in c.execute(
+        "SELECT id,name,category_id,status FROM v2_recipe_library ORDER BY name,id"
+    ).fetchall()]
+    links = [dict(row) for row in c.execute(
+        "SELECT dish_id,recipe_id,position FROM v2_dish_recipe_links ORDER BY dish_id,position,recipe_id"
+    ).fetchall()]
+    dish_ids = {dish["id"] for dish in dishes}
+    recipe_ids = {recipe["id"] for recipe in recipes}
+    by_dish = {}
+    by_recipe = {}
+    invalid_links = []
+    for link in links:
+        if link["dish_id"] not in dish_ids or link["recipe_id"] not in recipe_ids:
+            invalid_links.append(link)
+            continue
+        by_dish.setdefault(link["dish_id"], []).append(link["recipe_id"])
+        by_recipe.setdefault(link["recipe_id"], []).append(link["dish_id"])
+    unlinked_dishes = [dish for dish in dishes if not by_dish.get(dish["id"])]
+    unlinked_recipes = [recipe for recipe in recipes if not by_recipe.get(recipe["id"])]
+    linked_dishes = [dish for dish in dishes if by_dish.get(dish["id"])]
+    multi_linked_dishes = [
+        {**dish, "recipe_ids": by_dish[dish["id"]]}
+        for dish in linked_dishes if len(by_dish[dish["id"]]) > 1
+    ]
+    return {
+        "read_only": True,
+        "summary": {
+            "dishes_total": len(dishes),
+            "dishes_linked": len(linked_dishes),
+            "dishes_unlinked": len(unlinked_dishes),
+            "recipes_total": len(recipes),
+            "recipes_linked": len(recipes) - len(unlinked_recipes),
+            "recipes_unlinked": len(unlinked_recipes),
+            "associations_total": len(links),
+            "dishes_with_multiple_recipes": len(multi_linked_dishes),
+            "invalid_associations": len(invalid_links),
+        },
+        "unlinked_dishes": unlinked_dishes,
+        "unlinked_recipes": unlinked_recipes,
+        "multiple_recipe_dishes": multi_linked_dishes,
+        "invalid_associations": invalid_links,
+    }
