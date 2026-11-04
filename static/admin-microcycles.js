@@ -152,21 +152,21 @@ function renderRecipeCategoryPicker(){
  host.replaceChildren();
  const chosen=recipeCategoryOptions.filter(item=>selectedRecipeCategories.has(item.id));
  for(const category of chosen){
-  const chip=document.createElement("span");chip.className="tm-recipe-category-chip";
-  const name=document.createElement("span");name.textContent=category.name;
-  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remover "+category.name);
+  const chip=document.createElement("div");chip.className="tm-recipe-category-chip";chip.style.cssText="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;width:100%!important;box-sizing:border-box;gap:12px;padding:10px 12px;border:1px solid #c9ced7;border-radius:11px;background:rgba(140,150,165,.08);";
+  const name=document.createElement("span");name.textContent=category.name;name.style.cssText="flex:1;min-width:0;text-align:left;";
+  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remover "+category.name);remove.style.cssText="display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 30px!important;width:30px!important;height:30px!important;min-width:30px!important;padding:0!important;margin:0!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;line-height:1!important;";
   remove.addEventListener("click",()=>{selectedRecipeCategories.delete(category.id);renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";});
   chip.append(name,remove);host.append(chip);
  }
  const term=search.value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
- const available=recipeCategoryOptions.filter(item=>!selectedRecipeCategories.has(item.id)&&item.name.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().includes(term));
+ const available=term?recipeCategoryOptions.filter(item=>!selectedRecipeCategories.has(item.id)&&item.name.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().includes(term)):[];
  results.replaceChildren();
  for(const category of available){
   const option=document.createElement("button");option.type="button";option.className="tm-recipe-category-option";option.textContent=category.name;
   option.addEventListener("click",()=>{selectedRecipeCategories.add(category.id);search.value="";renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";search.focus();});
   results.append(option);
  }
- const show=document.activeElement===search&&available.length>0;
+ const show=term.length>0&&document.activeElement===search&&available.length>0;
  results.hidden=!show;search.setAttribute("aria-expanded",String(show));
 }
 $("profile-recipe-category-search").addEventListener("input",renderRecipeCategoryPicker);
