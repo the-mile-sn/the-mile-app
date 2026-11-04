@@ -324,11 +324,12 @@ def link_dish_recipe(c, dish_id, recipe_id):
         _validate_recipe_reference(c, recipe_id)
     if not c.execute("SELECT 1 FROM v2_dish_library WHERE id=?", (dish_id,)).fetchone():
         return None
+    # The legacy endpoint keeps replace semantics for existing clients.
+    c.execute("DELETE FROM v2_dish_recipe_links WHERE dish_id=?", (dish_id,))
     c.execute("UPDATE v2_dish_library SET recipe_id=? WHERE id=?", (recipe_id, dish_id))
     if recipe_id is not None:
-        c.execute("""INSERT INTO v2_dish_recipe_links(dish_id,recipe_id,position)
-            SELECT ?,?,COALESCE(MAX(position)+1,0) FROM v2_dish_recipe_links WHERE dish_id=?
-            ON CONFLICT(dish_id,recipe_id) DO NOTHING""", (dish_id, recipe_id, dish_id))
+        c.execute("INSERT INTO v2_dish_recipe_links(dish_id,recipe_id,position) VALUES(?,?,0)",
+                  (dish_id, recipe_id))
     c.commit()
     return list_dish_recipe_links(c)[dish_id]
 
