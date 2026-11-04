@@ -524,3 +524,31 @@
  #menus #player-recipes-area > .recipe-page-enter,
  #menus #player-recipes-area > .recipe-page-leave{animation:none;}
 }
+
+/* Menu recipe CTA has a clearly filled resting state, not a stroke.
+   Only .is-pressed gets the temporary stronger fill. */
+#menus .menu-entry-body .menu-view-recipe,
+#menus .menu-entry-body .menu-view-recipe:active,
+#menus .menu-entry-body .menu-view-recipe:hover{
+ border:0!important;
+ box-shadow:none!important;
+ outline:0;
+ background:rgba(255,255,255,.105);
+ transform:none;
+}
+#menus .menu-entry-body .menu-view-recipe.is-pressed{
+ border:0!important;
+ background:rgba(255,255,255,.25)!important;
+ transform:scale(.98);
+}
+#menus .menu-entry-body .menu-view-recipe:focus-visible{
+ outline:2px solid currentColor;
+ outline-offset:3px;
+}
+/* Faster, less theatrical recipe navigation. */
+#menus #player-recipes-area > .recipe-page-enter{
+ animation-duration:260ms;
+}
+#menus #player-recipes-area > .recipe-page-leave{
+ animation-duration:180ms;
+}
