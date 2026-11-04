@@ -1741,8 +1741,10 @@ function renderDishEditor(){
    if(cls==="dish-table-title"){
     const associated=dishRecipeLinks[dish.id];
     const tag=document.createElement("small");tag.className="dish-recipe-indicator";
-    tag.textContent=associated?.recipe_id?"Receita associada":"";
-    tag.hidden=!associated?.recipe_id;td.append(tag);
+    const linkedCount=associated?.recipes?.length||0;
+    const hasRecipe=linkedCount>0||Boolean(associated?.recipe_id);
+    tag.textContent=hasRecipe?(linkedCount>1?linkedCount+" receitas associadas":"Receita associada"):"";
+    tag.hidden=!hasRecipe;td.append(tag);
    }
    tr.append(td);
   }
@@ -1822,7 +1824,7 @@ function renderDishEditor(){
      const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(view,remove);line.append(name,actions);associationList.append(line);
     }
     const rowTag=tr.querySelector(".dish-recipe-indicator");
-    if(rowTag){rowTag.hidden=!linked.length;rowTag.textContent=linked.length?linked.length+" receita(s) associada(s)":"";}
+    if(rowTag){rowTag.hidden=!linked.length;rowTag.textContent=linked.length?(linked.length===1?"Receita associada":linked.length+" receitas associadas"):"";}
    };
    const closeAssociationSuggestions=()=>{
     associationSuggestions.hidden=true;associationSearch.setAttribute("aria-expanded","false");

@@ -140,7 +140,7 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(css,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
  assert.match(html,/admin-recipes\.js\?v=13/);
  assert.match(html,/admin-dashboard\.js\?v=33/);
- assert.match(html,/admin-microcycles\.js\?v=18236/);
+ assert.match(html,/admin-microcycles\.js\?v=18237/);
  assert.match(html,/admin-microcycles\.css\?v=111/);
 });
 
@@ -152,4 +152,11 @@ test("linked dish recipes render individual icon-action cards",()=>{
  assert.match(admin,/aria-label","Desassociar receita: "/);
  assert.match(css,/\.dish-recipe-card-name/);
  assert.match(css,/\.dish-recipe-card-buttons/);
+});
+
+test("dish table recipe badge reflects multi-recipe links without opening editor",()=>{
+ assert.match(admin,/const linkedCount=associated\?\.recipes\?\.length\|\|0/);
+ assert.match(admin,/const hasRecipe=linkedCount>0\|\|Boolean\(associated\?\.recipe_id\)/);
+ assert.match(admin,/linkedCount>1\?linkedCount\+" receitas associadas":"Receita associada"/);
+ assert.match(admin,/rowTag\.textContent=linked\.length\?/);
 });
