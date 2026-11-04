@@ -1,0 +1,68 @@
+/* Isolated recipe UI. Existing menu, calendar and navigation styles remain unchanged. */
+#menus #menus-recipe-switch{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;
+ gap:3px;padding:3px;height:38px;min-height:38px;margin:14px 0 18px;
+ background:#202024;border-radius:999px;overflow:hidden;
+}
+#menus #menus-recipe-switch button{
+ display:flex;justify-content:center;align-items:center;min-width:0;width:100%;
+ min-height:32px;height:32px;border:0;margin:0;padding:4px 8px;
+ background:transparent;color:#f2f2f5;border-radius:999px;
+ font-family:inherit;font-weight:500;font-size:13px;line-height:1.1;box-shadow:none;cursor:pointer;
+}
+#menus #menus-recipe-switch button[aria-pressed="true"]{background:#55555b;color:#fff;}
+#menus #menus-recipe-switch button:focus-visible,
+#menus #player-recipes-area button:focus-visible{outline:2px solid currentColor;outline-offset:3px;}
+#menus #player-recipes-area{padding-bottom:24px;}
+#menus .recipe-topline{display:flex;align-items:center;gap:12px;margin:12px 0 22px;}
+#menus .recipe-back{
+ display:flex;align-items:center;justify-content:center;border:0;border-radius:100%;
+ background:rgba(255,255,255,.06);color:inherit;min-width:38px;height:38px;
+ font:inherit;cursor:pointer;
+}
+#menus .recipe-topline h2{font-size:22px;font-weight:600;line-height:1.25;margin:0;}
+#menus .recipe-topline .recipe-subtitle{margin:4px 0 0;color:#a9a9b2;font-size:13px;}
+#menus .recipe-list{display:grid;gap:9px;}
+#menus .recipe-item{
+ display:flex;align-items:center;gap:14px;width:100%;min-height:83px;
+ background:rgba(255,255,255,.055);border:0;border-radius:18px;
+ padding:11px 13px;color:inherit;font:inherit;text-align:left;cursor:pointer;
+}
+#menus .recipe-thumb{height:64px;width:64px;border-radius:15px;object-fit:cover;flex:none;}
+#menus .recipe-thumb-placeholder{
+ width:64px;height:64px;border-radius:15px;flex:none;
+ display:grid;place-items:center;background:rgba(255,255,255,.055);color:#a9a9b2;
+}
+#menus .recipe-item-body{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;}
+#menus .recipe-item-body strong{font-size:15px;line-height:1.35;font-weight:500;}
+#menus .recipe-item-body small{color:#a9a9b2;font-size:12px;}
+#menus .recipe-chevron{color:#a9a9b2;font-size:28px;font-weight:300;padding:0 3px;}
+#menus .recipe-detail{background:rgba(255,255,255,.055);border-radius:20px;padding:18px;margin:0 0 16px;}
+#menus .recipe-hero{display:block;width:100%;max-height:290px;object-fit:cover;border-radius:20px;margin-bottom:14px;}
+#menus .recipe-detail>h2{font-size:23px;line-height:1.2;font-weight:600;margin:0 0 14px;}
+#menus .recipe-servings{display:flex;gap:8px;align-items:center;color:#dddde0;font-size:13px;margin:0 0 20px;}
+#menus .recipe-detail h3{font-size:18px;line-height:1.25;font-weight:600;margin:25px 0 12px;}
+#menus .recipe-section-heading{margin:17px 0 9px;font-weight:500;font-size:15px;color:#bfc0c6;}
+#menus .recipe-ingredient{
+ display:flex;align-items:baseline;justify-content:space-between;
+ column-gap:15px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.075);
+ font-size:14px;line-height:1.4;
+}
+#menus .recipe-ingredient:last-child{border-bottom:0;}
+#menus .recipe-ingredient-name{flex:1;min-width:0;}
+#menus .recipe-ingredient-quantity{flex:none;text-align:right;white-space:nowrap;color:#d5d5da;}
+#menus .recipe-step{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;margin:0 0 12px;font-size:14px;line-height:1.55;}
+#menus .recipe-step-number{color:#b6b6bd;font-variant-numeric:tabular-nums;}
+#menus .recipe-notes{white-space:pre-line;font-size:14px;line-height:1.55;color:#d5d5dc;}
+#menus .recipe-accordion{margin:0 0 9px;background:rgba(255,255,255,.055);border-radius:17px;overflow:hidden;}
+#menus .recipe-accordion summary{display:flex;gap:10px;align-items:center;justify-content:space-between;cursor:pointer;padding:18px 16px;list-style:none;font-weight:500;}
+#menus .recipe-accordion summary::-webkit-details-marker{display:none;}
+#menus .recipe-accordion summary:after{content:'⌄';font-size:21px;color:#a9a9b2;}
+#menus .recipe-accordion[open] summary:after{transform:rotate(180deg);}
+#menus .recipe-accordion .recipe-detail{margin:0;border-radius:0;background:transparent;padding-top:0;}
+#menus .recipe-message{padding:24px 8px;text-align:center;color:#a9a9b2;font-size:14px;line-height:1.5;}
+@media(max-width:390px){
+ #menus .recipe-detail{padding:15px;}
+ #menus .recipe-thumb,#menus .recipe-thumb-placeholder{width:56px;height:56px;}
+}
+/* The recipe views inherit the app's active palette. No global styles changed. */
