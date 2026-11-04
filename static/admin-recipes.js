@@ -56,6 +56,8 @@
   svg.setAttribute("stroke-linejoin","round");svg.setAttribute("aria-hidden","true");
   const paths=kind==="edit"?
    ["M12 20h9","M16.5 3.5a2.12 2.12 0 0 1 3 3L10 16l-4 1 1-4 9.5-9.5Z"]:
+   kind==="upload"?["M12 16V3","M7 8l5-5 5 5","M4 16v4h16v-4"]:
+   kind==="check"?["M5 12l4 4L19 6"]:
    ["M3 6h18","M8 6V4h8v2","M6 6l1 14h10l1-14","M10 10v7","M14 10v7"];
   for(const d of paths){
    const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);svg.append(p);
@@ -126,7 +128,11 @@
    const remove=button("",()=>deleteRecipe(r),"recipe-icon-button recipe-delete");
    remove.append(recipeListIcon("trash"));
    remove.title="Eliminar";remove.setAttribute("aria-label","Eliminar receita "+r.name);
-   actions.append(see,edit,remove);
+   const publish=button("",()=>publishFromList(r),"recipe-icon-button recipe-publish-action");
+   publish.append(recipeListIcon(r.status==="published"?"check":"upload"));
+   publish.title=r.status==="published"?"Publicada — voltar a rascunho":"Publicar receita";
+   publish.setAttribute("aria-label",publish.title+": "+r.name);
+   actions.append(see,edit,publish,remove);
    tr.append(actions);host.append(tr);
   }
  }
@@ -434,6 +440,30 @@
   $("recipe-editor-panel").hidden=true;openedId=null;current=null;
   $("recipe-photo-file").value="";editorMessage("");
  }
+ function syncPublicationActions(){
+  const published=current?.status==="published";
+  $("recipe-publication-label").textContent=published?"Publicada":"Rascunho";
+  $("recipe-publication").value=published?"published":"draft";
+  $("recipe-publish").hidden=!current?.id||published;
+  $("recipe-unpublish").hidden=!current?.id||!published;
+  $("recipe-publish").disabled=busy;
+  $("recipe-unpublish").disabled=busy;
+ }
+ async function changePublication(status){
+  if(!current?.id||busy||current.status===status)return;
+  if(status==="published"&&!window.confirm("Publicar «"+current.name+"»? A receita ficará marcada como publicada no Backoffice. A disponibilização na app será implementada separadamente."))return;
+  if(status==="draft"&&!window.confirm("Voltar «"+current.name+"» a rascunho?"))return;
+  busy=true;syncPublicationActions();editorMessage(status==="published"?"A publicar receita…":"A voltar a rascunho…");
+  try{
+   const result=await request("/api/v2/recipes/"+encodeURIComponent(current.id));
+   const recipe=result.recipe;
+   const data={name:recipe.name,category_id:recipe.category_id,recipe_type:recipe.recipe_type,status,servings:recipe.servings,sections:recipe.sections,steps:recipe.steps,notes:recipe.notes};
+   const saved=await request("/api/v2/recipes/"+encodeURIComponent(current.id),{method:"PUT",body:JSON.stringify(data)});
+   current=saved.recipe;await loadLibrary();
+   editorMessage(status==="published"?"Receita publicada no Backoffice.":"Receita devolvida a rascunho.");
+  }catch(error){editorMessage(error.message==="incomplete_recipe"?"Para publicar, preenche os ingredientes e os procedimentos da receita.":"Não foi possível alterar o estado: "+error.message);}
+  finally{busy=false;syncPublicationActions();}
+ }
  function paintEditor(){
   $("recipe-editor-panel").hidden=false;
   $("recipe-editor-heading").textContent=current.id?"Editar receita":"Adicionar nova receita";
@@ -441,6 +471,7 @@
   $("recipe-category").value=current.category_id;
   $("recipe-type").value=current.recipe_type;
   $("recipe-publication").value=current.status;
+  syncPublicationActions();
   $("recipe-servings").value=current.servings;
   $("recipe-notes").value=current.notes;
   $("recipe-photo-file").value="";
@@ -519,6 +550,22 @@
     "Não foi possível guardar: "+error.message);
   }
   finally{busy=false;$("recipe-save").disabled=false;}
+ }
+ async function publishFromList(recipe){
+  if(busy)return;
+  const status=recipe.status==="published"?"draft":"published";
+  const verb=status==="published"?"Publicar":"Voltar a rascunho";
+  if(!window.confirm(verb+" «"+recipe.name+"»?"+(status==="published"?" A receita ficará publicada no Backoffice; a disponibilização na app será implementada separadamente.":"")))return;
+  busy=true;alertMessage(status==="published"?"A publicar receita…":"A voltar a rascunho…");
+  try{
+   const result=await request("/api/v2/recipes/"+encodeURIComponent(recipe.id));
+   const full=result.recipe;
+   const data={name:full.name,category_id:full.category_id,recipe_type:full.recipe_type,status,servings:full.servings,sections:full.sections,steps:full.steps,notes:full.notes};
+   await request("/api/v2/recipes/"+encodeURIComponent(recipe.id),{method:"PUT",body:JSON.stringify(data)});
+   if(current?.id===recipe.id){current=(await request("/api/v2/recipes/"+encodeURIComponent(recipe.id))).recipe;syncPublicationActions();}
+   await loadLibrary();alertMessage(status==="published"?"Receita publicada no Backoffice.":"Receita devolvida a rascunho.");
+  }catch(error){alertMessage(error.message==="incomplete_recipe"?"Para publicar, preenche os ingredientes e os procedimentos.":"Não foi possível alterar o estado: "+error.message);}
+  finally{busy=false;}
  }
  async function deleteRecipe(recipe){
   if(busy)return;
@@ -994,6 +1041,8 @@
  $("recipe-close").addEventListener("click",closeEditor);
  $("recipe-cancel").addEventListener("click",closeEditor);
  $("recipe-save").addEventListener("click",saveRecipe);
+ $("recipe-publish").addEventListener("click",()=>changePublication("published"));
+ $("recipe-unpublish").addEventListener("click",()=>changePublication("draft"));
  $("recipe-create-category").addEventListener("click",addCategory);
  $("recipe-add-section").addEventListener("click",()=>{if(!current)return;current.sections.push({title:"",ingredients:[{name:"",quantity:"",unit:""}]});paintSections();});
  $("recipe-add-step").addEventListener("click",()=>{if(!current)return;current.steps.push("");paintSteps();});
