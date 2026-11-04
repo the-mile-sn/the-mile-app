@@ -140,8 +140,8 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(style,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
  assert.match(html,/admin-recipes\.js\?v=13/);
  assert.match(html,/admin-dashboard\.js\?v=33/);
- assert.match(html,/admin-microcycles\.js\?v=18235/);
- assert.match(html,/admin-microcycles\.css\?v=110/);
+ assert.match(html,/admin-microcycles\.js\?v=18236/);
+ assert.match(html,/admin-microcycles\.css\?v=111/);
 });
 
 test("linked dish recipes render individual icon-action cards",()=>{
