@@ -557,12 +557,12 @@
 #menus .menu-entry-body .menu-view-recipe,
 #menus .menu-entry-body .menu-view-recipe:hover,
 #menus .menu-entry-body .menu-view-recipe:active{
- background:rgba(16,18,22,.38);
- color:#f4f4f6;
+ background:rgba(11,14,17,.22);
+ color:rgba(255,255,255,.84);
  border:0!important;
  box-shadow:none!important;
 }
 #menus .menu-entry-body .menu-view-recipe.is-pressed{
- background:rgba(8,10,13,.76)!important;
+ background:rgba(8,10,13,.56)!important;
  border:0!important;
 }
