@@ -159,7 +159,7 @@ test("menu recipe action is slightly smaller, separated and provides pressed fee
  assert.match(refinements,/:active\{/);
  assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
  assert.match(refinements,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=12/);
+ assert.match(html,/player-recipes\.css\?v=13/);
 });
 
 test("menu recipe pressed state is applied on initial touch and survives until navigation",()=>{
