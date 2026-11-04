@@ -1396,11 +1396,8 @@ function activateDishPhoto(photo){
   photo.classList.add("dish-photo-ready");
   photo.tabIndex=0;
   photo.setAttribute("role","button");
-  const recipeCount=Number(photo.dataset.recipeCount||0);
-  const activate=()=>recipeCount>0&&window.themileRecipes
-   ?window.themileRecipes.openDish(dishId,photo.alt,src)
-   :openDishPhoto(src,photo.alt);
-  photo.setAttribute("aria-label",(recipeCount>0?"Ver receitas: ":"Ampliar fotografia: ")+photo.alt);
+  const activate=()=>openDishPhoto(src,photo.alt);
+  photo.setAttribute("aria-label","Ampliar fotografia: "+photo.alt);
   photo.onclick=activate;
   photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();activate();}};
  });
@@ -1481,7 +1478,9 @@ async function menusView(){
  if(color&&color!=="none"){const dot=document.createElement("span");dot.className="color-dot "+color;title.append(dot);}
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
- const name=document.createElement("span");name.className="value";name.textContent=menu.value;body.append(name);
+ const name=document.createElement("span");name.className="value";name.textContent=menu.value;
+ const nameColumn=document.createElement("div");nameColumn.className="menu-dish-name-column";nameColumn.append(name);
+ body.append(nameColumn);
  if(menu.kind==="dish"){
   const dish=menu.dish_id?dishById.get(menu.dish_id):uniqueDishByName.get(menu.value);
   if(dish){
@@ -1489,7 +1488,17 @@ async function menusView(){
    photo.className="dish-img";photo.alt=menu.value;photo.loading="lazy";photo.decoding="async";
    photo.dataset.dishId=dish.id;photo.dataset.recipeCount=String(dish.recipe_count||0);
    photo.dataset.playerEpoch=String(epoch);
-   body.append(photo);photosToObserve.push(photo);
+   const photoFrame=document.createElement("span");photoFrame.className="dish-photo-frame";
+   const zoom=document.createElement("span");zoom.className="dish-photo-zoom";zoom.setAttribute("aria-hidden","true");
+   zoom.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.2 4.2"/></svg>';
+   photoFrame.append(photo,zoom);body.append(photoFrame);photosToObserve.push(photo);
+   if(Number(dish.recipe_count||0)>0){
+    const recipeAction=document.createElement("button");recipeAction.type="button";recipeAction.className="menu-view-recipe";
+    recipeAction.textContent=Number(dish.recipe_count||0)>1?"Ver receitas":"Ver receita";
+    recipeAction.setAttribute("aria-label",recipeAction.textContent+" de "+menu.value);
+    recipeAction.addEventListener("click",()=>{if(window.themileRecipes)window.themileRecipes.openDish(dish.id,menu.value);});
+    nameColumn.append(recipeAction);
+   }
   }
  }
  div.append(title,body);section.append(div);}fragment.append(section);}if(renderToken===menuRenderToken){

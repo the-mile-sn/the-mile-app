@@ -392,3 +392,45 @@
 #menus details.recipe-accordion .recipe-content-section{
  background:#1b1b20;
 }
+
+/* Menus: photo enlargement and recipe reading are independent actions. */
+#menus .menu-entry-body .menu-dish-name-column{
+ display:flex;flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:7px;
+}
+#menus .menu-entry-body .menu-dish-name-column .value{
+ flex:none;min-width:0;overflow-wrap:anywhere;width:100%;
+}
+#menus .menu-entry-body .menu-view-recipe{
+ appearance:none;border:0;box-shadow:none;background:transparent;color:#dcdce3;
+ font:inherit;font-size:12px;font-weight:var(--mile-type-medium,500);
+ line-height:1.3;letter-spacing:0;padding:3px 0;text-decoration:underline;
+ text-decoration-color:rgba(255,255,255,.38);text-underline-offset:3px;
+ cursor:pointer;text-align:left;min-height:27px;
+}
+#menus .menu-entry-body .menu-view-recipe:focus-visible{
+ outline:2px solid currentColor;outline-offset:3px;border-radius:3px;
+}
+#menus .menu-entry-body .dish-photo-frame{
+ position:relative;display:block;flex:0 0 auto;width:88px;height:88px;
+}
+#menus .menu-entry-body .dish-photo-frame .dish-img{
+ display:block;width:100%;height:100%;cursor:zoom-in;
+}
+#menus .menu-entry-body .dish-photo-zoom{
+ pointer-events:none;position:absolute;right:5px;bottom:5px;
+ display:flex;align-items:center;justify-content:center;
+ width:23px;height:23px;border-radius:8px;
+ background:rgba(18,18,21,.68);color:#f0f0f2;
+}
+#menus .menu-entry-body .dish-photo-zoom svg{width:14px;height:14px;}
+@media(max-width:620px){
+ #menus .menu-entry-body .dish-photo-frame{width:82px;height:82px;}
+}
+/* The section title needs to be visibly quieter than the recipe text. */
+#menus .recipe-content-section .recipe-section-title{
+ font-size:14px;font-weight:var(--mile-type-medium,500);line-height:1.35;
+}
+/* Slightly deeper than the assessment inset, to overcome the overly bright photographed view. */
+#menus details.recipe-accordion .recipe-content-section{
+ background:#17171b;
+}

@@ -113,7 +113,7 @@ test("library photo aligns to the top of recipe name; menu-linked details remain
 
 test("final heading hierarchy is smaller in every recipe detail",()=>{
  const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
- assert.match(finalRules,/#menus \.recipe-content-section \.recipe-section-title\{\s*font-size:16px;/);
+ assert.match(css.slice(css.lastIndexOf("/* Menus: photo enlargement")),/#menus \.recipe-content-section \.recipe-section-title\{\s*font-size:14px;/);
  assert.match(finalRules,/font-weight:var\(--mile-type-medium,500\)/);
  assert.doesNotMatch(finalRules,/#tabs[\s.{>]/);
 });
@@ -130,4 +130,18 @@ test("the library image gets optical top alignment only in standalone details",(
  assert.match(finalRules,/#menus \.recipe-detail-standalone \.recipe-identity \.recipe-detail-photo\{\s*margin-top:7px;/);
  assert.doesNotMatch(finalRules,/#menus details\.recipe-accordion \.recipe-detail-photo/);
  assert.match(js,/if\(includePhoto&&recipe\.has_photo\)identity\.append\(thumb\(recipe\.id,true\)\)/);
+});
+
+test("menu dish photos always open the same zoom, independent of recipes",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/const activate=\(\)=>openDishPhoto\(src,photo.alt\)/);
+ assert.doesNotMatch(player,/recipeCount>0&&window\.themileRecipes/);
+ assert.match(player,/photo\.setAttribute\("aria-label","Ampliar fotografia: "\+photo.alt\)/);
+});
+test("only dishes with linked recipes get a separate recipe action",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/if\(Number\(dish\.recipe_count\|\|0\)>0\)/);
+ assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?"Ver receitas":"Ver receita"/);
+ assert.match(player,/window\.themileRecipes\.openDish\(dish.id,menu.value\)/);
+ assert.match(player,/dish-photo-zoom/);
 });
