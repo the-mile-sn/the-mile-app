@@ -160,7 +160,10 @@
  }
  function sectionTitle(label,kind){
   const h=node("h3","recipe-section-title");
-  h.append(sectionIcon(kind),node("span","",label));
+  const tile=node("span","recipe-icon-tile");
+  tile.setAttribute("aria-hidden","true");
+  tile.append(sectionIcon(kind));
+  h.append(tile,node("span","",label));
   return h;
  }
  // A recipe from the independent library has one small photo alongside its name.
