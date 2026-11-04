@@ -375,3 +375,20 @@
 #menus .recipe-content-section .recipe-ingredient:last-child{
  border-bottom:0;
 }
+
+/* Recipe-only visual finish: typography and the library's optical image alignment. */
+#menus .recipe-content-section .recipe-section-title{
+ font-size:16px;
+ font-weight:var(--mile-type-medium,500);
+ line-height:1.35;
+ color:#e6e6eb;
+}
+/* Align the image with the visible top of the letters, not only the line box. */
+#menus .recipe-detail-standalone .recipe-identity .recipe-detail-photo{
+ margin-top:7px;
+}
+/* Use the very same darker inset surface as the expanded Avaliações chart
+   (#plans .assessment-trend). Keep outer cards at their existing #242429. */
+#menus details.recipe-accordion .recipe-content-section{
+ background:#1b1b20;
+}
