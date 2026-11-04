@@ -31,6 +31,7 @@ import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
 import food_plan_drafts_v2
+import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -273,6 +274,13 @@ def initialize():
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
         food_plan_drafts_v2.initialize(c)
+        # Import existing published snapshots into independent editable drafts once.
+        # The importer never updates published snapshots or overwrites editor drafts.
+        try:
+            migration_stats = food_plan_migration_v2.import_drafts(c)
+            logging.info('Editor plan migration: %s', migration_stats)
+        except Exception:
+            logging.exception('Editor plan migration failed; published plans remain unchanged')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
