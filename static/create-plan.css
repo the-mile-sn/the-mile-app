@@ -330,3 +330,20 @@
 #plan-editor .plan-selectors{margin:16px 0}
 .search-player-results button{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .search-player-results button::after{content:'›';font-size:20px;color:var(--lib-muted)}
+
+/* Search selectors share the same surface, dimensions and dropdown treatment. */
+.plan-entry .entry-choice{min-height:58px;border-radius:999px!important;flex-direction:row;gap:12px;align-items:center;justify-content:center;color:var(--lib-fg);font-size:14px}
+.entry-choice .entry-icon{width:20px;height:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:25px;font-weight:350;line-height:1}
+#plan-search-selection{max-width:none;width:100%}
+#plan-search-selection .plan-search-field,#plan-search-selection #search-plan-type{width:100%;min-height:60px}
+#plan-search-selection .plan-search-field input,#plan-search-selection #search-plan-type{height:60px;min-height:60px;padding:0 54px 0 18px;border-radius:13px!important;background:var(--lib-panel-2)!important;color:var(--lib-fg);font-size:14px;box-sizing:border-box}
+#plan-search-selection .plan-search-field input:focus{outline:0;box-shadow:none}
+#plan-search-selection .plan-search-field:focus-within{outline:2px solid #397da9;outline-offset:2px;border-radius:13px}
+#plan-search-selection #search-plan-type{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23929298' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-size:18px!important;background-position:right 20px center!important}
+#plan-search-selection #search-plan-type:disabled{opacity:1;cursor:not-allowed}
+.search-player-toggle{position:absolute;right:0;top:0;width:56px;height:60px;border:0;background:transparent;color:var(--lib-muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.search-player-toggle svg{width:19px;height:19px}
+.search-player-results[hidden]{display:none!important}
+.search-player-results{border-radius:12px;overflow:auto;max-height:300px;background:var(--lib-panel-2)}
+.search-player-results button{background:transparent;border-radius:0;min-height:46px;padding:12px 18px}
+.search-player-results button+button{border-top:1px solid #85858b20}
