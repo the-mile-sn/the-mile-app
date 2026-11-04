@@ -140,7 +140,7 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(css,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
  assert.match(html,/admin-recipes\.js\?v=14/);
  assert.match(html,/admin-dashboard\.js\?v=33/);
- assert.match(html,/admin-microcycles\.js\?v=18239/);
+ assert.match(html,/admin-microcycles\.js\?v=18240/);
  assert.match(html,/admin-microcycles\.css\?v=111/);
 });
 
