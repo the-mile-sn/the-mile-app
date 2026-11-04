@@ -49,22 +49,8 @@
   const header=node("div","recipe-topline");
   const back=node("button","recipe-back","‹");back.type="button";
   back.setAttribute("aria-label","Voltar");
-  back.onclick=()=>{
-   if(back.dataset.leaving==="true")return;
-   back.dataset.leaving="true";
-   const page=area.firstElementChild;
-   const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-   if(!page||reduced){callback();return;}
-   page.classList.remove("recipe-page-enter");
-   page.classList.add("recipe-page-leave");
-   let done=false;
-   const finish=()=>{
-    if(done)return;done=true;
-    if(page.isConnected&&page===area.firstElementChild)callback();
-   };
-   page.addEventListener("animationend",finish,{once:true});
-   window.setTimeout(finish,245);
-  };
+  // Returning is immediate; the user's swipe is already the motion cue.
+  back.onclick=callback;
   header.append(back);return header;
  }
  function card(name,small,photoId,callback){

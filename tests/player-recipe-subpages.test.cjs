@@ -159,7 +159,7 @@ test("menu recipe action is slightly smaller, separated and provides pressed fee
  assert.match(refinements,/:active\{/);
  assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
  assert.match(refinements,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=14/);
+ assert.match(html,/player-recipes\.css\?v=15/);
 });
 
 test("menu recipe pressed state is applied on initial touch and survives until navigation",()=>{
@@ -177,12 +177,12 @@ test("recipe subpages support left-edge swipe and horizontal page transitions",(
  assert.match(js,/p\.clientX<=Math\.min\(145,window\.innerWidth\*\.4\)/);
  assert.match(js,/dx<72/);
  assert.match(js,/function showRecipePage\(root\)/);
- assert.match(js,/page\.classList\.add\("recipe-page-leave"\)/);
+ assert.match(js,/back\.onclick=callback/);
  assert.match(css,/animation:recipe-subpage-enter 500ms/);
  assert.match(css,/animation:recipe-subpage-leave 380ms/);
  assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=14/);
- assert.match(html,/player-recipes\.js\?v=9/);
+ assert.match(html,/player-recipes\.css\?v=15/);
+ assert.match(html,/player-recipes\.js\?v=10/);
 });
 
 test("menu CTA cleans pressed state before showing a subpage; resting state has no border",()=>{
@@ -198,7 +198,21 @@ test("swipe is captured from the outer gutter, preserves vertical scrolling, and
  assert.match(js,/document\.addEventListener\("touchmove"/);
  assert.match(js,/passive:false,capture:true/);
  assert.match(js,/event\.cancelable\)event\.preventDefault\(\)/);
- assert.match(js,/window\.setTimeout\(finish,245\)/);
+ assert.doesNotMatch(js,/window\.setTimeout\(finish,245\)/);
  assert.match(css,/animation-duration:180ms;/);
- assert.match(html,/player-recipes\.js\?v=9/);
+ assert.match(html,/player-recipes\.js\?v=10/);
+});
+
+test("recipe subpage return has no extra animation delay",()=>{
+ assert.match(js,/back\.onclick=callback/);
+ assert.doesNotMatch(js,/page\.classList\.add\("recipe-page-leave"\)/);
+ assert.match(js,/if\(back\)back\.click\(\)/);
+});
+
+test("menu recipe pill uses a dark resting surface close to the zoom tile",()=>{
+ const finalCss=css.slice(css.lastIndexOf("/* Recipe CTA: dark translucent fill"));
+ assert.match(finalCss,/background:rgba\(16,18,22,\.38\)/);
+ assert.match(finalCss,/border:0!important/);
+ assert.match(finalCss,/background:rgba\(255,255,255,\.17\)!important/);
+ assert.match(html,/player-recipes\.css\?v=15/);
 });

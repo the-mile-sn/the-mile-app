@@ -552,3 +552,17 @@
 #menus #player-recipes-area > .recipe-page-leave{
  animation-duration:180ms;
 }
+
+/* Recipe CTA: dark translucent fill in the same neutral family as the photo zoom tile. */
+#menus .menu-entry-body .menu-view-recipe,
+#menus .menu-entry-body .menu-view-recipe:hover,
+#menus .menu-entry-body .menu-view-recipe:active{
+ background:rgba(16,18,22,.38);
+ color:#f4f4f6;
+ border:0!important;
+ box-shadow:none!important;
+}
+#menus .menu-entry-body .menu-view-recipe.is-pressed{
+ background:rgba(255,255,255,.17)!important;
+ border:0!important;
+}
