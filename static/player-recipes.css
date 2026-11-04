@@ -491,3 +491,15 @@
 @media(prefers-reduced-motion:reduce){
  #menus .menu-entry-body .menu-view-recipe{transition:none;}
 }
+
+/* Touch feedback is held in a class before navigation replaces the button. */
+#menus .menu-entry-body .menu-view-recipe.is-pressed{
+ background:rgba(255,255,255,.20)!important;
+ border-color:rgba(255,255,255,.35)!important;
+ transform:scale(.98);
+}
+/* The zoom tile is rounded and translucent, without any stroke. */
+#menus .menu-entry-body .dish-photo-zoom{
+ border:0!important;
+ box-shadow:none!important;
+}

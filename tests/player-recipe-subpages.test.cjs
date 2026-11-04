@@ -159,5 +159,16 @@ test("menu recipe action is slightly smaller, separated and provides pressed fee
  assert.match(refinements,/:active\{/);
  assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
  assert.match(refinements,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=11/);
+ assert.match(html,/player-recipes\.css\?v=12/);
+});
+
+test("menu recipe pressed state is applied on initial touch and survives until navigation",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/recipeAction\.addEventListener\("pointerdown",press\)/);
+ assert.match(player,/recipeAction\.addEventListener\("touchstart",press,\{passive:true\}\)/);
+ assert.match(player,/recipeAction\.classList\.add\("is-pressed"\)/);
+ assert.match(player,/window\.setTimeout\(\(\)=>\{if\(window\.themileRecipes\)window\.themileRecipes\.openDish\(dish\.id,menu\.value\);\},180\)/);
+ assert.match(css,/#menus \.menu-entry-body \.menu-view-recipe\.is-pressed\{/);
+ assert.match(css,/#menus \.menu-entry-body \.dish-photo-zoom\{\s*border:0!important;/);
+ assert.match(html,/jogador-v2\.js\?v=147/);
 });
