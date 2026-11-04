@@ -95,3 +95,18 @@ test("the final ingredient does not have a divider",()=>{
  assert.match(css,/#menus \.recipe-content-section \.recipe-ingredient:last-child\{\s*border-bottom:0;/);
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.09\)/);
 });
+
+test("section headings have quiet grayscale icon tiles and medium weight",()=>{
+ assert.match(js,/const tile=node\("span","recipe-icon-tile"\)/);
+ assert.match(js,/tile\.append\(sectionIcon\(kind\)\)/);
+ assert.match(css,/#menus \.recipe-section-title > \.recipe-icon-tile\{/);
+ assert.match(css,/background:#222228;/);
+ assert.match(css,/color:#b8b8c0;/);
+ assert.match(css,/font-weight:var\(--mile-type-medium,500\);/);
+});
+test("library photo aligns to the top of recipe name; menu-linked details remain photoless",()=>{
+ assert.match(css,/#menus \.recipe-identity\{\s*align-items:flex-start;/);
+ assert.match(js,/\{includePhoto:false\}/);
+ assert.match(js,/includePhoto:false,includeTitle:false,includeServings:true,standalone:false/);
+ assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.045\)/);
+});
