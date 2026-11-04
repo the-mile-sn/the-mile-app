@@ -79,7 +79,7 @@
  margin-bottom:18px;
 }
 #menus .recipe-detail .recipe-hero{
- height:clamp(185px,54vw,235px);
+ height:clamp(160px,46vw,195px);
  max-height:none;
  object-fit:cover;
  margin-bottom:13px;
@@ -87,3 +87,22 @@
 #menus .recipe-detail-standalone>h2{margin-bottom:9px;}
 #menus .recipe-detail-standalone .recipe-servings{margin-bottom:16px;}
 #menus .recipe-detail-standalone .recipe-ingredient{padding-top:6px;padding-bottom:6px;}
+
+/* Compact text-only recipe panels opened from a dish in Menus. */
+#menus .recipe-accordion{
+ margin-bottom:9px;
+}
+#menus .recipe-accordion summary{
+ min-height:58px;
+ padding:12px 15px;
+ line-height:1.35;
+}
+#menus .recipe-accordion .recipe-detail{
+ padding:0 15px 15px;
+}
+#menus .recipe-accordion .recipe-servings{
+ margin:0 0 14px;
+}
+#menus .recipe-accordion .recipe-detail h3:first-of-type{
+ margin-top:12px;
+}
