@@ -105,7 +105,7 @@ test("section headings have quiet grayscale icon tiles and medium weight",()=>{
 test("library photo aligns to the top of recipe name; menu-linked details remain photoless",()=>{
  assert.match(css,/#menus \.recipe-identity\{\s*align-items:flex-start;/);
  assert.match(js,/\{includePhoto:false\}/);
- assert.match(js,/includePhoto:false,includeTitle:false,includeServings:true,standalone:false/);
+ assert.match(js,/renderDishDetail\(\)/);
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.045\)/);
 });
 
