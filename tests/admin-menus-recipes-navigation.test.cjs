@@ -136,8 +136,8 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(backend,/path == '\/api\/v2\/dishes\/recipe-link'/);
  assert.match(backend,/admin\(user\)/);
  assert.match(backend,/path\.startswith\('\/api\/v2\/dishes\/recipe-link'\)/);
- assert.match(style,/\.dish-recipe-association\{/);
- assert.match(style,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
+ assert.match(css,/\.dish-recipe-association\{/);
+ assert.match(css,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
  assert.match(html,/admin-recipes\.js\?v=13/);
  assert.match(html,/admin-dashboard\.js\?v=33/);
  assert.match(html,/admin-microcycles\.js\?v=18236/);
@@ -150,6 +150,6 @@ test("linked dish recipes render individual icon-action cards",()=>{
  assert.match(admin,/dish-recipe-card-buttons/);
  assert.match(admin,/aria-label","Ver receita: "/);
  assert.match(admin,/aria-label","Desassociar receita: "/);
- assert.match(style,/\.dish-recipe-card-name/);
- assert.match(style,/\.dish-recipe-card-buttons/);
+ assert.match(css,/\.dish-recipe-card-name/);
+ assert.match(css,/\.dish-recipe-card-buttons/);
 });
