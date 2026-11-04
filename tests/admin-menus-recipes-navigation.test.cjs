@@ -77,7 +77,7 @@ test("recipe library switches independently from dish catalogue and Planning",()
  assert.match(dashboard,/recipeLibraryPage\.hidden=false/);
  assert.match(dashboard,/window\.tmLoadRecipeLibrary\(\)/);
  assert.match(dashboard,/recipeLibraryBtn\.addEventListener\("click",openRecipeLibrary\)/);
- assert.match(html,/admin-recipes\\.js\\?v=14/);
+ assert.match(html,/admin-recipes\.js\?v=14/);
  assert.match(html,/admin-recipes\.css\?v=13/);
 });
 
@@ -138,7 +138,7 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(backend,/path\.startswith\('\/api\/v2\/dishes\/recipe-link'\)/);
  assert.match(css,/\.dish-recipe-association\{/);
  assert.match(css,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
- assert.match(html,/admin-recipes\\.js\\?v=14/);
+ assert.match(html,/admin-recipes\.js\?v=14/);
  assert.match(html,/admin-dashboard\.js\?v=33/);
  assert.match(html,/admin-microcycles\.js\?v=18237/);
  assert.match(html,/admin-microcycles\.css\?v=111/);
