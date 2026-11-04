@@ -181,7 +181,7 @@ async function loadModel(){
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
  model=nextModel;profileEditing=false;render();renderProfileSummary();
- loadRecipeCategoryAccess(athleteId);
+ if(typeof loadRecipeCategoryAccess==="function")loadRecipeCategoryAccess(athleteId);
  await loadPlanDrafts();
  if($("athlete").value!==athleteId)return;
  if(backofficeView==="calendar")await showBackofficeView("calendar");
