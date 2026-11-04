@@ -41,10 +41,30 @@
   });
   return img;
  }
+ function showRecipePage(root){
+  root.classList.add("recipe-page-enter");
+  area.replaceChildren(root);
+ }
  function goBack(callback){
   const header=node("div","recipe-topline");
   const back=node("button","recipe-back","‹");back.type="button";
-  back.setAttribute("aria-label","Voltar");back.onclick=callback;
+  back.setAttribute("aria-label","Voltar");
+  back.onclick=()=>{
+   if(back.dataset.leaving==="true")return;
+   back.dataset.leaving="true";
+   const page=area.firstElementChild;
+   const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+   if(!page||reduced){callback();return;}
+   page.classList.remove("recipe-page-enter");
+   page.classList.add("recipe-page-leave");
+   let done=false;
+   const finish=()=>{
+    if(done)return;done=true;
+    if(page.isConnected&&page===area.firstElementChild)callback();
+   };
+   page.addEventListener("animationend",finish,{once:true});
+   window.setTimeout(finish,450);
+  };
   header.append(back);return header;
  }
  function card(name,small,photoId,callback){
@@ -98,7 +118,7 @@
       screen={kind:"list",group};renderList();scrollTop();
      }));
    }
-   area.replaceChildren(root);
+   showRecipePage(root);
   }catch(err){
    if(render!==token)return;
    message("Não foi possível carregar as receitas. Tenta novamente.");
@@ -118,7 +138,7 @@
     screen={kind:"detail",recipeId:r.id,group};renderDetail();scrollTop();
    }));
   }
-  root.append(list);area.replaceChildren(root);
+  root.append(list);showRecipePage(root);
  }
  function ingredientList(parent,sections){
   for(const section of sections||[]){
@@ -220,7 +240,7 @@
   }));
   const content=node("div","");
   content.append(node("p","recipe-message","A carregar receita…"));
-  root.append(content);area.replaceChildren(root);
+  root.append(content);showRecipePage(root);
   loadDetail(r.recipeId,content,()=>render===token&&screen.kind==="detail");
  }
  async function openDish(dishId,dishName){
@@ -237,7 +257,7 @@
    if(entries.length===1){
     const detailRoot=node("div","");
     root.append(detailRoot);
-    area.replaceChildren(root);
+    showRecipePage(root);
     loadDetail(entries[0].id,detailRoot,()=>render===token&&screen.kind==="dish",
      {includePhoto:false});
     return;
@@ -254,7 +274,7 @@
     }));
    }
    root.append(list);
-   area.replaceChildren(root);
+   showRecipePage(root);
   }catch(err){
    if(render===token&&screen.kind==="dish")message("Não foi possível abrir as receitas deste prato.");
   }
@@ -271,7 +291,7 @@
   }));
   const content=node("div","");
   content.append(node("p","recipe-message","A carregar receita…"));
-  root.append(content);area.replaceChildren(root);
+  root.append(content);showRecipePage(root);
   loadDetail(state.recipeId,content,()=>render===token&&screen.kind==="dish-detail"&&screen.recipeId===state.recipeId,
    {includePhoto:false});
  }
@@ -288,7 +308,7 @@
     renderDishDetail();scrollTop();
    }));
   }
-  root.append(list);area.replaceChildren(root);
+  root.append(list);showRecipePage(root);
  }
  function closeDish(){
   const wasDish=screen.kind==="dish"||screen.kind==="dish-detail";
@@ -316,13 +336,16 @@
    touchStart=null;return;
   }
   const p=event.touches[0];
-  touchStart=p.clientX<=38?{x:p.clientX,y:p.clientY,kind:screen.kind}:null;
+  // Use a generous left-edge zone on iPhone; ignore taps on controls.
+  touchStart=p.clientX<=86&&!event.target.closest("button,a,input,textarea,select")
+   ?{x:p.clientX,y:p.clientY,kind:screen.kind}:null;
  },{passive:true});
  area.addEventListener("touchend",event=>{
   if(!touchStart||event.changedTouches.length!==1)return;
   const p=event.changedTouches[0],start=touchStart;touchStart=null;
-  if(start.kind!==screen.kind||p.clientX-start.x<90||
-    Math.abs(p.clientY-start.y)>65)return;
+  if(start.kind!==screen.kind||p.clientX-start.x<85||
+    Math.abs(p.clientY-start.y)>65||
+    p.clientX-start.x<Math.abs(p.clientY-start.y)*1.5)return;
   const back=area.querySelector(".recipe-topline .recipe-back");
   if(back)back.click();
  },{passive:true});
