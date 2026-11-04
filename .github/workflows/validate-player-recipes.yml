@@ -1,0 +1,25 @@
+name: Validate player recipe access
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  recipe-access:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install application dependencies
+        run: pip install -r requirements.txt
+      - name: Check Python syntax
+        run: python -m compileall -q app.py microcycles_v2.py player_recipes_v2.py test_player_recipes_v2.py
+      - name: Test recipe IDs and permissions
+        run: python -m unittest -v test_player_recipes_v2
+      - name: Check existing player API regression
+        run: python -m unittest -v test_app test_player_access_profile_bridge
