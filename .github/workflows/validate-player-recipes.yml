@@ -17,6 +17,10 @@ jobs:
           python-version: '3.12'
       - name: Install application dependencies
         run: pip install -r requirements.txt
+      - name: Check player recipe UI syntax
+        run: |
+          node --check static/jogador-v2.js
+          node --check static/player-recipes.js
       - name: Check Python syntax
         run: python -m compileall -q app.py microcycles_v2.py player_recipes_v2.py test_player_recipes_v2.py
       - name: Test recipe IDs and permissions
