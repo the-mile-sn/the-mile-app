@@ -66,3 +66,24 @@
  #menus .recipe-thumb,#menus .recipe-thumb-placeholder{width:56px;height:56px;}
 }
 /* The recipe views inherit the app's active palette. No global styles changed. */
+
+/* Recipe subpages: no redundant selector or heading. The bottom navigation is untouched. */
+#menus .recipe-topline:has(> .recipe-back:only-child){
+ margin:8px 0 14px;
+ min-height:38px;
+}
+#menus .recipe-detail-standalone{
+ background:transparent;
+ padding:0;
+ border-radius:0;
+ margin-bottom:18px;
+}
+#menus .recipe-detail .recipe-hero{
+ height:clamp(185px,54vw,235px);
+ max-height:none;
+ object-fit:cover;
+ margin-bottom:13px;
+}
+#menus .recipe-detail-standalone>h2{margin-bottom:9px;}
+#menus .recipe-detail-standalone .recipe-servings{margin-bottom:16px;}
+#menus .recipe-detail-standalone .recipe-ingredient{padding-top:6px;padding-bottom:6px;}
