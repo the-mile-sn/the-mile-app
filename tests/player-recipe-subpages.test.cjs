@@ -150,3 +150,14 @@ test("zoom icon remains a rounded square and gets softer translucent fill",()=>{
  assert.match(css,/border-radius:8px;/);
  assert.match(css,/background:rgba\(18,18,21,\.43\)/);
 });
+
+test("menu recipe action is slightly smaller, separated and provides pressed feedback",()=>{
+ const refinements=css.slice(css.lastIndexOf("/* Small, more detached recipe CTA"));
+ assert.match(refinements,/margin-top:6px;/);
+ assert.match(refinements,/min-height:24px;/);
+ assert.match(refinements,/font-size:11px;/);
+ assert.match(refinements,/:active\{/);
+ assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
+ assert.match(refinements,/prefers-reduced-motion:reduce/);
+ assert.match(html,/player-recipes\.css\?v=11/);
+});
