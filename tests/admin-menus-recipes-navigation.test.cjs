@@ -143,3 +143,13 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(html,/admin-microcycles\.js\?v=18235/);
  assert.match(html,/admin-microcycles\.css\?v=110/);
 });
+
+test("linked dish recipes render individual icon-action cards",()=>{
+ assert.match(admin,/associationHeading\.textContent="Associar receita"/);
+ assert.match(admin,/associationList\.replaceChildren\(\)/);
+ assert.match(admin,/dish-recipe-card-buttons/);
+ assert.match(admin,/aria-label","Ver receita: "/);
+ assert.match(admin,/aria-label","Desassociar receita: "/);
+ assert.match(style,/\.dish-recipe-card-name/);
+ assert.match(style,/\.dish-recipe-card-buttons/);
+});
