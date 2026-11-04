@@ -56,6 +56,8 @@
   svg.setAttribute("stroke-linejoin","round");svg.setAttribute("aria-hidden","true");
   const paths=kind==="edit"?
    ["M12 20h9","M16.5 3.5a2.12 2.12 0 0 1 3 3L10 16l-4 1 1-4 9.5-9.5Z"]:
+   kind==="upload"?["M12 16V3","M7 8l5-5 5 5","M4 16v4h16v-4"]:
+   kind==="check"?["M5 12l4 4L19 6"]:
    ["M3 6h18","M8 6V4h8v2","M6 6l1 14h10l1-14","M10 10v7","M14 10v7"];
   for(const d of paths){
    const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);svg.append(p);
