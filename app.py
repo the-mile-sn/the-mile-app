@@ -688,6 +688,54 @@ def application(env, start_response):
                 try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
                 except ValueError:raise Problem(400,'invalid_supplement_package')
                 return respond(200,result)
+            # Read-only migration inventory. Never imports, edits, or publishes plans.
+            if path == '/api/v2/food-plan-migration-audit' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                athletes=c.execute("""SELECT a.id,a.name,l.user_id
+                    FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id
+                    WHERE a.archived_at IS NULL ORDER BY a.name""").fetchall()
+                imports=c.execute("""SELECT athlete_id,color,status,COUNT(*) AS total
+                    FROM v2_plan_imports GROUP BY athlete_id,color,status""").fetchall()
+                publications=c.execute("""SELECT athlete_id,color,COUNT(*) AS total,
+                    SUM(CASE WHEN replaced_at IS NULL THEN 1 ELSE 0 END) AS active
+                    FROM v2_plan_publications GROUP BY athlete_id,color""").fetchall()
+                draft_rows=c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall()
+                by_athlete={}
+                for a in athletes:
+                    by_athlete[a['id']]={'athlete_id':a['id'],'name':a['name'],
+                        'linked_player':bool(a['user_id']),'imports':[],
+                        'publications':[],'editor_drafts':[]}
+                for item in imports:
+                    if item['athlete_id'] in by_athlete:
+                        by_athlete[item['athlete_id']]['imports'].append({
+                            'color':item['color'],'status':item['status'],'count':item['total']})
+                for item in publications:
+                    if item['athlete_id'] in by_athlete:
+                        by_athlete[item['athlete_id']]['publications'].append({
+                            'color':item['color'],'count':item['total'],'active':item['active']})
+                user_to_athlete={a['user_id']:a['id'] for a in athletes if a['user_id']}
+                unmatched_drafts=0
+                for item in draft_rows:
+                    try: data=json.loads(item['content'])
+                    except (ValueError,TypeError):
+                        unmatched_drafts+=1
+                        continue
+                    athlete_id=user_to_athlete.get(str(data.get('player_id') or ''))
+                    if athlete_id in by_athlete:
+                        by_athlete[athlete_id]['editor_drafts'].append({
+                            'id':item['id'],'plan_type':data.get('plan_type'),
+                            'meal_count':len(data.get('meals') or [])})
+                    else: unmatched_drafts+=1
+                foods=c.execute("SELECT COUNT(*) AS total, SUM(CASE WHEN active=1 THEN 1 ELSE 0 END) AS active FROM v2_food_library").fetchone()
+                result=list(by_athlete.values())
+                return respond(200,{'read_only':True,'athletes':result,
+                    'summary':{'athletes':len(result),
+                        'linked_players':sum(1 for a in result if a['linked_player']),
+                        'athletes_with_imports':sum(1 for a in result if a['imports']),
+                        'athletes_with_active_publications':sum(1 for a in result if any(p['active'] for p in a['publications'])),
+                        'editor_drafts':len(draft_rows),'unmatched_editor_drafts':unmatched_drafts,
+                        'food_library_total':foods['total'],'food_library_active':foods['active'] or 0}})
             if path == '/api/v2/food-plan-drafts' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
