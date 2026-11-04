@@ -1457,6 +1457,35 @@ def application(env, start_response):
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
                                      'effective_colors':effective_colors})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/recipe-categories') and method in ('GET','PUT'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5 or parts[:3]!=['api','v2','athletes'] or parts[4]!='recipe-categories':
+                    raise Problem(404,'not_found')
+                aid=parts[3]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'not_found')
+                if method=='GET':
+                    return respond(200,{'categories':recipe_library_v2.list_categories(c),
+                                        'category_ids':recipe_library_v2.athlete_recipe_categories(c,aid)})
+                try:
+                    ids=recipe_library_v2.set_athlete_recipe_categories(c,aid,read_json(env).get('category_ids'))
+                except ValueError: raise Problem(400,'invalid_recipe_categories')
+                return respond(200,{'category_ids':ids})
+            if path == '/api/v2/player/recipes' and method=='GET':
+                if not user or user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                return respond(200,{'recipes':recipe_library_v2.published_for_athlete(c,link['athlete_id'])})
+            if path.startswith('/api/v2/player/recipes/') and method=='GET':
+                if not user or user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                recipe_id=path.rsplit('/',1)[-1]
+                recipe=recipe_library_v2.published_recipe_for_athlete(c,link['athlete_id'],recipe_id)
+                if not recipe:raise Problem(404,'not_found')
+                return respond(200,{'recipe':recipe})
             # Admin-only culinary catalogue. This route family is never exposed
             # to players and never changes meal plans or nutrition calculations.
             if path.startswith('/api/v2/recipes'):
