@@ -208,3 +208,11 @@ test("recipe subpage return has no extra animation delay",()=>{
  assert.doesNotMatch(js,/page\.classList\.add\("recipe-page-leave"\)/);
  assert.match(js,/if\(back\)back\.click\(\)/);
 });
+
+test("menu recipe pill uses a dark resting surface close to the zoom tile",()=>{
+ const finalCss=css.slice(css.lastIndexOf("/* Recipe CTA: dark translucent fill"));
+ assert.match(finalCss,/background:rgba\(16,18,22,\.38\)/);
+ assert.match(finalCss,/border:0!important/);
+ assert.match(finalCss,/background:rgba\(255,255,255,\.17\)!important/);
+ assert.match(html,/player-recipes\.css\?v=15/);
+});
