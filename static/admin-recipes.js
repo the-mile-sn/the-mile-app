@@ -126,7 +126,11 @@
    const remove=button("",()=>deleteRecipe(r),"recipe-icon-button recipe-delete");
    remove.append(recipeListIcon("trash"));
    remove.title="Eliminar";remove.setAttribute("aria-label","Eliminar receita "+r.name);
-   actions.append(see,edit,remove);
+   const publish=button("",()=>publishFromList(r),"recipe-icon-button recipe-publish-action");
+   publish.append(recipeListIcon(r.status==="published"?"check":"upload"));
+   publish.title=r.status==="published"?"Publicada — voltar a rascunho":"Publicar receita";
+   publish.setAttribute("aria-label",publish.title+": "+r.name);
+   actions.append(see,edit,publish,remove);
    tr.append(actions);host.append(tr);
   }
  }
@@ -544,6 +548,22 @@
     "Não foi possível guardar: "+error.message);
   }
   finally{busy=false;$("recipe-save").disabled=false;}
+ }
+ async function publishFromList(recipe){
+  if(busy)return;
+  const status=recipe.status==="published"?"draft":"published";
+  const verb=status==="published"?"Publicar":"Voltar a rascunho";
+  if(!window.confirm(verb+" «"+recipe.name+"»?"+(status==="published"?" A receita ficará publicada no Backoffice; a disponibilização na app será implementada separadamente.":"")))return;
+  busy=true;alertMessage(status==="published"?"A publicar receita…":"A voltar a rascunho…");
+  try{
+   const result=await request("/api/v2/recipes/"+encodeURIComponent(recipe.id));
+   const full=result.recipe;
+   const data={name:full.name,category_id:full.category_id,recipe_type:full.recipe_type,status,servings:full.servings,sections:full.sections,steps:full.steps,notes:full.notes};
+   await request("/api/v2/recipes/"+encodeURIComponent(recipe.id),{method:"PUT",body:JSON.stringify(data)});
+   if(current?.id===recipe.id){current=(await request("/api/v2/recipes/"+encodeURIComponent(recipe.id))).recipe;syncPublicationActions();}
+   await loadLibrary();alertMessage(status==="published"?"Receita publicada no Backoffice.":"Receita devolvida a rascunho.");
+  }catch(error){alertMessage(error.message==="incomplete_recipe"?"Para publicar, preenche os ingredientes e os procedimentos.":"Não foi possível alterar o estado: "+error.message);}
+  finally{busy=false;}
  }
  async function deleteRecipe(recipe){
   if(busy)return;
