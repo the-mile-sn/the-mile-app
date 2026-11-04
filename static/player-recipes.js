@@ -22,7 +22,7 @@
  function thumb(id,large=false){
   const placeholder=node("span","recipe-thumb-placeholder","•");
   if(!id)return placeholder;
-  const img=node("img",large?"recipe-hero":"recipe-thumb");
+  const img=node("img",large?"recipe-detail-photo":"recipe-thumb");
   img.alt="";img.loading="lazy";img.decoding="async";
   const epoch=current();
   const key=String(id);
@@ -35,7 +35,8 @@
   }
   photos.get(key).then(src=>{
    if(epoch!==current()||!img.isConnected)return;
-   if(src){img.src=src;img.onerror=()=>img.replaceWith(placeholder);}
+   if(src){img.src=src;img.onerror=()=>large?img.remove():img.replaceWith(placeholder);}
+   else if(large)img.remove();
    else img.replaceWith(placeholder);
   });
   return img;
@@ -133,26 +134,67 @@
    parent.append(ingredients);
   }
  }
- // The independent library has a photograph; menu-linked recipes deliberately do not.
- // An accordion summary already names the recipe, so avoid a second title inside it.
- function detail(recipe,{includePhoto=true,includeTitle=true,standalone=true}={}){
+ const portions=value=>Number(value)===1?"1 porção":String(value)+" porções";
+ // Keep the 1.5px rounded outline style used by the rest of The Mile.
+ // Ingredients reuse the app's existing official meal icon.
+ function sectionIcon(kind){
+  if(kind==="ingredients")return mealIcon("restaurant-02");
+  const icon=node("span","recipe-section-icon");
+  icon.setAttribute("aria-hidden","true");
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 24 24");
+  svg.setAttribute("fill","none");
+  svg.setAttribute("stroke","currentColor");
+  svg.setAttribute("stroke-width","1.5");
+  svg.setAttribute("stroke-linecap","round");
+  svg.setAttribute("stroke-linejoin","round");
+  const strokes=kind==="preparation"
+   ?["M6 13.9A4 4 0 0 1 6.5 6a6 6 0 0 1 11 0 4 4 0 0 1 .5 7.9V21H6v-7.1","M6 17h12"]
+   :["M9 18h6","M10 21h4","M9 14a6 6 0 1 1 6 0l-1 4h-4l-1-4Z"];
+  for(const d of strokes){
+   const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+   p.setAttribute("d",d);svg.append(p);
+  }
+  icon.append(svg);
+  return icon;
+ }
+ function sectionTitle(label,kind){
+  const h=node("h3","recipe-section-title");
+  h.append(sectionIcon(kind),node("span","",label));
+  return h;
+ }
+ // A recipe from the independent library has one small photo alongside its name.
+ // Menus do not repeat the dish photo, and multi-recipe cards use their summary
+ // for the recipe name and portion count.
+ function detail(recipe,{includePhoto=true,includeTitle=true,includeServings=true,standalone=true}={}){
   const root=node("div","recipe-detail");
   if(standalone)root.classList.add("recipe-detail-standalone");
-  if(includePhoto&&recipe.has_photo)root.append(thumb(recipe.id,true));
-  if(includeTitle)root.append(node("h2","",recipe.name||""));
-  root.append(node("div","recipe-servings",
-   Number(recipe.servings)===1?"1 porção":String(recipe.servings)+" porções"));
-  root.append(node("h3","","Ingredientes"));
-  ingredientList(root,recipe.sections);
-  root.append(node("h3","","Preparação"));
+  if(includeTitle||includeServings||(includePhoto&&recipe.has_photo)){
+   const identity=node("div","recipe-identity");
+   const copy=node("div","recipe-identity-copy");
+   if(includeTitle)copy.append(node("h2","",recipe.name||""));
+   if(includeServings)copy.append(node("div","recipe-servings",portions(recipe.servings)));
+   identity.append(copy);
+   if(includePhoto&&recipe.has_photo)identity.append(thumb(recipe.id,true));
+   root.append(identity);
+  }
+  const ingredients=node("section","recipe-content-section");
+  ingredients.append(sectionTitle("Ingredientes","ingredients"));
+  ingredientList(ingredients,recipe.sections);
+  root.append(ingredients);
+  const preparation=node("section","recipe-content-section");
+  preparation.append(sectionTitle("Preparação","preparation"));
   (recipe.steps||[]).forEach((step,i)=>{
    const row=node("div","recipe-step");
    row.append(node("span","recipe-step-number",i+1),node("span","",step));
-   root.append(row);
+   preparation.append(row);
   });
+  root.append(preparation);
   if(recipe.notes&&recipe.notes.trim()){
-   root.append(node("h3","","Dicas e observações"));
-   root.append(node("p","recipe-notes",recipe.notes));
+   const tips=node("section","recipe-content-section");
+   tips.append(sectionTitle("Dicas úteis","tips"));
+   tips.append(node("p","recipe-notes",recipe.notes));
+   root.append(tips);
   }
   return root;
  }
@@ -201,7 +243,10 @@
    // Multiple recipe panels show only their own instructions, never extra photos.
    for(const entry of entries){
     const section=node("details","recipe-accordion");
-    const summary=node("summary","",entry.name);
+    const summary=node("summary","");
+    const label=node("span","recipe-accordion-label");
+    label.append(node("strong","",entry.name),node("small","",portions(entry.servings)));
+    summary.append(label);
     const body=node("div","");
     section.append(summary,body);
     section.addEventListener("toggle",()=>{
@@ -209,7 +254,7 @@
      section.dataset.loaded="true";
      body.append(node("p","recipe-message","A carregar receita…"));
      loadDetail(entry.id,body,()=>render===token&&section.isConnected,
-      {includePhoto:false,includeTitle:false,standalone:false});
+      {includePhoto:false,includeTitle:false,includeServings:false,standalone:false});
     });
     root.append(section);
    }
