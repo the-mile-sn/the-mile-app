@@ -1497,17 +1497,23 @@ async function menusView(){
     recipeAction.textContent=Number(dish.recipe_count||0)>1?"Ver receitas":"Ver receita";
     recipeAction.setAttribute("aria-label",recipeAction.textContent+" de "+menu.value);
     const press=()=>recipeAction.classList.add("is-pressed");
-    const cancelPress=()=>{if(recipeAction.dataset.navigating!=="true")recipeAction.classList.remove("is-pressed");};
+    const clearPress=()=>{recipeAction.classList.remove("is-pressed");recipeAction.blur();};
     recipeAction.addEventListener("pointerdown",press);
-    recipeAction.addEventListener("pointercancel",cancelPress);
-    recipeAction.addEventListener("pointerleave",cancelPress);
+    recipeAction.addEventListener("pointerup",()=>{if(recipeAction.dataset.navigating!=="true")clearPress();});
+    recipeAction.addEventListener("pointercancel",clearPress);
+    recipeAction.addEventListener("pointerleave",()=>{if(recipeAction.dataset.navigating!=="true")clearPress();});
     recipeAction.addEventListener("touchstart",press,{passive:true});
-    recipeAction.addEventListener("touchcancel",cancelPress);
+    recipeAction.addEventListener("touchend",()=>{if(recipeAction.dataset.navigating!=="true")clearPress();},{passive:true});
+    recipeAction.addEventListener("touchcancel",clearPress);
     recipeAction.addEventListener("click",()=>{
      if(recipeAction.dataset.navigating==="true")return;
      recipeAction.dataset.navigating="true";press();
-     // Preserve the pressed frame before the menu view is replaced.
-     window.setTimeout(()=>{if(window.themileRecipes)window.themileRecipes.openDish(dish.id,menu.value);},180);
+     window.setTimeout(()=>{
+      // Never leave a hidden menu button in a pressed state when returning.
+      clearPress();
+      recipeAction.dataset.navigating="false";
+      if(window.themileRecipes)window.themileRecipes.openDish(dish.id,menu.value);
+     },120);
     });
     nameColumn.append(recipeAction);
    }
