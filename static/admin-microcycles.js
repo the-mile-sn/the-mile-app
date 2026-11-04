@@ -145,23 +145,47 @@ document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(even
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
 window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
 let recipeAccessToken=0;
+let recipeCategoryOptions=[];
+let selectedRecipeCategories=new Set();
+function renderRecipeCategoryPicker(){
+ const host=$("profile-recipe-category-list"),results=$("profile-recipe-category-results"),search=$("profile-recipe-category-search");
+ host.replaceChildren();
+ const chosen=recipeCategoryOptions.filter(item=>selectedRecipeCategories.has(item.id));
+ for(const category of chosen){
+  const chip=document.createElement("span");chip.className="tm-recipe-category-chip";
+  const name=document.createElement("span");name.textContent=category.name;
+  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remover "+category.name);
+  remove.addEventListener("click",()=>{selectedRecipeCategories.delete(category.id);renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";});
+  chip.append(name,remove);host.append(chip);
+ }
+ const term=search.value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
+ const available=recipeCategoryOptions.filter(item=>!selectedRecipeCategories.has(item.id)&&item.name.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().includes(term));
+ results.replaceChildren();
+ for(const category of available){
+  const option=document.createElement("button");option.type="button";option.className="tm-recipe-category-option";option.textContent=category.name;
+  option.addEventListener("click",()=>{selectedRecipeCategories.add(category.id);search.value="";renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";search.focus();});
+  results.append(option);
+ }
+ const show=document.activeElement===search&&available.length>0;
+ results.hidden=!show;search.setAttribute("aria-expanded",String(show));
+}
+$("profile-recipe-category-search").addEventListener("input",renderRecipeCategoryPicker);
+$("profile-recipe-category-search").addEventListener("focus",renderRecipeCategoryPicker);
+$("profile-recipe-category-search").addEventListener("blur",()=>{setTimeout(()=>{if(!$("profile-recipe-category-results").contains(document.activeElement)){$("profile-recipe-category-results").hidden=true;$("profile-recipe-category-search").setAttribute("aria-expanded","false");}},160);});
 async function loadRecipeCategoryAccess(athleteId){
- const token=++recipeAccessToken,host=$("profile-recipe-category-list"),feedback=$("profile-recipe-category-feedback");
- host.replaceChildren();feedback.textContent="A carregar categorias…";
+ const token=++recipeAccessToken,feedback=$("profile-recipe-category-feedback");
+ recipeCategoryOptions=[];selectedRecipeCategories=new Set();$("profile-recipe-category-search").value="";renderRecipeCategoryPicker();
+ feedback.textContent="A carregar categorias…";
  try{
   const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories");
   if(token!==recipeAccessToken||$("athlete").value!==athleteId)return;
-  for(const category of result.categories){
-   const label=document.createElement("label");label.style.cssText="display:flex;gap:9px;align-items:center;margin:9px 0";
-   const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.value=category.id;
-   checkbox.checked=result.category_ids.includes(category.id);label.append(checkbox,document.createTextNode(category.name));host.append(label);
-  }
+  recipeCategoryOptions=result.categories;selectedRecipeCategories=new Set(result.category_ids);renderRecipeCategoryPicker();
   feedback.textContent=result.categories.length?"":"Não existem categorias de receitas.";
  }catch(error){if(token===recipeAccessToken)feedback.textContent="Não foi possível carregar as categorias: "+error.message;}
 }
 $("profile-recipe-category-save").addEventListener("click",async()=>{
  const athleteId=$("athlete").value,feedback=$("profile-recipe-category-feedback");
- const category_ids=Array.from($("profile-recipe-category-list").querySelectorAll('input[type="checkbox"]:checked')).map(el=>el.value);
+ const category_ids=Array.from(selectedRecipeCategories);
  const button=$("profile-recipe-category-save");button.disabled=true;feedback.textContent="A guardar…";
  try{await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories",{method:"PUT",body:JSON.stringify({category_ids})});
   if($("athlete").value===athleteId)feedback.textContent="Acesso às receitas guardado.";
