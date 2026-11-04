@@ -14,6 +14,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import player_recipes_v2
 import calendar_v2
 import events_v2
 import day_colors_v2
@@ -259,6 +260,7 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        player_recipes_v2.initialize(c)
         plan_import_v2.initialize(c)
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
@@ -1539,15 +1541,56 @@ def application(env, start_response):
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
                 return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+            if path == '/api/v2/player/recipes' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                return respond(200,{'recipes':player_recipes_v2.library_for_athlete(c,link['athlete_id'])})
+            if path.startswith('/api/v2/player/recipe-photo/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                rid=path.rsplit('/',1)[-1]
+                recipe=player_recipes_v2.recipe_for_athlete(c,link['athlete_id'],rid)
+                if not recipe or not recipe['photo_key']: raise Problem(404,'not_found')
+                image_data=read_dish_image(c,recipe['photo_key'])
+                if image_data is None: raise Problem(404,'not_found')
+                return respond(200,image_data,'image/webp')
+            if path.startswith('/api/v2/player/recipes/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                recipe=player_recipes_v2.recipe_for_athlete(c,link['athlete_id'],path.rsplit('/',1)[-1])
+                if not recipe: raise Problem(404,'not_found')
+                recipe.pop('photo_key',None)
+                recipe['has_photo']=bool(c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=? AND photo_key IS NOT NULL",(recipe['id'],)).fetchone())
+                return respond(200,{'recipe':recipe})
+            if path.startswith('/api/v2/player/dish-recipes/') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                recipes=player_recipes_v2.published_for_dish(c,link['athlete_id'],path.rsplit('/',1)[-1])
+                if recipes is None: raise Problem(404,'not_found')
+                return respond(200,{'recipes':recipes})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link: raise Problem(404,'player_not_linked')
-                rows=c.execute("""SELECT DISTINCT d.id,d.name_pt FROM v2_dish_library d
-                  JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
-                  WHERE m.athlete_id=? AND d.active=1""",(link['athlete_id'],)).fetchall()
-                return respond(200,{'dishes':[dict(row) for row in rows]})
+                rows=c.execute("""SELECT DISTINCT d.id,d.name_pt
+                  FROM v2_dish_library d JOIN v2_weekly_menus m
+                  ON m.athlete_id=? AND m.kind='dish' AND
+                  (m.dish_id=d.id OR (m.dish_id IS NULL AND m.value=d.name_pt
+                   AND (SELECT COUNT(*) FROM v2_dish_library matches
+                        WHERE matches.name_pt=m.value)=1))
+                  WHERE d.active=1""",(link['athlete_id'],)).fetchall()
+                counts=player_recipes_v2.dish_recipe_counts(c,link['athlete_id'])
+                return respond(200,{'dishes':[{'id':row['id'],'name_pt':row['name_pt'],
+                    'recipe_count':counts.get(row['id'],0)} for row in rows]})
             if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
@@ -1555,9 +1598,9 @@ def application(env, start_response):
                 if not link: raise Problem(404,'player_not_linked')
                 identifier=path.rsplit('/',1)[-1]
                 if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
-                row=c.execute("""SELECT d.image_filename FROM v2_dish_library d
-                   JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
-                   WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",(link['athlete_id'],identifier)).fetchone()
+                if not player_recipes_v2.dish_assigned_to_athlete(c,link['athlete_id'],identifier):
+                    raise Problem(404,'not_found')
+                row=c.execute("SELECT image_filename FROM v2_dish_library WHERE id=? AND active=1",(identifier,)).fetchone()
                 if not row: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,row['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
