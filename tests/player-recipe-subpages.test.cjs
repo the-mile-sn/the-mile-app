@@ -30,9 +30,9 @@ test("recipe body retains ingredient values, portions and plain numbered steps",
 });
 
 test("back swipe is edge-only and does not capture ordinary vertical scrolling",()=>{
- assert.match(js,/p\.clientX<=86/);
- assert.match(js,/p\.clientX-start\.x<85/);
- assert.match(js,/Math\.abs\(p\.clientY-start\.y\)>65/);
+ assert.match(js,/p\.clientX<=Math\.min\(145,window\.innerWidth\*\.4\)/);
+ assert.match(js,/dx<72/);
+ assert.match(js,/Math\.abs\(dy\)>55/);
  assert.match(js,/restoreScroll\(listScroll\)/);
  assert.match(js,/restoreScroll\(categoryScroll\)/);
  assert.match(js,/restoreScroll\(returnScroll\)/);
@@ -159,7 +159,7 @@ test("menu recipe action is slightly smaller, separated and provides pressed fee
  assert.match(refinements,/:active\{/);
  assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
  assert.match(refinements,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=13/);
+ assert.match(html,/player-recipes\.css\?v=14/);
 });
 
 test("menu recipe pressed state is applied on initial touch and survives until navigation",()=>{
@@ -167,20 +167,38 @@ test("menu recipe pressed state is applied on initial touch and survives until n
  assert.match(player,/recipeAction\.addEventListener\("pointerdown",press\)/);
  assert.match(player,/recipeAction\.addEventListener\("touchstart",press,\{passive:true\}\)/);
  assert.match(player,/recipeAction\.classList\.add\("is-pressed"\)/);
- assert.match(player,/window\.setTimeout\(\(\)=>\{if\(window\.themileRecipes\)window\.themileRecipes\.openDish\(dish\.id,menu\.value\);\},180\)/);
+ assert.match(player,/window\.setTimeout\(\(\)=>\{/);
  assert.match(css,/#menus \.menu-entry-body \.menu-view-recipe\.is-pressed\{/);
  assert.match(css,/#menus \.menu-entry-body \.dish-photo-zoom\{\s*border:0!important;/);
- assert.match(html,/jogador-v2\.js\?v=147/);
+ assert.match(html,/jogador-v2\.js\?v=148/);
 });
 
 test("recipe subpages support left-edge swipe and horizontal page transitions",()=>{
- assert.match(js,/p\.clientX<=86/);
- assert.match(js,/p\.clientX-start\.x<85/);
+ assert.match(js,/p\.clientX<=Math\.min\(145,window\.innerWidth\*\.4\)/);
+ assert.match(js,/dx<72/);
  assert.match(js,/function showRecipePage\(root\)/);
  assert.match(js,/page\.classList\.add\("recipe-page-leave"\)/);
  assert.match(css,/animation:recipe-subpage-enter 500ms/);
  assert.match(css,/animation:recipe-subpage-leave 380ms/);
  assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=13/);
- assert.match(html,/player-recipes\.js\?v=8/);
+ assert.match(html,/player-recipes\.css\?v=14/);
+ assert.match(html,/player-recipes\.js\?v=9/);
+});
+
+test("menu CTA cleans pressed state before showing a subpage; resting state has no border",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/const clearPress=\(\)=>\{recipeAction\.classList\.remove\("is-pressed"\);recipeAction\.blur\(\);\}/);
+ assert.match(player,/recipeAction\.dataset\.navigating="false"/);
+ assert.match(css,/border:0!important;/);
+ assert.match(css,/background:rgba\(255,255,255,\.105\)/);
+ assert.match(css,/background:rgba\(255,255,255,\.25\)!important/);
+});
+test("swipe is captured from the outer gutter, preserves vertical scrolling, and returns quickly",()=>{
+ assert.match(js,/document\.addEventListener\("touchstart"/);
+ assert.match(js,/document\.addEventListener\("touchmove"/);
+ assert.match(js,/passive:false,capture:true/);
+ assert.match(js,/event\.cancelable\)event\.preventDefault\(\)/);
+ assert.match(js,/window\.setTimeout\(finish,245\)/);
+ assert.match(css,/animation-duration:180ms;/);
+ assert.match(html,/player-recipes\.js\?v=9/);
 });
