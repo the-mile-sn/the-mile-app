@@ -31,7 +31,7 @@ test("recipe body retains ingredient values, portions and plain numbered steps",
 
 test("back swipe is edge-only and does not capture ordinary vertical scrolling",()=>{
  assert.match(js,/p\.clientX<=86/);
- assert.match(js,/p\.clientX-start\.x<90/);
+ assert.match(js,/p\.clientX-start\.x<85/);
  assert.match(js,/Math\.abs\(p\.clientY-start\.y\)>65/);
  assert.match(js,/restoreScroll\(listScroll\)/);
  assert.match(js,/restoreScroll\(categoryScroll\)/);
