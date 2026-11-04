@@ -55,6 +55,7 @@
   return button;
  }
  function startLibrary(){
+  library=null;
   mode="recipes";screen={kind:"categories"};
   syncMode();renderCategories();
  }
