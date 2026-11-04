@@ -430,7 +430,7 @@
 #menus .recipe-content-section .recipe-section-title{
  font-size:14px;font-weight:var(--mile-type-medium,500);line-height:1.35;
 }
-/* Match the expanded assessment's inset/background rather than the brighter panel. */
+/* Slightly deeper than the assessment inset, to overcome the overly bright photographed view. */
 #menus details.recipe-accordion .recipe-content-section{
- background:#1b1b20;
+ background:#17171b;
 }
