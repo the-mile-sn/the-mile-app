@@ -159,7 +159,7 @@ test("menu recipe action is slightly smaller, separated and provides pressed fee
  assert.match(refinements,/:active\{/);
  assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
  assert.match(refinements,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=14/);
+ assert.match(html,/player-recipes\.css\?v=15/);
 });
 
 test("menu recipe pressed state is applied on initial touch and survives until navigation",()=>{
@@ -181,7 +181,7 @@ test("recipe subpages support left-edge swipe and horizontal page transitions",(
  assert.match(css,/animation:recipe-subpage-enter 500ms/);
  assert.match(css,/animation:recipe-subpage-leave 380ms/);
  assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=14/);
+ assert.match(html,/player-recipes\.css\?v=15/);
  assert.match(html,/player-recipes\.js\?v=10/);
 });
 
