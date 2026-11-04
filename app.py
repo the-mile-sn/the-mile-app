@@ -688,6 +688,88 @@ def application(env, start_response):
                 try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
                 except ValueError:raise Problem(400,'invalid_supplement_package')
                 return respond(200,result)
+            # Detailed read-only comparison of active publications against the food library.
+            if path == '/api/v2/food-plan-migration-comparison' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                import re as _audit_re
+                import unicodedata as _audit_ud
+                def _audit_key(value):
+                    value=_audit_ud.normalize('NFKC',str(value or '')).casefold()
+                    return ' '.join(value.split())
+                foods=c.execute("SELECT id,display_name,base_name,variant,kcal,protein_g,carbs_g,fat_g FROM v2_food_library WHERE active=1").fetchall()
+                by_display={}
+                by_base={}
+                for food in foods:
+                    by_display.setdefault(_audit_key(food['display_name']),[]).append(food)
+                    by_base.setdefault(_audit_key(food['base_name']),[]).append(food)
+                rows=c.execute("""SELECT p.id,p.athlete_id,a.name AS athlete_name,p.color,p.snapshot_json
+                    FROM v2_plan_publications p JOIN v2_athletes a ON a.id=p.athlete_id
+                    WHERE p.replaced_at IS NULL ORDER BY a.name,p.color""").fetchall()
+                reports=[]
+                totals={'plans':len(rows),'options':0,'food_items':0,'exact':0,'ambiguous':0,'unmatched':0,
+                    'missing_quantity':0,'nutrition_comparable':0,'nutrition_mismatch':0}
+                for row in rows:
+                    snapshot=json.loads(row['snapshot_json'])
+                    groups=plan_import_v2.enrich_groups(snapshot.get('groups',[]))
+                    report={'athlete_name':row['athlete_name'],'athlete_id':row['athlete_id'],
+                        'color':row['color'],'publication_id':row['id'],'groups':len(groups),
+                        'options':0,'food_items':0,'exact':0,'ambiguous':0,'unmatched':0,
+                        'missing_quantity':0,'nutrition_comparable':0,'nutrition_mismatch':0,
+                        'issues':[]}
+                    for gi,group in enumerate(groups):
+                        for oi,option in enumerate(group.get('options',[])):
+                            report['options']+=1
+                            for ii,item in enumerate(option.get('items',[])):
+                                if item.get('kind')!='food': continue
+                                report['food_items']+=1
+                                name=str(item.get('name') or '').strip()
+                                key=_audit_key(name)
+                                matches=by_display.get(key,[])
+                                match_basis='display_name'
+                                if not matches:
+                                    matches=by_base.get(key,[])
+                                    match_basis='base_name'
+                                issue={'group':gi,'option':oi,'item':ii,'name':name,
+                                    'quantity':item.get('quantity'),'match_basis':match_basis}
+                                if len(matches)==1:
+                                    report['exact']+=1
+                                    issue['food_id']=matches[0]['id']
+                                elif len(matches)>1:
+                                    report['ambiguous']+=1
+                                    issue['reason']='ambiguous_food_name'
+                                    issue['candidate_ids']=[f['id'] for f in matches[:12]]
+                                else:
+                                    report['unmatched']+=1
+                                    issue['reason']='food_name_not_found'
+                                quantity=str(item.get('quantity') or '').strip()
+                                grams=_audit_re.fullmatch(r'(\\d+(?:[.,]\\d+)?)\\s*(?:g|gr|gramas?)',quantity,flags=_audit_re.I)
+                                if not grams:
+                                    report['missing_quantity']+=1
+                                    issue['quantity_review']='not_unambiguous_grams'
+                                if len(matches)==1 and grams and isinstance(item.get('nutrients'),dict):
+                                    grams_value=float(grams.group(1).replace(',','.'))
+                                    source=item['nutrients']
+                                    keys=('kcal','protein_g','carbs_g','fat_g')
+                                    try:
+                                        original={k:float(str(source[k]).replace(',','.')) for k in keys}
+                                        computed={k:float(matches[0][k])*grams_value/100 for k in keys}
+                                        delta={k:round(computed[k]-original[k],2) for k in keys}
+                                        report['nutrition_comparable']+=1
+                                        if abs(delta['kcal'])>2 or any(abs(delta[k])>0.5 for k in keys[1:]):
+                                            report['nutrition_mismatch']+=1
+                                            issue['nutrition_delta']=delta
+                                            issue['reason']='nutrition_mismatch'
+                                    except (ValueError,TypeError,KeyError):
+                                        issue['nutrition_review']='unparseable_source_nutrients'
+                                if issue.get('reason') or issue.get('quantity_review') or issue.get('nutrition_review'):
+                                    report['issues'].append(issue)
+                    for key in totals:
+                        if key!='plans':totals[key]+=report[key]
+                    reports.append(report)
+                return respond(200,{'read_only':True,'matching_policy':'exact_normalized_display_name_then_base_name',
+                    'nutrition_policy':'only explicit grams and source nutrients; library assumed per 100g; tolerance 2 kcal and 0.5g',
+                    'summary':totals,'plans':reports})
             # Read-only migration inventory. Never imports, edits, or publishes plans.
             if path == '/api/v2/food-plan-migration-audit' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
