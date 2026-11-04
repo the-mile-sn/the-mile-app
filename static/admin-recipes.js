@@ -434,6 +434,30 @@
   $("recipe-editor-panel").hidden=true;openedId=null;current=null;
   $("recipe-photo-file").value="";editorMessage("");
  }
+ function syncPublicationActions(){
+  const published=current?.status==="published";
+  $("recipe-publication-label").textContent=published?"Publicada":"Rascunho";
+  $("recipe-publication").value=published?"published":"draft";
+  $("recipe-publish").hidden=!current?.id||published;
+  $("recipe-unpublish").hidden=!current?.id||!published;
+  $("recipe-publish").disabled=busy;
+  $("recipe-unpublish").disabled=busy;
+ }
+ async function changePublication(status){
+  if(!current?.id||busy||current.status===status)return;
+  if(status==="published"&&!window.confirm("Publicar «"+current.name+"»? A receita ficará marcada como publicada no Backoffice. A disponibilização na app será implementada separadamente."))return;
+  if(status==="draft"&&!window.confirm("Voltar «"+current.name+"» a rascunho?"))return;
+  busy=true;syncPublicationActions();editorMessage(status==="published"?"A publicar receita…":"A voltar a rascunho…");
+  try{
+   const result=await request("/api/v2/recipes/"+encodeURIComponent(current.id));
+   const recipe=result.recipe;
+   const data={name:recipe.name,category_id:recipe.category_id,recipe_type:recipe.recipe_type,status,servings:recipe.servings,sections:recipe.sections,steps:recipe.steps,notes:recipe.notes};
+   const saved=await request("/api/v2/recipes/"+encodeURIComponent(current.id),{method:"PUT",body:JSON.stringify(data)});
+   current=saved.recipe;await loadLibrary();
+   editorMessage(status==="published"?"Receita publicada no Backoffice.":"Receita devolvida a rascunho.");
+  }catch(error){editorMessage(error.message==="incomplete_recipe"?"Para publicar, preenche os ingredientes e os procedimentos da receita.":"Não foi possível alterar o estado: "+error.message);}
+  finally{busy=false;syncPublicationActions();}
+ }
  function paintEditor(){
   $("recipe-editor-panel").hidden=false;
   $("recipe-editor-heading").textContent=current.id?"Editar receita":"Adicionar nova receita";
@@ -441,6 +465,7 @@
   $("recipe-category").value=current.category_id;
   $("recipe-type").value=current.recipe_type;
   $("recipe-publication").value=current.status;
+  syncPublicationActions();
   $("recipe-servings").value=current.servings;
   $("recipe-notes").value=current.notes;
   $("recipe-photo-file").value="";
@@ -994,6 +1019,8 @@
  $("recipe-close").addEventListener("click",closeEditor);
  $("recipe-cancel").addEventListener("click",closeEditor);
  $("recipe-save").addEventListener("click",saveRecipe);
+ $("recipe-publish").addEventListener("click",()=>changePublication("published"));
+ $("recipe-unpublish").addEventListener("click",()=>changePublication("draft"));
  $("recipe-create-category").addEventListener("click",addCategory);
  $("recipe-add-section").addEventListener("click",()=>{if(!current)return;current.sections.push({title:"",ingredients:[{name:"",quantity:"",unit:""}]});paintSections();});
  $("recipe-add-step").addEventListener("click",()=>{if(!current)return;current.steps.push("");paintSteps();});
