@@ -79,6 +79,7 @@ def initialize(c):
         meal TEXT NOT NULL CHECK(meal IN ('lunch','dinner')),
         kind TEXT NOT NULL CHECK(kind IN ('category','dish')),
         value TEXT NOT NULL,
+        dish_id TEXT REFERENCES v2_dish_library(id),
         PRIMARY KEY (athlete_id, menu_date, meal)
     )""")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_player_links (
@@ -94,6 +95,15 @@ def initialize(c):
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
     if "match_time" not in columns:
         c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
+    if "dish_id" not in _table_columns(c, "v2_weekly_menus"):
+        c.execute("ALTER TABLE v2_weekly_menus ADD COLUMN dish_id TEXT REFERENCES v2_dish_library(id)")
+        # Existing menu names are linked only when one unique dish matches.
+        c.execute("""UPDATE v2_weekly_menus SET dish_id=(
+            SELECT d.id FROM v2_dish_library d WHERE d.name_pt=v2_weekly_menus.value
+        ) WHERE kind='dish' AND dish_id IS NULL
+        AND (SELECT COUNT(*) FROM v2_dish_library d
+             WHERE d.name_pt=v2_weekly_menus.value)=1""")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_weekly_menus_dish_id_idx ON v2_weekly_menus(dish_id)")
 
 
 def list_athletes(c):
@@ -228,7 +238,13 @@ def list_menus(c, athlete_id, start, end):
     if finish < begin or (finish-begin).days > 62:
         raise ValueError("invalid_range")
     return [dict(row) for row in c.execute(
-        "SELECT menu_date,meal,kind,value FROM v2_weekly_menus WHERE athlete_id=? AND menu_date BETWEEN ? AND ? ORDER BY menu_date,meal",
+        """SELECT m.menu_date,m.meal,m.kind,
+            CASE WHEN m.kind='dish' AND d.id IS NOT NULL THEN d.name_pt ELSE m.value END AS value,
+            CASE WHEN m.kind='dish' THEN m.dish_id ELSE NULL END AS dish_id
+            FROM v2_weekly_menus m
+            LEFT JOIN v2_dish_library d ON m.kind='dish' AND m.dish_id=d.id
+            WHERE m.athlete_id=? AND m.menu_date BETWEEN ? AND ?
+            ORDER BY m.menu_date,m.meal""",
         (athlete_id, begin.isoformat(), finish.isoformat())).fetchall()]
 
 
@@ -241,10 +257,16 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value):
         raise ValueError("invalid_menu_category")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
-    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
-                 VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
-                 DO UPDATE SET kind=excluded.kind,value=excluded.value""",
-              (athlete_id,day,meal,kind,value.strip()))
+    # Legacy menu writes resolve unique names; never guess between duplicates.
+    dish_id=None
+    if kind=="dish":
+        matches=c.execute("SELECT id FROM v2_dish_library WHERE name_pt=? LIMIT 2",(value.strip(),)).fetchall()
+        if len(matches)==1:
+            dish_id=matches[0]["id"]
+    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
+                 VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
+                 DO UPDATE SET kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
+              (athlete_id,day,meal,kind,value.strip(),dish_id))
     c.commit()
     return {"menu_date":day,"meal":meal,"kind":kind,"value":value.strip()}
 
