@@ -276,3 +276,50 @@
  #menus .recipe-identity{gap:12px;}
  #menus details.recipe-accordion .recipe-detail{padding:7px 14px 18px;}
 }
+
+/* Recipe-only revision: very subtle sections, never glass or outlined. */
+#menus .recipe-content-section{
+ background:rgba(255,255,255,.035);
+ border:0;
+ box-shadow:none;
+ border-radius:15px;
+ padding:15px 15px 16px;
+ margin:0 0 12px;
+}
+#menus .recipe-content-section .recipe-section-title{
+ margin:0 0 10px;
+}
+#menus .recipe-content-section .recipe-ingredient{
+ padding:7px 0;
+ min-height:0;
+ border:0;
+ border-bottom:1px solid rgba(255,255,255,.09);
+}
+#menus .recipe-content-section .recipe-ingredient:last-child{
+ border-bottom:0;
+}
+#menus details.recipe-accordion .recipe-identity{
+ min-height:0;
+ margin:0 0 14px;
+}
+#menus details.recipe-accordion .recipe-identity-copy{
+ display:block;
+}
+#menus details.recipe-accordion .recipe-identity .recipe-servings{
+ margin:0;
+ color:#aaaab2;
+ font-size:13px;
+}
+#menus details.recipe-accordion .recipe-content-section{
+ margin:0 0 12px;
+ padding:15px 13px 16px;
+ background:rgba(255,255,255,.035);
+ border:0;
+ box-shadow:none;
+ border-radius:14px;
+}
+#menus details.recipe-accordion .recipe-content-section:last-child{margin-bottom:0;}
+@media(max-width:390px){
+ #menus .recipe-content-section{padding:13px 12px 14px;}
+ #menus details.recipe-accordion .recipe-content-section{padding:13px 12px 14px;}
+}
