@@ -1627,6 +1627,10 @@ def application(env, start_response):
                 except ValueError: raise Problem(400,'invalid_dish')
                 if not ok: raise Problem(404,'not_found')
                 return respond(200,{'ok':True})
+            if path == '/api/v2/dishes/recipe-association-audit' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, recipe_library_v2.audit_dish_recipe_associations(c))
             if path == '/api/v2/dishes/recipe-links' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
