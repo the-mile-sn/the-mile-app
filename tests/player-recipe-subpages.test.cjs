@@ -133,13 +133,13 @@ test("the library image gets optical top alignment only in standalone details",(
 });
 
 test("menu dish photos always open the same zoom, independent of recipes",()=>{
- const player=readFileSync(join(__dirname,"../static/jogador-v2.js"),"utf8");
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
  assert.match(player,/const activate=\(\)=>openDishPhoto\(src,photo.alt\)/);
  assert.doesNotMatch(player,/recipeCount>0&&window\.themileRecipes/);
  assert.match(player,/photo\.setAttribute\("aria-label","Ampliar fotografia: "\+photo.alt\)/);
 });
 test("only dishes with linked recipes get a separate recipe action",()=>{
- const player=readFileSync(join(__dirname,"../static/jogador-v2.js"),"utf8");
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
  assert.match(player,/if\(Number\(dish\.recipe_count\|\|0\)>0\)/);
  assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?"Ver receitas":"Ver receita"/);
  assert.match(player,/window\.themileRecipes\.openDish\(dish.id,menu.value\)/);
