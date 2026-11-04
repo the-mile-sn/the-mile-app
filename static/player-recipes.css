@@ -461,3 +461,33 @@
  box-sizing:border-box;
 }
 #menus .menu-entry-body .dish-photo-zoom svg{width:13px;height:13px;}
+
+/* Small, more detached recipe CTA with native-feeling pressed feedback. */
+#menus .menu-entry-body .menu-view-recipe{
+ margin-top:6px;
+ min-height:24px;
+ padding:3px 8px;
+ gap:7px;
+ font-size:11px;
+ background:rgba(255,255,255,.025);
+ border-color:rgba(255,255,255,.16);
+ transition:background-color 160ms ease,border-color 160ms ease,transform 160ms ease;
+ -webkit-tap-highlight-color:transparent;
+}
+#menus .menu-entry-body .menu-view-recipe::after{
+ width:5px;height:5px;
+}
+#menus .menu-entry-body .menu-view-recipe:active{
+ background:rgba(255,255,255,.18);
+ border-color:rgba(255,255,255,.33);
+ transform:scale(.98);
+}
+@media(hover:hover){
+ #menus .menu-entry-body .menu-view-recipe:hover{
+  background:rgba(255,255,255,.095);
+  border-color:rgba(255,255,255,.25);
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #menus .menu-entry-body .menu-view-recipe{transition:none;}
+}
