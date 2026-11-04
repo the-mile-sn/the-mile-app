@@ -121,7 +121,7 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(admin,/if\(savingAssociation\)return/);
  assert.match(admin,/associationList\.replaceChildren\(\)/);
  assert.match(admin,/associationSearch\.addEventListener\("keydown",event=>/);
- assert.match(admin,/window\.tmOpenAdminDishRecipe\(id\)/);
+ assert.match(admin,/window\.tmOpenAdminDishRecipe\(item\.recipe_id\)/);
  assert.match(recipes,/window\.tmOpenAdminDishRecipe=async id=>/);
  assert.match(recipes,/window\.tmOpenAdminRecipeLibrary\(\);\s*await openReadRecipe\(id\)/);
  assert.doesNotMatch(recipes,/await window\.tmOpenAdminRecipeLibrary\(\)/);
