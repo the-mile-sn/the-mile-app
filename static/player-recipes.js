@@ -6,7 +6,7 @@
  const switcher=document.getElementById("menus-recipe-switch");
  let mode="menus",screen={kind:"categories"},library=null,token=0;
  const photos=new Map();
- let returnScroll=0,categoryScroll=0,listScroll=0;
+ let returnScroll=0,categoryScroll=0,listScroll=0,dishListScroll=0;
  const position=()=>Math.max(0,window.scrollY||0);
  const scrollTop=()=>window.scrollTo({top:0,behavior:"instant"});
  const restoreScroll=y=>window.requestAnimationFrame(()=>window.scrollTo({top:y,behavior:"instant"}));
@@ -66,10 +66,10 @@
   for(const btn of switcher.querySelectorAll("button")){
    btn.setAttribute("aria-pressed",String(btn.dataset.menuMode===mode));
   }
-  const secondary=screen.kind==="list"||screen.kind==="detail"||screen.kind==="dish";
+  const secondary=["list","detail","dish","dish-detail"].includes(screen.kind);
   switcher.hidden=secondary;
-  menuContent.hidden=mode!=="menus"||screen.kind==="dish";
-  area.hidden=mode==="menus"&&screen.kind!=="dish";
+  menuContent.hidden=mode!=="menus"||["dish","dish-detail"].includes(screen.kind);
+  area.hidden=mode==="menus"&&!["dish","dish-detail"].includes(screen.kind);
  }
  async function getLibrary(){
   if(!library)library=request("/api/v2/player/recipes")
@@ -242,39 +242,63 @@
      {includePhoto:false});
     return;
    }
-   // A menu dish already has its photograph on its original card.
-   // Multiple recipe panels show only their own instructions, never extra photos.
+   // Multi-recipe dishes use the SAME photo/name/chevron cards as the library.
+   // The menu dish photo stays on its menu card; here each recipe photo appears once.
+   const list=node("div","recipe-list");
    for(const entry of entries){
-    const section=node("details","recipe-accordion");
-    const summary=node("summary","");
-    const label=node("span","recipe-accordion-label");
-    label.append(node("strong","",entry.name));
-    summary.append(label);
-    const body=node("div","");
-    section.append(summary,body);
-    section.addEventListener("toggle",()=>{
-     if(!section.open||section.dataset.loaded)return;
-     section.dataset.loaded="true";
-     body.append(node("p","recipe-message","A carregar receita…"));
-     loadDetail(entry.id,body,()=>render===token&&section.isConnected,
-      {includePhoto:false,includeTitle:false,includeServings:true,standalone:false});
-    });
-    root.append(section);
+    list.append(card(entry.name,"",entry.has_photo?entry.id:null,()=>{
+     dishListScroll=position();
+     screen={kind:"dish-detail",dishId,dishName,entries,recipeId:entry.id};
+     renderDishDetail();
+     scrollTop();
+    }));
    }
+   root.append(list);
    area.replaceChildren(root);
   }catch(err){
    if(render===token&&screen.kind==="dish")message("Não foi possível abrir as receitas deste prato.");
   }
  }
+ function renderDishDetail(){
+  const render=++token;syncMode();
+  const state=screen;
+  const root=node("div","");
+  root.append(goBack(()=>{
+   if(screen.kind!=="dish-detail")return;
+   screen={kind:"dish",dishId:state.dishId,dishName:state.dishName,entries:state.entries};
+   renderDishList(state.entries);
+   restoreScroll(dishListScroll);
+  }));
+  const content=node("div","");
+  content.append(node("p","recipe-message","A carregar receita…"));
+  root.append(content);area.replaceChildren(root);
+  loadDetail(state.recipeId,content,()=>render===token&&screen.kind==="dish-detail"&&screen.recipeId===state.recipeId,
+   {includePhoto:false});
+ }
+ function renderDishList(entries){
+  ++token;syncMode();
+  const state=screen;
+  const root=node("div","");
+  root.append(goBack(closeDish));
+  const list=node("div","recipe-list");
+  for(const entry of entries){
+   list.append(card(entry.name,"",entry.has_photo?entry.id:null,()=>{
+    dishListScroll=position();
+    screen={kind:"dish-detail",dishId:state.dishId,dishName:state.dishName,entries,recipeId:entry.id};
+    renderDishDetail();scrollTop();
+   }));
+  }
+  root.append(list);area.replaceChildren(root);
+ }
  function closeDish(){
-  const wasDish=screen.kind==="dish";
+  const wasDish=screen.kind==="dish"||screen.kind==="dish-detail";
   ++token;screen={kind:"categories"};mode="menus";syncMode();
   area.replaceChildren();
   if(wasDish)restoreScroll(returnScroll);
  }
  function reset(){
   ++token;mode="menus";screen={kind:"categories"};library=null;
-  returnScroll=0;categoryScroll=0;listScroll=0;
+  returnScroll=0;categoryScroll=0;listScroll=0;dishListScroll=0;
   for(const pending of photos.values())pending.then(src=>{if(src)URL.revokeObjectURL(src);});
   photos.clear();area.replaceChildren();syncMode();
  }
@@ -288,7 +312,7 @@
  // Optional edge-swipe back for recipe subpages; ignore normal vertical scroll.
  let touchStart=null;
  area.addEventListener("touchstart",event=>{
-  if(event.touches.length!==1||!["list","detail","dish"].includes(screen.kind)){
+  if(event.touches.length!==1||!["list","detail","dish","dish-detail"].includes(screen.kind)){
    touchStart=null;return;
   }
   const p=event.touches[0];

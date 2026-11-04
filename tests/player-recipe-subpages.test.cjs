@@ -7,7 +7,7 @@ const css=fs.readFileSync("static/player-recipes.css","utf8");
 const html=fs.readFileSync("static/jogador-v2.html","utf8");
 
 test("segment is reserved for the main Menus and Recipes views",()=>{
- assert.match(js,/const secondary=screen\.kind==="list"\|\|screen\.kind==="detail"\|\|screen\.kind==="dish"/);
+ assert.match(js,/const secondary=\["list","detail","dish","dish-detail"\]\.includes\(screen\.kind\)/);
  assert.match(js,/switcher\.hidden=secondary/);
  assert.match(js,/screen=\{kind:"categories"\};renderCategories/);
 });
@@ -47,16 +47,16 @@ test("bottom navigation remains in original layout",()=>{
 
 test("menu-linked recipe details omit duplicate photographs and titles",()=>{
  assert.match(js,/\{includePhoto:false\}/);
- assert.match(js,/\{includePhoto:false,includeTitle:false,includeServings:true,standalone:false\}/);
+ assert.match(js,/\{includePhoto:false\}/);
  assert.doesNotMatch(js,/if\(dishPhotoUrl\)/);
  assert.match(js,/if\(includePhoto&&recipe\.has_photo\)identity\.append\(thumb\(recipe\.id,true\)\)/);
 });
 
-test("multiple recipe panels remain expandable and compact",()=>{
- assert.match(js,/const section=node\("details","recipe-accordion"\)/);
- assert.match(js,/section\.addEventListener\("toggle"/);
- assert.match(css,/#menus \.recipe-accordion summary\{/);
- assert.match(css,/min-height:65px/);
+test("multi-recipe dish opens a separate list with library-style cards",()=>{
+ assert.match(js,/const list=node\("div","recipe-list"\)/);
+ assert.match(js,/card\(entry\.name,"",entry\.has_photo\?entry\.id:null/);
+ assert.match(js,/screen=\{kind:"dish-detail",dishId,dishName,entries,recipeId:entry\.id\}/);
+ assert.doesNotMatch(js,/const section=node\("details","recipe-accordion"\)/);
 });
 
 test("library recipe header places a small photo next to name and portions",()=>{
@@ -76,19 +76,17 @@ test("recipe sections have subtle cards and separated ingredients",()=>{
  assert.match(css,/#menus \.recipe-content-section\{/);
  assert.match(css,/background:rgba\(255,255,255,\.035\);\s*border:0;\s*box-shadow:none;/);
 });
-test("multiple linked recipes reuse borderless Assessment-style cards",()=>{
- assert.match(js,/const label=node\("span","recipe-accordion-label"\)/);
- assert.match(js,/label\.append\(node\("strong","",entry\.name\)\)/);
- assert.match(css,/#menus details\.recipe-accordion\{/);
- assert.match(css,/background:#242429;\s*border:0;/);
- assert.match(css,/#menus details\.recipe-accordion>summary:after\{/);
- assert.match(css,/border-width:0 2px 2px 0;/);
+test("multi-recipe cards reuse the library card styling and thumbnails",()=>{
+ assert.match(js,/function card\(name,small,photoId,callback\)/);
+ assert.match(js,/button\.append\(thumb\(photoId\)\)/);
+ assert.match(js,/button\.append\(info,node\("span","recipe-chevron","›"\)\)/);
+ assert.match(css,/#menus \.recipe-item\{/);
 });
 
-test("portions only appear after expanding a multi-recipe entry",()=>{
- assert.match(js,/label\.append\(node\("strong","",entry\.name\)\)/);
- assert.doesNotMatch(js,/label\.append\(node\("strong","",entry\.name\),node\("small"/);
- assert.match(js,/includeServings:true,standalone:false/);
+test("multi-recipe list omits portions, detail preserves portions without photo",()=>{
+ assert.match(js,/card\(entry\.name,"",entry\.has_photo\?entry\.id:null/);
+ assert.match(js,/loadDetail\(state\.recipeId,content,/);
+ assert.match(js,/\{includePhoto:false\}/);
  assert.match(js,/if\(includeServings\)copy\.append\(node\("div","recipe-servings"/);
 });
 test("the final ingredient does not have a divider",()=>{
@@ -107,7 +105,7 @@ test("section headings have quiet grayscale icon tiles and medium weight",()=>{
 test("library photo aligns to the top of recipe name; menu-linked details remain photoless",()=>{
  assert.match(css,/#menus \.recipe-identity\{\s*align-items:flex-start;/);
  assert.match(js,/\{includePhoto:false\}/);
- assert.match(js,/includePhoto:false,includeTitle:false,includeServings:true,standalone:false/);
+ assert.match(js,/renderDishDetail\(\)/);
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.045\)/);
 });
 
@@ -118,11 +116,12 @@ test("final heading hierarchy is smaller in every recipe detail",()=>{
  assert.doesNotMatch(finalRules,/#tabs[\s.{>]/);
 });
 
-test("multiple-recipe insets match the dark Assessment expanded inset",()=>{
- const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
- assert.match(finalRules,/#menus details\.recipe-accordion \.recipe-content-section\{\s*background:#1b1b20;/);
- assert.match(css,/#menus details\.recipe-accordion\{[\s\S]*?background:#242429;/);
- assert.match(js,/\{includePhoto:false,includeTitle:false,includeServings:true,standalone:false\}/);
+test("multi-recipe dish has explicit back navigation and preserves menu scroll",()=>{
+ assert.match(js,/function renderDishList\(entries\)/);
+ assert.match(js,/function renderDishDetail\(\)/);
+ assert.match(js,/restoreScroll\(dishListScroll\)/);
+ assert.match(js,/restoreScroll\(returnScroll\)/);
+ assert.match(js,/\["list","detail","dish","dish-detail"\]\.includes\(screen\.kind\)/);
 });
 
 test("the library image gets optical top alignment only in standalone details",()=>{
@@ -144,4 +143,10 @@ test("only dishes with linked recipes get a separate recipe action",()=>{
  assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?"Ver receitas":"Ver receita"/);
  assert.match(player,/window\.themileRecipes\.openDish\(dish.id,menu.value\)/);
  assert.match(player,/dish-photo-zoom/);
+});
+
+test("zoom icon remains a rounded square and gets softer translucent fill",()=>{
+ assert.match(css,/#menus \.menu-entry-body \.dish-photo-zoom\{/);
+ assert.match(css,/border-radius:8px;/);
+ assert.match(css,/background:rgba\(18,18,21,\.43\)/);
 });
