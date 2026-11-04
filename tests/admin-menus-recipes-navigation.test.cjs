@@ -153,3 +153,10 @@ test("linked dish recipes render individual icon-action cards",()=>{
  assert.match(css,/\.dish-recipe-card-name/);
  assert.match(css,/\.dish-recipe-card-buttons/);
 });
+
+test("dish table recipe badge reflects multi-recipe links without opening editor",()=>{
+ assert.match(admin,/const linkedCount=associated\?\.recipes\?\.length\|\|0/);
+ assert.match(admin,/const hasRecipe=linkedCount>0\|\|Boolean\(associated\?\.recipe_id\)/);
+ assert.match(admin,/linkedCount>1\?linkedCount\+" receitas associadas":"Receita associada"/);
+ assert.match(admin,/rowTag\.textContent=linked\.length\?/);
+});
