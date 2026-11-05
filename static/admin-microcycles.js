@@ -413,19 +413,24 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
 let monitoringSavedWeights=[];
+const monitoringFemale=()=>String(model?.athlete?.sex||"").toUpperCase()==="F";
+const monitoringMenstruationLabel=value=>value===1||value===true?"Sim":value===0||value===false?"Não":"—";
+const monitoringMenstruationValue=value=>value===1||value===true?"yes":value===0||value===false?"no":"";
+const syncMonitoringMenstruation=()=>{$("monitoring-weight-menstruation-field").hidden=!monitoringFemale();if(!monitoringFemale())$("monitoring-weight-menstruation").value="";};
 const monitoringWeightDate=()=>$("monitoring-weight-date").value;
 $("monitoring-weight-date").max=new Date().toISOString().slice(0,10);
 $("monitoring-weight-date").value=new Date().toISOString().slice(0,10);
 $("monitoring-weight-form").addEventListener("submit",async e=>{
  e.preventDefault();const aid=model?.athlete?.id;if(!aid)return;
+ syncMonitoringMenstruation();
  const button=e.submitter||$("monitoring-weight-form").querySelector('[type="submit"]');button.disabled=true;
  try{
-  await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"save",date:monitoringWeightDate(),weight:$("monitoring-weight-value").value})});
+  await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"save",date:monitoringWeightDate(),weight:$("monitoring-weight-value").value,...(monitoringFemale()?{menstruating:$("monitoring-weight-menstruation").value==="yes"?true:$("monitoring-weight-menstruation").value==="no"?false:null}:{})})});
   $("monitoring-weight-feedback").textContent="Registo guardado.";
   $("monitoring-weight-cancel").hidden=true;await openMonitoring("weight");
  }catch(err){$("monitoring-weight-feedback").textContent="Não foi possível guardar: "+err.message;}finally{button.disabled=false;}
 });
-$("monitoring-weight-cancel").addEventListener("click",()=>{$("monitoring-weight-value").value="";$("monitoring-weight-date").value=new Date().toISOString().slice(0,10);$("monitoring-weight-cancel").hidden=true;});
+$("monitoring-weight-cancel").addEventListener("click",()=>{$("monitoring-weight-value").value="";$("monitoring-weight-date").value=new Date().toISOString().slice(0,10);$("monitoring-weight-cancel").hidden=true;$("monitoring-weight-menstruation").value="";});
 async function deleteMonitoringWeight(date){
  const aid=model?.athlete?.id;if(!aid||!window.confirm("Eliminar o registo de peso de "+monitoringDate(date)+"? Esta ação não afeta avaliações antropométricas."))return;
  try{await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"delete",date,confirm:"ELIMINAR_PESO"})});$("monitoring-weight-feedback").textContent="Registo eliminado.";await openMonitoring("weight");}
@@ -452,6 +457,7 @@ let monitoringRequestVersion=0;
 const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
 function renderMonitoringWeightChart(rows){
+ const female=monitoringFemale();
  const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=false;
  const dated=rows.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.weigh_date||"")&&Number.isFinite(Number(r.weight_kg))).slice().sort((a,b)=>a.weigh_date.localeCompare(b.weigh_date));
  const header=document.createElement("div");header.className="tm-weight-chart-head";
@@ -490,7 +496,7 @@ function renderMonitoringWeightChart(rows){
   svg.append(guide,focus);
   let pinned=false;
   const showPoint=i=>{
-   const p=coords[i];tooltip.textContent=monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg";
+   const p=coords[i];tooltip.textContent=monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"+(female&&monitoringMenstruationLabel(points[i].menstruating)==="Sim"?" · Menstruação":"");
    tooltip.style.left=Math.max(12,Math.min(86,p.x/W*100))+"%";
    tooltip.style.top=Math.max(7,p.y/H*100-9)+"%";tooltip.hidden=false;
    guide.setAttribute("x1",p.x);guide.setAttribute("x2",p.x);guide.setAttribute("opacity",".8");
@@ -504,6 +510,7 @@ function renderMonitoringWeightChart(rows){
   };
   coords.forEach((p,i)=>{
    const dot=node("circle",{cx:p.x,cy:p.y,r:4.5,fill:"#1b2027",stroke:"#a5c7de","stroke-width":"2.5",tabindex:"0",role:"button","aria-label":monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"});
+   if(female&&monitoringMenstruationLabel(points[i].menstruating)==="Sim")svg.append(node("circle",{cx:p.x,cy:p.y+11,r:3.4,fill:"#d6a7bc",stroke:"#1b2027","stroke-width":"1.2","aria-hidden":"true"}));
    dot.addEventListener("focus",()=>showPoint(i));
    dot.addEventListener("blur",()=>{if(!pinned){tooltip.hidden=true;guide.setAttribute("opacity",0);focus.setAttribute("opacity",0);}});
    dot.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pinned=!pinned;showPoint(i);}});
@@ -526,6 +533,7 @@ async function openMonitoring(kind){
  if(kind==="weight"){$("monitoring-reference").replaceChildren();$("monitoring-weight-chart").replaceChildren();$("monitoring-weight-chart").hidden=true;}
  try{
   const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/monitoring");
+  syncMonitoringMenstruation();
   if(version!==monitoringRequestVersion||model?.athlete?.id!==athleteId)return;
   if(kind==="game"){
    const select=$("monitoring-game-match"),selected=select.value;select.replaceChildren();
@@ -542,7 +550,7 @@ async function openMonitoring(kind){
   if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
   info.textContent=rows.length+" registo(s)";
   const table=document.createElement("table");table.className=kind==="game"?"tm-postmatch-matrix":"tm-weight-records";
-  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína pré-jogo"],["caffeine_half","Cafeína ao intervalo"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"]];
+  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína pré-jogo"],["caffeine_half","Cafeína ao intervalo"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"],...(monitoringFemale()?[["menstruating","Menstruação"]]:[])];
   const head=document.createElement("tr");for(const [,label]of fields){const th=document.createElement("th");th.textContent=label;head.append(th);}const th=document.createElement("th");th.textContent="Ações";head.append(th);const thead=document.createElement("thead");thead.append(head);table.append(thead);
   const body=document.createElement("tbody");
   const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína pré-jogo",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
@@ -575,7 +583,7 @@ async function openMonitoring(kind){
   for(const record of rows){
    const tr=document.createElement("tr"),answers=(()=>{try{return JSON.parse(record.answers_json||"{}")}catch{return {};}})();
    for(const [key] of fields){
-    const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":fmt(answers[key],key);
+    const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":key==="menstruating"?monitoringMenstruationLabel(record.menstruating):fmt(answers[key],key);
     const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";if(kind==="game"&&!["match_date","minutes"].includes(key))td.append(visualValue(key,answers[key],v));else td.append(value);tr.append(td);
    }
    const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
@@ -588,7 +596,7 @@ async function openMonitoring(kind){
     const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-form").hidden=false;$("monitoring-game-register").setAttribute("aria-expanded","true");$("monitoring-game-register").textContent="Fechar registo";$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringGame(record.match_id,record.match_date);actions.append(edit,remove);tr.append(actions);body.append(tr,extra);
    }else{
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-form").hidden=false;$("monitoring-weight-register").setAttribute("aria-expanded","true");$("monitoring-weight-register").textContent="Fechar registo";$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;};
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-form").hidden=false;$("monitoring-weight-register").setAttribute("aria-expanded","true");$("monitoring-weight-register").textContent="Fechar registo";$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;syncMonitoringMenstruation();$("monitoring-weight-menstruation").value=monitoringMenstruationValue(record.menstruating);$("monitoring-weight-cancel").hidden=false;};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringWeight(record.weigh_date);
     actions.append(edit,remove);tr.append(actions);body.append(tr);
    }
@@ -599,7 +607,7 @@ async function openMonitoring(kind){
 for(const kind of ["weight","game"]){
  const toggle=$("monitoring-"+kind+"-register"),form=$("monitoring-"+kind+"-form");
  const setOpen=open=>{form.hidden=!open;toggle.setAttribute("aria-expanded",String(open));toggle.textContent=open?"Fechar registo":"+ Registar";};
- toggle.addEventListener("click",()=>setOpen(form.hidden));
+ toggle.addEventListener("click",()=>{if(kind==="weight"){syncMonitoringMenstruation();$("monitoring-weight-menstruation").value="";}setOpen(form.hidden);});
  form.addEventListener("submit",()=>{setOpen(false);});
 }
 $("monitoring-weight-button").addEventListener("click",()=>openMonitoring("weight"));
