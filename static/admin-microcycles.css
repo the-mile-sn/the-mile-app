@@ -1610,3 +1610,15 @@ th .tm-two-line-select{min-height:55px;border-radius:12px}
 th .tm-two-line-select .tm-select-caption{top:7px;left:10px;font-size:10px}
 th .tm-two-line-select .tm-select-value{bottom:7px;left:10px;font-size:12px}
 th .tm-two-line-select .tm-select-arrow{right:7px;width:14px;height:14px}
+
+
+/* Hide legacy label and decorative chevrons: only the two-line caption and one arrow remain. */
+label.tm-select-label-container{font-size:0!important;line-height:0!important}
+label.tm-select-label-container>.tm-two-line-select{font-size:initial;line-height:normal}
+label.tm-select-label-container>.tm-two-line-select .tm-select-caption{font-size:12px;line-height:1.3}
+label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:16px;line-height:1.3}
+.tm-two-line-select::before,.tm-two-line-select::after{content:none!important;display:none!important}
+.tm-two-line-select>select::before,.tm-two-line-select>select::after{content:none!important;display:none!important}
+.tm-two-line-select>select{background:none!important;background-image:none!important;-webkit-appearance:none!important;appearance:none!important}
+.tm-two-line-select>.tm-select-arrow{display:block!important;pointer-events:none!important}
+.tm-two-line-select>.tm-select-arrow::before,.tm-two-line-select>.tm-select-arrow::after{display:none!important;content:none!important}
