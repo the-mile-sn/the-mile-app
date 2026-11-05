@@ -499,3 +499,23 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 .plan-library-open,.plan-library-chevron{border:0;background:none;color:inherit;cursor:pointer;font:inherit;text-align:left}
 .plan-library-chevron{font-size:26px}.plan-library-empty{text-align:center;color:#939397!important}
 @media(max-width:760px){.plan-library-filters{grid-template-columns:1fr 1fr}.plan-library-search-label{grid-column:1/-1}.plan-library-table td,.plan-library-table th{padding:13px 10px}.plan-library-table th:last-child{width:28px}}
+
+.plan-library-table th:last-child{width:180px}
+.plan-library-row-actions{display:flex;gap:8px;justify-content:flex-end}
+.plan-library-row-actions button,.plan-preview-edit{background:#30343c;border:1px solid #4b505b;border-radius:12px;padding:9px 12px;color:#f3f4f6;font:inherit;font-size:13px;cursor:pointer}
+.plan-library-row-actions button:hover,.plan-preview-edit:hover{background:#414753}
+.plan-preview-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+#plan-preview-content{max-width:800px;margin:0 auto;color:#f2f3f5}
+.plan-preview-heading{background:#24272e;border-radius:24px;padding:24px;margin-bottom:18px}
+.plan-preview-eyebrow{color:#a5aab5;font-size:13px}
+.plan-preview-heading h2{font-size:24px;margin:8px 0 22px}
+.plan-preview-macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.plan-preview-macros>div{display:flex;flex-direction:column;gap:5px}
+.plan-preview-macros strong{font-size:20px}.plan-preview-macros small{color:#a5aab5;font-size:11px}
+.plan-preview-meal{background:#22252b;border-radius:22px;padding:19px;margin-bottom:14px}
+.plan-preview-meal h3{margin:0 0 15px;font-size:18px}
+.plan-preview-option{background:#30343b;border-radius:16px;padding:15px;margin-top:10px}
+.plan-preview-option-title{font-weight:600;font-size:14px;margin-bottom:10px;color:#f5f5f5}
+.plan-preview-food,.plan-preview-note{padding:10px 0;border-top:1px solid #494d55;font-size:14px}
+.plan-preview-note{color:#bfc3cb}
+@media(max-width:760px){.plan-library-table th:last-child{width:116px}.plan-library-row-actions{flex-direction:column}.plan-library-row-actions button{padding:7px 8px}.plan-preview-macros{grid-template-columns:repeat(2,minmax(0,1fr))}}
