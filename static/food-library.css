@@ -31,3 +31,34 @@ dialog{background:var(--lib-panel);border-color:var(--lib-border);color:var(--li
 .error{color:#ffadad}
 @media(max-width:900px){.tm-library-layout{display:block}.tm-library-sidebar{padding:13px 16px;gap:12px}.tm-library-sidebar nav{display:flex;flex-wrap:wrap}.tm-library-sidebar nav a{padding:9px 11px}.tm-library-sidefoot{display:none}.tm-library-brand{font-size:21px}.shell{padding:24px 16px}}
 @media(prefers-color-scheme:light){:root{color-scheme:light;--lib-bg:#f5f6f8;--lib-panel:#fff;--lib-panel-2:#f0f2f6;--lib-border:#d9dfe7;--lib-fg:#1c2633;--lib-muted:#596675}.tm-library-sidebar{background:#fff}.tm-library-sidebar nav a.active{background:#e7ebf1;color:#1c2633}.tm-library-sidebar nav a:hover{background:#f0f2f6}.tm-library-brand{color:#1c2633}button.primary{background:#1c2633;border-color:#1c2633;color:#fff}.tag{background:#e5f0e9;color:#476c54}}
+
+/* Dish-library-inspired food catalogue: prominent names, consistent rows and compact nutrition. */
+.food-catalog-table{table-layout:fixed;min-width:0;width:100%;border-collapse:collapse}
+.food-catalog-table th{font-size:11px;letter-spacing:.04em;font-weight:600;text-transform:none;padding:17px 16px}
+.food-catalog-table td{padding:19px 16px;font-size:13px;line-height:1.55;vertical-align:middle}
+.food-catalog-table tbody tr{border-bottom:1px solid var(--lib-border)}
+.food-catalog-table tbody tr:last-child{border-bottom:0}
+.food-catalog-table td.food-name strong{font-size:14px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
+.food-catalog-table td.food-notes{color:var(--lib-muted);overflow-wrap:anywhere}
+.food-catalog-table th:first-child{width:30%}
+.food-catalog-table th:nth-child(2){width:25%}
+.food-catalog-table th:nth-child(n+3):nth-child(-n+6){width:9%}
+.food-catalog-table th:last-child{width:9%}
+.food-catalog-table td.num{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.food-catalog-table td:last-child button{padding:9px 12px}
+.toolbar #search,.toolbar #category{
+  height:51px;min-height:51px;border:1px solid var(--lib-border);
+  background:var(--lib-panel-2);border-radius:12px;
+  padding:0 16px;color:var(--lib-fg);font-size:14px;
+  box-shadow:none;outline-offset:2px;
+}
+.toolbar #search::placeholder{color:var(--lib-muted);opacity:1}
+@media(max-width:800px){
+  .food-catalog-table th:first-child{width:38%}
+  .food-catalog-table th:nth-child(2){width:22%}
+  .food-catalog-table th:nth-child(n+3):nth-child(-n+6){width:10%}
+  .food-catalog-table th:last-child{width:auto}
+  .food-catalog-table{min-width:720px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .toolbar #search,.toolbar #category{flex:1 1 100%;width:100%;min-width:0}
+}
