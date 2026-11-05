@@ -234,3 +234,14 @@ test("Daily, Weekly detail and Plans share meal heading, option title and option
  assert.match(css,/font-size:15px!important;font-weight:500!important/);
  assert.match(css,/font-size:12px!important;font-weight:400!important/);
 });
+
+test("female weight trend only marks affirmative menstrual days, without changing weight values",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ const page=fs.readFileSync("static/jogador-v2.html","utf8");
+ assert.match(player,/const female=String\(me\?\.sex\|\|""\)\.toUpperCase\(\)==="F"/);
+ assert.match(player,/items\[i\]\.menstruating===1\|\|items\[i\]\.menstruating===true/);
+ assert.match(player,/marker\.setAttribute\("aria-hidden","true"\)/);
+ assert.match(player,/touch\.addEventListener\("click",\(\)=>showDetail\(i\)\)/);
+ assert.match(player,/daily-weight-chart-detail/);
+ assert.match(page,/jogador-v2\.js\?v=149/);
+});

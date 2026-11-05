@@ -937,8 +937,18 @@ async function renderWeightCard(root,date){
   const n=items.length,range=Math.max(1,high-low);
   const coords=items.map((x,i)=>[18+i*284/Math.max(1,n-1),115-(Number(x.weight_kg)-low)/range*90]);
   const path=document.createElementNS(svg.namespaceURI,"polyline");path.setAttribute("points",coords.map(p=>p.join(",")).join(" "));path.setAttribute("fill","none");path.setAttribute("stroke","#aeb7c2");path.setAttribute("stroke-width","2");svg.append(path);
-  coords.forEach((p,i)=>{const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);dot.setAttribute("r",i===n-1?"4":"2.7");dot.setAttribute("fill",i===n-1?"#5da8ed":"#c4cbd2");svg.append(dot);const tx=document.createElementNS(svg.namespaceURI,"text");tx.setAttribute("x",p[0]);tx.setAttribute("y","137");tx.setAttribute("text-anchor","middle");tx.setAttribute("fill","#9ca3af");tx.setAttribute("font-size","10");tx.textContent=items[i].weigh_date.slice(-2);svg.append(tx);});
-  panel.append(svg);
+  const female=String(me?.sex||"").toUpperCase()==="F";
+  const detail=document.createElement("p");detail.className="daily-weight-chart-detail";detail.setAttribute("aria-live","polite");
+  const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?" · Menstruação":"");};
+  coords.forEach((p,i)=>{
+   const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);dot.setAttribute("r",i===n-1?"4":"2.7");dot.setAttribute("fill",i===n-1?"#5da8ed":"#c4cbd2");svg.append(dot);
+   if(female&&(items[i].menstruating===1||items[i].menstruating===true)){
+    const marker=document.createElementNS(svg.namespaceURI,"circle");marker.setAttribute("cx",p[0]);marker.setAttribute("cy",p[1]+10);marker.setAttribute("r","3");marker.setAttribute("fill","#d6a7bc");marker.setAttribute("aria-hidden","true");svg.append(marker);
+   }
+   const touch=document.createElementNS(svg.namespaceURI,"circle");touch.setAttribute("cx",p[0]);touch.setAttribute("cy",p[1]);touch.setAttribute("r","12");touch.setAttribute("fill","transparent");touch.setAttribute("tabindex","0");touch.setAttribute("role","button");touch.setAttribute("aria-label",items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?" · Menstruação":""));touch.addEventListener("click",()=>showDetail(i));touch.addEventListener("focus",()=>showDetail(i));touch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showDetail(i);}});svg.append(touch);
+   const tx=document.createElementNS(svg.namespaceURI,"text");tx.setAttribute("x",p[0]);tx.setAttribute("y","137");tx.setAttribute("text-anchor","middle");tx.setAttribute("fill","#9ca3af");tx.setAttribute("font-size","10");tx.textContent=items[i].weigh_date.slice(-2);svg.append(tx);
+  });
+  panel.append(svg,detail);
  }
  // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
  const collapsedIcon=action.innerHTML,collapsedLabel=action.getAttribute("aria-label");

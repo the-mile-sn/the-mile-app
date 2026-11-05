@@ -170,7 +170,7 @@ test("menu recipe pressed state is applied on initial touch and survives until n
  assert.match(player,/window\.setTimeout\(\(\)=>\{/);
  assert.match(css,/#menus \.menu-entry-body \.menu-view-recipe\.is-pressed\{/);
  assert.match(css,/#menus \.menu-entry-body \.dish-photo-zoom\{\s*border:0!important;/);
- assert.match(html,/jogador-v2\.js\?v=148/);
+ assert.match(html,/jogador-v2\.js\?v=149/);
 });
 
 test("recipe subpages support left-edge swipe and horizontal page transitions",()=>{
