@@ -622,3 +622,62 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 .option-content .nutrition-row.food-row .edit-quantity input{width:145px;max-width:100%}
 @media(max-width:1050px){.option-content .nutrition-row.food-row{grid-template-columns:20px minmax(115px,1fr) minmax(220px,1.5fr) 120px}.option-content .nutrition-row.food-row>.food-reference-note{display:none}.option-content .nutrition-row.food-row>.macro-values{grid-column:3}.option-content .nutrition-row.food-row>.food-actions{grid-column:4}}
 @media(max-width:650px){.option-content .nutrition-row.food-row{grid-template-columns:18px minmax(90px,1fr) 120px;row-gap:7px}.option-content .nutrition-row.food-row>.food-identity{grid-column:2}.option-content .nutrition-row.food-row>.macro-values{grid-column:2;grid-row:2}.option-content .nutrition-row.food-row>.food-actions{grid-column:3;grid-row:1 / span 2}}
+
+/* Final override: nutrition and action controls occupy DIFFERENT layout tracks.
+   Legacy desktop absolute rails must not overlap the third action icon. */
+.option-content .nutrition-list .nutrition-row.food-row {
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:22px minmax(125px,1.15fr) minmax(55px,.55fr) minmax(290px,1.35fr) 124px!important;
+  gap:10px!important;
+  padding:12px 8px!important;
+  padding-right:8px!important;
+  align-items:center!important;
+  min-width:0!important;
+}
+.option-content .nutrition-list .nutrition-row.food-row > .drag-handle {grid-column:1!important;grid-row:1!important}
+.option-content .nutrition-list .nutrition-row.food-row > .food-identity {
+  grid-column:2!important;grid-row:1!important;min-width:0!important;
+}
+.option-content .nutrition-list .nutrition-row.food-row > .food-reference-note {
+  grid-column:3!important;grid-row:1!important;min-width:0!important;
+}
+.option-content .nutrition-list .nutrition-row.food-row > .macro-values {
+  grid-column:4!important;grid-row:1!important;
+  position:static!important;left:auto!important;right:auto!important;top:auto!important;
+  transform:none!important;display:grid!important;width:100%!important;
+  min-width:0!important;max-width:100%!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px!important;box-sizing:border-box!important;
+}
+.option-content .nutrition-list .nutrition-row.food-row > .food-actions {
+  grid-column:5!important;grid-row:1!important;
+  position:static!important;left:auto!important;right:auto!important;top:auto!important;
+  transform:none!important;justify-self:end!important;
+  display:flex!important;align-items:center!important;justify-content:flex-end!important;
+  gap:6px!important;flex-wrap:nowrap!important;
+  width:124px!important;min-width:124px!important;max-width:124px!important;
+}
+.option-content .nutrition-list .nutrition-row.food-row > .food-actions button {
+  box-sizing:border-box!important;flex:0 0 34px!important;
+  width:34px!important;min-width:34px!important;max-width:34px!important;
+  height:34px!important;min-height:34px!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
+}
+@media(max-width:1100px){
+  .option-content .nutrition-list .nutrition-row.food-row {
+    grid-template-columns:20px minmax(125px,1fr) minmax(240px,1.5fr) 124px!important;
+  }
+  .option-content .nutrition-list .nutrition-row.food-row > .food-reference-note {display:none!important}
+  .option-content .nutrition-list .nutrition-row.food-row > .macro-values {grid-column:3!important}
+  .option-content .nutrition-list .nutrition-row.food-row > .food-actions {grid-column:4!important}
+}
+@media(max-width:690px){
+  .option-content .nutrition-list .nutrition-row.food-row {
+    grid-template-columns:18px minmax(0,1fr) 124px!important;
+    row-gap:8px!important;
+  }
+  .option-content .nutrition-list .nutrition-row.food-row > .food-identity {grid-column:2!important;grid-row:1!important}
+  .option-content .nutrition-list .nutrition-row.food-row > .macro-values {grid-column:2 / 4!important;grid-row:2!important}
+  .option-content .nutrition-list .nutrition-row.food-row > .food-actions {grid-column:3!important;grid-row:1!important}
+}
