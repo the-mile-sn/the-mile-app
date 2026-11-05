@@ -601,3 +601,11 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
  #plan-preview .plan-preview-option-macros{gap:8px;font-size:11px}
  #plan-preview .plan-preview-option-macros span+span:before{margin-right:8px}
 }
+
+/* Reserve a dedicated right-hand column for the three icon actions. */
+.option-content .food-row{grid-template-columns:minmax(150px,1fr) minmax(100px,1fr) minmax(260px,40%) 118px;column-gap:10px}
+.option-content .food-row .macro-values{min-width:0;width:100%;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.option-content .food-row .food-actions{width:118px;min-width:118px;display:flex;justify-content:flex-end;gap:4px;position:relative;z-index:1}
+.option-content .food-row .food-actions button{flex:0 0 32px;width:32px;min-width:32px;padding:4px}
+.option-content .food-row .macro{min-width:0;overflow:hidden}
+@media(max-width:900px){.option-content .food-row{grid-template-columns:minmax(110px,1fr) minmax(180px,1fr) 118px}.option-content .food-row .food-reference-note{display:none}}
