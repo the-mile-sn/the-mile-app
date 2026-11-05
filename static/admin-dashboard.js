@@ -524,3 +524,12 @@ function ensurePlanningOnlyView(){
  if(workspace)observer.observe(workspace,{attributes:true,attributeFilter:["hidden"]});
  window.addEventListener("load",()=>{if(open())observer.disconnect()},{once:true});
 })();
+
+
+/* Shared two-line native dropdown presentation. Keeps the original select functional. */
+(()=>{const skip=el=>el.hidden||el.getAttribute("aria-hidden")==="true"||el.tabIndex===-1||el.classList.contains("tm-planning-native-select")||el.classList.contains("tm-clinical-native-select")||el.id==="draft-list"||el.id==="supp-lib-select";
+const title=el=>{const label=el.labels&&[...el.labels].find(x=>!x.classList.contains("sr-only")&&!x.classList.contains("tm-sr-only")&&!x.classList.contains("recipe-sr-only"));let text=label?label.textContent.replace(el.textContent,"").replace(/\*/g,"").trim():"";if(!text)text=el.getAttribute("aria-label")||el.getAttribute("name")||el.id.replace(/[-_]/g," ");return text.replace(/^(Filtrar |Selecionar )/i,"").trim()||"Selecionar"};
+const update=el=>{const w=el.parentElement;if(!w?.classList.contains("tm-two-line-select"))return;const selected=el.selectedOptions?.[0];const display=w.querySelector(".tm-select-value");if(display)display.textContent=selected?.textContent?.trim()||el.options[0]?.textContent?.trim()||"Selecionar";w.classList.toggle("tm-select-disabled",el.disabled)};
+const setup=el=>{if(skip(el)||el.closest(".tm-two-line-select"))return;const w=document.createElement("span");w.className="tm-two-line-select";const label=document.createElement("span");label.className="tm-select-caption";label.textContent=title(el);const value=document.createElement("span");value.className="tm-select-value";const arrow=document.createElement("span");arrow.className="tm-select-arrow";arrow.setAttribute("aria-hidden","true");arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';el.parentNode.insertBefore(w,el);w.append(label,value,arrow,el);el.addEventListener("change",()=>update(el));el.addEventListener("input",()=>update(el));new MutationObserver(()=>update(el)).observe(el,{childList:true,subtree:true,attributes:true,attributeFilter:["disabled","selected"]});update(el)};
+const scan=()=>document.querySelectorAll("select").forEach(setup);scan();new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.("select")||n.querySelector?.("select")))))scan()}).observe(document.documentElement,{childList:true,subtree:true});
+})();
