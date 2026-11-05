@@ -511,3 +511,16 @@ function ensurePlanningOnlyView(){
  $("tm-db-next").addEventListener("click",()=>{weekMonday=shifted(weekMonday,7);load().catch(showError);});
  $("tm-db-go-today").addEventListener("click",()=>{weekMonday=monday(dateParts(new Date()));load().catch(showError);});
 })();
+
+/* Navigate from standalone nutrition pages to the corresponding Backoffice section. */
+(()=>{
+ const target=new URLSearchParams(window.location.search).get("nav");
+ const allowed=new Set(["players","planning","menus-recipes","dishes","recipe-library","assessments","forms","dashboard"]);
+ if(!allowed.has(target)||target==="dashboard")return;
+ const workspace=document.getElementById("admin-workspace");
+ const open=()=>{if(workspace?.hidden)return false;const button=document.getElementById("tm-admin-nav-"+target);if(!button)return false;button.click();window.history.replaceState(null,"",window.location.pathname);return true};
+ if(open())return;
+ const observer=new MutationObserver(()=>{if(open())observer.disconnect()});
+ if(workspace)observer.observe(workspace,{attributes:true,attributeFilter:["hidden"]});
+ window.addEventListener("load",()=>{if(open())observer.disconnect()},{once:true});
+})();
