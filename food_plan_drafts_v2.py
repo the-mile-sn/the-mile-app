@@ -54,7 +54,17 @@ def validate(value):
     return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"meals":clean}
 
 def list_drafts(c):
-    return [dict(r) for r in c.execute("SELECT id,name,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()]
+    rows=c.execute("SELECT id,name,content,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()
+    result=[]
+    for row in rows:
+        try: value=json.loads(row["content"])
+        except (TypeError,ValueError): value={}
+        player_id=str(value.get("player_id") or "").strip()
+        plan_type=str(value.get("plan_type") or "").strip()
+        result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],
+                       "player_id":player_id,"player_name":str(value.get("player_name") or ""),
+                       "plan_type":plan_type})
+    return result
 
 def get(c, ident):
     r=c.execute("SELECT content FROM v2_food_plan_drafts WHERE id=?",(ident,)).fetchone()
