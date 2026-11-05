@@ -169,3 +169,108 @@ def unify_egg_variants(c):
             c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",(json.dumps(plan),now,row["id"]))
             changed+=1
     return {"status":"ok","changed":changed,"canonical_id":canonical}
+
+def restore_approved_average_foods(c):
+    """Idempotent, explicitly approved fixed per-100g values; never touch published plans."""
+    import re
+    import unicodedata
+    approved = [
+        ("Bebida Aveia 0% – Hacendado", 35, .7, 4.7, 1.4),
+        ("Pão (integral, centeio, mistura, outros)", 256, 8, 48, 2),
+        ("Wrap integral – Hacendado", 112, 8, 50, 7.8),
+        ("Tortilhas de trigo Integral, Continente", 292, 9.7, 42, 7.5),
+        ("Polpa de manga", 114, .6, 26, .4),
+        ("Maçã (s/caroço)", 64, .2, 13.4, .5),
+        ("Peça de fruta", 54.21, .68, 10.67, .33),
+        ("Óleo de coco", 906, 0, 0, 100),
+    ]
+    def norm(s):
+        s = unicodedata.normalize("NFKD", str(s or "").casefold())
+        return re.sub(r"[^a-z0-9]+", " ", "".join(ch for ch in s if not unicodedata.combining(ch))).strip()
+    aliases = {
+        norm("Bebida Aveia 0% – Hacendado"): ["Bebida Aveia 0% - Hacendado", "Bebida Aveia 0% Hacendado"],
+        norm("Wrap integral – Hacendado"): ["Wrap integral, Hacendado (Mercadona)", "Wrap integral Hacendado"],
+        norm("Tortilhas de trigo Integral, Continente"): ["Tortilhas de trigo Integral, Continente"],
+    }
+    existing = [dict(row) for row in c.execute("SELECT * FROM v2_food_library").fetchall()]
+    now = int(time.time())
+    by_name = {}
+    for row in existing:
+        by_name.setdefault(norm(row["display_name"]), []).append(row)
+    linked = {}
+    inserted = updated = skipped = 0
+    for i, (name, kcal, protein, carbs, fat) in enumerate(approved):
+        names = [name] + aliases.get(norm(name), [])
+        matches = {row["id"]: row for alias in names for row in by_name.get(norm(alias), [])}
+        source_key = "approved-average-2026-11:" + str(i + 1)
+        for row in existing:
+            if row["source_key"] == source_key:
+                matches[row["id"]] = row
+        if len(matches) > 1:
+            skipped += 1
+            continue  # never guess which duplicate is canonical
+        row = next(iter(matches.values()), None)
+        food = dict(display_name=name, base_name=name, category=(row["category"] if row else "Outros"),
+                    notes=(row["notes"] if row else ""), variant="plain", edible_fraction=1,
+                    reference_g=(row["reference_g"] if row else None),
+                    kcal=kcal, protein_g=protein, carbs_g=carbs, fat_g=fat)
+        if row:
+            fid = row["id"]
+            # Keep the existing food ID, so linked draft entries immediately regain macros.
+            c.execute("""UPDATE v2_food_library SET display_name=?,base_name=?,category=?,notes=?,
+                variant='plain',edible_fraction=1,reference_g=?,kcal=?,protein_g=?,carbs_g=?,fat_g=?,
+                active=1,updated_at=? WHERE id=?""",
+                (name,name,food["category"],food["notes"],food["reference_g"],kcal,protein,carbs,fat,now,fid))
+            updated += 1
+        else:
+            fid = upsert(c, dict(food, source_key=source_key))
+            inserted += 1
+        for alias in names:
+            linked[norm(alias)] = fid
+    # Convert only simple unambiguous gram-prefixed text notes; preserve all other notes.
+    converted = 0
+    for row in c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall():
+        try:
+            plan = json.loads(row["content"])
+        except (ValueError, TypeError):
+            continue
+        dirty = False
+        for meal in plan.get("meals", []):
+            for option in meal.get("options", []):
+                notes = option.get("notes", [])
+                order = option.get("order", [])
+                if not isinstance(notes,list) or not isinstance(order,list):
+                    continue
+                changes = {}
+                for ni, note in enumerate(notes):
+                    match = re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*(?:g|gr|gramas?)\s*(?:[-–·:]\s*)?(.+?)\s*",str(note),re.I)
+                    if not match:
+                        continue
+                    grams = float(match.group(1).replace(",","."))
+                    fid = linked.get(norm(match.group(2)))
+                    if fid and 0 < grams <= 100000:
+                        changes[ni] = (fid, grams)
+                if not changes:
+                    continue
+                used = {item.get("index") for item in order if item.get("type") == "note"}
+                changes = {i:v for i,v in changes.items() if i in used}
+                if not changes:
+                    continue
+                for item in order:
+                    if item.get("type") == "note" and item.get("index") in changes:
+                        fid, grams = changes[item["index"]]
+                        item["type"] = "food"
+                        item["index"] = len(option.setdefault("foods",[]))
+                        option["foods"].append({"id":fid,"grams":grams})
+                        converted += 1
+                keep = [i for i in range(len(notes)) if i not in changes]
+                mapping = {old:new for new,old in enumerate(keep)}
+                option["notes"] = [notes[i] for i in keep]
+                for item in order:
+                    if item.get("type") == "note" and item.get("index") in mapping:
+                        item["index"] = mapping[item["index"]]
+                dirty = True
+        if dirty:
+            c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",
+                      (json.dumps(plan,ensure_ascii=False),now,row["id"]))
+    return {"inserted":inserted,"updated":updated,"ambiguous_skipped":skipped,"draft_notes_linked":converted}
