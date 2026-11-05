@@ -30,11 +30,29 @@ def validate(value):
             foods=[]
             for food in option["foods"]:
                 if not isinstance(food,dict): raise ValueError("invalid_food")
-                fid=str(food.get("id") or "")
-                try: grams=float(food.get("grams"))
-                except (TypeError,ValueError): raise ValueError("invalid_quantity")
-                if not fid or not 0<grams<=100000: raise ValueError("invalid_quantity")
-                foods.append({"id":fid,"grams":grams})
+                kind=str(food.get("kind") or "food").strip()
+                if kind not in ("food","supplement"): raise ValueError("invalid_food_kind")
+                fid=str(food.get("id") or "").strip()
+                grams_raw=food.get("grams")
+                if grams_raw is None or grams_raw == "":
+                    grams=None
+                else:
+                    try: grams=float(grams_raw)
+                    except (TypeError,ValueError): raise ValueError("invalid_quantity")
+                    import math
+                    if not math.isfinite(grams) or not 0<grams<=100000: raise ValueError("invalid_quantity")
+                if kind=="food" and not fid: raise ValueError("invalid_food")
+                if kind=="supplement" and fid: raise ValueError("invalid_supplement")
+                label=str(food.get("label") or "").strip()
+                if len(label)>240 or (kind=="supplement" and not label): raise ValueError("invalid_food_label")
+                alternative_to=food.get("alternative_to")
+                if alternative_to is not None:
+                    if type(alternative_to) is not int or not 0<=alternative_to<len(foods): raise ValueError("invalid_alternative")
+                    if foods[alternative_to]["kind"]!="food" or kind!="food": raise ValueError("invalid_alternative")
+                item={"id":fid,"grams":grams}
+                if kind=="supplement": item.update({"kind":"supplement","label":label})
+                if alternative_to is not None: item["alternative_to"]=alternative_to
+                foods.append(item)
             notes=option.get("notes",[])
             if not isinstance(notes,list) or len(notes)>100: raise ValueError("invalid_notes")
             notes=[str(n).strip() for n in notes]
@@ -78,7 +96,7 @@ def save(c, value):
     ident=str(value.get("id") or secrets.token_hex(16))
     # Never trust client-provided identifiers for food composition.
     known={r["id"] for r in c.execute("SELECT id FROM v2_food_library WHERE active=1").fetchall()}
-    if any(f["id"] not in known for m in value["meals"] for o in m["options"] for f in o["foods"]): raise ValueError("unknown_food")
+    if any(f["id"] not in known for m in value["meals"] for o in m["options"] for f in o["foods"] if f.get("kind","food")=="food"): raise ValueError("unknown_food")
     if value["player_id"]:
         player=c.execute("SELECT name FROM users WHERE id=? AND role='player'",(value["player_id"],)).fetchone()
         if not player: raise ValueError("unknown_player")
