@@ -383,7 +383,7 @@ def reconcile_original_snapshot_quantities(c):
     def norm(value):
         value = unicodedata.normalize("NFKD", str(value or "").casefold()).replace("®","")
         return re.sub(r"[^a-z0-9]+"," ","".join(ch for ch in value if not unicodedata.combining(ch))).strip()
-    active = [dict(r) for r in c.execute("SELECT id,display_name,base_name FROM v2_food_library WHERE active=1")]
+    active = [dict(r) for r in c.execute("SELECT id,display_name,base_name FROM v2_food_library WHERE active=1").fetchall()]
     by_name = {}
     for food in active:
         for label in (food["display_name"],food["base_name"]):
@@ -473,3 +473,38 @@ def reconcile_original_snapshot_quantities(c):
             changed_plans+=1
     return {"changed_plans":changed_plans,"linked":linked,
             "source_quantity_missing":missing_quantity,"food_not_unique":missing_food}
+
+def audit_unlinked_plan_foods(c):
+    """Read-only coverage audit; no changes to player plans or editor drafts."""
+    import collections
+    import re
+    import unicodedata
+    def norm(value):
+        s=unicodedata.normalize("NFKD",str(value or "").casefold()).replace("®","")
+        return re.sub(r"[^a-z0-9]+"," ","".join(ch for ch in s if not unicodedata.combining(ch))).strip()
+    foods=[dict(r) for r in c.execute("SELECT id,display_name,base_name,active FROM v2_food_library").fetchall()]
+    ids={r["id"] for r in foods if r["active"]}
+    names=collections.defaultdict(set)
+    for r in foods:
+        if r["active"]:
+            names[norm(r["display_name"])].add(r["id"])
+            names[norm(r["base_name"])].add(r["id"])
+    stats=collections.Counter()
+    examples=collections.Counter()
+    for row in c.execute("SELECT content FROM v2_food_plan_drafts").fetchall():
+        try: plan=json.loads(row["content"])
+        except (ValueError,TypeError): continue
+        stats["plans"]+=1
+        for meal in plan.get("meals",[]):
+            for option in meal.get("options",[]):
+                for food in option.get("foods",[]):
+                    stats["linked_food_rows"]+=1
+                    if food.get("id") not in ids: stats["inactive_or_missing_ids"]+=1
+                for note in option.get("notes",[]):
+                    stats["note_rows"]+=1
+                    text=str(note).strip()
+                    if not text: continue
+                    if re.search(r"\b(?:acompanhar com|observa[cç][oõ]es|nota|op[cç][aã]o)\b",text,re.I): continue
+                    stats["possible_unlinked_foods"]+=1
+                    examples[text[:160]]+=1
+    return {"counts":dict(stats),"most_common_unlinked":examples.most_common(45)}
