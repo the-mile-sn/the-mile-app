@@ -279,13 +279,10 @@ def initialize():
             logging.info('Approved average foods restoration: %s', restored)
         except Exception:
             logging.exception('Approved average foods restoration failed')
-        # Import existing published snapshots into independent editable drafts once.
-        # The importer never updates published snapshots or overwrites editor drafts.
-        try:
-            migration_stats = food_plan_migration_v2.import_drafts(c)
-            logging.info('Editor plan migration: %s', migration_stats)
-        except Exception:
-            logging.exception('Editor plan migration failed; published plans remain unchanged')
+        # The legacy publication-to-draft migration has already run.
+        # Do NOT repeat it at startup: deleted editor drafts would be resurrected
+        # on every redeploy, with new creation timestamps. Publications are untouched.
+        # Retained source/migration module only for historical analysis.
         try:
             egg_stats = food_library_v2.unify_egg_variants(c)
             logging.info('Editor egg consolidation: %s', egg_stats)
