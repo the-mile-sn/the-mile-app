@@ -48,7 +48,7 @@ def validate(value):
                 alternative_to=food.get("alternative_to")
                 if alternative_to is not None:
                     if type(alternative_to) is not int or not 0<=alternative_to<len(foods): raise ValueError("invalid_alternative")
-                    if foods[alternative_to]["kind"]!="food" or kind!="food": raise ValueError("invalid_alternative")
+                    if foods[alternative_to].get("kind","food")!="food" or kind!="food": raise ValueError("invalid_alternative")
                 item={"id":fid,"grams":grams}
                 if kind=="supplement": item.update({"kind":"supplement","label":label})
                 if alternative_to is not None: item["alternative_to"]=alternative_to
