@@ -347,3 +347,55 @@
 .search-player-results{border-radius:12px;overflow:auto;max-height:300px;background:var(--lib-panel-2)}
 .search-player-results button{background:transparent;border-radius:0;min-height:46px;padding:12px 18px}
 .search-player-results button+button{border-top:1px solid #85858b20}
+
+/* Plan search: neutral placeholder and permanent arrow on mobile Safari. */
+#plan-search-selection #search-plan-type,
+#plan-search-selection #search-plan-type:disabled{
+  -webkit-text-fill-color:var(--lib-fg);
+  color:var(--lib-fg)!important;
+  opacity:1!important;
+  background-color:var(--lib-panel-2)!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23929298' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-size:19px!important;
+  background-position:right 19px center!important;
+}
+#plan-search-selection #search-plan-type:disabled{
+  -webkit-text-fill-color:var(--lib-muted);
+  color:var(--lib-muted)!important;
+}
+/* Compact and balanced nutrition overview on phones. */
+@media(max-width:700px){
+  #plan-editor .plan-overview .stats.four{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+    width:100%!important;
+  }
+  #plan-editor .plan-overview .stats.four .stat{
+    width:auto!important;
+    min-width:0!important;
+    min-height:78px!important;
+    padding:12px 8px!important;
+    margin:0!important;
+    display:flex!important;
+    flex-direction:row!important;
+    justify-content:center!important;
+    align-items:center!important;
+    gap:6px!important;
+    box-sizing:border-box!important;
+    border-radius:13px!important;
+  }
+  #plan-editor .plan-overview .stats.four .stat strong{
+    font-size:clamp(21px,5.5vw,30px)!important;
+    line-height:1.1!important;
+    letter-spacing:-.025em!important;
+  }
+  #plan-editor .plan-overview .stats.four .stat small{
+    font-size:11px!important;
+    line-height:1.2!important;
+    white-space:nowrap!important;
+  }
+}
