@@ -1622,3 +1622,10 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 .tm-two-line-select>select{background:none!important;background-image:none!important;-webkit-appearance:none!important;appearance:none!important}
 .tm-two-line-select>.tm-select-arrow{display:block!important;pointer-events:none!important}
 .tm-two-line-select>.tm-select-arrow::before,.tm-two-line-select>.tm-select-arrow::after{display:none!important;content:none!important}
+
+/* Keep sidebar interactive above the dishes/recipes content on desktop and mobile. */
+#admin-workspace .tm-admin-sidebar{position:relative;z-index:100!important;isolation:isolate;pointer-events:auto}
+#admin-workspace .tm-admin-sidebar .tm-admin-nav-link,
+#admin-workspace .tm-admin-sidebar .tm-admin-subnav-link{position:relative;z-index:101;pointer-events:auto;cursor:pointer}
+#admin-workspace .tm-admin-main{position:relative;z-index:1;min-width:0}
+@media(min-width:900px){#admin-workspace .tm-admin-sidebar{position:sticky}}
