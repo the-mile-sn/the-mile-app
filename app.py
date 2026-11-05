@@ -296,6 +296,11 @@ def initialize():
             logging.info('Imported food links repair: %s', link_stats)
         except Exception:
             logging.exception('Imported food links repair failed')
+        try:
+            source_stats = food_library_v2.reconcile_original_snapshot_quantities(c)
+            logging.info('Source snapshot food reconciliation: %s', source_stats)
+        except Exception:
+            logging.exception('Source snapshot food reconciliation failed')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
