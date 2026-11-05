@@ -45,7 +45,21 @@ function draw(){
   document.querySelectorAll("[data-edit-food]").forEach(b=>b.onclick=()=>{editingFood=Number(b.dataset.editFood);draw();document.querySelector("[data-edit-grams]")?.focus()});
   document.querySelectorAll("[data-cancel-grams]").forEach(b=>b.onclick=()=>{editingFood=-1;draw()});
   document.querySelectorAll("[data-save-grams]").forEach(b=>b.onclick=()=>{const fi=Number(b.dataset.saveGrams),el=document.querySelector('[data-edit-grams="'+fi+'"]'),grams=Number(el?.value);if(!Number.isFinite(grams)||grams<=0||grams>100000){status("Indica uma quantidade válida em gramas.");return}const item=plan.meals[active].options[option].foods[fi];item.grams=grams;item.display_quantity=document.querySelector(`[data-display-quantity="${fi}"]`)?.value.trim()||"";item.display_name=document.querySelector(`[data-display-name="${fi}"]`)?.value.trim()||"";editingFood=-1;draw();status("Quantidade atualizada.")});
-  document.querySelectorAll("[data-suggest-display]").forEach(b=>b.onclick=()=>{const fi=Number(b.dataset.suggestDisplay),f=plan.meals[active].options[option].foods[fi],ref=foods.find(x=>x.id===f.id),notes=String(ref?.notes||"");const match=notes.match(/(\\d+(?:[.,]\\d+)?)\\s*g\\s*(?:por|\\/|=|[-–])?\\s*(fatia|fatias|unidade|unidades|ovo|ovos|colher|colheres)/i)||notes.match(/(fatia|fatias|unidade|unidades|ovo|ovos|colher|colheres)\\s*(?:=|:|de)?\\s*(\\d+(?:[.,]\\d+)?)\\s*g/i);if(!match){status("Sem equivalência inequívoca na nota da biblioteca. Introduz manualmente a apresentação.");return}const amount=Number((/^[\\d]/.test(match[1])?match[1]:match[2]).replace(",",".")),unit=/^[\\d]/.test(match[1])?match[2]:match[1];if(!amount||!f.grams){status("Quantidade insuficiente para sugerir.");return}const count=f.grams/amount;const display=(Number.isInteger(count)?String(count):"≈ "+count.toLocaleString("pt-PT",{maximumFractionDigits:1}))+" "+unit;document.querySelector('[data-display-quantity="'+fi+'"]').value=display;status("Sugestão: "+display+". Confirma a equivalência e guarda.")});
+  document.querySelectorAll("[data-suggest-display]").forEach(b=>b.onclick=()=>{
+    const fi=Number(b.dataset.suggestDisplay);
+    const f=plan.meals[active].options[option].foods[fi];
+    const ref=foods.find(x=>x.id===f.id),notes=String(ref?.notes||"");
+    const unit="(?:fatias?|unidades?|ovos?|colheres?)";
+    const gramsFirst=new RegExp("(\\d+(?:[.,]\\d+)?)\\s*g\\s*(?:por|=|[-–])?\\s*("+unit+")","i").exec(notes);
+    const unitFirst=new RegExp("("+unit+")\\s*(?:=|:|de)?\\s*(\\d+(?:[.,]\\d+)?)\\s*g","i").exec(notes);
+    if(!gramsFirst&&!unitFirst){status("Sem equivalência inequívoca na nota da biblioteca. Introduz manualmente a apresentação.");return}
+    const amount=Number((gramsFirst?gramsFirst[1]:unitFirst[2]).replace(",",".")),unitName=(gramsFirst?gramsFirst[2]:unitFirst[1]);
+    if(!amount||!f.grams){status("Quantidade insuficiente para sugerir.");return}
+    const count=f.grams/amount;
+    const display=(Number.isInteger(count)?String(count):"≈ "+count.toLocaleString("pt-PT",{maximumFractionDigits:1}))+" "+unitName;
+    document.querySelector('[data-display-quantity="'+fi+'"]').value=display;
+    status("Sugestão: "+display+". Confirma a equivalência e guarda.");
+  });
   document.querySelectorAll("[data-edit-grams]").forEach(el=>el.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.querySelector('[data-save-grams="'+el.dataset.editGrams+'"]')?.click()}if(e.key==="Escape"){editingFood=-1;draw()}});
   document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.remove);ensureOrder(o);o.foods.splice(idx,1);o.foods.forEach(f=>{if(f.alternative_to===idx)delete f.alternative_to;else if(f.alternative_to>idx)f.alternative_to--});o.order=o.order.filter(x=>!(x.type==="food"&&x.index===idx)).map(x=>x.type==="food"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
   if(document.querySelector("[data-option-title]"))document.querySelector("[data-option-title]").oninput=e=>{plan.meals[active].options[option].title=e.target.value};
@@ -146,7 +160,7 @@ $("preview-back").onclick=()=>showEntry("entry");
 $("preview-edit").onclick=()=>showEntry("editor");
 const switchExistingPlan=async(playerId,type)=>{const owner=players.find(p=>p.id===playerId);if(!owner){status("Seleciona um jogador válido.");draw();return}const match=plansForPlayer(playerId).find(d=>d.plan_type===type);if(match){try{await loadExistingPlan(match.id)}catch(err){status("Não foi possível mudar de plano: "+err.message)}return}
  if(!confirm("Ainda não existe "+type+" para "+owner.name+". Criar um novo rascunho separado, sem alterar o plano atual?")){draw();return}
- const initialMeal=type==="Plano Peri-treino"?"Pós treino":type==="Plano Peri-jogo"?"Pré jogo":"Pequeno almoço";
+ const initialMeal=type==="Plano Peri-treino"?"Pré treino":type==="Plano Peri-jogo"?"Pré jogo":"Pequeno almoço";
  plan={id:"",name:owner.name+" - "+type,player_id:owner.id,player_name:owner.name,plan_type:type,meals:[]};active=-1;option=0;addMeal(initialMeal);syncPlanSelectors();status("Novo rascunho "+type+" criado no editor. Guarda-o para ficar disponível na biblioteca.");};
 $("plan-type").onchange=async e=>{const type=e.target.value;if(plan.id){await switchExistingPlan(plan.player_id,type);return}plan.plan_type=type;plan.name=plan.player_name&&plan.plan_type?plan.player_name+" - "+plan.plan_type:"Novo plano alimentar"};
 $("plan-player").onchange=async e=>{const id=e.target.value;if(plan.id){const matches=plansForPlayer(id);if(!matches.length){status("Este jogador não tem planos guardados. Usa Pesquisar plano ou Criar novo.");draw();return}const target=matches.find(d=>d.plan_type===plan.plan_type)||matches[0];try{await loadExistingPlan(target.id)}catch(err){status("Não foi possível mudar de jogador: "+err.message)}return}plan.player_id=id;plan.player_name=players.find(p=>p.id===id)?.name||"";plan.name=plan.player_name&&plan.plan_type?plan.player_name+" - "+plan.plan_type:"Novo plano alimentar"};
