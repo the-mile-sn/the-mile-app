@@ -274,3 +274,102 @@ def restore_approved_average_foods(c):
             c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",
                       (json.dumps(plan,ensure_ascii=False),now,row["id"]))
     return {"inserted":inserted,"updated":updated,"ambiguous_skipped":skipped,"draft_notes_linked":converted}
+
+def repair_imported_plan_food_links(c):
+    """Link unambiguous imported food lines in editor drafts; leave published snapshots intact."""
+    import re
+    import unicodedata
+    def norm(value):
+        value = unicodedata.normalize("NFKD", str(value or "").casefold())
+        return re.sub(r"[^a-z0-9]+", " ", "".join(ch for ch in value if not unicodedata.combining(ch))).strip()
+    rows = [dict(r) for r in c.execute("SELECT id,display_name,base_name,active FROM v2_food_library").fetchall()]
+    lookup = {}
+    for food in rows:
+        if not food["active"]:
+            continue
+        for name in (food["display_name"], food["base_name"]):
+            lookup.setdefault(norm(name), set()).add(food["id"])
+    # Only the user's explicitly confirmed spelling correction is allowed.
+    aliases = {
+        norm("Bebida Aveia, Alpro, 0%"): norm("Bebida Aveia - Alpro, 0%"),
+        norm("Pão (integral, centeio, mistura, outros)"): norm("Pão (integral, centeio, mistura, outros)"),
+        norm("Ovo (com casca)"): norm("Ovo"),
+        norm("Ovo (descascado)"): norm("Ovo"),
+        norm("Ovo (sem casca)"): norm("Ovo"),
+    }
+    # Eggs may have an inactive old ID after consolidation; never map by guess.
+    canonical_eggs = lookup.get(norm("Ovo"), set())
+    for alias in ("Ovo (com casca)", "Ovo (descascado)", "Ovo (sem casca)"):
+        if len(canonical_eggs) == 1:
+            lookup[norm(alias)] = set(canonical_eggs)
+    changed_plans = linked_lines = renamed_notes = unresolved = 0
+    now = int(time.time())
+    for row in c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall():
+        try:
+            plan = json.loads(row["content"])
+        except (TypeError, ValueError):
+            continue
+        dirty = False
+        for meal in plan.get("meals", []):
+            for option in meal.get("options", []):
+                notes = option.get("notes", [])
+                order = option.get("order", [])
+                if not isinstance(notes, list) or not isinstance(order, list):
+                    continue
+                replacements = {}
+                for i, note in enumerate(notes):
+                    original = str(note)
+                    # Preserve free text and other nutrients; correct the Alpro spelling only.
+                    corrected = re.sub(r"Bebida\s+Aveia\s*,\s*Alpro\s*,\s*0\s*%", "Bebida Aveia - Alpro, 0%", original, flags=re.I)
+                    if corrected != original:
+                        notes[i] = corrected
+                        renamed_notes += 1
+                        dirty = True
+                    text = corrected.strip()
+                    # Imported snapshots typically render as '120 g Ovo' or 'Ovo 120 g'.
+                    match = re.fullmatch(r"(?:(?:\d+(?:[.,]\d+)?\s*(?:un|unid|unidades?)\s*/\s*)?)(\d+(?:[.,]\d+)?)\s*(?:g|gr|gramas?)\s*(?:[-–·:]\s*)?(.+)",text,re.I)
+                    if match:
+                        amount, name = match.group(1), match.group(2)
+                    else:
+                        match = re.fullmatch(r"(.+?)\s*(?:[-–·:]\s*)?(\d+(?:[.,]\d+)?)\s*(?:g|gr|gramas?)",text,re.I)
+                        if not match:
+                            continue
+                        name, amount = match.group(1), match.group(2)
+                    grams = float(amount.replace(",","."))
+                    if not 0 < grams <= 100000:
+                        continue
+                    key = norm(name)
+                    target = aliases.get(key,key)
+                    ids = lookup.get(target,set())
+                    if len(ids) != 1:
+                        if key in aliases or any(token in key for token in ("alpro","ovo","pao")):
+                            unresolved += 1
+                        continue
+                    replacements[i] = (next(iter(ids)), grams)
+                if not replacements:
+                    continue
+                used = {item.get("index") for item in order if isinstance(item,dict) and item.get("type")=="note"}
+                replacements = {i:value for i,value in replacements.items() if i in used}
+                if not replacements:
+                    continue
+                foods = option.setdefault("foods",[])
+                for item in order:
+                    if item.get("type") == "note" and item.get("index") in replacements:
+                        fid, grams = replacements[item["index"]]
+                        item["type"] = "food"
+                        item["index"] = len(foods)
+                        foods.append({"id":fid,"grams":grams})
+                        linked_lines += 1
+                keep = [i for i in range(len(notes)) if i not in replacements]
+                mapping = {old:new for new,old in enumerate(keep)}
+                option["notes"] = [notes[i] for i in keep]
+                for item in order:
+                    if item.get("type") == "note":
+                        item["index"] = mapping[item["index"]]
+                dirty = True
+        if dirty:
+            c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",
+                      (json.dumps(plan,ensure_ascii=False),now,row["id"]))
+            changed_plans += 1
+    return {"changed_plans":changed_plans,"linked_lines":linked_lines,
+            "alpro_spelling_corrected":renamed_notes,"unresolved":unresolved}
