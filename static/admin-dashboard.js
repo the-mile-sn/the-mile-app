@@ -218,6 +218,8 @@ function ensurePlanningOnlyView(){
   if($("admin-workspace").hidden)return;
   closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
   navActive(recipesBtn);
+  if(recipesPage)recipesPage.hidden=false;
+  if(recipeLibraryPage)recipeLibraryPage.hidden=true;
   const feedback=$("dish-catalog-feedback");
   if(typeof window.tmLoadDishLibrary==="function"){
    window.tmLoadDishLibrary().catch(err=>{if(feedback&&recipesPage&&!recipesPage.hidden)feedback.textContent="Não foi possível carregar a biblioteca: "+err.message;});
