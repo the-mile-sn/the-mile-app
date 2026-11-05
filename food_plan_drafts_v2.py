@@ -1,5 +1,5 @@
 """Isolated draft meal-plan editor. No published plan writes."""
-import json, secrets, time
+import json, secrets, time, unicodedata
 
 def initialize(c):
     c.execute("""CREATE TABLE IF NOT EXISTS v2_food_plan_drafts (
@@ -75,7 +75,12 @@ def validate(value):
             except (TypeError,KeyError): raise ValueError("invalid_order")
             if any(type(i) is not int for _,i in actual) or len(set(actual))!=len(actual) or set(actual)!=expected: raise ValueError("invalid_order")
             options.append({"title":title,"foods":foods,"notes":notes,"order":order})
-        clean.append({"name":meal_title,"options":options})
+        normalized=''.join(ch for ch in unicodedata.normalize('NFD', meal_title.lower()) if unicodedata.category(ch)!='Mn')
+        slots=(["Pequeno almoço","Lanche"] if "intermedia" in normalized else
+               ["Almoço","Jantar"] if "principal" in normalized else [])
+        clean_meal={"name":meal_title,"options":options}
+        if slots: clean_meal["applies_to"]=slots
+        clean.append(clean_meal)
     return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"origin":origin,"meals":clean}
 
 def list_drafts(c):
@@ -122,3 +127,52 @@ def save(c, value):
 def delete(c, ident):
     result=c.execute("DELETE FROM v2_food_plan_drafts WHERE id=?",(ident,))
     return result.rowcount > 0
+
+
+def _meal_key(name):
+    clean=unicodedata.normalize("NFD",str(name or "").lower())
+    return " ".join("".join(ch if unicodedata.category(ch)!="Mn" else "" for ch in clean).replace("-", " ").split())
+
+def transfer_post_training(c, source_ids, dry_run=True):
+    """Safely move identical post-training meals from selected colored drafts to one peri-training draft.
+    Never reads or writes publications; caller's DB transaction makes the transfer atomic.
+    """
+    if not isinstance(source_ids,list) or not 1<=len(source_ids)<=8 or any(not isinstance(x,str) or len(x)>100 for x in source_ids) or len(set(source_ids))!=len(source_ids):
+        raise ValueError("invalid_sources")
+    colored={"Plano laranja","Plano amarelo","Plano azul","Plano verde","Plano verde preparação"}
+    sources=[]
+    for ident in source_ids:
+        value=get(c,ident)
+        if not value or value.get("plan_type") not in colored:
+            raise ValueError("invalid_source_plan")
+        indexes=[i for i,m in enumerate(value.get("meals") or []) if _meal_key(m.get("name"))=="pos treino"]
+        if len(indexes)!=1 or len(value["meals"])<=1:
+            raise ValueError("missing_post_training_or_empty_plan")
+        sources.append((value,indexes[0]))
+    player_id=sources[0][0].get("player_id")
+    if not player_id or any(value.get("player_id")!=player_id for value,_ in sources):
+        raise ValueError("mixed_players")
+    meal=sources[0][0]["meals"][sources[0][1]]
+    if any(json.dumps(value["meals"][index],sort_keys=True,ensure_ascii=False)!=json.dumps(meal,sort_keys=True,ensure_ascii=False) for value,index in sources):
+        raise ValueError("post_training_options_not_identical")
+    peri_candidates=[d for d in list_drafts(c) if d.get("player_id")==player_id and d.get("plan_type")=="Plano Peri-treino"]
+    if len(peri_candidates)>1: raise ValueError("ambiguous_peri_training_drafts")
+    peri=get(c,peri_candidates[0]["id"]) if peri_candidates else None
+    matched=next((m for m in peri["meals"] if _meal_key(m["name"])=="pos treino"),None) if peri else None
+    if matched and json.dumps(matched,sort_keys=True,ensure_ascii=False)!=json.dumps(meal,sort_keys=True,ensure_ascii=False):
+        raise ValueError("existing_peri_training_conflict")
+    result={"player_id":player_id,"source_ids":source_ids,"source_types":[v["plan_type"] for v,_ in sources],
+            "peri_target":peri["id"] if peri else None,"peri_status":("identical" if matched else "append" if peri else "create"),
+            "post_training_options":len(meal["options"]),"dry_run":bool(dry_run)}
+    if dry_run: return result
+    if not peri:
+        peri={"name":sources[0][0].get("player_name","Jogador")+" - Plano Peri-treino",
+              "player_id":player_id,"plan_type":"Plano Peri-treino","meals":[meal]}
+    elif not matched:
+        peri["meals"].append(meal)
+    result["peri_target"]=save(c,peri)
+    for value,index in sources:
+        value["meals"].pop(index)
+        save(c,value)
+    result["dry_run"]=False
+    return result
