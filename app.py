@@ -1396,16 +1396,18 @@ def application(env, start_response):
                 menstruating=payload.get('menstruating')
                 if menstruating is not None and type(menstruating)!=bool:raise Problem(400,'invalid_menstruation')
                 if not is_f:menstruating=None
+                # PostgreSQL stores this optional tri-state flag as INTEGER (1/0/NULL).
+                stored_menstruating=None if menstruating is None else int(menstruating)
                 before=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,selected)).fetchone()
                 now=int(time.time())
                 if before:
                     entry_id=before['id']
                     c.execute("UPDATE v2_daily_weighins SET weight_kg=?,menstruating=?,updated_at=? WHERE id=? AND athlete_id=?",
-                              (weight,menstruating,now,entry_id,aid))
+                              (weight,stored_menstruating,now,entry_id,aid))
                 else:
                     entry_id=secrets.token_hex(16)
                     c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",
-                              (entry_id,aid,selected,weight,menstruating,now,now))
+                              (entry_id,aid,selected,weight,stored_menstruating,now,now))
                 c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
                           (secrets.token_hex(16),aid,'weight',entry_id,user['id'],
                            json.dumps(dict(before)) if before else None,
