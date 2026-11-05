@@ -1155,7 +1155,7 @@ def application(env, start_response):
                     if response is not None and type(response) is not bool:raise Problem(400,"invalid_menstruation")
                     stored_response=None if response is None else int(response)
                     # An old administrative client must not erase an existing response.
-                    if "menstruating" not in body and previous:stored_response=previous["menstruating"]
+                    if is_female and "menstruating" not in body and previous:stored_response=previous["menstruating"]
                     try:
                         value=float(str(body.get('weight')).replace(',','.'))
                         import math
