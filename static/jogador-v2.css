@@ -4116,3 +4116,10 @@ body:has(#login-panel:not([hidden])) #login-panel{margin-top:38px!important}
 .daily-weight-chart-surface svg{display:block;width:100%;max-height:none}
 .daily-weight-chart-average{font-size:11px;color:#aeb0b8;text-align:right;margin:0 8px 3px}
 .daily-weight-chart-detail{min-height:18px;margin:4px 0 0;color:#b9bdc6;font-size:12px;text-align:center}
+
+.daily-weight-chart-surface .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:.7;stroke-dasharray:2 4}
+.daily-weight-chart-surface .assessment-chart-mean{stroke:#b6b8bf;stroke-width:1.3;stroke-dasharray:5 4;opacity:.75}
+.daily-weight-chart-surface .assessment-chart-line{fill:none;stroke:#a2ddc0;stroke-width:2.3;stroke-linejoin:round;stroke-linecap:round}
+.daily-weight-chart-surface .assessment-chart-point{fill:#1b1b20;stroke:#a2ddc0;stroke-width:2}
+.daily-weight-chart-surface .assessment-chart-value{fill:#d7f0e2;font-size:10.5px;font-weight:600}
+.daily-weight-chart-surface .assessment-chart-tick{fill:#9496a1;font-size:10px}
