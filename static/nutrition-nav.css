@@ -14,3 +14,10 @@
 .tm-library-layout .tm-admin-sidebar-footer{border-top:1px solid #29292e;margin:12px 10px 0;padding-top:17px;color:#777781;font-size:10px;letter-spacing:.1em}
 .tm-library-layout .shell{max-width:none;width:100%;padding:26px clamp(16px,2vw,34px)}
 @media(max-width:830px){.tm-library-layout{display:block}.tm-library-layout .tm-admin-sidebar{position:relative;height:auto;min-height:0;padding:12px}.tm-library-layout .tm-admin-brand{padding:4px 8px 9px}.tm-library-layout .tm-admin-side-nav{flex-direction:row;flex-wrap:wrap}.tm-library-layout .tm-admin-nav-link{width:auto}.tm-library-layout .tm-admin-sidebar-spacer,.tm-library-layout .tm-admin-sidebar-footer{display:none}}
+
+/* Same navigation hierarchy as the main Backoffice, including recipes. */
+.tm-library-layout .tm-admin-recipes-subnav{display:flex;flex-direction:column;gap:3px;padding:2px 0 6px 43px}
+.tm-library-layout .tm-admin-subnav-link{display:flex;align-items:center;min-height:34px;padding:8px 10px;border-radius:9px;color:#b9b9c1;text-decoration:none;font-size:12px}
+.tm-library-layout .tm-admin-subnav-link:hover{background:#25252a;color:#fff}
+.tm-library-layout .tm-admin-nav-chevron{width:16px;height:16px;margin-left:auto}
+@media(max-width:830px){.tm-library-layout .tm-admin-recipes-subnav{width:100%;padding-left:10px}}
