@@ -301,6 +301,11 @@ def initialize():
             logging.info('Source snapshot food reconciliation: %s', source_stats)
         except Exception:
             logging.exception('Source snapshot food reconciliation failed')
+        try:
+            audit_stats = food_library_v2.audit_unlinked_plan_foods(c)
+            logging.info('Food plan coverage counts: %s', audit_stats['counts'])
+        except Exception:
+            logging.exception('Food plan coverage audit failed')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
