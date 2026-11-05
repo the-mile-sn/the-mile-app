@@ -116,3 +116,56 @@ def import_batch(c, records):
             item["id"]=existing["id"]
         upsert(c,item)
     return len(validated)
+
+def unify_egg_variants(c):
+    """Idempotently consolidate egg catalogue and editor draft references only."""
+    import re
+    rows=c.execute("SELECT * FROM v2_food_library WHERE active=1").fetchall()
+    eggs=[dict(r) for r in rows if re.fullmatch(r"ovo\s*(?:\((?:com casca|descascado|sem casca)\))?",str(r["display_name"]).strip(),re.I)]
+    if not eggs: return {"status":"no_egg","changed":0}
+    preferred=next((r for r in eggs if re.search(r"descascado|sem casca",r["display_name"],re.I)),None)
+    if preferred is None: preferred=next((r for r in eggs if r["variant"]!="gross"),None)
+    if preferred is None: return {"status":"needs_edible_reference","changed":0}
+    canonical=preferred["id"]
+    ids={r["id"] for r in eggs}
+    now=int(time.time())
+    c.execute("UPDATE v2_food_library SET display_name='Ovo',base_name='Ovo',variant='edible',edible_fraction=1,updated_at=? WHERE id=?",(now,canonical))
+    for r in eggs:
+        if r["id"]!=canonical:
+            c.execute("UPDATE v2_food_library SET active=0,updated_at=? WHERE id=?",(now,r["id"]))
+    changed=0
+    for row in c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall():
+        try: plan=json.loads(row["content"])
+        except (ValueError,TypeError): continue
+        dirty=False
+        for meal in plan.get("meals",[]):
+            for option in meal.get("options",[]):
+                for food in option.get("foods",[]):
+                    if food.get("id") in ids and food["id"]!=canonical:
+                        food["id"]=canonical
+                        dirty=True
+                # Imported free-text egg quantities can be linked only when an unambiguous gram amount exists.
+                notes=option.get("notes",[])
+                order=option.get("order",[])
+                for index,note in enumerate(list(notes)):
+                    m=re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*g\s+ovo(?:\s*\((?:com casca|descascado|sem casca)\))?\s*",str(note),re.I)
+                    if not m: continue
+                    grams=float(m.group(1).replace(",","."))
+                    if not 0<grams<=100000: continue
+                    food_index=len(option["foods"])
+                    option["foods"].append({"id":canonical,"grams":grams})
+                    notes[index]=""
+                    for item in order:
+                        if item.get("type")=="note" and item.get("index")==index:
+                            item["type"]="food"
+                            item["index"]=food_index
+                    dirty=True
+                if dirty and "" in notes:
+                    keep=[i for i,n in enumerate(notes) if n!=""]
+                    remap={old:new for new,old in enumerate(keep)}
+                    option["notes"]=[notes[i] for i in keep]
+                    option["order"]=[dict(item,index=remap[item["index"]]) if item["type"]=="note" else item for item in order if item["type"]!="note" or item["index"] in remap]
+        if dirty:
+            c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",(json.dumps(plan),now,row["id"]))
+            changed+=1
+    return {"status":"ok","changed":changed,"canonical_id":canonical}
