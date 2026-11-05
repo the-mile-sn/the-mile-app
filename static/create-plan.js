@@ -78,7 +78,7 @@ $("assign-player").onclick=()=>status("A publicação ainda não está disponív
 $("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$("draft-list").value;if(!plan.id)return;if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();showEntry("entry");status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",player_id:"",player_name:"",plan_type:"",meals:[]};active=-1;option=0;addMeal("Pequeno almoço");status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
-async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");draftIndex=data.drafts||[];$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+data.drafts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||"";$("draft-list").classList.toggle("has-selection",!!$("draft-list").value)}
+async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");draftIndex=data.drafts||[];$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+data.drafts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||"";$("draft-list").classList.toggle("has-selection",!!$("draft-list").value);if($("library-plan-rows"))populatePlanLibrary()}
 const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";};
 const normalizeSearch=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
 const draftOwner=d=>{const n=String(d.name||"");return [...players].sort((a,b)=>b.name.length-a.name.length).find(p=>n.startsWith(p.name+" - "))||null};
@@ -87,11 +87,24 @@ const matchingDraftPlayers=()=>{const ids=new Set(draftIndex.map(d=>draftOwner(d
 const renderSearchPlayers=(all=false)=>{const q=normalizeSearch($("search-player").value.trim());const found=matchingDraftPlayers().filter(p=>all||!q||normalizeSearch(p.name).includes(q));$("search-player-results").innerHTML=found.slice(0,60).map(p=>'<button type="button" data-player="'+esc(p.id)+'">'+esc(p.name)+'</button>').join("")||'<span>Sem planos encontrados</span>';$("search-player-results").hidden=false;$("search-player-toggle").setAttribute("aria-expanded","true");$("search-player-results").querySelectorAll("[data-player]").forEach(b=>b.onclick=()=>selectSearchPlayer(b.dataset.player))};
 const selectSearchPlayer=id=>{selectedSearchPlayer=id;const player=players.find(p=>p.id===id);if(!player)return;$("search-player").value=player.name;$("search-player-results").hidden=true;$("search-player-toggle").setAttribute("aria-expanded","false");const options=plansForPlayer(id);$("search-plan-type").innerHTML='<option value="">Selecionar tipo de plano</option>'+options.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name.slice(player.name.length+3))+'</option>').join("");$("search-plan-type").value="";$("search-plan-type").disabled=!options.length;refreshSelectDisplays()};
 $("entry-create").onclick=()=>{newPlan();syncPlanSelectors();showEntry("editor")};
-$("entry-search").onclick=async()=>{try{await loadDrafts();selectedSearchPlayer="";$("search-player").value="";$("search-player-results").hidden=true;$("search-player-toggle").setAttribute("aria-expanded","false");$("search-plan-type").innerHTML='<option value="">Selecionar tipo de plano</option>';$("search-plan-type").disabled=true;refreshSelectDisplays();showEntry("search")}catch(err){status("Não foi possível pesquisar os planos: "+err.message)}};
-$("search-player").oninput=()=>{selectedSearchPlayer="";$("search-plan-type").innerHTML='<option value="">Selecionar tipo de plano</option>';$("search-plan-type").disabled=true;refreshSelectDisplays();renderSearchPlayers()};
-$("search-player").onfocus=()=>renderSearchPlayers();
-$("search-player-toggle").onclick=()=>{const results=$("search-player-results");if(!results.hidden){results.hidden=true;$("search-player-toggle").setAttribute("aria-expanded","false")}else{renderSearchPlayers(true);$("search-player").focus()}};
-$("search-plan-type").onchange=e=>{if(!e.target.value)return;$("draft-list").value=e.target.value;$("draft-list").dispatchEvent(new Event("change"))};
+const planTypeOf=d=>{const owner=draftOwner(d);return owner?String(d.name||"").slice(owner.name.length+3):String(d.name||"")};
+const renderPlanLibrary=()=>{
+ const query=normalizeSearch($("library-plan-search").value.trim()),playerId=$("library-player-filter").value,type=$("library-type-filter").value;
+ const rows=draftIndex.map(d=>({draft:d,owner:draftOwner(d),type:planTypeOf(d)})).filter(x=>(!playerId||x.owner?.id===playerId)&&(!type||x.type===type)&&(!query||normalizeSearch((x.owner?.name||"")+" "+x.type+" "+x.draft.name).includes(query))).sort((a,b)=>(a.owner?.name||a.draft.name).localeCompare(b.owner?.name||b.draft.name,"pt")||a.type.localeCompare(b.type,"pt"));
+ $("library-plan-count").textContent=rows.length+" resultado"+(rows.length===1?"":"s");
+ $("library-plan-rows").innerHTML=rows.map(x=>'<tr><td><button type="button" class="plan-library-open" data-id="'+esc(x.draft.id)+'"><strong>'+esc(x.owner?.name||x.draft.name)+'</strong></button></td><td>'+esc(x.type)+'</td><td><button type="button" class="plan-library-chevron" data-id="'+esc(x.draft.id)+'" aria-label="Abrir plano">›</button></td></tr>').join("")||'<tr><td colspan="3" class="plan-library-empty">Nenhum plano encontrado.</td></tr>';
+ $("library-plan-rows").querySelectorAll("[data-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.id)}catch(err){status("Não foi possível abrir o plano: "+err.message)}});
+};
+const populatePlanLibrary=()=>{
+ const playerFilter=$("library-player-filter"),typeFilter=$("library-type-filter"),oldPlayer=playerFilter.value,oldType=typeFilter.value;
+ const owners=[...new Map(draftIndex.map(d=>draftOwner(d)).filter(Boolean).map(p=>[p.id,p])).values()].sort((a,b)=>a.name.localeCompare(b.name,"pt"));
+ playerFilter.innerHTML='<option value="">Todos os jogadores</option>'+owners.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");
+ typeFilter.innerHTML='<option value="">Todos os tipos de plano</option>'+[...new Set(draftIndex.map(planTypeOf))].sort((a,b)=>a.localeCompare(b,"pt")).map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join("");
+ playerFilter.value=oldPlayer;typeFilter.value=oldType;refreshSelectDisplays();renderPlanLibrary();
+};
+$("library-plan-search").addEventListener("input",renderPlanLibrary);
+$("library-player-filter").addEventListener("change",renderPlanLibrary);
+$("library-type-filter").addEventListener("change",renderPlanLibrary);
 const syncPlanSelectors=()=>{$("plan-player").value=plan.player_id||"";$("plan-type").value=plan.plan_type||"";refreshSelectDisplays();$("plan-player").classList.toggle("has-selection",!!plan.player_id);$("plan-type").classList.toggle("has-selection",!!plan.plan_type)};
 $("back-from-search").onclick=()=>showEntry("entry");
 $("back-from-editor").onclick=()=>{if(!confirm("Voltar à entrada? Guarda primeiro as alterações que pretendes manter."))return;showEntry("entry")};
