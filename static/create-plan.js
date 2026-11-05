@@ -97,7 +97,27 @@ function draw(){
   if($("delete-option"))$("delete-option").onclick=()=>{const m=plan.meals[active];if(m.options.length===1){status("Esta é a única opção. Para eliminar tudo, utiliza Apagar refeição.");return}if(!confirm("Apagar esta opção e todos os seus alimentos e notas?"))return;m.options.splice(option,1);option=Math.min(option,m.options.length-1);editingFood=-1;draw();status("Opção eliminada.")};
   document.querySelectorAll("[data-delete-meal]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.deleteMeal),m=plan.meals[i];if(!m)return;if(!confirm("Apagar a refeição "+m.name+" e todas as suas opções, alimentos e notas?"))return;plan.meals.splice(i,1);if(active===i)active=-1;else if(active>i)active--;option=0;editingFood=-1;draw();status("Refeição eliminada.")});
 
+
+  requestAnimationFrame(alignNutritionHeaders);
 }
+function alignNutritionHeaders(){
+  document.querySelectorAll(".meal").forEach(meal=>{
+    const rail=meal.querySelector(".option-content .nutrition-row.food-row > .macro-values");
+    if(!rail)return;
+    const reference=rail.getBoundingClientRect();
+    for(const target of [meal.querySelector(".meal-header-macros"),meal.querySelector(".option-content .option-summary > .macro-values")]){
+      if(!target||!target.parentElement)continue;
+      const parent=target.parentElement.getBoundingClientRect();
+      target.style.setProperty("position","absolute","important");
+      target.style.setProperty("left",(reference.left-parent.left)+"px","important");
+      target.style.setProperty("right","auto","important");
+      target.style.setProperty("width",reference.width+"px","important");
+      target.style.setProperty("max-width","none","important");
+      target.style.setProperty("display",target.classList.contains("macro-values")?"grid":"block","important");
+    }
+  });
+}
+window.addEventListener("resize",()=>requestAnimationFrame(alignNutritionHeaders));
 function addMeal(name){plan.meals.push({name:name||"Pequeno almoço",options:[{title:"",foods:[],notes:[]}]});active=plan.meals.length-1;option=0;draw()}
 const mealNames=["Pequeno almoço","Intermédia","Almoço","Principal","Lanche","Pós treino","Pré treino","Pré jogo","Pós jogo","Intra Jogo","Pré aquecimento","Pós aquecimento","Jantar","Ceia"];
 function showMealPicker(){const panel=$("meal-picker");$("meal-choices").innerHTML=mealNames.map((name,i)=>'<button type="button" data-meal-choice="'+i+'">'+esc(name)+'</button>').join("");panel.hidden=false;panel.scrollIntoView({behavior:"smooth",block:"nearest"});panel.querySelectorAll("[data-meal-choice]").forEach(b=>b.onclick=()=>{addMeal(mealNames[Number(b.dataset.mealChoice)]);panel.hidden=true})}
