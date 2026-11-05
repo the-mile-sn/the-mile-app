@@ -274,6 +274,11 @@ def initialize():
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
         food_plan_drafts_v2.initialize(c)
+        try:
+            restored = food_library_v2.restore_approved_average_foods(c)
+            logging.info('Approved average foods restoration: %s', restored)
+        except Exception:
+            logging.exception('Approved average foods restoration failed')
         # Import existing published snapshots into independent editable drafts once.
         # The importer never updates published snapshots or overwrites editor drafts.
         try:
