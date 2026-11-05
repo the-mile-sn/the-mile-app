@@ -19,7 +19,8 @@
  $("tm-import-confirm").onclick=async()=>{const player=players.find(p=>String(p.id)===$("tm-import-player").value);if(!prepared||!player){$("tm-import-result").textContent="Seleciona o jogador.";return}
   $("tm-import-confirm").disabled=true;try{
    const existing=(await request("/api/v2/food-plan-drafts")).drafts||[];
-   for(const p of prepared)if(existing.some(d=>String(d.player_id)===String(player.id)&&d.plan_type===p.plan_type))throw Error("Já existe rascunho "+p.plan_type+". Não foram feitas alterações.");
+   const repeated=prepared.filter(p=>existing.some(d=>String(d.player_id)===String(player.id)&&d.plan_type===p.plan_type)).map(p=>p.plan_type);
+   if(repeated.length&&!confirm("Já existem rascunhos destes tipos: "+repeated.join(", ")+". Criar novas cópias independentes, sem substituir os anteriores?"))return;
    if(!confirm("Criar "+prepared.length+" rascunhos para "+player.name+"?"))return;
    const csrf=(await request("/api/me")).csrf||"";let count=0;
    for(const p of prepared){const body={...p,id:"",player_id:player.id,player_name:player.name};const saved=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(body)});const check=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(saved.id));if(check.draft?.meals?.length!==p.meals.length)throw Error("Falha na confirmação de "+p.plan_type);count++;$("tm-import-result").textContent=count+" rascunhos confirmados."}
