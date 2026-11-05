@@ -416,3 +416,13 @@ html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row 
   grid-template-columns:128px minmax(0,1fr);
  }
 }
+
+/* Search field matches the category selector in the dishes library. */
+.dish-catalog-filters #dish-search{
+  box-sizing:border-box;width:100%;min-height:51px;height:51px;
+  padding:0 16px;border-radius:12px;
+  background:var(--lib-panel-2,#22252b);border:1px solid var(--lib-border,#343840);
+  color:var(--lib-fg,#f2f3f5);font:inherit;font-size:14px;
+  box-shadow:none;outline-offset:2px;
+}
+.dish-catalog-filters #dish-search::placeholder{color:var(--lib-muted,#a2a7b0);opacity:1}
