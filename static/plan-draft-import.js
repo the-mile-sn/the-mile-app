@@ -23,7 +23,7 @@
    if(repeated.length&&!confirm("Já existem rascunhos destes tipos: "+repeated.join(", ")+". Criar novas cópias independentes, sem substituir os anteriores?"))return;
    if(!confirm("Criar "+prepared.length+" rascunhos para "+player.name+"?"))return;
    const csrf=(await request("/api/me")).csrf||"";let count=0;
-   for(const p of prepared){const body={...p,id:"",player_id:player.id,player_name:player.name};const saved=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(body)});const check=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(saved.id));if(check.draft?.meals?.length!==p.meals.length)throw Error("Falha na confirmação de "+p.plan_type);count++;$("tm-import-result").textContent=count+" rascunhos confirmados."}
+   for(const p of prepared){const body={...p,id:"",origin:"json_import",player_id:player.id,player_name:player.name};const saved=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(body)});const check=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(saved.id));if(check.draft?.meals?.length!==p.meals.length)throw Error("Falha na confirmação de "+p.plan_type);count++;$("tm-import-result").textContent=count+" rascunhos confirmados."}
    $("tm-import-result").textContent="Concluído: "+count+" rascunhos não publicados. Atualiza a página para os consultar.";prepared=null;
   }catch(e){$("tm-import-result").textContent="Interrompido: "+e.message+" Confirma os rascunhos antes de repetir."}finally{$("tm-import-confirm").disabled=!prepared}
  };
