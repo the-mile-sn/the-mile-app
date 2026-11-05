@@ -4112,4 +4112,7 @@ body:has(#login-panel:not([hidden])) #login-panel{margin-top:38px!important}
 }
 
 /* Compact accessible detail for selected weight points. */
+.daily-weight-chart-surface{background:#1b1b20;border-radius:14px;padding:10px 8px 9px}
+.daily-weight-chart-surface svg{display:block;width:100%;max-height:none}
+.daily-weight-chart-average{font-size:11px;color:#aeb0b8;text-align:right;margin:0 8px 3px}
 .daily-weight-chart-detail{min-height:18px;margin:4px 0 0;color:#b9bdc6;font-size:12px;text-align:center}
