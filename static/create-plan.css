@@ -553,3 +553,51 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
  #plan-entry .plan-library-table th:last-child{width:175px!important}
  #plan-entry .plan-library-row-actions{flex-direction:row;justify-content:flex-end}
 }
+
+/* Responsive read-only player-style preview */
+#plan-preview{width:100%;min-width:0;max-width:none}
+#plan-preview-content{width:100%;max-width:none!important;margin:0!important;box-sizing:border-box}
+#plan-preview .plan-preview-heading{max-width:none;border-radius:20px;background:#24262c}
+#plan-preview .plan-preview-group{--preview-bg:#303035;--preview-fg:#e5e5e8;--preview-option:#414148;background:#232429;padding:22px;border-radius:22px;margin-top:16px;color:var(--preview-fg)}
+#plan-preview .plan-preview-group[data-palette="yellow"]{--preview-bg:#513c12;--preview-fg:#ffdb77;--preview-option:#634d20}
+#plan-preview .plan-preview-group[data-palette="orange"]{--preview-bg:#53351c;--preview-fg:#ffca95;--preview-option:#67482b}
+#plan-preview .plan-preview-group[data-palette="blue"]{--preview-bg:#203e54;--preview-fg:#a8d8fb;--preview-option:#30536b}
+#plan-preview .plan-preview-group[data-palette="green"]{--preview-bg:#234535;--preview-fg:#a7e1b9;--preview-option:#355942}
+#plan-preview .plan-preview-group-title{margin:0 0 18px;font-size:19px;text-transform:capitalize;color:#f5f5f5}
+#plan-preview .plan-preview-meal{background:var(--preview-bg)!important;color:var(--preview-fg);border:0!important;border-radius:18px;padding:0!important;margin:12px 0!important;overflow:hidden}
+#plan-preview summary{list-style:none;cursor:pointer}
+#plan-preview summary::-webkit-details-marker{display:none}
+#plan-preview .plan-preview-meal-heading{display:flex;align-items:center;gap:15px;padding:22px 20px;min-height:78px;box-sizing:border-box}
+#plan-preview .plan-preview-meal-name{font-size:17px;font-weight:650;flex:1;min-width:0}
+#plan-preview .plan-preview-meal-macros{display:flex;gap:12px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
+#plan-preview .plan-preview-meal-macros .preview-kcal{font-size:14px}
+#plan-preview .plan-preview-caret{font-size:23px;color:inherit;opacity:.85;transition:transform .18s;flex:none}
+#plan-preview details[open]>summary>.plan-preview-caret{transform:rotate(180deg)}
+#plan-preview .plan-preview-options{padding:0 16px 16px}
+#plan-preview .plan-preview-option{background:var(--preview-option);border-radius:17px;margin-top:10px;padding:0;overflow:hidden}
+#plan-preview .plan-preview-option-heading{padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+#plan-preview .plan-preview-option-heading span:first-child{display:flex;flex-direction:column;gap:7px;min-width:0}
+#plan-preview .plan-preview-option-heading small{font-size:12px;color:inherit;opacity:.9}
+#plan-preview .plan-preview-option-heading strong{font-size:16px;font-weight:600}
+#plan-preview .plan-preview-option-body{padding:0 18px 18px}
+#plan-preview .plan-preview-option-macros{display:flex;flex-wrap:wrap;gap:12px;padding:9px 0 16px;font-size:13px}
+#plan-preview .plan-preview-option-macros span+span:before{content:"|";opacity:.5;margin-right:12px}
+#plan-preview .plan-preview-food,#plan-preview .plan-preview-note{border:0!important;padding:8px 0!important;color:inherit!important;font-size:14px}
+#plan-preview .plan-preview-note{opacity:.8}
+@media(min-width:1100px){
+ #plan-preview-content{max-width:none!important}
+ #plan-preview .plan-preview-heading,#plan-preview .plan-preview-group{width:100%;max-width:none;box-sizing:border-box}
+ #plan-preview .plan-preview-macros{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ #plan-preview .plan-preview-group{padding:12px;border-radius:18px}
+ #plan-preview .plan-preview-meal-heading{padding:16px 13px;gap:8px;flex-wrap:wrap}
+ #plan-preview .plan-preview-meal-name{font-size:15px}
+ #plan-preview .plan-preview-meal-macros{width:100%;order:3;justify-content:flex-start;gap:9px;font-size:11px}
+ #plan-preview .plan-preview-options{padding:0 9px 10px}
+ #plan-preview .plan-preview-option-heading{padding:14px}
+ #plan-preview .plan-preview-option-heading strong{font-size:14px}
+ #plan-preview .plan-preview-option-body{padding:0 14px 14px}
+ #plan-preview .plan-preview-option-macros{gap:8px;font-size:11px}
+ #plan-preview .plan-preview-option-macros span+span:before{margin-right:8px}
+}
