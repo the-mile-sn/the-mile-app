@@ -148,7 +148,7 @@ def unify_egg_variants(c):
                 notes=option.get("notes",[])
                 order=option.get("order",[])
                 for index,note in enumerate(list(notes)):
-                    m=re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*g\s+ovo(?:\s*\((?:com casca|descascado|sem casca)\))?\s*",str(note),re.I)
+                    m=re.fullmatch(r"\s*(?:(?:\d+(?:[.,]\d+)?)\s*(?:un|unid|unidades?)\s*/\s*)?(\d+(?:[.,]\d+)?)\s*g\s+ovo(?:\s*\((?:com casca|descascado|sem casca)\))?\s*",str(note),re.I)
                     if not m: continue
                     grams=float(m.group(1).replace(",","."))
                     if not 0<grams<=100000: continue
