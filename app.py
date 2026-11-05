@@ -291,6 +291,11 @@ def initialize():
             logging.info('Editor egg consolidation: %s', egg_stats)
         except Exception:
             logging.exception('Editor egg consolidation failed')
+        try:
+            link_stats = food_library_v2.repair_imported_plan_food_links(c)
+            logging.info('Imported food links repair: %s', link_stats)
+        except Exception:
+            logging.exception('Imported food links repair failed')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
