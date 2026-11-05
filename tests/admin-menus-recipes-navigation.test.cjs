@@ -78,7 +78,7 @@ test("recipe library switches independently from dish catalogue and Planning",()
  assert.match(dashboard,/window\.tmLoadRecipeLibrary\(\)/);
  assert.match(dashboard,/recipeLibraryBtn\.addEventListener\("click",openRecipeLibrary\)/);
  assert.match(html,/admin-recipes\.js\?v=14/);
- assert.match(html,/admin-recipes\.css\?v=13/);
+ assert.match(html,/admin-recipes\.css\?v=14/);
 });
 
 test("menu chooser submits stable dish IDs while preserving legacy labels",()=>{
@@ -139,9 +139,9 @@ test("dish recipe association has a searchable, independent, admin-only editor",
  assert.match(css,/\.dish-recipe-association\{/);
  assert.match(css,/html\[data-admin-theme="light"\] #tm-menu-recipes-page \.dish-recipe-association/);
  assert.match(html,/admin-recipes\.js\?v=14/);
- assert.match(html,/admin-dashboard\.js\?v=33/);
+ assert.match(html,/admin-dashboard\.js\?v=37/);
  assert.match(html,/admin-microcycles\.js\?v=18243/);
- assert.match(html,/admin-microcycles\.css\?v=111/);
+ assert.match(html,/admin-microcycles\.css\?v=116/);
 });
 
 test("linked dish recipes render individual icon-action cards",()=>{
