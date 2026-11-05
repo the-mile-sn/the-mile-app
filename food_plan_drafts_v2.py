@@ -1,5 +1,5 @@
 """Isolated draft meal-plan editor. No published plan writes."""
-import json, secrets, time, unicodedata
+import json, secrets, time, unicodedata, hashlib
 
 def initialize(c):
     c.execute("""CREATE TABLE IF NOT EXISTS v2_food_plan_drafts (
@@ -85,13 +85,19 @@ def validate(value):
 
 def list_drafts(c):
     rows=c.execute("SELECT id,name,content,created_at,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()
+    # Identify legacy copies by their deterministic publication-derived ID.
+    try:
+        legacy_ids={hashlib.sha256(("editor-import-v1:"+str(r["id"])).encode()).hexdigest()[:32]
+                    for r in c.execute("SELECT id FROM v2_plan_publications").fetchall()}
+    except Exception:
+        legacy_ids=set()
     result=[]
     for row in rows:
         try: value=json.loads(row["content"])
         except (TypeError,ValueError): value={}
         player_id=str(value.get("player_id") or "").strip()
         plan_type=str(value.get("plan_type") or "").strip()
-        result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],"created_at":row["created_at"],"origin":str(value.get("origin") or ""),
+        result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],"created_at":row["created_at"],"origin":str(value.get("origin") or ""), "legacy_migration":row["id"] in legacy_ids,
                        "player_id":player_id,"player_name":str(value.get("player_name") or ""),
                        "plan_type":plan_type})
     return result
