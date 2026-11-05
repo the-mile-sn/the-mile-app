@@ -112,10 +112,24 @@ $("back-from-search").onclick=()=>showEntry("entry");
 $("back-from-editor").onclick=()=>{if(!confirm("Voltar à entrada? Guarda primeiro as alterações que pretendes manter."))return;showEntry("entry")};
 $("new-plan").onclick=()=>{if(!confirm("Criar outro plano? Guarda primeiro as alterações que pretendes manter."))return;newPlan();showEntry("entry")};
 const loadExistingPlan=async id=>{const index=draftIndex.find(d=>String(d.id)===String(id));if(!index)throw Error("Plano não encontrado.");const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(id));const loaded=data.draft;const owner=draftOwner(index);if(!owner)throw Error("O jogador associado a este plano não existe na base de dados. É necessário rever a associação antes de editar.");if(String(loaded.player_id||"")!==String(owner.id))throw Error("Inconsistência no ID do jogador associado ao plano.");loaded.id=id;loaded.player_id=owner.id;loaded.player_name=owner.name;loaded.plan_type=index.plan_type;loaded.name=owner.name+" - "+index.plan_type;loaded.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));plan=loaded;active=plan.meals.length?0:-1;option=0;draw();syncPlanSelectors();showEntry("editor");status("Plano carregado: "+index.name)};
+const previewPalette=type=>{
+ const key=String(type||"").toLowerCase();
+ if(key.includes("amarelo"))return "yellow";
+ if(key.includes("laranja"))return "orange";
+ if(key.includes("azul"))return "blue";
+ if(key.includes("verde"))return "green";
+ return "neutral";
+};
+const previewNutrition=t=>'<span class="preview-kcal">'+fmtKcal(t[0])+' kcal</span><span class="preview-protein">'+fmt(t[1])+' g</span><span class="preview-carbs">'+fmt(t[2])+' g</span><span class="preview-fat">'+fmt(t[3])+' g</span>';
 const renderPlanPreview=()=>{
- const body=$("plan-preview-content");
- const total=totals();
- body.innerHTML='<div class="plan-preview-heading"><div class="plan-preview-eyebrow">'+esc(plan.player_name)+'</div><h2>'+esc(plan.plan_type)+'</h2><div class="plan-preview-macros">'+total.map((v,i)=>'<div><strong>'+esc(i===0?fmtKcal(v):fmt(v))+'</strong><small>'+["kcal","Proteína (g)","Hidratos (g)","Gordura (g)"][i]+'</small></div>').join("")+'</div></div>'+plan.meals.map((meal,mi)=>'<section class="plan-preview-meal"><h3>'+esc(meal.name)+'</h3>'+meal.options.map((opt,oi)=>{const entries=(opt.order||[]).map(item=>item.type==="food"?(()=>{const f=opt.foods[item.index];if(!f)return "";const ref=foods.find(x=>x.id===f.id);return '<div class="plan-preview-food">'+esc(fmt(f.grams))+' g · '+esc(ref?.display_name||"Alimento indisponível")+'</div>'})():(()=>{const note=opt.notes?.[item.index];return note?'<div class="plan-preview-note">'+esc(note)+'</div>':""})()).join("");return '<div class="plan-preview-option"><div class="plan-preview-option-title">Opção '+(oi+1)+(opt.title?' · '+esc(opt.title):'')+'</div>'+entries+'</div>'}).join("")+'</section>').join("");
+ const body=$("plan-preview-content"),total=totals(),palette=previewPalette(plan.plan_type);
+ body.innerHTML='<div class="plan-preview-heading"><div class="plan-preview-eyebrow">'+esc(plan.player_name)+'</div><h2>'+esc(plan.plan_type)+'</h2><div class="plan-preview-macros">'+total.map((v,i)=>'<div><strong>'+esc(i===0?fmtKcal(v):fmt(v))+'</strong><small>'+["kcal","Proteína (g)","Hidratos (g)","Gordura (g)"][i]+'</small></div>').join("")+'</div></div><div class="plan-preview-group" data-palette="'+palette+'"><h3 class="plan-preview-group-title">'+esc(plan.plan_type.replace(/^Plano\s+/i,""))+'</h3>'+plan.meals.map((meal,mi)=>{
+ const mealTotals=average(meal);
+ return '<details class="plan-preview-meal" '+(mi===0?'open':'')+'><summary class="plan-preview-meal-heading"><span class="plan-preview-meal-name">'+esc(meal.name)+'</span><span class="plan-preview-meal-macros">'+previewNutrition(mealTotals)+'</span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-options">'+meal.options.map((opt,oi)=>{
+ const entries=ensureOrder(opt).map(item=>item.type==="food"?(()=>{const f=opt.foods[item.index];if(!f)return "";const ref=foods.find(x=>x.id===f.id);return '<div class="plan-preview-food">'+esc(fmt(f.grams))+' g · '+esc(ref?.display_name||"Alimento indisponível")+'</div>'})():(()=>{const note=opt.notes?.[item.index];return note?'<div class="plan-preview-note">'+esc(note)+'</div>':""})()).join("");
+ return '<details class="plan-preview-option"><summary class="plan-preview-option-heading"><span><small>Opção '+(oi+1)+'</small><strong>'+esc(opt.title||"Opção "+(oi+1))+'</strong></span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-option-body"><div class="plan-preview-option-macros">'+previewNutrition(sum(opt.foods))+'</div>'+entries+'</div></details>'
+ }).join("")+'</div></details>'
+ }).join("")+'</div>';
 };
 $("preview-back").onclick=()=>showEntry("entry");
 $("preview-edit").onclick=()=>showEntry("editor");
