@@ -281,6 +281,11 @@ def initialize():
             logging.info('Editor plan migration: %s', migration_stats)
         except Exception:
             logging.exception('Editor plan migration failed; published plans remain unchanged')
+        try:
+            egg_stats = food_library_v2.unify_egg_variants(c)
+            logging.info('Editor egg consolidation: %s', egg_stats)
+        except Exception:
+            logging.exception('Editor egg consolidation failed')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
