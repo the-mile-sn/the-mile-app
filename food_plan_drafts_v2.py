@@ -51,7 +51,12 @@ def validate(value):
                 if alternative_to is not None:
                     if type(alternative_to) is not int or not 0<=alternative_to<len(foods): raise ValueError("invalid_alternative")
                     if foods[alternative_to].get("kind","food")!="food" or kind!="food": raise ValueError("invalid_alternative")
+                display_quantity=str(food.get("display_quantity") or "").strip()
+                display_name=str(food.get("display_name") or "").strip()
+                if len(display_quantity)>100 or len(display_name)>160: raise ValueError("invalid_display_text")
                 item={"id":fid,"grams":grams}
+                if display_quantity: item["display_quantity"]=display_quantity
+                if display_name: item["display_name"]=display_name
                 if kind=="supplement": item.update({"kind":"supplement","label":label})
                 if alternative_to is not None: item["alternative_to"]=alternative_to
                 foods.append(item)
