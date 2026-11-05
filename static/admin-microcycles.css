@@ -1588,3 +1588,6 @@ html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-ac
   width:34px;min-width:34px;height:34px;min-height:34px!important;
  }
 }
+
+/* Sidebar links must look identical whether implemented as anchors or buttons. */
+.tm-admin-sidebar .tm-admin-nav-link,.tm-admin-sidebar .tm-admin-nav-link:link,.tm-admin-sidebar .tm-admin-nav-link:visited,.tm-admin-sidebar .tm-admin-subnav-link,.tm-admin-sidebar .tm-admin-subnav-link:link,.tm-admin-sidebar .tm-admin-subnav-link:visited{text-decoration:none!important;text-decoration-line:none!important}
