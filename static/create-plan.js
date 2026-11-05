@@ -25,6 +25,7 @@ function draw(){
   refreshSelectDisplays();
   ["plan-player","plan-type","draft-list"].forEach(id=>$(id).classList.toggle("has-selection",!!$(id).value));
   $("delete-plan").disabled=!plan.id;
+  if($("move-post-training"))$("move-post-training").hidden=!(plan.id&&isColorPlan(plan.plan_type)&&plan.meals.some(isPostTraining));
   const t=totals();["total-kcal","total-p","total-hc","total-g"].forEach((id,i)=>$(id).textContent=i===0?fmtKcal(t[i]):fmt(t[i]));
   $("meals").innerHTML=plan.meals.map((m,mi)=>{
     const open=mi===active,o=m.options[option]||m.options[0];
@@ -99,6 +100,52 @@ const mealNames=["Pequeno almoço","Intermédia","Almoço","Principal","Lanche",
 function showMealPicker(){const panel=$("meal-picker");$("meal-choices").innerHTML=mealNames.map((name,i)=>'<button type="button" data-meal-choice="'+i+'">'+esc(name)+'</button>').join("");panel.hidden=false;panel.scrollIntoView({behavior:"smooth",block:"nearest"});panel.querySelectorAll("[data-meal-choice]").forEach(b=>b.onclick=()=>{addMeal(mealNames[Number(b.dataset.mealChoice)]);panel.hidden=true})}
 $("cancel-meal").onclick=()=>{$("meal-picker").hidden=true};
 $("assign-player").onclick=()=>status("A publicação ainda não está disponível: é necessário validar a integração com o Planeamento e a app do jogador. Guardar rascunho não publica o plano.");
+
+const movePostButton=document.createElement("button");
+movePostButton.id="move-post-training";
+movePostButton.type="button";
+movePostButton.textContent="Transferir pós-treino para Peri-treino";
+movePostButton.title="Cria ou atualiza um rascunho Peri-treino e remove o pós-treino dos rascunhos de cores confirmados.";
+document.querySelector("#plan-editor .actions")?.prepend(movePostButton);
+movePostButton.onclick=async()=>{
+  if(!plan.id||!isColorPlan(plan.plan_type)||!plan.meals.some(isPostTraining)){
+    status("Seleciona um plano de cor guardado com Pós treino.");return;
+  }
+  const current=draftIndex.find(d=>String(d.id)===String(plan.id));
+  const baseTime=Number(current?.created_at||0);
+  const matches=draftIndex.filter(d=>String(d.player_id)===String(plan.player_id)&&isColorPlan(d.plan_type)&&
+    (String(d.id)===String(plan.id)||(baseTime&&Math.abs(Number(d.created_at||0)-baseTime)<=120)));
+  const byType=new Map();
+  byType.set(plan.plan_type,current||{id:plan.id,plan_type:plan.plan_type});
+  matches.sort((a,b)=>Math.abs(Number(a.created_at||0)-baseTime)-Math.abs(Number(b.created_at||0)-baseTime))
+    .forEach(d=>{if(!byType.has(d.plan_type))byType.set(d.plan_type,d)});
+  const source_ids=[...byType.values()].map(d=>d.id);
+  const send=async(dry_run,csrf)=>{
+    const response=await fetch("/api/v2/food-plan-drafts/post-training-transfer",{
+      method:"POST",credentials:"same-origin",
+      headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},
+      body:JSON.stringify({source_ids,dry_run})
+    });
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok)throw Error(payload.error||payload.code||"HTTP "+response.status);
+    return payload.transfer;
+  };
+  movePostButton.disabled=true;
+  try{
+    const csrf=(await request("/api/me")).csrf||"";
+    const preview=await send(true,csrf);
+    if(!confirm("Transferir o Pós treino destes rascunhos de "+plan.player_name+"?\n\n"+
+       preview.source_types.join("\n")+"\n\n"+
+       "Destino: Plano Peri-treino ("+
+       (preview.peri_status==="create"?"novo rascunho":preview.peri_status==="identical"?"já contém a mesma refeição":"adicionar ao rascunho existente")+
+       ").\n\nAs opções e doses serão preservadas. Os planos publicados não serão alterados. Guarda previamente quaisquer edições ainda não gravadas."))return;
+    const outcome=await send(false,csrf);
+    await loadDrafts();
+    await loadExistingPlan(plan.id);
+    status("Pós treino transferido de "+outcome.source_types.length+" rascunhos para Peri-treino. Nenhum plano publicado foi alterado.");
+  }catch(err){status("Não foi possível transferir o Pós treino: "+err.message+" Os rascunhos permanecem inalterados quando a validação falha.")}
+  finally{movePostButton.disabled=false}
+};
 $("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$("draft-list").value;if(!plan.id)return;if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();showEntry("entry");status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",player_id:"",player_name:"",plan_type:"",meals:[]};active=-1;option=0;addMeal("Pequeno almoço");status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
