@@ -1629,3 +1629,7 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 #admin-workspace .tm-admin-sidebar .tm-admin-subnav-link{position:relative;z-index:101;pointer-events:auto;cursor:pointer}
 #admin-workspace .tm-admin-main{position:relative;z-index:1;min-width:0}
 @media(min-width:900px){#admin-workspace .tm-admin-sidebar{position:sticky}}
+
+/* Female-only weight monitoring control; retain existing light/dark theme rules. */
+#monitoring-weight-menstruation-field[hidden]{display:none!important}
+#monitoring-weight-menstruation-field select{min-width:115px}

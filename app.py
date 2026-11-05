@@ -1148,6 +1148,14 @@ def application(env, start_response):
                 except (TypeError,ValueError):raise Problem(400,'invalid_weight_date')
                 previous=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,day.isoformat())).fetchone()
                 if action=='save':
+                    # The optional menstrual value is only editable for female athletes.
+                    sex_row=c.execute("SELECT u.sex FROM users u JOIN v2_player_links l ON l.user_id=u.id WHERE l.athlete_id=? AND u.role='player'",(aid,)).fetchone()
+                    is_female=str(sex_row["sex"] or "").upper()=="F" if sex_row else False
+                    response=body.get("menstruating") if is_female else None
+                    if response is not None and type(response) is not bool:raise Problem(400,"invalid_menstruation")
+                    stored_response=None if response is None else int(response)
+                    # An old administrative client must not erase an existing response.
+                    if is_female and "menstruating" not in body and previous:stored_response=previous["menstruating"]
                     try:
                         value=float(str(body.get('weight')).replace(',','.'))
                         import math
@@ -1157,12 +1165,12 @@ def application(env, start_response):
                     import time as weight_time
                     now=int(weight_time.time())
                     if previous:
-                        c.execute("UPDATE v2_daily_weighins SET weight_kg=?,updated_at=? WHERE id=?",(value,now,previous['id']))
+                        c.execute("UPDATE v2_daily_weighins SET weight_kg=?,menstruating=?,updated_at=? WHERE id=?",(value,stored_response,now,previous['id']))
                         entry_id=previous['id']
                     else:
                         entry_id=weight_secrets.token_hex(16)
-                        c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",(entry_id,aid,day.isoformat(),value,None,now,now))
-                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(weight_secrets.token_hex(16),aid,'weight',entry_id,user['id'],json.dumps(dict(previous)) if previous else None,json.dumps({'date':day.isoformat(),'weight_kg':value}),now))
+                        c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",(entry_id,aid,day.isoformat(),value,stored_response,now,now))
+                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(weight_secrets.token_hex(16),aid,'weight',entry_id,user['id'],json.dumps(dict(previous)) if previous else None,json.dumps({'date':day.isoformat(),'weight_kg':value,'menstruating':stored_response}),now))
                     c.commit()
                     return respond(200,{'ok':True})
                 if action=='delete':
