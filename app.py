@@ -1149,8 +1149,8 @@ def application(env, start_response):
                 previous=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,day.isoformat())).fetchone()
                 if action=='save':
                     # The optional menstrual value is only editable for female athletes.
-                    sex_row=c.execute("SELECT sex FROM v2_athletes WHERE id=?",(aid,)).fetchone()
-                    is_female=str(sex_row["sex"] or "").upper()=="F"
+                    sex_row=c.execute("SELECT u.sex FROM users u JOIN v2_player_links l ON l.user_id=u.id WHERE l.athlete_id=? AND u.role='player'",(aid,)).fetchone()
+                    is_female=str(sex_row["sex"] or "").upper()=="F" if sex_row else False
                     response=body.get("menstruating") if is_female else None
                     if response is not None and type(response) is not bool:raise Problem(400,"invalid_menstruation")
                     stored_response=None if response is None else int(response)
