@@ -851,6 +851,15 @@ def application(env, start_response):
                         'athletes_with_active_publications':sum(1 for a in result if any(p['active'] for p in a['publications'])),
                         'editor_drafts':len(draft_rows),'unmatched_editor_drafts':unmatched_drafts,
                         'food_library_total':foods['total'],'food_library_active':foods['active'] or 0}})
+            if path == '/api/v2/food-plan-drafts/post-training-transfer' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    result=food_plan_drafts_v2.transfer_post_training(c,body.get('source_ids'),body.get('dry_run') is not False)
+                except ValueError as error:
+                    raise Problem(409,str(error))
+                return respond(200,{'transfer':result})
             if path == '/api/v2/food-plan-drafts' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
