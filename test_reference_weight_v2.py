@@ -103,3 +103,14 @@ class ReferenceWeightTests(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
+
+class MenstruationStorageRegressionTests(unittest.TestCase):
+    def test_postgresql_integer_storage_for_female_weight(self):
+        # The player API accepts booleans, but the existing SQL column is INTEGER.
+        from pathlib import Path
+        app_source = Path("app.py").read_text(encoding="utf-8")
+        self.assertIn("stored_menstruating=None if menstruating is None else int(menstruating)", app_source)
+        self.assertIn("(weight,stored_menstruating,now,entry_id,aid)", app_source)
+        self.assertIn("(entry_id,aid,selected,weight,stored_menstruating,now,now)", app_source)
+        self.assertEqual([None if v is None else int(v) for v in (True,False,None)], [1,0,None])
