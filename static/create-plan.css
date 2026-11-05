@@ -710,3 +710,44 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 
 /* Keep four nutrient totals in one row and share the 124px actions gutter. */
 @media(min-width:1121px){.meal-header .meal-header-macros{right:124px!important;width:38%!important;display:block!important}.meal-header .meal-header-macros>.macro-values,.option-content .option-summary>.macro-values{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;width:100%!important}.option-content .option-summary>.macro-values{position:absolute!important;right:124px!important;left:auto!important;top:50%!important;transform:translateY(-50%)!important;width:38%!important}.meal-header .macro,.option-summary .macro{display:flex!important;flex-direction:row!important;align-items:baseline!important;justify-content:flex-end!important;gap:5px!important;white-space:nowrap!important}}
+
+/* Legacy publication copies are intentionally distinguishable from editable imports. */
+#plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td {
+  background:#493915!important;
+  color:#f8e7b8!important;
+  border-top-color:#7d642b!important;
+  border-bottom:1px solid #7d642b!important;
+}
+#plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:hover > td {
+  background:#59451b!important;
+}
+#plan-entry .plan-library-table tbody tr.plan-library-legacy-draft td strong {
+  color:#ffe6a4!important;
+}
+#plan-entry .plan-library-table tbody tr.plan-library-legacy-draft td small {
+  color:#edcd85!important;
+  opacity:1!important;
+}
+#plan-entry .plan-library-table tbody tr.plan-library-legacy-draft .plan-library-row-actions button {
+  background:#604c25!important;
+  border-color:#967639!important;
+  color:#fff0c6!important;
+}
+#plan-entry .plan-library-table tbody tr.plan-library-legacy-draft .plan-library-row-actions button:hover {
+  background:#745a2a!important;
+}
+html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td {
+  background:#fff0bd!important;
+  color:#664910!important;
+  border-color:#e2c56e!important;
+}
+html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:hover > td {
+  background:#ffe5a0!important;
+}
+html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft td strong,
+html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft td small {
+  color:#664910!important;opacity:1!important;
+}
+html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft .plan-library-row-actions button {
+  background:#fff8e5!important;border-color:#d3b65e!important;color:#664910!important;
+}
