@@ -373,3 +373,103 @@ def repair_imported_plan_food_links(c):
             changed_plans += 1
     return {"changed_plans":changed_plans,"linked_lines":linked_lines,
             "alpro_spelling_corrected":renamed_notes,"unresolved":unresolved}
+
+def reconcile_original_snapshot_quantities(c):
+    """Repair only legacy-imported drafts using their exact published source snapshots."""
+    import hashlib
+    import re
+    import unicodedata
+    import food_plan_migration_v2 as migration
+    def norm(value):
+        value = unicodedata.normalize("NFKD", str(value or "").casefold()).replace("®","")
+        return re.sub(r"[^a-z0-9]+"," ","".join(ch for ch in value if not unicodedata.combining(ch))).strip()
+    active = [dict(r) for r in c.execute("SELECT id,display_name,base_name FROM v2_food_library WHERE active=1")]
+    by_name = {}
+    for food in active:
+        for label in (food["display_name"],food["base_name"]):
+            by_name.setdefault(norm(label),set()).add(food["id"])
+    aliases = {
+        norm("Bebida Aveia, Alpro® 0%"): norm("Bebida Aveia - Alpro, 0%"),
+        norm("Bebida Aveia, Alpro, 0%"): norm("Bebida Aveia - Alpro, 0%"),
+        norm("Ovo (com casca)"): norm("Ovo"),
+        norm("Ovo (descascado)"): norm("Ovo"),
+        norm("Ovo (sem casca)"): norm("Ovo"),
+    }
+    targets = {norm("Pão (integral, centeio, mistura, outros)"),
+               norm("Bebida Aveia, Alpro® 0%"),norm("Bebida Aveia - Alpro, 0%"),
+               norm("Ovo"),norm("Ovo (com casca)"),norm("Ovo (descascado)"),norm("Ovo (sem casca)")}
+    def target_id(label):
+        key = aliases.get(norm(label),norm(label))
+        ids = by_name.get(key,set())
+        return next(iter(ids)) if len(ids)==1 else None
+    changed_plans=linked=missing_quantity=missing_food=0
+    now=int(time.time())
+    for pub in c.execute("SELECT id,snapshot_json FROM v2_plan_publications").fetchall():
+        draft_id = hashlib.sha256(("editor-import-v1:"+pub["id"]).encode()).hexdigest()[:32]
+        record = c.execute("SELECT content FROM v2_food_plan_drafts WHERE id=?",(draft_id,)).fetchone()
+        if not record: continue
+        try:
+            plan=json.loads(record["content"])
+            snapshot=json.loads(pub["snapshot_json"])
+        except (ValueError,TypeError): continue
+        # Rebuild the import's meal-to-group correspondence, preserving original order.
+        source_meals=[]
+        for group in snapshot.get("groups",[]):
+            for meal_key in group.get("meals",[]):
+                if migration.MEALS.get(meal_key):
+                    source_meals.append((migration.MEALS[meal_key],group))
+        if len(source_meals)!=len(plan.get("meals",[])): continue
+        dirty=False
+        for meal,(source_name,group) in zip(plan["meals"],source_meals):
+            if meal.get("name")!=source_name: continue
+            if len(meal.get("options",[]))!=len(group.get("options",[])): continue
+            for option,source_option in zip(meal["options"],group["options"]):
+                # Each source item maps to one ordered entry in the imported draft.
+                original_items=[item for item in source_option.get("items",[]) if item.get("kind")!="title"]
+                order=option.get("order",[])
+                if len(order)!=len(original_items): continue
+                changes=[]
+                for position,(item,entry) in enumerate(zip(original_items,order)):
+                    if entry.get("type")!="note": continue
+                    name=str(item.get("name") or "").strip()
+                    if norm(name) not in targets: continue
+                    ni=entry.get("index")
+                    if not isinstance(ni,int) or ni<0 or ni>=len(option.get("notes",[])): continue
+                    original_note=str(option["notes"][ni])
+                    source_note=str(item.get("text") or "").strip() or " ".join(x for x in (str(item.get("quantity") or "").strip(),name) if x)
+                    # Only repair notes that still match the original import, allowing Alpro spelling correction.
+                    if norm(original_note)!=norm(source_note) and norm(original_note)!=norm(source_note.replace("Bebida Aveia, Alpro® 0%","Bebida Aveia - Alpro, 0%")):
+                        continue
+                    grams=migration.grams(item.get("quantity"))
+                    if grams is None:
+                        grams=migration.grams(item.get("text"))
+                    if grams is None:
+                        missing_quantity+=1
+                        continue
+                    fid=target_id(name)
+                    if not fid:
+                        missing_food+=1
+                        continue
+                    changes.append((position,ni,fid,grams))
+                if not changes: continue
+                foods=option.setdefault("foods",[])
+                notes=option["notes"]
+                removed=set()
+                for pos,ni,fid,grams in changes:
+                    order[pos]={"type":"food","index":len(foods)}
+                    foods.append({"id":fid,"grams":grams})
+                    removed.add(ni)
+                    linked+=1
+                kept=[i for i in range(len(notes)) if i not in removed]
+                remap={old:new for new,old in enumerate(kept)}
+                option["notes"]=[notes[i] for i in kept]
+                for entry in order:
+                    if entry.get("type")=="note":
+                        entry["index"]=remap[entry["index"]]
+                dirty=True
+        if dirty:
+            c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",
+                      (json.dumps(plan,ensure_ascii=False),now,draft_id))
+            changed_plans+=1
+    return {"changed_plans":changed_plans,"linked":linked,
+            "source_quantity_missing":missing_quantity,"food_not_unique":missing_food}
