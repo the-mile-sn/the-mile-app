@@ -19,6 +19,8 @@ def validate(value):
     player_id=str(value.get("player_id") or "").strip()
     player_name=str(value.get("player_name") or "").strip()
     if len(player_id)>100 or len(player_name)>160: raise ValueError("invalid_player")
+    origin=str(value.get("origin") or "").strip()
+    if origin not in ("", "json_import"): raise ValueError("invalid_origin")
     clean=[]
     for meal in meals:
         if not isinstance(meal,dict) or not isinstance(meal.get("options"),list) or not 1<=len(meal["options"])<=30: raise ValueError("invalid_meal")
@@ -69,17 +71,17 @@ def validate(value):
             if any(type(i) is not int for _,i in actual) or len(set(actual))!=len(actual) or set(actual)!=expected: raise ValueError("invalid_order")
             options.append({"title":title,"foods":foods,"notes":notes,"order":order})
         clean.append({"name":meal_title,"options":options})
-    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"meals":clean}
+    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"origin":origin,"meals":clean}
 
 def list_drafts(c):
-    rows=c.execute("SELECT id,name,content,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()
+    rows=c.execute("SELECT id,name,content,created_at,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()
     result=[]
     for row in rows:
         try: value=json.loads(row["content"])
         except (TypeError,ValueError): value={}
         player_id=str(value.get("player_id") or "").strip()
         plan_type=str(value.get("plan_type") or "").strip()
-        result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],
+        result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],"created_at":row["created_at"],"origin":str(value.get("origin") or ""),
                        "player_id":player_id,"player_name":str(value.get("player_name") or ""),
                        "plan_type":plan_type})
     return result
