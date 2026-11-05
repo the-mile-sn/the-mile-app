@@ -932,23 +932,41 @@ async function renderWeightCard(root,date){
   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=editor;heading.append(t,edit);panel.append(heading);
   const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
   if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(p);return;}
-  const values=items.map(x=>Number(x.weight_kg));const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
-  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 320 145");svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolução do peso nos últimos dez dias");
+  const values=items.map(x=>Number(x.weight_kg));
+  const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
   const n=items.length,range=Math.max(1,high-low);
-  const coords=items.map((x,i)=>[18+i*284/Math.max(1,n-1),115-(Number(x.weight_kg)-low)/range*90]);
-  const path=document.createElementNS(svg.namespaceURI,"polyline");path.setAttribute("points",coords.map(p=>p.join(",")).join(" "));path.setAttribute("fill","none");path.setAttribute("stroke","#aeb7c2");path.setAttribute("stroke-width","2");svg.append(path);
+  const mean=values.reduce((sum,v)=>sum+v,0)/n;
   const female=String(me?.sex||"").toUpperCase()==="F";
+  const surface=document.createElement("div");surface.className="daily-weight-chart-surface";
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 340 205");svg.setAttribute("role","img");
+  svg.setAttribute("aria-label","Evolução do peso nos últimos dez dias");
+  const ns=svg.namespaceURI;
+  const element=(tag,attrs,parent=svg)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([key,value])=>el.setAttribute(key,String(value)));parent.append(el);return el;};
+  const left=25,right=315,top=38,bottom=143;
+  const yFor=v=>bottom-(v-low)/range*(bottom-top);
+  const coords=items.map((x,i)=>[left+i*(right-left)/Math.max(1,n-1),yFor(Number(x.weight_kg))]);
+  for(let i=0;i<4;i++){const y=top+i*(bottom-top)/3;element("line",{x1:left,y1:y,x2:right,y2:y,class:"assessment-chart-grid"});}
+  const meanY=yFor(mean);element("line",{x1:left,y1:meanY,x2:right,y2:meanY,class:"assessment-chart-mean"});
+  element("polyline",{points:coords.map(p=>p.join(",")).join(" "),class:"assessment-chart-line"});
   const detail=document.createElement("p");detail.className="daily-weight-chart-detail";detail.setAttribute("aria-live","polite");
   const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?" · Menstruação":"");};
   coords.forEach((p,i)=>{
-   const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("cx",p[0]);dot.setAttribute("cy",p[1]);dot.setAttribute("r",i===n-1?"4":"2.7");dot.setAttribute("fill",i===n-1?"#5da8ed":"#c4cbd2");svg.append(dot);
+   const valueLabel=element("text",{x:p[0],y:Math.max(15,p[1]-12),"text-anchor":"middle",class:"assessment-chart-value"});
+   valueLabel.textContent=format(items[i].weight_kg);
+   element("circle",{cx:p[0],cy:p[1],r:4.5,class:"assessment-chart-point"});
    if(female&&(items[i].menstruating===1||items[i].menstruating===true)){
-    const marker=document.createElementNS(svg.namespaceURI,"circle");marker.setAttribute("cx",p[0]);marker.setAttribute("cy",p[1]+10);marker.setAttribute("r","3");marker.setAttribute("fill","#d6a7bc");marker.setAttribute("aria-hidden","true");svg.append(marker);
+    element("circle",{cx:p[0],cy:p[1]+11,r:3,fill:"#d6a7bc","aria-hidden":"true"});
    }
-   const touch=document.createElementNS(svg.namespaceURI,"circle");touch.setAttribute("cx",p[0]);touch.setAttribute("cy",p[1]);touch.setAttribute("r","12");touch.setAttribute("fill","transparent");touch.setAttribute("tabindex","0");touch.setAttribute("role","button");touch.setAttribute("aria-label",items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?" · Menstruação":""));touch.addEventListener("click",()=>showDetail(i));touch.addEventListener("focus",()=>showDetail(i));touch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showDetail(i);}});svg.append(touch);
-   const tx=document.createElementNS(svg.namespaceURI,"text");tx.setAttribute("x",p[0]);tx.setAttribute("y","137");tx.setAttribute("text-anchor","middle");tx.setAttribute("fill","#9ca3af");tx.setAttribute("font-size","10");tx.textContent=items[i].weigh_date.slice(-2);svg.append(tx);
+   const touch=element("circle",{cx:p[0],cy:p[1],r:13,fill:"transparent",tabindex:0,role:"button","aria-label":items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?" · Menstruação":"")});
+   touch.addEventListener("click",()=>showDetail(i));touch.addEventListener("focus",()=>showDetail(i));
+   touch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showDetail(i);}});
+   const dayLabel=element("text",{x:p[0],y:169,"text-anchor":"middle",class:"assessment-chart-tick"});
+   dayLabel.textContent=items[i].weigh_date.slice(-2);
   });
-  panel.append(svg,detail);
+  surface.append(svg);
+  const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent="— Média: "+format(mean)+" kg";
+  surface.append(average);panel.append(surface,detail);
  }
  // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
  const collapsedIcon=action.innerHTML,collapsedLabel=action.getAttribute("aria-label");
