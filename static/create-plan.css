@@ -609,3 +609,16 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 .option-content .food-row .food-actions button{flex:0 0 32px;width:32px;min-width:32px;padding:4px}
 .option-content .food-row .macro{min-width:0;overflow:hidden}
 @media(max-width:900px){.option-content .food-row{grid-template-columns:minmax(110px,1fr) minmax(180px,1fr) 118px}.option-content .food-row .food-reference-note{display:none}}
+
+/* Five real grid cells: handle, food, notes, nutrition, actions. */
+.option-content .nutrition-row.food-row{display:grid;grid-template-columns:24px minmax(130px,1.4fr) minmax(80px,.65fr) minmax(280px,1.5fr) 120px;gap:10px;align-items:center}
+.option-content .nutrition-row.food-row>.macro-values{grid-column:4;min-width:0;width:100%;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.option-content .nutrition-row.food-row>.food-actions{grid-column:5;min-width:120px;width:120px;display:flex;align-items:center;justify-content:flex-end;gap:4px}
+.option-content .nutrition-row.food-row>.food-actions button{flex:0 0 32px;width:32px;min-width:32px;max-width:32px}
+.option-content .nutrition-row.food-row>.food-identity{min-width:0}
+.option-content .nutrition-row.food-row>.food-reference-note{min-width:0;overflow-wrap:anywhere}
+.option-content .nutrition-row.food-row .edit-quantity{display:flex;flex-wrap:wrap;align-items:end;gap:8px;padding:8px 0}
+.option-content .nutrition-row.food-row .edit-quantity label{display:flex;flex-direction:column;gap:4px;font-size:11px;max-width:160px}
+.option-content .nutrition-row.food-row .edit-quantity input{width:145px;max-width:100%}
+@media(max-width:1050px){.option-content .nutrition-row.food-row{grid-template-columns:20px minmax(115px,1fr) minmax(220px,1.5fr) 120px}.option-content .nutrition-row.food-row>.food-reference-note{display:none}.option-content .nutrition-row.food-row>.macro-values{grid-column:3}.option-content .nutrition-row.food-row>.food-actions{grid-column:4}}
+@media(max-width:650px){.option-content .nutrition-row.food-row{grid-template-columns:18px minmax(90px,1fr) 120px;row-gap:7px}.option-content .nutrition-row.food-row>.food-identity{grid-column:2}.option-content .nutrition-row.food-row>.macro-values{grid-column:2;grid-row:2}.option-content .nutrition-row.food-row>.food-actions{grid-column:3;grid-row:1 / span 2}}
