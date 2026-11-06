@@ -440,10 +440,25 @@ function dayNutritionTotal(entry){
  return count?total:null;
 }
 function weeklyDayTotal(entry){return dayNutritionTotal(entry);}
-
+// Seven-day averages require seven complete days; /kg always uses each day's reference weight.
+function summarizeWeekNutrition(dates,totals,referenceWeights={}){
+ const fields=["kcal","protein_g","carbs_g","fat_g"];
+ const completeDays=totals.filter(row=>row&&fields.every(k=>Number.isFinite(row[k])&&row[k]>=0)).length;
+ if(dates.length!==7||totals.length!==7||completeDays!==7)
+  return {complete:false,completeDays,means:null,perKg:{},hasAllReferenceWeights:false};
+ const means=Object.fromEntries(fields.map(k=>[k,totals.reduce((sum,row)=>sum+row[k],0)/7]));
+ const weights=dates.map(date=>{
+  const raw=referenceWeights?.[date]?.weight_kg;
+  const value=raw==null?NaN:Number(raw);
+  return Number.isFinite(value)&&value>0?value:null;
+ });
+ const hasAllReferenceWeights=weights.every(w=>w!==null);
+ const perKg=hasAllReferenceWeights?
+  Object.fromEntries(fields.map(k=>[k,totals.reduce((sum,row,i)=>sum+row[k]/weights[i],0)/7])):{};
+ return {complete:true,completeDays:7,means,perKg,hasAllReferenceWeights};
+}
 function weeklySummary(data,relativeMeans={}){
  const section=document.createElement("section");section.className="weekly-average-summary";
- const hasWeight=false; // Relative weekly means are computed day by day below.
  for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
@@ -535,9 +550,19 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   }
 
  const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Média diária";heading.append(h);root.append(heading);
- const valid=totals.filter(Boolean);
- if(!valid.length){const p=document.createElement("p");p.className="hint";p.textContent="Sem dados publicados para calcular a média desta semana.";root.append(p);}
- else{const avg={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const t of valid)for(const k in avg)avg[k]+=t[k]/valid.length;const ratios={};for(const k in avg){const values=totals.flatMap((t,i)=>{const rawWeight=weeklyWeights[dates[i]]?.weight_kg;const w=rawWeight==null?NaN:Number(rawWeight);return t&&Number.isFinite(w)&&w>0?[t[k]/w]:[];});if(values.length===valid.length)ratios[k]=values.reduce((a,b)=>a+b,0)/values.length;}root.append(weeklySummary(avg,ratios));}
+ const weeklyNutrition=summarizeWeekNutrition(dates,totals,weeklyWeights);
+ if(!weeklyNutrition.complete){
+  const hint=document.createElement("p");hint.className="hint";
+  hint.textContent="Média semanal indisponível · "+weeklyNutrition.completeDays+"/7 dias com prescrição nutricional completa.";
+  root.append(hint);
+ }else{
+  root.append(weeklySummary(weeklyNutrition.means,weeklyNutrition.perKg));
+  if(!weeklyNutrition.hasAllReferenceWeights){
+   const hint=document.createElement("p");hint.className="hint";
+   hint.textContent="Rácios por kg indisponíveis: falta o Peso de referência de um ou mais dias.";
+   root.append(hint);
+  }
+ }
  const weeklySupplements=new Map();
  for(const date of dates){
   for(const item of supplementsByDay[date]||[]){
@@ -692,7 +717,7 @@ function appendWeeklyEvents(host,dates,session){
     const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.phase==="pre"&&weeklySelection?.date===date;
     button.setAttribute("aria-pressed",String(active));
     if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0);button.append(kcal);}
-    const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus);};
+    const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);};
     button.onclick=select;button.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}};
     slot.append(button);
    }else{
@@ -1156,16 +1181,14 @@ async function overview(){
    for(let offset=0;offset<7;offset++){
     const date=new Date(mon);date.setDate(mon.getDate()+offset);const key=iso(date);
     const dayModel=r.days?.find(x=>x.date===key);
-    const sum={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let found=false;
-    for(const meal of meals){const color=assignedColor(key,meal,dayModel?.classification);const a=average(plans[color]?.[meal]||[]);if(a){found=true;for(const nutrient of Object.keys(sum))sum[nutrient]+=Number(a[nutrient]||0);}}
-    for(const peri of periMeals.filter(x=>x.event_date===key)){const a=average(peri.options||[]);if(a){found=true;for(const nutrient of Object.keys(sum))sum[nutrient]+=Number(a[nutrient]||0);}}
-    weekDays.push({date,key,total:sum,found});
+    const daily=dayNutritionTotal(dayModel||{date:key,classification:null});
+    weekDays.push({date,key,total:daily,found:!!daily});
    }
-   // Dual comparison rings: signed, fixed +/-30% reference range; published daily totals only.
-   const validDays=weekDays.filter(x=>x.found&&x.total.kcal>0);
-   const mean=validDays.length?validDays.reduce((n,x)=>n+x.total.kcal,0)/validDays.length:null;
+   // The comparison uses the same completed totals as the day/week cards.
+   const fullWeek=weekDays.length===7&&weekDays.every(x=>x.total&&Number.isFinite(x.total.kcal));
+   const mean=fullWeek?weekDays.reduce((n,x)=>n+x.total.kcal,0)/7:null;
    const yesterday=new Date(d+"T12:00:00");yesterday.setDate(yesterday.getDate()-1);
-   let previous=weekDays.find(x=>x.key===iso(yesterday)&&x.found&&x.total.kcal>0);
+   let previous=weekDays.find(x=>x.key===iso(yesterday)&&x.total?.kcal>0);
    const change=reference=>reference>0?100*(total.kcal-reference)/reference:null;
    const deviationMean=change(mean);let deviationPrevious=change(previous?.total.kcal);
    const visual=document.createElement("div");visual.className="nutrition-comparison";
