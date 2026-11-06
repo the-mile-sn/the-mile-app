@@ -188,3 +188,30 @@ html body #admin-account-panel #admin-signout.tm-action-danger{
 }
 
 #admin-account-panel .tm-field-two-line[hidden],#tm-admin-settings .tm-field-two-line[hidden],#tm-settings-admins .tm-field-two-line[hidden],#admin-account-panel .tm-photo-field-two-line[hidden]{display:none!important}
+
+/* Navigation back arrows remain simple text+icon, never filled buttons. */
+html body #admin-workspace .tm-dashboard-return #tm-dashboard-return-button.tm-subpage-back,
+html body #tm-players-page #tm-players-profile-back.tm-subpage-back,
+html body #tm-admin-legacy #admin-account-toggle.tm-planning-account-link{
+ display:inline-flex!important;align-items:center!important;gap:7px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0!important;width:auto!important;min-height:36px!important;
+ padding:5px 4px!important;color:var(--tm-control-ink)!important;
+ font-weight:500!important;
+}
+html body #admin-workspace .tm-dashboard-return #tm-dashboard-return-button:hover,
+html body #tm-players-page #tm-players-profile-back:hover{background:transparent!important;opacity:.72}
+/* New action should be discreet in the light theme (no elevated white capsule). */
+html[data-admin-theme="light"] body .tm-action-new,
+html[data-admin-theme="light"] body #tm-players-page #tm-players-new.tm-action-new,
+html[data-admin-theme="light"] body #tm-recipe-library-page #recipe-add.tm-action-new,
+html[data-admin-theme="light"] body #plan-entry #entry-create.tm-action-new,
+html[data-admin-theme="light"] body .food-library-top #new.tm-action-new,
+html[data-admin-theme="light"] body #assessment-new.tm-action-new,
+html[data-admin-theme="light"] body #tm-menu-recipes-page #dish-add-toggle.tm-action-new{
+ background:#eef1f5!important;color:#46576a!important;border-color:#e1e6ed!important;
+ box-shadow:none!important;font-weight:500!important;
+}
+html[data-admin-theme="light"] body .tm-action-new:hover:not(:disabled){background:#e6ebf1!important}
+/* Legacy Filipe-only activation utility remains in DOM solely for compatibility. */
+#admin-access-panel{display:none!important}
