@@ -307,6 +307,9 @@ def initialize():
         try:
             draft_audit = food_plan_calendar_bridge_v2.audit_all_drafts(c)
             logging.warning('Read-only live Planos nutrition audit counts: %s', draft_audit)
+            missing_details, peri_headings = food_plan_calendar_bridge_v2.audit_detailed_missing_quantities_and_peri_headings(c)
+            logging.warning('Temporary missing Planos quantities (admin audit): %s', missing_details)
+            logging.warning('Temporary Peri Planos meal headings (aggregate): %s', peri_headings)
         except Exception:
             logging.exception('Read-only live Planos nutrition audit failed')
         if SITE_ROLE == 'admin':
