@@ -309,6 +309,19 @@ def initialize():
             logging.warning('Read-only live Planos nutrition audit counts: %s', draft_audit)
         except Exception:
             logging.exception('Read-only live Planos nutrition audit failed')
+        if SITE_ROLE == 'admin':
+            try:
+                import unittest
+                validation_output = io.StringIO()
+                suite = unittest.defaultTestLoader.discover(
+                    str(ROOT / 'tests'), pattern='test_food_plan_calendar_bridge_v2.py')
+                results = unittest.TextTestRunner(stream=validation_output, verbosity=0).run(suite)
+                logging.warning('Planos nutrition regression checks: %s tests, %s failures, %s errors',
+                                results.testsRun, len(results.failures), len(results.errors))
+                if results.failures or results.errors:
+                    logging.error('Planos nutrition regression details: %s', validation_output.getvalue()[:1200])
+            except Exception:
+                logging.exception('Planos nutrition regression checks could not run')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
