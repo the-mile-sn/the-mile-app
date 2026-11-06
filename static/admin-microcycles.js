@@ -1234,7 +1234,6 @@ function renderDayPreview(day,host){
    }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
   });
   colorBar.append(choose);
-  const oldAverage=entry.color?averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]):null;
   const liveMeal=liveCalendarPlans[day.date]?.meals?.[entry.meal];
   const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?liveMeal.nutrition:null;
   if(newAverage){
@@ -1246,11 +1245,6 @@ function renderDayPreview(day,host){
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
    unavailable.textContent=entry.color?"Novo plano: valores por confirmar":"—";cell.append(unavailable);
-  }
-  if(oldAverage){
-   const oldNote=document.createElement("small");oldNote.className="calendar-legacy-meal-nutrients";
-   oldNote.textContent="Anterior: "+nutritionSummary(oldAverage);
-   oldNote.title="Dados do importador antigo, apenas para comparação";cell.append(oldNote);
   }
   cell.append(renderLiveMealOptions(day,entry.meal));
   grid.appendChild(cell);
@@ -1286,22 +1280,26 @@ function renderDayPreview(day,host){
   host.append(details);
  }
  const liveDay=liveCalendarPlans[day.date];
- if(liveDay){
-  const liveTotals=document.createElement("section");liveTotals.className="calendar-live-totals";
-  const title=document.createElement("h3");title.textContent="Novo módulo Planos · resumo nutricional de teste";liveTotals.append(title);
-  const note=document.createElement("p");note.className="hint";
-  note.textContent="Inclui refeições de cores e apenas os momentos peri prescritos para eventos ativos. Ainda não publicado aos jogadores.";
-  liveTotals.append(note);
+ const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
+ const currentHeading=document.createElement("h3");currentHeading.textContent="Resumo nutricional do dia";currentBlock.append(currentHeading);
+ const currentSource=document.createElement("p");currentSource.className="calendar-current-source";
+ currentSource.textContent="Fonte: Planos · inclui os momentos peri aplicáveis. Atualiza ao abrir o Calendário.";
+ currentBlock.append(currentSource);
+ if(!liveDay){
+  const warning=document.createElement("p");warning.className="calendar-live-warning";
+  warning.textContent="Sem acesso aos planos atuais. Não são usados valores antigos como substituição.";currentBlock.append(warning);
+ }else if(liveDay.state!=="complete"){
   const issues=liveDay.issues||[];
-  if(issues.length){
-   const warning=document.createElement("p");warning.className="calendar-live-warning";
-   warning.textContent="Resultado parcial — "+issues.map(x=>(names[x.meal]||x.phase||x.meal_name||"Evento peri")+": "+x.status).join("; ");
-   liveTotals.append(warning);
-  }
-  if(Object.values(liveDay.meals||{}).some(x=>x?.nutrition)||liveDay.peri_events?.some(x=>x.nutrition))nutritionCards(liveTotals,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
-  host.append(liveTotals);
- }
- renderNutritionTotals(host,"Sistema anterior · comparação",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
+  const warning=document.createElement("p");warning.className="calendar-live-warning";
+  warning.textContent="Resumo indisponível: existem prescrições incompletas"+
+   (issues.length?" · "+issues.map(x=>(names[x.meal]||x.phase||x.meal_name||"Momento peri")+": "+x.status).join("; "):"")+".";
+  currentBlock.append(warning);
+ }else nutritionCards(currentBlock,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
+ host.append(currentBlock);
+ const oldDetails=document.createElement("details");oldDetails.className="calendar-legacy-summary";
+ const oldSummary=document.createElement("summary");oldSummary.textContent="Comparar com valores do sistema anterior";oldDetails.append(oldSummary);
+ renderNutritionTotals(oldDetails,"Sistema anterior · resumo do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
+ host.append(oldDetails);
 }
 let dayWeightReferences={};
 async function loadCalendar(){
