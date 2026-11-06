@@ -604,6 +604,11 @@ class Problem(Exception):
         self.status, self.code = status, code
 
 
+PLAYER_SESSION_SECONDS = 180 * 24 * 60 * 60
+PLAYER_SESSION_RENEW_WINDOW = 30 * 24 * 60 * 60
+ADMIN_SESSION_SECONDS = 12 * 60 * 60
+
+
 def application(env, start_response):
     headers = [('Cache-Control', 'no-store'), ('X-Content-Type-Options', 'nosniff'), ('X-Frame-Options', 'DENY'), ('Referrer-Policy', 'no-referrer'), ('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")]
     if SECURE:
@@ -671,7 +676,7 @@ def application(env, start_response):
 
         with connect() as c:
             now = int(time.time())
-            user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
+            user = c.execute('SELECT u.*,s.csrf,s.expires AS session_expires FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
 
             if SITE_ROLE != 'both' and user and user['role'] != SITE_ROLE:
                 user = None
@@ -1650,6 +1655,15 @@ def application(env, start_response):
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, food_plan_player_v2.player_plans(c, link['athlete_id']))
             if path == '/api/me' and method == 'GET':
+                # Player PWA: keep the HttpOnly cookie alive across app restarts.
+                # Renew only when the existing session is nearing expiry. Admin
+                # sessions remain short-lived; inactive users remain revoked.
+                if user and user['role'] == 'player' and user['session_expires'] - now <= PLAYER_SESSION_RENEW_WINDOW:
+                    renewed_token = secrets.token_urlsafe(32)
+                    c.execute('UPDATE sessions SET token=?, expires=? WHERE token=? AND user_id=?',
+                              (digest(renewed_token), now + PLAYER_SESSION_SECONDS, digest(token), user['id']))
+                    c.commit()
+                    headers.append(('Set-Cookie', f'mile_session={renewed_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={PLAYER_SESSION_SECONDS}' + ('; Secure' if SECURE else '')))
                 if not user:
                     return respond(200, {'user': None, 'csrf': None})
                 if user['role'] == 'player':
@@ -1688,10 +1702,11 @@ def application(env, start_response):
                     u = a
                 session_token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(24)
                 c.execute('DELETE FROM sessions WHERE expires<=?', (now,))
-                c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (digest(session_token), u['id'], csrf, now + 43200))
+                session_seconds = PLAYER_SESSION_SECONDS if u['role'] == 'player' else ADMIN_SESSION_SECONDS
+                c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (digest(session_token), u['id'], csrf, now + session_seconds))
                 c.execute('DELETE FROM attempts WHERE key=?', (limit_key,))
                 c.commit()
-                headers.append(('Set-Cookie', f'mile_session={session_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=43200' + ('; Secure' if SECURE else '')))
+                headers.append(('Set-Cookie', f'mile_session={session_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={session_seconds}' + ('; Secure' if SECURE else '')))
                 return respond(200, {'ok': True})
 
             if path == '/api/change-password' and method == 'POST':
