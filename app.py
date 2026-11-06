@@ -307,9 +307,6 @@ def initialize():
         try:
             draft_audit = food_plan_calendar_bridge_v2.audit_all_drafts(c)
             logging.warning('Read-only live Planos nutrition audit counts: %s', draft_audit)
-            missing_details, peri_headings = food_plan_calendar_bridge_v2.audit_detailed_missing_quantities_and_peri_headings(c)
-            logging.warning('Temporary missing Planos quantities (admin audit): %s', missing_details)
-            logging.warning('Temporary Peri Planos meal headings (aggregate): %s', peri_headings)
         except Exception:
             logging.exception('Read-only live Planos nutrition audit failed')
         if SITE_ROLE == 'admin':
@@ -1526,7 +1523,7 @@ def application(env, start_response):
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
                                      'effective_colors':effective_colors,
-                                      **({'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors)} if (query.get('include_food_plans') or [''])[0]=='1' else {})})
+                                      **({'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors,event_data,matches,{(row['match_id'],row['phase']):row['state'] for row in override_rows})} if (query.get('include_food_plans') or [''])[0]=='1' else {})})
             if path.startswith('/api/v2/athletes/') and path.endswith('/recipe-categories') and method in ('GET','PUT'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
