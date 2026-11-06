@@ -98,6 +98,43 @@ class PortalTest(unittest.TestCase):
         client=Client()
         for i in range(10):self.assertEqual(client.request('/api/login','POST',{'email':'unknown@example.com','password':'invalid-password'})['status'],401)
         self.assertEqual(client.request('/api/login','POST',{'email':'unknown@example.com','password':'invalid-password'})['status'],429)
+    def test_player_session_is_persistent_and_renews_without_password(self):
+        import time
+        with app.connect() as c:
+            c.execute(
+                "INSERT INTO users(id,name,email,role,password,active,username) VALUES(?,?,?,?,?,?,?)",
+                ('persistent-player', 'Persistent Player', 'persistent@example.com',
+                 'player', app.password_hash('example-password-123'), 1, 'persistent')
+            )
+            c.commit()
+        player = Client()
+        login = player.request('/api/login', 'POST', {
+            'identifier': 'persistent', 'password': 'example-password-123'
+        })
+        self.assertEqual(login['status'], 200)
+        self.assertIn(f'Max-Age={app.PLAYER_SESSION_SECONDS}', login['headers']['Set-Cookie'])
+        self.assertIn('HttpOnly', login['headers']['Set-Cookie'])
+        self.assertIn('SameSite=Lax', login['headers']['Set-Cookie'])
+        self.assertIn('Max-Age=43200', self.admin.request('/api/me')['headers'].get('Set-Cookie', 'Max-Age=43200'))
+        first_cookie = player.cookie
+        self.assertIsNotNone(player.request('/api/me')['body']['user'])
+        self.assertEqual(player.cookie, first_cookie)
+        with app.connect() as c:
+            c.execute('UPDATE sessions SET expires=? WHERE token=?',
+                      (int(time.time()) + app.PLAYER_SESSION_RENEW_WINDOW - 60,
+                       app.digest(first_cookie.split('=', 1)[1])))
+            c.commit()
+        renewed = player.request('/api/me')
+        self.assertEqual(renewed['status'], 200)
+        self.assertIn(f'Max-Age={app.PLAYER_SESSION_SECONDS}', renewed['headers']['Set-Cookie'])
+        self.assertNotEqual(player.cookie, first_cookie)
+        old = Client()
+        old.cookie = first_cookie
+        self.assertIsNone(old.request('/api/me')['body']['user'])
+        self.assertIsNotNone(player.request('/api/me')['body']['user'])
+        self.assertEqual(player.request('/api/logout', 'POST', {})['status'], 200)
+        self.assertIsNone(player.request('/api/me')['body']['user'])
+
     def test_no_data_files_served_and_session_security_headers(self):
         self.assertEqual(Client().request('/data/mile.sqlite3')['status'],404)
         self.assertEqual(Client().request('/logo.png')['status'],200)
