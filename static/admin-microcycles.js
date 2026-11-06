@@ -1273,7 +1273,7 @@ async function loadCalendar(){
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
-  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
+  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
   dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
   const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
   const weeklyColors=colorOverrideLookup(weeklyData.meal_color_overrides);
@@ -1294,6 +1294,24 @@ async function loadCalendar(){
     weekly.appendChild(warning);
   }
   weekly.appendChild(progress);
+  const liveWeekly=weeklyData.live_food_plans?.days||{};
+  const liveEntries=weeklyData.days.map(d=>liveWeekly[d.date]).filter(Boolean);
+  const liveComplete=liveEntries.length===7&&liveEntries.every(x=>x.state==="complete");
+  const livePanel=document.createElement("section");livePanel.className="calendar-live-weekly";
+  const liveTitle=document.createElement("h4");liveTitle.textContent="Novo módulo Planos · média semanal de teste";livePanel.append(liveTitle);
+  const coverage=document.createElement("p");coverage.className="hint";
+  coverage.textContent=liveEntries.filter(x=>x.state==="complete").length+"/7 dias completos · Refeições de cores apenas; peri ainda por integrar";
+  livePanel.append(coverage);
+  if(liveComplete){
+    const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+    for(const item of liveEntries)for(const key of Object.keys(sums))sums[key]+=item.nutrition[key];
+    nutritionCards(livePanel,Object.fromEntries(Object.keys(sums).map(k=>[k,sums[k]/7])));
+  }else{
+    const partial=document.createElement("p");partial.className="calendar-live-warning";
+    partial.textContent="Média não apresentada: existem refeições sem plano válido ou com valores provisórios.";
+    livePanel.append(partial);
+  }
+  weekly.prepend(livePanel);
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
