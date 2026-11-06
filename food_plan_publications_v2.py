@@ -108,11 +108,18 @@ def published_for_athlete(c, athlete_id):
         "SELECT draft_id,plan_type,snapshot_json,published_at,state "
         "FROM v2_food_plan_editor_publications WHERE athlete_id=?",
         (athlete_id,)).fetchall()
+    link = c.execute("SELECT user_id FROM v2_player_links WHERE athlete_id=?",
+                     (athlete_id,)).fetchone()
+    linked_user = str(link["user_id"]) if link else ""
     result = {}
     for row in rows:
         try:
             plan = json.loads(row["snapshot_json"])
         except (TypeError, ValueError):
+            continue
+        if plan.get("athlete_id") and str(plan["athlete_id"]) != str(athlete_id):
+            continue
+        if plan.get("player_id") and str(plan["player_id"]) != linked_user:
             continue
         result.setdefault(row["plan_type"], []).append({
             "id": row["draft_id"], "draft": plan,
