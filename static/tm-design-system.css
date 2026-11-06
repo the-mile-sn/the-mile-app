@@ -1,0 +1,69 @@
+/* The Mile Backoffice — shared visual controls v1
+   Cosmetic only. Keep nutritional colour controls and specialised calendars intact. */
+:root{
+  --tm-control-radius:12px;
+  --tm-control-height:42px;
+  --tm-control-ink:#f0f2f5;
+  --tm-control-bg:#292c34;
+  --tm-control-border:#4b505a;
+  --tm-control-bg-hover:#343944;
+  --tm-control-new-bg:#373c46;
+  --tm-control-new-border:#757f8d;
+  --tm-control-new-ink:#f5f7fa;
+  --tm-control-success-bg:rgba(67,148,94,.14);
+  --tm-control-success-border:rgba(99,174,123,.5);
+  --tm-control-success-ink:#9bd7ac;
+  --tm-control-danger-bg:rgba(174,77,87,.1);
+  --tm-control-danger-border:rgba(194,111,122,.43);
+  --tm-control-danger-ink:#e5a0aa;
+}
+html[data-admin-theme="light"]{
+  --tm-control-ink:#283748;
+  --tm-control-bg:#f0f2f6;
+  --tm-control-border:#d1d9e3;
+  --tm-control-bg-hover:#e4eaf0;
+  --tm-control-new-bg:#fff;
+  --tm-control-new-border:#a7b6c8;
+  --tm-control-new-ink:#243448;
+  --tm-control-success-bg:rgba(64,143,89,.1);
+  --tm-control-success-border:rgba(53,128,78,.35);
+  --tm-control-success-ink:#2f794b;
+  --tm-control-danger-bg:rgba(171,72,83,.06);
+  --tm-control-danger-border:rgba(175,86,99,.34);
+  --tm-control-danger-ink:#a14f59;
+}
+/* Only opt-in action classes: no blanket button, input or select overrides. */
+.tm-action-primary,.tm-action-secondary,.tm-action-add,.tm-action-new,.tm-action-danger,.tm-action-success,.tm-action-icon{
+  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:8px!important;min-height:var(--tm-control-height)!important;
+  border-radius:var(--tm-control-radius)!important;
+  font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  font-size:13px!important;font-weight:500!important;line-height:1.25!important;
+  cursor:pointer;transition:background-color .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease;
+}
+.tm-action-primary,.tm-action-secondary,.tm-action-add{background:var(--tm-control-bg)!important;color:var(--tm-control-ink)!important;border:1px solid var(--tm-control-border)!important;padding:10px 16px!important}
+.tm-action-primary:hover:not(:disabled),.tm-action-secondary:hover:not(:disabled),.tm-action-add:hover:not(:disabled){background:var(--tm-control-bg-hover)!important}
+.tm-action-new{background:var(--tm-control-new-bg)!important;color:var(--tm-control-new-ink)!important;border:1px solid var(--tm-control-new-border)!important;border-radius:999px!important;min-height:44px!important;padding:10px 19px!important;font-weight:600!important;box-shadow:0 2px 9px rgba(0,0,0,.07)!important}
+.tm-action-new:hover:not(:disabled){filter:brightness(1.07);box-shadow:0 3px 12px rgba(0,0,0,.11)!important}
+.tm-action-danger{background:var(--tm-control-danger-bg)!important;color:var(--tm-control-danger-ink)!important;border:1px solid var(--tm-control-danger-border)!important;padding:10px 16px!important}
+.tm-action-success{background:var(--tm-control-success-bg)!important;color:var(--tm-control-success-ink)!important;border:1px solid var(--tm-control-success-border)!important;padding:10px 16px!important}
+.tm-action-icon{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;padding:7px!important;background:transparent!important;color:var(--tm-control-ink)!important;border:1px solid var(--tm-control-border)!important;border-radius:11px!important}
+.tm-action-icon svg{width:19px;height:19px;stroke-width:1.7}
+.tm-action-icon:hover:not(:disabled){background:var(--tm-control-bg-hover)!important}
+.tm-action-primary:disabled,.tm-action-secondary:disabled,.tm-action-add:disabled,.tm-action-new:disabled,.tm-action-danger:disabled,.tm-action-success:disabled,.tm-action-icon:disabled{opacity:.55;cursor:not-allowed}
+:is(.tm-action-primary,.tm-action-secondary,.tm-action-add,.tm-action-new,.tm-action-danger,.tm-action-success,.tm-action-icon):focus-visible{outline:2px solid #76a6d4!important;outline-offset:3px!important}
+@media(prefers-reduced-motion:reduce){:is(.tm-action-primary,.tm-action-secondary,.tm-action-add,.tm-action-new,.tm-action-danger,.tm-action-success,.tm-action-icon){transition:none!important}}
+/* Shared geometry for the already-approved two-line dropdown. Keep its own colours. */
+.tm-two-line-select{border-radius:19px!important}
+@media(max-width:700px){.tm-two-line-select{border-radius:18px!important}}
+/* Save/publish state is supplied by the existing persistence logic, not by label alone. */
+#plan-editor #save-plan.is-confirmed:not(:disabled),
+#plan-editor #save-plan.is-confirmed:disabled,
+#plan-editor #assign-player.is-confirmed:not(:disabled),
+#plan-editor #assign-player.is-confirmed:disabled{background:var(--tm-control-success-bg)!important;color:var(--tm-control-success-ink)!important;border:1px solid var(--tm-control-success-border)!important;opacity:1!important}
+/* Recipe actions share the same shape, preserving page and button semantics. */
+#tm-recipe-library-page .tm-action-new{min-width:112px}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-drag-handle{cursor:grab!important;touch-action:none}
+#tm-recipe-library-page .recipe-ingredient-actions .recipe-drag-handle:active{cursor:grabbing!important}
+#tm-recipe-library-page .recipe-ingredient-row.is-dragging{opacity:.58;outline:1px dashed var(--tm-control-new-border)}
+#tm-recipe-library-page .recipe-ingredient-row.drag-target{outline:2px solid var(--tm-control-new-border);outline-offset:2px}
