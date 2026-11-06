@@ -95,7 +95,7 @@ def resolve(c, athlete_id, colors_by_day):
     """Admin-only dynamic preview; no edits or publication changes."""
     from microcycles_v2 import MEALS
     drafts = available_drafts(c, athlete_id)
-    rows = c.execute("SELECT id,variant,edible_fraction,kcal,protein_g,carbs_g,fat_g FROM v2_food_library WHERE active=1").fetchall()
+    rows = c.execute("SELECT id,display_name,variant,edible_fraction,kcal,protein_g,carbs_g,fat_g FROM v2_food_library WHERE active=1").fetchall()
     library = {r["id"]:dict(r) for r in rows}
     days = {}
     for day, colors in colors_by_day.items():
@@ -140,9 +140,23 @@ def resolve(c, athlete_id, colors_by_day):
             for key in FIELDS:
                 total[key] += average[key]
             status = "provisional" if provisional else "ok"
+            previews = []
+            for option, (nutrition, option_pending) in zip(options, values):
+                foods = []
+                for food in option.get("foods") or []:
+                    ref = library.get(food.get("id")) or {}
+                    foods.append({**food, "library_name":ref.get("display_name", "")})
+                previews.append({
+                    "title":option.get("title") or "",
+                    "foods":foods,
+                    "notes":option.get("notes") or [],
+                    "order":option.get("order") or [],
+                    "nutrition":nutrition,
+                    "provisional":option_pending,
+                })
             meals[slot] = {"status":status,"color":color,"draft_id":entry["id"],
                            "source_meal_name":meal.get("name"),
-                           "options":options,"nutrition":average,
+                           "options":previews,"nutrition":average,
                            "updated_at":entry["updated_at"]}
             if provisional:
                 issues.append({"meal":slot,"color":color,"status":status})
