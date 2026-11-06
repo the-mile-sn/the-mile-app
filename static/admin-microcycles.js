@@ -1813,24 +1813,38 @@ function refreshDishTableCategories(){
  select.value=[...select.options].some(o=>o.value===previous)?previous:"";
 }
 function renderDishEditor(){
- const host=$("dish-editor-list");if(!host)return;host.replaceChildren();
+ const host=$("dish-editor-list");if(!host)return;
+ const search=$("dish-search"),category=$("dish-category-filter");
+ const parking=$("dish-filter-parking");
+ if(!search||!category||!parking)return;
+ parking.append(search,category);
+ host.replaceChildren();
  refreshDishTableCategories();
  const query=normalizedDishText($("dish-search").value).trim();
  const filter=$("dish-category-filter")?.value||"";
  const matches=dishLibrary.filter(d=>(!filter||d.category===filter)&&(!query||normalizedDishText([d.name_pt,d.name_en,d.category].join(" ")).includes(query)));
- if(!matches.length){const empty=document.createElement("p");empty.className="dish-table-empty";empty.textContent=dishLibrary.length?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";host.append(empty);return;}
  const wrap=document.createElement("div");wrap.className="dish-table-scroll";
  const table=document.createElement("table");table.className="dish-library-table";
- const thead=document.createElement("thead"),head=document.createElement("tr");
- for(const name of ["Fotografia","Prato","Nome inglês","Categoria",""]){
-  const th=document.createElement("th");th.textContent=name;head.append(th);
- }
+ const thead=document.createElement("thead"),head=document.createElement("tr");head.className="dish-table-filter-row";
+ const categoryHeading=document.createElement("th");categoryHeading.append(category);
+ const photoHeading=document.createElement("th");photoHeading.textContent="Foto";
+ const dishHeading=document.createElement("th");dishHeading.append(search);
+ const englishHeading=document.createElement("th");englishHeading.textContent="Nome inglês";
+ const actionsHeading=document.createElement("th");actionsHeading.textContent="Ações";
+ head.append(categoryHeading,photoHeading,dishHeading,englishHeading,actionsHeading);
  thead.append(head);table.append(thead);
  const tbody=document.createElement("tbody");
+ if(!matches.length){
+  const tr=document.createElement("tr"),td=document.createElement("td");
+  td.colSpan=5;td.className="dish-table-empty";
+  td.textContent=dishLibrary.length?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";
+  tr.append(td);tbody.append(tr);
+ }
  for(const dish of matches){
   const tr=document.createElement("tr");tr.className="dish-table-row";
+  const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";categoryCell.textContent=dish.category||"—";tr.append(categoryCell);
   const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);photo.alt="";photo.loading="lazy";photo.className="dish-table-photo";photoCell.append(photo);tr.append(photoCell);
-  for(const [value,cls] of [[dish.name_pt,"dish-table-title"],[dish.name_en||"—","dish-table-subtitle"],[dish.category||"—","dish-table-category"]]){
+  for(const [value,cls] of [[dish.name_pt,"dish-table-title"],[dish.name_en||"—","dish-table-subtitle"]]){
    const td=document.createElement("td");td.className=cls;td.textContent=value;
    if(cls==="dish-table-title"){
     const associated=dishRecipeLinks[dish.id];
