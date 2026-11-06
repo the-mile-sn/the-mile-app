@@ -327,12 +327,22 @@ function ensurePlanningOnlyView(){
  let loadingPhotoPreviewSeq=0;
  function refreshPlayerLoadingPhoto(){
   const seq=++loadingPhotoPreviewSeq,uid=playerDetails?.user_id;
-  const box=$("tm-player-loading-photo-preview"),remove=$("tm-player-loading-photo-delete"),input=$("tm-player-loading-photo-input");
+  const box=$("tm-player-loading-photo-preview"),remove=$("tm-player-loading-photo-delete"),input=$("tm-player-loading-photo-input"),feedback=$("tm-player-loading-photo-feedback");
   box.replaceChildren();remove.hidden=true;input.disabled=!uid;
-  if(!uid){box.append(el("span","","Este jogador ainda não tem conta associada."));return;}
-  const image=el("img");image.alt="Fotografia de carregamento";image.loading="lazy";
-  image.onload=()=>{if(seq!==loadingPhotoPreviewSeq)return;box.replaceChildren(image);remove.hidden=false;};
-  image.onerror=()=>{if(seq!==loadingPhotoPreviewSeq)return;box.replaceChildren(el("span","","Sem fotografia de carregamento"));remove.hidden=true;};
+  if(!uid){box.append(el("span","","Este jogador ainda não tem conta associada."));feedback.textContent="";return;}
+  box.append(el("span","","A verificar fotografia…"));
+  // The image must load eagerly while detached; a detached lazy image never fires onload.
+  const image=el("img");image.alt="Fotografia de carregamento";image.loading="eager";image.decoding="async";
+  image.onload=()=>{
+   if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
+   box.replaceChildren(image);remove.hidden=false;
+   feedback.textContent="Fotografia guardada e disponível na app.";
+  };
+  image.onerror=()=>{
+   if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
+   box.replaceChildren(el("span","","Sem fotografia de carregamento"));remove.hidden=true;
+   feedback.textContent="Sem fotografia associada ou não foi possível obter a pré-visualização.";
+  };
   image.src="/api/players/"+encodeURIComponent(uid)+"/loading-photo?v="+Date.now();
  }
  async function resizePlayerLoadingPhoto(file){
