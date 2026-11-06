@@ -17,6 +17,46 @@ const totals=()=>nutrients.map((_,i)=>dailyMeals().reduce((value,m)=>value+avera
 const mealDisplayName=m=>{const slots=mealSlots(m);return slots.length>1?(slots[0]==="Pequeno almoço"?"Pequeno almoço / lanche":"Almoço / jantar"):m.name};
 const label=t=>t.map((n,i)=>fmt(n)+(i===0?" kcal":" g")).join(" · ");
 const status=s=>$("status").textContent=s;
+
+/* Total macros use the same date-specific reference-weight resolver as Planeamento. */
+const planRef={key:"",weight:null,token:0,error:false};
+const planRefDate=()=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Lisbon",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+function renderPlanReference(){
+ const valid=plan.athlete_id&&planRef.key===(String(plan.athlete_id)+"|"+planRefDate())&&Number.isFinite(planRef.weight)&&planRef.weight>0;
+ const values=totals(),w=planRef.weight;
+ for(const [i,id] of ["total-p-kg","total-hc-kg","total-g-kg"].entries()){
+  const el=$(id);if(el)el.textContent=valid?fmt(values[i+1]/w)+" g/kg":"";
+ }
+ const note=$("plan-weight-reference");
+ const label=valid?"Peso de referência: "+fmt(w)+" kg · "+planRefDate():
+   !plan.athlete_id?"Seleciona um jogador para calcular os rácios":
+   planRef.error?"Não foi possível obter o Peso de referência.":"A consultar Peso de referência…";
+ if(note)note.textContent=label;
+ const previewNote=$("plan-preview-weight");if(previewNote)previewNote.textContent=label;
+ document.querySelectorAll("[data-plan-preview-kg]").forEach(el=>{
+  const index=Number(el.dataset.planPreviewKg);
+  el.textContent=valid?fmt(values[index]/w)+" g/kg":"";
+ });
+}
+function ensurePlanReference(){
+ const athlete=String(plan.athlete_id||"");
+ if(!athlete){planRef.key="";planRef.weight=null;planRef.error=false;renderPlanReference();return;}
+ const date=planRefDate(),key=athlete+"|"+date;
+ if(planRef.key===key){renderPlanReference();return;}
+ planRef.key=key;planRef.weight=null;planRef.error=false;const token=++planRef.token;
+ renderPlanReference();
+ request("/api/v2/athletes/"+encodeURIComponent(athlete)+"/reference-weights?start="+date+"&end="+date).then(data=>{
+  if(token!==planRef.token||planRef.key!==key)return;
+  const weight=Number(data.weights_by_date?.[date]?.weight_kg);
+  if(!Number.isFinite(weight)||weight<=0)throw Error("invalid_reference_weight");
+  planRef.weight=weight;renderPlanReference();
+ }).catch(error=>{
+  if(token!==planRef.token||planRef.key!==key)return;
+  planRef.error=true;renderPlanReference();
+  status("Não foi possível obter o Peso de referência de "+plan.player_name+": "+error.message);
+ });
+}
+
 let savedSignature=null,publicationState={state:"draft",pending_changes:false,published_at:null},saveBusy=false,publishBusy=false,lastSavedAt=null,persistenceError="";
 const planSignature=()=>JSON.stringify({athlete_id:plan.athlete_id||"",player_id:plan.player_id||"",plan_type:plan.plan_type||"",meals:plan.meals});
 const planIsDirty=()=>!plan.id||savedSignature!==planSignature();
@@ -129,6 +169,7 @@ function draw(){
 
   requestAnimationFrame(alignNutritionHeaders);
   renderPersistence();
+  ensurePlanReference();
 }
 function alignNutritionHeaders(){
   document.querySelectorAll(".meal").forEach(meal=>{
@@ -282,13 +323,14 @@ const previewPalette=type=>{
 const previewNutrition=t=>'<span class="preview-kcal">'+fmtKcal(t[0])+' kcal</span><span class="preview-protein">'+fmt(t[1])+' g</span><span class="preview-carbs">'+fmt(t[2])+' g</span><span class="preview-fat">'+fmt(t[3])+' g</span>';
 const renderPlanPreview=()=>{
  const body=$("plan-preview-content"),total=totals(),palette=previewPalette(plan.plan_type);
- body.innerHTML='<div class="plan-preview-heading"><div class="plan-preview-eyebrow">'+esc(plan.player_name)+'</div><h2>'+esc(plan.plan_type)+'</h2><div class="plan-preview-macros">'+total.map((v,i)=>'<div><strong>'+esc(i===0?fmtKcal(v):fmt(v))+'</strong><small>'+["kcal","Proteína (g)","Hidratos (g)","Gordura (g)"][i]+'</small></div>').join("")+'</div></div><div class="plan-preview-group" data-palette="'+palette+'"><h3 class="plan-preview-group-title">'+esc(plan.plan_type.replace(/^Plano\s+/i,""))+'</h3>'+plan.meals.map((meal,mi)=>{
+ body.innerHTML='<div class="plan-preview-heading"><div id="plan-preview-weight" class="plan-preview-weight"></div><div class="plan-preview-eyebrow">'+esc(plan.player_name)+'</div><h2>'+esc(plan.plan_type)+'</h2><div class="plan-preview-macros">'+total.map((v,i)=>'<div><strong>'+esc(i===0?fmtKcal(v):fmt(v))+'</strong><small>'+["kcal","Proteína (g)","Hidratos (g)","Gordura (g)"][i]+'</small>'+(i?'<small class="plan-preview-perkg" data-plan-preview-kg="'+i+'"></small>':"")+'</div>').join("")+'</div></div><div class="plan-preview-group" data-palette="'+palette+'"><h3 class="plan-preview-group-title">'+esc(plan.plan_type.replace(/^Plano\s+/i,""))+'</h3>'+plan.meals.map((meal,mi)=>{
  const mealTotals=average(meal);
  return '<details class="plan-preview-meal" '+(mi===0?'open':'')+'><summary class="plan-preview-meal-heading"><span class="plan-preview-meal-name">'+esc(mealDisplayName(meal))+'</span><span class="plan-preview-meal-macros">'+previewNutrition(mealTotals)+'</span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-options">'+meal.options.map((opt,oi)=>{
  const entries=displayOrder(opt).map(item=>item.type==="food"?(()=>{const f=opt.foods[item.index];if(!f)return "";const ref=foods.find(x=>x.id===f.id);return '<div class="plan-preview-food'+(f.alternative_to!=null?' plan-preview-alternative':'')+'">'+(f.alternative_to!=null?'<span class="alternative-or">ou</span> ':'')+esc(f.display_quantity||(f.grams==null?'⚠ Quantidade por definir':fmt(f.grams)+' g'))+' '+esc(f.display_name||(f.kind==='supplement'?f.label:(ref?.display_name||'Alimento indisponível')))+'</div>'})():(()=>{const note=opt.notes?.[item.index];return note?'<div class="plan-preview-note">'+esc(note)+'</div>':""})()).join("");
  return '<details class="plan-preview-option"><summary class="plan-preview-option-heading"><span><small>Opção '+(oi+1)+'</small><strong>'+esc(opt.title||"Opção "+(oi+1))+'</strong></span><span class="plan-preview-caret">⌄</span></summary><div class="plan-preview-option-body"><div class="plan-preview-option-macros">'+previewNutrition(sum(opt.foods))+'</div>'+entries+'</div></details>'
  }).join("")+'</div></details>'
  }).join("")+'</div>';
+  ensurePlanReference();
 };
 $("preview-back").onclick=()=>showEntry("entry");
 $("preview-edit").onclick=()=>showEntry("editor");
