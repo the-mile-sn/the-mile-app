@@ -524,3 +524,9 @@ html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-empty{color:#64
 
 html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface{background:transparent!important;border:0!important;box-shadow:none!important}
 html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table-scroll{background:#fff;border-color:var(--tm-light-border,#d7dfe9)}
+
+/* Planning unified header in light mode. */
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header{background:#fff;border-color:var(--tm-light-border,#d7dfe9)}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{background:transparent!important;border-color:transparent!important}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{background:transparent!important;border-top-color:rgba(83,101,123,.15)!important}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header #tm-planning-search{background:#f2f4f7!important;border-color:#d8e0e9!important;color:#253448!important}
