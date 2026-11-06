@@ -17,8 +17,9 @@ def validate(value):
     plan_type=str(value.get("plan_type") or "").strip()
     if plan_type and plan_type not in PLAN_TYPES: raise ValueError("invalid_plan_type")
     player_id=str(value.get("player_id") or "").strip()
+    athlete_id=str(value.get("athlete_id") or "").strip()
     player_name=str(value.get("player_name") or "").strip()
-    if len(player_id)>100 or len(player_name)>160: raise ValueError("invalid_player")
+    if len(player_id)>100 or len(athlete_id)>100 or len(player_name)>160: raise ValueError("invalid_player")
     origin=str(value.get("origin") or "").strip()
     if origin not in ("", "json_import"): raise ValueError("invalid_origin")
     clean=[]
@@ -81,7 +82,7 @@ def validate(value):
         clean_meal={"name":meal_title,"options":options}
         if slots: clean_meal["applies_to"]=slots
         clean.append(clean_meal)
-    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"player_name":player_name,"origin":origin,"meals":clean}
+    return {"id":str(value.get("id") or ""), "name":name,"plan_type":plan_type,"player_id":player_id,"athlete_id":athlete_id,"player_name":player_name,"origin":origin,"meals":clean}
 
 def list_drafts(c):
     rows=c.execute("SELECT id,name,content,created_at,updated_at FROM v2_food_plan_drafts ORDER BY updated_at DESC").fetchall()
@@ -91,14 +92,17 @@ def list_drafts(c):
                     for r in c.execute("SELECT id FROM v2_plan_publications").fetchall()}
     except Exception:
         legacy_ids=set()
+    links={r["user_id"]:r["athlete_id"] for r in c.execute(
+        "SELECT user_id,athlete_id FROM v2_player_links").fetchall()}
     result=[]
     for row in rows:
         try: value=json.loads(row["content"])
         except (TypeError,ValueError): value={}
         player_id=str(value.get("player_id") or "").strip()
+        athlete_id=str(value.get("athlete_id") or links.get(player_id) or "").strip()
         plan_type=str(value.get("plan_type") or "").strip()
         result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],"created_at":row["created_at"],"origin":str(value.get("origin") or ""), "legacy_migration":row["id"] in legacy_ids,
-                       "player_id":player_id,"player_name":str(value.get("player_name") or ""),
+                       "player_id":player_id,"athlete_id":athlete_id,"player_name":str(value.get("player_name") or ""),
                        "plan_type":plan_type})
     return result
 
@@ -107,6 +111,10 @@ def get(c, ident):
     if not r: return None
     value=json.loads(r["content"])
     value["id"]=ident
+    if not value.get("athlete_id") and value.get("player_id"):
+        row=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",
+                      (value["player_id"],)).fetchone()
+        if row: value["athlete_id"]=row["athlete_id"]
     return value
 
 def save(c, value):
@@ -115,12 +123,28 @@ def save(c, value):
     # Never trust client-provided identifiers for food composition.
     known={r["id"] for r in c.execute("SELECT id FROM v2_food_library WHERE active=1").fetchall()}
     if any(f["id"] not in known for m in value["meals"] for o in m["options"] for f in o["foods"] if f.get("kind","food")=="food"): raise ValueError("unknown_food")
-    if value["player_id"]:
-        player=c.execute("SELECT name FROM users WHERE id=? AND role='player'",(value["player_id"],)).fetchone()
-        if not player: raise ValueError("unknown_player")
-        value["player_name"]=player["name"]
-    else: value["player_name"]=""
-    if not value["player_id"] or not value["plan_type"]: raise ValueError("missing_player_or_type")
+    # Athlete profile is canonical; historical player_id stays for old plans.
+    athlete_id=value["athlete_id"]
+    if not athlete_id and value["player_id"]:
+        link=c.execute("""SELECT l.athlete_id FROM v2_player_links l
+            JOIN users u ON u.id=l.user_id AND u.role='player'
+            JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL
+            WHERE l.user_id=?""",(value["player_id"],)).fetchone()
+        if link: athlete_id=link["athlete_id"]
+    if not athlete_id or not value["plan_type"]:
+        raise ValueError("missing_athlete_or_type")
+    athlete=c.execute("SELECT id,name FROM v2_athletes WHERE id=? AND archived_at IS NULL",
+                      (athlete_id,)).fetchone()
+    if not athlete: raise ValueError("unknown_athlete")
+    link=c.execute("""SELECT l.user_id FROM v2_player_links l
+        JOIN users u ON u.id=l.user_id AND u.role='player'
+        WHERE l.athlete_id=?""",(athlete_id,)).fetchone()
+    linked_user=str(link["user_id"]) if link else ""
+    if value["player_id"] and value["player_id"]!=linked_user:
+        raise ValueError("player_athlete_mismatch")
+    value["athlete_id"]=athlete_id
+    value["player_id"]=linked_user
+    value["player_name"]=athlete["name"]
     value["name"]=value["player_name"]+" - "+value["plan_type"]
     now=int(time.time())
     if c.execute("SELECT id FROM v2_food_plan_drafts WHERE id=?",(ident,)).fetchone():
@@ -155,25 +179,26 @@ def transfer_post_training(c, source_ids, dry_run=True):
         if len(indexes)!=1 or len(value["meals"])<=1:
             raise ValueError("missing_post_training_or_empty_plan")
         sources.append((value,indexes[0]))
+    athlete_id=sources[0][0].get("athlete_id")
     player_id=sources[0][0].get("player_id")
-    if not player_id or any(value.get("player_id")!=player_id for value,_ in sources):
+    if not athlete_id or any(value.get("athlete_id")!=athlete_id for value,_ in sources):
         raise ValueError("mixed_players")
     meal=sources[0][0]["meals"][sources[0][1]]
     if any(json.dumps(value["meals"][index],sort_keys=True,ensure_ascii=False)!=json.dumps(meal,sort_keys=True,ensure_ascii=False) for value,index in sources):
         raise ValueError("post_training_options_not_identical")
-    peri_candidates=[d for d in list_drafts(c) if d.get("player_id")==player_id and d.get("plan_type")=="Plano Peri-treino"]
+    peri_candidates=[d for d in list_drafts(c) if d.get("athlete_id")==athlete_id and d.get("plan_type")=="Plano Peri-treino"]
     if len(peri_candidates)>1: raise ValueError("ambiguous_peri_training_drafts")
     peri=get(c,peri_candidates[0]["id"]) if peri_candidates else None
     matched=next((m for m in peri["meals"] if _meal_key(m["name"])=="pos treino"),None) if peri else None
     if matched and json.dumps(matched,sort_keys=True,ensure_ascii=False)!=json.dumps(meal,sort_keys=True,ensure_ascii=False):
         raise ValueError("existing_peri_training_conflict")
-    result={"player_id":player_id,"source_ids":source_ids,"source_types":[v["plan_type"] for v,_ in sources],
+    result={"athlete_id":athlete_id,"player_id":player_id,"source_ids":source_ids,"source_types":[v["plan_type"] for v,_ in sources],
             "peri_target":peri["id"] if peri else None,"peri_status":("identical" if matched else "append" if peri else "create"),
             "post_training_options":len(meal["options"]),"dry_run":bool(dry_run)}
     if dry_run: return result
     if not peri:
         peri={"name":sources[0][0].get("player_name","Jogador")+" - Plano Peri-treino",
-              "player_id":player_id,"plan_type":"Plano Peri-treino","meals":[meal]}
+              "player_id":player_id,"athlete_id":athlete_id,"plan_type":"Plano Peri-treino","meals":[meal]}
     elif not matched:
         peri["meals"].append(meal)
     result["peri_target"]=save(c,peri)
