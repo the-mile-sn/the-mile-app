@@ -279,6 +279,11 @@ def initialize():
         if SITE_ROLE == 'admin':
             transition = food_plan_publications_v2.initialize(c)
             logging.warning('Planos publication transition counts: %s', transition)
+            try:
+                approved = food_plan_publications_v2.approve_initial_roster_for_players(c)
+                logging.warning('Planos initial approval for players: %s', approved)
+            except Exception:
+                logging.exception('Planos initial approval for players failed; no partial approval applied')
         try:
             restored = food_library_v2.restore_approved_average_foods(c)
             logging.info('Approved average foods restoration: %s', restored)
