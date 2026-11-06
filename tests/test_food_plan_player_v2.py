@@ -159,6 +159,18 @@ class PlayerPlanPublicationTests(unittest.TestCase):
         data=player.player_plans(self.c,"a1")["options_by_color"]["yellow"]
         self.assertEqual(data["breakfast"],[])
 
+    def test_older_snapshot_with_user_id_only_resolves_canonical_athlete(self):
+        value=plan("Plano amarelo",[meal("Pequeno almoço",opt(f("bread",80)))])
+        del value["athlete_id"]
+        self.c.execute(
+            "INSERT INTO v2_food_plan_editor_publications VALUES (?,?,?,?,?,?)",
+            ("old","a1","Plano amarelo",json.dumps(value),100,"published"))
+        data=player.player_plans(self.c,"a1")["options_by_color"]["yellow"]
+        self.assertEqual(data["breakfast"][0]["totals"]["kcal"],200)
+        audit=player.audit_published_options(self.c)
+        self.assertEqual(audit["published_plans"],1)
+        self.assertEqual(audit["bad_options"],0)
+
     def tearDown(self):
         self.c.close()
 
