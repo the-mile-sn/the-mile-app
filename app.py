@@ -24,6 +24,7 @@ import supplements_v2
 import assessments_v2
 import weight_reference_v2
 import plan_import_v2
+import food_plan_player_v2
 import nutrition_preview_v2
 import time
 from datetime import datetime, timedelta
@@ -1325,9 +1326,9 @@ def application(env, start_response):
                             'revisions':prescription_effective_v2.revisions_from_audit(raw,audit)})
                 nutrition_mode=(path == '/api/v2/player/effective-nutrition-preview')
                 if nutrition_mode:
-                    published=plan_import_v2.published_meal_options(c,aid)
+                    published=food_plan_player_v2.player_plans(c,aid)['options_by_color']
                     event_data=events_v2.list_events(c,aid,start,end)
-                    peri_meals=peri_v2.list_event_meals(c,aid,start,end,event_data)
+                    peri_meals=food_plan_player_v2.player_peri_days(c,aid,start,end,event_data)
                 output=[]
                 for row in days:
                     day=row['date'];classification=row['classification']
@@ -1543,7 +1544,9 @@ def application(env, start_response):
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+                matches=[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last]
+                peri_meals=food_plan_player_v2.player_peri_days(c,link['athlete_id'],first,last,event_data,matches)
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
             if path == '/api/v2/player/recipes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
@@ -1613,7 +1616,7 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                return respond(200, {'options_by_color': plan_import_v2.published_meal_options(c, link['athlete_id']), 'peri_plans': peri_v2.current(c, link['athlete_id'])})
+                return respond(200, food_plan_player_v2.player_plans(c, link['athlete_id']))
             if path == '/api/me' and method == 'GET':
                 if not user:
                     return respond(200, {'user': None, 'csrf': None})
