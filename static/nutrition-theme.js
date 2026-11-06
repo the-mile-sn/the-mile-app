@@ -4,6 +4,7 @@
  let theme="dark";
  try{theme=localStorage.getItem(key)==="light"?"light":"dark"}catch(_){}
  document.documentElement.dataset.adminTheme=theme;
+ const linkBack=()=>{
  const back=document.querySelector("[data-nutrition-back]");
  if(back)back.addEventListener("click",event=>{
   event.preventDefault();
@@ -12,4 +13,7 @@
   if(sameOrigin&&history.length>1)history.back();
   else location.assign("/");
  });
+ };
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",linkBack,{once:true});
+ else linkBack();
 })();
