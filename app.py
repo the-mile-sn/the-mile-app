@@ -2498,6 +2498,32 @@ def application(env, start_response):
                     return respond(200, {'activation_url': link})
                 raise Problem(404, 'not_found')
 
+            # The admin owns the private, optional full-screen loading photograph.
+            if path.startswith('/api/players/') and path.endswith('/loading-photo') and method in ('GET','PUT','DELETE'):
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 5: raise Problem(404, 'not_found')
+                target = c.execute("SELECT id FROM users WHERE id=? AND role='player'", (parts[3],)).fetchone()
+                if not target: raise Problem(404, 'not_found')
+                key = 'player-loading:' + target['id']
+                if method == 'GET':
+                    photo = c.execute("SELECT image_data FROM v2_shared_images WHERE image_key=?", (key,)).fetchone()
+                    if not photo: raise Problem(404, 'not_found')
+                    return respond(200, bytes(photo['image_data']), 'image/webp')
+                if method == 'PUT':
+                    raw, mime = parse_photo(read_json(env).get('photo'))
+                    if mime != 'image/webp': raise Problem(400, 'photo_format')
+                    with Image.open(io.BytesIO(raw)) as image:
+                        if image.width > 1400 or image.height > 2500:
+                            raise Problem(400, 'photo_dimensions')
+                    c.execute("DELETE FROM v2_shared_images WHERE image_key=?", (key,))
+                    c.execute("INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)", (key, raw))
+                    c.commit()
+                    return respond(200, {'ok':True,'has_photo':True})
+                c.execute("DELETE FROM v2_shared_images WHERE image_key=?", (key,))
+                c.commit()
+                return respond(200, {'ok':True,'has_photo':False})
+
             if path.startswith('/api/players/') and path.endswith('/photo') and method == 'GET':
                 parts = path.split('/')
                 if len(parts) != 5:
