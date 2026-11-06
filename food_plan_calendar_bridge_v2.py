@@ -5,16 +5,26 @@ COLOR_TYPES = {'orange': 'Plano laranja', 'yellow': 'Plano amarelo', 'blue': 'Pl
 
 
 def available_drafts(c, athlete_id):
-    link = c.execute('SELECT user_id FROM v2_player_links WHERE athlete_id=?', (athlete_id,)).fetchone()
-    if not link:
+    athlete = c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL", (athlete_id,)).fetchone()
+    if not athlete:
         return {}
+    link = c.execute('SELECT user_id FROM v2_player_links WHERE athlete_id=?', (athlete_id,)).fetchone()
+    user_id = str(link["user_id"]) if link else ""
     results = {}
     for row in c.execute('SELECT id, content, updated_at FROM v2_food_plan_drafts').fetchall():
         try:
             draft = json.loads(row['content'])
         except (ValueError, TypeError):
             continue
-        if str(draft.get('player_id') or '') != str(link['user_id']):
+        draft_athlete = str(draft.get("athlete_id") or "")
+        draft_user = str(draft.get("player_id") or "")
+        # A stored athlete ID wins over a matching account ID.
+        if draft_athlete:
+            if draft_athlete != str(athlete_id):
+                continue
+            if draft_user and draft_user != user_id:
+                continue
+        elif not user_id or draft_user != user_id:
             continue
         results.setdefault(draft.get('plan_type'), []).append({'id': row['id'], 'draft': draft, 'updated_at': row['updated_at']})
     return results
