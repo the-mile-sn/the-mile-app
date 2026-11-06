@@ -186,3 +186,5 @@ html body #admin-account-panel #admin-signout.tm-action-danger{
  border:0!important;border-radius:0!important;background:transparent!important;color:var(--tm-control-ink)!important;
  font:500 12px/26px "Inter Tight",Arial,sans-serif!important;
 }
+
+#admin-account-panel .tm-field-two-line[hidden],#tm-admin-settings .tm-field-two-line[hidden],#tm-settings-admins .tm-field-two-line[hidden],#admin-account-panel .tm-photo-field-two-line[hidden]{display:none!important}
