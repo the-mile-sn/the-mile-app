@@ -1238,6 +1238,15 @@ def application(env, start_response):
                     return respond(200,{'access':{'id':existing['id'],'username':existing['username'],'active':active}})
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
+            # Player-specific loading photograph is private and never replaces the profile avatar.
+            if path == '/api/v2/player/loading-photo' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                image_key = 'player-loading:' + user['id']
+                photo = c.execute("SELECT image_data FROM v2_shared_images WHERE image_key=?", (image_key,)).fetchone()
+                if not photo: raise Problem(404, 'not_found')
+                return respond(200, bytes(photo['image_data']), 'image/webp')
+
             if path == '/api/v2/player/profile-photo' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
