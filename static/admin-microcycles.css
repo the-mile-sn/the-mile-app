@@ -1633,3 +1633,96 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 /* Female-only weight monitoring control; retain existing light/dark theme rules. */
 #monitoring-weight-menstruation-field[hidden]{display:none!important}
 #monitoring-weight-menstruation-field select{min-width:115px}
+
+
+/* 2026-11-06: Repair native controls after unintended global dropdown wrapping.
+   Keep established microcycle and model colours visible in both themes. */
+#calendar-section .calendar-event-form{
+  display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(140px,1.2fr) minmax(140px,1.2fr) auto auto;
+  align-items:end;column-gap:12px;row-gap:10px
+}
+#calendar-section .calendar-event-form>div:not(#calendar-supp-options):not(.calendar-peri-flags){
+  min-width:0;min-height:0;align-self:end
+}
+#calendar-section .calendar-event-form>div:not(#calendar-supp-options):not(.calendar-peri-flags) :is(input,select){
+  display:block;width:100%;height:43px;min-height:43px;max-height:43px;
+  padding:8px 12px;box-sizing:border-box;line-height:1.3
+}
+#calendar-section .calendar-event-form>button{
+  height:43px;min-height:43px;align-self:end;white-space:nowrap
+}
+#calendar-section .calendar-peri-flags{min-height:43px;align-self:end;align-items:center;flex-wrap:wrap;gap:7px}
+#calendar-section .calendar-peri-flags .calendar-peri-check{
+  display:inline-flex;align-items:center;justify-content:center;min-height:43px;height:43px;
+  box-sizing:border-box;gap:8px;line-height:1.2
+}
+#calendar-section .calendar-peri-flags input[type=checkbox]{
+  display:block;flex:0 0 18px;width:18px;height:18px;margin:0;vertical-align:middle
+}
+#calendar-section .day-preview .day-meal-header{overflow:visible}
+#calendar-section .day-preview .day-meal-header .day-color-select{
+  position:static!important;display:block!important;flex:0 1 48%;min-width:0;
+  max-width:125px;height:31px;min-height:31px;margin:0!important;
+  padding:4px 7px;opacity:1!important;visibility:visible!important;
+  background:rgba(255,255,255,.88)!important;color:#26313b!important;
+  border:1px solid rgba(40,50,60,.16)!important;border-radius:7px;
+  pointer-events:auto!important;appearance:auto!important
+}
+#matrix .microcycle-color-select{
+  position:static!important;display:block!important;width:100%;max-width:100%;
+  opacity:1!important;pointer-events:auto!important;appearance:auto!important;
+  min-height:38px;padding:6px 9px;border-radius:8px
+}
+#menu-grid .menu-meal-card select{
+  position:static!important;opacity:1!important;pointer-events:auto!important;
+  appearance:auto!important;min-height:39px;height:auto;padding:8px 10px
+}
+#tm-assessments-page .tm-assessment-filter select,
+#tm-assessments-page .tm-assessment-filter input{
+  position:static!important;opacity:1!important;pointer-events:auto!important;
+  appearance:auto!important;height:42px!important;min-height:42px!important;
+  padding:8px 12px!important;border-radius:9px!important;box-sizing:border-box
+}
+#tm-assessments-page .tm-assessment-filters{align-items:stretch;gap:10px}
+#tm-assessments-page .tm-assessment-filter{min-width:145px;min-height:42px}
+#calendar-section .calendar-day-meal-options{margin-top:6px;min-width:0}
+#calendar-section .calendar-day-meal-options>summary{
+  list-style:none;cursor:pointer;text-align:center;font-size:11px;font-weight:600;
+  border:1px solid #4f5663;border-radius:8px;padding:7px 6px;
+  color:#e0e6ef;background:transparent;line-height:1.4
+}
+#calendar-section .calendar-day-meal-options>summary::-webkit-details-marker{display:none}
+#calendar-section .calendar-day-meal-options>summary:focus-visible{outline:2px solid #80a9d0;outline-offset:2px}
+#calendar-section .calendar-day-meal-options[open]>summary{margin-bottom:7px}
+#calendar-section .calendar-day-meal-option{
+  padding:8px 7px;border-top:1px solid #454850;font-size:11px;
+  overflow-wrap:anywhere;line-height:1.45
+}
+#calendar-section .calendar-day-meal-option>strong{display:block;margin:0 0 5px;font-size:11px}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line{display:block;padding:3px 0;white-space:normal}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line.is-alternative{padding-left:10px}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line.is-note{opacity:.8;font-style:italic}
+#calendar-section .calendar-day-meal-option .calendar-day-food-macro{display:block;margin-top:4px;font-size:10px;opacity:.78}
+#calendar-section .calendar-day-options-note{font-size:11px;line-height:1.4;color:#a8b2c1}
+html[data-admin-theme="light"] #calendar-section .calendar-day-meal-options>summary{
+  color:#33475a;border-color:#d0d9e4;background:#f8fafc
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day-meal-option{border-color:#dce3eb}
+html[data-admin-theme="light"] #calendar-section .calendar-day-options-note{color:#667485}
+html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-filter select,
+html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-filter input{
+  background:#fff!important;border-color:#cdd7e3!important;color:#26384a!important
+}
+@media(max-width:1240px){
+  #calendar-section .calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #calendar-section .calendar-peri-flags{grid-column:1/3}
+}
+@media(max-width:740px){
+  #calendar-section .calendar-event-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #calendar-section .calendar-peri-flags{grid-column:1/-1}
+}
+@media(max-width:500px){
+  #calendar-section .calendar-event-form{grid-template-columns:1fr}
+  #calendar-section .calendar-peri-flags{grid-column:1}
+  #calendar-section .calendar-event-form>button{width:100%}
+}
