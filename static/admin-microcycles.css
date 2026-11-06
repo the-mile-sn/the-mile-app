@@ -1726,3 +1726,45 @@ html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-filter input{
   #calendar-section .calendar-peri-flags{grid-column:1}
   #calendar-section .calendar-event-form>button{width:100%}
 }
+
+/* Dish table uses the same filter-in-header hierarchy as Recipes. */
+#tm-menu-recipes-page .dish-catalog-filters{
+ display:flex;align-items:center;justify-content:flex-end;gap:10px;
+ margin:0 0 12px!important
+}
+#tm-menu-recipes-page #dish-filter-parking[hidden]{display:none!important}
+#tm-menu-recipes-page .dish-table-filter-row th{
+ vertical-align:middle;white-space:nowrap;padding:10px 9px;box-sizing:border-box
+}
+#tm-menu-recipes-page .dish-table-filter-row th:first-child{width:22%;min-width:170px}
+#tm-menu-recipes-page .dish-table-filter-row th:nth-child(2){width:90px;min-width:80px}
+#tm-menu-recipes-page .dish-table-filter-row th:nth-child(3){width:38%;min-width:240px}
+#tm-menu-recipes-page .dish-table-filter-row th:last-child{text-align:right!important}
+#tm-menu-recipes-page .dish-table-filter-row #dish-search,
+#tm-menu-recipes-page .dish-table-filter-row #dish-category-filter{
+ display:block;width:100%;min-width:0;height:38px;min-height:38px;
+ padding:7px 10px;border:1px solid #454a54;border-radius:8px;
+ font:inherit;font-size:12px;font-weight:450;box-sizing:border-box;
+ background:transparent;color:#e7e9ee;line-height:1.3
+}
+#tm-menu-recipes-page .dish-table-filter-row #dish-search::placeholder{color:#aab2be;opacity:1}
+#tm-menu-recipes-page .dish-table-filter-row #dish-category-filter{appearance:auto}
+#tm-menu-recipes-page .dish-table-category{white-space:normal;overflow-wrap:anywhere}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dish-search,
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dish-category-filter{
+ background:#fff;color:#253648;border-color:#d1dae5
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dish-search::placeholder{color:#68798c}
+@media(max-width:760px){
+ #tm-menu-recipes-page .dish-library-table{min-width:790px}
+}
+/* Recipe table filters: one compact control height, no decorative overlay. */
+#tm-recipe-library-page .recipe-table-filter-row input,
+#tm-recipe-library-page .recipe-table-filter-row select{
+ position:static!important;display:block!important;opacity:1!important;
+ pointer-events:auto!important;appearance:auto!important;
+ width:100%!important;height:38px!important;min-height:38px!important;
+ max-height:38px!important;padding:7px 10px!important;
+ box-sizing:border-box;border-radius:8px!important;
+ font-size:12px!important;font-weight:450!important
+}
