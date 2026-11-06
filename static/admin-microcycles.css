@@ -2003,3 +2003,14 @@ html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-pal
 html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="blue"]{--food-opt-bg:#dceeff;--food-opt-fg:#24577d;--food-opt-inner:#f1f8ff}
 html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="green"]{--food-opt-bg:#d9f1e2;--food-opt-fg:#245e40;--food-opt-inner:#eef9f2}
 html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion{background:var(--food-opt-inner)!important;color:var(--food-opt-fg)!important;border-color:color-mix(in srgb,var(--food-opt-fg) 22%,transparent)!important}
+
+/* Temporarily hide legacy document import interfaces; keep existing data and handlers intact. */
+#recipe-pdf-toggle,
+#recipe-pdf-panel,
+.tm-assessment-import-section,
+#plan-import-panel,
+#peri-panel,
+#supplements-panel .supp-workflow:has(> a[href="/api/v2/supplement-library/transfer"]),
+#supplements-panel .supp-workflow-body > .supp-workflow:has(> #supp-transfer-import),
+#supplements-panel .supp-workflow-body > .supp-workflow:has(#supp-transfer-file),
+#supplements-panel .supp-workflow-body > details.supp-workflow:has(#supp-bulk-file){display:none!important}
