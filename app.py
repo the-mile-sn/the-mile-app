@@ -2513,9 +2513,14 @@ def application(env, start_response):
                 if method == 'PUT':
                     raw, mime = parse_photo(read_json(env).get('photo'))
                     if mime != 'image/webp': raise Problem(400, 'photo_format')
-                    with Image.open(io.BytesIO(raw)) as image:
-                        if image.width > 1400 or image.height > 2500:
-                            raise Problem(400, 'photo_dimensions')
+                    try:
+                        with Image.open(io.BytesIO(raw)) as image:
+                            image.verify()
+                        with Image.open(io.BytesIO(raw)) as image:
+                            if image.width > 1400 or image.height > 2500:
+                                raise Problem(400, 'photo_dimensions')
+                    except (OSError, UnidentifiedImageError, ValueError, Image.DecompressionBombError):
+                        raise Problem(400, 'photo')
                     c.execute("DELETE FROM v2_shared_images WHERE image_key=?", (key,))
                     c.execute("INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)", (key, raw))
                     c.commit()
