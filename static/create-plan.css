@@ -835,3 +835,14 @@ html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro-v
 .plan-inline-note{display:flex;align-items:end;gap:9px;margin:12px 0 14px;max-width:850px}.plan-inline-note textarea{flex:1;min-width:0;min-height:43px;resize:vertical;border-radius:10px;padding:11px 13px;font:inherit;background:var(--tm-card,#2222);border:1px solid #8885;color:inherit}.plan-inline-note button{min-height:42px;padding:0 19px}.option-tabs button .plan-option-card-name{display:block;margin-bottom:9px}.option-tabs button .macro-values{margin-top:7px}
 
 .plan-type-tag svg{display:inline-block;width:19px;height:19px;flex-shrink:0;vertical-align:middle}.plan-type-tag svg.ball-icon{width:20px;height:20px}
+
+/* Quick notes follow the add-food input row */
+#plan-editor .plan-inline-note{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;gap:14px;max-width:none;width:100%;box-sizing:border-box;margin:14px 0 18px}
+#plan-editor .plan-inline-note #new-plan-note{width:100%;min-width:0;min-height:57px;box-sizing:border-box;background:var(--lib-panel-2,#24262c);border:1px solid var(--lib-border,#484b55);border-radius:12px;padding:16px 20px;color:var(--lib-fg,#f3f4f6);font:inherit;font-size:14px;resize:vertical}
+#plan-editor .plan-inline-note #new-plan-note::placeholder{color:var(--lib-muted,#939397);opacity:1}
+#plan-editor .plan-inline-note #add-note{display:inline-flex;align-items:center;justify-content:center;min-height:57px;height:auto;padding:0 26px;border-radius:12px;background:#f4f5f7;color:#1d2025;border:0;font:inherit;font-weight:650;cursor:pointer}
+@media(max-width:560px){#plan-editor .plan-inline-note{gap:8px}#plan-editor .plan-inline-note #add-note{padding:0 16px}}
+#plan-preview .plan-preview-macros>div:nth-child(1)>strong,#plan-preview .preview-kcal{color:#70b389}
+#plan-preview .plan-preview-macros>div:nth-child(2)>strong,#plan-preview .preview-protein{color:#74b0e0}
+#plan-preview .plan-preview-macros>div:nth-child(3)>strong,#plan-preview .preview-carbs{color:#e4a456}
+#plan-preview .plan-preview-macros>div:nth-child(4)>strong,#plan-preview .preview-fat{color:#d5be65}
