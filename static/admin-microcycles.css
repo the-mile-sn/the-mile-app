@@ -1768,3 +1768,19 @@ html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dis
  box-sizing:border-box;border-radius:8px!important;
  font-size:12px!important;font-weight:450!important
 }
+
+/* Explicit separation of live draft nutrition and historical comparison. */
+#calendar-section .calendar-live-source{display:block;font-size:10px;font-weight:600;color:#8ac9a3;line-height:1.35}
+#calendar-section .calendar-legacy-meal-nutrients{display:block;font-size:10px;line-height:1.4;color:#9ca5b3}
+#calendar-section .calendar-live-totals,
+#calendar-section .calendar-live-weekly{padding:14px;border:1px solid #486451;border-radius:11px;background:rgba(62,125,83,.065);margin-top:13px}
+#calendar-section .calendar-live-totals h3,
+#calendar-section .calendar-live-weekly h4{font-size:14px;margin:0 0 8px;font-weight:650}
+#calendar-section .calendar-live-totals .hint,
+#calendar-section .calendar-live-weekly .hint{margin:0 0 9px;font-size:11px;line-height:1.55}
+#calendar-section .calendar-live-warning{color:#e5ba75;font-size:11px;line-height:1.55;margin:8px 0}
+html[data-admin-theme="light"] #calendar-section .calendar-live-source{color:#26704b}
+html[data-admin-theme="light"] #calendar-section .calendar-legacy-meal-nutrients{color:#708093}
+html[data-admin-theme="light"] #calendar-section .calendar-live-totals,
+html[data-admin-theme="light"] #calendar-section .calendar-live-weekly{background:#f0f8f3;border-color:#b9d9c4}
+html[data-admin-theme="light"] #calendar-section .calendar-live-warning{color:#925f16}
