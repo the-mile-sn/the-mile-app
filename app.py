@@ -908,7 +908,7 @@ def application(env, start_response):
                 body=read_json(env)
                 try: approved=food_plan_publications_v2.publish(c,ident,body.get('updated_at'))
                 except ValueError as error: raise Problem(409,str(error))
-                return respond(200,{'publication':approved,'scope':'backoffice_planning_only'})
+                return respond(200,{'publication':approved,'scope':'planning_and_player_app'})
             if path == '/api/v2/food-plan-drafts' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
