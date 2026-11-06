@@ -101,3 +101,16 @@ html[data-admin-theme="light"] #plan-editor .actions #assign-player:not(:disable
 html[data-admin-theme="light"] .food-library-top .food-library-back{background:#fff;color:#263849}
 html[data-admin-theme="light"] .food-library-top #new{background:#fff;color:#243344;border-color:#d6dfe8}
 html[data-admin-theme="light"] .food-library-top #new:hover{background:#f0f2f6}
+
+/* Colour-coded plan in light mode, without changing dark-mode styling */
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette="yellow"]{--preview-bg:#fff0bb;--preview-fg:#725313;--preview-option:#fff9e7}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette="orange"]{--preview-bg:#ffdfc3;--preview-fg:#804717;--preview-option:#fff3e8}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette="blue"]{--preview-bg:#dceeff;--preview-fg:#24577d;--preview-option:#f1f8ff}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette="green"]{--preview-bg:#d9f1e2;--preview-fg:#245e40;--preview-option:#eef9f2}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette] .plan-preview-meal{background:var(--preview-bg)!important;color:var(--preview-fg)!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette] .plan-preview-option{background:var(--preview-option)!important;color:var(--preview-fg)!important;border:1px solid color-mix(in srgb,var(--preview-fg) 22%,transparent)!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette] .plan-preview-option-heading{color:var(--preview-fg)!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(1)>strong,html[data-admin-theme="light"] #plan-preview .preview-kcal{color:#32885c!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(2)>strong,html[data-admin-theme="light"] #plan-preview .preview-protein{color:#3678b4!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(3)>strong,html[data-admin-theme="light"] #plan-preview .preview-carbs{color:#ad672e!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(4)>strong,html[data-admin-theme="light"] #plan-preview .preview-fat{color:#9c811d!important}
