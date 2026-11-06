@@ -307,6 +307,8 @@ def initialize():
         try:
             draft_audit = food_plan_calendar_bridge_v2.audit_all_drafts(c)
             logging.warning('Read-only live Planos nutrition audit counts: %s', draft_audit)
+            parity_audit = food_plan_calendar_bridge_v2.audit_real_option_parity(c)
+            logging.warning('Real draft option nutrition parity audit: %s', parity_audit)
         except Exception:
             logging.exception('Read-only live Planos nutrition audit failed')
         if SITE_ROLE == 'admin':
