@@ -467,3 +467,86 @@ def audit_event_links(c, first, last):
             stats["peri_resolution_issues"] += len(day["issues"])
             stats["days_with_peri"] += bool(peri)
     return stats
+
+
+def audit_effective_color_planning(c, first, last):
+    """Read-only coverage of actual microcycle colours against current Planos drafts.
+
+    No personal identifiers, option contents or dates are returned in the audit.
+    Calendar and athlete app state is never changed.
+    """
+    import calendar_v2
+    import microcycles_v2
+    import day_colors_v2
+    import prescription_effective_v2
+    import events_v2
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    stats = {"athletes": 0, "athletes_without_model": 0,
+             "days_checked": 0, "days_complete": 0, "days_partial": 0,
+             "colored_meals": 0, "colored_meals_ok": 0,
+             "no_color_moments": 0, "peri_events_checked": 0,
+             "peri_moments": 0, "missing_plan": 0, "missing_meal": 0,
+             "missing_options": 0, "ambiguous_plan": 0,
+             "ambiguous_meal": 0, "provisional": 0, "other_issues": 0}
+    today=datetime.now(ZoneInfo("Europe/Lisbon")).date().isoformat()
+    for row in c.execute("SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall():
+        aid=row["id"]
+        stats["athletes"]+=1
+        model=microcycles_v2.get_model(c, aid)
+        if not model:
+            stats["athletes_without_model"]+=1
+            continue
+        matches=microcycles_v2.list_matches(c,aid)
+        days=calendar_v2.classify_range(first,last,[m["match_date"] for m in matches])
+        base={r["name"]:r["meals"] for r in model["classifications"]}
+        manual={(r["meal_date"],r["meal"]):r["color"]
+                for r in day_colors_v2.list_colors(c,aid,first,last)}
+        scenarios={(r["classification"],r["scenario"],r["meal"]):r["color"]
+                   for r in c.execute(
+                       "SELECT classification,scenario,meal,color FROM v2_scenario_cells "
+                       "WHERE athlete_id=?",(aid,)).fetchall()}
+        responses=[]
+        for rec in c.execute(
+                "SELECT id,match_id,scenario,created_at FROM v2_post_match_responses WHERE athlete_id=?",
+                (aid,)).fetchall():
+            info=dict(rec)
+            audit=[dict(x) for x in c.execute(
+                "SELECT id,record_type,record_id,new_json,created_at "
+                "FROM v2_monitoring_audit WHERE athlete_id=? AND record_type='post_match' "
+                "AND record_id=? ORDER BY created_at,id",
+                (aid,info["id"])).fetchall()]
+            responses.append({"match_id":info["match_id"],
+                              "revisions":prescription_effective_v2.revisions_from_audit(info,audit)})
+        dates={}
+        for day in days:
+            colors=prescription_effective_v2.resolve_day(
+                day["date"],day["classification"],
+                base.get(day["classification"],{}),manual,scenarios,matches,responses,today)
+            dates[day["date"]]=colors
+        events=events_v2.list_events(c,aid,first,last)
+        controls={(r["match_id"],r["phase"]):r["state"] for r in c.execute(
+            "SELECT match_id,phase,state FROM v2_match_peri_overrides WHERE athlete_id=?",
+            (aid,)).fetchall()}
+        report=resolve(c,aid,dates,events,matches,controls)
+        for day in report["days"].values():
+            stats["days_checked"]+=1
+            stats["days_complete" if day["state"]=="complete" else "days_partial"]+=1
+            stats["peri_moments"]+=len(day["peri_events"])
+            for value in day["meals"].values():
+                status=value["status"]
+                if status=="no_color":
+                    stats["no_color_moments"]+=1
+                else:
+                    stats["colored_meals"]+=1
+                    if status=="ok":
+                        stats["colored_meals_ok"]+=1
+            for issue in day["issues"]:
+                key=issue["status"]
+                if key in stats:
+                    stats[key]+=1
+                else:
+                    stats["other_issues"]+=1
+        stats["peri_events_checked"]+=len(events)
+    return stats
