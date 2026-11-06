@@ -87,3 +87,17 @@ html[data-admin-theme="light"] #plan-preview .plan-preview-food{border-color:#dc
 html[data-admin-theme="light"] #plan-editor .actions #save-plan:not(:disabled),
 html[data-admin-theme="light"] #plan-editor .actions #assign-player:not(:disabled){border-color:#d2dce7}
 @media(max-width:800px){html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar{position:relative}}
+
+/* Navigation is an icon-only Backoffice back control, not a page heading. */
+.food-library-top{min-height:46px;margin:0 0 22px;align-items:center}
+.food-library-top .food-library-back{
+ display:inline-flex;align-items:center;justify-content:center;flex:none;
+ width:44px;height:44px;border-radius:12px;
+ border:1px solid var(--lib-border);background:var(--lib-panel-2);
+ font-size:22px;text-decoration:none;color:var(--lib-fg);
+}
+.food-library-top .food-library-back:hover{filter:brightness(.95)}
+.food-library-top #new{margin-left:auto;white-space:nowrap;min-height:44px;border-radius:12px}
+html[data-admin-theme="light"] .food-library-top .food-library-back{background:#fff;color:#263849}
+html[data-admin-theme="light"] .food-library-top #new{background:#fff;color:#243344;border-color:#d6dfe8}
+html[data-admin-theme="light"] .food-library-top #new:hover{background:#f0f2f6}
