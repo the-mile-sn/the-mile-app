@@ -1309,7 +1309,7 @@ async function loadCalendar(){
   // Keep the weekly summary outside the collapsible month-events details.
   $("calendar-month-events").insertAdjacentElement("afterend",weekly);
   weekly.replaceChildren();
-  const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
+  const heading=document.createElement("h3");heading.textContent="Sistema anterior · média semanal (referência)";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation";
   const previous=document.createElement("button");previous.type="button";previous.textContent="← Semana anterior";
   const next=document.createElement("button");next.type="button";next.textContent="Semana seguinte →";
