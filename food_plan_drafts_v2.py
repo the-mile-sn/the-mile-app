@@ -94,6 +94,7 @@ def list_drafts(c):
         legacy_ids=set()
     links={r["user_id"]:r["athlete_id"] for r in c.execute(
         "SELECT user_id,athlete_id FROM v2_player_links").fetchall()}
+    import food_plan_publications_v2
     result=[]
     for row in rows:
         try: value=json.loads(row["content"])
@@ -103,7 +104,7 @@ def list_drafts(c):
         plan_type=str(value.get("plan_type") or "").strip()
         result.append({"id":row["id"],"name":row["name"],"updated_at":row["updated_at"],"created_at":row["created_at"],"origin":str(value.get("origin") or ""), "legacy_migration":row["id"] in legacy_ids,
                        "player_id":player_id,"athlete_id":athlete_id,"player_name":str(value.get("player_name") or ""),
-                       "plan_type":plan_type})
+                       "plan_type":plan_type, "publication":food_plan_publications_v2.state_for_draft(c,row["id"],row["content"])})
     return result
 
 def get(c, ident):
@@ -115,6 +116,9 @@ def get(c, ident):
         row=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",
                       (value["player_id"],)).fetchone()
         if row: value["athlete_id"]=row["athlete_id"]
+    import food_plan_publications_v2
+    value["publication"]=food_plan_publications_v2.state_for_draft(c,ident,r["content"])
+    value["updated_at"]=c.execute("SELECT updated_at FROM v2_food_plan_drafts WHERE id=?",(ident,)).fetchone()["updated_at"]
     return value
 
 def save(c, value):
