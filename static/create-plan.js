@@ -44,7 +44,7 @@ function renderPersistence(){
  save.textContent=saveBusy?"A guardar…":!plan.id?"Guardar rascunho":dirty?"Guardar alterações":"✓ Guardado";
  publish.textContent=display==="published"?"✓ Publicado":display==="pending"?"Publicar alterações":"Publicar no Planeamento";
  save.disabled=saveBusy||publishBusy||(!dirty&&!persistenceError);
- publish.disabled=saveBusy||publishBusy||dirty||display==="published"||display==="error";
+ publish.disabled=saveBusy||publishBusy||dirty||display==="published";
 }
 const refreshSelectDisplays=()=>document.querySelectorAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
 
@@ -290,7 +290,67 @@ const switchExistingPlan=async(playerId,type)=>{const owner=players.find(p=>p.id
 $("plan-type").onchange=async e=>{const type=e.target.value;if(plan.id){await switchExistingPlan(players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id,type);return}plan.plan_type=type;plan.name=plan.player_name&&plan.plan_type?plan.player_name+" - "+plan.plan_type:"Novo plano alimentar";renderPersistence()};
 $("plan-player").onchange=async e=>{const id=e.target.value;if(plan.id){const matches=plansForPlayer(id);if(!matches.length){status("Este jogador não tem planos guardados. Usa Pesquisar plano ou Criar novo.");draw();return}const target=matches.find(d=>d.plan_type===plan.plan_type)||matches[0];try{await loadExistingPlan(target.id)}catch(err){status("Não foi possível mudar de jogador: "+err.message)}return}const owner=players.find(p=>p.id===id);plan.player_id=owner?.user_id||"";plan.athlete_id=owner?.athlete_id||"";plan.player_name=owner?.name||"";plan.name=plan.player_name&&plan.plan_type?plan.player_name+" - "+plan.plan_type:"Novo plano alimentar";renderPersistence()};
 $("draft-list").onchange=async e=>{if(!e.target.value)return;try{await loadExistingPlan(e.target.value)}catch(err){status("Não foi possível abrir o plano: "+err.message)}};
-$("save-plan").onclick=async()=>{if(!plan.athlete_id||!plan.plan_type){status("Seleciona o jogador e o tipo de plano antes de guardar.");return}plan.name=plan.player_name+" - "+plan.plan_type;if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){status("Preenche todas as opções antes de guardar.");return}try{const csrf=(await request("/api/me")).csrf||"";const r=await request("/api/v2/food-plan-drafts",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify(plan)});plan.id=r.id;draw();await loadDrafts();status("Rascunho guardado. Não foi publicado.")}catch(err){status("Não foi possível guardar: "+err.message)}};
+async function saveCurrentDraft(){
+ if(!plan.athlete_id||!plan.plan_type){
+  persistenceError="Seleciona primeiro o jogador e o tipo de plano.";renderPersistence();return false;
+ }
+ if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){
+  persistenceError="Preenche as opções alimentares antes de guardar.";renderPersistence();return false;
+ }
+ if(!planIsDirty())return true;
+ plan.name=plan.player_name+" - "+plan.plan_type;
+ persistenceError="";saveBusy=true;renderPersistence();
+ try{
+  const csrf=(await request("/api/me")).csrf||"";
+  const result=await request("/api/v2/food-plan-drafts",{
+   method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},
+   body:JSON.stringify(plan)
+  });
+  plan.id=result.id;plan.updated_at=result.updated_at;
+  publicationState=result.publication||{state:"draft",pending_changes:false};
+  lastSavedAt=result.updated_at||Math.floor(Date.now()/1000);
+  savedSignature=planSignature();persistenceError="";saveBusy=false;
+  renderPersistence();await loadDrafts();
+  status("Rascunho guardado na base de dados.");return true;
+ }catch(err){
+  saveBusy=false;persistenceError="Não foi possível guardar o rascunho: "+err.message;
+  renderPersistence();status(persistenceError);return false;
+ }
+}
+$("save-plan").onclick=()=>saveCurrentDraft();
+$("assign-player").onclick=async()=>{
+ if(!plan.id||planIsDirty()){
+  persistenceError="Guarda primeiro todas as alterações com «Guardar rascunho».";
+  renderPersistence();return;
+ }
+ if(publicationState?.state==="published"&&!publicationState.pending_changes)return;
+ if(!confirm("Publicar «"+plan.name+"» apenas no Planeamento do Backoffice?\n\n"+
+  "Esta ação aprova os alimentos, quantidades e valores nutricionais guardados.\n"+
+  "A app dos jogadores NÃO será alterada."))return;
+ persistenceError="";publishBusy=true;renderPersistence();
+ try{
+  const csrf=(await request("/api/me")).csrf||"";
+  const result=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id)+"/publish",{
+   method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},
+   body:JSON.stringify({updated_at:plan.updated_at})
+  });
+  publicationState=result.publication;publishBusy=false;persistenceError="";
+  renderPersistence();await loadDrafts();
+  status("Plano publicado no Planeamento. Não foi enviado à app dos jogadores.");
+ }catch(err){
+  publishBusy=false;
+  const errors={
+   stale_draft:"O rascunho foi alterado noutro local. Reabre-o antes de publicar.",
+   missing_quantity:"Existe uma quantidade por preencher. Corrige e guarda o rascunho.",
+   missing_food:"Existe um alimento sem referência ativa na biblioteca.",
+   another_plan_active:"Já existe um plano ativo deste tipo para o jogador. Revê a associação.",
+   empty_plan:"O plano ainda não tem refeições.",
+   empty_option:"Existe uma opção vazia."
+  };
+  persistenceError=errors[err.message]||"Publicação não concluída: "+err.message;
+  renderPersistence();status(persistenceError);
+ }
+};
 (async()=>{try{const data=await request("/api/v2/food-library");foods=data.foods||[];const roster=await request("/api/v2/athletes");players=(roster.athletes||[]).map(a=>({id:String(a.user_id||a.id),user_id:a.user_id||"",athlete_id:String(a.id),name:a.name}));$("plan-player").innerHTML='<option value="">Selecionar jogador</option>'+players.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");await loadDrafts();addMeal("Pequeno almoço");showEntry("entry");status("Biblioteca carregada: "+foods.length+" alimentos.")}catch(err){status("Não foi possível carregar os dados. Inicia sessão no Backoffice. "+err.message)}})();
 })();
 
