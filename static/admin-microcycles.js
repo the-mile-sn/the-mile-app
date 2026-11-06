@@ -1121,11 +1121,56 @@ function renderNutritionTotals(host,label,result,referenceWeight=null){
 }
 
 let liveCalendarPlans={};
+let editorFoodLibrary=null,editorFoodLibraryPromise=null;
+function loadEditorFoodLibrary(){
+ if(editorFoodLibrary)return Promise.resolve(editorFoodLibrary);
+ if(!editorFoodLibraryPromise)editorFoodLibraryPromise=request("/api/v2/food-library").then(data=>{
+  editorFoodLibrary=new Map((data.foods||[]).map(f=>[f.id,f]));return editorFoodLibrary;
+ }).catch(e=>{editorFoodLibraryPromise=null;throw e;});
+ return editorFoodLibraryPromise;
+}
+function checkEditorNutrition(option){
+ if(!editorFoodLibrary)return "not_checked";
+ const fields=["kcal","protein_g","carbs_g","fat_g"],foods=option.foods||[];
+ const totals=Object.fromEntries(fields.map(k=>[k,0]));
+ let missing=false;
+ foods.forEach((parent,index)=>{
+  if(parent.alternative_to!=null)return;
+  const group=[parent,...foods.filter(f=>f.alternative_to===index)];
+  const complete=group.filter(f=>f.grams!=null),chosen=complete.length?complete:[parent];
+  const values=chosen.map(food=>{
+   if(food.kind==="supplement"||food.grams==null)return Object.fromEntries(fields.map(k=>[k,0]));
+   const ref=editorFoodLibrary.get(food.id);
+   if(!ref){missing=true;return Object.fromEntries(fields.map(k=>[k,0]));}
+   const fraction=ref.variant==="gross"?Number(ref.edible_fraction):1;
+   return Object.fromEntries(fields.map(k=>[k,Number(ref[k]||0)*Number(food.grams)*fraction/100]));
+  });
+  fields.forEach(k=>{totals[k]+=values.reduce((v,item)=>v+item[k],0)/values.length;});
+ });
+ if(missing)return "missing_reference";
+ return fields.every(k=>Math.abs(totals[k]-Number(option.nutrition?.[k]))<=0.02)?"match":"mismatch";
+}
+function checkMealNutrition(record){
+ if(!record||!["ok","provisional"].includes(record.status))return "not_checked";
+ const statuses=(record.options||[]).map(checkEditorNutrition);
+ if(statuses.includes("mismatch"))return "mismatch";
+ if(statuses.includes("missing_reference"))return "missing_reference";
+ if(statuses.includes("not_checked"))return "not_checked";
+ const fields=["kcal","protein_g","carbs_g","fat_g"],opts=record.options||[];
+ if(!opts.length)return "mismatch";
+ return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
+}
 function renderLiveMealOptions(day,meal){
  const box=document.createElement("details");box.className="calendar-day-meal-options";
  const summary=document.createElement("summary");summary.textContent="Ver opções";box.append(summary);
  const record=liveCalendarPlans[day.date]?.meals?.[meal];
  const state=record?.status||"unavailable";
+ const parity=checkMealNutrition(record);
+ if(parity!=="not_checked"){
+  const p=document.createElement("p");p.className="calendar-day-options-note";
+  p.textContent=parity==="match"?"Cálculo confirmado: coincide com o editor Planos.":parity==="missing_reference"?"Alimento sem referência ativa; revisão necessária.":"Divergência de cálculo; rever antes de publicar.";
+  p.classList.toggle("is-mismatch",parity!=="match");box.append(p);
+ }
  if(state!=="ok"&&state!=="provisional"){
   const messages={no_color:"Sem cor atribuída neste dia.",missing_plan:"Não existe este plano nos rascunhos do jogador.",ambiguous_plan:"Existem vários rascunhos deste tipo. Rever a associação.",missing_meal:"Este plano não contém esta refeição.",ambiguous_meal:"Existem várias refeições correspondentes.",missing_options:"Esta refeição não contém opções.",unavailable:"Pré-visualização indisponível; o calendário anterior permanece intacto."};
   const note=document.createElement("p");note.className="calendar-day-options-note";note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
@@ -1144,7 +1189,7 @@ function renderLiveMealOptions(day,meal){
     const food=foods[item.index];if(!food)continue;
     const alternative=food.alternative_to!=null;if(alternative)line.classList.add("is-alternative");
     const amount=food.display_quantity|| (food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
-    line.textContent=(alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
+    line.textContent=food.kind==="supplement"?(food.label||"Suplemento"):(alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
    }
    section.append(line);
   }
@@ -1246,6 +1291,7 @@ async function loadCalendar(){
   if(!model)return;
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
+  await loadEditorFoodLibrary().catch(()=>null);
   const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last)+"&include_food_plans=1");
   liveCalendarPlans=data.live_food_plans?.days||{};
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
