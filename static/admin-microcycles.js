@@ -1160,10 +1160,10 @@ function checkMealNutrition(record){
  if(!opts.length)return "mismatch";
  return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
 }
-function renderLiveMealOptions(day,meal){
+function renderLiveMealOptions(day,meal,overrideRecord=null){
  const box=document.createElement("details");box.className="calendar-day-meal-options";
  const summary=document.createElement("summary");summary.textContent="Ver opções";box.append(summary);
- const record=liveCalendarPlans[day.date]?.meals?.[meal];
+ const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
  const state=record?.status||"unavailable";
  const parity=checkMealNutrition(record);
  if(parity!=="not_checked"){
@@ -1256,12 +1256,29 @@ function renderDayPreview(day,host){
   grid.appendChild(cell);
  }
  host.appendChild(grid);
- // A collapsed protocol summary preserves access to peri details without cluttering the five meal cards.
- const peri=periByDay[day.date]||[];
- if(peri.length){
-  const details=document.createElement("details");details.className="calendar-day-peri";
-  const summary=document.createElement("summary");summary.textContent="Protocolos de treino e jogo";details.append(summary);
-  for(const item of peri){
+ // New peri prescription previews are read only. Historical protocols remain
+ // available strictly for comparison, never mixed into the new totals.
+ const livePeriOptions=liveCalendarPlans[day.date]?.peri_events||[];
+ if(livePeriOptions.length){
+  const details=document.createElement("details");details.className="calendar-day-peri calendar-live-peri";
+  const summary=document.createElement("summary");summary.textContent="Novo módulo Planos · Peri-treino e Peri-jogo";details.append(summary);
+  for(const peri of livePeriOptions){
+   const line=document.createElement("section");line.className="calendar-live-peri-phase";
+   const heading=document.createElement("strong");
+   heading.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
+   line.append(heading);
+   const mac=document.createElement("small");mac.className="calendar-live-source";
+   mac.textContent=peri.nutrition?nutritionSummary(peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
+   line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
+   details.append(line);
+  }
+  host.append(details);
+ }
+ const oldPeri=periByDay[day.date]||[];
+ if(oldPeri.length){
+  const details=document.createElement("details");details.className="calendar-day-peri calendar-old-peri";
+  const summary=document.createElement("summary");summary.textContent="Sistema anterior · protocolos de treino e jogo (comparação)";details.append(summary);
+  for(const item of oldPeri){
    const avg=averageMealNutrition(item.options||[]),line=document.createElement("p");
    line.textContent=item.title+" · "+(item.session==="morning"?"Manhã":"Tarde")+(avg?" · "+nutritionSummary(avg):" · Valores indisponíveis");
    details.append(line);
@@ -1273,15 +1290,15 @@ function renderDayPreview(day,host){
   const liveTotals=document.createElement("section");liveTotals.className="calendar-live-totals";
   const title=document.createElement("h3");title.textContent="Novo módulo Planos · resumo nutricional de teste";liveTotals.append(title);
   const note=document.createElement("p");note.className="hint";
-  note.textContent="Soma apenas as refeições com cores; peri-treino e peri-jogo ainda não incluídos. Não publicado aos jogadores.";
+  note.textContent="Inclui refeições de cores e apenas os momentos peri prescritos para eventos ativos. Ainda não publicado aos jogadores.";
   liveTotals.append(note);
   const issues=liveDay.issues||[];
   if(issues.length){
    const warning=document.createElement("p");warning.className="calendar-live-warning";
-   warning.textContent="Resultado parcial — "+issues.map(x=>names[x.meal]+": "+x.status).join("; ");
+   warning.textContent="Resultado parcial — "+issues.map(x=>(names[x.meal]||x.phase||x.meal_name||"Evento peri")+": "+x.status).join("; ");
    liveTotals.append(warning);
   }
-  if(issues.length<model.meals.length)nutritionCards(liveTotals,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
+  if(Object.values(liveDay.meals||{}).some(x=>x?.nutrition)||liveDay.peri_events?.some(x=>x.nutrition))nutritionCards(liveTotals,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
   host.append(liveTotals);
  }
  renderNutritionTotals(host,"Sistema anterior · comparação",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
@@ -1346,7 +1363,7 @@ async function loadCalendar(){
   const livePanel=document.createElement("section");livePanel.className="calendar-live-weekly";
   const liveTitle=document.createElement("h4");liveTitle.textContent="Novo módulo Planos · média semanal de teste";livePanel.append(liveTitle);
   const coverage=document.createElement("p");coverage.className="hint";
-  coverage.textContent=liveEntries.filter(x=>x.state==="complete").length+"/7 dias completos · Refeições de cores apenas; peri ainda por integrar";
+  coverage.textContent=liveEntries.filter(x=>x.state==="complete").length+"/7 dias completos · Refeições de cores + momentos peri aplicáveis";
   livePanel.append(coverage);
   if(liveComplete){
     const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
