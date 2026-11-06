@@ -1981,3 +1981,11 @@ html[data-admin-theme="light"] #calendar-section .calendar-event-form>#calendar-
 .calendar-option-accordion[open] .calendar-option-accordion-caret{transform:rotate(180deg)}
 .calendar-option-accordion .calendar-day-food-line,.calendar-option-accordion .calendar-day-food-macro{margin-left:14px;margin-right:14px}
 .calendar-option-accordion .calendar-day-food-macro{margin-bottom:12px}
+
+/* Each expanded food option occupies one full-width horizontal row */
+#calendar-section .calendar-wide-options-grid,#calendar-section .calendar-live-peri .calendar-wide-options-grid{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;width:100%!important}
+#calendar-section .calendar-wide-options-grid>.calendar-option-accordion{display:block!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;flex:none!important;padding:0!important}
+#calendar-section .calendar-option-accordion-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%;min-height:56px;padding:15px 18px!important;box-sizing:border-box;font-size:14px}
+#calendar-section .calendar-option-accordion-heading strong{font-size:14px;line-height:1.45;min-width:0;overflow-wrap:anywhere}
+#calendar-section .calendar-option-accordion[open] .calendar-option-accordion-heading{border-bottom:1px solid #59616c50;margin-bottom:8px}
+#calendar-section .calendar-option-accordion .calendar-day-food-line,#calendar-section .calendar-option-accordion .calendar-day-food-macro{margin-left:18px!important;margin-right:18px!important}
