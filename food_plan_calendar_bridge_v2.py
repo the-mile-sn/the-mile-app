@@ -221,3 +221,39 @@ def audit_all_drafts(c):
             counts["invalid_draft_json"] += 1
         counts["unmatched_drafts"] += 1
     return counts
+
+
+def audit_detailed_missing_quantities_and_peri_headings(c):
+    """Temporary read-only deployment diagnostic for admin-requested two quantities.
+
+    Only missing-quantity locations and distinct peri meal headings are returned.
+    No quantities or entire prescriptions are logged or modified.
+    """
+    refs={r["id"]:r["display_name"] for r in c.execute(
+        "SELECT id,display_name FROM v2_food_library").fetchall()}
+    missing=[]
+    headings={}
+    for row in c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall():
+        try:
+            draft=json.loads(row["content"])
+        except (ValueError,TypeError):
+            continue
+        kind=draft.get("plan_type") or ""
+        for meal_idx,meal in enumerate(draft.get("meals") or [],1):
+            title=meal.get("name") or ""
+            if kind in ("Plano Peri-treino","Plano Peri-jogo"):
+                key=(kind,title)
+                headings[key]=headings.get(key,0)+1
+            for opt_idx,opt in enumerate(meal.get("options") or [],1):
+                for f_idx,food in enumerate(opt.get("foods") or [],1):
+                    if food.get("kind")=="supplement" or food.get("grams") is not None:
+                        continue
+                    missing.append({
+                        "player":draft.get("player_name") or "",
+                        "plan_type":kind,"meal":title,"meal_index":meal_idx,
+                        "option":opt_idx,"option_title":opt.get("title") or "",
+                        "food_index":f_idx,"food":food.get("display_name") or refs.get(food.get("id")) or food.get("label") or "Alimento sem nome",
+                        "alternative":food.get("alternative_to") is not None,
+                    })
+    return missing, [{"plan_type":k[0],"meal":k[1],"drafts":count}
+                     for k,count in sorted(headings.items())]
