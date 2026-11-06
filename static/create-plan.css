@@ -875,3 +875,6 @@ html[data-admin-theme="light"] #plan-entry .plan-state-label[data-state="pending
 #plan-entry .plan-type-tag[data-palette="vp"]{color:#8dd4af;background:rgba(32,92,64,.24);border-color:rgba(91,165,121,.55)}
 html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{color:#235c40;background:#d9efe2;border-color:#9ec7ae}
 @media(max-width:700px){#plan-entry .plan-library-table th:first-child{width:27%!important}#plan-entry .plan-library-table th:nth-child(2){width:27%!important}#plan-entry .plan-library-table th:nth-child(3){width:26%!important}#plan-entry .plan-library-table th:last-child{width:20%!important}#plan-entry .plan-library-row-actions{gap:3px!important}#plan-entry .plan-library-row-actions button{width:31px!important;min-width:31px!important;height:34px!important}}
+
+/* Dark VP preview is a deeper green than the standard green plan. */
+#plan-preview .plan-preview-group[data-palette="vp"]{--preview-bg:#28543e;--preview-fg:#bde6cd;--preview-option:#3c6750}
