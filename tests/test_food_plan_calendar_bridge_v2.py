@@ -17,7 +17,7 @@ def food(fid, grams, **extra):
 
 
 def option(*foods):
-    return {"title": "", "foods": list(foods), "notes": [], "order": []}
+    return {"title": "", "foods": list(foods), "notes": [], "order": [{"type":"food","index":i} for i in range(len(foods))]}
 
 
 def meal(name, *options):
