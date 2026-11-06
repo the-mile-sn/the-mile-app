@@ -255,3 +255,40 @@ def player_peri_days(c,athlete_id,first,last,events=None,matches=None):
                            "session":event.get("session","morning"),"kind":kind,
                            "phase":phase,"title":label,"options":options})
     return result
+
+
+def audit_published_options(c):
+    """Read-only validation of every live prescription before activating players.
+
+    Aggregate counts only. Avoid sending data from one player to another.
+    """
+    library=_library(c)
+    result={"published_plans":0,"meals":0,"options":0,
+            "peri_options":0,"bad_options":0,"missing_foods":0}
+    rows=c.execute(
+        "SELECT athlete_id,plan_type,snapshot_json FROM "
+        "v2_food_plan_editor_publications WHERE state='published'").fetchall()
+    for row in rows:
+        try:
+            plan=json.loads(row["snapshot_json"])
+        except (TypeError,ValueError):
+            result["bad_options"]+=1
+            continue
+        if str(plan.get("athlete_id") or "")!=str(row["athlete_id"]):
+            result["bad_options"]+=1
+            continue
+        result["published_plans"]+=1
+        for meal in plan.get("meals") or []:
+            result["meals"]+=1
+            for option in meal.get("options") or []:
+                result["options"]+=1
+                if row["plan_type"] in PERI_KINDS.values():
+                    result["peri_options"]+=1
+                try:
+                    totals=_option_totals(option,library)
+                    items=_option_items(option,library)
+                    if not math.isfinite(totals["kcal"]) or not items:
+                        result["bad_options"]+=1
+                except (ValueError,TypeError,KeyError,ZeroDivisionError):
+                    result["bad_options"]+=1
+    return result
