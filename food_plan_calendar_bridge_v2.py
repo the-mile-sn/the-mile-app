@@ -166,3 +166,58 @@ def resolve(c, athlete_id, colors_by_day):
                      "peri_included":False}
     return {"source":"live_editor_drafts","days":days,
             "available_plan_types":sorted(x for x in drafts if isinstance(x,str))}
+
+
+def audit_all_drafts(c):
+    """Read-only audit of the registered athlete plan library.
+
+    Counts are safe to log: no names, IDs, prescription details or food data.
+    Tests coverage, active library references and quantity completeness.
+    """
+    rows = c.execute("SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall()
+    all_drafts = c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall()
+    references = {row["id"] for row in c.execute(
+        "SELECT id FROM v2_food_library WHERE active=1").fetchall()}
+    counts = {
+        "registered_athletes": len(rows), "stored_drafts": len(all_drafts),
+        "matched_drafts": 0, "unmatched_drafts": 0,
+        "duplicate_color_plan_types": 0, "color_meals_missing_options": 0,
+        "food_references_missing": 0, "quantities_missing": 0,
+        "alternatives_missing_quantity": 0, "invalid_draft_json": 0,
+        "peri_drafts": 0,
+    }
+    indexed_ids = set()
+    for row in rows:
+        drafts = available_drafts(c, row["id"])
+        for kind, candidates in drafts.items():
+            if kind in COLOR_TYPES.values() and len(candidates) > 1:
+                counts["duplicate_color_plan_types"] += 1
+            for candidate in candidates:
+                if candidate["id"] in indexed_ids:
+                    continue
+                indexed_ids.add(candidate["id"])
+                counts["matched_drafts"] += 1
+                if kind in ("Plano Peri-treino", "Plano Peri-jogo"):
+                    counts["peri_drafts"] += 1
+                for meal in candidate["draft"].get("meals") or []:
+                    if kind in COLOR_TYPES.values() and not meal.get("options"):
+                        counts["color_meals_missing_options"] += 1
+                    for option in meal.get("options") or []:
+                        for food in option.get("foods") or []:
+                            if food.get("kind") == "supplement":
+                                continue
+                            if food.get("id") not in references:
+                                counts["food_references_missing"] += 1
+                            if food.get("grams") is None:
+                                counts["quantities_missing"] += 1
+                                if food.get("alternative_to") is not None:
+                                    counts["alternatives_missing_quantity"] += 1
+    for row in all_drafts:
+        if row["id"] in indexed_ids:
+            continue
+        try:
+            json.loads(row["content"])
+        except (TypeError, ValueError):
+            counts["invalid_draft_json"] += 1
+        counts["unmatched_drafts"] += 1
+    return counts
