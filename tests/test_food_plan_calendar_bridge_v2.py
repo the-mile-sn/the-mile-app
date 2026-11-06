@@ -45,6 +45,11 @@ class BridgeNutritionTests(unittest.TestCase):
             CREATE TABLE v2_athletes (id TEXT PRIMARY KEY, archived_at TEXT);
             CREATE TABLE v2_player_links (athlete_id TEXT, user_id TEXT);
             CREATE TABLE v2_food_plan_drafts (id TEXT, content TEXT, updated_at INTEGER);
+            CREATE TABLE v2_food_plan_editor_publications (
+                draft_id TEXT PRIMARY KEY, athlete_id TEXT, plan_type TEXT,
+                snapshot_json TEXT, published_at INTEGER, state TEXT);
+            CREATE UNIQUE INDEX editor_one_per_kind ON
+                v2_food_plan_editor_publications(athlete_id,plan_type);
             CREATE TABLE v2_food_library (
               id TEXT, display_name TEXT, active INTEGER, variant TEXT, edible_fraction REAL,
               kcal REAL, protein_g REAL, carbs_g REAL, fat_g REAL);
@@ -58,9 +63,14 @@ class BridgeNutritionTests(unittest.TestCase):
                  item["edible_fraction"], *[item[k] for k in MACROS])
             )
 
-    def add(self, value, ident="d1"):
+    def add(self, value, ident="d1", active=True):
         self.c.execute("INSERT INTO v2_food_plan_drafts VALUES (?,?,?)",
                        (ident, json.dumps(value), 12345))
+        if active:
+            self.c.execute(
+                "INSERT INTO v2_food_plan_editor_publications VALUES (?,?,?,?,?,?)",
+                (ident, value["athlete_id"], value["plan_type"], json.dumps(value),
+                 12345, "transitional"))
 
     def test_grams_fraction_and_macros(self):
         values, pending = option_values(option(food("pao", 80), food("fruta", 100)), self.library)
@@ -118,13 +128,14 @@ class BridgeNutritionTests(unittest.TestCase):
             "2026-11-06": {"breakfast": {"color": "yellow"}}})
         self.assertEqual(result["days"]["2026-11-06"]["meals"]["breakfast"]["nutrition"]["kcal"], 250)
 
-    def test_duplicate_drafts_are_not_chosen_automatically(self):
+    def test_new_working_copy_does_not_replace_approved_plan(self):
         value = draft(meals=[meal("Pequeno almoço", option(food("pao", 80)))])
         self.add(value, "d1")
-        self.add(value, "d2")
+        self.add(draft(meals=[meal("Pequeno almoço", option(food("pao", 300)))]),
+                 "d2", active=False)
         result = resolve(self.c, "a1", {"2026-11-06": {"breakfast": {"color": "yellow"}}})
-        self.assertEqual(result["days"]["2026-11-06"]["meals"]["breakfast"]["status"],
-                         "ambiguous_plan")
+        self.assertEqual(result["days"]["2026-11-06"]["meals"]["breakfast"]["status"], "ok")
+        self.assertEqual(result["days"]["2026-11-06"]["nutrition"]["kcal"], 200)
 
     def test_missing_meal_is_flagged(self):
         self.add(draft(meals=[meal("Ceia", option(food("pao", 80)))]))
@@ -242,7 +253,8 @@ class BridgeNutritionTests(unittest.TestCase):
         self.assertEqual(report["state"], "partial")
         self.assertEqual(report["peri_events"][0]["status"], "provisional")
 
-    def test_saving_updated_grams_recalculates_without_reimport(self):
+    def test_draft_save_is_not_live_until_approved(self):
+        from food_plan_publications_v2 import publish
         initial = draft(meals=[meal("Pequeno almoço", option(food("pao", 80)))])
         self.add(initial, "updated")
         day = "2026-11-06"
@@ -253,9 +265,13 @@ class BridgeNutritionTests(unittest.TestCase):
         self.c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",
                        (json.dumps(replacement), 56789, "updated"))
         second = resolve(self.c, "a1", colors)["days"][day]
-        self.assertEqual(second["nutrition"]["kcal"], 300)
-        self.assertEqual(second["meals"]["breakfast"]["updated_at"], 56789)
-        self.assertEqual(len(second["meals"]["breakfast"]["options"]), 1)
+        self.assertEqual(second["nutrition"]["kcal"], 200)
+        published = publish(self.c, "updated", expected_updated_at=56789)
+        self.assertEqual(published["state"], "published")
+        third = resolve(self.c, "a1", colors)["days"][day]
+        self.assertEqual(third["nutrition"]["kcal"], 300)
+        self.assertEqual(third["meals"]["breakfast"]["updated_at"],
+                         published["published_at"])
 
     def test_invalid_day_does_not_fallback_to_historical_totals(self):
         day = "2026-11-06"
