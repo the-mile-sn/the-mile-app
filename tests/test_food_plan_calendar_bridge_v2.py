@@ -280,6 +280,56 @@ class BridgeNutritionTests(unittest.TestCase):
         self.assertEqual(report["meals"]["breakfast"]["status"], "missing_plan")
         self.assertEqual(report["nutrition"]["kcal"], 0)
 
+    def test_publish_requires_saved_current_revision(self):
+        from food_plan_publications_v2 import publish
+        self.add(draft(meals=[meal("Pequeno almoço", option(food("pao", 80)))]))
+        with self.assertRaisesRegex(ValueError, "stale_draft"):
+            publish(self.c, "d1", expected_updated_at=12344)
+        report=resolve(self.c, "a1", {"2026-11-06":{"breakfast":{"color":"yellow"}}})
+        self.assertEqual(report["days"]["2026-11-06"]["nutrition"]["kcal"], 200)
+
+    def test_publish_rejects_missing_food_quantity(self):
+        from food_plan_publications_v2 import publish
+        self.add(draft(meals=[meal("Pequeno almoço", option(food("pao", None)))]))
+        with self.assertRaisesRegex(ValueError, "missing_quantity"):
+            publish(self.c, "d1", expected_updated_at=12345)
+
+    def test_published_state_flags_saved_unapproved_changes(self):
+        from food_plan_publications_v2 import state_for_draft
+        old = draft(meals=[meal("Pequeno almoço", option(food("pao", 80)))])
+        self.add(old)
+        self.assertEqual(state_for_draft(self.c, "d1", json.dumps(old))["state"], "transitional")
+        new = draft(meals=[meal("Pequeno almoço", option(food("pao", 100)))])
+        self.assertTrue(state_for_draft(self.c, "d1", json.dumps(new))["pending_changes"])
+
+    def test_initial_cutover_never_auto_publishes_later_drafts(self):
+        from food_plan_publications_v2 import initialize, published_for_athlete
+        conn=sqlite3.connect(":memory:")
+        conn.row_factory=sqlite3.Row
+        try:
+            conn.executescript("""
+                CREATE TABLE v2_athletes (id TEXT PRIMARY KEY, archived_at TEXT);
+                CREATE TABLE v2_player_links (athlete_id TEXT, user_id TEXT);
+                CREATE TABLE v2_food_plan_drafts (id TEXT PRIMARY KEY,content TEXT,
+                       created_at INTEGER,updated_at INTEGER);
+                INSERT INTO v2_athletes VALUES ('a1',NULL);
+                INSERT INTO v2_player_links VALUES ('a1','u1');
+            """)
+            item=draft(meals=[meal("Pequeno almoço",option(food("pao",80)))])
+            conn.execute("INSERT INTO v2_food_plan_drafts VALUES (?,?,?,?)",
+                         ("existing",json.dumps(item),1,2))
+            report=initialize(conn)
+            self.assertEqual(report["seeded"],1)
+            self.assertEqual(len(published_for_athlete(conn,"a1")["Plano amarelo"]),1)
+            fresh=draft(kind="Plano verde",meals=[meal("Almoço",option(food("pao",100)))])
+            conn.execute("INSERT INTO v2_food_plan_drafts VALUES (?,?,?,?)",
+                         ("new",json.dumps(fresh),3,4))
+            second=initialize(conn)
+            self.assertEqual(second["seeded"],0)
+            self.assertNotIn("Plano verde",published_for_athlete(conn,"a1"))
+        finally:
+            conn.close()
+
     def tearDown(self):
         self.c.close()
 
