@@ -227,7 +227,7 @@ const populatePlanLibrary=()=>{
 $("library-plan-search").addEventListener("input",renderPlanLibrary);
 $("library-player-filter").addEventListener("change",renderPlanLibrary);
 $("library-type-filter").addEventListener("change",renderPlanLibrary);
-const syncPlanSelectors=()=>{$("plan-player").value=players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id||"";$("plan-type").value=plan.plan_type||"";refreshSelectDisplays();$("plan-player").classList.toggle("has-selection",!!plan.player_id);$("plan-type").classList.toggle("has-selection",!!plan.plan_type)};
+const syncPlanSelectors=()=>{$("plan-player").value=players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id||"";$("plan-type").value=plan.plan_type||"";refreshSelectDisplays();$("plan-player").classList.toggle("has-selection",!!plan.athlete_id);$("plan-type").classList.toggle("has-selection",!!plan.plan_type)};
 $("back-from-search").onclick=()=>showEntry("entry");
 $("back-from-editor").onclick=()=>{if(!confirm("Voltar à entrada? Guarda primeiro as alterações que pretendes manter."))return;showEntry("entry")};
 $("new-plan").onclick=()=>{if(!confirm("Criar outro plano? Guarda primeiro as alterações que pretendes manter."))return;newPlan();showEntry("entry")};
