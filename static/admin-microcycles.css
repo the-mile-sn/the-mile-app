@@ -1797,3 +1797,12 @@ html[data-admin-theme="light"] #calendar-section .calendar-live-warning{color:#9
 html[data-admin-theme="light"] #calendar-section .calendar-live-peri{background:#f1f8f3;border-color:#bbd8c4}
 html[data-admin-theme="light"] #calendar-section .calendar-live-peri-phase{border-bottom-color:#d4e4d9}
 html[data-admin-theme="light"] #calendar-section .calendar-day-options-note.is-mismatch{color:#925a17}
+
+/* Source-of-truth switch: keep original calendar summary hierarchy. */
+#calendar-section .calendar-current-source{font-size:11px;line-height:1.5;opacity:.8;margin:7px 0 9px}
+#calendar-section .calendar-legacy-summary{margin:12px 0 0;padding:11px 13px;border-radius:10px;border:1px solid #444954;background:transparent}
+#calendar-section .calendar-legacy-summary>summary{cursor:pointer;font-size:12px;font-weight:550;line-height:1.5}
+#calendar-section .calendar-legacy-summary>.calendar-day-totals{margin-top:10px}
+#calendar-section .calendar-legacy-summary .nutrition-metric-card{background:transparent}
+html[data-admin-theme="light"] #calendar-section .calendar-legacy-summary{border-color:#d8e0e9}
+html[data-admin-theme="light"] #calendar-section .calendar-current-source{color:#667485}
