@@ -2024,3 +2024,9 @@ html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-pal
 #tm-players-page .tm-players-table thead .tm-players-header-select select{width:100%;min-width:105px;max-width:190px}
 #tm-players-page .tm-players-table tbody tr td{border-bottom:1px solid rgba(144,153,165,.11)!important}
 html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{border-bottom-color:rgba(80,98,123,.11)!important}
+
+#tm-players-page .tm-players-list-surface{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#tm-players-page .tm-players-list-surface .tm-players-table-scroll{border:1px solid #34363e;border-radius:15px;overflow:auto;background:#15161a}
+#tm-players-page .tm-players-list-surface .tm-players-table thead th{padding:15px 17px!important}
+#tm-players-page .tm-players-list-surface .tm-players-table tbody td{padding:16px 17px!important}
+#tm-players-page .tm-players-list-surface .tm-players-table tbody tr td{border-bottom-color:rgba(144,153,165,.1)!important}
