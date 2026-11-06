@@ -1530,7 +1530,7 @@ def application(env, start_response):
                 effective_colors={}
                 for item in days:
                     resolved=prescription_effective_v2.resolve_day(
-                        item['date'],item['classification'],base_rows.get(item['classification'],{}),
+                        item['date'],item['classification'],base_rows.get(item['classification'] or 'Geral',{}),
                         manual,variants,matches,responses,today)
                     effective_colors[item['date']]={meal:{'color':value['color'],'source':value['source']}
                         for meal,value in resolved.items()}
