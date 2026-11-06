@@ -319,7 +319,8 @@ async function saveCurrentDraft(){
   publicationState=result.publication||{state:"draft",pending_changes:false};
   lastSavedAt=result.updated_at||Math.floor(Date.now()/1000);
   savedSignature=planSignature();persistenceError="";saveBusy=false;
-  renderPersistence();await loadDrafts();
+  renderPersistence();
+  await loadDrafts().catch(()=>status("Rascunho guardado. A lista não foi atualizada."));
   status("Rascunho guardado na base de dados.");return true;
  }catch(err){
   saveBusy=false;persistenceError="Não foi possível guardar o rascunho: "+err.message;
@@ -344,7 +345,8 @@ $("assign-player").onclick=async()=>{
    body:JSON.stringify({updated_at:plan.updated_at})
   });
   publicationState=result.publication;publishBusy=false;persistenceError="";
-  renderPersistence();await loadDrafts();
+  renderPersistence();
+  await loadDrafts().catch(()=>status("Plano publicado. A lista não foi atualizada."));
   status("Plano publicado no Planeamento. Não foi enviado à app dos jogadores.");
  }catch(err){
   publishBusy=false;
