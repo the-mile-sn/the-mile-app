@@ -2030,3 +2030,14 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{bo
 #tm-players-page .tm-players-list-surface .tm-players-table thead th{padding:15px 17px!important}
 #tm-players-page .tm-players-list-surface .tm-players-table tbody td{padding:16px 17px!important}
 #tm-players-page .tm-players-list-surface .tm-players-table tbody tr td{border-bottom-color:rgba(144,153,165,.1)!important}
+
+/* Unified Planning header: player picker and section navigation share one card. */
+#tm-admin-legacy .tm-planning-unified-header{display:flex;flex-direction:column;gap:0;margin:0 0 16px;padding:13px 17px 9px;background:#17181d;border:1px solid #313239;border-radius:16px;min-width:0}
+#tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{margin:0!important;padding:0 0 14px!important;min-height:62px;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;justify-content:flex-start}
+#tm-admin-legacy .tm-planning-unified-header .tm-planning-player-identity{flex:1;min-width:0;max-width:650px;gap:13px}
+#tm-admin-legacy .tm-planning-unified-header #tm-planning-avatar{width:48px;height:48px;flex:0 0 48px}
+#tm-admin-legacy .tm-planning-unified-header .tm-planning-player-select{flex:1;max-width:565px;z-index:6}
+#tm-admin-legacy .tm-planning-unified-header #tm-planning-search{height:49px!important;border-radius:12px!important;background:#23252b;border-color:#3a3d45}
+#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{display:flex;align-items:center;gap:5px;margin:0!important;padding:9px 0 0!important;border:0!important;border-top:1px solid rgba(147,154,166,.19)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;flex-wrap:wrap;min-width:0}
+#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button{min-height:37px;border-radius:9px;padding:9px 13px!important}
+@media(max-width:650px){#tm-admin-legacy .tm-planning-unified-header{padding:12px 12px 8px;margin-bottom:12px}#tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{min-height:52px;padding-bottom:10px!important}#tm-admin-legacy .tm-planning-unified-header #tm-planning-avatar{width:40px;height:40px;flex-basis:40px}#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button{flex:none;padding:9px 11px!important}}
