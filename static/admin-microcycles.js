@@ -1326,10 +1326,6 @@ function renderDayPreview(day,host){
   currentBlock.append(warning);
  }else nutritionCards(currentBlock,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
  host.append(currentBlock);
- const oldDetails=document.createElement("details");oldDetails.className="calendar-legacy-summary";
- const oldSummary=document.createElement("summary");oldSummary.textContent="Comparar com valores do sistema anterior";oldDetails.append(oldSummary);
- renderNutritionTotals(oldDetails,"Sistema anterior · resumo do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
- host.append(oldDetails);
 }
 let dayWeightReferences={};
 async function loadCalendar(){
@@ -1391,22 +1387,6 @@ async function loadCalendar(){
    weekly.append(warning);
   }
   weekly.append(coverage);
-  const historical=document.createElement("details");historical.className="calendar-legacy-summary";
-  const historicHeader=document.createElement("summary");historicHeader.textContent="Comparar com a média semanal do sistema anterior";
-  historical.append(historicHeader);
-  const oldPeriByDay=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(p=>p.event_date===d.date)]));
-  const oldColorMap=colorOverrideLookup(weeklyData.meal_color_overrides);
-  const oldTotals=weeklyData.days.map(d=>plannedDayTotals(d,oldPeriByDay,oldColorMap));
-  if(oldTotals.length===7&&oldTotals.every(x=>x.state==="complete"&&x.total)){
-   const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-   for(const day of oldTotals)for(const key of Object.keys(sums))sums[key]+=day.total[key];
-   nutritionCards(historical,Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7])));
-  }else{
-   const hint=document.createElement("p");hint.className="hint";
-   hint.textContent="A referência antiga também tem dias com valores nutricionais incompletos.";
-   historical.append(hint);
-  }
-  weekly.append(historical);
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
