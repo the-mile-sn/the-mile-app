@@ -31,6 +31,7 @@ import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
 import food_plan_drafts_v2
+import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
 import food_plan_migration_v2
 import time
@@ -275,6 +276,9 @@ def initialize():
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
         food_plan_drafts_v2.initialize(c)
+        if SITE_ROLE == 'admin':
+            transition = food_plan_publications_v2.initialize(c)
+            logging.warning('Planos publication transition counts: %s', transition)
         try:
             restored = food_library_v2.restore_approved_average_foods(c)
             logging.info('Approved average foods restoration: %s', restored)
@@ -892,6 +896,14 @@ def application(env, start_response):
                 except ValueError as error:
                     raise Problem(409,str(error))
                 return respond(200,{'transfer':result})
+            if path.startswith('/api/v2/food-plan-drafts/') and path.endswith('/publish') and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                ident=path.split('/')[-2]
+                body=read_json(env)
+                try: approved=food_plan_publications_v2.publish(c,ident,body.get('updated_at'))
+                except ValueError as error: raise Problem(409,str(error))
+                return respond(200,{'publication':approved,'scope':'backoffice_planning_only'})
             if path == '/api/v2/food-plan-drafts' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -899,11 +911,15 @@ def application(env, start_response):
                     return respond(200,{'drafts':food_plan_drafts_v2.list_drafts(c)})
                 try: ident=food_plan_drafts_v2.save(c,read_json(env))
                 except ValueError: raise Problem(400,'invalid_plan')
-                return respond(200,{'id':ident})
+                saved=c.execute('SELECT updated_at,content FROM v2_food_plan_drafts WHERE id=?',(ident,)).fetchone()
+                return respond(200,{'id':ident, 'updated_at':saved['updated_at'],
+                    'publication':food_plan_publications_v2.state_for_draft(c,ident,saved['content'])})
             if path.startswith('/api/v2/food-plan-drafts/') and method in ('GET','DELETE'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 if method == 'DELETE':
+                    if not food_plan_publications_v2.may_delete(c,path.rsplit('/',1)[-1]):
+                        raise Problem(409,'active_plan_cannot_delete')
                     if not food_plan_drafts_v2.delete(c,path.rsplit('/',1)[-1]): raise Problem(404,'not_found')
                     return respond(200,{'deleted':True})
                 draft=food_plan_drafts_v2.get(c,path.rsplit('/',1)[-1])
