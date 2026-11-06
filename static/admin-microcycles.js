@@ -1220,6 +1220,24 @@ function renderDayPreview(day,host){
  heading.textContent=day.date+" · "+(day.classification||"Geral · por definir");
  host.appendChild(heading);
  const grid=document.createElement("div");grid.className="day-meals";
+ const optionsPanel=document.createElement("section");optionsPanel.className="calendar-wide-options";optionsPanel.id="calendar-wide-options";optionsPanel.hidden=true;
+ const optionButtons=new Map();let expandedMeal=null;
+ function toggleOptions(meal){
+  if(expandedMeal===meal&&!optionsPanel.hidden){
+   expandedMeal=null;optionsPanel.hidden=true;
+   for(const button of optionButtons.values()){button.setAttribute("aria-expanded","false");button.classList.remove("is-active");}
+   return;
+  }
+  expandedMeal=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
+  const heading=document.createElement("div");heading.className="calendar-wide-options-heading";
+  const title=document.createElement("strong");title.textContent="Opções · "+names[meal];
+  const close=document.createElement("button");close.type="button";close.className="calendar-wide-options-close";
+  close.textContent="Fechar";close.addEventListener("click",()=>toggleOptions(meal));
+  heading.append(title,close);optionsPanel.append(heading,renderLiveMealOptions(day,meal));
+  for(const [key,button] of optionButtons){
+   const on=key===meal;button.setAttribute("aria-expanded",String(on));button.classList.toggle("is-active",on);
+  }
+ }
  for(const entry of mealColorsForDay(day)){
   const cell=document.createElement("div");cell.className="day-meal";
   const colorBar=document.createElement("div");colorBar.className="day-meal-color day-meal-header"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
@@ -1252,23 +1270,25 @@ function renderDayPreview(day,host){
   if(newAverage){
    const macros=document.createElement("div");macros.className="day-meal-nutrients calendar-live-meal-nutrients";
    macros.textContent=[formatNutrition(newAverage.kcal,0)+" kcal",formatNutrition(newAverage.protein_g)+" g",formatNutrition(newAverage.carbs_g)+" g",formatNutrition(newAverage.fat_g)+" g"].join(" · ");
-   macros.title="Novo módulo Planos · média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
-   const source=document.createElement("small");source.className="calendar-live-source";
-   source.textContent="Novo módulo Planos"+(liveMeal.status==="provisional"?" · provisório":"");cell.append(source);
+   macros.title="Média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
    unavailable.textContent=entry.color?"Novo plano: valores por confirmar":"—";cell.append(unavailable);
   }
-  cell.append(renderLiveMealOptions(day,entry.meal));
+  const button=document.createElement("button");button.type="button";button.className="calendar-options-trigger";
+  button.textContent="Ver opções";button.setAttribute("aria-expanded","false");
+  button.setAttribute("aria-controls","calendar-wide-options");
+  button.addEventListener("click",()=>toggleOptions(entry.meal));
+  optionButtons.set(entry.meal,button);cell.append(button);
   grid.appendChild(cell);
  }
- host.appendChild(grid);
+ host.append(grid,optionsPanel);
  // New peri prescription previews are read only. Historical protocols remain
  // available strictly for comparison, never mixed into the new totals.
  const livePeriOptions=liveCalendarPlans[day.date]?.peri_events||[];
  if(livePeriOptions.length){
   const details=document.createElement("details");details.className="calendar-day-peri calendar-live-peri";
-  const summary=document.createElement("summary");summary.textContent="Novo módulo Planos · Peri-treino e Peri-jogo";details.append(summary);
+  const summary=document.createElement("summary");summary.textContent="Peri-treino e Peri-jogo";details.append(summary);
   for(const peri of livePeriOptions){
    const line=document.createElement("section");line.className="calendar-live-peri-phase";
    const heading=document.createElement("strong");
@@ -1295,9 +1315,6 @@ function renderDayPreview(day,host){
  const liveDay=liveCalendarPlans[day.date];
  const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
  const currentHeading=document.createElement("h3");currentHeading.textContent="Resumo nutricional do dia";currentBlock.append(currentHeading);
- const currentSource=document.createElement("p");currentSource.className="calendar-current-source";
- currentSource.textContent="Fonte: Planos · inclui os momentos peri aplicáveis. Atualiza ao abrir o Calendário.";
- currentBlock.append(currentSource);
  if(!liveDay){
   const warning=document.createElement("p");warning.className="calendar-live-warning";
   warning.textContent="Sem acesso aos planos atuais. Não são usados valores antigos como substituição.";currentBlock.append(warning);
