@@ -824,3 +824,12 @@ html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro-v
  #plan-editor .option-tabs button{min-width:140px!important;flex:1 1 140px}
  #plan-editor .plan-overview .stats.four{padding-top:47px!important}
 }
+
+/* Focused plan-list and editor refinements */
+.plan-type-tag{display:inline-flex;align-items:center;gap:7px;font-weight:650;border-radius:9px;padding:5px 10px;background:var(--tm-card,#8882);border:1px solid #8883}
+.plan-type-tag[data-palette="yellow"]{color:#d4b651;background:#d4b65118;border-color:#d4b6514d}
+.plan-type-tag[data-palette="orange"]{color:#d99555;background:#d9955518;border-color:#d995554d}
+.plan-type-tag[data-palette="blue"]{color:#6fa9da;background:#6fa9da18;border-color:#6fa9da4d}
+.plan-type-tag[data-palette="green"]{color:#6ebc8d;background:#6ebc8d18;border-color:#6ebc8d4d}
+.plan-library-row-actions [data-view-id],.plan-library-row-actions [data-edit-id]{display:inline-flex;align-items:center;justify-content:center;min-width:37px;width:37px;height:37px;padding:6px}
+.plan-inline-note{display:flex;align-items:end;gap:9px;margin:12px 0 14px;max-width:850px}.plan-inline-note textarea{flex:1;min-width:0;min-height:43px;resize:vertical;border-radius:10px;padding:11px 13px;font:inherit;background:var(--tm-card,#2222);border:1px solid #8885;color:inherit}.plan-inline-note button{min-height:42px;padding:0 19px}.option-tabs button .plan-option-card-name{display:block;margin-bottom:9px}.option-tabs button .macro-values{margin-top:7px}
