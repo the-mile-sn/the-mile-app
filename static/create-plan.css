@@ -790,3 +790,37 @@ html[data-admin-theme="light"] #plan-entry .plan-publication-label[data-state="p
  #plan-editor .plan-save-feedback-time{margin-left:42px}
  #plan-editor .actions #save-plan,#plan-editor .actions #assign-player{flex:1 1 145px}
 }
+
+/* Plan nutrition: second-line ratios from the current athlete reference weight. */
+#plan-editor .plan-overview .stats.four{position:relative!important;padding-top:33px!important}
+#plan-editor .plan-overview .stats.four .plan-weight-reference{
+ position:absolute;right:18px;top:9px;z-index:1;max-width:calc(100% - 24px);
+ color:var(--lib-muted)!important;font-size:10px!important;font-weight:500;
+ white-space:normal;text-align:right;line-height:1.3;
+}
+#plan-editor .plan-overview .stats.four>.stat .plan-perkg{
+ display:block!important;font-size:12px!important;line-height:1.3!important;
+ font-weight:550!important;color:var(--lib-muted)!important;white-space:nowrap;
+ opacity:1!important;margin:0;
+}
+#plan-editor .option-tabs button .plan-option-card-name{
+ display:block;max-width:100%;font-size:11px;font-weight:500;
+ line-height:1.35;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;opacity:.9;min-width:0;
+}
+#plan-editor .option-tabs button{min-width:185px!important;min-height:86px;max-width:min(100%,320px)!important}
+#plan-editor .option-tabs button .plan-option-number{font-size:12px;font-weight:650}
+#plan-preview .plan-preview-heading{position:relative}
+#plan-preview .plan-preview-weight{
+ color:var(--lib-muted);font-size:11px;line-height:1.4;text-align:right;margin-bottom:8px;
+}
+#plan-preview .plan-preview-perkg{font-size:12px!important;font-weight:600!important;line-height:1.45}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro.m0 b{color:#2f8b5a!important}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro.m1 b{color:#3675b5!important}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro.m2 b{color:#a66128!important}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro.m3 b{color:#a48621!important}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro-values small{color:#5a6878!important}
+@media(max-width:550px){
+ #plan-editor .option-tabs button{min-width:140px!important;flex:1 1 140px}
+ #plan-editor .plan-overview .stats.four{padding-top:47px!important}
+}
