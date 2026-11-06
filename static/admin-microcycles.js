@@ -1229,6 +1229,8 @@ function renderDayPreview(day,host){
    return;
   }
   expandedMeal=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
+  const selectedColor=mealColorsForDay(day).find(entry=>entry.meal===meal)?.color||"";
+  optionsPanel.dataset.palette=selectedColor;
   const heading=document.createElement("div");heading.className="calendar-wide-options-heading";
   const title=document.createElement("strong");title.textContent="Opções · "+names[meal];
   const close=document.createElement("button");close.type="button";close.className="calendar-wide-options-close";
