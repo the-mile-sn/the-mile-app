@@ -266,6 +266,31 @@ def initialize():
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
+        if SITE_ROLE == 'player':
+            # Release gate: do not activate the player build unless the shared
+            # database contains the approved, audited Planos prescriptions.
+            try:
+                approved=c.execute(
+                    "SELECT COUNT(*) AS total, COUNT(DISTINCT athlete_id) AS athletes "
+                    "FROM v2_food_plan_editor_publications WHERE state='published'").fetchone()
+                logging.warning('Player published Planos ready: %s prescriptions, %s athletes',
+                                approved['total'], approved['athletes'])
+                if approved['total'] < 58 or approved['athletes'] < 12:
+                    raise RuntimeError('Incomplete approved Planos roster for player activation')
+            except Exception:
+                logging.exception('Player published Planos readiness check failed')
+                raise
+            import unittest
+            output=io.StringIO()
+            suite=unittest.defaultTestLoader.discover(
+                str(ROOT / 'tests'), pattern='test_food_plan_player_v2.py')
+            tests=unittest.TextTestRunner(stream=output,verbosity=0).run(suite)
+            logging.warning('Player Planos conversion tests: %s run, %s failures, %s errors',
+                            tests.testsRun,len(tests.failures),len(tests.errors))
+            if tests.testsRun < 11 or tests.failures or tests.errors:
+                logging.error('Player Planos conversion test failures: %s',
+                              output.getvalue()[:1800])
+                raise RuntimeError('Player Planos conversion tests failed')
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
         weight_reference_v2.ensure_weighins_table(c)
