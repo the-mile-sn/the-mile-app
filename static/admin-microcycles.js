@@ -1303,17 +1303,6 @@ function renderDayPreview(day,host){
   }
   host.append(details);
  }
- const oldPeri=periByDay[day.date]||[];
- if(oldPeri.length){
-  const details=document.createElement("details");details.className="calendar-day-peri calendar-old-peri";
-  const summary=document.createElement("summary");summary.textContent="Sistema anterior · protocolos de treino e jogo (comparação)";details.append(summary);
-  for(const item of oldPeri){
-   const avg=averageMealNutrition(item.options||[]),line=document.createElement("p");
-   line.textContent=item.title+" · "+(item.session==="morning"?"Manhã":"Tarde")+(avg?" · "+nutritionSummary(avg):" · Valores indisponíveis");
-   details.append(line);
-  }
-  host.append(details);
- }
  const liveDay=liveCalendarPlans[day.date];
  const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
  const currentHeading=document.createElement("h3");currentHeading.textContent="Resumo nutricional do dia";currentBlock.append(currentHeading);
