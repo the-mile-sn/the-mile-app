@@ -199,7 +199,7 @@ movePostButton.onclick=async()=>{
   }catch(err){status("Não foi possível transferir o Pós treino: "+err.message+" Os rascunhos permanecem inalterados quando a validação falha.")}
   finally{movePostButton.disabled=false}
 };
-$("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$("draft-list").value;if(!plan.id)return;if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();showEntry("entry");status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
+$("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$("draft-list").value;if(!plan.id)return;if(publicationState?.state!=="draft"){persistenceError="Este plano está em utilização no Planeamento. Não pode ser apagado sem retirar primeiro a publicação.";renderPersistence();return;}if(!confirm('Apagar definitivamente o plano «'+plan.name+'»? Esta ação não pode ser anulada.'))return;try{const csrf=(await request("/api/me")).csrf||"";await request("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id),{method:"DELETE",headers:{"X-CSRF-Token":csrf}});newPlan();await loadDrafts();showEntry("entry");status("Plano apagado.")}catch(err){status("Não foi possível apagar o plano: "+err.message)}};
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",player_id:"",athlete_id:"",player_name:"",plan_type:"",meals:[]};savedSignature=null;publicationState={state:"draft",pending_changes:false,published_at:null};lastSavedAt=null;persistenceError="";active=-1;option=0;addMeal("Pequeno almoço");status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});const data=await r.json().catch(()=>null);if(!r.ok)throw Error(data?.error||data?.code||"HTTP "+r.status);return data||{}}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");draftIndex=(data.drafts||[]).filter(d=>draftOwner(d));$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+draftIndex.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||"";$("draft-list").classList.toggle("has-selection",!!$("draft-list").value);if($("library-plan-rows"))populatePlanLibrary()}
@@ -229,7 +229,16 @@ const renderSearchPlayers=(all=false)=>{const q=normalizeSearch($("search-player
 const selectSearchPlayer=id=>{selectedSearchPlayer=id;const player=players.find(p=>p.id===id);if(!player)return;$("search-player").value=player.name;$("search-player-results").hidden=true;$("search-player-toggle").setAttribute("aria-expanded","false");const options=plansForPlayer(id);$("search-plan-type").innerHTML='<option value="">Selecionar tipo de plano</option>'+options.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name.slice(player.name.length+3))+'</option>').join("");$("search-plan-type").value="";$("search-plan-type").disabled=!options.length;refreshSelectDisplays()};
 $("entry-create").onclick=()=>{newPlan();syncPlanSelectors();showEntry("editor")};
 const planTypeOf=d=>String(d.plan_type||"");
-const draftMeta=d=>{const stamp=Number(d.created_at||d.updated_at);const date=stamp?new Date(stamp*1000).toLocaleString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"Data indisponível";const origin=d.legacy_migration?"Cópia de publicação antiga":d.origin==="json_import"?"Importado · JSON":"Rascunho";return '<small style="display:block;opacity:.7;margin-top:6px;font-weight:400">'+esc(origin)+' · Criado '+esc(date)+'</small>'};
+const draftMeta=d=>{
+ const stamp=Number(d.created_at||d.updated_at);
+ const date=stamp?new Date(stamp*1000).toLocaleString("pt-PT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"Data indisponível";
+ const origin=d.legacy_migration?"Cópia antiga":d.origin==="json_import"?"Importado · JSON":"Plano guardado";
+ const pub=d.publication||{state:"draft",pending_changes:false};
+ const state=pub.pending_changes?"pending":pub.state;
+ const caption=state==="published"?"Publicado no Planeamento":state==="transitional"?"Em uso no Planeamento":state==="pending"?"Alterações por publicar":"Rascunho · por publicar";
+ return '<small style="display:block;opacity:.7;margin-top:6px;font-weight:400">'+esc(origin)+" · Guardado "+esc(date)+'</small>'+
+  '<span class="plan-publication-label" data-state="'+esc(state)+'">'+esc(caption)+'</span>';
+};
 const renderPlanLibrary=()=>{
  const query=normalizeSearch($("library-plan-search").value.trim()),playerId=$("library-player-filter").value,type=$("library-type-filter").value;
  const rows=draftIndex.map(d=>({draft:d,owner:draftOwner(d),type:planTypeOf(d)})).filter(x=>x.owner&&(!playerId||String(x.owner?.id)===String(playerId))&&(!type||x.type===type)&&(!query||Number.isFinite(draftSearchRank(x,query)))).sort((a,b)=>draftSearchRank(a,query)-draftSearchRank(b,query)||(a.owner?.name||a.draft.player_name||"").localeCompare(b.owner?.name||b.draft.player_name||"","pt")||a.type.localeCompare(b.type,"pt")||Number(b.draft.created_at||0)-Number(a.draft.created_at||0));
