@@ -1784,3 +1784,16 @@ html[data-admin-theme="light"] #calendar-section .calendar-legacy-meal-nutrients
 html[data-admin-theme="light"] #calendar-section .calendar-live-totals,
 html[data-admin-theme="light"] #calendar-section .calendar-live-weekly{background:#f0f8f3;border-color:#b9d9c4}
 html[data-admin-theme="light"] #calendar-section .calendar-live-warning{color:#925f16}
+
+/* Dynamic peri-plan preview: preserve event/phase boundaries and never overlay controls. */
+#calendar-section .calendar-live-peri{border-color:#4a6c56;background:rgba(76,135,91,.055)}
+#calendar-section .calendar-live-peri-phase{padding:11px 0;border-bottom:1px solid #3d4941;min-width:0}
+#calendar-section .calendar-live-peri-phase:last-child{border-bottom:0;padding-bottom:0}
+#calendar-section .calendar-live-peri-phase>strong{display:block;font-size:12px;line-height:1.5}
+#calendar-section .calendar-live-peri-phase>.calendar-live-source{margin:5px 0 9px}
+#calendar-section .calendar-live-peri-phase .calendar-day-meal-options{max-width:100%}
+#calendar-section .calendar-old-peri{opacity:.82}
+#calendar-section .calendar-day-options-note.is-mismatch{color:#efb571;font-weight:600}
+html[data-admin-theme="light"] #calendar-section .calendar-live-peri{background:#f1f8f3;border-color:#bbd8c4}
+html[data-admin-theme="light"] #calendar-section .calendar-live-peri-phase{border-bottom-color:#d4e4d9}
+html[data-admin-theme="light"] #calendar-section .calendar-day-options-note.is-mismatch{color:#925a17}
