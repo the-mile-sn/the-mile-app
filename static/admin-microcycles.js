@@ -1161,25 +1161,30 @@ function checkMealNutrition(record){
  return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
 }
 function renderLiveMealOptions(day,meal,overrideRecord=null){
- const box=document.createElement("details");box.className="calendar-day-meal-options";
- const summary=document.createElement("summary");summary.textContent="Ver opções";box.append(summary);
+ const box=document.createElement("div");box.className="calendar-day-meal-options";
  const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
  const state=record?.status||"unavailable";
  const parity=checkMealNutrition(record);
- if(parity!=="not_checked"){
-  const p=document.createElement("p");p.className="calendar-day-options-note";
-  p.textContent=parity==="match"?"Cálculo confirmado: coincide com o editor Planos.":parity==="missing_reference"?"Alimento sem referência ativa; revisão necessária.":"Divergência de cálculo; rever antes de publicar.";
-  p.classList.toggle("is-mismatch",parity!=="match");box.append(p);
+ // Only actionable discrepancies are displayed; successful parity stays silent.
+ if(parity==="mismatch"||parity==="missing_reference"){
+  const warning=document.createElement("p");warning.className="calendar-day-options-note is-mismatch";
+  warning.textContent=parity==="missing_reference"?
+   "Alimento sem referência ativa na Biblioteca Alimentar. Rever antes de publicar.":
+   "Divergência de cálculo nutricional. Rever antes de publicar.";
+  box.append(warning);
  }
  if(state!=="ok"&&state!=="provisional"){
-  const messages={no_color:"Sem cor atribuída neste dia.",missing_plan:"Não existe este plano nos rascunhos do jogador.",ambiguous_plan:"Existem vários rascunhos deste tipo. Rever a associação.",missing_meal:"Este plano não contém esta refeição.",ambiguous_meal:"Existem várias refeições correspondentes.",missing_options:"Esta refeição não contém opções.",unavailable:"Pré-visualização indisponível; o calendário anterior permanece intacto."};
-  const note=document.createElement("p");note.className="calendar-day-options-note";note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
+  const messages={no_color:"Sem cor atribuída neste dia.",missing_plan:"Plano alimentar indisponível para esta cor.",ambiguous_plan:"Existem versões duplicadas. Rever a associação.",missing_meal:"Este plano não contém esta refeição.",ambiguous_meal:"Existem várias refeições correspondentes.",missing_options:"Esta refeição não contém opções.",unavailable:"Opções indisponíveis para esta refeição."};
+  const note=document.createElement("p");note.className="calendar-day-options-note";
+  note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
  }
- (record.options||[]).forEach((option,index)=>{
+ const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
+ for(const [index,option] of (record.options||[]).entries()){
   const section=document.createElement("section");section.className="calendar-day-meal-option";
-  const heading=document.createElement("strong");heading.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");section.append(heading);
+  const title=document.createElement("strong");title.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");section.append(title);
   const foods=option.foods||[],notes=option.notes||[];
-  const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
+  const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?
+   option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
   for(const item of order){
    const line=document.createElement("span");line.className="calendar-day-food-line";
    if(item.type==="note"){
@@ -1188,15 +1193,23 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
    }else{
     const food=foods[item.index];if(!food)continue;
     const alternative=food.alternative_to!=null;if(alternative)line.classList.add("is-alternative");
-    const amount=food.display_quantity|| (food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
-    line.textContent=food.kind==="supplement"?(food.label||"Suplemento"):(alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
+    const amount=food.display_quantity||(food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
+    line.textContent=food.kind==="supplement"?(food.label||"Suplemento"):
+     (alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
    }
    section.append(line);
   }
-  if(option.nutrition){const macros=document.createElement("small");macros.className="calendar-day-food-macro";macros.textContent=nutritionSummary(option.nutrition)+(option.provisional?" · Provisório":"");section.append(macros);}
-  box.append(section);
- });
- if(state==="provisional"){const note=document.createElement("p");note.className="calendar-day-options-note";note.textContent="Valores provisórios: há quantidades por confirmar.";box.append(note);}
+  if(option.nutrition){
+   const macros=document.createElement("small");macros.className="calendar-day-food-macro";
+   macros.textContent=nutritionSummary(option.nutrition)+(option.provisional?" · Provisório":"");section.append(macros);
+  }
+  grid.append(section);
+ }
+ box.append(grid);
+ if(state==="provisional"){
+  const note=document.createElement("p");note.className="calendar-day-options-note";
+  note.textContent="Valores provisórios: há quantidades por confirmar.";box.append(note);
+ }
  return box;
 }
 
