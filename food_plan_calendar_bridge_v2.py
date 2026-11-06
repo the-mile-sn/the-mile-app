@@ -414,3 +414,56 @@ def audit_real_option_parity(c):
                 elif any(abs(new_values[key] - actual[key]) > 0.00001 for key in FIELDS):
                     counters["macro_mismatches"] += 1
     return counters
+
+
+def audit_event_links(c, first, last):
+    """End-to-end, read-only peri check using actual event records and drafts.
+
+    Uses the same resolution path as the admin calendar, but never writes.
+    No player names, IDs or prescription content are included in the report.
+    """
+    import events_v2
+    import microcycles_v2
+    stats = {
+        "registered_athletes": 0, "athletes_with_events": 0,
+        "scheduled_event_rows": 0, "match_rows": 0,
+        "days_with_events": 0, "peri_moments_resolved": 0,
+        "peri_moments_provisional": 0, "peri_moments_skipped": 0,
+        "days_with_peri": 0, "peri_resolution_issues": 0,
+        "duplicate_match_sources_collapsed": 0,
+    }
+    for athlete in c.execute(
+            "SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall():
+        athlete_id = athlete["id"]
+        stats["registered_athletes"] += 1
+        events = events_v2.list_events(c, athlete_id, first, last)
+        events = [e for e in events if e.get("kind") in PERI_TYPES]
+        matches = [m for m in microcycles_v2.list_matches(c, athlete_id)
+                   if first <= m["match_date"] <= last]
+        stats["scheduled_event_rows"] += len(events)
+        stats["match_rows"] += len(matches)
+        dates = {e["event_date"] for e in events}
+        dates.update(m["match_date"] for m in matches)
+        if not dates:
+            continue
+        stats["athletes_with_events"] += 1
+        stats["days_with_events"] += len(dates)
+        overrides = c.execute(
+            "SELECT match_id,phase,state FROM v2_match_peri_overrides WHERE athlete_id=?",
+            (athlete_id,)).fetchall()
+        state = {(r["match_id"], r["phase"]):r["state"] for r in overrides}
+        source_events = _event_sources(events, matches, state, dates)
+        stats["duplicate_match_sources_collapsed"] += sum(
+            bool(x.get("deduplicated_match_source")) for x in source_events)
+        report = resolve(c, athlete_id, {day:{} for day in dates}, events,
+                         matches, state)
+        for day in report["days"].values():
+            peri = day["peri_events"]
+            stats["peri_moments_resolved"] += len(peri)
+            stats["peri_moments_provisional"] += sum(
+                r["status"] == "provisional" for r in peri)
+            stats["peri_moments_skipped"] += sum(
+                r.get("status") not in ("ok", "provisional") for r in peri)
+            stats["peri_resolution_issues"] += len(day["issues"])
+            stats["days_with_peri"] += bool(peri)
+    return stats
