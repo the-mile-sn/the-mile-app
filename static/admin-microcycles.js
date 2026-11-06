@@ -1817,6 +1817,9 @@ function renderDishEditor(){
  const search=$("dish-search"),category=$("dish-category-filter");
  const parking=$("dish-filter-parking");
  if(!search||!category||!parking)return;
+ const hadSearchFocus=document.activeElement===search;
+ const cursor=hadSearchFocus?search.selectionStart:null;
+ const hadCategoryFocus=document.activeElement===category;
  parking.append(search,category);
  host.replaceChildren();
  refreshDishTableCategories();
@@ -2019,6 +2022,8 @@ function renderDishEditor(){
   });
  }
  table.append(tbody);wrap.append(table);host.append(wrap);
+ if(hadSearchFocus){search.focus({preventScroll:true});if(cursor!=null)search.setSelectionRange(cursor,cursor);}
+ else if(hadCategoryFocus)category.focus({preventScroll:true});
 }
 $("dish-search").addEventListener("input",renderDishEditor);
 $("dish-category-filter").addEventListener("change",renderDishEditor);
