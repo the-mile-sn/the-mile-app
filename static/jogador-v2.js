@@ -299,10 +299,14 @@ function playerSessionReady(animated=false){
  const loading=$("player-session-loading");
  if(animated&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
   loading.classList.add("is-leaving");
-  loading.addEventListener("transitionend",()=>{
-   if(!loading.classList.contains("is-leaving"))return;
-   loading.hidden=true;loading.classList.remove("is-leaving");resetPlayerLoadingPhoto();
-  },{once:true});
+  let finished=false;
+  const finish=()=>{
+   if(finished||!loading.classList.contains("is-leaving"))return;
+   finished=true;loading.hidden=true;loading.classList.remove("is-leaving");resetPlayerLoadingPhoto();
+  };
+  loading.addEventListener("transitionend",event=>{if(event.target===loading)finish();},{once:true});
+  // Safari can suspend CSS transitions when its installed PWA changes state.
+  setTimeout(finish,450);
   // The animation is purely visual and does not wait for an artificial loading period.
  }else{loading.hidden=true;loading.classList.remove("is-leaving");resetPlayerLoadingPhoto();}
 }
