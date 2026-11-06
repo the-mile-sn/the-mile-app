@@ -30,9 +30,9 @@ test('an anonymous /api/me response is a normal signed-out state, without an exp
  const end=source.indexOf('async function show(',start);
  const body=source.slice(start,end);
  assert.match(body,/if\(!sessionData\.user\)\{/);
- assert.match(body,/\$\("status"\)\.textContent="";\s*\$\("login-panel"\)\.hidden=false/);
+ assert.match(body,/playerSessionReady\(\);\s*\$\("status"\)\.textContent="";\s*\$\("login-panel"\)\.hidden=false/);
  assert.match(body,/if\(epoch!==playerSessionEpoch\)return/);
- assert.match(body,/\$\("login-panel"\)\.hidden=true;\s*\$\("player-panel"\)\.hidden=false;\s*\$\("logout"\)\.hidden=false;\s*\$\("status"\)\.textContent=""/);
+ assert.match(body,/playerSessionReady\(\);\s*\$\("login-panel"\)\.hidden=true;\s*\$\("player-panel"\)\.hidden=false;\s*\$\("logout"\)\.hidden=false;\s*\$\("status"\)\.textContent=""/);
 });
 test('only unauthorized responses revoke the player view, not forbidden actions',()=>{
  const start=source.indexOf('async function api(');
