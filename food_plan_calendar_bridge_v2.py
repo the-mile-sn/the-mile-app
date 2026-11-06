@@ -341,37 +341,76 @@ def audit_all_drafts(c):
     return counts
 
 
-def audit_detailed_missing_quantities_and_peri_headings(c):
-    """Temporary read-only deployment diagnostic for admin-requested two quantities.
+def audit_real_option_parity(c):
+    """Compare every stored option with the library's independent nutrient helper.
 
-    Only missing-quantity locations and distinct peri meal headings are returned.
-    No quantities or entire prescriptions are logged or modified.
+    Entirely read-only. Summaries contain no player names or prescription contents.
     """
-    refs={r["id"]:r["display_name"] for r in c.execute(
-        "SELECT id,display_name FROM v2_food_library").fetchall()}
-    missing=[]
-    headings={}
-    for row in c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall():
+    from food_library_v2 import nutrients_for_quantity
+    library = {row["id"]: dict(row) for row in c.execute(
+        "SELECT id,variant,edible_fraction,kcal,protein_g,carbs_g,fat_g "
+        "FROM v2_food_library WHERE active=1").fetchall()}
+    counters = {
+        "drafts": 0, "meals": 0, "options": 0,
+        "options_with_pending_quantities": 0,
+        "options_without_foods": 0, "missing_active_food_references": 0,
+        "macro_mismatches": 0, "options_not_comparable": 0,
+        "peri_options": 0,
+        "unmapped_peri_meal_names": 0,
+    }
+    for row in c.execute("SELECT content FROM v2_food_plan_drafts").fetchall():
         try:
-            draft=json.loads(row["content"])
-        except (ValueError,TypeError):
+            plan = json.loads(row["content"])
+        except (ValueError, TypeError):
             continue
-        kind=draft.get("plan_type") or ""
-        for meal_idx,meal in enumerate(draft.get("meals") or [],1):
-            title=meal.get("name") or ""
-            if kind in ("Plano Peri-treino","Plano Peri-jogo"):
-                key=(kind,title)
-                headings[key]=headings.get(key,0)+1
-            for opt_idx,opt in enumerate(meal.get("options") or [],1):
-                for f_idx,food in enumerate(opt.get("foods") or [],1):
-                    if food.get("kind")=="supplement" or food.get("grams") is not None:
+        counters["drafts"] += 1
+        kind = plan.get("plan_type") or ""
+        for meal in plan.get("meals") or []:
+            counters["meals"] += 1
+            if kind in ("Plano Peri-treino", "Plano Peri-jogo") and not _peri_phase(
+                    meal.get("name"), "training" if kind == "Plano Peri-treino" else "match"):
+                counters["unmapped_peri_meal_names"] += 1
+            for option in meal.get("options") or []:
+                counters["options"] += 1
+                if kind in ("Plano Peri-treino", "Plano Peri-jogo"):
+                    counters["peri_options"] += 1
+                foods = option.get("foods") or []
+                if not foods:
+                    counters["options_without_foods"] += 1
+                new_values, provisional = option_values(option, library)
+                if provisional:
+                    counters["options_with_pending_quantities"] += 1
+                actual = zero()
+                comparable = True
+                for index, primary in enumerate(foods):
+                    if primary.get("alternative_to") is not None:
                         continue
-                    missing.append({
-                        "player":draft.get("player_name") or "",
-                        "plan_type":kind,"meal":title,"meal_index":meal_idx,
-                        "option":opt_idx,"option_title":opt.get("title") or "",
-                        "food_index":f_idx,"food":food.get("display_name") or refs.get(food.get("id")) or food.get("label") or "Alimento sem nome",
-                        "alternative":food.get("alternative_to") is not None,
-                    })
-    return missing, [{"plan_type":k[0],"meal":k[1],"drafts":count}
-                     for k,count in sorted(headings.items())]
+                    group = [primary] + [food for food in foods
+                                         if food.get("alternative_to") == index]
+                    choices = [food for food in group if food.get("grams") is not None]
+                    if not choices:
+                        choices = [primary]
+                    nutrients = []
+                    for food in choices:
+                        if food.get("kind") == "supplement" or food.get("grams") is None:
+                            nutrients.append(zero())
+                        else:
+                            ref = library.get(food.get("id"))
+                            if ref is None:
+                                counters["missing_active_food_references"] += 1
+                                comparable = False
+                                break
+                            try:
+                                nutrients.append(nutrients_for_quantity(ref, food["grams"]))
+                            except (ValueError, TypeError, KeyError):
+                                comparable = False
+                                break
+                    if not comparable:
+                        break
+                    for key in FIELDS:
+                        actual[key] += sum(item[key] for item in nutrients) / len(nutrients)
+                if not comparable:
+                    counters["options_not_comparable"] += 1
+                elif any(abs(new_values[key] - actual[key]) > 0.00001 for key in FIELDS):
+                    counters["macro_mismatches"] += 1
+    return counters
