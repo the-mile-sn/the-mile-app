@@ -139,7 +139,7 @@ def published_for_athlete(c, athlete_id):
 def publish(c, draft_id, expected_updated_at=None):
     """Explicit admin-only action: approve saved snapshot for Planeamento.
 
-    Does not publish to athlete apps, old PDF snapshots, or other services.
+    The athlete app reads approved Planos snapshots directly from the shared database. Does not modify old PDF publications.
     """
     import food_plan_drafts_v2
     row = c.execute(
