@@ -1120,6 +1120,41 @@ function renderNutritionTotals(host,label,result,referenceWeight=null){
   host.appendChild(block);
 }
 
+let liveCalendarPlans={};
+function renderLiveMealOptions(day,meal){
+ const box=document.createElement("details");box.className="calendar-day-meal-options";
+ const summary=document.createElement("summary");summary.textContent="Ver opções";box.append(summary);
+ const record=liveCalendarPlans[day.date]?.meals?.[meal];
+ const state=record?.status||"unavailable";
+ if(state!=="ok"&&state!=="provisional"){
+  const messages={no_color:"Sem cor atribuída neste dia.",missing_plan:"Não existe este plano nos rascunhos do jogador.",ambiguous_plan:"Existem vários rascunhos deste tipo. Rever a associação.",missing_meal:"Este plano não contém esta refeição.",ambiguous_meal:"Existem várias refeições correspondentes.",missing_options:"Esta refeição não contém opções.",unavailable:"Pré-visualização indisponível; o calendário anterior permanece intacto."};
+  const note=document.createElement("p");note.className="calendar-day-options-note";note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
+ }
+ (record.options||[]).forEach((option,index)=>{
+  const section=document.createElement("section");section.className="calendar-day-meal-option";
+  const heading=document.createElement("strong");heading.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");section.append(heading);
+  const foods=option.foods||[],notes=option.notes||[];
+  const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
+  for(const item of order){
+   const line=document.createElement("span");line.className="calendar-day-food-line";
+   if(item.type==="note"){
+    if(!notes[item.index])continue;
+    line.textContent=notes[item.index];line.classList.add("is-note");
+   }else{
+    const food=foods[item.index];if(!food)continue;
+    const alternative=food.alternative_to!=null;if(alternative)line.classList.add("is-alternative");
+    const amount=food.display_quantity|| (food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
+    line.textContent=(alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
+   }
+   section.append(line);
+  }
+  if(option.nutrition){const macros=document.createElement("small");macros.className="calendar-day-food-macro";macros.textContent=nutritionSummary(option.nutrition)+(option.provisional?" · Provisório":"");section.append(macros);}
+  box.append(section);
+ });
+ if(state==="provisional"){const note=document.createElement("p");note.className="calendar-day-options-note";note.textContent="Valores provisórios: há quantidades por confirmar.";box.append(note);}
+ return box;
+}
+
 function renderDayPreview(day,host){
  host.replaceChildren();
  window.currentNutritionDay=day;
@@ -1169,6 +1204,7 @@ function renderDayPreview(day,host){
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
    unavailable.textContent=entry.color?"Valores nutricionais indisponíveis":"—";if(!entry.color)unavailable.setAttribute("aria-label","Sem refeição atribuída");cell.append(unavailable);
   }
+  cell.append(renderLiveMealOptions(day,entry.meal));
   grid.appendChild(cell);
  }
  host.appendChild(grid);
@@ -1191,7 +1227,8 @@ async function loadCalendar(){
   if(!model)return;
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
-  const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last)+"&include_food_plans=1");
+  liveCalendarPlans=data.live_food_plans?.days||{};
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
   effectiveAdminColorsByDay=data.effective_colors||{};
   periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
