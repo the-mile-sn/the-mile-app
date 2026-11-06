@@ -2041,3 +2041,19 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{bo
 #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{display:flex;align-items:center;gap:5px;margin:0!important;padding:9px 0 0!important;border:0!important;border-top:1px solid rgba(147,154,166,.19)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;flex-wrap:wrap;min-width:0}
 #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button{min-height:37px;border-radius:9px;padding:9px 13px!important}
 @media(max-width:650px){#tm-admin-legacy .tm-planning-unified-header{padding:12px 12px 8px;margin-bottom:12px}#tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{min-height:52px;padding-bottom:10px!important}#tm-admin-legacy .tm-planning-unified-header #tm-planning-avatar{width:40px;height:40px;flex-basis:40px}#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button{flex:none;padding:9px 11px!important}}
+
+/* Optional independent loading photograph in the Player profile. */
+#tm-players-page .tm-player-loading-photo-card{display:flex;flex-direction:column;gap:17px;padding:19px 20px;margin:19px 0;border:1px solid #343740;border-radius:16px;background:#1b1d22}
+#tm-players-page .tm-player-loading-photo-info strong{font-size:15px;font-weight:500;color:#f2f3f5}
+#tm-players-page .tm-player-loading-photo-info p{max-width:650px;font-size:12px;line-height:1.55;color:#a5aab4;margin:7px 0 0}
+#tm-players-page .tm-player-loading-photo-editor{display:flex;align-items:center;gap:19px}
+#tm-players-page .tm-player-loading-photo-preview{width:96px;height:171px;border:1px solid #42464f;background:#111216;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:none;padding:0}
+#tm-players-page .tm-player-loading-photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+#tm-players-page .tm-player-loading-photo-preview span{color:#979da8;font-size:11px;text-align:center;padding:12px;line-height:1.5}
+#tm-players-page .tm-player-loading-photo-controls{display:flex;flex-direction:column;gap:11px;align-items:flex-start}
+#tm-players-page .tm-player-loading-photo-upload{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border:1px solid #424751;background:#2b2f36;border-radius:999px;color:#f4f5f6;font:500 13px "Inter Tight",sans-serif;cursor:pointer}
+#tm-players-page .tm-player-loading-photo-upload:has(input:disabled){opacity:.48;cursor:not-allowed}
+#tm-players-page .tm-player-loading-photo-upload input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+#tm-players-page .tm-player-loading-photo-controls p{margin:0;color:#a4aab4;font-size:12px}
+#tm-players-page #tm-player-loading-photo-delete{min-height:35px;padding:7px 14px;font-size:12px}
+@media(max-width:550px){#tm-players-page .tm-player-loading-photo-editor{align-items:flex-start;gap:12px}#tm-players-page .tm-player-loading-photo-card{padding:15px}}
