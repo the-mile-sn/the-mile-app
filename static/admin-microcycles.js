@@ -1324,7 +1324,7 @@ async function loadCalendar(){
   // Keep the weekly summary outside the collapsible month-events details.
   $("calendar-month-events").insertAdjacentElement("afterend",weekly);
   weekly.replaceChildren();
-  const heading=document.createElement("h3");heading.textContent="Sistema anterior · média semanal (referência)";weekly.appendChild(heading);
+  const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation";
   const previous=document.createElement("button");previous.type="button";previous.textContent="← Semana anterior";
   const next=document.createElement("button");next.type="button";next.textContent="Semana seguinte →";
@@ -1336,43 +1336,47 @@ async function loadCalendar(){
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
   const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
   dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
-  const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
-  const weeklyColors=colorOverrideLookup(weeklyData.meal_color_overrides);
-  const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri,weeklyColors));
-  const covered=results.filter(item=>item.total).length;
-  const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
-  const progress=document.createElement("p");progress.className="calendar-week-coverage";
-  progress.textContent=covered+"/7 dias com valores nutricionais disponíveis";
+  const liveByDay=weeklyData.live_food_plans?.days||{};
+  const liveEntries=weeklyData.days.map(d=>liveByDay[d.date]).filter(Boolean);
+  const fullDays=liveEntries.filter(x=>x.state==="complete").length;
+  const complete=weeklyData.days.length===7&&fullDays===7;
+  const coverage=document.createElement("p");coverage.className="calendar-week-coverage";
+  coverage.textContent=fullDays+"/7 dias com prescrição nutricional completa · Fonte: Planos";
   if(complete){
-    const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-    for(const result of results)for(const key of Object.keys(sums))sums[key]+=result.total[key];
-    const average=Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7]));
-    const relativeMeans={};for(const key of Object.keys(sums)){const ratios=results.map((result,i)=>{const rawWeight=dayWeightReferences[weeklyData.days[i]?.date]?.weight_kg;const w=rawWeight==null?NaN:Number(rawWeight);return Number.isFinite(w)&&w>0?result.total[key]/w:null;});if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/ratios.length;}
-    nutritionCards(weekly,average,null,relativeMeans);
+   const liveSums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+   for(const day of liveEntries)for(const key of Object.keys(liveSums))liveSums[key]+=day.nutrition[key];
+   const average=Object.fromEntries(Object.entries(liveSums).map(([key,value])=>[key,value/7]));
+   const relativeMeans={};
+   for(const key of Object.keys(liveSums)){
+    const ratios=weeklyData.days.map((day,index)=>{
+     const weight=Number(dayWeightReferences[day.date]?.weight_kg);
+     return Number.isFinite(weight)&&weight>0?liveEntries[index].nutrition[key]/weight:null;
+    });
+    if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/7;
+   }
+   nutritionCards(weekly,average,null,relativeMeans);
   }else{
-    const warning=document.createElement("p");
-    warning.textContent="Média diária semanal indisponível: faltam prescrições ou valores nutricionais para completar os sete dias.";
-    weekly.appendChild(warning);
+   const warning=document.createElement("p");warning.className="calendar-live-warning";
+   warning.textContent="Média semanal indisponível: existem dias com planos em falta ou valores provisórios. Não são usados valores antigos.";
+   weekly.append(warning);
   }
-  weekly.appendChild(progress);
-  const liveWeekly=weeklyData.live_food_plans?.days||{};
-  const liveEntries=weeklyData.days.map(d=>liveWeekly[d.date]).filter(Boolean);
-  const liveComplete=liveEntries.length===7&&liveEntries.every(x=>x.state==="complete");
-  const livePanel=document.createElement("section");livePanel.className="calendar-live-weekly";
-  const liveTitle=document.createElement("h4");liveTitle.textContent="Novo módulo Planos · média semanal de teste";livePanel.append(liveTitle);
-  const coverage=document.createElement("p");coverage.className="hint";
-  coverage.textContent=liveEntries.filter(x=>x.state==="complete").length+"/7 dias completos · Refeições de cores + momentos peri aplicáveis";
-  livePanel.append(coverage);
-  if(liveComplete){
-    const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-    for(const item of liveEntries)for(const key of Object.keys(sums))sums[key]+=item.nutrition[key];
-    nutritionCards(livePanel,Object.fromEntries(Object.keys(sums).map(k=>[k,sums[k]/7])));
+  weekly.append(coverage);
+  const historical=document.createElement("details");historical.className="calendar-legacy-summary";
+  const historicHeader=document.createElement("summary");historicHeader.textContent="Comparar com a média semanal do sistema anterior";
+  historical.append(historicHeader);
+  const oldPeriByDay=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(p=>p.event_date===d.date)]));
+  const oldColorMap=colorOverrideLookup(weeklyData.meal_color_overrides);
+  const oldTotals=weeklyData.days.map(d=>plannedDayTotals(d,oldPeriByDay,oldColorMap));
+  if(oldTotals.length===7&&oldTotals.every(x=>x.state==="complete"&&x.total)){
+   const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+   for(const day of oldTotals)for(const key of Object.keys(sums))sums[key]+=day.total[key];
+   nutritionCards(historical,Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7])));
   }else{
-    const partial=document.createElement("p");partial.className="calendar-live-warning";
-    partial.textContent="Média não apresentada: existem refeições sem plano válido ou com valores provisórios.";
-    livePanel.append(partial);
+   const hint=document.createElement("p");hint.className="hint";
+   hint.textContent="A referência antiga também tem dias com valores nutricionais incompletos.";
+   historical.append(hint);
   }
-  weekly.prepend(livePanel);
+  weekly.append(historical);
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
