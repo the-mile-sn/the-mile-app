@@ -26,15 +26,15 @@ function renderPersistence(){
  const title=$("plan-save-feedback-title"),desc=$("plan-save-feedback-description"),icon=$("plan-save-feedback-icon"),time=$("plan-save-feedback-time");
  const chip=$("plan-state-chip"),save=$("save-plan"),publish=$("assign-player");
  const dirty=planIsDirty(),state=publicationState?.state||"draft";
- let display="new",caption="Por guardar",message="Novo plano por guardar",detail="Guarda o plano para o poderes publicar no Planeamento.",symbol="○";
+ let display="new",caption="Por guardar",message="Novo plano por guardar",detail="Guarda o plano para depois o publicares no Planeamento e na app do jogador.",symbol="○";
  if(!plan.id){display="new";}
  else if(dirty){display="dirty";caption="Alterações por guardar";message="Alterações por guardar";detail="Guarda primeiro o rascunho. O Planeamento mantém a última versão aprovada.";symbol="!";}
  else if(state==="published"&&!publicationState.pending_changes){display="published";caption="Publicado · Planeamento e jogador";message="Plano publicado para o Planeamento e a app do jogador";detail="Versão aprovada e disponível no Planeamento e na app do jogador.";symbol="✓";}
  else if(state==="transitional"&&!publicationState.pending_changes){display="transitional";caption="Em uso no Planeamento";message="Guardado e já ligado ao Planeamento";detail="Plano existente preservado. Clica em Publicar para confirmar esta versão.";symbol="✓";}
- else if(publicationState.pending_changes){display="pending";caption="Alterações por publicar";message="Rascunho guardado · alterações por publicar";detail="O Planeamento continua a utilizar a última versão aprovada.";symbol="✓";}
- else {display="saved";caption="Rascunho guardado";message="Rascunho guardado com sucesso";detail="Ainda não aparece no Planeamento. Publica quando estiver validado.";symbol="✓";}
+ else if(publicationState.pending_changes){display="pending";caption="Alterações por publicar";message="Rascunho guardado · alterações por publicar";detail="O Planeamento e a app do jogador continuam a utilizar a última versão aprovada.";symbol="✓";}
+ else {display="saved";caption="Rascunho guardado";message="Rascunho guardado com sucesso";detail="Ainda não aparece no Planeamento nem na app do jogador. Publica quando estiver validado.";symbol="✓";}
  if(saveBusy){display="saving";caption="A guardar…";message="A guardar alterações…";detail="A confirmar o registo na base de dados.";symbol="…";}
- if(publishBusy){display="saving";caption="A publicar…";message="A publicar no Planeamento…";detail="A confirmar a versão aprovada.";symbol="…";}
+ if(publishBusy){display="saving";caption="A publicar…";message="A publicar para Planeamento e jogador…";detail="A confirmar a versão aprovada.";symbol="…";}
  if(persistenceError){display="error";caption="Ação não concluída";message="Não foi possível concluir a ação";detail=persistenceError;symbol="!";}
  panel.dataset.state=display;chip.dataset.state=display;chip.textContent=caption;
  title.textContent=message;desc.textContent=detail;icon.textContent=symbol;
@@ -334,7 +334,7 @@ $("assign-player").onclick=async()=>{
   renderPersistence();return;
  }
  if(publicationState?.state==="published"&&!publicationState.pending_changes)return;
- if(!confirm("Publicar «"+plan.name+"» apenas no Planeamento do Backoffice?\n\n"+
+ if(!confirm("Publicar «"+plan.name+"» no Planeamento e na app do jogador?\n\n"+
   "Esta ação aprova os alimentos, quantidades e valores nutricionais guardados para o Planeamento e para o jogador.\n"+
   "O jogador verá esta versão quando a app atualizar os dados."))return;
  persistenceError="";publishBusy=true;renderPersistence();
@@ -347,7 +347,7 @@ $("assign-player").onclick=async()=>{
   publicationState=result.publication;publishBusy=false;persistenceError="";
   renderPersistence();
   await loadDrafts().catch(()=>status("Plano publicado. A lista não foi atualizada."));
-  status("Plano publicado para o Planeamento e a app do jogador. Não foi enviado à app dos jogadores.");
+  status("Plano publicado no Planeamento e disponível na app do jogador.");
  }catch(err){
   publishBusy=false;
   const errors={
