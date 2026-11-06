@@ -277,6 +277,13 @@ def initialize():
                                 approved['total'], approved['athletes'])
                 if approved['total'] < 58 or approved['athletes'] < 12:
                     raise RuntimeError('Incomplete approved Planos roster for player activation')
+                option_audit=food_plan_player_v2.audit_published_options(c)
+                logging.warning('Player published Planos option audit: %s', option_audit)
+                if (option_audit['published_plans'] < 58 or
+                    option_audit['options'] < 354 or
+                    option_audit['peri_options'] < 15 or
+                    option_audit['bad_options']):
+                    raise RuntimeError('Published Planos option validation failed')
             except Exception:
                 logging.exception('Player published Planos readiness check failed')
                 raise
