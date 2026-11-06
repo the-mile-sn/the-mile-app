@@ -139,6 +139,109 @@ class BridgeNutritionTests(unittest.TestCase):
         self.assertEqual(result["days"]["2026-11-06"]["meals"]["breakfast"]["status"],
                          "missing_plan")
 
+    def test_training_post_is_added_once_to_color_nutrition(self):
+        self.add(draft(meals=[meal("Pequeno almoço", option(food("pao", 80)))]), "yellow")
+        self.add(draft(kind="Plano Peri-treino",
+                       meals=[meal("Pós treino", option(food("fruta", 100)))]), "peri")
+        day = "2026-11-06"
+        event = {"id": "t1", "kind": "training", "event_date": day,
+                 "session": "morning", "pre_override": "auto", "post_override": "auto"}
+        result = resolve(self.c, "a1", {day: {"breakfast": {"color": "yellow"}}},
+                         events=[event])
+        report = result["days"][day]
+        self.assertAlmostEqual(report["nutrition"]["kcal"], 280)
+        self.assertAlmostEqual(report["color_nutrition"]["kcal"], 200)
+        self.assertAlmostEqual(report["peri_nutrition"]["kcal"], 80)
+        self.assertTrue(report["peri_included"])
+        self.assertEqual(len(report["peri_events"]), 1)
+        self.assertEqual(report["peri_events"][0]["phase"], "post_training")
+
+    def test_pre_and_post_training_are_distinct_phases(self):
+        self.add(draft(kind="Plano Peri-treino", meals=[
+            meal("Pré-treino", option(food("pao", 80))),
+            meal("Pós-treino", option(food("fruta", 100)))]), "peri")
+        day = "2026-11-06"
+        e = {"id": "t1", "kind": "training", "event_date": day,
+             "session": "afternoon", "pre_override": "auto", "post_override": "auto"}
+        report = resolve(self.c, "a1", {day: {}}, events=[e])["days"][day]
+        self.assertEqual({r["phase"] for r in report["peri_events"]},
+                         {"pre_training", "post_training"})
+        self.assertAlmostEqual(report["peri_nutrition"]["kcal"], 280)
+
+    def test_post_training_off_excludes_post_nutrients(self):
+        self.add(draft(kind="Plano Peri-treino",
+                       meals=[meal("Pós treino", option(food("pao", 80)))]), "peri")
+        day = "2026-11-06"
+        report = resolve(self.c, "a1", {day: {}}, events=[{
+            "id": "t1", "kind": "training", "event_date": day, "session": "morning",
+            "pre_override": "auto", "post_override": "off"}])["days"][day]
+        self.assertEqual(report["peri_nutrition"]["kcal"], 0)
+        self.assertEqual(report["peri_events"], [])
+
+    def test_match_intra_is_included_once_even_when_both_sources_exist(self):
+        self.add(draft(kind="Plano Peri-jogo",
+                       meals=[meal("Intra Jogo", option(food("pao", 80)))]), "peri")
+        day = "2026-11-06"
+        calendar_match = {"id": "calendar_match", "kind": "match",
+                          "event_date": day, "session": "morning",
+                          "pre_override": "auto", "post_override": "auto"}
+        official_match = {"id": "official_match", "match_date": day, "match_time": "10:00"}
+        report = resolve(self.c, "a1", {day: {}}, events=[calendar_match],
+                         matches=[official_match])["days"][day]
+        self.assertAlmostEqual(report["peri_nutrition"]["kcal"], 200)
+        self.assertEqual(len(report["peri_events"]), 1)
+        self.assertEqual(report["peri_events"][0]["phase"], "intra_match")
+        self.assertTrue(report["peri_events"][0]["deduplicated_match_source"])
+
+    def test_match_intra_pre_flag_off_skips_the_protocol(self):
+        self.add(draft(kind="Plano Peri-jogo",
+                       meals=[meal("Intra-jogo", option(food("pao", 80)))]), "peri")
+        day = "2026-11-06"
+        report = resolve(self.c, "a1", {day: {}}, events=[{
+            "id": "m1", "kind": "match", "event_date": day, "session": "morning",
+            "pre_override": "off", "post_override": "auto"}])["days"][day]
+        self.assertEqual(report["peri_nutrition"]["kcal"], 0)
+
+    def test_independent_training_events_have_independent_prescriptions(self):
+        self.add(draft(kind="Plano Peri-treino",
+                       meals=[meal("Pós-treino", option(food("pao", 80)))]), "peri")
+        day = "2026-11-06"
+        events = [{"id": x, "kind": "training", "event_date": day, "session": session,
+                   "pre_override": "auto", "post_override": "auto"}
+                  for x, session in (("morning", "morning"), ("afternoon", "afternoon"))]
+        report = resolve(self.c, "a1", {day: {}}, events=events)["days"][day]
+        self.assertAlmostEqual(report["peri_nutrition"]["kcal"], 400)
+        self.assertEqual(len(report["peri_events"]), 2)
+
+    def test_peri_without_plan_is_not_invented(self):
+        day = "2026-11-06"
+        event = {"id": "m1", "kind": "match", "event_date": day, "session": "morning",
+                 "pre_override": "auto", "post_override": "auto"}
+        report = resolve(self.c, "a1", {day: {}}, events=[event])["days"][day]
+        self.assertEqual(report["peri_events"], [])
+        self.assertEqual(report["peri_nutrition"]["kcal"], 0)
+
+    def test_unknown_peri_phase_is_reported_not_silently_included(self):
+        self.add(draft(kind="Plano Peri-jogo",
+                       meals=[meal("Intervalo", option(food("pao", 80)))]), "peri")
+        day = "2026-11-06"
+        event = {"id": "m1", "kind": "match", "event_date": day, "session": "morning",
+                 "pre_override": "auto", "post_override": "auto"}
+        report = resolve(self.c, "a1", {day: {}}, events=[event])["days"][day]
+        self.assertEqual(report["state"], "partial")
+        self.assertEqual(report["peri_nutrition"]["kcal"], 0)
+        self.assertEqual(report["issues"][0]["status"], "unmapped_peri_meal")
+
+    def test_peri_missing_quantity_marks_day_partial(self):
+        self.add(draft(kind="Plano Peri-treino",
+                       meals=[meal("Pós treino", option(food("pao", None)))]), "peri")
+        day = "2026-11-06"
+        event = {"id": "t1", "kind": "training", "event_date": day, "session": "morning",
+                 "pre_override": "auto", "post_override": "auto"}
+        report = resolve(self.c, "a1", {day: {}}, events=[event])["days"][day]
+        self.assertEqual(report["state"], "partial")
+        self.assertEqual(report["peri_events"][0]["status"], "provisional")
+
     def tearDown(self):
         self.c.close()
 
