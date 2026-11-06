@@ -114,3 +114,5 @@ html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(
 html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(2)>strong,html[data-admin-theme="light"] #plan-preview .preview-protein{color:#3678b4!important}
 html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(3)>strong,html[data-admin-theme="light"] #plan-preview .preview-carbs{color:#ad672e!important}
 html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(4)>strong,html[data-admin-theme="light"] #plan-preview .preview-fat{color:#9c811d!important}
+
+html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette="vp"]{--preview-bg:#d8e9de;--preview-fg:#24513a;--preview-option:#eef7f0}
