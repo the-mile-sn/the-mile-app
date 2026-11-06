@@ -4123,3 +4123,12 @@ body:has(#login-panel:not([hidden])) #login-panel{margin-top:38px!important}
 .daily-weight-chart-surface .assessment-chart-point{fill:#1b1b20;stroke:#a2ddc0;stroke-width:2}
 .daily-weight-chart-surface .assessment-chart-value{fill:#d7f0e2;font-size:10.5px;font-weight:600}
 .daily-weight-chart-surface .assessment-chart-tick{fill:#9496a1;font-size:10px}
+
+/* PWA session check: do not flash login before checking stored session. */
+.player-session-loading{min-height:45dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;text-align:center;padding:28px 18px;color:#a7abb4;font:500 14px/1.5 "Inter Tight",Arial,sans-serif}
+.player-session-loading[hidden]{display:none!important}
+.player-session-loading p{margin:0}
+.player-session-loader{display:block;width:28px;height:28px;border-radius:50%;border:2px solid rgba(169,174,186,.23);border-top-color:#c8ced8;animation:tm-session-spin .8s linear infinite}
+.player-session-loading #player-session-retry{border:1px solid #535862;background:#292b31;color:#f2f4f6;border-radius:12px;padding:11px 20px;font:500 14px "Inter Tight",Arial,sans-serif}
+@keyframes tm-session-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.player-session-loader{animation:none}}
