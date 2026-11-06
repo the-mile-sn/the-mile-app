@@ -521,3 +521,6 @@ html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-row:hover td{
  background:#f7f9fc;
 }
 html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-empty{color:#64748b}
+
+html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface{background:transparent!important;border:0!important;box-shadow:none!important}
+html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table-scroll{background:#fff;border-color:var(--tm-light-border,#d7dfe9)}
