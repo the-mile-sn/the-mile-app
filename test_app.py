@@ -115,7 +115,13 @@ class PortalTest(unittest.TestCase):
         self.assertIn(f'Max-Age={app.PLAYER_SESSION_SECONDS}', login['headers']['Set-Cookie'])
         self.assertIn('HttpOnly', login['headers']['Set-Cookie'])
         self.assertIn('SameSite=Lax', login['headers']['Set-Cookie'])
-        self.assertIn('Max-Age=43200', self.admin.request('/api/me')['headers'].get('Set-Cookie', 'Max-Age=43200'))
+        self.assertEqual(self.admin.request('/api/logout', 'POST', {})['status'], 200)
+        admin_login = self.admin.request('/api/login', 'POST', {
+            'identifier': 'filipesousa@themile.pt', 'password': 'private-password-123'
+        })
+        self.assertEqual(admin_login['status'], 200)
+        self.assertIn('Max-Age=43200', admin_login['headers']['Set-Cookie'])
+        self.admin.request('/api/me')
         first_cookie = player.cookie
         self.assertIsNotNone(player.request('/api/me')['body']['user'])
         self.assertEqual(player.cookie, first_cookie)
