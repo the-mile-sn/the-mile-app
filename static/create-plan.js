@@ -29,7 +29,7 @@ function renderPersistence(){
  let display="new",caption="Por guardar",message="Novo plano por guardar",detail="Guarda o plano para o poderes publicar no Planeamento.",symbol="○";
  if(!plan.id){display="new";}
  else if(dirty){display="dirty";caption="Alterações por guardar";message="Alterações por guardar";detail="Guarda primeiro o rascunho. O Planeamento mantém a última versão aprovada.";symbol="!";}
- else if(state==="published"&&!publicationState.pending_changes){display="published";caption="Publicado no Planeamento";message="Plano publicado no Planeamento";detail="Versão aprovada e em utilização no Backoffice. A app dos jogadores não foi alterada.";symbol="✓";}
+ else if(state==="published"&&!publicationState.pending_changes){display="published";caption="Publicado · Planeamento e jogador";message="Plano publicado para o Planeamento e a app do jogador";detail="Versão aprovada e disponível no Planeamento e na app do jogador.";symbol="✓";}
  else if(state==="transitional"&&!publicationState.pending_changes){display="transitional";caption="Em uso no Planeamento";message="Guardado e já ligado ao Planeamento";detail="Plano existente preservado. Clica em Publicar para confirmar esta versão.";symbol="✓";}
  else if(publicationState.pending_changes){display="pending";caption="Alterações por publicar";message="Rascunho guardado · alterações por publicar";detail="O Planeamento continua a utilizar a última versão aprovada.";symbol="✓";}
  else {display="saved";caption="Rascunho guardado";message="Rascunho guardado com sucesso";detail="Ainda não aparece no Planeamento. Publica quando estiver validado.";symbol="✓";}
@@ -42,7 +42,7 @@ function renderPersistence(){
  save.classList.toggle("is-confirmed",["saved","pending","published","transitional"].includes(display));
  publish.classList.toggle("is-confirmed",display==="published");
  save.textContent=saveBusy?"A guardar…":!plan.id?"Guardar rascunho":dirty?"Guardar alterações":"✓ Guardado";
- publish.textContent=display==="published"?"✓ Publicado":display==="pending"?"Publicar alterações":"Publicar no Planeamento";
+ publish.textContent=display==="published"?"✓ Publicado":display==="pending"?"Publicar alterações":"Publicar plano";
  save.disabled=saveBusy||publishBusy||(!dirty&&!persistenceError);
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
 }
@@ -235,7 +235,7 @@ const draftMeta=d=>{
  const origin=d.legacy_migration?"Cópia antiga":d.origin==="json_import"?"Importado · JSON":"Plano guardado";
  const pub=d.publication||{state:"draft",pending_changes:false};
  const state=pub.pending_changes?"pending":pub.state;
- const caption=state==="published"?"Publicado no Planeamento":state==="transitional"?"Em uso no Planeamento":state==="pending"?"Alterações por publicar":"Rascunho · por publicar";
+ const caption=state==="published"?"Publicado · Planeamento e jogador":state==="transitional"?"Em uso no Planeamento":state==="pending"?"Alterações por publicar":"Rascunho · por publicar";
  return '<small style="display:block;opacity:.7;margin-top:6px;font-weight:400">'+esc(origin)+" · Guardado "+esc(date)+'</small>'+
   '<span class="plan-publication-label" data-state="'+esc(state)+'">'+esc(caption)+'</span>';
 };
@@ -335,8 +335,8 @@ $("assign-player").onclick=async()=>{
  }
  if(publicationState?.state==="published"&&!publicationState.pending_changes)return;
  if(!confirm("Publicar «"+plan.name+"» apenas no Planeamento do Backoffice?\n\n"+
-  "Esta ação aprova os alimentos, quantidades e valores nutricionais guardados.\n"+
-  "A app dos jogadores NÃO será alterada."))return;
+  "Esta ação aprova os alimentos, quantidades e valores nutricionais guardados para o Planeamento e para o jogador.\n"+
+  "O jogador verá esta versão quando a app atualizar os dados."))return;
  persistenceError="";publishBusy=true;renderPersistence();
  try{
   const csrf=(await request("/api/me")).csrf||"";
@@ -347,7 +347,7 @@ $("assign-player").onclick=async()=>{
   publicationState=result.publication;publishBusy=false;persistenceError="";
   renderPersistence();
   await loadDrafts().catch(()=>status("Plano publicado. A lista não foi atualizada."));
-  status("Plano publicado no Planeamento. Não foi enviado à app dos jogadores.");
+  status("Plano publicado para o Planeamento e a app do jogador. Não foi enviado à app dos jogadores.");
  }catch(err){
   publishBusy=false;
   const errors={
