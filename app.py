@@ -335,6 +335,10 @@ def initialize():
                 associations = food_plan_calendar_bridge_v2.audit_event_links(
                     c, first_check, last_check)
                 logging.warning('Read-only live peri event association audit: %s', associations)
+                weekly_coverage = food_plan_calendar_bridge_v2.audit_effective_color_planning(
+                    c, (reference_day-timedelta(days=7)).isoformat(),
+                    (reference_day+timedelta(days=21)).isoformat())
+                logging.warning('Live microcycle-to-Planos calendar coverage audit: %s', weekly_coverage)
             except Exception:
                 logging.exception('Read-only live peri event association audit failed')
         supplements_v2.initialize(c)
