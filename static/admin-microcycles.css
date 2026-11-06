@@ -1989,3 +1989,17 @@ html[data-admin-theme="light"] #calendar-section .calendar-event-form>#calendar-
 #calendar-section .calendar-option-accordion-heading strong{font-size:14px;line-height:1.45;min-width:0;overflow-wrap:anywhere}
 #calendar-section .calendar-option-accordion[open] .calendar-option-accordion-heading{border-bottom:1px solid #59616c50;margin-bottom:8px}
 #calendar-section .calendar-option-accordion .calendar-day-food-line,#calendar-section .calendar-option-accordion .calendar-day-food-macro{margin-left:18px!important;margin-right:18px!important}
+
+/* Food option colours match the corresponding published colour plan */
+#calendar-section .calendar-wide-options[data-palette="yellow"]{--food-opt-bg:#513c12;--food-opt-fg:#ffdb77;--food-opt-inner:#634d20}
+#calendar-section .calendar-wide-options[data-palette="orange"]{--food-opt-bg:#53351c;--food-opt-fg:#ffca95;--food-opt-inner:#67482b}
+#calendar-section .calendar-wide-options[data-palette="blue"]{--food-opt-bg:#203e54;--food-opt-fg:#a8d8fb;--food-opt-inner:#30536b}
+#calendar-section .calendar-wide-options[data-palette="green"]{--food-opt-bg:#234535;--food-opt-fg:#a7e1b9;--food-opt-inner:#355942}
+#calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion{background:var(--food-opt-inner,#282c34)!important;color:var(--food-opt-fg,inherit)!important;border-color:color-mix(in srgb,var(--food-opt-fg,white) 22%,transparent)!important}
+#calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion-heading{color:inherit!important}
+#calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion .calendar-day-food-line{color:inherit!important}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="yellow"]{--food-opt-bg:#fff0bb;--food-opt-fg:#725313;--food-opt-inner:#fff9e7}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="orange"]{--food-opt-bg:#ffdfc3;--food-opt-fg:#804717;--food-opt-inner:#fff3e8}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="blue"]{--food-opt-bg:#dceeff;--food-opt-fg:#24577d;--food-opt-inner:#f1f8ff}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="green"]{--food-opt-bg:#d9f1e2;--food-opt-fg:#245e40;--food-opt-inner:#eef9f2}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion{background:var(--food-opt-inner)!important;color:var(--food-opt-fg)!important;border-color:color-mix(in srgb,var(--food-opt-fg) 22%,transparent)!important}
