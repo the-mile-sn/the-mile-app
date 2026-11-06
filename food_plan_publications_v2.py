@@ -202,3 +202,40 @@ def publish(c, draft_id, expected_updated_at=None):
 
 def may_delete(c, draft_id):
     return publication_for_draft(c, draft_id) is None
+
+
+def approve_initial_roster_for_players(c):
+    """One-time explicit approval of all current validated Planos.
+
+    Called only for the user's authorized cutover. All writes succeed or
+    none do; it never touches legacy PDF/player publications.
+    """
+    marker = "player_cutover_2026_11_06"
+    if c.execute("SELECT id FROM v2_food_editor_cutover WHERE id=?", (marker,)).fetchone():
+        return {"already_approved": True, "approved": 0}
+    rows = c.execute(
+        "SELECT id,content,updated_at FROM v2_food_plan_drafts").fetchall()
+    active = c.execute(
+        "SELECT COUNT(*) AS n FROM v2_food_plan_editor_publications").fetchone()["n"]
+    if len(rows) != active or active <= 0:
+        raise ValueError("publication_roster_not_one_to_one")
+    c.execute("SAVEPOINT approve_initial_roster")
+    try:
+        approved = 0
+        for row in rows:
+            if not publication_for_draft(c, row["id"]):
+                raise ValueError("draft_without_approved_snapshot")
+            # Validate the latest saved prescription, including amounts and
+            # active library records, then freeze it as the player's version.
+            publish(c, row["id"], row["updated_at"])
+            approved += 1
+        if approved != active:
+            raise ValueError("approval_count_mismatch")
+        c.execute("INSERT INTO v2_food_editor_cutover(id,created_at) VALUES (?,?)",
+                  (marker, int(time.time())))
+        c.execute("RELEASE SAVEPOINT approve_initial_roster")
+    except Exception:
+        c.execute("ROLLBACK TO SAVEPOINT approve_initial_roster")
+        c.execute("RELEASE SAVEPOINT approve_initial_roster")
+        raise
+    return {"already_approved": False, "approved": approved}
