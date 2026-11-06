@@ -1245,7 +1245,8 @@ def application(env, start_response):
                 image_key = 'player-loading:' + user['id']
                 photo = c.execute("SELECT image_data FROM v2_shared_images WHERE image_key=?", (image_key,)).fetchone()
                 if not photo: raise Problem(404, 'not_found')
-                return respond(200, bytes(photo['image_data']), 'image/webp')
+                data = bytes(photo['image_data'])
+                return respond(200, data, 'image/webp' if data[:4] == b'RIFF' and data[8:12] == b'WEBP' else 'image/jpeg')
 
             if path == '/api/v2/player/profile-photo' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
