@@ -327,6 +327,16 @@ def initialize():
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
+        if SITE_ROLE == 'admin':
+            try:
+                reference_day = datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                first_check=(reference_day-timedelta(days=14)).isoformat()
+                last_check=(reference_day+timedelta(days=45)).isoformat()
+                associations = food_plan_calendar_bridge_v2.audit_event_links(
+                    c, first_check, last_check)
+                logging.warning('Read-only live peri event association audit: %s', associations)
+            except Exception:
+                logging.exception('Read-only live peri event association audit failed')
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
         monitoring_v2.initialize(c)
