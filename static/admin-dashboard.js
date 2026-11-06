@@ -338,14 +338,31 @@ function ensurePlanningOnlyView(){
  async function resizePlayerLoadingPhoto(file){
   if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw Error("Escolhe uma imagem JPG, PNG ou WebP.");
   if(file.size>15*1024*1024)throw Error("A fotografia original deve ter até 15 MB.");
-  const picture=await new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Não foi possível ler a fotografia."))};img.src=url;});
+  // Already optimized WebP files (including the supplied Dalot photo) must not
+  // be re-encoded: some browsers can display WebP but cannot export WebP from canvas.
+  if(file.type==="image/webp"&&file.size<=3*1024*1024){
+   return await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||""));
+    reader.onerror=()=>reject(Error("Não foi possível ler a fotografia."));
+    reader.readAsDataURL(file);
+   });
+  }
+  const picture=await new Promise((resolve,reject)=>{
+   const img=new Image(),url=URL.createObjectURL(file);
+   img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+   img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Não foi possível ler a fotografia."));};
+   img.src=url;
+  });
   const canvas=document.createElement("canvas");canvas.width=900;canvas.height=1600;
   const ctx=canvas.getContext("2d");if(!ctx)throw Error("Não foi possível otimizar a fotografia.");
   const scale=Math.max(900/picture.naturalWidth,1600/picture.naturalHeight);
   const width=picture.naturalWidth*scale,height=picture.naturalHeight*scale;
   ctx.drawImage(picture,(900-width)/2,(1600-height)/2,width,height);
-  const data=canvas.toDataURL("image/webp",.79);
-  if(!data.startsWith("data:image/webp;"))throw Error("Este navegador não permite converter para WebP.");
+  let data=canvas.toDataURL("image/webp",.79);
+  // JPEG fallback is supported by the private endpoint and all target browsers.
+  if(!data.startsWith("data:image/webp;"))data=canvas.toDataURL("image/jpeg",.77);
+  if(!data.startsWith("data:image/webp;")&&!data.startsWith("data:image/jpeg;"))throw Error("Não foi possível otimizar a fotografia neste navegador.");
   if(data.length>4*1024*1024)throw Error("A imagem otimizada é demasiado grande.");
   return data;
  }
