@@ -41,7 +41,7 @@
  // Navigation only changes visibility; it must never return these to Minha conta.
  if(settingsAdmin&&adminList&&inviteForm&&activationPanel){
   settingsAdmin.append(adminList,inviteForm,activationPanel);
-  activationPanel.hidden=false;
+  activationPanel.hidden=true; // Legacy single-user activation link is no longer shown.
  }
  function moveAdminControls(){/* Existing controls remain mounted in Settings. */}
  function navActive(target){
