@@ -523,7 +523,7 @@ def audit_effective_color_planning(c, first, last):
         for day in days:
             colors=prescription_effective_v2.resolve_day(
                 day["date"],day["classification"],
-                base.get(day["classification"],{}),manual,scenarios,matches,responses,today)
+                base.get(day["classification"] or "Geral",{}),manual,scenarios,matches,responses,today)
             dates[day["date"]]=colors
         events=events_v2.list_events(c,aid,first,last)
         controls={(r["match_id"],r["phase"]):r["state"] for r in c.execute(
