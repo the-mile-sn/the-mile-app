@@ -19,7 +19,7 @@
  $("tm-import-confirm").onclick=async()=>{const player=players.find(p=>String(p.id)===$("tm-import-player").value);if(!prepared||!player){$("tm-import-result").textContent="Seleciona o jogador.";return}
   $("tm-import-confirm").disabled=true;try{
    const existing=(await request("/api/v2/food-plan-drafts")).drafts||[];
-   const repeated=prepared.filter(p=>existing.some(d=>String(d.athlete_id||"")===String(player.id)||(!d.athlete_id&&String(d.player_id||"")===String(player.user_id||""))&&d.plan_type===p.plan_type)).map(p=>p.plan_type);
+   const repeated=prepared.filter(p=>existing.some(d=>(String(d.athlete_id||"")===String(player.id)||(!d.athlete_id&&!!player.user_id&&String(d.player_id||"")===String(player.user_id)))&&d.plan_type===p.plan_type)).map(p=>p.plan_type);
    if(repeated.length&&!confirm("Já existem rascunhos destes tipos: "+repeated.join(", ")+". Criar novas cópias independentes, sem substituir os anteriores?"))return;
    if(!confirm("Criar "+prepared.length+" rascunhos para "+player.name+"?"))return;
    const csrf=(await request("/api/me")).csrf||"";let count=0;
