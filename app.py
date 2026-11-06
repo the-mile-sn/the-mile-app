@@ -31,6 +31,7 @@ import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
 import food_plan_drafts_v2
+import food_plan_calendar_bridge_v2
 import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
@@ -1503,7 +1504,8 @@ def application(env, start_response):
                                      'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
-                                     'effective_colors':effective_colors})
+                                     'effective_colors':effective_colors,
+                                      'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/recipe-categories') and method in ('GET','PUT'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
