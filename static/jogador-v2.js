@@ -257,13 +257,24 @@ function displayPlayerRenewal(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return "Por definir";
  return value.slice(8,10)+"/"+value.slice(5,7)+"/"+value.slice(0,4);
 }
+function playerSessionScreen(message,retry=false){
+ const loading=$("player-session-loading");
+ loading.hidden=false;
+ $("player-session-loading-text").textContent=message;
+ $("player-session-retry").hidden=!retry;
+ $("login-panel").hidden=true;
+ $("player-panel").hidden=true;
+}
+function playerSessionReady(){ $("player-session-loading").hidden=true; }
 async function session(){
+ playerSessionScreen("A abrir a The Mile…");
  const epoch=playerSessionEpoch;
  const sessionData=await api("/api/me");
  if(epoch!==playerSessionEpoch)return;
  // /api/me intentionally returns 200 with user:null for an anonymous visitor.
  // Do not treat an ordinary first opening as an expired session.
  if(!sessionData.user){
+  playerSessionReady();
   $("status").textContent="";
   $("login-panel").hidden=false;
   $("player-panel").hidden=true;
@@ -271,10 +282,12 @@ async function session(){
   return;
  }
  if(sessionData.user.role!=="player"){
+  playerSessionReady();
   $("login-panel").hidden=false;
   $("status").textContent="Este acesso não pertence à área do jogador.";
   return;
  }
+ playerSessionScreen("A carregar os teus dados…");
  profileUsername=sessionData.user.username||"";
  playerCsrf=sessionData.csrf||"";
  // The server has four request threads. Give the two required identity/plan
@@ -306,6 +319,7 @@ async function session(){
  if(epoch!==playerSessionEpoch)return;
  plans=p.options_by_color;
  periPlans=p.peri_plans||{};
+ playerSessionReady();
  $("login-panel").hidden=true;
  $("player-panel").hidden=false;
  $("logout").hidden=false;
@@ -1626,7 +1640,12 @@ $("plans-open-prescriptions").onclick=()=>openPlansSection("prescriptions");
 
 
 
-session().catch(()=>{$("login-panel").hidden=false;});
+$("player-session-retry").onclick=()=>session().catch(err=>{
+ if(err.stale)return;
+ if(err.status===401){playerSessionReady();$("login-panel").hidden=false;return;}
+ playerSessionScreen("Não foi possível carregar a sessão. Verifica a ligação e tenta novamente.",true);
+});
+$("player-session-retry").onclick();
 
 
 /* Player anthropometry data. Only clinician-published measurements are shown. */
