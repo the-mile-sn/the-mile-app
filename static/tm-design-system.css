@@ -219,3 +219,23 @@ html[data-admin-theme="light"] body .tm-action-new:hover:not(:disabled){backgrou
 /* New action labels use the shared medium weight, not a bold exception. */
 html body #plan-entry .plan-library-actions #entry-create.tm-action-new,html body #plan-entry .plan-library-actions #entry-create.tm-action-new span:not(.entry-icon){font-weight:500!important}
 html body #plan-entry .plan-library-actions #entry-create.tm-action-new .entry-icon{font-weight:500!important}
+
+/* Canonical The Mile food-plan colours across the Backoffice. */
+:root{--tm-plan-yellow:#e4c85d;--tm-plan-orange:#e89448;--tm-plan-blue:#63a7d8;--tm-plan-green:#72c697;--tm-plan-vp:#28543e}
+#plan-entry .plan-type-tag[data-palette="yellow"]{background:color-mix(in srgb,var(--tm-plan-yellow) 16%,transparent);border-color:color-mix(in srgb,var(--tm-plan-yellow) 45%,transparent);color:var(--tm-plan-yellow)}
+#plan-entry .plan-type-tag[data-palette="orange"]{background:color-mix(in srgb,var(--tm-plan-orange) 16%,transparent);border-color:color-mix(in srgb,var(--tm-plan-orange) 45%,transparent);color:var(--tm-plan-orange)}
+#plan-entry .plan-type-tag[data-palette="blue"]{background:color-mix(in srgb,var(--tm-plan-blue) 16%,transparent);border-color:color-mix(in srgb,var(--tm-plan-blue) 45%,transparent);color:var(--tm-plan-blue)}
+#plan-entry .plan-type-tag[data-palette="green"]{background:color-mix(in srgb,var(--tm-plan-green) 16%,transparent);border-color:color-mix(in srgb,var(--tm-plan-green) 45%,transparent);color:var(--tm-plan-green)}
+#plan-entry .plan-type-tag[data-palette="vp"]{background:color-mix(in srgb,var(--tm-plan-vp) 42%,transparent);border-color:var(--tm-plan-vp);color:#a9dfbe}
+html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="yellow"]{background:#f9f0c5;color:#796009;border-color:#ddc76b}
+html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="orange"]{background:#fae3d0;color:#9a5622;border-color:#e6b189}
+html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="blue"]{background:#e0eef8;color:#27638e;border-color:#95bfdd}
+html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="green"]{background:#e0f3e9;color:#2c764a;border-color:#a7d5b7}
+html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{background:#d5e8dc;color:#24513a;border-color:#83ae94}
+/* Canonical colour controls and planning markers preserve the same accent hues. */
+#matrix .microcycle-color-select[data-color="yellow"],#scenario-editor .microcycle-color-select[data-color="yellow"]{background:var(--tm-plan-yellow)!important;border-color:var(--tm-plan-yellow)!important}
+#matrix .microcycle-color-select[data-color="orange"],#scenario-editor .microcycle-color-select[data-color="orange"]{background:var(--tm-plan-orange)!important;border-color:var(--tm-plan-orange)!important}
+#matrix .microcycle-color-select[data-color="blue"],#scenario-editor .microcycle-color-select[data-color="blue"]{background:var(--tm-plan-blue)!important;border-color:var(--tm-plan-blue)!important}
+#matrix .microcycle-color-select[data-color="green"],#scenario-editor .microcycle-color-select[data-color="green"]{background:var(--tm-plan-green)!important;border-color:var(--tm-plan-green)!important}
+#matrix .microcycle-color-select[data-color="vp"],#scenario-editor .microcycle-color-select[data-color="vp"]{background:var(--tm-plan-vp)!important;border-color:var(--tm-plan-vp)!important;color:#fff!important}
+#calendar-section .day-preview .day-meal-header.meal-vp{background:var(--tm-plan-vp)!important}
