@@ -91,12 +91,140 @@ def option_values(option, library):
     return totals, provisional
 
 
-def resolve(c, athlete_id, colors_by_day):
+
+PERI_TYPES = {"training": "Plano Peri-treino", "match": "Plano Peri-jogo"}
+PERI_LABELS = {
+    "pre_training": "Pré-treino", "post_training": "Pós-treino",
+    "pre_match": "Pré-jogo", "intra_match": "Intra-jogo", "post_match": "Pós-jogo",
+}
+
+
+def _peri_phase(meal_title, kind):
+    name = normalize(meal_title)
+    training = {"pre treino": "pre_training", "pos treino": "post_training"}
+    match = {"pre jogo": "pre_match", "intra jogo": "intra_match",
+             "intrajogo": "intra_match", "pos jogo": "post_match"}
+    return (training if kind == "training" else match).get(name)
+
+
+def _meal_preview(meal, library):
+    options = meal.get("options") or []
+    if not options:
+        return {"status": "missing_options"}
+    values = [option_values(option, library) for option in options]
+    averages = {key: sum(value[key] for value, _ in values) / len(values)
+                for key in FIELDS}
+    pending = any(flag for _, flag in values)
+    previews = []
+    for option, (value, option_pending) in zip(options, values):
+        foods = []
+        for food in option.get("foods") or []:
+            reference = library.get(food.get("id")) or {}
+            foods.append({**food, "library_name": reference.get("display_name", "")})
+        previews.append({
+            "title": option.get("title") or "", "foods": foods,
+            "notes": option.get("notes") or [], "order": option.get("order") or [],
+            "nutrition": value, "provisional": option_pending,
+        })
+    return {"status": "provisional" if pending else "ok",
+            "options": previews, "nutrition": averages, "provisional": pending}
+
+
+def _event_sources(events, matches, match_overrides, dates):
+    """Build events once; collapse the same match in both calendar sources."""
+    result = {}
+    for event in events or []:
+        if event.get("kind") not in PERI_TYPES or event.get("event_date") not in dates:
+            continue
+        result[("calendar", event["id"])] = dict(event)
+    for match in matches or []:
+        date = match.get("match_date")
+        if date not in dates:
+            continue
+        session = ("morning" if not match.get("match_time") or
+                   str(match["match_time"]) < "15:00" else "afternoon")
+        override = match_overrides or {}
+        event = {"id": match["id"], "event_date": date, "kind": "match",
+                 "session": session, "title": "Jogo",
+                 "pre_override": override.get((match["id"], "pre"), "auto"),
+                 "post_override": override.get((match["id"], "post"), "auto")}
+        same = next((existing for existing in result.values()
+                     if existing["kind"] == "match" and
+                     existing["event_date"] == date and
+                     existing["session"] == session), None)
+        if same is not None:
+            same["deduplicated_match_source"] = True
+            # If either source explicitly excludes a protocol, exclusion wins.
+            for field in ("pre_override", "post_override"):
+                values = (same.get(field, "auto"), event.get(field, "auto"))
+                same[field] = "off" if "off" in values else "on" if "on" in values else "auto"
+        else:
+            result[("match", match["id"])] = event
+    return sorted(result.values(), key=lambda row: (
+        row["event_date"], row.get("session") != "morning", row["kind"], row["id"]))
+
+
+def _resolve_peri_for_day(drafts, library, events):
+    rows, total, issues = [], zero(), []
+    for event in events:
+        kind = event["kind"]
+        candidates = drafts.get(PERI_TYPES[kind], [])
+        if not candidates:
+            # An unprescribed peri moment must never be invented automatically.
+            continue
+        if len(candidates) != 1:
+            issues.append({"event_id": event["id"], "status": "ambiguous_peri_plan"})
+            continue
+        entry = candidates[0]
+        grouped = {}
+        for meal in entry["draft"].get("meals") or []:
+            phase = _peri_phase(meal.get("name"), kind)
+            if phase is None:
+                issues.append({"event_id": event["id"],
+                               "status": "unmapped_peri_meal",
+                               "meal_name": meal.get("name") or ""})
+                continue
+            grouped.setdefault(phase, []).append(meal)
+        for phase, matching in grouped.items():
+            if phase in ("pre_training", "pre_match", "intra_match"):
+                control = event.get("pre_override", "auto")
+            else:
+                control = event.get("post_override", "auto")
+            if control == "off":
+                continue
+            status = None
+            if len(matching) != 1:
+                status = "ambiguous_peri_meal"
+                detail = {"status": status}
+            else:
+                detail = _meal_preview(matching[0], library)
+                status = detail["status"]
+            detail.update({
+                "event_id": event["id"], "event_date": event["event_date"],
+                "kind": kind, "session": event.get("session", ""),
+                "phase": phase, "title": PERI_LABELS[phase],
+                "source_meal_name": matching[0].get("name") if len(matching) == 1 else "",
+                "draft_id": entry["id"], "updated_at": entry["updated_at"],
+                "deduplicated_match_source": bool(event.get("deduplicated_match_source")),
+            })
+            rows.append(detail)
+            if status in ("ok", "provisional"):
+                for key in FIELDS:
+                    total[key] += detail["nutrition"][key]
+            if status != "ok":
+                issues.append({"event_id": event["id"], "phase": phase,
+                               "status": status})
+    return rows, total, issues
+
+def resolve(c, athlete_id, colors_by_day, events=None, matches=None, match_overrides=None):
     """Admin-only dynamic preview; no edits or publication changes."""
     from microcycles_v2 import MEALS
     drafts = available_drafts(c, athlete_id)
     rows = c.execute("SELECT id,display_name,variant,edible_fraction,kcal,protein_g,carbs_g,fat_g FROM v2_food_library WHERE active=1").fetchall()
     library = {r["id"]:dict(r) for r in rows}
+    events_by_date = {}
+    for event in _event_sources(events, matches, match_overrides, set(colors_by_day)):
+        events_by_date.setdefault(event["event_date"], []).append(event)
     days = {}
     for day, colors in colors_by_day.items():
         meals = {}
@@ -129,41 +257,31 @@ def resolve(c, athlete_id, colors_by_day):
                 issues.append({"meal":slot, "color":color, "status":status})
                 continue
             meal = matching[0]
-            options = meal.get("options") or []
-            if not options:
-                meals[slot] = {"status":"missing_options", "color":color}
-                issues.append({"meal":slot, "color":color, "status":"missing_options"})
-                continue
-            values = [option_values(o, library) for o in options]
-            average = {k:sum(v[k] for v,_ in values)/len(values) for k in FIELDS}
-            provisional = any(p for _,p in values)
-            for key in FIELDS:
-                total[key] += average[key]
-            status = "provisional" if provisional else "ok"
-            previews = []
-            for option, (nutrition, option_pending) in zip(options, values):
-                foods = []
-                for food in option.get("foods") or []:
-                    ref = library.get(food.get("id")) or {}
-                    foods.append({**food, "library_name":ref.get("display_name", "")})
-                previews.append({
-                    "title":option.get("title") or "",
-                    "foods":foods,
-                    "notes":option.get("notes") or [],
-                    "order":option.get("order") or [],
-                    "nutrition":nutrition,
-                    "provisional":option_pending,
-                })
-            meals[slot] = {"status":status,"color":color,"draft_id":entry["id"],
-                           "source_meal_name":meal.get("name"),
-                           "options":previews,"nutrition":average,
-                           "updated_at":entry["updated_at"]}
-            if provisional:
-                issues.append({"meal":slot,"color":color,"status":status})
-        days[day] = {"meals":meals,"nutrition":total,
+            preview = _meal_preview(meal, library)
+            preview.update({
+                "color": color, "draft_id": entry["id"],
+                "source_meal_name": meal.get("name"),
+                "updated_at": entry["updated_at"],
+            })
+            meals[slot] = preview
+            if preview["status"] in ("ok", "provisional"):
+                for key in FIELDS:
+                    total[key] += preview["nutrition"][key]
+            if preview["status"] != "ok":
+                issues.append({"meal": slot, "color": color, "status": preview["status"]})
+        color_nutrition = dict(total)
+        peri_rows, peri_totals, peri_issues = _resolve_peri_for_day(
+            drafts, library, events_by_date.get(day, []))
+        issues.extend(peri_issues)
+        for key in FIELDS:
+            total[key] += peri_totals[key]
+        days[day] = {"meals":meals, "nutrition":total,
+                     "color_nutrition":color_nutrition,
+                     "peri_nutrition":peri_totals,
+                     "peri_events":peri_rows,
                      "state":"partial" if issues else "complete",
                      "issues":issues,
-                     "peri_included":False}
+                     "peri_included":bool(peri_rows)}
     return {"source":"live_editor_drafts","days":days,
             "available_plan_types":sorted(x for x in drafts if isinstance(x,str))}
 
