@@ -324,6 +324,52 @@ function ensurePlanningOnlyView(){
  });
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)"),profileNav=$("tm-players-profile-nav"),playersHeader=playersPage.querySelector(".tm-players-heading-minimal");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Data de nascimento","birth_date","date"],["Plano de acompanhamento","followup_plan","followup"],["Data de renovação do acompanhamento","followup_renewal_date","date"],["Notas internas","profile_notes","textarea"]];
+ let loadingPhotoPreviewSeq=0;
+ function refreshPlayerLoadingPhoto(){
+  const seq=++loadingPhotoPreviewSeq,uid=playerDetails?.user_id;
+  const box=$("tm-player-loading-photo-preview"),remove=$("tm-player-loading-photo-delete"),input=$("tm-player-loading-photo-input");
+  box.replaceChildren();remove.hidden=true;input.disabled=!uid;
+  if(!uid){box.append(el("span","","Este jogador ainda não tem conta associada."));return;}
+  const image=el("img");image.alt="Fotografia de carregamento";image.loading="lazy";
+  image.onload=()=>{if(seq!==loadingPhotoPreviewSeq)return;box.replaceChildren(image);remove.hidden=false;};
+  image.onerror=()=>{if(seq!==loadingPhotoPreviewSeq)return;box.replaceChildren(el("span","","Sem fotografia de carregamento"));remove.hidden=true;};
+  image.src="/api/players/"+encodeURIComponent(uid)+"/loading-photo?v="+Date.now();
+ }
+ async function resizePlayerLoadingPhoto(file){
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw Error("Escolhe uma imagem JPG, PNG ou WebP.");
+  if(file.size>15*1024*1024)throw Error("A fotografia original deve ter até 15 MB.");
+  const picture=await new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Não foi possível ler a fotografia."))};img.src=url;});
+  const canvas=document.createElement("canvas");canvas.width=900;canvas.height=1600;
+  const ctx=canvas.getContext("2d");if(!ctx)throw Error("Não foi possível otimizar a fotografia.");
+  const scale=Math.max(900/picture.naturalWidth,1600/picture.naturalHeight);
+  const width=picture.naturalWidth*scale,height=picture.naturalHeight*scale;
+  ctx.drawImage(picture,(900-width)/2,(1600-height)/2,width,height);
+  const data=canvas.toDataURL("image/webp",.79);
+  if(!data.startsWith("data:image/webp;"))throw Error("Este navegador não permite converter para WebP.");
+  if(data.length>4*1024*1024)throw Error("A imagem otimizada é demasiado grande.");
+  return data;
+ }
+ $("tm-player-loading-photo-input").addEventListener("change",async event=>{
+  const file=event.target.files?.[0];if(!file)return;
+  const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
+  event.target.disabled=true;feedback.textContent="A otimizar fotografia…";
+  try{
+   if(!uid)throw Error("O jogador ainda não tem uma conta associada.");
+   const photo=await resizePlayerLoadingPhoto(file);
+   feedback.textContent="A guardar fotografia…";
+   await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"PUT",body:JSON.stringify({photo})});
+   if(profileLoadToken===token&&playerDetails?.user_id===uid){feedback.textContent="Fotografia de carregamento guardada.";refreshPlayerLoadingPhoto();}
+  }catch(e){if(profileLoadToken===token)feedback.textContent="Não foi possível guardar: "+e.message;}
+  finally{event.target.value="";event.target.disabled=!playerDetails?.user_id;}
+ });
+ $("tm-player-loading-photo-delete").addEventListener("click",async()=>{
+  const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
+  if(!uid||!window.confirm("Eliminar a fotografia de carregamento deste jogador?"))return;
+  const button=$("tm-player-loading-photo-delete");button.disabled=true;feedback.textContent="A eliminar…";
+  try{await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"DELETE"});if(token===profileLoadToken&&playerDetails?.user_id===uid){feedback.textContent="Fotografia eliminada. O carregamento ficará com fundo escuro.";refreshPlayerLoadingPhoto();}}
+  catch(e){if(token===profileLoadToken)feedback.textContent="Erro: "+e.message;}
+  finally{button.disabled=false;}
+ });
  function displayPlayerProfile(){
   if(!playerProfile)return;
   const athlete={...playerProfile,...(playerDetails||{})},host=$("tm-players-profile-fields");host.replaceChildren();
@@ -334,6 +380,7 @@ function ensurePlanningOnlyView(){
    const img=el("img","tm-player-photo-preview");img.src="/api/players/"+encodeURIComponent(accountId)+"/photo?reload="+Date.now();img.alt="Fotografia de "+athlete.name;img.onerror=()=>img.remove();avatar.append(img);
   }
   photoHost.append(avatar);
+  refreshPlayerLoadingPhoto();
   const photoControl=$("tm-players-profile-photo-upload");photoControl.hidden=!playerProfileEditing;
   photoControl.disabled=!accountId;
   $("tm-players-profile-title").textContent=athlete.name;
