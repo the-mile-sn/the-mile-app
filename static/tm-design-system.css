@@ -67,3 +67,17 @@ html[data-admin-theme="light"]{
 #tm-recipe-library-page .recipe-ingredient-actions .recipe-drag-handle:active{cursor:grabbing!important}
 #tm-recipe-library-page .recipe-ingredient-row.is-dragging{opacity:.58;outline:1px dashed var(--tm-control-new-border)}
 #tm-recipe-library-page .recipe-ingredient-row.drag-target{outline:2px solid var(--tm-control-new-border);outline-offset:2px}
+
+/* Align common one-line action controls without altering selected theme buttons,
+   nutritional colours, or full-width speciality controls. */
+#tm-admin-settings .tm-appearance-choices>button{border-radius:var(--tm-control-radius);min-height:44px;font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;font-weight:500}
+#admin-account-panel #admin-password-form button.tm-action-primary{min-height:42px}
+#plan-entry #entry-create.tm-action-new{font-weight:600!important}
+#plan-editor .actions #save-plan.tm-action-secondary:not(.is-confirmed){background:var(--tm-control-bg)!important;color:var(--tm-control-ink)!important;border:1px solid var(--tm-control-border)!important}
+#plan-editor .actions #assign-player.tm-action-primary:not(.is-confirmed){background:var(--tm-control-bg)!important;color:var(--tm-control-ink)!important;border:1px solid var(--tm-control-border)!important}
+#plan-editor .meal-controls #delete-option{background:var(--tm-control-danger-bg)!important;color:var(--tm-control-danger-ink)!important;border:1px solid var(--tm-control-danger-border)!important;border-radius:var(--tm-control-radius)!important}
+#tm-recipe-library-page .recipe-row-actions .recipe-icon-button{border-radius:11px!important}
+#tm-recipe-library-page .recipe-ingredient-movers{flex:0 0 38px;align-items:center;justify-content:center}
+#tm-recipe-library-page .recipe-ingredient-movers .recipe-drag-handle{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:6px!important;border:1px solid var(--tm-control-border)!important;background:transparent!important;color:var(--tm-control-ink)!important}
+#tm-recipe-library-page .recipe-ingredient-movers .recipe-drag-handle svg{width:19px;height:19px}
+@media(max-width:680px){.tm-action-new{padding:9px 15px!important}}
