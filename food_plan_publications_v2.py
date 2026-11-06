@@ -47,9 +47,16 @@ def initialize(c):
              for r in c.execute("SELECT user_id,athlete_id FROM v2_player_links").fetchall()}
     active = {str(r["id"]) for r in c.execute(
         "SELECT id FROM v2_athletes WHERE archived_at IS NULL").fetchall()}
+    try:
+        legacy_ids = {hashlib.sha256(("editor-import-v1:"+str(r["id"])).encode()).hexdigest()[:32]
+                      for r in c.execute("SELECT id FROM v2_plan_publications").fetchall()}
+    except Exception:
+        legacy_ids = set()
     grouped = {}
     for row in c.execute(
             "SELECT id,content FROM v2_food_plan_drafts ORDER BY created_at,id").fetchall():
+        if row["id"] in legacy_ids:
+            continue
         try:
             plan = json.loads(row["content"])
         except (TypeError, ValueError):
