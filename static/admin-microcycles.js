@@ -1180,8 +1180,8 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
  }
  const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
  for(const [index,option] of (record.options||[]).entries()){
-  const section=document.createElement("section");section.className="calendar-day-meal-option";
-  const title=document.createElement("strong");title.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");section.append(title);
+  const section=document.createElement("details");section.className="calendar-day-meal-option calendar-option-accordion";
+  const title=document.createElement("summary");title.className="calendar-option-accordion-heading";const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");const arrow=document.createElement("span");arrow.className="calendar-option-accordion-caret";arrow.setAttribute("aria-hidden","true");arrow.textContent="⌄";title.append(label,arrow);section.append(title);
   const foods=option.foods||[],notes=option.notes||[];
   const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?
    option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
