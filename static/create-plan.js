@@ -405,7 +405,7 @@ $("assign-player").onclick=async()=>{
   renderPersistence();status(persistenceError);
  }
 };
-(async()=>{try{const data=await request("/api/v2/food-library");foods=data.foods||[];const roster=await request("/api/v2/athletes");players=(roster.athletes||[]).map(a=>({id:String(a.user_id||a.id),user_id:a.user_id||"",athlete_id:String(a.id),name:a.name}));$("plan-player").innerHTML='<option value="">Selecionar jogador</option>'+players.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");await loadDrafts();addMeal("Pequeno almoço");showEntry("entry");status("Biblioteca carregada: "+foods.length+" alimentos.")}catch(err){status("Não foi possível carregar os dados. Inicia sessão no Backoffice. "+err.message)}})();
+(async()=>{showEntry("entry");status("A carregar planos…");try{const data=await request("/api/v2/food-library");foods=data.foods||[];const roster=await request("/api/v2/athletes");players=(roster.athletes||[]).map(a=>({id:String(a.user_id||a.id),user_id:a.user_id||"",athlete_id:String(a.id),name:a.name}));$("plan-player").innerHTML='<option value="">Selecionar jogador</option>'+players.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join("");await loadDrafts();addMeal("Pequeno almoço");showEntry("entry");status("Biblioteca carregada: "+foods.length+" alimentos.")}catch(err){showEntry("entry");status("Não foi possível carregar os planos: "+err.message+". Verifica a sessão ou tenta atualizar a página.");}})();
 })();
 
 /* Shared two-line native dropdown presentation: native controls remain authoritative. */
