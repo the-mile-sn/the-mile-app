@@ -1505,7 +1505,7 @@ def application(env, start_response):
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
                                      'effective_colors':effective_colors,
-                                      'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors)})
+                                      **({'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors)} if (query.get('include_food_plans') or [''])[0]=='1' else {})})
             if path.startswith('/api/v2/athletes/') and path.endswith('/recipe-categories') and method in ('GET','PUT'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
