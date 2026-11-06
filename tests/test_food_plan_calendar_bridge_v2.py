@@ -242,6 +242,28 @@ class BridgeNutritionTests(unittest.TestCase):
         self.assertEqual(report["state"], "partial")
         self.assertEqual(report["peri_events"][0]["status"], "provisional")
 
+    def test_saving_updated_grams_recalculates_without_reimport(self):
+        initial = draft(meals=[meal("Pequeno almoço", option(food("pao", 80)))])
+        self.add(initial, "updated")
+        day = "2026-11-06"
+        colors = {day: {"breakfast": {"color": "yellow"}}}
+        first = resolve(self.c, "a1", colors)["days"][day]
+        self.assertEqual(first["nutrition"]["kcal"], 200)
+        replacement = draft(meals=[meal("Pequeno almoço", option(food("pao", 120)))])
+        self.c.execute("UPDATE v2_food_plan_drafts SET content=?,updated_at=? WHERE id=?",
+                       (json.dumps(replacement), 56789, "updated"))
+        second = resolve(self.c, "a1", colors)["days"][day]
+        self.assertEqual(second["nutrition"]["kcal"], 300)
+        self.assertEqual(second["meals"]["breakfast"]["updated_at"], 56789)
+        self.assertEqual(len(second["meals"]["breakfast"]["options"]), 1)
+
+    def test_invalid_day_does_not_fallback_to_historical_totals(self):
+        day = "2026-11-06"
+        report = resolve(self.c, "a1", {day: {"breakfast": {"color": "green"}}})["days"][day]
+        self.assertEqual(report["state"], "partial")
+        self.assertEqual(report["meals"]["breakfast"]["status"], "missing_plan")
+        self.assertEqual(report["nutrition"]["kcal"], 0)
+
     def tearDown(self):
         self.c.close()
 
