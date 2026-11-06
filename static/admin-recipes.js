@@ -387,13 +387,52 @@
  }
  function ingredientMoveButtons(section,index,onMove){
   const controls=node("div","recipe-ingredient-movers");
-  for(const [delta,symbol,label] of [[-1,"↑","cima"],[1,"↓","baixo"]]){
-   const action=button(symbol,()=>moveRecipeIngredient(section.ingredients,index,delta,onMove),"recipe-move-button");
-   action.title="Mover ingrediente para "+label;
-   action.setAttribute("aria-label","Mover "+(section.ingredients[index].name||"ingrediente")+" para "+label);
-   action.disabled=delta<0?index===0:index===section.ingredients.length-1;
-   controls.append(action);
-  }
+  const handle=node("button","recipe-drag-handle tm-action-icon");
+  handle.type="button";
+  handle.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+  handle.title="Arrastar para reordenar; setas do teclado para mover";
+  handle.setAttribute("aria-label","Reordenar "+(section.ingredients[index].name||"ingrediente")+". Usa as setas para cima e para baixo");
+  handle.setAttribute("aria-keyshortcuts","ArrowUp ArrowDown");
+  handle.addEventListener("keydown",event=>{
+   const offset=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;
+   if(!offset)return;
+   event.preventDefault();
+   const next=index+offset;
+   if(next<0||next>=section.ingredients.length)return;
+   moveRecipeIngredient(section.ingredients,index,offset,onMove);
+   const sectionIndex=current.sections.indexOf(section);
+   document.querySelectorAll("#recipe-sections .recipe-section")[sectionIndex]?.querySelectorAll(".recipe-drag-handle")[next]?.focus();
+  });
+  handle.addEventListener("pointerdown",event=>{
+   if(event.button!==0)return;
+   const row=handle.closest(".recipe-ingredient-row");
+   if(!row)return;
+   let targetIndex=index,moved=false;
+   const initialY=event.clientY;
+   handle.setPointerCapture(event.pointerId);
+   row.classList.add("is-dragging");
+   const move=e=>{
+    if(Math.abs(e.clientY-initialY)>6)moved=true;
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest(".recipe-ingredient-row");
+    const rows=[...row.parentElement.querySelectorAll(":scope > .recipe-ingredient-row")];
+    rows.forEach(x=>x.classList.remove("drag-target"));
+    const targetPosition=rows.indexOf(target);
+    if(targetPosition>=0){targetIndex=targetPosition;target.classList.add("drag-target");}
+   };
+   const cleanup=()=>{
+    handle.removeEventListener("pointermove",move);
+    handle.removeEventListener("pointerup",done);
+    handle.removeEventListener("pointercancel",cancel);
+    row.classList.remove("is-dragging");
+    row.parentElement.querySelectorAll(":scope > .recipe-ingredient-row").forEach(x=>x.classList.remove("drag-target"));
+   };
+   const done=()=>{cleanup();if(moved&&targetIndex!==index)moveRecipeIngredient(section.ingredients,index,targetIndex-index,onMove);};
+   const cancel=()=>{cleanup();};
+   handle.addEventListener("pointermove",move);
+   handle.addEventListener("pointerup",done);
+   handle.addEventListener("pointercancel",cancel);
+  });
+  controls.append(handle);
   return controls;
  }
  function paintSections(){
