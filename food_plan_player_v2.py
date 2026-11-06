@@ -265,6 +265,8 @@ def audit_published_options(c):
     library=_library(c)
     result={"published_plans":0,"meals":0,"options":0,
             "peri_options":0,"bad_options":0,"missing_foods":0}
+    links={str(r["athlete_id"]):str(r["user_id"]) for r in c.execute(
+        "SELECT athlete_id,user_id FROM v2_player_links").fetchall()}
     rows=c.execute(
         "SELECT athlete_id,plan_type,snapshot_json FROM "
         "v2_food_plan_editor_publications WHERE state='published'").fetchall()
@@ -274,7 +276,11 @@ def audit_published_options(c):
         except (TypeError,ValueError):
             result["bad_options"]+=1
             continue
-        if str(plan.get("athlete_id") or "")!=str(row["athlete_id"]):
+        aid=str(row["athlete_id"])
+        # Older editor JSON had only the player's user_id. The canonical
+        # athlete link in v2_player_links is authoritative for those plans.
+        if (plan.get("athlete_id") and str(plan["athlete_id"])!=aid or
+            plan.get("player_id") and str(plan["player_id"])!=links.get(aid)):
             result["bad_options"]+=1
             continue
         result["published_plans"]+=1
