@@ -1329,7 +1329,7 @@ function renderPlanContent(key,target){
  if(key==="supplements"){renderSupplementPlan(target).catch(error);return;}
  if(key.startsWith("peri-")){
   const kind=key.slice(5),published=periPlans[kind]?.options||{};
-  for(const [phase,label] of [["pre",kind==="match"?"Intra-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]]){
+  for(const [phase,label] of [["pre",periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino")],["post",periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino")]]){
    if(planPhase&&planPhase!==phase)continue;
    const opts=published[phase]||[];if(!opts.length)continue;
    const section=document.createElement("section");section.className="meal plan-meal";
@@ -1388,7 +1388,7 @@ function renderPlans(){
  if(plansCategory==="treino"||plansCategory==="jogo"){
   const kind=plansCategory==="treino"?"training":"match";
   if(!hasPeri(kind)){detail.textContent="Ainda não existem planos publicados nesta categoria.";return;}
-  const phases=[["pre",kind==="match"?"Pré-jogo":"Pré-treino"],["post",kind==="match"?"Pós-jogo":"Pós-treino"]];
+  const phases=[["pre",periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino")],["post",periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino")]];
   if(!planPhase)planPhase=phases.find(([p])=>(periPlans[kind]?.options?.[p]||[]).length)?.[0]||"pre";
   for(const [phase,label] of phases){if(!(periPlans[kind]?.options?.[phase]||[]).length)continue;addSub("peri-"+kind+":"+phase,label,()=>{planPhase=phase;renderPlans();});}
   sub.querySelectorAll("button").forEach(b=>{const match=b.textContent===phases.find(([p])=>p===planPhase)?.[1];b.classList.toggle("selected",match);b.setAttribute("aria-pressed",String(match));});
