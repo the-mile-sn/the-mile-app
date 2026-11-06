@@ -304,6 +304,11 @@ def initialize():
             logging.info('Food plan coverage counts: %s', audit_stats['counts'])
         except Exception:
             logging.exception('Food plan coverage audit failed')
+        try:
+            draft_audit = food_plan_calendar_bridge_v2.audit_all_drafts(c)
+            logging.info('Read-only live Planos nutrition audit: %s', draft_audit)
+        except Exception:
+            logging.exception('Read-only live Planos nutrition audit failed')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
