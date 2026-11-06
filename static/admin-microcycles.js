@@ -1189,20 +1189,23 @@ function renderDayPreview(day,host){
    }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
   });
   colorBar.append(choose);
-  const average=entry.color?averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]):null;
-  if(average){
-   const macros=document.createElement("div");macros.className="day-meal-nutrients";
-   macros.textContent=[
-    formatNutrition(average.kcal,0)+" kcal",
-    formatNutrition(average.protein_g)+" g",
-    formatNutrition(average.carbs_g)+" g",
-    formatNutrition(average.fat_g)+" g"
-   ].join(" · ");
-   macros.setAttribute("aria-label",names[entry.meal]+": "+formatNutrition(average.kcal,0)+" quilocalorias, "+formatNutrition(average.protein_g)+" gramas de proteína, "+formatNutrition(average.carbs_g)+" gramas de hidratos e "+formatNutrition(average.fat_g)+" gramas de gordura");
-   cell.append(macros);
+  const oldAverage=entry.color?averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]):null;
+  const liveMeal=liveCalendarPlans[day.date]?.meals?.[entry.meal];
+  const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?liveMeal.nutrition:null;
+  if(newAverage){
+   const macros=document.createElement("div");macros.className="day-meal-nutrients calendar-live-meal-nutrients";
+   macros.textContent=[formatNutrition(newAverage.kcal,0)+" kcal",formatNutrition(newAverage.protein_g)+" g",formatNutrition(newAverage.carbs_g)+" g",formatNutrition(newAverage.fat_g)+" g"].join(" · ");
+   macros.title="Novo módulo Planos · média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
+   const source=document.createElement("small");source.className="calendar-live-source";
+   source.textContent="Novo módulo Planos"+(liveMeal.status==="provisional"?" · provisório":"");cell.append(source);
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
-   unavailable.textContent=entry.color?"Valores nutricionais indisponíveis":"—";if(!entry.color)unavailable.setAttribute("aria-label","Sem refeição atribuída");cell.append(unavailable);
+   unavailable.textContent=entry.color?"Novo plano: valores por confirmar":"—";cell.append(unavailable);
+  }
+  if(oldAverage){
+   const oldNote=document.createElement("small");oldNote.className="calendar-legacy-meal-nutrients";
+   oldNote.textContent="Anterior: "+nutritionSummary(oldAverage);
+   oldNote.title="Dados do importador antigo, apenas para comparação";cell.append(oldNote);
   }
   cell.append(renderLiveMealOptions(day,entry.meal));
   grid.appendChild(cell);
@@ -1220,7 +1223,23 @@ function renderDayPreview(day,host){
   }
   host.append(details);
  }
- renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
+ const liveDay=liveCalendarPlans[day.date];
+ if(liveDay){
+  const liveTotals=document.createElement("section");liveTotals.className="calendar-live-totals";
+  const title=document.createElement("h3");title.textContent="Novo módulo Planos · resumo nutricional de teste";liveTotals.append(title);
+  const note=document.createElement("p");note.className="hint";
+  note.textContent="Soma apenas as refeições com cores; peri-treino e peri-jogo ainda não incluídos. Não publicado aos jogadores.";
+  liveTotals.append(note);
+  const issues=liveDay.issues||[];
+  if(issues.length){
+   const warning=document.createElement("p");warning.className="calendar-live-warning";
+   warning.textContent="Resultado parcial — "+issues.map(x=>names[x.meal]+": "+x.status).join("; ");
+   liveTotals.append(warning);
+  }
+  if(issues.length<model.meals.length)nutritionCards(liveTotals,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
+  host.append(liveTotals);
+ }
+ renderNutritionTotals(host,"Sistema anterior · comparação",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
 }
 let dayWeightReferences={};
 async function loadCalendar(){
