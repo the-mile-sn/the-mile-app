@@ -215,3 +215,7 @@ html[data-admin-theme="light"] body #tm-menu-recipes-page #dish-add-toggle.tm-ac
 html[data-admin-theme="light"] body .tm-action-new:hover:not(:disabled){background:#e6ebf1!important}
 /* Legacy Filipe-only activation utility remains in DOM solely for compatibility. */
 #admin-access-panel{display:none!important}
+
+/* New action labels use the shared medium weight, not a bold exception. */
+html body #plan-entry .plan-library-actions #entry-create.tm-action-new,html body #plan-entry .plan-library-actions #entry-create.tm-action-new span:not(.entry-icon){font-weight:500!important}
+html body #plan-entry .plan-library-actions #entry-create.tm-action-new .entry-icon{font-weight:500!important}
