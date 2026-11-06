@@ -17,6 +17,34 @@ const totals=()=>nutrients.map((_,i)=>dailyMeals().reduce((value,m)=>value+avera
 const mealDisplayName=m=>{const slots=mealSlots(m);return slots.length>1?(slots[0]==="Pequeno almoço"?"Pequeno almoço / lanche":"Almoço / jantar"):m.name};
 const label=t=>t.map((n,i)=>fmt(n)+(i===0?" kcal":i===1?" g P":i===2?" g HC":" g G")).join(" · ");
 const status=s=>$("status").textContent=s;
+let savedSignature=null,publicationState={state:"draft",pending_changes:false,published_at:null},saveBusy=false,lastSavedAt=null,persistenceError="";
+const planSignature=()=>JSON.stringify({athlete_id:plan.athlete_id||"",player_id:plan.player_id||"",plan_type:plan.plan_type||"",meals:plan.meals});
+const planIsDirty=()=>!plan.id||savedSignature!==planSignature();
+const savedStamp=stamp=>stamp?new Date(Number(stamp)*1000).toLocaleString("pt-PT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+function renderPersistence(){
+ const panel=$("plan-save-feedback");if(!panel)return;
+ const title=$("plan-save-feedback-title"),desc=$("plan-save-feedback-description"),icon=$("plan-save-feedback-icon"),time=$("plan-save-feedback-time");
+ const chip=$("plan-state-chip"),save=$("save-plan"),publish=$("assign-player");
+ const dirty=planIsDirty(),state=publicationState?.state||"draft";
+ let display="new",caption="Por guardar",message="Novo plano por guardar",detail="Guarda o plano para o poderes publicar no Planeamento.",symbol="○";
+ if(!plan.id){display="new";}
+ else if(dirty){display="dirty";caption="Alterações por guardar";message="Alterações por guardar";detail="Guarda primeiro o rascunho. O Planeamento mantém a última versão aprovada.";symbol="!";}
+ else if(state==="published"&&!publicationState.pending_changes){display="published";caption="Publicado no Planeamento";message="Plano publicado no Planeamento";detail="Versão aprovada e em utilização no Backoffice. A app dos jogadores não foi alterada.";symbol="✓";}
+ else if(state==="transitional"&&!publicationState.pending_changes){display="transitional";caption="Em uso no Planeamento";message="Guardado e já ligado ao Planeamento";detail="Plano existente preservado. Clica em Publicar para confirmar esta versão.";symbol="✓";}
+ else if(publicationState.pending_changes){display="pending";caption="Alterações por publicar";message="Rascunho guardado · alterações por publicar";detail="O Planeamento continua a utilizar a última versão aprovada.";symbol="✓";}
+ else {display="saved";caption="Rascunho guardado";message="Rascunho guardado com sucesso";detail="Ainda não aparece no Planeamento. Publica quando estiver validado.";symbol="✓";}
+ if(saveBusy){display="saving";caption="A guardar…";message="A guardar alterações…";detail="A confirmar o registo na base de dados.";symbol="…";}
+ if(persistenceError){display="error";caption="Ação não concluída";message="Não foi possível concluir a ação";detail=persistenceError;symbol="!";}
+ panel.dataset.state=display;chip.dataset.state=display;chip.textContent=caption;
+ title.textContent=message;desc.textContent=detail;icon.textContent=symbol;
+ time.textContent=!dirty&&plan.id&&lastSavedAt?"Guardado em "+savedStamp(lastSavedAt):"";
+ save.classList.toggle("is-confirmed",["saved","pending","published","transitional"].includes(display));
+ publish.classList.toggle("is-confirmed",display==="published");
+ save.textContent=saveBusy?"A guardar…":!plan.id?"Guardar rascunho":dirty?"Guardar alterações":"✓ Guardado";
+ publish.textContent=display==="published"?"✓ Publicado":display==="pending"?"Publicar alterações":"Publicar no Planeamento";
+ save.disabled=saveBusy||(!dirty&&!persistenceError);
+ publish.disabled=saveBusy||dirty||display==="published"||display==="error";
+}
 const refreshSelectDisplays=()=>document.querySelectorAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
 
 const macro=(values,rounded=false)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+["kcal","P (g)","HC (g)","G (g)"][i]+'</small></span>').join("")+'</div>';
@@ -66,8 +94,8 @@ function draw(){
   });
   document.querySelectorAll("[data-edit-grams]").forEach(el=>el.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();document.querySelector('[data-save-grams="'+el.dataset.editGrams+'"]')?.click()}if(e.key==="Escape"){editingFood=-1;draw()}});
   document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.remove);ensureOrder(o);o.foods.splice(idx,1);o.foods.forEach(f=>{if(f.alternative_to===idx)delete f.alternative_to;else if(f.alternative_to>idx)f.alternative_to--});o.order=o.order.filter(x=>!(x.type==="food"&&x.index===idx)).map(x=>x.type==="food"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
-  if(document.querySelector("[data-option-title]"))document.querySelector("[data-option-title]").oninput=e=>{plan.meals[active].options[option].title=e.target.value};
-  document.querySelectorAll("[data-note]").forEach(el=>el.oninput=()=>{plan.meals[active].options[option].notes[Number(el.dataset.note)]=el.value});
+  if(document.querySelector("[data-option-title]"))document.querySelector("[data-option-title]").oninput=e=>{plan.meals[active].options[option].title=e.target.value;renderPersistence()};
+  document.querySelectorAll("[data-note]").forEach(el=>el.oninput=()=>{plan.meals[active].options[option].notes[Number(el.dataset.note)]=el.value;renderPersistence()});
   document.querySelectorAll("[data-remove-note]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.removeNote);ensureOrder(o);o.notes.splice(idx,1);o.order=o.order.filter(x=>!(x.type==="note"&&x.index===idx)).map(x=>x.type==="note"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
   document.querySelectorAll("[data-confirm-note]").forEach(b=>b.onclick=()=>{const field=document.querySelector('[data-note="'+b.dataset.confirmNote+'"]');if(field){field.blur();b.classList.add("confirmed");status("Nota confirmada.")}});
   let dragging=null;document.querySelectorAll(".drag-handle").forEach(handle=>{const row=handle.closest("[data-row-type]");handle.ondragstart=e=>{dragging={type:row.dataset.rowType,index:Number(row.dataset.rowIndex)};e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","reorder")};handle.ondragend=()=>{dragging=null;document.querySelectorAll(".drag-over").forEach(el=>el.classList.remove("drag-over"))}});
@@ -99,6 +127,7 @@ function draw(){
 
 
   requestAnimationFrame(alignNutritionHeaders);
+  renderPersistence();
 }
 function alignNutritionHeaders(){
   document.querySelectorAll(".meal").forEach(meal=>{
