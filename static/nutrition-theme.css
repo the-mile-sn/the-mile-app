@@ -1,0 +1,89 @@
+
+/* Explicit Settings theme for Planos and Biblioteca Alimentar.
+   Appearance is controlled by the same tm-admin-theme setting as the Backoffice;
+   device preference never overrides it. */
+html[data-admin-theme="dark"]{
+ color-scheme:dark;--lib-bg:#101114;--lib-panel:#1b1d22;--lib-panel-2:#22252b;
+ --lib-border:#343840;--lib-fg:#f2f3f5;--lib-muted:#a2a7b0;
+ background:var(--lib-bg);color:var(--lib-fg);
+}
+html[data-admin-theme="light"]{
+ color-scheme:light;--lib-bg:#f5f6f8;--lib-panel:#ffffff;--lib-panel-2:#f0f2f6;
+ --lib-border:#d9dfe7;--lib-fg:#1c2633;--lib-muted:#596675;
+ background:var(--lib-bg);color:var(--lib-fg);
+}
+html[data-admin-theme] body{background:var(--lib-bg);color:var(--lib-fg)}
+html[data-admin-theme="dark"] .tm-library-layout .tm-admin-sidebar{background:#121215;color:#f2f3f5;border-right:1px solid #29292e}
+html[data-admin-theme="dark"] .tm-library-layout .tm-admin-nav-link{color:#d6d6dc}
+html[data-admin-theme="dark"] .tm-library-layout .tm-admin-nav-link.is-active{background:#292b31;color:#fff}
+html[data-admin-theme="dark"] .tm-library-layout .tm-admin-brand-home{color:#f2f3f5}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar{background:#fff;color:#1c2633;border-right:1px solid #d9dfe7}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-brand-home{color:#1c2633}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-nav-link,
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-subnav-link{color:#526071}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-nav-link.is-active{background:#e7ebf1;color:#1c2633}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-nav-link:hover,
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-subnav-link:hover{background:#f0f2f6;color:#243344}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-nav-icon{color:#586a7d}
+html[data-admin-theme="light"] .tm-library-layout .tm-admin-nav-chevron{color:#586a7d}
+html[data-admin-theme="light"] :is(.stat,.panel,.meal,.plan-library-table-wrap,.plan-preview-heading){
+ background:var(--lib-panel);border-color:var(--lib-border);color:var(--lib-fg);
+}
+html[data-admin-theme="light"] :is(input,select,textarea,button,dialog){
+ background:var(--lib-panel-2);border-color:var(--lib-border);color:var(--lib-fg);
+}
+html[data-admin-theme="light"] :is(input,textarea)::placeholder{color:#7a8491}
+html[data-admin-theme="light"] :is(td,.food-name,.food-notes,th,.panelhead,.muted,.back,.notice,.sub){color:var(--lib-fg);border-color:var(--lib-border)}
+html[data-admin-theme="light"] :is(th,.panelhead){background:var(--lib-panel-2);color:var(--lib-muted)}
+html[data-admin-theme="light"] .stat small{color:var(--lib-muted)}
+html[data-admin-theme="light"] .tm-two-line-select{background:var(--lib-panel)!important;border-color:var(--lib-border)!important}
+html[data-admin-theme="light"] .tm-two-line-select .tm-select-caption{color:#6b7889}
+html[data-admin-theme="light"] .tm-two-line-select .tm-select-value{color:#1c2633}
+html[data-admin-theme="light"] button.primary{background:#243344;border-color:#243344;color:#fff}
+html[data-admin-theme="light"] .back{color:#344458}
+html[data-admin-theme="light"] .back:hover{color:#162c41}
+html[data-admin-theme="light"] .food-catalog-table tbody tr:hover{background:#f7f9fb}
+html[data-admin-theme="light"] dialog{background:#fff;border-color:var(--lib-border)}
+html[data-admin-theme="light"] .tag{background:#e5f0e9;color:#476c54}
+html[data-admin-theme="dark"] .tm-two-line-select{background:var(--lib-panel-2)}
+/* Plan editor uses dark-only legacy surfaces in several nested components. */
+html[data-admin-theme="light"] #plan-entry .plan-library-search-label input{background:#fff!important;color:#1c2633!important;border-color:#d7dfe8!important}
+html[data-admin-theme="light"] #plan-entry .plan-library-table-wrap{background:#fff!important;border-color:#d7dfe8!important}
+html[data-admin-theme="light"] #plan-entry .plan-library-table th{background:#f0f2f6!important;color:#536475!important}
+html[data-admin-theme="light"] #plan-entry .plan-library-table td{color:#243344!important;border-color:#d7dfe8!important}
+html[data-admin-theme="light"] #plan-entry .plan-library-row-actions button,
+html[data-admin-theme="light"] #plan-preview .plan-preview-edit{background:#f3f5f8;color:#243344;border-color:#d3dce6}
+html[data-admin-theme="light"] #plan-entry .plan-library-row-actions button:hover{background:#e9eff5}
+html[data-admin-theme="light"] #plan-editor .meal{background:#fff!important;color:#1c2633!important;border:1px solid #d9dfe7!important}
+html[data-admin-theme="light"] #plan-editor .option-content{background:#f7f9fb!important;color:#1c2633!important;border:1px solid #e1e7ee}
+html[data-admin-theme="light"] #plan-editor .option-summary,
+html[data-admin-theme="light"] #plan-editor .nutrition-list{background:transparent!important;color:#1c2633}
+html[data-admin-theme="light"] #plan-editor .option-tabs button{background:#fff!important;border:1px solid #d9dfe7!important;color:#1c2633!important}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current{background:#e7eaf0!important;border-color:#cdd7e2!important;color:#17283a!important}
+html[data-admin-theme="light"] #plan-editor .option-tabs button.current .macro-values :is(b,small){color:inherit!important}
+html[data-admin-theme="light"] #plan-editor .nutrition-row{border-color:#dce4ec!important}
+html[data-admin-theme="light"] #plan-editor .meal :is(.option-title,.note-row textarea){color:#1c2633!important}
+html[data-admin-theme="light"] #plan-editor :is(.food-results,.meal-rename-menu,.meal-rename-picker){background:#fff!important;border-color:#d6dfe8!important;color:#263648!important}
+html[data-admin-theme="light"] #plan-editor .meal-rename-menu button{color:#273849!important}
+html[data-admin-theme="light"] #plan-editor .meal-rename-menu button:hover{background:#e9eff5!important}
+html[data-admin-theme="light"] #plan-editor .food-result:hover{background:#eef2f6!important}
+html[data-admin-theme="light"] #plan-editor .plan-overview .stats.four{background:#fff!important;border:1px solid #d9dfe7!important}
+html[data-admin-theme="light"] #plan-editor .plan-overview .stats.four>.stat{background:transparent!important}
+html[data-admin-theme="light"] #plan-editor .plan-overview .stats.four :is(.stat-label,.stat-value small){color:#596675!important}
+html[data-admin-theme="light"] #plan-editor .plan-state-chip[data-state="published"]{background:#e0f2e6;color:#267349}
+html[data-admin-theme="light"] #plan-editor .plan-state-chip[data-state="dirty"]{background:#fff0d5;color:#875d20}
+html[data-admin-theme="light"] #plan-preview-content{color:#1c2633!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-heading{background:#fff!important;color:#1c2633!important;border:1px solid #d9dfe7}
+html[data-admin-theme="light"] #plan-preview .plan-preview-heading :is(h2,.plan-preview-eyebrow){color:inherit}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group{
+ --preview-bg:#f4f6f8;--preview-fg:#1c2633;--preview-option:#fff;
+ background:#fff!important;color:#1c2633!important;border:1px solid #d9dfe7;
+}
+html[data-admin-theme="light"] #plan-preview .plan-preview-group-title{color:#1c2633!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-meal{background:#f4f6f8!important;color:#1c2633!important}
+html[data-admin-theme="light"] #plan-preview .plan-preview-option{background:#fff!important;color:#1c2633!important;border:1px solid #dce3eb}
+html[data-admin-theme="light"] #plan-preview .plan-preview-option-title{color:#1c2633}
+html[data-admin-theme="light"] #plan-preview .plan-preview-food{border-color:#dce3eb!important}
+html[data-admin-theme="light"] #plan-editor .actions #save-plan:not(:disabled),
+html[data-admin-theme="light"] #plan-editor .actions #assign-player:not(:disabled){border-color:#d2dce7}
+@media(max-width:800px){html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar{position:relative}}
