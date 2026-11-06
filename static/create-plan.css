@@ -751,3 +751,42 @@ html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-lib
 html[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft .plan-library-row-actions button {
   background:#fff8e5!important;border-color:#d3b65e!important;color:#664910!important;
 }
+
+
+/* Saving and approval now have durable, nearby confirmation states. */
+#plan-editor .plan-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#plan-editor .plan-state-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:6px 11px;border-radius:999px;background:var(--lib-panel-2);color:var(--lib-muted);font-size:11px;font-weight:650;line-height:1.35;white-space:normal;text-align:center}
+#plan-editor .plan-state-chip[data-state="published"],#plan-editor .plan-state-chip[data-state="transitional"]{background:rgba(70,152,101,.16);color:#80cc9d}
+#plan-editor .plan-state-chip[data-state="pending"],#plan-editor .plan-state-chip[data-state="dirty"]{background:rgba(209,161,83,.16);color:#deb980}
+#plan-editor .plan-save-feedback{display:flex;align-items:center;gap:13px;margin:16px 0 12px;padding:13px 16px;border:1px solid rgba(147,154,167,.24);border-left:3px solid #79828e;border-radius:11px;background:var(--lib-panel,#1f2127);color:var(--lib-fg,#f3f4f6);min-width:0}
+#plan-editor .plan-save-feedback[data-state="saved"],#plan-editor .plan-save-feedback[data-state="published"],#plan-editor .plan-save-feedback[data-state="transitional"]{border-left-color:#64b885;background:rgba(68,139,91,.095);border-top-color:rgba(75,147,96,.26);border-right-color:rgba(75,147,96,.26);border-bottom-color:rgba(75,147,96,.26)}
+#plan-editor .plan-save-feedback[data-state="pending"],#plan-editor .plan-save-feedback[data-state="dirty"]{border-left-color:#d3a05d;background:rgba(171,118,56,.09)}
+#plan-editor .plan-save-feedback[data-state="error"]{border-left-color:#c57669;background:rgba(178,78,78,.09)}
+#plan-editor .plan-save-feedback-icon{display:flex;flex:none;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(134,143,151,.15);font-size:16px;color:var(--lib-fg);font-weight:700}
+#plan-editor .plan-save-feedback[data-state="saved"] .plan-save-feedback-icon,#plan-editor .plan-save-feedback[data-state="published"] .plan-save-feedback-icon,#plan-editor .plan-save-feedback[data-state="transitional"] .plan-save-feedback-icon{background:rgba(74,160,98,.2);color:#79d59b}
+#plan-editor .plan-save-feedback[data-state="dirty"] .plan-save-feedback-icon,#plan-editor .plan-save-feedback[data-state="pending"] .plan-save-feedback-icon{background:rgba(198,143,75,.16);color:#e6b87c}
+#plan-editor .plan-save-feedback-copy{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;line-height:1.45}
+#plan-editor .plan-save-feedback-copy>strong{font-size:13px;font-weight:650}
+#plan-editor .plan-save-feedback-copy>small{font-size:11px;color:var(--lib-muted,#a2a7b0);line-height:1.45}
+#plan-editor .plan-save-feedback-time{font-size:11px;color:var(--lib-muted,#a2a7b0);white-space:nowrap}
+#plan-editor .actions{margin-top:0}
+#plan-editor .actions #save-plan,#plan-editor .actions #assign-player{min-width:150px;transition:background-color .18s ease,opacity .18s ease}
+#plan-editor .actions #save-plan.is-confirmed{background:#346c4d!important;color:#fff!important}
+#plan-editor .actions #assign-player.is-confirmed{background:#346c4d!important;color:#fff!important}
+#plan-editor .actions #save-plan:disabled,#plan-editor .actions #assign-player:disabled{opacity:.65;cursor:default;filter:none}
+html[data-admin-theme="light"] #plan-editor .plan-save-feedback{background:#f6f8fa;border-color:#d9dee5;border-left-color:#79828e}
+html[data-admin-theme="light"] #plan-editor .plan-save-feedback[data-state="saved"],html[data-admin-theme="light"] #plan-editor .plan-save-feedback[data-state="published"],html[data-admin-theme="light"] #plan-editor .plan-save-feedback[data-state="transitional"]{background:#eff8f2;border-color:#c9e1d2;border-left-color:#37845d}
+html[data-admin-theme="light"] #plan-editor .plan-save-feedback[data-state="dirty"],html[data-admin-theme="light"] #plan-editor .plan-save-feedback[data-state="pending"]{background:#fff8ed;border-color:#ead4b3;border-left-color:#c48d43}
+html[data-admin-theme="light"] #plan-editor .plan-save-feedback-copy>small,html[data-admin-theme="light"] #plan-editor .plan-save-feedback-time{color:#5c6876}
+html[data-admin-theme="light"] #plan-editor .plan-state-chip[data-state="published"],html[data-admin-theme="light"] #plan-editor .plan-state-chip[data-state="transitional"]{color:#22643d}
+html[data-admin-theme="light"] #plan-editor .plan-state-chip[data-state="pending"],html[data-admin-theme="light"] #plan-editor .plan-state-chip[data-state="dirty"]{color:#82591f}
+#plan-entry .plan-publication-label{display:inline-block;margin:6px 0 0;padding:4px 7px;border-radius:6px;background:rgba(100,105,114,.17);color:var(--lib-muted);font-size:10px;line-height:1.4;font-weight:550}
+#plan-entry .plan-publication-label[data-state="published"],#plan-entry .plan-publication-label[data-state="transitional"]{background:rgba(83,152,100,.13);color:#80c99c}
+#plan-entry .plan-publication-label[data-state="pending"]{background:rgba(212,158,71,.14);color:#e0b37c}
+html[data-admin-theme="light"] #plan-entry .plan-publication-label[data-state="published"],html[data-admin-theme="light"] #plan-entry .plan-publication-label[data-state="transitional"]{color:#2d724b}
+html[data-admin-theme="light"] #plan-entry .plan-publication-label[data-state="pending"]{color:#896123}
+@media(max-width:650px){
+ #plan-editor .plan-save-feedback{align-items:flex-start;flex-wrap:wrap;padding:12px}
+ #plan-editor .plan-save-feedback-time{margin-left:42px}
+ #plan-editor .actions #save-plan,#plan-editor .actions #assign-player{flex:1 1 145px}
+}
