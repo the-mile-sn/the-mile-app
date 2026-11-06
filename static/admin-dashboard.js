@@ -419,7 +419,6 @@ function ensurePlanningOnlyView(){
   const body=$("tm-players-body");body.replaceChildren();
   const term=$("tm-players-filter").value,filter=$("tm-players-access").value;
   const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&matchesName(p.name,term));
-  $("tm-players-count").textContent=items.length+" jogador"+(items.length===1?"":"es");
   for(const p of items){
    const row=el("tr"),first=el("td");
    const link=el("button","tm-p-player");
