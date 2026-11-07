@@ -547,3 +547,19 @@ html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save{background
 html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save.is-saved{background:#e4f4e9;border-color:#94d1ac;color:#246c40}
 
 html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-enter-app{background:#eaf3ee;border-color:#b5d8c3;color:#246345}
+
+/* Light theme: the native two-line player access filter must not keep its dark surface. */
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+ background:#ffffff!important;
+ border-color:var(--tm-light-border,#d4dce7)!important;
+ color:var(--tm-light-text,#263448)!important;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-caption{
+ color:var(--tm-light-muted,#7a8596)!important;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-value{
+ color:var(--tm-light-text,#263448)!important;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-arrow{
+ color:var(--tm-light-muted,#7a8596)!important;
+}
