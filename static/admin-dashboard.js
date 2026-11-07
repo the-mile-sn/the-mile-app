@@ -582,7 +582,11 @@ function ensurePlanningOnlyView(){
   window.scrollTo({top:0,behavior:"smooth"});
  }
  $("tm-players-filter").addEventListener("input",renderPlayers);
- $("tm-players-access").addEventListener("change",renderPlayers);
+ $("tm-players-access").addEventListener("change",()=>{
+  const selector=$("tm-players-access");
+  $("tm-players-access-value").textContent=selector.options[selector.selectedIndex]?.textContent||"Todos";
+  renderPlayers();
+ });
  $("tm-players-new").addEventListener("click",()=>{
   if(typeof window.tmOpenPlayerCreate==="function")window.tmOpenPlayerCreate();
  });
