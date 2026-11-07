@@ -1661,6 +1661,17 @@ def application(env, start_response):
                         return respond(200,result)
                 if path == '/api/v2/recipes':
                     if method == 'GET':
+                        q=parse_qs(env.get('QUERY_STRING',''))
+                        if q.get('paged') == ['1']:
+                            try:
+                                page=max(1,min(100000,int(q.get('page',['1'])[0])))
+                            except (ValueError,TypeError):
+                                page=1
+                            return respond(200,recipe_library_v2.page_recipes(
+                                c, q.get('q',[''])[0][:180],
+                                q.get('category',[''])[0][:100],
+                                q.get('type',[''])[0][:30],
+                                q.get('status',[''])[0][:30],page))
                         return respond(200,{'recipes':recipe_library_v2.list_recipes(c)})
                     if method == 'POST':
                         try:
@@ -1815,6 +1826,14 @@ def application(env, start_response):
             if path == '/api/v2/dishes' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
+                q=parse_qs(env.get('QUERY_STRING',''))
+                if q.get('paged') == ['1']:
+                    try:
+                        page=max(1,min(100000,int(q.get('page',['1'])[0])))
+                    except (ValueError,TypeError):
+                        page=1
+                    return respond(200,microcycles_v2.page_dish_library(
+                        c,q.get('q',[''])[0][:180],q.get('category',[''])[0][:100],page))
                 return respond(200, {'dishes':microcycles_v2.list_dish_library(c)})
             if path == '/api/v2/dishes/export' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
