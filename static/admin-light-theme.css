@@ -594,3 +594,11 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-play
    background:#eff2f6!important
  }
 }
+
+/* Compact More popup: theme-matched surface for mobile navigation. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   background:#fff!important;border-color:#d8dfe8!important;box-shadow:0 12px 28px rgba(31,51,74,.12)
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-more-trigger{color:#43576b!important}
+}
