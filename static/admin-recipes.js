@@ -227,6 +227,7 @@
   $("recipe-list").hidden=true;
   $("recipe-library-toolbar").hidden=true;
   $("recipe-list-meta").hidden=true;
+  if($("recipe-pagination"))$("recipe-pagination").hidden=true;
   $("recipe-category-manage").hidden=true;
   $("recipe-pdf-panel").hidden=true;
   $("recipe-reader-content").replaceChildren();
@@ -259,6 +260,7 @@
   $("recipe-reader-panel").hidden=true;
   $("recipe-library-toolbar").hidden=false;
   $("recipe-list-meta").hidden=false;
+  if($("recipe-pagination"))$("recipe-pagination").hidden=recipePages<=1;
   $("recipe-list").hidden=false;
   $("recipe-editor-panel").hidden=!recipeReaderEditorVisible;
   recipeReaderEditorVisible=false;
