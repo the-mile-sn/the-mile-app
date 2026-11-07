@@ -996,6 +996,14 @@ def application(env, start_response):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 if method == 'GET':
+                    query=parse_qs(env.get('QUERY_STRING',''))
+                    if query.get('paged') == ['1']:
+                        try:
+                            page=max(1,min(100000,int(query.get('page',['1'])[0])))
+                        except (TypeError,ValueError):
+                            page=1
+                        return respond(200,food_library_v2.page_foods(
+                            c,query.get('q',[''])[0],query.get('category',[''])[0],page))
                     return respond(200,{'foods':food_library_v2.list_foods(c,limit=2000,offset=0)})
                 try:
                     ident=food_library_v2.upsert(c,read_json(env),actor=user['id'])
