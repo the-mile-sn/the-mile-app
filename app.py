@@ -1705,7 +1705,7 @@ def application(env, start_response):
                         return respond(201,{'recipe':recipe})
                 if path.startswith('/api/v2/recipes/image/') and method == 'GET':
                     recipe_id=path.rsplit('/',1)[-1]
-                    recipe=recipe_library_v2.get_recipe(c,recipe_id)
+                    recipe=c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone()
                     if not recipe or not recipe['photo_key']: raise Problem(404,'not_found')
                     photo=read_dish_image(c,recipe['photo_key'])
                     if photo is None: raise Problem(404,'not_found')
