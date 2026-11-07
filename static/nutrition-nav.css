@@ -24,3 +24,100 @@
 
 /* Sidebar links must look identical whether implemented as anchors or buttons. */
 .tm-admin-sidebar .tm-admin-nav-link,.tm-admin-sidebar .tm-admin-nav-link:link,.tm-admin-sidebar .tm-admin-nav-link:visited,.tm-admin-sidebar .tm-admin-subnav-link,.tm-admin-sidebar .tm-admin-subnav-link:link,.tm-admin-sidebar .tm-admin-subnav-link:visited{text-decoration:none!important;text-decoration-line:none!important}
+
+/* Same mobile header and one-row navigation as the Admin homepage. */
+.tm-library-layout .tm-admin-mobile-nav-track{display:contents}
+@media(max-width:830px){
+ .tm-library-layout{display:block!important;min-width:0}
+ .tm-library-layout .tm-admin-sidebar{
+   position:relative!important;display:flex!important;flex-direction:column!important;
+   width:100%!important;min-height:0!important;height:auto!important;
+   padding:12px 0 7px!important;gap:0!important;
+   overflow:hidden!important;border-right:0!important;
+   border-bottom:1px solid #dbe1e9!important;
+ }
+ .tm-library-layout .tm-admin-brand{
+   margin:0!important;padding:2px 111px 10px 16px!important;min-height:37px!important
+ }
+ .tm-library-layout .tm-admin-brand-wordmark{
+   width:116px!important;max-width:116px!important;height:auto!important
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track{
+   display:flex!important;flex-direction:row!important;align-items:stretch!important;
+   flex-wrap:nowrap!important;width:100%!important;max-width:100%!important;
+   min-width:0!important;gap:4px!important;padding:0 16px 4px!important;
+   overflow-x:auto!important;overflow-y:hidden!important;
+   scroll-snap-type:x proximity;overscroll-behavior-x:contain;
+   -webkit-overflow-scrolling:touch;scrollbar-width:none
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track::-webkit-scrollbar{display:none}
+ .tm-library-layout .tm-admin-mobile-nav-track>.tm-admin-side-nav{display:contents!important}
+ .tm-library-layout .tm-admin-sidebar-spacer,.tm-library-layout .tm-admin-sidebar-footer{display:none!important}
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   box-sizing:border-box!important;display:inline-flex!important;
+   flex:0 0 auto!important;flex-direction:column!important;
+   align-items:center!important;justify-content:center!important;
+   width:auto!important;min-width:76px!important;max-width:124px!important;
+   height:auto!important;min-height:66px!important;
+   margin:0!important;padding:8px 11px!important;gap:5px!important;
+   border:0!important;border-radius:12px!important;
+   background:transparent!important;
+   font-size:11px!important;font-weight:500!important;line-height:1.1!important;
+   text-align:center!important;white-space:nowrap!important;
+   color:#cbd2dc!important;text-decoration:none!important;scroll-snap-align:start
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link>.tm-admin-nav-icon{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   width:21px!important;height:21px!important;min-width:21px!important;margin:0!important
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-side-icon{width:20px!important;height:20px!important}
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{
+   color:#fff!important;background:#303740!important;font-weight:650!important
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link:hover{
+   background:#262a31!important
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-chevron{display:none!important}
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-recipes-subnav{
+   display:flex!important;flex:0 0 auto!important;flex-direction:row!important;
+   align-items:stretch!important;width:auto!important;
+   margin:0!important;padding:0!important;border:0!important;gap:4px!important
+ }
+ .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-recipes-subnav .tm-admin-subnav-link{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 auto!important;min-height:66px!important;
+   min-width:106px!important;max-width:138px!important;
+   padding:8px 10px!important;border-radius:12px!important;
+   font-size:11px!important;text-align:center!important;line-height:1.25!important;
+   white-space:normal!important
+ }
+ .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   display:flex!important;position:absolute!important;top:10px;right:12px;z-index:4;
+   flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;
+   width:auto!important;margin:0!important;padding:0!important;gap:5px!important
+ }
+ .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 39px!important;width:39px!important;min-width:39px!important;
+   height:39px!important;min-height:39px!important;
+   padding:8px!important;margin:0!important;gap:0!important;
+   border:0!important;border-radius:11px!important;background:transparent!important
+ }
+ .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link>span:not(.tm-admin-nav-icon){display:none!important}
+ .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-nav-icon{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   width:21px!important;height:21px!important;min-width:21px!important
+ }
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   color:#43576b!important;background:transparent!important
+ }
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important
+ }
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link:hover{
+   background:#eff2f6!important
+ }
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-nav-link{
+   color:#4d6379!important;background:transparent!important
+ }
+}
