@@ -643,13 +643,25 @@ def application(env, start_response):
     def respond(status, data, mime='application/json; charset=utf-8'):
         if not isinstance(data, bytes):
             data = json.dumps(data, ensure_ascii=False).encode()
-        # Compress large JSON responses for capable clients; never alter nutrition values.
-        # Binary documents, uploaded images and PDFs remain untouched.
+        # Compress JSON transport only; do not change any numeric values or binary files.
         if status == 200 and mime.startswith('application/json') and len(data) >= 2048:
             accepted = env.get('HTTP_ACCEPT_ENCODING', '').lower()
             supports_gzip = any(
                 part.strip().split(';')[0].strip() == 'gzip'
-                and not re.search(r';\s*q\s*=\s*0(?:\.0*)?\s*
+                and not any(option.strip() in ('q=0', 'q=0.0', 'q=0.00')
+                            for option in part.split(';')[1:])
+                for part in accepted.split(',')
+            )
+            if supports_gzip:
+                compressed = gzip.compress(data, compresslevel=5, mtime=0)
+                if len(compressed) + 100 < len(data):
+                    data = compressed
+                    headers.append(('Content-Encoding', 'gzip'))
+                    headers.append(('Vary', 'Accept-Encoding'))
+        if (status == 200 and mime == 'image/webp'
+                and parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1']
+                and (path.startswith('/api/v2/recipes/image/')
+                     or path.startswith('/api/v2/dishes/image/'))):
             headers[:] = [(key, val) for key, val in headers if key.lower() != 'cache-control']
             headers.extend([('Cache-Control', 'private, max-age=3600'), ('Vary', 'Cookie')])
         headers.extend([('Content-Type', mime), ('Content-Length', str(len(data)))])
