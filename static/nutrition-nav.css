@@ -263,3 +263,25 @@
   background:#fff!important
  }
 }
+
+/* Higher-specificity override for older sidebar display:none!important rules. */
+@media(max-width:830px){
+ .tm-admin-sidebar .tm-admin-more-trigger[aria-expanded="true"],
+ .tm-admin-sidebar .tm-admin-more-trigger.is-active{
+  background:rgba(99,128,154,.18)!important;color:inherit!important;font-weight:650!important
+ }
+ .tm-admin-sidebar .tm-admin-more-trigger[aria-expanded="true"] svg{opacity:1}
+}
+
+@media(max-width:830px){
+ .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav#tm-admin-account-actions[aria-label="Conta e configurações"].is-mobile-open{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  position:relative!important;inset:auto!important;visibility:visible!important;
+  width:auto!important;max-width:calc(100% - 40px)!important;min-width:0!important;
+  height:auto!important;opacity:1!important
+ }
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar .tm-admin-more-trigger[aria-expanded="true"],
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar .tm-admin-more-trigger.is-active{
+  background:#e6edf4!important;color:#172c40!important
+ }
+}
