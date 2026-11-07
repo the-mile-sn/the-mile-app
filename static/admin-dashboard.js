@@ -291,12 +291,10 @@ function ensurePlanningOnlyView(){
   }catch(err){if(token===profileLoadToken)accessFeedback.textContent="Não foi possível alterar: "+err.message;}
   finally{btn.disabled=false;}
  });
- $("tm-players-enter-app").addEventListener("click",async()=>{
-  const uid=playerDetails?.user_id,loadToken=profileLoadToken,button=$("tm-players-enter-app");
-  if(!uid||!playerAccess?.active)return;
-  // Open synchronously on the user gesture to avoid popup blockers.
+ async function enterPlayerApp(uid,button,feedback){
+  if(!uid)return;
   const tab=window.open("about:blank","_blank");
-  if(!tab){accessFeedback.textContent="Permite pop-ups deste site para abrir a app do jogador.";return;}
+  if(!tab){feedback.textContent="Permite pop-ups deste site para abrir a app do jogador.";return;}
   tab.document.title="The Mile · Acesso de visualização";
   tab.document.body.textContent="A preparar acesso de visualização…";
   button.disabled=true;
@@ -304,15 +302,18 @@ function ensurePlanningOnlyView(){
    const response=await request("/api/admin/player-preview",{
     method:"POST",body:JSON.stringify({user_id:uid})
    });
-   if(loadToken!==profileLoadToken||playerDetails?.user_id!==uid){tab.close();return;}
    const url=new URL(response.url);
    if(url.origin!=="https://app.themile.pt"||url.pathname!=="/preview-entry")throw Error("Destino inesperado.");
    tab.location.replace(url.href);
-   accessFeedback.textContent="";
+   feedback.textContent="";
   }catch(err){
    tab.close();
-   accessFeedback.textContent="Não foi possível abrir a app do jogador: "+err.message;
+   feedback.textContent="Não foi possível abrir a app do jogador: "+err.message;
   }finally{button.disabled=false;}
+ }
+ $("tm-players-enter-app").addEventListener("click",()=>{
+  if(!playerAccess?.active||!playerDetails?.user_id)return;
+  enterPlayerApp(playerDetails.user_id,$("tm-players-enter-app"),accessFeedback);
  });
  $("tm-players-archive").addEventListener("click",async()=>{
   if(!playerProfile)return;const aid=playerProfile.id,name=playerProfile.name,token=profileLoadToken;
@@ -553,12 +554,22 @@ function ensurePlanningOnlyView(){
    const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
    link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));first.append(link);row.append(first);
    const statusCell=el("td");statusCell.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));row.append(statusCell);
-   const game=el("td");game.append(el("span","",p.next_match?fullDate(p.next_match.date):"—"));if(p.next_match?.time)game.append(el("small","tm-p-muted",p.next_match.time));row.append(game);
-   const weight=el("td");if(p.latest_weight){weight.append(el("span","",Number(p.latest_weight.weight_kg).toLocaleString("pt-PT",{maximumFractionDigits:1})+" kg"),el("small","tm-p-muted",fullDate(p.latest_weight.date)));}else weight.textContent="—";row.append(weight);
-   const reply=el("td");if(p.last_player_response){const isWeight=p.last_player_response.type==="weight";reply.append(el("span","",isWeight?"Peso":"Pós-jogo"),el("small","tm-p-muted",new Date(p.last_player_response.timestamp*1000).toLocaleDateString("pt-PT")));}else reply.textContent="—";row.append(reply);
-   const action=el("td");const go=el("button","tm-p-go","Abrir");go.type="button";go.addEventListener("click",()=>openPlayerProfile(p.id));action.append(go);row.append(action);body.append(row);
+   const renewal=el("td","tm-p-renewal",fullDate(p.renewal_date));row.append(renewal);
+   const action=el("td","tm-p-actions");
+   const actions=el("div","tm-p-actions-wrap");
+   const go=el("button","tm-p-icon-action");go.type="button";
+   go.title="Ver perfil";go.setAttribute("aria-label","Ver perfil de "+p.name);
+   go.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.7-7 10-7 10 7 10 7-3.7 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+   go.addEventListener("click",()=>openPlayerProfile(p.id));actions.append(go);
+   const app=el("button","tm-p-icon-action tm-p-app-action");app.type="button";
+   app.title="Entrar na app";app.setAttribute("aria-label","Entrar na app de "+p.name);
+   app.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>';
+   app.disabled=p.access_status!=="active"||!p.user_id;
+   app.title=app.disabled?"Jogador sem acesso ativo":"Entrar na app";
+   app.addEventListener("click",()=>enterPlayerApp(p.user_id,app,$("tm-players-error")));
+   actions.append(app);action.append(actions);row.append(action);body.append(row);
   }
-  if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=6;row.append(cell);body.append(row);}
+  if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=4;row.append(cell);body.append(row);}
  }
  async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
  window.tmRefreshPlayersList=()=>loadPlayers();
