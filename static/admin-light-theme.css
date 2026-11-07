@@ -542,3 +542,6 @@ html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-card{
 }
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info strong{color:#263448}
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info p{color:#667284}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save{background:#273e55;border-color:#273e55;color:#fff}
+html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save.is-saved{background:#e4f4e9;border-color:#94d1ac;color:#246c40}
