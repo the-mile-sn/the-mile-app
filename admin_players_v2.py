@@ -9,7 +9,7 @@ def overview(c, today, access_is_valid):
     rows = c.execute("""
         SELECT a.id, a.name, a.weight_kg AS profile_weight,
                l.user_id, u.username, u.active, u.role,
-               (u.photo IS NOT NULL) AS has_photo
+               (u.photo IS NOT NULL) AS has_photo, a.followup_renewal_date
           FROM v2_athletes a
           LEFT JOIN v2_player_links l ON l.athlete_id=a.id
           LEFT JOIN users u ON u.id=l.user_id AND u.role='player'
@@ -72,6 +72,7 @@ def overview(c, today, access_is_valid):
             "has_photo": bool(row["has_photo"]),
             "access_status": access,
             "profile_weight": row["profile_weight"],
+            "renewal_date": row["followup_renewal_date"],
             "next_match": next_matches.get(row["id"]),
             "latest_weight": last_weights.get(row["id"]),
             "last_player_response": last_responses.get(row["id"]),
