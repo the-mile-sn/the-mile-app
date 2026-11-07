@@ -107,7 +107,7 @@ function updatePlanningPlayerControls(){
  if(!select||!avatar)return;
  const name=select.selectedOptions[0]?.textContent||"";
  avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(v=>v[0]).join("").toLocaleUpperCase("pt-PT")||"—";
- const chosen=select.selectedOptions[0];if(chosen?.dataset.hasPhoto==="true"&&chosen.dataset.userId){const img=document.createElement("img");img.className="tm-picker-photo";img.src="/api/players/"+encodeURIComponent(chosen.dataset.userId)+"/photo";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
+ const chosen=select.selectedOptions[0];if(chosen?.dataset.hasPhoto==="true"&&chosen.dataset.userId){const img=document.createElement("img");img.className="tm-picker-photo";img.src="/api/players/"+encodeURIComponent(chosen.dataset.userId)+"/photo?thumb=1";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
  planningSearch.value=name;
  closePlanningResults();
 }
