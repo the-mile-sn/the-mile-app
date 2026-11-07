@@ -212,6 +212,8 @@ def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
     with connect() as c:
         c.execute('CREATE TABLE IF NOT EXISTS v2_shared_images (image_key TEXT PRIMARY KEY, image_data ' + ('BYTEA' if DATABASE_URL else 'BLOB') + ' NOT NULL)')
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_tickets (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_sessions (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
         if DATABASE_URL:
             c.executescript('''
             CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
@@ -2434,6 +2436,25 @@ def application(env, start_response):
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'options_by_color': plan_import_v2.published_meal_options(c, link['athlete_id']), 'peri_plans': peri_v2.current(c, link['athlete_id'])})
+            if path == '/api/admin/player-preview' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                requested=str(read_json(env).get('user_id',''))
+                target=c.execute(
+                    "SELECT id FROM users WHERE id=? AND role='player' AND active=1",
+                    (requested,)).fetchone()
+                if not target: raise Problem(404,'player_unavailable')
+                linked=c.execute(
+                    "SELECT athlete_id FROM v2_player_links WHERE user_id=?",
+                    (requested,)).fetchone()
+                if not linked: raise Problem(404,'player_not_linked')
+                ticket=secrets.token_urlsafe(32)
+                expires=now+60
+                c.execute("DELETE FROM v2_admin_preview_tickets WHERE expires<=?",(now,))
+                c.execute("INSERT INTO v2_admin_preview_tickets(token,admin_id,player_id,expires) VALUES(?,?,?,?)",
+                          (digest(ticket),user['id'],requested,expires))
+                c.commit()
+                return respond(200,{'url':'https://app.themile.pt/preview-entry?token='+quote(ticket)})
             if path == '/api/me' and method == 'GET':
                 if not user:
                     return respond(200, {'user': None, 'csrf': None})
