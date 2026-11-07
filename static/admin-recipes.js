@@ -3,7 +3,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const blank=()=>({id:"",name:"",category_id:"",recipe_type:"standard",status:"draft",servings:1,sections:[{title:"",ingredients:[{name:"",quantity:"",unit:""}]}],steps:[""],notes:"",photo_key:null});
- let categories=[],recipes=[],current=null,openedId=null,busy=false,loaded=false;
+ let categories=[],recipes=[],recipeRows=[],recipeTotal=0,recipePage=1,recipePages=1,recipeQueryRevision=0,recipeSearchTimer=null,fullRecipeIndexLoaded=false,current=null,openedId=null,busy=false,loaded=false;
  let recipeReaderHistory=[],recipeReaderCache=new Map(),recipeReaderToken=0,recipeReaderEditorVisible=false;
  const alertMessage=(message)=>{$("recipe-status-message").textContent=message;};
  const editorMessage=(message)=>{$("recipe-editor-feedback").textContent=message;};
@@ -93,13 +93,13 @@
  function paintList(){
   // Repaint only tbody: retain search focus, filter selections and table width.
   const host=$("recipe-list-body");host.replaceChildren();
-  const visible=recipes.filter(matchesRecipe);
-  $("recipe-result-count").textContent=visible.length===recipes.length?
-   recipes.length+" receitas":visible.length+" de "+recipes.length+" receitas";
+  const visible=recipeRows;
+  $("recipe-result-count").textContent=recipeTotal+" receitas";
+  paintRecipePagination();
   $("recipe-clear-filters").hidden=!activeRecipeFilters();
   const empty=$("recipe-list-empty");
   empty.hidden=visible.length>0;
-  empty.textContent=visible.length?"":recipes.length?
+  empty.textContent=visible.length?"":recipeTotal?
    "Nenhuma receita corresponde aos filtros.":"A biblioteca está vazia. Adiciona a primeira receita ou cria uma categoria.";
   for(const r of visible){
    const tr=node("tr");
@@ -181,7 +181,7 @@
     row.append(node("span","recipe-reader-quantity",quantity||"—"));
     const linkId=item.recipe_ref_id;
     if(linkId){
-     const linked=recipes.find(r=>r.id===linkId);
+     const linked=recipes.find(r=>r.id===linkId)||recipeRows.find(r=>r.id===linkId);
      const name=linked?.name||item.name.replace(/\([^)]*ver receita[^)]*\)/ig,"").trim()||item.name;
      const action=button(name+" ↗",()=>openReadRecipe(linkId,true),"recipe-reader-ingredient-link");
      action.title="Abrir receita associada";
@@ -523,6 +523,7 @@
  }
  async function openRecipe(id){
   if(busy)return;
+  try{await ensureFullRecipeIndex();}catch(error){alertMessage("Não foi possível carregar as associações: "+error.message);return;}
   if(!id){current=blank();openedId=null;paintEditor();return;}
   alertMessage("A carregar receita…");
   try{const result=await request("/api/v2/recipes/"+encodeURIComponent(id));current=result.recipe;openedId=id;paintEditor();alertMessage("");}
@@ -623,10 +624,55 @@
   }
   finally{busy=false;}
  }
+ async function ensureFullRecipeIndex(){
+  if(fullRecipeIndexLoaded)return;
+  const data=await request("/api/v2/recipes");
+  recipes=data.recipes||[];
+  fullRecipeIndexLoaded=true;
+ }
+ function recipePageUrl(page){
+  const q=new URLSearchParams({paged:"1",page:String(page)});
+  const search=$("recipe-search").value.trim();
+  if(search)q.set("q",search);
+  for(const [id,key] of [["recipe-filter-category","category"],["recipe-filter-type","type"],["recipe-filter-status","status"]]){
+   if($(id).value)q.set(key,$(id).value);
+  }
+  return "/api/v2/recipes?"+q.toString();
+ }
+ function paintRecipePagination(){
+  let nav=$("recipe-pagination");
+  if(!nav){
+   nav=node("div","tm-library-pagination");
+   nav.id="recipe-pagination";
+   nav.setAttribute("aria-label","Paginação das receitas");
+   $("recipe-list-meta").insertAdjacentElement("afterend",nav);
+  }
+  nav.replaceChildren();
+  nav.hidden=recipePages<=1;
+  if(recipePages<=1)return;
+  const prev=button("Anterior",()=>fetchRecipePage(recipePage-1),"tm-library-page-button");
+  prev.disabled=recipePage<=1;
+  const next=button("Seguinte",()=>fetchRecipePage(recipePage+1),"tm-library-page-button");
+  next.disabled=recipePage>=recipePages;
+  nav.append(prev,node("span","tm-library-page-label","Página "+recipePage+" de "+recipePages),next);
+ }
+ async function fetchRecipePage(page=1){
+  const revision=++recipeQueryRevision;
+  const data=await request(recipePageUrl(page));
+  if(revision!==recipeQueryRevision)return;
+  recipeRows=data.recipes||[];
+  recipeTotal=data.total||0;
+  recipePage=data.page||1;
+  recipePages=data.pages||1;
+  paintList();
+ }
  async function loadLibrary(){
-  const [cat,data]=await Promise.all([request("/api/v2/recipes/categories"),request("/api/v2/recipes")]);
-  categories=cat.categories||[];recipes=data.recipes||[];recipeReaderCache.clear();
-  paintCategoryOptions();paintList();loaded=true;
+  const cat=await request("/api/v2/recipes/categories");
+  categories=cat.categories||[];
+  recipes=[];fullRecipeIndexLoaded=false;recipeReaderCache.clear();
+  paintCategoryOptions();
+  await fetchRecipePage(recipePage);
+  loaded=true;
  }
  async function addCategory(){
   const input=$("recipe-new-category"),name=input.value.trim(),output=$("recipe-category-feedback");
@@ -679,6 +725,7 @@
  }
  async function removeCategory(entry){
   if(busy)return;
+  try{await ensureFullRecipeIndex();}catch(error){$("recipe-category-feedback").textContent="Não foi possível consultar as receitas: "+error.message;return;}
   const count=recipes.filter(r=>r.category_id===entry.id).length;
   if(count){
    const form=$("recipe-category-edit");form.hidden=false;form.replaceChildren();
@@ -978,6 +1025,7 @@
  }
  async function analyzePdf(){
   if(pdfBusy)return;
+  try{await ensureFullRecipeIndex();}catch(error){$("recipe-pdf-feedback").textContent="Não foi possível consultar a biblioteca: "+error.message;return;}
   const file=$("recipe-pdf-file").files?.[0],category=$("recipe-pdf-category").value;
   const feedback=$("recipe-pdf-feedback");
   if(!category){feedback.textContent="Seleciona primeiro a categoria de destino.";return;}
@@ -1052,14 +1100,16 @@
  $("recipe-pdf-cancel").addEventListener("click",resetPdfPreview);
  $("recipe-pdf-save").addEventListener("click",savePdfDrafts);
  $("recipe-pdf-category").addEventListener("change",()=>{if(pdfPreview)paintPdfPreview();});
- $("recipe-search").addEventListener("input",paintList);
- $("recipe-filter-category").addEventListener("change",paintList);
- $("recipe-filter-type").addEventListener("change",paintList);
- $("recipe-filter-status").addEventListener("change",paintList);
+ $("recipe-search").addEventListener("input",()=>{
+  clearTimeout(recipeSearchTimer);
+  recipeSearchTimer=setTimeout(()=>fetchRecipePage(1).catch(e=>alertMessage("Erro na pesquisa: "+e.message)),250);
+ });
+ for(const id of ["recipe-filter-category","recipe-filter-type","recipe-filter-status"])
+  $(id).addEventListener("change",()=>fetchRecipePage(1).catch(e=>alertMessage("Erro nos filtros: "+e.message)));
  $("recipe-clear-filters").addEventListener("click",()=>{
   $("recipe-search").value="";
   for(const id of ["recipe-filter-category","recipe-filter-type","recipe-filter-status"])$(id).value="";
-  paintList();
+  fetchRecipePage(1).catch(e=>alertMessage("Erro ao limpar filtros: "+e.message));
  });
  $("recipe-reader-back").addEventListener("click",readerBack);
  $("recipe-reader-close").addEventListener("click",closeReadRecipe);
