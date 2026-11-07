@@ -163,3 +163,11 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
  padding:8px 2px;font-size:15px;font-weight:500;line-height:1.3
 }
 .food-library-top .food-library-back svg{width:20px;height:20px;flex:none}
+
+/* Keep row actions compact and hide non-visual status announcements. */
+.food-catalog-table col.col-edit{width:9%}
+.food-catalog-table col.col-food{width:25%}
+.food-catalog-table td.food-edit-cell{white-space:nowrap;padding-left:4px;padding-right:4px}
+.food-catalog-table td.food-edit-cell .food-delete-icon:hover{color:#ca6367;background:rgba(197,76,81,.09)}
+.food-catalog-table td.food-edit-cell button:disabled{opacity:.45;cursor:wait}
+.food-catalog-panel #feedback.sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;margin:-1px!important;padding:0!important;border:0!important}
