@@ -45,6 +45,8 @@
  }
  function moveAdminControls(){/* Existing controls remain mounted in Settings. */}
  function navActive(target){
+  // Navigation selected during startup must not be overridden by late data loading.
+  window.tmAdminNavigationVersion=(window.tmAdminNavigationVersion||0)+1;
   const id=target?.id,accountView=id==="tm-admin-nav-account",settingsView=id==="tm-admin-nav-settings";
   moveAdminControls(settingsView);
   if(settingsPage)settingsPage.hidden=!settingsView;
