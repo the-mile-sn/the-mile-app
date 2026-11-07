@@ -330,3 +330,41 @@
   color:#172c40!important;background:#e6edf4!important
  }
 }
+
+/* Mobile navigation polish: breathable top safe-area and borderless More list. */
+@media(max-width:830px){
+ .tm-admin-sidebar .tm-admin-mobile-nav-track{
+  padding-top:16px!important;
+  padding-bottom:10px!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  box-sizing:border-box!important;position:relative!important;
+  width:calc(100% - 48px)!important;max-width:none!important;
+  margin:10px 24px 8px!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  gap:2px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link{
+  border:0!important;background:transparent!important;
+  border-radius:10px!important;padding:11px 12px!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link.is-active{
+  background:rgba(123,150,172,.14)!important;
+ }
+ html[data-admin-theme="light"] .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+ }
+}
+
+@media(max-width:830px){
+ .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav#tm-admin-account-actions.is-mobile-open{
+  position:relative!important;inset:auto!important;width:calc(100% - 48px)!important;
+  max-width:none!important;margin:10px 24px 8px!important;padding:0!important;
+  border:none!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent!important
+ }
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav#tm-admin-account-actions.is-mobile-open{
+  background:transparent!important;border:0!important;box-shadow:none!important
+ }
+}
