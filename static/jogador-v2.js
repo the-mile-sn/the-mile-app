@@ -260,7 +260,13 @@ function displayPlayerRenewal(value){
 }
 let playerLoadingPhotoController=null;
 let playerLoadingPhotoUrl=null;
+let playerLoadingPhotoReadyAt=0;
+let playerLoadingPhotoPending=null;
+let playerLoadingPhotoClosing=false;
 function resetPlayerLoadingPhoto(){
+ playerLoadingPhotoClosing=true;
+ playerLoadingPhotoReadyAt=0;
+ playerLoadingPhotoPending=null;
  if(playerLoadingPhotoController){playerLoadingPhotoController.abort();playerLoadingPhotoController=null;}
  if(playerLoadingPhotoUrl){URL.revokeObjectURL(playerLoadingPhotoUrl);playerLoadingPhotoUrl=null;}
  const layer=$("player-loading-photo");
@@ -268,23 +274,47 @@ function resetPlayerLoadingPhoto(){
 }
 function loadPlayerLoadingPhoto(epoch){
  resetPlayerLoadingPhoto();
+ playerLoadingPhotoClosing=false;
  const controller=new AbortController();playerLoadingPhotoController=controller;
- // Non-blocking: optional photo never delays authenticated content.
- fetch("/api/v2/player/loading-photo",{credentials:"same-origin",cache:"no-store",signal:controller.signal})
-  .then(r=>{if(!r.ok)throw Error("no_loading_photo");return r.blob();})
-  .then(blob=>{
-   if(epoch!==playerSessionEpoch||controller.signal.aborted||$("player-session-loading").hidden)return;
-   const url=URL.createObjectURL(blob),img=new Image();
-   playerLoadingPhotoUrl=url;
-   img.onload=()=>{
-    if(epoch!==playerSessionEpoch||controller.signal.aborted||$("player-session-loading").hidden)return;
-    const layer=$("player-loading-photo");
-    layer.style.backgroundImage="url("+JSON.stringify(url)+")";
-    requestAnimationFrame(()=>layer.classList.add("is-visible"));
-   };
-   img.onerror=()=>{if(playerLoadingPhotoUrl===url){URL.revokeObjectURL(url);playerLoadingPhotoUrl=null;}};
-   img.src=url;
-  }).catch(()=>{});
+ playerLoadingPhotoPending=new Promise(resolve=>{
+  const unavailable=()=>resolve(false);
+  fetch("/api/v2/player/loading-photo",{credentials:"same-origin",cache:"no-store",signal:controller.signal})
+   .then(r=>{if(!r.ok)throw Error("no_loading_photo");return r.blob();})
+   .then(blob=>{
+    if(epoch!==playerSessionEpoch||controller.signal.aborted||playerLoadingPhotoClosing)return unavailable();
+    const url=URL.createObjectURL(blob),img=new Image();
+    playerLoadingPhotoUrl=url;
+    img.onload=()=>{
+     if(epoch!==playerSessionEpoch||controller.signal.aborted||playerLoadingPhotoClosing||$("player-session-loading").hidden)return unavailable();
+     const layer=$("player-loading-photo");
+     layer.style.backgroundImage="url("+JSON.stringify(url)+")";
+     requestAnimationFrame(()=>{
+      if(epoch!==playerSessionEpoch||controller.signal.aborted||playerLoadingPhotoClosing||$("player-session-loading").hidden)return unavailable();
+      playerLoadingPhotoReadyAt=Date.now();
+      layer.classList.add("is-visible");
+      resolve(true);
+     });
+    };
+    img.onerror=unavailable;
+    img.src=url;
+   }).catch(unavailable);
+ });
+}
+async function finishPlayerLoading(epoch){
+ // On fast sessions, give the optional image a brief chance to appear.
+ // A missing or slow image must never hold up the app.
+ if(!playerLoadingPhotoReadyAt&&playerLoadingPhotoPending){
+  await Promise.race([playerLoadingPhotoPending,new Promise(resolve=>setTimeout(resolve,140))]);
+ }
+ if(epoch!==playerSessionEpoch)return;
+ if(playerLoadingPhotoReadyAt){
+  // Keep a loaded player photo visible long enough to avoid a fleeting flash.
+  const remaining=Math.max(0,400-(Date.now()-playerLoadingPhotoReadyAt));
+  if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
+ }
+ if(epoch!==playerSessionEpoch)return;
+ playerLoadingPhotoClosing=true;
+ playerSessionReady(true);
 }
 function playerSessionScreen(message,retry=false){
  const loading=$("player-session-loading");
@@ -370,7 +400,7 @@ async function session(){
  $("logout").hidden=false;
  $("status").textContent=""; // Never keep a stale pre-login session warning on screen.
  await show(tab);
- if(epoch===playerSessionEpoch)playerSessionReady(true);
+ if(epoch===playerSessionEpoch)await finishPlayerLoading(epoch);
 }
 /* Adaptive navigation: hysteresis prevents flicker on short scroll gestures. */
 let mileLastScrollY=0,mileScrollAccum=0,mileScrollDirection=0,mileScrollFrame=0;
