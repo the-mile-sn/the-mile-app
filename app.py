@@ -198,6 +198,8 @@ def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
     with connect() as c:
         c.execute('CREATE TABLE IF NOT EXISTS v2_shared_images (image_key TEXT PRIMARY KEY, image_data ' + ('BYTEA' if DATABASE_URL else 'BLOB') + ' NOT NULL)')
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_tickets (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_sessions (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
         if DATABASE_URL:
             c.executescript('''
             CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
@@ -664,7 +666,7 @@ def application(env, start_response):
                 content = content.replace('Ambiente de testes · The Mile 2.0'.encode(), b'The Mile')
                 content = content.replace('The Mile · Jogador (testes)'.encode(), b'The Mile')
             return respond(200, content, mime)
-        if not path.startswith('/api/'):
+        if not path.startswith('/api/') and path != '/preview-entry':
             raise Problem(404, 'not_found')
 
         cookies = SimpleCookie()
@@ -680,6 +682,44 @@ def application(env, start_response):
 
             if SITE_ROLE != 'both' and user and user['role'] != SITE_ROLE:
                 user = None
+
+            if path == '/preview-entry' and method == 'GET' and SITE_ROLE in ('player','both'):
+                ticket=parse_qs(env.get('QUERY_STRING','')).get('token',[''])[0]
+                if not re.fullmatch(r'[A-Za-z0-9_-]{40,100}',ticket):
+                    raise Problem(404,'invalid_preview')
+                consumed=c.execute(
+                    "DELETE FROM v2_admin_preview_tickets WHERE token=? AND expires>? RETURNING admin_id,player_id",
+                    (digest(ticket),now)).fetchone()
+                if not consumed:
+                    raise Problem(404,'expired_preview')
+                target=c.execute(
+                    "SELECT id FROM users WHERE id=? AND role='player' AND active=1",
+                    (consumed['player_id'],)).fetchone()
+                if not target:
+                    raise Problem(404,'player_unavailable')
+                preview_token=secrets.token_urlsafe(32)
+                csrf_preview=secrets.token_urlsafe(24)
+                expires=now+3600
+                c.execute("INSERT INTO sessions(token,user_id,csrf,expires) VALUES(?,?,?,?)",
+                          (digest(preview_token),target['id'],csrf_preview,expires))
+                c.execute("INSERT INTO v2_admin_preview_sessions(token,admin_id,player_id,expires) VALUES(?,?,?,?)",
+                          (digest(preview_token),consumed['admin_id'],target['id'],expires))
+                c.commit()
+                headers.append(('Set-Cookie',
+                    f'mile_session={preview_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600'
+                    + ('; Secure' if SECURE else '')))
+                headers.append(('Location','/'))
+                headers.append(('Cache-Control','no-store'))
+                return respond(303,b'', 'text/plain; charset=utf-8')
+
+            preview_session=None
+            if user:
+                preview_session=c.execute(
+                    "SELECT admin_id FROM v2_admin_preview_sessions WHERE token=? AND expires>?",
+                    (digest(token),now)).fetchone()
+            # Read-only preview is enforced by the server, not merely hidden controls.
+            if preview_session and method not in ('GET','HEAD') and path != '/api/logout':
+                raise Problem(403,'admin_preview_read_only')
 
             if method != 'GET':
                 origin = (env.get('HTTP_ORIGIN') or '').strip().rstrip('/')
@@ -1668,7 +1708,7 @@ def application(env, start_response):
                 # Player PWA: keep the HttpOnly cookie alive across app restarts.
                 # Renew only when the existing session is nearing expiry. Admin
                 # sessions remain short-lived; inactive users remain revoked.
-                if user and user['role'] == 'player' and user['session_expires'] - now <= PLAYER_SESSION_RENEW_WINDOW:
+                if user and user['role'] == 'player' and not preview_session and user['session_expires'] - now <= PLAYER_SESSION_RENEW_WINDOW:
                     renewed_token = secrets.token_urlsafe(32)
                     c.execute('UPDATE sessions SET token=?, expires=? WHERE token=? AND user_id=?',
                               (digest(renewed_token), now + PLAYER_SESSION_SECONDS, digest(token), user['id']))
@@ -1682,7 +1722,7 @@ def application(env, start_response):
                     data['game_form_url'] = GAME_FORM
                 else:
                     data = {'id': user['id'], 'name': user['name'], 'email': user['email'], 'role': user['role']}
-                return respond(200, {'user': data, 'csrf': user['csrf']})
+                return respond(200, {'user': data, 'csrf': user['csrf'], 'admin_preview': bool(preview_session)})
 
             if path in ('/api/login', '/api/activate') and method == 'POST':
                 body = read_json(env)
