@@ -20,9 +20,9 @@ function updatePager(){
  nav.append(back,current,next);
 }
 function draw(){
- $("rows").innerHTML=foods.map(f=>'<tr><td class="food-category">'+esc(f.category||"—")+'</td><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td class="food-edit-cell"><button type="button" class="food-edit-icon" data-edit="'+esc(f.id)+'" aria-label="Editar '+esc(f.display_name)+'" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg></button></td></tr>').join("");
+ $("rows").innerHTML=foods.map(f=>'<tr><td class="food-category">'+esc(f.category||"—")+'</td><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td class="food-edit-cell"><button type="button" class="food-edit-icon" data-edit="'+esc(f.id)+'" aria-label="Editar '+esc(f.display_name)+'" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg></button><button type="button" class="food-edit-icon food-delete-icon" data-delete="'+esc(f.id)+'" aria-label="Eliminar '+esc(f.display_name)+'" title="Eliminar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg></button></td></tr>').join("");
  $("empty").hidden=foods.length!==0;
- $("feedback").textContent="Biblioteca atualizada.";
+ $("feedback").textContent="";
  updatePager();
 }
 async function load(target=1){
@@ -57,9 +57,32 @@ $("search").addEventListener("input",()=>{
 });
 $("category").addEventListener("change",()=>load(1));
 $("rows").addEventListener("click",event=>{
- const button=event.target.closest("[data-edit]");
- if(button)open(foods.find(f=>f.id===button.dataset.edit));
+ const editButton=event.target.closest("[data-edit]");
+ if(editButton){open(foods.find(f=>f.id===editButton.dataset.edit));return;}
+ const deleteButton=event.target.closest("[data-delete]");
+ if(deleteButton)archiveFood(deleteButton.dataset.delete);
 });
+async function archiveFood(id){
+ const food=foods.find(item=>item.id===id);
+ if(!food)return;
+ if(!confirm("Eliminar o alimento \""+food.display_name+"\" da Biblioteca Alimentar?\n\nNão será possível se estiver associado a um plano."))return;
+ const button=[...$("rows").querySelectorAll("[data-delete]")].find(item=>item.dataset.delete===id);
+ if(button)button.disabled=true;
+ try{
+  const response=await fetch("/api/v2/food-library/"+encodeURIComponent(id),{
+   method:"DELETE",headers:{"X-CSRF-Token":window.foodLibraryCsrf||""},
+   credentials:"same-origin"
+  });
+  if(response.status===409){
+   alert("Não é possível eliminar este alimento porque está associado a um plano guardado ou publicado.");
+   return;
+  }
+  if(!response.ok)throw Error("O servidor devolveu o erro "+response.status+".");
+  await load(page);
+ }catch(error){
+  alert("Não foi possível eliminar o alimento: "+error.message);
+ }finally{if(button)button.disabled=false;}
+}
 function open(food){
  editing=food||null;$("food-form").reset();
  $("editor-title").textContent=food?"Editar alimento":"Novo alimento";
