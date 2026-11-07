@@ -366,6 +366,16 @@ def store_dish_image(c, filename, image_data):
     c.execute('INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)', (filename, image_data))
 
 
+def admin_library_thumbnail(image_data):
+    """Small WebP solely for admin catalogue tables; original remains unchanged."""
+    with Image.open(io.BytesIO(image_data)) as source:
+        source = ImageOps.exif_transpose(source)
+        source.thumbnail((240, 240))
+        output = io.BytesIO()
+        source.convert('RGB').save(output, format='WEBP', quality=65, method=4)
+        return output.getvalue()
+
+
 def read_dish_image(c, filename):
     row = c.execute('SELECT image_data FROM v2_shared_images WHERE image_key=?', (filename,)).fetchone()
     if row:
@@ -614,6 +624,9 @@ def application(env, start_response):
     def respond(status, data, mime='application/json; charset=utf-8'):
         if not isinstance(data, bytes):
             data = json.dumps(data, ensure_ascii=False).encode()
+        if status == 200 and mime == 'image/webp' and parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1'] and (path.startswith('/api/v2/recipes/image/') or path.startswith('/api/v2/dishes/image/')):
+            headers[:] = [(key, val) for key, val in headers if key.lower() != 'cache-control']
+            headers.extend([('Cache-Control', 'private, max-age=3600'), ('Vary', 'Cookie')])
         headers.extend([('Content-Type', mime), ('Content-Length', str(len(data)))])
         start_response(f'{status} ' + {200:'OK', 201:'Created', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error'}.get(status, 'Error'), headers)
         return [data]
@@ -1661,6 +1674,8 @@ def application(env, start_response):
                     if not recipe or not recipe['photo_key']: raise Problem(404,'not_found')
                     photo=read_dish_image(c,recipe['photo_key'])
                     if photo is None: raise Problem(404,'not_found')
+                    if parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1']:
+                        photo=admin_library_thumbnail(photo)
                     return respond(200,photo,'image/webp')
                 if path.startswith('/api/v2/recipes/photo/') and method == 'POST':
                     recipe_id=path.rsplit('/',1)[-1]
@@ -1864,6 +1879,8 @@ def application(env, start_response):
                 if not dish: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,dish['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
+                if parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1']:
+                    image_data=admin_library_thumbnail(image_data)
                 return respond(200,image_data,'image/webp')
             if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method in ('GET', 'PUT'):
                 if not user: raise Problem(401,'unauthorized')
