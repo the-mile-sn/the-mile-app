@@ -1,4 +1,98 @@
-"use strict";(()=>{const $=id=>document.getElementById(id);let foods=[],editing=null;const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));const fmt=n=>Number(n||0).toLocaleString("pt-PT",{maximumFractionDigits:1});function draw(){const q=$("search").value.toLocaleLowerCase("pt-PT"),cat=$("category").value;const filtered=foods.filter(f=>(!cat||f.category===cat)&&f.display_name.toLocaleLowerCase("pt-PT").includes(q));$("rows").innerHTML=filtered.map(f=>'<tr><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td><button type="button" data-edit="'+esc(f.id)+'">Editar</button></td></tr>').join("");$("empty").hidden=filtered.length!==0;$("feedback").textContent=filtered.length+" resultados";$("count").textContent=foods.length;$("categories").textContent=new Set(foods.map(f=>f.category)).size;$("variants").textContent=foods.filter(f=>f.variant!=="plain").length;const cats=[...new Set(foods.map(f=>f.category))].sort((a,b)=>a.localeCompare(b,"pt"));$("category").innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>'<option value="'+esc(c)+'" '+(c===cat?"selected":"")+'>'+esc(c)+'</option>').join("")}async function load(){try{const r=await fetch("/api/v2/food-library",{credentials:"same-origin"});if(!r.ok)throw Error("Sem acesso à biblioteca ("+r.status+").");const j=await r.json();foods=j.foods||[];draw()}catch(e){$("feedback").textContent=e.message;$("empty").hidden=false;$("empty").textContent="Não foi possível carregar a biblioteca."}}$("search").addEventListener("input",draw);$("category").addEventListener("change",draw);$("rows").addEventListener("click",e=>{const b=e.target.closest("[data-edit]");if(b)open(foods.find(f=>f.id===b.dataset.edit))});function open(food){editing=food||null;$("food-form").reset();$("editor-title").textContent=food?"Editar alimento":"Novo alimento";if(food){for(const [k,v] of Object.entries(food)){const el=$("food-form").elements.namedItem(k);if(el)el.value=v??""}}$("form-feedback").textContent="";$("editor").showModal()}$("new").addEventListener("click",()=>open(null));$("cancel").addEventListener("click",()=>$("editor").close());$("food-form").addEventListener("submit",async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));if(editing)data.id=editing.id;data.base_name=editing?.base_name||data.display_name;try{const r=await fetch("/api/v2/food-library",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":window.foodLibraryCsrf||""},credentials:"same-origin",body:JSON.stringify(data)});if(!r.ok)throw Error("Não foi possível guardar ("+r.status+").");$("editor").close();await load()}catch(err){$("form-feedback").textContent=err.message}});fetch("/api/me",{credentials:"same-origin"}).then(r=>r.json()).then(j=>{window.foodLibraryCsrf=j.csrf||"";load()}).catch(load)})();
+"use strict";(()=>{
+const $=id=>document.getElementById(id);
+let foods=[],editing=null,page=1,pages=1,total=0,revision=0,searchTimer=null;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>Number(n||0).toLocaleString("pt-PT",{maximumFractionDigits:1});
+function updatePager(){
+ let nav=$("food-pagination");
+ if(!nav){
+  nav=document.createElement("nav");nav.id="food-pagination";nav.className="tm-food-pagination";
+  nav.setAttribute("aria-label","Paginação da biblioteca alimentar");
+  $("empty").insertAdjacentElement("afterend",nav);
+ }
+ nav.replaceChildren();nav.hidden=pages<=1;
+ if(pages<=1)return;
+ const back=document.createElement("button");back.type="button";back.textContent="Anterior";back.disabled=page<=1;
+ back.addEventListener("click",()=>load(page-1));
+ const current=document.createElement("span");current.textContent="Página "+page+" de "+pages;
+ const next=document.createElement("button");next.type="button";next.textContent="Seguinte";next.disabled=page>=pages;
+ next.addEventListener("click",()=>load(page+1));
+ nav.append(back,current,next);
+}
+function draw(){
+ $("rows").innerHTML=foods.map(f=>'<tr><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td><button type="button" data-edit="'+esc(f.id)+'">Editar</button></td></tr>').join("");
+ $("empty").hidden=foods.length!==0;
+ $("feedback").textContent=total+" resultados";
+ updatePager();
+}
+async function load(target=1){
+ const token=++revision;
+ const query=new URLSearchParams({paged:"1",page:String(target)});
+ const search=$("search").value.trim(),cat=$("category").value;
+ if(search)query.set("q",search);
+ if(cat)query.set("category",cat);
+ $("feedback").textContent="A carregar…";
+ try{
+  const response=await fetch("/api/v2/food-library?"+query.toString(),{credentials:"same-origin"});
+  if(!response.ok)throw Error("Sem acesso à biblioteca ("+response.status+").");
+  const data=await response.json();
+  if(token!==revision)return;
+  foods=data.foods||[];page=data.page||1;pages=data.pages||1;total=data.total||0;
+  $("count").textContent=data.stats?.total??total;
+  $("categories").textContent=data.stats?.categories??0;
+  $("variants").textContent=data.stats?.variants??0;
+  const select=$("category"),selected=select.value;
+  select.replaceChildren();
+  const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";select.append(all);
+  for(const name of data.categories||[]){
+   const option=document.createElement("option");option.value=name;option.textContent=name;select.append(option);
+  }
+  select.value=selected;
+  draw();
+ }catch(error){
+  if(token!==revision)return;
+  $("feedback").textContent="Não foi possível carregar a biblioteca: "+error.message;
+ }
+}
+$("search").addEventListener("input",()=>{
+ clearTimeout(searchTimer);
+ searchTimer=setTimeout(()=>load(1),250);
+});
+$("category").addEventListener("change",()=>load(1));
+$("rows").addEventListener("click",event=>{
+ const button=event.target.closest("[data-edit]");
+ if(button)open(foods.find(f=>f.id===button.dataset.edit));
+});
+function open(food){
+ editing=food||null;$("food-form").reset();
+ $("editor-title").textContent=food?"Editar alimento":"Novo alimento";
+ if(food)for(const [key,value] of Object.entries(food)){
+  const input=$("food-form").elements.namedItem(key);
+  if(input)input.value=value??"";
+ }
+ $("form-feedback").textContent="";$("editor").showModal();
+}
+$("new").addEventListener("click",()=>open(null));
+$("cancel").addEventListener("click",()=>$("editor").close());
+$("food-form").addEventListener("submit",async event=>{
+ event.preventDefault();
+ const data=Object.fromEntries(new FormData(event.target));
+ if(editing)data.id=editing.id;
+ data.base_name=editing?.base_name||data.display_name;
+ try{
+  const response=await fetch("/api/v2/food-library",{
+   method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":window.foodLibraryCsrf||""},
+   credentials:"same-origin",body:JSON.stringify(data)
+  });
+  if(!response.ok)throw Error("Não foi possível guardar ("+response.status+").");
+  $("editor").close();await load(page);
+ }catch(error){$("form-feedback").textContent=error.message;}
+});
+fetch("/api/me",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
+ window.foodLibraryCsrf=data.csrf||"";
+ load();
+}).catch(()=>load());
+})();
 
 /* Shared two-line native dropdown presentation: native controls remain authoritative. */
 (()=>{
