@@ -563,3 +563,22 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-play
 html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-arrow{
  color:var(--tm-light-muted,#7a8596)!important;
 }
+
+/* Mobile phase 1: the compact top navigation respects the selected admin theme. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   color:#43576b!important;background:transparent!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:hover:not(:disabled){
+   background:#eff2f6!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-icon{
+   color:#526b82!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-subnav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important;
+ }
+}
