@@ -582,3 +582,15 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-play
    color:#172c40!important;background:#e6edf4!important;
  }
 }
+
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   color:#4d6379!important;background:transparent!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link:hover{
+   background:#eff2f6!important
+ }
+}
