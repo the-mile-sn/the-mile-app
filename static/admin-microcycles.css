@@ -2275,3 +2275,58 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
    width:17px!important;height:17px!important
  }
 }
+
+/* Mobile menu phase: one small wordmark and inline icon+text tabs. */
+@media(max-width:830px){
+ .tm-admin-more-trigger{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;gap:7px!important;min-height:43px!important;
+  padding:8px 13px!important;border:0!important;border-radius:11px!important;
+  background:transparent!important;color:inherit!important;font:inherit!important;
+  font-size:12px!important;font-weight:550!important;white-space:nowrap;
+  cursor:pointer;scroll-snap-align:start
+ }
+ .tm-admin-more-trigger svg{width:18px;height:18px;flex:none}
+ .tm-admin-more-trigger[aria-expanded="true"]{background:rgba(112,137,159,.13)!important}
+ .tm-admin-more-trigger:focus-visible{outline:2px solid #88aeca;outline-offset:-2px}
+}
+
+/* Only small-screen navigation is changed. Desktop keeps the existing sidebar. */
+#admin-workspace .tm-admin-more-trigger{display:none}
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar{overflow:visible!important;padding-top:9px!important}
+ #admin-workspace .tm-admin-brand{min-height:34px!important;padding:0 16px 4px 24px!important}
+ #admin-workspace .tm-admin-brand-wordmark{width:92px!important;max-width:92px!important}
+ #admin-workspace .tm-admin-mobile-nav-track{
+   align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important;
+   padding:0 16px 6px 24px!important
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   flex-direction:row!important;gap:7px!important;
+   min-width:0!important;max-width:none!important;
+   min-height:43px!important;height:43px!important;
+   padding:8px 12px!important;font-size:12px!important;font-weight:500!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{font-weight:650!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-recipes-subnav .tm-admin-subnav-link{
+   min-height:43px!important;min-width:110px!important;height:43px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   display:none!important;position:absolute!important;top:100%!important;right:16px!important;
+   width:190px!important;min-width:190px!important;z-index:20!important;
+   padding:6px!important;margin:0!important;gap:3px!important;
+   flex-direction:column!important;align-items:stretch!important;
+   background:#23262c!important;border:1px solid #3b4652!important;
+   box-shadow:0 12px 30px rgba(0,0,0,.18);border-radius:13px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav.is-mobile-open{display:flex!important}
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   display:flex!important;justify-content:flex-start!important;
+   gap:10px!important;flex:none!important;width:100%!important;height:41px!important;
+   min-height:41px!important;padding:8px 11px!important;
+   text-align:left!important;opacity:1!important;font-size:12px!important;
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link>span:not(.tm-admin-nav-icon){
+   display:inline!important
+ }
+}
