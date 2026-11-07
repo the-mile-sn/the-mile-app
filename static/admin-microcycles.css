@@ -2131,3 +2131,14 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   min-width:0!important;height:100%!important;opacity:0!important;
   cursor:pointer;appearance:none!important
 }
+
+/* Player-directory filters: equal-height controls, aligned in the header row. */
+#tm-players-page .tm-players-table thead .tm-players-search-label input{
+ height:55px!important;min-height:55px!important;box-sizing:border-box;
+}
+#tm-players-page .tm-players-table thead .tm-players-search-label .tm-players-search-icon{
+ top:50%;transform:translateY(-50%);
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+ height:55px!important;min-height:55px!important;
+}
