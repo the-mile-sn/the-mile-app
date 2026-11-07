@@ -59,6 +59,10 @@
   legacy.classList.toggle("tm-account-only",accountView);
   if(dashboardReturn)dashboardReturn.hidden=target===dash||!$("tm-players-profile").hidden;
   for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
+  // Mobile: make the newly selected tab visible without changing the current page.
+  if(window.matchMedia("(max-width: 830px)").matches&&target?.closest(".tm-admin-mobile-nav-track")){
+   target.scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
+  }
  }
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
  const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
