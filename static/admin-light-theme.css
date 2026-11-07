@@ -536,3 +536,9 @@ html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info st
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info p{color:#667284}
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-upload{background:#eef1f5;color:#46576a;border-color:#e1e6ed}
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-preview{background:#f4f6f9;border-color:#dce2e9}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-card{
+ background:#fff;border-color:#dce2e9;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info strong{color:#263448}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info p{color:#667284}
