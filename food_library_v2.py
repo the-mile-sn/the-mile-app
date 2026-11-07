@@ -126,6 +126,40 @@ def upsert(c, food, actor=None):
                   [fid,food.get("source_key")]+[data[k] for k in cols]+[now,now])
     return fid
 
+def archive_food(c, food_id):
+    """Only archive foods that are not referenced by any saved or published plan."""
+    existing=c.execute("SELECT id,active FROM v2_food_library WHERE id=?",(food_id,)).fetchone()
+    if not existing or not existing["active"]:
+        return "not_found"
+
+    def referenced(value):
+        if isinstance(value,dict):
+            for name,item in value.items():
+                if name=="foods" and isinstance(item,list):
+                    if any(isinstance(food,dict) and str(food.get("id",""))==food_id for food in item):
+                        return True
+                if referenced(item):
+                    return True
+        if isinstance(value,list):
+            return any(referenced(item) for item in value)
+        return False
+
+    for table,column in (
+        ("v2_food_plan_drafts","content"),
+        ("v2_food_plan_editor_publications","snapshot_json"),
+        ("v2_plan_publications","snapshot_json"),
+    ):
+        for row in c.execute("SELECT "+column+" FROM "+table).fetchall():
+            try:
+                if referenced(json.loads(row[column])):
+                    return "in_use"
+            except (ValueError,TypeError):
+                return "in_use"
+    c.execute("UPDATE v2_food_library SET active=0,updated_at=? WHERE id=? AND active=1",
+              (int(time.time()),food_id))
+    return "archived"
+
+
 def nutrients_for_quantity(food, grams):
     grams=number(grams)
     fraction=number(food.get("edible_fraction",1),zero=False) if food.get("variant")=="gross" else 1
