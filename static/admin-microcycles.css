@@ -2110,3 +2110,24 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{bo
 #tm-players-page .tm-p-app-action:not(:disabled){color:#76bf9c}
 html[data-admin-theme="light"] #tm-players-page .tm-p-icon-action{border-color:#d6dfe9;color:#253449;background:#f5f7fa}
 html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){color:#2c7651}
+
+/* The player-access filter follows the shared two-line dropdown design. */
+#tm-players-page .tm-players-table thead label.tm-players-header-select{
+  display:block!important;margin:0!important;width:100%;font-size:initial;line-height:normal;white-space:normal
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+  display:block!important;position:relative;min-height:55px!important;
+  width:100%;max-width:240px;border-radius:12px
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-caption{
+  top:7px;left:12px;right:38px;font-size:10px
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-value{
+  left:12px;bottom:7px;right:38px;font-size:13px;font-weight:550
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-arrow{right:10px}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select>select{
+  position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;
+  min-width:0!important;height:100%!important;opacity:0!important;
+  cursor:pointer;appearance:none!important
+}
