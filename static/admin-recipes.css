@@ -426,3 +426,14 @@ html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row 
   box-shadow:none;outline-offset:2px;
 }
 .dish-catalog-filters #dish-search::placeholder{color:var(--lib-muted,#a2a7b0);opacity:1}
+
+/* Small pagination controls, matching the existing backoffice surfaces. */
+#tm-recipe-library-page .tm-library-pagination,
+#dish-editor-list .tm-library-pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin:12px 0 16px;color:var(--recipe-muted,var(--muted,#8c95a3));font-size:12px}
+#tm-recipe-library-page .tm-library-pagination[hidden]{display:none}
+#tm-recipe-library-page .tm-library-pagination button,
+#dish-editor-list .tm-library-pagination button{font:inherit;color:inherit;border:1px solid var(--recipe-border,var(--border,#505660));background:transparent;border-radius:9px;padding:7px 12px;cursor:pointer}
+#tm-recipe-library-page .tm-library-pagination button:disabled,
+#dish-editor-list .tm-library-pagination button:disabled{opacity:.45;cursor:default}
+#tm-recipe-library-page .tm-library-pagination button:not(:disabled):hover,
+#dish-editor-list .tm-library-pagination button:not(:disabled):hover{background:rgba(127,138,155,.10)}
