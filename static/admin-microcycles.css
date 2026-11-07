@@ -2057,3 +2057,30 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{bo
 #tm-players-page .tm-player-loading-photo-controls p{margin:0;color:#a4aab4;font-size:12px}
 #tm-players-page #tm-player-loading-photo-delete{min-height:35px;padding:7px 14px;font-size:12px}
 @media(max-width:550px){#tm-players-page .tm-player-loading-photo-editor{align-items:flex-start;gap:12px}#tm-players-page .tm-player-loading-photo-card{padding:15px}}
+
+/* Profile: entry image is its own compact card, after access management. */
+#tm-players-page .tm-player-loading-photo-card{
+  margin:16px 0 0;padding:18px 20px;gap:15px;
+  background:#1b1d22;border:1px solid #343840;border-radius:15px;
+}
+#tm-players-page .tm-player-loading-photo-info strong{
+  color:#f2f3f5;font-size:15px;font-weight:600;
+}
+#tm-players-page .tm-player-loading-photo-info p{
+  max-width:none;margin:5px 0 0;font-size:12px;line-height:1.5;
+  color:#9fa7b4;
+}
+#tm-players-page .tm-player-loading-photo-editor{gap:17px;align-items:center}
+#tm-players-page .tm-player-loading-photo-preview{
+  width:80px;height:143px;border-radius:11px;flex:none;
+}
+#tm-players-page .tm-player-loading-photo-controls{gap:9px}
+#tm-players-page .tm-player-loading-photo-upload{
+  padding:10px 14px;border-radius:10px;
+}
+#tm-players-page #tm-player-loading-photo-feedback:empty{display:none}
+@media(max-width:520px){
+  #tm-players-page .tm-player-loading-photo-card{padding:16px}
+  #tm-players-page .tm-player-loading-photo-editor{gap:12px}
+  #tm-players-page .tm-player-loading-photo-preview{width:72px;height:128px}
+}
