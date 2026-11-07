@@ -11,6 +11,9 @@
  const mobile=()=>window.matchMedia("(max-width:830px)").matches;
  const ids=["tm-admin-nav-food-library","tm-admin-nav-menus-recipes","tm-admin-nav-assessments","tm-admin-nav-forms"];
  const secondary=ids.map(id=>sidebar.querySelector("#"+id)).filter(Boolean);
+ const accountLinks=Array.from(menu.querySelectorAll(".tm-admin-nav-link"));
+ const secondaryControls=[...secondary,...accountLinks];
+ const selectedAtEntry=secondaryControls.some(node=>node.classList.contains("is-active"));
  const planning=sidebar.querySelector("#tm-admin-nav-planning");
  const plans=sidebar.querySelector("#tm-admin-nav-create-plan");
  const moving=[...secondary,...(recipes?[recipes]:[]),...(plans?[plans]:[])];
@@ -22,9 +25,14 @@
  }
  let expanded=false;
  function selectedSecondary(){
-  return secondary.some(node=>node.classList.contains("is-active"))||
-   !!recipes?.querySelector(".is-active")||
-   (standalone&&!!sidebar.querySelector("#tm-admin-nav-food-library.is-active"));
+  return secondaryControls.some(node=>node.classList.contains("is-active"))||
+   !!recipes?.querySelector(".is-active");
+ }
+ function openMore(){
+  if(!mobile())return;
+  menu.classList.add("is-mobile-open");
+  more.setAttribute("aria-expanded","true");
+  paint();
  }
  function paint(){
   more.classList.toggle("is-active",mobile()&&(menu.classList.contains("is-mobile-open")||selectedSecondary()));
@@ -47,6 +55,11 @@
     recipes.hidden=!expanded;
    }
    if(plans&&planning&&plans.previousElementSibling!==planning)planning.after(plans);
+   if(selectedSecondary())openMore();
+   if(recipes?.querySelector(".is-active")){
+    expanded=true;recipes.hidden=false;recipes.classList.add("is-mobile-open");
+    recipeLink?.setAttribute("aria-expanded","true");
+   }
   }else{
    collapse();
    for(const [node,mark] of markers)if(mark.parentNode)mark.after(node);
@@ -61,10 +74,7 @@
   event.preventDefault();event.stopPropagation();
   const opening=!menu.classList.contains("is-mobile-open");
   collapse();
-  if(opening){
-   menu.classList.add("is-mobile-open");
-   more.setAttribute("aria-expanded","true");
-  }
+  if(opening)openMore();
   paint();
  });
  if(recipeLink)recipeLink.addEventListener("click",event=>{
@@ -81,9 +91,16 @@
  menu.addEventListener("click",event=>{
   const target=event.target.closest("a,button");
   if(!target||target===recipeLink)return;
-  // Preserve active More state for the destination after navigation changes.
-  collapse();
-  setTimeout(paint,0);
+  // Secondary destinations retain the expanded panel when they update in place.
+  // Full page destinations initialize open when their active item is found.
+  if(mobile()){
+   openMore();
+   if(recipes?.contains(target))expanded=true;
+   requestAnimationFrame(()=>{
+    if(selectedSecondary())openMore();
+    paint();
+   });
+  }
  });
  document.addEventListener("click",event=>{
   if(!sidebar.contains(event.target))collapse();
@@ -93,8 +110,17 @@
  });
  window.addEventListener("resize",sync);
  // Main app applies active classes during navigation, after this module loads.
- for(const node of [...secondary,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[])]){
-  new MutationObserver(paint).observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
+ for(const node of [...secondaryControls,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[])]){
+  new MutationObserver(()=>{
+   if(mobile()&&selectedSecondary())openMore();
+   paint();
+  }).observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
  }
  sync();
+ // Entering a standalone secondary page resets the scroll position. Keep "Mais"
+ // in view so navigation and sibling destinations remain immediately accessible.
+ if(standalone&&mobile()&&selectedAtEntry){
+  track.scrollLeft=track.scrollWidth;
+ }
+
 })();
