@@ -117,3 +117,13 @@ html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(
 html[data-admin-theme="light"] #plan-preview .plan-preview-macros>div:nth-child(4)>strong,html[data-admin-theme="light"] #plan-preview .preview-fat{color:#9c811d!important}
 
 html[data-admin-theme="light"] #plan-preview .plan-preview-group[data-palette="vp"]{--preview-bg:#d8e9de;--preview-fg:#24513a;--preview-option:#eef7f0}
+
+/* Independent nutrition pages: selected mobile tab uses only the shared underline. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active,
+ html[data-admin-theme="dark"] .tm-library-layout .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active,
+ html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active,
+ html[data-admin-theme="dark"] .tm-library-layout .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active{
+  background:transparent!important;background-image:none!important;box-shadow:none!important;
+ }
+}
