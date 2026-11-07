@@ -93,3 +93,36 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 .tm-two-line-select>select{background:none!important;background-image:none!important;-webkit-appearance:none!important;appearance:none!important}
 .tm-two-line-select>.tm-select-arrow{display:block!important;pointer-events:none!important}
 .tm-two-line-select>.tm-select-arrow::before,.tm-two-line-select>.tm-select-arrow::after{display:none!important;content:none!important}
+
+/* Shared backoffice navigation: match the Início back control used in the other libraries. */
+.food-library-top .food-library-back,
+.food-library-top .food-library-back:visited{
+  display:inline-flex;align-items:center;gap:11px;
+  padding:8px 6px;min-height:42px;
+  color:var(--lib-fg);font-size:15px;font-weight:500;line-height:1.3;
+  text-decoration:none;border:0;background:transparent;
+}
+.food-library-top .food-library-back svg{width:22px;height:22px;flex:none}
+.food-library-top .food-library-back:hover{color:var(--lib-fg);opacity:.82}
+
+/* Same pagination layout and dimensions as Pratos / Receitas, outside the table card. */
+.tm-library-pagination.tm-food-pagination{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin:12px 0 16px;font-size:12px;color:var(--lib-muted);
+}
+.tm-library-pagination.tm-food-pagination[hidden]{display:none}
+.tm-library-pagination.tm-food-pagination button{
+  appearance:none;font:inherit;font-size:12px;font-weight:500;
+  color:inherit;background:transparent;border:1px solid var(--lib-border);
+  border-radius:9px;padding:9px 13px;min-height:38px;cursor:pointer;
+}
+.tm-library-pagination.tm-food-pagination button:disabled{opacity:.45;cursor:default}
+.tm-library-pagination.tm-food-pagination button:not(:disabled):hover{background:rgba(127,138,155,.10)}
+.tm-library-pagination.tm-food-pagination span{font-size:12px;font-weight:500}
+
+/* Match the rounded outline Editar actions in the other catalogues. */
+.food-catalog-table td:last-child button{
+  border:1px solid var(--lib-border);background:transparent;color:var(--lib-fg);
+  border-radius:999px;padding:9px 16px;font-size:13px;font-weight:500;
+}
+.food-catalog-table td:last-child button:hover{background:rgba(127,138,155,.10)}
