@@ -20,9 +20,9 @@ function updatePager(){
  nav.append(back,current,next);
 }
 function draw(){
- $("rows").innerHTML=foods.map(f=>'<tr><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td><button type="button" data-edit="'+esc(f.id)+'">Editar</button></td></tr>').join("");
+ $("rows").innerHTML=foods.map(f=>'<tr><td class="food-category">'+esc(f.category||"—")+'</td><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td class="food-edit-cell"><button type="button" class="food-edit-icon" data-edit="'+esc(f.id)+'" aria-label="Editar '+esc(f.display_name)+'" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg></button></td></tr>').join("");
  $("empty").hidden=foods.length!==0;
- $("feedback").textContent=total+" resultados";
+ $("feedback").textContent="Biblioteca atualizada.";
  updatePager();
 }
 async function load(target=1){
@@ -38,9 +38,6 @@ async function load(target=1){
   const data=await response.json();
   if(token!==revision)return;
   foods=data.foods||[];page=data.page||1;pages=data.pages||1;total=data.total||0;
-  $("count").textContent=data.stats?.total??total;
-  $("categories").textContent=data.stats?.categories??0;
-  $("variants").textContent=data.stats?.variants??0;
   const select=$("category"),selected=select.value;
   select.replaceChildren();
   const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";select.append(all);
