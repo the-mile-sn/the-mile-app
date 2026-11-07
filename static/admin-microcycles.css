@@ -2142,3 +2142,83 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
 #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
  height:55px!important;min-height:55px!important;
 }
+
+/* Mobile phase 1: preserve every existing navigation destination, but arrange
+   the existing buttons in one horizontally scrollable row. Desktop untouched. */
+#admin-workspace .tm-admin-mobile-nav-track{display:contents}
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar{
+   display:flex!important;flex-direction:column!important;align-items:stretch!important;
+   position:relative!important;top:auto!important;min-height:0!important;height:auto!important;
+   gap:0!important;padding:12px 0 7px!important;border-right:0!important;
+   overflow:hidden!important;
+ }
+ #admin-workspace .tm-admin-brand{
+   padding:2px 16px 10px!important;margin:0!important;min-height:37px!important;
+ }
+ #admin-workspace .tm-admin-brand-home{display:inline-flex;align-items:center}
+ #admin-workspace .tm-admin-brand-wordmark{
+   width:116px!important;max-width:116px!important;height:auto!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track{
+   display:flex;flex-direction:row;align-items:stretch;
+   width:100%;max-width:100%;min-width:0;gap:4px;
+   padding:0 12px 4px;overflow-x:auto;overflow-y:hidden;
+   flex-wrap:nowrap;scroll-snap-type:x proximity;
+   overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+   scrollbar-width:none;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track::-webkit-scrollbar{display:none}
+ #admin-workspace .tm-admin-mobile-nav-track:focus-visible{
+   outline:2px solid #7eabc8;outline-offset:-2px;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track>.tm-admin-side-nav{
+   display:contents!important;
+ }
+ #admin-workspace .tm-admin-sidebar-spacer,
+ #admin-workspace .tm-admin-sidebar-footer,
+ #admin-workspace .tm-admin-nav-heading{display:none!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   box-sizing:border-box!important;display:inline-flex!important;
+   flex:0 0 auto!important;flex-direction:column!important;
+   justify-content:center!important;align-items:center!important;
+   width:auto!important;min-width:76px!important;max-width:124px!important;
+   min-height:66px!important;margin:0!important;padding:8px 11px!important;
+   gap:5px!important;border:0!important;border-radius:12px!important;
+   background:transparent!important;color:#cbd2dc!important;
+   font-size:11px!important;font-weight:500!important;line-height:1.1!important;
+   text-align:center!important;white-space:nowrap!important;
+   text-decoration:none!important;scroll-snap-align:start;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link>.tm-admin-nav-icon{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   width:21px!important;height:21px!important;min-width:21px!important;margin:0!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-side-icon{width:20px!important;height:20px!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{
+   background:#303740!important;color:#fff!important;font-weight:650!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:not(:disabled):hover{
+   background:#262a31!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:focus-visible{
+   outline:2px solid #8db7d9!important;outline-offset:-2px!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link small,
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-chevron{display:none!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-recipes-subnav{
+   display:flex;flex:0 0 auto;flex-direction:row;align-items:stretch;
+   gap:4px;margin:0!important;padding:0!important;border:0!important;
+   scroll-snap-align:start;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-recipes-subnav[hidden]{display:none!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-subnav-link{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 auto;min-width:104px;max-width:140px;min-height:66px;
+   padding:8px 9px!important;border-radius:12px!important;text-align:center!important;
+   white-space:normal!important;font-size:11px!important;line-height:1.25!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-subnav-link.is-active{
+   background:#303740!important;color:#fff!important;
+ }
+}
