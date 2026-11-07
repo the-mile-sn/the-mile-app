@@ -1949,7 +1949,7 @@ function renderDishEditor(){
  for(const dish of matches){
   const tr=document.createElement("tr");tr.className="dish-table-row";
   const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";categoryCell.textContent=dish.category||"—";tr.append(categoryCell);
-  const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);photo.alt="";photo.loading="lazy";photo.className="dish-table-photo";photoCell.append(photo);tr.append(photoCell);
+  const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?thumb=1";photo.alt="";photo.loading="lazy";photo.decoding="async";photo.className="dish-table-photo";photoCell.append(photo);tr.append(photoCell);
   for(const [value,cls] of [[dish.name_pt,"dish-table-title"],[dish.name_en||"—","dish-table-subtitle"]]){
    const td=document.createElement("td");td.className=cls;td.textContent=value;
    if(cls==="dish-table-title"){
