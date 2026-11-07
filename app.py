@@ -992,6 +992,16 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400,'invalid_food_import')
                 return respond(200,{'imported':count})
+            if path.startswith('/api/v2/food-library/') and method == 'DELETE':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                ident=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[0-9a-f]{1,64}',ident): raise Problem(400,'invalid_id')
+                outcome=food_library_v2.archive_food(c,ident)
+                if outcome=='not_found': raise Problem(404,'not_found')
+                if outcome=='in_use': raise Problem(409,'food_in_use')
+                c.commit()
+                return respond(200,{'archived':True})
             if path == '/api/v2/food-library' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
