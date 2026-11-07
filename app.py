@@ -5,6 +5,8 @@ import io
 from PIL import Image, ImageOps, UnidentifiedImageError
 import zipfile
 import hashlib
+from collections import OrderedDict
+from threading import Lock
 import hmac
 import json
 import logging
@@ -366,14 +368,30 @@ def store_dish_image(c, filename, image_data):
     c.execute('INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)', (filename, image_data))
 
 
-def admin_library_thumbnail(image_data):
-    """Small WebP solely for admin catalogue tables; original remains unchanged."""
+_admin_thumbnail_cache = OrderedDict()
+_admin_thumbnail_lock = Lock()
+
+
+def admin_library_thumbnail(image_data, size=240):
+    """Small catalogue/avatar WebP; retain only compressed derivatives in memory."""
+    key = (size, hashlib.sha256(image_data).digest())
+    with _admin_thumbnail_lock:
+        cached = _admin_thumbnail_cache.get(key)
+        if cached is not None:
+            _admin_thumbnail_cache.move_to_end(key)
+            return cached
     with Image.open(io.BytesIO(image_data)) as source:
         source = ImageOps.exif_transpose(source)
-        source.thumbnail((240, 240))
+        source.thumbnail((size, size))
         output = io.BytesIO()
         source.convert('RGB').save(output, format='WEBP', quality=65, method=4)
-        return output.getvalue()
+        compressed = output.getvalue()
+    with _admin_thumbnail_lock:
+        _admin_thumbnail_cache[key] = compressed
+        _admin_thumbnail_cache.move_to_end(key)
+        while len(_admin_thumbnail_cache) > 128:
+            _admin_thumbnail_cache.popitem(last=False)
+    return compressed
 
 
 def read_dish_image(c, filename):
@@ -672,6 +690,12 @@ def application(env, start_response):
             mime = mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             if file.name.endswith('.webmanifest'):
                 mime = 'application/manifest+json'
+            # Only explicitly versioned JS/CSS can be stored in shared browser caches.
+            # HTML, JSON, session endpoints and unversioned assets remain no-store.
+            query=parse_qs(env.get('QUERY_STRING',''))
+            if file.suffix in ('.js','.css') and query.get('v') and query['v'][0]:
+                headers[:] = [(k,v) for k,v in headers if k.lower() != 'cache-control']
+                headers.append(('Cache-Control','public, max-age=2592000, immutable'))
             return respond(200, file.read_bytes(), mime)
         if not path.startswith('/api/'):
             raise Problem(404, 'not_found')
@@ -2571,13 +2595,16 @@ def application(env, start_response):
                 if len(parts) != 5:
                     raise Problem(404, 'not_found')
                 uid = parts[3]
-                target = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                target = c.execute("SELECT photo,photo_mime FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
                 if not target:
                     raise Problem(404, 'not_found')
                 authorize_owner(user, uid)
                 if not target['photo']:
                     raise Problem(404, 'not_found')
-                return respond(200, bytes(target['photo']), target['photo_mime'] or 'image/jpeg')
+                data=bytes(target['photo'])
+                if user['role']=='admin' and parse_qs(env.get('QUERY_STRING','')).get('thumb')==['1']:
+                    return respond(200,admin_library_thumbnail(data,160),'image/webp')
+                return respond(200, data, target['photo_mime'] or 'image/jpeg')
 
             if path.startswith('/api/players/') and path.endswith('/access-extension') and method == 'POST':
                 admin(user)
