@@ -620,7 +620,7 @@ def application(env, start_response):
         if not isinstance(data, bytes):
             data = json.dumps(data, ensure_ascii=False).encode()
         headers.extend([('Content-Type', mime), ('Content-Length', str(len(data)))])
-        start_response(f'{status} ' + {200:'OK', 201:'Created', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error'}.get(status, 'Error'), headers)
+        start_response(f'{status} ' + {200:'OK', 201:'Created', 303:'See Other', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error'}.get(status, 'Error'), headers)
         return [data]
 
     try:
@@ -2095,7 +2095,7 @@ def application(env, start_response):
                     c.commit()
                     return respond(200, {'ok': True})
                 if method == 'GET':
-                    if user['role']=='player':
+                    if user['role']=='player' and not preview_session:
                         c.execute('UPDATE notifications SET document_opened_at=COALESCE(document_opened_at,?) WHERE user_id=? AND document_id=?', (now,user['id'],did))
                         c.commit()
                     headers.append(('Content-Disposition', "inline; filename=document.pdf; filename*=UTF-8''" + quote((d['title'] if d['title'].lower().endswith('.pdf') else d['title'] + '.pdf'), safe='')))
