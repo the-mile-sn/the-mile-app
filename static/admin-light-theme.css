@@ -602,3 +602,12 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-play
  }
  html[data-admin-theme="light"] #admin-workspace .tm-admin-more-trigger{color:#43576b!important}
 }
+
+/* Mobile top tabs: theme overrides must not restore the selected pill background. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active,
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active,
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger[aria-expanded="true"]{
+  background:transparent!important;background-image:none!important;box-shadow:none!important;
+ }
+}
