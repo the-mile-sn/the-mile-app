@@ -285,3 +285,48 @@
   background:#e6edf4!important;color:#172c40!important
  }
 }
+
+/* The five primary mobile sections and the secondary "Mais" panel. */
+@media(max-width:830px){
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  width:calc(100% - 48px)!important;max-width:none!important;margin:5px 24px 10px!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link{
+  display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+  align-items:center!important;width:100%!important;min-height:44px!important;height:auto!important;
+  text-align:left!important;padding:10px 12px!important;gap:11px!important;
+  font-size:13px!important;font-weight:500!important;opacity:1!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link .tm-admin-nav-icon{
+  display:inline-flex!important;width:21px!important;min-width:21px!important;
+  height:21px!important;align-items:center!important;justify-content:center!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link .tm-admin-nav-chevron{
+  display:inline-block!important;margin-left:auto!important;width:15px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link.is-active{
+  background:rgba(123,150,172,.17)!important;border-radius:9px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav{
+  display:none!important;flex-direction:column!important;align-items:stretch!important;
+  width:100%!important;max-width:none!important;margin:0!important;padding:2px 0 5px 20px!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;gap:3px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav.is-mobile-open:not([hidden]){
+  display:flex!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav .tm-admin-subnav-link{
+  width:100%!important;min-width:0!important;max-width:none!important;
+  flex:none!important;justify-content:flex-start!important;text-align:left!important;
+  min-height:38px!important;padding:9px 12px!important;font-size:12px!important
+ }
+ .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger{
+  display:inline-flex!important
+ }
+ .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active{
+  font-weight:650!important;background:rgba(122,151,175,.15)!important
+ }
+ html[data-admin-theme="light"] .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active{
+  color:#172c40!important;background:#e6edf4!important
+ }
+}
