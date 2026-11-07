@@ -351,6 +351,31 @@ def import_dish_catalog(c, catalog_rows):
     c.commit()
 
 
+def page_dish_library(c, query="", category="", page=1, page_size=25):
+    """Return only requested dish rows; leave full catalogue for menu selectors."""
+    conditions, params = ["active=1"], []
+    if query:
+        conditions.append("(LOWER(name_pt) LIKE ? OR LOWER(name_en) LIKE ? OR LOWER(category) LIKE ?)")
+        params.extend(["%"+query.lower()+"%"]*3)
+    if category:
+        conditions.append("category=?")
+        params.append(category)
+    where = " WHERE " + " AND ".join(conditions)
+    total = c.execute("SELECT COUNT(*) AS total FROM v2_dish_library" + where,
+                      tuple(params)).fetchone()["total"]
+    pages = max(1, (total+page_size-1)//page_size)
+    page = max(1, min(page,pages))
+    rows = c.execute(
+        "SELECT id,category,name_pt,name_en,image_filename,active FROM v2_dish_library"
+        + where + " ORDER BY category,name_pt,id LIMIT ? OFFSET ?",
+        tuple(params + [page_size,(page-1)*page_size])
+    ).fetchall()
+    categories = [row["category"] for row in c.execute(
+        "SELECT DISTINCT category FROM v2_dish_library WHERE active=1 ORDER BY category").fetchall()]
+    return {"dishes":[dict(r) for r in rows], "page":page,
+            "page_size":page_size, "pages":pages, "total":total, "categories":categories}
+
+
 def list_dish_library(c):
     return [dict(row) for row in c.execute(
        "SELECT id,category,name_pt,name_en,image_filename,active FROM v2_dish_library ORDER BY category,name_pt").fetchall()]
