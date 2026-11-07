@@ -254,6 +254,37 @@ def _validated(c, payload, recipe_id=None, allow_ref_ids=()):
             json.dumps(sections, ensure_ascii=False), json.dumps(steps, ensure_ascii=False), notes)
 
 
+def page_recipes(c, query="", category="", recipe_type="", status="", page=1, page_size=25):
+    """Global server-side search and bounded pagination for the admin table."""
+    terms = []
+    params = []
+    if query:
+        terms.append("LOWER(r.name) LIKE ?")
+        params.append("%" + query.lower() + "%")
+    if category:
+        terms.append("r.category_id=?")
+        params.append(category)
+    if recipe_type:
+        terms.append("r.recipe_type=?")
+        params.append(recipe_type)
+    if status:
+        terms.append("r.status=?")
+        params.append(status)
+    where = (" WHERE " + " AND ".join(terms)) if terms else ""
+    source = " FROM v2_recipe_library r JOIN v2_recipe_categories c ON c.id=r.category_id"
+    total = c.execute("SELECT COUNT(*) AS total" + source + where, tuple(params)).fetchone()["total"]
+    pages = max(1, (total + page_size - 1) // page_size)
+    page = max(1, min(page, pages))
+    rows = c.execute(
+        "SELECT r.id,r.name,r.category_id,c.name AS category,"
+        "r.recipe_type,r.status,r.servings,r.photo_key,r.updated_at"
+        + source + where + " ORDER BY c.name,r.name,r.id LIMIT ? OFFSET ?",
+        tuple(params + [page_size, (page-1)*page_size])
+    ).fetchall()
+    return {"recipes":[dict(row) for row in rows], "page":page,
+            "page_size":page_size, "pages":pages, "total":total}
+
+
 def list_recipes(c):
     rows = c.execute("""SELECT r.id,r.name,r.category_id,c.name AS category,
         r.recipe_type,r.status,r.servings,r.photo_key,r.updated_at
