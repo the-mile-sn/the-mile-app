@@ -78,6 +78,40 @@ def list_foods(c, query="", category=None, limit=100, offset=0):
     params.extend([limit,offset])
     return [dict(row) for row in c.execute(sql,params).fetchall()]
 
+def page_foods(c, query="", category="", page=1, page_size=25):
+    """Server-side catalogue pages; full food list for prescriptions is preserved."""
+    query = str(query or "").strip()[:180]
+    category = str(category or "").strip()[:120]
+    conditions, params = ["active=1"], []
+    if query:
+        conditions.append("lower(display_name) LIKE ?")
+        params.append("%" + query.lower() + "%")
+    if category:
+        conditions.append("category=?")
+        params.append(category)
+    where = " WHERE " + " AND ".join(conditions)
+    total = c.execute("SELECT COUNT(*) AS total FROM v2_food_library" + where, tuple(params)).fetchone()["total"]
+    pages = max(1, (total + page_size - 1) // page_size)
+    page = max(1, min(page, pages))
+    records = c.execute(
+        "SELECT * FROM v2_food_library" + where + " ORDER BY display_name,id LIMIT ? OFFSET ?",
+        tuple(params + [page_size, (page - 1) * page_size])
+    ).fetchall()
+    stats = c.execute(
+        "SELECT COUNT(*) AS total,COUNT(DISTINCT category) AS categories,"
+        "SUM(CASE WHEN variant<>'plain' THEN 1 ELSE 0 END) AS variants "
+        "FROM v2_food_library WHERE active=1"
+    ).fetchone()
+    categories = [r["category"] for r in c.execute(
+        "SELECT DISTINCT category FROM v2_food_library WHERE active=1 ORDER BY category"
+    ).fetchall()]
+    return {"foods": [dict(row) for row in records], "total": total,
+            "page": page, "pages": pages, "page_size": page_size,
+            "stats": {"total": stats["total"], "categories": stats["categories"],
+                      "variants": stats["variants"] or 0},
+            "categories": categories}
+
+
 def upsert(c, food, actor=None):
     data=validate(food)
     fid=str(food.get("id") or secrets.token_hex(16))
