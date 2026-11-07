@@ -324,10 +324,17 @@ function ensurePlanningOnlyView(){
  });
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)"),profileNav=$("tm-players-profile-nav"),playersHeader=playersPage.querySelector(".tm-players-heading-minimal");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Data de nascimento","birth_date","date"],["Plano de acompanhamento","followup_plan","followup"],["Data de renovação do acompanhamento","followup_renewal_date","date"],["Notas internas","profile_notes","textarea"]];
- let loadingPhotoPreviewSeq=0;
+ let loadingPhotoPreviewSeq=0,stagedLoadingPhoto=null;
+ function updateLoadingPhotoSaveState(saved=false){
+  const button=$("tm-player-loading-photo-save");
+  button.disabled=saved||!stagedLoadingPhoto;
+  button.classList.toggle("is-saved",saved);
+  button.textContent=saved?"Guardado":"Guardar";
+ }
  function refreshPlayerLoadingPhoto(){
   const seq=++loadingPhotoPreviewSeq,uid=playerDetails?.user_id;
   const box=$("tm-player-loading-photo-preview"),remove=$("tm-player-loading-photo-delete"),input=$("tm-player-loading-photo-input"),feedback=$("tm-player-loading-photo-feedback");
+  stagedLoadingPhoto=null;updateLoadingPhotoSaveState(false);
   box.replaceChildren();remove.hidden=true;input.disabled=!uid;
   if(!uid){box.append(el("span","","Este jogador ainda não tem conta associada."));feedback.textContent="";return;}
   box.append(el("span","","A verificar fotografia…"));
@@ -336,12 +343,12 @@ function ensurePlanningOnlyView(){
   image.onload=()=>{
    if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
    box.replaceChildren(image);remove.hidden=false;
-   feedback.textContent="Fotografia guardada e disponível na app.";
+   feedback.textContent="";updateLoadingPhotoSaveState(true);
   };
   image.onerror=()=>{
    if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
    box.replaceChildren(el("span","","Sem fotografia de carregamento"));remove.hidden=true;
-   feedback.textContent="Sem fotografia associada ou não foi possível obter a pré-visualização.";
+   feedback.textContent="";updateLoadingPhotoSaveState(false);
   };
   image.src="/api/players/"+encodeURIComponent(uid)+"/loading-photo?v="+Date.now();
  }
@@ -379,19 +386,38 @@ function ensurePlanningOnlyView(){
  $("tm-player-loading-photo-input").addEventListener("change",async event=>{
   const file=event.target.files?.[0];if(!file)return;
   const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
-  event.target.disabled=true;feedback.textContent="A otimizar fotografia…";
+  event.target.disabled=true;feedback.textContent="A preparar imagem…";
   try{
    if(!uid)throw Error("O jogador ainda não tem uma conta associada.");
    const photo=await resizePlayerLoadingPhoto(file);
-   feedback.textContent="A guardar fotografia…";
-   await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"PUT",body:JSON.stringify({photo})});
-   if(profileLoadToken===token&&playerDetails?.user_id===uid){feedback.textContent="Fotografia de carregamento guardada.";refreshPlayerLoadingPhoto();}
-  }catch(e){if(profileLoadToken===token)feedback.textContent="Não foi possível guardar: "+e.message;}
+   if(profileLoadToken!==token||playerDetails?.user_id!==uid)return;
+   stagedLoadingPhoto={uid,photo};
+   const preview=$("tm-player-loading-photo-preview");
+   const image=el("img");image.alt="Imagem App selecionada";image.src=photo;
+   preview.replaceChildren(image);
+   $("tm-player-loading-photo-delete").hidden=true;
+   feedback.textContent="";
+   updateLoadingPhotoSaveState(false);
+  }catch(e){if(profileLoadToken===token)feedback.textContent="Não foi possível preparar: "+e.message;}
   finally{event.target.value="";event.target.disabled=!playerDetails?.user_id;}
+ });
+ $("tm-player-loading-photo-save").addEventListener("click",async()=>{
+  const selected=stagedLoadingPhoto,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
+  if(!selected||selected.uid!==playerDetails?.user_id)return;
+  const button=$("tm-player-loading-photo-save");
+  button.disabled=true;feedback.textContent="A guardar imagem…";
+  try{
+   await request("/api/players/"+encodeURIComponent(selected.uid)+"/loading-photo",{method:"PUT",body:JSON.stringify({photo:selected.photo})});
+   if(profileLoadToken===token&&playerDetails?.user_id===selected.uid){
+    stagedLoadingPhoto=null;feedback.textContent="";refreshPlayerLoadingPhoto();
+   }
+  }catch(e){
+   if(profileLoadToken===token){feedback.textContent="Não foi possível guardar: "+e.message;button.disabled=false;}
+  }
  });
  $("tm-player-loading-photo-delete").addEventListener("click",async()=>{
   const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
-  if(!uid||!window.confirm("Eliminar a fotografia de carregamento deste jogador?"))return;
+  if(!uid||!window.confirm("Remover a Imagem App deste jogador?"))return;
   const button=$("tm-player-loading-photo-delete");button.disabled=true;feedback.textContent="A eliminar…";
   try{await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"DELETE"});if(token===profileLoadToken&&playerDetails?.user_id===uid){feedback.textContent="Fotografia eliminada. O carregamento ficará com fundo escuro.";refreshPlayerLoadingPhoto();}}
   catch(e){if(token===profileLoadToken)feedback.textContent="Erro: "+e.message;}
