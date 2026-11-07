@@ -3,7 +3,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const blank=()=>({id:"",name:"",category_id:"",recipe_type:"standard",status:"draft",servings:1,sections:[{title:"",ingredients:[{name:"",quantity:"",unit:""}]}],steps:[""],notes:"",photo_key:null});
- let categories=[],recipes=[],recipeRows=[],recipeTotal=0,recipePage=1,recipePages=1,recipeQueryRevision=0,recipeSearchTimer=null,fullRecipeIndexLoaded=false,current=null,openedId=null,busy=false,loaded=false;
+ let recipeLastLoadedAt=0,categories=[],recipes=[],recipeRows=[],recipeTotal=0,recipePage=1,recipePages=1,recipeQueryRevision=0,recipeSearchTimer=null,fullRecipeIndexLoaded=false,current=null,openedId=null,busy=false,loaded=false;
  let recipeReaderHistory=[],recipeReaderCache=new Map(),recipeReaderToken=0,recipeReaderEditorVisible=false;
  const alertMessage=(message)=>{$("recipe-status-message").textContent=message;};
  const editorMessage=(message)=>{$("recipe-editor-feedback").textContent=message;};
@@ -674,7 +674,7 @@
   recipes=[];fullRecipeIndexLoaded=false;recipeReaderCache.clear();
   paintCategoryOptions();
   await fetchRecipePage(recipePage);
-  loaded=true;
+  loaded=true;recipeLastLoadedAt=Date.now();
  }
  async function addCategory(){
   const input=$("recipe-new-category"),name=input.value.trim(),output=$("recipe-category-feedback");
@@ -1147,6 +1147,8 @@
   await openReadRecipe(id);
  };
  window.tmLoadRecipeLibrary=async()=>{
+  // Reopening the same catalogue shortly afterwards need not fetch it again.
+  if(loaded&&Date.now()-recipeLastLoadedAt<15000)return;
   if(!loaded)alertMessage("A carregar biblioteca…");
   try{await loadLibrary();alertMessage("");}
   catch(error){alertMessage("Não foi possível carregar as receitas: "+error.message);}
