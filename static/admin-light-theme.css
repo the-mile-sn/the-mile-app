@@ -545,3 +545,5 @@ html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info p{
 
 html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save{background:#273e55;border-color:#273e55;color:#fff}
 html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save.is-saved{background:#e4f4e9;border-color:#94d1ac;color:#246c40}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-enter-app{background:#eaf3ee;border-color:#b5d8c3;color:#246345}
