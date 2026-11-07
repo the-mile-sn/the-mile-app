@@ -2457,7 +2457,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
 
 /* Mobile navigation polish: breathable top safe-area and borderless More list. */
 @media(max-width:830px){
- .tm-admin-sidebar .tm-admin-mobile-nav-track{
+ #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track{
   padding-top:44px!important;
   padding-bottom:10px!important;
  }
