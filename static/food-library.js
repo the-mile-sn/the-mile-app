@@ -6,9 +6,9 @@ const fmt=n=>Number(n||0).toLocaleString("pt-PT",{maximumFractionDigits:1});
 function updatePager(){
  let nav=$("food-pagination");
  if(!nav){
-  nav=document.createElement("nav");nav.id="food-pagination";nav.className="tm-food-pagination";
+  nav=document.createElement("nav");nav.id="food-pagination";nav.className="tm-library-pagination tm-food-pagination";
   nav.setAttribute("aria-label","Paginação da biblioteca alimentar");
-  $("empty").insertAdjacentElement("afterend",nav);
+  $("empty").closest(".panel").insertAdjacentElement("afterend",nav);
  }
  nav.replaceChildren();nav.hidden=pages<=1;
  if(pages<=1)return;
