@@ -108,7 +108,8 @@
    const photoCell=node("td");
    if(r.photo_key){
     const photo=node("img","recipe-thumb");
-    photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id);
+    photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id)+"?thumb=1";
+    photo.decoding="async";
     photo.loading="lazy";photo.alt="";photoCell.append(photo);
    }else photoCell.append(node("div","recipe-thumb recipe-thumb-empty","—"));
    tr.append(photoCell);
