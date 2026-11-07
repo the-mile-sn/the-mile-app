@@ -2249,3 +2249,29 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
    background:#303740!important;color:#fff!important
  }
 }
+
+/* Mobile polish: align first tab with The Mile wordmark and Dashboard cards.
+   Small secondary account controls remain in the top-right corner. */
+@media(max-width:830px){
+ #admin-workspace .tm-admin-brand{padding-left:24px!important}
+ #admin-workspace .tm-admin-mobile-nav-track{
+   padding-left:24px!important;scroll-padding-inline-start:24px!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track>.tm-admin-side-nav:first-child>.tm-admin-nav-link:first-child{
+   scroll-margin-inline-start:24px!important;
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   top:13px!important;right:16px!important;gap:5px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   flex:0 0 30px!important;width:30px!important;min-width:30px!important;
+   min-height:30px!important;height:30px!important;padding:6px!important;
+   border-radius:8px!important;opacity:.78
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-nav-icon{
+   width:17px!important;min-width:17px!important;height:17px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-side-icon{
+   width:17px!important;height:17px!important
+ }
+}
