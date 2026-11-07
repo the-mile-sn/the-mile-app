@@ -1837,7 +1837,7 @@ function refreshDishCategories(){
   const select=$("new-dish-category");const previous=select.value;
   select.replaceChildren();
   const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar categoria";select.appendChild(empty);
-  for(const name of [...new Set(dishLibrary.map(d=>d.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
+  for(const name of [...new Set([...dishTableCategories,...dishLibrary.map(d=>d.category)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
     const option=document.createElement("option");option.value=name;option.textContent=name;select.appendChild(option);
   }
   select.value=previous;
@@ -1846,17 +1846,38 @@ async function uploadDishPhoto(file,fields){
   const image=await photoAsWebp(file);
   return request("/api/v2/dishes/photo",{method:"POST",body:JSON.stringify({...fields,image})});
 }
-let dishRecipeChoices=[],dishRecipeLinks={};
-async function loadDishLibrary(){
- const [data,recipesData,linksData]=await Promise.all([
-  request("/api/v2/dishes"),request("/api/v2/recipes"),
-  request("/api/v2/dishes/recipe-links")
- ]);
- dishLibrary=data.dishes||[];
- dishRecipeChoices=recipesData.recipes||[];
- dishRecipeLinks=linksData.links||{};
+let dishRecipeChoices=[],dishRecipeLinks={},dishTableRows=[],dishTableCategories=[],dishTablePage=1,dishTablePages=1,dishTableTotal=0,dishTableRevision=0,dishSearchTimer=null,dishRecipeChoicesLoaded=false;
+async function ensureDishRecipeChoices(){
+ if(dishRecipeChoicesLoaded)return;
+ const data=await request("/api/v2/recipes");
+ dishRecipeChoices=data.recipes||[];
+ dishRecipeChoicesLoaded=true;
+}
+function dishTableUrl(page){
+ const qs=new URLSearchParams({paged:"1",page:String(page)});
+ const search=$("dish-search").value.trim();
+ const category=$("dish-category-filter").value;
+ if(search)qs.set("q",search);
+ if(category)qs.set("category",category);
+ return "/api/v2/dishes?"+qs.toString();
+}
+async function fetchDishPage(page=1){
+ const revision=++dishTableRevision;
+ const result=await request(dishTableUrl(page));
+ if(revision!==dishTableRevision)return;
+ dishTableRows=result.dishes||[];
+ dishTableCategories=result.categories||[];
+ dishTablePage=result.page||1;
+ dishTablePages=result.pages||1;
+ dishTableTotal=result.total||0;
  renderDishEditor();
  refreshDishCategories();
+}
+async function loadDishLibrary(){
+ const links=await request("/api/v2/dishes/recipe-links");
+ dishRecipeLinks=links.links||{};
+ dishRecipeChoices=[];dishRecipeChoicesLoaded=false;
+ await fetchDishPage(dishTablePage);
 }
 window.tmLoadDishLibrary=loadDishLibrary;
 function setDishAddPanel(open){
@@ -1910,7 +1931,7 @@ function refreshDishTableCategories(){
  const previous=select.value;
  select.replaceChildren();
  const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";select.append(all);
- for(const name of [...new Set(dishLibrary.map(d=>d.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
+ for(const name of [...new Set([...dishTableCategories,...dishLibrary.map(d=>d.category)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
   const option=document.createElement("option");option.value=name;option.textContent=name;select.append(option);
  }
  select.value=[...select.options].some(o=>o.value===previous)?previous:"";
@@ -1928,7 +1949,7 @@ function renderDishEditor(){
  refreshDishTableCategories();
  const query=normalizedDishText($("dish-search").value).trim();
  const filter=$("dish-category-filter")?.value||"";
- const matches=dishLibrary.filter(d=>(!filter||d.category===filter)&&(!query||normalizedDishText([d.name_pt,d.name_en,d.category].join(" ")).includes(query)));
+ const matches=dishTableRows;
  const wrap=document.createElement("div");wrap.className="dish-table-scroll";
  const table=document.createElement("table");table.className="dish-library-table";
  const thead=document.createElement("thead"),head=document.createElement("tr");head.className="dish-table-filter-row";
@@ -1943,7 +1964,7 @@ function renderDishEditor(){
  if(!matches.length){
   const tr=document.createElement("tr"),td=document.createElement("td");
   td.colSpan=5;td.className="dish-table-empty";
-  td.textContent=dishLibrary.length?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";
+  td.textContent=dishTableTotal?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";
   tr.append(td);tbody.append(tr);
  }
  for(const dish of matches){
@@ -1968,11 +1989,16 @@ function renderDishEditor(){
   actions.append(edit);tr.append(actions);tbody.append(tr);
   const detailRow=document.createElement("tr");detailRow.className="dish-table-detail";detailRow.hidden=true;
   const detailCell=document.createElement("td");detailCell.colSpan=5;detailRow.append(detailCell);tbody.append(detailRow);
-  edit.addEventListener("click",()=>{
+  edit.addEventListener("click",async()=>{
    detailRow.hidden=!detailRow.hidden;
    edit.setAttribute("aria-expanded",String(!detailRow.hidden));
    edit.textContent=detailRow.hidden?"Editar":"Fechar";
    if(detailRow.hidden||detailCell.children.length)return;
+   try{await ensureDishRecipeChoices();}catch(error){
+    $("dish-catalog-feedback").textContent="Não foi possível carregar receitas associáveis: "+error.message;
+    detailRow.hidden=true;edit.textContent="Editar";edit.setAttribute("aria-expanded","false");return;
+   }
+   if(detailRow.hidden)return;
    const editor=document.createElement("div");editor.className="dish-edit-fields dish-table-editor";
    const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
    const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.append(photoInput);editor.append(photoLabel);
@@ -2119,17 +2145,32 @@ function renderDishEditor(){
      await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:true})});
      dish.name_pt=inputs[0].value.trim();dish.name_en=inputs[1].value.trim();dish.category=inputs[2].value.trim();dish.active=1;
      $("dish-catalog-feedback").textContent="Prato atualizado na biblioteca.";
-     refreshDishCategories();renderDishEditor();
+     refreshDishCategories();await fetchDishPage(dishTablePage);
     }catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;save.disabled=false;}
    };editor.append(save);detailCell.append(editor);
   });
  }
  table.append(tbody);wrap.append(table);host.append(wrap);
+ if(dishTablePages>1){
+  const pages=document.createElement("div");pages.className="tm-library-pagination";
+  pages.setAttribute("aria-label","Paginação dos pratos");
+  const previous=document.createElement("button");previous.type="button";previous.textContent="Anterior";
+  previous.disabled=dishTablePage===1;
+  previous.addEventListener("click",()=>fetchDishPage(dishTablePage-1).catch(e=>{$("dish-catalog-feedback").textContent="Erro: "+e.message;}));
+  const label=document.createElement("span");label.textContent="Página "+dishTablePage+" de "+dishTablePages;
+  const next=document.createElement("button");next.type="button";next.textContent="Seguinte";
+  next.disabled=dishTablePage===dishTablePages;
+  next.addEventListener("click",()=>fetchDishPage(dishTablePage+1).catch(e=>{$("dish-catalog-feedback").textContent="Erro: "+e.message;}));
+  pages.append(previous,label,next);host.append(pages);
+ }
  if(hadSearchFocus){search.focus({preventScroll:true});if(cursor!=null)search.setSelectionRange(cursor,cursor);}
  else if(hadCategoryFocus)category.focus({preventScroll:true});
 }
-$("dish-search").addEventListener("input",renderDishEditor);
-$("dish-category-filter").addEventListener("change",renderDishEditor);
+$("dish-search").addEventListener("input",()=>{
+ clearTimeout(dishSearchTimer);
+ dishSearchTimer=setTimeout(()=>fetchDishPage(1).catch(e=>{$("dish-catalog-feedback").textContent="Erro na pesquisa: "+e.message;}),250);
+});
+$("dish-category-filter").addEventListener("change",()=>fetchDishPage(1).catch(e=>{$("dish-catalog-feedback").textContent="Erro nos filtros: "+e.message;}));
 
 const CALENDAR_EVENT_NAMES={training:"Treino",match:"Jogo",travel:"Viagem"};
 function calendarEventEndpoint(){return matchBase()+"/events";}
