@@ -2084,3 +2084,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{bo
   #tm-players-page .tm-player-loading-photo-editor{gap:12px}
   #tm-players-page .tm-player-loading-photo-preview{width:72px;height:128px}
 }
+
+#tm-players-page .tm-player-photo-save{display:inline-flex;align-items:center;justify-content:center;min-width:114px;padding:10px 16px;border-radius:10px;border:1px solid #4a5568;background:#2f3b4e;color:#f7f9fc;font-size:13px;font-weight:600;cursor:pointer}
+#tm-players-page .tm-player-photo-save:disabled:not(.is-saved){opacity:.45;cursor:default}
+#tm-players-page .tm-player-photo-save.is-saved{background:#204936;border-color:#3e8061;color:#a8edc1;opacity:1;cursor:default}
