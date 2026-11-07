@@ -17,6 +17,8 @@
  const planning=sidebar.querySelector("#tm-admin-nav-planning");
  const plans=sidebar.querySelector("#tm-admin-nav-create-plan");
  const moving=[...secondary,...(recipes?[recipes]:[]),...(plans?[plans]:[])];
+ const primaryIds=["tm-admin-nav-dashboard","tm-admin-nav-players","tm-admin-nav-planning","tm-admin-nav-create-plan"];
+ const primary=primaryIds.map(id=>sidebar.querySelector("#"+id)).filter(Boolean);
  const markers=new Map();
  for(const node of moving){
   const mark=document.createComment("Original admin navigation position");
@@ -69,6 +71,13 @@
   }
   paint();
  }
+ // Choosing a primary destination must collapse More immediately, even if
+ // navigation is asynchronous or the previous secondary item is still active.
+ for(const node of primary){
+  node.addEventListener("click",()=>{
+   if(mobile())collapse();
+  },true);
+ }
  more.addEventListener("click",event=>{
   if(!mobile())return;
   event.preventDefault();event.stopPropagation();
@@ -110,10 +119,18 @@
  });
  window.addEventListener("resize",sync);
  // Main app applies active classes during navigation, after this module loads.
- for(const node of [...secondaryControls,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[])]){
+ for(const node of [...secondaryControls,...primary,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[])]){
   new MutationObserver(()=>{
-   if(mobile()&&selectedSecondary())openMore();
-   paint();
+   if(!mobile())return;
+   // When a main tab becomes active, hide the secondary panel.
+   // Its active state can otherwise survive while a previous view is closing.
+   if(primary.some(item=>item.classList.contains("is-active"))&&!selectedSecondary()){
+    collapse();
+   }else if(selectedSecondary()){
+    openMore();
+   }else{
+    paint();
+   }
   }).observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
  }
  sync();
