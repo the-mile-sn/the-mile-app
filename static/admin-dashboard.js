@@ -248,11 +248,12 @@ function ensurePlanningOnlyView(){
  const accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
  function paintPlayerAccess(){
   accessToggle.hidden=!playerAccess;
+  $("tm-players-enter-app").hidden=!(playerAccess?.active&&playerDetails?.user_id);
   $("tm-players-password-toggle").hidden=!playerAccess;
   if(playerAccess){accessToggle.querySelector(".tm-access-action-text").textContent=playerAccess.active?"Bloquear acesso":"Reativar acesso";accessToggle.classList.toggle("is-unblocking",!playerAccess.active);}
  }
  async function loadPlayerAccess(aid,token){
-  accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
+  accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-enter-app").hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
   try{
    const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/access");
    if(token!==profileLoadToken||profilePanel.hidden)return;
@@ -289,6 +290,29 @@ function ensurePlanningOnlyView(){
    resetPasswordForm();accessFeedback.textContent="Palavra-passe alterada; sessões anteriores terminadas.";
   }catch(err){if(token===profileLoadToken)accessFeedback.textContent="Não foi possível alterar: "+err.message;}
   finally{btn.disabled=false;}
+ });
+ $("tm-players-enter-app").addEventListener("click",async()=>{
+  const uid=playerDetails?.user_id,loadToken=profileLoadToken,button=$("tm-players-enter-app");
+  if(!uid||!playerAccess?.active)return;
+  // Open synchronously on the user gesture to avoid popup blockers.
+  const tab=window.open("about:blank","_blank");
+  if(!tab){accessFeedback.textContent="Permite pop-ups deste site para abrir a app do jogador.";return;}
+  tab.document.title="The Mile · Acesso de visualização";
+  tab.document.body.textContent="A preparar acesso de visualização…";
+  button.disabled=true;
+  try{
+   const response=await request("/api/admin/player-preview",{
+    method:"POST",body:JSON.stringify({user_id:uid})
+   });
+   if(loadToken!==profileLoadToken||playerDetails?.user_id!==uid){tab.close();return;}
+   const url=new URL(response.url);
+   if(url.origin!=="https://app.themile.pt"||url.pathname!=="/preview-entry")throw Error("Destino inesperado.");
+   tab.location.replace(url.href);
+   accessFeedback.textContent="";
+  }catch(err){
+   tab.close();
+   accessFeedback.textContent="Não foi possível abrir a app do jogador: "+err.message;
+  }finally{button.disabled=false;}
  });
  $("tm-players-archive").addEventListener("click",async()=>{
   if(!playerProfile)return;const aid=playerProfile.id,name=playerProfile.name,token=profileLoadToken;
