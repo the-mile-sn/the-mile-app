@@ -34,7 +34,7 @@
    width:100%!important;min-height:0!important;height:auto!important;
    padding:12px 0 7px!important;gap:0!important;
    overflow:hidden!important;border-right:0!important;
-   border-bottom:1px solid #dbe1e9!important;
+   border-bottom:0!important;
  }
  .tm-library-layout .tm-admin-brand{
    margin:0!important;padding:2px 111px 10px 16px!important;min-height:37px!important
@@ -305,7 +305,8 @@
   display:inline-block!important;margin-left:auto!important;width:15px!important
  }
  .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link.is-active{
-  background:rgba(123,150,172,.17)!important;border-radius:9px!important
+  background:transparent!important;border-radius:0!important;
+  font-weight:650!important
  }
  .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav{
   display:none!important;flex-direction:column!important;align-items:stretch!important;
@@ -350,7 +351,7 @@
   border-radius:10px!important;padding:11px 12px!important;
  }
  .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link.is-active{
-  background:rgba(123,150,172,.14)!important;
+  background:transparent!important;
  }
  html[data-admin-theme="light"] .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
   background:transparent!important;border:0!important;box-shadow:none!important;
