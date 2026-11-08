@@ -162,10 +162,61 @@ function draw(){
   document.querySelectorAll("[data-select-meal-name]").forEach(btn=>btn.onclick=()=>{const meal=plan.meals[Number(btn.dataset.selectMealName)];meal.name=btn.dataset.mealName;delete meal.applies_to;draw()});
 
     document.querySelectorAll("[data-option]").forEach(b=>b.onclick=()=>{option=Number(b.dataset.option);editingFood=-1;draw()});
-  document.querySelectorAll("[data-move-timing]").forEach(select=>select.onchange=()=>{const o=plan.meals[active].options[option],index=Number(select.dataset.moveTiming),chosen=select.value;const primary=o.foods[index];if(!primary)return;if(chosen)primary.timing=chosen;else delete primary.timing;o.foods.forEach(f=>{if(f.alternative_to===index){if(chosen)f.timing=chosen;else delete f.timing}});draw()});
-  document.querySelectorAll("[data-shift-timing]").forEach(btn=>btn.onclick=()=>{const o=plan.meals[active].options[option],code=btn.dataset.shiftTiming,direction=Number(btn.dataset.direction);const list=[...new Set([...(o.timing_groups||[]),...o.foods.map(f=>f.timing).filter(Boolean)])];const index=list.indexOf(code),target=index+direction;if(index<0||target<0||target>=list.length)return;[list[index],list[target]]=[list[target],list[index]];o.timing_groups=list;draw()});
-  document.querySelectorAll("[data-remove-timing]").forEach(btn=>btn.onclick=()=>{const o=plan.meals[active].options[option],code=btn.dataset.removeTiming;o.timing_groups=(o.timing_groups||[]).filter(x=>x!==code);o.foods.forEach(f=>{if(f.timing===code)delete f.timing});draw()});
-  if($("peri-add-timing"))$("peri-add-timing").onclick=()=>{const code=$("peri-new-timing")?.value;if(!code)return;const o=plan.meals[active].options[option];o.timing_groups=o.timing_groups||[];if(!o.timing_groups.includes(code))o.timing_groups.push(code);draw()};
+  const periOption=plan.meals[active]?.options?.[option];
+  const mirrorPeriTiming=(o,index)=>{const main=o.foods[index];if(!main)return;o.foods.forEach(food=>{if(food.alternative_to!==index)return;if(main.timing)food.timing=main.timing;else delete food.timing;if(main.timing_splits?.length)food.timing_splits=main.timing_splits.map(part=>({...part}));else delete food.timing_splits;})};
+  document.querySelectorAll("[data-move-timing]").forEach(select=>select.onchange=()=>{
+   const o=periOption,index=Number(select.dataset.moveTiming),chosen=select.value,main=o.foods[index];
+   if(!main)return;
+   delete main.timing_splits;
+   if(chosen)main.timing=chosen;else delete main.timing;
+   mirrorPeriTiming(o,index);draw();
+  });
+  document.querySelectorAll("[data-start-split]").forEach(button=>button.onclick=()=>{
+   const o=periOption,index=Number(button.dataset.startSplit),main=o.foods[index];
+   const codes=periTimingCodes(o),first=main.timing||codes[0],second=codes.find(key=>key!==first);
+   if(!first||!second){status("Adiciona dois momentos antes de dividir este alimento.");return}
+   main.timing_splits=[{timing:first,share:0.5},{timing:second,share:0.5}];delete main.timing;
+   mirrorPeriTiming(o,index);draw();
+  });
+  document.querySelectorAll("[data-add-split]").forEach(button=>button.onclick=()=>{
+   const o=periOption,index=Number(button.dataset.addSplit),main=o.foods[index],codes=periTimingCodes(o);
+   const next=codes.find(key=>!(main.timing_splits||[]).some(part=>part.timing===key));
+   if(!next)return;
+   const shares=main.timing_splits||[];
+   const newCount=shares.length+1;main.timing_splits=[...shares.map(p=>({...p,share:1/newCount})),{timing:next,share:1/newCount}];
+   mirrorPeriTiming(o,index);draw();
+  });
+  document.querySelectorAll("[data-split-share]").forEach(input=>input.onchange=()=>{
+   const o=periOption,index=Number(input.dataset.splitShare),code=input.dataset.splitCode,number=Number(input.value.replace(",","."));
+   if(!Number.isFinite(number)||number<=0||number>100){status("Indica uma percentagem superior a 0 e até 100.");draw();return}
+   const main=o.foods[index],part=main.timing_splits?.find(p=>p.timing===code);
+   if(!part)return;
+   part.share=number/100;
+   mirrorPeriTiming(o,index);draw();
+  });
+  document.querySelectorAll("[data-remove-split]").forEach(button=>button.onclick=()=>{
+   const o=periOption,index=Number(button.dataset.removeSplit),code=button.dataset.splitCode,main=o.foods[index];
+   const remaining=(main.timing_splits||[]).filter(part=>part.timing!==code);
+   if(remaining.length===1){main.timing=remaining[0].timing;delete main.timing_splits}
+   else if(!remaining.length){delete main.timing;delete main.timing_splits}
+   else{const total=remaining.reduce((sum,p)=>sum+p.share,0);main.timing_splits=remaining.map(p=>({...p,share:p.share/total}))}
+   mirrorPeriTiming(o,index);draw();
+  });
+  document.querySelectorAll("[data-shift-timing]").forEach(btn=>btn.onclick=()=>{const o=periOption,code=btn.dataset.shiftTiming,direction=Number(btn.dataset.direction);const list=periTimingCodes(o);const index=list.indexOf(code),target=index+direction;if(index<0||target<0||target>=list.length)return;[list[index],list[target]]=[list[target],list[index]];o.timing_groups=list;draw()});
+  document.querySelectorAll("[data-remove-timing]").forEach(btn=>btn.onclick=()=>{
+   const o=periOption,code=btn.dataset.removeTiming;
+   o.timing_groups=(o.timing_groups||[]).filter(x=>x!==code);
+   o.foods.forEach(food=>{
+    if(food.timing===code)delete food.timing;
+    if(food.timing_splits?.length){
+     const remaining=food.timing_splits.filter(p=>p.timing!==code);
+     if(remaining.length===1){food.timing=remaining[0].timing;delete food.timing_splits}
+     else if(remaining.length===0){delete food.timing_splits}
+     else if(remaining.length!==food.timing_splits.length){const total=remaining.reduce((n,p)=>n+p.share,0);food.timing_splits=remaining.map(p=>({...p,share:p.share/total}))}
+    }
+   });draw();
+  });
+  if($("peri-add-timing"))$("peri-add-timing").onclick=()=>{const code=$("peri-new-timing")?.value;if(!code)return;const o=periOption;o.timing_groups=o.timing_groups||[];if(!o.timing_groups.includes(code))o.timing_groups.push(code);draw()};
   document.querySelectorAll("[data-add-alternative]").forEach(b=>b.onclick=()=>{alternativeParent=Number(b.dataset.addAlternative);const input=$("food-search-input");input?.scrollIntoView({behavior:"smooth",block:"center"});input?.focus();status("Pesquisa o alimento alternativo, indica a quantidade e clica em Adicionar alimento. A alternativa ficará ligada ao alimento selecionado.")});
   document.querySelectorAll("[data-edit-food]").forEach(b=>b.onclick=()=>{editingFood=Number(b.dataset.editFood);draw();document.querySelector("[data-edit-grams]")?.focus()});
   document.querySelectorAll("[data-cancel-grams]").forEach(b=>b.onclick=()=>{editingFood=-1;draw()});
@@ -211,7 +262,7 @@ function draw(){
     search.onkeydown=e=>{if(e.key==="Escape")results.hidden=true;if(e.key==="Enter"){const first=results.querySelector("[data-food-id]");if(first&&!results.hidden){e.preventDefault();first.click()}}};
   }
   if($("food-grams"))$("food-grams").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("add-food")?.click()}};
-  if($("add-food"))$("add-food").onclick=()=>{const id=selectedFoodId,grams=Number($("food-grams").value);if(!id||!Number.isFinite(grams)||grams<=0||grams>100000){status("Seleciona um alimento e uma quantidade válida.");return}const o=plan.meals[active].options[option];ensureOrder(o);const parent=alternativeParent;o.foods.push({...{id,grams},...(parent!=null?{alternative_to:parent,...(o.foods[parent]?.timing?{timing:o.foods[parent].timing}:{})}:{})});alternativeParent=null;const index=o.foods.length-1;const pos=parent==null?-1:o.order.findLastIndex(x=>x.type==="food"&&(x.index===parent||o.foods[x.index]?.alternative_to===parent));o.order.splice(pos<0?o.order.length:pos+1,0,{type:"food",index});draw()};
+  if($("add-food"))$("add-food").onclick=()=>{const id=selectedFoodId,grams=Number($("food-grams").value);if(!id||!Number.isFinite(grams)||grams<=0||grams>100000){status("Seleciona um alimento e uma quantidade válida.");return}const o=plan.meals[active].options[option];ensureOrder(o);const parent=alternativeParent;o.foods.push({...{id,grams},...(parent!=null?{alternative_to:parent,...(o.foods[parent]?.timing?{timing:o.foods[parent].timing}:{}),...(o.foods[parent]?.timing_splits?.length?{timing_splits:o.foods[parent].timing_splits.map(part=>({...part}))}:{})}:{})});alternativeParent=null;const index=o.foods.length-1;const pos=parent==null?-1:o.order.findLastIndex(x=>x.type==="food"&&(x.index===parent||o.foods[x.index]?.alternative_to===parent));o.order.splice(pos<0?o.order.length:pos+1,0,{type:"food",index});draw()};
   if($("add-option"))$("add-option").onclick=()=>{plan.meals[active].options.push({title:"",foods:[],notes:[]});option=plan.meals[active].options.length-1;draw()};
   if($("add-note"))$("add-note").onclick=()=>{const value=$("new-plan-note")?.value.trim();if(!value)return;const o=plan.meals[active].options[option];o.notes=o.notes||[];ensureOrder(o);o.notes.push(value);o.order.push({type:"note",index:o.notes.length-1});draw()};
   if($("add-meal-inline"))$("add-meal-inline").onclick=showMealPicker;
@@ -401,6 +452,9 @@ async function saveCurrentDraft(){
  }
  if(plan.meals.some(m=>m.options.some(o=>o.foods.length===0&&!(o.notes||[]).some(n=>n.trim())))){
   persistenceError="Preenche as opções alimentares antes de guardar.";renderPersistence();return false;
+ }
+ if(plan.plan_type==="Plano Peri-jogo"&&plan.meals.some(m=>m.options.some(o=>o.foods.some(f=>f.timing_splits?.length&&Math.abs(f.timing_splits.reduce((sum,p)=>sum+Number(p.share),0)-1)>0.00001)))){
+  persistenceError="A distribuição por timings deve somar 100% em cada alimento.";renderPersistence();status(persistenceError);return false;
  }
  if(!planIsDirty())return true;
  plan.name=plan.player_name+" - "+plan.plan_type;
