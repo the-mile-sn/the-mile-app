@@ -43,10 +43,10 @@ const timingOrganizer=o=>{
   const unit=periDisplayUnit(food);
   const select=current
     ?'<label class="peri-timing-share"><input type="number" class="peri-timing-percent" min="0.0001" max="'+(unit?unit.total:100)+'" step="any" value="'+(unit?periNumericDisplay(unit.total*share):Math.round(share*10000)/100)+'" data-split-share="'+food.index+'" data-split-code="'+esc(timing)+'" data-split-total="'+(unit?unit.total:100)+'" aria-label="'+(unit?"Quantidade em "+unit.unit:"Percentagem")+" no timing "+esc(periTimingLabel(timing))+'"><span>'+esc(unit?unit.unit:"%")+'</span></label>'
-    :(codes.length?'<span class="peri-timing-picker"><button type="button" class="peri-timing-assign" data-toggle-timing-picker="'+food.index+'" aria-expanded="false" aria-label="'+(timing?"Mover alimento inteiro":"Atribuir alimento inteiro")+'">'+(timing?"Mover inteiro":"Atribuir inteiro")+'</button><span class="peri-timing-picker-choices" data-picker-choices="'+food.index+'" hidden>'+codes.map(code=>'<button type="button" data-pick-timing="'+food.index+'" data-pick-code="'+esc(code)+'">'+esc(periTimingLabel(code))+'</button>').join("")+(timing?'<button type="button" data-pick-timing="'+food.index+'" data-pick-code="">Sem timing</button>':'')+'</span></span>':'');
+    :(codes.length?'<select class="peri-timing-native" data-move-timing="'+food.index+'" aria-label="'+(timing?"Mover alimento inteiro para outro timing":"Atribuir alimento inteiro a um timing")+'"><option value="" selected disabled>'+ (timing?"Mover inteiro…":"Atribuir inteiro…") +'</option>'+codes.map(code=>'<option value="'+esc(code)+'">'+esc(periTimingLabel(code))+'</option>').join("")+'</select>':'');
   const add=current?(available.length?'<button type="button" data-add-split="'+food.index+'" class="peri-add-split">+ Outro timing</button>':'')
     :(codes.length>1?'<button type="button" data-start-split="'+food.index+'" class="peri-add-split">Dividir por timings</button>':'');
-  const remove=current?'<button type="button" class="peri-timing-delete" data-remove-split="'+food.index+'" data-split-code="'+esc(timing)+'" aria-label="Remover parcela" title="Remover parcela">×</button>':"";
+  const remove=current?'<button type="button" class="peri-timing-delete" data-remove-split="'+food.index+'" data-split-code="'+esc(timing)+'" aria-label="Remover parcela" title="Remover parcela">×</button>':(timing?'<button type="button" class="peri-timing-delete" data-clear-timing="'+food.index+'" aria-label="Retirar timing do alimento" title="Retirar timing">×</button>':"");
   return '<div class="peri-timing-food">'+left+'<div class="peri-timing-controls">'+select+add+remove+'</div></div>';
  };
  const blocks=codes.map(code=>{
@@ -222,6 +222,7 @@ function draw(){
   });
   document.querySelectorAll("[data-pick-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.pickTiming),code=button.dataset.pickCode,main=o.foods[index];if(!main||(code&&!periTimingCodes(o).includes(code)))return;delete main.timing_splits;if(code)main.timing=code;else delete main.timing;mirrorPeriTiming(o,index);draw()});
   document.querySelectorAll("[data-assign-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.assignTiming),code=button.dataset.assignCode,main=o.foods[index];if(!main||!periTimingCodes(o).includes(code))return;delete main.timing_splits;main.timing=code;mirrorPeriTiming(o,index);draw()});
+  document.querySelectorAll("[data-clear-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.clearTiming),main=o.foods[index];if(!main)return;delete main.timing;delete main.timing_splits;mirrorPeriTiming(o,index);draw()});
   document.querySelectorAll("[data-move-timing]").forEach(select=>select.onchange=()=>{
    const o=periOption,index=Number(select.dataset.moveTiming),chosen=select.value,main=o.foods[index];
    if(!main)return;
