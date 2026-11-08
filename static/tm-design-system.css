@@ -349,3 +349,12 @@ html[data-admin-theme="light"] .tm-search-clear:hover{
 @media(max-width:830px){
  .tm-search-clear{width:32px;height:32px}
 }
+
+/* iOS Safari: avoid automatic viewport zoom when focusing search fields.
+   Keep user pinch-to-zoom available for accessibility. */
+@media(max-width:830px){
+ html body input[type="search"],
+ html body input[type="search"]:focus{
+  font-size:16px!important;
+ }
+}
