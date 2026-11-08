@@ -722,6 +722,7 @@ async function loadMenus(){
   renderDishEditor();refreshDishCategories();
   const calendar=calendarData.days;
   const menuColorOverrides=colorOverrideLookup(calendarData.meal_color_overrides);
+  const menuEffectiveColors=calendarData.effective_colors||{};
   const pending=new Map();
   saveWeek.disabled=true;feedback.textContent="";
   const mark=(key,entry)=>{if(!stillCurrent())return;pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
@@ -745,14 +746,16 @@ async function loadMenus(){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
     const section=document.createElement("section");section.className="menu-day-card";
     const calendarDay=calendar.find(item=>item.date===date);
-    const modelRow=model.classifications.find(item=>item.name===calendarDay?.classification);
-    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+(calendarDay?.classification?" · "+calendarDay.classification:"");section.appendChild(title);
+    const effectiveClassification=calendarDay?.classification||"Geral";
+    const modelRow=model.classifications.find(item=>item.name===effectiveClassification);
+    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+" · "+effectiveClassification;section.appendChild(title);
     for(const meal of ["lunch","dinner"]){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
       const line=document.createElement("div");line.className="menu-meal-card";
       const heading=document.createElement("div");heading.className="menu-meal-heading";
       const overrideKey=date+"|"+meal;
-      const assignedColor=Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal];
+      const effectiveMeal=menuEffectiveColors[date]?.[meal];
+      const assignedColor=effectiveMeal&&Object.prototype.hasOwnProperty.call(effectiveMeal,"color")?effectiveMeal.color:(Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal]);
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
