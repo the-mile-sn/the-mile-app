@@ -2660,3 +2660,39 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   background:#fff;color:#243448;border-color:#d9dfe7;
  }
 }
+
+
+/* Mobile directory and Planning: compact approved upper layout only.
+   Retain original desktop structure, filters, controls and calendar. */
+@media(max-width:830px){
+ /* Search and the existing Create button share a single top toolbar. */
+ #tm-players-page .tm-players-heading-minimal{display:none!important}
+ #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  margin-bottom:10px!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead tr{
+  display:block!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th:first-child{
+  display:flex!important;align-items:center;gap:8px;width:100%!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th:nth-child(2){
+  display:none!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-search-label{
+  flex:1 1 0;min-width:0!important;
+ }
+ #tm-players-page .tm-players-list-surface #tm-players-new{
+  flex:0 0 auto!important;max-width:45%;min-height:43px!important;
+  padding:8px 11px!important;font-size:12px!important;
+  white-space:nowrap;border-radius:22px!important;
+ }
+ /* Do not retain the reserved status height if there is no message. */
+ #tm-admin-legacy #status:empty{display:none!important}
+ #tm-admin-legacy .tm-planning-unified-header{
+  margin-bottom:8px!important;
+ }
+ #tm-admin-legacy #calendar-section{
+  margin-top:0!important;
+ }
+}
