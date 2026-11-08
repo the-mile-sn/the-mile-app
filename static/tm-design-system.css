@@ -319,3 +319,33 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{bac
   background:#526b82;
  }
 }
+
+
+/* Shared clear control for all Backoffice search fields (desktop and mobile).
+   Native browser clear icons are hidden to prevent duplicate X buttons. */
+input[type="search"].tm-has-search-clear{
+ padding-right:43px!important;
+}
+input[type="search"].tm-has-search-clear::-webkit-search-cancel-button,
+input[type="search"].tm-has-search-clear::-webkit-search-decoration{
+ -webkit-appearance:none;appearance:none;display:none;
+}
+.tm-search-clear{
+ box-sizing:border-box;position:absolute;z-index:8;
+ display:flex;align-items:center;justify-content:center;
+ width:32px;height:32px;padding:0!important;margin:0!important;
+ border:0!important;border-radius:50%!important;
+ background:transparent!important;box-shadow:none!important;
+ color:#9da7b5!important;cursor:pointer;
+ -webkit-tap-highlight-color:transparent;
+}
+.tm-search-clear:hover{background:rgba(130,148,169,.13)!important;color:#e1e7ef!important}
+.tm-search-clear:focus-visible{outline:2px solid #8cabc7;outline-offset:1px}
+.tm-search-clear[hidden]{display:none!important}
+html[data-admin-theme="light"] .tm-search-clear{color:#8390a0!important}
+html[data-admin-theme="light"] .tm-search-clear:hover{
+ background:rgba(83,111,143,.12)!important;color:#263f56!important
+}
+@media(max-width:830px){
+ .tm-search-clear{width:32px;height:32px}
+}
