@@ -894,3 +894,14 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .peri-timing-add{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .peri-timing-add button{padding:9px 12px;border-radius:9px;cursor:pointer}
 @media(max-width:600px){.peri-timing-food{align-items:stretch;flex-direction:column;gap:6px}.peri-timing-food select{width:100%;max-width:none}}
+
+/* Split quantities: presentation metadata, never part of nutrition calculation. */
+.peri-timing-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.peri-timing-controls select{min-width:155px}
+.peri-timing-percent{width:76px;min-width:76px;padding:9px;border-radius:9px}
+.peri-add-split{border:1px solid var(--border,#41454c);background:transparent;border-radius:9px;padding:8px 10px;font-size:12px;cursor:pointer}
+.peri-timing-description{flex:1}
+.peri-timing-warning{color:#ce8341;font-size:12px}
+.peri-timing-actions{display:inline-flex;align-items:center;gap:5px}
+.peri-timing-actions button{font-size:16px;min-width:25px}
+@media(max-width:600px){.peri-timing-controls{justify-content:flex-start}.peri-timing-description{width:100%}}
