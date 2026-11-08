@@ -109,6 +109,34 @@ def _format_grams(grams):
             ("%g"%value).replace(".",","))+" g"
 
 
+def _split_display_quantity(quantity, food, share):
+    """Presentation-only portion; never affects the nutritional grams."""
+    import re
+    value = str(quantity or "").strip()
+    simple = re.fullmatch(r"(\d+(?:[.,]\d+)?)\s+([^/]+)", value)
+    if simple:
+        amount = float(simple.group(1).replace(",", ".")) * share
+        formatted = (str(int(round(amount))) if abs(amount-round(amount))<1e-8
+                     else "½" if abs(amount-.5)<1e-8
+                     else "¼" if abs(amount-.25)<1e-8
+                     else "¾" if abs(amount-.75)<1e-8
+                     else ("%g" % round(amount,3)).replace(".",","))
+        return formatted + " " + simple.group(2).strip()
+    if value:
+        return ("%g" % round(share*100,2)).replace(".",",") + "% de " + value
+    if food.get("grams") is not None:
+        return ("%g" % round(float(food["grams"])*share,2)).replace(".",",") + " g"
+    return ("%g" % round(share*100,2)).replace(".",",") + "%"
+
+
+def _display_timing_parts(food, quantity, fallback_timing=""):
+    splits = food.get("timing_splits") or []
+    if not splits:
+        return [(str(food.get("timing") or fallback_timing or ""), quantity)]
+    return [(str(part.get("timing") or ""), _split_display_quantity(quantity, food, float(part["share"])))
+            for part in splits]
+
+
 def _option_items(option,library):
     foods=option.get("foods") or []
     notes=option.get("notes") or []
@@ -125,17 +153,22 @@ def _option_items(option,library):
             continue
         if position.get("type")!="food" or not 0<=index<len(foods):continue
         food=foods[index]
+        alternative=food.get("alternative_to")
+        parent=(foods[alternative] if isinstance(alternative,int) and 0<=alternative<len(foods) else {})
+        fallback=str(parent.get("timing") or "")
         if food.get("kind")=="supplement":
-            items.append({"kind":"note","text":str(food.get("label") or ""),"timing":str(food.get("timing") or "")})
+            for timing,_ in _display_timing_parts(food, str(food.get("label") or ""), fallback):
+                items.append({"kind":"note","text":str(food.get("label") or ""),"timing":timing})
             continue
         ref=library.get(food.get("id"))
         if not ref:raise ValueError("incomplete_published_food")
         name=food.get("display_name") or ref.get("display_name") or "Alimento"
         quantity=food.get("display_quantity") or _format_grams(food["grams"])
-        if food.get("alternative_to") is not None:
-            items.append({"kind":"note","text":"ou "+quantity+" · "+name,"timing":str(food.get("timing") or (foods[food["alternative_to"]].get("timing") if isinstance(food.get("alternative_to"),int) and 0<=food["alternative_to"]<len(foods) else "") or "")})
-        else:
-            items.append({"kind":"food","quantity":quantity,"name":name,"timing":str(food.get("timing") or "")})
+        for timing,portion in _display_timing_parts(food,quantity,fallback):
+            if alternative is not None:
+                items.append({"kind":"note","text":"ou "+portion+" · "+name,"timing":timing})
+            else:
+                items.append({"kind":"food","quantity":portion,"name":name,"timing":timing})
     return items
 
 
