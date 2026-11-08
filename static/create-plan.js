@@ -92,7 +92,7 @@ function renderPlanReference(){
  const label=valid?"Peso de referência: "+fmt(w)+" kg · "+planRefDate():
    !plan.athlete_id?"Seleciona um jogador para calcular os rácios":
    planRef.error?"Não foi possível obter o Peso de referência.":"A consultar Peso de referência…";
- if(note)note.textContent=label;
+ if(note){note.textContent=label;if(valid)note.dataset.tmMobileWeight=fmt(w)+" kg";else delete note.dataset.tmMobileWeight;}
  const previewNote=$("plan-preview-weight");if(previewNote)previewNote.textContent=label;
  document.querySelectorAll("[data-plan-preview-kg]").forEach(el=>{
   const index=Number(el.dataset.planPreviewKg);
