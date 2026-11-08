@@ -5,19 +5,50 @@ const ensureOrder=o=>{if(!Array.isArray(o.order)||o.order.length!==o.foods.lengt
 const displayOrder=o=>{const order=ensureOrder(o),alts=new Map(),result=[],seen=new Set();for(const item of order){if(item.type==="food"){const parent=o.foods[item.index]?.alternative_to;if(parent!=null&&parent!==item.index){const a=alts.get(parent)||[];a.push(item);alts.set(parent,a)}}}for(const item of order){if(item.type==="food"&&o.foods[item.index]?.alternative_to!=null)continue;result.push(item);if(item.type==="food"){for(const alt of alts.get(item.index)||[]) {result.push(alt);seen.add(alt.index)}}}for(const item of order)if(item.type==="food"&&o.foods[item.index]?.alternative_to!=null&&!seen.has(item.index))result.push(item);return result};
 const periTimingChoices=[["pre_warmup","Pré-aquecimento"],["warmup","Aquecimento"],["post_warmup","Pós-aquecimento"],["first_half","Durante a 1.ª parte"],["half_time","Intervalo"],["second_half","Durante a 2.ª parte"],["throughout","Ao longo do jogo"],["post_match","Pós-jogo"]];
 const periTimingLabel=code=>periTimingChoices.find(([key])=>key===code)?.[1]||code;
+const periShareText=share=>{const n=Math.round(Number(share)*10000)/100;return n.toLocaleString("pt-PT",{maximumFractionDigits:2})+"%";};
+const periFractionText=(food,share)=>{
+ const raw=String(food.display_quantity||"").trim();
+ const match=/^(\d+(?:[.,]\d+)?)\s+([^/]+)$/.exec(raw);
+ if(match){
+  const amount=Number(match[1].replace(",","."))*share,unit=match[2].trim();
+  const number=Math.abs(amount-.5)<.0001?"½":Math.abs(amount-.25)<.0001?"¼":Math.abs(amount-.75)<.0001?"¾":amount.toLocaleString("pt-PT",{maximumFractionDigits:2});
+  return number+" "+unit;
+ }
+ if(raw)return periShareText(share)+" de "+raw;
+ if(food.grams!=null)return (food.grams*share).toLocaleString("pt-PT",{maximumFractionDigits:2})+" g";
+ return periShareText(share);
+};
+const periTimingCodes=o=>[...new Set([...(o.timing_groups||[]),...o.foods.flatMap(f=>(f.timing_splits||[]).map(split=>split.timing).concat(f.timing||[]))])];
+const periTimingSelect=(selected,exclude=[])=>'<option value="">Selecionar timing…</option>'+periTimingChoices.filter(([key])=>!exclude.includes(key)).map(([key,label])=>'<option value="'+key+'"'+(selected===key?' selected':'')+'>'+esc(label)+'</option>').join("");
 const timingOrganizer=o=>{
- const groups=Array.isArray(o.timing_groups)?o.timing_groups:[];
- const assigned=o.foods.map((f,i)=>({...f,index:i})).filter(f=>f.alternative_to==null);
- const codes=[...new Set([...groups,...assigned.map(f=>f.timing).filter(Boolean)])];
- const choiceOptions=chosen=>'<option value="">Sem timing</option>'+periTimingChoices.map(([value,label])=>'<option value="'+value+'"'+(chosen===value?' selected':'')+'>'+label+'</option>').join("");
+ const codes=periTimingCodes(o);
+ const primary=o.foods.map((food,index)=>({...food,index})).filter(food=>food.alternative_to==null);
+ const foodName=food=>{const ref=foodById.get(food.id);return food.display_name||food.label||ref?.display_name||"Alimento"};
+ const foodRow=(food,timing,share=null)=>{
+  const current=Array.isArray(food.timing_splits)&&food.timing_splits.length>0;
+  const available=codes.filter(key=>!current||!(food.timing_splits||[]).some(x=>x.timing===key));
+  const display=share===null?(food.display_quantity||((food.grams??"")+" g")):periFractionText(food,share);
+  const left='<span class="peri-timing-description">'+esc(display)+" · "+esc(foodName(food))+'</span>';
+  const select=current
+    ?'<input type="number" class="peri-timing-percent" min="0.01" max="100" step="any" value="'+(Math.round(share*10000)/100)+'" data-split-share="'+food.index+'" data-split-code="'+esc(timing)+'" aria-label="Percentagem no timing '+esc(periTimingLabel(timing))+'"><span>%</span><button type="button" data-remove-split="'+food.index+'" data-split-code="'+esc(timing)+'" title="Remover esta parcela">×</button>'
+    :'<select data-move-timing="'+food.index+'" aria-label="Mover alimento para outro timing">'+periTimingSelect(timing)+'</select>';
+  const add=current?(available.length?'<button type="button" data-add-split="'+food.index+'" class="peri-add-split">+ Outro timing</button>':'')
+    :(codes.length>1?'<button type="button" data-start-split="'+food.index+'" class="peri-add-split">Dividir por timings</button>':'');
+  return '<div class="peri-timing-food">'+left+'<div class="peri-timing-controls">'+select+add+'</div></div>';
+ };
  const blocks=codes.map(code=>{
-  const members=assigned.filter(f=>f.timing===code);
-  return '<section class="peri-timing-block"><div class="peri-timing-block-head"><strong>'+esc(periTimingLabel(code))+'</strong><span class="peri-timing-actions"><button type="button" data-shift-timing="'+esc(code)+'" data-direction="-1" aria-label="Subir timing">↑</button><button type="button" data-shift-timing="'+esc(code)+'" data-direction="1" aria-label="Descer timing">↓</button><button type="button" data-remove-timing="'+esc(code)+'" title="Remover bloco e deixar os alimentos sem timing">×</button></span></div>'+
-   (members.length?members.map(f=>{const ref=foodById.get(f.id);return '<div class="peri-timing-food"><span>'+esc(f.display_quantity||(f.grams==null?'':fmt(f.grams)+' g'))+' · '+esc(f.display_name||f.label||ref?.display_name||"Alimento")+'</span><select data-move-timing="'+f.index+'" aria-label="Mover alimento para outro timing">'+choiceOptions(code)+'</select></div>'}).join(""):'<small class="peri-timing-empty">Sem alimentos neste momento.</small>')+'</section>';
+  const members=primary.filter(food=>food.timing===code||(food.timing_splits||[]).some(split=>split.timing===code));
+  const lines=members.map(food=>{
+   const split=(food.timing_splits||[]).find(part=>part.timing===code);
+   return foodRow(food,code,split?split.share:null);
+  }).join("");
+  return '<section class="peri-timing-block"><div class="peri-timing-block-head"><strong>'+esc(periTimingLabel(code))+'</strong><span class="peri-timing-actions"><button type="button" data-shift-timing="'+esc(code)+'" data-direction="-1" aria-label="Subir timing">↑</button><button type="button" data-shift-timing="'+esc(code)+'" data-direction="1" aria-label="Descer timing">↓</button><button type="button" data-remove-timing="'+esc(code)+'" title="Remover bloco e deixar os alimentos sem timing">×</button></span></div>'+(members.length?lines:'<small class="peri-timing-empty">Sem alimentos neste momento.</small>')+'</section>';
  }).join("");
- const unassigned=assigned.filter(f=>!f.timing);
- const without=unassigned.length?'<section class="peri-timing-block"><div class="peri-timing-block-head"><strong>Sem timing definido</strong></div>'+unassigned.map(f=>{const ref=foodById.get(f.id);return '<div class="peri-timing-food"><span>'+esc(f.display_quantity||(f.grams==null?'':fmt(f.grams)+' g'))+' · '+esc(f.display_name||f.label||ref?.display_name||"Alimento")+'</span><select data-move-timing="'+f.index+'" aria-label="Atribuir timing ao alimento">'+choiceOptions("")+'</select></div>'}).join("")+'</section>':"";
- return '<div class="peri-timing-organizer"><div class="peri-timing-intro"><strong>Momentos de consumo</strong><small>Organiza os alimentos por timing, sem alterar quantidades ou valores nutricionais. As alternativas acompanham o alimento principal.</small></div>'+blocks+without+'<div class="peri-timing-add"><select id="peri-new-timing" aria-label="Novo timing"><option value="">Selecionar timing…</option>'+periTimingChoices.filter(([code])=>!codes.includes(code)).map(([code,label])=>'<option value="'+code+'">'+label+'</option>').join("")+'</select><button type="button" id="peri-add-timing">+ Adicionar timing</button></div></div>';
+ const unassigned=primary.filter(food=>!food.timing&&!(food.timing_splits||[]).length);
+ const without=unassigned.length?'<section class="peri-timing-block"><div class="peri-timing-block-head"><strong>Sem timing definido</strong></div>'+unassigned.map(food=>foodRow(food,"")).join("")+'</section>':"";
+ const errors=primary.filter(food=>food.timing_splits?.length&&Math.abs(food.timing_splits.reduce((sum,part)=>sum+Number(part.share),0)-1)>.00001);
+ const warning=errors.length?'<p class="peri-timing-warning">Distribuição incompleta: confirma que a soma das parcelas de cada alimento é 100% antes de guardar.</p>':"";
+ return '<div class="peri-timing-organizer"><div class="peri-timing-intro"><strong>Momentos de consumo</strong><small>Divide um alimento por vários timings, sem o duplicar nem alterar o cálculo nutricional. As percentagens devem somar 100%.</small></div>'+blocks+without+warning+'<div class="peri-timing-add"><select id="peri-new-timing" aria-label="Novo timing">'+periTimingSelect("",codes)+'</select><button type="button" id="peri-add-timing">+ Adicionar timing</button></div></div>';
 };
 const nutrients=["kcal","protein_g","carbs_g","fat_g"];
 const foodNutrients=f=>nutrients.map(k=>{if(f.kind==="supplement"||f.grams==null)return 0;const ref=foodById.get(f.id);return ref?Number(ref[k]||0)*Number(f.grams)/100*(ref.variant==="gross"?Number(ref.edible_fraction):1):0});
