@@ -129,6 +129,7 @@
   closeClinical();const token=++clinicalToken;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
   const page=clinicalPages[kind],feedback=$("tm-"+kind+"-error");page.hidden=false;navActive($("tm-admin-nav-"+kind));feedback.textContent="";
+  if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
   syncClinicalSelectors();const original=$("athlete");
   const selected=$("tm-"+kind+"-player");
   if(aid&&Array.from(original.options).some(o=>o.value===aid))selected.value=aid;
@@ -184,13 +185,12 @@ function ensurePlanningOnlyView(){
  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
   ensurePlanningOnlyView();
  try{
+  if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
   if(aid&&$("athlete")){
    const choice=$("athlete");
-   if([...choice.options].some(o=>o.value===aid)&&choice.value!==aid){
-    choice.value=aid;
-    if(typeof loadModel==="function")await loadModel();
-   }
+   if([...choice.options].some(o=>o.value===aid))choice.value=aid;
   }
+  if(typeof window.tmEnsureAdminPlanning==="function")await window.tmEnsureAdminPlanning();
   if(day){
    const d=new Date(day+"T12:00:00Z");
    if(typeof calendarMonth!=="undefined")calendarMonth=new Date(d.getUTCFullYear(),d.getUTCMonth(),1);
@@ -214,6 +214,7 @@ function ensurePlanningOnlyView(){
   if($("admin-workspace").hidden)return;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
   ensurePlanningOnlyView();
+  if(typeof window.tmEnsureAdminPlanning==="function")window.tmEnsureAdminPlanning().catch(err=>{if(typeof status==="function")status("Não foi possível carregar o Planeamento: "+err.message,"warn");});
   $("admin-account-panel").hidden=true;
   $("admin-account-toggle").setAttribute("aria-expanded","false");
   window.scrollTo({top:0,behavior:"smooth"});
