@@ -2626,3 +2626,37 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   display:inline-flex!important;
  }
 }
+
+
+/* Planning calendar: compact event creation and no redundant top-level back row
+   on phones. The internal profile back button is retained. */
+#calendar-mobile-event-toggle{display:none}
+@media(max-width:830px){
+ #admin-workspace #tm-dashboard-return{display:none!important}
+ #calendar-section #calendar-mobile-event-toggle{
+  box-sizing:border-box;display:flex;align-items:center;gap:12px;
+  width:100%;min-height:49px;padding:12px 15px;
+  margin:0 0 13px;border:1px solid #3a3e48;border-radius:14px;
+  background:#1b1d22;color:#f0f2f5;text-align:left;
+  font-size:14px;font-weight:600;cursor:pointer;
+ }
+ #calendar-mobile-event-toggle .calendar-mobile-event-plus{
+  font-size:24px;font-weight:400;line-height:1;
+ }
+ #calendar-mobile-event-toggle .calendar-mobile-event-chevron{
+  margin-left:auto;flex:none;transition:transform .18s ease;
+ }
+ #calendar-mobile-event-toggle[aria-expanded="true"] .calendar-mobile-event-chevron{
+  transform:rotate(180deg);
+ }
+ #calendar-section #calendar-event-form{
+  display:none!important;
+ }
+ #calendar-section:has(#calendar-mobile-event-toggle[aria-expanded="true"]) #calendar-event-form{
+  display:flex!important;margin-top:0!important;
+ }
+ #calendar-section #calendar-event-feedback:empty{display:none!important}
+ html[data-admin-theme="light"] #calendar-section #calendar-mobile-event-toggle{
+  background:#fff;color:#243448;border-color:#d9dfe7;
+ }
+}
