@@ -2492,3 +2492,104 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   background:transparent!important;border:0!important;box-shadow:none!important
  }
 }
+
+
+/* TM mobile player directory v1 — presentation only. The same table rows,
+   actions, SVG icons, filters and event handlers remain in the DOM.
+   No rules outside 830px and no changes to player/profile/desktop views. */
+@media (max-width:830px){
+ #tm-players-page .tm-players-list-surface .tm-players-table-scroll{
+  overflow:visible!important;border:0!important;background:transparent!important;
+  border-radius:0!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table{
+  display:block!important;min-width:0!important;width:100%!important;
+  border-collapse:separate!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  display:block!important;margin-bottom:12px;
+  border:1px solid #373a43;border-radius:15px;background:#1e2026;
+  padding:12px;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead tr{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(120px,36%);
+  align-items:center;gap:10px;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th{
+  display:block!important;min-width:0!important;width:auto!important;
+  padding:0!important;border:0!important;background:transparent!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th:nth-child(n+3){display:none!important}
+ #tm-players-page .tm-players-table thead .tm-players-search-label{
+  display:block!important;max-width:none!important;min-width:0!important;width:100%!important;
+ }
+ #tm-players-page .tm-players-table thead .tm-players-search-label input{
+  height:55px!important;min-width:0!important;width:100%!important;
+  font-size:14px!important;
+ }
+ #tm-players-page .tm-players-table thead .tm-players-header-select,
+ #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+  max-width:none!important;width:100%!important;min-width:0!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table tbody{
+  display:grid!important;gap:10px!important;min-width:0!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table tbody tr{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;column-gap:10px;row-gap:9px;min-width:0;
+  padding:13px 14px;border:1px solid #34363f;border-radius:15px;
+  background:#17181d;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table tbody td{
+  box-sizing:border-box;display:block!important;min-width:0!important;
+  width:auto!important;max-width:100%!important;
+  padding:0!important;border:0!important;background:transparent!important;
+ }
+ #tm-players-page .tm-players-table tbody td:first-child{grid-column:1;grid-row:1}
+ #tm-players-page .tm-players-table tbody td:nth-child(2){grid-column:2;grid-row:1;justify-self:end}
+ #tm-players-page .tm-players-table tbody td:nth-child(3){
+  grid-column:1;grid-row:2;align-self:center;
+  color:#aab1bd;font-size:12px;line-height:1.35;
+ }
+ #tm-players-page .tm-players-table tbody td:nth-child(3)::before{
+  content:"Renovação: ";color:#858e9c;
+ }
+ #tm-players-page .tm-players-table tbody td:nth-child(4){
+  grid-column:2;grid-row:2;justify-self:end;
+ }
+ #tm-players-page .tm-players-table tbody td:first-child .tm-p-player{
+  gap:10px!important;padding:0!important;min-width:0!important;
+ }
+ #tm-players-page .tm-p-avatar{width:45px!important;height:45px!important;flex-basis:45px!important}
+ #tm-players-page .tm-p-identity{min-width:0!important}
+ #tm-players-page .tm-p-identity strong{
+  display:block;font-size:14px;line-height:1.3;
+  white-space:normal;overflow-wrap:break-word;
+ }
+ #tm-players-page .tm-p-identity small{
+  display:block;font-size:12px;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+ }
+ #tm-players-page .tm-p-status{font-size:11px!important;white-space:nowrap}
+ #tm-players-page .tm-p-actions-wrap{gap:8px}
+ #tm-players-page .tm-p-icon-action{
+  width:40px!important;height:40px!important;min-height:40px!important;
+  flex:0 0 40px;
+ }
+ #tm-players-page .tm-players-table tbody td.tm-p-empty{
+  grid-column:1/-1!important;grid-row:auto!important;
+  text-align:center!important;padding:20px 8px!important;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  background:#eef1f5;border-color:#d9dfe7;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table tbody tr{
+  background:#fff;border-color:#d9dfe7;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody td:nth-child(3){
+  color:#566578;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody td:nth-child(3)::before{
+  color:#728094;
+ }
+}
