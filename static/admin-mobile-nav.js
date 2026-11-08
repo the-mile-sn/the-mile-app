@@ -26,6 +26,22 @@
   markers.set(node,mark);
  }
  let expanded=false;
+ // Keep the selected mobile tab completely visible with a comfortable right inset.
+ // Only scroll the horizontal track; never change the page's vertical position.
+ function revealActiveTab(animate=false){
+  if(!mobile())return;
+  const selected=primary.find(node=>node.classList.contains("is-active"));
+  if(!selected)return;
+  const trackRect=track.getBoundingClientRect();
+  const rect=selected.getBoundingClientRect();
+  const inset=16;
+  const left=trackRect.left+inset;
+  const right=trackRect.right-inset;
+  let delta=0;
+  if(rect.right>right)delta=rect.right-right;
+  else if(rect.left<left)delta=rect.left-left;
+  if(Math.abs(delta)>1)track.scrollBy({left:delta,behavior:animate?"smooth":"instant"});
+ }
  function selectedSecondary(){
   return secondaryControls.some(node=>node.classList.contains("is-active"))||
    !!recipes?.querySelector(".is-active");
@@ -70,12 +86,16 @@
    if(recipes&&standalone)recipes.hidden=false;
   }
   paint();
+  if(mobile())requestAnimationFrame(()=>revealActiveTab());
  }
  // Choosing a primary destination must collapse More immediately, even if
  // navigation is asynchronous or the previous secondary item is still active.
  for(const node of primary){
   node.addEventListener("click",()=>{
-   if(mobile())collapse();
+   if(mobile()){
+    collapse();
+    requestAnimationFrame(()=>revealActiveTab(true));
+   }
   },true);
  }
  more.addEventListener("click",event=>{
@@ -131,9 +151,11 @@
    }else{
     paint();
    }
+   requestAnimationFrame(()=>revealActiveTab(true));
   }).observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
  }
  sync();
+ if(mobile())requestAnimationFrame(()=>revealActiveTab());
  // Entering a standalone secondary page resets the scroll position. Keep "Mais"
  // in view so navigation and sibling destinations remain immediately accessible.
  if(standalone&&mobile()&&selectedAtEntry){
