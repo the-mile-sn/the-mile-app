@@ -879,29 +879,30 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 /* Dark VP preview is a deeper green than the standard green plan. */
 #plan-preview .plan-preview-group[data-palette="vp"]{--preview-bg:#28543e;--preview-fg:#bde6cd;--preview-option:#3c6750}
 
-/* Peri-jogo: timing is presentation-only and never enters nutrient totals. */
-.peri-timing-organizer{margin:16px 0 4px;padding:16px;border:1px solid var(--border,#34383e);border-radius:14px;display:grid;gap:12px}
-.peri-timing-intro{display:grid;gap:5px}
-.peri-timing-intro strong{font-size:14px}
-.peri-timing-intro small,.peri-timing-empty{font-size:12px;opacity:.72;line-height:1.5}
-.peri-timing-block{border:1px solid var(--border,#34383e);border-radius:12px;padding:12px;display:grid;gap:10px}
-.peri-timing-block-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.peri-timing-block-head strong{font-size:13px;font-weight:600}
-.peri-timing-block-head button{background:transparent;border:0;color:inherit;cursor:pointer;font-size:20px}
-.peri-timing-food{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
-.peri-timing-food span{min-width:0;overflow-wrap:anywhere}
-.peri-timing-food select,.peri-timing-add select{max-width:210px;min-width:140px;padding:9px;border-radius:9px}
-.peri-timing-add{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.peri-timing-add button{padding:9px 12px;border-radius:9px;cursor:pointer}
-@media(max-width:600px){.peri-timing-food{align-items:stretch;flex-direction:column;gap:6px}.peri-timing-food select{width:100%;max-width:none}}
-
-/* Split quantities: presentation metadata, never part of nutrition calculation. */
-.peri-timing-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
-.peri-timing-controls select{min-width:155px}
-.peri-timing-percent{width:76px;min-width:76px;padding:9px;border-radius:9px}
-.peri-add-split{border:1px solid var(--border,#41454c);background:transparent;border-radius:9px;padding:8px 10px;font-size:12px;cursor:pointer}
-.peri-timing-description{flex:1}
-.peri-timing-warning{color:#ce8341;font-size:12px}
-.peri-timing-actions{display:inline-flex;align-items:center;gap:5px}
-.peri-timing-actions button{font-size:16px;min-width:25px}
-@media(max-width:600px){.peri-timing-controls{justify-content:flex-start}.peri-timing-description{width:100%}}
+/* Peri-jogo: lighter editorial layout; scoped to this editor only. */
+.peri-timing-organizer{margin:18px 0 8px;padding:0;border:0;box-shadow:none;background:transparent;border-radius:0;display:grid;gap:0}
+.peri-timing-intro{display:block;margin:0 0 8px;padding:0}
+.peri-timing-intro strong{font-size:15px;font-weight:650}
+.peri-timing-block{border:0;border-radius:0;background:transparent;box-shadow:none;padding:15px 0 13px;display:grid;gap:3px}
+.peri-timing-block+.peri-timing-block{border-top:1px solid var(--border,rgba(127,127,127,.16))}
+.peri-timing-block-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 3px}
+.peri-timing-block-head strong{font-size:13px;font-weight:650}
+.peri-timing-actions{display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.peri-timing-actions button{border:0;background:transparent;box-shadow:none;color:inherit;opacity:.68;cursor:pointer;width:28px;height:28px;min-width:28px;padding:0;border-radius:7px;font-size:16px}
+.peri-timing-actions button:hover{background:var(--surface-secondary,rgba(127,127,127,.09));opacity:1}
+.peri-timing-actions button:last-child{margin-left:5px}
+.peri-timing-food{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,auto);gap:12px;align-items:center;padding:8px 0;min-height:46px;font-size:13px}
+.peri-timing-description{min-width:0;overflow-wrap:anywhere}
+.peri-timing-controls{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.peri-timing-controls select{min-width:0;width:145px;max-width:180px;border-radius:9px;padding:7px 9px}
+.peri-timing-percent{width:72px;min-width:72px;padding:7px 8px;border-radius:9px}
+.peri-add-split{font-size:12px;padding:7px 10px;border:0;box-shadow:none;background:var(--surface-secondary,rgba(127,127,127,.08));border-radius:8px;white-space:nowrap}
+.peri-timing-delete{order:10;margin-left:4px;width:28px;height:30px;min-width:28px;border:0;box-shadow:none;background:transparent;color:inherit;border-radius:7px;font-size:17px;cursor:pointer;opacity:.7}
+.peri-timing-delete:hover{background:var(--surface-secondary,rgba(127,127,127,.1));opacity:1}
+.peri-timing-unassigned{opacity:.9}
+.peri-timing-empty{padding:2px 0 5px}
+.peri-timing-add{display:flex;align-items:center;gap:9px;flex-wrap:wrap;border-top:1px solid var(--border,rgba(127,127,127,.16));padding:14px 0 0;margin-top:3px}
+.peri-timing-add select{min-width:190px;width:230px;max-width:100%;border-radius:9px;padding:9px 11px}
+.peri-timing-add button{padding:9px 12px;border-radius:9px;border:0;box-shadow:none;background:var(--surface-secondary,rgba(127,127,127,.08));white-space:nowrap}
+.peri-timing-warning{margin:6px 0;padding:5px 0;font-size:12px}
+@media(max-width:650px){.peri-timing-food{grid-template-columns:minmax(0,1fr);gap:6px}.peri-timing-controls{justify-content:flex-start;gap:7px;flex-wrap:wrap}.peri-timing-description{width:100%}.peri-timing-add{align-items:stretch}.peri-timing-add select{width:100%}}
