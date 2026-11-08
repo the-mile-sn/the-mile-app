@@ -126,16 +126,16 @@ def _option_items(option,library):
         if position.get("type")!="food" or not 0<=index<len(foods):continue
         food=foods[index]
         if food.get("kind")=="supplement":
-            items.append({"kind":"note","text":str(food.get("label") or "")})
+            items.append({"kind":"note","text":str(food.get("label") or ""),"timing":str(food.get("timing") or "")})
             continue
         ref=library.get(food.get("id"))
         if not ref:raise ValueError("incomplete_published_food")
         name=food.get("display_name") or ref.get("display_name") or "Alimento"
         quantity=food.get("display_quantity") or _format_grams(food["grams"])
         if food.get("alternative_to") is not None:
-            items.append({"kind":"note","text":"ou "+quantity+" · "+name})
+            items.append({"kind":"note","text":"ou "+quantity+" · "+name,"timing":str(food.get("timing") or (foods[food["alternative_to"]].get("timing") if isinstance(food.get("alternative_to"),int) and 0<=food["alternative_to"]<len(foods) else "") or "")})
         else:
-            items.append({"kind":"food","quantity":quantity,"name":name})
+            items.append({"kind":"food","quantity":quantity,"name":name,"timing":str(food.get("timing") or "")})
     return items
 
 
@@ -144,7 +144,8 @@ def _options(meal,library):
     for index,option in enumerate(meal.get("options") or [],1):
         result.append({"number":index,"title":option.get("title") or "",
                        "totals":_option_totals(option,library),
-                       "items":_option_items(option,library)})
+                       "items":_option_items(option,library),
+                       "timing_groups":option.get("timing_groups") or []})
     return result
 
 
