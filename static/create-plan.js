@@ -150,7 +150,20 @@ function renderPersistence(){
 const refreshSelectDisplays=()=>document.querySelectorAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
 
 const macro=(values,rounded=false)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+(i===0?"kcal":"g")+'</small></span>').join("")+'</div>';
+let openPeriTimingPopup=null;
+function closePeriTimingPopup(){
+ if(!openPeriTimingPopup)return;
+ openPeriTimingPopup.popup.remove();
+ openPeriTimingPopup.trigger.setAttribute("aria-expanded","false");
+ openPeriTimingPopup=null;
+}
+document.addEventListener("pointerdown",event=>{
+ if(openPeriTimingPopup&&!openPeriTimingPopup.popup.contains(event.target)&&!openPeriTimingPopup.trigger.contains(event.target))closePeriTimingPopup();
+});
+window.addEventListener("scroll",closePeriTimingPopup,true);
+window.addEventListener("resize",closePeriTimingPopup);
 function draw(){
+ closePeriTimingPopup();
   $("plan-player").value=players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id||"";
   $("plan-type").value=plan.plan_type||"";
   refreshSelectDisplays();
@@ -177,7 +190,34 @@ function draw(){
     document.querySelectorAll("[data-option]").forEach(b=>b.onclick=()=>{option=Number(b.dataset.option);editingFood=-1;draw()});
   const periOption=plan.meals[active]?.options?.[option];
   const mirrorPeriTiming=(o,index)=>{const main=o.foods[index];if(!main)return;o.foods.forEach(food=>{if(food.alternative_to!==index)return;if(main.timing)food.timing=main.timing;else delete food.timing;if(main.timing_splits?.length)food.timing_splits=main.timing_splits.map(part=>({...part}));else delete food.timing_splits;})};
-  document.querySelectorAll("[data-toggle-timing-picker]").forEach(button=>button.onclick=()=>{const choices=document.querySelector('[data-picker-choices="'+button.dataset.toggleTimingPicker+'"]');if(!choices)return;const opening=choices.hidden;document.querySelectorAll("[data-picker-choices]").forEach(item=>item.hidden=true);document.querySelectorAll("[data-toggle-timing-picker]").forEach(item=>item.setAttribute("aria-expanded","false"));choices.hidden=!opening;button.setAttribute("aria-expanded",String(opening))});
+  document.querySelectorAll("[data-toggle-timing-picker]").forEach(button=>button.onclick=()=>{
+   if(openPeriTimingPopup?.trigger===button){closePeriTimingPopup();return}
+   closePeriTimingPopup();
+   const choices=document.querySelector('[data-picker-choices="'+button.dataset.toggleTimingPicker+'"]');
+   if(!choices)return;
+   // Use a body-level floating menu: cards and option panels cannot clip it.
+   const popup=choices.cloneNode(true);
+   popup.removeAttribute("hidden");
+   popup.removeAttribute("data-picker-choices");
+   popup.classList.add("peri-timing-portal");
+   popup.setAttribute("role","menu");
+   document.body.append(popup);
+   const triggerRect=button.getBoundingClientRect();
+   const popupRect=popup.getBoundingClientRect();
+   const left=Math.max(8,Math.min(triggerRect.right-popupRect.width,window.innerWidth-popupRect.width-8));
+   const roomBelow=window.innerHeight-triggerRect.bottom;
+   const top=roomBelow>=popupRect.height+8?triggerRect.bottom+5:Math.max(8,triggerRect.top-popupRect.height-5);
+   popup.style.left=left+"px";
+   popup.style.top=top+"px";
+   popup.querySelectorAll("[data-pick-timing]").forEach(choice=>choice.onclick=()=>{
+    const code=choice.dataset.pickCode,index=choice.dataset.pickTiming;
+    closePeriTimingPopup();
+    const actual=[...document.querySelectorAll("[data-pick-timing]")].find(el=>el.dataset.pickTiming===index&&el.dataset.pickCode===code);
+    actual?.click();
+   });
+   button.setAttribute("aria-expanded","true");
+   openPeriTimingPopup={popup,trigger:button};
+  });
   document.querySelectorAll("[data-pick-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.pickTiming),code=button.dataset.pickCode,main=o.foods[index];if(!main||(code&&!periTimingCodes(o).includes(code)))return;delete main.timing_splits;if(code)main.timing=code;else delete main.timing;mirrorPeriTiming(o,index);draw()});
   document.querySelectorAll("[data-assign-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.assignTiming),code=button.dataset.assignCode,main=o.foods[index];if(!main||!periTimingCodes(o).includes(code))return;delete main.timing_splits;main.timing=code;mirrorPeriTiming(o,index);draw()});
   document.querySelectorAll("[data-move-timing]").forEach(select=>select.onchange=()=>{
