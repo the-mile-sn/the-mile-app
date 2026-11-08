@@ -2593,3 +2593,36 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   color:#728094;
  }
 }
+
+
+/* TM mobile player directory v2 — compact top actions and full-card tap target.
+   Eye stays in the original desktop table; the app's phone icon remains interactive. */
+@media(max-width:830px){
+ #admin-workspace:has(#tm-players-page:not([hidden])) #tm-dashboard-return{
+  margin-bottom:-39px!important;
+  width:max-content;max-width:50%;
+  position:relative;z-index:1;
+ }
+ #tm-players-page .tm-players-heading-minimal{
+  min-height:39px;align-items:center;
+  margin:0 0 12px!important;
+ }
+ #tm-players-page #tm-players-new{
+  min-height:36px!important;
+  padding:7px 12px!important;
+  font-size:12px!important;
+  border-radius:20px!important;
+ }
+ #tm-players-page .tm-players-table tbody tr:not(:has(.tm-p-empty)){
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+ }
+ #tm-players-page .tm-players-table tbody tr:focus-visible{
+  outline:2px solid #8baec9;outline-offset:2px;
+ }
+ #tm-players-page .tm-players-table tbody td.tm-p-actions .tm-p-actions-wrap>button:not(.tm-p-app-action){
+  display:none!important;
+ }
+ #tm-players-page .tm-players-table tbody td.tm-p-actions .tm-p-app-action{
+  display:inline-flex!important;
+ }
+}
