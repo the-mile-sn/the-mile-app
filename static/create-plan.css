@@ -954,3 +954,17 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .peri-timing-portal{position:fixed!important;z-index:2147483000!important;top:0;left:0;display:grid;gap:2px;min-width:175px;max-width:calc(100vw - 16px);padding:6px;background:var(--lib-panel,#fff);color:var(--lib-text,inherit);border:1px solid var(--border,rgba(127,127,127,.18));border-radius:10px;box-shadow:0 12px 35px rgba(0,0,0,.17)}
 .peri-timing-portal button{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:13px;color:inherit;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:7px;padding:9px 11px;white-space:nowrap}
 .peri-timing-portal button:hover,.peri-timing-portal button:focus-visible{background:var(--surface-secondary,rgba(127,127,127,.12))!important;outline-offset:1px}
+
+/* Native timing selector: no popup script, clipping, or residual divider. */
+.meal .peri-timing-panel select.peri-timing-native{
+ display:inline-block!important;position:static!important;appearance:menulist!important;-webkit-appearance:menulist!important;
+ width:148px!important;min-width:0!important;max-width:148px!important;height:30px!important;min-height:30px!important;
+ padding:3px 6px!important;margin:0!important;box-sizing:border-box!important;
+ border:0!important;border-left:0!important;border-right:0!important;border-radius:0!important;
+ outline-offset:2px;box-shadow:none!important;background:transparent!important;
+ font-size:12px!important;font-weight:500!important;color:inherit!important;cursor:pointer;
+}
+.meal .peri-timing-panel select.peri-timing-native::before,
+.meal .peri-timing-panel select.peri-timing-native::after{content:none!important;display:none!important}
+.meal .peri-timing-panel select.peri-timing-native option{color:#20242a;background:#fff}
+.meal .peri-timing-panel .peri-timing-delete{order:99;margin-left:8px}
