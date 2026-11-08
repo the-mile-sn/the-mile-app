@@ -1623,7 +1623,7 @@ def application(env, start_response):
                         overrides={(x['meal_date'],x['meal']):x['color'] for x in day_colors_v2.list_colors(c,link['athlete_id'],first,last)}
                         for menu in menus:
                             key=(menu['menu_date'],menu['meal'])
-                            base=class_meals.get(class_by_day.get(menu['menu_date']),{}).get(menu['meal'])
+                            base=class_meals.get(class_by_day.get(menu['menu_date']) or 'Geral',{}).get(menu['meal'])
                             color=overrides.get(key,base)
                             menu['effective_color']=None if color=='none' else color
                         return respond(200,{'menus':menus})
