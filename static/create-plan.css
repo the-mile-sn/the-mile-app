@@ -928,3 +928,10 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .meal .peri-timing-panel .peri-timing-add select{padding:6px 8px;min-width:175px;width:210px;border-radius:8px}
 .meal .peri-timing-panel .peri-timing-add button{font-size:12px;background:transparent!important;border:0!important;box-shadow:none!important;padding:6px 8px}
 @media(max-width:650px){.meal .peri-timing-panel{padding:0 12px}.meal .peri-timing-panel .peri-timing-food{min-height:0;gap:3px;padding:5px 0}.meal .peri-timing-panel .peri-timing-controls{flex-wrap:wrap}.meal .peri-timing-panel .peri-timing-add select{width:100%}}
+
+/* Explicitly reset the older move-select chrome: no residual vertical rule. */
+.meal .peri-timing-panel .peri-timing-controls{border:0!important;border-left:0!important;box-shadow:none!important}
+.meal .peri-timing-panel .peri-timing-controls::before,.meal .peri-timing-panel .peri-timing-controls::after{display:none!important;content:none!important}
+.meal .peri-timing-panel .peri-timing-move{border:0!important;border-left:0!important;border-right:0!important;box-shadow:none!important;background:transparent!important;appearance:auto;-webkit-appearance:menulist;max-width:145px;width:145px;min-width:0;padding:4px 6px!important;font-size:12px;opacity:.72;cursor:pointer}
+.meal .peri-timing-panel .peri-timing-share{display:inline-flex;align-items:center;gap:5px;border:0!important;box-shadow:none!important;background:transparent!important;white-space:nowrap;font-size:12px}
+.meal .peri-timing-panel .peri-timing-share span{opacity:.7}
