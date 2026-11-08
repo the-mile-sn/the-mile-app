@@ -32,6 +32,27 @@ html[data-admin-theme="light"]{
   --tm-control-danger-border:rgba(175,86,99,.34);
   --tm-control-danger-ink:#a14f59;
 }
+/* Shared semantic shell colours. Page-specific nutritional/status palettes
+   remain separate. Existing exact colour values are retained. */
+:root{
+  --tm-shell-bg:#101114;
+  --tm-shell-surface:#1b1d22;
+  --tm-shell-surface-muted:#22252b;
+  --tm-shell-border:#343840;
+  --tm-shell-text:#f2f3f5;
+  --tm-shell-muted:#a2a7b0;
+}
+html[data-admin-theme="light"]{
+  --tm-shell-bg:#f5f6f8;
+  --tm-shell-surface:#ffffff;
+  --tm-shell-surface-muted:#f0f2f6;
+  --tm-shell-surface-hover:#e7ebf1;
+  --tm-shell-border:#d9dfe7;
+  --tm-shell-text:#1c2633;
+  --tm-shell-muted:#596675;
+  --tm-shell-focus:#4a789d;
+}
+
 /* Only opt-in action classes: no blanket button, input or select overrides. */
 .tm-action-primary,.tm-action-secondary,.tm-action-add,.tm-action-new,.tm-action-danger,.tm-action-success,.tm-action-icon{
   box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
