@@ -1459,6 +1459,7 @@ async function loadCalendar(){
    edit.onclick=()=>{
     $("calendar-new-kind").value="supplementation";$("calendar-new-date").value=date;
     syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
+    openMobileCalendarEventForm();
     $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
    };
    card.append(label,edit);list.append(card);monthEventCount++;
@@ -2304,6 +2305,15 @@ $("calendar-new-date").addEventListener("change",()=>renderCalendarSupplementCho
 $("calendar-new-kind").addEventListener("change",()=>{syncCalendarEventForm();if($("calendar-new-kind").value==="supplementation")renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));});
 $("calendar-new-date").value=isoDay(new Date());
 syncCalendarEventForm();
+function setMobileCalendarEventFormOpen(open){
+ const toggle=$("calendar-mobile-event-toggle");
+ toggle.setAttribute("aria-expanded",String(Boolean(open)));
+}
+function openMobileCalendarEventForm(){setMobileCalendarEventFormOpen(true);}
+$("calendar-mobile-event-toggle").addEventListener("click",()=>{
+ const toggle=$("calendar-mobile-event-toggle");
+ setMobileCalendarEventFormOpen(toggle.getAttribute("aria-expanded")!=="true");
+});
 $("calendar-event-form").addEventListener("submit",async e=>{
  e.preventDefault();
  if(!model)return;
