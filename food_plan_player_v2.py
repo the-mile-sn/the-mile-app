@@ -116,10 +116,13 @@ def _split_display_quantity(quantity, food, share):
     simple = re.fullmatch(r"(\d+(?:[.,]\d+)?)\s+([^/]+)", value)
     if simple:
         amount = float(simple.group(1).replace(",", ".")) * share
-        formatted = (str(int(round(amount))) if abs(amount-round(amount))<1e-8
-                     else "½" if abs(amount-.5)<1e-8
-                     else "¼" if abs(amount-.25)<1e-8
-                     else "¾" if abs(amount-.75)<1e-8
+        fractions=((1/2,"½"),(1/3,"⅓"),(2/3,"⅔"),(1/4,"¼"),(3/4,"¾"),
+                   (1/6,"⅙"),(5/6,"⅚"),(1/8,"⅛"),(3/8,"⅜"),(5/8,"⅝"),(7/8,"⅞"))
+        whole=int(amount)
+        fraction=next((symbol for value,symbol in fractions
+                       if abs((amount-whole)-value)<0.00011),None)
+        formatted = (str(int(round(amount))) if abs(amount-round(amount))<0.00011
+                     else (str(whole)+" " if whole else "")+fraction if fraction
                      else ("%g" % round(amount,3)).replace(".",","))
         return formatted + " " + simple.group(2).strip()
     if value:
