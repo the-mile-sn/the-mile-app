@@ -574,7 +574,23 @@ function ensurePlanningOnlyView(){
    app.disabled=p.access_status!=="active"||!p.user_id;
    app.title=app.disabled?"Jogador sem acesso ativo":"Entrar na app";
    app.addEventListener("click",()=>enterPlayerApp(p.user_id,app,$("tm-players-error")));
-   actions.append(app);action.append(actions);row.append(action);body.append(row);
+   actions.append(app);action.append(actions);row.append(action);
+   // Mobile: the entire player card opens the profile, except its app button.
+   // Existing desktop controls and SVGs remain unchanged.
+   row.addEventListener("click",event=>{
+    if(!window.matchMedia("(max-width: 830px)").matches)return;
+    if(event.target.closest("button,a,input,select,textarea"))return;
+    openPlayerProfile(p.id);
+   });
+   row.addEventListener("keydown",event=>{
+    if(!window.matchMedia("(max-width: 830px)").matches||event.target!==row)return;
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();openPlayerProfile(p.id);}
+   });
+   if(window.matchMedia("(max-width: 830px)").matches){
+    row.tabIndex=0;
+    row.setAttribute("aria-label","Abrir perfil de "+p.name);
+   }
+   body.append(row);
   }
   if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=4;row.append(cell);body.append(row);}
  }
