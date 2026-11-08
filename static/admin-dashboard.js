@@ -129,6 +129,10 @@
   closeClinical();const token=++clinicalToken;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
   const page=clinicalPages[kind],feedback=$("tm-"+kind+"-error");page.hidden=false;navActive($("tm-admin-nav-"+kind));feedback.textContent="";
+  // On phones, position the newly opened view before async data loads.
+  // Never scroll the viewport after the user may have focused its search.
+  const mobileClinical=window.matchMedia("(max-width: 830px)").matches;
+  if(mobileClinical&&!aid&&!recordDate)window.scrollTo({top:0,behavior:"instant"});
   if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
   syncClinicalSelectors();const original=$("athlete");
   const selected=$("tm-"+kind+"-player");
@@ -161,7 +165,7 @@
     }
    }
   }catch(err){if(token===clinicalToken)feedback.textContent="Não foi possível carregar: "+err.message;}
-  if(token===clinicalToken&&!deepLinked)window.scrollTo({top:0,behavior:"smooth"});
+  if(token===clinicalToken&&!deepLinked&&!mobileClinical)window.scrollTo({top:0,behavior:"smooth"});
  }
  for(const kind of ["assessments","forms"]){
   $("tm-admin-nav-"+kind).addEventListener("click",()=>openClinical(kind));
