@@ -6,7 +6,7 @@ let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
-async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;paintMyPhoto(me.user.has_photo,me.user.name);$("admin-login-panel").hidden=true;$("tm-admin-legacy").hidden=true;$("admin-workspace").hidden=false;const navigationVersion=window.tmAdminNavigationVersion||0;const athletesLoading=loadAthletes();if((window.tmAdminNavigationVersion||0)===navigationVersion&&typeof window.tmOpenAdminDashboard==="function")window.tmOpenAdminDashboard();await athletesLoading;status("");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
+async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;paintMyPhoto(me.user.has_photo,me.user.name);$("admin-login-panel").hidden=true;$("tm-admin-legacy").hidden=true;$("admin-workspace").hidden=false;const navigationVersion=window.tmAdminNavigationVersion||0;const athletesLoading=loadAthletes(undefined,false);window.tmAdminRosterReady=athletesLoading;if((window.tmAdminNavigationVersion||0)===navigationVersion&&typeof window.tmOpenAdminDashboard==="function")window.tmOpenAdminDashboard();await athletesLoading;status("");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
 $("admin-login-form").addEventListener("submit",async e=>{e.preventDefault();const feedback=$("admin-login-error");feedback.textContent="";try{await fetch("/api/login",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({identifier:$("admin-login-email").value.trim().toLowerCase(),password:$("admin-login-password").value})}).then(async r=>{if(!r.ok)throw Error("invalid_login");});$("admin-login-password").value="";await start();}catch(err){feedback.textContent="Não foi possível iniciar sessão. Confirma as credenciais.";}});
 let administratorIdentity=null;
 let myAdminPhotoName='';
@@ -99,7 +99,7 @@ $("admin-signout").onclick=async()=>{
   $("admin-login-password").value="";
  }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
 };
-async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
+async function loadAthletes(prefer,loadDetails=true){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;if(loadDetails)await loadModel();}
 const planningSearch=$("tm-planning-search"),planningResults=$("tm-planning-results"),planningPicker=$("tm-planning-picker");
 const planningNormalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
 function updatePlanningPlayerControls(){
@@ -192,6 +192,16 @@ $("profile-recipe-category-save").addEventListener("click",async()=>{
  }catch(error){feedback.textContent="Não foi possível guardar: "+error.message;}
  finally{button.disabled=false;}
 });
+let tmPlanningReadyPromise=null;
+window.tmEnsureAdminPlanning=()=>{
+ if(model&&model.athlete?.id===$("athlete").value)return Promise.resolve();
+ if(tmPlanningReadyPromise)return tmPlanningReadyPromise;
+ tmPlanningReadyPromise=(async()=>{
+  if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
+  if(!model||model.athlete?.id!==$("athlete").value)await loadModel();
+ })().finally(()=>{tmPlanningReadyPromise=null;});
+ return tmPlanningReadyPromise;
+};
 async function loadModel(){
  updatePlanningPlayerControls();
  const athleteId=$("athlete").value;
