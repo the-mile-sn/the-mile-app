@@ -2199,7 +2199,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
    background:#303740!important;color:#fff!important;font-weight:650!important;
  }
  #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:not(:disabled):hover{
-   background:#262a31!important;
+   background:transparent!important;
  }
  #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:focus-visible{
    outline:2px solid #8db7d9!important;outline-offset:-2px!important;
@@ -2429,8 +2429,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   display:inline-block!important;margin-left:auto!important;width:15px!important
  }
  .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link.is-active{
-  background:transparent!important;border-radius:0!important;
-  font-weight:650!important
+  background:rgba(123,150,172,.17)!important;border-radius:9px!important
  }
  .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav{
   display:none!important;flex-direction:column!important;align-items:stretch!important;
@@ -2475,7 +2474,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   border-radius:10px!important;padding:11px 12px!important;
  }
  .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link.is-active{
-  background:transparent!important;
+  background:rgba(123,150,172,.14)!important;
  }
  html[data-admin-theme="light"] .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
   background:transparent!important;border:0!important;box-shadow:none!important;
