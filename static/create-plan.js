@@ -21,6 +21,14 @@ const periFractionText=(food,share)=>{
  if(food.grams!=null)return (food.grams*share).toLocaleString("pt-PT",{maximumFractionDigits:2})+" g";
  return periShareText(share);
 };
+// Only a single numeric quantity plus one unambiguous displayed unit is eligible.
+const periDisplayUnit=food=>{
+ const match=/^(\d+(?:[.,]\d+)?)\s+([\p{L}µ]+)$/u.exec(String(food.display_quantity||"").trim());
+ if(!match)return null;
+ const total=Number(match[1].replace(",","."));
+ return Number.isFinite(total)&&total>0?{total,unit:match[2]}:null;
+};
+const periNumericDisplay=value=>Number(value.toFixed(4)).toLocaleString("pt-PT",{maximumFractionDigits:4});
 const periTimingCodes=o=>[...new Set([...(o.timing_groups||[]),...o.foods.flatMap(f=>(f.timing_splits||[]).map(split=>split.timing).concat(f.timing||[]))])];
 const periTimingSelect=(selected,exclude=[])=>'<option value="">Selecionar timing…</option>'+periTimingChoices.filter(([key])=>!exclude.includes(key)).map(([key,label])=>'<option value="'+key+'"'+(selected===key?' selected':'')+'>'+esc(label)+'</option>').join("");
 const timingOrganizer=o=>{
@@ -32,9 +40,10 @@ const timingOrganizer=o=>{
   const available=codes.filter(key=>!current||!(food.timing_splits||[]).some(x=>x.timing===key));
   const display=share===null?(food.display_quantity||((food.grams??"")+" g")):periFractionText(food,share);
   const left='<span class="peri-timing-description">'+esc(display)+" · "+esc(foodName(food))+'</span>';
+  const unit=periDisplayUnit(food);
   const select=current
-    ?'<input type="number" class="peri-timing-percent" min="0.01" max="100" step="any" value="'+(Math.round(share*10000)/100)+'" data-split-share="'+food.index+'" data-split-code="'+esc(timing)+'" aria-label="Percentagem no timing '+esc(periTimingLabel(timing))+'"><span>%</span>'
-    :'<select data-move-timing="'+food.index+'" aria-label="Mover alimento para outro timing">'+periTimingSelect(timing)+'</select>';
+    ?'<label class="peri-timing-share"><input type="number" class="peri-timing-percent" min="0.0001" max="'+(unit?unit.total:100)+'" step="any" value="'+(unit?periNumericDisplay(unit.total*share):Math.round(share*10000)/100)+'" data-split-share="'+food.index+'" data-split-code="'+esc(timing)+'" data-split-total="'+(unit?unit.total:100)+'" aria-label="'+(unit?"Quantidade em "+unit.unit:"Percentagem")+" no timing "+esc(periTimingLabel(timing))+'"><span>'+esc(unit?unit.unit:"%")+'</span></label>'
+    :'<select class="peri-timing-move" data-move-timing="'+food.index+'" aria-label="Mover alimento para outro timing">'+periTimingSelect(timing)+'</select>';
   const add=current?(available.length?'<button type="button" data-add-split="'+food.index+'" class="peri-add-split">+ Outro timing</button>':'')
     :(codes.length>1?'<button type="button" data-start-split="'+food.index+'" class="peri-add-split">Dividir por timings</button>':'');
   const remove=current?'<button type="button" class="peri-timing-delete" data-remove-split="'+food.index+'" data-split-code="'+esc(timing)+'" aria-label="Remover parcela" title="Remover parcela">×</button>':"";
@@ -51,7 +60,7 @@ const timingOrganizer=o=>{
  const unassigned=primary.filter(food=>!food.timing&&!(food.timing_splits||[]).length);
  const without=unassigned.length?'<section class="peri-timing-block peri-timing-unassigned"><div class="peri-timing-block-head"><strong>Sem timing definido</strong></div>'+unassigned.map(food=>foodRow(food,"")).join("")+'</section>':"";
  const errors=primary.filter(food=>food.timing_splits?.length&&Math.abs(food.timing_splits.reduce((sum,part)=>sum+Number(part.share),0)-1)>.00001);
- const warning=errors.length?'<p class="peri-timing-warning">Distribuição incompleta: confirma que a soma das parcelas de cada alimento é 100% antes de guardar.</p>':"";
+ const warning=errors.length?'<p class="peri-timing-warning">A soma das quantidades atribuídas deve corresponder à quantidade apresentada (ou a 100%, quando não existir unidade simples).</p>':"";
  return '<div class="peri-timing-organizer"><div class="peri-timing-intro"><strong>Timing</strong></div>'+blocks+without+warning+'<div class="peri-timing-add"><select id="peri-new-timing" aria-label="Novo timing">'+periTimingSelect("",codes)+'</select><button type="button" id="peri-add-timing">+ Adicionar timing</button></div></div>';
 };
 const nutrients=["kcal","protein_g","carbs_g","fat_g"];
@@ -191,11 +200,11 @@ function draw(){
    mirrorPeriTiming(o,index);draw();
   });
   document.querySelectorAll("[data-split-share]").forEach(input=>input.onchange=()=>{
-   const o=periOption,index=Number(input.dataset.splitShare),code=input.dataset.splitCode,number=Number(input.value.replace(",","."));
-   if(!Number.isFinite(number)||number<=0||number>100){status("Indica uma percentagem superior a 0 e até 100.");draw();return}
+   const o=periOption,index=Number(input.dataset.splitShare),code=input.dataset.splitCode,number=Number(input.value.replace(",",".")),total=Number(input.dataset.splitTotal);
+   if(!Number.isFinite(number)||!Number.isFinite(total)||number<=0||number>total){status("Indica uma quantidade superior a 0 e até "+total.toLocaleString("pt-PT")+".");draw();return}
    const main=o.foods[index],part=main.timing_splits?.find(p=>p.timing===code);
    if(!part)return;
-   part.share=number/100;
+   part.share=number/total;
    mirrorPeriTiming(o,index);draw();
   });
   document.querySelectorAll("[data-remove-split]").forEach(button=>button.onclick=()=>{
@@ -458,7 +467,7 @@ async function saveCurrentDraft(){
   persistenceError="Preenche as opções alimentares antes de guardar.";renderPersistence();return false;
  }
  if(plan.plan_type==="Plano Peri-jogo"&&plan.meals.some(m=>m.options.some(o=>o.foods.some(f=>f.timing_splits?.length&&Math.abs(f.timing_splits.reduce((sum,p)=>sum+Number(p.share),0)-1)>0.00001)))){
-  persistenceError="A distribuição por timings deve somar 100% em cada alimento.";renderPersistence();status(persistenceError);return false;
+  persistenceError="A distribuição por timings deve corresponder à quantidade total do alimento.";renderPersistence();status(persistenceError);return false;
  }
  if(!planIsDirty())return true;
  plan.name=plan.player_name+" - "+plan.plan_type;
