@@ -30,6 +30,14 @@ def validate(value):
         options=[]
         for option in meal["options"]:
             if not isinstance(option,dict) or not isinstance(option.get("foods"),list) or len(option["foods"])>100: raise ValueError("invalid_option")
+            # Timings organize the peri-match display only; nutrient calculation is unchanged.
+            timing_codes=("pre_warmup","warmup","post_warmup","first_half","half_time","second_half","post_match","throughout","pre_match")
+            groups=option.get("timing_groups",[])
+            if plan_type=="Plano Peri-jogo":
+                if not isinstance(groups,list) or len(groups)>12 or any(not isinstance(t,str) or t not in timing_codes for t in groups) or len(set(groups))!=len(groups):
+                    raise ValueError("invalid_timing_groups")
+            else:
+                groups=[]
             foods=[]
             for food in option["foods"]:
                 if not isinstance(food,dict): raise ValueError("invalid_food")
@@ -60,6 +68,11 @@ def validate(value):
                 if display_name: item["display_name"]=display_name
                 if kind=="supplement": item.update({"kind":"supplement","label":label})
                 if alternative_to is not None: item["alternative_to"]=alternative_to
+                if plan_type=="Plano Peri-jogo":
+                    timing=food.get("timing","")
+                    if not isinstance(timing,str) or (timing and timing not in timing_codes):
+                        raise ValueError("invalid_food_timing")
+                    if timing:item["timing"]=timing
                 foods.append(item)
             notes=option.get("notes",[])
             if not isinstance(notes,list) or len(notes)>100: raise ValueError("invalid_notes")
@@ -75,7 +88,9 @@ def validate(value):
             try: actual=[(item["type"],item["index"]) for item in order]
             except (TypeError,KeyError): raise ValueError("invalid_order")
             if any(type(i) is not int for _,i in actual) or len(set(actual))!=len(actual) or set(actual)!=expected: raise ValueError("invalid_order")
-            options.append({"title":title,"foods":foods,"notes":notes,"order":order})
+            clean_option={"title":title,"foods":foods,"notes":notes,"order":order}
+            if plan_type=="Plano Peri-jogo" and groups:clean_option["timing_groups"]=groups
+            options.append(clean_option)
         normalized=''.join(ch for ch in unicodedata.normalize('NFD', meal_title.lower()) if unicodedata.category(ch)!='Mn')
         slots=(["Pequeno almoço","Lanche"] if "intermedia" in normalized else
                ["Almoço","Jantar"] if "principal" in normalized else [])
