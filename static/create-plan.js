@@ -160,7 +160,7 @@ function closePeriTimingPopup(){
 document.addEventListener("pointerdown",event=>{
  if(openPeriTimingPopup&&!openPeriTimingPopup.popup.contains(event.target)&&!openPeriTimingPopup.trigger.contains(event.target))closePeriTimingPopup();
 });
-window.addEventListener("scroll",closePeriTimingPopup,true);
+window.addEventListener("scroll",closePeriTimingPopup);
 window.addEventListener("resize",closePeriTimingPopup);
 function draw(){
  closePeriTimingPopup();
@@ -190,31 +190,33 @@ function draw(){
     document.querySelectorAll("[data-option]").forEach(b=>b.onclick=()=>{option=Number(b.dataset.option);editingFood=-1;draw()});
   const periOption=plan.meals[active]?.options?.[option];
   const mirrorPeriTiming=(o,index)=>{const main=o.foods[index];if(!main)return;o.foods.forEach(food=>{if(food.alternative_to!==index)return;if(main.timing)food.timing=main.timing;else delete food.timing;if(main.timing_splits?.length)food.timing_splits=main.timing_splits.map(part=>({...part}));else delete food.timing_splits;})};
-  document.querySelectorAll("[data-toggle-timing-picker]").forEach(button=>button.onclick=()=>{
+  document.querySelectorAll("[data-toggle-timing-picker]").forEach(button=>button.onclick=event=>{
+   event.preventDefault();event.stopPropagation();
    if(openPeriTimingPopup?.trigger===button){closePeriTimingPopup();return}
    closePeriTimingPopup();
-   const choices=document.querySelector('[data-picker-choices="'+button.dataset.toggleTimingPicker+'"]');
-   if(!choices)return;
-   // Use a body-level floating menu: cards and option panels cannot clip it.
-   const popup=choices.cloneNode(true);
-   popup.removeAttribute("hidden");
-   popup.removeAttribute("data-picker-choices");
-   popup.classList.add("peri-timing-portal");
+   const index=Number(button.dataset.toggleTimingPicker),o=periOption;
+   if(!o?.foods?.[index])return;
+   const codes=periTimingCodes(o);
+   if(!codes.length)return;
+   const popup=document.createElement("div");
+   popup.className="peri-timing-portal";
    popup.setAttribute("role","menu");
+   for(const code of [...codes,...(o.foods[index].timing?[""]:[])]){
+    const choice=document.createElement("button");
+    choice.type="button";choice.textContent=code?periTimingLabel(code):"Sem timing";
+    choice.onclick=e=>{
+     e.preventDefault();e.stopPropagation();
+     const main=o.foods[index];if(!main)return;
+     delete main.timing_splits;
+     if(code)main.timing=code;else delete main.timing;
+     mirrorPeriTiming(o,index);closePeriTimingPopup();draw();
+    };
+    popup.append(choice);
+   }
    document.body.append(popup);
-   const triggerRect=button.getBoundingClientRect();
-   const popupRect=popup.getBoundingClientRect();
-   const left=Math.max(8,Math.min(triggerRect.right-popupRect.width,window.innerWidth-popupRect.width-8));
-   const roomBelow=window.innerHeight-triggerRect.bottom;
-   const top=roomBelow>=popupRect.height+8?triggerRect.bottom+5:Math.max(8,triggerRect.top-popupRect.height-5);
-   popup.style.left=left+"px";
-   popup.style.top=top+"px";
-   popup.querySelectorAll("[data-pick-timing]").forEach(choice=>choice.onclick=()=>{
-    const code=choice.dataset.pickCode,index=choice.dataset.pickTiming;
-    closePeriTimingPopup();
-    const actual=[...document.querySelectorAll("[data-pick-timing]")].find(el=>el.dataset.pickTiming===index&&el.dataset.pickCode===code);
-    actual?.click();
-   });
+   const rect=button.getBoundingClientRect(),size=popup.getBoundingClientRect();
+   popup.style.left=Math.max(8,Math.min(rect.right-size.width,window.innerWidth-size.width-8))+"px";
+   popup.style.top=(window.innerHeight-rect.bottom>=size.height+8?rect.bottom+5:Math.max(8,rect.top-size.height-5))+"px";
    button.setAttribute("aria-expanded","true");
    openPeriTimingPopup={popup,trigger:button};
   });
