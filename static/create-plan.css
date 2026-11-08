@@ -878,3 +878,19 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 
 /* Dark VP preview is a deeper green than the standard green plan. */
 #plan-preview .plan-preview-group[data-palette="vp"]{--preview-bg:#28543e;--preview-fg:#bde6cd;--preview-option:#3c6750}
+
+/* Peri-jogo: timing is presentation-only and never enters nutrient totals. */
+.peri-timing-organizer{margin:16px 0 4px;padding:16px;border:1px solid var(--border,#34383e);border-radius:14px;display:grid;gap:12px}
+.peri-timing-intro{display:grid;gap:5px}
+.peri-timing-intro strong{font-size:14px}
+.peri-timing-intro small,.peri-timing-empty{font-size:12px;opacity:.72;line-height:1.5}
+.peri-timing-block{border:1px solid var(--border,#34383e);border-radius:12px;padding:12px;display:grid;gap:10px}
+.peri-timing-block-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.peri-timing-block-head strong{font-size:13px;font-weight:600}
+.peri-timing-block-head button{background:transparent;border:0;color:inherit;cursor:pointer;font-size:20px}
+.peri-timing-food{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+.peri-timing-food span{min-width:0;overflow-wrap:anywhere}
+.peri-timing-food select,.peri-timing-add select{max-width:210px;min-width:140px;padding:9px;border-radius:9px}
+.peri-timing-add{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.peri-timing-add button{padding:9px 12px;border-radius:9px;cursor:pointer}
+@media(max-width:600px){.peri-timing-food{align-items:stretch;flex-direction:column;gap:6px}.peri-timing-food select{width:100%;max-width:none}}
