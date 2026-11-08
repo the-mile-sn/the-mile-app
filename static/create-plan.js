@@ -11,7 +11,10 @@ const periFractionText=(food,share)=>{
  const match=/^(\d+(?:[.,]\d+)?)\s+([^/]+)$/.exec(raw);
  if(match){
   const amount=Number(match[1].replace(",","."))*share,unit=match[2].trim();
-  const number=Math.abs(amount-.5)<.0001?"½":Math.abs(amount-.25)<.0001?"¼":Math.abs(amount-.75)<.0001?"¾":amount.toLocaleString("pt-PT",{maximumFractionDigits:2});
+  const fractions=[[1/2,"½"],[1/3,"⅓"],[2/3,"⅔"],[1/4,"¼"],[3/4,"¾"],[1/6,"⅙"],[5/6,"⅚"],[1/8,"⅛"],[3/8,"⅜"],[5/8,"⅝"],[7/8,"⅞"]];
+  const whole=Math.floor(amount),fraction=amount-whole;
+  const matchFraction=fractions.find(([value])=>Math.abs(fraction-value)<.00011);
+  const number=Math.abs(amount-Math.round(amount))<.00011?String(Math.round(amount)):matchFraction?(whole?whole+" "+matchFraction[1]:matchFraction[1]):amount.toLocaleString("pt-PT",{maximumFractionDigits:2});
   return number+" "+unit;
  }
  if(raw)return periShareText(share)+" de "+raw;
