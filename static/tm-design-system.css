@@ -242,6 +242,18 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{bac
 
 /* Mobile tabs: compact header with an understated The Mile underline. */
 @media(max-width:830px){
+ /* The first icon aligns with the left edge of the page card (24px).
+    The link already provides 12px of horizontal padding. */
+ #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track,
+ .tm-library-layout .tm-admin-sidebar .tm-admin-mobile-nav-track{
+  padding-left:12px!important;
+  scroll-padding-inline-start:12px!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track>.tm-admin-side-nav:first-child>.tm-admin-nav-link:first-child,
+ .tm-library-layout .tm-admin-mobile-nav-track>.tm-admin-side-nav:first-child>.tm-admin-nav-link:first-child{
+  scroll-margin-inline-start:12px!important;
+ }
+
  #admin-workspace .tm-admin-sidebar,
  .tm-library-layout .tm-admin-sidebar{padding-bottom:0!important}
  #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track,
