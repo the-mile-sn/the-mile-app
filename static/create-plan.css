@@ -1610,3 +1610,55 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   display:none!important;content:none!important;
  }
 }
+
+/* Mobile Plan editor: approved compact spacing and left-aligned open-meal header. */
+@media (max-width:700px){
+ /* Move selectors and daily totals closer to the navigation / back control. */
+ #plan-editor .plan-editor-heading{
+  margin:0!important;
+  min-height:40px!important;
+ }
+ #plan-editor .plan-overview{
+  margin:-8px 0 12px!important;
+  row-gap:12px!important;
+  column-gap:8px!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors{
+  margin:0!important;
+ }
+ /* Align expanded meal title with its nutrient values and inner content. */
+ #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header{
+  gap:17px 6px!important;
+  padding:5px 0 0!important;
+ }
+ #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-name{
+  padding-left:10px!important;
+  box-sizing:border-box!important;
+ }
+ #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-header-macros{
+  box-sizing:border-box!important;
+  padding:0 0 6px 10px!important;
+  margin:0!important;
+ }
+ #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-header-macros>.macro-values{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:4px!important;
+  width:100%!important;
+  justify-items:start!important;
+ }
+ #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-header-macros .macro{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-start!important;
+  align-items:baseline!important;
+  text-align:left!important;
+  gap:3px!important;
+  min-width:0!important;
+ }
+ /* Give nutrients their own breathing room before the option cards. */
+ #plan-editor #meals>.meal.tm-mobile-expanded>.option-toolbar{
+  margin-top:20px!important;
+ }
+}
