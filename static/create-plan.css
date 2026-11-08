@@ -1243,7 +1243,7 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
  }
  #plan-editor #meals>.meal.tm-mobile-expanded .option-content>.option-summary{
   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
-  grid-template-rows:auto auto!important;gap:10px!important;
+  grid-template-rows:auto!important;gap:0!important;
   box-sizing:border-box!important;align-items:start!important;
   min-height:0!important;padding:14px 12px!important;
   padding-right:12px!important;
@@ -1253,13 +1253,10 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   display:flex!important;flex-direction:column!important;
   width:100%!important;max-width:100%!important;min-width:0!important;
  }
+ /* Selected-option nutrients are already shown in its choice card.
+    Hide the duplicate rail on phones to prevent desktop rail collisions. */
  #plan-editor #meals>.meal.tm-mobile-expanded .option-content>.option-summary>.macro-values{
-  grid-column:1!important;grid-row:2!important;justify-self:stretch!important;
-  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  position:static!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;
-  transform:none!important;float:none!important;
-  box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;
-  margin:0!important;padding:10px 0 2px!important;
+  display:none!important;
  }
  #plan-editor #meals>.meal.tm-mobile-expanded .option-content>.nutrition-list{
   box-sizing:border-box!important;width:100%!important;max-width:100%!important;
