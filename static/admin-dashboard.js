@@ -604,6 +604,28 @@ function ensurePlanningOnlyView(){
   loadPlayers().catch(e=>{$("tm-players-error").textContent="Não foi possível carregar os jogadores: "+e.message;});
   window.scrollTo({top:0,behavior:"smooth"});
  }
+ // Move the existing create button beside search on small screens only.
+ // Keep its original listener and restore the exact desktop DOM on resize.
+ const playersMobileQuery=window.matchMedia("(max-width: 830px)");
+ const playersCreateButton=$("tm-players-new");
+ const playersCreateHome=playersCreateButton.parentNode;
+ const playersCreateAnchor=document.createComment("tm-players-create-original-position");
+ playersCreateHome.insertBefore(playersCreateAnchor,playersCreateButton);
+ const playersSearchCell=$("tm-players-filter").closest("th");
+ function arrangeMobilePlayerSearch(){
+  if(playersMobileQuery.matches){
+   if(playersCreateButton.parentNode!==playersSearchCell)playersSearchCell.append(playersCreateButton);
+   const access=$("tm-players-access");
+   if(access.value!=="all"){
+    access.value="all";
+    access.dispatchEvent(new Event("change",{bubbles:true}));
+   }
+  }else if(playersCreateButton.parentNode!==playersCreateHome){
+   playersCreateHome.insertBefore(playersCreateButton,playersCreateAnchor.nextSibling);
+  }
+ }
+ playersMobileQuery.addEventListener("change",arrangeMobilePlayerSearch);
+ arrangeMobilePlayerSearch();
  $("tm-players-filter").addEventListener("input",renderPlayers);
  $("tm-players-access").addEventListener("change",()=>{
   const selector=$("tm-players-access");
