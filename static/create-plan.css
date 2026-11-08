@@ -906,3 +906,25 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .peri-timing-add button{padding:9px 12px;border-radius:9px;border:0;box-shadow:none;background:var(--surface-secondary,rgba(127,127,127,.08));white-space:nowrap}
 .peri-timing-warning{margin:6px 0;padding:5px 0;font-size:12px}
 @media(max-width:650px){.peri-timing-food{grid-template-columns:minmax(0,1fr);gap:6px}.peri-timing-controls{justify-content:flex-start;gap:7px;flex-wrap:wrap}.peri-timing-description{width:100%}.peri-timing-add{align-items:stretch}.peri-timing-add select{width:100%}}
+
+/* Peri-game Timing follows the complete nutrition editor, aligned with option interior. */
+.meal .peri-timing-panel{margin:10px 0 14px;padding:0 14px;min-width:0}
+.meal .peri-timing-panel .peri-timing-organizer{margin:0;padding:13px 0 0;border-top:1px solid var(--border,rgba(127,127,127,.16));gap:0}
+.meal .peri-timing-panel .peri-timing-intro{margin:0 0 6px}
+.meal .peri-timing-panel .peri-timing-intro strong{font-size:14px;font-weight:650}
+.meal .peri-timing-panel .peri-timing-block{padding:8px 0 9px;gap:0}
+.meal .peri-timing-panel .peri-timing-block+.peri-timing-block{border-top:1px solid var(--border,rgba(127,127,127,.16))}
+.meal .peri-timing-panel .peri-timing-block-head{margin:0 0 1px;min-height:28px}
+.meal .peri-timing-panel .peri-timing-food{padding:3px 0;min-height:34px;gap:8px;border:0!important;box-shadow:none!important}
+.meal .peri-timing-panel .peri-timing-food+.peri-timing-food{border:0!important}
+.meal .peri-timing-panel .peri-timing-controls{gap:5px}
+.meal .peri-timing-panel .peri-timing-percent{background:transparent!important;border:0!important;box-shadow:none!important;text-align:right;width:64px;min-width:64px;padding:4px 2px;appearance:textfield;-moz-appearance:textfield}
+.meal .peri-timing-panel .peri-timing-percent::-webkit-inner-spin-button,.meal .peri-timing-panel .peri-timing-percent::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.meal .peri-timing-panel .peri-timing-actions button,.meal .peri-timing-panel .peri-timing-delete{background:transparent!important;border:0!important;box-shadow:none!important;min-width:24px;width:24px;height:26px;min-height:0;padding:0;font-size:15px;opacity:.65}
+.meal .peri-timing-panel .peri-timing-actions button:hover,.meal .peri-timing-panel .peri-timing-delete:hover{opacity:1}
+.meal .peri-timing-panel .peri-add-split{border:0!important;box-shadow:none!important;background:transparent!important;font-size:11px;opacity:.7;padding:4px 5px;font-weight:500}
+.meal .peri-timing-panel .peri-add-split:hover{opacity:1}
+.meal .peri-timing-panel .peri-timing-add{padding:9px 0 0;margin:0;border-top:1px solid var(--border,rgba(127,127,127,.16));gap:8px}
+.meal .peri-timing-panel .peri-timing-add select{padding:6px 8px;min-width:175px;width:210px;border-radius:8px}
+.meal .peri-timing-panel .peri-timing-add button{font-size:12px;background:transparent!important;border:0!important;box-shadow:none!important;padding:6px 8px}
+@media(max-width:650px){.meal .peri-timing-panel{padding:0 12px}.meal .peri-timing-panel .peri-timing-food{min-height:0;gap:3px;padding:5px 0}.meal .peri-timing-panel .peri-timing-controls{flex-wrap:wrap}.meal .peri-timing-panel .peri-timing-add select{width:100%}}
