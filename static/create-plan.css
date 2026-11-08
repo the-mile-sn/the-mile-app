@@ -949,3 +949,8 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .meal .peri-timing-panel .peri-timing-picker-choices button{border:0!important;box-shadow:none!important;background:transparent!important;text-align:left;white-space:nowrap;font-size:12px;padding:8px 9px;border-radius:6px;cursor:pointer;color:inherit}
 .meal .peri-timing-panel .peri-timing-picker-choices button:hover{background:var(--surface-secondary,rgba(127,127,127,.1))!important}
 .meal .peri-timing-panel .peri-timing-controls .peri-add-split{border-left:0!important;border-right:0!important;box-shadow:none!important}
+
+/* Outside the meal card: always above scrollable/clipped editing panels. */
+.peri-timing-portal{position:fixed!important;z-index:2147483000!important;top:0;left:0;display:grid;gap:2px;min-width:175px;max-width:calc(100vw - 16px);padding:6px;background:var(--lib-panel,#fff);color:var(--lib-text,inherit);border:1px solid var(--border,rgba(127,127,127,.18));border-radius:10px;box-shadow:0 12px 35px rgba(0,0,0,.17)}
+.peri-timing-portal button{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:13px;color:inherit;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:7px;padding:9px 11px;white-space:nowrap}
+.peri-timing-portal button:hover,.peri-timing-portal button:focus-visible{background:var(--surface-secondary,rgba(127,127,127,.12))!important;outline-offset:1px}
