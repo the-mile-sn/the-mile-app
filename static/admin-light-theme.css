@@ -3,14 +3,14 @@
    Meal colours and clinical risk/category colours retain their meaning. */
 html[data-admin-theme="light"]{
   color-scheme:light;
-  --tm-light-bg:#f5f6f8;
-  --tm-light-surface:#ffffff;
-  --tm-light-surface-muted:#f0f2f6;
-  --tm-light-surface-hover:#e7ebf1;
-  --tm-light-text:#1c2633;
-  --tm-light-muted:#596675;
-  --tm-light-border:#d9dfe7;
-  --tm-light-focus:#4a789d;
+  --tm-light-bg:var(--tm-shell-bg);
+  --tm-light-surface:var(--tm-shell-surface);
+  --tm-light-surface-muted:var(--tm-shell-surface-muted);
+  --tm-light-surface-hover:var(--tm-shell-surface-hover);
+  --tm-light-text:var(--tm-shell-text);
+  --tm-light-muted:var(--tm-shell-muted);
+  --tm-light-border:var(--tm-shell-border);
+  --tm-light-focus:var(--tm-shell-focus);
   background:var(--tm-light-bg);
   color:var(--tm-light-text);
 }
