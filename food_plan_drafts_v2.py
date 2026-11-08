@@ -69,9 +69,28 @@ def validate(value):
                 if kind=="supplement": item.update({"kind":"supplement","label":label})
                 if alternative_to is not None: item["alternative_to"]=alternative_to
                 if plan_type=="Plano Peri-jogo":
+                    splits=food.get("timing_splits",[])
+                    if not isinstance(splits,list) or len(splits)>12:
+                        raise ValueError("invalid_timing_splits")
+                    if splits:
+                        codes=[]
+                        shares=[]
+                        for split in splits:
+                            if not isinstance(split,dict) or split.get("timing") not in timing_codes:
+                                raise ValueError("invalid_timing_splits")
+                            share=split.get("share")
+                            import math
+                            if type(share) not in (int,float) or not math.isfinite(share) or not 0<share<=1:
+                                raise ValueError("invalid_timing_splits")
+                            codes.append(split["timing"])
+                            shares.append(share)
+                        if len(set(codes))!=len(codes) or abs(sum(shares)-1)>0.00001:
+                            raise ValueError("invalid_timing_splits")
+                        item["timing_splits"]=[{"timing":t,"share":v} for t,v in zip(codes,shares)]
                     timing=food.get("timing","")
                     if not isinstance(timing,str) or (timing and timing not in timing_codes):
                         raise ValueError("invalid_food_timing")
+                    if timing and splits:raise ValueError("invalid_timing_splits")
                     if timing:item["timing"]=timing
                 foods.append(item)
             notes=option.get("notes",[])
