@@ -3,13 +3,13 @@
    Appearance is controlled by the same tm-admin-theme setting as the Backoffice;
    device preference never overrides it. */
 html[data-admin-theme="dark"]{
- color-scheme:dark;--lib-bg:#101114;--lib-panel:#1b1d22;--lib-panel-2:#22252b;
- --lib-border:#343840;--lib-fg:#f2f3f5;--lib-muted:#a2a7b0;
+ color-scheme:dark;--lib-bg:var(--tm-shell-bg);--lib-panel:var(--tm-shell-surface);--lib-panel-2:var(--tm-shell-surface-muted);
+ --lib-border:var(--tm-shell-border);--lib-fg:var(--tm-shell-text);--lib-muted:var(--tm-shell-muted);
  background:var(--lib-bg);color:var(--lib-fg);
 }
 html[data-admin-theme="light"]{
- color-scheme:light;--lib-bg:#f5f6f8;--lib-panel:#ffffff;--lib-panel-2:#f0f2f6;
- --lib-border:#d9dfe7;--lib-fg:#1c2633;--lib-muted:#596675;
+ color-scheme:light;--lib-bg:var(--tm-shell-bg);--lib-panel:var(--tm-shell-surface);--lib-panel-2:var(--tm-shell-surface-muted);
+ --lib-border:var(--tm-shell-border);--lib-fg:var(--tm-shell-text);--lib-muted:var(--tm-shell-muted);
  background:var(--lib-bg);color:var(--lib-fg);
 }
 html[data-admin-theme] body{background:var(--lib-bg);color:var(--lib-fg)}
