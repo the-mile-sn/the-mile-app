@@ -1541,11 +1541,11 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   gap:0!important;
   box-sizing:border-box!important;
   width:100%!important;min-width:0!important;
-  padding:18px 9px 17px!important;
+  padding:20px 18px 21px!important;
   margin:0!important;
-  min-height:92px!important;
-  border:1px solid #393e47!important;
-  border-radius:17px!important;
+  min-height:100px!important;
+  border:1px solid #3a414d!important;
+  border-radius:18px!important;
   box-shadow:none!important;
   background:var(--lib-panel,#1b1d22)!important;
  }
@@ -1562,7 +1562,7 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   grid-row:1!important;grid-column:auto!important;
   width:100%!important;min-width:0!important;max-width:100%!important;
   min-height:0!important;height:auto!important;
-  padding:0 1px!important;margin:0!important;gap:8px!important;
+  padding:0 3px!important;margin:0!important;gap:8px!important;
   background:transparent!important;
   border:0!important;
   border-radius:0!important;box-shadow:none!important;
@@ -1586,15 +1586,21 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
  }
  html body #plan-editor .plan-overview>.stats.four>.stat .stat-value strong{
   font-size:clamp(18px,5.5vw,24px)!important;
-  line-height:1.1!important;
+  line-height:1.12!important;
   font-weight:650!important;
   font-variant-numeric:tabular-nums!important;
   white-space:nowrap!important;letter-spacing:-.035em!important;
  }
+ /* Match preview: numerical values only; keep the units in the DOM. */
  html body #plan-editor .plan-overview>.stats.four>.stat .stat-value small{
-  font-size:10px!important;
-  line-height:1.1!important;
-  white-space:nowrap!important;
+  position:absolute!important;
+  width:1px!important;height:1px!important;
+  margin:-1px!important;padding:0!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;border:0!important;
+ }
+ html body #plan-editor .plan-overview>.stats.four>.stat+.stat{
+  border-left:1px solid color-mix(in srgb,var(--lib-muted,#9299a5) 22%,transparent)!important;
  }
  html body #plan-editor .plan-overview>.stats.four>.stat .plan-perkg{
   display:block!important;
