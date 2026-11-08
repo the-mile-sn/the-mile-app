@@ -1431,3 +1431,99 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   margin:0!important;padding-top:0!important;
  }
 }
+
+
+/* Phone Plan editor top: two selectors, one-row nutrition, concise weight.
+   Scope is exclusively the editor at phone widths; desktop is unchanged. */
+@media (max-width:700px){
+ #plan-editor .plan-editor-heading{
+  margin:8px 0 0!important;min-height:42px!important;
+ }
+ #plan-editor .plan-editor-heading>.plan-state-chip{
+  display:none!important;
+ }
+ #plan-editor .plan-overview{
+  min-width:0!important;width:100%!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;width:100%!important;min-width:0!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors>label{
+  min-width:0!important;max-width:100%!important;width:100%!important;
+  grid-column:auto!important;grid-row:auto!important;
+  margin:0!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors .tm-two-line-select{
+  box-sizing:border-box!important;min-width:0!important;width:100%!important;
+  max-width:100%!important;min-height:68px!important;
+  border-radius:16px!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors .tm-select-caption{
+  max-width:calc(100% - 24px)!important;font-size:11px!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors .tm-select-value{
+  box-sizing:border-box!important;max-width:calc(100% - 24px)!important;
+  font-size:14px!important;white-space:nowrap!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors .tm-select-arrow{
+  right:10px!important;
+ }
+ #plan-editor .plan-overview>.planhead.plan-selectors select{
+  font-size:16px!important;
+ }
+ #plan-editor .plan-overview>.stats.four{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:auto!important;grid-auto-flow:row!important;
+  align-items:start!important;gap:0!important;
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  padding:34px 8px 12px!important;
+  border-radius:18px!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat{
+  grid-column:auto!important;grid-row:auto!important;
+  box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+  width:100%!important;height:auto!important;min-height:72px!important;
+  padding:6px 2px!important;margin:0!important;gap:7px!important;
+  display:flex!important;flex-direction:column!important;
+  justify-content:flex-start!important;align-items:center!important;
+  border-top:0!important;border-bottom:0!important;
+  border-left:0!important;border-right:0!important;
+  background:transparent!important;border-radius:0!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat+.stat{
+  border-left:0!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat .stat-label{
+  display:block!important;max-width:100%!important;
+  font-size:10px!important;line-height:1.2!important;
+  text-align:center!important;white-space:normal!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat .stat-value{
+  display:flex!important;align-items:baseline!important;
+  justify-content:center!important;gap:2px!important;
+  box-sizing:border-box!important;min-width:0!important;
+  max-width:100%!important;width:100%!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat .stat-value strong{
+  font-size:clamp(14px,4vw,18px)!important;line-height:1.15!important;
+  letter-spacing:-.025em!important;white-space:nowrap!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat .stat-value small{
+  font-size:9px!important;line-height:1.15!important;white-space:nowrap!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.stat .plan-perkg{
+  font-size:9px!important;line-height:1.2!important;
+  max-width:100%!important;white-space:nowrap!important;
+  letter-spacing:-.02em!important;text-align:center!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.plan-weight-reference[data-tm-mobile-weight]{
+  font-size:0!important;
+ }
+ #plan-editor .plan-overview>.stats.four>.plan-weight-reference[data-tm-mobile-weight]::after{
+  content:attr(data-tm-mobile-weight);
+  font-size:12px!important;line-height:1.2!important;
+  font-weight:500!important;
+ }
+}
