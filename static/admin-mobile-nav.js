@@ -133,7 +133,11 @@
   }
  });
  document.addEventListener("click",event=>{
-  if(!sidebar.contains(event.target))collapse();
+  if(sidebar.contains(event.target))return;
+  // A selected secondary page stays in its expanded navigation context.
+  // Tapping its search fields must not collapse More and move the page.
+  if(selectedSecondary())return;
+  collapse();
  });
  document.addEventListener("keydown",event=>{
   if(event.key==="Escape"&&menu.classList.contains("is-mobile-open")){collapse();more.focus();}
