@@ -939,3 +939,13 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 /* One available moment: explicit single-click assignment, no split required. */
 .meal .peri-timing-panel .peri-timing-assign{border:0!important;border-left:0!important;box-shadow:none!important;background:transparent!important;color:inherit;font-size:12px;font-weight:500;opacity:.8;padding:4px 6px;cursor:pointer;text-align:right}
 .meal .peri-timing-panel .peri-timing-assign:hover{opacity:1;text-decoration:underline}
+
+/* Explicit two-path UX: assign 100% to one timing, or divide across timings. */
+.meal .peri-timing-panel .peri-timing-picker{position:relative;display:inline-flex;align-items:center;min-width:0;border:0!important;border-left:0!important;box-shadow:none!important;background:transparent!important}
+.meal .peri-timing-panel .peri-timing-picker::before,.meal .peri-timing-panel .peri-timing-picker::after{content:none!important;display:none!important}
+.meal .peri-timing-panel .peri-timing-picker .peri-timing-assign{border:0!important;border-left:0!important;border-right:0!important;box-shadow:none!important;background:transparent!important;padding:4px 6px;white-space:nowrap;min-width:0;min-height:0;font-size:12px}
+.meal .peri-timing-panel .peri-timing-picker-choices{position:absolute;z-index:30;top:100%;right:0;min-width:165px;padding:5px;background:var(--lib-panel,#fff);color:var(--lib-text,inherit);box-shadow:0 7px 26px rgba(0,0,0,.14);border:1px solid var(--border,rgba(127,127,127,.16));border-radius:9px;display:grid;gap:1px}
+.meal .peri-timing-panel .peri-timing-picker-choices[hidden]{display:none!important}
+.meal .peri-timing-panel .peri-timing-picker-choices button{border:0!important;box-shadow:none!important;background:transparent!important;text-align:left;white-space:nowrap;font-size:12px;padding:8px 9px;border-radius:6px;cursor:pointer;color:inherit}
+.meal .peri-timing-panel .peri-timing-picker-choices button:hover{background:var(--surface-secondary,rgba(127,127,127,.1))!important}
+.meal .peri-timing-panel .peri-timing-controls .peri-add-split{border-left:0!important;border-right:0!important;box-shadow:none!important}
