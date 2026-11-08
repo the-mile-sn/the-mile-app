@@ -1439,7 +1439,8 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
  #plan-editor .plan-editor-heading{
   margin:8px 0 0!important;min-height:42px!important;
  }
- #plan-editor .plan-editor-heading>.plan-state-chip{
+ #plan-editor .plan-editor-heading>.plan-state-chip[data-state="published"],
+ #plan-editor .plan-editor-heading>.plan-state-chip[data-state="transitional"]{
   display:none!important;
  }
  #plan-editor .plan-overview{
