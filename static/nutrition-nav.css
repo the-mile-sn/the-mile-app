@@ -75,7 +75,7 @@
    color:#fff!important;background:#303740!important;font-weight:650!important
  }
  .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link:hover{
-   background:#262a31!important
+   background:transparent!important
  }
  .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-chevron{display:none!important}
  .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-recipes-subnav{
@@ -115,7 +115,7 @@
    color:#172c40!important;background:#e6edf4!important
  }
  html[data-admin-theme="light"] .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link:hover{
-   background:#eff2f6!important
+   background:transparent!important
  }
  html[data-admin-theme="light"] .tm-library-layout .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-nav-link{
    color:#4d6379!important;background:transparent!important
@@ -305,8 +305,7 @@
   display:inline-block!important;margin-left:auto!important;width:15px!important
  }
  .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link.is-active{
-  background:transparent!important;border-radius:0!important;
-  font-weight:650!important
+  background:rgba(123,150,172,.17)!important;border-radius:9px!important
  }
  .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav{
   display:none!important;flex-direction:column!important;align-items:stretch!important;
@@ -351,7 +350,7 @@
   border-radius:10px!important;padding:11px 12px!important;
  }
  .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link.is-active{
-  background:transparent!important;
+  background:rgba(123,150,172,.14)!important;
  }
  html[data-admin-theme="light"] .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
   background:transparent!important;border:0!important;box-shadow:none!important;
