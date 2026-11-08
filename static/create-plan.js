@@ -28,7 +28,7 @@ const periDisplayUnit=food=>{
  const total=Number(match[1].replace(",","."));
  return Number.isFinite(total)&&total>0?{total,unit:match[2]}:null;
 };
-const periNumericDisplay=value=>Number(value.toFixed(4)).toLocaleString("pt-PT",{maximumFractionDigits:4});
+const periNumericDisplay=value=>String(Number(value.toFixed(4)));
 const periTimingCodes=o=>[...new Set([...(o.timing_groups||[]),...o.foods.flatMap(f=>(f.timing_splits||[]).map(split=>split.timing).concat(f.timing||[]))])];
 const periTimingSelect=(selected,exclude=[])=>'<option value="">Selecionar timing…</option>'+periTimingChoices.filter(([key])=>!exclude.includes(key)).map(([key,label])=>'<option value="'+key+'"'+(selected===key?' selected':'')+'>'+esc(label)+'</option>').join("");
 const timingOrganizer=o=>{
