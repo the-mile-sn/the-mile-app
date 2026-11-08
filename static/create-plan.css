@@ -1662,3 +1662,81 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   margin-top:20px!important;
  }
 }
+
+/* Mobile Plan preview: compact four-column totals, matching the editor. */
+@media (max-width:700px){
+ #plan-preview .plan-preview-heading{
+  box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  padding:20px 18px 21px!important;
+  margin:0 0 16px!important;
+  border-radius:18px!important;
+  border:1px solid #3a414d!important;
+  background:var(--lib-panel,#1b1d22)!important;
+  box-shadow:none!important;
+ }
+ html[data-admin-theme="light"] #plan-preview .plan-preview-heading{
+  background:#fff!important;
+  border-color:#d7dfe9!important;
+ }
+ #plan-preview .plan-preview-weight{
+  display:none!important;
+ }
+ #plan-preview .plan-preview-eyebrow{
+  font-size:13px!important;
+  line-height:1.3!important;
+  margin:0 0 5px!important;
+ }
+ #plan-preview .plan-preview-heading h2{
+  font-size:24px!important;
+  line-height:1.2!important;
+  margin:0 0 19px!important;
+ }
+ #plan-preview .plan-preview-macros{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;
+  width:100%!important;
+  min-width:0!important;
+  align-items:center!important;
+ }
+ #plan-preview .plan-preview-macros>div{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  max-width:100%!important;
+  gap:8px!important;
+  padding:0 3px!important;
+  box-sizing:border-box!important;
+ }
+ #plan-preview .plan-preview-macros>div+div{
+  border-left:1px solid color-mix(in srgb,var(--lib-muted,#9299a5) 22%,transparent)!important;
+ }
+ #plan-preview .plan-preview-macros>div>strong{
+  display:block!important;
+  font-size:clamp(18px,5.5vw,24px)!important;
+  line-height:1.12!important;
+  letter-spacing:-.035em!important;
+  font-variant-numeric:tabular-nums!important;
+  white-space:nowrap!important;
+ }
+ #plan-preview .plan-preview-macros>div>small:not(.plan-preview-perkg){
+  position:absolute!important;
+  width:1px!important;height:1px!important;
+  margin:-1px!important;padding:0!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;border:0!important;
+ }
+ #plan-preview .plan-preview-macros>div>.plan-preview-perkg{
+  display:block!important;
+  font-size:10px!important;
+  font-weight:550!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+  color:var(--lib-muted)!important;
+ }
+}
