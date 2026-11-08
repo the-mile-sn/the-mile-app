@@ -286,6 +286,8 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{bac
  #admin-workspace .tm-admin-mobile-nav-track .tm-admin-more-trigger,
  .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-more-trigger{
   position:relative!important;border-radius:0!important;background:transparent!important;
+  background-image:none!important;box-shadow:none!important;
+  -webkit-tap-highlight-color:transparent;
  }
  #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active,
  .tm-library-layout .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active,
