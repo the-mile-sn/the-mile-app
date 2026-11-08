@@ -196,6 +196,8 @@
 .plan-overview .planhead.plan-selectors label::after{content:"";position:absolute;right:17px;top:50%;width:10px;height:10px;border-right:2px solid #939397;border-bottom:2px solid #939397;transform:translateY(-70%) rotate(45deg);pointer-events:none;z-index:2}
 .plan-overview .planhead.plan-selectors select{background-image:none!important;padding-right:45px!important}
 .food-search::after{content:""!important;position:absolute!important;right:16px!important;top:17px!important;width:10px!important;height:10px!important;border-right:2px solid #939397!important;border-bottom:2px solid #939397!important;transform:rotate(45deg)!important;background:none!important;pointer-events:none!important;z-index:2}
+/* The shared clear X replaces the dropdown arrow while search text exists. */
+.food-search:has(#food-search-input + .tm-search-clear:not([hidden]))::after{display:none!important}
 .food-search #food-search-input{padding-right:45px!important;font-size:13px!important}
 .option-tabs{display:flex!important;flex-wrap:wrap!important;gap:9px!important;align-items:stretch!important}
 .option-tabs button{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:5px!important;padding:10px 15px!important;border-radius:18px!important;min-width:185px!important;max-width:100%!important;font-family:inherit!important}
