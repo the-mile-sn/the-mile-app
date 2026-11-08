@@ -1353,3 +1353,81 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   width:62px!important;min-width:0!important;padding:0 10px!important;
  }
 }
+
+
+/* iPhone expanded option: actual dedicated third row from the renderer.
+   Unlike legacy desktop macro rail, these nutrients live inside their own
+   normal-flow wrapper after the editable title. */
+@media (max-width:700px){
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile{
+  display:flex!important;flex-direction:column!important;
+  align-items:stretch!important;justify-content:flex-start!important;
+  gap:0!important;height:auto!important;min-height:0!important;
+  padding:14px 12px 0!important;margin:0!important;
+  box-sizing:border-box!important;
+  position:static!important;overflow:visible!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile>.option-heading{
+  display:flex!important;flex-direction:column!important;
+  flex:none!important;order:0!important;
+  align-items:flex-start!important;gap:4px!important;
+  min-width:0!important;max-width:100%!important;width:100%!important;
+  height:auto!important;position:static!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile>.option-heading>strong{
+  display:block!important;font-size:12px!important;
+  line-height:1.4!important;opacity:.75;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile .option-title{
+  display:block!important;position:static!important;
+  margin:0!important;padding:2px 0!important;
+  min-width:0!important;max-width:100%!important;width:100%!important;
+  height:auto!important;min-height:36px!important;
+  font-size:16px!important;line-height:1.4!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile>.tm-option-macros-mobile{
+  display:block!important;position:static!important;
+  inset:auto!important;transform:none!important;float:none!important;
+  order:1!important;flex:none!important;
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;height:auto!important;
+  margin:6px 0 0!important;padding:6px 0 14px!important;
+  border:0!important;border-bottom:1px solid color-mix(in srgb,var(--lib-muted) 18%,transparent)!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile>.tm-option-macros-mobile>.macro-values{
+  display:grid!important;position:static!important;
+  inset:auto!important;transform:none!important;float:none!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;margin:0!important;padding:0!important;
+  border:0!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile
+ .tm-option-macros-mobile .macro{
+  min-width:0!important;display:flex!important;flex-direction:row!important;
+  flex-wrap:wrap!important;align-items:baseline!important;
+  justify-content:center!important;gap:3px!important;
+  white-space:normal!important;text-align:center!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile
+ .tm-option-macros-mobile .macro b{
+  font-size:clamp(13px,3.5vw,17px)!important;line-height:1.2!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.option-summary.tm-option-summary-mobile
+ .tm-option-macros-mobile .macro small{
+  font-size:10px!important;line-height:1.2!important;
+ }
+ html body #plan-editor #meals>.meal.tm-mobile-expanded
+ .option-content>.nutrition-list{
+  margin:0!important;padding-top:0!important;
+ }
+}
