@@ -970,3 +970,178 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .meal .peri-timing-panel select.peri-timing-native::after{content:none!important;display:none!important}
 .meal .peri-timing-panel select.peri-timing-native option{color:#20242a;background:#fff}
 .meal .peri-timing-panel .peri-timing-delete{order:99;margin-left:8px}
+
+
+/* Mobile-only plan editor layout v1.
+   Desktop nutrition rails, data model, events and controls stay untouched. */
+@media (max-width:700px){
+ #plan-editor #meals, #plan-editor .meal, #plan-editor .option-content{
+  min-width:0!important;max-width:100%!important;box-sizing:border-box!important;
+ }
+ #plan-editor .meal{padding:14px 12px!important;overflow:visible!important}
+ /* Meal title and action icons on the first line; average nutrients below. */
+ #plan-editor .meal-header{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 36px!important;
+  align-items:center!important;gap:10px 6px!important;
+  padding:0!important;padding-right:0!important;min-height:0!important;
+ }
+ #plan-editor .meal-header>.meal-name{
+  grid-column:1!important;grid-row:1!important;
+  min-width:0!important;display:flex!important;flex-wrap:wrap!important;
+  align-items:center!important;gap:6px!important;
+ }
+ #plan-editor .meal-header>.meal-name>strong{
+  flex:1 1 130px!important;min-width:0!important;
+  font-size:16px!important;line-height:1.4!important;overflow-wrap:anywhere;
+ }
+ #plan-editor .meal-header>.meal-header-macros{
+  grid-column:1/-1!important;grid-row:2!important;
+  position:static!important;inset:auto!important;top:auto!important;right:auto!important;
+  transform:none!important;width:100%!important;max-width:none!important;
+  min-width:0!important;margin:0!important;padding:9px 0 5px!important;
+  order:initial!important;
+ }
+ #plan-editor .meal-header>.meal-toggle{
+  grid-column:2!important;grid-row:1!important;justify-self:end!important;
+  position:static!important;inset:auto!important;transform:none!important;
+  width:36px!important;min-width:36px!important;height:36px!important;
+ }
+ #plan-editor .meal-header .macro-values,
+ #plan-editor .option-content .option-summary>.macro-values{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  gap:4px!important;margin:0!important;padding:0!important;
+ }
+ #plan-editor .meal-header .macro,
+ #plan-editor .option-content .option-summary .macro{
+  display:flex!important;flex-wrap:wrap!important;flex-direction:row!important;
+  align-items:baseline!important;justify-content:center!important;gap:3px!important;
+  text-align:center!important;min-width:0!important;white-space:normal!important;
+ }
+ #plan-editor .meal-header .macro b,
+ #plan-editor .option-content .option-summary .macro b{
+  font-size:clamp(13px,3.5vw,17px)!important;line-height:1.25!important;
+ }
+ #plan-editor .meal-header .macro small,
+ #plan-editor .option-content .option-summary .macro small{
+  font-size:10px!important;line-height:1.2!important;
+ }
+ /* Two equally sized selectable options; titles can use two lines. */
+ #plan-editor .option-toolbar{display:block!important;min-width:0!important}
+ #plan-editor .option-tabs{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;width:100%!important;min-width:0!important;
+ }
+ #plan-editor .option-tabs button{
+  display:flex!important;flex-direction:column!important;gap:5px!important;
+  width:100%!important;max-width:none!important;min-width:0!important;
+  min-height:118px!important;padding:12px 10px!important;
+  border-radius:14px!important;white-space:normal!important;text-align:left!important;
+ }
+ #plan-editor .option-tabs button .plan-option-card-name{
+  display:-webkit-box!important;-webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2;line-clamp:2;white-space:normal!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+  line-height:1.35!important;min-height:2.7em;overflow-wrap:anywhere;
+ }
+ #plan-editor .option-tabs button .macro-values{
+  margin-top:auto!important;min-width:0!important;flex-wrap:wrap!important;
+  row-gap:3px!important;column-gap:8px!important;
+ }
+ /* Selected option title first; its nutrients get their own row. */
+ #plan-editor .option-content .option-summary{
+  display:flex!important;flex-direction:column!important;
+  align-items:stretch!important;gap:10px!important;min-height:0!important;
+  padding:14px 12px!important;padding-right:12px!important;
+ }
+ #plan-editor .option-content .option-summary>.option-heading{
+  width:100%!important;max-width:100%!important;min-width:0!important;
+ }
+ #plan-editor .option-content .option-summary>.macro-values{
+  grid-column:auto!important;grid-row:auto!important;
+  position:static!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;
+  transform:none!important;margin:0!important;padding:9px 0 2px!important;
+  border-top:1px solid color-mix(in srgb,var(--lib-muted) 18%,transparent);
+ }
+ #plan-editor .meal .option-summary .option-title{
+  max-width:100%!important;width:100%!important;
+  font-size:16px!important;min-height:42px!important;
+ }
+ /* Ingredient name and original actions on row one, nutrient grid below. */
+ #plan-editor .option-content .nutrition-list{
+  min-width:0!important;padding:0 10px 8px!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row{
+  display:grid!important;grid-template-columns:18px minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;
+  gap:7px 8px!important;min-width:0!important;
+  align-items:start!important;padding:13px 2px!important;
+  padding-right:2px!important;position:relative!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.drag-handle{
+  grid-column:1!important;grid-row:1!important;align-self:center!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.food-identity{
+  grid-column:2!important;grid-row:1!important;
+  flex:none!important;min-width:0!important;max-width:100%!important;
+  align-self:center!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.food-identity strong{
+  font-size:13px!important;line-height:1.4!important;
+  white-space:normal!important;overflow-wrap:anywhere;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.food-reference-note{
+  display:none!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.food-actions{
+  grid-column:3!important;grid-row:1!important;
+  position:static!important;inset:auto!important;top:auto!important;right:auto!important;
+  transform:none!important;justify-self:end!important;align-self:center!important;
+  flex:none!important;display:flex!important;align-items:center!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  gap:1px!important;flex-wrap:nowrap!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.food-actions button{
+  width:30px!important;min-width:30px!important;max-width:30px!important;
+  height:34px!important;min-height:34px!important;flex:0 0 30px!important;
+  padding:4px!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.macro-values{
+  grid-column:1/-1!important;grid-row:2!important;
+  position:static!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;
+  transform:none!important;display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  gap:4px!important;padding:3px 0 0 20px!important;box-sizing:border-box!important;
+  flex:none!important;justify-self:stretch!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.macro-values .macro{
+  min-width:0!important;justify-content:center!important;gap:3px!important;
+  text-align:center!important;white-space:normal!important;flex-wrap:wrap!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row>.macro-values b{
+  font-size:13px!important;
+ }
+ #plan-editor .option-content .nutrition-list .nutrition-row.food-row.alt-row>.food-identity{
+  padding-left:8px!important;
+ }
+ /* Free-text notes remain editable and their remove button is reachable. */
+ #plan-editor .option-content .nutrition-list .nutrition-row.note-row{
+  display:grid!important;grid-template-columns:18px minmax(0,1fr) 34px!important;
+  gap:8px!important;align-items:center!important;padding:12px 2px!important;
+ }
+ #plan-editor .option-content .nutrition-list .note-row>.drag-handle{grid-column:1!important;grid-row:1!important}
+ #plan-editor .option-content .nutrition-list .note-row>textarea{
+  grid-column:2!important;grid-row:1!important;min-width:0!important;
+  width:100%!important;flex:none!important;
+ }
+ #plan-editor .option-content .nutrition-list .note-row>.remove-row{
+  grid-column:3!important;grid-row:1!important;
+ }
+ /* iOS Safari auto-zoom prevention for editing fields, without disabling pinch zoom. */
+ #plan-editor input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+ #plan-editor select,#plan-editor textarea,
+ #plan-entry input[type="search"]{
+  font-size:16px!important;
+ }
+}
