@@ -164,3 +164,97 @@
  }
 
 })();
+
+/* The Mile: shared clear-search action, on desktop and mobile.
+   Works for static and dynamically created search inputs; the original search
+   handlers remain responsible for applying filters and dropdown results. */
+(()=>{
+ const searchSelector='input[type="search"]:not([data-tm-no-clear])';
+ const attached=new WeakSet();
+ const controls=new Map();
+ let scheduled=false;
+
+ function place(input,button){
+  if(!input.isConnected||!button.isConnected)return;
+  const parent=input.parentElement;
+  if(!parent)return;
+  const r=input.getBoundingClientRect();
+  const p=parent.getBoundingClientRect();
+  // Buttons are positioned against the input, not against result dropdowns.
+  button.style.left=Math.round(r.right-p.left-parent.clientLeft-38)+"px";
+  button.style.top=Math.round(r.top-p.top-parent.clientTop+(r.height-32)/2)+"px";
+ }
+ function update(input){
+  const button=controls.get(input);
+  if(!button)return;
+  const hasValue=Boolean(input.value)&&!input.disabled&&!input.readOnly;
+  button.hidden=!hasValue;
+  if(hasValue)place(input,button);
+ }
+ function refresh(){
+  scheduled=false;
+  for(const [input,button] of controls){
+   if(!input.isConnected){
+    button.remove();
+    controls.delete(input);
+   }else update(input);
+  }
+ }
+ function schedule(){
+  if(scheduled)return;
+  scheduled=true;
+  requestAnimationFrame(refresh);
+ }
+ function attach(input){
+  if(attached.has(input))return;
+  const parent=input.parentElement;
+  if(!parent)return;
+  attached.add(input);
+  // Keep the existing input and all its listeners in place.
+  if(getComputedStyle(parent).position==="static")parent.style.position="relative";
+  const clear=document.createElement("button");
+  clear.type="button";
+  clear.className="tm-search-clear";
+  clear.setAttribute("aria-label","Limpar pesquisa");
+  clear.title="Limpar pesquisa";
+  clear.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  clear.hidden=true;
+  input.insertAdjacentElement("afterend",clear);
+  input.classList.add("tm-has-search-clear");
+  controls.set(input,clear);
+  clear.addEventListener("pointerdown",event=>event.preventDefault());
+  clear.addEventListener("click",event=>{
+   event.preventDefault();
+   event.stopPropagation();
+   if(!input.value)return;
+   input.value="";
+   update(input);
+   input.dispatchEvent(new Event("input",{bubbles:true}));
+   input.dispatchEvent(new Event("change",{bubbles:true}));
+  });
+  input.addEventListener("input",()=>update(input));
+  input.addEventListener("change",()=>update(input));
+  input.addEventListener("focus",()=>update(input));
+  update(input);
+ }
+ function discover(root){
+  if(root.nodeType!==1&&root.nodeType!==9)return;
+  if(root.matches?.(searchSelector))attach(root);
+  root.querySelectorAll?.(searchSelector).forEach(attach);
+ }
+ discover(document);
+ new MutationObserver(records=>{
+  for(const record of records){
+   for(const node of record.addedNodes)discover(node);
+   for(const node of record.removedNodes){
+    if(node.nodeType===1&&node.matches?.(searchSelector))schedule();
+   }
+  }
+  schedule();
+ }).observe(document.body,{childList:true,subtree:true});
+ window.addEventListener("resize",schedule,{passive:true});
+ window.addEventListener("orientationchange",schedule,{passive:true});
+ document.addEventListener("focusin",event=>{
+  if(event.target.matches?.(searchSelector))update(event.target);
+ });
+})();
