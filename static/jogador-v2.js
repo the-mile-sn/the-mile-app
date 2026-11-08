@@ -71,20 +71,21 @@ async function api(path,opts={}){
 function fmt(v,d=1){return Number(v).toLocaleString("pt-PT",{minimumFractionDigits:d,maximumFractionDigits:d});}
 function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
-const periTimingLabels={pre_warmup:"Pré-aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
+const periTimingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
 // Group the already prescribed intra-match items by their timing, keeping
 // the first-seen timing order and each item's original position within its group.
-function groupPeriItemsByTiming(items){
+function groupPeriItemsByTiming(items,order=[]){
  const groups=new Map();
  for(const food of items||[]){
   const timing=food.timing||"";
   if(!groups.has(timing))groups.set(timing,[]);
   groups.get(timing).push(food);
  }
- return Array.from(groups,([timing,foods])=>({timing,foods}));
+ const sorted=[...(order||[]).filter(timing=>groups.has(timing)),...groups.keys()].filter((timing,index,list)=>list.indexOf(timing)===index);
+ return sorted.map(timing=>({timing,foods:groups.get(timing)}));
 }
-function appendGroupedPeriItems(host,items){
- for(const {timing,foods} of groupPeriItemsByTiming(items)){
+function appendGroupedPeriItems(host,items,order=[]){
+ for(const {timing,foods} of groupPeriItemsByTiming(items,order)){
   const group=document.createElement("div");group.className="peri-timing-group";
   const label=periTimingLabels[timing];
   if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=label;group.append(heading);}
@@ -116,7 +117,7 @@ function optionEl(o,i,planView=false,groupPeriTiming=false){
  if(o.title){const name=document.createElement("strong");name.textContent=o.title;label.append(name);}
  line.append(label);summary.append(line);details.append(summary);
  if(o.totals){const value=document.createElement("div");value.className="option-expanded-macros";value.append(nutrition(o.totals));details.append(value);}
- if(groupPeriTiming)appendGroupedPeriItems(details,o.items);
+ if(groupPeriTiming)appendGroupedPeriItems(details,o.items,o.timing_groups);
  else appendMealItems(details,o.items);
  return details;
 }
@@ -754,7 +755,7 @@ function matchWithIntraCard(event,item){
   totals.append(nutrition(avg));head.append(totals);
  }
  section.append(head);
- if(opts.length===1)appendGroupedPeriItems(section,opts[0].items);
+ if(opts.length===1)appendGroupedPeriItems(section,opts[0].items,opts[0].timing_groups);
  else opts.forEach((option,index)=>section.append(optionEl(option,index,false,true)));
  return section;
 }
