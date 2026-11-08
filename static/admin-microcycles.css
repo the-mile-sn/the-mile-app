@@ -2429,7 +2429,8 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   display:inline-block!important;margin-left:auto!important;width:15px!important
  }
  .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link.is-active{
-  background:rgba(123,150,172,.17)!important;border-radius:9px!important
+  background:transparent!important;border-radius:0!important;
+  font-weight:650!important
  }
  .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav{
   display:none!important;flex-direction:column!important;align-items:stretch!important;
@@ -2474,7 +2475,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   border-radius:10px!important;padding:11px 12px!important;
  }
  .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link.is-active{
-  background:rgba(123,150,172,.14)!important;
+  background:transparent!important;
  }
  html[data-admin-theme="light"] .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
   background:transparent!important;border:0!important;box-shadow:none!important;
