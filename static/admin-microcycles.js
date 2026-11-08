@@ -90,7 +90,9 @@ async function loadMenus(){
   const data=await request(matchBase()+"/menus?start="+begin+"&end="+end);
   dishLibrary=(await request("/api/v2/dishes")).dishes;
   renderDishEditor();refreshDishCategories();
-  const calendar=(await request(matchBase()+"/calendar?start="+begin+"&end="+end)).days;
+  const calendarResponse=await request(matchBase()+"/calendar?start="+begin+"&end="+end);
+  const calendar=calendarResponse.days;
+  const calendarOverrides=colorOverrideLookup(calendarResponse.meal_color_overrides);
   const root=$("menu-grid");root.replaceChildren();
   const pending=new Map();
   const saveWeek=$("save-menu-week");
@@ -108,13 +110,15 @@ async function loadMenus(){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
     const section=document.createElement("section");section.className="menu-day-card";
     const calendarDay=calendar.find(item=>item.date===date);
-    const modelRow=model.classifications.find(item=>item.name===calendarDay?.classification);
-    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+(calendarDay?.classification?" · "+calendarDay.classification:"");section.appendChild(title);
+    const effectiveClassification=calendarDay?.classification||"Geral";
+    const modelRow=model.classifications.find(item=>item.name===effectiveClassification);
+    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+" · "+effectiveClassification;section.appendChild(title);
     for(const meal of ["lunch","dinner"]){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
       const line=document.createElement("div");line.className="menu-meal-card";
       const heading=document.createElement("div");heading.className="menu-meal-heading";
-      const assignedColor=modelRow?.meals?.[meal];
+      const manualColor=calendarOverrides[date+"|"+meal];
+      const assignedColor=manualColor==="none"?null:(manualColor||modelRow?.meals?.[meal]);
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
@@ -372,7 +376,7 @@ function matchBase(){return "/api/v2/athletes/"+encodeURIComponent(model.athlete
 
 // An explicit per-day exception takes precedence over the microcycle model.
 function colorForDay(day,meal,overrides=dayColorOverrides){
-  const row=model&&model.classifications.find(r=>r.name===day.classification);
+  const row=model&&model.classifications.find(r=>r.name===(day.classification||"Geral"));
   const fallback=row?.meals?.[meal]||null;
   const selected=overrides[day.date+"|"+meal];
   return selected==="none"?null:(selected||fallback);
