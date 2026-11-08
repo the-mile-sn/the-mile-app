@@ -935,3 +935,7 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 .meal .peri-timing-panel .peri-timing-move{border:0!important;border-left:0!important;border-right:0!important;box-shadow:none!important;background:transparent!important;appearance:auto;-webkit-appearance:menulist;max-width:145px;width:145px;min-width:0;padding:4px 6px!important;font-size:12px;opacity:.72;cursor:pointer}
 .meal .peri-timing-panel .peri-timing-share{display:inline-flex;align-items:center;gap:5px;border:0!important;box-shadow:none!important;background:transparent!important;white-space:nowrap;font-size:12px}
 .meal .peri-timing-panel .peri-timing-share span{opacity:.7}
+
+/* One available moment: explicit single-click assignment, no split required. */
+.meal .peri-timing-panel .peri-timing-assign{border:0!important;border-left:0!important;box-shadow:none!important;background:transparent!important;color:inherit;font-size:12px;font-weight:500;opacity:.8;padding:4px 6px;cursor:pointer;text-align:right}
+.meal .peri-timing-panel .peri-timing-assign:hover{opacity:1;text-decoration:underline}
