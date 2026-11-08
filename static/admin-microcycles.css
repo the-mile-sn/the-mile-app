@@ -2696,3 +2696,18 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
   margin-top:0!important;
  }
 }
+
+
+/* iPhone search focus: enforce 16px on high-specificity player and clinical fields. */
+@media(max-width:830px){
+ #tm-players-page .tm-players-table thead .tm-players-search-label input[type="search"],
+ #admin-workspace #tm-players-page #tm-players-filter,
+ #admin-workspace #tm-assessments-page .tm-clinical-search-wrap input[type="search"],
+ #admin-workspace #tm-forms-page .tm-clinical-search-wrap input[type="search"],
+ #admin-workspace #tm-assessments-search,
+ #admin-workspace #tm-forms-search,
+ #admin-workspace #tm-assessment-filter-text{
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+ }
+}
