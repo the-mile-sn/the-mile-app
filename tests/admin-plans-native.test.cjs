@@ -11,7 +11,7 @@ test("Planos is mounted as one native editor without duplicate HTML IDs",()=>{
  for(const id of ["tm-plan-page","plan-entry","plan-search-selection","plan-preview","plan-editor","tm-plan-status","plan-player","plan-type","save-plan","assign-player","library-plan-rows"])assert.ok(ids.includes(id),id);
  assert.match(html,/<section id="tm-plan-page"[^>]*hidden/);
  assert.match(html,/\/create-plan\.js\?v=78/);
- assert.match(html,/\/admin-plans-native\.css\?v=2/);
+ assert.match(html,/\/admin-plans-native\.css\?v=3/);
  assert.match(legacy,/id="status"/);
  assert.match(legacy,/data-tm-nav-page="create-plan"/);
 });
@@ -45,4 +45,11 @@ test("Planos CSS is isolated without importing its old rules globally",()=>{
  assert.match(css,/#tm-plan-page \.tm-library-layout/);
  assert.doesNotMatch(html,/\/create-plan\.css\?/);
  assert.doesNotMatch(html,/\/nutrition-theme\.css\?/);
+});
+
+test("Production WSGI explicitly serves the native Planos stylesheet",()=>{
+ assert.match(app,/'\/admin-plans-native\.css': 'admin-plans-native\.css'/);
+ const roleGuard=app.slice(app.indexOf("if SITE_ROLE == 'player':"),app.indexOf("elif SITE_ROLE == 'admin':"));
+ assert.match(roleGuard,/'\/admin-plans-native\.css'/);
+ assert.ok(css.length>140000,"Native Planos CSS file must not be empty");
 });
