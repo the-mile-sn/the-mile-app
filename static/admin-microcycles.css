@@ -2723,25 +2723,25 @@ body.tm-light-mode .calendar-day.calendar-off>span:not(.calendar-event-mark),[da
 
 /* Today is a stable, semantic highlight; selection remains a quieter UI state. */
 #calendar-section .calendar-day.calendar-selected:not(.calendar-today){
-  box-shadow:inset 0 0 0 1px rgba(164,179,201,.55),0 1px 4px rgba(0,0,0,.08);
+  box-shadow:none;
   border-color:#718298;
+}
+#calendar-section .calendar-day.calendar-selected:not(.calendar-today):not(.calendar-match):not(.calendar-off){
+  background:#19232d;
 }
 #calendar-section .calendar-day.calendar-today{
   --tm-today-border:#69a9df;
-  --tm-today-glow:rgba(89,155,225,.24);
   border:2px solid var(--tm-today-border);
-  padding:8px; /* match the space of the normal 1px border / 9px padding */
+  padding:8px; /* keep the original card dimensions */
   background:#17283a;
-  box-shadow:0 0 0 2px var(--tm-today-glow),0 3px 12px var(--tm-today-glow);
+  box-shadow:none;
 }
 #calendar-section .calendar-day.calendar-today.calendar-match{
   --tm-today-border:#65c795;
-  --tm-today-glow:rgba(82,188,122,.22);
   background:#1e382b;
 }
 #calendar-section .calendar-day.calendar-today.calendar-off{
   --tm-today-border:#db8792;
-  --tm-today-glow:rgba(206,96,108,.24);
   background:#462c31;
 }
 #calendar-section .calendar-day.calendar-today:focus-visible{
