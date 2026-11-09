@@ -44,10 +44,11 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
    return {stylesLoaded:!!style,cssRules:style?.cssRules.length||0,
     layout:getComputedStyle(list).display,columns:getComputedStyle(list).gridTemplateColumns,
     border:getComputedStyle(table).borderTopStyle,
-    iconWidth:getComputedStyle(icon).width,iconHeight:getComputedStyle(icon).height};
+    iconWidth:getComputedStyle(icon).width,iconHeight:getComputedStyle(icon).height,
+     cssVersion:style?.href||"",countDisplay:getComputedStyle(entry.querySelector("#library-plan-count")).display};
   });
   assert.equal(cssInfo.stylesLoaded,true);
-   assert.match(cssInfo.cssVersion,/admin-plans-native\\.css\\?v=4/);
+   assert.ok(cssInfo.cssVersion.includes("admin-plans-native.css?v=4"),JSON.stringify(cssInfo));
    assert.equal(cssInfo.countDisplay,"none","Plan list result count should be hidden");
   assert.ok(cssInfo.cssRules>100,JSON.stringify(cssInfo));
   assert.equal(cssInfo.layout,"grid",JSON.stringify(cssInfo));
