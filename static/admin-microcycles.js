@@ -1260,7 +1260,7 @@ function renderDayPreview(day,host){
   const colorBar=document.createElement("div");colorBar.className="day-meal-color day-meal-header"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
   const label=document.createElement("span");label.className="day-meal-label";label.textContent=names[entry.meal];
   colorBar.append(label);cell.append(colorBar);
-  const modelRow=model.classifications.find(r=>r.name===day.classification);
+  const modelRow=model.classifications.find(r=>r.name===(day.classification||"Geral"));
   const baseline=modelRow?.meals?.[entry.meal]||null;
   const isOverride=Object.hasOwn(dayColorOverrides,day.date+"|"+entry.meal);
   const choose=document.createElement("select");choose.className="day-color-select";
