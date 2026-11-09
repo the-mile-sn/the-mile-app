@@ -16,10 +16,10 @@ jobs:
           node --check static/create-plan.js
       - name: Verify Planos native contract
         run: node --test tests/admin-plans-native.test.cjs
-      - name: Install headless Chromium
+      - name: Install Chromium and WebKit for visual regressions
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       - name: Test Planos navigation and unsaved state in Chromium
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory static > /tmp/the-mile-plans-native-http.log 2>&1 &
@@ -35,4 +35,6 @@ jobs:
             plans-native-dark.png
             plans-native-light.png
             plans-native-mobile.png
+            plans-native-webkit-list.png
+            plans-native-webkit-editor.png
           if-no-files-found: ignore
