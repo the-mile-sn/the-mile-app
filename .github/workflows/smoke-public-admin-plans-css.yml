@@ -1,0 +1,23 @@
+name: Verify live Planos stylesheet is reachable
+on:
+  push:
+    branches: [test/admin-plans-css-public-20261109]
+jobs:
+  live-css:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Fetch production CSS from public domains
+        shell: bash
+        run: |
+          set -euo pipefail
+          for BASE in "https://the-mile-admin.onrender.com" "https://admin.themile.pt"; do
+            echo "Checking $BASE"
+            status=$(curl --retry 4 --retry-delay 3 --retry-all-errors --max-time 50 -sS -L -w '%{http_code}' -o /tmp/native-plans.css "$BASE/admin-plans-native.css?v=3")
+            test "$status" = "200"
+            test "$(wc -c < /tmp/native-plans.css)" -gt 140000
+            grep -Fq '#tm-plan-page .plan-library-filters' /tmp/native-plans.css
+            grep -Fq '#tm-plan-page .stats.four' /tmp/native-plans.css
+            echo "PASS $BASE: CSS loaded, length and layout selectors verified"
+          done
