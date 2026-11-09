@@ -48,7 +48,7 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
      cssVersion:style?.href||"",countDisplay:getComputedStyle(entry.querySelector("#library-plan-count")).display};
   });
   assert.equal(cssInfo.stylesLoaded,true);
-   assert.ok(cssInfo.cssVersion.includes("admin-plans-native.css?v=4"),JSON.stringify(cssInfo));
+   assert.ok(cssInfo.cssVersion.includes("admin-plans-native.css?v=5"),JSON.stringify(cssInfo));
    assert.equal(cssInfo.countDisplay,"none","Plan list result count should be hidden");
   assert.ok(cssInfo.cssRules>100,JSON.stringify(cssInfo));
   assert.equal(cssInfo.layout,"grid",JSON.stringify(cssInfo));
@@ -59,6 +59,25 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
   await page.screenshot({path:"plans-native-dark.png",fullPage:true});
   await page.evaluate(()=>document.documentElement.dataset.adminTheme="light");
   await page.waitForFunction(()=>document.getElementById("tm-plan-page").dataset.adminTheme==="light");
+  // CSS-only regression: true pills begin at the left edge of their cells.
+  const pills=await page.evaluate(()=>{
+   const table=document.querySelector("#tm-plan-page #plan-entry .plan-library-table");
+   const row=document.createElement("tr");
+   row.innerHTML='<td><strong>Jogador de teste</strong></td><td><span class="plan-type-tag" data-palette="yellow">amarelo</span></td><td><span class="plan-state-label" data-state="published">Publicado</span></td><td></td>';
+   table.tBodies[0].appendChild(row);
+   const metrics=[row.cells[1],row.cells[2]].map(td=>{
+    const el=td.firstElementChild,style=getComputedStyle(el),cellStyle=getComputedStyle(td);
+    return {radius:style.borderTopLeftRadius,textAlign:cellStyle.textAlign,
+     leftOffset:el.getBoundingClientRect().left-(td.getBoundingClientRect().left+parseFloat(cellStyle.paddingLeft))};
+   });
+   row.remove();
+   return metrics;
+  });
+  for(const pill of pills){
+   assert.equal(pill.radius,"999px",JSON.stringify(pills));
+   assert.equal(pill.textAlign,"left",JSON.stringify(pills));
+   assert.ok(Math.abs(pill.leftOffset)<2,JSON.stringify(pills));
+  }
   await page.screenshot({path:"plans-native-light.png",fullPage:true});
   await page.locator("#tm-plan-page #entry-create").click();
   await page.locator("#tm-plan-page #plan-editor").waitFor({state:"visible"});
