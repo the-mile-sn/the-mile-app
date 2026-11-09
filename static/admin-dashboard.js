@@ -531,6 +531,24 @@ function ensurePlanningOnlyView(){
    }
    host.append(wrapper);
   }
+  // Per-athlete nutrition service preference, separate from clinical measurements.
+  const selectionCard=el("label","profile-info-card tm-player-meal-selection");
+  selectionCard.style.cssText="display:flex;flex-direction:column;gap:8px;padding:15px;border:1px solid #36363c;border-radius:12px;min-width:0";
+  selectionCard.append(el("small","","Seleção de opções pelo nutricionista"));
+  if(!playerProfileEditing){
+   selectionCard.append(el("strong","",athlete.meal_option_selection_enabled?"Ativada":"Desativada"));
+  }else{
+   const control=el("span");control.style.cssText="display:flex;align-items:center;gap:10px;min-height:30px";
+   const checkbox=el("input");checkbox.type="checkbox";checkbox.checked=athlete.meal_option_selection_enabled===true;
+   checkbox.dataset.playerProfileField="meal_option_selection_enabled";
+   checkbox.setAttribute("aria-label","Ativar seleção de opções alimentares pelo nutricionista");
+   checkbox.style.cssText="width:18px;height:18px;margin:0;accent-color:#377c5c";
+   control.append(checkbox,el("span","",checkbox.checked?"Ativada":"Desativada"));
+   checkbox.addEventListener("change",()=>{control.lastElementChild.textContent=checkbox.checked?"Ativada":"Desativada";});
+   selectionCard.append(control);
+  }
+  selectionCard.append(el("small","","Permite definir opções específicas por refeição e data no Planeamento."));
+  host.append(selectionCard);
   $("tm-players-profile-edit").hidden=playerProfileEditing;
   $("tm-players-profile-save").hidden=!playerProfileEditing;
   $("tm-players-profile-cancel").hidden=!playerProfileEditing;
@@ -577,10 +595,10 @@ function ensurePlanningOnlyView(){
   try{
    const selectedId=playerProfile.id,selectedToken=profileLoadToken;
    const result=await request("/api/v2/athletes/"+encodeURIComponent(selectedId)+"/profile",{method:"PUT",body:JSON.stringify({
-    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point")),birth_date:get("birth_date"),followup_plan:get("followup_plan"),followup_renewal_date:get("followup_renewal_date"),...(playerPhotoData?{photo:playerPhotoData}:{})
+    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point")),birth_date:get("birth_date"),followup_plan:get("followup_plan"),followup_renewal_date:get("followup_renewal_date"),meal_option_selection_enabled:profilePanel.querySelector('[data-player-profile-field="meal_option_selection_enabled"]').checked,...(playerPhotoData?{photo:playerPhotoData}:{})
    })});
    if(selectedToken!==profileLoadToken||playerProfile?.id!==selectedId)return;
-   playerProfile=result.athlete;playerDetails={...playerDetails,birth_date:result.athlete.birth_date,followup_plan:result.athlete.followup_plan,followup_renewal_date:result.athlete.followup_renewal_date,has_photo:result.athlete.has_photo,user_id:result.athlete.user_id};
+   playerProfile=result.athlete;playerDetails={...playerDetails,birth_date:result.athlete.birth_date,followup_plan:result.athlete.followup_plan,followup_renewal_date:result.athlete.followup_renewal_date,meal_option_selection_enabled:result.athlete.meal_option_selection_enabled,has_photo:result.athlete.has_photo,user_id:result.athlete.user_id};
    playerProfileEditing=false;playerPhotoData=null;$("tm-players-profile-photo-upload").value="";displayPlayerProfile();
    $("tm-players-profile-feedback").textContent="Perfil guardado.";
    if(typeof window.tmSyncPlanningAthleteProfile==="function")window.tmSyncPlanningAthleteProfile(playerProfile);
