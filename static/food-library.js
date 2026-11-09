@@ -1,6 +1,7 @@
 "use strict";(()=>{
-const $=id=>document.getElementById(id);
-let foods=[],editing=null,page=1,pages=1,total=0,revision=0,searchTimer=null;
+const embeddedRoot=document.getElementById("tm-food-library-page");
+const $=id=>embeddedRoot?embeddedRoot.querySelector('[id="'+id+'"]'):document.getElementById(id);
+let foods=[],editing=null,page=1,pages=1,total=0,revision=0,searchTimer=null,csrf="";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=n=>Number(n||0).toLocaleString("pt-PT",{maximumFractionDigits:1});
 function updatePager(){
@@ -70,7 +71,7 @@ async function archiveFood(id){
  if(button)button.disabled=true;
  try{
   const response=await fetch("/api/v2/food-library/"+encodeURIComponent(id),{
-   method:"DELETE",headers:{"X-CSRF-Token":window.foodLibraryCsrf||""},
+   method:"DELETE",headers:{"X-CSRF-Token":csrf||""},
    credentials:"same-origin"
   });
   if(response.status===409){
@@ -101,21 +102,34 @@ $("food-form").addEventListener("submit",async event=>{
  data.base_name=editing?.base_name||data.display_name;
  try{
   const response=await fetch("/api/v2/food-library",{
-   method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":window.foodLibraryCsrf||""},
+   method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf||""},
    credentials:"same-origin",body:JSON.stringify(data)
   });
   if(!response.ok)throw Error("Não foi possível guardar ("+response.status+").");
   $("editor").close();await load(page);
  }catch(error){$("form-feedback").textContent=error.message;}
 });
-fetch("/api/me",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
- window.foodLibraryCsrf=data.csrf||"";
- load();
-}).catch(()=>load());
+// Load on entry in the main Backoffice; keep standalone page behavior.
+let activation=null;
+function activate(){
+ if(activation)return activation;
+ activation=(async()=>{
+  const response=await fetch("/api/me",{credentials:"same-origin"});
+  if(!response.ok)throw Error("Sessão de administração indisponível.");
+  const data=await response.json();
+  if(embeddedRoot&&data.user?.role!=="admin")throw Error("Acesso não autorizado.");
+  csrf=data.csrf||"";
+  await load(page);
+ })().finally(()=>{activation=null});
+ return activation;
+}
+if(embeddedRoot)window.tmEnsureAdminFoodLibrary=activate;
+else activate().catch(()=>load());
 })();
 
-/* Shared two-line native dropdown presentation: native controls remain authoritative. */
+/* Standalone-only dropdown decoration. The main backoffice manages its controls. */
 (()=>{
+ if(document.getElementById("tm-food-library-page"))return;
  const skip=el=>el.hidden||el.getAttribute("aria-hidden")==="true"||el.tabIndex===-1||el.classList.contains("tm-planning-native-select")||el.classList.contains("tm-clinical-native-select")||["draft-list","supp-lib-select","category"].includes(el.id);
  const getTitle=el=>{const lbl=el.closest("label");let raw="";if(lbl){raw=[...lbl.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(" ").trim();if(!raw){const span=lbl.querySelector(":scope > span");if(span&&!span.classList.contains("sr-only"))raw=span.textContent.trim()}}return (raw||el.getAttribute("aria-label")||el.getAttribute("name")||el.id.replace(/[-_]/g," ")).replace(/\*/g,"").replace(/^(Filtrar |Selecionar )/i,"").trim()||"Selecionar"};
  const update=el=>{const w=el.parentElement;if(!w?.classList.contains("tm-two-line-select"))return;const selected=el.selectedOptions?.[0];const first=[...el.options].find(o=>o.value&&!o.disabled);const isAll=/^(todas?|todos?\s+as?|all)(\s|$)/i.test((selected?.textContent||"").trim());const text=selected?.value||isAll?selected?.textContent:(first?.textContent||selected?.textContent||"Selecionar");w.querySelector(".tm-select-value").textContent=text.trim();w.classList.toggle("tm-select-disabled",el.disabled)};
