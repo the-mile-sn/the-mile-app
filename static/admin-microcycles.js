@@ -1149,7 +1149,7 @@ function renderNutritionTotals(host,label,result,referenceWeight=null){
   host.appendChild(block);
 }
 
-let liveCalendarPlans={};
+let liveCalendarPlans={},mealChoiceAssignments={enabled:false,drafts:[],published:[]};
 let editorFoodLibrary=null,editorFoodLibraryPromise=null;
 function loadEditorFoodLibrary(){
  if(editorFoodLibrary)return Promise.resolve(editorFoodLibrary);
@@ -1190,6 +1190,26 @@ function checkMealNutrition(record){
  return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
 }
 function renderLiveMealOptions(day,meal,overrideRecord=null){
+ const eventId=overrideRecord?.event_id||"";
+ const choiceKey=row=>row.meal_date===day.date&&row.meal_key===meal&&(row.event_id||"")===eventId;
+ const pendingChoice=(mealChoiceAssignments.drafts||[]).find(choiceKey);
+ const publishedChoice=(mealChoiceAssignments.published||[]).find(choiceKey);
+ const editable=Boolean(mealChoiceAssignments.enabled&&model?.athlete?.meal_option_selection_enabled);
+ const updateChoice=async(optionIndex)=>{
+  try{
+   const base=matchBase()+"/meal-options";
+   await request(base,{method:"PUT",body:JSON.stringify({date:day.date,meal,event_id:eventId,option_index:optionIndex})});
+   status(optionIndex==null?"Remoção guardada. Publica para voltar a mostrar todas as opções.":"Seleção guardada. Publica para a disponibilizar na app.","success");
+   await loadCalendar();
+  }catch(err){status("Não foi possível guardar a seleção: "+err.message,"warn");}
+ };
+ const publishChoice=async()=>{
+  try{
+   await request(matchBase()+"/meal-options",{method:"POST",body:JSON.stringify({action:"publish",date:day.date,meal,event_id:eventId})});
+   status(pendingChoice?.action==="clear"?"Seleção removida e publicada.":"Opção publicada para o jogador.","success");
+   await loadCalendar();
+  }catch(err){status("Não foi possível publicar a seleção: "+err.message,"warn");}
+ };
  const box=document.createElement("div");box.className="calendar-day-meal-options";
  const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
  const state=record?.status||"unavailable";
@@ -1210,7 +1230,19 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
  const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
  for(const [index,option] of (record.options||[]).entries()){
   const section=document.createElement("details");section.className="calendar-day-meal-option calendar-option-accordion";
-  const title=document.createElement("summary");title.className="calendar-option-accordion-heading";const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");const arrow=document.createElement("span");arrow.className="calendar-option-accordion-caret";arrow.setAttribute("aria-hidden","true");arrow.textContent="⌄";title.append(label,arrow);section.append(title);
+  const title=document.createElement("summary");title.className="calendar-option-accordion-heading";const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");const arrow=document.createElement("span");arrow.className="calendar-option-accordion-caret";arrow.setAttribute("aria-hidden","true");arrow.textContent="⌄";
+  title.append(label);
+  if(editable){
+   const chosenDraft=pendingChoice?.action==="select"&&pendingChoice.option_index===index+1;
+   const chosenPub=!pendingChoice&&publishedChoice?.option_index===index+1&&publishedChoice.option_ref===option.option_ref;
+   const pick=document.createElement("button");pick.type="button";pick.className="calendar-option-choice-button";
+   pick.textContent=chosenDraft?"Guardada":chosenPub?"Publicada":"Selecionar";
+   pick.setAttribute("aria-label","Guardar opção "+(index+1)+" de "+(names[meal]||overrideRecord?.title||meal)+" para "+day.date);
+   if(chosenDraft||chosenPub)pick.classList.add("is-chosen");
+   pick.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();pick.disabled=true;updateChoice(index+1);});
+   title.append(pick);
+  }
+  title.append(arrow);section.append(title);
   const foods=option.foods||[],notes=option.notes||[];
   const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?
    option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
@@ -1235,6 +1267,24 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   grid.append(section);
  }
  box.append(grid);
+ if(editable){
+  const actions=document.createElement("div");actions.className="calendar-option-choice-actions";
+  const summary=document.createElement("small");summary.className="calendar-option-choice-summary";
+  if(pendingChoice)summary.textContent=pendingChoice.action==="clear"?"Remoção guardada · por publicar":"Opção "+pendingChoice.option_index+" guardada · por publicar";
+  else if(publishedChoice){
+   const match=record.options?.[publishedChoice.option_index-1]?.option_ref===publishedChoice.option_ref;
+   summary.textContent=match?"Opção "+publishedChoice.option_index+" publicada":"Seleção anterior desatualizada · rever";
+  }else summary.textContent="Sem seleção específica · o jogador vê todas as opções";
+  actions.append(summary);
+  if(pendingChoice){
+   const publish=document.createElement("button");publish.type="button";publish.className="calendar-option-publish-button";publish.textContent="Publicar alteração";
+   publish.onclick=()=>{publish.disabled=true;publishChoice();};actions.append(publish);
+  }else if(publishedChoice){
+   const clear=document.createElement("button");clear.type="button";clear.className="calendar-option-clear-button";clear.textContent="Remover seleção";
+   clear.onclick=()=>{clear.disabled=true;updateChoice(null);};actions.append(clear);
+  }
+  box.append(actions);
+ }
  if(state==="provisional"){
   const note=document.createElement("p");note.className="calendar-day-options-note";
   note.textContent="Valores provisórios: há quantidades por confirmar.";box.append(note);
@@ -1353,8 +1403,13 @@ async function loadCalendar(){
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   await loadEditorFoodLibrary().catch(()=>null);
-  const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last)+"&include_food_plans=1");
+  const from=isoDay(first),to=isoDay(last);
+  const [data,choices]=await Promise.all([
+   request(matchBase()+"/calendar?start="+from+"&end="+to+"&include_food_plans=1"),
+   request(matchBase()+"/meal-options?start="+from+"&end="+to)
+  ]);
   liveCalendarPlans=data.live_food_plans?.days||{};
+  mealChoiceAssignments=choices;
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
   effectiveAdminColorsByDay=data.effective_colors||{};
   periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
