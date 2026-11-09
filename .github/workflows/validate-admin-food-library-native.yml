@@ -34,4 +34,5 @@ jobs:
           path: |
             food-library-native-dark.png
             food-library-native-light.png
+            food-library-native-mobile.png
           if-no-files-found: ignore
