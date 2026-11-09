@@ -111,7 +111,9 @@ def _meal_preview(meal, library):
         for food in option.get("foods") or []:
             reference = library.get(food.get("id")) or {}
             foods.append({**food, "library_name": reference.get("display_name", "")})
+        from meal_option_selection_v2 import option_ref
         previews.append({
+            "option_ref": option_ref(option),
             "title": option.get("title") or "", "foods": foods,
             "notes": option.get("notes") or [], "order": option.get("order") or [],
             "nutrition": value, "provisional": option_pending,
