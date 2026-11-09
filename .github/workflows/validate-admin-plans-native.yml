@@ -1,0 +1,38 @@
+name: Validate native Planos integration
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  native-plan-regression:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check static/admin-dashboard.js
+          node --check static/admin-nav-shell.js
+          node --check static/create-plan.js
+      - name: Verify Planos native contract
+        run: node --test tests/admin-plans-native.test.cjs
+      - name: Install headless Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test Planos navigation and unsaved state in Chromium
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 --directory static > /tmp/the-mile-plans-native-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node --test tests/admin-plans-native-browser.test.cjs
+      - name: Upload Planos light/dark/mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-planos-desktop-mobile-screenshots
+          path: |
+            plans-native-dark.png
+            plans-native-light.png
+            plans-native-mobile.png
+          if-no-files-found: ignore
