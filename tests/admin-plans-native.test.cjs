@@ -11,7 +11,7 @@ test("Planos is mounted as one native editor without duplicate HTML IDs",()=>{
  for(const id of ["tm-plan-page","plan-entry","plan-search-selection","plan-preview","plan-editor","tm-plan-status","plan-player","plan-type","save-plan","assign-player","library-plan-rows"])assert.ok(ids.includes(id),id);
  assert.match(html,/<section id="tm-plan-page"[^>]*hidden/);
  assert.match(html,/\/create-plan\.js\?v=78/);
- assert.match(html,/\/admin-plans-native\.css\?v=4/);
+ assert.match(html,/\/admin-plans-native\.css\?v=5/);
  assert.match(legacy,/id="status"/);
  assert.match(legacy,/data-tm-nav-page="create-plan"/);
 });

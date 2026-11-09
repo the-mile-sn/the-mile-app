@@ -36,7 +36,7 @@ jobs:
                    "wsgi.multithread":False,"wsgi.multiprocess":False,"wsgi.run_once":False}
               out["body"]=b"".join(app.application(env,start))
               return out
-          css=request("/admin-plans-native.css","v=4","admin")
+          css=request("/admin-plans-native.css","v=5","admin")
           assert css["status"]=="200 OK",css["status"]
           assert css["headers"]["Content-Type"].startswith("text/css"),css["headers"]
           assert len(css["body"])>140000
@@ -44,8 +44,8 @@ jobs:
           assert "immutable" in css["headers"]["Cache-Control"]
           page=request("/","","admin")
           assert page["status"]=="200 OK"
-          assert b"/admin-plans-native.css?v=4" in page["body"]
-          blocked=request("/admin-plans-native.css","v=4","player")
+          assert b"/admin-plans-native.css?v=5" in page["body"]
+          blocked=request("/admin-plans-native.css","v=5","player")
           assert blocked["status"]=="404 Not Found",blocked["status"]
           print("PASS: Real WSGI serves native Planos CSS, with browser cache version and role isolation")
           PY
