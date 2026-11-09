@@ -1416,7 +1416,7 @@ async function loadCalendar(){
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
     if(data.matches.some(m=>m.match_date===day.date)){el.classList.add("calendar-match");}
-    const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date);
+    const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date&&e.kind!=="off");
     if(dayEvents.length){
       const chip=document.createElement("span");chip.className="calendar-event-mark";
       chip.textContent=dayEvents.map(e=>CALENDAR_EVENT_NAMES[e.kind]||e.title).join(" · ");
@@ -2223,7 +2223,7 @@ function renderUnifiedEvent(ev){
  const card=document.createElement("section");card.className="calendar-unified-event";
  const heading=document.createElement("div");heading.className="calendar-unified-heading";
  const title=document.createElement("strong");title.textContent=CALENDAR_EVENT_NAMES[ev.kind]||ev.title;
- const dateLabel=document.createElement("span");dateLabel.textContent=ev.event_date+" · "+(ev.kind==="match"&&ev.match_time?ev.match_time:ev.session==="morning"?"Manhã":"Tarde");
+ const dateLabel=document.createElement("span");dateLabel.textContent=ev.event_date+" · "+(ev.kind==="match"&&ev.match_time?ev.match_time:ev.kind==="off"?"Dia inteiro":ev.session==="morning"?"Manhã":"Tarde");
  heading.append(title,dateLabel);
  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";heading.append(edit);card.append(heading);
  const controls=document.createElement("form");controls.className="calendar-inline-editor";controls.hidden=true;
