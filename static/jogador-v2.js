@@ -783,7 +783,7 @@ function attachSupplements(card,items){
  card.append(area);
 }
 function appendDailyEvents(host,date,session){
- for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
+ for(const event of calendarEvents.filter(e=>e.kind!=="off"&&e.event_date===date&&e.session===session)){
   const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
   const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
   if(event.kind==="match"&&intra)host.append(matchWithIntraCard(event,intra));
@@ -797,10 +797,10 @@ function appendDailyEvents(host,date,session){
  }
 }
 function appendWeeklyEvents(host,dates,session){
- if(!calendarEvents.some(e=>dates.includes(e.event_date)&&e.session===session))return;
+ if(!calendarEvents.some(e=>e.kind!=="off"&&dates.includes(e.event_date)&&e.session===session))return;
  for(const date of dates){
   const slot=document.createElement("div");slot.className="weekly-event-slot";if(weeklySelection?.date===date)slot.classList.add("weekly-selected-column");
-  for(const event of calendarEvents.filter(e=>e.event_date===date&&e.session===session)){
+  for(const event of calendarEvents.filter(e=>e.kind!=="off"&&e.event_date===date&&e.session===session)){
    const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
    const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
    if(intra){
