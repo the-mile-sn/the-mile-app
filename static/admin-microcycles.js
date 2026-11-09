@@ -1150,6 +1150,7 @@ function renderNutritionTotals(host,label,result,referenceWeight=null){
 }
 
 let liveCalendarPlans={},mealChoiceAssignments={enabled:false,drafts:[],published:[]};
+let expandedCalendarMealDate=null,expandedCalendarMealKey=null;
 let editorFoodLibrary=null,editorFoodLibraryPromise=null;
 function loadEditorFoodLibrary(){
  if(editorFoodLibrary)return Promise.resolve(editorFoodLibrary);
@@ -1347,11 +1348,11 @@ function renderDayPreview(day,host){
  const optionButtons=new Map();let expandedMeal=null;
  function toggleOptions(meal){
   if(expandedMeal===meal&&!optionsPanel.hidden){
-   expandedMeal=null;optionsPanel.hidden=true;
+   expandedMeal=null;expandedCalendarMealDate=null;expandedCalendarMealKey=null;optionsPanel.hidden=true;
    for(const button of optionButtons.values()){button.setAttribute("aria-expanded","false");button.classList.remove("is-active");}
    return;
   }
-  expandedMeal=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
+  expandedMeal=meal;expandedCalendarMealDate=day.date;expandedCalendarMealKey=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
   const selectedColor=mealColorsForDay(day).find(entry=>entry.meal===meal)?.color||"";
   optionsPanel.dataset.palette=selectedColor;
   const heading=document.createElement("div");heading.className="calendar-wide-options-heading";
@@ -1412,6 +1413,9 @@ function renderDayPreview(day,host){
   grid.appendChild(cell);
  }
  host.append(grid,optionsPanel);
+ // Keep the same meal expanded across the save -> publish refresh.
+ if(expandedCalendarMealDate===day.date&&optionButtons.has(expandedCalendarMealKey))
+  toggleOptions(expandedCalendarMealKey);
  // New peri prescription previews are read only. Historical protocols remain
  // available strictly for comparison, never mixed into the new totals.
  const livePeriOptions=liveCalendarPlans[day.date]?.peri_events||[];
