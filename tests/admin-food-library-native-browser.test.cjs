@@ -107,3 +107,37 @@ test("Food Library operates inside the admin shell without changing URL or live 
   await browser.close();
  }
 });
+
+
+test("Food Library opens from mobile More menu without a page navigation",async()=>{
+ const browser=await chromium.launch({headless:true});
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ const errors=[];
+ page.on("pageerror",error=>errors.push(error.message));
+ await page.route("**/api/**",async route=>{
+  const path=new URL(route.request().url()).pathname;
+  const payload=path==="/api/me"?
+   {user:{id:"test",name:"Test Admin",email:"test@localhost",role:"admin",has_photo:false},csrf:"test-csrf"}:
+   path==="/api/v2/athletes"?{athletes:[]}:
+   path==="/api/v2/food-library"?{foods:[{
+    id:"mock-apple",display_name:"Maçã",category:"Fruta",notes:"",
+    variant:"plain",edible_fraction:1,kcal:52,protein_g:.3,carbs_g:14,fat_g:.2
+   }],page:1,pages:1,total:1,categories:["Fruta"]}:
+   {today:"2026-11-09",players:[],events:[],recent:[],days:["2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-14","2026-11-15"]};
+  return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(payload)});
+ });
+ try{
+  await page.goto("http://127.0.0.1:8765/admin-microcycles.html",{waitUntil:"domcontentloaded"});
+  await page.locator("#admin-workspace").waitFor({state:"visible"});
+  const url=page.url();
+  await page.locator(".tm-admin-more-trigger").click();
+  await page.locator("#tm-admin-nav-food-library").click();
+  await page.locator("#tm-food-library-page").waitFor({state:"visible"});
+  await page.locator("#tm-food-library-page #rows").getByText("Maçã").waitFor({state:"visible"});
+  assert.equal(page.url(),url);
+  await page.screenshot({path:"food-library-native-mobile.png",fullPage:true});
+  assert.deepEqual(errors,[]);
+ }finally{
+  await browser.close();
+ }
+});
