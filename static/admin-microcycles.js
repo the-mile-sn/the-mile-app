@@ -224,7 +224,7 @@ async function loadModel(){
  resetSupplementForAthlete(athleteId);
  resetPlayerPreviewForAthlete(athleteId);
  resetPeriForAthlete(athleteId);
- selectedCalendarDay=null;selectedNutritionWeek=null;
+ selectedCalendarDay=null;selectedNutritionWeek=null;expandedCalendarMealDate=null;expandedCalendarMealKey=null;
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
  model=nextModel;profileEditing=false;render();renderProfileSummary();
