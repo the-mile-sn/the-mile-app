@@ -66,6 +66,18 @@ html[data-admin-theme="light"] .calendar-day.calendar-review{
   background:#fff5df;border-color:#d9a94d
 }
 html[data-admin-theme="light"] .calendar-day.calendar-review span{color:#805d24}
+ /* Off cards are pale red in light mode, while meal colors remain untouched. */
+ html[data-admin-theme="light"] .calendar-day.calendar-off{
+   background:#faecee;
+   border-color:#dca6ad;
+   color:#263448;
+ }
+ html[data-admin-theme="light"] .calendar-day.calendar-off>strong{
+   color:#263448;
+ }
+ html[data-admin-theme="light"] .calendar-day.calendar-off>span:not(.calendar-event-mark){
+   color:#98515c;
+ }
 html[data-admin-theme="light"] .calendar-day.calendar-selected{box-shadow:inset 0 0 0 1px #79869a}
 html[data-admin-theme="light"] .day-color-dot{background:#cbd2de}
 html[data-admin-theme="light"] .menu-color-label:not([class*="meal-"]){background:#e6eaf0!important;color:#465263}
