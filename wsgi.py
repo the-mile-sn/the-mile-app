@@ -33,16 +33,41 @@ SEEDS = [
      "variant": "plain", "edible_fraction": 1, "reference_g": 10, "kcal": 900, "protein_g": 0, "carbs_g": 0, "fat_g": 100, "notes": "Exemplo de biblioteca"}
 ]
 
+DEMO_PLANS = [
+    {"id": "demo-plan-azul", "name": "Jogador Demonstração - Plano azul",
+     "athlete_id": "demo-athlete-1", "player_id": "demo-user-1", "player_name": "Jogador Demonstração",
+     "plan_type": "Plano azul", "origin": "demo", "created_at": 1794211200, "updated_at": 1794211200,
+     "publication": {"state": "draft", "pending_changes": False},
+     "meals": [{"name": "Pequeno almoço", "options": [{"foods": [
+         {"id": "demo-aveia", "grams": 75, "display_quantity": "75 g"},
+         {"id": "demo-banana", "grams": 110, "display_quantity": "110 g"}
+     ], "notes": [], "order": [{"type": "food", "index": 0}, {"type": "food", "index": 1}]}]}]},
+    {"id": "demo-plan-laranja", "name": "Jogador Demonstração - Plano laranja",
+     "athlete_id": "demo-athlete-1", "player_id": "demo-user-1", "player_name": "Jogador Demonstração",
+     "plan_type": "Plano laranja", "origin": "demo", "created_at": 1794211200, "updated_at": 1794211200,
+     "publication": {"state": "published", "pending_changes": False, "published_at": 1794211200},
+     "meals": [{"name": "Almoço", "options": [{"foods": [
+         {"id": "demo-frango", "grams": 180, "display_quantity": "180 g"},
+         {"id": "demo-arroz", "grams": 220, "display_quantity": "220 g"}
+     ], "notes": [], "order": [{"type": "food", "index": 0}, {"type": "food", "index": 1}]}]}]}
+]
+
 def connect():
     connection = sqlite3.connect(DEMO_DB, timeout=8)
     connection.row_factory = sqlite3.Row
     connection.execute("CREATE TABLE IF NOT EXISTS demo_foods (id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
+    connection.execute("CREATE TABLE IF NOT EXISTS demo_plans (id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
     with LOCK:
         count = connection.execute("SELECT COUNT(*) FROM demo_foods").fetchone()[0]
         if count == 0:
             connection.executemany("INSERT INTO demo_foods (id,payload) VALUES (?,?)",
                                    [(x["id"], json.dumps(x, ensure_ascii=False)) for x in SEEDS])
             connection.commit()
+        plan_count = connection.execute("SELECT COUNT(*) FROM demo_plans").fetchone()[0]
+        if plan_count == 0:
+            connection.executemany("INSERT INTO demo_plans (id,payload) VALUES (?,?)",
+                                   [(x["id"], json.dumps(x, ensure_ascii=False)) for x in DEMO_PLANS])
+        connection.commit()
     return connection
 
 def output(start_response, payload, code=200, content_type="application/json; charset=utf-8", method="GET"):
@@ -65,10 +90,67 @@ def catalog(environ, start_response, path, method):
                           "email": "demo@the-mile.invalid", "role": "admin", "has_photo": False},
                           "csrf": "demo-csrf-only"}, method=method)
     if path == "/api/v2/athletes" and method in ("GET", "HEAD"):
-        return output(start_response, {"athletes": []}, method=method)
+        return output(start_response, {"athletes": [{"id": "demo-athlete-1", "user_id": "demo-user-1",
+                           "name": "Jogador Demonstração", "sex": "M", "has_photo": False}]}, method=method)
     if path == "/api/v2/admin/dashboard" and method in ("GET", "HEAD"):
         return output(start_response, {"players": [], "events": [], "recent": [], "days": [],
                                        "today": "2026-11-09", "week": []}, method=method)
+
+    if path == "/api/v2/food-plan-drafts" and method == "GET":
+        with connect() as con:
+            drafts = [json.loads(row["payload"]) for row in con.execute("SELECT payload FROM demo_plans ORDER BY id")]
+        return output(start_response, {"drafts": drafts}, method=method)
+    if (path == "/api/v2/food-plan-drafts" and method == "POST") or (
+            path.startswith("/api/v2/food-plan-drafts/") and method in ("POST", "DELETE")):
+        if environ.get("HTTP_X_CSRF_TOKEN") != "demo-csrf-only":
+            return output(start_response, {"error": "csrf_required"}, 403, method=method)
+        if path == "/api/v2/food-plan-drafts" and method == "POST":
+            size = int(environ.get("CONTENT_LENGTH", "0") or 0)
+            if size > 300000:
+                return output(start_response, {"error": "payload_too_large"}, 413, method=method)
+            try:
+                draft = json.loads(environ["wsgi.input"].read(size))
+            except (ValueError, UnicodeDecodeError):
+                return output(start_response, {"error": "invalid_json"}, 400, method=method)
+            if not isinstance(draft, dict):
+                return output(start_response, {"error": "invalid_draft"}, 400, method=method)
+            ident = str(draft.get("id") or ("demo-plan-" + uuid.uuid4().hex[:12]))
+            draft["id"] = ident
+            draft["updated_at"] = 1794211200
+            draft.setdefault("publication", {"state": "draft", "pending_changes": False})
+            if draft["publication"].get("state") == "published":
+                draft["publication"]["pending_changes"] = True
+            with connect() as con:
+                con.execute("INSERT OR REPLACE INTO demo_plans(id,payload) VALUES (?,?)",
+                            (ident, json.dumps(draft, ensure_ascii=False)))
+                con.commit()
+            return output(start_response, {"id": ident, "updated_at": draft["updated_at"],
+                                           "publication": draft["publication"]}, method=method)
+        ident = unquote(path.removeprefix("/api/v2/food-plan-drafts/").removesuffix("/publish"))
+        with connect() as con:
+            row = con.execute("SELECT payload FROM demo_plans WHERE id=?", (ident,)).fetchone()
+            if not row:
+                return output(start_response, {"error": "plan_not_found"}, 404, method=method)
+            draft = json.loads(row["payload"])
+            if path.endswith("/publish") and method == "POST":
+                draft["publication"] = {"state": "published", "pending_changes": False,
+                                         "published_at": 1794211200}
+                con.execute("UPDATE demo_plans SET payload=? WHERE id=?",
+                            (json.dumps(draft, ensure_ascii=False), ident))
+                con.commit()
+                return output(start_response, {"publication": draft["publication"]}, method=method)
+            if method == "DELETE":
+                con.execute("DELETE FROM demo_plans WHERE id=?", (ident,))
+                con.commit()
+                return output(start_response, {"deleted": True}, method=method)
+    if path.startswith("/api/v2/food-plan-drafts/") and method == "GET":
+        ident = unquote(path.split("/")[-1])
+        with connect() as con:
+            row = con.execute("SELECT payload FROM demo_plans WHERE id=?", (ident,)).fetchone()
+        return output(start_response, {"draft": json.loads(row["payload"])} if row else
+                      {"error": "plan_not_found"}, 200 if row else 404, method=method)
+    if path.startswith("/api/v2/athletes/") and "/reference-weights" in path and method == "GET":
+        return output(start_response, {"weights": [], "reference_weight_kg": 75}, method=method)
     if path == "/api/v2/food-library" and method == "GET":
         qs = parse_qs(environ.get("QUERY_STRING", ""))
         with connect() as con:
@@ -113,7 +195,7 @@ def catalog(environ, start_response, path, method):
             con.execute("DELETE FROM demo_foods WHERE id=?", (food_id,))
             con.commit()
         return output(start_response, {"archived": True}, method=method)
-    return output(start_response, {"error": "preview_only", "message": "Apenas a Biblioteca Alimentar usa dados de demonstração."}, 404, method=method)
+    return output(start_response, {"error": "preview_only", "message": "Os módulos nutricionais usam dados fictícios."}, 404, method=method)
 
 def application(environ, start_response):
     """Static backoffice with test-only mock API. Never connects to production."""
@@ -121,7 +203,7 @@ def application(environ, start_response):
     method = (environ.get("REQUEST_METHOD") or "GET").upper()
     if path == "/__preview_meta":
         return output(start_response, {"preview": True, "data": "simulated", "writes": "isolated_tmp_sqlite",
-                                       "prod_database": False, "feature": "native_food_library_20261109"}, method=method)
+                                       "prod_database": False, "feature": "native_nutrition_modules_20261109"}, method=method)
     if path == "/healthz":
         return output(start_response, b"ok", content_type="text/plain; charset=utf-8", method=method)
     if path.startswith("/api/"):
