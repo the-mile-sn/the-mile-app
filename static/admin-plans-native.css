@@ -2121,3 +2121,135 @@
 #tm-plan-page[data-admin-theme="light"]{--lib-panel:#fff;--lib-panel-2:#f0f2f6;--lib-border:#d9dfe7;--lib-fg:#1c2633;--lib-muted:#596675;color:var(--lib-fg)}
 #tm-plan-page #tm-plan-status{min-height:20px}
 @media(max-width:830px){#tm-plan-page .tm-library-layout .shell{padding:14px 10px 32px}}
+
+
+/* The Mile | Planos library list refinement (2026-11-09).
+   Presentation only. Restrict changes to #plan-entry; publication, editor,
+   preview, plan classification, old-copy distinction, and icon SVGs stay intact. */
+#tm-plan-page #plan-entry.plan-library{gap:17px!important}
+#tm-plan-page #plan-entry .plan-library-actions{margin-bottom:0}
+#tm-plan-page #plan-entry .plan-library-filters{
+ grid-template-columns:minmax(240px,1.9fr) minmax(195px,1fr) minmax(220px,1fr);
+ align-items:stretch;gap:10px;
+}
+#tm-plan-page #plan-entry .plan-library-filters>label{min-width:0}
+#tm-plan-page #plan-entry .plan-library-filters .tm-two-line-select,
+#tm-plan-page #plan-entry .plan-library-filters .plan-library-search-label input{
+ box-sizing:border-box;min-height:64px;height:64px;
+ border-radius:16px;border:1px solid var(--lib-border);
+ background:var(--lib-panel);box-shadow:none;
+ transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease;
+}
+#tm-plan-page #plan-entry .plan-library-search-label input{
+ display:block;width:100%;padding:0 18px;font-size:14px;
+ color:var(--lib-fg);
+}
+#tm-plan-page #plan-entry .plan-library-search-label input::placeholder{color:var(--lib-muted);opacity:.82}
+#tm-plan-page #plan-entry .plan-library-filters .tm-two-line-select:hover,
+#tm-plan-page #plan-entry .plan-library-filters .plan-library-search-label input:hover{border-color:color-mix(in srgb,var(--lib-muted) 55%,var(--lib-border))}
+#tm-plan-page #plan-entry .plan-library-filters .tm-two-line-select:focus-within,
+#tm-plan-page #plan-entry .plan-library-filters .plan-library-search-label input:focus-visible{
+ outline:2px solid #4382ad;outline-offset:2px;
+}
+#tm-plan-page #plan-entry .plan-library-filters .tm-select-caption{top:10px;font-size:11px}
+#tm-plan-page #plan-entry .plan-library-filters .tm-select-value{bottom:11px;font-size:14px;font-weight:500}
+#tm-plan-page #plan-entry .plan-library-table-wrap{
+ border:1px solid var(--lib-border);border-radius:17px;
+ background:var(--lib-panel);box-shadow:none;
+}
+#tm-plan-page #plan-entry .plan-library-table-heading{padding:0!important;min-height:0!important}
+#tm-plan-page #plan-entry #library-plan-count{display:none!important}
+#tm-plan-page #plan-entry .plan-library-table{width:100%;border-collapse:collapse}
+#tm-plan-page #plan-entry .plan-library-table th{
+ padding:15px 18px;background:var(--lib-panel-2);
+ color:var(--lib-muted);font-size:11px;font-weight:600;
+ line-height:1.35;letter-spacing:.09em;text-transform:uppercase;
+}
+#tm-plan-page #plan-entry .plan-library-table td{
+ padding:16px 18px;font-size:13px;line-height:1.45;
+ vertical-align:middle;border-top:1px solid var(--lib-border);
+}
+#tm-plan-page #plan-entry .plan-library-table td:first-child strong{
+ font-size:14px;font-weight:650;line-height:1.45;
+ color:var(--lib-fg);
+}
+#tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):hover>td{
+ background:color-mix(in srgb,var(--lib-panel-2) 45%,var(--lib-panel));
+}
+#tm-plan-page #plan-entry .plan-type-tag{
+ display:inline-flex;align-items:center;gap:7px;
+ max-width:100%;padding:6px 11px;border-radius:10px;
+ font-size:12px;font-weight:550;line-height:1.3;
+ vertical-align:middle;white-space:normal;
+}
+#tm-plan-page #plan-entry .plan-type-tag .plan-peri-icon{
+ width:17px;height:17px;flex:none;
+}
+#tm-plan-page #plan-entry .plan-state-label{
+ padding:6px 10px;border-radius:8px;font-size:11px;
+ font-weight:500;line-height:1.3;white-space:normal;
+}
+#tm-plan-page #plan-entry .plan-library-row-actions{gap:8px!important;align-items:center}
+#tm-plan-page #plan-entry .plan-library-row-actions [data-view-id],
+#tm-plan-page #plan-entry .plan-library-row-actions [data-edit-id]{
+ width:36px!important;min-width:36px!important;height:36px!important;
+ padding:7px!important;border-radius:11px;border:1px solid var(--lib-border);
+ background:var(--lib-panel-2);color:var(--lib-fg);
+ box-shadow:none;transition:background-color .16s ease,border-color .16s ease;
+}
+#tm-plan-page #plan-entry .plan-library-row-actions [data-view-id]:hover,
+#tm-plan-page #plan-entry .plan-library-row-actions [data-edit-id]:hover{
+ background:color-mix(in srgb,var(--lib-panel-2) 72%,var(--lib-muted));
+ border-color:color-mix(in srgb,var(--lib-muted) 45%,var(--lib-border));
+}
+#tm-plan-page #plan-entry .plan-library-row-actions button:focus-visible{
+ outline:2px solid #4382ad;outline-offset:2px;
+}
+#tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-table th{
+ background:#f2f4f7!important;color:#607084!important;
+}
+#tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-row-actions [data-view-id],
+#tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-row-actions [data-edit-id]{
+ background:#f5f7fa;color:#2d4054;border-color:#d6e0e9;
+}
+#tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-row-actions [data-view-id]:hover,
+#tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-row-actions [data-edit-id]:hover{background:#e9eff5}
+@media(min-width:701px){
+ #tm-plan-page #plan-entry .plan-library-table-heading{display:none!important}
+}
+@media(max-width:900px) and (min-width:701px){
+ #tm-plan-page #plan-entry .plan-library-filters{
+  grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:8px;
+ }
+ #tm-plan-page #plan-entry .plan-library-table th,
+ #tm-plan-page #plan-entry .plan-library-table td{padding-left:12px;padding-right:12px}
+}
+@media(max-width:700px){
+ #tm-plan-page #plan-entry.plan-library{gap:12px!important}
+ #tm-plan-page #plan-entry .plan-library-filters{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-filters .tm-two-line-select{
+  min-height:64px;height:64px;border-radius:14px;
+ }
+ #tm-plan-page #plan-entry .plan-library-filters .tm-select-value{font-size:13px}
+ #tm-plan-page #plan-entry .plan-library-table-heading{
+  display:flex!important;justify-content:flex-end!important;
+  align-items:center;min-height:47px!important;padding:6px 12px!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+ #tm-plan-page #plan-entry .plan-library-table{
+  min-width:610px!important;table-layout:fixed!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-table th,
+ #tm-plan-page #plan-entry .plan-library-table td{
+  padding:13px 10px!important;font-size:12px!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-table td:first-child strong{font-size:12px}
+ #tm-plan-page #plan-entry .plan-library-row-actions{gap:4px!important}
+ #tm-plan-page #plan-entry .plan-library-row-actions [data-view-id],
+ #tm-plan-page #plan-entry .plan-library-row-actions [data-edit-id]{
+  width:34px!important;min-width:34px!important;height:34px!important;
+ }
+ #tm-plan-page #plan-entry .plan-type-tag{font-size:11px;padding:5px 8px}
+}
