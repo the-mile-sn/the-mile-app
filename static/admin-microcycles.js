@@ -1411,7 +1411,7 @@ async function loadCalendar(){
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
   for(const day of data.days){
-    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback");if(!day.classification){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
+    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback")+(day.is_off?" calendar-off":"");if(!day.classification){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
     const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
@@ -2202,7 +2202,7 @@ $("dish-search").addEventListener("input",()=>{
 });
 $("dish-category-filter").addEventListener("change",()=>fetchDishPage(1).catch(e=>{$("dish-catalog-feedback").textContent="Erro nos filtros: "+e.message;}));
 
-const CALENDAR_EVENT_NAMES={training:"Treino",match:"Jogo",travel:"Viagem"};
+const CALENDAR_EVENT_NAMES={training:"Treino",match:"Jogo",travel:"Viagem",off:"Folga"};
 function calendarEventEndpoint(){return matchBase()+"/events";}
 function dayPartSelect(value,label){
  const field=document.createElement("label");field.textContent=label;
@@ -2232,7 +2232,7 @@ function renderUnifiedEvent(ev){
  const period=dayPartSelect(ev.session,"Período");
  const timeWrap=document.createElement("label");timeWrap.textContent="Hora do jogo";
  const time=document.createElement("input");time.type="time";time.value=ev.match_time||"";timeWrap.append(time);
- if(ev.kind==="match")controls.append(timeWrap);else controls.append(period.field);
+ if(ev.kind==="match")controls.append(timeWrap);else if(ev.kind!=="off")controls.append(period.field);
  if(ev.kind==="travel"){
   const label=document.createElement("label");label.textContent="Descrição";
   const text=document.createElement("input");text.value=ev.title;text.maxLength=100;text.required=true;label.append(text);controls.append(label);
@@ -2256,7 +2256,7 @@ function renderUnifiedEvent(ev){
     await saveMatchPeri(ev.id,pre.checkbox.checked,post.checkbox.checked);
    }else{
     await request(calendarEventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({
-      event_date:date.value,session:period.select.value,title:ev.kind==="travel"?controls.querySelector('input[maxlength="100"]').value:ev.title,
+      event_date:date.value,session:ev.kind==="off"?"morning":period.select.value,title:ev.kind==="travel"?controls.querySelector('input[maxlength="100"]').value:ev.title,
       ...(pre?{pre_override:pre.checkbox.checked?"auto":"off",post_override:post.checkbox.checked?"auto":"off"}:{})
     })});
    }
@@ -2283,7 +2283,7 @@ async function saveMatchPeri(matchId,pre,post){
 function syncCalendarEventForm(){
  const kind=$("calendar-new-kind").value,game=kind==="match",training=kind==="training";
  $("calendar-supp-options").hidden=kind!=="supplementation";
- $("calendar-new-session").closest("div").hidden=game||kind==="supplementation";
+ $("calendar-new-session").closest("div").hidden=game||kind==="supplementation"||kind==="off";
  $("calendar-new-time-wrap").hidden=!game;
  $("calendar-new-title-wrap").hidden=kind!=="travel";
  $("calendar-pre-wrap").hidden=!(game||training);
@@ -2348,7 +2348,7 @@ $("calendar-event-form").addEventListener("submit",async e=>{
   }else{
    await request(calendarEventEndpoint(),{method:"POST",body:JSON.stringify({
     event_date:date,kind,session:$("calendar-new-session").value,
-    title:kind==="training"?"Treino":$("calendar-new-title").value.trim()||"Viagem",
+    title:kind==="training"?"Treino":kind==="off"?"Folga":$("calendar-new-title").value.trim()||"Viagem",
     ...(kind==="training"?{pre_override:$("calendar-new-pre").checked?"auto":"off",
       post_override:$("calendar-new-post").checked?"auto":"off"}:{})
    })});

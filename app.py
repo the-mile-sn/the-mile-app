@@ -1604,7 +1604,7 @@ def application(env, start_response):
                 try:
                     from calendar_v2 import classify_range
                     matches = microcycles_v2.list_matches(c, aid)
-                    days = classify_range(start, end, [m['match_date'] for m in matches])
+                    days = calendar_v2.effective_days(c,aid,classify_range(start, end, [m['match_date'] for m in matches]))
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
                 event_data=events_v2.list_events(c,aid,start,end)
@@ -1628,6 +1628,7 @@ def application(env, start_response):
                         manual,variants,matches,responses,today)
                     effective_colors[item['date']]={meal:{'color':value['color'],'source':value['source']}
                         for meal,value in resolved.items()}
+                effective_colors=calendar_v2.effective_colors(c,aid,days,model_data)
                 return respond(200, {'matches': matches, 'days': days,'events':event_data,
                                      'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
@@ -2072,6 +2073,8 @@ def application(env, start_response):
                 if method == 'POST':
                     body = read_json(env)
                     try:
+                        if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (aid,body.get('match_date'))).fetchone():
+                            raise Problem(409,'day_has_off_event')
                         match = microcycles_v2.add_match(c, aid, body.get('match_date'), body.get('match_time'))
                     except ValueError:
                         raise Problem(400, 'invalid_or_duplicate_match')
@@ -2087,6 +2090,8 @@ def application(env, start_response):
                     raise Problem(404, 'not_found')
                 body = read_json(env)
                 try:
+                    if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (parts[4],body.get('match_date'))).fetchone():
+                        raise Problem(409,'day_has_off_event')
                     match = microcycles_v2.update_match(c, parts[4], parts[6], body.get('match_date'), body.get('match_time'))
                 except ValueError:
                     raise Problem(400, 'invalid_or_duplicate_match')
@@ -2383,22 +2388,21 @@ def application(env, start_response):
                 try:
                     if path.endswith('/menus'):
                         menus=microcycles_v2.list_menus(c,link['athlete_id'],first,last)
-                        classes=calendar_v2.classify_range(first,last,[m['match_date'] for m in microcycles_v2.list_matches(c,link['athlete_id'])])
+                        classes=calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first,last,[m['match_date'] for m in microcycles_v2.list_matches(c,link['athlete_id'])]))
                         class_by_day={d['date']:d['classification'] for d in classes}
                         model_data=microcycles_v2.get_model(c,link['athlete_id'])
                         class_meals={row['name']:row['meals'] for row in model_data['classifications']}
-                        overrides={(x['meal_date'],x['meal']):x['color'] for x in day_colors_v2.list_colors(c,link['athlete_id'],first,last)}
+                        colors_by_day=calendar_v2.effective_colors(c,link['athlete_id'],classes,model_data)
                         for menu in menus:
                             key=(menu['menu_date'],menu['meal'])
                             base=class_meals.get(class_by_day.get(menu['menu_date']) or 'Geral',{}).get(menu['meal'])
-                            color=overrides.get(key,base)
-                            menu['effective_color']=None if color=='none' else color
+                            menu['effective_color']=colors_by_day.get(menu['menu_date'],{}).get(menu['meal'],{}).get('color')
                         return respond(200,{'menus':menus})
-                    days = calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])])
+                    days = calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])]))
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')

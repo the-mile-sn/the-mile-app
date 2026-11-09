@@ -2714,3 +2714,9 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
 
 /* Empty clinical status areas should not reserve space. */
 #tm-assessments-error:empty,#tm-forms-error:empty{display:none!important}
+
+/* Off day: quiet warm cue; nutritional meal strips remain untouched. */
+.calendar-day.calendar-off{background:#392427;border-color:#c77c7c;outline:none}
+.calendar-day.calendar-off>span:not(.calendar-event-mark){color:#e7aaaa}
+body.tm-light-mode .calendar-day.calendar-off,[data-theme="light"] .calendar-day.calendar-off{background:#f9ebeb;border-color:#dcaaaa}
+body.tm-light-mode .calendar-day.calendar-off>span:not(.calendar-event-mark),[data-theme="light"] .calendar-day.calendar-off>span:not(.calendar-event-mark){color:#a44c4c}
