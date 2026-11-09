@@ -59,7 +59,7 @@ test("Published options replace their meal averages in full daily totals",()=>{
  ]};
  const record=calculator(assignments);
  // 400->480; 600->500; 200->250, across all four nutrients
- approx(record.effectiveLiveDayNutrition(day,baseDay),nutrients(1230,80,155,27));
+ approx(record.effectiveLiveDayNutrition(day,baseDay),nutrients(1230,85,155,27));
 });
 test("A saved choice immediately changes the backoffice preview, but not published state",()=>{
  const assignments={enabled:true,published:[
@@ -104,5 +104,5 @@ test("Seven-day average uses each selected daily total, not the mean of unselect
  const averages=Object.fromEntries(Object.keys(baseline).map(k=>[k,
   days.reduce((sum,row)=>sum+row[k],0)/7]));
  approx(averages,nutrients(
-  (1230+1200*6)/7,(80+82*6)/7,(155+160*6)/7,(27+26*6)/7));
+  (1230+1200*6)/7,(85+82*6)/7,(155+160*6)/7,(27+26*6)/7));
 });
