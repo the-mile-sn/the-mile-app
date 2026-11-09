@@ -1385,7 +1385,7 @@ def application(env, start_response):
                 model_data=microcycles_v2.get_model(c,aid)
                 classes={row['name']:row['meals'] for row in model_data['classifications']}
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
-                days=calendar_v2.classify_range(start,end,[m['match_date'] for m in matches])
+                days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(start,end,[m['match_date'] for m in matches]))
                 # Optional, read-only scenario simulation. Some deployments do not
                 # have the admin monitoring schema yet. Never create tables here.
                 required={'v2_scenario_cells','v2_post_match_responses','v2_monitoring_audit'}
