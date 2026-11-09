@@ -197,6 +197,7 @@ def _resolve_peri_for_day(drafts, library, events):
                 "phase": phase, "title": PERI_LABELS[phase],
                 "source_meal_name": matching[0].get("name") if len(matching) == 1 else "",
                 "draft_id": entry["id"], "updated_at": entry["updated_at"],
+                "publication_state": entry["publication_state"],
                 "deduplicated_match_source": bool(event.get("deduplicated_match_source")),
             })
             rows.append(detail)
@@ -253,6 +254,7 @@ def resolve(c, athlete_id, colors_by_day, events=None, matches=None, match_overr
             preview.update({
                 "color": color, "draft_id": entry["id"],
                 "source_meal_name": meal.get("name"),
+                "publication_state": entry["publication_state"],
                 "updated_at": entry["updated_at"],
             })
             meals[slot] = preview
