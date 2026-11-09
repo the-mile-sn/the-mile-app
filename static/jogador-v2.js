@@ -1,7 +1,7 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
 let playerSessionEpoch=0;
-let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
+let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
 // A week swipe lands on its boundary: previous Sunday, next Monday.
@@ -38,7 +38,7 @@ function revokePlayerView(){
  for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
- calendarEvents=[];periMeals=[];dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
+ calendarEvents=[];periMeals=[];publishedMealChoices={};dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
  weeklyContext=null;weeklySelection=null;menuSelectedDate=null;dishIndex=[];selectedColor=null;
@@ -486,6 +486,17 @@ function assignedColor(date,meal,classification){
  if(own)return own;
  return model.find(c=>c.name===(classification||"Geral"))?.meals?.[meal]||null;
 }
+// Date-specific nutritionist choices are an opt-in overlay on immutable Planos.
+ // No published choice (or a stale reference) means all Planos options remain.
+function datedPlanOptions(date,meal,color,assignments=publishedMealChoices){
+ const options=plans[color]?.[meal]||[];
+ const selected=assignments[date+"|"+meal];
+ if(!selected||selected.source_color!==color)return options;
+ const index=selected.option_index-1,choice=options[index];
+ if(!choice||choice.option_ref!==selected.option_ref||
+    choice.source_draft_id!==selected.source_draft_id)return options;
+ return [choice];
+}
 // Read-only nutritional parity check, never rendered and never persisted.
 let scenarioNutritionPreviewByDay={};
 let scenarioNutritionParityByDay={};
@@ -522,7 +533,7 @@ function dayNutritionTotal(entry){
  for(const meal of meals){
   const color=assignedColor(entry.date,meal,entry.classification);
   if(!color)continue;
-  const avg=average(plans[color]?.[meal]||[]);
+  const avg=average(datedPlanOptions(entry.date,meal,color));
   if(!avg)return null;
   count++;for(const k in total)total[k]+=avg[k];
  }
@@ -585,7 +596,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   if(meal==="lunch")appendWeeklyEvents(grid,dates,"morning");
   if(meal==="dinner")appendWeeklyEvents(grid,dates,"afternoon");
   for(let i=0;i<7;i++){
-   const color=assignedColor(dates[i],meal,r.days.find(e=>e.date===dates[i])?.classification),avg=color?average(plans[color]?.[meal]||[]):null;
+   const color=assignedColor(dates[i],meal,r.days.find(e=>e.date===dates[i])?.classification),avg=color?average(datedPlanOptions(dates[i],meal,color)):null;
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";markWeeklyColumn(empty,dates[i]);grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");markWeeklyColumn(b,dates[i]);
@@ -613,7 +624,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const title=document.createElement("strong");title.textContent=names[meal]||meal;
   const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
   const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
-  const options=plans[color]?.[meal]||[],avg=average(options);
+  const options=datedPlanOptions(date,meal,color),avg=average(options);
   if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
   if(meal==="lunch"||meal==="dinner"){
    const menu=weekMenus.find(x=>x.menu_date===date&&x.meal===meal);
@@ -1213,6 +1224,7 @@ async function overview(){
   }).catch(()=>{});
 
  }
+ publishedMealChoices=Object.fromEntries((r.meal_option_selections||[]).filter(choice=>!choice.event_id).map(choice=>[choice.meal_date+"|"+choice.meal_key,choice]));
  model=r.classifications;meals=r.meals;canonicalMealColorsByDay=r.effective_colors||{};dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  lastOverviewPresentation={weekKey,dateKey:d,mode:overviewMode};
@@ -1337,12 +1349,13 @@ async function overview(){
      const last=previousCalendar?.days?.find(x=>x.date===priorSunday);
      if(!last)return;
      const overrides=Object.fromEntries((previousCalendar.meal_color_overrides||[]).map(x=>[x.meal_date+"|"+x.meal,x.color]));
+     const priorSelections=Object.fromEntries((previousCalendar.meal_option_selections||[]).filter(x=>!x.event_id).map(x=>[x.meal_date+"|"+x.meal_key,x]));
      const sum={kcal:0,protein_g:0,carbs_g:0,fat_g:0};let assignedCount=0;
      for(const meal of previousCalendar.meals||[]){
       const own=overrides[priorSunday+"|"+meal];
       const color=own==="none"?null:own||(previousCalendar.classifications||[]).find(x=>x.name===(last.classification||"Geral"))?.meals?.[meal];
       if(!color)continue;
-      const portion=average(plans[color]?.[meal]||[]);
+      const portion=average(datedPlanOptions(priorSunday,meal,color,priorSelections));
       if(!portion)return;
       for(const nutrient in sum)sum[nutrient]+=portion[nutrient];
       assignedCount++;
@@ -1417,7 +1430,7 @@ async function overview(){
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   section.append(head);
   if(color||menu){
-   const options=plans[color]?.[meal]||[];
+   const options=datedPlanOptions(d,meal,color);
    const avg=average(options);
    if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
    if(menu){const p=document.createElement("div");p.className="menu-line meal-menu-card";p.textContent=menu.value;section.append(p);}
