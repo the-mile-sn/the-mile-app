@@ -1,7 +1,7 @@
 "use strict";(()=>{
 const nativeRoot=document.getElementById("tm-plan-page");
 const $=id=>nativeRoot?nativeRoot.querySelector('[id="'+(id==="status"?"tm-plan-status":id)+'"]'):document.getElementById(id);
-const $=selector=>(nativeRoot||document).querySelectorAll(selector);
+const queryAll=selector=>(nativeRoot||document).querySelectorAll(selector);
 const query=selector=>(nativeRoot||document).querySelector(selector);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),fmt=v=>Number(v||0).toLocaleString("pt-PT",{maximumFractionDigits:1}),fmtKcal=v=>Number(v||0).toLocaleString("pt-PT",{maximumFractionDigits:0});
 let alternativeParent=null,draftIndex=[],selectedSearchPlayer="",players=[],editingFood=-1,foods=[],foodById=new Map(),plan={id:"",name:"Novo plano alimentar",player_id:"",athlete_id:"",player_name:"",plan_type:"",meals:[]},active=-1,option=0;
@@ -98,7 +98,7 @@ function renderPlanReference(){
    planRef.error?"Não foi possível obter o Peso de referência.":"A consultar Peso de referência…";
  if(note){note.textContent=label;if(valid)note.dataset.tmMobileWeight=fmt(w)+" kg";else delete note.dataset.tmMobileWeight;}
  const previewNote=$("plan-preview-weight");if(previewNote)previewNote.textContent=label;
- $("[data-plan-preview-kg]").forEach(el=>{
+ queryAll("[data-plan-preview-kg]").forEach(el=>{
   const index=Number(el.dataset.planPreviewKg);
   el.textContent=valid?fmt(values[index]/w)+(index===0?" kcal/kg":" g/kg"):"";
  });
@@ -151,7 +151,7 @@ function renderPersistence(){
  save.disabled=saveBusy||publishBusy||(!dirty&&!persistenceError);
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
 }
-const refreshSelectDisplays=()=>$(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
+const refreshSelectDisplays=()=>queryAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
 
 const macro=(values,rounded=false)=>'<div class="macro-values">'+values.map((v,i)=>'<span class="macro m'+i+'"><b>'+fmt(v)+'</b><small>'+(i===0?"kcal":"g")+'</small></span>').join("")+'</div>';
 function draw(){
@@ -175,29 +175,29 @@ function draw(){
     '<div class="plan-inline-note"><textarea id="new-plan-note" rows="2" placeholder="Adicionar nota" aria-label="Adicionar nota"></textarea><button type="button" id="add-note">OK</button></div><div class="meal-controls"><button id="add-option">+ Adicionar opção</button><button id="add-meal-inline">+ Adicionar refeição</button><button id="delete-option" class="delete-inline" type="button">Apagar opção</button>'+'</div>'+(plan.plan_type==="Plano Peri-jogo"?'<section class="peri-timing-panel">'+timingOrganizer(o)+'</section>':'')+
     '':'')+'</section>';
   }).join("");
-  $("[data-toggle]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.toggle);active=active===i?-1:i;option=0;editingFood=-1;draw()});
-  $("[data-open-meal-rename]").forEach(btn=>btn.onclick=e=>{e.stopPropagation();const panel=query('[data-meal-rename-menu="'+btn.dataset.openMealRename+'"]');$(".meal-rename-menu").forEach(other=>{if(other!==panel)other.hidden=true});panel.hidden=!panel.hidden;btn.setAttribute("aria-expanded",String(!panel.hidden));});
-  $("[data-select-meal-name]").forEach(btn=>btn.onclick=()=>{const meal=plan.meals[Number(btn.dataset.selectMealName)];meal.name=btn.dataset.mealName;delete meal.applies_to;draw()});
+  queryAll("[data-toggle]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.toggle);active=active===i?-1:i;option=0;editingFood=-1;draw()});
+  queryAll("[data-open-meal-rename]").forEach(btn=>btn.onclick=e=>{e.stopPropagation();const panel=query('[data-meal-rename-menu="'+btn.dataset.openMealRename+'"]');queryAll(".meal-rename-menu").forEach(other=>{if(other!==panel)other.hidden=true});panel.hidden=!panel.hidden;btn.setAttribute("aria-expanded",String(!panel.hidden));});
+  queryAll("[data-select-meal-name]").forEach(btn=>btn.onclick=()=>{const meal=plan.meals[Number(btn.dataset.selectMealName)];meal.name=btn.dataset.mealName;delete meal.applies_to;draw()});
 
-    $("[data-option]").forEach(b=>b.onclick=()=>{option=Number(b.dataset.option);editingFood=-1;draw()});
+    queryAll("[data-option]").forEach(b=>b.onclick=()=>{option=Number(b.dataset.option);editingFood=-1;draw()});
   const periOption=plan.meals[active]?.options?.[option];
   const mirrorPeriTiming=(o,index)=>{const main=o.foods[index];if(!main)return;o.foods.forEach(food=>{if(food.alternative_to!==index)return;if(main.timing)food.timing=main.timing;else delete food.timing;if(main.timing_splits?.length)food.timing_splits=main.timing_splits.map(part=>({...part}));else delete food.timing_splits;})};
-  $("[data-clear-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.clearTiming),main=o.foods[index];if(!main)return;delete main.timing;delete main.timing_splits;mirrorPeriTiming(o,index);draw()});
-  $("[data-move-timing]").forEach(select=>select.onchange=()=>{
+  queryAll("[data-clear-timing]").forEach(button=>button.onclick=()=>{const o=periOption,index=Number(button.dataset.clearTiming),main=o.foods[index];if(!main)return;delete main.timing;delete main.timing_splits;mirrorPeriTiming(o,index);draw()});
+  queryAll("[data-move-timing]").forEach(select=>select.onchange=()=>{
    const o=periOption,index=Number(select.dataset.moveTiming),chosen=select.value,main=o.foods[index];
    if(!main)return;
    delete main.timing_splits;
    if(chosen)main.timing=chosen;else delete main.timing;
    mirrorPeriTiming(o,index);draw();
   });
-  $("[data-start-split]").forEach(button=>button.onclick=()=>{
+  queryAll("[data-start-split]").forEach(button=>button.onclick=()=>{
    const o=periOption,index=Number(button.dataset.startSplit),main=o.foods[index];
    const codes=periTimingCodes(o),first=main.timing||codes[0],second=codes.find(key=>key!==first);
    if(!first||!second){status("Adiciona dois momentos antes de dividir este alimento.");return}
    main.timing_splits=[{timing:first,share:0.5},{timing:second,share:0.5}];delete main.timing;
    mirrorPeriTiming(o,index);draw();
   });
-  $("[data-add-split]").forEach(button=>button.onclick=()=>{
+  queryAll("[data-add-split]").forEach(button=>button.onclick=()=>{
    const o=periOption,index=Number(button.dataset.addSplit),main=o.foods[index],codes=periTimingCodes(o);
    const next=codes.find(key=>!(main.timing_splits||[]).some(part=>part.timing===key));
    if(!next)return;
@@ -205,7 +205,7 @@ function draw(){
    const newCount=shares.length+1;main.timing_splits=[...shares.map(p=>({...p,share:1/newCount})),{timing:next,share:1/newCount}];
    mirrorPeriTiming(o,index);draw();
   });
-  $("[data-split-share]").forEach(input=>input.onchange=()=>{
+  queryAll("[data-split-share]").forEach(input=>input.onchange=()=>{
    const o=periOption,index=Number(input.dataset.splitShare),code=input.dataset.splitCode,number=Number(input.value.replace(",",".")),total=Number(input.dataset.splitTotal);
    if(!Number.isFinite(number)||!Number.isFinite(total)||number<=0||number>total){status("Indica uma quantidade superior a 0 e até "+total.toLocaleString("pt-PT")+".");draw();return}
    const main=o.foods[index],part=main.timing_splits?.find(p=>p.timing===code);
@@ -213,7 +213,7 @@ function draw(){
    part.share=number/total;
    mirrorPeriTiming(o,index);draw();
   });
-  $("[data-remove-split]").forEach(button=>button.onclick=()=>{
+  queryAll("[data-remove-split]").forEach(button=>button.onclick=()=>{
    const o=periOption,index=Number(button.dataset.removeSplit),code=button.dataset.splitCode,main=o.foods[index];
    const remaining=(main.timing_splits||[]).filter(part=>part.timing!==code);
    if(remaining.length===1){main.timing=remaining[0].timing;delete main.timing_splits}
@@ -221,8 +221,8 @@ function draw(){
    else{const total=remaining.reduce((sum,p)=>sum+p.share,0);main.timing_splits=remaining.map(p=>({...p,share:p.share/total}))}
    mirrorPeriTiming(o,index);draw();
   });
-  $("[data-shift-timing]").forEach(btn=>btn.onclick=()=>{const o=periOption,code=btn.dataset.shiftTiming,direction=Number(btn.dataset.direction);const list=periTimingCodes(o);const index=list.indexOf(code),target=index+direction;if(index<0||target<0||target>=list.length)return;[list[index],list[target]]=[list[target],list[index]];o.timing_groups=list;draw()});
-  $("[data-remove-timing]").forEach(btn=>btn.onclick=()=>{
+  queryAll("[data-shift-timing]").forEach(btn=>btn.onclick=()=>{const o=periOption,code=btn.dataset.shiftTiming,direction=Number(btn.dataset.direction);const list=periTimingCodes(o);const index=list.indexOf(code),target=index+direction;if(index<0||target<0||target>=list.length)return;[list[index],list[target]]=[list[target],list[index]];o.timing_groups=list;draw()});
+  queryAll("[data-remove-timing]").forEach(btn=>btn.onclick=()=>{
    const o=periOption,code=btn.dataset.removeTiming;
    o.timing_groups=(o.timing_groups||[]).filter(x=>x!==code);
    o.foods.forEach(food=>{
@@ -236,11 +236,11 @@ function draw(){
    });draw();
   });
   if($("peri-add-timing"))$("peri-add-timing").onclick=()=>{const code=$("peri-new-timing")?.value;if(!code)return;const o=periOption;o.timing_groups=o.timing_groups||[];if(!o.timing_groups.includes(code))o.timing_groups.push(code);draw()};
-  $("[data-add-alternative]").forEach(b=>b.onclick=()=>{alternativeParent=Number(b.dataset.addAlternative);const input=$("food-search-input");input?.scrollIntoView({behavior:"smooth",block:"center"});input?.focus();status("Pesquisa o alimento alternativo, indica a quantidade e clica em Adicionar alimento. A alternativa ficará ligada ao alimento selecionado.")});
-  $("[data-edit-food]").forEach(b=>b.onclick=()=>{editingFood=Number(b.dataset.editFood);draw();query("[data-edit-grams]")?.focus()});
-  $("[data-cancel-grams]").forEach(b=>b.onclick=()=>{editingFood=-1;draw()});
-  $("[data-save-grams]").forEach(b=>b.onclick=()=>{const fi=Number(b.dataset.saveGrams),el=query('[data-edit-grams="'+fi+'"]'),grams=Number(el?.value);if(!Number.isFinite(grams)||grams<=0||grams>100000){status("Indica uma quantidade válida em gramas.");return}const item=plan.meals[active].options[option].foods[fi];item.grams=grams;item.display_quantity=query(`[data-display-quantity="${fi}"]`)?.value.trim()||"";item.display_name=query(`[data-display-name="${fi}"]`)?.value.trim()||"";editingFood=-1;draw();status("Quantidade alterada neste editor. Para ficar guardada no plano e refletir no Calendário, clica em Guardar rascunho.");});
-  $("[data-suggest-display]").forEach(b=>b.onclick=()=>{
+  queryAll("[data-add-alternative]").forEach(b=>b.onclick=()=>{alternativeParent=Number(b.dataset.addAlternative);const input=$("food-search-input");input?.scrollIntoView({behavior:"smooth",block:"center"});input?.focus();status("Pesquisa o alimento alternativo, indica a quantidade e clica em Adicionar alimento. A alternativa ficará ligada ao alimento selecionado.")});
+  queryAll("[data-edit-food]").forEach(b=>b.onclick=()=>{editingFood=Number(b.dataset.editFood);draw();query("[data-edit-grams]")?.focus()});
+  queryAll("[data-cancel-grams]").forEach(b=>b.onclick=()=>{editingFood=-1;draw()});
+  queryAll("[data-save-grams]").forEach(b=>b.onclick=()=>{const fi=Number(b.dataset.saveGrams),el=query('[data-edit-grams="'+fi+'"]'),grams=Number(el?.value);if(!Number.isFinite(grams)||grams<=0||grams>100000){status("Indica uma quantidade válida em gramas.");return}const item=plan.meals[active].options[option].foods[fi];item.grams=grams;item.display_quantity=query(`[data-display-quantity="${fi}"]`)?.value.trim()||"";item.display_name=query(`[data-display-name="${fi}"]`)?.value.trim()||"";editingFood=-1;draw();status("Quantidade alterada neste editor. Para ficar guardada no plano e refletir no Calendário, clica em Guardar rascunho.");});
+  queryAll("[data-suggest-display]").forEach(b=>b.onclick=()=>{
     const fi=Number(b.dataset.suggestDisplay);
     const f=plan.meals[active].options[option].foods[fi];
     const ref=foodById.get(f.id),notes=String(ref?.notes||"");
@@ -255,14 +255,14 @@ function draw(){
     query('[data-display-quantity="'+fi+'"]').value=display;
     status("Sugestão: "+display+". Confirma a equivalência e guarda.");
   });
-  $("[data-edit-grams]").forEach(el=>el.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();query('[data-save-grams="'+el.dataset.editGrams+'"]')?.click()}if(e.key==="Escape"){editingFood=-1;draw()}});
-  $("[data-remove]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.remove);ensureOrder(o);o.foods.splice(idx,1);o.foods.forEach(f=>{if(f.alternative_to===idx)delete f.alternative_to;else if(f.alternative_to>idx)f.alternative_to--});o.order=o.order.filter(x=>!(x.type==="food"&&x.index===idx)).map(x=>x.type==="food"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
+  queryAll("[data-edit-grams]").forEach(el=>el.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();query('[data-save-grams="'+el.dataset.editGrams+'"]')?.click()}if(e.key==="Escape"){editingFood=-1;draw()}});
+  queryAll("[data-remove]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.remove);ensureOrder(o);o.foods.splice(idx,1);o.foods.forEach(f=>{if(f.alternative_to===idx)delete f.alternative_to;else if(f.alternative_to>idx)f.alternative_to--});o.order=o.order.filter(x=>!(x.type==="food"&&x.index===idx)).map(x=>x.type==="food"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
   if(query("[data-option-title]"))query("[data-option-title]").oninput=e=>{plan.meals[active].options[option].title=e.target.value;renderPersistence()};
-  $("[data-note]").forEach(el=>el.oninput=()=>{plan.meals[active].options[option].notes[Number(el.dataset.note)]=el.value;renderPersistence()});
-  $("[data-remove-note]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.removeNote);ensureOrder(o);o.notes.splice(idx,1);o.order=o.order.filter(x=>!(x.type==="note"&&x.index===idx)).map(x=>x.type==="note"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
-  $("[data-confirm-note]").forEach(b=>b.onclick=()=>{const field=query('[data-note="'+b.dataset.confirmNote+'"]');if(field){field.blur();b.classList.add("confirmed");status("Nota confirmada.")}});
-  let dragging=null;$(".drag-handle").forEach(handle=>{const row=handle.closest("[data-row-type]");handle.ondragstart=e=>{dragging={type:row.dataset.rowType,index:Number(row.dataset.rowIndex)};e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","reorder")};handle.ondragend=()=>{dragging=null;$(".drag-over").forEach(el=>el.classList.remove("drag-over"))}});
-  $(".nutrition-list [data-row-type]").forEach(row=>{row.ondragover=e=>{if(!dragging)return;e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drag-over")};row.ondragleave=()=>row.classList.remove("drag-over");row.ondrop=e=>{e.preventDefault();row.classList.remove("drag-over");if(!dragging)return;const o=plan.meals[active].options[option],order=ensureOrder(o),from=order.findIndex(x=>x.type===dragging.type&&x.index===dragging.index),to=order.findIndex(x=>x.type===row.dataset.rowType&&x.index===Number(row.dataset.rowIndex));if(from<0||to<0||from===to)return;const [moved]=order.splice(from,1);order.splice(to,0,moved);dragging=null;draw()}});
+  queryAll("[data-note]").forEach(el=>el.oninput=()=>{plan.meals[active].options[option].notes[Number(el.dataset.note)]=el.value;renderPersistence()});
+  queryAll("[data-remove-note]").forEach(b=>b.onclick=()=>{const o=plan.meals[active].options[option],idx=Number(b.dataset.removeNote);ensureOrder(o);o.notes.splice(idx,1);o.order=o.order.filter(x=>!(x.type==="note"&&x.index===idx)).map(x=>x.type==="note"&&x.index>idx?{...x,index:x.index-1}:x);draw()});
+  queryAll("[data-confirm-note]").forEach(b=>b.onclick=()=>{const field=query('[data-note="'+b.dataset.confirmNote+'"]');if(field){field.blur();b.classList.add("confirmed");status("Nota confirmada.")}});
+  let dragging=null;queryAll(".drag-handle").forEach(handle=>{const row=handle.closest("[data-row-type]");handle.ondragstart=e=>{dragging={type:row.dataset.rowType,index:Number(row.dataset.rowIndex)};e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","reorder")};handle.ondragend=()=>{dragging=null;queryAll(".drag-over").forEach(el=>el.classList.remove("drag-over"))}});
+  queryAll(".nutrition-list [data-row-type]").forEach(row=>{row.ondragover=e=>{if(!dragging)return;e.preventDefault();e.dataTransfer.dropEffect="move";row.classList.add("drag-over")};row.ondragleave=()=>row.classList.remove("drag-over");row.ondrop=e=>{e.preventDefault();row.classList.remove("drag-over");if(!dragging)return;const o=plan.meals[active].options[option],order=ensureOrder(o),from=order.findIndex(x=>x.type===dragging.type&&x.index===dragging.index),to=order.findIndex(x=>x.type===row.dataset.rowType&&x.index===Number(row.dataset.rowIndex));if(from<0||to<0||from===to)return;const [moved]=order.splice(from,1);order.splice(to,0,moved);dragging=null;draw()}});
   let selectedFoodId="";const search=$("food-search-input"),results=$("food-results");
   if(search&&results){
     const preview=$("selected-food-note");
@@ -286,7 +286,7 @@ function draw(){
   if($("add-note"))$("add-note").onclick=()=>{const value=$("new-plan-note")?.value.trim();if(!value)return;const o=plan.meals[active].options[option];o.notes=o.notes||[];ensureOrder(o);o.notes.push(value);o.order.push({type:"note",index:o.notes.length-1});draw()};
   if($("add-meal-inline"))$("add-meal-inline").onclick=showMealPicker;
   if($("delete-option"))$("delete-option").onclick=()=>{const m=plan.meals[active];if(m.options.length===1){status("Esta é a única opção. Para eliminar tudo, utiliza Apagar refeição.");return}if(!confirm("Apagar esta opção e todos os seus alimentos e notas?"))return;m.options.splice(option,1);option=Math.min(option,m.options.length-1);editingFood=-1;draw();status("Opção eliminada.")};
-  $("[data-delete-meal]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.deleteMeal),m=plan.meals[i];if(!m)return;if(!confirm("Apagar a refeição "+m.name+" e todas as suas opções, alimentos e notas?"))return;plan.meals.splice(i,1);if(active===i)active=-1;else if(active>i)active--;option=0;editingFood=-1;draw();status("Refeição eliminada.")});
+  queryAll("[data-delete-meal]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.deleteMeal),m=plan.meals[i];if(!m)return;if(!confirm("Apagar a refeição "+m.name+" e todas as suas opções, alimentos e notas?"))return;plan.meals.splice(i,1);if(active===i)active=-1;else if(active>i)active--;option=0;editingFood=-1;draw();status("Refeição eliminada.")});
 
 
   requestAnimationFrame(alignNutritionHeaders);
@@ -294,7 +294,7 @@ function draw(){
   ensurePlanReference();
 }
 function alignNutritionHeaders(){
-  $(".meal").forEach(meal=>{
+  queryAll(".meal").forEach(meal=>{
     const rail=meal.querySelector(".option-content .nutrition-row.food-row > .macro-values");
     if(!rail)return;
     const reference=rail.getBoundingClientRect();
