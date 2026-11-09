@@ -2712,16 +2712,5 @@ html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){
  }
 }
 
-/* Planning loads athlete details only after explicit selection. */
-#tm-admin-legacy .tm-planning-empty{
- margin:24px 0 8px;
- padding:20px 18px;
- border:1px solid var(--tm-light-border,rgba(127,127,127,.18));
- border-radius:14px;
- background:transparent;
- color:var(--lib-muted,#a5a9b3);
- font-size:13px;
- line-height:1.5;
-}
-#tm-admin-legacy .tm-planning-empty[hidden]{display:none!important}
-@media(max-width:680px){#tm-admin-legacy .tm-planning-empty{margin:16px 0 8px;padding:15px 14px}}
+/* Empty clinical status areas should not reserve space. */
+#tm-assessments-error:empty,#tm-forms-error:empty{display:none!important}
