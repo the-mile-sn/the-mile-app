@@ -93,6 +93,9 @@ def initialize(c):
     for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("field_position","TEXT"),("followup_plan","TEXT"),("followup_renewal_date","TEXT")):
         if name not in athlete_columns:
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
+    # Safe on both services, and OFF for all existing/future athletes.
+    if "meal_option_selection_enabled" not in athlete_columns:
+        c.execute("ALTER TABLE v2_athletes ADD COLUMN meal_option_selection_enabled INTEGER NOT NULL DEFAULT 0")
     if "match_time" not in columns:
         c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
     if "dish_id" not in _table_columns(c, "v2_weekly_menus"):
