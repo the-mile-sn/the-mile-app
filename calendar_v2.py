@@ -73,3 +73,55 @@ def classify_range(start, end, match_dates):
     matches = list(match_dates)
     return [classify_calendar_day((first + timedelta(days=offset)).isoformat(), matches)
             for offset in range((last - first).days + 1)]
+
+
+def effective_days(c, athlete_id, days):
+    """Keep the temporal MD classification while applying Off nutrition."""
+    if not days:
+        return []
+    off_dates = {r["event_date"] for r in c.execute(
+        "SELECT event_date FROM v2_calendar_events WHERE athlete_id=? "
+        "AND kind='off' AND event_date>=? AND event_date<=?",
+        (athlete_id, days[0]["date"], days[-1]["date"])).fetchall()}
+    result = []
+    for day in days:
+        original = day["classification"]
+        off = day["date"] in off_dates and original != "MD"
+        nutrition = original
+        if off:
+            if original and original.startswith("MD+1"):
+                nutrition = "Off (+1)"
+            elif original and original.startswith("MD+2"):
+                nutrition = "Off (+2)"
+            else:
+                nutrition = "Off"
+        result.append({**day, "temporal_classification": original,
+                       "classification": nutrition, "is_off": off,
+                       "off_conflict": day["date"] in off_dates and original == "MD"})
+    return result
+
+
+def effective_colors(c, athlete_id, days, model_data=None):
+    """Canonical meal colors for the calendar, menus and player app."""
+    from microcycles_v2 import get_model, MEALS
+    if not days:
+        return {}
+    if model_data is None:
+        model_data = get_model(c, athlete_id)
+    rows = {r["name"]: r["meals"] for r in model_data["classifications"]}
+    manual = {(r["meal_date"], r["meal"]): r["color"] for r in c.execute(
+        "SELECT meal_date,meal,color FROM v2_day_meal_colors WHERE athlete_id=? "
+        "AND meal_date>=? AND meal_date<=?",
+        (athlete_id,days[0]["date"],days[-1]["date"])).fetchall()}
+    result = {}
+    for day in days:
+        day_key = day["date"]
+        baseline = rows.get(day["classification"] or "Geral", {})
+        per_meal = {}
+        for meal in MEALS:
+            key = (day_key, meal)
+            color = manual[key] if key in manual else baseline.get(meal)
+            per_meal[meal] = {"color": None if color == "none" else color,
+                              "source": "manual" if key in manual else "model"}
+        result[day_key] = per_meal
+    return result

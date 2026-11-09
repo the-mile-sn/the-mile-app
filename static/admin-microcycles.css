@@ -395,3 +395,8 @@
 .option-editor .meal-line-remove:hover{background:rgba(255,255,255,.07);color:#e5a4a4}
 .option-editor .meal-line-editor [hidden]{display:none!important}
 @media(max-width:520px){.option-editor .meal-food-main{grid-template-columns:minmax(80px,1fr) minmax(0,1.6fr)}.option-editor .meal-line-editor{padding:12px 9px}.option-editor .meal-nutrient-row{gap:4px}}
+
+/* Rest-day highlight; meal-color strips continue to reflect nutrition. */
+.calendar-day.calendar-off{background:#392427;border-color:#c77c7c}
+.calendar-day.calendar-off>span:not(.calendar-event-mark){color:#e7aaaa}
+body.tm-light-mode .calendar-day.calendar-off,[data-theme="light"] .calendar-day.calendar-off{background:#f9ebeb;border-color:#dcaaaa}

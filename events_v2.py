@@ -6,7 +6,7 @@ Event sources and per-event manual overrides are retained independently.
 import secrets
 from datetime import date
 
-KINDS = {"training", "match", "gym", "travel", "other"}
+KINDS = {"training", "match", "gym", "travel", "other", "off"}
 SESSIONS = {"morning", "afternoon"}
 MAX_EVENTS = 500
 
@@ -51,6 +51,11 @@ def create_event(c,athlete_id,payload,actor):
     values=validate_event(payload.get("event_date"),payload.get("kind"),payload.get("session"),payload.get("title"))
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone():
         return None
+    if values[1] == "off":
+        if c.execute("SELECT 1 FROM v2_match_events WHERE athlete_id=? AND match_date=?", (athlete_id, values[0])).fetchone():
+            raise ValueError("off_conflicts_with_match")
+        if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (athlete_id, values[0])).fetchone():
+            raise ValueError("duplicate_off")
     n=c.execute("SELECT COUNT(*) AS n FROM v2_calendar_events WHERE athlete_id=?",(athlete_id,)).fetchone()["n"]
     if n>=MAX_EVENTS: raise ValueError("too_many_events")
     pre=payload.get("pre_override","auto")
@@ -70,6 +75,11 @@ def update_event(c,athlete_id,event_id,payload,actor,allow_nutrition_changes):
     row=c.execute("SELECT * FROM v2_calendar_events WHERE id=? AND athlete_id=?",(event_id,athlete_id)).fetchone()
     if not row: return None
     values=validate_event(payload.get("event_date",row["event_date"]),payload.get("kind",row["kind"]),payload.get("session",row["session"]),payload.get("title",row["title"]))
+    if values[1] == "off":
+        if c.execute("SELECT 1 FROM v2_match_events WHERE athlete_id=? AND match_date=?", (athlete_id, values[0])).fetchone():
+            raise ValueError("off_conflicts_with_match")
+        if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off' AND id<>?", (athlete_id, values[0], event_id)).fetchone():
+            raise ValueError("duplicate_off")
     pre=row["pre_override"]; post=row["post_override"]
     if allow_nutrition_changes:
         pre=payload.get("pre_override",pre);post=payload.get("post_override",post)

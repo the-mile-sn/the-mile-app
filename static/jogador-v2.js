@@ -471,7 +471,10 @@ async function renderSupplementPlan(target){
 // prescription until an explicitly reviewed activation enables this flag.
 const POST_MATCH_DISPLAY_ENABLED=false;
 let effectiveScenarioColorsByDay={};
+let canonicalMealColorsByDay={};
 function assignedColor(date,meal,classification){
+ const effective=canonicalMealColorsByDay[date]?.[meal];
+ if(effective&&Object.prototype.hasOwnProperty.call(effective,"color"))return effective.color;
  if(POST_MATCH_DISPLAY_ENABLED){
   const simulated=effectiveScenarioColorsByDay[date];
   if(simulated&&Object.prototype.hasOwnProperty.call(simulated,meal)){
@@ -1210,7 +1213,7 @@ async function overview(){
   }).catch(()=>{});
 
  }
- model=r.classifications;meals=r.meals;dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
+ model=r.classifications;meals=r.meals;canonicalMealColorsByDay=r.effective_colors||{};dayColorOverrides=Object.fromEntries((r.meal_color_overrides||[]).map(e=>[e.meal_date+"|"+e.meal,e.color]));periMeals=r.peri_meals||[];supplementsByDay=r.supplements_by_day||{};calendarEvents=(r.events||[]).concat((r.matches||[]).map(m=>({id:m.id,event_date:m.match_date,kind:"match",session:!m.match_time||m.match_time<"15:00"?"morning":"afternoon",title:"Jogo"})));
  const isWeek=overviewMode==="week";
  lastOverviewPresentation={weekKey,dateKey:d,mode:overviewMode};
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
