@@ -1233,7 +1233,8 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
  const choiceKey=row=>row.meal_date===day.date&&row.meal_key===meal&&(row.event_id||"")===eventId;
  const pendingChoice=(mealChoiceAssignments.drafts||[]).find(choiceKey);
  const publishedChoice=(mealChoiceAssignments.published||[]).find(choiceKey);
- const editable=Boolean(mealChoiceAssignments.enabled&&model?.athlete?.meal_option_selection_enabled);
+ const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
+ const editable=Boolean(mealChoiceAssignments.enabled&&model?.athlete?.meal_option_selection_enabled&&record?.status==="ok"&&record?.publication_state==="published");
  const updateChoice=async(optionIndex)=>{
   try{
    const base=matchBase()+"/meal-options";
@@ -1250,7 +1251,6 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   }catch(err){status("Não foi possível publicar a seleção: "+err.message,"warn");}
  };
  const box=document.createElement("div");box.className="calendar-day-meal-options";
- const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
  const state=record?.status||"unavailable";
  const parity=checkMealNutrition(record);
  // Only actionable discrepancies are displayed; successful parity stays silent.
@@ -1265,6 +1265,11 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   const messages={no_color:"Sem cor atribuída neste dia.",missing_plan:"Plano alimentar indisponível para esta cor.",ambiguous_plan:"Existem versões duplicadas. Rever a associação.",missing_meal:"Este plano não contém esta refeição.",ambiguous_meal:"Existem várias refeições correspondentes.",missing_options:"Esta refeição não contém opções.",unavailable:"Opções indisponíveis para esta refeição."};
   const note=document.createElement("p");note.className="calendar-day-options-note";
   note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
+ }
+ if(mealChoiceAssignments.enabled&&model?.athlete?.meal_option_selection_enabled&&record.publication_state!=="published"){
+  const notice=document.createElement("small");notice.className="calendar-day-options-note";
+  notice.textContent="Publica primeiro este Plano na aba Planos para poderes selecionar uma opção para a app.";
+  box.append(notice);
  }
  const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
  for(const [index,option] of (record.options||[]).entries()){
