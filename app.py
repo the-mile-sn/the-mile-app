@@ -1084,7 +1084,7 @@ def application(env, start_response):
                     raise Problem(400,'invalid_preview_range')
                 model_data=microcycles_v2.get_model(c,aid)
                 matches=microcycles_v2.list_matches(c,aid)
-                rows=calendar_v2.classify_range(start,end,[m['match_date'] for m in matches])
+                rows=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(start,end,[m['match_date'] for m in matches]))
                 classes={r['name']:r['meals'] for r in model_data['classifications']}
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
                 scenarios={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute(
@@ -1118,7 +1118,7 @@ def application(env, start_response):
                 if not model_data:raise Problem(404,'not_found')
                 matches=microcycles_v2.list_matches(c,aid)
                 model_rows={r['name']:r['meals'] for r in model_data['classifications']}
-                days=calendar_v2.classify_range(first,last,[m['match_date'] for m in matches])
+                days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(first,last,[m['match_date'] for m in matches]))
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,first,last)}
                 variants={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute("SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
                 responses=[]
@@ -1160,7 +1160,7 @@ def application(env, start_response):
                 if not model:raise Problem(404,'not_found')
                 matches=microcycles_v2.list_matches(c,aid)
                 baseline={r['name']:r['meals'] for r in model['classifications']}
-                days=calendar_v2.classify_range(first,last,[m['match_date'] for m in matches])
+                days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(first,last,[m['match_date'] for m in matches]))
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,first,last)}
                 cells={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute(
                     "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
