@@ -1191,20 +1191,20 @@ function checkMealNutrition(record){
 }
 // Published choices change the effective nutritional totals only for the
 // opted-in athlete. Draft changes never affect these totals or the player app.
-function publishedNutritionOption(date,meal,record,eventId=""){
- if(!mealChoiceAssignments.enabled||!record||record.status!=="ok")return null;
- const selection=(mealChoiceAssignments.published||[]).find(row=>
+function publishedNutritionOption(date,meal,record,eventId="",assignments=mealChoiceAssignments){
+ if(!assignments.enabled||!record||record.status!=="ok")return null;
+ const selection=(assignments.published||[]).find(row=>
   row.meal_date===date&&row.meal_key===meal&&(row.event_id||"")===eventId);
  if(!selection||selection.source_draft_id!==record.draft_id||
     (selection.source_color||null)!==(record.color||null))return null;
  const option=record.options?.[selection.option_index-1];
  return option?.option_ref===selection.option_ref?option:null;
 }
-function effectiveLiveDayNutrition(date,record){
- if(!record?.nutrition||!mealChoiceAssignments.enabled)return record?.nutrition;
+function effectiveLiveDayNutrition(date,record,assignments=mealChoiceAssignments){
+ if(!record?.nutrition||!assignments.enabled)return record?.nutrition;
  const effective={...record.nutrition};
  const substitute=(meal,source,eventId="")=>{
-  const selected=publishedNutritionOption(date,meal,source,eventId);
+  const selected=publishedNutritionOption(date,meal,source,eventId,assignments);
   if(!selected?.nutrition||!source.nutrition)return;
   for(const key of ["kcal","protein_g","carbs_g","fat_g"])
    effective[key]+=selected.nutrition[key]-source.nutrition[key];
@@ -1461,7 +1461,7 @@ async function loadCalendar(){
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
-  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
+  const [weeklyData,weeklyRefs,weeklyChoices]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday)),request(matchBase()+"/meal-options?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
   dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
   const liveByDay=weeklyData.live_food_plans?.days||{};
   const liveEntries=weeklyData.days.map(d=>liveByDay[d.date]).filter(Boolean);
@@ -1471,13 +1471,13 @@ async function loadCalendar(){
   coverage.textContent=fullDays+"/7 dias com prescrição nutricional completa · Fonte: Planos";
   if(complete){
    const liveSums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-   for(const day of liveEntries)for(const key of Object.keys(liveSums))liveSums[key]+=effectiveLiveDayNutrition(weeklyData.days[liveEntries.indexOf(day)].date,day)[key];
+   for(const [index,day] of liveEntries.entries())for(const key of Object.keys(liveSums))liveSums[key]+=effectiveLiveDayNutrition(weeklyData.days[index].date,day,weeklyChoices)[key];
    const average=Object.fromEntries(Object.entries(liveSums).map(([key,value])=>[key,value/7]));
    const relativeMeans={};
    for(const key of Object.keys(liveSums)){
     const ratios=weeklyData.days.map((day,index)=>{
      const weight=Number(dayWeightReferences[day.date]?.weight_kg);
-     return Number.isFinite(weight)&&weight>0?effectiveLiveDayNutrition(day.date,liveEntries[index])[key]/weight:null;
+     return Number.isFinite(weight)&&weight>0?effectiveLiveDayNutrition(day.date,liveEntries[index],weeklyChoices)[key]/weight:null;
     });
     if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/7;
    }
