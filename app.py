@@ -25,6 +25,7 @@ import assessments_v2
 import weight_reference_v2
 import plan_import_v2
 import food_plan_player_v2
+import meal_option_selection_v2
 import nutrition_preview_v2
 import time
 from datetime import datetime, timedelta
@@ -263,6 +264,7 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        meal_option_selection_v2.initialize(c)
         player_recipes_v2.initialize(c)
         plan_import_v2.initialize(c)
         events_v2.initialize(c)
@@ -1637,7 +1639,25 @@ def application(env, start_response):
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
                 matches=[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last]
                 peri_meals=food_plan_player_v2.player_peri_days(c,link['athlete_id'],first,last,event_data,matches)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+                published_choices=meal_option_selection_v2.published_for_player(
+                    c,link['athlete_id'],first,last)
+                # Only approved selections can affect the daily/wk player view.
+                # The option ref, source publication and position must all
+                # match the active published Planos: stale choices show all.
+                for peri in peri_meals:
+                    row=next((item for item in published_choices if
+                        item['meal_date']==peri['event_date'] and
+                        item['meal_key']==peri.get('selection_phase') and
+                        item['event_id']==peri['event_id']),None)
+                    if row:
+                        ix=row['option_index']-1
+                        options=peri.get('options') or []
+                        if (0<=ix<len(options) and
+                                options[ix].get('option_ref')==row['option_ref'] and
+                                options[ix].get('source_draft_id')==row['source_draft_id'] and
+                                not row['source_color']):
+                            peri['options']=[options[ix]]
+                return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
             if path == '/api/v2/player/recipes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
