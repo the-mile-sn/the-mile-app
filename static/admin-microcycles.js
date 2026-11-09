@@ -1410,8 +1410,11 @@ async function loadCalendar(){
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
+  const todayKey=isoDay(new Date());
   for(const day of data.days){
-    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback")+(day.is_off?" calendar-off":"");if(!day.classification){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
+    const isToday=day.date===todayKey;
+    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback")+(day.is_off?" calendar-off":"")+(isToday?" calendar-today":"");if(!day.classification&&!isToday){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
+    if(isToday)el.setAttribute("aria-current","date");
     const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
@@ -1431,7 +1434,7 @@ async function loadCalendar(){
     }
     el.appendChild(strip);
     el.setAttribute("role","button");el.tabIndex=0;
-    el.setAttribute("aria-label","Ver cores das refeições de "+day.date+(day.classification?"":" · Geral aplicado automaticamente, dia por definir"));
+    el.setAttribute("aria-label","Ver cores das refeições de "+day.date+(isToday?" · Hoje":"")+(day.classification?"":" · Geral aplicado automaticamente, dia por definir"));
     const selectDay=()=>{
       const wasSelected=selectedCalendarDay===day.date;
       selectedCalendarDay=wasSelected?null:day.date;
