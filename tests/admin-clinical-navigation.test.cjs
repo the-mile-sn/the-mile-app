@@ -49,7 +49,7 @@ test("Planeamento has only planning tabs; migrated controls remain single and us
  assert.doesNotMatch(admin,/button\.dataset\.view==="assessments"/);
  assert.doesNotMatch(admin,/admin-access-panel"\)\.hidden=view!==/);
  assert.match(dashboard,/activationPanel\.hidden=false/);
- assert.match(html,/admin-microcycles\.css\?v=103/);
+ assert.match(html,/admin-microcycles\.css\?v=116/);
 });
 
 test("Clinical editors remain in their definitive homes without reparenting or account fetches",()=>{
@@ -73,7 +73,7 @@ test("Avaliações restores its cards and chart dashboard when opened from the d
  assert.match(admin,/host\.append\(detailGrid\)/);
  assert.match(admin,/host\.append\(visual\)/);
  assert.match(dashboard,/monitoringPanel\.hidden=false/); // Formulários unchanged.
- assert.match(html,/admin-dashboard\.js\?v=30/); // Force browsers to load the fix.
+ assert.match(html,/admin-dashboard\.js\?v=37/); // Force browsers to load the fix.
 });
 
 test("Modelo legend and matrix stay scoped to their Planning tab, including athlete refresh",()=>{
@@ -82,7 +82,7 @@ test("Modelo legend and matrix stay scoped to their Planning tab, including athl
  assert.equal(legend,null);
  assert.doesNotMatch(html,/id="model-legend"/);
  assert.equal(html.split('id="model-legend"').length-1,0);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
  const elements={};
  for(const id of ["athlete-weight-panel","calendar-section","plan-import-panel","peri-panel","supplements-panel","matrix","scenario-editor","menus-panel","player-preview-panel"]){
   elements[id]={hidden:true};
@@ -136,7 +136,7 @@ test("Microciclos loads the calendar once per athlete refresh and never exposes 
  const source=admin.slice(start,end);
  assert.match(admin,/\$\("calendar-section"\)\.hidden=backofficeView!=="calendar";/);
  assert.doesNotMatch(admin,/\$\("calendar-section"\)\.hidden=false;\s*\n}/);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
  for(const view of ["calendar","plans","supplements","matrix","menus","player-preview","assessments"]){
   const calls=[];
   const ctx={
@@ -189,7 +189,7 @@ test("Menus loads and saves only for its selected athlete and current week",()=>
  assert.match(admin,/const calendarData=await request\(base\+"\/calendar\?start="\+begin\+"&end="\+end\);\s*if\(!stillCurrent\(\)\)return/);
  assert.match(admin,/saveWeek\.onclick=async\(\)=>\{\s*if\(!stillCurrent\(\)\|\|!pending\.size\)return/);
  assert.match(admin,/await request\(base\+"\/menus\/batch"/);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
 });
 
 
@@ -203,7 +203,7 @@ test("Suplementação invalidates old-player reads and binds publication to the 
  assert.match(admin,/if\(!stillCurrent\(\)\)return;\s*supplementDraft=draft/);
  assert.match(admin,/if\(!supplementEditorReady\|\|!athleteId\|\|!stillCurrent\(\)\)return/);
  assert.match(admin,/await request\("\/api\/v2\/athletes\/"\+encodeURIComponent\(athleteId\)\+"\/supplements",\{method:"PUT"/);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
 });
 
 
@@ -218,7 +218,7 @@ test("Vista jogador ignores delayed reads after changing athlete, day, week or t
  assert.match(admin,/async function showPlayerView\(view\)\{\s*playerView=view;\+\+playerPreviewRevision/);
  assert.match(admin,/isoDay\(weekStart\(playerMenuWeek\)\)===begin/);
  assert.match(admin,/isoDay\(simulationDay\)===d/);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
 });
 
 test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
@@ -230,7 +230,7 @@ test("Peri-treino and Peri-jogo remain scoped to the selected player",()=>{
  assert.match(admin,/confirmation:"PUBLICAR",athlete_id:athleteId/);
  assert.match(admin,/await request\(periEndpoint\(athleteId\)\+"\/"\+encodeURIComponent\(draft.id\)\+"\/option"/);
  assert.match(admin,/if\(!periIsCurrent\(athleteId\)\)return;\s*const result=await request\(periEndpoint\(athleteId\),\{method:"POST"/);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
 });
 
 
@@ -240,8 +240,8 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
  assert.match(html,/id="tm-settings-appearance"/);
  assert.match(html,/data-admin-theme-choice="dark" aria-pressed="true"/);
  assert.match(html,/data-admin-theme-choice="light" aria-pressed="false"/);
- assert.match(html,/\/admin-light-theme\.css\?v=10/);
- assert.match(html,/\/admin-dashboard\.js\?v=30/);
+ assert.match(html,/\/admin-light-theme\.css\?v=11/);
+ assert.match(html,/\/admin-dashboard\.js\?v=37/);
  assert.match(dashboard,/tm-admin-theme/);
  assert.match(dashboard,/window\.localStorage\.getItem\(key\)/);
  assert.match(dashboard,/window\.localStorage\.setItem\(key,theme\)/);
@@ -258,9 +258,9 @@ test("Appearance is in Definições, uses locally persisted two-state control, a
 
 test("The Backoffice serves its opt-in light stylesheet from the exact HTML URL",()=>{
  const backend=require("node:fs").readFileSync("app.py","utf8");
- assert.match(html,/href="\/admin-light-theme\.css\?v=10"/);
+ assert.match(html,/href="\/admin-light-theme\.css\?v=11"/);
  assert.match(backend,/['"]\/admin-light-theme\.css['"]:\s*['"]admin-light-theme\.css['"]/);
- assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]\)/);
+ assert.match(backend,/path in \([\s\S]*?['"]\/admin-light-theme\.css['"]/);
 });
 
 
@@ -279,7 +279,7 @@ test("Light Formulários panel and chart point centers have dedicated contrast s
  assert.match(css,/html\[data-admin-theme="light"\] #tm-forms-page #profile-monitoring\{/);
  assert.match(css,/#tm-forms-page #profile-monitoring \.monitoring-weight-chart/);
  assert.match(css,/#tm-assessments-page \.tm-assessment-trend-svg circle\[role="button"\]/);
- assert.match(html,/admin-light-theme\.css\?v=10/);
+ assert.match(html,/admin-light-theme\.css\?v=11/);
 });
 
 test("Brand wordmark preserves original aspect ratio and provides navigation home",()=>{
@@ -292,14 +292,14 @@ test("Brand wordmark preserves original aspect ratio and provides navigation hom
  assert.match(dashboard,/\$\("tm-admin-brand-home"\)\.addEventListener\("click",openDashboard\)/);
  assert.match(dashboard,/dashboardReturn\.hidden=target===dash/);
  assert.match(dashboard,/dashboardReturn\.hidden=true/);
- assert.match(html,/admin-dashboard\.js\?v=30/);
+ assert.match(html,/admin-dashboard\.js\?v=37/);
 });
 
 test("The Mile wordmark aligns optically with navigation icon artwork",()=>{
  const css=require("node:fs").readFileSync("static/admin-microcycles.css","utf8");
  assert.match(css,/#admin-workspace \.tm-admin-brand\{padding:12px 15px 30px\}/);
  assert.match(css,/@media\(max-width:830px\)\{#admin-workspace \.tm-admin-brand\{padding:6px 11px 10px\}\}/);
- assert.match(html,/admin-microcycles\.css\?v=103/);
+ assert.match(html,/admin-microcycles\.css\?v=116/);
 });
 
 test("Jogadores profile has birth date, follow-up plan, renewal and private photo editing",()=>{
@@ -312,7 +312,7 @@ test("Jogadores profile has birth date, follow-up plan, renewal and private phot
  assert.match(dashboard,/playerPhotoData=value/);
  assert.match(dashboard,/followup_renewal_date:get\("followup_renewal_date"\)/);
  assert.match(dashboard,/selectedToken!==profileLoadToken/);
- assert.match(html,/admin-dashboard\.js\?v=30/);
+ assert.match(html,/admin-dashboard\.js\?v=37/);
 });
 
 test("Jogadores follow-up is a select with Pro and Elite only",()=>{
@@ -346,7 +346,7 @@ test("opening imported option editor does not reference obsolete index parameter
 test("Menus includes CT and Estágio in selector and API allowlist",()=>{
  const app=require("node:fs").readFileSync("app.py","utf8");
  assert.match(admin,/const categoryNames=\[[^\]]*"CT","Estágio"\]/);
- assert.match(app,/if kind==\x27category\x27 and value\.strip\(\) not in \([^\)]*\x27CT\x27,\x27Estágio\x27\)/);
+ assert.match(app,/if kind==\x27category\x27 and value(?:\.strip\(\))? not in \([^\)]*\x27CT\x27,\x27Estágio\x27\)/);
 });
 
 test("Modelo places effective colors before grouped post-match scenarios and hides diagnostic UI",()=>{
@@ -441,7 +441,7 @@ test("Light mode assessment editing and Planning picker keep readable surfaces",
  assert.match(rules,/html\[data-admin-theme="light"\]/);
  assert.match(rules,/background:var\(--tm-light-surface\)/);
  assert.match(rules,/background:#e9eef5/);
- assert.match(html,/admin-light-theme\.css\?v=10/);
+ assert.match(html,/admin-light-theme\.css\?v=11/);
  assert.match(html,/id="assessment-review-form"/);
  assert.match(html,/id="tm-planning-results"/);
 });
@@ -504,7 +504,7 @@ test("Dashboard uses photo metadata, with initials fallback, and MD-green game e
  assert.match(dashboard,/item\.match_id\?" tm-db-game":""/);
  assert.match(dark,/\.tm-db-event\.tm-db-game\{background:#193126!important/);
  assert.match(lightCss,/\.tm-db-event\.tm-db-game\{background:#e5f3e9!important/);
- assert.match(html,/admin-dashboard\.js\?v=30/);
+ assert.match(html,/admin-dashboard\.js\?v=37/);
 });
 
 test("Player picker photos share linked account metadata while retaining initials fallback",()=>{
@@ -519,5 +519,5 @@ test("Player picker photos share linked account metadata while retaining initial
  assert.match(css,/\.tm-picker-photo\{/);
  assert.match(css,/#tm-dashboard \.tm-db-avatar\{width:38px/);
  assert.match(css,/#tm-players-page \.tm-p-avatar\{width:46px/);
- assert.match(html,/admin-microcycles\.js\?v=18230/);
+ assert.match(html,/admin-microcycles\.js\?v=18243/);
 });

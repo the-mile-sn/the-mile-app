@@ -1,0 +1,18 @@
+name: Validate isolated recipe library
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  recipe-regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install PyMuPDF==1.26.7 Pillow==11.3.0
+      - run: python -m py_compile app.py recipe_library_v2.py recipe_pdf_import_v2.py
+      - run: python -m unittest -v test_recipe_library_v2 test_recipe_pdf_import_v2 test_menu_color_parity_v2 test_calendar_v2 test_dish_recipe_links_v2 test_multiple_dish_recipes_v2
+      - run: node --check static/admin-recipes.js
+      - run: node --check static/admin-dashboard.js
+      - run: node --check static/admin-microcycles.js
+      - run: node --test tests/admin-recipe-library.test.cjs tests/admin-menus-recipes-navigation.test.cjs tests/admin-clinical-navigation.test.cjs

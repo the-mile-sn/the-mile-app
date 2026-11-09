@@ -73,3 +73,56 @@ def classify_range(start, end, match_dates):
     matches = list(match_dates)
     return [classify_calendar_day((first + timedelta(days=offset)).isoformat(), matches)
             for offset in range((last - first).days + 1)]
+
+
+def effective_days(c, athlete_id, days):
+    """Resolve nutritional classifications without changing MD chronology."""
+    if not days:
+        return []
+    first, last = days[0]["date"], days[-1]["date"]
+    off_dates = {r["event_date"] for r in c.execute(
+        "SELECT event_date FROM v2_calendar_events WHERE athlete_id=? "
+        "AND kind='off' AND event_date>=? AND event_date<=?",
+        (athlete_id, first, last)).fetchall()}
+    result = []
+    for day in days:
+        original = day["classification"]
+        is_off = day["date"] in off_dates and original != "MD"
+        effective = original
+        if is_off:
+            if original and original.startswith("MD+1"):
+                effective = "Off (+1)"
+            elif original and original.startswith("MD+2"):
+                effective = "Off (+2)"
+            else:
+                effective = "Off"
+        result.append({**day, "temporal_classification": original,
+                       "classification": effective, "is_off": is_off,
+                       "off_conflict": day["date"] in off_dates and original == "MD"})
+    return result
+
+
+def effective_colors(c, athlete_id, days, model_data=None):
+    """The calendar, menus and player share one effective-meal-color resolver."""
+    from microcycles_v2 import get_model, MEALS
+    if not days:
+        return {}
+    if model_data is None:
+        model_data = get_model(c, athlete_id)
+    rows = {r["name"]: r["meals"] for r in model_data["classifications"]}
+    first, last = days[0]["date"], days[-1]["date"]
+    manual = {(r["meal_date"], r["meal"]): r["color"] for r in c.execute(
+        "SELECT meal_date,meal,color FROM v2_day_meal_colors WHERE athlete_id=? "
+        "AND meal_date>=? AND meal_date<=?", (athlete_id,first,last)).fetchall()}
+    result = {}
+    for day in days:
+        date_value = day["date"]
+        base = rows.get(day["classification"] or "Geral", {})
+        per_meal = {}
+        for meal in MEALS:
+            key = (date_value, meal)
+            color = manual[key] if key in manual else base.get(meal)
+            per_meal[meal] = {"color": None if color == "none" else color,
+                              "source": "manual" if key in manual else "model"}
+        result[date_value] = per_meal
+    return result

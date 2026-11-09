@@ -318,10 +318,10 @@
 #calendar-supp-wrap{align-items:flex-start;text-align:left}
 #calendar-section .calendar-event-list{margin-bottom:24px}
 #calendar-section .calendar-event-list + *{margin-top:26px}
-#menus-panel .menu-library-section,#menus-panel .menu-create-section{margin-top:25px;padding:22px;border-radius:20px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025)}
-#menus-panel .menu-library-section h3,#menus-panel .menu-create-section h3{margin-top:0}
+#tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{margin-top:25px;padding:22px;border-radius:20px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025)}
+#tm-menu-recipes-page .menu-library-section h3,#tm-menu-recipes-page .menu-create-section h3{margin-top:0}
 #menus-panel #menu-grid{margin-bottom:12px}
-#calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button{border-radius:999px}
+#calendar-section button,#plan-import-panel button,#peri-panel button,#supplements-panel button,#menus-panel button,#tm-menu-recipes-page button{border-radius:999px}
 
 /* Fine spacing and compact editorial UI */
 #calendar-supp-options{align-self:stretch;padding:12px 0}
@@ -335,21 +335,21 @@
 #supplements-panel .supp-associated-row.supp-pending{background:rgba(222,162,75,.15)!important}
 #menus-panel .menu-color-label{display:inline-block!important;width:25px!important;min-width:25px!important;height:25px!important;padding:0!important;border-radius:9px!important;font-size:0!important}
 #menus-panel .menu-color-label:not([class*="meal-"]){background:#555!important}
-#menus-panel .menu-library-section,#menus-panel .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
-#menus-panel .menu-library-section{margin-top:46px!important}
-#menus-panel .dish-new{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
-#menus-panel .dish-new input,#menus-panel .dish-new select{min-height:46px;width:100%;min-width:0}
-#menus-panel .dish-new input[type=file]{padding:9px}
-#menus-panel .dish-new button{justify-self:start}
-#menus-panel .dish-new #dish-new-feedback{align-self:center}
-#menus-panel #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
-#menus-panel #dish-editor-list input[type=file]{min-height:42px}
-@media(max-width:650px){#menus-panel .dish-new{grid-template-columns:1fr}#menus-panel .menu-library-section,#menus-panel .menu-create-section{padding:18px!important}}
+#tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
+#tm-menu-recipes-page .menu-library-section{margin-top:46px!important}
+#tm-menu-recipes-page .dish-new{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+#tm-menu-recipes-page .dish-new input,#tm-menu-recipes-page .dish-new select{min-height:46px;width:100%;min-width:0}
+#tm-menu-recipes-page .dish-new input[type=file]{padding:9px}
+#tm-menu-recipes-page .dish-new button{justify-self:start}
+#tm-menu-recipes-page .dish-new #dish-new-feedback{align-self:center}
+#tm-menu-recipes-page #dish-editor-list button{min-height:38px;height:auto;padding:8px 14px;align-self:center}
+#tm-menu-recipes-page #dish-editor-list input[type=file]{min-height:42px}
+@media(max-width:650px){#tm-menu-recipes-page .dish-new{grid-template-columns:1fr}#tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{padding:18px!important}}
 
-#menus-panel .menu-planning-card,#menus-panel .menu-library-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.025);border-radius:22px;padding:24px;margin-top:22px}
-#menus-panel .menu-planning-card>h3,#menus-panel .menu-library-card>h3{margin:0 0 20px}
-#menus-panel .menu-library-card>.menu-library-section,#menus-panel .menu-library-card>.menu-create-section{margin:18px 0!important;background:rgba(255,255,255,.025)}
-#menus-panel .menu-library-card>.menu-create-section{margin-top:22px!important}
+#menus-panel .menu-planning-card,#tm-menu-recipes-page .menu-library-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.025);border-radius:22px;padding:24px;margin-top:22px}
+#menus-panel .menu-planning-card>h3,#tm-menu-recipes-page .menu-library-card>h3{margin:0 0 20px}
+#tm-menu-recipes-page .menu-library-card>.menu-library-section,#tm-menu-recipes-page .menu-library-card>.menu-create-section{margin:18px 0!important;background:rgba(255,255,255,.025)}
+#tm-menu-recipes-page .menu-library-card>.menu-create-section{margin-top:22px!important}
 #plan-import-panel .calendar-add>div,#peri-panel .calendar-add>div{align-self:end}
 #plan-import-panel .calendar-add select,#peri-panel .calendar-add select{min-height:45px}
 #matrix .microcycle-color-select[data-color=yellow]{background:#e9c95b!important;color:#302609!important;border-color:#e9c95b!important}
@@ -358,7 +358,7 @@
 #matrix .microcycle-color-select[data-color=green]{background:#92cfa4!important;color:#183524!important;border-color:#92cfa4!important}
 #matrix .microcycle-color-select[data-color=vp]{background:#afd9b2!important;color:#183524!important;border-color:#afd9b2!important}
 #matrix .microcycle-color-select option{background:#232329;color:#fff}
-@media(max-width:650px){#menus-panel .menu-planning-card,#menus-panel .menu-library-card{padding:15px}}
+@media(max-width:650px){#menus-panel .menu-planning-card,#tm-menu-recipes-page .menu-library-card{padding:15px}}
 
 /* Assessment review workflow */
 #assessments-admin-panel .assessment-upload{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:18px 0}
@@ -1343,3 +1343,1452 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 #tm-admin-legacy #tm-planning-avatar{position:relative;overflow:hidden}
 .tm-clinical-avatar{position:relative;overflow:hidden}
 .tm-picker-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+/* Consistent Backoffice navigation: match the compact Crear Plano sidebar. */
+@media(min-width:831px){
+#admin-workspace .tm-admin-sidebar{gap:10px!important;padding:24px 13px!important}
+#admin-workspace .tm-admin-brand{padding:9px 12px 32px!important}
+#admin-workspace .tm-admin-side-nav{gap:3px!important}
+#admin-workspace .tm-admin-nav-link{box-sizing:border-box!important;border:0!important;border-radius:10px!important;background:transparent!important;padding:12px!important;display:flex!important;align-items:center!important;gap:11px!important;text-align:left!important;color:#d6d6dc!important;font-size:13px!important;font-weight:500!important;min-height:44px!important;line-height:1.35!important;text-decoration:none!important}
+#admin-workspace .tm-admin-nav-link:hover:not(:disabled){background:#25252a!important;color:#fff!important}
+#admin-workspace .tm-admin-nav-link.is-active{background:transparent!important;color:#f5f5f7!important;font-weight:600!important}
+#admin-workspace .tm-admin-nav-icon{width:21px!important;min-width:21px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
+#admin-workspace .tm-admin-side-icon,#tm-admin-nav-players .tm-admin-side-icon{width:20px!important;height:20px!important}
+}
+
+/* Menus e Receitas: existing shared dish editor in its own navigation area. */
+#tm-menu-recipes-page[hidden],#admin-workspace #tm-admin-recipes-subnav[hidden]{display:none!important}
+#tm-menu-recipes-page{min-width:0}
+#tm-menu-recipes-page>h2{margin:0 0 18px;font-size:24px;font-weight:650}
+#tm-menu-recipes-page .menu-library-card{margin-top:0}
+#admin-workspace .tm-admin-nav-chevron{width:15px;height:15px;margin-left:auto;flex:none;transition:transform .18s ease}
+#admin-workspace #tm-admin-nav-menus-recipes[aria-expanded="true"] .tm-admin-nav-chevron{transform:rotate(90deg)}
+#admin-workspace .tm-admin-recipes-subnav{display:flex;flex-direction:column;gap:3px;margin:0 4px 5px 32px;padding:2px 0 2px 12px;border-left:1px solid #383a41}
+#admin-workspace .tm-admin-subnav-link{display:flex;align-items:center;gap:7px;width:100%;border:0;border-radius:8px;padding:10px 9px;background:transparent;color:#c1c4cd;text-align:left;font:inherit;font-size:12px;cursor:pointer}
+#admin-workspace .tm-admin-subnav-link.is-active{color:#f5f5f7;font-weight:600;background:#292b31}
+#admin-workspace .tm-admin-subnav-link:not(:disabled):hover{background:#292b31}
+#admin-workspace .tm-admin-subnav-link:disabled{opacity:.5;cursor:default}
+#admin-workspace .tm-admin-subnav-link small{margin-left:auto;font-size:10px;font-weight:400}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-recipes-subnav{border-color:#d0d7df}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link{color:#4b5968}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link.is-active{color:#172c40;background:#e6edf4}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link:not(:disabled):hover{background:#eff2f6}
+@media(max-width:830px){#admin-workspace .tm-admin-recipes-subnav{margin:0 3px;padding-left:9px;border-left:1px solid #383a41;flex:0 1 auto}}
+
+/* Compact, browse-first dish catalog with an editable details row. */
+#tm-menu-recipes-page .menu-library-section{margin-top:14px!important}
+#tm-menu-recipes-page .dish-catalog-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+#tm-menu-recipes-page .dish-catalog-toolbar h3{margin:0 0 3px}
+#tm-menu-recipes-page .dish-catalog-toolbar .hint{margin:0;font-size:12px}
+#tm-menu-recipes-page .dish-catalog-export{font-size:12px;color:inherit;text-decoration:none;border:1px solid #444651;border-radius:999px;padding:10px 15px;white-space:nowrap}
+#tm-menu-recipes-page .dish-catalog-export:hover{background:rgba(120,130,150,.12)}
+#tm-menu-recipes-page .dish-catalog-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(160px,1fr);gap:12px;margin:0 0 16px}
+#tm-menu-recipes-page .dish-catalog-filters label{display:flex;flex-direction:column;gap:7px;font-size:12px;min-width:0}
+#tm-menu-recipes-page .dish-catalog-filters input,#tm-menu-recipes-page .dish-catalog-filters select{width:100%;min-width:0;min-height:43px;box-sizing:border-box}
+#tm-menu-recipes-page #dish-editor-list{display:block;margin-top:13px}
+#tm-menu-recipes-page .dish-table-scroll{width:100%;overflow-x:auto;border:1px solid #383a42;border-radius:12px}
+#tm-menu-recipes-page .dish-library-table{width:100%;border-collapse:collapse;min-width:720px;text-align:left;font-size:13px}
+#tm-menu-recipes-page .dish-library-table th{background:#22242a;color:#aeb1bd;font-size:11px;font-weight:600;padding:11px 13px;border-bottom:1px solid #393b43;white-space:nowrap}
+#tm-menu-recipes-page .dish-library-table td{padding:10px 13px;border-bottom:1px solid #32343c;vertical-align:middle;max-width:360px}
+#tm-menu-recipes-page .dish-library-table tbody tr:last-child td{border-bottom:0}
+#tm-menu-recipes-page .dish-table-photo{display:block;width:62px;height:54px;object-fit:cover;border-radius:8px;background:#25272c}
+#tm-menu-recipes-page .dish-table-title{font-weight:600;min-width:170px;line-height:1.5;overflow-wrap:anywhere}
+#tm-menu-recipes-page .dish-table-subtitle{color:#b0b3bb;font-size:12px;overflow-wrap:anywhere}
+#tm-menu-recipes-page .dish-table-category{white-space:nowrap;font-size:12px}
+#tm-menu-recipes-page .dish-table-actions{text-align:right;white-space:nowrap}
+#tm-menu-recipes-page .dish-table-row:hover td{background:#26282e}
+#tm-menu-recipes-page .dish-table-detail td{background:#202228}
+#tm-menu-recipes-page .dish-table-detail[hidden]{display:none!important}
+#tm-menu-recipes-page .dish-table-editor{padding:8px 6px 12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+#tm-menu-recipes-page .dish-table-edit{min-height:34px!important;border-radius:999px;padding:7px 13px!important}
+#tm-menu-recipes-page .dish-table-empty{margin:20px 0;color:#aaaeb8;text-align:center}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-catalog-export{border-color:#d2dbe5;color:#2c3e52}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-scroll{border-color:#dbe2eb}
+@media(max-width:700px){#tm-menu-recipes-page .dish-catalog-filters{grid-template-columns:1fr}#tm-menu-recipes-page .dish-table-editor{grid-template-columns:1fr}}
+
+/* Simplified dish library: search/filter live in the table's top control row. */
+#tm-menu-recipes-page .dish-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#tm-menu-recipes-page .menu-library-card{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;margin:0!important}
+#tm-menu-recipes-page .dish-catalog-surface{width:100%;min-width:0}
+#tm-menu-recipes-page .dish-catalog-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(165px,.9fr) auto;align-items:end;gap:14px;margin:0 0 14px!important}
+#tm-menu-recipes-page .dish-catalog-filters label{margin:0!important;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left}
+#tm-menu-recipes-page .dish-catalog-filters input,#tm-menu-recipes-page .dish-catalog-filters select{height:43px;min-height:43px;font-size:13px;border-radius:9px}
+#tm-menu-recipes-page .dish-catalog-filters .dish-catalog-add{height:43px;min-height:43px!important;padding:0 18px!important;border-radius:9px!important;background:#283d56!important;color:#fff!important;border:1px solid #283d56!important;font-weight:600;white-space:nowrap}
+#tm-menu-recipes-page .dish-catalog-filters .dish-catalog-add:hover{background:#344d68!important}
+#tm-menu-recipes-page #dish-catalog-feedback:empty{display:none}
+#tm-menu-recipes-page #dish-editor-list{margin-top:0}
+#tm-menu-recipes-page .dish-table-scroll{border-radius:12px}
+#tm-menu-recipes-page .dish-library-table,#tm-menu-recipes-page .dish-library-table th,#tm-menu-recipes-page .dish-library-table td{text-align:left!important}
+#tm-menu-recipes-page .dish-library-table .dish-table-actions{text-align:right!important}
+#tm-menu-recipes-page .dish-library-table th{vertical-align:middle}
+#tm-menu-recipes-page .menu-create-section{padding:20px!important;margin:0 0 16px!important;border:1px solid #41454f!important;border-radius:13px!important;background:rgba(120,130,145,.045)!important}
+#tm-menu-recipes-page .menu-create-section[hidden]{display:none!important}
+#tm-menu-recipes-page .menu-create-section h3{font-size:15px;margin:0 0 17px}
+#tm-menu-recipes-page .dish-new{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+#tm-menu-recipes-page .dish-new>label{display:flex;flex-direction:column;align-items:stretch;gap:7px;font-size:12px;min-width:0;margin:0}
+#tm-menu-recipes-page .dish-new>label input,#tm-menu-recipes-page .dish-new>label select{min-width:0;width:100%;height:42px;box-sizing:border-box}
+#tm-menu-recipes-page .dish-required{color:#cd665a}
+#tm-menu-recipes-page .dish-photo-label{position:relative}
+#tm-menu-recipes-page .dish-photo-dropzone{min-height:66px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;border:1px dashed #8e9bad;border-radius:10px;padding:10px 12px;color:#aab3c0;text-align:center;cursor:pointer;font-size:11px}
+#tm-menu-recipes-page .dish-photo-dropzone svg{width:23px;height:23px;flex:none}
+#tm-menu-recipes-page .dish-photo-dropzone.is-dragging{border-color:#699bcb;background:rgba(100,150,200,.10)}
+#tm-menu-recipes-page .dish-photo-input{position:absolute;bottom:0;left:0;width:100%!important;height:66px!important;min-height:0!important;opacity:0;cursor:pointer;z-index:1}
+#tm-menu-recipes-page .dish-photo-input:focus-visible+.dish-photo-dropzone{outline:2px solid #628bb4}
+#tm-menu-recipes-page .dish-form-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:1px}
+#tm-menu-recipes-page .dish-form-actions #dish-new-feedback{margin-right:auto;font-size:12px}
+#tm-menu-recipes-page .dish-form-actions button{min-height:38px!important;padding:8px 15px!important;border-radius:9px!important}
+#tm-menu-recipes-page .dish-form-actions .dish-add-save{background:#283d56!important;border-color:#283d56!important;color:#fff!important;font-weight:600}
+#tm-menu-recipes-page .dish-form-actions .dish-add-cancel{background:transparent}
+html[data-admin-theme="light"] #tm-menu-recipes-page .menu-create-section{border-color:#d9dfe7!important;background:#f7f8fa!important}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-photo-dropzone{color:#506179;border-color:#c5d0dd}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-photo-dropzone.is-dragging{background:#e5eff9}
+@media(max-width:900px){#tm-menu-recipes-page .dish-new{grid-template-columns:repeat(2,minmax(0,1fr))}#tm-menu-recipes-page .dish-catalog-filters{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto}}
+@media(max-width:620px){#tm-menu-recipes-page .dish-new,#tm-menu-recipes-page .dish-catalog-filters{grid-template-columns:1fr}#tm-menu-recipes-page .dish-form-actions{flex-wrap:wrap}#tm-menu-recipes-page .dish-catalog-add{width:100%}}
+
+
+/* Recipe link editor lives under the dish's existing edit fields, admin-only. */
+#tm-menu-recipes-page .dish-recipe-indicator{
+ display:block;width:max-content;max-width:100%;margin-top:5px;
+ padding:3px 7px;border-radius:6px;background:rgba(85,171,120,.14);
+ color:#a4dfba;font-size:10px;font-weight:500;line-height:1.4;
+}
+#tm-menu-recipes-page .dish-recipe-indicator[hidden]{display:none!important}
+#tm-menu-recipes-page .dish-recipe-association{
+ grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:11px 14px;padding:17px 15px;margin-top:7px;
+ border:1px solid #434750;border-radius:11px;background:rgba(116,128,148,.065);
+}
+#tm-menu-recipes-page .dish-recipe-association h4{
+ grid-column:1/-1;font-size:15px;font-weight:600;line-height:1.4;margin:0;
+}
+#tm-menu-recipes-page .dish-recipe-association-hint{
+ grid-column:1/-1;font-size:12px;line-height:1.55;color:#aeb8c4;margin:-4px 0 2px;
+}
+#tm-menu-recipes-page .dish-recipe-association label{min-width:0;font-size:12px;gap:7px}
+#tm-menu-recipes-page .dish-recipe-association select,
+#tm-menu-recipes-page .dish-recipe-association input{
+ width:100%;min-width:0;box-sizing:border-box;min-height:39px;
+ padding:7px 9px;border-radius:8px;border:1px solid #525967;
+ background:#20252c;color:#f0f2f4;font-size:13px;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions{
+ grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions button{
+ min-height:35px!important;padding:7px 12px!important;border-radius:8px!important;
+ font-size:12px!important;
+}
+#tm-menu-recipes-page .dish-recipe-association-save{
+ background:#334861!important;color:#fff!important;border:1px solid #426080!important;
+}
+#tm-menu-recipes-page .dish-recipe-association-clear,
+#tm-menu-recipes-page .dish-recipe-association-view{
+ border:1px solid #535d69;background:transparent;color:inherit;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions button[hidden]{display:none!important}
+#tm-menu-recipes-page .dish-recipe-association-state{
+ grid-column:1/-1;margin:0;min-height:18px;color:#b7c1ce;font-size:12px;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-indicator{
+ background:#e3f4e9;color:#286143;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association{
+ border-color:#d6dfe9;background:#f4f7fa;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-hint,
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-state{color:#586878}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association select,
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association input{
+ color:#1c2b3c;background:#fff;border-color:#cbd6e2;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-clear,
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-view{
+ border-color:#cbd6e2;color:#36475c;background:#fff;
+}
+@media(max-width:700px){
+ #tm-menu-recipes-page .dish-recipe-association{grid-template-columns:minmax(0,1fr);padding:14px 12px}
+}
+
+
+/* A single combobox replaces the old search + select + save sequence. */
+#tm-menu-recipes-page .dish-recipe-combobox-label{grid-column:1/-1}
+#tm-menu-recipes-page .dish-recipe-combobox{position:relative;min-width:0;width:100%}
+#tm-menu-recipes-page .dish-recipe-combobox input{
+ display:block;width:100%;min-height:43px;font-size:14px;
+}
+#tm-menu-recipes-page .dish-recipe-combobox input:focus-visible{
+ outline:2px solid #81a8cb;outline-offset:1px;
+}
+#tm-menu-recipes-page .dish-recipe-suggestions{
+ position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:80;
+ max-height:262px;overflow-y:auto;padding:5px;
+ border:1px solid #555f6b;border-radius:10px;background:#242a33;
+ box-shadow:0 15px 34px rgba(0,0,0,.24);
+}
+#tm-menu-recipes-page .dish-recipe-suggestions[hidden]{display:none!important}
+#tm-menu-recipes-page .dish-recipe-suggestion{
+ width:100%;min-height:38px;text-align:left;display:block;
+ border:0!important;border-radius:7px!important;padding:8px 10px!important;
+ font-size:12px!important;font-weight:400!important;
+ color:#f0f2f4!important;background:transparent!important;cursor:pointer;
+ white-space:normal;line-height:1.45;
+}
+#tm-menu-recipes-page .dish-recipe-suggestion:hover,
+#tm-menu-recipes-page .dish-recipe-suggestion:focus-visible{
+ background:#3b4655!important;outline:0;
+}
+#tm-menu-recipes-page .dish-recipe-suggestion-empty{
+ font-size:12px;color:#c0c8d0;padding:10px 9px;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestions{
+ background:#fff;border-color:#cad4e1;box-shadow:0 13px 28px rgba(32,55,80,.13);
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestion{
+ color:#1f2f42!important;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestion:hover,
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestion:focus-visible{
+ background:#ecf1f6!important;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-suggestion-empty{
+ color:#617184;
+}
+
+/* Compact individual recipe cards in the dish editor. */
+#tm-menu-recipes-page .dish-recipe-association-list{
+ grid-column:1/-1;display:grid;gap:9px;width:100%;min-width:0;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;
+ gap:12px;min-width:0;width:100%;box-sizing:border-box;
+ padding:10px 12px;border:1px solid #535d69;border-radius:11px;
+ background:rgba(255,255,255,.035);
+}
+#tm-menu-recipes-page .dish-recipe-card-name{
+ flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;font-weight:600;
+}
+#tm-menu-recipes-page .dish-recipe-card-buttons{
+ display:flex;align-items:center;flex-shrink:0;gap:7px;
+}
+#tm-menu-recipes-page .dish-recipe-association-actions .dish-recipe-card-buttons button{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:36px;min-width:36px;height:36px;min-height:36px!important;
+ padding:0!important;border-radius:9px!important;
+}
+#tm-menu-recipes-page .dish-recipe-card-buttons button:focus-visible{
+ outline:2px solid #7aa5df;outline-offset:2px;
+}
+#tm-menu-recipes-page .dish-recipe-association-state:empty{display:none;}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-recipe-association-actions{
+ background:#fff;border-color:#d6dfe9;
+}
+@media(max-width:540px){
+ #tm-menu-recipes-page .dish-recipe-association-actions{padding:8px;gap:7px;}
+ #tm-menu-recipes-page .dish-recipe-association-actions .dish-recipe-card-buttons button{
+  width:34px;min-width:34px;height:34px;min-height:34px!important;
+ }
+}
+
+/* Sidebar links must look identical whether implemented as anchors or buttons. */
+.tm-admin-sidebar .tm-admin-nav-link,.tm-admin-sidebar .tm-admin-nav-link:link,.tm-admin-sidebar .tm-admin-nav-link:visited,.tm-admin-sidebar .tm-admin-subnav-link,.tm-admin-sidebar .tm-admin-subnav-link:link,.tm-admin-sidebar .tm-admin-subnav-link:visited{text-decoration:none!important;text-decoration-line:none!important}
+
+
+/* Unified native dropdown: two-line label, value and chevron. */
+.tm-two-line-select{position:relative!important;display:block!important;min-width:0;width:100%;min-height:68px;border-radius:19px;background:var(--lib-panel-2,#22252b);border:1px solid var(--lib-border,#343840);box-sizing:border-box;overflow:hidden}
+.tm-two-line-select .tm-select-caption{position:absolute;left:18px;top:11px;right:49px;z-index:1;color:#939397;font-size:12px;font-weight:400;line-height:1.3;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-two-line-select .tm-select-value{position:absolute;left:18px;bottom:12px;right:49px;z-index:1;color:var(--lib-fg,#fff);font-size:16px;font-weight:450;line-height:1.3;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-two-line-select .tm-select-arrow{position:absolute;right:17px;top:50%;transform:translateY(-50%);z-index:1;color:#939397;width:20px;height:20px;pointer-events:none}
+.tm-two-line-select .tm-select-arrow svg{width:100%;height:100%;display:block}
+.tm-two-line-select>select{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;opacity:0!important;appearance:none!important;-webkit-appearance:none!important;cursor:pointer!important;z-index:2!important;border:0!important}
+.tm-two-line-select:focus-within{outline:2px solid #397da9;outline-offset:2px}
+.tm-two-line-select.tm-select-disabled{opacity:.65}
+.tm-two-line-select.tm-select-disabled>select{cursor:not-allowed!important}
+.tm-two-line-select option{color:#16181b}
+@media(max-width:700px){.tm-two-line-select{min-height:66px;border-radius:18px}.tm-two-line-select .tm-select-caption{font-size:12px}.tm-two-line-select .tm-select-value{font-size:16px}}
+/* Compact contexts: recipe table headings retain usable column widths. */
+th .tm-two-line-select{min-height:55px;border-radius:12px}
+th .tm-two-line-select .tm-select-caption{top:7px;left:10px;font-size:10px}
+th .tm-two-line-select .tm-select-value{bottom:7px;left:10px;font-size:12px}
+th .tm-two-line-select .tm-select-arrow{right:7px;width:14px;height:14px}
+
+
+/* Hide legacy label and decorative chevrons: only the two-line caption and one arrow remain. */
+label.tm-select-label-container{font-size:0!important;line-height:0!important}
+label.tm-select-label-container>.tm-two-line-select{font-size:initial;line-height:normal}
+label.tm-select-label-container>.tm-two-line-select .tm-select-caption{font-size:12px;line-height:1.3}
+label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:16px;line-height:1.3}
+.tm-two-line-select::before,.tm-two-line-select::after{content:none!important;display:none!important}
+.tm-two-line-select>select::before,.tm-two-line-select>select::after{content:none!important;display:none!important}
+.tm-two-line-select>select{background:none!important;background-image:none!important;-webkit-appearance:none!important;appearance:none!important}
+.tm-two-line-select>.tm-select-arrow{display:block!important;pointer-events:none!important}
+.tm-two-line-select>.tm-select-arrow::before,.tm-two-line-select>.tm-select-arrow::after{display:none!important;content:none!important}
+
+/* Keep sidebar interactive above the dishes/recipes content on desktop and mobile. */
+#admin-workspace .tm-admin-sidebar{position:relative;z-index:100!important;isolation:isolate;pointer-events:auto}
+#admin-workspace .tm-admin-sidebar .tm-admin-nav-link,
+#admin-workspace .tm-admin-sidebar .tm-admin-subnav-link{position:relative;z-index:101;pointer-events:auto;cursor:pointer}
+#admin-workspace .tm-admin-main{position:relative;z-index:1;min-width:0}
+@media(min-width:900px){#admin-workspace .tm-admin-sidebar{position:sticky}}
+
+/* Female-only weight monitoring control; retain existing light/dark theme rules. */
+#monitoring-weight-menstruation-field[hidden]{display:none!important}
+#monitoring-weight-menstruation-field select{min-width:115px}
+
+
+/* 2026-11-06: Repair native controls after unintended global dropdown wrapping.
+   Keep established microcycle and model colours visible in both themes. */
+#calendar-section .calendar-event-form{
+  display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(140px,1.2fr) minmax(140px,1.2fr) auto auto;
+  align-items:end;column-gap:12px;row-gap:10px
+}
+#calendar-section .calendar-event-form>div:not(#calendar-supp-options):not(.calendar-peri-flags){
+  min-width:0;min-height:0;align-self:end
+}
+#calendar-section .calendar-event-form>div:not(#calendar-supp-options):not(.calendar-peri-flags) :is(input,select){
+  display:block;width:100%;height:43px;min-height:43px;max-height:43px;
+  padding:8px 12px;box-sizing:border-box;line-height:1.3
+}
+#calendar-section .calendar-event-form>button{
+  height:43px;min-height:43px;align-self:end;white-space:nowrap
+}
+#calendar-section .calendar-peri-flags{min-height:43px;align-self:end;align-items:center;flex-wrap:wrap;gap:7px}
+#calendar-section .calendar-peri-flags .calendar-peri-check{
+  display:inline-flex;align-items:center;justify-content:center;min-height:43px;height:43px;
+  box-sizing:border-box;gap:8px;line-height:1.2
+}
+#calendar-section .calendar-peri-flags input[type=checkbox]{
+  display:block;flex:0 0 18px;width:18px;height:18px;margin:0;vertical-align:middle
+}
+#calendar-section .day-preview .day-meal-header{overflow:visible}
+#calendar-section .day-preview .day-meal-header .day-color-select{
+  position:static!important;display:block!important;flex:0 1 48%;min-width:0;
+  max-width:125px;height:31px;min-height:31px;margin:0!important;
+  padding:4px 7px;opacity:1!important;visibility:visible!important;
+  background:rgba(255,255,255,.88)!important;color:#26313b!important;
+  border:1px solid rgba(40,50,60,.16)!important;border-radius:7px;
+  pointer-events:auto!important;appearance:auto!important
+}
+#matrix .microcycle-color-select{
+  position:static!important;display:block!important;width:100%;max-width:100%;
+  opacity:1!important;pointer-events:auto!important;appearance:auto!important;
+  min-height:38px;padding:6px 9px;border-radius:8px
+}
+#menu-grid .menu-meal-card select{
+  position:static!important;opacity:1!important;pointer-events:auto!important;
+  appearance:auto!important;min-height:39px;height:auto;padding:8px 10px
+}
+#tm-assessments-page .tm-assessment-filter select,
+#tm-assessments-page .tm-assessment-filter input{
+  position:static!important;opacity:1!important;pointer-events:auto!important;
+  appearance:auto!important;height:42px!important;min-height:42px!important;
+  padding:8px 12px!important;border-radius:9px!important;box-sizing:border-box
+}
+#tm-assessments-page .tm-assessment-filters{align-items:stretch;gap:10px}
+#tm-assessments-page .tm-assessment-filter{min-width:145px;min-height:42px}
+#calendar-section .calendar-day-meal-options{margin-top:6px;min-width:0}
+#calendar-section .calendar-day-meal-options>summary{
+  list-style:none;cursor:pointer;text-align:center;font-size:11px;font-weight:600;
+  border:1px solid #4f5663;border-radius:8px;padding:7px 6px;
+  color:#e0e6ef;background:transparent;line-height:1.4
+}
+#calendar-section .calendar-day-meal-options>summary::-webkit-details-marker{display:none}
+#calendar-section .calendar-day-meal-options>summary:focus-visible{outline:2px solid #80a9d0;outline-offset:2px}
+#calendar-section .calendar-day-meal-options[open]>summary{margin-bottom:7px}
+#calendar-section .calendar-day-meal-option{
+  padding:8px 7px;border-top:1px solid #454850;font-size:11px;
+  overflow-wrap:anywhere;line-height:1.45
+}
+#calendar-section .calendar-day-meal-option>strong{display:block;margin:0 0 5px;font-size:11px}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line{display:block;padding:3px 0;white-space:normal}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line.is-alternative{padding-left:10px}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line.is-note{opacity:.8;font-style:italic}
+#calendar-section .calendar-day-meal-option .calendar-day-food-macro{display:block;margin-top:4px;font-size:10px;opacity:.78}
+#calendar-section .calendar-day-options-note{font-size:11px;line-height:1.4;color:#a8b2c1}
+html[data-admin-theme="light"] #calendar-section .calendar-day-meal-options>summary{
+  color:#33475a;border-color:#d0d9e4;background:#f8fafc
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day-meal-option{border-color:#dce3eb}
+html[data-admin-theme="light"] #calendar-section .calendar-day-options-note{color:#667485}
+html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-filter select,
+html[data-admin-theme="light"] #tm-assessments-page .tm-assessment-filter input{
+  background:#fff!important;border-color:#cdd7e3!important;color:#26384a!important
+}
+@media(max-width:1240px){
+  #calendar-section .calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #calendar-section .calendar-peri-flags{grid-column:1/3}
+}
+@media(max-width:740px){
+  #calendar-section .calendar-event-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #calendar-section .calendar-peri-flags{grid-column:1/-1}
+}
+@media(max-width:500px){
+  #calendar-section .calendar-event-form{grid-template-columns:1fr}
+  #calendar-section .calendar-peri-flags{grid-column:1}
+  #calendar-section .calendar-event-form>button{width:100%}
+}
+
+/* Dish table uses the same filter-in-header hierarchy as Recipes. */
+#tm-menu-recipes-page .dish-catalog-filters{
+ display:flex;align-items:center;justify-content:flex-end;gap:10px;
+ margin:0 0 12px!important
+}
+#tm-menu-recipes-page #dish-filter-parking[hidden]{display:none!important}
+#tm-menu-recipes-page .dish-table-filter-row th{
+ vertical-align:middle;white-space:nowrap;padding:10px 9px;box-sizing:border-box
+}
+#tm-menu-recipes-page .dish-table-filter-row th:first-child{width:22%;min-width:170px}
+#tm-menu-recipes-page .dish-table-filter-row th:nth-child(2){width:90px;min-width:80px}
+#tm-menu-recipes-page .dish-table-filter-row th:nth-child(3){width:38%;min-width:240px}
+#tm-menu-recipes-page .dish-table-filter-row th:last-child{text-align:right!important}
+#tm-menu-recipes-page .dish-table-filter-row #dish-search,
+#tm-menu-recipes-page .dish-table-filter-row #dish-category-filter{
+ display:block;width:100%;min-width:0;height:38px;min-height:38px;
+ padding:7px 10px;border:1px solid #454a54;border-radius:8px;
+ font:inherit;font-size:12px;font-weight:450;box-sizing:border-box;
+ background:transparent;color:#e7e9ee;line-height:1.3
+}
+#tm-menu-recipes-page .dish-table-filter-row #dish-search::placeholder{color:#aab2be;opacity:1}
+#tm-menu-recipes-page .dish-table-filter-row #dish-category-filter{appearance:auto}
+#tm-menu-recipes-page .dish-table-category{white-space:normal;overflow-wrap:anywhere}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dish-search,
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dish-category-filter{
+ background:#fff;color:#253648;border-color:#d1dae5
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-filter-row #dish-search::placeholder{color:#68798c}
+@media(max-width:760px){
+ #tm-menu-recipes-page .dish-library-table{min-width:790px}
+}
+/* Recipe table filters: one compact control height, no decorative overlay. */
+#tm-recipe-library-page .recipe-table-filter-row input,
+#tm-recipe-library-page .recipe-table-filter-row select{
+ position:static!important;display:block!important;opacity:1!important;
+ pointer-events:auto!important;appearance:auto!important;
+ width:100%!important;height:38px!important;min-height:38px!important;
+ max-height:38px!important;padding:7px 10px!important;
+ box-sizing:border-box;border-radius:8px!important;
+ font-size:12px!important;font-weight:450!important
+}
+
+/* Explicit separation of live draft nutrition and historical comparison. */
+#calendar-section .calendar-live-source{display:block;font-size:10px;font-weight:600;color:#8ac9a3;line-height:1.35}
+#calendar-section .calendar-legacy-meal-nutrients{display:block;font-size:10px;line-height:1.4;color:#9ca5b3}
+#calendar-section .calendar-live-totals,
+#calendar-section .calendar-live-weekly{padding:14px;border:1px solid #486451;border-radius:11px;background:rgba(62,125,83,.065);margin-top:13px}
+#calendar-section .calendar-live-totals h3,
+#calendar-section .calendar-live-weekly h4{font-size:14px;margin:0 0 8px;font-weight:650}
+#calendar-section .calendar-live-totals .hint,
+#calendar-section .calendar-live-weekly .hint{margin:0 0 9px;font-size:11px;line-height:1.55}
+#calendar-section .calendar-live-warning{color:#e5ba75;font-size:11px;line-height:1.55;margin:8px 0}
+html[data-admin-theme="light"] #calendar-section .calendar-live-source{color:#26704b}
+html[data-admin-theme="light"] #calendar-section .calendar-legacy-meal-nutrients{color:#708093}
+html[data-admin-theme="light"] #calendar-section .calendar-live-totals,
+html[data-admin-theme="light"] #calendar-section .calendar-live-weekly{background:#f0f8f3;border-color:#b9d9c4}
+html[data-admin-theme="light"] #calendar-section .calendar-live-warning{color:#925f16}
+
+/* Dynamic peri-plan preview: preserve event/phase boundaries and never overlay controls. */
+#calendar-section .calendar-live-peri{border-color:#4a6c56;background:rgba(76,135,91,.055)}
+#calendar-section .calendar-live-peri-phase{padding:11px 0;border-bottom:1px solid #3d4941;min-width:0}
+#calendar-section .calendar-live-peri-phase:last-child{border-bottom:0;padding-bottom:0}
+#calendar-section .calendar-live-peri-phase>strong{display:block;font-size:12px;line-height:1.5}
+#calendar-section .calendar-live-peri-phase>.calendar-live-source{margin:5px 0 9px}
+#calendar-section .calendar-live-peri-phase .calendar-day-meal-options{max-width:100%}
+#calendar-section .calendar-old-peri{opacity:.82}
+#calendar-section .calendar-day-options-note.is-mismatch{color:#efb571;font-weight:600}
+html[data-admin-theme="light"] #calendar-section .calendar-live-peri{background:#f1f8f3;border-color:#bbd8c4}
+html[data-admin-theme="light"] #calendar-section .calendar-live-peri-phase{border-bottom-color:#d4e4d9}
+html[data-admin-theme="light"] #calendar-section .calendar-day-options-note.is-mismatch{color:#925a17}
+
+/* Source-of-truth switch: keep original calendar summary hierarchy. */
+#calendar-section .calendar-current-source{font-size:11px;line-height:1.5;opacity:.8;margin:7px 0 9px}
+#calendar-section .calendar-legacy-summary{margin:12px 0 0;padding:11px 13px;border-radius:10px;border:1px solid #444954;background:transparent}
+#calendar-section .calendar-legacy-summary>summary{cursor:pointer;font-size:12px;font-weight:550;line-height:1.5}
+#calendar-section .calendar-legacy-summary>.calendar-day-totals{margin-top:10px}
+#calendar-section .calendar-legacy-summary .nutrition-metric-card{background:transparent}
+html[data-admin-theme="light"] #calendar-section .calendar-legacy-summary{border-color:#d8e0e9}
+html[data-admin-theme="light"] #calendar-section .calendar-current-source{color:#667485}
+
+
+/* The Mile calendar: VP is the same deep green in month strips and daily cards. */
+#calendar-section .calendar-day .day-color-strip .day-color-dot.meal-vp,
+#calendar-section .calendar-day .tm-db-vp,
+#calendar-section .day-preview .day-meal-header.meal-vp{
+ background:#28543e!important;color:#fff!important;
+}
+#calendar-section .calendar-day .day-color-strip .day-color-dot.meal-vp{opacity:1!important}
+
+/* Day detail: an options button in each meal opens ONE full-width,
+   horizontal section below the five meal cards, never inside a narrow cell. */
+#calendar-section .calendar-options-trigger{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-height:38px!important;margin-top:9px!important;
+ padding:8px 10px!important;background:transparent!important;
+ border:1px solid #536071!important;border-radius:9px!important;
+ font:inherit!important;font-size:12px!important;font-weight:600!important;
+ color:inherit!important;cursor:pointer!important;box-sizing:border-box!important;
+}
+#calendar-section .calendar-options-trigger:hover,
+#calendar-section .calendar-options-trigger.is-active{background:rgba(115,148,177,.12)!important;border-color:#8da5b9!important}
+#calendar-section .calendar-options-trigger:focus-visible{outline:2px solid #8aaed1;outline-offset:2px}
+#calendar-section .calendar-wide-options[hidden]{display:none!important}
+#calendar-section .calendar-wide-options{
+ display:block;min-width:0;width:100%;box-sizing:border-box;
+ margin:14px 0 18px;padding:16px;
+ border:1px solid #434c58;border-radius:12px;background:#202329;
+}
+#calendar-section .calendar-wide-options-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ margin:0 0 13px;font-size:14px;font-weight:650;
+}
+#calendar-section .calendar-wide-options-close{
+ background:transparent!important;color:inherit!important;min-height:32px;
+ border:1px solid #59616c!important;border-radius:8px!important;
+ padding:5px 12px!important;cursor:pointer;
+}
+#calendar-section .calendar-wide-options-grid{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));
+ gap:12px;align-items:start;min-width:0;width:100%;
+}
+#calendar-section .calendar-day-meal-options{margin:0;min-width:0}
+#calendar-section .calendar-wide-options .calendar-day-meal-option,
+#calendar-section .calendar-live-peri .calendar-day-meal-option{
+ background:#282c34;border:1px solid #444e5a;border-radius:10px;
+ padding:13px 14px;min-width:0;margin:0;
+ line-height:1.5;font-size:12px;overflow-wrap:anywhere;
+}
+#calendar-section .calendar-day-meal-option>strong{
+ font-size:12px;font-weight:650;margin-bottom:9px;line-height:1.4;
+}
+#calendar-section .calendar-day-meal-option .calendar-day-food-line{font-size:11px;line-height:1.5;padding:4px 0}
+#calendar-section .calendar-day-meal-option .calendar-day-food-macro{
+ display:block;font-size:11px;font-weight:600;opacity:.88;
+ border-top:1px solid #4b5563;padding-top:9px;margin-top:10px;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-options-trigger{
+ background:#f8fafc!important;border-color:#cad6e4!important;color:#30465c!important;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-options-trigger:hover,
+html[data-admin-theme="light"] #calendar-section .calendar-options-trigger.is-active{background:#e8eef5!important;border-color:#a8baca!important}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options{
+ background:#fff;border-color:#d4dee8;color:#263648;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options-close{
+ border-color:#cbd8e5!important;color:#334b60!important;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options .calendar-day-meal-option,
+html[data-admin-theme="light"] #calendar-section .calendar-live-peri .calendar-day-meal-option{
+ background:#f8fafc;border-color:#d7e0ea;color:#2b4054;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day-meal-option .calendar-day-food-macro{border-color:#d8e1ec}
+#calendar-section .calendar-live-peri .calendar-wide-options-grid{
+ grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));
+}
+
+/* Two-line controls WITHIN one rectangle in the event form. */
+#calendar-section .calendar-event-form{
+ display:flex!important;flex-wrap:wrap!important;align-items:stretch!important;
+ gap:10px!important;padding:15px!important;
+}
+#calendar-section .calendar-event-form>.calendar-event-field{
+ position:relative!important;display:flex!important;flex-direction:column!important;
+ justify-content:center!important;gap:3px!important;
+ height:68px!important;min-height:68px!important;
+ padding:9px 14px!important;margin:0!important;
+ background:#24262d!important;border:1px solid #424852!important;
+ border-radius:12px!important;box-sizing:border-box!important;
+ flex:1 1 156px!important;min-width:128px!important;max-width:none!important;
+}
+#calendar-section .calendar-event-form>.calendar-event-field[hidden]{display:none!important}
+#calendar-section .calendar-event-form>.calendar-event-field>label{
+ position:static!important;display:block!important;margin:0!important;padding:0!important;
+ color:#9ea9b7!important;line-height:1.25!important;
+ font-size:11px!important;font-weight:500!important;white-space:nowrap!important;
+}
+#calendar-section .calendar-event-form>.calendar-event-field :is(select,input){
+ position:static!important;opacity:1!important;pointer-events:auto!important;
+ appearance:auto!important;display:block!important;
+ border:0!important;background:transparent!important;color:inherit!important;
+ box-shadow:none!important;border-radius:0!important;
+ width:100%!important;height:32px!important;min-height:32px!important;max-height:32px!important;
+ padding:0!important;margin:0!important;
+ font:inherit!important;font-size:15px!important;line-height:1.3!important;
+}
+#calendar-section .calendar-event-form>.calendar-event-field:focus-within{outline:2px solid #8aabc9;outline-offset:1px}
+#calendar-section .calendar-peri-flags{
+ display:flex!important;align-items:stretch!important;justify-content:center!important;
+ flex:0 1 auto!important;min-height:68px!important;height:auto!important;
+ gap:9px!important;margin:0!important;
+}
+#calendar-section .calendar-peri-flags[hidden]{display:none!important}
+#calendar-section .calendar-peri-flags .calendar-peri-check{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:9px!important;box-sizing:border-box!important;
+ min-height:68px!important;height:68px!important;margin:0!important;
+ padding:0 12px!important;
+ background:#24262d!important;border:1px solid #424852!important;
+ border-radius:12px!important;color:inherit!important;
+ white-space:nowrap!important;
+}
+#calendar-section .calendar-peri-flags input[type=checkbox]{
+ position:relative!important;display:inline-block!important;appearance:none!important;
+ margin:0!important;padding:0!important;
+ width:21px!important;min-width:21px!important;height:21px!important;min-height:21px!important;
+ flex:0 0 21px!important;box-sizing:border-box!important;
+ border-radius:6px!important;border:1px solid #768292!important;
+}
+#calendar-section .calendar-peri-flags input[type=checkbox]:checked{
+ background:#70bf91!important;border-color:#70bf91!important;
+}
+#calendar-section .calendar-peri-flags input[type=checkbox]:checked::after{
+ content:""!important;position:absolute!important;
+ width:9px!important;height:5px!important;left:50%!important;top:46%!important;
+ border:0!important;border-left:2px solid #183523!important;
+ border-bottom:2px solid #183523!important;
+ transform:translate(-50%,-50%) rotate(-45deg)!important;
+}
+#calendar-section .calendar-event-form>#calendar-add-event{
+ display:inline-flex!important;justify-content:center!important;align-items:center!important;
+ flex:0 0 auto!important;align-self:stretch!important;
+ min-height:68px!important;height:68px!important;
+ padding:0 16px!important;border-radius:12px!important;white-space:nowrap!important;
+ box-sizing:border-box!important;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-form>.calendar-event-field,
+html[data-admin-theme="light"] #calendar-section .calendar-peri-flags .calendar-peri-check{
+ background:#fff!important;border-color:#d4dfe9!important;color:#203146!important;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-form>.calendar-event-field>label{color:#68798b!important}
+html[data-admin-theme="light"] #calendar-section .calendar-event-form>.calendar-event-field :is(input,select){color:#203146!important}
+html[data-admin-theme="light"] #calendar-section .calendar-event-form>#calendar-add-event{
+ background:#fff!important;border-color:#cbd9e6!important;color:#203146!important;
+}
+@media(max-width:900px){
+ #calendar-section .calendar-event-form>.calendar-event-field{flex:1 1 calc(50% - 8px)!important}
+ #calendar-section .calendar-peri-flags{flex:1 1 100%!important;justify-content:flex-start!important;flex-wrap:wrap!important}
+ #calendar-section .calendar-event-form>#calendar-add-event{flex:1 1 100%!important}
+}
+@media(max-width:550px){
+ #calendar-section .calendar-event-form>.calendar-event-field{flex:1 1 100%!important}
+ #calendar-section .calendar-peri-flags .calendar-peri-check{flex:1 1 130px!important}
+}
+
+/* Horizontal option cards within the expanded daily meal preview */
+.calendar-wide-options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;align-items:start;width:100%}
+.calendar-option-accordion{min-width:0;overflow:hidden;align-self:start}
+.calendar-option-accordion-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;list-style:none;min-height:48px;padding:12px 14px}
+.calendar-option-accordion-heading::-webkit-details-marker{display:none}
+.calendar-option-accordion-heading strong{font-weight:650;line-height:1.4}
+.calendar-option-accordion-caret{flex-shrink:0;font-size:21px;transition:transform .2s ease}
+.calendar-option-accordion[open] .calendar-option-accordion-caret{transform:rotate(180deg)}
+.calendar-option-accordion .calendar-day-food-line,.calendar-option-accordion .calendar-day-food-macro{margin-left:14px;margin-right:14px}
+.calendar-option-accordion .calendar-day-food-macro{margin-bottom:12px}
+
+/* Each expanded food option occupies one full-width horizontal row */
+#calendar-section .calendar-wide-options-grid,#calendar-section .calendar-live-peri .calendar-wide-options-grid{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;width:100%!important}
+#calendar-section .calendar-wide-options-grid>.calendar-option-accordion{display:block!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;flex:none!important;padding:0!important}
+#calendar-section .calendar-option-accordion-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%;min-height:56px;padding:15px 18px!important;box-sizing:border-box;font-size:14px}
+#calendar-section .calendar-option-accordion-heading strong{font-size:14px;line-height:1.45;min-width:0;overflow-wrap:anywhere}
+#calendar-section .calendar-option-accordion[open] .calendar-option-accordion-heading{border-bottom:1px solid #59616c50;margin-bottom:8px}
+#calendar-section .calendar-option-accordion .calendar-day-food-line,#calendar-section .calendar-option-accordion .calendar-day-food-macro{margin-left:18px!important;margin-right:18px!important}
+
+/* Food option colours match the corresponding published colour plan */
+#calendar-section .calendar-wide-options[data-palette="yellow"]{--food-opt-bg:#513c12;--food-opt-fg:#ffdb77;--food-opt-inner:#634d20}
+#calendar-section .calendar-wide-options[data-palette="orange"]{--food-opt-bg:#53351c;--food-opt-fg:#ffca95;--food-opt-inner:#67482b}
+#calendar-section .calendar-wide-options[data-palette="blue"]{--food-opt-bg:#203e54;--food-opt-fg:#a8d8fb;--food-opt-inner:#30536b}
+#calendar-section .calendar-wide-options[data-palette="green"]{--food-opt-bg:#234535;--food-opt-fg:#a7e1b9;--food-opt-inner:#355942}
+#calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion{background:var(--food-opt-inner,#282c34)!important;color:var(--food-opt-fg,inherit)!important;border-color:color-mix(in srgb,var(--food-opt-fg,white) 22%,transparent)!important}
+#calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion-heading{color:inherit!important}
+#calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion .calendar-day-food-line{color:inherit!important}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="yellow"]{--food-opt-bg:#fff0bb;--food-opt-fg:#725313;--food-opt-inner:#fff9e7}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="orange"]{--food-opt-bg:#ffdfc3;--food-opt-fg:#804717;--food-opt-inner:#fff3e8}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="blue"]{--food-opt-bg:#dceeff;--food-opt-fg:#24577d;--food-opt-inner:#f1f8ff}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="green"]{--food-opt-bg:#d9f1e2;--food-opt-fg:#245e40;--food-opt-inner:#eef9f2}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette] .calendar-option-accordion{background:var(--food-opt-inner)!important;color:var(--food-opt-fg)!important;border-color:color-mix(in srgb,var(--food-opt-fg) 22%,transparent)!important}
+
+/* Temporarily hide legacy document import interfaces; keep existing data and handlers intact. */
+#recipe-pdf-toggle,
+#recipe-pdf-panel,
+.tm-assessment-import-section,
+#plan-import-panel,
+#peri-panel,
+#supplements-panel .supp-workflow:has(> a[href="/api/v2/supplement-library/transfer"]),
+#supplements-panel .supp-workflow-body > .supp-workflow:has(> #supp-transfer-import),
+#supplements-panel .supp-workflow-body > .supp-workflow:has(#supp-transfer-file),
+#supplements-panel .supp-workflow-body > details.supp-workflow:has(#supp-bulk-file){display:none!important}
+
+/* Players: filtering happens in the table header, not a separate toolbar. */
+#tm-players-page .tm-players-table-meta{display:flex;justify-content:flex-end;padding:0 2px 12px}
+#tm-players-page .tm-players-table thead th{vertical-align:middle;padding:11px 12px!important}
+#tm-players-page .tm-players-table thead .tm-players-search-label{display:block;width:100%;max-width:none;margin:0!important}
+#tm-players-page .tm-players-table thead .tm-players-search-label input{width:100%;height:42px;min-width:0}
+#tm-players-page .tm-players-table thead .tm-players-header-select{display:flex;gap:8px;align-items:center;width:100%;white-space:nowrap;margin:0}
+#tm-players-page .tm-players-table thead .tm-players-header-select select{width:100%;min-width:105px;max-width:190px}
+#tm-players-page .tm-players-table tbody tr td{border-bottom:1px solid rgba(144,153,165,.11)!important}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody tr td{border-bottom-color:rgba(80,98,123,.11)!important}
+
+#tm-players-page .tm-players-list-surface{padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#tm-players-page .tm-players-list-surface .tm-players-table-scroll{border:1px solid #34363e;border-radius:15px;overflow:auto;background:#15161a}
+#tm-players-page .tm-players-list-surface .tm-players-table thead th{padding:15px 17px!important}
+#tm-players-page .tm-players-list-surface .tm-players-table tbody td{padding:16px 17px!important}
+#tm-players-page .tm-players-list-surface .tm-players-table tbody tr td{border-bottom-color:rgba(144,153,165,.1)!important}
+
+/* Unified Planning header: player picker and section navigation share one card. */
+#tm-admin-legacy .tm-planning-unified-header{display:flex;flex-direction:column;gap:0;margin:0 0 16px;padding:13px 17px 9px;background:#17181d;border:1px solid #313239;border-radius:16px;min-width:0}
+#tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{margin:0!important;padding:0 0 14px!important;min-height:62px;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;justify-content:flex-start}
+#tm-admin-legacy .tm-planning-unified-header .tm-planning-player-identity{flex:1;min-width:0;max-width:650px;gap:13px}
+#tm-admin-legacy .tm-planning-unified-header #tm-planning-avatar{width:48px;height:48px;flex:0 0 48px}
+#tm-admin-legacy .tm-planning-unified-header .tm-planning-player-select{flex:1;max-width:565px;z-index:6}
+#tm-admin-legacy .tm-planning-unified-header #tm-planning-search{height:49px!important;border-radius:12px!important;background:#23252b;border-color:#3a3d45}
+#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{display:flex;align-items:center;gap:5px;margin:0!important;padding:9px 0 0!important;border:0!important;border-top:1px solid rgba(147,154,166,.19)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;flex-wrap:wrap;min-width:0}
+#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button{min-height:37px;border-radius:9px;padding:9px 13px!important}
+@media(max-width:650px){#tm-admin-legacy .tm-planning-unified-header{padding:12px 12px 8px;margin-bottom:12px}#tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{min-height:52px;padding-bottom:10px!important}#tm-admin-legacy .tm-planning-unified-header #tm-planning-avatar{width:40px;height:40px;flex-basis:40px}#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}#tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button{flex:none;padding:9px 11px!important}}
+
+/* Optional independent loading photograph in the Player profile. */
+#tm-players-page .tm-player-loading-photo-card{display:flex;flex-direction:column;gap:17px;padding:19px 20px;margin:19px 0;border:1px solid #343740;border-radius:16px;background:#1b1d22}
+#tm-players-page .tm-player-loading-photo-info strong{font-size:15px;font-weight:500;color:#f2f3f5}
+#tm-players-page .tm-player-loading-photo-info p{max-width:650px;font-size:12px;line-height:1.55;color:#a5aab4;margin:7px 0 0}
+#tm-players-page .tm-player-loading-photo-editor{display:flex;align-items:center;gap:19px}
+#tm-players-page .tm-player-loading-photo-preview{width:96px;height:171px;border:1px solid #42464f;background:#111216;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:none;padding:0}
+#tm-players-page .tm-player-loading-photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+#tm-players-page .tm-player-loading-photo-preview span{color:#979da8;font-size:11px;text-align:center;padding:12px;line-height:1.5}
+#tm-players-page .tm-player-loading-photo-controls{display:flex;flex-direction:column;gap:11px;align-items:flex-start}
+#tm-players-page .tm-player-loading-photo-upload{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border:1px solid #424751;background:#2b2f36;border-radius:999px;color:#f4f5f6;font:500 13px "Inter Tight",sans-serif;cursor:pointer}
+#tm-players-page .tm-player-loading-photo-upload:has(input:disabled){opacity:.48;cursor:not-allowed}
+#tm-players-page .tm-player-loading-photo-upload input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+#tm-players-page .tm-player-loading-photo-controls p{margin:0;color:#a4aab4;font-size:12px}
+#tm-players-page #tm-player-loading-photo-delete{min-height:35px;padding:7px 14px;font-size:12px}
+@media(max-width:550px){#tm-players-page .tm-player-loading-photo-editor{align-items:flex-start;gap:12px}#tm-players-page .tm-player-loading-photo-card{padding:15px}}
+
+/* Profile: entry image is its own compact card, after access management. */
+#tm-players-page .tm-player-loading-photo-card{
+  margin:16px 0 0;padding:18px 20px;gap:15px;
+  background:#1b1d22;border:1px solid #343840;border-radius:15px;
+}
+#tm-players-page .tm-player-loading-photo-info strong{
+  color:#f2f3f5;font-size:15px;font-weight:600;
+}
+#tm-players-page .tm-player-loading-photo-info p{
+  max-width:none;margin:5px 0 0;font-size:12px;line-height:1.5;
+  color:#9fa7b4;
+}
+#tm-players-page .tm-player-loading-photo-editor{gap:17px;align-items:center}
+#tm-players-page .tm-player-loading-photo-preview{
+  width:80px;height:143px;border-radius:11px;flex:none;
+}
+#tm-players-page .tm-player-loading-photo-controls{gap:9px}
+#tm-players-page .tm-player-loading-photo-upload{
+  padding:10px 14px;border-radius:10px;
+}
+#tm-players-page #tm-player-loading-photo-feedback:empty{display:none}
+@media(max-width:520px){
+  #tm-players-page .tm-player-loading-photo-card{padding:16px}
+  #tm-players-page .tm-player-loading-photo-editor{gap:12px}
+  #tm-players-page .tm-player-loading-photo-preview{width:72px;height:128px}
+}
+
+#tm-players-page .tm-player-photo-save{display:inline-flex;align-items:center;justify-content:center;min-width:114px;padding:10px 16px;border-radius:10px;border:1px solid #4a5568;background:#2f3b4e;color:#f7f9fc;font-size:13px;font-weight:600;cursor:pointer}
+#tm-players-page .tm-player-photo-save:disabled:not(.is-saved){opacity:.45;cursor:default}
+#tm-players-page .tm-player-photo-save.is-saved{background:#204936;border-color:#3e8061;color:#a8edc1;opacity:1;cursor:default}
+
+#tm-players-page .tm-player-access-actions .tm-enter-app{display:inline-flex;align-items:center;gap:8px;background:#243e36;border-color:#386753;color:#c3f0d4}
+#tm-players-page .tm-player-access-actions .tm-enter-app:hover{background:#2e5143}
+#tm-players-page .tm-player-access-actions .tm-enter-app[hidden]{display:none!important}
+
+/* Compact player directory and contextual view / read-only app actions. */
+#tm-players-page .tm-players-table{min-width:640px}
+#tm-players-page .tm-players-table th:first-child{width:37%;min-width:225px}
+#tm-players-page .tm-players-table th:nth-child(2){width:19%}
+#tm-players-page .tm-players-table th:nth-child(3){width:27%}
+#tm-players-page .tm-players-table th:last-child{width:17%;min-width:112px}
+#tm-players-page .tm-p-actions-wrap{display:flex;align-items:center;gap:8px}
+#tm-players-page .tm-p-icon-action{
+ display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;
+ padding:0;border:1px solid #454a55;border-radius:10px;
+ color:inherit;background:rgba(138,150,168,.07);cursor:pointer
+}
+#tm-players-page .tm-p-icon-action:hover:not(:disabled){background:rgba(138,150,168,.18)}
+#tm-players-page .tm-p-icon-action:disabled{opacity:.4;cursor:not-allowed}
+#tm-players-page .tm-p-app-action:not(:disabled){color:#76bf9c}
+html[data-admin-theme="light"] #tm-players-page .tm-p-icon-action{border-color:#d6dfe9;color:#253449;background:#f5f7fa}
+html[data-admin-theme="light"] #tm-players-page .tm-p-app-action:not(:disabled){color:#2c7651}
+
+/* The player-access filter follows the shared two-line dropdown design. */
+#tm-players-page .tm-players-table thead label.tm-players-header-select{
+  display:block!important;margin:0!important;width:100%;font-size:initial;line-height:normal;white-space:normal
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+  display:block!important;position:relative;min-height:55px!important;
+  width:100%;max-width:240px;border-radius:12px
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-caption{
+  top:7px;left:12px;right:38px;font-size:10px
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-value{
+  left:12px;bottom:7px;right:38px;font-size:13px;font-weight:550
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-arrow{right:10px}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select>select{
+  position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;
+  min-width:0!important;height:100%!important;opacity:0!important;
+  cursor:pointer;appearance:none!important
+}
+
+/* Player-directory filters: equal-height controls, aligned in the header row. */
+#tm-players-page .tm-players-table thead .tm-players-search-label input{
+ height:55px!important;min-height:55px!important;box-sizing:border-box;
+}
+#tm-players-page .tm-players-table thead .tm-players-search-label .tm-players-search-icon{
+ top:50%;transform:translateY(-50%);
+}
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+ height:55px!important;min-height:55px!important;
+}
+
+/* Mobile phase 1: preserve every existing navigation destination, but arrange
+   the existing buttons in one horizontally scrollable row. Desktop untouched. */
+#admin-workspace .tm-admin-mobile-nav-track{display:contents}
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar{
+   display:flex!important;flex-direction:column!important;align-items:stretch!important;
+   position:relative!important;top:auto!important;min-height:0!important;height:auto!important;
+   gap:0!important;padding:12px 0 7px!important;border-right:0!important;
+   overflow:hidden!important;
+ }
+ #admin-workspace .tm-admin-brand{
+   padding:2px 16px 10px!important;margin:0!important;min-height:37px!important;
+ }
+ #admin-workspace .tm-admin-brand-home{display:inline-flex;align-items:center}
+ #admin-workspace .tm-admin-brand-wordmark{
+   width:116px!important;max-width:116px!important;height:auto!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track{
+   display:flex;flex-direction:row;align-items:stretch;
+   width:100%;max-width:100%;min-width:0;gap:4px;
+   padding:0 12px 4px;overflow-x:auto;overflow-y:hidden;
+   flex-wrap:nowrap;scroll-snap-type:x proximity;
+   overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+   scrollbar-width:none;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track::-webkit-scrollbar{display:none}
+ #admin-workspace .tm-admin-mobile-nav-track:focus-visible{
+   outline:2px solid #7eabc8;outline-offset:-2px;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track>.tm-admin-side-nav{
+   display:contents!important;
+ }
+ #admin-workspace .tm-admin-sidebar-spacer,
+ #admin-workspace .tm-admin-sidebar-footer,
+ #admin-workspace .tm-admin-nav-heading{display:none!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   box-sizing:border-box!important;display:inline-flex!important;
+   flex:0 0 auto!important;flex-direction:column!important;
+   justify-content:center!important;align-items:center!important;
+   width:auto!important;min-width:76px!important;max-width:124px!important;
+   min-height:66px!important;margin:0!important;padding:8px 11px!important;
+   gap:5px!important;border:0!important;border-radius:12px!important;
+   background:transparent!important;color:#cbd2dc!important;
+   font-size:11px!important;font-weight:500!important;line-height:1.1!important;
+   text-align:center!important;white-space:nowrap!important;
+   text-decoration:none!important;scroll-snap-align:start;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link>.tm-admin-nav-icon{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   width:21px!important;height:21px!important;min-width:21px!important;margin:0!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-side-icon{width:20px!important;height:20px!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{
+   background:#303740!important;color:#fff!important;font-weight:650!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:not(:disabled):hover{
+   background:transparent!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:focus-visible{
+   outline:2px solid #8db7d9!important;outline-offset:-2px!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link small,
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-chevron{display:none!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-recipes-subnav{
+   display:flex;flex:0 0 auto;flex-direction:row;align-items:stretch;
+   gap:4px;margin:0!important;padding:0!important;border:0!important;
+   scroll-snap-align:start;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-recipes-subnav[hidden]{display:none!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-subnav-link{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 auto;min-width:104px;max-width:140px;min-height:66px;
+   padding:8px 9px!important;border-radius:12px!important;text-align:center!important;
+   white-space:normal!important;font-size:11px!important;line-height:1.25!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-subnav-link.is-active{
+   background:#303740!important;color:#fff!important;
+ }
+}
+
+/* Mobile nav refinement: 16pt leading inset, separate icon-only account controls. */
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar{position:relative!important;overflow:hidden!important}
+ #admin-workspace .tm-admin-brand{padding-right:111px!important}
+ #admin-workspace .tm-admin-mobile-nav-track{padding-left:16px!important;padding-right:16px!important}
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   display:flex!important;position:absolute!important;top:10px;right:12px;z-index:4;
+   flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;
+   gap:5px!important;width:auto!important;margin:0!important;padding:0!important;
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 39px!important;width:39px!important;min-width:39px!important;
+   min-height:39px!important;height:39px!important;margin:0!important;padding:8px!important;
+   gap:0!important;border:0!important;border-radius:11px!important;
+   background:transparent!important;color:#bfc8d2!important;
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link>span:not(.tm-admin-nav-icon){display:none!important}
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link .tm-admin-nav-icon{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   width:21px!important;min-width:21px!important;height:21px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link.is-active{
+   background:#303740!important;color:#fff!important
+ }
+}
+
+/* Mobile polish: align first tab with The Mile wordmark and Dashboard cards.
+   Small secondary account controls remain in the top-right corner. */
+@media(max-width:830px){
+ #admin-workspace .tm-admin-brand{padding-left:24px!important}
+ #admin-workspace .tm-admin-mobile-nav-track{
+   padding-left:24px!important;scroll-padding-inline-start:24px!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track>.tm-admin-side-nav:first-child>.tm-admin-nav-link:first-child{
+   scroll-margin-inline-start:24px!important;
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   top:13px!important;right:16px!important;gap:5px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   flex:0 0 30px!important;width:30px!important;min-width:30px!important;
+   min-height:30px!important;height:30px!important;padding:6px!important;
+   border-radius:8px!important;opacity:.78
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-nav-icon{
+   width:17px!important;min-width:17px!important;height:17px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"] .tm-admin-side-icon{
+   width:17px!important;height:17px!important
+ }
+}
+
+/* Mobile menu phase: one small wordmark and inline icon+text tabs. */
+@media(max-width:830px){
+ .tm-admin-more-trigger{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;gap:7px!important;min-height:43px!important;
+  padding:8px 13px!important;border:0!important;border-radius:11px!important;
+  background:transparent!important;color:inherit!important;font:inherit!important;
+  font-size:12px!important;font-weight:550!important;white-space:nowrap;
+  cursor:pointer;scroll-snap-align:start
+ }
+ .tm-admin-more-trigger svg{width:18px;height:18px;flex:none}
+ .tm-admin-more-trigger[aria-expanded="true"]{background:rgba(112,137,159,.13)!important}
+ .tm-admin-more-trigger:focus-visible{outline:2px solid #88aeca;outline-offset:-2px}
+}
+
+/* Only small-screen navigation is changed. Desktop keeps the existing sidebar. */
+#admin-workspace .tm-admin-more-trigger{display:none}
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar{overflow:visible!important;padding-top:9px!important}
+ #admin-workspace .tm-admin-brand{min-height:34px!important;padding:0 16px 4px 24px!important}
+ #admin-workspace .tm-admin-brand-wordmark{width:92px!important;max-width:92px!important}
+ #admin-workspace .tm-admin-mobile-nav-track{
+   align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important;
+   padding:0 16px 6px 24px!important
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   flex-direction:row!important;gap:7px!important;
+   min-width:0!important;max-width:none!important;
+   min-height:43px!important;height:43px!important;
+   padding:8px 12px!important;font-size:12px!important;font-weight:500!important;
+ }
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{font-weight:650!important}
+ #admin-workspace .tm-admin-mobile-nav-track .tm-admin-recipes-subnav .tm-admin-subnav-link{
+   min-height:43px!important;min-width:110px!important;height:43px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   display:none!important;position:absolute!important;top:100%!important;right:16px!important;
+   width:190px!important;min-width:190px!important;z-index:20!important;
+   padding:6px!important;margin:0!important;gap:3px!important;
+   flex-direction:column!important;align-items:stretch!important;
+   background:#23262c!important;border:1px solid #3b4652!important;
+   box-shadow:0 12px 30px rgba(0,0,0,.18);border-radius:13px!important
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav.is-mobile-open{display:flex!important}
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   display:flex!important;justify-content:flex-start!important;
+   gap:10px!important;flex:none!important;width:100%!important;height:41px!important;
+   min-height:41px!important;padding:8px 11px!important;
+   text-align:left!important;opacity:1!important;font-size:12px!important;
+ }
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link>span:not(.tm-admin-nav-icon){
+   display:inline!important
+ }
+}
+
+/* Mobile-only: remove wordmark, show safe inline submenu panels below the tab row. */
+@media(max-width:830px){
+ .tm-admin-sidebar .tm-admin-brand{display:none!important}
+ .tm-admin-sidebar .tm-admin-recipes-subnav{
+  box-sizing:border-box!important;position:relative!important;
+  flex:none!important;align-items:center!important;gap:6px!important;
+  width:auto!important;max-width:calc(100% - 32px)!important;
+  margin:2px 16px 7px 24px!important;padding:5px!important;
+  border:1px solid rgba(128,147,168,.2)!important;border-radius:12px!important;
+  background:rgba(125,148,168,.07)!important;
+ }
+ .tm-admin-sidebar .tm-admin-recipes-subnav .tm-admin-subnav-link{
+  box-sizing:border-box!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
+  min-height:37px!important;height:auto!important;padding:9px 12px!important;
+  min-width:0!important;width:auto!important;flex:1 1 auto!important;
+  font-size:12px!important;line-height:1.3!important;border-radius:9px!important;
+  white-space:normal!important;text-align:center!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions{
+  position:relative!important;inset:auto!important;top:auto!important;right:auto!important;
+  width:auto!important;max-width:calc(100% - 40px)!important;
+  min-width:0!important;margin:3px 16px 9px auto!important;
+  box-sizing:border-box!important;z-index:6!important;flex:none!important;
+  gap:3px!important;padding:5px!important;
+  border:1px solid rgba(128,147,168,.25)!important;border-radius:12px!important;
+  box-shadow:none!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions:not(.is-mobile-open){display:none!important}
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions .tm-admin-nav-link{
+  box-sizing:border-box!important;display:flex!important;
+  flex:none!important;flex-direction:row!important;align-items:center!important;
+  justify-content:flex-start!important;gap:10px!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  height:40px!important;min-height:40px!important;
+  padding:8px 12px!important;border-radius:9px!important;
+  font-size:12px!important;opacity:1!important;white-space:nowrap!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions .tm-admin-nav-link>span:not(.tm-admin-nav-icon){
+  display:inline!important
+ }
+ .tm-admin-sidebar .tm-admin-mobile-nav-track{padding-top:4px!important}
+}
+
+@media(max-width:830px){
+ #admin-workspace #tm-admin-recipes-subnav:not([hidden]){display:flex!important;flex-direction:row!important}
+ #admin-workspace .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  background:#23262c!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  background:#fff!important
+ }
+}
+
+/* Higher-specificity override for older sidebar display:none!important rules. */
+@media(max-width:830px){
+ .tm-admin-sidebar .tm-admin-more-trigger[aria-expanded="true"],
+ .tm-admin-sidebar .tm-admin-more-trigger.is-active{
+  background:rgba(99,128,154,.18)!important;color:inherit!important;font-weight:650!important
+ }
+ .tm-admin-sidebar .tm-admin-more-trigger[aria-expanded="true"] svg{opacity:1}
+}
+
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav#tm-admin-account-actions[aria-label="Conta e configurações"].is-mobile-open{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  position:relative!important;inset:auto!important;visibility:visible!important;
+  width:auto!important;max-width:calc(100% - 40px)!important;min-width:0!important;
+  height:auto!important;opacity:1!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-more-trigger[aria-expanded="true"],
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-more-trigger.is-active{
+  background:#e6edf4!important;color:#172c40!important
+ }
+}
+
+/* The five primary mobile sections and the secondary "Mais" panel. */
+@media(max-width:830px){
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  width:calc(100% - 48px)!important;max-width:none!important;margin:5px 24px 10px!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link{
+  display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+  align-items:center!important;width:100%!important;min-height:44px!important;height:auto!important;
+  text-align:left!important;padding:10px 12px!important;gap:11px!important;
+  font-size:13px!important;font-weight:500!important;opacity:1!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link .tm-admin-nav-icon{
+  display:inline-flex!important;width:21px!important;min-width:21px!important;
+  height:21px!important;align-items:center!important;justify-content:center!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link .tm-admin-nav-chevron{
+  display:inline-block!important;margin-left:auto!important;width:15px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions>.tm-admin-nav-link.is-active{
+  background:rgba(123,150,172,.17)!important;border-radius:9px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav{
+  display:none!important;flex-direction:column!important;align-items:stretch!important;
+  width:100%!important;max-width:none!important;margin:0!important;padding:2px 0 5px 20px!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;gap:3px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav.is-mobile-open:not([hidden]){
+  display:flex!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions #tm-admin-recipes-subnav .tm-admin-subnav-link{
+  width:100%!important;min-width:0!important;max-width:none!important;
+  flex:none!important;justify-content:flex-start!important;text-align:left!important;
+  min-height:38px!important;padding:9px 12px!important;font-size:12px!important
+ }
+ .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger{
+  display:inline-flex!important
+ }
+ .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active{
+  font-weight:650!important;background:rgba(122,151,175,.15)!important
+ }
+ html[data-admin-theme="light"] .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active{
+  color:#172c40!important;background:#e6edf4!important
+ }
+}
+
+/* Mobile navigation polish: breathable top safe-area and borderless More list. */
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track{
+  padding-top:24px!important;
+  padding-bottom:18px!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  box-sizing:border-box!important;position:relative!important;
+  width:calc(100% - 48px)!important;max-width:none!important;
+  margin:10px 24px 8px!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  gap:2px!important
+ }
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link{
+  border:0!important;background:transparent!important;
+  border-radius:10px!important;padding:11px 12px!important;
+ }
+ .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open>.tm-admin-nav-link.is-active{
+  background:rgba(123,150,172,.14)!important;
+ }
+ html[data-admin-theme="light"] .tm-admin-sidebar #tm-admin-account-actions.is-mobile-open{
+  background:transparent!important;border:0!important;box-shadow:none!important;
+ }
+}
+
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav#tm-admin-account-actions.is-mobile-open{
+  position:relative!important;inset:auto!important;width:calc(100% - 48px)!important;
+  max-width:none!important;margin:10px 24px 8px!important;padding:0!important;
+  border:none!important;border-radius:0!important;box-shadow:none!important;
+  background:transparent!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav#tm-admin-account-actions.is-mobile-open{
+  background:transparent!important;border:0!important;box-shadow:none!important
+ }
+}
+
+
+/* TM mobile player directory v1 — presentation only. The same table rows,
+   actions, SVG icons, filters and event handlers remain in the DOM.
+   No rules outside 830px and no changes to player/profile/desktop views. */
+@media (max-width:830px){
+ #tm-players-page .tm-players-list-surface .tm-players-table-scroll{
+  overflow:visible!important;border:0!important;background:transparent!important;
+  border-radius:0!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table{
+  display:block!important;min-width:0!important;width:100%!important;
+  border-collapse:separate!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  display:block!important;margin-bottom:12px;
+  border:1px solid #373a43;border-radius:15px;background:#1e2026;
+  padding:12px;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead tr{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(120px,36%);
+  align-items:center;gap:10px;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th{
+  display:block!important;min-width:0!important;width:auto!important;
+  padding:0!important;border:0!important;background:transparent!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th:nth-child(n+3){display:none!important}
+ #tm-players-page .tm-players-table thead .tm-players-search-label{
+  display:block!important;max-width:none!important;min-width:0!important;width:100%!important;
+ }
+ #tm-players-page .tm-players-table thead .tm-players-search-label input{
+  height:55px!important;min-width:0!important;width:100%!important;
+  font-size:14px!important;
+ }
+ #tm-players-page .tm-players-table thead .tm-players-header-select,
+ #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+  max-width:none!important;width:100%!important;min-width:0!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table tbody{
+  display:grid!important;gap:10px!important;min-width:0!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table tbody tr{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;column-gap:10px;row-gap:9px;min-width:0;
+  padding:13px 14px;border:1px solid #34363f;border-radius:15px;
+  background:#17181d;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table tbody td{
+  box-sizing:border-box;display:block!important;min-width:0!important;
+  width:auto!important;max-width:100%!important;
+  padding:0!important;border:0!important;background:transparent!important;
+ }
+ #tm-players-page .tm-players-table tbody td:first-child{grid-column:1;grid-row:1}
+ #tm-players-page .tm-players-table tbody td:nth-child(2){grid-column:2;grid-row:1;justify-self:end}
+ #tm-players-page .tm-players-table tbody td:nth-child(3){
+  grid-column:1;grid-row:2;align-self:center;
+  color:#aab1bd;font-size:12px;line-height:1.35;
+ }
+ #tm-players-page .tm-players-table tbody td:nth-child(3)::before{
+  content:"Renovação: ";color:#858e9c;
+ }
+ #tm-players-page .tm-players-table tbody td:nth-child(4){
+  grid-column:2;grid-row:2;justify-self:end;
+ }
+ #tm-players-page .tm-players-table tbody td:first-child .tm-p-player{
+  gap:10px!important;padding:0!important;min-width:0!important;
+ }
+ #tm-players-page .tm-p-avatar{width:45px!important;height:45px!important;flex-basis:45px!important}
+ #tm-players-page .tm-p-identity{min-width:0!important}
+ #tm-players-page .tm-p-identity strong{
+  display:block;font-size:14px;line-height:1.3;
+  white-space:normal;overflow-wrap:break-word;
+ }
+ #tm-players-page .tm-p-identity small{
+  display:block;font-size:12px;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+ }
+ #tm-players-page .tm-p-status{font-size:11px!important;white-space:nowrap}
+ #tm-players-page .tm-p-actions-wrap{gap:8px}
+ #tm-players-page .tm-p-icon-action{
+  width:40px!important;height:40px!important;min-height:40px!important;
+  flex:0 0 40px;
+ }
+ #tm-players-page .tm-players-table tbody td.tm-p-empty{
+  grid-column:1/-1!important;grid-row:auto!important;
+  text-align:center!important;padding:20px 8px!important;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  background:#eef1f5;border-color:#d9dfe7;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table tbody tr{
+  background:#fff;border-color:#d9dfe7;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody td:nth-child(3){
+  color:#566578;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-table tbody td:nth-child(3)::before{
+  color:#728094;
+ }
+}
+
+
+/* TM mobile player directory v2 — compact top actions and full-card tap target.
+   Eye stays in the original desktop table; the app's phone icon remains interactive. */
+@media(max-width:830px){
+ #admin-workspace:has(#tm-players-page:not([hidden])) #tm-dashboard-return{
+  margin-bottom:-39px!important;
+  width:max-content;max-width:50%;
+  position:relative;z-index:1;
+ }
+ #tm-players-page .tm-players-heading-minimal{
+  min-height:39px;align-items:center;
+  margin:0 0 12px!important;
+ }
+ #tm-players-page #tm-players-new{
+  min-height:36px!important;
+  padding:7px 12px!important;
+  font-size:12px!important;
+  border-radius:20px!important;
+ }
+ #tm-players-page .tm-players-table tbody tr:not(:has(.tm-p-empty)){
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+ }
+ #tm-players-page .tm-players-table tbody tr:focus-visible{
+  outline:2px solid #8baec9;outline-offset:2px;
+ }
+ #tm-players-page .tm-players-table tbody td.tm-p-actions .tm-p-actions-wrap>button:not(.tm-p-app-action){
+  display:none!important;
+ }
+ #tm-players-page .tm-players-table tbody td.tm-p-actions .tm-p-app-action{
+  display:inline-flex!important;
+ }
+}
+
+
+/* Planning calendar: compact event creation and no redundant top-level back row
+   on phones. The internal profile back button is retained. */
+#calendar-mobile-event-toggle{display:none}
+@media(max-width:830px){
+ #admin-workspace #tm-dashboard-return{display:none!important}
+ #calendar-section #calendar-mobile-event-toggle{
+  box-sizing:border-box;display:flex;align-items:center;gap:12px;
+  width:100%;min-height:49px;padding:12px 15px;
+  margin:0 0 13px;border:1px solid #3a3e48;border-radius:14px;
+  background:#1b1d22;color:#f0f2f5;text-align:left;
+  font-size:14px;font-weight:600;cursor:pointer;
+ }
+ #calendar-mobile-event-toggle .calendar-mobile-event-plus{
+  font-size:24px;font-weight:400;line-height:1;
+ }
+ #calendar-mobile-event-toggle .calendar-mobile-event-chevron{
+  margin-left:auto;flex:none;transition:transform .18s ease;
+ }
+ #calendar-mobile-event-toggle[aria-expanded="true"] .calendar-mobile-event-chevron{
+  transform:rotate(180deg);
+ }
+ #calendar-section #calendar-event-form{
+  display:none!important;
+ }
+ #calendar-section:has(#calendar-mobile-event-toggle[aria-expanded="true"]) #calendar-event-form{
+  display:flex!important;margin-top:0!important;
+ }
+ #calendar-section #calendar-event-feedback:empty{display:none!important}
+ html[data-admin-theme="light"] #calendar-section #calendar-mobile-event-toggle{
+  background:#fff;color:#243448;border-color:#d9dfe7;
+ }
+}
+
+
+/* Mobile directory and Planning: compact approved upper layout only.
+   Retain original desktop structure, filters, controls and calendar. */
+@media(max-width:830px){
+ /* Search and the existing Create button share a single top toolbar. */
+ #tm-players-page .tm-players-heading-minimal{display:none!important}
+ #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  margin-bottom:10px!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead tr{
+  display:block!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th:first-child{
+  display:flex!important;align-items:center;gap:8px;width:100%!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead th:nth-child(2){
+  display:none!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-search-label{
+  flex:1 1 0;min-width:0!important;
+ }
+ #tm-players-page .tm-players-list-surface #tm-players-new{
+  flex:0 0 auto!important;max-width:45%;min-height:43px!important;
+  padding:8px 11px!important;font-size:12px!important;
+  white-space:nowrap;border-radius:22px!important;
+ }
+ /* Do not retain the reserved status height if there is no message. */
+ #tm-admin-legacy #status:empty{display:none!important}
+ #tm-admin-legacy .tm-planning-unified-header{
+  margin-bottom:8px!important;
+ }
+ #tm-admin-legacy #calendar-section{
+  margin-top:0!important;
+ }
+}
+
+
+/* iPhone search focus: enforce 16px on high-specificity player and clinical fields. */
+@media(max-width:830px){
+ #tm-players-page .tm-players-table thead .tm-players-search-label input[type="search"],
+ #admin-workspace #tm-players-page #tm-players-filter,
+ #admin-workspace #tm-assessments-page .tm-clinical-search-wrap input[type="search"],
+ #admin-workspace #tm-forms-page .tm-clinical-search-wrap input[type="search"],
+ #admin-workspace #tm-assessments-search,
+ #admin-workspace #tm-forms-search,
+ #admin-workspace #tm-assessment-filter-text{
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+ }
+}
+
+/* Empty clinical status areas should not reserve space. */
+#tm-assessments-error:empty,#tm-forms-error:empty{display:none!important}
+
+/* Off day: quiet warm cue; nutritional meal strips remain untouched. */
+.calendar-day.calendar-off{background:#392427;border-color:#c77c7c;outline:none}
+.calendar-day.calendar-off>span:not(.calendar-event-mark){color:#e7aaaa}
+body.tm-light-mode .calendar-day.calendar-off,[data-theme="light"] .calendar-day.calendar-off{background:#f9ebeb;border-color:#dcaaaa}
+body.tm-light-mode .calendar-day.calendar-off>span:not(.calendar-event-mark),[data-theme="light"] .calendar-day.calendar-off>span:not(.calendar-event-mark){color:#a44c4c}
+
+/* Today is a stable, semantic highlight; selection remains a quieter UI state. */
+#calendar-section .calendar-day.calendar-selected:not(.calendar-today){
+  box-shadow:none;
+  border-color:#718298;
+}
+#calendar-section .calendar-day.calendar-selected:not(.calendar-today):not(.calendar-match):not(.calendar-off){
+  background:#19232d;
+}
+#calendar-section .calendar-day.calendar-today{
+  --tm-today-border:#69a9df;
+  border:2px solid var(--tm-today-border);
+  padding:8px; /* keep the original card dimensions */
+  background:#17283a;
+  box-shadow:none;
+}
+#calendar-section .calendar-day.calendar-today.calendar-match{
+  --tm-today-border:#65c795;
+  background:#1e382b;
+}
+#calendar-section .calendar-day.calendar-today.calendar-off{
+  --tm-today-border:#db8792;
+  background:#462c31;
+}
+#calendar-section .calendar-day.calendar-today:focus-visible{
+  outline:2px solid var(--tm-today-border);outline-offset:4px;
+}
+
+/* Native Food Library: styles deliberately constrained to this admin view. */
+#tm-food-library-page{--lib-panel:#1b1d22;--lib-panel-2:#25282f;--lib-border:#373c45;--lib-fg:#f2f3f5;--lib-muted:#a7aebb;display:block;width:100%;min-width:0;padding:24px clamp(12px,2.1vw,32px) 40px;color:var(--lib-fg);font-family:inherit}
+#tm-food-library-page[hidden]{display:none!important}
+#tm-food-library-page .tm-food-library-content{width:100%;max-width:1500px;margin:0 auto}
+#tm-food-library-page .food-library-top{display:flex;justify-content:flex-end;margin-bottom:18px}
+#tm-food-library-page button,#tm-food-library-page input,#tm-food-library-page select{font:inherit;font-size:13px;color:var(--lib-fg);background:var(--lib-panel-2);border:1px solid var(--lib-border);border-radius:10px;padding:10px 12px}
+#tm-food-library-page button{cursor:pointer}
+#tm-food-library-page button:hover{border-color:#8390a0}
+#tm-food-library-page button:disabled{opacity:.55;cursor:not-allowed}
+#tm-food-library-page button.primary,#tm-food-library-page .tm-action-new{background:#dcebf9;border-color:#dcebf9;color:#19283b;font-weight:600}
+#tm-food-library-page .food-catalog-panel{background:var(--lib-panel);border:1px solid var(--lib-border);border-radius:14px;overflow:hidden}
+#tm-food-library-page .scroll{width:100%;overflow-x:auto}
+#tm-food-library-page .food-catalog-table{width:100%;min-width:800px;border-collapse:collapse;table-layout:fixed}
+#tm-food-library-page .col-category{width:19%}
+#tm-food-library-page .col-food{width:25%}
+#tm-food-library-page .col-notes{width:22%}
+#tm-food-library-page .col-macro{width:7%}
+#tm-food-library-page .col-edit{width:6%}
+#tm-food-library-page .food-catalog-table th{font-size:12px;font-weight:600;text-align:left;padding:14px 12px;border-bottom:1px solid var(--lib-border);color:var(--lib-muted)}
+#tm-food-library-page .food-catalog-table td{font-size:13px;line-height:1.5;vertical-align:middle;padding:16px 12px;border-bottom:1px solid var(--lib-border)}
+#tm-food-library-page .food-catalog-table tbody tr:last-child td{border-bottom:0}
+#tm-food-library-page .food-header-row th{background:var(--lib-panel-2)}
+#tm-food-library-page .food-catalog-table td.food-name strong{font-size:14px;overflow-wrap:anywhere}
+#tm-food-library-page .food-catalog-table td.food-notes{color:var(--lib-muted);overflow-wrap:anywhere}
+#tm-food-library-page .food-catalog-table td.num,#tm-food-library-page .food-catalog-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+#tm-food-library-page .food-filter-row input,#tm-food-library-page .food-filter-row select{width:100%;min-width:0}
+#tm-food-library-page .food-edit-cell{white-space:nowrap}
+#tm-food-library-page .food-edit-icon{display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;padding:7px;border-radius:9px}
+#tm-food-library-page .empty{padding:25px;color:var(--lib-muted);text-align:center}
+#tm-food-library-page .tm-food-pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px}
+#tm-food-library-page .tm-food-pagination[hidden]{display:none!important}
+#tm-food-library-page .tm-food-pagination span{color:var(--lib-muted);font-size:12px}
+#tm-food-library-page dialog{border:1px solid var(--lib-border);border-radius:16px;background:var(--lib-panel);color:var(--lib-fg);padding:23px;width:min(560px,94vw);max-height:90vh;overflow-y:auto}
+#tm-food-library-page dialog::backdrop{background:#0009}
+#tm-food-library-page dialog h2{font-size:20px;margin:0 0 18px}
+#tm-food-library-page dialog .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#tm-food-library-page dialog .fields label{font-size:12px;color:var(--lib-muted)}
+#tm-food-library-page dialog .fields input,#tm-food-library-page dialog .fields select{display:block;width:100%;margin-top:6px}
+#tm-food-library-page dialog .fields .wide{grid-column:1/-1}
+#tm-food-library-page dialog .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+#tm-food-library-page dialog .error{font-size:12px;color:#ffadad}
+html[data-admin-theme="light"] #tm-food-library-page{--lib-panel:#fff;--lib-panel-2:#f0f2f6;--lib-border:#d9dfe7;--lib-fg:#253347;--lib-muted:#667586}
+html[data-admin-theme="light"] #tm-food-library-page button.primary,html[data-admin-theme="light"] #tm-food-library-page .tm-action-new{background:#233f62;border-color:#233f62;color:white}
+@media(max-width:720px){#tm-food-library-page{padding:12px 10px 24px}#tm-food-library-page dialog .fields{grid-template-columns:1fr}#tm-food-library-page dialog .fields .wide{grid-column:auto}}

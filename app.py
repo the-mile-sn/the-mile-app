@@ -5,6 +5,9 @@ import io
 from PIL import Image, ImageOps, UnidentifiedImageError
 import zipfile
 import hashlib
+import gzip
+from collections import OrderedDict
+from threading import Lock
 import hmac
 import json
 import logging
@@ -14,6 +17,8 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import recipe_library_v2
+import recipe_pdf_import_v2
 import calendar_v2
 import dashboard_v2
 import admin_players_v2
@@ -28,12 +33,16 @@ import effective_nutrition_v2
 import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
+import food_plan_drafts_v2
+import food_plan_publications_v2
+import food_plan_calendar_bridge_v2
+import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from http.cookies import SimpleCookie
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, urlparse, unquote
 
 try:
     import psycopg
@@ -203,6 +212,8 @@ def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
     with connect() as c:
         c.execute('CREATE TABLE IF NOT EXISTS v2_shared_images (image_key TEXT PRIMARY KEY, image_data ' + ('BYTEA' if DATABASE_URL else 'BLOB') + ' NOT NULL)')
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_tickets (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
+        c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_sessions (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
         if DATABASE_URL:
             c.executescript('''
             CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
@@ -266,11 +277,84 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
+        food_plan_drafts_v2.initialize(c)
+        if SITE_ROLE == 'admin':
+            transition = food_plan_publications_v2.initialize(c)
+            logging.warning('Planos publication transition counts: %s', transition)
+            try:
+                approved = food_plan_publications_v2.approve_initial_roster_for_players(c)
+                logging.warning('Planos initial approval for players: %s', approved)
+            except Exception:
+                logging.exception('Planos initial approval for players failed; no partial approval applied')
+        try:
+            restored = food_library_v2.restore_approved_average_foods(c)
+            logging.info('Approved average foods restoration: %s', restored)
+        except Exception:
+            logging.exception('Approved average foods restoration failed')
+        # The legacy publication-to-draft migration has already run.
+        # Do NOT repeat it at startup: deleted editor drafts would be resurrected
+        # on every redeploy, with new creation timestamps. Publications are untouched.
+        # Retained source/migration module only for historical analysis.
+        try:
+            egg_stats = food_library_v2.unify_egg_variants(c)
+            logging.info('Editor egg consolidation: %s', egg_stats)
+        except Exception:
+            logging.exception('Editor egg consolidation failed')
+        try:
+            link_stats = food_library_v2.repair_imported_plan_food_links(c)
+            logging.info('Imported food links repair: %s', link_stats)
+        except Exception:
+            logging.exception('Imported food links repair failed')
+        try:
+            source_stats = food_library_v2.reconcile_original_snapshot_quantities(c)
+            logging.info('Source snapshot food reconciliation: %s', source_stats)
+        except Exception:
+            logging.exception('Source snapshot food reconciliation failed')
+        try:
+            audit_stats = food_library_v2.audit_unlinked_plan_foods(c)
+            logging.info('Food plan coverage counts: %s', audit_stats['counts'])
+        except Exception:
+            logging.exception('Food plan coverage audit failed')
+        try:
+            draft_audit = food_plan_calendar_bridge_v2.audit_all_drafts(c)
+            logging.warning('Read-only live Planos nutrition audit counts: %s', draft_audit)
+            parity_audit = food_plan_calendar_bridge_v2.audit_real_option_parity(c)
+            logging.warning('Real draft option nutrition parity audit: %s', parity_audit)
+        except Exception:
+            logging.exception('Read-only live Planos nutrition audit failed')
+        if SITE_ROLE == 'admin':
+            try:
+                import unittest
+                validation_output = io.StringIO()
+                suite = unittest.defaultTestLoader.discover(
+                    str(ROOT / 'tests'), pattern='test_food_plan_calendar_bridge_v2.py')
+                results = unittest.TextTestRunner(stream=validation_output, verbosity=0).run(suite)
+                logging.warning('Planos nutrition regression checks: %s tests, %s failures, %s errors',
+                                results.testsRun, len(results.failures), len(results.errors))
+                if results.failures or results.errors:
+                    logging.error('Planos nutrition regression details: %s', validation_output.getvalue()[:1200])
+            except Exception:
+                logging.exception('Planos nutrition regression checks could not run')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
         peri_v2.initialize(c)
+        if SITE_ROLE == 'admin':
+            try:
+                reference_day = datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                first_check=(reference_day-timedelta(days=14)).isoformat()
+                last_check=(reference_day+timedelta(days=45)).isoformat()
+                associations = food_plan_calendar_bridge_v2.audit_event_links(
+                    c, first_check, last_check)
+                logging.warning('Read-only live peri event association audit: %s', associations)
+                weekly_coverage = food_plan_calendar_bridge_v2.audit_effective_color_planning(
+                    c, (reference_day-timedelta(days=7)).isoformat(),
+                    (reference_day+timedelta(days=21)).isoformat())
+                logging.warning('Live microcycle-to-Planos calendar coverage audit: %s', weekly_coverage)
+            except Exception:
+                logging.exception('Read-only live peri event association audit failed')
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
         monitoring_v2.initialize(c)
@@ -285,6 +369,32 @@ def store_dish_image(c, filename, image_data):
     """Keep dish photos in the same database both production services use."""
     c.execute('DELETE FROM v2_shared_images WHERE image_key=?', (filename,))
     c.execute('INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)', (filename, image_data))
+
+
+_admin_thumbnail_cache = OrderedDict()
+_admin_thumbnail_lock = Lock()
+
+
+def admin_library_thumbnail(image_data, size=240):
+    """Small catalogue/avatar WebP; retain only compressed derivatives in memory."""
+    key = (size, hashlib.sha256(image_data).digest())
+    with _admin_thumbnail_lock:
+        cached = _admin_thumbnail_cache.get(key)
+        if cached is not None:
+            _admin_thumbnail_cache.move_to_end(key)
+            return cached
+    with Image.open(io.BytesIO(image_data)) as source:
+        source = ImageOps.exif_transpose(source)
+        source.thumbnail((size, size))
+        output = io.BytesIO()
+        source.convert('RGB').save(output, format='WEBP', quality=65, method=4)
+        compressed = output.getvalue()
+    with _admin_thumbnail_lock:
+        _admin_thumbnail_cache[key] = compressed
+        _admin_thumbnail_cache.move_to_end(key)
+        while len(_admin_thumbnail_cache) > 128:
+            _admin_thumbnail_cache.popitem(last=False)
+    return compressed
 
 
 def read_dish_image(c, filename):
@@ -528,13 +638,31 @@ class Problem(Exception):
 
 
 def application(env, start_response):
-    headers = [('Cache-Control', 'no-store'), ('X-Content-Type-Options', 'nosniff'), ('X-Frame-Options', 'DENY'), ('Referrer-Policy', 'no-referrer'), ('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")]
+    headers = [('Cache-Control', 'no-store'), ('X-Content-Type-Options', 'nosniff'), ('X-Frame-Options', 'DENY'), ('Referrer-Policy', 'no-referrer'), ('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")]
     if SECURE:
         headers.append(('Strict-Transport-Security', 'max-age=31536000'))
 
     def respond(status, data, mime='application/json; charset=utf-8'):
         if not isinstance(data, bytes):
             data = json.dumps(data, ensure_ascii=False).encode()
+        # Compress JSON responses only; leave the logical payload unchanged.
+        if status == 200 and mime.startswith('application/json') and len(data) >= 2048:
+            accepted = env.get('HTTP_ACCEPT_ENCODING', '').lower()
+            supports_gzip = any(
+                part.strip().split(';')[0].strip() == 'gzip'
+                and not any(option.strip() in ('q=0', 'q=0.0', 'q=0.00')
+                            for option in part.split(';')[1:])
+                for part in accepted.split(',')
+            )
+            if supports_gzip:
+                compressed = gzip.compress(data, compresslevel=5, mtime=0)
+                if len(compressed) + 100 < len(data):
+                    data = compressed
+                    headers.append(('Content-Encoding', 'gzip'))
+                    headers.append(('Vary', 'Accept-Encoding'))
+        if status == 200 and mime == 'image/webp' and parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1'] and (path.startswith('/api/v2/recipes/image/') or path.startswith('/api/v2/dishes/image/')):
+            headers[:] = [(key, val) for key, val in headers if key.lower() != 'cache-control']
+            headers.extend([('Cache-Control', 'private, max-age=3600'), ('Vary', 'Cookie')])
         headers.extend([('Content-Type', mime), ('Content-Length', str(len(data)))])
         start_response(f'{status} ' + {200:'OK', 201:'Created', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error'}.get(status, 'Error'), headers)
         return [data]
@@ -545,14 +673,16 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-light-theme.css')
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
                     or path.startswith('/api/v2/supplement-library')
                     or path.startswith('/api/v2/dishes/edit')
+                    or path.startswith('/api/v2/dishes/recipe-link')
                     or path.startswith('/api/v2/dishes/photo')
                     or path.startswith('/api/v2/dishes/import')
+                    or path.startswith('/api/v2/recipes')
                     or path.startswith('/api/players')
                     or path.startswith('/api/admins')):
                 raise Problem(404, 'not_found')
@@ -567,8 +697,8 @@ def application(env, start_response):
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
-            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-light-theme.css': 'admin-light-theme.css',
-            '/food-library': 'food-library.html', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
+            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/tm-design-system.css': 'tm-design-system.css',
+            '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
@@ -578,6 +708,12 @@ def application(env, start_response):
             mime = mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             if file.name.endswith('.webmanifest'):
                 mime = 'application/manifest+json'
+            # Only explicitly versioned JS/CSS can be stored in shared browser caches.
+            # HTML, JSON, session endpoints and unversioned assets remain no-store.
+            query=parse_qs(env.get('QUERY_STRING',''))
+            if file.suffix in ('.js','.css') and query.get('v') and query['v'][0]:
+                headers[:] = [(k,v) for k,v in headers if k.lower() != 'cache-control']
+                headers.append(('Cache-Control','public, max-age=2592000, immutable'))
             return respond(200, file.read_bytes(), mime)
         if not path.startswith('/api/'):
             raise Problem(404, 'not_found')
@@ -681,6 +817,174 @@ def application(env, start_response):
                 try: result=supplements_v2.library_bulk_zip(c,body.get('package_base64',''),True)
                 except ValueError:raise Problem(400,'invalid_supplement_package')
                 return respond(200,result)
+            # Detailed read-only comparison of active publications against the food library.
+            if path == '/api/v2/food-plan-migration-comparison' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                import re as _audit_re
+                import unicodedata as _audit_ud
+                def _audit_key(value):
+                    value=_audit_ud.normalize('NFKC',str(value or '')).casefold()
+                    return ' '.join(value.split())
+                foods=c.execute("SELECT id,display_name,base_name,variant,kcal,protein_g,carbs_g,fat_g FROM v2_food_library WHERE active=1").fetchall()
+                by_display={}
+                by_base={}
+                for food in foods:
+                    by_display.setdefault(_audit_key(food['display_name']),[]).append(food)
+                    by_base.setdefault(_audit_key(food['base_name']),[]).append(food)
+                rows=c.execute("""SELECT p.id,p.athlete_id,a.name AS athlete_name,p.color,p.snapshot_json
+                    FROM v2_plan_publications p JOIN v2_athletes a ON a.id=p.athlete_id
+                    WHERE p.replaced_at IS NULL ORDER BY a.name,p.color""").fetchall()
+                reports=[]
+                totals={'plans':len(rows),'options':0,'food_items':0,'exact':0,'ambiguous':0,'unmatched':0,
+                    'missing_quantity':0,'nutrition_comparable':0,'nutrition_mismatch':0}
+                for row in rows:
+                    snapshot=json.loads(row['snapshot_json'])
+                    groups=plan_import_v2.enrich_groups(snapshot.get('groups',[]))
+                    report={'athlete_name':row['athlete_name'],'athlete_id':row['athlete_id'],
+                        'color':row['color'],'publication_id':row['id'],'groups':len(groups),
+                        'options':0,'food_items':0,'exact':0,'ambiguous':0,'unmatched':0,
+                        'missing_quantity':0,'nutrition_comparable':0,'nutrition_mismatch':0,
+                        'issues':[]}
+                    for gi,group in enumerate(groups):
+                        for oi,option in enumerate(group.get('options',[])):
+                            report['options']+=1
+                            for ii,item in enumerate(option.get('items',[])):
+                                if item.get('kind')!='food': continue
+                                report['food_items']+=1
+                                name=str(item.get('name') or '').strip()
+                                key=_audit_key(name)
+                                matches=by_display.get(key,[])
+                                match_basis='display_name'
+                                if not matches:
+                                    matches=by_base.get(key,[])
+                                    match_basis='base_name'
+                                issue={'group':gi,'option':oi,'item':ii,'name':name,
+                                    'quantity':item.get('quantity'),'match_basis':match_basis}
+                                if len(matches)==1:
+                                    report['exact']+=1
+                                    issue['food_id']=matches[0]['id']
+                                elif len(matches)>1:
+                                    report['ambiguous']+=1
+                                    issue['reason']='ambiguous_food_name'
+                                    issue['candidate_ids']=[f['id'] for f in matches[:12]]
+                                else:
+                                    report['unmatched']+=1
+                                    issue['reason']='food_name_not_found'
+                                quantity=str(item.get('quantity') or '').strip()
+                                grams=_audit_re.fullmatch(r'(\\d+(?:[.,]\\d+)?)\\s*(?:g|gr|gramas?)',quantity,flags=_audit_re.I)
+                                if not grams:
+                                    report['missing_quantity']+=1
+                                    issue['quantity_review']='not_unambiguous_grams'
+                                if len(matches)==1 and grams and isinstance(item.get('nutrients'),dict):
+                                    grams_value=float(grams.group(1).replace(',','.'))
+                                    source=item['nutrients']
+                                    keys=('kcal','protein_g','carbs_g','fat_g')
+                                    try:
+                                        original={k:float(str(source[k]).replace(',','.')) for k in keys}
+                                        computed={k:float(matches[0][k])*grams_value/100 for k in keys}
+                                        delta={k:round(computed[k]-original[k],2) for k in keys}
+                                        report['nutrition_comparable']+=1
+                                        if abs(delta['kcal'])>2 or any(abs(delta[k])>0.5 for k in keys[1:]):
+                                            report['nutrition_mismatch']+=1
+                                            issue['nutrition_delta']=delta
+                                            issue['reason']='nutrition_mismatch'
+                                    except (ValueError,TypeError,KeyError):
+                                        issue['nutrition_review']='unparseable_source_nutrients'
+                                if issue.get('reason') or issue.get('quantity_review') or issue.get('nutrition_review'):
+                                    report['issues'].append(issue)
+                    for key in totals:
+                        if key!='plans':totals[key]+=report[key]
+                    reports.append(report)
+                return respond(200,{'read_only':True,'matching_policy':'exact_normalized_display_name_then_base_name',
+                    'nutrition_policy':'only explicit grams and source nutrients; library assumed per 100g; tolerance 2 kcal and 0.5g',
+                    'summary':totals,'plans':reports})
+            # Read-only migration inventory. Never imports, edits, or publishes plans.
+            if path == '/api/v2/food-plan-migration-audit' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                athletes=c.execute("""SELECT a.id,a.name,l.user_id
+                    FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id
+                    WHERE a.archived_at IS NULL ORDER BY a.name""").fetchall()
+                imports=c.execute("""SELECT athlete_id,color,status,COUNT(*) AS total
+                    FROM v2_plan_imports GROUP BY athlete_id,color,status""").fetchall()
+                publications=c.execute("""SELECT athlete_id,color,COUNT(*) AS total,
+                    SUM(CASE WHEN replaced_at IS NULL THEN 1 ELSE 0 END) AS active
+                    FROM v2_plan_publications GROUP BY athlete_id,color""").fetchall()
+                draft_rows=c.execute("SELECT id,content FROM v2_food_plan_drafts").fetchall()
+                by_athlete={}
+                for a in athletes:
+                    by_athlete[a['id']]={'athlete_id':a['id'],'name':a['name'],
+                        'linked_player':bool(a['user_id']),'imports':[],
+                        'publications':[],'editor_drafts':[]}
+                for item in imports:
+                    if item['athlete_id'] in by_athlete:
+                        by_athlete[item['athlete_id']]['imports'].append({
+                            'color':item['color'],'status':item['status'],'count':item['total']})
+                for item in publications:
+                    if item['athlete_id'] in by_athlete:
+                        by_athlete[item['athlete_id']]['publications'].append({
+                            'color':item['color'],'count':item['total'],'active':item['active']})
+                user_to_athlete={a['user_id']:a['id'] for a in athletes if a['user_id']}
+                unmatched_drafts=0
+                for item in draft_rows:
+                    try: data=json.loads(item['content'])
+                    except (ValueError,TypeError):
+                        unmatched_drafts+=1
+                        continue
+                    athlete_id=user_to_athlete.get(str(data.get('player_id') or ''))
+                    if athlete_id in by_athlete:
+                        by_athlete[athlete_id]['editor_drafts'].append({
+                            'id':item['id'],'plan_type':data.get('plan_type'),
+                            'meal_count':len(data.get('meals') or [])})
+                    else: unmatched_drafts+=1
+                foods=c.execute("SELECT COUNT(*) AS total, SUM(CASE WHEN active=1 THEN 1 ELSE 0 END) AS active FROM v2_food_library").fetchone()
+                result=list(by_athlete.values())
+                return respond(200,{'read_only':True,'athletes':result,
+                    'summary':{'athletes':len(result),
+                        'linked_players':sum(1 for a in result if a['linked_player']),
+                        'athletes_with_imports':sum(1 for a in result if a['imports']),
+                        'athletes_with_active_publications':sum(1 for a in result if any(p['active'] for p in a['publications'])),
+                        'editor_drafts':len(draft_rows),'unmatched_editor_drafts':unmatched_drafts,
+                        'food_library_total':foods['total'],'food_library_active':foods['active'] or 0}})
+            if path == '/api/v2/food-plan-drafts/post-training-transfer' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    result=food_plan_drafts_v2.transfer_post_training(c,body.get('source_ids'),body.get('dry_run') is not False)
+                except ValueError as error:
+                    raise Problem(409,str(error))
+                return respond(200,{'transfer':result})
+            if path.startswith('/api/v2/food-plan-drafts/') and path.endswith('/publish') and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                ident=path.split('/')[-2]
+                body=read_json(env)
+                try: approved=food_plan_publications_v2.publish(c,ident,body.get('updated_at'))
+                except ValueError as error: raise Problem(409,str(error))
+                return respond(200,{'publication':approved,'scope':'planning_and_player_app'})
+            if path == '/api/v2/food-plan-drafts' and method in ('GET','POST'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200,{'drafts':food_plan_drafts_v2.list_drafts(c)})
+                try: ident=food_plan_drafts_v2.save(c,read_json(env))
+                except ValueError: raise Problem(400,'invalid_plan')
+                saved=c.execute('SELECT updated_at,content FROM v2_food_plan_drafts WHERE id=?',(ident,)).fetchone()
+                return respond(200,{'id':ident, 'updated_at':saved['updated_at'],
+                    'publication':food_plan_publications_v2.state_for_draft(c,ident,saved['content'])})
+            if path.startswith('/api/v2/food-plan-drafts/') and method in ('GET','DELETE'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if method == 'DELETE':
+                    if not food_plan_publications_v2.may_delete(c,path.rsplit('/',1)[-1]):
+                        raise Problem(409,'active_plan_cannot_delete')
+                    if not food_plan_drafts_v2.delete(c,path.rsplit('/',1)[-1]): raise Problem(404,'not_found')
+                    return respond(200,{'deleted':True})
+                draft=food_plan_drafts_v2.get(c,path.rsplit('/',1)[-1])
+                if draft is None: raise Problem(404,'not_found')
+                return respond(200,{'draft':draft})
             if path == '/api/v2/food-library/import' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -690,10 +994,28 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400,'invalid_food_import')
                 return respond(200,{'imported':count})
+            if path.startswith('/api/v2/food-library/') and method == 'DELETE':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                ident=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[0-9a-f]{1,64}',ident): raise Problem(400,'invalid_id')
+                outcome=food_library_v2.archive_food(c,ident)
+                if outcome=='not_found': raise Problem(404,'not_found')
+                if outcome=='in_use': raise Problem(409,'food_in_use')
+                c.commit()
+                return respond(200,{'archived':True})
             if path == '/api/v2/food-library' and method in ('GET','POST'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 if method == 'GET':
+                    query=parse_qs(env.get('QUERY_STRING',''))
+                    if query.get('paged') == ['1']:
+                        try:
+                            page=max(1,min(100000,int(query.get('page',['1'])[0])))
+                        except (TypeError,ValueError):
+                            page=1
+                        return respond(200,food_library_v2.page_foods(
+                            c,query.get('q',[''])[0],query.get('category',[''])[0],page))
                     return respond(200,{'foods':food_library_v2.list_foods(c,limit=2000,offset=0)})
                 try:
                     ident=food_library_v2.upsert(c,read_json(env),actor=user['id'])
@@ -762,7 +1084,7 @@ def application(env, start_response):
                     raise Problem(400,'invalid_preview_range')
                 model_data=microcycles_v2.get_model(c,aid)
                 matches=microcycles_v2.list_matches(c,aid)
-                rows=calendar_v2.classify_range(start,end,[m['match_date'] for m in matches])
+                rows=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(start,end,[m['match_date'] for m in matches]))
                 classes={r['name']:r['meals'] for r in model_data['classifications']}
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,start,end)}
                 scenarios={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute(
@@ -796,7 +1118,7 @@ def application(env, start_response):
                 if not model_data:raise Problem(404,'not_found')
                 matches=microcycles_v2.list_matches(c,aid)
                 model_rows={r['name']:r['meals'] for r in model_data['classifications']}
-                days=calendar_v2.classify_range(first,last,[m['match_date'] for m in matches])
+                days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(first,last,[m['match_date'] for m in matches]))
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,first,last)}
                 variants={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute("SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
                 responses=[]
@@ -838,7 +1160,7 @@ def application(env, start_response):
                 if not model:raise Problem(404,'not_found')
                 matches=microcycles_v2.list_matches(c,aid)
                 baseline={r['name']:r['meals'] for r in model['classifications']}
-                days=calendar_v2.classify_range(first,last,[m['match_date'] for m in matches])
+                days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(first,last,[m['match_date'] for m in matches]))
                 manual={(r['meal_date'],r['meal']):r['color'] for r in day_colors_v2.list_colors(c,aid,first,last)}
                 cells={(r['classification'],r['scenario'],r['meal']):r['color'] for r in c.execute(
                     "SELECT classification,scenario,meal,color FROM v2_scenario_cells WHERE athlete_id=?",(aid,)).fetchall()}
@@ -981,6 +1303,14 @@ def application(env, start_response):
                 except (TypeError,ValueError):raise Problem(400,'invalid_weight_date')
                 previous=c.execute("SELECT * FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date=?",(aid,day.isoformat())).fetchone()
                 if action=='save':
+                    # The optional menstrual value is only editable for female athletes.
+                    sex_row=c.execute("SELECT u.sex FROM users u JOIN v2_player_links l ON l.user_id=u.id WHERE l.athlete_id=? AND u.role='player'",(aid,)).fetchone()
+                    is_female=str(sex_row["sex"] or "").upper()=="F" if sex_row else False
+                    response=body.get("menstruating") if is_female else None
+                    if response is not None and type(response) is not bool:raise Problem(400,"invalid_menstruation")
+                    stored_response=None if response is None else int(response)
+                    # An old administrative client must not erase an existing response.
+                    if is_female and "menstruating" not in body and previous:stored_response=previous["menstruating"]
                     try:
                         value=float(str(body.get('weight')).replace(',','.'))
                         import math
@@ -990,12 +1320,12 @@ def application(env, start_response):
                     import time as weight_time
                     now=int(weight_time.time())
                     if previous:
-                        c.execute("UPDATE v2_daily_weighins SET weight_kg=?,updated_at=? WHERE id=?",(value,now,previous['id']))
+                        c.execute("UPDATE v2_daily_weighins SET weight_kg=?,menstruating=?,updated_at=? WHERE id=?",(value,stored_response,now,previous['id']))
                         entry_id=previous['id']
                     else:
                         entry_id=weight_secrets.token_hex(16)
-                        c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",(entry_id,aid,day.isoformat(),value,None,now,now))
-                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(weight_secrets.token_hex(16),aid,'weight',entry_id,user['id'],json.dumps(dict(previous)) if previous else None,json.dumps({'date':day.isoformat(),'weight_kg':value}),now))
+                        c.execute("INSERT INTO v2_daily_weighins(id,athlete_id,weigh_date,weight_kg,menstruating,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",(entry_id,aid,day.isoformat(),value,stored_response,now,now))
+                    c.execute("INSERT INTO v2_monitoring_audit(id,athlete_id,record_type,record_id,actor_id,prior_json,new_json,created_at) VALUES(?,?,?,?,?,?,?,?)",(weight_secrets.token_hex(16),aid,'weight',entry_id,user['id'],json.dumps(dict(previous)) if previous else None,json.dumps({'date':day.isoformat(),'weight_kg':value,'menstruating':stored_response}),now))
                     c.commit()
                     return respond(200,{'ok':True})
                 if action=='delete':
@@ -1274,7 +1604,7 @@ def application(env, start_response):
                 try:
                     from calendar_v2 import classify_range
                     matches = microcycles_v2.list_matches(c, aid)
-                    days = classify_range(start, end, [m['match_date'] for m in matches])
+                    days = calendar_v2.effective_days(c,aid,classify_range(start, end, [m['match_date'] for m in matches]))
                 except ValueError:
                     raise Problem(400, 'invalid_calendar_range')
                 event_data=events_v2.list_events(c,aid,start,end)
@@ -1294,15 +1624,182 @@ def application(env, start_response):
                 effective_colors={}
                 for item in days:
                     resolved=prescription_effective_v2.resolve_day(
-                        item['date'],item['classification'],base_rows.get(item['classification'],{}),
+                        item['date'],item['classification'],base_rows.get(item['classification'] or 'Geral',{}),
                         manual,variants,matches,responses,today)
                     effective_colors[item['date']]={meal:{'color':value['color'],'source':value['source']}
                         for meal,value in resolved.items()}
+                effective_colors=calendar_v2.effective_colors(c,aid,days,model_data)
                 return respond(200, {'matches': matches, 'days': days,'events':event_data,
                                      'peri_meals':peri_v2.list_event_meals(c,aid,start,end,event_data),
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
-                                     'effective_colors':effective_colors})
+                                     'effective_colors':effective_colors,
+                                      **({'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors,event_data,matches,{(row['match_id'],row['phase']):row['state'] for row in override_rows})} if (query.get('include_food_plans') or [''])[0]=='1' else {})})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/recipe-categories') and method in ('GET','PUT'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5 or parts[:3]!=['api','v2','athletes'] or parts[4]!='recipe-categories':
+                    raise Problem(404,'not_found')
+                aid=parts[3]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'not_found')
+                if method=='GET':
+                    return respond(200,{'categories':recipe_library_v2.list_categories(c),
+                                        'category_ids':recipe_library_v2.athlete_recipe_categories(c,aid)})
+                try:
+                    ids=recipe_library_v2.set_athlete_recipe_categories(c,aid,read_json(env).get('category_ids'))
+                except ValueError: raise Problem(400,'invalid_recipe_categories')
+                return respond(200,{'category_ids':ids})
+            if path == '/api/v2/player/recipes' and method=='GET':
+                if not user or user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                return respond(200,{'recipes':recipe_library_v2.published_for_athlete(c,link['athlete_id'])})
+            if path.startswith('/api/v2/player/recipes/') and method=='GET':
+                if not user or user['role']!='player':raise Problem(403,'forbidden')
+                link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
+                if not link:raise Problem(404,'player_not_linked')
+                recipe_id=path.rsplit('/',1)[-1]
+                recipe=recipe_library_v2.published_recipe_for_athlete(c,link['athlete_id'],recipe_id)
+                if not recipe:raise Problem(404,'not_found')
+                return respond(200,{'recipe':recipe})
+            # Admin-only culinary catalogue. This route family is never exposed
+            # to players and never changes meal plans or nutrition calculations.
+            if path.startswith('/api/v2/recipes'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                if path == '/api/v2/recipes/pdf/preview' and method == 'POST':
+                    raw=read_body(env,recipe_pdf_import_v2.MAX_PDF_BYTES)
+                    filename=unquote((env.get('HTTP_X_RECIPE_FILENAME') or 'receitas.pdf')[:180])
+                    try:
+                        preview=recipe_pdf_import_v2.preview_pdf(raw,filename)
+                    except ValueError as error:
+                        raise Problem(400,str(error))
+                    return respond(200,preview)
+                if path == '/api/v2/recipes/pdf/import' and method == 'POST':
+                    body=read_json(env)
+                    try:
+                        result=recipe_pdf_import_v2.commit_drafts(
+                            c,body.get('category_id'),body.get('filename'),
+                            body.get('recipes'),store_dish_image)
+                    except ValueError as error:
+                        code=str(error)
+                        raise Problem(400,code if code in ('invalid_recipe_reference','cyclic_recipe_reference') else 'invalid_recipe_import')
+                    return respond(200,result)
+                if path == '/api/v2/recipes/categories':
+                    if method == 'GET':
+                        return respond(200, {'categories':recipe_library_v2.list_categories(c)})
+                    if method == 'POST':
+                        body=read_json(env)
+                        try:
+                            category=recipe_library_v2.create_category(c,body.get('name'))
+                        except ValueError:
+                            raise Problem(400,'invalid_recipe_category')
+                        return respond(200,{'category':category})
+                if path.startswith('/api/v2/recipes/categories/'):
+                    category_id=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-f0-9]{24}',category_id):
+                        raise Problem(404,'not_found')
+                    if method == 'PUT':
+                        body=read_json(env)
+                        try:
+                            category=recipe_library_v2.rename_category(c,category_id,body.get('name'))
+                        except ValueError as error:
+                            code=str(error)
+                            raise Problem(409 if code=='duplicate_recipe_category' else 400,
+                                          code if code in ('duplicate_recipe_category','invalid_recipe_category') else 'invalid_recipe_category')
+                        if not category: raise Problem(404,'not_found')
+                        return respond(200,{'category':category})
+                    if method == 'DELETE':
+                        try:
+                            result=recipe_library_v2.delete_category(c,category_id)
+                        except ValueError as error:
+                            code=str(error)
+                            raise Problem(409 if code=='category_in_use' else 400,
+                                          code if code in ('category_in_use','invalid_recipe_category') else 'invalid_recipe_category')
+                        if not result: raise Problem(404,'not_found')
+                        return respond(200,result)
+                if path == '/api/v2/recipes':
+                    if method == 'GET':
+                        q=parse_qs(env.get('QUERY_STRING',''))
+                        if q.get('paged') == ['1']:
+                            try:
+                                page=max(1,min(100000,int(q.get('page',['1'])[0])))
+                            except (ValueError,TypeError):
+                                page=1
+                            return respond(200,recipe_library_v2.page_recipes(
+                                c, q.get('q',[''])[0][:180],
+                                q.get('category',[''])[0][:100],
+                                q.get('type',[''])[0][:30],
+                                q.get('status',[''])[0][:30],page))
+                        return respond(200,{'recipes':recipe_library_v2.list_recipes(c)})
+                    if method == 'POST':
+                        try:
+                            recipe=recipe_library_v2.create_recipe(c,read_json(env))
+                        except ValueError as exc:
+                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe','invalid_recipe_reference','cyclic_recipe_reference') else 'invalid_recipe')
+                        return respond(201,{'recipe':recipe})
+                if path.startswith('/api/v2/recipes/image/') and method == 'GET':
+                    recipe_id=path.rsplit('/',1)[-1]
+                    recipe=c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=?", (recipe_id,)).fetchone()
+                    if not recipe or not recipe['photo_key']: raise Problem(404,'not_found')
+                    photo=read_dish_image(c,recipe['photo_key'])
+                    if photo is None: raise Problem(404,'not_found')
+                    if parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1']:
+                        photo=admin_library_thumbnail(photo)
+                    return respond(200,photo,'image/webp')
+                if path.startswith('/api/v2/recipes/photo/') and method == 'POST':
+                    recipe_id=path.rsplit('/',1)[-1]
+                    recipe=recipe_library_v2.get_recipe(c,recipe_id)
+                    if not recipe: raise Problem(404,'not_found')
+                    body=read_json(env)
+                    payload=body.get('image')
+                    if not isinstance(payload,str) or len(payload)>4200000: raise Problem(400,'invalid_image')
+                    try:
+                        raw=base64.b64decode(payload,validate=True)
+                        if len(raw)>3000000: raise ValueError()
+                        source=Image.open(io.BytesIO(raw))
+                        source.verify()
+                        source=Image.open(io.BytesIO(raw))
+                        if source.width>8000 or source.height>8000 or source.width*source.height>32000000: raise ValueError()
+                        source=ImageOps.exif_transpose(source).convert('RGB')
+                        source.thumbnail((1100,1100))
+                        image_file=io.BytesIO()
+                        source.save(image_file,format='WEBP',quality=78,method=4)
+                        raw=image_file.getvalue()
+                        if len(raw)>1200000: raise ValueError()
+                    except (ValueError,UnidentifiedImageError,OSError,base64.binascii.Error):
+                        raise Problem(400,'invalid_image')
+                    image_key=recipe_library_v2.photo_key(recipe_id)
+                    store_dish_image(c,image_key,raw)
+                    recipe_library_v2.set_photo(c,recipe_id)
+                    return respond(200,{'ok':True})
+                if path.startswith('/api/v2/recipes/') and not path.startswith(('/api/v2/recipes/photo/','/api/v2/recipes/image/')):
+                    recipe_id=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-f0-9]{24}',recipe_id):
+                        raise Problem(404,'not_found')
+                    if method == 'GET':
+                        recipe=recipe_library_v2.get_recipe(c,recipe_id)
+                        if not recipe: raise Problem(404,'not_found')
+                        return respond(200,{'recipe':recipe})
+                    if method == 'PUT':
+                        try:
+                            recipe=recipe_library_v2.update_recipe(c,recipe_id,read_json(env))
+                        except ValueError as exc:
+                            raise Problem(400,str(exc) if str(exc) in ('invalid_recipe','invalid_recipe_category','incomplete_recipe','invalid_recipe_reference','cyclic_recipe_reference') else 'invalid_recipe')
+                        if not recipe: raise Problem(404,'not_found')
+                        return respond(200,{'recipe':recipe})
+                    if method == 'DELETE':
+                        try:
+                            deleted=recipe_library_v2.delete_recipe(c,recipe_id)
+                        except ValueError as error:
+                            if str(error)=='recipe_in_use':
+                                raise Problem(409,'recipe_in_use')
+                            raise
+                        if not deleted: raise Problem(404,'not_found')
+                        return respond(200,{'deleted':True})
+                raise Problem(404,'not_found')
             if path == '/api/v2/dishes/photo' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -1350,9 +1847,54 @@ def application(env, start_response):
                 except ValueError: raise Problem(400,'invalid_dish')
                 if not ok: raise Problem(404,'not_found')
                 return respond(200,{'ok':True})
+            if path == '/api/v2/dishes/recipe-association-audit' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, recipe_library_v2.audit_dish_recipe_associations(c))
+            if path == '/api/v2/dishes/recipe-links' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, {'links': recipe_library_v2.list_dish_recipe_links(c)})
+            if path == '/api/v2/dishes/recipe-link' and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    linked=recipe_library_v2.link_dish_recipe(c,body.get('dish_id'),body.get('recipe_id'))
+                except ValueError as error:
+                    code=str(error)
+                    raise Problem(400,code if code in ('invalid_dish','invalid_recipe_reference') else 'invalid_recipe_reference')
+                if linked is None: raise Problem(404,'not_found')
+                return respond(200,{'link':linked})
+            if path == '/api/v2/dishes/recipe-link-item' and method in ('POST', 'DELETE'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                body=read_json(env)
+                try:
+                    if method == 'POST':
+                        linked=recipe_library_v2.add_dish_recipe(c,body.get('dish_id'),body.get('recipe_id'))
+                    else:
+                        linked=recipe_library_v2.remove_dish_recipe(c,body.get('dish_id'),body.get('recipe_id'))
+                except ValueError as error:
+                    code=str(error)
+                    raise Problem(400,code if code in ('invalid_dish','invalid_recipe_reference') else 'invalid_recipe_reference')
+                if linked is None: raise Problem(404,'not_found')
+                return respond(200,{'link':linked})
+            if path == '/api/v2/dishes/menu-id-audit' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, microcycles_v2.menu_dish_id_audit(c))
             if path == '/api/v2/dishes' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
+                q=parse_qs(env.get('QUERY_STRING',''))
+                if q.get('paged') == ['1']:
+                    try:
+                        page=max(1,min(100000,int(q.get('page',['1'])[0])))
+                    except (ValueError,TypeError):
+                        page=1
+                    return respond(200,microcycles_v2.page_dish_library(
+                        c,q.get('q',[''])[0][:180],q.get('category',[''])[0][:100],page))
                 return respond(200, {'dishes':microcycles_v2.list_dish_library(c)})
             if path == '/api/v2/dishes/export' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
@@ -1417,6 +1959,8 @@ def application(env, start_response):
                 if not dish: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,dish['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
+                if parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1']:
+                    image_data=admin_library_thumbnail(image_data)
                 return respond(200,image_data,'image/webp')
             if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method in ('GET', 'PUT'):
                 if not user: raise Problem(401,'unauthorized')
@@ -1473,17 +2017,22 @@ def application(env, start_response):
                         meal=item.get('meal')
                         kind=item.get('kind')
                         value=item.get('value')
-                        if meal not in ('lunch','dinner') or kind not in ('category','dish') or not isinstance(value,str) or not value.strip() or len(value)>200: raise ValueError()
-                        if kind=='category' and value.strip() not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix','CT','Estágio'): raise ValueError()
-                        validated.append((date,meal,kind,value.strip()))
+                        if meal not in ('lunch','dinner') or kind not in ('category','dish'):
+                            raise ValueError()
+                        dish_id=item.get('dish_id')
+                        value,dish_id=microcycles_v2.resolve_menu_dish(c,kind,value,dish_id)
+                        if kind=='category' and value not in ('Carne branca','Carne vermelha','Peixe magro','Peixe gordo','Livre','Pós-jogo','Mix','CT','Estágio'):
+                            raise ValueError()
+                        validated.append((date,meal,kind,value,dish_id))
                     if len(set((v[0],v[1]) for v in validated))!=len(validated): raise ValueError()
                 except (ValueError,TypeError,AttributeError):
                     raise Problem(400,'invalid_menu_batch')
                 if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
-                for date,meal,kind,value in validated:
-                    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
-                      VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
-                      kind=excluded.kind,value=excluded.value""",(aid,date,meal,kind,value))
+                for date,meal,kind,value,dish_id in validated:
+                    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
+                      VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
+                      kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
+                      (aid,date,meal,kind,value,dish_id))
                 c.commit()
                 return respond(200,{'saved':len(validated)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
@@ -1501,7 +2050,7 @@ def application(env, start_response):
                 if method == 'PUT':
                     body = read_json(env)
                     try:
-                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'))
+                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'), body.get('dish_id'))
                     except ValueError:
                         raise Problem(400, 'invalid_menu')
                     if item is None:
@@ -1524,6 +2073,8 @@ def application(env, start_response):
                 if method == 'POST':
                     body = read_json(env)
                     try:
+                        if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (aid,body.get('match_date'))).fetchone():
+                            raise Problem(409,'day_has_off_event')
                         match = microcycles_v2.add_match(c, aid, body.get('match_date'), body.get('match_time'))
                     except ValueError:
                         raise Problem(400, 'invalid_or_duplicate_match')
@@ -1539,6 +2090,8 @@ def application(env, start_response):
                     raise Problem(404, 'not_found')
                 body = read_json(env)
                 try:
+                    if c.execute("SELECT 1 FROM v2_calendar_events WHERE athlete_id=? AND event_date=? AND kind='off'", (parts[4],body.get('match_date'))).fetchone():
+                        raise Problem(409,'day_has_off_event')
                     match = microcycles_v2.update_match(c, parts[4], parts[6], body.get('match_date'), body.get('match_time'))
                 except ValueError:
                     raise Problem(400, 'invalid_or_duplicate_match')
@@ -1835,29 +2388,32 @@ def application(env, start_response):
                 try:
                     if path.endswith('/menus'):
                         menus=microcycles_v2.list_menus(c,link['athlete_id'],first,last)
-                        classes=calendar_v2.classify_range(first,last,[m['match_date'] for m in microcycles_v2.list_matches(c,link['athlete_id'])])
+                        classes=calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first,last,[m['match_date'] for m in microcycles_v2.list_matches(c,link['athlete_id'])]))
                         class_by_day={d['date']:d['classification'] for d in classes}
                         model_data=microcycles_v2.get_model(c,link['athlete_id'])
                         class_meals={row['name']:row['meals'] for row in model_data['classifications']}
-                        overrides={(x['meal_date'],x['meal']):x['color'] for x in day_colors_v2.list_colors(c,link['athlete_id'],first,last)}
+                        colors_by_day=calendar_v2.effective_colors(c,link['athlete_id'],classes,model_data)
                         for menu in menus:
                             key=(menu['menu_date'],menu['meal'])
-                            base=class_meals.get(class_by_day.get(menu['menu_date']),{}).get(menu['meal'])
-                            color=overrides.get(key,base)
-                            menu['effective_color']=None if color=='none' else color
+                            base=class_meals.get(class_by_day.get(menu['menu_date']) or 'Geral',{}).get(menu['meal'])
+                            menu['effective_color']=colors_by_day.get(menu['menu_date'],{}).get(menu['meal'],{}).get('color')
                         return respond(200,{'menus':menus})
-                    days = calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])])
+                    days = calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])]))
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
                 model_data = microcycles_v2.get_model(c, link['athlete_id'])
                 event_data=events_v2.list_events(c,link['athlete_id'],first,last)
-                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+                return respond(200, {'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':[m for m in microcycles_v2.list_matches(c,link['athlete_id']) if first<=m['match_date']<=last], 'peri_meals':peri_v2.list_event_meals(c,link['athlete_id'],first,last,event_data), 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link: raise Problem(404,'player_not_linked')
                 rows=c.execute("""SELECT DISTINCT d.id,d.name_pt FROM v2_dish_library d
-                  JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
+                  JOIN v2_weekly_menus m ON m.kind='dish' AND
+                    (m.dish_id=d.id OR
+                     (m.dish_id IS NULL AND m.value=d.name_pt AND
+                      (SELECT COUNT(*) FROM v2_dish_library exact
+                       WHERE exact.name_pt=m.value)=1))
                   WHERE m.athlete_id=? AND d.active=1""",(link['athlete_id'],)).fetchall()
                 return respond(200,{'dishes':[dict(row) for row in rows]})
             if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
@@ -1868,7 +2424,11 @@ def application(env, start_response):
                 identifier=path.rsplit('/',1)[-1]
                 if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier): raise Problem(404,'not_found')
                 row=c.execute("""SELECT d.image_filename FROM v2_dish_library d
-                   JOIN v2_weekly_menus m ON m.kind='dish' AND m.value=d.name_pt
+                   JOIN v2_weekly_menus m ON m.kind='dish' AND
+                     (m.dish_id=d.id OR
+                      (m.dish_id IS NULL AND m.value=d.name_pt AND
+                       (SELECT COUNT(*) FROM v2_dish_library exact
+                        WHERE exact.name_pt=m.value)=1))
                    WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",(link['athlete_id'],identifier)).fetchone()
                 if not row: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,row['image_filename'])
@@ -1880,6 +2440,25 @@ def application(env, start_response):
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'options_by_color': plan_import_v2.published_meal_options(c, link['athlete_id']), 'peri_plans': peri_v2.current(c, link['athlete_id'])})
+            if path == '/api/admin/player-preview' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                requested=str(read_json(env).get('user_id',''))
+                target=c.execute(
+                    "SELECT id FROM users WHERE id=? AND role='player' AND active=1",
+                    (requested,)).fetchone()
+                if not target: raise Problem(404,'player_unavailable')
+                linked=c.execute(
+                    "SELECT athlete_id FROM v2_player_links WHERE user_id=?",
+                    (requested,)).fetchone()
+                if not linked: raise Problem(404,'player_not_linked')
+                ticket=secrets.token_urlsafe(32)
+                expires=now+60
+                c.execute("DELETE FROM v2_admin_preview_tickets WHERE expires<=?",(now,))
+                c.execute("INSERT INTO v2_admin_preview_tickets(token,admin_id,player_id,expires) VALUES(?,?,?,?)",
+                          (digest(ticket),user['id'],requested,expires))
+                c.commit()
+                return respond(200,{'url':'https://app.themile.pt/preview-entry?token='+quote(ticket)})
             if path == '/api/me' and method == 'GET':
                 if not user:
                     return respond(200, {'user': None, 'csrf': None})
@@ -2038,18 +2617,53 @@ def application(env, start_response):
                     return respond(200, {'activation_url': link})
                 raise Problem(404, 'not_found')
 
+            # The admin owns the private, optional full-screen loading photograph.
+            if path.startswith('/api/players/') and path.endswith('/loading-photo') and method in ('GET','PUT','DELETE'):
+                admin(user)
+                parts = path.split('/')
+                if len(parts) != 5: raise Problem(404, 'not_found')
+                target = c.execute("SELECT id FROM users WHERE id=? AND role='player'", (parts[3],)).fetchone()
+                if not target: raise Problem(404, 'not_found')
+                key = 'player-loading:' + target['id']
+                if method == 'GET':
+                    photo = c.execute("SELECT image_data FROM v2_shared_images WHERE image_key=?", (key,)).fetchone()
+                    if not photo: raise Problem(404, 'not_found')
+                    data = bytes(photo['image_data'])
+                    return respond(200, data, 'image/webp' if data[:4] == b'RIFF' and data[8:12] == b'WEBP' else 'image/jpeg')
+                if method == 'PUT':
+                    raw, mime = parse_photo(read_json(env).get('photo'))
+                    if mime not in ('image/webp', 'image/jpeg'): raise Problem(400, 'photo_format')
+                    try:
+                        with Image.open(io.BytesIO(raw)) as image:
+                            image.verify()
+                        with Image.open(io.BytesIO(raw)) as image:
+                            if image.width > 1400 or image.height > 2500:
+                                raise Problem(400, 'photo_dimensions')
+                    except (OSError, UnidentifiedImageError, ValueError, Image.DecompressionBombError):
+                        raise Problem(400, 'photo')
+                    c.execute("DELETE FROM v2_shared_images WHERE image_key=?", (key,))
+                    c.execute("INSERT INTO v2_shared_images(image_key,image_data) VALUES(?,?)", (key, raw))
+                    c.commit()
+                    return respond(200, {'ok':True,'has_photo':True})
+                c.execute("DELETE FROM v2_shared_images WHERE image_key=?", (key,))
+                c.commit()
+                return respond(200, {'ok':True,'has_photo':False})
+
             if path.startswith('/api/players/') and path.endswith('/photo') and method == 'GET':
                 parts = path.split('/')
                 if len(parts) != 5:
                     raise Problem(404, 'not_found')
                 uid = parts[3]
-                target = c.execute("SELECT * FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
+                target = c.execute("SELECT photo,photo_mime FROM users WHERE id=? AND role='player'", (uid,)).fetchone()
                 if not target:
                     raise Problem(404, 'not_found')
                 authorize_owner(user, uid)
                 if not target['photo']:
                     raise Problem(404, 'not_found')
-                return respond(200, bytes(target['photo']), target['photo_mime'] or 'image/jpeg')
+                data=bytes(target['photo'])
+                if user['role']=='admin' and parse_qs(env.get('QUERY_STRING','')).get('thumb')==['1']:
+                    return respond(200,admin_library_thumbnail(data,160),'image/webp')
+                return respond(200, data, target['photo_mime'] or 'image/jpeg')
 
             if path.startswith('/api/players/') and path.endswith('/access-extension') and method == 'POST':
                 admin(user)

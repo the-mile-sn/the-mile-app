@@ -19,7 +19,7 @@
 })();
 (()=> {
  const $=id=>document.getElementById(id);
- const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning");
+ const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning"),recipesBtn=$("tm-admin-nav-menus-recipes"),recipesSubnav=$("tm-admin-recipes-subnav"),recipesPage=$("tm-menu-recipes-page"),recipeLibraryPage=$("tm-recipe-library-page"),dishesBtn=$("tm-admin-nav-dishes"),recipeLibraryBtn=$("tm-admin-nav-recipe-library"),foodLibraryBtn=$("tm-admin-nav-food-library"),foodLibraryPage=$("tm-food-library-page");
  if(!section||!legacy||!dash)return;
  const meals=["breakfast","lunch","snack","dinner","supper"];
  const icons=["coffee","restaurant","veg","restaurant","moon"];
@@ -41,16 +41,29 @@
  // Navigation only changes visibility; it must never return these to Minha conta.
  if(settingsAdmin&&adminList&&inviteForm&&activationPanel){
   settingsAdmin.append(adminList,inviteForm,activationPanel);
-  activationPanel.hidden=false;
+  activationPanel.hidden=true; // Legacy single-user activation link is no longer shown.
  }
  function moveAdminControls(){/* Existing controls remain mounted in Settings. */}
  function navActive(target){
+  // Navigation selected during startup must not be overridden by late data loading.
+  window.tmAdminNavigationVersion=(window.tmAdminNavigationVersion||0)+1;
   const id=target?.id,accountView=id==="tm-admin-nav-account",settingsView=id==="tm-admin-nav-settings";
   moveAdminControls(settingsView);
   if(settingsPage)settingsPage.hidden=!settingsView;
+  if(foodLibraryPage)foodLibraryPage.hidden=target!==foodLibraryBtn;
+  if(recipesPage)recipesPage.hidden=target!==recipesBtn;
+  if(recipeLibraryPage)recipeLibraryPage.hidden=true;
+  if(recipesSubnav)recipesSubnav.hidden=target!==recipesBtn;
+  if(recipesBtn)recipesBtn.setAttribute("aria-expanded",String(target===recipesBtn));
+  if(dishesBtn){dishesBtn.classList.toggle("is-active",target===recipesBtn);if(target===recipesBtn)dishesBtn.setAttribute("aria-current","page");else dishesBtn.removeAttribute("aria-current");}
+  if(recipeLibraryBtn){recipeLibraryBtn.classList.remove("is-active");recipeLibraryBtn.removeAttribute("aria-current");}
   legacy.classList.toggle("tm-account-only",accountView);
-  if(dashboardReturn)dashboardReturn.hidden=target===dash||!$("tm-players-profile").hidden;
+  if(dashboardReturn)dashboardReturn.hidden=target===dash||target===foodLibraryBtn||!$("tm-players-profile").hidden;
   for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
+  // Mobile: make the newly selected tab visible without changing the current page.
+  if(window.matchMedia("(max-width: 830px)").matches&&target?.closest(".tm-admin-mobile-nav-track")){
+   target.scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
+  }
  }
  const clinicalPages={assessments:$("tm-assessments-page"),forms:$("tm-forms-page")};
  const assessmentPanel=$("assessments-admin-panel"),monitoringPanel=$("profile-monitoring");
@@ -104,7 +117,7 @@
     $("tm-"+kind+"-player").value="";
     syncClinicalPicker(kind);
     if(kind==="assessments"){$("assessments-admin-panel").hidden=true;}else{$("profile-monitoring").hidden=true;}
-    $("tm-"+kind+"-error").textContent="Seleciona um jogador para consultar os respetivos dados.";
+    $("tm-"+kind+"-error").textContent="";
     return;
    }
    drawClinicalResults(kind);
@@ -117,11 +130,16 @@
   closeClinical();const token=++clinicalToken;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
   const page=clinicalPages[kind],feedback=$("tm-"+kind+"-error");page.hidden=false;navActive($("tm-admin-nav-"+kind));feedback.textContent="";
+  // On phones, position the newly opened view before async data loads.
+  // Never scroll the viewport after the user may have focused its search.
+  const mobileClinical=window.matchMedia("(max-width: 830px)").matches;
+  if(mobileClinical&&!aid&&!recordDate)window.scrollTo({top:0,behavior:"instant"});
+  if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
   syncClinicalSelectors();const original=$("athlete");
   const selected=$("tm-"+kind+"-player");
   if(aid&&Array.from(original.options).some(o=>o.value===aid))selected.value=aid;
   syncClinicalPicker(kind);
-  if(!selected.value){feedback.textContent="Seleciona um jogador para consultar os respetivos dados.";return;}
+  if(!selected.value){feedback.textContent="";return;}
   original.value=selected.value;
   let deepLinked=false;
   try{
@@ -148,7 +166,7 @@
     }
    }
   }catch(err){if(token===clinicalToken)feedback.textContent="Não foi possível carregar: "+err.message;}
-  if(token===clinicalToken&&!deepLinked)window.scrollTo({top:0,behavior:"smooth"});
+  if(token===clinicalToken&&!deepLinked&&!mobileClinical)window.scrollTo({top:0,behavior:"smooth"});
  }
  for(const kind of ["assessments","forms"]){
   $("tm-admin-nav-"+kind).addEventListener("click",()=>openClinical(kind));
@@ -172,13 +190,12 @@ function ensurePlanningOnlyView(){
  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
   ensurePlanningOnlyView();
  try{
+  if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
   if(aid&&$("athlete")){
    const choice=$("athlete");
-   if([...choice.options].some(o=>o.value===aid)&&choice.value!==aid){
-    choice.value=aid;
-    if(typeof loadModel==="function")await loadModel();
-   }
+   if([...choice.options].some(o=>o.value===aid))choice.value=aid;
   }
+  if(typeof window.tmEnsureAdminPlanning==="function")await window.tmEnsureAdminPlanning();
   if(day){
    const d=new Date(day+"T12:00:00Z");
    if(typeof calendarMonth!=="undefined")calendarMonth=new Date(d.getUTCFullYear(),d.getUTCMonth(),1);
@@ -202,23 +219,69 @@ function ensurePlanningOnlyView(){
   if($("admin-workspace").hidden)return;
   section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
   ensurePlanningOnlyView();
+  if(typeof window.tmEnsureAdminPlanning==="function")window.tmEnsureAdminPlanning().catch(err=>{if(typeof status==="function")status("Não foi possível carregar o Planeamento: "+err.message,"warn");});
   $("admin-account-panel").hidden=true;
   $("admin-account-toggle").setAttribute("aria-expanded","false");
   window.scrollTo({top:0,behavior:"smooth"});
  }
  planningBtn.addEventListener("click",openPlanning);
  window.tmOpenAdminPlanning=openPlanning;
+ function openMenusRecipes(){
+  if($("admin-workspace").hidden)return;
+  closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
+  navActive(recipesBtn);
+  if(recipesPage)recipesPage.hidden=false;
+  if(recipeLibraryPage)recipeLibraryPage.hidden=true;
+  const feedback=$("dish-catalog-feedback");
+  if(typeof window.tmLoadDishLibrary==="function"){
+   window.tmLoadDishLibrary().catch(err=>{if(feedback&&recipesPage&&!recipesPage.hidden)feedback.textContent="Não foi possível carregar a biblioteca: "+err.message;});
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+ }
+ if(recipesBtn&&dishesBtn){recipesBtn.addEventListener("click",openMenusRecipes);dishesBtn.addEventListener("click",openMenusRecipes);}
+ window.tmOpenAdminMenusRecipes=openMenusRecipes;
+ function openRecipeLibrary(){
+  if($("admin-workspace").hidden)return;
+  closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
+  navActive(recipesBtn);
+  recipesPage.hidden=true;
+  recipeLibraryPage.hidden=false;
+  dishesBtn.classList.remove("is-active");dishesBtn.removeAttribute("aria-current");
+  recipeLibraryBtn.classList.add("is-active");recipeLibraryBtn.setAttribute("aria-current","page");
+  const loadPromise=typeof window.tmLoadRecipeLibrary==="function"?window.tmLoadRecipeLibrary():Promise.resolve();
+  window.scrollTo({top:0,behavior:"smooth"});
+  return loadPromise;
+ }
+ if(recipeLibraryBtn)recipeLibraryBtn.addEventListener("click",openRecipeLibrary);
+ window.tmOpenAdminRecipeLibrary=openRecipeLibrary;
+ function openFoodLibrary(){
+  if($("admin-workspace").hidden)return;
+  closeClinical();
+  section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
+  navActive(foodLibraryBtn);
+  if(foodLibraryPage)foodLibraryPage.hidden=false;
+  if(typeof window.tmEnsureAdminFoodLibrary==="function"){
+   window.tmEnsureAdminFoodLibrary().catch(err=>{
+    const feedback=foodLibraryPage?.querySelector("#feedback");
+    if(feedback)feedback.textContent="Não foi possível carregar a Biblioteca Alimentar: "+err.message;
+   });
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+ }
+ if(foodLibraryBtn)foodLibraryBtn.addEventListener("click",openFoodLibrary);
+ window.tmOpenAdminFoodLibrary=openFoodLibrary;
  const chooseSettings=$("tm-admin-nav-settings");if(chooseSettings)chooseSettings.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;navActive(chooseSettings);if(typeof loadAdminAccounts==="function")loadAdminAccounts().catch(()=>{});});
  const chooseAccount=$("tm-admin-nav-account");if(chooseAccount)chooseAccount.addEventListener("click",()=>{closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(chooseAccount);});
  let playerProfile=null,playerProfileEditing=false,profileLoadToken=0,playerAccess=null,playerDetails=null,playerPhotoData=null;
  const accessToggle=$("tm-players-access-toggle"),accessFeedback=$("tm-players-access-feedback");
  function paintPlayerAccess(){
   accessToggle.hidden=!playerAccess;
+  $("tm-players-enter-app").hidden=!(playerAccess?.active&&playerDetails?.user_id);
   $("tm-players-password-toggle").hidden=!playerAccess;
   if(playerAccess){accessToggle.querySelector(".tm-access-action-text").textContent=playerAccess.active?"Bloquear acesso":"Reativar acesso";accessToggle.classList.toggle("is-unblocking",!playerAccess.active);}
  }
  async function loadPlayerAccess(aid,token){
-  accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
+  accessFeedback.textContent="";accessToggle.hidden=true;$("tm-players-enter-app").hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();playerAccess=null;
   try{
    const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/access");
    if(token!==profileLoadToken||profilePanel.hidden)return;
@@ -256,6 +319,30 @@ function ensurePlanningOnlyView(){
   }catch(err){if(token===profileLoadToken)accessFeedback.textContent="Não foi possível alterar: "+err.message;}
   finally{btn.disabled=false;}
  });
+ async function enterPlayerApp(uid,button,feedback){
+  if(!uid)return;
+  const tab=window.open("about:blank","_blank");
+  if(!tab){feedback.textContent="Permite pop-ups deste site para abrir a app do jogador.";return;}
+  tab.document.title="The Mile · Acesso de visualização";
+  tab.document.body.textContent="A preparar acesso de visualização…";
+  button.disabled=true;
+  try{
+   const response=await request("/api/admin/player-preview",{
+    method:"POST",body:JSON.stringify({user_id:uid})
+   });
+   const url=new URL(response.url);
+   if(url.origin!=="https://app.themile.pt"||url.pathname!=="/preview-entry")throw Error("Destino inesperado.");
+   tab.location.replace(url.href);
+   feedback.textContent="";
+  }catch(err){
+   tab.close();
+   feedback.textContent="Não foi possível abrir a app do jogador: "+err.message;
+  }finally{button.disabled=false;}
+ }
+ $("tm-players-enter-app").addEventListener("click",()=>{
+  if(!playerAccess?.active||!playerDetails?.user_id)return;
+  enterPlayerApp(playerDetails.user_id,$("tm-players-enter-app"),accessFeedback);
+ });
  $("tm-players-archive").addEventListener("click",async()=>{
   if(!playerProfile)return;const aid=playerProfile.id,name=playerProfile.name,token=profileLoadToken;
   if(!window.confirm("Arquivar "+name+"? Vai desaparecer das listas e perder acesso à App. Os seus dados serão preservados."))return;
@@ -290,6 +377,105 @@ function ensurePlanningOnlyView(){
  });
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)"),profileNav=$("tm-players-profile-nav"),playersHeader=playersPage.querySelector(".tm-players-heading-minimal");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Data de nascimento","birth_date","date"],["Plano de acompanhamento","followup_plan","followup"],["Data de renovação do acompanhamento","followup_renewal_date","date"],["Notas internas","profile_notes","textarea"]];
+ let loadingPhotoPreviewSeq=0,stagedLoadingPhoto=null;
+ function updateLoadingPhotoSaveState(saved=false){
+  const button=$("tm-player-loading-photo-save");
+  button.disabled=saved||!stagedLoadingPhoto;
+  button.classList.toggle("is-saved",saved);
+  button.textContent=saved?"Guardado":"Guardar";
+ }
+ function refreshPlayerLoadingPhoto(){
+  const seq=++loadingPhotoPreviewSeq,uid=playerDetails?.user_id;
+  const box=$("tm-player-loading-photo-preview"),remove=$("tm-player-loading-photo-delete"),input=$("tm-player-loading-photo-input"),feedback=$("tm-player-loading-photo-feedback");
+  stagedLoadingPhoto=null;updateLoadingPhotoSaveState(false);
+  box.replaceChildren();remove.hidden=true;input.disabled=!uid;
+  if(!uid){box.append(el("span","","Este jogador ainda não tem conta associada."));feedback.textContent="";return;}
+  box.append(el("span","","A verificar fotografia…"));
+  // The image must load eagerly while detached; a detached lazy image never fires onload.
+  const image=el("img");image.alt="Fotografia de carregamento";image.loading="eager";image.decoding="async";
+  image.onload=()=>{
+   if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
+   box.replaceChildren(image);remove.hidden=false;
+   feedback.textContent="";updateLoadingPhotoSaveState(true);
+  };
+  image.onerror=()=>{
+   if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
+   box.replaceChildren(el("span","","Sem fotografia de carregamento"));remove.hidden=true;
+   feedback.textContent="";updateLoadingPhotoSaveState(false);
+  };
+  image.src="/api/players/"+encodeURIComponent(uid)+"/loading-photo?v="+Date.now();
+ }
+ async function resizePlayerLoadingPhoto(file){
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw Error("Escolhe uma imagem JPG, PNG ou WebP.");
+  if(file.size>15*1024*1024)throw Error("A fotografia original deve ter até 15 MB.");
+  // Already optimized WebP files (including the supplied Dalot photo) must not
+  // be re-encoded: some browsers can display WebP but cannot export WebP from canvas.
+  if(file.type==="image/webp"&&file.size<=3*1024*1024){
+   return await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||""));
+    reader.onerror=()=>reject(Error("Não foi possível ler a fotografia."));
+    reader.readAsDataURL(file);
+   });
+  }
+  const picture=await new Promise((resolve,reject)=>{
+   const img=new Image(),url=URL.createObjectURL(file);
+   img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+   img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Não foi possível ler a fotografia."));};
+   img.src=url;
+  });
+  const canvas=document.createElement("canvas");canvas.width=900;canvas.height=1600;
+  const ctx=canvas.getContext("2d");if(!ctx)throw Error("Não foi possível otimizar a fotografia.");
+  const scale=Math.max(900/picture.naturalWidth,1600/picture.naturalHeight);
+  const width=picture.naturalWidth*scale,height=picture.naturalHeight*scale;
+  ctx.drawImage(picture,(900-width)/2,(1600-height)/2,width,height);
+  let data=canvas.toDataURL("image/webp",.79);
+  // JPEG fallback is supported by the private endpoint and all target browsers.
+  if(!data.startsWith("data:image/webp;"))data=canvas.toDataURL("image/jpeg",.77);
+  if(!data.startsWith("data:image/webp;")&&!data.startsWith("data:image/jpeg;"))throw Error("Não foi possível otimizar a fotografia neste navegador.");
+  if(data.length>4*1024*1024)throw Error("A imagem otimizada é demasiado grande.");
+  return data;
+ }
+ $("tm-player-loading-photo-input").addEventListener("change",async event=>{
+  const file=event.target.files?.[0];if(!file)return;
+  const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
+  event.target.disabled=true;feedback.textContent="A preparar imagem…";
+  try{
+   if(!uid)throw Error("O jogador ainda não tem uma conta associada.");
+   const photo=await resizePlayerLoadingPhoto(file);
+   if(profileLoadToken!==token||playerDetails?.user_id!==uid)return;
+   stagedLoadingPhoto={uid,photo};
+   const preview=$("tm-player-loading-photo-preview");
+   const image=el("img");image.alt="Imagem App selecionada";image.src=photo;
+   preview.replaceChildren(image);
+   $("tm-player-loading-photo-delete").hidden=true;
+   feedback.textContent="";
+   updateLoadingPhotoSaveState(false);
+  }catch(e){if(profileLoadToken===token)feedback.textContent="Não foi possível preparar: "+e.message;}
+  finally{event.target.value="";event.target.disabled=!playerDetails?.user_id;}
+ });
+ $("tm-player-loading-photo-save").addEventListener("click",async()=>{
+  const selected=stagedLoadingPhoto,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
+  if(!selected||selected.uid!==playerDetails?.user_id)return;
+  const button=$("tm-player-loading-photo-save");
+  button.disabled=true;feedback.textContent="A guardar imagem…";
+  try{
+   await request("/api/players/"+encodeURIComponent(selected.uid)+"/loading-photo",{method:"PUT",body:JSON.stringify({photo:selected.photo})});
+   if(profileLoadToken===token&&playerDetails?.user_id===selected.uid){
+    stagedLoadingPhoto=null;feedback.textContent="";refreshPlayerLoadingPhoto();
+   }
+  }catch(e){
+   if(profileLoadToken===token){feedback.textContent="Não foi possível guardar: "+e.message;button.disabled=false;}
+  }
+ });
+ $("tm-player-loading-photo-delete").addEventListener("click",async()=>{
+  const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
+  if(!uid||!window.confirm("Remover a Imagem App deste jogador?"))return;
+  const button=$("tm-player-loading-photo-delete");button.disabled=true;feedback.textContent="A eliminar…";
+  try{await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"DELETE"});if(token===profileLoadToken&&playerDetails?.user_id===uid){feedback.textContent="Fotografia eliminada. O carregamento ficará com fundo escuro.";refreshPlayerLoadingPhoto();}}
+  catch(e){if(token===profileLoadToken)feedback.textContent="Erro: "+e.message;}
+  finally{button.disabled=false;}
+ });
  function displayPlayerProfile(){
   if(!playerProfile)return;
   const athlete={...playerProfile,...(playerDetails||{})},host=$("tm-players-profile-fields");host.replaceChildren();
@@ -300,6 +486,7 @@ function ensurePlanningOnlyView(){
    const img=el("img","tm-player-photo-preview");img.src="/api/players/"+encodeURIComponent(accountId)+"/photo?reload="+Date.now();img.alt="Fotografia de "+athlete.name;img.onerror=()=>img.remove();avatar.append(img);
   }
   photoHost.append(avatar);
+  refreshPlayerLoadingPhoto();
   const photoControl=$("tm-players-profile-photo-upload");photoControl.hidden=!playerProfileEditing;
   photoControl.disabled=!accountId;
   $("tm-players-profile-title").textContent=athlete.name;
@@ -385,23 +572,48 @@ function ensurePlanningOnlyView(){
   const body=$("tm-players-body");body.replaceChildren();
   const term=$("tm-players-filter").value,filter=$("tm-players-access").value;
   const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&matchesName(p.name,term));
-  $("tm-players-count").textContent=items.length+" jogador"+(items.length===1?"":"es");
   for(const p of items){
    const row=el("tr"),first=el("td");
    const link=el("button","tm-p-player");
    const avatar=el("span","tm-p-avatar",p.name.split(/\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
    if(p.has_photo&&p.user_id){
-    const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
+    const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
    }
    const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
    link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));first.append(link);row.append(first);
    const statusCell=el("td");statusCell.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));row.append(statusCell);
-   const game=el("td");game.append(el("span","",p.next_match?fullDate(p.next_match.date):"—"));if(p.next_match?.time)game.append(el("small","tm-p-muted",p.next_match.time));row.append(game);
-   const weight=el("td");if(p.latest_weight){weight.append(el("span","",Number(p.latest_weight.weight_kg).toLocaleString("pt-PT",{maximumFractionDigits:1})+" kg"),el("small","tm-p-muted",fullDate(p.latest_weight.date)));}else weight.textContent="—";row.append(weight);
-   const reply=el("td");if(p.last_player_response){const isWeight=p.last_player_response.type==="weight";reply.append(el("span","",isWeight?"Peso":"Pós-jogo"),el("small","tm-p-muted",new Date(p.last_player_response.timestamp*1000).toLocaleDateString("pt-PT")));}else reply.textContent="—";row.append(reply);
-   const action=el("td");const go=el("button","tm-p-go","Abrir");go.type="button";go.addEventListener("click",()=>openPlayerProfile(p.id));action.append(go);row.append(action);body.append(row);
+   const renewal=el("td","tm-p-renewal",fullDate(p.renewal_date));row.append(renewal);
+   const action=el("td","tm-p-actions");
+   const actions=el("div","tm-p-actions-wrap");
+   const go=el("button","tm-p-icon-action");go.type="button";
+   go.title="Ver perfil";go.setAttribute("aria-label","Ver perfil de "+p.name);
+   go.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.7-7 10-7 10 7 10 7-3.7 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+   go.addEventListener("click",()=>openPlayerProfile(p.id));actions.append(go);
+   const app=el("button","tm-p-icon-action tm-p-app-action");app.type="button";
+   app.title="Entrar na app";app.setAttribute("aria-label","Entrar na app de "+p.name);
+   app.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>';
+   app.disabled=p.access_status!=="active"||!p.user_id;
+   app.title=app.disabled?"Jogador sem acesso ativo":"Entrar na app";
+   app.addEventListener("click",()=>enterPlayerApp(p.user_id,app,$("tm-players-error")));
+   actions.append(app);action.append(actions);row.append(action);
+   // Mobile: the entire player card opens the profile, except its app button.
+   // Existing desktop controls and SVGs remain unchanged.
+   row.addEventListener("click",event=>{
+    if(!window.matchMedia("(max-width: 830px)").matches)return;
+    if(event.target.closest("button,a,input,select,textarea"))return;
+    openPlayerProfile(p.id);
+   });
+   row.addEventListener("keydown",event=>{
+    if(!window.matchMedia("(max-width: 830px)").matches||event.target!==row)return;
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();openPlayerProfile(p.id);}
+   });
+   if(window.matchMedia("(max-width: 830px)").matches){
+    row.tabIndex=0;
+    row.setAttribute("aria-label","Abrir perfil de "+p.name);
+   }
+   body.append(row);
   }
-  if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=6;row.append(cell);body.append(row);}
+  if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=4;row.append(cell);body.append(row);}
  }
  async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
  window.tmRefreshPlayersList=()=>loadPlayers();
@@ -413,8 +625,34 @@ function ensurePlanningOnlyView(){
   loadPlayers().catch(e=>{$("tm-players-error").textContent="Não foi possível carregar os jogadores: "+e.message;});
   window.scrollTo({top:0,behavior:"smooth"});
  }
+ // Move the existing create button beside search on small screens only.
+ // Keep its original listener and restore the exact desktop DOM on resize.
+ const playersMobileQuery=window.matchMedia("(max-width: 830px)");
+ const playersCreateButton=$("tm-players-new");
+ const playersCreateHome=playersCreateButton.parentNode;
+ const playersCreateAnchor=document.createComment("tm-players-create-original-position");
+ playersCreateHome.insertBefore(playersCreateAnchor,playersCreateButton);
+ const playersSearchCell=$("tm-players-filter").closest("th");
+ function arrangeMobilePlayerSearch(){
+  if(playersMobileQuery.matches){
+   if(playersCreateButton.parentNode!==playersSearchCell)playersSearchCell.append(playersCreateButton);
+   const access=$("tm-players-access");
+   if(access.value!=="all"){
+    access.value="all";
+    access.dispatchEvent(new Event("change",{bubbles:true}));
+   }
+  }else if(playersCreateButton.parentNode!==playersCreateHome){
+   playersCreateHome.insertBefore(playersCreateButton,playersCreateAnchor.nextSibling);
+  }
+ }
+ playersMobileQuery.addEventListener("change",arrangeMobilePlayerSearch);
+ arrangeMobilePlayerSearch();
  $("tm-players-filter").addEventListener("input",renderPlayers);
- $("tm-players-access").addEventListener("change",renderPlayers);
+ $("tm-players-access").addEventListener("change",()=>{
+  const selector=$("tm-players-access");
+  $("tm-players-access-value").textContent=selector.options[selector.selectedIndex]?.textContent||"Todos";
+  renderPlayers();
+ });
  $("tm-players-new").addEventListener("click",()=>{
   if(typeof window.tmOpenPlayerCreate==="function")window.tmOpenPlayerCreate();
  });
@@ -461,7 +699,7 @@ function ensurePlanningOnlyView(){
  let playerQuery="";
  function renderTable(data){const head=$("tm-db-thead"),body=$("tm-db-tbody");head.replaceChildren();body.replaceChildren();const today=data.today;const header=el("tr");const name=el("th","tm-db-name-cell");const search=el("input","tm-db-search");search.type="search";search.placeholder="Filtrar jogador";search.setAttribute("aria-label","Filtrar jogadores da matriz");search.value=playerQuery;name.append(search);header.append(name);
  const days=Array.from({length:7},(_,i)=>shifted(weekMonday,i));for(const [i,day] of days.entries()){const th=el("th",day===today?"tm-db-today":"");const lab=el("div","tm-db-date",["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"][i]);const d=el("div","tm-db-day",dateLabel(day));const ico=el("div","tm-db-five-cols tm-db-icon-row");for(const kind of icons){const slot=el("span");slot.append(hugeIcon(kind));ico.append(slot);}th.append(lab,d,ico);header.append(th);}head.append(header);
- for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name;const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name");const avatar=el("span","tm-db-avatar");avatar.setAttribute("aria-hidden","true");avatar.textContent=player.name.split(/\s+/).slice(0,2).map(n=>n[0]||"").join("").toUpperCase();if(player.has_photo&&player.user_id){const img=el("img","tm-db-avatar-photo");img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);}btn.append(avatar,el("span","tm-db-player-text",player.name));btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const cell=el("button","tm-db-cell"+(item.classification==="MD"?" tm-db-match":""));cell.type="button";cell.setAttribute("aria-label",player.name+", "+item.date+", "+(item.classification||"sem MD"));cell.append(el("span","tm-db-md",item.classification||"—"));const dots=el("span","tm-db-five-cols tm-db-dots");for(const meal of meals){const value=item.colors?.[meal];const dot=el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot"));dot.title=({breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"}[meal]||meal)+": "+(value||"não prescrito");dots.append(dot);}cell.append(dots);cell.addEventListener("click",()=>openPlayers(player.id,item.date));td.append(cell);tr.append(td);}body.append(tr);}
+ for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name;const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name");const avatar=el("span","tm-db-avatar");avatar.setAttribute("aria-hidden","true");avatar.textContent=player.name.split(/\s+/).slice(0,2).map(n=>n[0]||"").join("").toUpperCase();if(player.has_photo&&player.user_id){const img=el("img","tm-db-avatar-photo");img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);}btn.append(avatar,el("span","tm-db-player-text",player.name));btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const cell=el("button","tm-db-cell"+(item.classification==="MD"?" tm-db-match":""));cell.type="button";cell.setAttribute("aria-label",player.name+", "+item.date+", "+(item.classification||"sem MD"));cell.append(el("span","tm-db-md",item.classification||"—"));const dots=el("span","tm-db-five-cols tm-db-dots");for(const meal of meals){const value=item.colors?.[meal];const dot=el("span","tm-db-dot "+(value?("tm-db-"+value):"tm-db-none-dot"));dot.title=({breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"}[meal]||meal)+": "+(value||"não prescrito");dots.append(dot);}cell.append(dots);cell.addEventListener("click",()=>openPlayers(player.id,item.date));td.append(cell);tr.append(td);}body.append(tr);}
  const applyPlayerFilter=()=>{
   let count=0;
   for(const tr of body.children){
@@ -479,3 +717,22 @@ function ensurePlanningOnlyView(){
  $("tm-db-next").addEventListener("click",()=>{weekMonday=shifted(weekMonday,7);load().catch(showError);});
  $("tm-db-go-today").addEventListener("click",()=>{weekMonday=monday(dateParts(new Date()));load().catch(showError);});
 })();
+
+/* Navigate from standalone nutrition pages to the corresponding Backoffice section. */
+(()=>{
+ const target=new URLSearchParams(window.location.search).get("nav");
+ const allowed=new Set(["players","planning","food-library","menus-recipes","dishes","recipe-library","assessments","forms","dashboard","settings","account"]);
+ if(!allowed.has(target)||target==="dashboard")return;
+ const workspace=document.getElementById("admin-workspace");
+ const open=()=>{if(workspace?.hidden)return false;const button=document.getElementById("tm-admin-nav-"+target);if(!button)return false;button.click();window.history.replaceState(null,"",window.location.pathname);return true};
+ if(open())return;
+ const observer=new MutationObserver(()=>{if(open())observer.disconnect()});
+ if(workspace)observer.observe(workspace,{attributes:true,attributeFilter:["hidden"]});
+ window.addEventListener("load",()=>{if(open())observer.disconnect()},{once:true});
+})();
+
+
+/* Native selects are intentionally not replaced with decorative wrappers.
+   The previous global wrapper obscured meal colours, overlaid event controls
+   and changed table filter heights in both admin themes. The Planos editor
+   has its own independent presentation and is not affected here. */

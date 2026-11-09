@@ -3,14 +3,14 @@
    Meal colours and clinical risk/category colours retain their meaning. */
 html[data-admin-theme="light"]{
   color-scheme:light;
-  --tm-light-bg:#f5f6f8;
-  --tm-light-surface:#ffffff;
-  --tm-light-surface-muted:#f0f2f6;
-  --tm-light-surface-hover:#e7ebf1;
-  --tm-light-text:#1c2633;
-  --tm-light-muted:#596675;
-  --tm-light-border:#d9dfe7;
-  --tm-light-focus:#4a789d;
+  --tm-light-bg:var(--tm-shell-bg);
+  --tm-light-surface:var(--tm-shell-surface);
+  --tm-light-surface-muted:var(--tm-shell-surface-muted);
+  --tm-light-surface-hover:var(--tm-shell-surface-hover);
+  --tm-light-text:var(--tm-shell-text);
+  --tm-light-muted:var(--tm-shell-muted);
+  --tm-light-border:var(--tm-shell-border);
+  --tm-light-focus:var(--tm-shell-focus);
   background:var(--tm-light-bg);
   color:var(--tm-light-text);
 }
@@ -66,6 +66,18 @@ html[data-admin-theme="light"] .calendar-day.calendar-review{
   background:#fff5df;border-color:#d9a94d
 }
 html[data-admin-theme="light"] .calendar-day.calendar-review span{color:#805d24}
+ /* Off cards are pale red in light mode, while meal colors remain untouched. */
+ html[data-admin-theme="light"] .calendar-day.calendar-off{
+   background:#faecee;
+   border-color:#dca6ad;
+   color:#263448;
+ }
+ html[data-admin-theme="light"] .calendar-day.calendar-off>strong{
+   color:#263448;
+ }
+ html[data-admin-theme="light"] .calendar-day.calendar-off>span:not(.calendar-event-mark){
+   color:#98515c;
+ }
 html[data-admin-theme="light"] .calendar-day.calendar-selected{box-shadow:inset 0 0 0 1px #79869a}
 html[data-admin-theme="light"] .day-color-dot{background:#cbd2de}
 html[data-admin-theme="light"] .menu-color-label:not([class*="meal-"]){background:#e6eaf0!important;color:#465263}
@@ -473,3 +485,166 @@ html[data-admin-theme="light"] #tm-players-page #tm-players-password-cancel{back
 html[data-admin-theme="light"] #tm-dashboard button.tm-db-event.tm-db-game{background:#e5f3e9!important;border-color:#75bb90!important;color:#245437!important}
 html[data-admin-theme="light"] #tm-dashboard button.tm-db-event.tm-db-game:hover{background:#d9ecdf!important}
 html[data-admin-theme="light"] #tm-dashboard button.tm-db-event.tm-db-game small{color:#477a58}
+
+/* Light-mode navigation: restore strong contrast against white sidebar.
+   The desktop navigation styles in admin-microcycles.css use !important. */
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link,
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link:not(:disabled){
+ color:#33465a!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link:hover:not(:disabled){
+ background:#e9edf2!important;color:#182838!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-link.is-active{
+ background:#e6edf4!important;color:#172c40!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-icon{
+ color:#526b82!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-nav-icon svg{
+ color:inherit!important;
+ stroke:currentColor;
+}
+html[data-admin-theme="light"] #admin-workspace #tm-admin-nav-menus-recipes .tm-admin-nav-chevron{
+ color:#526b82!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link{
+ color:#45566a!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link.is-active{
+ background:#e6edf4!important;color:#172c40!important;
+}
+html[data-admin-theme="light"] #admin-workspace .tm-admin-subnav-link:disabled{
+ opacity:.7!important;color:#5b697b!important;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-library-table{
+ background:#fff;color:#1b2939;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-library-table th{
+ background:#f4f6f9;color:#506075;border-color:#dce3eb;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-library-table td{
+ color:#253447;border-color:#e3e8ef;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-detail td{
+ background:#f5f7fa;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-row:hover td{
+ background:#f7f9fc;
+}
+html[data-admin-theme="light"] #tm-menu-recipes-page .dish-table-empty{color:#64748b}
+
+html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface{background:transparent!important;border:0!important;box-shadow:none!important}
+html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table-scroll{background:#fff;border-color:var(--tm-light-border,#d7dfe9)}
+
+/* Planning unified header in light mode. */
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header{background:#fff;border-color:var(--tm-light-border,#d7dfe9)}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{background:transparent!important;border-color:transparent!important}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{background:transparent!important;border-top-color:rgba(83,101,123,.15)!important}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header #tm-planning-search{background:#fff!important;border-color:#d8e0e9!important;color:#253448!important}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-card{background:#fff;border-color:#dce2e9}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info strong{color:#303e51}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info p{color:#667284}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-upload{background:#eef1f5;color:#46576a;border-color:#e1e6ed}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-preview{background:#f4f6f9;border-color:#dce2e9}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-card{
+ background:#fff;border-color:#dce2e9;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info strong{color:#263448}
+html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info p{color:#667284}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save{background:#273e55;border-color:#273e55;color:#fff}
+html[data-admin-theme="light"] #tm-players-page .tm-player-photo-save.is-saved{background:#e4f4e9;border-color:#94d1ac;color:#246c40}
+
+html[data-admin-theme="light"] #tm-players-page .tm-player-access-actions .tm-enter-app{background:#eaf3ee;border-color:#b5d8c3;color:#246345}
+
+/* Light theme: the native two-line player access filter must not keep its dark surface. */
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+ background:#ffffff!important;
+ border-color:var(--tm-light-border,#d4dce7)!important;
+ color:var(--tm-light-text,#263448)!important;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-caption{
+ color:var(--tm-light-muted,#7a8596)!important;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-value{
+ color:var(--tm-light-text,#263448)!important;
+}
+html[data-admin-theme="light"] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-select-arrow{
+ color:var(--tm-light-muted,#7a8596)!important;
+}
+
+/* Mobile phase 1: the compact top navigation respects the selected admin theme. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link{
+   color:#43576b!important;background:transparent!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-link:hover:not(:disabled){
+   background:#eff2f6!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-nav-icon{
+   color:#526b82!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-mobile-nav-track .tm-admin-subnav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important;
+ }
+}
+
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link{
+   color:#4d6379!important;background:transparent!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link.is-active{
+   color:#172c40!important;background:#e6edf4!important
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]>.tm-admin-nav-link:hover{
+   background:#eff2f6!important
+ }
+}
+
+/* Compact More popup: theme-matched surface for mobile navigation. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar>.tm-admin-side-nav[aria-label="Conta e configurações"]{
+   background:#fff!important;border-color:#d8dfe8!important;box-shadow:0 12px 28px rgba(31,51,74,.12)
+ }
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-more-trigger{color:#43576b!important}
+}
+
+/* Mobile top tabs: theme overrides must not restore the selected pill background. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-nav-link.is-active,
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger.is-active,
+ html[data-admin-theme="light"] #admin-workspace .tm-admin-sidebar .tm-admin-mobile-nav-track .tm-admin-more-trigger[aria-expanded="true"]{
+  background:transparent!important;background-image:none!important;box-shadow:none!important;
+ }
+}
+
+/* Today follows the card's meaning (Off/red, match/green, other/blue).
+   Selection is intentionally weaker and never replaces the today indicator. */
+html[data-admin-theme="light"] #calendar-section .calendar-day.calendar-selected:not(.calendar-today){
+  border-color:#b4c3d3;
+  box-shadow:none;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day.calendar-selected:not(.calendar-today):not(.calendar-match):not(.calendar-off){
+  background:#f2f6fb;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day.calendar-today{
+  --tm-today-border:#5a9dd7;
+  background:#eaf4ff;
+  border-color:var(--tm-today-border);
+  box-shadow:none;
+  color:var(--tm-light-text);
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day.calendar-today.calendar-match{
+  --tm-today-border:#4caf80;
+  background:#dff3e7;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-day.calendar-today.calendar-off{
+  --tm-today-border:#d56b7c;
+  background:#fae1e5;
+}

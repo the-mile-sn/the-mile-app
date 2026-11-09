@@ -79,6 +79,7 @@ def initialize(c):
         meal TEXT NOT NULL CHECK(meal IN ('lunch','dinner')),
         kind TEXT NOT NULL CHECK(kind IN ('category','dish')),
         value TEXT NOT NULL,
+        dish_id TEXT REFERENCES v2_dish_library(id),
         PRIMARY KEY (athlete_id, menu_date, meal)
     )""")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_player_links (
@@ -94,6 +95,20 @@ def initialize(c):
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
     if "match_time" not in columns:
         c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
+    if "dish_id" not in _table_columns(c, "v2_weekly_menus"):
+        # Upgrade existing menus without rewriting their kind, name or history.
+        c.execute("ALTER TABLE v2_weekly_menus ADD COLUMN dish_id TEXT REFERENCES v2_dish_library(id)")
+        # Backfill ONLY unambiguous exact names, once at schema upgrade. Rows
+        # with duplicate/missing names deliberately remain unlinked for review.
+        c.execute("""
+            UPDATE v2_weekly_menus SET dish_id=(
+                SELECT d.id FROM v2_dish_library d
+                WHERE d.name_pt=v2_weekly_menus.value
+            ) WHERE kind='dish' AND dish_id IS NULL
+            AND (SELECT COUNT(*) FROM v2_dish_library d
+                 WHERE d.name_pt=v2_weekly_menus.value)=1
+        """)
+    c.execute("CREATE INDEX IF NOT EXISTS v2_weekly_menus_dish_id_idx ON v2_weekly_menus(dish_id)")
 
 
 def list_athletes(c):
@@ -233,26 +248,87 @@ def list_menus(c, athlete_id, start, end):
     begin, finish = parse_day(start), parse_day(end)
     if finish < begin or (finish-begin).days > 62:
         raise ValueError("invalid_range")
+    # The ID is authoritative after a dish is renamed. Keep the existing
+    # 'value' API contract for both the Backoffice and the player app.
     return [dict(row) for row in c.execute(
-        "SELECT menu_date,meal,kind,value FROM v2_weekly_menus WHERE athlete_id=? AND menu_date BETWEEN ? AND ? ORDER BY menu_date,meal",
+        """SELECT m.menu_date,m.meal,m.kind,
+               CASE WHEN m.kind='dish' AND d.id IS NOT NULL
+                    THEN d.name_pt ELSE m.value END AS value,
+               CASE WHEN m.kind='dish' THEN m.dish_id ELSE NULL END AS dish_id
+           FROM v2_weekly_menus m
+           LEFT JOIN v2_dish_library d ON m.kind='dish' AND d.id=m.dish_id
+           WHERE m.athlete_id=? AND m.menu_date BETWEEN ? AND ?
+           ORDER BY m.menu_date,m.meal""",
         (athlete_id, begin.isoformat(), finish.isoformat())).fetchall()]
 
 
-def save_menu(c, athlete_id, menu_date, meal, kind, value):
+def resolve_menu_dish(c, kind, value, dish_id=None):
+    """Return (display name, stable ID), never guessing between duplicates.
+
+    Older clients still send names. The chooser may instead submit dish_id;
+    its current name then wins over any stale client-provided display value.
+    """
+    if not isinstance(value, str) or not 1 <= len(value.strip()) <= 200:
+        raise ValueError("invalid_menu")
+    if kind != "dish":
+        if dish_id is not None:
+            raise ValueError("invalid_menu_dish")
+        return value.strip(), None
+    if dish_id is not None:
+        if not isinstance(dish_id, str) or not 1 <= len(dish_id) <= 100:
+            raise ValueError("invalid_menu_dish")
+        row = c.execute(
+            "SELECT id,name_pt FROM v2_dish_library WHERE id=?", (dish_id,)
+        ).fetchone()
+        if row is None:
+            raise ValueError("invalid_menu_dish")
+        return row["name_pt"], row["id"]
+    rows = c.execute(
+        "SELECT id FROM v2_dish_library WHERE name_pt=? LIMIT 2", (value.strip(),)
+    ).fetchall()
+    return value.strip(), rows[0]["id"] if len(rows) == 1 else None
+
+
+def menu_dish_id_audit(c):
+    """Admin-only diagnostics: no athlete identifiers or private details."""
+    total_row = c.execute(
+        """SELECT COUNT(*) AS total,
+                  COALESCE(SUM(CASE WHEN dish_id IS NOT NULL THEN 1 ELSE 0 END),0) AS linked
+           FROM v2_weekly_menus WHERE kind='dish'"""
+    ).fetchone()
+    unresolved = c.execute(
+        """SELECT value AS name,COUNT(*) AS assignments
+           FROM v2_weekly_menus WHERE kind='dish' AND dish_id IS NULL
+           GROUP BY value ORDER BY assignments DESC,value LIMIT 100"""
+    ).fetchall()
+    names = []
+    for row in unresolved:
+        matches = c.execute(
+            "SELECT COUNT(*) AS n FROM v2_dish_library WHERE name_pt=?", (row["name"],)
+        ).fetchone()["n"]
+        names.append({"name": row["name"], "assignments": row["assignments"],
+                      "reason": "ambiguous" if matches > 1 else "unmatched"})
+    return {"total": total_row["total"], "linked": total_row["linked"],
+            "unresolved": total_row["total"] - total_row["linked"],
+            "unresolved_names": names}
+
+
+def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None):
     from calendar_v2 import parse_day
     day = parse_day(menu_date).isoformat()
-    if meal not in ("lunch","dinner") or kind not in ("category","dish") or not isinstance(value,str) or not 1 <= len(value.strip()) <= 200:
+    if meal not in ("lunch","dinner") or kind not in ("category","dish"):
         raise ValueError("invalid_menu")
-    if kind == "category" and value.strip() not in ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo", "Livre", "Pós-jogo", "Mix"):
+    value, dish_id = resolve_menu_dish(c, kind, value, dish_id)
+    if kind == "category" and value not in ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo", "Livre", "Pós-jogo", "Mix"):
         raise ValueError("invalid_menu_category")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
-    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value)
-                 VALUES(?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
-                 DO UPDATE SET kind=excluded.kind,value=excluded.value""",
-              (athlete_id,day,meal,kind,value.strip()))
+    c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
+                 VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
+                 DO UPDATE SET kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
+              (athlete_id,day,meal,kind,value,dish_id))
     c.commit()
-    return {"menu_date":day,"meal":meal,"kind":kind,"value":value.strip()}
+    return {"menu_date":day,"meal":meal,"kind":kind,"value":value,"dish_id":dish_id}
 
 
 def delete_menu(c, athlete_id, menu_date, meal):
@@ -273,6 +349,31 @@ def import_dish_catalog(c, catalog_rows):
           image_filename=excluded.image_filename""",
           (row["id"],row["category"],row["name_pt"],row.get("name_en",""),row["image_filename"]))
     c.commit()
+
+
+def page_dish_library(c, query="", category="", page=1, page_size=25):
+    """Return only requested dish rows; leave full catalogue for menu selectors."""
+    conditions, params = [], []
+    if query:
+        conditions.append("(LOWER(name_pt) LIKE ? OR LOWER(name_en) LIKE ? OR LOWER(category) LIKE ?)")
+        params.extend(["%"+query.lower()+"%"]*3)
+    if category:
+        conditions.append("category=?")
+        params.append(category)
+    where = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    total = c.execute("SELECT COUNT(*) AS total FROM v2_dish_library" + where,
+                      tuple(params)).fetchone()["total"]
+    pages = max(1, (total+page_size-1)//page_size)
+    page = max(1, min(page,pages))
+    rows = c.execute(
+        "SELECT id,category,name_pt,name_en,image_filename,active FROM v2_dish_library"
+        + where + " ORDER BY category,name_pt,id LIMIT ? OFFSET ?",
+        tuple(params + [page_size,(page-1)*page_size])
+    ).fetchall()
+    categories = [row["category"] for row in c.execute(
+        "SELECT DISTINCT category FROM v2_dish_library ORDER BY category").fetchall()]
+    return {"dishes":[dict(r) for r in rows], "page":page,
+            "page_size":page_size, "pages":pages, "total":total, "categories":categories}
 
 
 def list_dish_library(c):

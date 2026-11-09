@@ -6,7 +6,7 @@ let csrf="",athletes=[],model=null,calendarMonth=new Date(),selectedCalendarDay=
 calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
 function status(msg,cls=""){const el=$("status");el.textContent=msg;el.className="status "+cls;}
 async function request(path,opts={}){const headers={"Accept":"application/json"};if(opts.body){headers["Content-Type"]="application/json";}if(opts.method&&opts.method!=="GET"){headers["X-CSRF-Token"]=csrf;}const r=await fetch(path,{credentials:"same-origin",...opts,headers});let out;try{out=await r.json();}catch{out={error:"Resposta inválida do servidor"};}if(!r.ok)throw Error(out.error||"Pedido falhou");return out;}
-async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;paintMyPhoto(me.user.has_photo,me.user.name);$("admin-login-panel").hidden=true;$("tm-admin-legacy").hidden=true;$("admin-workspace").hidden=false;await loadAthletes();if(typeof window.tmOpenAdminDashboard==="function")window.tmOpenAdminDashboard();status("");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
+async function start(){try{const me=await request("/api/me");if(!me.user||me.user.role!=="admin"){throw Error("login_required");}csrf=me.csrf;$("admin-account-identity").textContent=me.user.name+" · "+me.user.email;paintMyPhoto(me.user.has_photo,me.user.name);$("admin-login-panel").hidden=true;$("tm-admin-legacy").hidden=true;$("admin-workspace").hidden=false;const navigationVersion=window.tmAdminNavigationVersion||0;const athletesLoading=loadAthletes(undefined,false);window.tmAdminRosterReady=athletesLoading;if((window.tmAdminNavigationVersion||0)===navigationVersion&&typeof window.tmOpenAdminDashboard==="function")window.tmOpenAdminDashboard();await athletesLoading;status("");}catch(e){$("admin-workspace").hidden=true;$("admin-login-panel").hidden=false;}}
 $("admin-login-form").addEventListener("submit",async e=>{e.preventDefault();const feedback=$("admin-login-error");feedback.textContent="";try{await fetch("/api/login",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({identifier:$("admin-login-email").value.trim().toLowerCase(),password:$("admin-login-password").value})}).then(async r=>{if(!r.ok)throw Error("invalid_login");});$("admin-login-password").value="";await start();}catch(err){feedback.textContent="Não foi possível iniciar sessão. Confirma as credenciais.";}});
 let administratorIdentity=null;
 let myAdminPhotoName='';
@@ -99,15 +99,26 @@ $("admin-signout").onclick=async()=>{
   $("admin-login-password").value="";
  }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
 };
-async function loadAthletes(prefer){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;await loadModel();}
+async function loadAthletes(prefer,loadDetails=true){
+ const data=await request("/api/v2/athletes");athletes=data.athletes;
+ const list=$("athlete"),previous=list.value;
+ list.replaceChildren();
+ const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar jogador";list.appendChild(empty);
+ for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}
+ const chosen=prefer||previous||"";
+ list.value=athletes.some(a=>a.id===chosen)?chosen:"";
+ updatePlanningPlayerControls();
+ if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}
+ if(loadDetails&&list.value)await loadModel();
+}
 const planningSearch=$("tm-planning-search"),planningResults=$("tm-planning-results"),planningPicker=$("tm-planning-picker");
 const planningNormalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
 function updatePlanningPlayerControls(){
  const select=$("athlete"),avatar=$("tm-planning-avatar");
  if(!select||!avatar)return;
- const name=select.selectedOptions[0]?.textContent||"";
+ const name=select.value?(select.selectedOptions[0]?.textContent||""):"";
  avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(v=>v[0]).join("").toLocaleUpperCase("pt-PT")||"—";
- const chosen=select.selectedOptions[0];if(chosen?.dataset.hasPhoto==="true"&&chosen.dataset.userId){const img=document.createElement("img");img.className="tm-picker-photo";img.src="/api/players/"+encodeURIComponent(chosen.dataset.userId)+"/photo";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
+ const chosen=select.selectedOptions[0];if(chosen?.dataset.hasPhoto==="true"&&chosen.dataset.userId){const img=document.createElement("img");img.className="tm-picker-photo";img.src="/api/players/"+encodeURIComponent(chosen.dataset.userId)+"/photo?thumb=1";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
  planningSearch.value=name;
  closePlanningResults();
 }
@@ -119,6 +130,7 @@ function renderPlanningResults(){
  planningResults.replaceChildren();
  let count=0;
  for(const option of select.options){
+  if(!option.value)continue;
   const name=planningNormalize(option.textContent);
   if(!words.every(term=>name.split(/\s+/).some(part=>part.startsWith(term))))continue;
   const item=document.createElement("button");item.type="button";item.className="tm-planning-result";item.setAttribute("role","option");
@@ -144,10 +156,69 @@ planningSearch.addEventListener("keydown",event=>{
 document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target))closePlanningResults();});
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
 window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
+let recipeAccessToken=0;
+let recipeCategoryOptions=[];
+let selectedRecipeCategories=new Set();
+function renderRecipeCategoryPicker(){
+ const host=$("profile-recipe-category-list"),results=$("profile-recipe-category-results"),search=$("profile-recipe-category-search");
+ host.replaceChildren();
+ const chosen=recipeCategoryOptions.filter(item=>selectedRecipeCategories.has(item.id));
+ for(const category of chosen){
+  const chip=document.createElement("div");chip.className="tm-recipe-category-chip";chip.style.cssText="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;width:100%!important;box-sizing:border-box;gap:12px;padding:10px 12px;border:1px solid #c9ced7;border-radius:11px;background:rgba(140,150,165,.08);";
+  const name=document.createElement("span");name.textContent=category.name;name.style.cssText="flex:1;min-width:0;text-align:left;";
+  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remover "+category.name);remove.style.cssText="display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 30px!important;width:30px!important;height:30px!important;min-width:30px!important;padding:0!important;margin:0!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;line-height:1!important;";
+  remove.addEventListener("click",()=>{selectedRecipeCategories.delete(category.id);renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";});
+  chip.append(name,remove);host.append(chip);
+ }
+ const term=search.value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
+ const available=term?recipeCategoryOptions.filter(item=>!selectedRecipeCategories.has(item.id)&&item.name.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().includes(term)):[];
+ results.replaceChildren();
+ for(const category of available){
+  const option=document.createElement("button");option.type="button";option.className="tm-recipe-category-option";option.textContent=category.name;
+  option.addEventListener("click",()=>{selectedRecipeCategories.add(category.id);search.value="";renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";search.focus();});
+  results.append(option);
+ }
+ const show=term.length>0&&document.activeElement===search&&available.length>0;
+ results.hidden=!show;search.setAttribute("aria-expanded",String(show));
+}
+$("profile-recipe-category-search").addEventListener("input",renderRecipeCategoryPicker);
+$("profile-recipe-category-search").addEventListener("focus",renderRecipeCategoryPicker);
+$("profile-recipe-category-search").addEventListener("blur",()=>{setTimeout(()=>{if(!$("profile-recipe-category-results").contains(document.activeElement)){$("profile-recipe-category-results").hidden=true;$("profile-recipe-category-search").setAttribute("aria-expanded","false");}},160);});
+async function loadRecipeCategoryAccess(athleteId){
+ const token=++recipeAccessToken,feedback=$("profile-recipe-category-feedback");
+ recipeCategoryOptions=[];selectedRecipeCategories=new Set();$("profile-recipe-category-search").value="";renderRecipeCategoryPicker();
+ feedback.textContent="A carregar categorias…";
+ try{
+  const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories");
+  if(token!==recipeAccessToken||$("athlete").value!==athleteId)return;
+  recipeCategoryOptions=result.categories;selectedRecipeCategories=new Set(result.category_ids);renderRecipeCategoryPicker();
+  feedback.textContent=result.categories.length?"":"Não existem categorias de receitas.";
+ }catch(error){if(token===recipeAccessToken)feedback.textContent="Não foi possível carregar as categorias: "+error.message;}
+}
+$("profile-recipe-category-save").addEventListener("click",async()=>{
+ const athleteId=$("athlete").value,feedback=$("profile-recipe-category-feedback");
+ const category_ids=Array.from(selectedRecipeCategories);
+ const button=$("profile-recipe-category-save");button.disabled=true;feedback.textContent="A guardar…";
+ try{await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories",{method:"PUT",body:JSON.stringify({category_ids})});
+  if($("athlete").value===athleteId)feedback.textContent="Acesso às receitas guardado.";
+ }catch(error){feedback.textContent="Não foi possível guardar: "+error.message;}
+ finally{button.disabled=false;}
+});
+let tmPlanningReadyPromise=null;
+window.tmEnsureAdminPlanning=()=>{
+ if(model&&model.athlete?.id===$("athlete").value)return Promise.resolve();
+ if(tmPlanningReadyPromise)return tmPlanningReadyPromise;
+ tmPlanningReadyPromise=(async()=>{
+  if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
+  if(!$("athlete").value){updatePlanningPlayerControls();return;}
+  if(!model||model.athlete?.id!==$("athlete").value)await loadModel();
+ })().finally(()=>{tmPlanningReadyPromise=null;});
+ return tmPlanningReadyPromise;
+};
 async function loadModel(){
  updatePlanningPlayerControls();
  const athleteId=$("athlete").value;
- if(!athleteId)return;
+ if(!athleteId){model=null;showBackofficeView(backofficeView);return;}
  resetPlanReviewForAthlete(athleteId);
  resetMenusForAthlete(athleteId);
  resetSupplementForAthlete(athleteId);
@@ -157,6 +228,7 @@ async function loadModel(){
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
  model=nextModel;profileEditing=false;render();renderProfileSummary();
+ if(typeof loadRecipeCategoryAccess==="function")loadRecipeCategoryAccess(athleteId);
  await loadPlanDrafts();
  if($("athlete").value!==athleteId)return;
  if(backofficeView==="calendar")await showBackofficeView("calendar");
@@ -364,19 +436,24 @@ $("copy-admin-activation").addEventListener("click",async()=>{
   catch(e){input.focus();input.select();$("admin-access-feedback").textContent="Seleciona e copia a ligação para a partilhares em privado.";}
 });
 let monitoringSavedWeights=[];
+const monitoringFemale=()=>String(model?.athlete?.sex||"").toUpperCase()==="F";
+const monitoringMenstruationLabel=value=>value===1||value===true?"Sim":value===0||value===false?"Não":"—";
+const monitoringMenstruationValue=value=>value===1||value===true?"yes":value===0||value===false?"no":"";
+const syncMonitoringMenstruation=()=>{$("monitoring-weight-menstruation-field").hidden=!monitoringFemale();if(!monitoringFemale())$("monitoring-weight-menstruation").value="";};
 const monitoringWeightDate=()=>$("monitoring-weight-date").value;
 $("monitoring-weight-date").max=new Date().toISOString().slice(0,10);
 $("monitoring-weight-date").value=new Date().toISOString().slice(0,10);
 $("monitoring-weight-form").addEventListener("submit",async e=>{
  e.preventDefault();const aid=model?.athlete?.id;if(!aid)return;
+ syncMonitoringMenstruation();
  const button=e.submitter||$("monitoring-weight-form").querySelector('[type="submit"]');button.disabled=true;
  try{
-  await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"save",date:monitoringWeightDate(),weight:$("monitoring-weight-value").value})});
+  await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"save",date:monitoringWeightDate(),weight:$("monitoring-weight-value").value,...(monitoringFemale()?{menstruating:$("monitoring-weight-menstruation").value==="yes"?true:$("monitoring-weight-menstruation").value==="no"?false:null}:{})})});
   $("monitoring-weight-feedback").textContent="Registo guardado.";
   $("monitoring-weight-cancel").hidden=true;await openMonitoring("weight");
  }catch(err){$("monitoring-weight-feedback").textContent="Não foi possível guardar: "+err.message;}finally{button.disabled=false;}
 });
-$("monitoring-weight-cancel").addEventListener("click",()=>{$("monitoring-weight-value").value="";$("monitoring-weight-date").value=new Date().toISOString().slice(0,10);$("monitoring-weight-cancel").hidden=true;});
+$("monitoring-weight-cancel").addEventListener("click",()=>{$("monitoring-weight-value").value="";$("monitoring-weight-date").value=new Date().toISOString().slice(0,10);$("monitoring-weight-cancel").hidden=true;$("monitoring-weight-menstruation").value="";});
 async function deleteMonitoringWeight(date){
  const aid=model?.athlete?.id;if(!aid||!window.confirm("Eliminar o registo de peso de "+monitoringDate(date)+"? Esta ação não afeta avaliações antropométricas."))return;
  try{await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/monitoring/weight",{method:"POST",body:JSON.stringify({action:"delete",date,confirm:"ELIMINAR_PESO"})});$("monitoring-weight-feedback").textContent="Registo eliminado.";await openMonitoring("weight");}
@@ -403,6 +480,7 @@ let monitoringRequestVersion=0;
 const monitoringDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(iso||"")?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):iso;
 const monitoringDecimal=n=>Number(n).toLocaleString("pt-PT",{maximumFractionDigits:2});
 function renderMonitoringWeightChart(rows){
+ const female=monitoringFemale();
  const host=$("monitoring-weight-chart");host.replaceChildren();host.hidden=false;
  const dated=rows.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.weigh_date||"")&&Number.isFinite(Number(r.weight_kg))).slice().sort((a,b)=>a.weigh_date.localeCompare(b.weigh_date));
  const header=document.createElement("div");header.className="tm-weight-chart-head";
@@ -441,7 +519,7 @@ function renderMonitoringWeightChart(rows){
   svg.append(guide,focus);
   let pinned=false;
   const showPoint=i=>{
-   const p=coords[i];tooltip.textContent=monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg";
+   const p=coords[i];tooltip.textContent=monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"+(female&&monitoringMenstruationLabel(points[i].menstruating)==="Sim"?" · Menstruação":"");
    tooltip.style.left=Math.max(12,Math.min(86,p.x/W*100))+"%";
    tooltip.style.top=Math.max(7,p.y/H*100-9)+"%";tooltip.hidden=false;
    guide.setAttribute("x1",p.x);guide.setAttribute("x2",p.x);guide.setAttribute("opacity",".8");
@@ -455,6 +533,7 @@ function renderMonitoringWeightChart(rows){
   };
   coords.forEach((p,i)=>{
    const dot=node("circle",{cx:p.x,cy:p.y,r:4.5,fill:"#1b2027",stroke:"#a5c7de","stroke-width":"2.5",tabindex:"0",role:"button","aria-label":monitoringDate(points[i].weigh_date)+" · "+monitoringDecimal(points[i].weight_kg)+" kg"});
+   if(female&&monitoringMenstruationLabel(points[i].menstruating)==="Sim")svg.append(node("circle",{cx:p.x,cy:p.y+11,r:3.4,fill:"#d6a7bc",stroke:"#1b2027","stroke-width":"1.2","aria-hidden":"true"}));
    dot.addEventListener("focus",()=>showPoint(i));
    dot.addEventListener("blur",()=>{if(!pinned){tooltip.hidden=true;guide.setAttribute("opacity",0);focus.setAttribute("opacity",0);}});
    dot.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pinned=!pinned;showPoint(i);}});
@@ -477,6 +556,7 @@ async function openMonitoring(kind){
  if(kind==="weight"){$("monitoring-reference").replaceChildren();$("monitoring-weight-chart").replaceChildren();$("monitoring-weight-chart").hidden=true;}
  try{
   const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/monitoring");
+  syncMonitoringMenstruation();
   if(version!==monitoringRequestVersion||model?.athlete?.id!==athleteId)return;
   if(kind==="game"){
    const select=$("monitoring-game-match"),selected=select.value;select.replaceChildren();
@@ -493,7 +573,7 @@ async function openMonitoring(kind){
   if(!rows.length){info.textContent=kind==="weight"?"Ainda não existem registos de peso.":"Ainda não existem respostas pós-jogo.";return;}
   info.textContent=rows.length+" registo(s)";
   const table=document.createElement("table");table.className=kind==="game"?"tm-postmatch-matrix":"tm-weight-records";
-  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína pré-jogo"],["caffeine_half","Cafeína ao intervalo"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"]];
+  const fields=kind==="game"?[["match_date","Data"],["minutes","Minutos"],["feeling","Bem-estar"],["effort","Esforço"],["gi_level","Gastrointestinal"],["game_symptoms","Sintomas"],["food_pre","Pré-jogo"],["food_during","Durante o jogo"],["caffeine_pre","Cafeína pré-jogo"],["caffeine_half","Cafeína ao intervalo"],["recovery_shake","Recovery"]]:[["weigh_date","Data"],["weight_kg","Peso em jejum"],...(monitoringFemale()?[["menstruating","Menstruação"]]:[])];
   const head=document.createElement("tr");for(const [,label]of fields){const th=document.createElement("th");th.textContent=label;head.append(th);}const th=document.createElement("th");th.textContent="Ações";head.append(th);const thead=document.createElement("thead");thead.append(head);table.append(thead);
   const body=document.createElement("tbody");
   const answerLabels={feeling:"Bem-estar",effort:"Esforço",gi_level:"Gastrointestinal",gi_symptoms:"Sintomas gastrointestinais",game_symptoms:"Sintomas durante o jogo",food_pre:"Refeição pré-jogo",food_between:"Entre refeição e jogo",food_during:"Durante o jogo",caffeine_pre:"Cafeína pré-jogo",caffeine_half:"Cafeína ao intervalo",nitrates_pre:"Nitratos",recovery_shake:"Recovery"};
@@ -526,7 +606,7 @@ async function openMonitoring(kind){
   for(const record of rows){
    const tr=document.createElement("tr"),answers=(()=>{try{return JSON.parse(record.answers_json||"{}")}catch{return {};}})();
    for(const [key] of fields){
-    const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":fmt(answers[key],key);
+    const td=document.createElement("td");const v=key==="match_date"?monitoringDate(record.match_date):key==="weigh_date"?monitoringDate(record.weigh_date):key==="minutes"?(record.minutes==null?"Não joguei":record.minutes+" min"):key==="weight_kg"?monitoringDecimal(record.weight_kg)+" kg":key==="menstruating"?monitoringMenstruationLabel(record.menstruating):fmt(answers[key],key);
     const value=document.createElement("span");value.textContent=v;if(v==="Não preenchido")value.className="tm-unanswered";if(kind==="game"&&!["match_date","minutes"].includes(key))td.append(visualValue(key,answers[key],v));else td.append(value);tr.append(td);
    }
    const actions=document.createElement("td");actions.className="tm-clinical-row-actions";
@@ -539,7 +619,7 @@ async function openMonitoring(kind){
     const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-game-form").hidden=false;$("monitoring-game-register").setAttribute("aria-expanded","true");$("monitoring-game-register").textContent="Fechar registo";$("monitoring-game-match").value=record.match_id;$("monitoring-game-minutes").value=record.minutes==null?"not_played":String(record.minutes);$("monitoring-game-cancel").hidden=false;$("monitoring-game-minutes").focus();};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringGame(record.match_id,record.match_date);actions.append(edit,remove);tr.append(actions);body.append(tr,extra);
    }else{
-    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-form").hidden=false;$("monitoring-weight-register").setAttribute("aria-expanded","true");$("monitoring-weight-register").textContent="Fechar registo";$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;$("monitoring-weight-cancel").hidden=false;};
+    const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{$("monitoring-weight-form").hidden=false;$("monitoring-weight-register").setAttribute("aria-expanded","true");$("monitoring-weight-register").textContent="Fechar registo";$("monitoring-weight-date").value=record.weigh_date;$("monitoring-weight-value").value=record.weight_kg;syncMonitoringMenstruation();$("monitoring-weight-menstruation").value=monitoringMenstruationValue(record.menstruating);$("monitoring-weight-cancel").hidden=false;};
     const remove=document.createElement("button");remove.type="button";remove.textContent="Eliminar";remove.onclick=()=>deleteMonitoringWeight(record.weigh_date);
     actions.append(edit,remove);tr.append(actions);body.append(tr);
    }
@@ -550,7 +630,7 @@ async function openMonitoring(kind){
 for(const kind of ["weight","game"]){
  const toggle=$("monitoring-"+kind+"-register"),form=$("monitoring-"+kind+"-form");
  const setOpen=open=>{form.hidden=!open;toggle.setAttribute("aria-expanded",String(open));toggle.textContent=open?"Fechar registo":"+ Registar";};
- toggle.addEventListener("click",()=>setOpen(form.hidden));
+ toggle.addEventListener("click",()=>{if(kind==="weight"){syncMonitoringMenstruation();$("monitoring-weight-menstruation").value="";}setOpen(form.hidden);});
  form.addEventListener("submit",()=>{setOpen(false);});
 }
 $("monitoring-weight-button").addEventListener("click",()=>openMonitoring("weight"));
@@ -615,6 +695,14 @@ $("save-athlete-profile").addEventListener("click",async()=>{
 let selectedNutritionWeek=null,periByDay={},dayColorOverrides={},effectiveAdminColorsByDay={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 let menusAthleteId=null,menusLoadRevision=0;
+function resolveAdminMenuDish(existing,library){
+ if(!existing||existing.kind!=="dish")return null;
+ if(existing.dish_id)return library.find(item=>item.id===existing.dish_id)||null;
+ // A legacy display name can only pick a library entry when unique.
+ const matches=library.filter(item=>item.name_pt===existing.value);
+ return matches.length===1?matches[0]:null;
+}
+
 function resetMenusForAthlete(athleteId){
  if(menusAthleteId===athleteId)return;
  menusAthleteId=athleteId;
@@ -625,6 +713,16 @@ function resetMenusForAthlete(athleteId){
  $("menu-save-feedback").textContent="";
 }
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
+// Single source of truth for menu meal colors, identical on mobile and desktop.
+// The calendar's resolved color wins, then its manual override, then the model (Geral by default).
+function effectiveMenuMealColor(date,classification,meal,calendarData){
+ const value=calendarData.effective_colors?.[date]?.[meal];
+ if(value&&Object.prototype.hasOwnProperty.call(value,"color"))return value.color==="none"?null:(value.color||null);
+ const exception=(calendarData.meal_color_overrides||[]).find(item=>item.meal_date===date&&item.meal===meal);
+ if(exception)return exception.color==="none"?null:(exception.color||null);
+ const row=model?.classifications?.find(item=>item.name===(classification||"Geral"));
+ return row?.meals?.[meal]||null;
+}
 async function loadMenus(){
   if(!model)return;
   const athleteId=model.athlete.id;
@@ -646,7 +744,6 @@ async function loadMenus(){
   dishLibrary=dishes.dishes;
   renderDishEditor();refreshDishCategories();
   const calendar=calendarData.days;
-  const menuColorOverrides=colorOverrideLookup(calendarData.meal_color_overrides);
   const pending=new Map();
   saveWeek.disabled=true;feedback.textContent="";
   const mark=(key,entry)=>{if(!stillCurrent())return;pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
@@ -670,14 +767,13 @@ async function loadMenus(){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
     const section=document.createElement("section");section.className="menu-day-card";
     const calendarDay=calendar.find(item=>item.date===date);
-    const modelRow=model.classifications.find(item=>item.name===calendarDay?.classification);
-    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+(calendarDay?.classification?" · "+calendarDay.classification:"");section.appendChild(title);
+    const effectiveClassification=calendarDay?.classification||"Geral";
+    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+" · "+effectiveClassification;section.appendChild(title);
     for(const meal of ["lunch","dinner"]){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
       const line=document.createElement("div");line.className="menu-meal-card";
       const heading=document.createElement("div");heading.className="menu-meal-heading";
-      const overrideKey=date+"|"+meal;
-      const assignedColor=Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal];
+      const assignedColor=effectiveMenuMealColor(date,effectiveClassification,meal,calendarData);
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
@@ -691,7 +787,7 @@ async function loadMenus(){
       for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
       category.value=previousCategory||"";category.className="menu-choice";line.appendChild(category);
       const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
-      const selectedDish=dishLibrary.find(x=>x.name_pt===existing?.value);
+      const selectedDish=resolveAdminMenuDish(existing,dishLibrary);
       const dishFilter=document.createElement("select");dishFilter.className="menu-choice";dishFilter.setAttribute("aria-label","Filtrar pratos por categoria");
       const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";dishFilter.appendChild(all);
       const libraryCategories=[...new Set(dishLibrary.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
@@ -733,7 +829,8 @@ async function loadMenus(){
         const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
         const selected=kind.value==="category"?category.value:(selectedDish?.name_pt||"");
         if(!selected)return;
-        mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected});
+        mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected,
+          ...(kind.value==="dish"?{dish_id:selectedDish.id}:{})});
       };
       kind.addEventListener("change",queue);category.addEventListener("change",queue);
       section.appendChild(line);
@@ -826,17 +923,15 @@ async function playerShowMenus(){
  for(let i=0;i<7;i++){
   const date=new Date(monday);date.setDate(monday.getDate()+i);const key=isoDay(date),day=calendar.days.find(item=>item.date===key);
   const section=document.createElement("section");section.className="player-menu-day";
-  const title=document.createElement("h3");title.textContent=date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"short"})+(day?.classification?" · "+day.classification:"");section.appendChild(title);
+  const title=document.createElement("h3");title.textContent=date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"short"})+" · "+(day?.classification||"Geral");section.appendChild(title);
   for(const meal of ["lunch","dinner"]){
    const menu=menus.menus.find(item=>item.menu_date===key&&item.meal===meal);if(!menu)continue;
    const line=document.createElement("div");line.className="player-menu-entry";
    const name=document.createElement("strong");name.textContent=names[meal];line.appendChild(name);
-   const row=model.classifications.find(c=>c.name===day?.classification),baseline=row?.meals?.[meal];
-   const exception=(calendar.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal)?.color;
-   const color=exception||baseline;
+   const color=effectiveMenuMealColor(key,day?.classification,meal,calendar);
    if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
    const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
-   if(menu.kind==="dish"){const dish=dishes.dishes.find(item=>item.name_pt===menu.value);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
+   if(menu.kind==="dish"){const dish=resolveAdminMenuDish(menu,dishes.dishes);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
    section.appendChild(line);
   }
   root.appendChild(section);
@@ -1054,6 +1149,99 @@ function renderNutritionTotals(host,label,result,referenceWeight=null){
   host.appendChild(block);
 }
 
+let liveCalendarPlans={};
+let editorFoodLibrary=null,editorFoodLibraryPromise=null;
+function loadEditorFoodLibrary(){
+ if(editorFoodLibrary)return Promise.resolve(editorFoodLibrary);
+ if(!editorFoodLibraryPromise)editorFoodLibraryPromise=request("/api/v2/food-library").then(data=>{
+  editorFoodLibrary=new Map((data.foods||[]).map(f=>[f.id,f]));return editorFoodLibrary;
+ }).catch(e=>{editorFoodLibraryPromise=null;throw e;});
+ return editorFoodLibraryPromise;
+}
+function checkEditorNutrition(option){
+ if(!editorFoodLibrary)return "not_checked";
+ const fields=["kcal","protein_g","carbs_g","fat_g"],foods=option.foods||[];
+ const totals=Object.fromEntries(fields.map(k=>[k,0]));
+ let missing=false;
+ foods.forEach((parent,index)=>{
+  if(parent.alternative_to!=null)return;
+  const group=[parent,...foods.filter(f=>f.alternative_to===index)];
+  const complete=group.filter(f=>f.grams!=null),chosen=complete.length?complete:[parent];
+  const values=chosen.map(food=>{
+   if(food.kind==="supplement"||food.grams==null)return Object.fromEntries(fields.map(k=>[k,0]));
+   const ref=editorFoodLibrary.get(food.id);
+   if(!ref){missing=true;return Object.fromEntries(fields.map(k=>[k,0]));}
+   const fraction=ref.variant==="gross"?Number(ref.edible_fraction):1;
+   return Object.fromEntries(fields.map(k=>[k,Number(ref[k]||0)*Number(food.grams)*fraction/100]));
+  });
+  fields.forEach(k=>{totals[k]+=values.reduce((v,item)=>v+item[k],0)/values.length;});
+ });
+ if(missing)return "missing_reference";
+ return fields.every(k=>Math.abs(totals[k]-Number(option.nutrition?.[k]))<=0.02)?"match":"mismatch";
+}
+function checkMealNutrition(record){
+ if(!record||!["ok","provisional"].includes(record.status))return "not_checked";
+ const statuses=(record.options||[]).map(checkEditorNutrition);
+ if(statuses.includes("mismatch"))return "mismatch";
+ if(statuses.includes("missing_reference"))return "missing_reference";
+ if(statuses.includes("not_checked"))return "not_checked";
+ const fields=["kcal","protein_g","carbs_g","fat_g"],opts=record.options||[];
+ if(!opts.length)return "mismatch";
+ return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
+}
+function renderLiveMealOptions(day,meal,overrideRecord=null){
+ const box=document.createElement("div");box.className="calendar-day-meal-options";
+ const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
+ const state=record?.status||"unavailable";
+ const parity=checkMealNutrition(record);
+ // Only actionable discrepancies are displayed; successful parity stays silent.
+ if(parity==="mismatch"||parity==="missing_reference"){
+  const warning=document.createElement("p");warning.className="calendar-day-options-note is-mismatch";
+  warning.textContent=parity==="missing_reference"?
+   "Alimento sem referência ativa na Biblioteca Alimentar. Rever antes de publicar.":
+   "Divergência de cálculo nutricional. Rever antes de publicar.";
+  box.append(warning);
+ }
+ if(state!=="ok"&&state!=="provisional"){
+  const messages={no_color:"Sem cor atribuída neste dia.",missing_plan:"Plano alimentar indisponível para esta cor.",ambiguous_plan:"Existem versões duplicadas. Rever a associação.",missing_meal:"Este plano não contém esta refeição.",ambiguous_meal:"Existem várias refeições correspondentes.",missing_options:"Esta refeição não contém opções.",unavailable:"Opções indisponíveis para esta refeição."};
+  const note=document.createElement("p");note.className="calendar-day-options-note";
+  note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
+ }
+ const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
+ for(const [index,option] of (record.options||[]).entries()){
+  const section=document.createElement("details");section.className="calendar-day-meal-option calendar-option-accordion";
+  const title=document.createElement("summary");title.className="calendar-option-accordion-heading";const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");const arrow=document.createElement("span");arrow.className="calendar-option-accordion-caret";arrow.setAttribute("aria-hidden","true");arrow.textContent="⌄";title.append(label,arrow);section.append(title);
+  const foods=option.foods||[],notes=option.notes||[];
+  const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?
+   option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
+  for(const item of order){
+   const line=document.createElement("span");line.className="calendar-day-food-line";
+   if(item.type==="note"){
+    if(!notes[item.index])continue;
+    line.textContent=notes[item.index];line.classList.add("is-note");
+   }else{
+    const food=foods[item.index];if(!food)continue;
+    const alternative=food.alternative_to!=null;if(alternative)line.classList.add("is-alternative");
+    const amount=food.display_quantity||(food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
+    line.textContent=food.kind==="supplement"?(food.label||"Suplemento"):
+     (alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
+   }
+   section.append(line);
+  }
+  if(option.nutrition){
+   const macros=document.createElement("small");macros.className="calendar-day-food-macro";
+   macros.textContent=nutritionSummary(option.nutrition)+(option.provisional?" · Provisório":"");section.append(macros);
+  }
+  grid.append(section);
+ }
+ box.append(grid);
+ if(state==="provisional"){
+  const note=document.createElement("p");note.className="calendar-day-options-note";
+  note.textContent="Valores provisórios: há quantidades por confirmar.";box.append(note);
+ }
+ return box;
+}
+
 function renderDayPreview(day,host){
  host.replaceChildren();
  window.currentNutritionDay=day;
@@ -1061,12 +1249,32 @@ function renderDayPreview(day,host){
  heading.textContent=day.date+" · "+(day.classification||"Geral · por definir");
  host.appendChild(heading);
  const grid=document.createElement("div");grid.className="day-meals";
+ const optionsPanel=document.createElement("section");optionsPanel.className="calendar-wide-options";optionsPanel.id="calendar-wide-options";optionsPanel.hidden=true;
+ const optionButtons=new Map();let expandedMeal=null;
+ function toggleOptions(meal){
+  if(expandedMeal===meal&&!optionsPanel.hidden){
+   expandedMeal=null;optionsPanel.hidden=true;
+   for(const button of optionButtons.values()){button.setAttribute("aria-expanded","false");button.classList.remove("is-active");}
+   return;
+  }
+  expandedMeal=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
+  const selectedColor=mealColorsForDay(day).find(entry=>entry.meal===meal)?.color||"";
+  optionsPanel.dataset.palette=selectedColor;
+  const heading=document.createElement("div");heading.className="calendar-wide-options-heading";
+  const title=document.createElement("strong");title.textContent="Opções · "+names[meal];
+  const close=document.createElement("button");close.type="button";close.className="calendar-wide-options-close";
+  close.textContent="Fechar";close.addEventListener("click",()=>toggleOptions(meal));
+  heading.append(title,close);optionsPanel.append(heading,renderLiveMealOptions(day,meal));
+  for(const [key,button] of optionButtons){
+   const on=key===meal;button.setAttribute("aria-expanded",String(on));button.classList.toggle("is-active",on);
+  }
+ }
  for(const entry of mealColorsForDay(day)){
   const cell=document.createElement("div");cell.className="day-meal";
   const colorBar=document.createElement("div");colorBar.className="day-meal-color day-meal-header"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
   const label=document.createElement("span");label.className="day-meal-label";label.textContent=names[entry.meal];
   colorBar.append(label);cell.append(colorBar);
-  const modelRow=model.classifications.find(r=>r.name===day.classification);
+  const modelRow=model.classifications.find(r=>r.name===(day.classification||"Geral"));
   const baseline=modelRow?.meals?.[entry.meal]||null;
   const isOverride=Object.hasOwn(dayColorOverrides,day.date+"|"+entry.meal);
   const choose=document.createElement("select");choose.className="day-color-select";
@@ -1088,44 +1296,65 @@ function renderDayPreview(day,host){
    }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
   });
   colorBar.append(choose);
-  const average=entry.color?averageMealNutrition(mealOptionsByColor[entry.color]?.[entry.meal]||[]):null;
-  if(average){
-   const macros=document.createElement("div");macros.className="day-meal-nutrients";
-   macros.textContent=[
-    formatNutrition(average.kcal,0)+" kcal",
-    formatNutrition(average.protein_g)+" g",
-    formatNutrition(average.carbs_g)+" g",
-    formatNutrition(average.fat_g)+" g"
-   ].join(" · ");
-   macros.setAttribute("aria-label",names[entry.meal]+": "+formatNutrition(average.kcal,0)+" quilocalorias, "+formatNutrition(average.protein_g)+" gramas de proteína, "+formatNutrition(average.carbs_g)+" gramas de hidratos e "+formatNutrition(average.fat_g)+" gramas de gordura");
-   cell.append(macros);
+  const liveMeal=liveCalendarPlans[day.date]?.meals?.[entry.meal];
+  const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?liveMeal.nutrition:null;
+  if(newAverage){
+   const macros=document.createElement("div");macros.className="day-meal-nutrients calendar-live-meal-nutrients";
+   macros.textContent=[formatNutrition(newAverage.kcal,0)+" kcal",formatNutrition(newAverage.protein_g)+" g",formatNutrition(newAverage.carbs_g)+" g",formatNutrition(newAverage.fat_g)+" g"].join(" · ");
+   macros.title="Média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
-   unavailable.textContent=entry.color?"Valores nutricionais indisponíveis":"—";if(!entry.color)unavailable.setAttribute("aria-label","Sem refeição atribuída");cell.append(unavailable);
+   unavailable.textContent=entry.color?"Novo plano: valores por confirmar":"—";cell.append(unavailable);
   }
+  const button=document.createElement("button");button.type="button";button.className="calendar-options-trigger";
+  button.textContent="Ver opções";button.setAttribute("aria-expanded","false");
+  button.setAttribute("aria-controls","calendar-wide-options");
+  button.addEventListener("click",()=>toggleOptions(entry.meal));
+  optionButtons.set(entry.meal,button);cell.append(button);
   grid.appendChild(cell);
  }
- host.appendChild(grid);
- // A collapsed protocol summary preserves access to peri details without cluttering the five meal cards.
- const peri=periByDay[day.date]||[];
- if(peri.length){
-  const details=document.createElement("details");details.className="calendar-day-peri";
-  const summary=document.createElement("summary");summary.textContent="Protocolos de treino e jogo";details.append(summary);
-  for(const item of peri){
-   const avg=averageMealNutrition(item.options||[]),line=document.createElement("p");
-   line.textContent=item.title+" · "+(item.session==="morning"?"Manhã":"Tarde")+(avg?" · "+nutritionSummary(avg):" · Valores indisponíveis");
+ host.append(grid,optionsPanel);
+ // New peri prescription previews are read only. Historical protocols remain
+ // available strictly for comparison, never mixed into the new totals.
+ const livePeriOptions=liveCalendarPlans[day.date]?.peri_events||[];
+ if(livePeriOptions.length){
+  const details=document.createElement("details");details.className="calendar-day-peri calendar-live-peri";
+  const summary=document.createElement("summary");summary.textContent="Peri-treino e Peri-jogo";details.append(summary);
+  for(const peri of livePeriOptions){
+   const line=document.createElement("section");line.className="calendar-live-peri-phase";
+   const heading=document.createElement("strong");
+   heading.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
+   line.append(heading);
+   const mac=document.createElement("small");mac.className="calendar-live-source";
+   mac.textContent=peri.nutrition?nutritionSummary(peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
+   line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
    details.append(line);
   }
   host.append(details);
  }
- renderNutritionTotals(host,"Resumo nutricional do dia",plannedDayTotals(day),dayWeightReferences?.[day.date]?.weight_kg);
+ const liveDay=liveCalendarPlans[day.date];
+ const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
+ const currentHeading=document.createElement("h3");currentHeading.textContent="Resumo nutricional do dia";currentBlock.append(currentHeading);
+ if(!liveDay){
+  const warning=document.createElement("p");warning.className="calendar-live-warning";
+  warning.textContent="Sem acesso aos planos atuais. Não são usados valores antigos como substituição.";currentBlock.append(warning);
+ }else if(liveDay.state!=="complete"){
+  const issues=liveDay.issues||[];
+  const warning=document.createElement("p");warning.className="calendar-live-warning";
+  warning.textContent="Resumo indisponível: existem prescrições incompletas"+
+   (issues.length?" · "+issues.map(x=>(names[x.meal]||x.phase||x.meal_name||"Momento peri")+": "+x.status).join("; "):"")+".";
+  currentBlock.append(warning);
+ }else nutritionCards(currentBlock,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
+ host.append(currentBlock);
 }
 let dayWeightReferences={};
 async function loadCalendar(){
   if(!model)return;
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
-  const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
+  await loadEditorFoodLibrary().catch(()=>null);
+  const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last)+"&include_food_plans=1");
+  liveCalendarPlans=data.live_food_plans?.days||{};
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
   effectiveAdminColorsByDay=data.effective_colors||{};
   periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
@@ -1151,37 +1380,46 @@ async function loadCalendar(){
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
-  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
+  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
   dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
-  const weeklyPeri=Object.fromEntries(weeklyData.days.map(d=>[d.date,(weeklyData.peri_meals||[]).filter(x=>x.event_date===d.date)]));
-  const weeklyColors=colorOverrideLookup(weeklyData.meal_color_overrides);
-  const results=weeklyData.days.map(d=>plannedDayTotals(d,weeklyPeri,weeklyColors));
-  const covered=results.filter(item=>item.total).length;
-  const complete=weeklyData.days.length===7&&results.every((item)=>item.state==="complete"&&item.total);
-  const progress=document.createElement("p");progress.className="calendar-week-coverage";
-  progress.textContent=covered+"/7 dias com valores nutricionais disponíveis";
+  const liveByDay=weeklyData.live_food_plans?.days||{};
+  const liveEntries=weeklyData.days.map(d=>liveByDay[d.date]).filter(Boolean);
+  const fullDays=liveEntries.filter(x=>x.state==="complete").length;
+  const complete=weeklyData.days.length===7&&fullDays===7;
+  const coverage=document.createElement("p");coverage.className="calendar-week-coverage";
+  coverage.textContent=fullDays+"/7 dias com prescrição nutricional completa · Fonte: Planos";
   if(complete){
-    const sums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-    for(const result of results)for(const key of Object.keys(sums))sums[key]+=result.total[key];
-    const average=Object.fromEntries(Object.entries(sums).map(([key,value])=>[key,value/7]));
-    const relativeMeans={};for(const key of Object.keys(sums)){const ratios=results.map((result,i)=>{const rawWeight=dayWeightReferences[weeklyData.days[i]?.date]?.weight_kg;const w=rawWeight==null?NaN:Number(rawWeight);return Number.isFinite(w)&&w>0?result.total[key]/w:null;});if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/ratios.length;}
-    nutritionCards(weekly,average,null,relativeMeans);
+   const liveSums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+   for(const day of liveEntries)for(const key of Object.keys(liveSums))liveSums[key]+=day.nutrition[key];
+   const average=Object.fromEntries(Object.entries(liveSums).map(([key,value])=>[key,value/7]));
+   const relativeMeans={};
+   for(const key of Object.keys(liveSums)){
+    const ratios=weeklyData.days.map((day,index)=>{
+     const weight=Number(dayWeightReferences[day.date]?.weight_kg);
+     return Number.isFinite(weight)&&weight>0?liveEntries[index].nutrition[key]/weight:null;
+    });
+    if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/7;
+   }
+   nutritionCards(weekly,average,null,relativeMeans);
   }else{
-    const warning=document.createElement("p");
-    warning.textContent="Média diária semanal indisponível: faltam prescrições ou valores nutricionais para completar os sete dias.";
-    weekly.appendChild(warning);
+   const warning=document.createElement("p");warning.className="calendar-live-warning";
+   warning.textContent="Média semanal indisponível: existem dias com planos em falta ou valores provisórios. Não são usados valores antigos.";
+   weekly.append(warning);
   }
-  weekly.appendChild(progress);
+  weekly.append(coverage);
   const days=$("calendar-days");days.replaceChildren();
   $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
+  const todayKey=isoDay(new Date());
   for(const day of data.days){
-    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback");if(!day.classification){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
+    const isToday=day.date===todayKey;
+    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback")+(day.is_off?" calendar-off":"")+(isToday?" calendar-today":"");if(!day.classification&&!isToday){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
+    if(isToday)el.setAttribute("aria-current","date");
     const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
     if(day.needs_review){el.title=day.candidates.map(x=>x.match_date+": "+x.classification).join(" | ");}
     if(data.matches.some(m=>m.match_date===day.date)){el.classList.add("calendar-match");}
-    const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date);
+    const dayEvents=(data.events||[]).filter(e=>e.event_date===day.date&&e.kind!=="off");
     if(dayEvents.length){
       const chip=document.createElement("span");chip.className="calendar-event-mark";
       chip.textContent=dayEvents.map(e=>CALENDAR_EVENT_NAMES[e.kind]||e.title).join(" · ");
@@ -1196,7 +1434,7 @@ async function loadCalendar(){
     }
     el.appendChild(strip);
     el.setAttribute("role","button");el.tabIndex=0;
-    el.setAttribute("aria-label","Ver cores das refeições de "+day.date+(day.classification?"":" · Geral aplicado automaticamente, dia por definir"));
+    el.setAttribute("aria-label","Ver cores das refeições de "+day.date+(isToday?" · Hoje":"")+(day.classification?"":" · Geral aplicado automaticamente, dia por definir"));
     const selectDay=()=>{
       const wasSelected=selectedCalendarDay===day.date;
       selectedCalendarDay=wasSelected?null:day.date;
@@ -1243,6 +1481,7 @@ async function loadCalendar(){
    edit.onclick=()=>{
     $("calendar-new-kind").value="supplementation";$("calendar-new-date").value=date;
     syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
+    openMobileCalendarEventForm();
     $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
    };
    card.append(label,edit);list.append(card);monthEventCount++;
@@ -1631,7 +1870,7 @@ function refreshDishCategories(){
   const select=$("new-dish-category");const previous=select.value;
   select.replaceChildren();
   const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar categoria";select.appendChild(empty);
-  for(const name of [...new Set(dishLibrary.map(d=>d.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
+  for(const name of [...new Set([...dishTableCategories,...dishLibrary.map(d=>d.category)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
     const option=document.createElement("option");option.value=name;option.textContent=name;select.appendChild(option);
   }
   select.value=previous;
@@ -1640,62 +1879,333 @@ async function uploadDishPhoto(file,fields){
   const image=await photoAsWebp(file);
   return request("/api/v2/dishes/photo",{method:"POST",body:JSON.stringify({...fields,image})});
 }
-$("create-dish").addEventListener("click",async()=>{
-  const button=$("create-dish"),feedback=$("dish-new-feedback");
-  const name_pt=$("new-dish-pt").value.trim(),name_en=$("new-dish-en").value.trim(),category=$("new-dish-category").value.trim(),photo=$("new-dish-photo").files[0];
-  if(!name_pt||!category||!photo){feedback.textContent="Indica nome português, categoria e fotografia.";return;}
-  button.disabled=true;feedback.textContent="A guardar prato…";
-  try{await uploadDishPhoto(photo,{name_pt,name_en,category});
-    feedback.textContent="Prato adicionado à biblioteca universal.";
-    $("new-dish-pt").value="";$("new-dish-en").value="";$("new-dish-category").value="";$("new-dish-photo").value="";
-    dishLibrary=(await request("/api/v2/dishes")).dishes;renderDishEditor();refreshDishCategories();
-  }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
-});
-function renderDishEditor(){
-  const host=$("dish-editor-list");if(!host)return;host.replaceChildren();
-  const query=($("dish-search").value||"").trim().toLocaleLowerCase("pt-PT");
-  if(!query){host.textContent="";return;}
-  const matches=dishLibrary.filter(d=>(d.name_pt+" "+d.category).toLocaleLowerCase("pt-PT").includes(query)).slice(0,25);
-  for(const dish of matches){
-    const card=document.createElement("div");card.className="dish-edit-card";
-    const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();photo.alt=dish.name_pt;photo.loading="lazy";card.appendChild(photo);
-    const fields=document.createElement("div");fields.className="dish-edit-fields";
-    const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
-    const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.appendChild(photoInput);fields.appendChild(photoLabel);
-    const photoButton=document.createElement("button");photoButton.type="button";photoButton.textContent="Atualizar fotografia";
-    photoButton.onclick=async()=>{if(!photoInput.files[0])return;photoButton.disabled=true;
-      try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photoInput.value="";photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();status("Fotografia atualizada.","success");}
-      catch(e){status("Erro: "+e.message,"warn");}finally{photoButton.disabled=false;}
-    };fields.appendChild(photoButton);
-    const inputs=[];
-    for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
-      const wrap=document.createElement("label");wrap.textContent=label;const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;wrap.appendChild(input);fields.appendChild(wrap);inputs.push(input);
-    }
-
-    const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";
-    save.onclick=async()=>{save.disabled=true;try{
-      await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:true})});
-      dish.name_pt=inputs[0].value;dish.name_en=inputs[1].value;dish.category=inputs[2].value;dish.active=1;
-      status("Prato atualizado na biblioteca universal.","success");
-    }catch(e){status("Erro: "+e.message,"warn");}finally{save.disabled=false;}};
-    fields.appendChild(save);card.appendChild(fields);host.appendChild(card);
-  }
-  if(!matches.length)host.textContent="Nenhum prato encontrado.";
+let dishRecipeChoices=[],dishRecipeLinks={},dishTableRows=[],dishTableCategories=[],dishTablePage=1,dishTablePages=1,dishTableTotal=0,dishTableRevision=0,dishSearchTimer=null,dishRecipeChoicesLoaded=false;
+async function ensureDishRecipeChoices(){
+ if(dishRecipeChoicesLoaded)return;
+ const data=await request("/api/v2/recipes");
+ dishRecipeChoices=data.recipes||[];
+ dishRecipeChoicesLoaded=true;
 }
-$("dish-search").addEventListener("input",renderDishEditor);
-$("dish-catalog-import").addEventListener("click",async()=>{
-  const input=$("dish-catalog-file"),feedback=$("dish-catalog-feedback"),file=input.files?.[0];
-  if(!file){feedback.textContent="Seleciona o pacote ZIP da biblioteca.";return;}
-  const button=$("dish-catalog-import");button.disabled=true;feedback.textContent="A importar biblioteca…";
-  try{
-    const response=await fetch("/api/v2/dishes/import",{method:"POST",credentials:"same-origin",headers:{"X-CSRF-Token":csrf},body:file});
-    const data=await response.json();if(!response.ok)throw Error(data.error||"Erro na importação");
-    feedback.textContent=data.imported+" pratos importados com fotografias.";
-    await loadMenus();
-  }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
+function dishTableUrl(page){
+ const qs=new URLSearchParams({paged:"1",page:String(page)});
+ const search=$("dish-search").value.trim();
+ const category=$("dish-category-filter").value;
+ if(search)qs.set("q",search);
+ if(category)qs.set("category",category);
+ return "/api/v2/dishes?"+qs.toString();
+}
+async function fetchDishPage(page=1){
+ const revision=++dishTableRevision;
+ const result=await request(dishTableUrl(page));
+ if(revision!==dishTableRevision)return;
+ dishTableRows=result.dishes||[];
+ dishTableCategories=result.categories||[];
+ dishTablePage=result.page||1;
+ dishTablePages=result.pages||1;
+ dishTableTotal=result.total||0;
+ renderDishEditor();
+ refreshDishCategories();
+}
+async function loadDishLibrary(){
+ const links=await request("/api/v2/dishes/recipe-links");
+ dishRecipeLinks=links.links||{};
+ dishRecipeChoices=[];dishRecipeChoicesLoaded=false;
+ await fetchDishPage(dishTablePage);
+}
+window.tmLoadDishLibrary=loadDishLibrary;
+function setDishAddPanel(open){
+ const panel=$("dish-add-panel"),toggle=$("dish-add-toggle");
+ panel.hidden=!open;
+ toggle.setAttribute("aria-expanded",String(open));
+ if(open)$("new-dish-pt").focus();
+}
+$("dish-add-toggle").addEventListener("click",()=>setDishAddPanel($("dish-add-panel").hidden));
+$("dish-add-cancel").addEventListener("click",()=>{
+ for(const id of ["new-dish-pt","new-dish-en","new-dish-photo"])$(id).value="";
+ $("new-dish-category").value="";
+ $("dish-new-feedback").textContent="";
+ $("dish-photo-file-name").textContent="Arraste uma imagem ou clique para selecionar";
+ setDishAddPanel(false);
+});
+$("new-dish-photo").addEventListener("change",()=>{
+ const file=$("new-dish-photo").files?.[0];
+ $("dish-photo-file-name").textContent=file?file.name:"Arraste uma imagem ou clique para selecionar";
+});
+const dishDrop=$("dish-photo-dropzone");
+for(const type of ["dragenter","dragover"])dishDrop.addEventListener(type,event=>{event.preventDefault();dishDrop.classList.add("is-dragging");});
+for(const type of ["dragleave","drop"])dishDrop.addEventListener(type,event=>{event.preventDefault();dishDrop.classList.remove("is-dragging");});
+dishDrop.addEventListener("drop",event=>{
+ const file=event.dataTransfer?.files?.[0];
+ if(!file)return;
+ if(!file.type.startsWith("image/")){$("dish-new-feedback").textContent="Seleciona uma fotografia válida.";return;}
+ const input=$("new-dish-photo");
+ try{const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event("change",{bubbles:true}));}
+ catch(_error){$("dish-new-feedback").textContent="Não foi possível anexar a imagem; seleciona o ficheiro."; }
 });
 
-const CALENDAR_EVENT_NAMES={training:"Treino",match:"Jogo",travel:"Viagem"};
+$("create-dish").addEventListener("click",async()=>{
+ const button=$("create-dish"),feedback=$("dish-new-feedback");
+ const name_pt=$("new-dish-pt").value.trim(),name_en=$("new-dish-en").value.trim(),category=$("new-dish-category").value.trim(),photo=$("new-dish-photo").files[0];
+ if(!name_pt||!category||!photo){feedback.textContent="Indica nome português, categoria e fotografia.";return;}
+ button.disabled=true;feedback.textContent="A guardar prato…";
+ try{
+  await uploadDishPhoto(photo,{name_pt,name_en,category});
+  feedback.textContent="Prato adicionado à biblioteca.";
+  $("new-dish-pt").value="";$("new-dish-en").value="";$("new-dish-category").value="";$("new-dish-photo").value="";
+  $("dish-photo-file-name").textContent="Arraste uma imagem ou clique para selecionar";
+  await loadDishLibrary();
+  setDishAddPanel(false);
+ }catch(e){feedback.textContent="Erro: "+e.message;}finally{button.disabled=false;}
+});
+const normalizedDishText=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT");
+function refreshDishTableCategories(){
+ const select=$("dish-category-filter");
+ if(!select)return;
+ const previous=select.value;
+ select.replaceChildren();
+ const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";select.append(all);
+ for(const name of [...new Set([...dishTableCategories,...dishLibrary.map(d=>d.category)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"))){
+  const option=document.createElement("option");option.value=name;option.textContent=name;select.append(option);
+ }
+ select.value=[...select.options].some(o=>o.value===previous)?previous:"";
+}
+function renderDishEditor(){
+ const host=$("dish-editor-list");if(!host)return;
+ const search=$("dish-search"),category=$("dish-category-filter");
+ const parking=$("dish-filter-parking");
+ if(!search||!category||!parking)return;
+ const hadSearchFocus=document.activeElement===search;
+ const cursor=hadSearchFocus?search.selectionStart:null;
+ const hadCategoryFocus=document.activeElement===category;
+ parking.append(search,category);
+ host.replaceChildren();
+ refreshDishTableCategories();
+ const query=normalizedDishText($("dish-search").value).trim();
+ const filter=$("dish-category-filter")?.value||"";
+ const matches=dishTableRows;
+ const wrap=document.createElement("div");wrap.className="dish-table-scroll";
+ const table=document.createElement("table");table.className="dish-library-table";
+ const thead=document.createElement("thead"),head=document.createElement("tr");head.className="dish-table-filter-row";
+ const categoryHeading=document.createElement("th");categoryHeading.append(category);
+ const photoHeading=document.createElement("th");photoHeading.textContent="Foto";
+ const dishHeading=document.createElement("th");dishHeading.append(search);
+ const englishHeading=document.createElement("th");englishHeading.textContent="Nome inglês";
+ const actionsHeading=document.createElement("th");actionsHeading.textContent="Ações";
+ head.append(categoryHeading,photoHeading,dishHeading,englishHeading,actionsHeading);
+ thead.append(head);table.append(thead);
+ const tbody=document.createElement("tbody");
+ if(!matches.length){
+  const tr=document.createElement("tr"),td=document.createElement("td");
+  td.colSpan=5;td.className="dish-table-empty";
+  td.textContent=dishTableTotal?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";
+  tr.append(td);tbody.append(tr);
+ }
+ for(const dish of matches){
+  const tr=document.createElement("tr");tr.className="dish-table-row";
+  const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";categoryCell.textContent=dish.category||"—";tr.append(categoryCell);
+  const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?thumb=1";photo.alt="";photo.loading="lazy";photo.decoding="async";photo.className="dish-table-photo";photoCell.append(photo);tr.append(photoCell);
+  for(const [value,cls] of [[dish.name_pt,"dish-table-title"],[dish.name_en||"—","dish-table-subtitle"]]){
+   const td=document.createElement("td");td.className=cls;td.textContent=value;
+   if(cls==="dish-table-title"){
+    const associated=dishRecipeLinks[dish.id];
+    const tag=document.createElement("small");tag.className="dish-recipe-indicator";
+    const linkedCount=associated?.recipes?.length||0;
+    const hasRecipe=linkedCount>0||Boolean(associated?.recipe_id);
+    tag.textContent=hasRecipe?(linkedCount>1?linkedCount+" receitas associadas":"Receita associada"):"";
+    tag.hidden=!hasRecipe;td.append(tag);
+   }
+   tr.append(td);
+  }
+  const actions=document.createElement("td");actions.className="dish-table-actions";
+  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.className="dish-table-edit";
+  edit.setAttribute("aria-expanded","false");edit.setAttribute("aria-label","Editar "+dish.name_pt);
+  actions.append(edit);tr.append(actions);tbody.append(tr);
+  const detailRow=document.createElement("tr");detailRow.className="dish-table-detail";detailRow.hidden=true;
+  const detailCell=document.createElement("td");detailCell.colSpan=5;detailRow.append(detailCell);tbody.append(detailRow);
+  edit.addEventListener("click",async()=>{
+   detailRow.hidden=!detailRow.hidden;
+   edit.setAttribute("aria-expanded",String(!detailRow.hidden));
+   edit.textContent=detailRow.hidden?"Editar":"Fechar";
+   if(detailRow.hidden||detailCell.children.length)return;
+   try{await ensureDishRecipeChoices();}catch(error){
+    $("dish-catalog-feedback").textContent="Não foi possível carregar receitas associáveis: "+error.message;
+    detailRow.hidden=true;edit.textContent="Editar";edit.setAttribute("aria-expanded","false");return;
+   }
+   if(detailRow.hidden)return;
+   const editor=document.createElement("div");editor.className="dish-edit-fields dish-table-editor";
+   const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
+   const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.append(photoInput);editor.append(photoLabel);
+   const photoButton=document.createElement("button");photoButton.type="button";photoButton.textContent="Atualizar fotografia";
+   photoButton.onclick=async()=>{if(!photoInput.files[0])return;photoButton.disabled=true;
+    try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photoInput.value="";photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();$("dish-catalog-feedback").textContent="Fotografia atualizada.";}
+    catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;}finally{photoButton.disabled=false;}
+   };editor.append(photoButton);
+   const inputs=[];
+   for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
+    const field=document.createElement("label");field.textContent=label;
+    const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;
+    field.append(input);editor.append(field);inputs.push(input);
+   }
+   const association=document.createElement("section");association.className="dish-recipe-association";
+   const associationHeading=document.createElement("h4");associationHeading.textContent="Associar receita";
+   const associationHint=document.createElement("p");associationHint.className="dish-recipe-association-hint";
+   associationHint.textContent="";
+   const associationSearchLabel=document.createElement("label");associationSearchLabel.className="dish-recipe-combobox-label";
+   associationSearchLabel.textContent="";
+   const associationCombo=document.createElement("div");associationCombo.className="dish-recipe-combobox";
+   const associationSearch=document.createElement("input");associationSearch.type="search";
+   associationSearch.placeholder="Pesquisar receita pelo nome ou categoria";
+   associationSearch.autocomplete="off";associationSearch.setAttribute("role","combobox");
+   associationSearch.setAttribute("aria-autocomplete","list");
+   associationSearch.setAttribute("aria-expanded","false");
+   associationSearch.setAttribute("aria-label","Pesquisar e associar receita ao prato "+dish.name_pt);
+   const associationSuggestions=document.createElement("div");
+   associationSuggestions.className="dish-recipe-suggestions";
+   associationSuggestions.id="dish-recipe-suggestions-"+dish.id;
+   associationSuggestions.setAttribute("role","listbox");
+   associationSuggestions.hidden=true;
+   associationSearch.setAttribute("aria-controls",associationSuggestions.id);
+   associationCombo.append(associationSearch,associationSuggestions);
+   associationSearchLabel.append(associationCombo);
+   const associationState=document.createElement("p");associationState.className="dish-recipe-association-state";
+   associationState.setAttribute("role","status");
+   const associationList=document.createElement("div");associationList.className="dish-recipe-association-list";
+   let savingAssociation=false;
+   const linkedRecipes=()=>dishRecipeLinks[dish.id]?.recipes||[];
+   const recipeLabel=item=>item?item.name+" · "+item.category+(item.status==="draft"?" · Rascunho":""):"";
+   const paintAssociationState=()=>{
+    const linked=linkedRecipes();
+    associationList.replaceChildren();
+    associationState.textContent="";
+    for(const item of linked){
+     const line=document.createElement("div");line.className="dish-recipe-association-actions";
+     const name=document.createElement("span");name.className="dish-recipe-card-name";name.textContent=item.recipe_name+(item.recipe_status==="draft"?" · Rascunho":"");
+     const view=document.createElement("button");view.type="button";view.textContent="";view.setAttribute("aria-label","Ver receita: "+item.recipe_name);view.title="Ver receita";view.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+     view.className="dish-recipe-association-view";
+     view.addEventListener("click",async()=>{
+      if(typeof window.tmOpenAdminDishRecipe!=="function"){
+       associationState.textContent="A vista de receitas está indisponível.";return;
+      }
+      view.disabled=true;
+      try{await window.tmOpenAdminDishRecipe(item.recipe_id);}
+      catch(error){associationState.textContent="Não foi possível abrir: "+error.message;}
+      finally{view.disabled=false;}
+     });
+     const remove=document.createElement("button");remove.type="button";
+     remove.textContent="";remove.className="dish-recipe-association-clear";remove.setAttribute("aria-label","Desassociar receita: "+item.recipe_name);remove.title="Desassociar receita";remove.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+     remove.addEventListener("click",()=>persistAssociation(item.recipe_id,"DELETE"));
+     const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(view,remove);line.append(name,actions);associationList.append(line);
+    }
+    const rowTag=tr.querySelector(".dish-recipe-indicator");
+    if(rowTag){rowTag.hidden=!linked.length;rowTag.textContent=linked.length?(linked.length===1?"Receita associada":linked.length+" receitas associadas"):"";}
+   };
+   const closeAssociationSuggestions=()=>{
+    associationSuggestions.hidden=true;associationSearch.setAttribute("aria-expanded","false");
+   };
+   const associationMatches=()=>dishRecipeChoices.filter(item=>{
+    const q=normalizedDishText(associationSearch.value.trim());
+    return !linkedRecipes().some(link=>link.recipe_id===item.id)
+     &&(!q||normalizedDishText(item.name+" "+item.category).includes(q));
+   }).slice(0,25);
+   const persistAssociation=async(recipeId,method="POST")=>{
+    if(savingAssociation)return;
+    savingAssociation=true;associationSearch.disabled=true;
+    associationState.textContent=method==="POST"?"A associar receita…":"A remover associação…";
+    try{
+     const result=await request("/api/v2/dishes/recipe-link-item",{method,
+       body:JSON.stringify({dish_id:dish.id,recipe_id:recipeId})});
+     dishRecipeLinks[dish.id]=result.link;
+     associationSearch.value="";
+     paintAssociationState();
+     $("dish-catalog-feedback").textContent=method==="POST"?"Receita associada ao prato.":"Associação removida do prato.";
+    }catch(error){
+     paintAssociationState();
+     associationState.textContent="Não foi possível guardar: "+error.message;
+    }finally{savingAssociation=false;associationSearch.disabled=false;}
+   };
+   const selectAssociation=async item=>{
+    closeAssociationSuggestions();associationSearch.value="";
+    await persistAssociation(item.id);
+   };
+   const renderAssociationSuggestions=()=>{
+    associationSuggestions.replaceChildren();
+    const items=associationMatches();
+    for(const item of items){
+     const option=document.createElement("button");option.type="button";
+     option.className="dish-recipe-suggestion";option.setAttribute("role","option");
+     option.textContent=recipeLabel(item);
+     option.addEventListener("mousedown",e=>e.preventDefault());
+     option.addEventListener("click",()=>selectAssociation(item));
+     associationSuggestions.append(option);
+    }
+    if(!items.length){
+     const empty=document.createElement("div");empty.className="dish-recipe-suggestion-empty";
+     empty.textContent="Nenhuma receita disponível.";associationSuggestions.append(empty);
+    }
+    associationSuggestions.hidden=false;associationSearch.setAttribute("aria-expanded","true");
+   };
+   associationSearch.addEventListener("focus",()=>{associationSearch.value="";renderAssociationSuggestions();});
+   associationSearch.addEventListener("input",renderAssociationSuggestions);
+   associationSearch.addEventListener("keydown",event=>{
+    if(event.key==="Escape"){closeAssociationSuggestions();associationSearch.blur();}
+    if(event.key==="ArrowDown"&&!associationSuggestions.hidden){
+     event.preventDefault();associationSuggestions.querySelector("button")?.focus();
+    }
+    if(event.key==="Enter"&&!associationSuggestions.hidden){
+     event.preventDefault();const item=associationMatches()[0];if(item)selectAssociation(item);
+    }
+   });
+   associationSuggestions.addEventListener("keydown",event=>{
+    if(event.key==="Escape"){closeAssociationSuggestions();associationSearch.focus();}
+    if(event.key==="ArrowDown"||event.key==="ArrowUp"){
+     event.preventDefault();const choices=[...associationSuggestions.querySelectorAll("button")];
+     const index=choices.indexOf(document.activeElement);
+     (choices[(index+(event.key==="ArrowDown"?1:-1)+choices.length)%choices.length]||associationSearch).focus();
+    }
+   });
+   associationSearch.addEventListener("blur",()=>{
+    setTimeout(()=>{if(!associationCombo.contains(document.activeElement)){
+     closeAssociationSuggestions();associationSearch.value="";
+    }},125);
+   });
+   association.append(associationHeading,associationSearchLabel,
+    associationList,associationState);
+   editor.append(association);
+   paintAssociationState();
+   const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";
+   save.onclick=async()=>{save.disabled=true;
+    try{
+     await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:true})});
+     dish.name_pt=inputs[0].value.trim();dish.name_en=inputs[1].value.trim();dish.category=inputs[2].value.trim();dish.active=1;
+     $("dish-catalog-feedback").textContent="Prato atualizado na biblioteca.";
+     refreshDishCategories();await fetchDishPage(dishTablePage);
+    }catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;save.disabled=false;}
+   };editor.append(save);detailCell.append(editor);
+  });
+ }
+ table.append(tbody);wrap.append(table);host.append(wrap);
+ if(dishTablePages>1){
+  const pages=document.createElement("div");pages.className="tm-library-pagination";
+  pages.setAttribute("aria-label","Paginação dos pratos");
+  const previous=document.createElement("button");previous.type="button";previous.textContent="Anterior";
+  previous.disabled=dishTablePage===1;
+  previous.addEventListener("click",()=>fetchDishPage(dishTablePage-1).catch(e=>{$("dish-catalog-feedback").textContent="Erro: "+e.message;}));
+  const label=document.createElement("span");label.textContent="Página "+dishTablePage+" de "+dishTablePages;
+  const next=document.createElement("button");next.type="button";next.textContent="Seguinte";
+  next.disabled=dishTablePage===dishTablePages;
+  next.addEventListener("click",()=>fetchDishPage(dishTablePage+1).catch(e=>{$("dish-catalog-feedback").textContent="Erro: "+e.message;}));
+  pages.append(previous,label,next);host.append(pages);
+ }
+ if(hadSearchFocus){search.focus({preventScroll:true});if(cursor!=null)search.setSelectionRange(cursor,cursor);}
+ else if(hadCategoryFocus)category.focus({preventScroll:true});
+}
+$("dish-search").addEventListener("input",()=>{
+ clearTimeout(dishSearchTimer);
+ dishSearchTimer=setTimeout(()=>fetchDishPage(1).catch(e=>{$("dish-catalog-feedback").textContent="Erro na pesquisa: "+e.message;}),250);
+});
+$("dish-category-filter").addEventListener("change",()=>fetchDishPage(1).catch(e=>{$("dish-catalog-feedback").textContent="Erro nos filtros: "+e.message;}));
+
+const CALENDAR_EVENT_NAMES={training:"Treino",match:"Jogo",travel:"Viagem",off:"Folga"};
 function calendarEventEndpoint(){return matchBase()+"/events";}
 function dayPartSelect(value,label){
  const field=document.createElement("label");field.textContent=label;
@@ -1716,7 +2226,7 @@ function renderUnifiedEvent(ev){
  const card=document.createElement("section");card.className="calendar-unified-event";
  const heading=document.createElement("div");heading.className="calendar-unified-heading";
  const title=document.createElement("strong");title.textContent=CALENDAR_EVENT_NAMES[ev.kind]||ev.title;
- const dateLabel=document.createElement("span");dateLabel.textContent=ev.event_date+" · "+(ev.kind==="match"&&ev.match_time?ev.match_time:ev.session==="morning"?"Manhã":"Tarde");
+ const dateLabel=document.createElement("span");dateLabel.textContent=ev.event_date+" · "+(ev.kind==="match"&&ev.match_time?ev.match_time:ev.kind==="off"?"Dia inteiro":ev.session==="morning"?"Manhã":"Tarde");
  heading.append(title,dateLabel);
  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";heading.append(edit);card.append(heading);
  const controls=document.createElement("form");controls.className="calendar-inline-editor";controls.hidden=true;
@@ -1725,7 +2235,7 @@ function renderUnifiedEvent(ev){
  const period=dayPartSelect(ev.session,"Período");
  const timeWrap=document.createElement("label");timeWrap.textContent="Hora do jogo";
  const time=document.createElement("input");time.type="time";time.value=ev.match_time||"";timeWrap.append(time);
- if(ev.kind==="match")controls.append(timeWrap);else controls.append(period.field);
+ if(ev.kind==="match")controls.append(timeWrap);else if(ev.kind!=="off")controls.append(period.field);
  if(ev.kind==="travel"){
   const label=document.createElement("label");label.textContent="Descrição";
   const text=document.createElement("input");text.value=ev.title;text.maxLength=100;text.required=true;label.append(text);controls.append(label);
@@ -1749,7 +2259,7 @@ function renderUnifiedEvent(ev){
     await saveMatchPeri(ev.id,pre.checkbox.checked,post.checkbox.checked);
    }else{
     await request(calendarEventEndpoint()+"/"+encodeURIComponent(ev.id),{method:"PUT",body:JSON.stringify({
-      event_date:date.value,session:period.select.value,title:ev.kind==="travel"?controls.querySelector('input[maxlength="100"]').value:ev.title,
+      event_date:date.value,session:ev.kind==="off"?"morning":period.select.value,title:ev.kind==="travel"?controls.querySelector('input[maxlength="100"]').value:ev.title,
       ...(pre?{pre_override:pre.checkbox.checked?"auto":"off",post_override:post.checkbox.checked?"auto":"off"}:{})
     })});
    }
@@ -1776,7 +2286,7 @@ async function saveMatchPeri(matchId,pre,post){
 function syncCalendarEventForm(){
  const kind=$("calendar-new-kind").value,game=kind==="match",training=kind==="training";
  $("calendar-supp-options").hidden=kind!=="supplementation";
- $("calendar-new-session").closest("div").hidden=game||kind==="supplementation";
+ $("calendar-new-session").closest("div").hidden=game||kind==="supplementation"||kind==="off";
  $("calendar-new-time-wrap").hidden=!game;
  $("calendar-new-title-wrap").hidden=kind!=="travel";
  $("calendar-pre-wrap").hidden=!(game||training);
@@ -1817,6 +2327,15 @@ $("calendar-new-date").addEventListener("change",()=>renderCalendarSupplementCho
 $("calendar-new-kind").addEventListener("change",()=>{syncCalendarEventForm();if($("calendar-new-kind").value==="supplementation")renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));});
 $("calendar-new-date").value=isoDay(new Date());
 syncCalendarEventForm();
+function setMobileCalendarEventFormOpen(open){
+ const toggle=$("calendar-mobile-event-toggle");
+ toggle.setAttribute("aria-expanded",String(Boolean(open)));
+}
+function openMobileCalendarEventForm(){setMobileCalendarEventFormOpen(true);}
+$("calendar-mobile-event-toggle").addEventListener("click",()=>{
+ const toggle=$("calendar-mobile-event-toggle");
+ setMobileCalendarEventFormOpen(toggle.getAttribute("aria-expanded")!=="true");
+});
 $("calendar-event-form").addEventListener("submit",async e=>{
  e.preventDefault();
  if(!model)return;
@@ -1832,7 +2351,7 @@ $("calendar-event-form").addEventListener("submit",async e=>{
   }else{
    await request(calendarEventEndpoint(),{method:"POST",body:JSON.stringify({
     event_date:date,kind,session:$("calendar-new-session").value,
-    title:kind==="training"?"Treino":$("calendar-new-title").value.trim()||"Viagem",
+    title:kind==="training"?"Treino":kind==="off"?"Folga":$("calendar-new-title").value.trim()||"Viagem",
     ...(kind==="training"?{pre_override:$("calendar-new-pre").checked?"auto":"off",
       post_override:$("calendar-new-post").checked?"auto":"off"}:{})
    })});
