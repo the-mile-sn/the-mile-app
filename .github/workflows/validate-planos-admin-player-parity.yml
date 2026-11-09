@@ -1,0 +1,24 @@
+name: Audit parity between published Planos in Planeamento and player app
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+    paths:
+      - tests/test_planos_admin_player_parity.py
+      - food_plan_calendar_bridge_v2.py
+      - .github/workflows/validate-planos-admin-player-parity.yml
+  workflow_dispatch:
+jobs:
+  compare-published-converters:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout production backoffice
+        uses: actions/checkout@v4
+      - name: Checkout current player app
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: player-branch
+      - name: Run read-only cross-service parity cases
+        run: python -m unittest -v tests.test_planos_admin_player_parity
