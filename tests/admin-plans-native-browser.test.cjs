@@ -3,7 +3,7 @@ const test=require("node:test"),assert=require("node:assert/strict");
 const {chromium,webkit}=require("playwright");
 const ORIGIN="http://127.0.0.1:8765/admin-microcycles.html";
 function respond(route,body,status=200){return route.fulfill({status,contentType:"application/json",body:JSON.stringify(body)});}
-async function createPage(browser,viewport){
+async function createPage(browser,viewport,draftRows=[]){
  const context=await browser.newContext({viewport,locale:"pt-PT"});
  const page=await context.newPage(),errors=[],queries=[];
  page.on("pageerror",err=>errors.push(err.message));
@@ -13,7 +13,7 @@ async function createPage(browser,viewport){
   if(path==="/api/me")return respond(route,{user:{id:"demo-admin",name:"Demo",email:"demo@example.invalid",role:"admin",has_photo:false},csrf:"demo-csrf"});
   if(path==="/api/v2/athletes")return respond(route,{athletes:[{id:"athlete-1",user_id:"user-1",name:"Atleta de teste",sex:"M",has_photo:false}]});
   if(path==="/api/v2/food-library")return respond(route,{foods:[{id:"food-1",display_name:"Aveia",base_name:"Aveia",category:"Cereais",variant:"plain",edible_fraction:1,reference_g:100,kcal:370,protein_g:13,carbs_g:61,fat_g:7,notes:""}]});
-  if(path==="/api/v2/food-plan-drafts")return respond(route,{drafts:[]});
+  if(path==="/api/v2/food-plan-drafts")return respond(route,{drafts:draftRows});
   if(path==="/api/v2/admin/dashboard")return respond(route,{players:[],events:[],recent:[],today:"2026-11-09",days:["2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-14","2026-11-15"]});
   return respond(route,{});
  });
@@ -168,6 +168,32 @@ test("WebKit/Safari-style engine renders Planos cards, macros and small Peri-tre
   assert.equal(cardCss.columns.split(" ").length,4,JSON.stringify(cardCss));
   assert.notEqual(cardCss.pad,"0px");
   await page.screenshot({path:"plans-native-webkit-editor.png",fullPage:true});
+  assert.deepEqual(errors,[]);
+  await context.close();
+ }finally{await browser.close();}
+});
+
+test("Planos list capitalizes only first character of type and hides AÇÕES heading without removing buttons",async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const drafts=[
+   {id:"mock-yellow",athlete_id:"athlete-1",player_id:"user-1",plan_type:"Plano amarelo",publication:{state:"published"}},
+   {id:"mock-prep",athlete_id:"athlete-1",player_id:"user-1",plan_type:"Plano verde preparação",publication:{state:"published"}},
+   {id:"mock-peri",athlete_id:"athlete-1",player_id:"user-1",plan_type:"Plano Peri-treino",publication:{state:"published"}}
+  ];
+  const {page,context,errors}=await createPage(browser,{width:1365,height:850},drafts);
+  await page.locator("#tm-admin-nav-create-plan").click();
+  const chips=page.locator("#tm-plan-page #library-plan-rows .plan-type-tag");
+  await chips.first().waitFor({state:"visible"});
+  const labels=await chips.allTextContents();
+  assert.ok(labels.includes("Amarelo"),JSON.stringify(labels));
+  assert.ok(labels.includes("Verde preparação"),JSON.stringify(labels));
+  assert.ok(labels.some(x=>x.trim()==="Peri-treino"),JSON.stringify(labels));
+  const header=page.locator("#tm-plan-page #plan-entry .plan-library-table thead th").last();
+  assert.equal((await header.textContent()).trim(),"");
+  assert.equal(await header.getAttribute("aria-label"),"Ações");
+  assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-view-id]").count(),3);
+  assert.equal(await page.locator("#tm-plan-page #library-plan-rows [data-edit-id]").count(),3);
   assert.deepEqual(errors,[]);
   await context.close();
  }finally{await browser.close();}
