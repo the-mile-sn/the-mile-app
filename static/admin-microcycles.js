@@ -755,7 +755,8 @@ async function loadMenus(){
       const heading=document.createElement("div");heading.className="menu-meal-heading";
       const overrideKey=date+"|"+meal;
       const effectiveMeal=menuEffectiveColors[date]?.[meal];
-      const assignedColor=effectiveMeal&&Object.prototype.hasOwnProperty.call(effectiveMeal,"color")?effectiveMeal.color:(Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal]);
+      const rawColor=effectiveMeal&&Object.prototype.hasOwnProperty.call(effectiveMeal,"color")?effectiveMeal.color:(Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal]);
+      const assignedColor=rawColor==="none"?null:rawColor;
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
@@ -905,14 +906,15 @@ async function playerShowMenus(){
  for(let i=0;i<7;i++){
   const date=new Date(monday);date.setDate(monday.getDate()+i);const key=isoDay(date),day=calendar.days.find(item=>item.date===key);
   const section=document.createElement("section");section.className="player-menu-day";
-  const title=document.createElement("h3");title.textContent=date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"short"})+(day?.classification?" · "+day.classification:"");section.appendChild(title);
+  const title=document.createElement("h3");title.textContent=date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"short"})+" · "+(day?.classification||"Geral");section.appendChild(title);
   for(const meal of ["lunch","dinner"]){
    const menu=menus.menus.find(item=>item.menu_date===key&&item.meal===meal);if(!menu)continue;
    const line=document.createElement("div");line.className="player-menu-entry";
    const name=document.createElement("strong");name.textContent=names[meal];line.appendChild(name);
-   const row=model.classifications.find(c=>c.name===day?.classification),baseline=row?.meals?.[meal];
-   const exception=(calendar.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal)?.color;
-   const color=exception||baseline;
+   const row=model.classifications.find(c=>c.name===(day?.classification||"Geral")),baseline=row?.meals?.[meal];
+   const override=(calendar.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);
+   const effective=calendar.effective_colors?.[key]?.[meal];
+   const color=effective&&Object.prototype.hasOwnProperty.call(effective,"color")?effective.color:(override?(override.color==="none"?null:override.color):baseline);
    if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
    const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
    if(menu.kind==="dish"){const dish=resolveAdminMenuDish(menu,dishes.dishes);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
