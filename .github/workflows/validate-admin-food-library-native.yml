@@ -16,3 +16,22 @@ jobs:
           node --check static/food-library.js
       - name: Validate native module contract
         run: node --test tests/admin-food-library-native.test.cjs
+      - name: Install isolated browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise Food Library in Chromium with mocked endpoints
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 --directory static > /tmp/the-mile-test-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node --test tests/admin-food-library-native-browser.test.cjs
+      - name: Save dark and light mode browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-food-library-browser-screenshots
+          path: |
+            food-library-native-dark.png
+            food-library-native-light.png
+          if-no-files-found: ignore
