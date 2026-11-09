@@ -180,3 +180,21 @@ def published_for_player(c, athlete_id, start, end):
     """Approved choices only. If the feature is off, return nothing at all."""
     if not enabled(c, athlete_id): return []
     return _stored(c, "v2_meal_choice_publications", athlete_id, start, end)
+
+
+def visible_options(options, assignment, color=None):
+    """Fail-open to existing options if the recorded publication is stale.
+
+    This function never reads drafts. Pass only an approved published record.
+    """
+    if not assignment: return options
+    if (assignment.get("source_color") or None) != (color or None):
+        return options
+    index = assignment.get("option_index")
+    if type(index) is not int or index < 1 or index > len(options):
+        return options
+    current = options[index - 1]
+    if (current.get("option_ref") != assignment.get("option_ref") or
+            current.get("source_draft_id") != assignment.get("source_draft_id")):
+        return options
+    return [current]
