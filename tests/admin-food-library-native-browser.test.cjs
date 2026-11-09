@@ -54,7 +54,8 @@ test("Food Library operates inside the admin shell without changing URL or live 
   assert.equal(page.url(),startUrl,"the module must navigate without full-page reload");
   assert.equal(await page.locator(".tm-admin-sidebar").count(),1,"the page must have only one sidebar");
   assert.equal(await page.locator("#tm-admin-nav-food-library").getAttribute("aria-current"),"page");
-  assert.equal(await page.locator('a#tm-admin-nav-create-plan[href="/create-plan"]').count(),1,"Planos must remain a standalone destination");
+  assert.equal(await page.locator('button#tm-admin-nav-create-plan').count(),1,"Planos must be a native Backoffice button");
+  assert.equal(await page.locator("#tm-plan-page").isVisible(),false,"Planos must not be displayed over Biblioteca Alimentar");
 
   await page.screenshot({path:"food-library-native-dark.png",fullPage:true});
   await page.evaluate(()=>{document.documentElement.dataset.adminTheme="light"});

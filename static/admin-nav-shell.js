@@ -10,7 +10,7 @@
  if(!nav)return;
  const page=mount.dataset.tmNavPage;
  if(page==="admin"){
-  const actions=["dashboard","players","planning","food-library","menus-recipes","dishes","recipe-library","assessments","forms"];
+  const actions=["dashboard","players","planning","create-plan","food-library","menus-recipes","dishes","recipe-library","assessments","forms"];
   const toButton=(link,id)=>{
    const button=document.createElement("button");
    button.type="button";
