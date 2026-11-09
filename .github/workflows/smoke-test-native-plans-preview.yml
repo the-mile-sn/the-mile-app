@@ -1,0 +1,42 @@
+name: Smoke test isolated native Planos preview
+on:
+  push:
+    branches: [feature/food-library-v1-isolated]
+  workflow_dispatch:
+jobs:
+  remote-native-plans:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure public demo does not connect to production data
+        run: |
+          set -euo pipefail
+          BASE="https://the-mile-food-library-test.onrender.com"
+          curl --retry 5 --retry-delay 5 --retry-all-errors --max-time 45 -fsS "$BASE/__preview_meta" -o /tmp/the-mile-demo-meta.json
+          curl --retry 5 --retry-delay 5 --retry-all-errors --max-time 45 -fsS "$BASE/api/v2/food-plan-drafts" -o /tmp/the-mile-demo-drafts.json
+          python - <<'PY'
+          import json
+          meta=json.load(open('/tmp/the-mile-demo-meta.json'))
+          drafts=json.load(open('/tmp/the-mile-demo-drafts.json'))
+          assert meta['preview'] and not meta['prod_database'] and meta['data']=='simulated',meta
+          assert len(drafts['drafts'])>=2,drafts
+          assert all(d.get('id','').startswith('demo-') for d in drafts['drafts'])
+          PY
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify Planos is an internal tab on the live Render preview
+        run: node --test tests/native-planos-live-preview.test.cjs
+      - name: Attach Planos screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: planos-live-preview-desktop-mobile
+          path: |
+            planos-live-dark.png
+            planos-live-light.png
+            planos-live-mobile.png
+          if-no-files-found: ignore
