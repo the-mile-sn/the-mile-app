@@ -6,6 +6,7 @@ player endpoints call this module. No drafts, old PDF imports or app writes.
 import json
 import math
 import unicodedata
+from meal_option_selection_v2 import option_ref
 
 FIELDS=("kcal","protein_g","carbs_g","fat_g")
 COLORS={"orange":"Plano laranja","yellow":"Plano amarelo",
@@ -63,7 +64,7 @@ def _approved(c,athlete_id):
     owner=str(linked["user_id"]) if linked else ""
     if not owner:return {}
     rows=c.execute(
-        "SELECT plan_type,snapshot_json,published_at FROM "
+        "SELECT draft_id,plan_type,snapshot_json,published_at FROM "
         "v2_food_plan_editor_publications WHERE athlete_id=? AND state='published'",
         (athlete_id,)).fetchall()
     plans={}
@@ -77,7 +78,7 @@ def _approved(c,athlete_id):
         name=row["plan_type"]
         if name not in tuple(COLORS.values())+tuple(PERI_KINDS.values()):
             continue
-        plans[name]={"content":plan,"published_at":row["published_at"]}
+        plans[name]={"content":plan,"published_at":row["published_at"],"draft_id":row["draft_id"]}
     return plans
 
 
@@ -178,7 +179,7 @@ def _option_items(option,library):
 def _options(meal,library):
     result=[]
     for index,option in enumerate(meal.get("options") or [],1):
-        result.append({"number":index,"title":option.get("title") or "",
+        result.append({"number":index,"option_ref":option_ref(option),"title":option.get("title") or "",
                        "totals":_option_totals(option,library),
                        "items":_option_items(option,library),
                        "timing_groups":option.get("timing_groups") or []})
@@ -205,6 +206,7 @@ def _colors(plans,library):
                     result[color][slot]=[]
                     continue
                 result[color][slot]=_validated_options(meal,library)
+                for opt in result[color][slot]:opt["source_draft_id"]=plan["draft_id"]
     return result
 
 
@@ -220,6 +222,7 @@ def _peri_plans(plans,library):
             if not phase:continue
             legacy,label=PERI_NAMES[phase]
             new=_validated_options(meal,library)
+            for opt in new:opt["source_draft_id"]=entry["draft_id"]
             phases[legacy].extend(new)
             labels[legacy]=label
         result[kind]={"options":phases,"published_at":entry["published_at"],
@@ -287,10 +290,11 @@ def player_peri_days(c,athlete_id,first,last,events=None,matches=None):
                      ("pre_training","pre_match","intra_match") else "post_override")
             if event.get(control,"auto")=="off":continue
             options=_validated_options(meal,library)
+            for opt in options:opt["source_draft_id"]=entry["draft_id"]
             if not options:continue
             result.append({"event_id":event["id"],"event_date":event["event_date"],
                            "session":event.get("session","morning"),"kind":kind,
-                           "phase":phase,"title":label,"options":options})
+                           "phase":phase,"selection_phase":named,"title":label,"options":options})
     return result
 
 
