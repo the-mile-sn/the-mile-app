@@ -1,0 +1,18 @@
+name: Validate native Food Library integration
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  native-food-library:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check static/admin-nav-shell.js
+          node --check static/admin-dashboard.js
+          node --check static/food-library.js
+      - name: Validate native module contract
+        run: node --test tests/admin-food-library-native.test.cjs
