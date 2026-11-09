@@ -21,4 +21,4 @@ jobs:
           ref: main
           path: player-branch
       - name: Run read-only cross-service parity cases
-        run: python -m unittest -v tests.test_planos_admin_player_parity
+        run: python -m unittest discover -s tests -p 'test_planos_admin_player_parity.py' -v
