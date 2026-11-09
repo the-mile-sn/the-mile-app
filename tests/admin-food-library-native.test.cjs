@@ -20,18 +20,19 @@ test("native Food Library mounts once as an internal Backoffice section",()=>{
  assert.equal(new Set(ids).size,ids.length,"DOM ids must be globally unique");
 });
 
-test("Food Library changes route in the admin shell, but Planos remains standalone",()=>{
- assert.match(nav,/const actions=\[[^\]]*"food-library"/);
+test("Food Library remains a native Backoffice section alongside native Planos",()=>{
+ assert.match(nav,/const actions=\[[^\]]*"create-plan","food-library"/);
  assert.match(nav,/page!=="create-plan"&&page!=="food-library"/);
  assert.match(dashboard,/function openFoodLibrary\(\)/);
  assert.match(dashboard,/navActive\(foodLibraryBtn\)/);
  assert.match(dashboard,/foodLibraryPage\.hidden=target!==foodLibraryBtn/);
  assert.match(dashboard,/window\.tmEnsureAdminFoodLibrary\(\)/);
- assert.match(dashboard,/"players","planning","food-library","menus-recipes"/);
+ assert.match(dashboard,/function openPlans\(\)/);
+ assert.match(dashboard,/plansPage\.hidden=target!==plansBtn/);
+ assert.match(dashboard,/"players","planning","create-plan","food-library","menus-recipes"/);
  assert.match(adminHtml,/\/food-library\.js\?v=13/);
- assert.match(nav,/href=\\?"\/create-plan\\?"/);
+ assert.match(nav,/href=\\?"\/create-plan\\?"/); // legacy URL still reachable
 });
-
 test("native view retains the existing catalog operations and server authority",()=>{
  assert.match(library,/function archiveFood\(id\)/);
  assert.match(library,/function open\(food\)/);
