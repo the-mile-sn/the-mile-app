@@ -36,6 +36,7 @@ import food_library_v2
 import food_plan_drafts_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
+import meal_option_selection_v2
 import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
@@ -277,6 +278,7 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
@@ -1592,6 +1594,33 @@ def application(env, start_response):
                 except ValueError: raise Problem(400,'invalid_day_meal_color')
                 if saved is None: raise Problem(404,'not_found')
                 return respond(200,{'override':saved})
+
+            # Independent nutrition choice publication. Save is a draft only;
+            # the player app never receives unapproved selections.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/meal-options') and method in ('GET','PUT','POST'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                try:
+                    if method=='GET':
+                        query=parse_qs(env.get('QUERY_STRING',''))
+                        return respond(200,meal_option_selection_v2.read(
+                            c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0]))
+                    body=read_json(env)
+                    date=body.get('date')
+                    meal=body.get('meal')
+                    event_id=body.get('event_id','')
+                    if method=='PUT':
+                        if 'option_index' not in body: raise Problem(400,'invalid_option_index')
+                        saved=meal_option_selection_v2.stage(
+                            c,aid,date,meal,event_id,body['option_index'],user['id'])
+                        return respond(200,saved)
+                    if body.get('action')!='publish': raise Problem(400,'invalid_selection_action')
+                    result=meal_option_selection_v2.publish(
+                        c,aid,date,meal,event_id,user['id'])
+                    return respond(200,result)
+                except ValueError as err:
+                    raise Problem(400,str(err))
 
             if path.startswith('/api/v2/athletes/') and path.endswith('/calendar') and method == 'GET':
                 if not user:
