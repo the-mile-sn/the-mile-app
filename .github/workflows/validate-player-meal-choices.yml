@@ -1,0 +1,29 @@
+name: Validate opt-in player meal choices
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - app.py
+      - microcycles_v2.py
+      - food_plan_player_v2.py
+      - meal_option_selection_v2.py
+      - static/jogador-v2.js
+      - static/jogador-v2.html
+      - tests/test_meal_option_selection_player_v2.py
+      - .github/workflows/validate-player-meal-choices.yml
+  workflow_dispatch:
+jobs:
+  player-safety:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax
+        run: |
+          python -m compileall -q app.py microcycles_v2.py food_plan_player_v2.py meal_option_selection_v2.py tests/test_meal_option_selection_player_v2.py
+          node --check static/jogador-v2.js
+      - name: Published Planos regression tests
+        run: |
+          python -m unittest discover -s tests -p 'test_food_plan_player_v2.py' -v
+          python -m unittest discover -s tests -p 'test_meal_option_selection_player_v2.py' -v
