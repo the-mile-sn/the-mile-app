@@ -13,6 +13,7 @@ test("Real Render demo: Planos list, preview, edit, dark/light and tab navigatio
   await page.locator("#admin-workspace").waitFor({state:"visible",timeout:30000});
   await page.locator("#tm-plan-page").waitFor({state:"visible",timeout:20000});
   await page.locator("#tm-plan-page #library-plan-rows tr").first().waitFor({state:"visible",timeout:20000});
+  await page.locator("#tm-plan-page #library-plan-rows").getByText("Jogador Demonstração").first().waitFor({state:"visible",timeout:20000});
   const textRows=await page.locator("#tm-plan-page #library-plan-rows").innerText();
   assert.match(textRows,/Jogador Demonstração/);
   assert.match(await page.locator("#tm-preview-notice").innerText(),/fictícios/i);
