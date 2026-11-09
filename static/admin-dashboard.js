@@ -116,7 +116,7 @@
     $("tm-"+kind+"-player").value="";
     syncClinicalPicker(kind);
     if(kind==="assessments"){$("assessments-admin-panel").hidden=true;}else{$("profile-monitoring").hidden=true;}
-    $("tm-"+kind+"-error").textContent="Seleciona um jogador para consultar os respetivos dados.";
+    $("tm-"+kind+"-error").textContent="";
     return;
    }
    drawClinicalResults(kind);
@@ -138,7 +138,7 @@
   const selected=$("tm-"+kind+"-player");
   if(aid&&Array.from(original.options).some(o=>o.value===aid))selected.value=aid;
   syncClinicalPicker(kind);
-  if(!selected.value){feedback.textContent="Seleciona um jogador para consultar os respetivos dados.";return;}
+  if(!selected.value){feedback.textContent="";return;}
   original.value=selected.value;
   let deepLinked=false;
   try{
