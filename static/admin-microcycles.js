@@ -99,7 +99,18 @@ $("admin-signout").onclick=async()=>{
   $("admin-login-password").value="";
  }catch(e){feedback.textContent="Não foi possível terminar sessão: "+e.message;}
 };
-async function loadAthletes(prefer,loadDetails=true){const data=await request("/api/v2/athletes");athletes=data.athletes;const list=$("athlete");list.replaceChildren();for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}list.value=prefer||list.value||athletes[0].id;if(loadDetails)await loadModel();}
+async function loadAthletes(prefer,loadDetails=true){
+ const data=await request("/api/v2/athletes");athletes=data.athletes;
+ const list=$("athlete"),previous=list.value;
+ list.replaceChildren();
+ const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar jogador";list.appendChild(empty);
+ for(const a of athletes){const o=document.createElement("option");o.value=a.id;o.textContent=a.name;o.dataset.userId=a.user_id||"";o.dataset.hasPhoto=String(!!a.has_photo);list.appendChild(o);}
+ const chosen=prefer||previous||"";
+ list.value=athletes.some(a=>a.id===chosen)?chosen:"";
+ updatePlanningPlayerControls();
+ if(!athletes.length){model=null;$("matrix").hidden=true;$("calendar-section").hidden=true;status("Cria o primeiro jogador de teste.");return;}
+ if(loadDetails&&list.value)await loadModel();
+}
 const planningSearch=$("tm-planning-search"),planningResults=$("tm-planning-results"),planningPicker=$("tm-planning-picker");
 const planningNormalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
 function updatePlanningPlayerControls(){
@@ -198,6 +209,7 @@ window.tmEnsureAdminPlanning=()=>{
  if(tmPlanningReadyPromise)return tmPlanningReadyPromise;
  tmPlanningReadyPromise=(async()=>{
   if(window.tmAdminRosterReady)await window.tmAdminRosterReady;
+  if(!$("athlete").value){updatePlanningPlayerControls();return;}
   if(!model||model.athlete?.id!==$("athlete").value)await loadModel();
  })().finally(()=>{tmPlanningReadyPromise=null;});
  return tmPlanningReadyPromise;
