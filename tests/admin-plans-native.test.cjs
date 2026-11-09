@@ -10,7 +10,7 @@ test("Planos is mounted as one native editor without duplicate HTML IDs",()=>{
  assert.equal(new Set(ids).size,ids.length);
  for(const id of ["tm-plan-page","plan-entry","plan-search-selection","plan-preview","plan-editor","tm-plan-status","plan-player","plan-type","save-plan","assign-player","library-plan-rows"])assert.ok(ids.includes(id),id);
  assert.match(html,/<section id="tm-plan-page"[^>]*hidden/);
- assert.match(html,/\/create-plan\.js\?v=78/);
+ assert.match(html,/\/create-plan\.js\?v=79/);
  assert.match(html,/\/admin-plans-native\.css\?v=5/);
  assert.match(legacy,/id="status"/);
  assert.match(legacy,/data-tm-nav-page="create-plan"/);
@@ -52,4 +52,12 @@ test("Production WSGI explicitly serves the native Planos stylesheet",()=>{
  const roleGuard=app.slice(app.indexOf("if SITE_ROLE == 'player':"),app.indexOf("elif SITE_ROLE == 'admin':"));
  assert.match(roleGuard,/'\/admin-plans-native\.css'/);
  assert.ok(css.length>140000,"Native Planos CSS file must not be empty");
+});
+
+test("Planos list uses title-cased display labels and an accessible, visually empty actions header",()=>{
+ assert.ok(editor.includes('replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"))'));
+ assert.match(html,/<th aria-label="Ações"><\/th>/);
+ assert.doesNotMatch(html,/<th>Ações<\/th>/);
+ assert.match(editor,/data-view-id/);
+ assert.match(editor,/data-edit-id/);
 });
