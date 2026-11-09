@@ -700,6 +700,16 @@ function resetMenusForAthlete(athleteId){
  $("menu-save-feedback").textContent="";
 }
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
+// Single source of truth for menu meal colors, identical on mobile and desktop.
+// The calendar's resolved color wins, then its manual override, then the model (Geral by default).
+function effectiveMenuMealColor(date,classification,meal,calendarData){
+ const value=calendarData.effective_colors?.[date]?.[meal];
+ if(value&&Object.prototype.hasOwnProperty.call(value,"color"))return value.color==="none"?null:(value.color||null);
+ const exception=(calendarData.meal_color_overrides||[]).find(item=>item.meal_date===date&&item.meal===meal);
+ if(exception)return exception.color==="none"?null:(exception.color||null);
+ const row=model?.classifications?.find(item=>item.name===(classification||"Geral"));
+ return row?.meals?.[meal]||null;
+}
 async function loadMenus(){
   if(!model)return;
   const athleteId=model.athlete.id;
@@ -721,8 +731,6 @@ async function loadMenus(){
   dishLibrary=dishes.dishes;
   renderDishEditor();refreshDishCategories();
   const calendar=calendarData.days;
-  const menuColorOverrides=colorOverrideLookup(calendarData.meal_color_overrides);
-  const menuEffectiveColors=calendarData.effective_colors||{};
   const pending=new Map();
   saveWeek.disabled=true;feedback.textContent="";
   const mark=(key,entry)=>{if(!stillCurrent())return;pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
@@ -747,16 +755,12 @@ async function loadMenus(){
     const section=document.createElement("section");section.className="menu-day-card";
     const calendarDay=calendar.find(item=>item.date===date);
     const effectiveClassification=calendarDay?.classification||"Geral";
-    const modelRow=model.classifications.find(item=>item.name===effectiveClassification);
     const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+" · "+effectiveClassification;section.appendChild(title);
     for(const meal of ["lunch","dinner"]){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
       const line=document.createElement("div");line.className="menu-meal-card";
       const heading=document.createElement("div");heading.className="menu-meal-heading";
-      const overrideKey=date+"|"+meal;
-      const effectiveMeal=menuEffectiveColors[date]?.[meal];
-      const rawColor=effectiveMeal&&Object.prototype.hasOwnProperty.call(effectiveMeal,"color")?effectiveMeal.color:(Object.prototype.hasOwnProperty.call(menuColorOverrides,overrideKey)?menuColorOverrides[overrideKey]:modelRow?.meals?.[meal]);
-      const assignedColor=rawColor==="none"?null:rawColor;
+      const assignedColor=effectiveMenuMealColor(date,effectiveClassification,meal,calendarData);
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
@@ -911,10 +915,7 @@ async function playerShowMenus(){
    const menu=menus.menus.find(item=>item.menu_date===key&&item.meal===meal);if(!menu)continue;
    const line=document.createElement("div");line.className="player-menu-entry";
    const name=document.createElement("strong");name.textContent=names[meal];line.appendChild(name);
-   const row=model.classifications.find(c=>c.name===(day?.classification||"Geral")),baseline=row?.meals?.[meal];
-   const override=(calendar.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);
-   const effective=calendar.effective_colors?.[key]?.[meal];
-   const color=effective&&Object.prototype.hasOwnProperty.call(effective,"color")?effective.color:(override?(override.color==="none"?null:override.color):baseline);
+   const color=effectiveMenuMealColor(key,day?.classification,meal,calendar);
    if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
    const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
    if(menu.kind==="dish"){const dish=resolveAdminMenuDish(menu,dishes.dishes);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
