@@ -1650,13 +1650,8 @@ def application(env, start_response):
                         item['meal_key']==peri.get('selection_phase') and
                         item['event_id']==peri['event_id']),None)
                     if row:
-                        ix=row['option_index']-1
-                        options=peri.get('options') or []
-                        if (0<=ix<len(options) and
-                                options[ix].get('option_ref')==row['option_ref'] and
-                                options[ix].get('source_draft_id')==row['source_draft_id'] and
-                                not row['source_color']):
-                            peri['options']=[options[ix]]
+                        peri['options']=meal_option_selection_v2.visible_options(
+                            peri.get('options') or [],row,None)
                 return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
             if path == '/api/v2/player/recipes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
