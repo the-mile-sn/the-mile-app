@@ -16,6 +16,39 @@ jobs:
           node --check static/create-plan.js
       - name: Verify Planos native contract
         run: node --test tests/admin-plans-native.test.cjs
+      - name: Verify production WSGI serves Planos CSS with correct content type
+        run: |
+          python -m pip install -r requirements.txt
+          python - <<'PY'
+          import os
+          from io import BytesIO
+          os.environ["MILE_SITE_ROLE"]="admin"
+          import app
+          def request(path,query,role):
+              app.SITE_ROLE=role
+              out={}
+              def start(status,headers):
+                  out["status"]=status
+                  out["headers"]=dict(headers)
+              env={"REQUEST_METHOD":"GET","PATH_INFO":path,"QUERY_STRING":query,
+                   "wsgi.input":BytesIO(b""),"SERVER_NAME":"localhost","SERVER_PORT":"8765",
+                   "wsgi.url_scheme":"http","wsgi.version":(1,0),"wsgi.errors":BytesIO(),
+                   "wsgi.multithread":False,"wsgi.multiprocess":False,"wsgi.run_once":False}
+              out["body"]=b"".join(app.application(env,start))
+              return out
+          css=request("/admin-plans-native.css","v=3","admin")
+          assert css["status"]=="200 OK",css["status"]
+          assert css["headers"]["Content-Type"].startswith("text/css"),css["headers"]
+          assert len(css["body"])>140000
+          assert b"#tm-plan-page .plan-library-filters" in css["body"]
+          assert "immutable" in css["headers"]["Cache-Control"]
+          page=request("/","","admin")
+          assert page["status"]=="200 OK"
+          assert b"/admin-plans-native.css?v=3" in page["body"]
+          blocked=request("/admin-plans-native.css","v=3","player")
+          assert blocked["status"]=="404 Not Found",blocked["status"]
+          print("PASS: Real WSGI serves native Planos CSS, with browser cache version and role isolation")
+          PY
       - name: Install Chromium and WebKit for visual regressions
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
