@@ -47,12 +47,14 @@ test("native Planos tab keeps the editor and blocks unsaved navigation",async()=
     iconWidth:getComputedStyle(icon).width,iconHeight:getComputedStyle(icon).height};
   });
   assert.equal(cssInfo.stylesLoaded,true);
+   assert.match(cssInfo.cssVersion,/admin-plans-native\\.css\\?v=4/);
+   assert.equal(cssInfo.countDisplay,"none","Plan list result count should be hidden");
   assert.ok(cssInfo.cssRules>100,JSON.stringify(cssInfo));
   assert.equal(cssInfo.layout,"grid",JSON.stringify(cssInfo));
   assert.equal(cssInfo.columns.split(" ").length,3,JSON.stringify(cssInfo));
   assert.equal(cssInfo.border,"solid");
-  assert.equal(cssInfo.iconWidth,"19px","Peri-training icon must not cover the entire table");
-  assert.equal(cssInfo.iconHeight,"19px");
+  assert.equal(cssInfo.iconWidth,"17px","Peri-training icon must not cover the entire table");
+  assert.equal(cssInfo.iconHeight,"17px");
   await page.screenshot({path:"plans-native-dark.png",fullPage:true});
   await page.evaluate(()=>document.documentElement.dataset.adminTheme="light");
   await page.waitForFunction(()=>document.getElementById("tm-plan-page").dataset.adminTheme==="light");
@@ -130,8 +132,8 @@ test("WebKit/Safari-style engine renders Planos cards, macros and small Peri-tre
   assert.equal(listCss.layout,"grid",JSON.stringify(listCss));
   assert.equal(listCss.columns.split(" ").length,3,JSON.stringify(listCss));
   assert.equal(listCss.border,"solid");
-  assert.equal(listCss.iconWidth,"19px",JSON.stringify(listCss));
-  assert.equal(listCss.iconHeight,"19px");
+  assert.equal(listCss.iconWidth,"17px",JSON.stringify(listCss));
+  assert.equal(listCss.iconHeight,"17px");
   await page.screenshot({path:"plans-native-webkit-list.png",fullPage:true});
   await page.locator("#tm-plan-page #entry-create").click();
   await page.locator("#tm-plan-page #plan-editor").waitFor({state:"visible"});
