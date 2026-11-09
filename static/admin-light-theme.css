@@ -529,7 +529,7 @@ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-pla
 html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header{background:#fff;border-color:var(--tm-light-border,#d7dfe9)}
 html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{background:transparent!important;border-color:transparent!important}
 html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{background:transparent!important;border-top-color:rgba(83,101,123,.15)!important}
-html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header #tm-planning-search{background:#f2f4f7!important;border-color:#d8e0e9!important;color:#253448!important}
+html[data-admin-theme="light"] #tm-admin-legacy .tm-planning-unified-header #tm-planning-search{background:#fff!important;border-color:#d8e0e9!important;color:#253448!important}
 
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-card{background:#fff;border-color:#dce2e9}
 html[data-admin-theme="light"] #tm-players-page .tm-player-loading-photo-info strong{color:#303e51}
