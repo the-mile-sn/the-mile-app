@@ -116,7 +116,8 @@ const planningNormalize=value=>String(value||"").normalize("NFD").replace(/[\u03
 function updatePlanningPlayerControls(){
  const select=$("athlete"),avatar=$("tm-planning-avatar");
  if(!select||!avatar)return;
- const name=select.selectedOptions[0]?.textContent||"";
+ const name=select.value?(select.selectedOptions[0]?.textContent||""):"";
+ const empty=$("tm-planning-empty");if(empty)empty.hidden=!!select.value;
  avatar.textContent=name.trim().split(/\s+/).filter(Boolean).slice(0,2).map(v=>v[0]).join("").toLocaleUpperCase("pt-PT")||"—";
  const chosen=select.selectedOptions[0];if(chosen?.dataset.hasPhoto==="true"&&chosen.dataset.userId){const img=document.createElement("img");img.className="tm-picker-photo";img.src="/api/players/"+encodeURIComponent(chosen.dataset.userId)+"/photo?thumb=1";img.alt="";img.addEventListener("error",()=>img.remove());avatar.append(img);}
  planningSearch.value=name;
@@ -217,7 +218,7 @@ window.tmEnsureAdminPlanning=()=>{
 async function loadModel(){
  updatePlanningPlayerControls();
  const athleteId=$("athlete").value;
- if(!athleteId)return;
+ if(!athleteId){model=null;showBackofficeView(backofficeView);return;}
  resetPlanReviewForAthlete(athleteId);
  resetMenusForAthlete(athleteId);
  resetSupplementForAthlete(athleteId);
