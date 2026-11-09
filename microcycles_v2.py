@@ -90,7 +90,7 @@ def initialize(c):
     athlete_columns = _table_columns(c, "v2_athletes")
     if "weight_kg" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN weight_kg REAL")
-    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("field_position","TEXT"),("followup_plan","TEXT"),("followup_renewal_date","TEXT")):
+    for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("field_position","TEXT"),("followup_plan","TEXT"),("followup_renewal_date","TEXT"),("archived_at","BIGINT")):
         if name not in athlete_columns:
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
     # Safe on both services, and OFF for all existing/future athletes.
