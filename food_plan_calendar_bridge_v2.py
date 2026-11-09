@@ -111,7 +111,9 @@ def _meal_preview(meal, library):
         for food in option.get("foods") or []:
             reference = library.get(food.get("id")) or {}
             foods.append({**food, "library_name": reference.get("display_name", "")})
+        from meal_option_selection_v2 import option_ref
         previews.append({
+            "option_ref": option_ref(option),
             "title": option.get("title") or "", "foods": foods,
             "notes": option.get("notes") or [], "order": option.get("order") or [],
             "nutrition": value, "provisional": option_pending,
@@ -195,6 +197,7 @@ def _resolve_peri_for_day(drafts, library, events):
                 "phase": phase, "title": PERI_LABELS[phase],
                 "source_meal_name": matching[0].get("name") if len(matching) == 1 else "",
                 "draft_id": entry["id"], "updated_at": entry["updated_at"],
+                "publication_state": entry["publication_state"],
                 "deduplicated_match_source": bool(event.get("deduplicated_match_source")),
             })
             rows.append(detail)
@@ -251,6 +254,7 @@ def resolve(c, athlete_id, colors_by_day, events=None, matches=None, match_overr
             preview.update({
                 "color": color, "draft_id": entry["id"],
                 "source_meal_name": meal.get("name"),
+                "publication_state": entry["publication_state"],
                 "updated_at": entry["updated_at"],
             })
             meals[slot] = preview

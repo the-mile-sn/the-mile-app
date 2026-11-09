@@ -224,7 +224,7 @@ async function loadModel(){
  resetSupplementForAthlete(athleteId);
  resetPlayerPreviewForAthlete(athleteId);
  resetPeriForAthlete(athleteId);
- selectedCalendarDay=null;selectedNutritionWeek=null;
+ selectedCalendarDay=null;selectedNutritionWeek=null;expandedCalendarMealDate=null;expandedCalendarMealKey=null;
  const nextModel=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles");
  if($("athlete").value!==athleteId)return;
  model=nextModel;profileEditing=false;render();renderProfileSummary();
@@ -1149,7 +1149,8 @@ function renderNutritionTotals(host,label,result,referenceWeight=null){
   host.appendChild(block);
 }
 
-let liveCalendarPlans={};
+let liveCalendarPlans={},mealChoiceAssignments={enabled:false,drafts:[],published:[]};
+let expandedCalendarMealDate=null,expandedCalendarMealKey=null;
 let editorFoodLibrary=null,editorFoodLibraryPromise=null;
 function loadEditorFoodLibrary(){
  if(editorFoodLibrary)return Promise.resolve(editorFoodLibrary);
@@ -1189,9 +1190,68 @@ function checkMealNutrition(record){
  if(!opts.length)return "mismatch";
  return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
 }
+// Published choices change the effective nutritional totals only for the
+// opted-in athlete. Draft changes never affect these totals or the player app.
+function publishedNutritionOption(date,meal,record,eventId="",assignments=mealChoiceAssignments){
+ if(!assignments.enabled||!record||record.status!=="ok")return null;
+ const selection=(assignments.published||[]).find(row=>
+  row.meal_date===date&&row.meal_key===meal&&(row.event_id||"")===eventId);
+ if(!selection||selection.source_draft_id!==record.draft_id||
+    (selection.source_color||null)!==(record.color||null))return null;
+ const option=record.options?.[selection.option_index-1];
+ return option?.option_ref===selection.option_ref?option:null;
+}
+// Immediate backoffice preview. A pending change updates displayed nutrition
+// now, but never changes the published choice consumed by the player app.
+function previewNutritionOption(date,meal,record,eventId="",assignments=mealChoiceAssignments){
+ if(!assignments.enabled||!record||record.status!=="ok")return null;
+ const draft=(assignments.drafts||[]).find(row=>
+  row.meal_date===date&&row.meal_key===meal&&(row.event_id||"")===eventId);
+ if(draft?.action==="clear")return null;
+ if(draft?.action==="select"){
+  const candidate=record.options?.[draft.option_index-1];
+  if(candidate&&draft.source_draft_id===record.draft_id&&
+     (draft.source_color||null)===(record.color||null)&&
+     draft.option_ref===candidate.option_ref)return candidate;
+ }
+ return publishedNutritionOption(date,meal,record,eventId,assignments);
+}
+function effectiveLiveDayNutrition(date,record,assignments=mealChoiceAssignments){
+ if(!record?.nutrition||!assignments.enabled)return record?.nutrition;
+ const effective={...record.nutrition};
+ const substitute=(meal,source,eventId="")=>{
+  const selected=previewNutritionOption(date,meal,source,eventId,assignments);
+  if(!selected?.nutrition||!source.nutrition)return;
+  for(const key of ["kcal","protein_g","carbs_g","fat_g"])
+   effective[key]+=selected.nutrition[key]-source.nutrition[key];
+ };
+ for(const [meal,source] of Object.entries(record.meals||{}))substitute(meal,source);
+ for(const source of record.peri_events||[])substitute(source.phase,source,source.event_id);
+ return effective;
+}
 function renderLiveMealOptions(day,meal,overrideRecord=null){
- const box=document.createElement("div");box.className="calendar-day-meal-options";
+ const eventId=overrideRecord?.event_id||"";
+ const choiceKey=row=>row.meal_date===day.date&&row.meal_key===meal&&(row.event_id||"")===eventId;
+ const pendingChoice=(mealChoiceAssignments.drafts||[]).find(choiceKey);
+ const publishedChoice=(mealChoiceAssignments.published||[]).find(choiceKey);
  const record=overrideRecord||liveCalendarPlans[day.date]?.meals?.[meal];
+ const editable=Boolean(mealChoiceAssignments.enabled&&model?.athlete?.meal_option_selection_enabled&&record?.status==="ok"&&record?.publication_state==="published");
+ const updateChoice=async(optionIndex)=>{
+  try{
+   const base=matchBase()+"/meal-options";
+   await request(base,{method:"PUT",body:JSON.stringify({date:day.date,meal,event_id:eventId,option_index:optionIndex})});
+   status(optionIndex==null?"Remoção guardada. Publica para voltar a mostrar todas as opções.":"Seleção guardada. Publica para a disponibilizar na app.","success");
+   await loadCalendar();
+  }catch(err){status("Não foi possível guardar a seleção: "+err.message,"warn");}
+ };
+ const publishChoice=async()=>{
+  try{
+   await request(matchBase()+"/meal-options",{method:"POST",body:JSON.stringify({action:"publish",date:day.date,meal,event_id:eventId})});
+   status(pendingChoice?.action==="clear"?"Seleção removida e publicada.":"Opção publicada para o jogador.","success");
+   await loadCalendar();
+  }catch(err){status("Não foi possível publicar a seleção: "+err.message,"warn");}
+ };
+ const box=document.createElement("div");box.className="calendar-day-meal-options";
  const state=record?.status||"unavailable";
  const parity=checkMealNutrition(record);
  // Only actionable discrepancies are displayed; successful parity stays silent.
@@ -1207,10 +1267,27 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   const note=document.createElement("p");note.className="calendar-day-options-note";
   note.textContent=messages[state]||"Opções não disponíveis para esta refeição.";box.append(note);return box;
  }
+ if(mealChoiceAssignments.enabled&&model?.athlete?.meal_option_selection_enabled&&record.publication_state!=="published"){
+  const notice=document.createElement("small");notice.className="calendar-day-options-note";
+  notice.textContent="Publica primeiro este Plano na aba Planos para poderes selecionar uma opção para a app.";
+  box.append(notice);
+ }
  const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
  for(const [index,option] of (record.options||[]).entries()){
   const section=document.createElement("details");section.className="calendar-day-meal-option calendar-option-accordion";
-  const title=document.createElement("summary");title.className="calendar-option-accordion-heading";const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");const arrow=document.createElement("span");arrow.className="calendar-option-accordion-caret";arrow.setAttribute("aria-hidden","true");arrow.textContent="⌄";title.append(label,arrow);section.append(title);
+  const title=document.createElement("summary");title.className="calendar-option-accordion-heading";const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");const arrow=document.createElement("span");arrow.className="calendar-option-accordion-caret";arrow.setAttribute("aria-hidden","true");arrow.textContent="⌄";
+  title.append(label);
+  if(editable){
+   const chosenDraft=pendingChoice?.action==="select"&&pendingChoice.option_index===index+1;
+   const chosenPub=!pendingChoice&&publishedNutritionOption(day.date,meal,record,eventId)===option;
+   const pick=document.createElement("button");pick.type="button";pick.className="calendar-option-choice-button";
+   pick.textContent=chosenDraft?"Guardada":chosenPub?"Publicada":"Selecionar";
+   pick.setAttribute("aria-label","Guardar opção "+(index+1)+" de "+(names[meal]||overrideRecord?.title||meal)+" para "+day.date);
+   if(chosenDraft||chosenPub)pick.classList.add("is-chosen");
+   pick.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();pick.disabled=true;updateChoice(index+1);});
+   title.append(pick);
+  }
+  title.append(arrow);section.append(title);
   const foods=option.foods||[],notes=option.notes||[];
   const order=Array.isArray(option.order)&&option.order.length===foods.length+notes.length?
    option.order:[...foods.map((_,index)=>({type:"food",index})),...notes.map((_,index)=>({type:"note",index}))];
@@ -1235,6 +1312,24 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   grid.append(section);
  }
  box.append(grid);
+ if(editable){
+  const actions=document.createElement("div");actions.className="calendar-option-choice-actions";
+  const summary=document.createElement("small");summary.className="calendar-option-choice-summary";
+  if(pendingChoice)summary.textContent=pendingChoice.action==="clear"?"Remoção guardada · por publicar":"Opção "+pendingChoice.option_index+" guardada · por publicar";
+  else if(publishedChoice){
+   const match=Boolean(publishedNutritionOption(day.date,meal,record,eventId));
+   summary.textContent=match?"Opção "+publishedChoice.option_index+" publicada":"Seleção anterior desatualizada · rever";
+  }else summary.textContent="Sem seleção específica · o jogador vê todas as opções";
+  actions.append(summary);
+  if(pendingChoice){
+   const publish=document.createElement("button");publish.type="button";publish.className="calendar-option-publish-button";publish.textContent="Publicar alteração";
+   publish.onclick=()=>{publish.disabled=true;publishChoice();};actions.append(publish);
+  }else if(publishedChoice){
+   const clear=document.createElement("button");clear.type="button";clear.className="calendar-option-clear-button";clear.textContent="Remover seleção";
+   clear.onclick=()=>{clear.disabled=true;updateChoice(null);};actions.append(clear);
+  }
+  box.append(actions);
+ }
  if(state==="provisional"){
   const note=document.createElement("p");note.className="calendar-day-options-note";
   note.textContent="Valores provisórios: há quantidades por confirmar.";box.append(note);
@@ -1253,11 +1348,11 @@ function renderDayPreview(day,host){
  const optionButtons=new Map();let expandedMeal=null;
  function toggleOptions(meal){
   if(expandedMeal===meal&&!optionsPanel.hidden){
-   expandedMeal=null;optionsPanel.hidden=true;
+   expandedMeal=null;expandedCalendarMealDate=null;expandedCalendarMealKey=null;optionsPanel.hidden=true;
    for(const button of optionButtons.values()){button.setAttribute("aria-expanded","false");button.classList.remove("is-active");}
    return;
   }
-  expandedMeal=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
+  expandedMeal=meal;expandedCalendarMealDate=day.date;expandedCalendarMealKey=meal;optionsPanel.hidden=false;optionsPanel.replaceChildren();
   const selectedColor=mealColorsForDay(day).find(entry=>entry.meal===meal)?.color||"";
   optionsPanel.dataset.palette=selectedColor;
   const heading=document.createElement("div");heading.className="calendar-wide-options-heading";
@@ -1297,11 +1392,15 @@ function renderDayPreview(day,host){
   });
   colorBar.append(choose);
   const liveMeal=liveCalendarPlans[day.date]?.meals?.[entry.meal];
-  const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?liveMeal.nutrition:null;
+  const selectedOption=previewNutritionOption(day.date,entry.meal,liveMeal);
+  const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?(selectedOption?.nutrition||liveMeal.nutrition):null;
   if(newAverage){
    const macros=document.createElement("div");macros.className="day-meal-nutrients calendar-live-meal-nutrients";
    macros.textContent=[formatNutrition(newAverage.kcal,0)+" kcal",formatNutrition(newAverage.protein_g)+" g",formatNutrition(newAverage.carbs_g)+" g",formatNutrition(newAverage.fat_g)+" g"].join(" · ");
-   macros.title="Média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
+   macros.title=selectedOption?
+    ((mealChoiceAssignments.drafts||[]).some(row=>row.meal_date===day.date&&row.meal_key===entry.meal)
+      ?"Pré-visualização da opção guardada · por publicar":"Opção publicada pelo nutricionista"):
+    "Média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
    unavailable.textContent=entry.color?"Novo plano: valores por confirmar":"—";cell.append(unavailable);
@@ -1314,6 +1413,9 @@ function renderDayPreview(day,host){
   grid.appendChild(cell);
  }
  host.append(grid,optionsPanel);
+ // Keep the same meal expanded across the save -> publish refresh.
+ if(expandedCalendarMealDate===day.date&&optionButtons.has(expandedCalendarMealKey))
+  toggleOptions(expandedCalendarMealKey);
  // New peri prescription previews are read only. Historical protocols remain
  // available strictly for comparison, never mixed into the new totals.
  const livePeriOptions=liveCalendarPlans[day.date]?.peri_events||[];
@@ -1326,7 +1428,8 @@ function renderDayPreview(day,host){
    heading.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
    line.append(heading);
    const mac=document.createElement("small");mac.className="calendar-live-source";
-   mac.textContent=peri.nutrition?nutritionSummary(peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
+   const selectedPeri=previewNutritionOption(day.date,peri.phase,peri,peri.event_id);
+   mac.textContent=peri.nutrition?nutritionSummary(selectedPeri?.nutrition||peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
    line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
    details.append(line);
   }
@@ -1335,6 +1438,11 @@ function renderDayPreview(day,host){
  const liveDay=liveCalendarPlans[day.date];
  const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
  const currentHeading=document.createElement("h3");currentHeading.textContent="Resumo nutricional do dia";currentBlock.append(currentHeading);
+ if(mealChoiceAssignments.enabled&&(mealChoiceAssignments.drafts||[]).some(row=>row.meal_date===day.date)){
+  const notice=document.createElement("small");notice.className="calendar-option-choice-summary";
+  notice.textContent="Pré-visualização: inclui escolhas guardadas ainda por publicar. A app mantém a seleção publicada.";
+  currentBlock.append(notice);
+ }
  if(!liveDay){
   const warning=document.createElement("p");warning.className="calendar-live-warning";
   warning.textContent="Sem acesso aos planos atuais. Não são usados valores antigos como substituição.";currentBlock.append(warning);
@@ -1344,7 +1452,7 @@ function renderDayPreview(day,host){
   warning.textContent="Resumo indisponível: existem prescrições incompletas"+
    (issues.length?" · "+issues.map(x=>(names[x.meal]||x.phase||x.meal_name||"Momento peri")+": "+x.status).join("; "):"")+".";
   currentBlock.append(warning);
- }else nutritionCards(currentBlock,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
+ }else nutritionCards(currentBlock,effectiveLiveDayNutrition(day.date,liveDay),dayWeightReferences?.[day.date]?.weight_kg);
  host.append(currentBlock);
 }
 let dayWeightReferences={};
@@ -1353,8 +1461,13 @@ async function loadCalendar(){
   const first=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1);
   const last=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0);
   await loadEditorFoodLibrary().catch(()=>null);
-  const data=await request(matchBase()+"/calendar?start="+isoDay(first)+"&end="+isoDay(last)+"&include_food_plans=1");
+  const from=isoDay(first),to=isoDay(last);
+  const [data,choices]=await Promise.all([
+   request(matchBase()+"/calendar?start="+from+"&end="+to+"&include_food_plans=1"),
+   request(matchBase()+"/meal-options?start="+from+"&end="+to)
+  ]);
   liveCalendarPlans=data.live_food_plans?.days||{};
+  mealChoiceAssignments=choices;
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
   effectiveAdminColorsByDay=data.effective_colors||{};
   periByDay=Object.fromEntries(data.days.map(d=>[d.date,(data.peri_meals||[]).filter(p=>p.event_date===d.date)]));
@@ -1380,23 +1493,28 @@ async function loadCalendar(){
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
   const step=delta=>{const date=new Date(monday);date.setDate(date.getDate()+delta);selectedNutritionWeek=isoDay(date);loadCalendar().catch(e=>status(e.message,"warn"));};
   previous.addEventListener("click",()=>step(-7));next.addEventListener("click",()=>step(7));
-  const [weeklyData,weeklyRefs]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
+  const [weeklyData,weeklyRefs,weeklyChoices]=await Promise.all([request(matchBase()+"/calendar?start="+isoDay(monday)+"&end="+isoDay(sunday)+"&include_food_plans=1"),request(matchBase()+"/reference-weights?start="+isoDay(monday)+"&end="+isoDay(sunday)),request(matchBase()+"/meal-options?start="+isoDay(monday)+"&end="+isoDay(sunday))]);
   dayWeightReferences={...(dayWeightReferences||{}),...(weeklyRefs.weights_by_date||{})};
   const liveByDay=weeklyData.live_food_plans?.days||{};
   const liveEntries=weeklyData.days.map(d=>liveByDay[d.date]).filter(Boolean);
   const fullDays=liveEntries.filter(x=>x.state==="complete").length;
+  if(weeklyChoices.enabled&&(weeklyChoices.drafts||[]).length){
+   const notice=document.createElement("small");notice.className="calendar-option-choice-summary";
+   notice.textContent="Pré-visualização semanal: inclui escolhas ainda por publicar.";
+   weekly.append(notice);
+  }
   const complete=weeklyData.days.length===7&&fullDays===7;
   const coverage=document.createElement("p");coverage.className="calendar-week-coverage";
   coverage.textContent=fullDays+"/7 dias com prescrição nutricional completa · Fonte: Planos";
   if(complete){
    const liveSums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-   for(const day of liveEntries)for(const key of Object.keys(liveSums))liveSums[key]+=day.nutrition[key];
+   for(const [index,day] of liveEntries.entries())for(const key of Object.keys(liveSums))liveSums[key]+=effectiveLiveDayNutrition(weeklyData.days[index].date,day,weeklyChoices)[key];
    const average=Object.fromEntries(Object.entries(liveSums).map(([key,value])=>[key,value/7]));
    const relativeMeans={};
    for(const key of Object.keys(liveSums)){
     const ratios=weeklyData.days.map((day,index)=>{
      const weight=Number(dayWeightReferences[day.date]?.weight_kg);
-     return Number.isFinite(weight)&&weight>0?liveEntries[index].nutrition[key]/weight:null;
+     return Number.isFinite(weight)&&weight>0?effectiveLiveDayNutrition(day.date,liveEntries[index],weeklyChoices)[key]/weight:null;
     });
     if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/7;
    }

@@ -36,6 +36,7 @@ import food_library_v2
 import food_plan_drafts_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
+import meal_option_selection_v2
 import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
@@ -277,6 +278,7 @@ def initialize():
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
+        meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
@@ -1593,6 +1595,33 @@ def application(env, start_response):
                 if saved is None: raise Problem(404,'not_found')
                 return respond(200,{'override':saved})
 
+            # Independent nutrition choice publication. Save is a draft only;
+            # the player app never receives unapproved selections.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/meal-options') and method in ('GET','PUT','POST'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                try:
+                    if method=='GET':
+                        query=parse_qs(env.get('QUERY_STRING',''))
+                        return respond(200,meal_option_selection_v2.read(
+                            c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0]))
+                    body=read_json(env)
+                    date=body.get('date')
+                    meal=body.get('meal')
+                    event_id=body.get('event_id','')
+                    if method=='PUT':
+                        if 'option_index' not in body: raise Problem(400,'invalid_option_index')
+                        saved=meal_option_selection_v2.stage(
+                            c,aid,date,meal,event_id,body['option_index'],user['id'])
+                        return respond(200,saved)
+                    if body.get('action')!='publish': raise Problem(400,'invalid_selection_action')
+                    result=meal_option_selection_v2.publish(
+                        c,aid,date,meal,event_id,user['id'])
+                    return respond(200,result)
+                except ValueError as err:
+                    raise Problem(400,str(err))
+
             if path.startswith('/api/v2/athletes/') and path.endswith('/calendar') and method == 'GET':
                 if not user:
                     raise Problem(401, 'unauthorized')
@@ -1967,11 +1996,14 @@ def application(env, start_response):
                 admin(user)
                 athlete_id=path.split('/')[4]
                 linked=c.execute("SELECT u.id,u.birth_date,u.photo_mime FROM v2_player_links l JOIN users u ON u.id=l.user_id AND u.role='player' WHERE l.athlete_id=?",(athlete_id,)).fetchone()
-                details=c.execute("SELECT followup_plan,followup_renewal_date FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone()
+                details=c.execute("SELECT followup_plan,followup_renewal_date,meal_option_selection_enabled FROM v2_athletes WHERE id=?",(athlete_id,)).fetchone()
                 if details is None: raise Problem(404,'not_found')
                 if method=='GET':
-                    return respond(200,{'details':{'birth_date':linked['birth_date'] if linked else None,'has_photo':bool(linked and linked['photo_mime']),'user_id':linked['id'] if linked else None,'followup_plan':details['followup_plan'],'followup_renewal_date':details['followup_renewal_date']}})
+                    return respond(200,{'details':{'birth_date':linked['birth_date'] if linked else None,'has_photo':bool(linked and linked['photo_mime']),'user_id':linked['id'] if linked else None,'followup_plan':details['followup_plan'],'followup_renewal_date':details['followup_renewal_date'],'meal_option_selection_enabled':bool(details['meal_option_selection_enabled'])}})
                 body=read_json(env)
+                # Omitted by older Planning profile forms: preserve the saved preference.
+                selection_enabled=body.get('meal_option_selection_enabled',bool(details['meal_option_selection_enabled']))
+                if not isinstance(selection_enabled,bool): raise Problem(400,'invalid_meal_option_selection')
                 followup=body.get('followup_plan',details['followup_plan'])
                 if followup in ('',None): followup=None
                 if followup not in (None,'Pro','Elite'): raise Problem(400,'invalid_followup_plan')
@@ -1995,12 +2027,12 @@ def application(env, start_response):
                 try:
                     athlete=microcycles_v2.update_athlete_profile(c,athlete_id,body.get('name'),body.get('weight_kg'),body.get('height_cm'),body.get('profile_notes',''),body.get('sex'),body.get('field_position', current['field_position']),body.get('arm_point', current['arm_point']),body.get('thigh_point', current['thigh_point']),commit=False)
                 except ValueError: raise Problem(400,'invalid_athlete_profile')
-                c.execute("UPDATE v2_athletes SET followup_plan=?,followup_renewal_date=? WHERE id=?",(followup,renewal,athlete_id))
+                c.execute("UPDATE v2_athletes SET followup_plan=?,followup_renewal_date=?,meal_option_selection_enabled=? WHERE id=?",(followup,renewal,int(selection_enabled),athlete_id))
                 if linked:
                     if birth is not None:c.execute("UPDATE users SET birth_date=? WHERE id=? AND role='player'",(birth,linked['id']))
                     if photo_bytes is not None:c.execute("UPDATE users SET photo=?,photo_mime=? WHERE id=? AND role='player'",(photo_bytes,photo_mime,linked['id']))
                 c.commit()
-                athlete.update({'followup_plan':followup,'followup_renewal_date':renewal,'birth_date':birth,'has_photo':bool(photo_bytes or linked and linked['photo_mime']),'user_id':linked['id'] if linked else None})
+                athlete.update({'followup_plan':followup,'followup_renewal_date':renewal,'meal_option_selection_enabled':selection_enabled,'birth_date':birth,'has_photo':bool(photo_bytes or linked and linked['photo_mime']),'user_id':linked['id'] if linked else None})
                 return respond(200,{'athlete':athlete})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/batch') and method == 'PUT':
                 if not user: raise Problem(401, 'unauthorized')

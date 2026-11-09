@@ -93,6 +93,9 @@ def initialize(c):
     for name, definition in (("height_cm","REAL"),("profile_notes","TEXT"),("sex","TEXT"),("field_position","TEXT"),("arm_point","REAL"),("thigh_point","REAL"),("followup_plan","TEXT"),("followup_renewal_date","TEXT"),("archived_at","BIGINT"),("archived_by","TEXT")):
         if name not in athlete_columns:
             c.execute("ALTER TABLE v2_athletes ADD COLUMN "+name+" "+definition)
+    # Opt-in only. Existing and future athletes always start with the usual multi-option view.
+    if "meal_option_selection_enabled" not in athlete_columns:
+        c.execute("ALTER TABLE v2_athletes ADD COLUMN meal_option_selection_enabled INTEGER NOT NULL DEFAULT 0")
     if "match_time" not in columns:
         c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
     if "dish_id" not in _table_columns(c, "v2_weekly_menus"):
@@ -133,11 +136,11 @@ def create_athlete(c, name, commit=True, weight_kg=None):
         c.execute("INSERT INTO v2_microcycle_rows(athlete_id,classification,configured) VALUES(?,?,0)",
                   (athlete_id, classification))
     if commit: c.commit()
-    return {"id": athlete_id, "name": name}
+    return {"id": athlete_id, "name": name, "meal_option_selection_enabled": False}
 
 
 def get_model(c, athlete_id):
-    athlete = c.execute("SELECT a.id,a.name,a.weight_kg,a.height_cm,a.profile_notes,a.field_position,a.arm_point,a.thigh_point,a.archived_at,u.sex FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id LEFT JOIN users u ON u.id=l.user_id WHERE a.id=?", (athlete_id,)).fetchone()
+    athlete = c.execute("SELECT a.id,a.name,a.weight_kg,a.height_cm,a.profile_notes,a.field_position,a.arm_point,a.thigh_point,a.archived_at,a.meal_option_selection_enabled,u.sex FROM v2_athletes a LEFT JOIN v2_player_links l ON l.athlete_id=a.id LEFT JOIN users u ON u.id=l.user_id WHERE a.id=?", (athlete_id,)).fetchone()
     if not athlete:
         return None
     configured = c.execute(
@@ -148,7 +151,9 @@ def get_model(c, athlete_id):
         (athlete_id,)).fetchall()
     configured_lookup = {r["classification"]: bool(r["configured"]) for r in configured}
     cell_lookup = {(r["classification"], r["meal"]): r["color"] for r in cells}
-    return {"athlete": dict(athlete), "classifications": [
+    athlete = dict(athlete)
+    athlete["meal_option_selection_enabled"] = bool(athlete["meal_option_selection_enabled"])
+    return {"athlete": athlete, "classifications": [
         {"name": t, "configured": configured_lookup.get(t, False),
          "meals": {meal: cell_lookup.get((t, meal)) for meal in MEALS}}
         for t in TYPES], "colors": list(COLORS), "meals": list(MEALS)}

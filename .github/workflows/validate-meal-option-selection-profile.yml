@@ -1,0 +1,39 @@
+name: Validate opt-in meal option selection profile
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+    paths:
+      - app.py
+      - microcycles_v2.py
+      - static/admin-dashboard.js
+      - static/admin-microcycles.html
+      - test_meal_option_selection_profile_v2.py
+      - test_meal_option_selection_workflow_v2.py
+      - tests/test_meal_option_admin_player_parity.py
+      - tests/admin-meal-choice-nutrition.test.cjs
+      - meal_option_selection_v2.py
+      - food_plan_calendar_bridge_v2.py
+      - .github/workflows/validate-meal-option-selection-profile.yml
+  workflow_dispatch:
+jobs:
+  profile-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout matching player feature branch for source parity
+        uses: actions/checkout@v4
+        with:
+          ref: feature/meal-option-selection-player-20261109
+          path: player-branch
+      - name: Python syntax
+        run: python -m compileall -q app.py microcycles_v2.py meal_option_selection_v2.py food_plan_calendar_bridge_v2.py test_meal_option_selection_profile_v2.py test_meal_option_selection_workflow_v2.py
+      - name: JavaScript syntax
+        run: node --check static/admin-dashboard.js && node --check static/admin-microcycles.js && node --test tests/admin-meal-choice-nutrition.test.cjs
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Validate opt-in default, profile save, legacy compatibility, and permissions
+        run: python -m unittest -v test_meal_option_selection_profile_v2 test_meal_option_selection_workflow_v2
+      - name: Compare nutrition, option refs and food order against player feature
+        run: python -m unittest discover -s tests -p 'test_meal_option_admin_player_parity.py' -v
