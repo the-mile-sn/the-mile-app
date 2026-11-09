@@ -131,6 +131,7 @@ function renderPlanningResults(){
  planningResults.replaceChildren();
  let count=0;
  for(const option of select.options){
+  if(!option.value)continue;
   const name=planningNormalize(option.textContent);
   if(!words.every(term=>name.split(/\s+/).some(part=>part.startsWith(term))))continue;
   const item=document.createElement("button");item.type="button";item.className="tm-planning-result";item.setAttribute("role","option");
