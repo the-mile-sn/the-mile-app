@@ -1189,6 +1189,30 @@ function checkMealNutrition(record){
  if(!opts.length)return "mismatch";
  return fields.every(k=>Math.abs(opts.reduce((v,o)=>v+Number(o.nutrition?.[k]||0),0)/opts.length-Number(record.nutrition?.[k]))<=0.02)?"match":"mismatch";
 }
+// Published choices change the effective nutritional totals only for the
+// opted-in athlete. Draft changes never affect these totals or the player app.
+function publishedNutritionOption(date,meal,record,eventId=""){
+ if(!mealChoiceAssignments.enabled||!record||record.status!=="ok")return null;
+ const selection=(mealChoiceAssignments.published||[]).find(row=>
+  row.meal_date===date&&row.meal_key===meal&&(row.event_id||"")===eventId);
+ if(!selection||selection.source_draft_id!==record.draft_id||
+    (selection.source_color||null)!==(record.color||null))return null;
+ const option=record.options?.[selection.option_index-1];
+ return option?.option_ref===selection.option_ref?option:null;
+}
+function effectiveLiveDayNutrition(date,record){
+ if(!record?.nutrition||!mealChoiceAssignments.enabled)return record?.nutrition;
+ const effective={...record.nutrition};
+ const substitute=(meal,source,eventId="")=>{
+  const selected=publishedNutritionOption(date,meal,source,eventId);
+  if(!selected?.nutrition||!source.nutrition)return;
+  for(const key of ["kcal","protein_g","carbs_g","fat_g"])
+   effective[key]+=selected.nutrition[key]-source.nutrition[key];
+ };
+ for(const [meal,source] of Object.entries(record.meals||{}))substitute(meal,source);
+ for(const source of record.peri_events||[])substitute(source.phase,source,source.event_id);
+ return effective;
+}
 function renderLiveMealOptions(day,meal,overrideRecord=null){
  const eventId=overrideRecord?.event_id||"";
  const choiceKey=row=>row.meal_date===day.date&&row.meal_key===meal&&(row.event_id||"")===eventId;
@@ -1234,7 +1258,7 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   title.append(label);
   if(editable){
    const chosenDraft=pendingChoice?.action==="select"&&pendingChoice.option_index===index+1;
-   const chosenPub=!pendingChoice&&publishedChoice?.option_index===index+1&&publishedChoice.option_ref===option.option_ref;
+   const chosenPub=!pendingChoice&&publishedNutritionOption(day.date,meal,record,eventId)===option;
    const pick=document.createElement("button");pick.type="button";pick.className="calendar-option-choice-button";
    pick.textContent=chosenDraft?"Guardada":chosenPub?"Publicada":"Selecionar";
    pick.setAttribute("aria-label","Guardar opção "+(index+1)+" de "+(names[meal]||overrideRecord?.title||meal)+" para "+day.date);
@@ -1272,7 +1296,7 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
   const summary=document.createElement("small");summary.className="calendar-option-choice-summary";
   if(pendingChoice)summary.textContent=pendingChoice.action==="clear"?"Remoção guardada · por publicar":"Opção "+pendingChoice.option_index+" guardada · por publicar";
   else if(publishedChoice){
-   const match=record.options?.[publishedChoice.option_index-1]?.option_ref===publishedChoice.option_ref;
+   const match=Boolean(publishedNutritionOption(day.date,meal,record,eventId));
    summary.textContent=match?"Opção "+publishedChoice.option_index+" publicada":"Seleção anterior desatualizada · rever";
   }else summary.textContent="Sem seleção específica · o jogador vê todas as opções";
   actions.append(summary);
@@ -1347,11 +1371,12 @@ function renderDayPreview(day,host){
   });
   colorBar.append(choose);
   const liveMeal=liveCalendarPlans[day.date]?.meals?.[entry.meal];
-  const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?liveMeal.nutrition:null;
+  const selectedOption=publishedNutritionOption(day.date,entry.meal,liveMeal);
+  const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?(selectedOption?.nutrition||liveMeal.nutrition):null;
   if(newAverage){
    const macros=document.createElement("div");macros.className="day-meal-nutrients calendar-live-meal-nutrients";
    macros.textContent=[formatNutrition(newAverage.kcal,0)+" kcal",formatNutrition(newAverage.protein_g)+" g",formatNutrition(newAverage.carbs_g)+" g",formatNutrition(newAverage.fat_g)+" g"].join(" · ");
-   macros.title="Média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
+   macros.title=selectedOption?"Opção publicada pelo nutricionista":"Média das opções"+(liveMeal.status==="provisional"?" · provisória":"");cell.append(macros);
   }else{
    const unavailable=document.createElement("small");unavailable.className="day-meal-nutrition-empty";
    unavailable.textContent=entry.color?"Novo plano: valores por confirmar":"—";cell.append(unavailable);
@@ -1376,7 +1401,8 @@ function renderDayPreview(day,host){
    heading.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
    line.append(heading);
    const mac=document.createElement("small");mac.className="calendar-live-source";
-   mac.textContent=peri.nutrition?nutritionSummary(peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
+   const selectedPeri=publishedNutritionOption(day.date,peri.phase,peri,peri.event_id);
+   mac.textContent=peri.nutrition?nutritionSummary(selectedPeri?.nutrition||peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
    line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
    details.append(line);
   }
@@ -1394,7 +1420,7 @@ function renderDayPreview(day,host){
   warning.textContent="Resumo indisponível: existem prescrições incompletas"+
    (issues.length?" · "+issues.map(x=>(names[x.meal]||x.phase||x.meal_name||"Momento peri")+": "+x.status).join("; "):"")+".";
   currentBlock.append(warning);
- }else nutritionCards(currentBlock,liveDay.nutrition,dayWeightReferences?.[day.date]?.weight_kg);
+ }else nutritionCards(currentBlock,effectiveLiveDayNutrition(day.date,liveDay),dayWeightReferences?.[day.date]?.weight_kg);
  host.append(currentBlock);
 }
 let dayWeightReferences={};
@@ -1445,13 +1471,13 @@ async function loadCalendar(){
   coverage.textContent=fullDays+"/7 dias com prescrição nutricional completa · Fonte: Planos";
   if(complete){
    const liveSums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
-   for(const day of liveEntries)for(const key of Object.keys(liveSums))liveSums[key]+=day.nutrition[key];
+   for(const day of liveEntries)for(const key of Object.keys(liveSums))liveSums[key]+=effectiveLiveDayNutrition(weeklyData.days[liveEntries.indexOf(day)].date,day)[key];
    const average=Object.fromEntries(Object.entries(liveSums).map(([key,value])=>[key,value/7]));
    const relativeMeans={};
    for(const key of Object.keys(liveSums)){
     const ratios=weeklyData.days.map((day,index)=>{
      const weight=Number(dayWeightReferences[day.date]?.weight_kg);
-     return Number.isFinite(weight)&&weight>0?liveEntries[index].nutrition[key]/weight:null;
+     return Number.isFinite(weight)&&weight>0?effectiveLiveDayNutrition(day.date,liveEntries[index])[key]/weight:null;
     });
     if(ratios.every(x=>x!==null))relativeMeans[key]=ratios.reduce((a,b)=>a+b,0)/7;
    }
