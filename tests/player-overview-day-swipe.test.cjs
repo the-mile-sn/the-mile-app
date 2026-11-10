@@ -118,26 +118,26 @@ test("Only the overview owns its day swipe; Menus preserves independent week nav
  assert.ok(!source.includes("enableWeekSwipe(strip,offset=>"));
  assert.ok(source.includes('if(isWeek){pendingDailySwipeDirection=0;renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}'));
  assert.ok(source.includes("injectPostMatchCard();\n animateDailySwipeEntry();\n}"));
- assert.ok(html.includes("jogador-v2.js?v=163"));
+ assert.ok(html.includes("jogador-v2.js?v=164"));
  assert.ok(html.includes("jogador-v2.css?v=196"));
 });
-test("Daily swipe animates 35px in the gesture direction for 260ms without opacity changes",()=>{
+test("Daily swipe animates 60px in the gesture direction for 320ms without opacity changes",()=>{
  const h=harness();
  h.swipe(280,110);
  assert.equal(h.page.getDirection(),1);
  h.page.animate();
  assert.equal(h.dayView.animations.length,1);
  const next=h.dayView.animations[0];
- assert.equal(next.frames[0].transform,"translateX(35px)");
+ assert.equal(next.frames[0].transform,"translateX(60px)");
  assert.equal(next.frames[1].transform,"translateX(0)");
- assert.equal(next.options.duration,260);
+ assert.equal(next.options.duration,320);
  assert.ok(next.options.easing.includes("cubic-bezier"));
  assert.ok(next.frames.every(frame=>!Object.hasOwn(frame,"opacity")));
  assert.equal(h.page.getDirection(),0);
  h.swipe(110,280);
  h.page.animate();
  assert.equal(h.dayView.animations.length,2);
- assert.equal(h.dayView.animations[1].frames[0].transform,"translateX(-35px)");
+ assert.equal(h.dayView.animations[1].frames[0].transform,"translateX(-60px)");
  assert.equal(next.canceled,true);
  assert.equal(h.weeklyView.animations.length,0);
 });
