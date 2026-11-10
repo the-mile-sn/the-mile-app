@@ -40,13 +40,18 @@
   if(!filtered.length){const empty=document.createElement("p");empty.textContent=references.length?"Nenhuma referência corresponde aos filtros.":"Ainda não foram importadas fotografias de porções.";grid.append(empty);return;}
   for(const ref of filtered){
    const card=document.createElement("article");card.className="tm-portion-card";
-   const image=document.createElement("img");image.loading="lazy";image.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id);image.alt="Exemplo visual de "+ref.category+", "+ref.total_g+" g";
+   const image=document.createElement("img");image.loading="lazy";image.decoding="async";image.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id);
+   image.alt=ref.photo_subject==="Carne branca"?"Fotografia de carne branca usada como exemplo para carne ou peixe, "+ref.total_g+" g":"Fotografia de "+ref.category+", "+ref.total_g+" g";
    const info=document.createElement("div");info.className="tm-portion-info";
    const label=document.createElement("strong");label.textContent=ref.category;
    const grams=document.createElement("span");grams.className="tm-portion-grams";
-   grams.textContent=ref.rice_g!==null&&ref.rice_g!==undefined?ref.rice_g+" g arroz + "+ref.potato_g+" g batata · "+ref.total_g+" g":ref.total_g+" g";
-   const note=document.createElement("small");note.textContent="Referência visual orientativa";
-   info.append(label,grams,note);
+   grams.textContent=ref.total_g+" g";
+   info.append(label,grams);
+   if(ref.rice_g!==null&&ref.rice_g!==undefined){
+    const breakdown=document.createElement("small");breakdown.className="tm-portion-breakdown";
+    breakdown.textContent=ref.rice_g+" g arroz + "+ref.potato_g+" g batata";
+    info.append(breakdown);
+   }
    const toggle=document.createElement("button");toggle.type="button";toggle.className="tm-portion-toggle";toggle.setAttribute("aria-pressed",String(!!ref.active));
    toggle.textContent=ref.active?"Ativa":"Inativa";
    toggle.addEventListener("click",async()=>{
@@ -62,7 +67,7 @@
   try{
    const result=await request("/api/v2/visual-portions");
    references=result.references||[];loaded=true;
-   feedback.textContent=references.length?"Fotografias importadas. Ainda não são apresentadas aos jogadores.":"Importa o pacote aprovado para adicionar as fotografias. Nenhuma está publicada na app.";
+   feedback.textContent=references.length?"":"Importa o pacote aprovado para adicionar as fotografias.";
    draw();
   }catch(error){feedback.textContent="Não foi possível carregar as fotografias: "+error.message;}
   finally{loading=false;}
@@ -79,7 +84,7 @@
    const result=await res.json();
    if(!res.ok)throw new Error(result.error||"Não foi possível importar.");
    await load();
-   feedback.textContent=result.imported+" referências importadas, com "+result.photos+" fotografias distintas. Ainda não publicadas aos jogadores.";
+   feedback.textContent=result.imported+" referências importadas, com "+result.photos+" fotografias distintas.";
   }catch(error){feedback.textContent="Erro na importação: "+error.message;}
   finally{input.disabled=false;input.value="";}
  });
