@@ -52,7 +52,7 @@ def classify(name):
     dry = bool(_UNCOOKED.search(n))
     if _GENERIC_SIDES.match(n):
         return "Acompanhamentos", dry
-    if re.match(r"^arroz (?:e|com|mais) batata\b", n):
+    if re.match(r"^arroz (?:(?:e|com|mais) )?batata\b", n):
         return "Arroz + Batata", dry
     if re.match(r"^arroz\b", n):
         # Arroz de frango, arroz de peixe etc. are complete dishes, not plain rice.
