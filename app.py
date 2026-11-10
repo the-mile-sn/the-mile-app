@@ -358,6 +358,28 @@ def initialize():
             except Exception:
                 logging.exception('Read-only live peri event association audit failed')
         supplements_v2.initialize(c)
+        if SITE_ROLE == 'admin':
+            # One-off read-only diagnostic: no edits to food library or player plans.
+            try:
+                food_hits = c.execute(
+                    "SELECT display_name,base_name,category,active FROM v2_food_library "
+                    "WHERE lower(display_name) LIKE '%creat%' "
+                    "OR lower(base_name) LIKE '%creat%' "
+                    "OR lower(coalesce(notes,'')) LIKE '%creat%' "
+                    "ORDER BY active DESC, display_name LIMIT 30"
+                ).fetchall()
+                supplement_hits = c.execute(
+                    "SELECT name FROM v2_supplement_library "
+                    "WHERE lower(name) LIKE '%creat%' ORDER BY name LIMIT 15"
+                ).fetchall()
+                active_count = c.execute("SELECT COUNT(*) AS n FROM v2_food_library WHERE active=1").fetchone()['n']
+                logging.warning('READ-ONLY creatina food search diagnostic: %s', {
+                    'active_foods_total': active_count,
+                    'matching_food_rows': [dict(row) for row in food_hits],
+                    'matching_supplements': [row['name'] for row in supplement_hits],
+                })
+            except Exception:
+                logging.exception('READ-ONLY creatina food search diagnostic failed')
         assessments_v2.initialize(c)
         monitoring_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
