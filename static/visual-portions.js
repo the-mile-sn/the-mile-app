@@ -56,7 +56,7 @@
    toggle.textContent=ref.active?"Ativa":"Inativa";
    toggle.addEventListener("click",async()=>{
     toggle.disabled=true;
-    try{const res=await request("/api/v2/visual-portions/"+encodeURIComponent(ref.id),{method:"PUT",body:JSON.stringify({active:!ref.active})});ref.active=!!res.active;draw();}
+    try{const res=await request("/api/v2/visual-portions/"+encodeURIComponent(ref.id),{method:"PUT",body:JSON.stringify({active:!ref.active})});ref.active=!!res.active;draw();if(!previewBody.hidden&&previewAthlete.value)previewForAthlete();}
     catch(e){feedback.textContent="Não foi possível alterar a referência: "+e.message;toggle.disabled=false;}
    });
    card.append(image,info,toggle);grid.append(card);
@@ -85,6 +85,7 @@
    if(!res.ok)throw new Error(result.error||"Não foi possível importar.");
    await load();
    feedback.textContent=result.imported+" referências importadas, com "+result.photos+" fotografias distintas.";
+   if(!previewBody.hidden&&previewAthlete.value)previewForAthlete();
   }catch(error){feedback.textContent="Erro na importação: "+error.message;}
   finally{input.disabled=false;input.value="";}
  });
