@@ -2878,15 +2878,18 @@ function renderLibraryPrescriptionRules(values){
  $("supp-lib-add-rule").onclick=()=>add({rule:"daily",dose:"",moment:"",timing_text:""});
 }
 let supplementLibrary=[];
+const normalizeSupplementQuery=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT");
+const supplementRank=(item,q)=>{const name=normalizeSupplementQuery(item.name);return !q||name.startsWith(q)?0:name.split(/\s+/).some(word=>word.startsWith(q))?1:name.includes(q)?2:3;};
+
 function filterSupplementLists(){
- const q=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");
- const lq=$("supp-library-search").value.trim().toLocaleLowerCase("pt-PT");
+ const q=normalizeSupplementQuery($("supp-assign-search").value.trim());
+ const lq=normalizeSupplementQuery($("supp-library-search").value.trim());
  const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list"),suggestions=$("supp-search-options");suggestions.replaceChildren();
  select.replaceChildren();list.replaceChildren();
  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar...";select.append(empty);
- for(const item of supplementLibrary){
-  const hay=[item.name,item.dose,item.note,item.timing_text].join(" ").toLocaleLowerCase("pt-PT");
-  if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}const suggestion=document.createElement("option");suggestion.value=item.name;suggestions.append(suggestion);
+ for(const item of [...supplementLibrary].sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt"))){
+  const hay=normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" "));
+  if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}
   if(!lq||!hay.includes(lq))continue;
   const row=document.createElement("div");row.className="event-admin-row";
   if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+item.id+"/image";img.alt=item.name;img.style.cssText="height:65px;width:55px;object-fit:contain";row.append(img);}
@@ -2901,6 +2904,12 @@ function filterSupplementLists(){
  }
  if([...select.options].some(option=>option.value===previous))select.value=previous;
 }
+const supplementSearchInput=$("supp-assign-search"),supplementDropdown=$("supp-search-dropdown");
+function showSupplementDropdown(){const q=normalizeSupplementQuery(supplementSearchInput.value.trim());supplementDropdown.replaceChildren();const matches=[...supplementLibrary].filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(q)).sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt")).slice(0,60);for(const item of matches){const button=document.createElement("button");button.type="button";button.className="supp-search-result";button.setAttribute("role","option");button.textContent=item.name;button.addEventListener("pointerdown",e=>e.preventDefault());button.onclick=()=>{supplementSearchInput.value=item.name;$("supp-lib-select").value=item.id;supplementDropdown.hidden=true;supplementSearchInput.blur();};supplementDropdown.append(button);}if(!matches.length){const empty=document.createElement("div");empty.className="supp-search-empty";empty.textContent="Sem resultados";supplementDropdown.append(empty);}supplementDropdown.hidden=false;}
+supplementSearchInput.addEventListener("focus",showSupplementDropdown);
+supplementSearchInput.addEventListener("input",showSupplementDropdown);
+supplementSearchInput.addEventListener("keydown",e=>{if(e.key==="Escape"){supplementDropdown.hidden=true;}if(e.key==="Enter"&&!supplementDropdown.hidden){const first=supplementDropdown.querySelector("button");if(first){e.preventDefault();first.click();}}});
+supplementSearchInput.addEventListener("blur",()=>{setTimeout(()=>{supplementDropdown.hidden=true;},120);});
 $("supp-assign-search").addEventListener("input",()=>{const exact=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT"));$("supp-lib-select").value=exact?.id||"";});
 $("supp-library-search").addEventListener("input",filterSupplementLists);
 async function loadSupplementLibrary(){
