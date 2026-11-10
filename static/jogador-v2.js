@@ -497,6 +497,7 @@ async function show(t){
  const animateTransition=oldIndex!==newIndex&&oldIndex>=0;
  tab=t;document.body.classList.toggle("profile-active",t==="profile");
  for(const key of ["overview","plans","assessments","menus","profile"])$(key).hidden=key!==(t==="assessments"?"plans":t);
+ window.themileRecipes?.syncHeaderBack?.();
  for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));
  document.querySelector(".welcome").hidden=true;
  if(animateTransition&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
