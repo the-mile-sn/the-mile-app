@@ -770,7 +770,7 @@ async function loadMenus(){
     const section=document.createElement("section");section.className="menu-day-card";
     const calendarDay=calendar.find(item=>item.date===date);
     const effectiveClassification=calendarDay?.classification||"Geral";
-    const title=document.createElement("h3");title.textContent=day.toLocaleDateString("pt-PT",{weekday:"long",day:"2-digit",month:"short"})+" · "+effectiveClassification;section.appendChild(title);
+    const title=document.createElement("h3");title.className="menu-day-heading";const dateLabel=document.createElement("span");const formatted=day.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});dateLabel.textContent=formatted.charAt(0).toLocaleUpperCase("pt-PT")+formatted.slice(1);const mdLabel=document.createElement("span");mdLabel.className="menu-day-classification";mdLabel.textContent=effectiveClassification;title.append(dateLabel,mdLabel);section.appendChild(title);
     for(const meal of ["lunch","dinner"]){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
       const line=document.createElement("div");line.className="menu-meal-card";
