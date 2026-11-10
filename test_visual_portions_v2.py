@@ -55,11 +55,22 @@ class VisualPortionsTests(unittest.TestCase):
         self.assertEqual(again["imported"],3)
         self.assertEqual(len(portions.list_references(self.c)),3)
         items=portions.list_references(self.c)
-        self.assertIn("Carne branca",[row["category"] for row in items])
-        self.assertNotIn("Carne / Peixe",[row["category"] for row in items])
+        self.assertIn("Carne / Peixe",[row["category"] for row in items])
+        meat=next(row for row in items if row["category"]=="Carne / Peixe")
+        self.assertEqual(meat["photo_subject"], "Carne branca")
         mix=next(row for row in items if row["category"]=="Arroz + Batata")
         self.assertEqual(mix["rice_g"]+mix["potato_g"],mix["total_g"])
         self.assertTrue(portions.get_image(self.c,mix["id"]).startswith(b"RIFF"))
+
+    def test_old_white_meat_rows_migrate_to_shared_meat_fish_category(self):
+        portions.import_approved_archive(self.c,approved_zip())
+        meat=next(row for row in portions.list_references(self.c) if row["category"]=="Carne / Peixe")
+        self.c.execute("UPDATE v2_visual_portions SET category='Carne branca' WHERE id=?", (meat["id"],))
+        portions.initialize(self.c)
+        changed=next(row for row in portions.list_references(self.c) if row["id"]==meat["id"])
+        self.assertEqual(changed["category"],"Carne / Peixe")
+        self.assertEqual(changed["photo_subject"],"Carne branca")
+        self.assertTrue(portions.get_image(self.c,meat["id"]))
 
     def test_deactivate_without_deleting(self):
         portions.import_approved_archive(self.c,approved_zip())
