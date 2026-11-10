@@ -3018,3 +3018,5 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days
 #calendar-section #calendar-mobile-event-toggle{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important}
 #calendar-section #calendar-mobile-event-toggle .calendar-mobile-event-plus{display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;vertical-align:middle!important;transform:translateY(-1px)}
 #calendar-section #calendar-mobile-event-toggle .calendar-mobile-event-label{display:inline-flex!important;align-items:center!important;line-height:1.25!important}
+
+#calendar-section #calendar-mobile-event-toggle>span:not(.calendar-mobile-event-plus){display:inline-flex!important;align-items:center!important;line-height:1.2!important}
