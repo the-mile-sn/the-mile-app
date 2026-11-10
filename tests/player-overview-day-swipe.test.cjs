@@ -6,7 +6,7 @@ const fs=require("node:fs");
 const source=fs.readFileSync("static/jogador-v2.js","utf8");
 const html=fs.readFileSync("static/jogador-v2.html","utf8");
 const css=fs.readFileSync("static/jogador-v2.css","utf8");
-const first=source.indexOf("let overviewSwipeDirection=0;");
+const first=source.indexOf("function shiftOverviewDay(offset){");
 const last=source.indexOf("function revokePlayerView(){",first);
 assert.ok(first>0&&last>first,"Actual daily swipe functions must exist");
 const functions=source.slice(first,last);
@@ -37,8 +37,7 @@ function harness({mode="day",tab="overview",hidden=false,day=new Date(2026,10,8,
   enableOverviewDaySwipe(element);
   return {
    getDate:()=>day,getWeeklySelection:()=>weeklySelection,
-   shift:shiftOverviewDay,animate:animateOverviewDaySwipe,
-   getDirection:()=>overviewSwipeDirection
+   shift:shiftOverviewDay
   };
  `);
  const page=factory(root,()=>({overflowX:"visible"}),{innerWidth:390},$,
@@ -78,9 +77,7 @@ test("Weekly view retains its mode and highlights consecutive dates",()=>{
  assert.equal(localDate(h.page.getDate()),"2026-11-08");
  assert.equal(h.page.getWeeklySelection(),null);
  assert.equal(h.renderCalls(),1);
- h.page.animate();
- assert.ok(h.weeklyView.classList.has("overview-swipe-enter-prev"));
- assert.equal(h.page.getDirection(),0);
+ assert.equal(h.weeklyView.classList.list.size,0);
 });
 test("Normal taps, short drags and vertical scroll do not change the date",()=>{
  const h=harness();
@@ -110,14 +107,18 @@ test("Only the overview owns its day swipe; Menus preserves independent week nav
  assert.ok(source.includes('enableWeekSwipe($("menu-week-strip")'));
  assert.ok(!source.includes("enableWeekSwipe(root,offset=>"));
  assert.ok(!source.includes("enableWeekSwipe(strip,offset=>"));
- assert.ok(source.includes('if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});animateOverviewDaySwipe();return;}'));
- assert.ok(source.includes("injectPostMatchCard();\n animateOverviewDaySwipe();"));
- assert.ok(html.includes("jogador-v2.js?v=161"));
- assert.ok(html.includes("jogador-v2.css?v=195"));
+ assert.ok(source.includes('if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}'));
+ assert.ok(source.includes("injectPostMatchCard();\n}"));
+ assert.ok(html.includes("jogador-v2.js?v=162"));
+ assert.ok(html.includes("jogador-v2.css?v=196"));
 });
-test("Animation is short, scoped, and respects reduced-motion preferences",()=>{
- assert.ok(css.includes("overview-day-swipe-enter-next 160ms ease-out"));
- assert.ok(css.includes("overview-day-swipe-enter-prev 160ms ease-out"));
- assert.ok(css.includes("@media(prefers-reduced-motion:reduce)"));
- assert.ok(css.includes("animation:none!important"));
+test("Day swipes do not animate or fade the content; main tab transitions are retained",()=>{
+ assert.ok(!source.includes("animateOverviewDaySwipe"));
+ assert.ok(!source.includes("overviewSwipeDirection"));
+ assert.ok(!css.includes("overview-day-swipe-enter-next"));
+ assert.ok(!css.includes("overview-day-swipe-enter-prev"));
+ assert.ok(!css.includes("overview-swipe-enter-next"));
+ assert.ok(!css.includes("overview-swipe-enter-prev"));
+ assert.ok(source.includes("destination.animate(["));
+ assert.ok(source.includes("{duration:500,easing:"));
 });
