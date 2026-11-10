@@ -20,7 +20,9 @@ class MatchingTests(unittest.TestCase):
             ("rice","Arroz branco cozido"),("potato","Batata cozida"),
             ("fish","Pescada cozida"),("chicken","Peito de frango grelhado"),
             ("dry","Arroz cru"),("pasta","Massa cozida"),
-            ("rice_dish","Arroz de frango"),("rice_cake","Bolachas de arroz")]:
+            ("rice_dish","Arroz de frango"),("rice_cake","Bolachas de arroz"),
+            ("side","Acompanhamentos"),("side_raw","Acompanhamentos em cru"),
+            ("side_hc","Hidratos de carbono cozidos")]:
             self.c.execute("INSERT INTO v2_food_library VALUES(?,?,?,1)",
                            (food_id,name,"Outro"))
         visual_portions_v2.initialize(self.c)
@@ -57,6 +59,11 @@ class MatchingTests(unittest.TestCase):
         self.assertEqual(matching.classify("Batata doce"),(None,False))
         self.assertEqual(matching.classify("Arroz cru"),("Arroz",True))
         self.assertEqual(matching.classify("Pescada cozida"),("Carne / Peixe",False))
+        self.assertEqual(matching.classify("Acompanhamentos"),("Acompanhamentos",False))
+        self.assertEqual(matching.classify("Acompanhamento cozido"),("Acompanhamentos",False))
+        self.assertEqual(matching.classify("Hidratos de carbono"),("Acompanhamentos",False))
+        self.assertEqual(matching.classify("Fontes de HC"),("Acompanhamentos",False))
+        self.assertEqual(matching.classify("Arroz + Batata"),("Arroz + Batata",False))
 
     def test_exact_close_and_no_photo(self):
         option={"foods":[self.food("rice",200),self.food("pasta",175)]}
@@ -93,6 +100,46 @@ class MatchingTests(unittest.TestCase):
         self.assertEqual(len(groups),1)
         self.assertEqual([x["category"] for x in groups[0]["alternatives"]],["Arroz","Batata"])
         self.assertNotIn("Arroz + Batata",[x["category"] for x in groups[0]["alternatives"]])
+
+    def test_generic_side_matches_multiple_real_photos_without_changing_prescription(self):
+        option={"foods":[self.food("chicken",140),self.food("side",350)]}
+        groups=matching._option_items(option,self.library,self.photos)
+        self.assertEqual(len(groups),2)
+        protein=groups[0]["alternatives"][0]
+        self.assertEqual(protein["category"],"Carne / Peixe")
+        sides=groups[1]
+        self.assertTrue(sides["visual_examples"])
+        categories={item["category"] for item in sides["alternatives"]}
+        self.assertIn("Arroz",categories)
+        self.assertIn("Arroz + Batata",categories)
+        mix=next(item for item in sides["alternatives"] if item["category"]=="Arroz + Batata")
+        self.assertEqual(mix["reference_g"],350)
+        self.assertEqual(mix["reference_rice_g"]+mix["reference_potato_g"],350)
+        self.assertEqual(mix["prescribed_g"],350)
+        self.assertNotIn("rice_g",mix)
+        self.assertNotIn("potato_g",mix)
+        self.assertEqual(option["foods"][1]["grams"],350)
+
+    def test_generic_side_with_cooked_name_and_nearby_photos(self):
+        option={"foods":[self.food("side_hc",200)]}
+        groups=matching._option_items(option,self.library,self.photos)
+        side=groups[0]["alternatives"]
+        self.assertIn("Arroz",{x["category"] for x in side})
+        self.assertIn("Massa",{x["category"] for x in side})
+        self.assertTrue(all(x["prescribed_g"]==200 for x in side))
+        self.assertTrue(all(not x["preparation_review"] for x in side))
+        self.assertTrue(all(x["photo_id"] for x in side))
+
+    def test_generic_raw_amount_is_never_associated_with_cooked_photo(self):
+        option={"foods":[self.food("side_raw",200)]}
+        side=matching._option_items(option,self.library,self.photos)[0]["alternatives"]
+        self.assertEqual(len(side),1)
+        self.assertIsNone(side[0]["photo_id"])
+        self.assertEqual(side[0]["match"],"raw_or_invalid")
+
+    def test_no_generic_side_guess_for_different_food(self):
+        option={"foods":[self.food("rice_cake",200)]}
+        self.assertEqual(matching._option_items(option,self.library,self.photos),[])
 
     def test_white_meat_photo_used_for_fish(self):
         item=matching._entry(self.food("fish",140),self.library,self.photos)
