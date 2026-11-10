@@ -1487,8 +1487,8 @@ async function loadCalendar(){
   weekly.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation";
-  const previous=document.createElement("button");previous.type="button";previous.textContent="‹";previous.setAttribute("aria-label","Semana anterior");previous.title="Semana anterior";
-  const next=document.createElement("button");next.type="button";next.textContent="›";next.setAttribute("aria-label","Semana seguinte");next.title="Semana seguinte";
+  const previous=document.createElement("button");previous.type="button";previous.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';previous.setAttribute("aria-label","Semana anterior");previous.title="Semana anterior";
+  const next=document.createElement("button");next.type="button";next.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';next.setAttribute("aria-label","Semana seguinte");next.title="Semana seguinte";
   const range=document.createElement("strong");navigation.append(previous,range,next);weekly.appendChild(navigation);
   const monday=new Date(selectedNutritionWeek+"T12:00:00");
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
