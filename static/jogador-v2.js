@@ -28,14 +28,12 @@ function enableWeekSwipe(element,onShift){
 }
 // Day-by-day navigation for the full Planning content area, in both views.
 // The menus week strip keeps its independent, existing week gesture.
-let overviewSwipeDirection=0;
 function shiftOverviewDay(offset){
  if(offset!==1&&offset!==-1)return;
  const next=new Date(day);
  next.setDate(next.getDate()+offset);
  day=next;
  weeklySelection=null;
- overviewSwipeDirection=offset;
  overview().catch(error);
 }
 function enableOverviewDaySwipe(element){
@@ -67,16 +65,6 @@ function enableOverviewDaySwipe(element){
   if(event.cancelable)event.preventDefault();
   shiftOverviewDay(dx<0?1:-1);
  },{passive:false});
-}
-function animateOverviewDaySwipe(){
- const direction=overviewSwipeDirection;
- overviewSwipeDirection=0;
- if(!direction)return;
- const target=$(overviewMode==="week"?"weekly-view":"day-details");
- if(!target||target.hidden)return;
- target.classList.remove("overview-swipe-enter-next","overview-swipe-enter-prev");
- void target.offsetWidth;
- target.classList.add(direction>0?"overview-swipe-enter-next":"overview-swipe-enter-prev");
 }
 function revokePlayerView(){
  window.themileRecipes?.reset();
@@ -1282,7 +1270,7 @@ async function overview(){
  lastOverviewPresentation={weekKey,dateKey:d,mode:overviewMode};
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
- if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});animateOverviewDaySwipe();return;}
+ if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}
  const dailyReferenceRaw=weekWeights.weights_by_date?.[d]?.weight_kg;
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
@@ -1304,7 +1292,7 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
   renderWeightCard(root,d).catch(()=>{});
-  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);animateOverviewDaySwipe();return;
+  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);return;
  }
 
  const dailyTotal=dayNutritionTotal(entry||{date:d,classification:null});
@@ -1498,7 +1486,6 @@ async function overview(){
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
  injectPostMatchCard();
- animateOverviewDaySwipe();
 }
 function openPlansSection(section){
  $("plans-landing").hidden=true;
