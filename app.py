@@ -359,29 +359,52 @@ def initialize():
                 logging.exception('Read-only live peri event association audit failed')
         supplements_v2.initialize(c)
         if SITE_ROLE == 'admin':
-            # One-off read-only diagnostic: no edits to food library or player plans.
+            # Temporary, READ-ONLY audit of where "creatina" appears in historical plans.
+            # Never logs athlete identifiers, plan IDs or full note contents.
             try:
-                food_hits = c.execute(
-                    "SELECT display_name,base_name,category,active FROM v2_food_library "
-                    "WHERE lower(display_name) LIKE ? "
-                    "OR lower(base_name) LIKE ? "
-                    "OR lower(coalesce(notes,'')) LIKE ? "
-                    "ORDER BY active DESC, display_name LIMIT 30",
-                    ('%creat%', '%creat%', '%creat%')
-                ).fetchall()
-                supplement_hits = c.execute(
-                    "SELECT name FROM v2_supplement_library "
-                    "WHERE lower(name) LIKE ? ORDER BY name LIMIT 15",
-                    ('%creat%',)
-                ).fetchall()
-                active_count = c.execute("SELECT COUNT(*) AS n FROM v2_food_library WHERE active=1").fetchone()['n']
-                logging.warning('READ-ONLY creatina food search diagnostic: %s', {
-                    'active_foods_total': active_count,
-                    'matching_food_rows': [dict(row) for row in food_hits],
-                    'matching_supplements': [row['name'] for row in supplement_hits],
-                })
+                source_summary = {}
+                for store, column in (
+                    ('v2_food_plan_drafts', 'content'),
+                    ('v2_food_plan_editor_publications', 'snapshot_json'),
+                    ('v2_plan_publications', 'snapshot_json'),
+                ):
+                    summary = {'total_plans': 0, 'plans_with_creatina': 0,
+                               'creatina_notes': 0, 'creatina_supplement_labels': 0,
+                               'creatina_food_labels': 0, 'creatina_other_text': 0}
+                    for entry in c.execute('SELECT '+column+' FROM '+store).fetchall():
+                        summary['total_plans'] += 1
+                        try:
+                            payload = json.loads(entry[column])
+                        except (ValueError,TypeError):
+                            continue
+                        found = False
+                        def count_creatina(obj, route=(), kind=''):
+                            nonlocal found
+                            if isinstance(obj,dict):
+                                item_kind = str(obj.get('kind') or kind or '')
+                                for key,value in obj.items():
+                                    count_creatina(value, route+(key,), item_kind)
+                            elif isinstance(obj,list):
+                                for value in obj:
+                                    count_creatina(value, route, kind)
+                            elif isinstance(obj,str) and 'creat' in obj.casefold():
+                                found = True
+                                if route and ('notes' in route or 'note' in route):
+                                    label = 'creatina_notes'
+                                elif route and route[-1] in ('label','display_name','name') and kind=='supplement':
+                                    label = 'creatina_supplement_labels'
+                                elif route and route[-1] in ('label','display_name','name') and ('foods' in route or kind=='food'):
+                                    label = 'creatina_food_labels'
+                                else:
+                                    label = 'creatina_other_text'
+                                summary[label] += 1
+                        count_creatina(payload)
+                        if found:
+                            summary['plans_with_creatina'] += 1
+                    source_summary[store] = summary
+                logging.warning('READ-ONLY creatina references in stored plans (no personal data): %s', source_summary)
             except Exception:
-                logging.exception('READ-ONLY creatina food search diagnostic failed')
+                logging.exception('READ-ONLY creatina stored-plan audit failed')
         assessments_v2.initialize(c)
         monitoring_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
