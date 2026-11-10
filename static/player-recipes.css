@@ -599,3 +599,11 @@
  outline:2px solid currentColor;
  outline-offset:3px;
 }
+
+
+/* Recipe subpages: align the first recipe card or recipe title with the top
+   of the Menus / Receitas selector on the main screen. The back action stays
+   in the global header and no extra row is added inside the page. */
+#menus #menus-recipe-switch[hidden] ~ #player-recipes-area{
+ padding-top:26px;
+}
