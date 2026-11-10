@@ -12,7 +12,7 @@ assert.ok(i>0,"Unified selector rules must exist");
 const patch=css.slice(i);
 function rule(selector){
  const anchor=selector+"{";
- const p=patch.indexOf(anchor);
+ const p=patch.lastIndexOf(anchor);
  assert.ok(p>=0,"Missing selector "+selector);
  const end=patch.indexOf("}",p+anchor.length);
  return patch.slice(p+anchor.length,end);
