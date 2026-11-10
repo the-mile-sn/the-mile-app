@@ -2960,3 +2960,20 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days
 #admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"] + #calendar-event-form{display:none!important}
 #admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="true"] + #calendar-event-form{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;box-sizing:border-box!important}
 #admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"] ~ #calendar-event-feedback:empty{display:none!important}
+
+/* Event accordion final override: resolves legacy :has() mobile display rule. */
+#admin-workspace #calendar-section:has(#calendar-mobile-event-toggle[aria-expanded="false"]) #calendar-event-form{display:none!important}
+#admin-workspace #calendar-section:has(#calendar-mobile-event-toggle[aria-expanded="true"]) #calendar-event-form{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;align-items:stretch!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3){grid-column:auto!important;grid-row:1!important;min-width:0!important;max-width:none!important;width:100%!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / 3!important;grid-row:2!important;justify-self:start!important;align-self:center!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;grid-row:2!important;justify-self:end!important;align-self:center!important}
+#admin-workspace #calendar-section #calendar-new-date{display:block!important;width:100%!important;text-align:left!important;direction:ltr!important;min-width:0!important}
+#admin-workspace #calendar-section #calendar-new-date::-webkit-date-and-time-value{text-align:left!important;margin:0!important}
+#admin-workspace #calendar-section #calendar-new-date::-webkit-datetime-edit{text-align:left!important;padding:0!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"]{border-radius:17px!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="true"]{border-radius:17px 17px 0 0!important}
+@media(max-width:680px){
+ #admin-workspace #calendar-section:has(#calendar-mobile-event-toggle[aria-expanded="true"]) #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / -1!important;grid-row:2!important}
+ #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:1 / -1!important;grid-row:3!important;justify-self:end!important}
+}
