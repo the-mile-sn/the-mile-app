@@ -2855,3 +2855,26 @@ html[data-admin-theme="light"] #tm-food-library-page button.primary,html[data-ad
 #calendar-section .calendar-days .calendar-day.calendar-selected{outline:2px solid rgba(255,255,255,.55);outline-offset:-2px}
 #calendar-section .calendar-event-list{border:0!important;box-shadow:none!important}
 @media(max-width:620px){#calendar-section .calendar-event-form{gap:7px!important;padding:9px!important}#calendar-section .calendar-event-form .calendar-event-field input,#calendar-section .calendar-event-form .calendar-event-field select{font-size:12px!important;padding:7px 5px!important;min-height:38px!important}#calendar-section .calendar-event-form .calendar-event-field label{font-size:10px!important}#calendar-section .calendar-event-form #calendar-add-event{min-height:34px!important}}
+
+/* Planning baseline: filled surfaces, no decorative outlines. */
+#admin-workspace #calendar-section,
+#admin-workspace #calendar-section #calendar-mobile-event-toggle,
+#admin-workspace #calendar-section #calendar-event-form,
+#admin-workspace #calendar-section #calendar-event-form .calendar-event-field input,
+#admin-workspace #calendar-section #calendar-event-form .calendar-event-field select,
+#admin-workspace #calendar-section #calendar-event-form .calendar-peri-check,
+#admin-workspace #calendar-section .calendar-day,
+#admin-workspace #calendar-section .calendar-event-list,
+#admin-workspace #calendar-section .calendar-navigation button{border:0!important;border-image:none!important}
+#admin-workspace #calendar-section #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field{width:auto!important;max-width:none!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{width:auto!important;display:inline-flex!important;align-items:center;justify-content:center;background:#fff!important;color:#17171b!important;border-radius:999px!important;padding:8px 18px!important}
+#admin-workspace #calendar-section .calendar-days .calendar-day{background-color:#232327}
+#admin-workspace #calendar-section .calendar-days .calendar-day.calendar-match{background-color:#1c3c2c}
+#admin-workspace #calendar-section .calendar-days .calendar-day.calendar-off{background-color:#43252a}
+#admin-workspace #calendar-section .calendar-days .calendar-day.calendar-today{outline:2px solid currentColor;outline-offset:-2px}
+@media(max-width:600px){
+ #admin-workspace #calendar-section #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field{min-width:0!important}
+ #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
