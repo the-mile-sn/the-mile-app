@@ -41,7 +41,7 @@ test("JS/CSS cache changed but recipe assets remain intact",()=>{
 });
 
 test("photos are prepared before opening, sharing a separate compact cache",()=>{
- assert.match(js,/const key=.*thumbnail\?"daily:":"full:"/);
+ assert.match(js,/key=\(thumbnail\?"daily:":"full:"\)\+dishId/);
  assert.match(js,/thumbnail\?"\?size=thumbnail":"\?v=2"/);
  assert.match(js,/const src=await cachedDishPhoto\(dishId,true\)/);
  const daily=js.slice(js.indexOf("function attachDailyDishPhoto("),js.indexOf("let lastMenuPresentationWeek=null;",js.indexOf("function attachDailyDishPhoto(")));
