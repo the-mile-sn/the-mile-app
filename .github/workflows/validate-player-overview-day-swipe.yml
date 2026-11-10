@@ -1,0 +1,22 @@
+name: Validate player day-by-day swipe navigation
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.js
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - tests/player-overview-day-swipe.test.cjs
+      - .github/workflows/validate-player-overview-day-swipe.yml
+  workflow_dispatch:
+jobs:
+  overview-day-swipe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate script syntax and swipe behavior
+        run: |
+          node --check static/jogador-v2.js
+          node --test tests/player-overview-day-swipe.test.cjs
