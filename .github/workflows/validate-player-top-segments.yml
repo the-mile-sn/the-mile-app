@@ -1,0 +1,19 @@
+name: Validate player top segmented controls
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - tests/player-top-segment-parity.test.cjs
+      - .github/workflows/validate-player-top-segments.yml
+  workflow_dispatch:
+jobs:
+  top-segment-parity:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Inicio, Menus and Avaliacoes segmented bar parity
+        run: node --test tests/player-top-segment-parity.test.cjs

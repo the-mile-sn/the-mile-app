@@ -4172,3 +4172,66 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  border-radius:11px!important;
  box-sizing:border-box!important;
 }
+
+
+/* Unify the top segmented controls with the approved Início (Dia/Semana)
+   geometry. Início is untouched and its panel has a -9px top offset.
+   Menus already has a separate -12px offset, so its selector needs a +3px
+   margin. Avaliações uses -9px. Keep hidden recipe-page tabs hidden. */
+#player-panel #menus #menus-recipe-switch,
+#player-panel #plans #plans-assessments .assessment-tabs{
+ display:grid!important;
+ align-items:stretch!important;
+ gap:3px!important;
+ width:100%!important;
+ height:38px!important;
+ min-height:38px!important;
+ max-height:38px!important;
+ box-sizing:border-box!important;
+ padding:3px!important;
+ border:0!important;
+ border-radius:999px!important;
+ background:#202024!important;
+ box-shadow:none!important;
+ overflow:hidden!important;
+}
+#player-panel #menus #menus-recipe-switch{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ margin-top:3px!important;
+}
+#player-panel #menus #menus-recipe-switch[hidden]{
+ display:none!important;
+}
+#player-panel #plans #plans-assessments .assessment-tabs{
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ margin-top:-9px!important;
+}
+#player-panel #menus #menus-recipe-switch button,
+#player-panel #plans #plans-assessments .assessment-tabs button{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ appearance:none!important;
+ width:100%!important;
+ min-width:0!important;
+ height:32px!important;
+ min-height:32px!important;
+ max-height:32px!important;
+ box-sizing:border-box!important;
+ padding:4px 8px!important;
+ margin:0!important;
+ border:0!important;
+ border-radius:999px!important;
+ background:transparent!important;
+ box-shadow:none!important;
+ color:#f2f2f5!important;
+ font-family:inherit!important;
+ font-size:13px!important;
+ font-weight:500!important;
+ line-height:1.1!important;
+}
+#player-panel #menus #menus-recipe-switch button[aria-pressed="true"],
+#player-panel #plans #plans-assessments .assessment-tabs button[aria-pressed="true"]{
+ background:#55555b!important;
+ color:#fff!important;
+}
