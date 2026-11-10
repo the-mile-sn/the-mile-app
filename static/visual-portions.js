@@ -88,5 +88,133 @@
   }catch(error){feedback.textContent="Erro na importação: "+error.message;}
   finally{input.disabled=false;input.value="";}
  });
+
+ /* Published-plan preview is read-only. This stage never modifies athlete preferences or plans. */
+ const previewToggle=get("tm-portion-preview-toggle"),previewBody=get("tm-portion-preview-body");
+ const previewAthlete=get("tm-portion-preview-athlete"),previewPlan=get("tm-portion-preview-plan");
+ const previewMeal=get("tm-portion-preview-meal"),previewOption=get("tm-portion-preview-option");
+ const previewFeedback=get("tm-portion-preview-feedback"),previewResults=get("tm-portion-preview-results");
+ let athleteListLoaded=false,previewData=null,previewRequest=0;
+ const labelForGrams=value=>Number(value).toLocaleString("pt-PT",{maximumFractionDigits:2})+" g";
+ function selectOptions(node, rows, placeholder){
+  const previous=node.value;
+  node.replaceChildren();
+  const empty=document.createElement("option");empty.value="";empty.textContent=placeholder;node.append(empty);
+  for(const [id,title] of rows){
+   const item=document.createElement("option");item.value=String(id);item.textContent=String(title);node.append(item);
+  }
+  node.value=rows.some(row=>String(row[0])===previous)?previous:"";
+  node.disabled=rows.length===0;
+ }
+ function currentPlan(){return previewData?.plans?.[Number(previewPlan.value)]||null;}
+ function currentMeal(){const plan=currentPlan();return plan?.meals?.[Number(previewMeal.value)]||null;}
+ function currentOption(){return currentMeal()?.options?.[Number(previewOption.value)]||null;}
+ function showOptions(){
+  const opt=currentOption();previewResults.replaceChildren();
+  if(!opt){previewFeedback.textContent="Seleciona uma opção para consultar as fotografias.";return;}
+  const groups=opt.groups||[];
+  if(!groups.length){previewFeedback.textContent="Esta opção não contém alimentos com referências fotográficas nesta biblioteca.";return;}
+  const total=groups.reduce((n,g)=>n+(g.alternatives||[]).filter(x=>!!x.photo_id).length,0);
+  previewFeedback.textContent=total
+    ?total+" fotografia(s) sugerida(s) nesta opção. Nenhuma alteração feita ao plano."
+    :"Ainda não existem fotografias suficientemente próximas para esta opção.";
+  let preparationReview=false;
+  for(const group of groups){
+   const alternatives=group.alternatives||[];
+   const panel=document.createElement("article");panel.className="tm-portion-preview-group";
+   if(alternatives.length>1){
+    const heading=document.createElement("span");heading.className="tm-portion-preview-group-heading";
+    heading.textContent="Alternativas — escolher apenas uma";panel.append(heading);
+   }
+   for(const item of alternatives){
+    preparationReview=preparationReview||!!item.preparation_review;
+    const row=document.createElement("div");row.className="tm-portion-preview-item";
+    if(item.photo_id){
+     const image=document.createElement("img");image.loading="lazy";image.decoding="async";
+     image.src="/api/v2/visual-portions/image/"+encodeURIComponent(item.photo_id);
+     image.alt=item.photo_subject==="Carne branca"
+       ?"Fotografia de carne branca usada como referência para carne ou peixe"
+       :"Fotografia de "+item.category;
+     row.append(image);
+    }else{
+     const blank=document.createElement("span");blank.className="tm-portion-preview-no-photo";
+     const imgIcon=document.createElement("span");imgIcon.textContent="—";blank.append(imgIcon);
+     blank.setAttribute("aria-label","Fotografia indisponível");row.append(blank);
+    }
+    const details=document.createElement("div");details.className="tm-portion-preview-description";
+    const name=document.createElement("strong");name.textContent=item.food_name||item.category;
+    const prescribed=document.createElement("span");
+    prescribed.textContent="Plano: "+labelForGrams(item.prescribed_g)+(item.rice_g!=null?" · "+labelForGrams(item.rice_g)+" arroz + "+labelForGrams(item.potato_g)+" batata":"");
+    const reference=document.createElement("span");
+    if(item.photo_id){
+     reference.textContent="Fotografia: "+labelForGrams(item.reference_g)
+       +(item.reference_rice_g!=null?" · "+labelForGrams(item.reference_rice_g)+" arroz + "+labelForGrams(item.reference_potato_g)+" batata":"");
+    }else if(item.match==="raw_or_invalid"){reference.textContent="Sem associação: quantidade indicada em cru/seco.";}
+    else if(item.match==="invalid_quantity"){reference.textContent="Sem associação: quantidade inválida.";}
+    else{reference.textContent="Sem fotografia próxima nesta categoria.";}
+    details.append(name,prescribed,reference);
+    const status=document.createElement("span");status.className="tm-portion-preview-match "+(item.photo_id?"has-photo":"no-match");
+    status.textContent=item.match==="exact"?"Exata":item.match==="near"?"Aproximada":"Sem imagem";
+    row.append(details,status);panel.append(row);
+   }
+   previewResults.append(panel);
+  }
+  if(preparationReview){
+   const note=document.createElement("p");note.className="tm-portion-preview-preparation-note";
+   note.textContent="Confirma se as quantidades prescritas se referem ao alimento já cozinhado. As fotografias não substituem a pesagem.";
+   previewResults.append(note);
+  }
+ }
+ function refreshOption(){
+  const meal=currentMeal();
+  selectOptions(previewOption,(meal?.options||[]).map((o,i)=>[i,o.title||"Opção "+(i+1)]),"Selecionar opção");
+  if(meal?.options?.length&&!previewOption.value)previewOption.value="0";
+  showOptions();
+ }
+ function refreshMeal(){
+  const plan=currentPlan();
+  selectOptions(previewMeal,(plan?.meals||[]).map((m,i)=>[i,m.name+(m.source_meal&&normalize(m.source_meal)!==normalize(m.name)?" · "+m.source_meal:"")]),"Selecionar refeição");
+  if(plan?.meals?.length&&!previewMeal.value)previewMeal.value="0";
+  refreshOption();
+ }
+ function refreshPlan(){
+  selectOptions(previewPlan,(previewData?.plans||[]).map((p,i)=>[i,p.plan_type+(previewData.plans.filter(x=>x.plan_type===p.plan_type).length>1?" · "+p.publication_id.slice(0,8):"")]),"Selecionar plano");
+  if(previewData?.plans?.length&&!previewPlan.value)previewPlan.value="0";
+  refreshMeal();
+ }
+ async function loadAthletesForPreview(){
+  if(athleteListLoaded)return;
+  previewFeedback.textContent="A carregar jogadores…";
+  try{
+   const result=await request("/api/v2/athletes");
+   const athletes=(result.athletes||[]).filter(a=>a&&a.id&&a.name);
+   selectOptions(previewAthlete,athletes.map(a=>[a.id,a.name]),"Selecionar jogador");
+   athleteListLoaded=true;
+   previewFeedback.textContent=athletes.length?"Seleciona um jogador para visualizar as associações.":"Não há jogadores disponíveis.";
+  }catch(error){previewFeedback.textContent="Não foi possível carregar jogadores: "+error.message;}
+ }
+ async function previewForAthlete(){
+  const token=++previewRequest,athleteId=previewAthlete.value;
+  previewData=null;previewResults.replaceChildren();refreshPlan();
+  if(!athleteId){previewFeedback.textContent="Seleciona um jogador para consultar os planos publicados.";return;}
+  previewFeedback.textContent="A verificar os planos publicados e as fotografias disponíveis…";
+  try{
+   const result=await request("/api/v2/visual-portions/preview?athlete_id="+encodeURIComponent(athleteId));
+   if(token!==previewRequest||previewAthlete.value!==athleteId)return;
+   previewData=result;refreshPlan();
+   if(!result.plans?.length)previewFeedback.textContent="Este jogador não tem planos alimentares publicados com Almoço/Jantar disponíveis para pré-visualização.";
+  }catch(error){if(token===previewRequest)previewFeedback.textContent="Não foi possível consultar as associações: "+error.message;}
+ }
+ previewToggle.addEventListener("click",()=>{
+  const isOpen=previewBody.hidden;previewBody.hidden=!isOpen;
+  previewToggle.setAttribute("aria-expanded",String(isOpen));
+  previewToggle.textContent=isOpen?"Fechar pré-visualização":"Pré-visualizar";
+  if(isOpen)loadAthletesForPreview();
+ });
+ previewAthlete.addEventListener("change",previewForAthlete);
+ previewPlan.addEventListener("change",refreshMeal);
+ previewMeal.addEventListener("change",refreshOption);
+ previewOption.addEventListener("change",showOptions);
+
  window.tmOpenAdminVisualPortions=()=>{if(typeof window.tmOpenAdminFoodLibrary==="function")window.tmOpenAdminFoodLibrary();mode("portions");};
 })();
