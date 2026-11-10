@@ -39,13 +39,20 @@ def initialize(c):
         updated_at BIGINT NOT NULL
     )""")
     c.execute("CREATE INDEX IF NOT EXISTS idx_v2_visual_portions_lookup ON v2_visual_portions(category,total_g,active)")
+    # Existing photographs remain unchanged. Reclassify only the reference group:
+    # white-meat photos serve visually for both meat and fish meal options.
+    c.execute("UPDATE v2_visual_portions SET category='Carne / Peixe' WHERE category='Carne branca'")
 
 
 def list_references(c):
     rows = c.execute("""SELECT id, source_row, category, total_g, rice_g, potato_g,
                                active, orientative, notes, updated_at
                         FROM v2_visual_portions ORDER BY category,total_g,source_row""").fetchall()
-    return [dict(row) for row in rows]
+    references = [dict(row) for row in rows]
+    for ref in references:
+        # Preserve the true photographed subject for future player UI/accessibility.
+        ref["photo_subject"] = "Carne branca" if ref["category"] == "Carne / Peixe" else ref["category"]
+    return references
 
 
 def get_image(c, reference_id):
@@ -109,6 +116,10 @@ def import_approved_archive(c, archive_bytes):
                 category = ref.get("categoria")
                 if category not in CATEGORIES or ref.get("categoria_original") == "Carne / Peixe" and category != "Carne branca":
                     raise ValueError("invalid_category")
+                # The approved ZIP records Carne branca, not fish photos. The
+                # category is a shared display/matching group, not the subject.
+                if category == "Carne branca":
+                    category = "Carne / Peixe"
                 source = _positive_int(ref.get("linha_excel"))
                 if source in ids:
                     raise ValueError("duplicate_reference")
