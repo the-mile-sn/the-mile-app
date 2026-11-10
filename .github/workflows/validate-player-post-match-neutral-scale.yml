@@ -1,0 +1,20 @@
+name: Validate post-match neutral slider
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - static/jogador-v2.js
+      - tests/player-post-match-neutral-scale.test.cjs
+      - .github/workflows/validate-player-post-match-neutral-scale.yml
+  workflow_dispatch:
+jobs:
+  neutral-game-scales:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate questionnaire labels, slider values, neutral styling and CSS cache version
+        run: node --test tests/player-post-match-neutral-scale.test.cjs
