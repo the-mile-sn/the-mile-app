@@ -142,7 +142,7 @@ def _generic_side_entries(food, library, catalogue):
     _, dry = classify(name)
     grams = _number(food.get("grams"))
     preparation_review = not bool(re.search(
-        r"\\b(cozid[oa]s?|grelhad[oa]s?|assad[oa]s?|saltead[oa]s?)\\b",
+        r"\b(cozid[oa]s?|grelhad[oa]s?|assad[oa]s?|saltead[oa]s?)\b",
         normalize(name)))
     base = {"prescribed_g":grams,"generic_visual":True,
             "preparation_review":preparation_review,
