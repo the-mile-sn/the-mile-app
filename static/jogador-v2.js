@@ -1243,7 +1243,7 @@ async function openDailyMealInMenus(dateKey,meal){
   const dayCard=document.querySelector('#menu-days .day-menu[data-date="'+dateKey+'"]');
   const mealCard=dayCard?.querySelector('.menu-entry[data-meal="'+meal+'"]');
   (mealCard||dayCard)?.scrollIntoView({
-   behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches?"instant":"smooth",
+   behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches?"auto":"smooth",
    block:"center"
   });
  });
