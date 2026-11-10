@@ -4153,3 +4153,22 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #player-session-loading #player-session-retry:not([hidden]){position:absolute;z-index:3;top:calc(48% + 65px);left:50%;transform:translateX(-50%);white-space:nowrap}
 #player-session-loading:has(#player-session-retry:not([hidden])) #player-session-loading-text{position:absolute!important;clip:auto!important;overflow:visible!important;width:min(86vw,360px)!important;height:auto!important;top:calc(48% + 39px);left:50%;transform:translateX(-50%);white-space:normal!important;text-align:center;color:#fff}
 @media(prefers-reduced-motion:reduce){#player-session-loading,#player-session-loading .player-loading-photo{transition:none!important;transform:none!important}}
+
+
+/* Game + post-match forms: match the existing 37px/11px daily meal icon grid.
+   Scope to the daily player overview; keep SVG artwork and card colors intact. */
+#overview #day-details .daily-event-card.match-intra-card > summary.daily-meal-head{
+ padding-left:17px!important;
+}
+#overview #day-details .post-match-inline-trigger{
+ padding-left:17px!important;
+}
+#overview #day-details .post-match-inline-icon{
+ width:37px!important;
+ height:37px!important;
+ min-width:37px!important;
+ max-width:37px!important;
+ flex:0 0 37px!important;
+ border-radius:11px!important;
+ box-sizing:border-box!important;
+}
