@@ -2952,3 +2952,11 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days
  #admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / -1!important;grid-row:auto!important}
  #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:1 / -1!important;justify-self:end!important;grid-row:auto!important}
 }
+
+/* Shared expandable Add Event widget on desktop, tablet and phone. */
+#admin-workspace #calendar-section #calendar-mobile-event-toggle{display:flex!important;align-items:center!important;width:100%!important;box-sizing:border-box!important;cursor:pointer!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"]{border-radius:17px!important;margin-bottom:0!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="true"]{border-radius:17px 17px 0 0!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"] + #calendar-event-form{display:none!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="true"] + #calendar-event-form{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;box-sizing:border-box!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"] ~ #calendar-event-feedback:empty{display:none!important}
