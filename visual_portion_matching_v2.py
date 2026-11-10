@@ -13,6 +13,15 @@ from food_plan_calendar_bridge_v2 import slots
 VISIBLE_SLOTS = ("lunch", "dinner")
 SLOT_NAMES = {"lunch": "Almoço", "dinner": "Jantar"}
 CATEGORIES = ("Arroz", "Arroz com leguminosas", "Massa", "Batata", "Arroz + Batata", "Carne / Peixe")
+SIDE_CATEGORIES = ("Arroz", "Arroz com leguminosas", "Massa", "Batata", "Arroz + Batata")
+# Several approved plans prescribe one general quantity called "Acompanhamentos"
+# instead of specifying one particular starchy food. Show visual suggestions for
+# each side group; never replace the plan's generic prescription with a food.
+_GENERIC_SIDES = re.compile(
+    r"^(?:acompanhamentos?|acomp\b|guarnicoes?|"
+    r"(?:fontes? de )?(?:hidratos(?: de carbono)?|glucidos|carboidratos|hc)\b|"
+    r"cereais(?: e derivados)?\b)"
+)
 
 # Deliberately conservative: a photograph of a cooked portion must never be
 # described as a measured representation of a raw/dry or composite product.
@@ -41,6 +50,10 @@ def classify(name):
     if not n:
         return None, False
     dry = bool(_UNCOOKED.search(n))
+    if _GENERIC_SIDES.match(n):
+        return "Acompanhamentos", dry
+    if re.match(r"^arroz (?:(?:e|com|mais) )?batata\b", n):
+        return "Arroz + Batata", dry
     if re.match(r"^arroz\b", n):
         # Arroz de frango, arroz de peixe etc. are complete dishes, not plain rice.
         if _COMPOSITE.search(n):
@@ -117,6 +130,52 @@ def _entry(food, library, catalogue):
     return result
 
 
+def _generic_side_entries(food, library, catalogue):
+    """Show safe visual examples for a general side-portion prescription.
+
+    The named rice/pasta/potato groups are photographic suggestions, not
+    choices published in the nutritional plan. The prescribed total is never
+    divided into invented component quantities.
+    """
+    ref = library.get(food.get("id")) or {}
+    name = str(food.get("display_name") or ref.get("display_name") or "").strip()
+    _, dry = classify(name)
+    grams = _number(food.get("grams"))
+    preparation_review = not bool(re.search(
+        r"\b(cozid[oa]s?|grelhad[oa]s?|assad[oa]s?|saltead[oa]s?)\b",
+        normalize(name)))
+    base = {"prescribed_g":grams,"generic_visual":True,
+            "preparation_review":preparation_review,
+            "difference_g":None, "photo_subject":None}
+    if dry or grams is None:
+        return [{**base,"food_name":name,"category":"Acompanhamentos",
+                 "photo_id":None,"reference_g":None,
+                 "match":"raw_or_invalid" if dry else "invalid_quantity"}]
+    items=[]
+    for category in SIDE_CATEGORIES:
+        photo=_best_photo(catalogue,category,grams)
+        if photo is None:
+            continue
+        # A broad generic category must not recommend an image with a large
+        # visual size discrepancy, even though all photos are orientative.
+        if abs(photo["total_g"]-grams)>min(65,max(35,grams*0.20)):
+            continue
+        item={**base,"food_name":category,"category":category,
+              "photo_id":photo["id"],"reference_g":photo["total_g"],
+              "difference_g":round(photo["total_g"]-grams,2),
+              "match":"exact" if abs(photo["total_g"]-grams)<0.01 else "near",
+              "photo_subject":category}
+        if category=="Arroz + Batata":
+            # Photo components describe the photograph, NOT a new prescription.
+            item["reference_rice_g"]=photo["rice_g"]
+            item["reference_potato_g"]=photo["potato_g"]
+        items.append(item)
+    if items:
+        return items
+    return [{**base,"food_name":name,"category":"Acompanhamentos",
+             "photo_id":None,"reference_g":None,"match":"unavailable"}]
+
+
 def _option_items(option, library, catalogue):
     foods = option.get("foods") or []
     groups = []
@@ -125,10 +184,22 @@ def _option_items(option, library, catalogue):
             continue
         alternatives = [item] + [f for f in foods if isinstance(f, dict)
                          and f.get("alternative_to")==i]
-        entries = [_entry(food, library, catalogue) for food in alternatives]
-        entries = [entry for entry in entries if entry is not None]
+        entries = []
+        for food in alternatives:
+            if not isinstance(food, dict):
+                continue
+            ref = library.get(food.get("id")) or {}
+            name = str(food.get("display_name") or ref.get("display_name") or "").strip()
+            group, _ = classify(name)
+            if group == "Acompanhamentos":
+                entries.extend(_generic_side_entries(food, library, catalogue))
+            else:
+                entry = _entry(food, library, catalogue)
+                if entry is not None:
+                    entries.append(entry)
         if entries:
-            groups.append({"alternatives": entries})
+            groups.append({"alternatives":entries,
+                           "visual_examples":any(e.get("generic_visual") for e in entries)})
 
     # Only construct a combined rice+potato photo from two *independent*
     # foods; never sum alternative ("ou") amounts as if eaten together.

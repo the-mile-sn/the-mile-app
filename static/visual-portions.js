@@ -125,7 +125,7 @@
    const panel=document.createElement("article");panel.className="tm-portion-preview-group";
    if(alternatives.length>1){
     const heading=document.createElement("span");heading.className="tm-portion-preview-group-heading";
-    heading.textContent="Alternativas — escolher apenas uma";panel.append(heading);
+    heading.textContent=group.visual_examples?"Exemplos de acompanhamentos — a prescrição não muda":"Alternativas — escolher apenas uma";panel.append(heading);
    }
    for(const item of alternatives){
     preparationReview=preparationReview||!!item.preparation_review;
