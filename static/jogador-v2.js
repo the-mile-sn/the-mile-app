@@ -79,9 +79,9 @@ function animateDailySwipeEntry(){
  dailySwipeEntryAnimation?.cancel();
  // Keep the calendar and date fixed; no opacity fade or loading flash.
  dailySwipeEntryAnimation=content.animate([
-  {transform:"translateX("+(direction>0?35:-35)+"px)"},
+  {transform:"translateX("+(direction>0?60:-60)+"px)"},
   {transform:"translateX(0)"}
- ],{duration:260,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+ ],{duration:320,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
 }
 function revokePlayerView(){
  pendingDailySwipeDirection=0;
