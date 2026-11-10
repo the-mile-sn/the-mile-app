@@ -16,8 +16,9 @@ test("Form icon surround matches the existing daily meal icon geometry",()=>{
  for(const d of ["width:37px!important","height:37px!important","flex:0 0 37px!important","border-radius:11px!important"]){
   assert.ok(rule.includes(d),"Missing "+d);
  }
- const meal=lastRule(".meal-leading-icon");
- assert.ok(meal.includes("width:37px;height:37px"));
+ const mealAnchor=".meal-leading-icon{width:37px;height:37px;";
+ assert.ok(css.includes(mealAnchor));
+ const meal=css.slice(css.indexOf(mealAnchor),css.indexOf("}",css.indexOf(mealAnchor)));
  assert.ok(meal.includes("border-radius:11px"));
 });
 test("Match and post-match icons use 17px meal grid inset",()=>{
