@@ -1,0 +1,20 @@
+name: Validate daily dish thumbnails
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.js
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - tests/player-daily-dish-photo.test.cjs
+      - .github/workflows/validate-player-daily-dish-photo.yml
+  workflow_dispatch:
+jobs:
+  daily-dish-photo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check static/jogador-v2.js
+      - run: node --test tests/player-daily-dish-photo.test.cjs tests/player-private-photo-performance.test.cjs tests/player-top-segment-parity.test.cjs

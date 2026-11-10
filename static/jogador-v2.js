@@ -1496,7 +1496,13 @@ async function overview(){
    const options=datedPlanOptions(d,meal,color);
    const avg=average(options);
    if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
-   if(menu){const p=document.createElement("div");p.className="menu-line meal-menu-card";p.textContent=menu.value;section.append(p);}
+   if(menu){
+    const p=document.createElement("div");p.className="menu-line meal-menu-card";
+    const name=document.createElement("span");name.className="daily-meal-menu-name";name.textContent=menu.value;
+    p.append(name);section.append(p);
+    if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish")
+     attachDailyDishPhoto(section,p,menu,epoch,requestId);
+   }
    if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
    if(options.length===1){
     const single=options[0],body=document.createElement("div");body.className="single-meal-option";
@@ -1643,6 +1649,39 @@ function openDishPhoto(src,alt){
  close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss();};document.addEventListener("keydown",onKey);
  overlay.append(close,image);document.body.append(overlay);close.focus();
 }
+/* The daily plan shares Menus' authorised dish photo endpoint. Fetch only when
+   an assigned lunch/dinner is expanded; a missing photo leaves its card unchanged. */
+function attachDailyDishPhoto(section,card,menu,epoch,requestId){
+ let started=false;
+ const load=async()=>{
+  if(started||!section.open)return;
+  started=true;
+  let dishId=menu.dish_id;
+  if(!dishId){
+   // Legacy menu rows may only have a name; never choose an ambiguous dish.
+   try{
+    const response=await cachedOverviewRead("/api/v2/player/dishes");
+    const matches=(response.dishes||[]).filter(dish=>dish.name_pt===menu.value);
+    if(matches.length===1)dishId=matches[0].id;
+   }catch{return;}
+  }
+  if(!dishId||epoch!==playerSessionEpoch||requestId!==overviewRequestId||!card.isConnected)return;
+  const src=await cachedDishPhoto(dishId);
+  if(!src||epoch!==playerSessionEpoch||requestId!==overviewRequestId||!card.isConnected)return;
+  const photo=document.createElement("img");
+  photo.className="daily-meal-dish-photo";photo.alt="";photo.decoding="async";
+  // Insert only once the image is ready: no broken icon or empty thumbnail.
+  photo.onload=()=>{
+   if(epoch!==playerSessionEpoch||requestId!==overviewRequestId||!card.isConnected)return;
+   card.classList.add("has-dish-photo");
+   card.append(photo);
+  };
+  photo.src=src;
+ };
+ section.addEventListener("toggle",()=>{if(section.open)void load();});
+ if(section.open)void load();
+}
+
 let lastMenuPresentationWeek=null;
 async function menusView(){
  const epoch=playerSessionEpoch,renderToken=++menuRenderToken;
