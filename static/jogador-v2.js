@@ -26,6 +26,58 @@ function enableWeekSwipe(element,onShift){
   event.preventDefault();onShift(dx<0?7:-7);
  },{passive:false});
 }
+// Day-by-day navigation for the full Planning content area, in both views.
+// The menus week strip keeps its independent, existing week gesture.
+let overviewSwipeDirection=0;
+function shiftOverviewDay(offset){
+ if(offset!==1&&offset!==-1)return;
+ const next=new Date(day);
+ next.setDate(next.getDate()+offset);
+ day=next;
+ weeklySelection=null;
+ overviewSwipeDirection=offset;
+ overview().catch(error);
+}
+function enableOverviewDaySwipe(element){
+ if(element.dataset.overviewDaySwipeBound)return;
+ element.dataset.overviewDaySwipeBound="true";
+ let start=null;
+ element.addEventListener("touchstart",event=>{
+  start=null;
+  if(tab!=="overview"||element.hidden||event.touches.length!==1)return;
+  const target=event.target;
+  if(target?.closest?.('input,select,textarea,[contenteditable],[role="slider"]'))return;
+  // Respect nested horizontal scrolling (e.g. charts), without blocking
+  // normal card buttons, vertically scrolling text or meal accordions.
+  for(let node=target;node&&node!==element;node=node.parentElement){
+   if(node.scrollWidth>node.clientWidth+6&&
+      /^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
+  }
+  const touch=event.touches[0];
+  // Let iOS/Android handle their native back gesture at the screen edges.
+  if(touch.clientX<22||touch.clientX>window.innerWidth-22)return;
+  start={x:touch.clientX,y:touch.clientY};
+ },{passive:true});
+ element.addEventListener("touchcancel",()=>{start=null;},{passive:true});
+ element.addEventListener("touchend",event=>{
+  if(!start||event.changedTouches.length!==1){start=null;return;}
+  const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+  start=null;
+  if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.5)return;
+  if(event.cancelable)event.preventDefault();
+  shiftOverviewDay(dx<0?1:-1);
+ },{passive:false});
+}
+function animateOverviewDaySwipe(){
+ const direction=overviewSwipeDirection;
+ overviewSwipeDirection=0;
+ if(!direction)return;
+ const target=$(overviewMode==="week"?"weekly-view":"day-details");
+ if(!target||target.hidden)return;
+ target.classList.remove("overview-swipe-enter-next","overview-swipe-enter-prev");
+ void target.offsetWidth;
+ target.classList.add(direction>0?"overview-swipe-enter-next":"overview-swipe-enter-prev");
+}
 function revokePlayerView(){
  window.themileRecipes?.reset();
  // An account switch must invalidate cached data and every old request.
@@ -577,7 +629,7 @@ function weeklySummary(data,relativeMeans={}){
 function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  weeklyContext={mon,r,weekMenus,weeklyWeights};
  const root=$("weekly-view");root.replaceChildren();
- enableWeekSwipe(root,offset=>{day=swipeWeekBoundary(day,offset);weeklySelection=null;overview().catch(error);});
+ // Full-view day swipe is registered once on #overview, including this grid.
  const grid=document.createElement("div");grid.className="weekly-calendar-grid";root.append(grid);
  const selectedWeeklyDate=weeklySelection?.date||iso(day);
  if(selectedWeeklyDate){const selectedIndex=Math.round((new Date(selectedWeeklyDate+"T12:00:00")-new Date(iso(mon)+"T12:00:00"))/86400000);if(selectedIndex>=0&&selectedIndex<7){grid.classList.add("has-weekly-selection");grid.style.setProperty("--selected-column-left",`calc(${selectedIndex} * (100% - 24px) / 7 + ${selectedIndex*4}px)`);grid.style.setProperty("--selected-column-left-mobile",`calc(${selectedIndex} * (100% - 18px) / 7 + ${selectedIndex*3}px)`);}}
@@ -1123,7 +1175,7 @@ function reusableOverviewSnapshot(weekKey,now=Date.now()){
 let lastOverviewPresentation=null;
 function renderPendingCalendar(mon,dateKey){
  const strip=$("week-strip");strip.replaceChildren();
- enableWeekSwipe(strip,offset=>{day=swipeWeekBoundary(day,offset);overview().catch(error);});
+ // Shared full-view swipe also covers the calendar, including during loading.
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);
   const key=iso(dt),b=document.createElement("button");b.type="button";
@@ -1230,12 +1282,12 @@ async function overview(){
  lastOverviewPresentation={weekKey,dateKey:d,mode:overviewMode};
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
- if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}
+ if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});animateOverviewDaySwipe();return;}
  const dailyReferenceRaw=weekWeights.weights_by_date?.[d]?.weight_kg;
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
- enableWeekSwipe(strip,offset=>{day=swipeWeekBoundary(day,offset);overview().catch(error);});
+ // Shared full-view swipe also covers the calendar, including during loading.
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);
   const dayInfo=r.days.find(x=>x.date===iso(dt));
@@ -1252,7 +1304,7 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
   renderWeightCard(root,d).catch(()=>{});
-  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);return;
+  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);animateOverviewDaySwipe();return;
  }
 
  const dailyTotal=dayNutritionTotal(entry||{date:d,classification:null});
@@ -1446,6 +1498,7 @@ async function overview(){
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
  injectPostMatchCard();
+ animateOverviewDaySwipe();
 }
 function openPlansSection(section){
  $("plans-landing").hidden=true;
@@ -1689,7 +1742,7 @@ async function menusView(){
  }
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
-$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("profile-logout").onclick=()=>$("logout").click();
+$("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("profile-logout").onclick=()=>$("logout").click();
 function resetProfilePassword(){
  $("profile-password-form").reset();
  $("profile-password-feedback").textContent="";
