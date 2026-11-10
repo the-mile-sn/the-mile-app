@@ -122,7 +122,7 @@ def import_approved_archive(c, archive_bytes):
                 elif rice is not None or potato is not None:
                     raise ValueError("invalid_mix")
                 filename = ref.get("ficheiro")
-                if not isinstance(filename, str) or not re.fullmatch(r"imagens/image[0-9]+\\.webp", filename):
+                if not isinstance(filename, str) or not re.fullmatch(r"imagens/image[0-9]+\.webp", filename):
                     raise ValueError("invalid_photo_path")
                 info = files.get(filename)
                 if info is None or info.file_size > MAX_PHOTO:
