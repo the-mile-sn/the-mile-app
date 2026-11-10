@@ -16,5 +16,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - run: python -m py_compile app.py
       - run: node --check static/jogador-v2.js
       - run: node --test tests/player-daily-dish-photo.test.cjs tests/player-private-photo-performance.test.cjs tests/player-top-segment-parity.test.cjs
