@@ -373,6 +373,24 @@ def player_menu_photo(image_bytes):
         return image_bytes
 
 
+
+@lru_cache(maxsize=64)
+def player_daily_dish_thumbnail(image_bytes):
+    """Small WebP for the 64-76px daily card, keeping the Menus image unchanged."""
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as original:
+            if original.width * original.height > 32_000_000:
+                return player_menu_photo(image_bytes)
+            photo = ImageOps.exif_transpose(original)
+            photo.thumbnail((176, 176), Image.Resampling.LANCZOS)
+            output = io.BytesIO()
+            photo.save(output, format='WEBP', quality=82, method=2)
+            # Retain the same transparent-matte handling as the Menus photo.
+            return player_menu_photo(output.getvalue())
+    except (OSError, ValueError, Image.DecompressionBombError, UnidentifiedImageError):
+        return player_menu_photo(image_bytes)
+
+
 def player_avatar_photo(image_data, mime):
     """Serve a smaller private avatar without modifying the original stored photo."""
     if len(image_data) <= 120_000:
@@ -1716,7 +1734,9 @@ def application(env, start_response):
                 if not row: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,row['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
-                return respond(200,player_menu_photo(image_data),'image/webp')
+                thumbnail = parse_qs(env.get('QUERY_STRING','')).get('size',[''])[0] == 'thumbnail'
+                photo_bytes = player_daily_dish_thumbnail(image_data) if thumbnail else player_menu_photo(image_data)
+                return respond(200,photo_bytes,'image/webp')
             if path == '/api/v2/player/plans' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
