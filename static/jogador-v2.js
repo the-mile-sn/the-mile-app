@@ -1630,10 +1630,11 @@ function activateDishPhoto(photo){
   photo.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();activate();}};
  });
 }
-function cachedDishPhoto(id){
- const key=String(id);
+function cachedDishPhoto(id,thumbnail=false){
+ const dishId=String(id),key=(thumbnail?"daily:":"full:")+dishId;
  if(!dishPhotoCache.has(key)){
-  const url="/api/v2/player/dish-photo/"+encodeURIComponent(key)+"?v=2";
+  // Daily cards display 76px thumbnails; Menus retains its full image.
+  const url="/api/v2/player/dish-photo/"+encodeURIComponent(dishId)+(thumbnail?"?size=thumbnail":"?v=2");
   const pending=fetch(url,{credentials:"same-origin"}).then(r=>{if(!r.ok)throw Error("Foto indisponível");return r.blob();}).then(blob=>URL.createObjectURL(blob)).catch(()=>null);
   dishPhotoCache.set(key,pending);
  }
@@ -1649,14 +1650,13 @@ function openDishPhoto(src,alt){
  close.onclick=dismiss;overlay.onclick=e=>{if(e.target===overlay)dismiss();};document.addEventListener("keydown",onKey);
  overlay.append(close,image);document.body.append(overlay);close.focus();
 }
-/* The daily plan shares Menus' authorised dish photo endpoint. Fetch only when
-   an assigned lunch/dinner is expanded; a missing photo leaves its card unchanged. */
+/* Prefetch up to the selected day's two assigned dish photos after the
+   meal DOM is built, so expanding Almoço/Jantar does not start a cold request.
+   Missing photographs leave the original text-only card unchanged. */
 function attachDailyDishPhoto(section,card,menu,epoch,requestId){
- let started=false;
  const load=async()=>{
-  if(started||!section.open)return;
-  started=true;
   let dishId=menu.dish_id;
+  if(epoch!==playerSessionEpoch||requestId!==overviewRequestId||!card.isConnected)return;
   if(!dishId){
    // Legacy menu rows may only have a name; never choose an ambiguous dish.
    try{
@@ -1666,7 +1666,7 @@ function attachDailyDishPhoto(section,card,menu,epoch,requestId){
    }catch{return;}
   }
   if(!dishId||epoch!==playerSessionEpoch||requestId!==overviewRequestId||!card.isConnected)return;
-  const src=await cachedDishPhoto(dishId);
+  const src=await cachedDishPhoto(dishId,true);
   if(!src||epoch!==playerSessionEpoch||requestId!==overviewRequestId||!card.isConnected)return;
   const photo=document.createElement("img");
   photo.className="daily-meal-dish-photo";photo.alt="";photo.decoding="async";
@@ -1678,8 +1678,9 @@ function attachDailyDishPhoto(section,card,menu,epoch,requestId){
   };
   photo.src=src;
  };
- section.addEventListener("toggle",()=>{if(section.open)void load();});
- if(section.open)void load();
+ // Deferring one microtask lets the entire day's cards attach to the DOM first.
+ // At most Almoço and Jantar are prefetched; menus and other tabs are untouched.
+ Promise.resolve().then(load);
 }
 
 let lastMenuPresentationWeek=null;
