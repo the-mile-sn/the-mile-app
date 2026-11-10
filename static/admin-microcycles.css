@@ -2834,3 +2834,24 @@ html[data-admin-theme="light"] #tm-food-library-page button.primary,html[data-ad
 #calendar-section .calendar-option-clear-button:disabled{
  opacity:.5;cursor:wait;
 }
+
+/* Planeamento: compact, filled-widget presentation (November 2026). */
+#calendar-section{border:0!important;box-shadow:none!important;background:transparent!important;padding:12px 0!important}
+#calendar-section #calendar-mobile-event-toggle{border:0!important;box-shadow:none!important;background:#303034!important;border-radius:15px!important}
+#calendar-section .calendar-event-form{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px!important;padding:12px!important;margin:10px 0 4px!important;border:0!important;box-shadow:none!important;background:#242428!important;border-radius:16px!important;align-items:end}
+#calendar-section .calendar-event-form>.calendar-event-field{min-width:0!important;flex:none!important;margin:0!important}
+#calendar-section .calendar-event-form>.calendar-event-field:not([hidden]){grid-column:auto}
+#calendar-section .calendar-event-form .calendar-event-field label{font-size:11px!important;margin-bottom:4px!important}
+#calendar-section .calendar-event-form .calendar-event-field input,
+#calendar-section .calendar-event-form .calendar-event-field select{width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;border:0!important;box-shadow:none!important;background:#36363b!important;border-radius:11px!important;min-height:42px!important;padding:8px 10px!important}
+#calendar-section .calendar-event-form #calendar-peri-flags{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap}
+#calendar-section .calendar-event-form .calendar-peri-check{border:0!important;box-shadow:none!important;background:#36363b!important;border-radius:12px!important;padding:9px 12px!important;margin:0!important}
+#calendar-section .calendar-event-form #calendar-supp-options{grid-column:1 / -1}
+#calendar-section .calendar-event-form #calendar-add-event{grid-column:1 / -1;justify-self:start;width:auto!important;min-width:0!important;min-height:36px!important;padding:8px 18px!important;margin:0!important;border:0!important;border-radius:999px!important;background:#fff!important;color:#18181b!important;font-size:12px!important;font-weight:650!important;box-shadow:none!important}
+#calendar-section .calendar-navigation{margin:12px 0 10px!important}
+#calendar-section .calendar-navigation #calendar-prev,
+#calendar-section .calendar-navigation #calendar-next{width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;display:grid!important;place-items:center;border:0!important;border-radius:50%!important;background:#343438!important;box-shadow:none!important;font-size:24px!important;line-height:1!important}
+#calendar-section .calendar-days .calendar-day{border:0!important;box-shadow:none!important}
+#calendar-section .calendar-days .calendar-day.calendar-selected{outline:2px solid rgba(255,255,255,.55);outline-offset:-2px}
+#calendar-section .calendar-event-list{border:0!important;box-shadow:none!important}
+@media(max-width:620px){#calendar-section .calendar-event-form{gap:7px!important;padding:9px!important}#calendar-section .calendar-event-form .calendar-event-field input,#calendar-section .calendar-event-form .calendar-event-field select{font-size:12px!important;padding:7px 5px!important;min-height:38px!important}#calendar-section .calendar-event-form .calendar-event-field label{font-size:10px!important}#calendar-section .calendar-event-form #calendar-add-event{min-height:34px!important}}
