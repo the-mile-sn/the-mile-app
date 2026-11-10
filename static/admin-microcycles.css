@@ -2998,3 +2998,15 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days
  #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;grid-row:2!important;font-size:10px!important;padding:0 8px!important;height:32px!important;min-height:32px!important}
  #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3){padding:8px!important;min-height:62px!important;height:62px!important}
 }
+
+#admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1/3!important;grid-row:2!important;justify-self:start!important;align-self:center!important;width:auto!important;gap:7px!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;grid-row:2!important;justify-self:end!important;align-self:center!important;width:max-content!important;min-height:34px!important;height:34px!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3){justify-content:center!important;gap:3px!important;height:64px!important;min-height:64px!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3)>label{line-height:17px!important;margin:0!important;text-align:left!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3)>:is(input,select){height:24px!important;min-height:24px!important;line-height:24px!important;margin:0!important;text-align:left!important}
+#admin-workspace #nutrition-weekly-summary{border:0!important;box-shadow:none!important;background:transparent!important}
+#admin-workspace #nutrition-weekly-summary .nutrition-metric-card,
+#admin-workspace #nutrition-weekly-summary .nutrition-card,
+#admin-workspace #nutrition-weekly-summary .calendar-navigation button{border:0!important;box-shadow:none!important}
+#admin-workspace #nutrition-weekly-summary .calendar-navigation button{width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center!important;font-size:23px!important;background:var(--tm-plan-control,#343438)!important;color:var(--tm-plan-text,#fff)!important}
+@media(max-width:680px){#admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1/3!important;grid-row:2!important;gap:5px!important}#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;grid-row:2!important;font-size:10px!important;padding:0 8px!important}#admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{font-size:10px!important;gap:3px!important}}
