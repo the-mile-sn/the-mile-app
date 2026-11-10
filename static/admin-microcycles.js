@@ -2884,7 +2884,7 @@ const supplementRank=(item,q)=>{const name=normalizeSupplementQuery(item.name);r
 function filterSupplementLists(){
  const q=normalizeSupplementQuery($("supp-assign-search").value.trim());
  const lq=normalizeSupplementQuery($("supp-library-search").value.trim());
- const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list"),suggestions=$("supp-search-options");suggestions.replaceChildren();
+ const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list");
  select.replaceChildren();list.replaceChildren();
  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar...";select.append(empty);
  for(const item of [...supplementLibrary].sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt"))){
