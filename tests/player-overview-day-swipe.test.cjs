@@ -6,13 +6,13 @@ const fs=require("node:fs");
 const source=fs.readFileSync("static/jogador-v2.js","utf8");
 const html=fs.readFileSync("static/jogador-v2.html","utf8");
 const css=fs.readFileSync("static/jogador-v2.css","utf8");
-const first=source.indexOf("function shiftOverviewDay(offset){");
+const first=source.indexOf("let pendingDailySwipeDirection=0,dailySwipeEntryAnimation=null;");
 const last=source.indexOf("function revokePlayerView(){",first);
 assert.ok(first>0&&last>first,"Actual daily swipe functions must exist");
 const functions=source.slice(first,last);
 const localDate=(d)=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 
-function harness({mode="day",tab="overview",hidden=false,day=new Date(2026,10,8,12)}={}){
+function harness({mode="day",tab="overview",hidden=false,reducedMotion=false,day=new Date(2026,10,8,12)}={}){
  const callbacks={};
  const root={
   dataset:{},hidden,
@@ -22,7 +22,12 @@ function harness({mode="day",tab="overview",hidden=false,day=new Date(2026,10,8,
  let renderCalls=0,defeatedClicks=0;
  const $=id=>id==="weekly-view"?weeklyView:dayView;
  const makeTarget=()=>({
-  hidden:false,offsetWidth:400,
+  hidden:false,offsetWidth:400,animations:[],
+  animate(frames,options){
+   const animation={frames,options,canceled:false,cancel(){this.canceled=true;}};
+   this.animations.push(animation);
+   return animation;
+  },
   classList:{
    list:new Set(),
    remove(...names){for(const n of names)this.list.delete(n)},
@@ -37,10 +42,11 @@ function harness({mode="day",tab="overview",hidden=false,day=new Date(2026,10,8,
   enableOverviewDaySwipe(element);
   return {
    getDate:()=>day,getWeeklySelection:()=>weeklySelection,
-   shift:shiftOverviewDay
+   shift:shiftOverviewDay,animate:animateDailySwipeEntry,
+   getDirection:()=>pendingDailySwipeDirection
   };
  `);
- const page=factory(root,()=>({overflowX:"visible"}),{innerWidth:390},$,
+ const page=factory(root,()=>({overflowX:"visible"}),{innerWidth:390,matchMedia:()=>({matches:reducedMotion})},$,
   ()=>{renderCalls++;return Promise.resolve()},()=>{},tab,mode,day,{date:"2026-11-08",meal:"lunch"});
  function touch(type,x,y,{targetNode=target,cancelable=true,touches=1}={}){
   const touch={clientX:x,clientY:y};
@@ -77,7 +83,10 @@ test("Weekly view retains its mode and highlights consecutive dates",()=>{
  assert.equal(localDate(h.page.getDate()),"2026-11-08");
  assert.equal(h.page.getWeeklySelection(),null);
  assert.equal(h.renderCalls(),1);
- assert.equal(h.weeklyView.classList.list.size,0);
+ h.page.animate();
+ assert.equal(h.weeklyView.animations.length,0);
+ assert.equal(h.dayView.animations.length,0);
+ assert.equal(h.page.getDirection(),0);
 });
 test("Normal taps, short drags and vertical scroll do not change the date",()=>{
  const h=harness();
@@ -107,18 +116,44 @@ test("Only the overview owns its day swipe; Menus preserves independent week nav
  assert.ok(source.includes('enableWeekSwipe($("menu-week-strip")'));
  assert.ok(!source.includes("enableWeekSwipe(root,offset=>"));
  assert.ok(!source.includes("enableWeekSwipe(strip,offset=>"));
- assert.ok(source.includes('if(isWeek){renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}'));
- assert.ok(source.includes("injectPostMatchCard();\n}"));
- assert.ok(html.includes("jogador-v2.js?v=162"));
+ assert.ok(source.includes('if(isWeek){pendingDailySwipeDirection=0;renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}'));
+ assert.ok(source.includes("injectPostMatchCard();\n animateDailySwipeEntry();\n}"));
+ assert.ok(html.includes("jogador-v2.js?v=163"));
  assert.ok(html.includes("jogador-v2.css?v=196"));
 });
-test("Day swipes do not animate or fade the content; main tab transitions are retained",()=>{
- assert.ok(!source.includes("animateOverviewDaySwipe"));
- assert.ok(!source.includes("overviewSwipeDirection"));
- assert.ok(!css.includes("overview-day-swipe-enter-next"));
- assert.ok(!css.includes("overview-day-swipe-enter-prev"));
- assert.ok(!css.includes("overview-swipe-enter-next"));
- assert.ok(!css.includes("overview-swipe-enter-prev"));
+test("Daily swipe animates 35px in the gesture direction for 260ms without opacity changes",()=>{
+ const h=harness();
+ h.swipe(280,110);
+ assert.equal(h.page.getDirection(),1);
+ h.page.animate();
+ assert.equal(h.dayView.animations.length,1);
+ const next=h.dayView.animations[0];
+ assert.equal(next.frames[0].transform,"translateX(35px)");
+ assert.equal(next.frames[1].transform,"translateX(0)");
+ assert.equal(next.options.duration,260);
+ assert.ok(next.options.easing.includes("cubic-bezier"));
+ assert.ok(next.frames.every(frame=>!Object.hasOwn(frame,"opacity")));
+ assert.equal(h.page.getDirection(),0);
+ h.swipe(110,280);
+ h.page.animate();
+ assert.equal(h.dayView.animations.length,2);
+ assert.equal(h.dayView.animations[1].frames[0].transform,"translateX(-35px)");
+ assert.equal(next.canceled,true);
+ assert.equal(h.weeklyView.animations.length,0);
+});
+test("Reduced-motion preference keeps Daily swipe navigation but removes the animation",()=>{
+ const h=harness({reducedMotion:true});
+ h.swipe(280,110);
+ h.page.animate();
+ assert.equal(localDate(h.page.getDate()),"2026-11-09");
+ assert.equal(h.dayView.animations.length,0);
+});
+test("Calendar remains stationary and tab transitions retain their established animation",()=>{
+ assert.ok(source.includes('const content=$("day-details")'));
+ assert.ok(!source.includes('const content=$("week-strip")'));
+ assert.ok(!source.includes('const content=$("date-title")'));
  assert.ok(source.includes("destination.animate(["));
  assert.ok(source.includes("{duration:500,easing:"));
+ assert.ok(!css.includes("overview-day-swipe-enter-next"));
+ assert.ok(!css.includes("overview-day-swipe-enter-prev"));
 });
