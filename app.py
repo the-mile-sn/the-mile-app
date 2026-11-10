@@ -358,53 +358,6 @@ def initialize():
             except Exception:
                 logging.exception('Read-only live peri event association audit failed')
         supplements_v2.initialize(c)
-        if SITE_ROLE == 'admin':
-            # Temporary, READ-ONLY audit of where "creatina" appears in historical plans.
-            # Never logs athlete identifiers, plan IDs or full note contents.
-            try:
-                source_summary = {}
-                for store, column in (
-                    ('v2_food_plan_drafts', 'content'),
-                    ('v2_food_plan_editor_publications', 'snapshot_json'),
-                    ('v2_plan_publications', 'snapshot_json'),
-                ):
-                    summary = {'total_plans': 0, 'plans_with_creatina': 0,
-                               'creatina_notes': 0, 'creatina_supplement_labels': 0,
-                               'creatina_food_labels': 0, 'creatina_other_text': 0}
-                    for entry in c.execute('SELECT '+column+' FROM '+store).fetchall():
-                        summary['total_plans'] += 1
-                        try:
-                            payload = json.loads(entry[column])
-                        except (ValueError,TypeError):
-                            continue
-                        found = False
-                        def count_creatina(obj, route=(), kind=''):
-                            nonlocal found
-                            if isinstance(obj,dict):
-                                item_kind = str(obj.get('kind') or kind or '')
-                                for key,value in obj.items():
-                                    count_creatina(value, route+(key,), item_kind)
-                            elif isinstance(obj,list):
-                                for value in obj:
-                                    count_creatina(value, route, kind)
-                            elif isinstance(obj,str) and 'creat' in obj.casefold():
-                                found = True
-                                if route and ('notes' in route or 'note' in route):
-                                    label = 'creatina_notes'
-                                elif route and route[-1] in ('label','display_name','name') and kind=='supplement':
-                                    label = 'creatina_supplement_labels'
-                                elif route and route[-1] in ('label','display_name','name') and ('foods' in route or kind=='food'):
-                                    label = 'creatina_food_labels'
-                                else:
-                                    label = 'creatina_other_text'
-                                summary[label] += 1
-                        count_creatina(payload)
-                        if found:
-                            summary['plans_with_creatina'] += 1
-                    source_summary[store] = summary
-                logging.warning('READ-ONLY creatina references in stored plans (no personal data): %s', source_summary)
-            except Exception:
-                logging.exception('READ-ONLY creatina stored-plan audit failed')
         assessments_v2.initialize(c)
         monitoring_v2.initialize(c)
         c.execute("UPDATE documents SET folder='weekly' WHERE folder='weekly_next'")
