@@ -30,10 +30,17 @@ test("Menus and Avaliações both use exact home exterior height, padding and to
  hasAll(outer,[
   "height:38px!important","min-height:38px!important","max-height:38px!important",
   "padding:3px!important","gap:3px!important","border-radius:999px!important",
-  "background:#202024!important","margin-top:-9px!important"
+  "background:#202024!important"
  ]);
- assert.ok(rule("#player-panel #menus #menus-recipe-switch").includes("repeat(2,minmax(0,1fr))"));
- assert.ok(rule("#player-panel #plans #plans-assessments .assessment-tabs").includes("repeat(3,minmax(0,1fr))"));
+ const menu=rule("#player-panel #menus #menus-recipe-switch");
+ const assessments=rule("#player-panel #plans #plans-assessments .assessment-tabs");
+ assert.ok(menu.includes("repeat(2,minmax(0,1fr))"));
+ assert.ok(assessments.includes("repeat(3,minmax(0,1fr))"));
+ // Home offsets its panel -9px, while Menus already offsets its page -12px.
+ assert.ok(css.includes("#player-panel:has(#overview:not([hidden])){margin-top:-9px!important}"));
+ assert.ok(css.includes("top:-12px!important;"));
+ assert.ok(menu.includes("margin-top:3px!important"));
+ assert.ok(assessments.includes("margin-top:-9px!important"));
 });
 test("Both controls have 32px equal buttons, home typography, no legacy thick padding",()=>{
  const buttons=rule("#player-panel #menus #menus-recipe-switch button,\n#player-panel #plans #plans-assessments .assessment-tabs button");
@@ -54,5 +61,6 @@ test("Navigation and recipe subpage top inset remain intact",()=>{
  assert.ok(html.includes("jogador-v2.css?v=197"));
  assert.ok(html.includes("player-recipes.css?v=18"));
  assert.ok(recipeCss.includes("#menus #menus-recipe-switch[hidden] ~ #player-recipes-area{\n padding-top:26px;"));
+ assert.ok(rule("#player-panel #menus #menus-recipe-switch[hidden]").includes("display:none!important"));
  assert.ok(!patch.includes("#tabs"));
 });
