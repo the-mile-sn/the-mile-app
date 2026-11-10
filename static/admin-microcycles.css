@@ -2869,9 +2869,6 @@ html[data-admin-theme="light"] #tm-food-library-page button.primary,html[data-ad
 #admin-workspace #calendar-section #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field{width:auto!important;max-width:none!important}
 #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{width:auto!important;display:inline-flex!important;align-items:center;justify-content:center;background:#fff!important;color:#17171b!important;border-radius:999px!important;padding:8px 18px!important}
-#admin-workspace #calendar-section .calendar-days .calendar-day{background-color:#232327}
-#admin-workspace #calendar-section .calendar-days .calendar-day.calendar-match{background-color:#1c3c2c}
-#admin-workspace #calendar-section .calendar-days .calendar-day.calendar-off{background-color:#43252a}
 #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-today{outline:2px solid currentColor;outline-offset:-2px}
 @media(max-width:600px){
  #admin-workspace #calendar-section #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important}
