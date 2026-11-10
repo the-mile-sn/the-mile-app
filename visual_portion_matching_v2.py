@@ -156,6 +156,10 @@ def _generic_side_entries(food, library, catalogue):
         photo=_best_photo(catalogue,category,grams)
         if photo is None:
             continue
+        # A broad generic category must not recommend an image with a large
+        # visual size discrepancy, even though all photos are orientative.
+        if abs(photo["total_g"]-grams)>min(65,max(35,grams*0.20)):
+            continue
         item={**base,"food_name":category,"category":category,
               "photo_id":photo["id"],"reference_g":photo["total_g"],
               "difference_g":round(photo["total_g"]-grams,2),
