@@ -566,3 +566,36 @@
  background:rgba(8,10,13,.56)!important;
  border:0!important;
 }
+
+
+/* Recipe subpages: back button shares the global header with the centered
+   The Mile wordmark. Positioning does not affect logo centering or page flow. */
+.player-top > #recipe-header-back{
+ position:absolute;
+ inset-inline-start:0;
+ top:50%;
+ transform:translateY(-50%);
+ z-index:2;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:40px;
+ height:40px;
+ min-width:40px;
+ margin:0;
+ padding:0 0 3px;
+ border:0;
+ border-radius:50%;
+ background:rgba(255,255,255,.06);
+ color:inherit;
+ font:inherit;
+ font-size:30px;
+ font-weight:400;
+ line-height:1;
+ box-shadow:none;
+ cursor:pointer;
+}
+.player-top > #recipe-header-back:focus-visible{
+ outline:2px solid currentColor;
+ outline-offset:3px;
+}
