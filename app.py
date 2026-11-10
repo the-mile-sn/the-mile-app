@@ -363,14 +363,16 @@ def initialize():
             try:
                 food_hits = c.execute(
                     "SELECT display_name,base_name,category,active FROM v2_food_library "
-                    "WHERE lower(display_name) LIKE '%creat%' "
-                    "OR lower(base_name) LIKE '%creat%' "
-                    "OR lower(coalesce(notes,'')) LIKE '%creat%' "
-                    "ORDER BY active DESC, display_name LIMIT 30"
+                    "WHERE lower(display_name) LIKE ? "
+                    "OR lower(base_name) LIKE ? "
+                    "OR lower(coalesce(notes,'')) LIKE ? "
+                    "ORDER BY active DESC, display_name LIMIT 30",
+                    ('%creat%', '%creat%', '%creat%')
                 ).fetchall()
                 supplement_hits = c.execute(
                     "SELECT name FROM v2_supplement_library "
-                    "WHERE lower(name) LIKE '%creat%' ORDER BY name LIMIT 15"
+                    "WHERE lower(name) LIKE ? ORDER BY name LIMIT 15",
+                    ('%creat%',)
                 ).fetchall()
                 active_count = c.execute("SELECT COUNT(*) AS n FROM v2_food_library WHERE active=1").fetchone()['n']
                 logging.warning('READ-ONLY creatina food search diagnostic: %s', {
