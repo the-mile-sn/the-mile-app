@@ -2875,3 +2875,41 @@ html[data-admin-theme="light"] #tm-food-library-page button.primary,html[data-ad
  #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field{min-width:0!important}
  #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+
+/* The Mile planning widget system: theme-aware, filled, compact. */
+#admin-workspace .tm-planning-unified-header,
+#admin-workspace .tm-planning-player-toolbar,
+#admin-workspace #backoffice-nav,
+#admin-workspace .tm-planning-player-select,
+#admin-workspace .tm-planning-search-wrap,
+#admin-workspace #tm-planning-search{
+ border:0!important;box-shadow:none!important;
+}
+#admin-workspace .tm-planning-unified-header{background:var(--tm-plan-shell,#18191e)!important}
+#admin-workspace .tm-planning-search-wrap{background:var(--tm-plan-control,#27282e)!important;border-radius:14px!important}
+#admin-workspace #tm-planning-search{background:transparent!important;color:var(--tm-plan-text,#fff)!important}
+#admin-workspace #backoffice-nav{background:transparent!important}
+#admin-workspace #calendar-section{--tm-plan-shell:#242428;--tm-plan-control:#333338;--tm-plan-text:#fff;--tm-plan-muted:#939397}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle{background:var(--tm-plan-shell)!important;border-radius:17px 17px 0 0!important;margin-bottom:0!important}
+#admin-workspace #calendar-section #calendar-event-form{background:var(--tm-plan-shell)!important;border-radius:0 0 17px 17px!important;margin-top:0!important;padding-top:7px!important;gap:8px!important}
+#admin-workspace #calendar-section #calendar-mobile-event-toggle[aria-expanded="false"]{border-radius:17px!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field{background:var(--tm-plan-control)!important;border:0!important;border-radius:13px!important;padding:8px 9px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;min-height:68px!important;overflow:hidden}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field[hidden]{display:none!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field label{color:var(--tm-plan-muted)!important;margin:0 0 5px!important;font-size:11px!important;line-height:1.2!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field input,
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field select{background:transparent!important;color:var(--tm-plan-text)!important;border:0!important;outline-offset:2px;box-shadow:none!important;padding:0!important;min-height:25px!important;height:25px!important;font-size:14px!important;border-radius:0!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{gap:7px!important;align-items:center}
+#admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{background:var(--tm-plan-control)!important;padding:6px 10px!important;min-height:34px!important;flex:0 0 auto!important;border-radius:10px!important;font-size:12px!important}
+#admin-workspace #calendar-section #calendar-event-form .calendar-peri-check input{width:17px!important;height:17px!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:1/-1!important;justify-self:start!important;width:auto!important;max-width:max-content!important;min-height:35px!important;padding:8px 17px!important;border-radius:999px!important;background:var(--tm-plan-button,#fff)!important;color:var(--tm-plan-button-text,#17171b)!important;font-size:12px!important}
+html[data-admin-theme="light"] #admin-workspace .tm-planning-unified-header{--tm-plan-shell:#f2f4f7;--tm-plan-control:#fff;--tm-plan-text:#202735;background:var(--tm-plan-shell)!important}
+html[data-admin-theme="light"] #admin-workspace .tm-planning-search-wrap{background:var(--tm-plan-control)!important}
+html[data-admin-theme="light"] #admin-workspace #calendar-section{--tm-plan-shell:#f2f4f7;--tm-plan-control:#fff;--tm-plan-text:#202735;--tm-plan-muted:#747a86;--tm-plan-button:#202735;--tm-plan-button-text:#fff}
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field input,
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field select{color-scheme:light!important}
+@media(max-width:620px){
+ #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field{padding:7px 6px!important;min-height:61px!important}
+ #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field input,
+ #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field select{font-size:12px!important}
+ #admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{padding:5px 8px!important}
+}
