@@ -1225,6 +1225,29 @@ function cachedOverviewRead(path){
  if(overviewReadCache.size>30)overviewReadCache.delete(overviewReadCache.keys().next().value);
  return promise;
 }
+/* A dish subcard in the daily plan is a shortcut to that exact Menus
+   date and meal. The main Almoço/Jantar summary stays an accordion. */
+async function openDailyMealInMenus(dateKey,meal){
+ if(tab!=="overview"||(meal!=="lunch"&&meal!=="dinner"))return;
+ const selectedDay=new Date(dateKey+"T12:00:00");
+ if(Number.isNaN(selectedDay.getTime()))return;
+ menuWeek=selectedDay;
+ menuSelectedDate=dateKey;
+ // Reuse the actual Menus selector action: this also closes old recipe
+ // subpages without changing navigation or recipe permissions.
+ document.querySelector('#menus-recipe-switch [data-menu-mode="menus"]')?.click();
+ await show("menus");
+ // Wait for the rendered Menus DOM and any queued scroll restoration.
+ window.requestAnimationFrame(()=>{
+  if(tab!=="menus"||menuSelectedDate!==dateKey)return;
+  const dayCard=document.querySelector('#menu-days .day-menu[data-date="'+dateKey+'"]');
+  const mealCard=dayCard?.querySelector('.menu-entry[data-meal="'+meal+'"]');
+  (mealCard||dayCard)?.scrollIntoView({
+   behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches?"instant":"smooth",
+   block:"center"
+  });
+ });
+}
 async function overview(){
  const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
@@ -1500,8 +1523,16 @@ async function overview(){
     const p=document.createElement("div");p.className="menu-line meal-menu-card";
     const name=document.createElement("span");name.className="daily-meal-menu-name";name.textContent=menu.value;
     p.append(name);section.append(p);
-    if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish")
+    if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish"){
+     p.classList.add("meal-menu-link");
+     p.setAttribute("role","button");p.tabIndex=0;
+     p.setAttribute("aria-label","Ver "+names[meal]+" nos Menus de "+new Date(d+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
+     p.addEventListener("click",()=>{openDailyMealInMenus(d,meal).catch(error);});
+     p.addEventListener("keydown",event=>{
+      if(event.key==="Enter"||event.key===" "){event.preventDefault();p.click();}
+     });
      attachDailyDishPhoto(section,p,menu,epoch,requestId);
+    }
    }
    if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
    if(options.length===1){
@@ -1733,7 +1764,7 @@ async function menusView(){
   button.onclick=()=>{selectMenuDay(key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
   strip.append(button);
  }
- const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"Geral";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";
+ const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"Geral";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";div.dataset.meal=meal;
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===(dayClass?.classification||"Geral"));const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal]);
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";
