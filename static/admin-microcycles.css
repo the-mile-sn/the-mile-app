@@ -2913,3 +2913,24 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-even
  #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field select{font-size:12px!important}
  #admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{padding:5px 8px!important}
 }
+
+/* Option A: single compact action row and softly filled calendar tiles. */
+#admin-workspace #calendar-section #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:8px!important;row-gap:8px!important;padding:8px 12px 12px!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / 3!important;grid-row:auto!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:12px!important;min-width:0!important}
+#admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{background:transparent!important;border:0!important;padding:3px 0!important;min-height:30px!important;border-radius:0!important;gap:6px!important;font-size:12px!important;white-space:nowrap!important}
+#admin-workspace #calendar-section #calendar-event-form .calendar-peri-check input{width:17px!important;height:17px!important;margin:0!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;justify-self:end!important;align-self:center!important;max-width:100%!important;width:max-content!important;min-height:34px!important;height:34px!important;padding:0 14px!important;line-height:1!important;font-size:12px!important;white-space:nowrap!important}
+#admin-workspace #calendar-section .calendar-days .calendar-day:not(.calendar-match):not(.calendar-off):not(.calendar-today):not(.calendar-selected){background:#242428!important}
+#admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected:not(.calendar-match):not(.calendar-off){background:#213544!important}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day:not(.calendar-match):not(.calendar-off):not(.calendar-today):not(.calendar-selected){background:#eef1f5!important;color:#202735!important}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected:not(.calendar-match):not(.calendar-off){background:#e2edf8!important;color:#202735!important}
+@media(max-width:680px){
+ #admin-workspace #calendar-section #calendar-event-form{grid-template-columns:repeat(3,minmax(0,1fr))!important;padding:8px!important;column-gap:6px!important}
+ #admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / 3!important;gap:7px!important}
+ #admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{font-size:11px!important;gap:4px!important}
+ #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;font-size:11px!important;padding:0 9px!important}
+}
+@media(max-width:390px){
+ #admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / -1!important}
+ #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:1 / -1!important;justify-self:end!important}
+}
