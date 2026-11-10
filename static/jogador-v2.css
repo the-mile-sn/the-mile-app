@@ -4172,27 +4172,3 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  border-radius:11px!important;
  box-sizing:border-box!important;
 }
-
-
-/* Subtle daily navigation feedback in both Planning views. The gesture itself
-   is attached to #overview; no layout shifts or persistent transforms. */
-@keyframes overview-day-swipe-enter-next{
- from{transform:translateX(9px);opacity:.90}
- to{transform:translateX(0);opacity:1}
-}
-@keyframes overview-day-swipe-enter-prev{
- from{transform:translateX(-9px);opacity:.90}
- to{transform:translateX(0);opacity:1}
-}
-#overview :is(#day-details,#weekly-view).overview-swipe-enter-next{
- animation:overview-day-swipe-enter-next 160ms ease-out both;
-}
-#overview :is(#day-details,#weekly-view).overview-swipe-enter-prev{
- animation:overview-day-swipe-enter-prev 160ms ease-out both;
-}
-@media(prefers-reduced-motion:reduce){
- #overview :is(#day-details,#weekly-view).overview-swipe-enter-next,
- #overview :is(#day-details,#weekly-view).overview-swipe-enter-prev{
-  animation:none!important;
- }
-}
