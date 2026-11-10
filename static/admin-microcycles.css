@@ -3060,3 +3060,13 @@ html[data-admin-theme="light"] #supplements-panel #supp-assign-search{background
 html[data-admin-theme="light"] #supplements-panel #supp-lib-assign{background:#222831!important;color:#fff!important}
 html[data-admin-theme="light"] #supplements-panel #supp-save{background:#dfe4ec!important;color:#20242b!important}
 @media(max-width:680px){#supplements-panel{gap:12px!important}#supplements-panel>.supp-workflow{padding:16px!important;border-radius:19px!important}#supplements-panel>details.supp-workflow{padding:0!important}#supplements-panel>details.supp-workflow>summary{padding:16px 18px!important;min-height:60px!important}#supplements-panel .supp-assignment-actions{gap:8px!important}#supplements-panel .supp-assignment-actions button{font-size:12px!important;padding:9px 12px!important}}
+
+#supplements-panel .supp-workflow:has(#supp-assign-search) label{position:relative;display:block}
+#supplements-panel .supp-search-dropdown{position:absolute;z-index:100;top:100%;left:0;right:0;max-height:280px;overflow:auto;background:#303137;border-radius:0 0 15px 15px;box-shadow:0 12px 30px #0006;padding:5px}
+#supplements-panel .supp-search-dropdown[hidden]{display:none!important}
+#supplements-panel .supp-search-result{display:block;width:100%;padding:11px 13px;border:0;border-radius:9px;background:transparent;color:#fff;text-align:left;font:inherit;cursor:pointer}
+#supplements-panel .supp-search-result:hover,#supplements-panel .supp-search-result:focus{background:#474951}
+#supplements-panel .supp-search-empty{padding:12px;color:#aaa}
+html[data-admin-theme="light"] #supplements-panel .supp-search-dropdown{background:#fff;box-shadow:0 12px 28px #0002}
+html[data-admin-theme="light"] #supplements-panel .supp-search-result{color:#20242b}
+html[data-admin-theme="light"] #supplements-panel .supp-search-result:hover,html[data-admin-theme="light"] #supplements-panel .supp-search-result:focus{background:#e9edf2}
