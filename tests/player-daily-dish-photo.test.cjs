@@ -14,9 +14,9 @@ test("reuses authorised photo endpoint and avoids guessing legacy dish names",()
  assert.match(body,/menu\.dish_id/);
  assert.match(body,/cachedOverviewRead\("\/api\/v2\/player\/dishes"\)/);
  assert.match(body,/matches\.length===1/);
- assert.match(body,/cachedDishPhoto\(dishId\)/);
- assert.match(body,/section\.addEventListener\("toggle"/);
- assert.match(body,/if\(started\|\|!section\.open\)return/);
+ assert.match(body,/cachedDishPhoto\(dishId,true\)/);
+ assert.match(body,/Promise\.resolve\(\)\.then\(load\)/);
+ assert.doesNotMatch(body,/if\(started\|\|!section\.open\)return/);
  assert.match(body,/epoch!==playerSessionEpoch/);
  assert.match(body,/requestId!==overviewRequestId/);
  assert.match(body,/photo\.onload=/);
@@ -33,8 +33,17 @@ test("no image or failed image leaves original card unchanged",()=>{
  assert.doesNotMatch(body,/openDishPhoto\(/);
 });
 test("JS/CSS cache changed but recipe assets remain intact",()=>{
- assert.match(html,/jogador-v2\.js\?v=166/);
+ assert.match(html,/jogador-v2\.js\?v=167/);
  assert.match(html,/jogador-v2\.css\?v=198/);
  assert.match(html,/player-recipes\.js\?v=11/);
  assert.match(html,/player-recipes\.css\?v=18/);
+});
+
+test("photos are prepared before opening, sharing a separate compact cache",()=>{
+ assert.match(js,/const key=.*thumbnail\?"daily:":"full:"/);
+ assert.match(js,/thumbnail\?"\?size=thumbnail":"\?v=2"/);
+ assert.match(js,/const src=await cachedDishPhoto\(dishId,true\)/);
+ const daily=js.slice(js.indexOf("function attachDailyDishPhoto("),js.indexOf("let lastMenuPresentationWeek=null;",js.indexOf("function attachDailyDishPhoto(")));
+ assert.doesNotMatch(daily,/section\.addEventListener\("toggle"/);
+ assert.match(daily,/Promise\.resolve\(\)\.then\(load\)/);
 });
