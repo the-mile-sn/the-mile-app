@@ -4,6 +4,7 @@
  const area=document.getElementById("player-recipes-area");
  const menuContent=document.getElementById("menu-content");
  const switcher=document.getElementById("menus-recipe-switch");
+ const headerBack=document.getElementById("recipe-header-back");
  let mode="menus",screen={kind:"categories"},library=null,token=0;
  const photos=new Map();
  let returnScroll=0,categoryScroll=0,listScroll=0,dishListScroll=0;
@@ -45,13 +46,19 @@
   root.classList.add("recipe-page-enter");
   area.replaceChildren(root);
  }
+ function syncHeaderBack(){
+  const subpage=["list","detail","dish","dish-detail"].includes(screen.kind);
+  // Hide this global action when navigating away from Menus, even if its
+  // previous recipe state is retained for a later return.
+  headerBack.hidden=!(subpage&&!document.getElementById("menus").hidden&&typeof headerBack.onclick==="function");
+ }
  function goBack(callback){
-  const header=node("div","recipe-topline");
-  const back=node("button","recipe-back","‹");back.type="button";
-  back.setAttribute("aria-label","Voltar");
-  // Returning is immediate; the user's swipe is already the motion cue.
+  const back=headerBack;
   back.onclick=callback;
-  header.append(back);return header;
+  syncHeaderBack();
+  // Existing renderers append this; an empty fragment keeps their back
+  // callbacks while eliminating the extra row above the recipe content.
+  return document.createDocumentFragment();
  }
  function card(name,small,photoId,callback){
   const button=node("button","recipe-item");button.type="button";button.onclick=callback;
@@ -76,6 +83,8 @@
   switcher.hidden=secondary;
   menuContent.hidden=mode!=="menus"||["dish","dish-detail"].includes(screen.kind);
   area.hidden=mode==="menus"&&!["dish","dish-detail"].includes(screen.kind);
+  if(!secondary)headerBack.onclick=null;
+  syncHeaderBack();
  }
  async function getLibrary(){
   if(!library)library=request("/api/v2/player/recipes")
@@ -342,9 +351,9 @@
   const dx=p.clientX-start.x,dy=p.clientY-start.y;
   if(start.kind!==screen.kind||dx<72||Math.abs(dy)>55||
     dx<Math.abs(dy)*1.5)return;
-  const back=area.querySelector(".recipe-topline .recipe-back");
-  if(back)back.click();
+  const back=headerBack;
+  if(back&&!back.hidden)back.click();
  },{passive:true,capture:true});
  document.addEventListener("touchcancel",()=>{touchStart=null;},{passive:true,capture:true});
- window.themileRecipes={mode:()=>mode,openDish,reset,onShow:syncMode};
+ window.themileRecipes={mode:()=>mode,openDish,reset,onShow:syncMode,syncHeaderBack};
 })();
