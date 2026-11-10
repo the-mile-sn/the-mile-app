@@ -27,7 +27,7 @@ class MatchingTests(unittest.TestCase):
                            (food_id,name,"Outro"))
         visual_portions_v2.initialize(self.c)
         for i,(cat,grams,rice,potato) in enumerate([
-            ("Arroz",200,None,None),("Arroz",250,None,None),
+            ("Arroz",200,None,None),("Arroz",250,None,None),("Arroz",350,None,None),
             ("Batata",100,None,None),("Arroz + Batata",350,250,100),
             ("Carne / Peixe",140,None,None),("Massa",180,None,None)
         ]):
