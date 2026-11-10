@@ -1,0 +1,19 @@
+name: Validate player recipe subpage alignment
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/player-recipes.css
+      - static/jogador-v2.html
+      - tests/player-recipe-subpage-spacing.test.cjs
+      - .github/workflows/validate-player-recipe-subpage-spacing.yml
+  workflow_dispatch:
+jobs:
+  recipe-subpage-alignment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify top spacing and preserved navigation
+        run: node --test tests/player-recipe-subpage-spacing.test.cjs
