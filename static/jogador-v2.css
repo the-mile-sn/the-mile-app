@@ -4235,3 +4235,37 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  background:#55555b!important;
  color:#fff!important;
 }
+
+/* Daily Planning: a quiet, secondary dish image only inside assigned
+   Almoço/Jantar description cards. Existing text-only cards are unchanged. */
+#overview #day-details .daily-meal .meal-menu-card.has-dish-photo{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:space-between!important;
+ gap:12px!important;
+ min-width:0!important;
+}
+#overview #day-details .meal-menu-card.has-dish-photo .daily-meal-menu-name{
+ display:block;
+ flex:1 1 auto;
+ min-width:0;
+ overflow-wrap:anywhere;
+}
+#overview #day-details .meal-menu-card.has-dish-photo .daily-meal-dish-photo{
+ display:block;
+ flex:0 0 76px;
+ width:76px;
+ height:76px;
+ max-width:76px;
+ object-fit:cover;
+ object-position:center;
+ border-radius:50%;
+ background:transparent;
+ margin:0;
+}
+@media(max-width:380px){
+ #overview #day-details .meal-menu-card.has-dish-photo{gap:9px!important;}
+ #overview #day-details .meal-menu-card.has-dish-photo .daily-meal-dish-photo{
+  flex-basis:64px;width:64px;height:64px;max-width:64px;
+ }
+}
