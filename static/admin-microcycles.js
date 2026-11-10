@@ -1487,8 +1487,8 @@ async function loadCalendar(){
   weekly.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation";
-  const previous=document.createElement("button");previous.type="button";previous.textContent="← Semana anterior";
-  const next=document.createElement("button");next.type="button";next.textContent="Semana seguinte →";
+  const previous=document.createElement("button");previous.type="button";previous.textContent="‹";previous.setAttribute("aria-label","Semana anterior");previous.title="Semana anterior";
+  const next=document.createElement("button");next.type="button";next.textContent="›";next.setAttribute("aria-label","Semana seguinte");next.title="Semana seguinte";
   const range=document.createElement("strong");navigation.append(previous,range,next);weekly.appendChild(navigation);
   const monday=new Date(selectedNutritionWeek+"T12:00:00");
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
