@@ -33,6 +33,7 @@ import effective_nutrition_v2
 import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
+import visual_portions_v2
 import food_plan_drafts_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
@@ -282,6 +283,7 @@ def initialize():
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
+        visual_portions_v2.initialize(c)
         food_plan_drafts_v2.initialize(c)
         if SITE_ROLE == 'admin':
             transition = food_plan_publications_v2.initialize(c)
@@ -675,10 +677,11 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css')
+            if (path in ('/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
+                    or path.startswith('/api/v2/visual-portions')
                     or path.startswith('/api/v2/supplement-library')
                     or path.startswith('/api/v2/dishes/edit')
                     or path.startswith('/api/v2/dishes/recipe-link')
@@ -700,7 +703,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-plans-native.css': 'admin-plans-native.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/tm-design-system.css': 'tm-design-system.css',
-            '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css',
+            '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
@@ -987,6 +990,33 @@ def application(env, start_response):
                 draft=food_plan_drafts_v2.get(c,path.rsplit('/',1)[-1])
                 if draft is None: raise Problem(404,'not_found')
                 return respond(200,{'draft':draft})
+            # Admin-only photo library. This stage deliberately has no player endpoint.
+            if path.startswith('/api/v2/visual-portions'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if path == '/api/v2/visual-portions' and method == 'GET':
+                    return respond(200,{'references':visual_portions_v2.list_references(c),
+                                        'scope':'admin_only','published_to_players':False})
+                if path == '/api/v2/visual-portions/import' and method == 'POST':
+                    try:
+                        result=visual_portions_v2.import_approved_archive(
+                            c,read_body(env,visual_portions_v2.MAX_ARCHIVE))
+                    except ValueError:
+                        raise Problem(400,'invalid_visual_portion_archive')
+                    return respond(200,result)
+                if path.startswith('/api/v2/visual-portions/image/') and method == 'GET':
+                    data=visual_portions_v2.get_image(c,path.rsplit('/',1)[-1])
+                    if data is None: raise Problem(404,'not_found')
+                    return respond(200,data,'image/webp')
+                if path.startswith('/api/v2/visual-portions/') and method == 'PUT':
+                    try:
+                        result=visual_portions_v2.set_active(
+                            c,path.rsplit('/',1)[-1],read_json(env).get('active'))
+                    except ValueError:
+                        raise Problem(400,'invalid_reference')
+                    if result is None: raise Problem(404,'not_found')
+                    return respond(200,{'active':result})
+                raise Problem(404,'not_found')
             if path == '/api/v2/food-library/import' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
