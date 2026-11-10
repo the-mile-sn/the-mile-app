@@ -34,6 +34,7 @@ import assessment_excel_v2
 import plan_import_v2
 import food_library_v2
 import visual_portions_v2
+import visual_portion_matching_v2
 import food_plan_drafts_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
@@ -994,6 +995,14 @@ def application(env, start_response):
             if path.startswith('/api/v2/visual-portions'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
+                if path == '/api/v2/visual-portions/preview' and method == 'GET':
+                    query = parse_qs(env.get('QUERY_STRING', ''))
+                    athlete_id = (query.get('athlete_id') or [''])[0]
+                    if not re.fullmatch(r'[0-9a-f]{32}', athlete_id):
+                        raise Problem(400,'invalid_athlete')
+                    preview = visual_portion_matching_v2.preview_for_athlete(c,athlete_id)
+                    if preview is None: raise Problem(404,'athlete_not_found')
+                    return respond(200,preview)
                 if path == '/api/v2/visual-portions' and method == 'GET':
                     return respond(200,{'references':visual_portions_v2.list_references(c),
                                         'scope':'admin_only','published_to_players':False})
