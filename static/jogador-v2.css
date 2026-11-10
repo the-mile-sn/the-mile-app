@@ -4269,3 +4269,17 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   flex-basis:64px;width:64px;height:64px;max-width:64px;
  }
 }
+
+/* Only assigned daily dish descriptions are interactive; outer meal details,
+   plain-text menus, weekly view and the photographed layout stay unchanged. */
+#overview #day-details .daily-meal .meal-menu-card.meal-menu-link{
+ cursor:pointer;
+ -webkit-tap-highlight-color:transparent;
+}
+#overview #day-details .daily-meal .meal-menu-card.meal-menu-link:focus-visible{
+ outline:2px solid currentColor;
+ outline-offset:3px;
+}
+#overview #day-details .daily-meal .meal-menu-card.meal-menu-link:active{
+ filter:brightness(1.07);
+}
