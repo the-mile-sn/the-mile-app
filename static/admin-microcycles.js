@@ -139,6 +139,7 @@ function renderPlanningResults(){
   item.addEventListener("mousedown",event=>event.preventDefault());
   item.addEventListener("click",()=>{
    const previous=select.value;select.value=option.value;closePlanningResults();
+   planningSearch.blur();
    planningSearch.value=option.textContent;
    if(previous!==select.value)select.dispatchEvent(new Event("change",{bubbles:true}));
   });
@@ -150,10 +151,11 @@ function renderPlanningResults(){
 planningSearch.addEventListener("focus",renderPlanningResults);
 planningSearch.addEventListener("input",renderPlanningResults);
 planningSearch.addEventListener("keydown",event=>{
- if(event.key==="Escape"){closePlanningResults();planningSearch.value=$("athlete").selectedOptions[0]?.textContent||"";}
+ if(event.key==="Escape"){closePlanningResults();planningSearch.value=$("athlete").selectedOptions[0]?.textContent||"";planningSearch.blur();}
  if(event.key==="Enter"&&!planningResults.hidden){event.preventDefault();const first=planningResults.querySelector("button");if(first)first.click();}
 });
-document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target))closePlanningResults();});
+document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target)){closePlanningResults();if(document.activeElement===planningSearch)planningSearch.blur();}});
+planningSearch.addEventListener("blur",()=>{closePlanningResults();});
 $("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
 window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
 let recipeAccessToken=0;
