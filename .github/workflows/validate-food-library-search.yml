@@ -1,0 +1,15 @@
+name: Validate Food Library search
+on:
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  food-search:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test read-only food lookups without production database
+        run: python -m unittest discover -s tests -p 'test_food_library_search.py' -v
+      - name: Syntax check backend
+        run: python -m py_compile app.py food_library_v2.py

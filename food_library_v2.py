@@ -69,8 +69,9 @@ def list_foods(c, query="", category=None, limit=100, offset=0):
     sql="SELECT * FROM v2_food_library WHERE active=1"
     params=[]
     if query:
-        sql+=" AND lower(display_name) LIKE ?"
-        params.append("%"+str(query).strip().lower()+"%")
+        sql+=" AND (lower(display_name) LIKE ? OR lower(base_name) LIKE ? OR lower(notes) LIKE ?)"
+        pattern="%"+str(query).strip().lower()+"%"
+        params.extend([pattern,pattern,pattern])
     if category:
         sql+=" AND category=?"
         params.append(category)
@@ -84,8 +85,11 @@ def page_foods(c, query="", category="", page=1, page_size=25):
     category = str(category or "").strip()[:120]
     conditions, params = ["active=1"], []
     if query:
-        conditions.append("lower(display_name) LIKE ?")
-        params.append("%" + query.lower() + "%")
+        # A food may have a specific display label but be known by its base name
+        # or a descriptive note. Keep all matching within active foods only.
+        conditions.append("(lower(display_name) LIKE ? OR lower(base_name) LIKE ? OR lower(notes) LIKE ?)")
+        pattern="%" + query.lower() + "%"
+        params.extend([pattern,pattern,pattern])
     if category:
         conditions.append("category=?")
         params.append(category)
