@@ -271,7 +271,7 @@ function draw(){
     const renderMatches=()=>{
       const q=norm(search.value.trim());selectedFoodId="";showPreview();
       if(!q){results.hidden=true;results.innerHTML="";return}
-      const matches=foods.filter(f=>norm(f.display_name).includes(q)).slice(0,60);
+      const matches=foods.filter(f=>norm(f.display_name).includes(q)).sort((a,b)=>{const an=norm(a.display_name),bn=norm(b.display_name);const rank=n=>n.startsWith(q)?0:n.split(/\s+/).some(w=>w.startsWith(q))?1:2;return rank(an)-rank(bn)||an.localeCompare(bn,"pt")}).slice(0,60);
       results.innerHTML=matches.length?matches.map(f=>'<button type="button" class="food-result" data-food-id="'+esc(f.id)+'">'+esc(f.display_name)+'</button>').join(""):'<div class="food-no-results">Sem resultados</div>';
       results.hidden=false;
       results.querySelectorAll("[data-food-id]").forEach(b=>b.onclick=()=>{selectedFoodId=b.dataset.foodId;search.value=foodById.get(selectedFoodId)?.display_name||"";results.hidden=true;showPreview();$("food-grams")?.focus()});
