@@ -25,3 +25,33 @@
 #tm-food-library-page .tm-portion-toggle[aria-pressed="false"]{border-color:var(--tm-shell-border);background:var(--tm-shell-surface-muted);color:var(--tm-shell-muted)}
 #tm-food-library-page .tm-portion-toggle:disabled{opacity:.5;cursor:wait}
 @media(max-width:590px){#tm-food-library-page .tm-portion-toolbar{justify-content:flex-end}#tm-food-library-page .tm-portion-upload-label{display:inline-flex!important}#tm-food-library-page .tm-portion-filters label{width:100%}#tm-food-library-page .tm-portion-filters select{width:100%}#tm-food-library-page .tm-portion-count{margin:0}#tm-food-library-page .tm-portion-card img{width:86px;height:86px;flex-basis:86px}}
+
+/* Read-only Planos -> Porções preview. Existing library cards and themes are unaffected. */
+#tm-food-library-page .tm-portion-plan-preview{margin:0 0 21px;padding:13px 15px;border:1px solid var(--tm-shell-border);border-radius:14px;background:var(--tm-shell-surface)}
+#tm-food-library-page .tm-portion-plan-preview [hidden]{display:none!important}
+#tm-food-library-page .tm-portion-plan-preview-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#tm-food-library-page .tm-portion-plan-preview-head>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+#tm-food-library-page .tm-portion-plan-preview-head strong{font-size:14px;font-weight:600;color:var(--tm-shell-text)}
+#tm-food-library-page .tm-portion-plan-preview-head span{font-size:12px;color:var(--tm-shell-muted)}
+#tm-food-library-page #tm-portion-preview-toggle{padding:8px 13px;min-height:35px;border-radius:10px;font-size:12px;white-space:nowrap}
+#tm-food-library-page #tm-portion-preview-body{padding-top:17px;margin-top:15px;border-top:1px solid var(--tm-shell-border)}
+#tm-food-library-page .tm-portion-preview-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#tm-food-library-page .tm-portion-preview-controls label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;color:var(--tm-shell-muted)}
+#tm-food-library-page .tm-portion-preview-controls select{display:block;width:100%;height:42px;min-width:0;padding:0 10px;border:1px solid var(--tm-shell-border);border-radius:10px;background:var(--tm-shell-surface-muted);color:var(--tm-shell-text);font:500 13px/1.3 "Inter Tight",Arial,sans-serif}
+#tm-food-library-page .tm-portion-preview-controls select:disabled{opacity:.5}
+#tm-food-library-page .tm-portion-preview-feedback{margin:12px 0;font-size:12px;line-height:1.5;color:var(--tm-shell-muted)}
+#tm-food-library-page .tm-portion-preview-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px}
+#tm-food-library-page .tm-portion-preview-group{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--tm-shell-border);border-radius:12px;padding:10px;background:var(--tm-shell-surface-muted)}
+#tm-food-library-page .tm-portion-preview-group-heading{font-size:12px;font-weight:500;color:var(--tm-shell-muted)}
+#tm-food-library-page .tm-portion-preview-item{display:flex;align-items:center;gap:11px;min-width:0}
+#tm-food-library-page .tm-portion-preview-item img,#tm-food-library-page .tm-portion-preview-no-photo{height:82px;width:82px;flex:0 0 82px;border-radius:10px;background:#fff;object-fit:contain}
+#tm-food-library-page .tm-portion-preview-no-photo{display:flex;align-items:center;justify-content:center;background:var(--tm-shell-surface);color:var(--tm-shell-muted);border:1px dashed var(--tm-shell-border)}
+#tm-food-library-page .tm-portion-preview-description{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+#tm-food-library-page .tm-portion-preview-description strong{font-size:13px;font-weight:600;color:var(--tm-shell-text);overflow-wrap:anywhere}
+#tm-food-library-page .tm-portion-preview-description span{font-size:11px;color:var(--tm-shell-muted);line-height:1.3;overflow-wrap:anywhere}
+#tm-food-library-page .tm-portion-preview-match{flex:0 0 auto;padding:5px 8px;border-radius:999px;border:1px solid var(--tm-shell-border);font:500 11px/1.3 "Inter Tight",Arial,sans-serif;white-space:nowrap}
+#tm-food-library-page .tm-portion-preview-match.has-photo{border-color:var(--tm-control-success-border);color:var(--tm-control-success-ink);background:var(--tm-control-success-bg)}
+#tm-food-library-page .tm-portion-preview-match.no-match{color:var(--tm-shell-muted)}
+#tm-food-library-page .tm-portion-preview-preparation-note{grid-column:1/-1;font-size:12px;line-height:1.5;color:var(--tm-shell-muted);margin:3px 0}
+@media(max-width:980px){#tm-food-library-page .tm-portion-preview-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){#tm-food-library-page .tm-portion-plan-preview{padding:12px}#tm-food-library-page .tm-portion-preview-controls{grid-template-columns:minmax(0,1fr)}#tm-food-library-page .tm-portion-preview-item img,#tm-food-library-page .tm-portion-preview-no-photo{height:74px;width:74px;flex-basis:74px}#tm-food-library-page .tm-portion-preview-match{font-size:10px}}
