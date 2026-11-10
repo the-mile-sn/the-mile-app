@@ -118,8 +118,8 @@ test("Only the overview owns its day swipe; Menus preserves independent week nav
  assert.ok(!source.includes("enableWeekSwipe(strip,offset=>"));
  assert.ok(source.includes('if(isWeek){pendingDailySwipeDirection=0;renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}'));
  assert.ok(source.includes("injectPostMatchCard();\n animateDailySwipeEntry();\n}"));
- assert.ok(html.includes("jogador-v2.js?v=164"));
- assert.ok(html.includes("jogador-v2.css?v=196"));
+ assert.ok(html.includes("jogador-v2.js?v=168"));
+ assert.ok(html.includes("jogador-v2.css?v=199"));
 });
 test("Daily swipe animates 60px in the gesture direction for 320ms without opacity changes",()=>{
  const h=harness();
