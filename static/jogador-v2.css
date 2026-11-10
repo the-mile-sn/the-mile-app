@@ -2759,8 +2759,8 @@ body.profile-active .player-top{display:none!important}
 .post-match-options label{display:flex;align-items:center;gap:10px;font-size:14px}
 .post-match-options input{accent-color:#e3e6e8;width:17px;height:17px}
 .post-match-question textarea{width:100%;box-sizing:border-box;border-radius:8px;background:#252927;border:1px solid #4a4d4b;color:#fff;padding:12px;font:inherit}
-.post-match-scale input{width:100%;accent-color:#d7dfe9}
-.post-match-scale-ends{display:flex;justify-content:space-between;font-size:12px;color:#aeb7b1}
+.post-match-scale input{width:100%;accent-color:#cecece}
+.post-match-scale-ends{display:flex;justify-content:space-between;font-size:12px;color:#b8b8b8}
 .post-match-navigation{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .post-match-inline-form .post-match-navigation button:last-child{margin-left:auto;background:#e8eaec;color:#17191b}
 
