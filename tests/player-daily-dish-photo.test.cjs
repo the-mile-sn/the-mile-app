@@ -3,6 +3,7 @@ const test=require("node:test"),assert=require("node:assert/strict"),fs=require(
 const js=fs.readFileSync("static/jogador-v2.js","utf8");
 const css=fs.readFileSync("static/jogador-v2.css","utf8");
 const html=fs.readFileSync("static/jogador-v2.html","utf8");
+const backend=fs.readFileSync("app.py","utf8");
 test("daily thumbnails only for assigned lunch/dinner dishes",()=>{
  assert.match(js,/if\(\(meal==="lunch"\|\|meal==="dinner"\)\&\&menu\.kind==="dish"\)/);
  assert.match(js,/attachDailyDishPhoto\(section,p,menu,epoch,requestId\)/);
@@ -46,4 +47,13 @@ test("photos are prepared before opening, sharing a separate compact cache",()=>
  const daily=js.slice(js.indexOf("function attachDailyDishPhoto("),js.indexOf("let lastMenuPresentationWeek=null;",js.indexOf("function attachDailyDishPhoto(")));
  assert.doesNotMatch(daily,/section\.addEventListener\("toggle"/);
  assert.match(daily,/Promise\.resolve\(\)\.then\(load\)/);
+});
+
+test("server delivers a small authenticated thumbnail without modifying Menus' full photo",()=>{
+ assert.match(backend,/def player_daily_dish_thumbnail\(image_bytes\)/);
+ assert.match(backend,/photo\.thumbnail\(\(176, 176\), Image\.Resampling\.LANCZOS\)/);
+ assert.match(backend,/@lru_cache\(maxsize=64\)/);
+ assert.match(backend,/get\('size',\[''\]\)\[0\] == 'thumbnail'/);
+ assert.match(backend,/player_daily_dish_thumbnail\(image_data\) if thumbnail else player_menu_photo\(image_data\)/);
+ assert.match(backend,/dish_assigned_to_athlete\(c,link\['athlete_id'\],identifier\)/);
 });
