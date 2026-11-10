@@ -1,0 +1,22 @@
+name: Validate daily meal-to-Menus shortcut
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.js
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - tests/player-daily-menu-shortcut.test.cjs
+      - .github/workflows/validate-player-daily-menu-shortcut.yml
+  workflow_dispatch:
+jobs:
+  daily-menu-navigation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check player JavaScript
+        run: node --check static/jogador-v2.js
+      - name: Validate targeted navigation and existing player behavior
+        run: node --test tests/player-daily-menu-shortcut.test.cjs tests/player-daily-dish-photo.test.cjs tests/player-top-segment-parity.test.cjs tests/player-overview-day-swipe.test.cjs tests/player-private-photo-performance.test.cjs

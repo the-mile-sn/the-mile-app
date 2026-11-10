@@ -34,8 +34,8 @@ test("no image or failed image leaves original card unchanged",()=>{
  assert.doesNotMatch(body,/openDishPhoto\(/);
 });
 test("JS/CSS cache changed but recipe assets remain intact",()=>{
- assert.match(html,/jogador-v2\.js\?v=167/);
- assert.match(html,/jogador-v2\.css\?v=198/);
+ assert.match(html,/jogador-v2\.js\?v=168/);
+ assert.match(html,/jogador-v2\.css\?v=199/);
  assert.match(html,/player-recipes\.js\?v=11/);
  assert.match(html,/player-recipes\.css\?v=18/);
 });
