@@ -2977,3 +2977,24 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days
  #admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / -1!important;grid-row:2!important}
  #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:1 / -1!important;grid-row:3!important;justify-self:end!important}
 }
+
+/* Compact event actions and borderless weekly nutrition widgets. */
+#admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / 3!important;grid-row:2!important;align-self:center!important;justify-self:start!important;justify-content:flex-start!important;width:auto!important;min-width:0!important;gap:12px!important}
+#admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;grid-row:2!important;align-self:center!important;justify-self:end!important;width:max-content!important;min-width:0!important;max-width:100%!important;margin:0!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3){justify-content:center!important;align-items:stretch!important;gap:3px!important;padding:9px 12px!important;min-height:64px!important;height:64px!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3)>label{margin:0!important;line-height:17px!important;text-align:left!important;align-self:stretch!important}
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3)>input,
+#admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3)>select{height:24px!important;min-height:24px!important;line-height:24px!important;text-align:left!important;margin:0!important;align-self:stretch!important}
+#admin-workspace #nutrition-weekly-summary{border:0!important;box-shadow:none!important;background:transparent!important}
+#admin-workspace #nutrition-weekly-summary .nutrition-metric-card,
+#admin-workspace #nutrition-weekly-summary .nutrition-card,
+#admin-workspace #nutrition-weekly-summary .nutrition-metric,
+#admin-workspace #nutrition-weekly-summary .calendar-navigation button{border:0!important;box-shadow:none!important}
+#admin-workspace #nutrition-weekly-summary .calendar-navigation button{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center!important;font-size:23px!important;line-height:1!important;background:var(--tm-plan-control,#343438)!important;color:var(--tm-plan-text,#fff)!important}
+@media(max-width:680px){
+ #admin-workspace #calendar-section #calendar-event-form #calendar-peri-flags{grid-column:1 / 3!important;grid-row:2!important;gap:5px!important}
+ #admin-workspace #calendar-section #calendar-event-form .calendar-peri-check{font-size:10px!important;gap:3px!important;white-space:nowrap!important}
+ #admin-workspace #calendar-section #calendar-event-form .calendar-peri-check input{width:15px!important;height:15px!important;flex-basis:15px!important}
+ #admin-workspace #calendar-section #calendar-event-form #calendar-add-event{grid-column:3!important;grid-row:2!important;font-size:10px!important;padding:0 8px!important;height:32px!important;min-height:32px!important}
+ #admin-workspace #calendar-section #calendar-event-form>.calendar-event-field:nth-child(-n+3){padding:8px!important;min-height:62px!important;height:62px!important}
+}
