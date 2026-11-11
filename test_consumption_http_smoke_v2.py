@@ -104,7 +104,7 @@ try:
  assert updated[0]["nutrition"]["kcal"]==0,updated
  # A partial record must preserve the fractional nutrition and stay a single row.
  payload["status"]="partial"
- payload["foods"]=[{"id":"rice","grams":50}]
+ payload["edits"]=[{"index":0,"consumed":True,"grams":50}]
  req=Request(base+"/api/v2/player/consumption-records",data=json.dumps(payload).encode(),method="PUT",
   headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})
  with urlopen(req,timeout=8) as response:
