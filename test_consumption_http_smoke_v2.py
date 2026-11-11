@@ -89,6 +89,19 @@ try:
   saved=json.load(response)["records"]
  assert len(saved)==1,saved
  assert saved[0]["nutrition"]["kcal"]==100,saved
+ # A second write replaces the same meal instead of creating a duplicate.
+ payload["status"]="none"
+ req=Request(base+"/api/v2/player/consumption-records",data=json.dumps(payload).encode(),method="PUT",
+  headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})
+ with urlopen(req,timeout=8) as response:
+  assert response.status==200,response.status
+ req=Request(base+"/api/v2/player/consumption-records?start=2026-11-11&end=2026-11-11",
+  headers={"Cookie":"mile_session=smoke-token"})
+ with urlopen(req,timeout=8) as response:
+  updated=json.load(response)["records"]
+ assert len(updated)==1,updated
+ assert updated[0]["status"]=="none",updated
+ assert updated[0]["nutrition"]["kcal"]==0,updated
 finally:
  server.shutdown()
 '''
