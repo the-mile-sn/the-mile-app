@@ -24,7 +24,7 @@
  function enableSheetResize(sheet,handle,header){
   // The grip and non-interactive header accept vertical drag gestures.
   // Photo content retains its own native vertical scrolling.
-  let expanded=false,gesture=null,ignoreHandleClick=false;
+  let expanded=false,gesture=null,ignoreHandleClickUntil=0;
   const viewHeight=()=>window.innerHeight||document.documentElement?.clientHeight||800;
   const snap=()=>{
    sheet.classList.remove("is-dragging");
@@ -58,7 +58,7 @@
     if(dy>18)expanded=true;
     else if(dy< -18)expanded=false;
     else expanded=sheet.getBoundingClientRect().height>viewHeight()*0.78;
-    if(gesture.viaHandle)ignoreHandleClick=true;
+    if(gesture.viaHandle)ignoreHandleClickUntil=Date.now()+450;
    }
    gesture=null;
    snap();
@@ -70,7 +70,7 @@
    target.addEventListener("pointercancel",end);
   }
   handle.addEventListener("click",()=>{
-   if(ignoreHandleClick){ignoreHandleClick=false;return;}
+   if(Date.now()<ignoreHandleClickUntil){ignoreHandleClickUntil=0;return;}
    expanded=!expanded;snap();
   });
   snap();
