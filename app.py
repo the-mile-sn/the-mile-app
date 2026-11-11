@@ -2383,6 +2383,32 @@ def application(env, start_response):
                 # Access remains blocked until the admin reactivates it explicitly.
                 c.commit()
                 return respond(200,{'ok':True,'archived':False})
+            # Player-only consumption read and food search. Both derive athlete
+            # identity from the authenticated session, never client input.
+            if path == '/api/v2/player/consumption-records' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records=consumption_records_v2.read_range(c, link['athlete_id'],
+                        (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
+
+            if path == '/api/v2/player/consumption-foods' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                search=(query.get('q') or [''])[0].strip()[:120]
+                if len(search) < 2: return respond(200, {'foods': []})
+                matches=food_library_v2.list_foods(c, query=search, limit=30)
+                return respond(200, {'foods': [{k: f[k] for k in ('id','display_name','variant','reference_g','kcal','protein_g','carbs_g','fat_g')} for f in matches]})
+
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
             if path == '/api/v2/player/assessments' and method == 'GET':
