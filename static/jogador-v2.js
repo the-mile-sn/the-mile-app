@@ -1271,6 +1271,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
   const data=await api('/api/v2/player/consumption-options?'+qs);
   const existing=await api('/api/v2/player/consumption-records?start='+mealDate+'&end='+mealDate);
   const previous=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
+  if(!panel.isConnected)return;
   if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
   panel.replaceChildren();
   const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Fechar sem guardar');close.onclick=()=>panel.remove();panel.append(close);
@@ -1309,7 +1310,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
   let initial=true;
   mode.onchange=()=>{initial=false;additional.length=0;redraw();};select.onchange=()=>{initial=false;additional.length=0;redraw();};redraw();
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
-  save.onclick=async()=>{const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
+  save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
    if(mode.value==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(mode.value==='partial')body.additional=additional;
    try{save.disabled=true;await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});panel.remove();await overview();}catch(e){error(e);save.disabled=false;}
