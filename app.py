@@ -1715,6 +1715,23 @@ def application(env, start_response):
                     raise Problem(400, str(exc))
                 return respond(200, {'saved': True, 'nutrition': calculated['nutrition']})
 
+            if path == '/api/v2/player/consumption-records' and method == 'DELETE':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
+                    raise Problem(403, 'consumption_pilot_not_enabled')
+                body=read_json(env)
+                if not isinstance(body, dict): raise Problem(400, 'invalid_request')
+                try:
+                    deleted=consumption_records_v2.delete_record(
+                        c, athlete_id=link['athlete_id'], meal_date=body.get('date'),
+                        meal_key=body.get('meal'), event_id=body.get('event_id', ''))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'deleted': deleted})
+
             # Player-only consumption read and food search. Both derive athlete
             # identity from the authenticated session, never client input.
             if path == '/api/v2/player/consumption-records' and method == 'GET':
