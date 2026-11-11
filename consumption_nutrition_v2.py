@@ -120,7 +120,7 @@ def calculate(option, library, status, edits=None, additional=None):
             value = {key: group_values[group][key] * grams / prescribed_grams for key in KEYS}
         else:
             value = _nutrition(food, library, grams)
-        result.append({"id": food["id"], "grams": grams, "additional": False, "nutrition": value})
+        result.append({"id": food["id"], "grams": grams, "additional": False, "option_index": index, "nutrition": value})
         for key in KEYS:
             totals[key] += value[key]
     for entry in additional:
