@@ -1291,7 +1291,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
     for(const i of indices){const food=foods[i],line=document.createElement('label');line.className='consumption-food-line';
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check)other.checked=false;}};
-     const name=document.createElement('span');name.textContent=food.library_name||food.name||'Alimento';
+     const name=document.createElement('span');name.textContent=food.display_name||food.library_name||food.name||'Alimento';
      const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');
      line.append(check,name,grams,document.createTextNode(' g'));group.append(line);
     }foodsRoot.append(group);
