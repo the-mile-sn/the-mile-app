@@ -3100,146 +3100,146 @@ html[data-admin-theme="light"] #menus-panel .menu-planning-card .calendar-naviga
 
 /* Player profile permissions — native, responsive, in both admin themes.
    Scoped to the existing profile panel; no other Backoffice views are altered. */
-#tm-players-profile-fields > .tm-player-permissions{
+#tm-players-settings-slot > .tm-player-permissions{
  grid-column:1 / -1;min-width:0;box-sizing:border-box;
  display:flex;flex-direction:column;gap:18px;
  padding:22px 20px;border:1px solid var(--tm-shell-border,#343840);
  border-radius:16px;background:var(--tm-shell-surface,#1b1d22);
  color:var(--tm-shell-text,#f2f3f5);
 }
-#tm-players-profile-fields .tm-player-permissions-heading{
+#tm-players-settings-slot .tm-player-permissions-heading{
  display:flex;align-items:center;gap:14px;min-width:0;
 }
-#tm-players-profile-fields .tm-player-permissions-shield{
+#tm-players-settings-slot .tm-player-permissions-shield{
  flex:0 0 46px;width:46px;height:46px;display:grid;place-items:center;
  border-radius:13px;color:var(--tm-shell-muted,#a2a7b0);
  background:var(--tm-shell-surface-muted,#22252b);
 }
-#tm-players-profile-fields .tm-player-permissions-shield svg{
+#tm-players-settings-slot .tm-player-permissions-shield svg{
  display:block;width:24px;height:24px;
 }
-#tm-players-profile-fields .tm-player-permissions-title{
+#tm-players-settings-slot .tm-player-permissions-title{
  margin:0;font-size:18px;line-height:1.35;letter-spacing:-.02em;
  font-weight:650;color:var(--tm-shell-text,#f2f3f5);
 }
-#tm-players-profile-fields .tm-player-permissions-list{
+#tm-players-settings-slot .tm-player-permissions-list{
  display:grid;grid-template-columns:minmax(0,1fr);gap:12px;
 }
-#tm-players-profile-fields .tm-player-permission-row{
+#tm-players-settings-slot .tm-player-permission-row{
  display:grid;grid-template-columns:50px minmax(0,1fr) auto;
  align-items:center;column-gap:16px;min-width:0;padding:17px 18px;
  border:0;border-radius:14px;
  background:var(--tm-shell-surface-muted,#22252b);
  transition:background .17s ease;
 }
-#tm-players-profile-fields .tm-player-permission-row.is-enabled{
+#tm-players-settings-slot .tm-player-permission-row.is-enabled{
  background:rgba(54,141,90,.13);
 }
-#tm-players-profile-fields .tm-player-permission-icon{
+#tm-players-settings-slot .tm-player-permission-icon{
  display:grid;place-items:center;flex-shrink:0;
  width:50px;height:50px;border-radius:13px;
  color:var(--tm-shell-muted,#a2a7b0);
  background:rgba(130,139,153,.085);
 }
-#tm-players-profile-fields .tm-player-permission-icon svg{
+#tm-players-settings-slot .tm-player-permission-icon svg{
  display:block;width:25px;height:25px;
 }
-#tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-icon{
+#tm-players-settings-slot .tm-player-permission-row.is-enabled .tm-player-permission-icon{
  color:#78c99e;background:rgba(59,156,102,.09);
 }
-#tm-players-profile-fields .tm-player-permission-copy{min-width:0}
-#tm-players-profile-fields .tm-player-permission-name{
+#tm-players-settings-slot .tm-player-permission-copy{min-width:0}
+#tm-players-settings-slot .tm-player-permission-name{
  display:block;white-space:normal;overflow-wrap:anywhere;
  font-size:15px;line-height:1.35;font-weight:650;
  color:var(--tm-shell-text,#f2f3f5);
 }
-#tm-players-profile-fields .tm-player-permission-description{
+#tm-players-settings-slot .tm-player-permission-description{
  margin:5px 0 0!important;font-size:13px;line-height:1.45;
  color:var(--tm-shell-muted,#a2a7b0)!important;
 }
-#tm-players-profile-fields .tm-player-permission-actions{
+#tm-players-settings-slot .tm-player-permission-actions{
  display:flex;align-items:center;justify-content:flex-end;gap:12px;
  flex-shrink:0;min-width:0;
 }
-#tm-players-profile-fields .tm-player-permission-switch{
+#tm-players-settings-slot .tm-player-permission-switch{
  position:relative;display:inline-flex;align-items:center;
  width:46px;height:28px;flex:0 0 46px;cursor:pointer;
 }
-#tm-players-profile-fields .tm-player-permission-input{
+#tm-players-settings-slot .tm-player-permission-input{
  position:absolute;inset:0;width:100%;height:100%;
  margin:0!important;opacity:0;cursor:inherit;
 }
-#tm-players-profile-fields .tm-player-permission-input:disabled{cursor:default}
-#tm-players-profile-fields .tm-player-permission-track{
+#tm-players-settings-slot .tm-player-permission-input:disabled{cursor:default}
+#tm-players-settings-slot .tm-player-permission-track{
  position:relative;display:block;width:46px;height:27px;
  border-radius:999px;border:1px solid rgba(130,139,153,.17);
  box-sizing:border-box;background:#656a73;
  transition:background .16s ease;pointer-events:none;
 }
-#tm-players-profile-fields .tm-player-permission-track::after{
+#tm-players-settings-slot .tm-player-permission-track::after{
  content:"";position:absolute;left:3px;top:3px;width:19px;height:19px;
  border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);
  transition:transform .16s ease;
 }
-#tm-players-profile-fields .tm-player-permission-input:checked + .tm-player-permission-track{
+#tm-players-settings-slot .tm-player-permission-input:checked + .tm-player-permission-track{
  background:#368a5c;border-color:rgba(54,138,92,.35);
 }
-#tm-players-profile-fields .tm-player-permission-input:checked + .tm-player-permission-track::after{
+#tm-players-settings-slot .tm-player-permission-input:checked + .tm-player-permission-track::after{
  transform:translateX(18px);
 }
-#tm-players-profile-fields .tm-player-permission-input:focus-visible + .tm-player-permission-track{
+#tm-players-settings-slot .tm-player-permission-input:focus-visible + .tm-player-permission-track{
  outline:2px solid var(--tm-shell-focus,#77a9cf);outline-offset:3px;
 }
-#tm-players-profile-fields .tm-player-permission-state{
+#tm-players-settings-slot .tm-player-permission-state{
  display:inline-flex;align-items:center;justify-content:center;
  padding:6px 11px;border-radius:999px;min-width:80px;
  background:rgba(130,139,153,.16);color:var(--tm-shell-muted,#a2a7b0);
  font-size:12px;font-weight:650;line-height:1.3;white-space:nowrap;
 }
-#tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-state{
+#tm-players-settings-slot .tm-player-permission-row.is-enabled .tm-player-permission-state{
  background:rgba(59,156,102,.14);color:#85d2a7;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-row{
  background:#f4f6f9;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row.is-enabled{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-row.is-enabled{
  background:#edf5f0;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-icon{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-icon{
  background:#e9edf3;color:#5f6d7e;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-icon{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-row.is-enabled .tm-player-permission-icon{
  background:#e2f0e8;color:#2b7e53;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-track{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-track{
  background:#d5d9df;border-color:#c9cfd7;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-input:checked + .tm-player-permission-track{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-input:checked + .tm-player-permission-track{
  background:#378e61;border-color:#378e61;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-state{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-state{
  background:#e7e9ee;color:#697586;
 }
-html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-state{
+html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-row.is-enabled .tm-player-permission-state{
  background:#dceddf;color:#29784e;
 }
 @media(max-width:640px){
- #tm-players-profile-fields > .tm-player-permissions{padding:16px;gap:15px;border-radius:14px}
- #tm-players-profile-fields .tm-player-permission-row{
+ #tm-players-settings-slot > .tm-player-permissions{padding:16px;gap:15px;border-radius:14px}
+ #tm-players-settings-slot .tm-player-permission-row{
   grid-template-columns:42px minmax(0,1fr);gap:10px 12px;padding:14px 12px;
  }
- #tm-players-profile-fields .tm-player-permission-icon{width:42px;height:42px;border-radius:12px}
- #tm-players-profile-fields .tm-player-permission-icon svg{width:22px;height:22px}
- #tm-players-profile-fields .tm-player-permission-actions{
+ #tm-players-settings-slot .tm-player-permission-icon{width:42px;height:42px;border-radius:12px}
+ #tm-players-settings-slot .tm-player-permission-icon svg{width:22px;height:22px}
+ #tm-players-settings-slot .tm-player-permission-actions{
   grid-column:2;justify-self:start;justify-content:flex-start;
  }
- #tm-players-profile-fields .tm-player-permission-name{font-size:14px}
- #tm-players-profile-fields .tm-player-permission-description{font-size:12px}
+ #tm-players-settings-slot .tm-player-permission-name{font-size:14px}
+ #tm-players-settings-slot .tm-player-permission-description{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){
- #tm-players-profile-fields .tm-player-permission-row,
- #tm-players-profile-fields .tm-player-permission-track,
- #tm-players-profile-fields .tm-player-permission-track::after{transition:none}
+ #tm-players-settings-slot .tm-player-permission-row,
+ #tm-players-settings-slot .tm-player-permission-track,
+ #tm-players-settings-slot .tm-player-permission-track::after{transition:none}
 }
 
 /* Player profile edit: unified field and select control heights.
@@ -3252,4 +3252,52 @@ html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-
 }
 #tm-players-page #tm-players-profile-fields > .profile-info-card > textarea{
  resize:vertical;
+}
+/* Player profile: focused personal-data edit, settings and independent access. */
+#tm-players-page .tm-player-profile-header{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:2px 0 22px}
+#tm-players-page .tm-player-profile-identity{display:flex;align-items:center;gap:16px;min-width:0;flex:1}
+#tm-players-page .tm-player-profile-identity-copy{display:flex;flex-direction:column;gap:8px;min-width:0}
+#tm-players-page #tm-players-profile-title{margin:0;font-size:21px;line-height:1.25;color:var(--tm-shell-text,#f3f4f5)}
+#tm-players-page .tm-player-profile-header #tm-players-profile-photo{width:66px;height:66px;flex:0 0 66px}
+#tm-players-page .tm-player-profile-header .tm-player-photo-placeholder{width:66px;height:66px;font-size:17px}
+#tm-players-page .tm-player-profile-header .tm-player-photo-control{margin:0;font-size:12px}
+#tm-players-page #tm-players-profile-edit{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 15px;border:1px solid var(--tm-shell-border,#454954);border-radius:11px;background:var(--tm-shell-surface-muted,#282a30);color:var(--tm-shell-text,#f3f4f5);font-weight:500}
+#tm-players-page #tm-players-profile-edit svg{width:17px;height:17px;flex:none}
+#tm-players-page :is(#tm-players-profile-edit,#tm-players-profile-save,#tm-players-profile-cancel)[hidden]{display:none!important}
+#tm-players-page .tm-profile-data-section{margin:0 0 22px}
+#tm-players-page .tm-profile-data-section h4{margin:0 0 14px;font-size:17px;font-weight:650;color:var(--tm-shell-text,#f3f4f5)}
+#tm-players-page .tm-profile-data-section #tm-players-profile-fields{margin:0!important}
+#tm-players-page .tm-profile-data-section .tm-player-profile-actions{margin:14px 0 0}
+#tm-players-page .tm-profile-data-section .tm-player-profile-actions:has(>button:not([hidden])){margin-bottom:10px}
+#tm-players-page .tm-profile-data-section #tm-players-profile-feedback:empty{display:none}
+#tm-players-page #tm-players-settings-slot{display:flex;flex-direction:column;gap:0;margin:24px 0 0;padding:22px 20px;border:1px solid var(--tm-shell-border,#343840);border-radius:16px;background:var(--tm-shell-surface,#1b1d22)}
+#tm-players-page #tm-players-settings-slot > .tm-player-permissions{background:transparent!important;border:0!important;padding:0!important;gap:18px}
+#tm-players-page #tm-players-settings-slot .tm-player-settings-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+#tm-players-page #tm-players-settings-slot .tm-player-settings-actions[hidden]{display:none!important}
+#tm-players-page #tm-players-settings-slot .tm-player-settings-actions button{font-size:13px;min-height:38px;padding:8px 13px;border-radius:10px}
+#tm-players-page #tm-players-settings-slot .tm-player-settings-save{background:#2f8156;border-color:#398d61;color:#fff}
+#tm-players-page #tm-players-settings-slot .tm-player-settings-feedback{margin:0;font-size:12px;color:var(--tm-shell-muted,#adb3bd)}
+#tm-players-page #tm-players-settings-slot .tm-player-settings-feedback:empty{display:none}
+#tm-players-page #tm-players-settings-slot > .tm-player-loading-photo-card{border:0!important;border-top:1px solid var(--tm-shell-border,#343840)!important;border-radius:0!important;background:transparent!important;margin:19px 0 0!important;padding:20px 0 0!important;gap:13px}
+#tm-players-page #tm-players-settings-slot .tm-player-loading-photo-info strong{color:var(--tm-shell-text,#f3f4f5)}
+#tm-players-page #tm-players-settings-slot .tm-player-loading-photo-preview{width:70px;height:124px;flex-basis:70px}
+#tm-players-page #tm-players-settings-slot .tm-player-loading-photo-controls{flex:1;min-width:0;gap:10px}
+#tm-players-page #tm-player-loading-photo-edit{width:max-content;max-width:100%;padding:9px 14px;border-radius:10px;font-size:13px;background:var(--tm-shell-surface-muted,#272b33);color:var(--tm-shell-text,#fff);border:1px solid var(--tm-shell-border,#444854)}
+#tm-players-page #tm-player-loading-photo-edit[hidden],#tm-players-page #tm-player-loading-photo-actions[hidden]{display:none!important}
+#tm-players-page .tm-player-loading-photo-actionset{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#tm-players-page .tm-player-loading-photo-actionset .tm-player-loading-photo-upload{margin:0}
+#tm-players-page .tm-player-loading-photo-actionset :is(button,.tm-player-loading-photo-upload){min-height:38px;border-radius:10px;font-size:12px;padding:8px 12px}
+#tm-players-page .tm-player-loading-photo-actionset #tm-player-loading-photo-save{min-width:0}
+#tm-players-page .tm-player-loading-photo-actionset #tm-player-loading-photo-cancel{background:transparent;border:1px solid var(--tm-shell-border,#444854);color:var(--tm-shell-text,#f3f4f5)}
+#tm-players-page .tm-player-loading-photo-actionset #tm-player-loading-photo-delete[hidden]{display:none!important}
+#tm-players-page #tm-players-settings-slot .tm-player-permission-input:disabled + .tm-player-permission-track{opacity:.55}
+@media(max-width:640px){
+ #tm-players-page .tm-player-profile-header{align-items:flex-start;gap:12px}
+ #tm-players-page .tm-player-profile-identity{gap:12px}
+ #tm-players-page .tm-player-profile-header #tm-players-profile-photo{width:56px;height:56px;flex-basis:56px}
+ #tm-players-page .tm-player-profile-header .tm-player-photo-placeholder{width:56px;height:56px}
+ #tm-players-page #tm-players-profile-title{font-size:18px}
+ #tm-players-page #tm-players-settings-slot{padding:16px}
+ #tm-players-page #tm-players-settings-slot .tm-player-loading-photo-preview{width:65px;height:116px;flex-basis:65px}
+ #tm-players-page #tm-players-settings-slot .tm-player-settings-actions{justify-content:flex-start}
 }

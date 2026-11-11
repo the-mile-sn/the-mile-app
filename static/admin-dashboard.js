@@ -402,17 +402,24 @@ function ensurePlanningOnlyView(){
  });
  const profilePanel=$("tm-players-profile"),playersTable=playersPage.querySelector(".tm-players-panel:not(#tm-players-profile)"),profileNav=$("tm-players-profile-nav"),playersHeader=playersPage.querySelector(".tm-players-heading-minimal");
  const profileFields=[["Nome","name","text"],["Sexo","sex","sex"],["Peso inicial (kg)","weight_kg","number"],["Posição em campo","field_position","position"],["Ponto braço (cm)","arm_point","number"],["Ponto coxa (cm)","thigh_point","number"],["Data de nascimento","birth_date","date"],["Plano de acompanhamento","followup_plan","followup"],["Data de renovação do acompanhamento","followup_renewal_date","date"],["Notas internas","profile_notes","textarea"]];
- let loadingPhotoPreviewSeq=0,stagedLoadingPhoto=null;
- function updateLoadingPhotoSaveState(saved=false){
+ let loadingPhotoPreviewSeq=0,stagedLoadingPhoto=null,playerLoadingPhotoEditing=false;
+ function updateLoadingPhotoSaveState(){
   const button=$("tm-player-loading-photo-save");
-  button.disabled=saved||!stagedLoadingPhoto;
-  button.classList.toggle("is-saved",saved);
-  button.textContent=saved?"Guardado":"Guardar";
+  button.disabled=!stagedLoadingPhoto;
+  button.classList.remove("is-saved");
+  button.textContent="Guardar imagem";
+ }
+ function temporaryLoadingPhotoMessage(message){
+  const feedback=$("tm-player-loading-photo-feedback"),token=profileLoadToken;
+  feedback.textContent=message;
+  window.setTimeout(()=>{if(token===profileLoadToken&&feedback.textContent===message)feedback.textContent="";},4000);
  }
  function refreshPlayerLoadingPhoto(){
   const seq=++loadingPhotoPreviewSeq,uid=playerDetails?.user_id;
   const box=$("tm-player-loading-photo-preview"),remove=$("tm-player-loading-photo-delete"),input=$("tm-player-loading-photo-input"),feedback=$("tm-player-loading-photo-feedback");
-  stagedLoadingPhoto=null;updateLoadingPhotoSaveState(false);
+  stagedLoadingPhoto=null;updateLoadingPhotoSaveState();
+  $("tm-player-loading-photo-edit").hidden=playerLoadingPhotoEditing||!uid;
+  $("tm-player-loading-photo-actions").hidden=!playerLoadingPhotoEditing;
   box.replaceChildren();remove.hidden=true;input.disabled=!uid;
   if(!uid){box.append(el("span","","Este jogador ainda não tem conta associada."));feedback.textContent="";return;}
   box.append(el("span","","A verificar fotografia…"));
@@ -421,12 +428,12 @@ function ensurePlanningOnlyView(){
   image.onload=()=>{
    if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
    box.replaceChildren(image);remove.hidden=false;
-   feedback.textContent="";updateLoadingPhotoSaveState(true);
+   updateLoadingPhotoSaveState();
   };
   image.onerror=()=>{
    if(seq!==loadingPhotoPreviewSeq||playerDetails?.user_id!==uid)return;
    box.replaceChildren(el("span","","Sem fotografia de carregamento"));remove.hidden=true;
-   feedback.textContent="";updateLoadingPhotoSaveState(false);
+   updateLoadingPhotoSaveState();
   };
   image.src="/api/players/"+encodeURIComponent(uid)+"/loading-photo?v="+Date.now();
  }
@@ -461,6 +468,17 @@ function ensurePlanningOnlyView(){
   if(data.length>4*1024*1024)throw Error("A imagem otimizada é demasiado grande.");
   return data;
  }
+ $("tm-player-loading-photo-edit").addEventListener("click",()=>{
+  if(!playerDetails?.user_id)return;
+  playerLoadingPhotoEditing=true;
+  $("tm-player-loading-photo-edit").hidden=true;
+  $("tm-player-loading-photo-actions").hidden=false;
+ });
+ $("tm-player-loading-photo-cancel").addEventListener("click",()=>{
+  playerLoadingPhotoEditing=false;
+  $("tm-player-loading-photo-feedback").textContent="";
+  refreshPlayerLoadingPhoto();
+ });
  $("tm-player-loading-photo-input").addEventListener("change",async event=>{
   const file=event.target.files?.[0];if(!file)return;
   const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
@@ -487,7 +505,8 @@ function ensurePlanningOnlyView(){
   try{
    await request("/api/players/"+encodeURIComponent(selected.uid)+"/loading-photo",{method:"PUT",body:JSON.stringify({photo:selected.photo})});
    if(profileLoadToken===token&&playerDetails?.user_id===selected.uid){
-    stagedLoadingPhoto=null;feedback.textContent="";refreshPlayerLoadingPhoto();
+    playerLoadingPhotoEditing=false;refreshPlayerLoadingPhoto();
+    temporaryLoadingPhotoMessage("Imagem guardada.");
    }
   }catch(e){
    if(profileLoadToken===token){feedback.textContent="Não foi possível guardar: "+e.message;button.disabled=false;}
@@ -497,13 +516,15 @@ function ensurePlanningOnlyView(){
   const uid=playerDetails?.user_id,token=profileLoadToken,feedback=$("tm-player-loading-photo-feedback");
   if(!uid||!window.confirm("Remover a Imagem App deste jogador?"))return;
   const button=$("tm-player-loading-photo-delete");button.disabled=true;feedback.textContent="A eliminar…";
-  try{await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"DELETE"});if(token===profileLoadToken&&playerDetails?.user_id===uid){feedback.textContent="Fotografia eliminada. O carregamento ficará com fundo escuro.";refreshPlayerLoadingPhoto();}}
+  try{await request("/api/players/"+encodeURIComponent(uid)+"/loading-photo",{method:"DELETE"});if(token===profileLoadToken&&playerDetails?.user_id===uid){playerLoadingPhotoEditing=false;refreshPlayerLoadingPhoto();temporaryLoadingPhotoMessage("Imagem removida.");}}
   catch(e){if(token===profileLoadToken)feedback.textContent="Erro: "+e.message;}
   finally{button.disabled=false;}
  });
  function displayPlayerProfile(){
   if(!playerProfile)return;
   const athlete={...playerProfile,...(playerDetails||{})},host=$("tm-players-profile-fields");host.replaceChildren();
+  const settingsSlot=$("tm-players-settings-slot");
+  settingsSlot.querySelector(".tm-player-permissions")?.remove();
   const photoHost=$("tm-players-profile-photo");photoHost.replaceChildren();
   const accountId=playerDetails?.user_id;
   const avatar=el("span","tm-player-photo-placeholder",(athlete.name||"").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase());
@@ -532,9 +553,8 @@ function ensurePlanningOnlyView(){
    host.append(wrapper);
   }
 
-  // Player-specific access controls. Keep values in the existing profile GET/PUT
-  // contract; edits remain pending until the user clicks "Guardar perfil".
-  // The grouping is visual only; no new permissions or publication effects.
+  // Account settings use the existing profile GET/PUT contract. The two
+  // permissions remain opt-in and only change when "Guardar definições" is used.
   function permissionGlyph(parts){
    const ns="http://www.w3.org/2000/svg";
    const svg=document.createElementNS(ns,"svg");
@@ -552,7 +572,7 @@ function ensurePlanningOnlyView(){
   const permissionHeading=el("div","tm-player-permissions-heading");
   const shield=el("span","tm-player-permissions-shield");
   shield.append(permissionGlyph(["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"]));
-  const heading=el("h4","tm-player-permissions-title","Permissões da conta");
+  const heading=el("h4","tm-player-permissions-title","Permissões e definições da conta");
   heading.id="tm-player-permissions-title";
   permissionHeading.append(shield,heading);
   permissions.append(permissionHeading);
@@ -568,17 +588,18 @@ function ensurePlanningOnlyView(){
    const switchLabel=el("label","tm-player-permission-switch");
    const input=el("input","tm-player-permission-input");
    input.type="checkbox";input.checked=!!enabled;
-   input.disabled=!playerProfileEditing;
+   input.disabled=playerProfileEditing;
    input.setAttribute("aria-label",ariaLabel);
-   if(playerProfileEditing)input.dataset.playerProfileField=key;
+   input.dataset.playerPermissionField=key;
    const track=el("span","tm-player-permission-track");
    track.setAttribute("aria-hidden","true");
    switchLabel.append(input,track);
    const badge=el("span","tm-player-permission-state",enabled?activeText:inactiveText);
-   badge.setAttribute("aria-live",playerProfileEditing?"polite":"off");
+   badge.setAttribute("aria-live","polite");
    input.addEventListener("change",()=>{
     row.classList.toggle("is-enabled",input.checked);
     badge.textContent=input.checked?activeText:inactiveText;
+    reflectPermissionChanges();
    });
    actions.append(switchLabel,badge);
    row.append(icon,copy,actions);
@@ -603,7 +624,70 @@ function ensurePlanningOnlyView(){
    paths:["M4 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z","M7 2h13a2 2 0 0 1 2 2v12","m3 17 5-5 4 4 3-3 4 4","M7 9h.01"]
   });
   permissions.append(permissionList);
-  host.append(permissions);
+  const settingsActions=el("div","tm-player-settings-actions");
+  const settingsSave=el("button","tm-player-settings-save","Guardar definições");
+  const settingsCancel=el("button","tm-player-settings-cancel","Cancelar");
+  settingsSave.type="button";settingsCancel.type="button";
+  settingsActions.append(settingsSave,settingsCancel);
+  settingsActions.hidden=true;
+  const settingsFeedback=el("p","tm-player-settings-feedback");
+  settingsFeedback.setAttribute("role","status");
+  settingsFeedback.setAttribute("aria-live","polite");
+  permissions.append(settingsActions,settingsFeedback);
+  settingsSlot.prepend(permissions);
+  let savedSettings={
+   meal_option_selection_enabled:!!athlete.meal_option_selection_enabled,
+   visual_portions_enabled:!!athlete.visual_portions_enabled
+  };
+  const permissionInputs=[...permissionList.querySelectorAll("[data-player-permission-field]")];
+  function readPermissions(){
+   return {
+    meal_option_selection_enabled:permissionInputs.find(i=>i.dataset.playerPermissionField==="meal_option_selection_enabled").checked,
+    visual_portions_enabled:permissionInputs.find(i=>i.dataset.playerPermissionField==="visual_portions_enabled").checked
+   };
+  }
+  function reflectPermissionChanges(){
+   const values=readPermissions();
+   settingsActions.hidden=playerProfileEditing||Object.keys(savedSettings).every(key=>savedSettings[key]===values[key]);
+   settingsFeedback.textContent="";
+  }
+  settingsCancel.addEventListener("click",()=>{
+   permissionInputs.forEach(input=>{
+    input.checked=savedSettings[input.dataset.playerPermissionField];
+    input.dispatchEvent(new Event("change"));
+   });
+  });
+  settingsSave.addEventListener("click",async()=>{
+   if(!playerProfile||playerProfileEditing)return;
+   const selectedId=playerProfile.id,selectedToken=profileLoadToken,flags=readPermissions();
+   settingsSave.disabled=true;settingsCancel.disabled=true;
+   permissionInputs.forEach(input=>input.disabled=true);
+   try{
+    // The profile endpoint requires core fields. Send the last SAVED values,
+    // never unsaved personal data; images and access are excluded.
+    const a={...playerProfile,...(playerDetails||{})};
+    await request("/api/v2/athletes/"+encodeURIComponent(selectedId)+"/profile",{method:"PUT",body:JSON.stringify({
+     name:a.name,sex:a.sex||null,weight_kg:a.weight_kg??null,height_cm:a.height_cm??null,
+     profile_notes:a.profile_notes??"",field_position:a.field_position??null,
+     arm_point:a.arm_point??null,thigh_point:a.thigh_point??null,
+     followup_plan:a.followup_plan??null,followup_renewal_date:a.followup_renewal_date??null,
+     ...flags
+    })});
+    if(selectedToken!==profileLoadToken||playerProfile?.id!==selectedId)return;
+    savedSettings={...flags};
+    Object.assign(playerProfile,flags);
+    playerDetails={...playerDetails,...flags};
+    settingsActions.hidden=true;
+    settingsFeedback.textContent="Definições guardadas.";
+    window.setTimeout(()=>{if(selectedToken===profileLoadToken&&settingsFeedback.textContent==="Definições guardadas.")settingsFeedback.textContent="";},4000);
+   }catch(e){if(selectedToken===profileLoadToken)settingsFeedback.textContent="Não foi possível guardar: "+e.message;}
+   finally{
+    if(selectedToken===profileLoadToken&&playerProfile?.id===selectedId){
+     permissionInputs.forEach(input=>input.disabled=playerProfileEditing);
+     settingsSave.disabled=false;settingsCancel.disabled=false;
+    }
+   }
+  });
   $("tm-players-profile-edit").hidden=playerProfileEditing;
   $("tm-players-profile-save").hidden=!playerProfileEditing;
   $("tm-players-profile-cancel").hidden=!playerProfileEditing;
@@ -612,14 +696,15 @@ function ensurePlanningOnlyView(){
   ++profileLoadToken;
   profileNav.hidden=true;playersHeader.hidden=false;
   if(dashboardReturn)dashboardReturn.hidden=false;
-  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerDetails=null;playerPhotoData=null;playerProfileEditing=false;playerAccess=null;accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();
+  profilePanel.hidden=true;playersTable.hidden=false;playerProfile=null;playerDetails=null;playerPhotoData=null;playerProfileEditing=false;playerLoadingPhotoEditing=false;stagedLoadingPhoto=null;playerAccess=null;accessToggle.hidden=true;$("tm-players-password-toggle").hidden=true;resetPasswordForm();
   $("tm-players-profile-feedback").textContent="";
  }
  async function openPlayerProfile(aid){
   const token=++profileLoadToken;
   playersHeader.hidden=true;profileNav.hidden=false;
   if(dashboardReturn)dashboardReturn.hidden=true;
-  playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;playerDetails=null;playerPhotoData=null;
+  playersTable.hidden=true;profilePanel.hidden=false;playerProfileEditing=false;playerLoadingPhotoEditing=false;stagedLoadingPhoto=null;playerDetails=null;playerPhotoData=null;
+  $("tm-player-loading-photo-feedback").textContent="";
   window.scrollTo({top:0,behavior:"smooth"});
   $("tm-players-profile-title").textContent="A carregar perfil…";$("tm-players-profile-fields").replaceChildren();
   $("tm-players-profile-feedback").textContent="";
@@ -630,7 +715,11 @@ function ensurePlanningOnlyView(){
   }catch(e){if(token===profileLoadToken)$("tm-players-profile-feedback").textContent="Não foi possível carregar o perfil: "+e.message;}
  }
  $("tm-players-profile-back").addEventListener("click",closePlayerProfile);
- $("tm-players-profile-edit").addEventListener("click",()=>{if(!playerProfile)return;playerProfileEditing=true;playerPhotoData=null;displayPlayerProfile();});
+ $("tm-players-profile-edit").addEventListener("click",()=>{
+  if(!playerProfile)return;
+  if(stagedLoadingPhoto){$("tm-player-loading-photo-feedback").textContent="Guarda ou cancela a Imagem App antes de editar os dados.";return;}
+  playerProfileEditing=true;playerPhotoData=null;displayPlayerProfile();
+ });
  $("tm-players-profile-photo-upload").addEventListener("change",async event=>{
   const file=event.target.files?.[0];if(!file)return;
   const feedback=$("tm-players-profile-feedback");
@@ -650,7 +739,7 @@ function ensurePlanningOnlyView(){
   try{
    const selectedId=playerProfile.id,selectedToken=profileLoadToken;
    const result=await request("/api/v2/athletes/"+encodeURIComponent(selectedId)+"/profile",{method:"PUT",body:JSON.stringify({
-    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point")),birth_date:get("birth_date"),followup_plan:get("followup_plan"),followup_renewal_date:get("followup_renewal_date"),meal_option_selection_enabled:profilePanel.querySelector('[data-player-profile-field="meal_option_selection_enabled"]').checked,visual_portions_enabled:profilePanel.querySelector('[data-player-profile-field="visual_portions_enabled"]').checked,...(playerPhotoData?{photo:playerPhotoData}:{})
+    name:get("name").trim(),sex:get("sex")||null,weight_kg:rawWeight===""?null:Number(rawWeight),height_cm:playerProfile.height_cm??null,profile_notes:get("profile_notes"),field_position:get("field_position"),arm_point:get("arm_point")===""?null:Number(get("arm_point")),thigh_point:get("thigh_point")===""?null:Number(get("thigh_point")),birth_date:get("birth_date"),followup_plan:get("followup_plan"),followup_renewal_date:get("followup_renewal_date"),meal_option_selection_enabled:!!playerDetails?.meal_option_selection_enabled,visual_portions_enabled:!!playerDetails?.visual_portions_enabled,...(playerPhotoData?{photo:playerPhotoData}:{})
    })});
    if(selectedToken!==profileLoadToken||playerProfile?.id!==selectedId)return;
    playerProfile=result.athlete;playerDetails={...playerDetails,birth_date:result.athlete.birth_date,followup_plan:result.athlete.followup_plan,followup_renewal_date:result.athlete.followup_renewal_date,meal_option_selection_enabled:result.athlete.meal_option_selection_enabled,visual_portions_enabled:result.athlete.visual_portions_enabled,has_photo:result.athlete.has_photo,user_id:result.athlete.user_id};
