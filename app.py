@@ -1642,7 +1642,7 @@ def application(env, start_response):
                            json.dumps({'match_id':match['id'],'minutes':minutes,'scenario':scenario,'answers':answers}),stamp))
                 c.commit()
                 return respond(200,{'ok':True,'scenario':scenario})
-if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records') and method == 'GET':
+            if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records') and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
                 aid = path.split('/')[4]
@@ -1658,7 +1658,7 @@ if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records'
 
             # Independent nutrition choice publication. Save is a draft only;
             # the player app never receives unapproved selections.
-if path == '/api/v2/player/consumption-options' and method == 'GET':
+            if path == '/api/v2/player/consumption-options' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
