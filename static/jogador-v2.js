@@ -1,6 +1,7 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
 let playerSessionEpoch=0;
+let visualPortionsByColor={};
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
@@ -97,6 +98,7 @@ function revokePlayerView(){
  if(dishPhotoObserver)dishPhotoObserver.disconnect();
  for(const value of dishPhotoCache.values())value.then(url=>{if(url)URL.revokeObjectURL(url);});
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
+ if(window.tmVisualPortions)window.tmVisualPortions.close();visualPortionsByColor={};
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
  calendarEvents=[];periMeals=[];publishedMealChoices={};dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
@@ -456,6 +458,17 @@ async function session(){
  if(epoch!==playerSessionEpoch)return;
  plans=p.options_by_color;
  periPlans=p.peri_plans||{};
+ visualPortionsByColor={};
+ if(me.visual_portions_enabled){
+  try{
+   const photoIndex=await api("/api/v2/player/visual-portions");
+   if(epoch!==playerSessionEpoch)return;
+   visualPortionsByColor=photoIndex.options_by_color||{};
+  }catch(err){
+   if(epoch!==playerSessionEpoch)return;
+   visualPortionsByColor={};
+  }
+ }
  $("login-panel").hidden=true;
  $("player-panel").hidden=false;
  $("logout").hidden=false;
@@ -1542,6 +1555,13 @@ async function overview(){
    }else options.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
+  if(color&&(meal==="lunch"||meal==="dinner")&&me?.visual_portions_enabled&&window.tmVisualPortions){
+   const displayed=datedPlanOptions(d,meal,color);
+   window.tmVisualPortions.appendAction({
+    card:section,date:d,mealTitle:names[meal],color,meal,displayed,
+    index:visualPortionsByColor,refresh:()=>api("/api/v2/player/visual-portions")
+   });
+  }
   root.append(section);
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));

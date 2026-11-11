@@ -1,0 +1,21 @@
+name: Validate player visual portions opt-in
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  player-visual-portions:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install photo support
+        run: python -m pip install Pillow
+      - name: Compile player and photo matching modules
+        run: python -m py_compile app.py microcycles_v2.py food_plan_player_v2.py player_visual_portions_v2.py test_player_visual_portions_v2.py
+      - name: Test approved-photo matching and stale published option references
+        run: python -m unittest -v test_player_visual_portions_v2.py
+      - name: Validate player photo sheet JavaScript
+        run: |
+          node --check static/jogador-v2.js
+          node --check static/player-visual-portions.js
