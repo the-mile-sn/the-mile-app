@@ -124,6 +124,16 @@ try:
  assert len(partial)==1,partial
  assert partial[0]["status"]=="partial",partial
  assert partial[0]["nutrition"]["kcal"]==50,partial
+ # Deleting a saved meal must leave the prescription untouched and no record.
+ req=Request(base+"/api/v2/player/consumption-records",data=json.dumps({"date":"2026-11-11","meal":"lunch"}).encode(),method="DELETE",
+  headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})
+ with urlopen(req,timeout=8) as response:
+  assert json.load(response)["deleted"] is True
+ req=Request(base+"/api/v2/player/consumption-records?start=2026-11-11&end=2026-11-11",
+  headers={"Cookie":"mile_session=smoke-token"})
+ with urlopen(req,timeout=8) as response:
+  assert json.load(response)["records"]==[]
+
 finally:
  server.shutdown()
 '''
