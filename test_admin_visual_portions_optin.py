@@ -34,8 +34,31 @@ class AthleteVisualPortionsTests(unittest.TestCase):
         self.assertIn("visual_portions_enabled=body.get(",source)
         self.assertIn("if not isinstance(visual_portions_enabled,bool)",source)
         self.assertIn("'visual_portions_enabled':bool(details['visual_portions_enabled'])",source)
-        self.assertIn("dataset.playerProfileField=\"visual_portions_enabled\"",dashboard)
+        self.assertIn("if(playerProfileEditing)input.dataset.playerProfileField=key",dashboard)
         self.assertIn("visual_portions_enabled:profilePanel.querySelector",dashboard)
+
+
+    def test_visual_account_permissions_layout_and_themes(self):
+        dashboard=pathlib.Path("static/admin-dashboard.js").read_text()
+        styles=pathlib.Path("static/admin-microcycles.css").read_text()
+        html=pathlib.Path("static/admin-microcycles.html").read_text()
+        self.assertIn('const permissions=el("section","tm-player-permissions")',dashboard)
+        self.assertIn('el("h4","tm-player-permissions-title","Permissões da conta")',dashboard)
+        self.assertIn('host.append(permissions)',dashboard)
+        self.assertIn('title:"Seleção de opções pelo nutricionista"',dashboard)
+        self.assertIn('title:"Porções visuais"',dashboard)
+        self.assertIn('description:"Referências fotográficas para Almoço e Jantar."',dashboard)
+        self.assertNotIn("A publicação na app depende ainda da aprovação final",dashboard)
+        self.assertIn("input.disabled=!playerProfileEditing",dashboard)
+        self.assertIn('badge.textContent=input.checked?activeText:inactiveText',dashboard)
+        self.assertIn('row.classList.toggle("is-enabled",input.checked)',dashboard)
+        self.assertIn("tm-player-permission-track",styles)
+        self.assertIn("tm-player-permissions-list",styles)
+        self.assertIn('html[data-admin-theme="light"] #tm-players-profile-fields',styles)
+        self.assertIn("@media(max-width:640px)",styles)
+        self.assertIn("admin-dashboard.js?v=61",html)
+        self.assertIn("admin-microcycles.css?v=177",html)
+
 
 
 if __name__=="__main__":
