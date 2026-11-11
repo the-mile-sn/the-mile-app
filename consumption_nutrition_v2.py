@@ -95,6 +95,9 @@ def calculate(option, library, status, edits=None, additional=None):
     group_values = {}
     if status != "none":
         for parent, members in groups.items():
+            # Supplements are prescription notes, not nutritional foods.
+            if foods[parent].get("kind") == "supplement":
+                continue
             values = []
             for member in members:
                 source = foods[member]
