@@ -2384,6 +2384,25 @@ def application(env, start_response):
                 # Access remains blocked until the admin reactivates it explicitly.
                 c.commit()
                 return respond(200,{'ok':True,'archived':False})
+            # Expose only current, explicitly published meal options for the
+            # authenticated player's consumption editor (not draft content).
+            if path == '/api/v2/player/consumption-options' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                meal_date=(query.get('date') or [''])[0]
+                meal_key=(query.get('meal') or [''])[0]
+                event_id=(query.get('event_id') or [''])[0]
+                try:
+                    source=meal_option_selection_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                except ValueError:
+                    raise Problem(400, 'invalid_meal_key')
+                if not source: raise Problem(404, 'published_meal_unavailable')
+                return respond(200, {'date': meal_date, 'meal': meal_key,
+                    'event_id': event_id, 'options': source['options']})
+
             # Save confirmed consumption only against an approved, current plan.
             # Never trust client-supplied athlete, food macros or prescription.
             if path == '/api/v2/player/consumption-records' and method == 'PUT':
