@@ -36,7 +36,7 @@ with connect() as db:
 with connect() as db:
  db.execute("CREATE TABLE IF NOT EXISTS v2_athletes(id TEXT PRIMARY KEY,archived_at TEXT)")
  db.execute("CREATE TABLE IF NOT EXISTS v2_player_links(user_id TEXT,athlete_id TEXT)")
- db.execute("INSERT INTO v2_athletes(id) VALUES ('pilot-athlete')")
+ db.execute("INSERT INTO v2_athletes(id,name) VALUES (?,?)",("pilot-athlete","Synthetic Athlete"))
  db.execute("INSERT INTO v2_player_links(user_id,athlete_id) VALUES ('synthetic','pilot-athlete')")
 import app
 from unittest.mock import patch
