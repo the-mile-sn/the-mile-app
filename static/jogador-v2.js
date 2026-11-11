@@ -458,6 +458,31 @@ async function overview(){
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }
+ // Confirmed intake only: missing records remain unknown, never zero.
+ const logged=consumptionRecords.filter(record=>record.meal_date===d&&record.nutrition&&
+  ['kcal','protein_g','carbs_g','fat_g'].every(key=>Number.isFinite(Number(record.nutrition[key]))));
+ if(assigned||logged.length){
+  const consumed={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+  for(const record of logged)for(const key in consumed)consumed[key]+=Number(record.nutrition[key]);
+  const summary=document.createElement('section');summary.className='consumption-day-summary';
+  const title=document.createElement('strong');title.textContent='Consumo registado';summary.append(title);
+  const note=document.createElement('p');note.className='hint';
+  note.textContent=logged.length?logged.length+' refeição(ões) registada(s) · as restantes continuam por registar':'Dia em registo · ainda não existem refeições registadas';summary.append(note);
+  if(logged.length){
+   const energy=document.createElement('strong');energy.textContent=fmt(consumed.kcal,0)+' kcal consumidas';summary.append(energy);
+   if(complete&&total.kcal>0){
+    const ratio=consumed.kcal/total.kcal*100;
+    const progress=document.createElement('progress');progress.max=Math.max(100,Math.ceil(ratio));progress.value=ratio;
+    progress.setAttribute('aria-label','Energia consumida face à energia prescrita');summary.append(progress);
+    const percent=document.createElement('small');percent.textContent=fmt(ratio,0)+'% do valor energético prescrito';summary.append(percent);
+   }
+   const macros=document.createElement('div');macros.className='consumption-macro-comparison';
+   for(const [key,label] of [['protein_g','Proteína'],['carbs_g','Hidratos'],['fat_g','Gordura']]){
+    const item=document.createElement('span');item.textContent=label+': '+fmt(consumed[key],0)+' g'+(complete?' / '+fmt(total[key],0)+' g':'');macros.append(item);
+   }summary.append(macros);
+  }
+  root.append(summary);
+ }
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
