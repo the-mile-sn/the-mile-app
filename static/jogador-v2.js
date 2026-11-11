@@ -1446,6 +1446,17 @@ async function overview(){
    const weight=dailyReferenceWeight,hasWeight=Number.isFinite(weight)&&weight>0;
    if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,0)+" kcal/kg";energy.append(ratio);}
    hero.append(energy);summary.append(hero);
+   if(consumptionEnabled){
+    const actual={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+    for(const record of consumptionRecords)for(const key of Object.keys(actual)){const n=Number(record.nutrition?.[key]);if(Number.isFinite(n)&&n>=0)actual[key]+=n;}
+    const ring=document.createElement('div');ring.className='consumption-actual-ring';ring.style.setProperty('--consumption-progress',(total.kcal>0?Math.min(100,actual.kcal/total.kcal*100):0)+'%');
+    ring.setAttribute('aria-label','Consumo registado '+fmt(actual.kcal,0)+' de '+fmt(total.kcal,0)+' kcal');
+    const ringLabel=document.createElement('span');ringLabel.textContent=fmt(actual.kcal,0)+' / '+fmt(total.kcal,0)+' kcal';ring.append(ringLabel);hero.append(ring);
+    const comparisons=document.createElement('div');comparisons.className='consumption-daily-macros';
+    for(const [key,label] of [['protein_g','Proteína'],['carbs_g','Hidratos'],['fat_g','Gordura']]){const item=document.createElement('span');item.textContent=label+' '+fmt(actual[key],0)+' / '+fmt(total[key],0)+' g';comparisons.append(item);}
+    summary.append(comparisons);
+   }
+
    const macros=document.createElement("div");macros.className="nutrition-macro-row";
    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-macro "+cls;
