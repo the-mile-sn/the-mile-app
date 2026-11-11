@@ -67,7 +67,7 @@ function mountOption(api,chosen,index,refresh){
  const card=node("details"),summary=node("summary"),foods=node("div"),notes=node("div");
  card.append(summary,foods,notes);
  api.appendAction({card,date:"2026-11-11",mealTitle:"Almoço",color:"yellow",meal:"lunch",
-  option:chosen,index,refresh:refresh||async()=>({options_by_color:index})});
+  option:chosen,index,refresh:refresh||(async()=>({options_by_color:index}))});
  return {card,summary,foods,notes,button:card.children[3]};
 }
 test("Ver porções is appended after foods and notes in each expandable option",()=>{
