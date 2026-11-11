@@ -1,48 +1,100 @@
-/* The Mile — visual portion guidance.
-   Isolated to the gated daily-card action and the native bottom sheet. */
-#overview .daily-meal > .tm-daily-portions-action{
- display:flex;align-items:center;justify-content:center;gap:9px;
- width:calc(100% - 32px);margin:12px 16px 16px;min-height:43px;
- padding:10px 16px;border-radius:13px;
- border:1px solid color-mix(in srgb,var(--tint,var(--meal-yellow)) 32%,#5d5d64 68%);
- background:color-mix(in srgb,var(--tint,var(--meal-yellow)) 12%,#24252a 88%);
- color:#f2f2f4;font:600 13px/1.3 "Inter Tight",Inter,-apple-system,BlinkMacSystemFont,sans-serif;
- cursor:pointer;-webkit-tap-highlight-color:transparent;
- transition:background-color .15s,border-color .15s;
+/* The Mile | opt-in portion guidance; scoped to the option inside Almoço/Jantar.
+   Photographs continue to use the same uploaded/optimized WebP resources. */
+#overview .daily-meal > details.player-meal-option-subcard > summary.tm-portion-summary-with-action{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:12px!important;min-width:0!important;
 }
-#overview .daily-meal > .tm-daily-portions-action::before{
+#overview .daily-meal > details.player-meal-option-subcard > summary.tm-portion-summary-with-action > .option{
+ width:100%!important;box-sizing:border-box!important;
+}
+#overview .daily-meal .tm-daily-portions-action{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+ box-sizing:border-box!important;align-self:stretch!important;width:100%!important;
+ min-height:41px!important;margin:0!important;padding:9px 15px!important;
+ border:1px solid rgba(255,255,255,.25)!important;border-radius:999px!important;
+ background:rgba(16,16,20,.38)!important;color:#f7f4ed!important;
+ box-shadow:none!important;
+ font:600 13px/1.3 "Inter Tight",Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
+ letter-spacing:0!important;text-transform:none!important;
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+ transition:background-color .15s ease,border-color .15s ease;
+}
+#overview .daily-meal .single-meal-option > .tm-daily-portions-action{
+ margin:14px 0 2px!important;
+}
+#overview .daily-meal .tm-daily-portions-action::before{
  content:"";width:17px;height:17px;flex:0 0 17px;display:inline-block;
- background:currentColor;
+ background:#e9cf94;
  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='m21 16-5.5-5.5L5 21'/%3E%3C/svg%3E") center/contain no-repeat;
  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='m21 16-5.5-5.5L5 21'/%3E%3C/svg%3E") center/contain no-repeat;
 }
-#overview .daily-meal > .tm-daily-portions-action:disabled{opacity:.55;cursor:wait}
-#overview .daily-meal > .tm-daily-portions-action:focus-visible{outline:2px solid #d6d6e3;outline-offset:3px}
-@media(hover:hover){#overview .daily-meal > .tm-daily-portions-action:hover{background:color-mix(in srgb,var(--tint,var(--meal-yellow)) 20%,#24252a 80%)}}
+#overview .daily-meal .tm-daily-portions-action:disabled{opacity:.55;cursor:wait}
+#overview .daily-meal .tm-daily-portions-action:focus-visible{outline:2px solid #f9e6bd!important;outline-offset:3px!important}
+@media(hover:hover){#overview .daily-meal .tm-daily-portions-action:hover{background:rgba(16,16,20,.55)!important;border-color:rgba(255,255,255,.42)!important}}
 body.visual-portions-open{overflow:hidden}
-.tm-portion-overlay{position:fixed;z-index:11000;inset:0;display:flex;align-items:flex-end;justify-content:center;box-sizing:border-box;background:rgba(6,6,9,.7);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
-.tm-portion-sheet{position:relative;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;width:min(100%,660px);max-height:min(88dvh,850px);overflow:hidden;color:#f3f3f5;background:#1d1d22;border:1px solid #3b3b42;border-bottom:0;border-radius:22px 22px 0 0;box-shadow:0 -16px 50px rgba(0,0,0,.34);padding:0 0 max(16px,env(safe-area-inset-bottom));font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.tm-portion-sheet-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:21px 22px 17px;flex:0 0 auto;border-bottom:1px solid #34343c}
+.tm-portion-overlay{
+ position:fixed;z-index:11000;inset:0;display:flex;align-items:flex-end;justify-content:center;box-sizing:border-box;
+ background:rgba(6,6,9,.70);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)
+}
+.tm-portion-sheet{
+ position:relative;display:flex;flex-direction:column;box-sizing:border-box;min-width:0;
+ width:min(100%,660px);max-height:min(88dvh,850px);overflow:hidden;
+ color:#f3f3f5;background:#1d1d22;border:1px solid #3b3b42;border-bottom:0;
+ border-radius:22px 22px 0 0;box-shadow:0 -16px 50px rgba(0,0,0,.34);
+ padding:0 0 max(16px,env(safe-area-inset-bottom));
+ font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+.tm-portion-sheet-header{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+ padding:21px 22px 18px;flex:0 0 auto;border-bottom:1px solid #34343c
+}
 .tm-portion-sheet-header h2{font-size:20px;line-height:1.2;letter-spacing:-.02em;font-weight:600;color:#f6f6f7;margin:0}
-.tm-portion-sheet-header p{font-size:12px;line-height:1.3;color:#a7a7b0;margin:7px 0 0}
-.tm-portion-sheet-close{flex:0 0 42px;display:grid;place-items:center;width:42px;height:42px;border:1px solid #45454d;background:#29292f;border-radius:50%;color:#f2f2f5;font-size:25px;line-height:1;cursor:pointer}
-.tm-portion-sheet-close:focus-visible,.tm-portion-sheet-tab:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.tm-portion-sheet-tabs{display:flex;gap:7px;padding:13px 17px 3px;overflow-x:auto;min-height:50px;flex:0 0 auto;scrollbar-width:none}
-.tm-portion-sheet-tabs[hidden]{display:none!important}
-.tm-portion-sheet-tab{border:1px solid #41414a;border-radius:999px;padding:9px 14px;flex:0 0 auto;background:#292930;color:#c6c6ce;font-size:12px;line-height:1.2;font-weight:500;cursor:pointer}
-.tm-portion-sheet-tab[aria-pressed="true"]{color:#fafafa;background:#3a3a43;border-color:#767681}
-.tm-portion-sheet-content{overflow:auto;min-height:0;flex:1 1 auto;padding:16px 19px 10px;overscroll-behavior:contain}
+.tm-portion-sheet-header p{font-size:12px;line-height:1.35;color:#a7a7b0;margin:6px 0 0}
+.tm-portion-sheet-header .tm-portion-sheet-option{
+ font-size:13px;line-height:1.4;font-weight:500;color:#ebebf0;margin-top:10px;
+}
+.tm-portion-sheet-close{
+ flex:0 0 42px;display:grid;place-items:center;width:42px;height:42px;
+ border:1px solid #45454d;background:#29292f;border-radius:50%;
+ color:#f2f2f5;font-size:25px;line-height:1;cursor:pointer
+}
+.tm-portion-sheet-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.tm-portion-sheet-content{
+ overflow-y:auto;overflow-x:hidden;min-height:0;flex:1 1 auto;
+ padding:20px 19px 14px;overscroll-behavior:contain
+}
 .tm-portion-photo-group{margin:0 0 22px;min-width:0}
-.tm-portion-photo-group h3{font-size:13px;color:#d6d6df;font-weight:600;margin:0 0 12px;line-height:1.4}
-.tm-portion-photo-carousel{display:flex;gap:13px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-inline:contain;padding:0 0 10px;scrollbar-width:thin;scrollbar-color:#5a5a65 transparent}
-.tm-portion-photo-tile{flex:0 0 clamp(205px,64%,286px);min-width:0;box-sizing:border-box;border:1px solid #42424a;background:#27272c;border-radius:16px;overflow:hidden;scroll-snap-align:start}
-.tm-portion-photo-tile img{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:#fff}
-.tm-portion-photo-description{display:flex;flex-direction:column;gap:6px;padding:14px 15px 15px;line-height:1.35;min-height:84px}
+.tm-portion-photo-group:last-child{margin-bottom:5px}
+.tm-portion-photo-group h3{
+ font-size:14px;color:#d9d9e2;font-weight:600;
+ margin:0 0 13px;line-height:1.4
+}
+.tm-portion-photo-carousel{
+ display:flex;gap:13px;overflow-x:auto;overflow-y:hidden;
+ scroll-snap-type:x mandatory;overscroll-behavior-inline:contain;
+ padding:0 0 10px;scrollbar-width:thin;scrollbar-color:#5a5a65 transparent
+}
+.tm-portion-photo-tile{
+ flex:0 0 clamp(200px,63%,268px);min-width:0;box-sizing:border-box;
+ border:1px solid #42424a;background:#27272c;
+ border-radius:16px;overflow:hidden;scroll-snap-align:start
+}
+.tm-portion-photo-tile img{
+ display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:#fff
+}
+.tm-portion-photo-description{
+ display:flex;flex-direction:column;gap:3px;padding:12px 13px 14px;line-height:1.3;
+}
 .tm-portion-photo-description strong{font-size:14px;color:#f4f4f6;font-weight:600}
-.tm-portion-photo-description span{font-size:12px;color:#d5d5dc}
-.tm-portion-photo-description small{font-size:11px;color:#a6a6b0}
-.tm-portion-sheet-foot{margin:0;padding:12px 22px 3px;border-top:1px solid #34343c;font-size:11px;line-height:1.45;color:#9b9ba5;flex:0 0 auto}
-.tm-portion-sheet-empty{font-size:13px;color:#bbb;margin:10px 0}
-@media(min-width:700px){.tm-portion-sheet{margin-bottom:24px;border-radius:22px;border-bottom:1px solid #3b3b42;max-height:min(84dvh,820px);padding-bottom:12px}.tm-portion-overlay{align-items:flex-end}}
-@media(max-width:390px){.tm-portion-sheet-header{padding:18px 17px 14px}.tm-portion-sheet-content{padding:14px 15px}.tm-portion-photo-tile{flex-basis:82%}.tm-portion-sheet-foot{padding:10px 17px 3px}}
-@media(prefers-reduced-motion:reduce){#overview .daily-meal > .tm-daily-portions-action{transition:none}}
+.tm-portion-photo-description .tm-portion-approximate{font-size:11px;color:#acacb6}
+@media(min-width:700px){
+ .tm-portion-sheet{margin-bottom:24px;border-radius:22px;border-bottom:1px solid #3b3b42;max-height:min(84dvh,820px);padding-bottom:12px}
+}
+@media(max-width:390px){
+ .tm-portion-sheet-header{padding:18px 17px 14px}
+ .tm-portion-sheet-content{padding:16px 15px}
+ .tm-portion-photo-tile{flex-basis:82%}
+}
+@media(prefers-reduced-motion:reduce){
+ #overview .daily-meal .tm-daily-portions-action{transition:none}
+}

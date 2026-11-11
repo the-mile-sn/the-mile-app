@@ -19,3 +19,5 @@ jobs:
         run: |
           node --check static/jogador-v2.js
           node --check static/player-visual-portions.js
+      - name: Test per-option photo sheet without altering menus
+        run: node --test tests/player-visual-portions-option.test.cjs
