@@ -3248,7 +3248,7 @@ html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-
  display:block;width:100%;box-sizing:border-box;height:44px;min-height:44px;
 }
 #tm-players-page #tm-players-profile-fields > .profile-info-card > select{
- padding:0 12px;line-height:normal;
+ padding:0 12px;line-height:normal;border-radius:12px!important;
 }
 #tm-players-page #tm-players-profile-fields > .profile-info-card > textarea{
  resize:vertical;
