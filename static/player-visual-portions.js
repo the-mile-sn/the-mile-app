@@ -21,6 +21,60 @@
   original.remove();
   if(original._previousFocus?.isConnected)original._previousFocus.focus({preventScroll:true});
  }
+ function enableSheetResize(sheet,handle,header){
+  // The grip and non-interactive header accept vertical drag gestures.
+  // Photo content retains its own native vertical scrolling.
+  let expanded=false,gesture=null,ignoreHandleClick=false;
+  const viewHeight=()=>window.innerHeight||document.documentElement?.clientHeight||800;
+  const snap=()=>{
+   sheet.classList.remove("is-dragging");
+   sheet.classList.toggle("is-expanded",expanded);
+   sheet.style.height="";
+   handle.setAttribute("aria-expanded",String(expanded));
+   handle.setAttribute("aria-label",expanded?"Reduzir painel":"Expandir painel");
+  };
+  function start(event){
+   if(event.button!=null&&event.button!==0)return;
+   if(event.target?.closest?.(".tm-portion-sheet-close"))return;
+   gesture={y:event.clientY,height:sheet.getBoundingClientRect().height,
+     moved:false,viaHandle:event.currentTarget===handle};
+   event.currentTarget?.setPointerCapture?.(event.pointerId);
+  }
+  function move(event){
+   if(!gesture)return;
+   const dy=gesture.y-event.clientY;
+   if(!gesture.moved&&Math.abs(dy)<7)return;
+   gesture.moved=true;
+   const minHeight=viewHeight()*0.50,maxHeight=viewHeight()*0.94;
+   const height=Math.max(minHeight,Math.min(maxHeight,gesture.height+dy));
+   sheet.classList.add("is-dragging");
+   sheet.style.height=Math.round(height)+"px";
+   event.preventDefault();
+  }
+  function end(event){
+   if(!gesture)return;
+   const dy=gesture.y-event.clientY;
+   if(gesture.moved){
+    if(dy>18)expanded=true;
+    else if(dy< -18)expanded=false;
+    else expanded=sheet.getBoundingClientRect().height>viewHeight()*0.78;
+    if(gesture.viaHandle)ignoreHandleClick=true;
+   }
+   gesture=null;
+   snap();
+  }
+  for(const target of [handle,header]){
+   target.addEventListener("pointerdown",start);
+   target.addEventListener("pointermove",move);
+   target.addEventListener("pointerup",end);
+   target.addEventListener("pointercancel",end);
+  }
+  handle.addEventListener("click",()=>{
+   if(ignoreHandleClick){ignoreHandleClick=false;return;}
+   expanded=!expanded;snap();
+  });
+  snap();
+ }
  function show(date,mealTitle,option){
   close();
   if(!option||!(option.groups||[]).some(group=>(group.alternatives||[]).some(ref=>ref.photo_id)))return;
@@ -28,6 +82,11 @@
   const overlay=document.createElement("div");overlay.className="tm-portion-overlay";
   const sheet=document.createElement("section");sheet.className="tm-portion-sheet";
   sheet.setAttribute("role","dialog");sheet.setAttribute("aria-modal","true");
+  const resizeHandle=document.createElement("button");resizeHandle.type="button";
+  resizeHandle.className="tm-portion-sheet-drag-handle";
+  const grip=document.createElement("span");grip.className="tm-portion-sheet-grip";
+  grip.setAttribute("aria-hidden","true");resizeHandle.append(grip);
+  sheet.append(resizeHandle);
   sheet.setAttribute("aria-label","Porções visuais — "+mealTitle+" — "+(option.title||"Opção "+option.number));
   const header=document.createElement("header");header.className="tm-portion-sheet-header";
   const headCopy=document.createElement("div");
@@ -38,9 +97,10 @@
   optionName.textContent=option.title||"Opção "+option.number;
   headCopy.append(title,dateText,optionName);
   const closeButton=document.createElement("button");closeButton.type="button";closeButton.className="tm-portion-sheet-close";
-  closeButton.setAttribute("aria-label","Fechar porções visuais");closeButton.textContent="×";
+  closeButton.setAttribute("aria-label","Fechar porções visuais");
   closeButton.addEventListener("click",close);
   header.append(headCopy,closeButton);sheet.append(header);
+  enableSheetResize(sheet,resizeHandle,header);
   const content=document.createElement("div");content.className="tm-portion-sheet-content";sheet.append(content);
   for(const group of option.groups||[]){
    const photos=(group.alternatives||[]).filter(item=>item.photo_id);
@@ -52,7 +112,7 @@
    const quantity=photos[0].prescribed_g;
    heading.textContent=groupName+(Number.isFinite(Number(quantity))?" · "+grams(quantity):"");
    section.append(heading);
-   const carousel=document.createElement("div");carousel.className="tm-portion-photo-carousel";
+   const carousel=document.createElement("div");carousel.className="tm-portion-photo-grid";
    carousel.setAttribute("aria-label",groupName);
    for(const ref of photos){
     const card=document.createElement("article");card.className="tm-portion-photo-tile";
@@ -96,9 +156,8 @@
   const button=document.createElement("button");button.type="button";button.className="tm-daily-portions-action";
   button.textContent="Ver porções";
   button.setAttribute("aria-label","Ver porções de "+(option.title||"Opção "+option.number)+" — "+mealTitle);
-  // A <summary> toggles its parent <details> by default: this independent
-  // action must open photos without expanding or collapsing the option.
-  if(card.tagName==="SUMMARY")card.classList.add("tm-portion-summary-with-action");
+  // The button is appended after the option's foods and notes, never inside
+  // <summary>. Native <details> hides it until this specific option opens.
   button.addEventListener("click",async event=>{
    event.preventDefault();event.stopPropagation();
    if(button.disabled)return;
@@ -120,7 +179,6 @@
     if(status)status.textContent="Não foi possível abrir as porções. Tenta novamente.";
    }finally{button.disabled=false;}
   });
-  button.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" ")event.stopPropagation();});
   card.append(button);
  }
  window.tmVisualPortions={appendAction,close};
