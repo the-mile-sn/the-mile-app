@@ -15,5 +15,6 @@ jobs:
         run: |
           python -m py_compile app.py visual_portions_v2.py visual_portion_matching_v2.py test_visual_portions_v2.py test_visual_portion_matching_v2.py
           python -m unittest -v test_visual_portions_v2.py test_visual_portion_matching_v2.py
+          python -m unittest -v test_admin_visual_portions_optin.py
       - name: Validate browser JavaScript
         run: node --check static/visual-portions.js
