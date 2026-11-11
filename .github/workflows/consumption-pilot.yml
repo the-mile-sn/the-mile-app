@@ -1,0 +1,21 @@
+name: Consumption pilot isolated tests
+on:
+  push:
+    branches:
+      - feature/jorge-consumption-pilot-from-main
+  pull_request:
+    paths:
+      - 'consumption_*.py'
+      - 'test_consumption_*.py'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile modules
+        run: python -m py_compile consumption_records_v2.py consumption_nutrition_v2.py
+      - name: Test nutrition and persistence
+        run: python -m unittest -v test_consumption_nutrition_v2 test_consumption_persistence_v2
