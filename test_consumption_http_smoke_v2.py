@@ -27,6 +27,11 @@ from threading import Thread
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from wsgi import application
+from app import connect, digest
+import time
+with connect() as db:
+ db.execute("INSERT INTO users(id,name,email,role,active) VALUES (?,?,?,?,1)",("synthetic","Smoke Player","smoke@example.invalid","player"))
+ db.execute("INSERT INTO sessions(token,user_id,csrf,expires) VALUES (?,?,?,?)",(digest("smoke-token"),"synthetic","smoke-csrf",int(time.time())+3600))
 class Quiet(WSGIRequestHandler):
  def log_message(self,*args): pass
 server=make_server("127.0.0.1",0,application,handler_class=Quiet)
@@ -48,6 +53,16 @@ try:
    with urlopen(req,timeout=8) as response: status=response.status
   except HTTPError as error: status=error.code
   assert status==401,(path,status)
+  authenticated=Request(base+path,method=method)
+  authenticated.add_header("Cookie","mile_session=smoke-token")
+  if method=="PUT":
+   authenticated.data=b"{}"
+   authenticated.add_header("Content-Type","application/json")
+   authenticated.add_header("X-CSRF-Token","smoke-csrf")
+  try:
+   with urlopen(authenticated,timeout=8) as response: linked_status=response.status
+  except HTTPError as error: linked_status=error.code
+  assert linked_status==404,(path,linked_status)
 finally:
  server.shutdown()
 '''
