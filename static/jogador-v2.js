@@ -1564,9 +1564,9 @@ async function overview(){
    }else options.forEach((o,i)=>{
     const card=optionEl(o,i);
     card.classList.add("player-meal-option-subcard");
-    // The action stays visible within *this* option even while its
-    // nutrition details are collapsed. Stop click/keyboard toggling on it.
-    addOptionPortions(card.querySelector(":scope > summary"),o);
+    // Append after macros, foods and notes. Native <details> conceals the
+    // action until *this* option opens, while the summary remains unchanged.
+    addOptionPortions(card,o);
     section.append(card);
    });
   }
