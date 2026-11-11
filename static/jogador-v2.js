@@ -1321,6 +1321,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
  }catch(e){panel.remove();error(e);}
 }
 
+let consumptionPilotAllowed=null;
 async function overview(){
  const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
@@ -1408,8 +1409,11 @@ async function overview(){
  }
 
  let consumptionEnabled=false,consumptionRecords=[];
- try{const consumption=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionEnabled=true;consumptionRecords=consumption.records||[];}
- catch(e){if(e.status===401)throw e;if(e.status!==403)console.warn('Consumo indisponível',e);}
+ // A denied pilot must not add repeated requests to every day change.
+ if(consumptionPilotAllowed!==false){
+  try{const consumption=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionPilotAllowed=true;consumptionEnabled=true;consumptionRecords=consumption.records||[];}
+  catch(e){if(e.status===403)consumptionPilotAllowed=false;else if(e.status===401)throw e;else console.warn('Consumo indisponível',e);}
+ }
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  const root=$("day-details");root.replaceChildren();
  const entry=r.days.find(x=>x.date===d);
