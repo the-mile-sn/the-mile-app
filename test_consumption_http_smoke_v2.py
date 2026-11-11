@@ -102,6 +102,20 @@ try:
  assert len(updated)==1,updated
  assert updated[0]["status"]=="none",updated
  assert updated[0]["nutrition"]["kcal"]==0,updated
+ # A partial record must preserve the fractional nutrition and stay a single row.
+ payload["status"]="partial"
+ payload["foods"]=[{"id":"rice","grams":50}]
+ req=Request(base+"/api/v2/player/consumption-records",data=json.dumps(payload).encode(),method="PUT",
+  headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})
+ with urlopen(req,timeout=8) as response:
+  assert response.status==200,response.status
+ req=Request(base+"/api/v2/player/consumption-records?start=2026-11-11&end=2026-11-11",
+  headers={"Cookie":"mile_session=smoke-token"})
+ with urlopen(req,timeout=8) as response:
+  partial=json.load(response)["records"]
+ assert len(partial)==1,partial
+ assert partial[0]["status"]=="partial",partial
+ assert partial[0]["nutrition"]["kcal"]==50,partial
 finally:
  server.shutdown()
 '''
