@@ -28,10 +28,11 @@ from threading import Thread
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from wsgi import application
-from app import connect, digest
+from app import connect, digest, password_hash
 import time
 with connect() as db:
  db.execute("INSERT INTO users(id,name,email,role,active) VALUES (?,?,?,?,1)",("synthetic","Smoke Player","smoke@example.invalid","player"))
+ db.execute("UPDATE users SET username=?, password=? WHERE id=?",("smokeplayer",password_hash("smoke-passphrase-unique"),"synthetic"))
  db.execute("INSERT INTO sessions(token,user_id,csrf,expires) VALUES (?,?,?,?)",(digest("smoke-token"),"synthetic","smoke-csrf",int(time.time())+3600))
 # Create a synthetic linked athlete and publish only a mocked source.
 with connect() as db:
@@ -76,6 +77,13 @@ try:
    with urlopen(authenticated,timeout=8) as response: linked_status=response.status
   except HTTPError as error: linked_status=error.code
   assert linked_status==403,(path,linked_status)
+ # Exercise real username/password login, not only a fabricated session.
+ login=Request(base+"/api/login",data=json.dumps({"identifier":"smokeplayer","password":"smoke-passphrase-unique"}).encode(),
+  method="POST",headers={"Content-Type":"application/json"})
+ with urlopen(login,timeout=8) as response:
+  assert response.status==200,response.status
+  cookie=response.headers.get("Set-Cookie","")
+  assert "mile_session=" in cookie,cookie
  # Allowlist the synthetic athlete, then test a real HTTP save/read cycle.
  os.environ["MILE_CONSUMPTION_PILOT_ATHLETE_IDS"]="pilot-athlete"
  payload={"date":"2026-11-11","meal":"lunch","option_ref":"option-test","status":"all"}
