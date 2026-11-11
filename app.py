@@ -683,6 +683,7 @@ def application(env, start_response):
             '/consumption-preview.css': 'consumption-preview.css',
             '/consumption-preview.js': 'consumption-preview.js',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
+            '/player-consumption.css': 'player-consumption.css',
             '/player-visual-portions.js': 'player-visual-portions.js', '/player-visual-portions.css': 'player-visual-portions.css',
             '/player-recipes.js': 'player-recipes.js', '/player-recipes.css': 'player-recipes.css',
         }
