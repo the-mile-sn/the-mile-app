@@ -22,6 +22,7 @@ class ConsumptionHttpSmoke(unittest.TestCase):
             # The player-only startup enforces the production 58-plan readiness gate.\n            # Use the combined role here to test identical HTTP authentication\n            # without manufacturing or bypassing the published-plan roster.\n            # Run a separate interpreter: app reads its DB configuration on import.
             script=r'''
 import json
+import os
 from wsgiref.simple_server import make_server, WSGIRequestHandler
 from threading import Thread
 from urllib.request import Request, urlopen
