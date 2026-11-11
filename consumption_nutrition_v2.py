@@ -104,6 +104,10 @@ def calculate(option, library, status, edits=None, additional=None):
                 values.append(_nutrition(source, library, source_grams))
             group_values[parent] = {key: sum(v[key] for v in values) / len(values) for key in KEYS}
     for index, food in enumerate(foods):
+        # Supplements in published Planos are informational, not library foods.
+        # They may legitimately have no grams and must not block meal logging.
+        if food.get("kind") == "supplement":
+            continue
         if status == "all":
             if food.get("alternative_to") is not None:
                 continue
