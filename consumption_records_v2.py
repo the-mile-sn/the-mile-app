@@ -80,6 +80,18 @@ def save_record(connection, *, athlete_id, meal_date, meal_key, event_id="",
     connection.commit()
 
 
+def delete_record(connection, *, athlete_id, meal_date, meal_key, event_id=""):
+    """Delete only the authenticated athlete's matching consumption snapshot."""
+    from meal_option_selection_v2 import valid_key
+    valid_key(_date(meal_date), meal_key, event_id)
+    cursor = connection.execute("""
+        DELETE FROM v2_consumption_records
+        WHERE athlete_id=? AND meal_date=? AND meal_key=? AND event_id=?
+    """, (athlete_id, meal_date, meal_key, event_id))
+    connection.commit()
+    return cursor.rowcount > 0
+
+
 def read_range(connection, athlete_id, start, end):
     _date(start)
     _date(end)
