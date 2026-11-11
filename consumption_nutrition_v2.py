@@ -56,6 +56,13 @@ def calculate(option, library, status, edits=None, additional=None):
         raise ValueError("unexpected_edits")
     if len(foods) > 150 or len(additional) > 100:
         raise ValueError("too_many_foods")
+    groups = {}
+    for index, food in enumerate(foods):
+        parent = food.get("alternative_to")
+        if parent is not None:
+            if type(parent) is not int or parent < 0 or parent >= index or foods[parent].get("alternative_to") is not None:
+                raise ValueError("invalid_equivalence_group")
+            groups.setdefault(parent, [parent]).append(index)
     if status == "partial":
         if len(edits) != len(foods):
             raise ValueError("incomplete_food_selection")
@@ -67,14 +74,6 @@ def calculate(option, library, status, edits=None, additional=None):
             if index < 0 or index >= len(foods) or index in selected or type(entry.get("consumed")) is not bool:
                 raise ValueError("invalid_food_selection")
             selected[index] = entry
-        # Exactly one selected member in each prescribed equivalence group.
-        groups = {}
-        for index, food in enumerate(foods):
-            parent = food.get("alternative_to")
-            if parent is not None:
-                if type(parent) is not int or parent < 0 or parent >= index:
-                    raise ValueError("invalid_equivalence_group")
-                groups.setdefault(parent, [parent]).append(index)
         for members in groups.values():
             if sum(bool(selected[i]["consumed"]) for i in members) > 1:
                 raise ValueError("multiple_equivalents_selected")
@@ -87,7 +86,7 @@ def calculate(option, library, status, edits=None, additional=None):
     # The plan already averages equivalent foods; use that group average
     # as the nutritional reference, scaled by the selected member's grams.
     group_values = {}
-    if status == "partial":
+    if status != "none":
         for parent, members in groups.items():
             values = []
             for member in members:
@@ -105,11 +104,11 @@ def calculate(option, library, status, edits=None, additional=None):
         else:
             entry = selected[index]
             grams = _amount(entry.get("grams")) if entry["consumed"] else 0
-        if grams == 0:
+        if grams == 0 or food.get("kind") == "supplement":
             continue
         parent = food.get("alternative_to")
         group = parent if parent is not None else index
-        if status == "partial" and group in group_values:
+        if group in group_values:
             prescribed_grams = _amount(food.get("grams"))
             value = {key: group_values[group][key] * grams / prescribed_grams for key in KEYS}
         else:
