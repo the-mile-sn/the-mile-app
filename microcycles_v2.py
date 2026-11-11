@@ -96,6 +96,10 @@ def initialize(c):
     # Opt-in only. Existing and future athletes always start with the usual multi-option view.
     if "meal_option_selection_enabled" not in athlete_columns:
         c.execute("ALTER TABLE v2_athletes ADD COLUMN meal_option_selection_enabled INTEGER NOT NULL DEFAULT 0")
+    # Separate per-athlete opt-in. All historical and future players start OFF.
+    # No player photographs are exposed by this column alone.
+    if "visual_portions_enabled" not in athlete_columns:
+        c.execute("ALTER TABLE v2_athletes ADD COLUMN visual_portions_enabled INTEGER NOT NULL DEFAULT 0")
     if "match_time" not in columns:
         c.execute("ALTER TABLE v2_match_events ADD COLUMN match_time TEXT")
     if "dish_id" not in _table_columns(c, "v2_weekly_menus"):
