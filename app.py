@@ -29,6 +29,7 @@ import player_visual_portions_v2
 import meal_option_selection_v2
 import consumption_records_v2
 import consumption_nutrition_v2
+import consumption_source_v2
 import nutrition_preview_v2
 import time
 from datetime import datetime, timedelta
@@ -1669,7 +1670,7 @@ if path == '/api/v2/player/consumption-options' and method == 'GET':
                 meal_key=(query.get('meal') or [''])[0]
                 event_id=(query.get('event_id') or [''])[0]
                 try:
-                    source=meal_option_selection_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
                 except ValueError:
                     raise Problem(400, 'invalid_meal_key')
                 if not source: raise Problem(404, 'published_meal_unavailable')
@@ -1692,7 +1693,7 @@ if path == '/api/v2/player/consumption-options' and method == 'GET':
                 event_id=body.get('event_id', '')
                 try:
                     meal_option_selection_v2.valid_key(meal_date, meal_key, event_id)
-                    source=meal_option_selection_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
                     if not source: raise Problem(409, 'published_meal_unavailable')
                     option_ref=body.get('option_ref')
                     option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
