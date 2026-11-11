@@ -1294,9 +1294,9 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
     for(const i of indices){const food=foods[i],line=document.createElement('label');line.className='consumption-food-line';
      if(food.kind==='supplement')continue;
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
-     check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check)other.checked=false;}};
+     check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
      const name=document.createElement('span');name.textContent=food.display_name||food.library_name||food.name||'Alimento';
-     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');
+     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');if(!check.checked){grams.value='0';grams.disabled=true;}
      line.append(check,name,grams,document.createTextNode(' g'));group.append(line);
     }foodsRoot.append(group);
    }
@@ -1318,6 +1318,13 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
    if(mode.value==='partial')body.additional=additional;
    try{save.disabled=true;await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});panel.remove();await overview();}catch(e){error(e);save.disabled=false;}
   };
+  if(previous){
+   const remove=document.createElement('button');remove.type='button';remove.textContent='✕ Eliminar registo';remove.setAttribute('aria-label','Eliminar registo de consumo desta refeição');
+   remove.onclick=async()=>{if(!confirm('Eliminar o registo de consumo desta refeição? O plano alimentar não será alterado.'))return;
+    try{remove.disabled=true;await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:mealDate,meal:mealKey,event_id:eventId})});panel.remove();await overview();}
+    catch(e){error(e);remove.disabled=false;}
+   };panel.append(remove);
+  }
   const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();panel.append(save,cancel);
  }catch(e){panel.remove();error(e);}
 }
