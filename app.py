@@ -25,6 +25,7 @@ import assessments_v2
 import weight_reference_v2
 import plan_import_v2
 import food_plan_player_v2
+import player_visual_portions_v2
 import meal_option_selection_v2
 import nutrition_preview_v2
 import time
@@ -115,6 +116,10 @@ BASE_URL = os.environ.get('MILE_BASE_URL', 'http://localhost:8000').strip().rstr
 ALLOWED_ORIGINS = {BASE_URL, 'https://the-mile-app.onrender.com'}
 ALLOWED_ORIGIN_HOSTS = {h for h in (urlparse(x).hostname for x in ALLOWED_ORIGINS) if h}
 ALLOWED_ORIGIN_HOSTS.update({'app.themile.pt', 'admin.themile.pt', 'the-mile-app.onrender.com', 'the-mile-app-test.onrender.com'})
+# Separate release approval, OFF for every player unless explicitly enabled
+# after the Backoffice/preview validation. Admin preview sessions may inspect
+# the UI read-only when the athlete's own flag has been enabled.
+PLAYER_VISUAL_PORTIONS_RELEASE = os.environ.get('TM_PLAYER_VISUAL_PORTIONS_RELEASE', '0').strip().lower() in ('1', 'true', 'yes')
 SITE_ROLE = os.environ.get('MILE_SITE_ROLE', 'both').strip().lower()
 if SITE_ROLE not in ('both', 'admin', 'player'):
     raise RuntimeError('Invalid MILE_SITE_ROLE')
@@ -1356,11 +1361,13 @@ def application(env, start_response):
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
-                link = c.execute("""SELECT a.id,a.name,a.weight_kg,a.field_position,a.followup_plan,a.followup_renewal_date FROM v2_player_links l
+                link = c.execute("""SELECT a.id,a.name,a.weight_kg,a.field_position,a.followup_plan,a.followup_renewal_date,a.visual_portions_enabled FROM v2_player_links l
                                     JOIN v2_athletes a ON a.id=l.athlete_id
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 player=dict(link)
+                player['visual_portions_enabled']=bool(link['visual_portions_enabled']) and (
+                    PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session))
                 player['sex']=user['sex']
                 return respond(200, {'player': player})
             if path == '/api/v2/player/reference-weights' and method == 'GET':
@@ -1737,6 +1744,31 @@ def application(env, start_response):
                 thumbnail = parse_qs(env.get('QUERY_STRING','')).get('size',[''])[0] == 'thumbnail'
                 photo_bytes = player_daily_dish_thumbnail(image_data) if thumbnail else player_menu_photo(image_data)
                 return respond(200,photo_bytes,'image/webp')
+            # Player photos: two explicit gates (per-athlete opt-in and a
+            # separate release approval). Until release, only read-only admin
+            # previews may exercise the integration.
+            if (path == '/api/v2/player/visual-portions' or
+                    path.startswith('/api/v2/player/visual-portions/image/')) and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player': raise Problem(403,'forbidden')
+                link=c.execute("""SELECT a.id,a.visual_portions_enabled FROM v2_player_links l
+                                  JOIN v2_athletes a ON a.id=l.athlete_id
+                                  WHERE l.user_id=? AND a.archived_at IS NULL""",
+                               (user['id'],)).fetchone()
+                if not link: raise Problem(404,'player_not_linked')
+                if not link['visual_portions_enabled'] or not (
+                        PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session)):
+                    raise Problem(404,'not_found')
+                if path == '/api/v2/player/visual-portions':
+                    return respond(200,player_visual_portions_v2.compiled_for_athlete(c,link['id']))
+                photo_id=path.rsplit('/',1)[-1]
+                if not re.fullmatch(r'[0-9a-f]{24}',photo_id):
+                    raise Problem(404,'not_found')
+                photo=c.execute("""SELECT im.data_base64 FROM v2_visual_portions p
+                                   JOIN v2_visual_portion_images im ON im.sha256=p.image_sha256
+                                   WHERE p.id=? AND p.active=1""",(photo_id,)).fetchone()
+                if not photo: raise Problem(404,'not_found')
+                return respond(200,base64.b64decode(photo['data_base64']),'image/webp')
             if path == '/api/v2/player/plans' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
