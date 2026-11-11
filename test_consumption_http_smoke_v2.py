@@ -74,7 +74,7 @@ try:
   try:
    with urlopen(authenticated,timeout=8) as response: linked_status=response.status
   except HTTPError as error: linked_status=error.code
-  assert linked_status==404,(path,linked_status)
+  assert linked_status==403,(path,linked_status)
  # Allowlist the synthetic athlete, then test a real HTTP save/read cycle.
  os.environ["MILE_CONSUMPTION_PILOT_ATHLETE_IDS"]="pilot-athlete"
  payload={"date":"2026-11-11","meal":"lunch","option_ref":"option-test","status":"all"}
