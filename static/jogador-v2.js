@@ -1548,20 +1548,29 @@ async function overview(){
     }
    }
    if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
+   const showOptionPortions=!!(color&&(meal==="lunch"||meal==="dinner")&&me?.visual_portions_enabled&&window.tmVisualPortions);
+   const addOptionPortions=(card,option)=>{
+    if(!showOptionPortions)return;
+    window.tmVisualPortions.appendAction({
+     card,date:d,mealTitle:names[meal],color,meal,option,
+     index:visualPortionsByColor,refresh:()=>api("/api/v2/player/visual-portions")
+    });
+   };
    if(options.length===1){
     const single=options[0],body=document.createElement("div");body.className="single-meal-option";
     appendMealItems(body,single.items);
+    addOptionPortions(body,single);
     section.append(body);
-   }else options.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
-  }
-  attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
-  if(color&&(meal==="lunch"||meal==="dinner")&&me?.visual_portions_enabled&&window.tmVisualPortions){
-   const displayed=datedPlanOptions(d,meal,color);
-   window.tmVisualPortions.appendAction({
-    card:section,date:d,mealTitle:names[meal],color,meal,displayed,
-    index:visualPortionsByColor,refresh:()=>api("/api/v2/player/visual-portions")
+   }else options.forEach((o,i)=>{
+    const card=optionEl(o,i);
+    card.classList.add("player-meal-option-subcard");
+    // The action stays visible within *this* option even while its
+    // nutrition details are collapsed. Stop click/keyboard toggling on it.
+    addOptionPortions(card.querySelector(":scope > summary"),o);
+    section.append(card);
    });
   }
+  attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
   root.append(section);
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
