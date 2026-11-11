@@ -3301,3 +3301,5 @@ html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-r
  #tm-players-page #tm-players-settings-slot .tm-player-loading-photo-preview{width:65px;height:116px;flex-basis:65px}
  #tm-players-page #tm-players-settings-slot .tm-player-settings-actions{justify-content:flex-start}
 }
+
+#tm-players-page .tm-player-profile-header .tm-player-photo-control[hidden]{display:none!important}

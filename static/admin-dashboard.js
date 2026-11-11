@@ -533,7 +533,9 @@ function ensurePlanningOnlyView(){
   }
   photoHost.append(avatar);
   refreshPlayerLoadingPhoto();
-  const photoControl=$("tm-players-profile-photo-upload");photoControl.hidden=!playerProfileEditing;
+  const photoControl=$("tm-players-profile-photo-upload");
+  photoControl.hidden=!playerProfileEditing;
+  photoControl.closest(".tm-player-photo-control").hidden=!playerProfileEditing;
   photoControl.disabled=!accountId;
   $("tm-players-profile-title").textContent=athlete.name;
   host.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin:18px 0";

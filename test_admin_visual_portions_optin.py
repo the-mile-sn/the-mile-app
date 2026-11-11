@@ -48,6 +48,7 @@ class AthleteVisualPortionsTests(unittest.TestCase):
         self.assertIn('id="tm-player-loading-photo-edit"',html)
         self.assertIn('id="tm-player-loading-photo-cancel"',html)
         self.assertIn('id="tm-players-profile-photo-upload"',html)
+        self.assertIn('photoControl.closest(".tm-player-photo-control").hidden=!playerProfileEditing',dashboard)
         self.assertIn("settingsActions.hidden=true",dashboard)
         self.assertIn('settingsSave.addEventListener("click",async()=>{',dashboard)
         self.assertIn('settingsCancel.addEventListener("click",()=>{',dashboard)
@@ -77,8 +78,8 @@ class AthleteVisualPortionsTests(unittest.TestCase):
         self.assertIn("tm-player-permissions-list",styles)
         self.assertIn('html[data-admin-theme="light"] #tm-players-settings-slot',styles)
         self.assertIn("@media(max-width:640px)",styles)
-        self.assertIn("admin-dashboard.js?v=62",html)
-        self.assertIn("admin-microcycles.css?v=180",html)
+        self.assertIn("admin-dashboard.js?v=63",html)
+        self.assertIn("admin-microcycles.css?v=181",html)
 
 
 
