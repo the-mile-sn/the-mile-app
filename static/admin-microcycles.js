@@ -1044,9 +1044,33 @@ $("v2-access-toggle").onclick=async()=>{
  try{await request(matchBase()+"/access",{method:"PUT",body:JSON.stringify({active})});$("v2-access-feedback").textContent=active?"Acesso reativado.":"Acesso bloqueado; sessões terminadas.";await loadV2Access();}
  catch(e){$("v2-access-feedback").textContent="Erro: "+e.message;}
 };
+async function loadConsumptionRecords(){
+ const root=$('consumption-admin-content'),athlete=$('athlete').value,date=$('consumption-admin-date').value;
+ root.replaceChildren();if(!athlete||!date){root.textContent='Seleciona um jogador e uma data.';return;}
+ root.textContent='A carregar registos…';
+ try{
+  const data=await request('/api/v2/athletes/'+encodeURIComponent(athlete)+'/consumption-records?start='+date+'&end='+date);
+  root.replaceChildren();const records=data.records||[];
+  if(!records.length){root.textContent='Ainda não existem registos de consumo nesta data.';return;}
+  const keys=[['kcal','kcal'],['protein_g','P'],['carbs_g','HC'],['fat_g','G']];
+  for(const record of records){
+   const card=document.createElement('article');card.className='calendar-panel consumption-admin-record';
+   const heading=document.createElement('h4');heading.textContent=names[record.meal_key]||record.meal_key;card.append(heading);
+   const state=document.createElement('p');state.textContent=({all:'Tudo',partial:'Parcialmente',none:'Não consumi'})[record.status]||record.status;card.append(state);
+   const prescription=record.prescription?.option;
+   if(prescription){const title=document.createElement('p');title.textContent='Opção prescrita: '+(prescription.title||record.option_ref||'Opção');card.append(title);}
+   const macros=document.createElement('p');macros.textContent=keys.map(([key,label])=>label+': '+Number(record.nutrition?.[key]||0).toLocaleString('pt-PT',{maximumFractionDigits:1})).join(' · ');card.append(macros);
+   const list=document.createElement('ul');for(const food of record.consumed_foods||[]){const item=document.createElement('li');const source=(prescription?.foods||[]).find((f,i)=>i===food.option_index);item.textContent=(source?.library_name||source?.name||food.id)+(food.additional?' (adicionado)':'')+' · '+food.grams+' g';list.append(item);}card.append(list);
+   root.append(card);
+  }
+ }catch(e){root.textContent='Não foi possível carregar os registos.';status(e.message,'warn');}
+}
+$('consumption-admin-date').value=new Date().toLocaleDateString('en-CA');
+$('consumption-admin-refresh').addEventListener('click',()=>loadConsumptionRecords());
+
 function showBackofficeView(view){
   backofficeView=view;
-  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix","scenario-editor"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
+  const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix","scenario-editor"],menus:["menus-panel"],consumption:["consumption-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
     const el=$(id);if(el)el.hidden=key!==view||!model;
   }
@@ -1061,6 +1085,7 @@ function showBackofficeView(view){
   // Avaliações is loaded by its dedicated navigation controller.
   if(view==="player-preview"){showPlayerView(playerView).catch(e=>status(e.message,"warn"));}
   if(view==="menus"&&model)loadMenus().catch(e=>status(e.message,"warn"));
+  if(view==="consumption"&&model)loadConsumptionRecords().catch(e=>status(e.message,"warn"));
   if(view==="matrix"&&model)loadScenarioEditor();
   return calendarReady;
 }
