@@ -39,6 +39,8 @@ import food_plan_drafts_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
 import meal_option_selection_v2
+import consumption_records_v2
+import consumption_nutrition_v2
 import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
@@ -281,6 +283,7 @@ def initialize():
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
+        consumption_records_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
@@ -1634,6 +1637,22 @@ def application(env, start_response):
                 if saved is None: raise Problem(404,'not_found')
                 return respond(200,{'override':saved})
 
+            # Read-only admin access to isolated player consumption records.
+            # This never changes prescribed nutrition or microcycle averages.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                athlete = c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL", (aid,)).fetchone()
+                if not athlete: raise Problem(404, 'not_found')
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records = consumption_records_v2.read_range(
+                        c, aid, (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
+
             # Independent nutrition choice publication. Save is a draft only;
             # the player app never receives unapproved selections.
             if path.startswith('/api/v2/athletes/') and path.endswith('/meal-options') and method in ('GET','PUT','POST'):
@@ -2365,6 +2384,84 @@ def application(env, start_response):
                 # Access remains blocked until the admin reactivates it explicitly.
                 c.commit()
                 return respond(200,{'ok':True,'archived':False})
+            # Expose only current, explicitly published meal options for the
+            # authenticated player's consumption editor (not draft content).
+            if path == '/api/v2/player/consumption-options' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                meal_date=(query.get('date') or [''])[0]
+                meal_key=(query.get('meal') or [''])[0]
+                event_id=(query.get('event_id') or [''])[0]
+                try:
+                    source=meal_option_selection_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                except ValueError:
+                    raise Problem(400, 'invalid_meal_key')
+                if not source: raise Problem(404, 'published_meal_unavailable')
+                return respond(200, {'date': meal_date, 'meal': meal_key,
+                    'event_id': event_id, 'options': source['options']})
+
+            # Save confirmed consumption only against an approved, current plan.
+            # Never trust client-supplied athlete, food macros or prescription.
+            if path == '/api/v2/player/consumption-records' and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                body=read_json(env)
+                if not isinstance(body, dict): raise Problem(400, 'invalid_request')
+                meal_date=body.get('date')
+                meal_key=body.get('meal')
+                event_id=body.get('event_id', '')
+                try:
+                    meal_option_selection_v2.valid_key(meal_date, meal_key, event_id)
+                    source=meal_option_selection_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                    if not source: raise Problem(409, 'published_meal_unavailable')
+                    option_ref=body.get('option_ref')
+                    option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
+                    if not option: raise Problem(409, 'option_stale')
+                    library=consumption_nutrition_v2.active_library(c)
+                    calculated=consumption_nutrition_v2.calculate(
+                        option, library, body.get('status'), body.get('edits'), body.get('additional'))
+                    consumption_records_v2.save_record(
+                        c, athlete_id=link['athlete_id'], meal_date=meal_date,
+                        meal_key=meal_key, event_id=event_id, status=body['status'],
+                        option_ref=option_ref, source_draft_id=source.get('draft_id'),
+                        prescription={'option': option, 'color': source.get('color'),
+                                      'draft_id': source.get('draft_id')},
+                        consumed_foods=calculated['foods'], nutrition=calculated['nutrition'])
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'saved': True, 'nutrition': calculated['nutrition']})
+
+            # Player-only consumption read and food search. Both derive athlete
+            # identity from the authenticated session, never client input.
+            if path == '/api/v2/player/consumption-records' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records=consumption_records_v2.read_range(c, link['athlete_id'],
+                        (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
+
+            if path == '/api/v2/player/consumption-foods' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                query=parse_qs(env.get('QUERY_STRING', ''))
+                search=(query.get('q') or [''])[0].strip()[:120]
+                if len(search) < 2: return respond(200, {'foods': []})
+                matches=food_library_v2.list_foods(c, query=search, limit=30)
+                return respond(200, {'foods': [{k: f[k] for k in ('id','display_name','variant','reference_g','kcal','protein_g','carbs_g','fat_g')} for f in matches]})
+
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
             if path == '/api/v2/player/assessments' and method == 'GET':

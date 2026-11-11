@@ -42,6 +42,62 @@ function optionEl(o,i,planView=false){
  return details;
 }
 
+// Consumption editor: isolated from the prescribed plan and its display.
+async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
+ const panel=document.createElement('div');panel.className='consumption-editor';
+ const message=document.createElement('p');message.className='hint';message.textContent='A carregar opções publicadas…';
+ panel.append(message);host.append(panel);
+ try{
+  const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
+  const data=await api('/api/v2/player/consumption-options?'+qs);
+  const existing=await api('/api/v2/player/consumption-records?start='+mealDate+'&end='+mealDate);
+  const previous=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
+  panel.replaceChildren();
+  const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Fechar sem guardar');close.onclick=()=>panel.remove();panel.append(close);
+  const select=document.createElement('select');
+  data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||'Opção '+(i+1);select.append(item);});
+  if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
+  panel.append(select);
+  const mode=document.createElement('select');for(const [value,label] of [['all','Tudo'],['partial','Parcialmente'],['none','Não consumi']]){const item=document.createElement('option');item.value=value;item.textContent=label;mode.append(item);}mode.value=previous?.status||'all';panel.append(mode);
+  const foodsRoot=document.createElement('div');panel.append(foodsRoot);
+  const additional=[];
+  const previousFoods=previous?.option_ref===select.value&&previous?.status==='partial'?(previous.consumed_foods||[]):[];
+  function redraw(){
+   foodsRoot.replaceChildren();if(mode.value!=='partial')return;
+   const option=data.options.find(x=>x.option_ref===select.value),foods=option.foods||[];
+   const groups=new Map();foods.forEach((food,i)=>{const parent=food.alternative_to??i;if(!groups.has(parent))groups.set(parent,[]);groups.get(parent).push(i);});
+   for(const indices of groups.values()){
+    const group=document.createElement('div');group.className='consumption-food-group';
+    for(const i of indices){const food=foods[i],line=document.createElement('label');line.className='consumption-food-line';
+     const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
+     check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check)other.checked=false;}};
+     const name=document.createElement('span');name.textContent=food.library_name||food.name||'Alimento';
+     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');
+     line.append(check,name,grams,document.createTextNode(' g'));group.append(line);
+    }foodsRoot.append(group);
+   }
+   const search=document.createElement('input');search.type='search';search.placeholder='Pesquisar alimento da biblioteca';search.setAttribute('aria-label','Pesquisar alimento adicional');
+   const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
+   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Gramas';quantity.setAttribute('aria-label','Gramas do alimento adicional');
+   const add=document.createElement('button');add.type='button';add.textContent='+ Adicionar alimento';
+   const added=document.createElement('div');
+   let request=0;search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;matches.append(opt);}}catch(e){if(id===request)error(e);}};
+   add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;additional.push({id,grams});const line=document.createElement('div');line.textContent=matches.selectedOptions[0]?.textContent+' · '+grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{additional.splice(additional.findIndex(x=>x.id===id&&x.grams===grams),1);line.remove();};line.append(remove);added.append(line);quantity.value='';};
+   if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){additional.push({id:f.id,grams:f.grams});const line=document.createElement('div');line.textContent=(f.id||'Alimento')+' · '+f.grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{const index=additional.findIndex(x=>x.id===f.id&&x.grams===f.grams);if(index>=0)additional.splice(index,1);line.remove();};line.append(remove);added.append(line);}}
+   foodsRoot.append(search,matches,quantity,add,added);
+  }
+  let initial=true;
+  mode.onchange=()=>{initial=false;additional.length=0;redraw();};select.onchange=()=>{initial=false;additional.length=0;redraw();};redraw();
+  const save=document.createElement('button');save.type='button';save.textContent='Guardar';
+  save.onclick=async()=>{const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
+   if(mode.value==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
+   if(mode.value==='partial')body.additional=additional;
+   try{save.disabled=true;await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});panel.remove();await overview();}catch(e){error(e);save.disabled=false;}
+  };
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();panel.append(save,cancel);
+ }catch(e){panel.remove();error(e);}
+}
+
 async function session(){const sessionData=await api("/api/me");playerCsrf=sessionData.csrf||"";const r=await api("/api/v2/player/me");me=r.player;$("player-name").textContent=me.name;const p=await api("/api/v2/player/plans");plans=p.options_by_color;periPlans=p.peri_plans||{};$("login-panel").hidden=true;$("player-panel").hidden=false;$("logout").hidden=false;await show(tab);}
 async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key).hidden=key!==t;for(const b of document.querySelectorAll("[data-tab]"))b.setAttribute("aria-pressed",String(b.dataset.tab===t));if(t==="overview")await overview();if(t==="plans")renderPlans();if(t==="menus")await menusView();}
 
@@ -353,6 +409,9 @@ async function overview(){
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
  if(isWeek){const weekMenus=await api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end));renderWeekly(mon,r,weekMenus.menus||[]);return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
+ let consumptionRecords=[];
+ try{const response=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionRecords=response.records||[];}
+ catch(e){if(e.status===401||e.status===403)throw e;console.warn('Registos de consumo indisponíveis',e);}
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
  const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
@@ -399,6 +458,31 @@ async function overview(){
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }
+ // Confirmed intake only: missing records remain unknown, never zero.
+ const logged=consumptionRecords.filter(record=>record.meal_date===d&&record.nutrition&&
+  ['kcal','protein_g','carbs_g','fat_g'].every(key=>Number.isFinite(Number(record.nutrition[key]))));
+ if(assigned||logged.length){
+  const consumed={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
+  for(const record of logged)for(const key in consumed)consumed[key]+=Number(record.nutrition[key]);
+  const summary=document.createElement('section');summary.className='consumption-day-summary';
+  const title=document.createElement('strong');title.textContent='Consumo registado';summary.append(title);
+  const note=document.createElement('p');note.className='hint';
+  note.textContent=logged.length?logged.length+' refeição(ões) registada(s) · as restantes continuam por registar':'Dia em registo · ainda não existem refeições registadas';summary.append(note);
+  if(logged.length){
+   const energy=document.createElement('strong');energy.textContent=fmt(consumed.kcal,0)+' kcal consumidas';summary.append(energy);
+   if(complete&&total.kcal>0){
+    const ratio=consumed.kcal/total.kcal*100;
+    const progress=document.createElement('progress');progress.max=Math.max(100,Math.ceil(ratio));progress.value=ratio;
+    progress.setAttribute('aria-label','Energia consumida face à energia prescrita');summary.append(progress);
+    const percent=document.createElement('small');percent.textContent=fmt(ratio,0)+'% do valor energético prescrito';summary.append(percent);
+   }
+   const macros=document.createElement('div');macros.className='consumption-macro-comparison';
+   for(const [key,label] of [['protein_g','Proteína'],['carbs_g','Hidratos'],['fat_g','Gordura']]){
+    const item=document.createElement('span');item.textContent=label+': '+fmt(consumed[key],0)+' g'+(complete?' / '+fmt(total[key],0)+' g':'');macros.append(item);
+   }summary.append(macros);
+  }
+  root.append(summary);
+ }
  for(const meal of meals){
   if(meal==="lunch")appendDailyEvents(root,d,"morning");
   if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
@@ -419,6 +503,17 @@ async function overview(){
     for(const food of single.items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);body.append(p);}
     section.append(body);
    }else options.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
+  }
+  const consumption=consumptionRecords.find(x=>x.meal_key===meal&&x.meal_date===d&&!x.event_id);
+  if(consumption){
+   const status=document.createElement('div');status.className='consumption-recorded';
+   const label=document.createElement('strong');label.textContent='Consumo registado';status.append(label);
+   if(consumption.nutrition){const details=document.createElement('span');details.append(nutrition(consumption.nutrition));status.append(details);}
+   section.append(status);
+  }
+  if(color&&(plans[color]?.[meal]||[]).length){
+   const register=document.createElement('button');register.type='button';register.className='consumption-open';register.textContent=consumption?'Editar registo':'Registar consumo';
+   register.onclick=()=>{register.disabled=true;openConsumptionEditor(section,d,meal).finally(()=>{register.disabled=false;});};section.append(register);
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
   root.append(section);
