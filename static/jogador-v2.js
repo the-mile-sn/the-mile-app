@@ -1262,6 +1262,7 @@ async function openDailyMealInMenus(dateKey,meal){
  });
 }
 async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
+ for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
  const message=document.createElement('p');message.className='hint';message.textContent='A carregar opções publicadas…';
  panel.append(message);host.append(panel);
@@ -1270,6 +1271,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
   const data=await api('/api/v2/player/consumption-options?'+qs);
   const existing=await api('/api/v2/player/consumption-records?start='+mealDate+'&end='+mealDate);
   const previous=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
+  if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
   panel.replaceChildren();
   const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Fechar sem guardar');close.onclick=()=>panel.remove();panel.append(close);
   const select=document.createElement('select');
