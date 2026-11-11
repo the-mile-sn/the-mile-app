@@ -87,8 +87,9 @@ test("Ver porções is appended after foods and notes in each expandable option"
  assert.equal(button.children.find(x=>x.tagName==="SPAN")?.textContent,"Ver porções");
  assert.equal(button.children.filter(x=>x.tagName==="SVG").length,2);
  assert.ok(button.children[0]._classes.has("tm-portion-action-icon"));
- assert.match(css,/color:var\(--option-base,/);
- assert.match(css,/border:1px solid var\(--option-base,/);
+ assert.match(css,/color:var\(--meal-ink,/);
+ assert.match(css,/border:1px solid var\(--meal-ink,/);
+ assert.doesNotMatch(css,/color:var\(--option-base,/);
  assert.ok(button._classes.has("tm-daily-portions-action"));
  assert.match(css,/details\.player-meal-option-subcard:not\(\[open\]\) > \.tm-daily-portions-action/);
  assert.match(css,/width:max-content!important/);
