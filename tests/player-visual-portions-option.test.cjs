@@ -32,6 +32,10 @@ function node(tagName){
   focus(){},
   querySelectorAll(){return [];}
  };
+ Object.defineProperty(self,"className",{
+  get(){return [...self._classes].join(" ");},
+  set(value){self._classes=new Set(String(value).split(/\s+/).filter(Boolean));}
+ });
  return self;
 }
 function flatten(root){
