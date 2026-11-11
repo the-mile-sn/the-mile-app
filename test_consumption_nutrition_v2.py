@@ -72,6 +72,14 @@ class ConsumptionNutritionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"invalid_additional_quantity"):
             nutrition.calculate(OPTION,LIB,"partial",edits(set()),[{"id":"egg","grams":0}])
 
+    def test_informational_supplement_without_grams_does_not_block_partial(self):
+        option={"foods":[{"id":"rice","grams":100},{"kind":"supplement","label":"Vitamina D"}]}
+        result=nutrition.calculate(option,LIB,"partial",[
+            {"index":0,"consumed":True,"grams":50},
+            {"index":1,"consumed":False,"grams":0}])
+        self.assertEqual([food["id"] for food in result["foods"]],["rice"])
+        self.assertEqual(result["nutrition"]["kcal"],50)
+
     def test_informational_supplement_without_grams_does_not_block_all(self):
         option={"foods":[{"id":"rice","grams":100},{"kind":"supplement","label":"Vitamina D"}]}
         result=nutrition.calculate(option,LIB,"all")
