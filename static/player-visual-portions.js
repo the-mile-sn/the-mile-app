@@ -7,6 +7,24 @@
   const n=Number(value);
   return Number.isFinite(n)?n.toLocaleString("pt-PT",{maximumFractionDigits:2})+" g":"—";
  }
+ // Render actual inline SVG strokes rather than CSS masks: Safari/iOS web
+ // previews can drop the mask and leave invisible action/close icons.
+ function icon(paths,className){
+  const ns="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(ns,"svg");
+  svg.setAttribute("viewBox","0 0 24 24");
+  svg.setAttribute("fill","none");
+  svg.setAttribute("stroke","currentColor");
+  svg.setAttribute("stroke-width","1.8");
+  svg.setAttribute("stroke-linecap","round");
+  svg.setAttribute("stroke-linejoin","round");
+  svg.setAttribute("aria-hidden","true");
+  svg.classList.add(className);
+  for(const d of paths){
+   const path=document.createElementNS(ns,"path");path.setAttribute("d",d);svg.append(path);
+  }
+  return svg;
+ }
  function matchingOption(option,index,color,meal){
   if(!option)return null;
   return (index?.[color]?.[meal]||[]).find(row=>
@@ -55,8 +73,14 @@
    if(!gesture)return;
    const dy=gesture.y-event.clientY;
    if(gesture.moved){
+    // Swipe downward to dismiss (not simply shrink). Short movements snap
+    // back, while upward drag expands and retains internal photo scrolling.
+    if(dy< -50){
+     gesture=null;
+     close();
+     return;
+    }
     if(dy>18)expanded=true;
-    else if(dy< -18)expanded=false;
     else expanded=sheet.getBoundingClientRect().height>viewHeight()*0.78;
     if(gesture.viaHandle)ignoreHandleClickUntil=Date.now()+450;
    }
@@ -98,6 +122,7 @@
   headCopy.append(title,dateText,optionName);
   const closeButton=document.createElement("button");closeButton.type="button";closeButton.className="tm-portion-sheet-close";
   closeButton.setAttribute("aria-label","Fechar porções visuais");
+  closeButton.append(icon(["M18 6 6 18","M6 6l12 12"],"tm-portion-close-icon"));
   closeButton.addEventListener("click",close);
   header.append(headCopy,closeButton);sheet.append(header);
   enableSheetResize(sheet,resizeHandle,header);
@@ -154,7 +179,9 @@
  function appendAction({card,date,mealTitle,color,meal,option,index,refresh}){
   if(!card||!matchingOption(option,index,color,meal))return;
   const button=document.createElement("button");button.type="button";button.className="tm-daily-portions-action";
-  button.textContent="Ver porções";
+  button.append(icon(["m12 3 9 5-9 5-9-5 9-5Z","m3 13 9 5 9-5","m3 18 9 5 9-5"],"tm-portion-action-icon"));
+  const label=document.createElement("span");label.textContent="Ver porções";button.append(label);
+  button.append(icon(["m9 18 6-6-6-6"],"tm-portion-arrow-icon"));
   button.setAttribute("aria-label","Ver porções de "+(option.title||"Opção "+option.number)+" — "+mealTitle);
   // The button is appended after the option's foods and notes, never inside
   // <summary>. Native <details> hides it until this specific option opens.

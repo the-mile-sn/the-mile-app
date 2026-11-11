@@ -45,7 +45,7 @@ function createApp(){
  const body=node("body");
  const document={
   body,documentElement:{clientHeight:800},activeElement:node("button"),
-  createElement:node,
+  createElement:node,createElementNS(_ns,tag){return node(tag);},
   addEventListener(){},removeEventListener(){},
   getElementById(){return node("div");}
  };
@@ -84,7 +84,11 @@ test("Ver porções is appended after foods and notes in each expandable option"
  assert.equal(card.children.length,4);
  assert.equal(card.children[0],summary);
  assert.equal(card.children[2],notes);
- assert.equal(button.textContent,"Ver porções");
+ assert.equal(button.children.find(x=>x.tagName==="SPAN")?.textContent,"Ver porções");
+ assert.equal(button.children.filter(x=>x.tagName==="SVG").length,2);
+ assert.ok(button.children[0]._classes.has("tm-portion-action-icon"));
+ assert.match(css,/color:var\(--option-base,/);
+ assert.match(css,/border:1px solid var\(--option-base,/);
  assert.ok(button._classes.has("tm-daily-portions-action"));
  assert.match(css,/details\.player-meal-option-subcard:not\(\[open\]\) > \.tm-daily-portions-action/);
  assert.match(css,/width:max-content!important/);
@@ -174,6 +178,30 @@ test("sheet grip expands, reduces and can be dragged while content still scrolls
  assert.match(css,/overflow-y:auto;overflow-x:hidden/);
  const close=content.find(x=>x._classes?.has("tm-portion-sheet-close"));
  assert.ok(close);
- assert.equal(close.textContent,"");
- assert.match(css,/\.tm-portion-sheet-close::before/);
+ assert.equal(close.children.length,1);
+ assert.equal(close.children[0].tagName,"SVG");
+ assert.equal(close.children[0].children.length,2);
+ assert.ok(close.children[0]._classes.has("tm-portion-close-icon"));
+ assert.doesNotMatch(css,/\.tm-portion-sheet-close::before/);
+ assert.match(css,/\.tm-portion-sheet-close \.tm-portion-close-icon/);
+});
+
+
+test("dragging downward on the sheet header or grip dismisses the modal",async()=>{
+ const {api,body}=createApp(),first=option("a","aaaaaaaaaaaaaaaaaaaaaaaa");
+ const {button}=mountOption(api,first,{yellow:{lunch:[first]}});
+ await button.listeners.click(event());
+ const all=flatten(body);
+ const grip=all.find(x=>x._classes?.has("tm-portion-sheet-drag-handle"));
+ const header=all.find(x=>x._classes?.has("tm-portion-sheet-header"));
+ const overlay=all.find(x=>x._classes?.has("tm-portion-overlay"));
+ assert.ok(grip&&header&&overlay);
+ const start={currentTarget:header,target:header,button:0,clientY:220,pointerId:2};
+ header.listeners.pointerdown(start);
+ header.listeners.pointermove({...start,clientY:315,preventDefault(){}});
+ header.listeners.pointerup({...start,clientY:315});
+ assert.equal(overlay.isConnected,false);
+ assert.equal(body._classes.has("visual-portions-open"),false);
+ assert.match(css,/\.tm-portion-sheet\{[^}]*border:0;/s);
+ assert.match(css,/\.tm-portion-photo-tile\{[^}]*border:0;/s);
 });
