@@ -40,6 +40,7 @@ import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
 import meal_option_selection_v2
 import consumption_records_v2
+import consumption_nutrition_v2
 import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
@@ -2383,6 +2384,39 @@ def application(env, start_response):
                 # Access remains blocked until the admin reactivates it explicitly.
                 c.commit()
                 return respond(200,{'ok':True,'archived':False})
+            # Save confirmed consumption only against an approved, current plan.
+            # Never trust client-supplied athlete, food macros or prescription.
+            if path == '/api/v2/player/consumption-records' and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                body=read_json(env)
+                if not isinstance(body, dict): raise Problem(400, 'invalid_request')
+                meal_date=body.get('date')
+                meal_key=body.get('meal')
+                event_id=body.get('event_id', '')
+                try:
+                    meal_option_selection_v2.valid_key(meal_date, meal_key, event_id)
+                    source=meal_option_selection_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                    if not source: raise Problem(409, 'published_meal_unavailable')
+                    option_ref=body.get('option_ref')
+                    option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
+                    if not option: raise Problem(409, 'option_stale')
+                    library=consumption_nutrition_v2.active_library(c)
+                    calculated=consumption_nutrition_v2.calculate(
+                        option, library, body.get('status'), body.get('edits'), body.get('additional'))
+                    consumption_records_v2.save_record(
+                        c, athlete_id=link['athlete_id'], meal_date=meal_date,
+                        meal_key=meal_key, event_id=event_id, status=body['status'],
+                        option_ref=option_ref, source_draft_id=source.get('draft_id'),
+                        prescription={'option': option, 'color': source.get('color'),
+                                      'draft_id': source.get('draft_id')},
+                        consumed_foods=calculated['foods'], nutrition=calculated['nutrition'])
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'saved': True, 'nutrition': calculated['nutrition']})
+
             # Player-only consumption read and food search. Both derive athlete
             # identity from the authenticated session, never client input.
             if path == '/api/v2/player/consumption-records' and method == 'GET':
