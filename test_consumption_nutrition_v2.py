@@ -54,6 +54,20 @@ class ConsumptionNutritionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"invalid_food_selection"):
             nutrition.calculate(OPTION,LIB,"partial",[{"index":0,"consumed":True,"grams":100}]*3)
 
+    def test_prescribed_indices_survive_partial_snapshot(self):
+        result=nutrition.calculate(OPTION,LIB,"partial",edits({1,2}))
+        self.assertEqual([food["option_index"] for food in result["foods"]], [1,2])
+        self.assertTrue(all(food["additional"] is False for food in result["foods"]))
+
+    def test_all_records_primary_equivalent_index(self):
+        result=nutrition.calculate(OPTION,LIB,"all")
+        self.assertEqual([food["option_index"] for food in result["foods"]], [0,2])
+
+    def test_unselected_foods_not_recorded_as_consumed(self):
+        result=nutrition.calculate(OPTION,LIB,"partial",edits(set()))
+        self.assertEqual(result["foods"], [])
+        self.assertEqual(result["nutrition"]["kcal"], 0)
+
     def test_zero_added_quantity_rejected(self):
         with self.assertRaisesRegex(ValueError,"invalid_additional_quantity"):
             nutrition.calculate(OPTION,LIB,"partial",edits(set()),[{"id":"egg","grams":0}])
