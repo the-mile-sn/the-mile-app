@@ -39,9 +39,18 @@ def current_source(c, athlete_id, meal_date, meal_key, event_id=""):
             plans._option_items(option,library)
         except (ValueError,TypeError,KeyError,OverflowError,ZeroDivisionError):
             return None
+        # Add display labels only to the API response; keep the original
+        # published option immutable and its stable option_ref unchanged.
+        foods=[]
+        for food in option.get("foods") or []:
+            display=dict(food)
+            if food.get("kind") != "supplement":
+                ref=library.get(food.get("id")) or {}
+                display["display_name"]=ref.get("display_name") or food.get("name") or "Alimento"
+            foods.append(display)
         options.append({"option_ref":choices.option_ref(option),
                         "title":option.get("title") or "Opção "+str(index),
-                        "foods":option.get("foods") or []})
+                        "foods":foods})
     if not options:
         return None
     return {"options":options,"draft_id":published["draft_id"],"color":color}
