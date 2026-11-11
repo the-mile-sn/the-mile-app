@@ -41,6 +41,19 @@ class ConsumptionPersistenceTests(unittest.TestCase):
         self.assertEqual(rows[0]['status'],'none')
         self.assertEqual(rows[0]['nutrition']['kcal'],0)
 
+    def test_published_meal_with_informational_supplement_roundtrip(self):
+        option={"foods":[{"id":"rice","grams":100},{"kind":"supplement","label":"Vitamina D"}]}
+        calculated=nutrition.calculate(option,LIB,"all")
+        records.save_record(self.db,athlete_id="athlete-a",meal_date="2026-11-11",
+            meal_key="breakfast",event_id="",status="all",option_ref="supplement-ref",
+            source_draft_id="published-draft",prescription={"option":option},
+            consumed_foods=calculated["foods"],nutrition=calculated["nutrition"])
+        saved=records.read_range(self.db,"athlete-a","2026-11-11","2026-11-11")
+        self.assertEqual(len(saved),1)
+        self.assertEqual(saved[0]["nutrition"]["kcal"],100)
+        self.assertEqual([f["id"] for f in saved[0]["consumed_foods"]],["rice"])
+        self.assertEqual(saved[0]["prescription"]["option"]["foods"][1]["kind"],"supplement")
+
     def test_athlete_isolation(self):
         self.save('athlete-a','all')
         self.assertEqual(records.read_range(self.db,'athlete-b','2026-11-11','2026-11-11'),[])
