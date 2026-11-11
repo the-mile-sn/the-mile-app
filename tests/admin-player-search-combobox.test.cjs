@@ -1,0 +1,23 @@
+"use strict";
+const {test}=require("node:test");
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const js=fs.readFileSync("static/admin-dashboard.js","utf8");
+const html=fs.readFileSync("static/admin-microcycles.html","utf8");
+const css=fs.readFileSync("static/admin-microcycles.css","utf8");
+test("player search is an accessible selectable combobox without replacing table filters",()=>{
+ assert.match(html,/id="tm-players-filter"[^>]+role="combobox"[^>]+aria-autocomplete="list"/);
+ assert.match(html,/id="tm-players-search-clear"/);
+ assert.match(js,/playerSearchOptions.setAttribute\("role","listbox"\)/);
+ assert.match(js,/option.setAttribute\("role","option"\)/);
+ assert.match(js,/choosePlayerSuggestion\(player\)/);
+ assert.match(js,/selectedPlayerId!==null\?p.id===selectedPlayerId:matchesPlayerSearch\(p,term\)/);
+ assert.match(js,/normalized\(player.username\).startsWith\(normalized\(text\)\)/);
+ assert.match(js,/event.key==="ArrowDown"/);
+ assert.match(js,/event.key==="Escape"/);
+ assert.match(js,/playerSearchClear.addEventListener\("click"/);
+ assert.match(css,/\.tm-player-search-list\{\s*position:fixed/);
+ assert.match(css,/html\[data-admin-theme="light"\] \.tm-player-search-list/);
+ assert.match(html,/id="tm-players-access"/);
+ assert.match(js,/loadPlayers\(\)/);
+});

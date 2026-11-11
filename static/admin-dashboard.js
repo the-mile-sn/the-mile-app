@@ -752,15 +752,133 @@ function ensurePlanningOnlyView(){
   }catch(e){$("tm-players-profile-feedback").textContent="Não foi possível guardar: "+e.message;}
   finally{button.disabled=false;}
  });
- let playersData=[],playersLoaded=false;
+ let playersData=[],playersLoaded=false,selectedPlayerId=null;
+ const playerSearchInput=$("tm-players-filter"),playerSearchClear=$("tm-players-search-clear");
+ const playerSearchHost=$("tm-players-search-combobox");
+ const playerSearchOptions=el("div","tm-player-search-list");
+ playerSearchOptions.id="tm-players-search-options";
+ playerSearchOptions.setAttribute("role","listbox");
+ playerSearchOptions.setAttribute("aria-label","Escolher jogador");
+ playerSearchOptions.hidden=true;
+ document.body.append(playerSearchOptions);
+ let playerSearchOpen=false,playerSearchMatches=[],playerSearchActive=-1;
  function normalized(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();}
  function matchesName(name,query){const words=normalized(name).split(/\s+/).filter(Boolean);return normalized(query).split(/\s+/).filter(Boolean).every(part=>words.some(word=>word.startsWith(part)));}
+ function matchesPlayerSearch(player,query){
+  const text=String(query||"").trim().replace(/^@/,"");
+  return matchesName(player.name,text)||normalized(player.username).startsWith(normalized(text));
+ }
+ function filteredPlayerOptions(){
+  const access=$("tm-players-access").value;
+  return playersData.filter(player=>(access==="all"||player.access_status===access)&&matchesPlayerSearch(player,playerSearchInput.value));
+ }
+ function positionPlayerSuggestions(){
+  if(!playerSearchOpen)return;
+  const rect=playerSearchInput.getBoundingClientRect();
+  const width=Math.min(rect.width,document.documentElement.clientWidth-16);
+  const left=Math.max(8,Math.min(rect.left,document.documentElement.clientWidth-width-8));
+  const below=window.innerHeight-rect.bottom-12,above=rect.top-12;
+  const showAbove=below<175&&above>below;
+  const space=Math.max(90,showAbove?above:below);
+  const height=Math.min(320,space);
+  playerSearchOptions.style.width=width+"px";
+  playerSearchOptions.style.left=left+"px";
+  playerSearchOptions.style.maxHeight=height+"px";
+  playerSearchOptions.style.top=(showAbove?Math.max(8,rect.top-6-Math.min(height,playerSearchOptions.scrollHeight)):rect.bottom+6)+"px";
+ }
+ function closePlayerSuggestions(){
+  playerSearchOpen=false;playerSearchOptions.hidden=true;playerSearchActive=-1;
+  playerSearchInput.setAttribute("aria-expanded","false");
+  playerSearchInput.removeAttribute("aria-activedescendant");
+ }
+ function highlightPlayerSuggestion(index){
+  if(!playerSearchMatches.length)return;
+  playerSearchActive=(index+playerSearchMatches.length)%playerSearchMatches.length;
+  for(const [i,item] of [...playerSearchOptions.querySelectorAll('[role="option"]')].entries()){
+   const active=i===playerSearchActive;
+   item.classList.toggle("is-active",active);
+   item.setAttribute("aria-selected",String(active));
+   if(active){
+    playerSearchInput.setAttribute("aria-activedescendant",item.id);
+    item.scrollIntoView({block:"nearest"});
+   }
+  }
+ }
+ function choosePlayerSuggestion(player){
+  selectedPlayerId=player.id;
+  playerSearchInput.value=player.name;
+  playerSearchClear.hidden=false;
+  closePlayerSuggestions();
+  playerSearchInput.blur();
+  renderPlayers();
+ }
+ function renderPlayerSuggestions(){
+  if(!playerSearchOpen)return;
+  playerSearchOptions.replaceChildren();
+  playerSearchMatches=filteredPlayerOptions();
+  playerSearchActive=-1;
+  playerSearchInput.removeAttribute("aria-activedescendant");
+  if(!playerSearchMatches.length){
+   playerSearchOptions.append(el("p","tm-player-search-empty",playersLoaded?"Nenhum jogador encontrado.":"A carregar jogadores…"));
+  }
+  for(const [index,player] of playerSearchMatches.entries()){
+   const option=el("button","tm-player-search-option");
+   option.type="button";option.id="tm-player-search-option-"+index;
+   option.setAttribute("role","option");option.setAttribute("aria-selected","false");
+   const avatar=el("span","tm-player-search-avatar",String(player.name||"").split(/\\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
+   if(player.has_photo&&player.user_id){
+    const image=el("img");image.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1";
+    image.alt="";image.loading="lazy";image.addEventListener("error",()=>image.remove());avatar.append(image);
+   }
+   const copy=el("span","tm-player-search-copy");
+   copy.append(el("strong","",player.name),el("small","",player.username?"@"+player.username:"Conta ainda não criada"));
+   option.append(avatar,copy);
+   option.addEventListener("click",()=>choosePlayerSuggestion(player));
+   playerSearchOptions.append(option);
+  }
+  positionPlayerSuggestions();
+ }
+ function openPlayerSuggestions(){
+  if(playersPage.hidden||!profilePanel.hidden)return;
+  playerSearchOpen=true;playerSearchOptions.hidden=false;
+  playerSearchInput.setAttribute("aria-expanded","true");
+  renderPlayerSuggestions();
+ }
+ playerSearchInput.addEventListener("focus",openPlayerSuggestions);
+ playerSearchInput.addEventListener("click",openPlayerSuggestions);
+ playerSearchInput.addEventListener("input",()=>{
+  selectedPlayerId=null;
+  playerSearchClear.hidden=!playerSearchInput.value;
+  renderPlayers();
+  openPlayerSuggestions();
+ });
+ playerSearchInput.addEventListener("keydown",event=>{
+  if(event.key==="Escape"){if(playerSearchOpen){event.preventDefault();closePlayerSuggestions();}return;}
+  if(event.key==="Tab"){closePlayerSuggestions();return;}
+  if(event.key==="ArrowDown"||event.key==="ArrowUp"){
+   event.preventDefault();
+   if(!playerSearchOpen)openPlayerSuggestions();
+   if(playerSearchMatches.length)highlightPlayerSuggestion(playerSearchActive+(event.key==="ArrowDown"?1:-1));
+  }else if(event.key==="Enter"&&playerSearchOpen&&playerSearchActive>=0){
+   event.preventDefault();choosePlayerSuggestion(playerSearchMatches[playerSearchActive]);
+  }
+ });
+ playerSearchClear.addEventListener("click",()=>{
+  selectedPlayerId=null;playerSearchInput.value="";playerSearchClear.hidden=true;
+  closePlayerSuggestions();renderPlayers();
+ });
+ document.addEventListener("pointerdown",event=>{
+  if(playerSearchOpen&&!playerSearchHost.contains(event.target)&&!playerSearchOptions.contains(event.target))closePlayerSuggestions();
+ });
+ window.addEventListener("resize",positionPlayerSuggestions);
+ window.addEventListener("scroll",positionPlayerSuggestions,true);
  const playerStatus={active:"Ativo",no_account:"Sem conta",inactive:"Inativo"};
  const fullDate=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4):"—";
  function renderPlayers(){
   const body=$("tm-players-body");body.replaceChildren();
-  const term=$("tm-players-filter").value,filter=$("tm-players-access").value;
-  const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&matchesName(p.name,term));
+  const term=playerSearchInput.value,filter=$("tm-players-access").value;
+  playerSearchClear.hidden=!term;
+  const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&(selectedPlayerId!==null?p.id===selectedPlayerId:matchesPlayerSearch(p,term)));
   for(const p of items){
    const row=el("tr"),first=el("td");
    const link=el("button","tm-p-player");
@@ -804,7 +922,14 @@ function ensurePlanningOnlyView(){
   }
   if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=4;row.append(cell);body.append(row);}
  }
- async function loadPlayers(){const data=await request("/api/v2/admin/players-overview");playersData=data.players||[];playersLoaded=true;renderPlayers();}
+ async function loadPlayers(){
+  const data=await request("/api/v2/admin/players-overview");
+  playersData=data.players||[];playersLoaded=true;
+  if(selectedPlayerId!==null&&!playersData.some(player=>player.id===selectedPlayerId)){
+   selectedPlayerId=null;playerSearchInput.value="";
+  }
+  renderPlayers();renderPlayerSuggestions();
+ }
  window.tmRefreshPlayersList=()=>loadPlayers();
  function openPlayersList(){closeClinical();
   if($("admin-workspace").hidden)return;
@@ -836,8 +961,11 @@ function ensurePlanningOnlyView(){
  }
  playersMobileQuery.addEventListener("change",arrangeMobilePlayerSearch);
  arrangeMobilePlayerSearch();
- $("tm-players-filter").addEventListener("input",renderPlayers);
  $("tm-players-access").addEventListener("change",()=>{
+  if(selectedPlayerId!==null){
+   selectedPlayerId=null;playerSearchInput.value="";playerSearchClear.hidden=true;
+  }
+  closePlayerSuggestions();
   const selector=$("tm-players-access");
   $("tm-players-access-value").textContent=selector.options[selector.selectedIndex]?.textContent||"Todos";
   renderPlayers();
