@@ -21,7 +21,9 @@ class SourceContractTests(unittest.TestCase):
             result=source.current_source(None,"athlete","2026-11-11","breakfast")
         self.assertEqual(result["draft_id"],"draft1")
         self.assertEqual(result["color"],"green")
-        self.assertEqual(result["options"][0]["foods"],option["foods"])
+        self.assertEqual(result["options"][0]["foods"][0]["id"],"food1")
+        self.assertEqual(result["options"][0]["foods"][0]["display_name"],"Alimento")
+        self.assertEqual(option["foods"],[{"id":"food1","grams":100}])
         self.assertEqual(result["options"][0]["option_ref"],source.choices.option_ref(option))
 
     def test_missing_publication_fails_closed(self):
