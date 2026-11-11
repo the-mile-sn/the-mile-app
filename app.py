@@ -676,6 +676,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
+            '/player-visual-portions.js': 'player-visual-portions.js', '/player-visual-portions.css': 'player-visual-portions.css',
             '/player-recipes.js': 'player-recipes.js', '/player-recipes.css': 'player-recipes.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
