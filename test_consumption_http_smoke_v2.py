@@ -18,8 +18,8 @@ class ConsumptionHttpSmoke(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             env=os.environ.copy()
             env.update({"MILE_DATA_DIR":directory,"DATABASE_URL":"",
-                        "MILE_SITE_ROLE":"player","MILE_CONSUMPTION_PILOT_ATHLETE_IDS":""})
-            # Run a separate interpreter: app reads its DB configuration on import.
+                        "MILE_SITE_ROLE":"both","MILE_CONSUMPTION_PILOT_ATHLETE_IDS":""})
+            # The player-only startup enforces the production 58-plan readiness gate.\n            # Use the combined role here to test identical HTTP authentication\n            # without manufacturing or bypassing the published-plan roster.\n            # Run a separate interpreter: app reads its DB configuration on import.
             script=r'''
 import json
 from wsgiref.simple_server import make_server, WSGIRequestHandler
