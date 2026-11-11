@@ -87,11 +87,12 @@ test("Ver porções is appended after foods and notes in each expandable option"
  assert.equal(button.children.find(x=>x.tagName==="SPAN")?.textContent,"Ver porções");
  assert.equal(button.children.filter(x=>x.tagName==="SVG").length,2);
  assert.ok(button.children[0]._classes.has("tm-portion-action-icon"));
- assert.match(css,/color:var\(--meal-ink,/);
- assert.match(css,/border:0!important;border-radius:999px!important/);
- assert.match(css,/background:rgba\(0,0,0,\.16\)!important/);
- assert.match(css,/font:400 13px\/1\.3/);
- assert.doesNotMatch(css,/color:var\(--option-base,/);
+ assert.match(css,/color:#fff!important;background:rgba\(255,255,255,\.11\)!important/);
+ assert.match(css,/border:1px solid rgba\(255,255,255,\.18\)!important/);
+ assert.match(css,/font:400 12px\/1\.3/);
+ assert.match(css,/min-height:34px!important/);
+ assert.match(css,/padding:7px 11px!important/);
+ assert.doesNotMatch(css,/color:var\(--meal-ink,/);
  assert.ok(button._classes.has("tm-daily-portions-action"));
  assert.match(css,/details\.player-meal-option-subcard:not\(\[open\]\) > \.tm-daily-portions-action/);
  assert.match(css,/width:max-content!important/);
@@ -115,6 +116,25 @@ test("one option opens its own published photos, without another option selector
  assert.equal(content.some(x=>x.textContent==="Fotografia: 220 g"),false);
  assert.equal(content.some(x=>x.textContent==="Exemplo com carne branca"),false);
  assert.equal(content.some(x=>x.textContent==="Arroz"),true);
+});
+test("the photo sheet shows only the meal name above the date, without option or divider",async()=>{
+ const {api,body}=createApp();
+ const first=option("a","aaaaaaaaaaaaaaaaaaaaaaaa");
+ const {button}=mountOption(api,first,{yellow:{lunch:[first]}});
+ await button.listeners.click(event());
+ const all=flatten(body);
+ const header=all.find(x=>x._classes?.has("tm-portion-sheet-header"));
+ assert.ok(header);
+ const heading=flatten(header).filter(x=>x.tagName==="H2");
+ const dates=flatten(header).filter(x=>x.tagName==="P");
+ assert.equal(heading.length,1);
+ assert.equal(heading[0].textContent,"Almoço");
+ assert.equal(dates.length,1);
+ assert.equal(dates[0].textContent,"11 de novembro");
+ assert.equal(flatten(header).some(x=>x.textContent==="Ver porções"),false);
+ assert.equal(flatten(header).some(x=>x.textContent==="Sopa + Prato + Fruta"),false);
+ assert.doesNotMatch(css,/\.tm-portion-sheet-header \.tm-portion-sheet-option/);
+ assert.match(css,/padding:8px 22px 16px;flex:0 0 auto;border-bottom:0/);
 });
 test("an obsolete option ref cannot reuse photos from another publication",async()=>{
  const {api,body}=createApp();
