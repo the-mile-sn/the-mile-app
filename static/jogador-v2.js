@@ -409,9 +409,9 @@ async function overview(){
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
  if(isWeek){const weekMenus=await api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end));renderWeekly(mon,r,weekMenus.menus||[]);return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
- let consumptionRecords=[];
- try{const response=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionRecords=response.records||[];}
- catch(e){if(e.status===401||e.status===403)throw e;console.warn('Registos de consumo indisponíveis',e);}
+ let consumptionRecords=[],consumptionEnabled=false;
+ try{const response=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionRecords=response.records||[];consumptionEnabled=true;}
+ catch(e){if(e.status===401)throw e;if(e.status!==403)console.warn('Registos de consumo indisponíveis',e);}
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
  const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
@@ -461,7 +461,7 @@ async function overview(){
  // Confirmed intake only: missing records remain unknown, never zero.
  const logged=consumptionRecords.filter(record=>record.meal_date===d&&record.nutrition&&
   ['kcal','protein_g','carbs_g','fat_g'].every(key=>Number.isFinite(Number(record.nutrition[key]))));
- if(assigned||logged.length){
+ if(consumptionEnabled&&(assigned||logged.length)){
   const consumed={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
   for(const record of logged)for(const key in consumed)consumed[key]+=Number(record.nutrition[key]);
   const summary=document.createElement('section');summary.className='consumption-day-summary';
@@ -511,7 +511,7 @@ async function overview(){
    if(consumption.nutrition){const details=document.createElement('span');details.append(nutrition(consumption.nutrition));status.append(details);}
    section.append(status);
   }
-  if(color&&(plans[color]?.[meal]||[]).length){
+  if(consumptionEnabled&&color&&(plans[color]?.[meal]||[]).length){
    const register=document.createElement('button');register.type='button';register.className='consumption-open';register.textContent=consumption?'Editar registo':'Registar consumo';
    register.onclick=()=>{register.disabled=true;openConsumptionEditor(section,d,meal).finally(()=>{register.disabled=false;});};section.append(register);
   }
