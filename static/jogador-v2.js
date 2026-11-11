@@ -1288,8 +1288,10 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId=''){
    const option=data.options.find(x=>x.option_ref===select.value),foods=option.foods||[];
    const groups=new Map();foods.forEach((food,i)=>{const parent=food.alternative_to??i;if(!groups.has(parent))groups.set(parent,[]);groups.get(parent).push(i);});
    for(const indices of groups.values()){
+    if(indices.every(i=>foods[i]?.kind==='supplement'))continue;
     const group=document.createElement('div');group.className='consumption-food-group';
     for(const i of indices){const food=foods[i],line=document.createElement('label');line.className='consumption-food-line';
+     if(food.kind==='supplement')continue;
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check)other.checked=false;}};
      const name=document.createElement('span');name.textContent=food.display_name||food.library_name||food.name||'Alimento';
