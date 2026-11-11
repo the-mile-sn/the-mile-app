@@ -409,6 +409,9 @@ async function overview(){
  $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
  if(isWeek){const weekMenus=await api("/api/v2/player/menus?start="+iso(mon)+"&end="+iso(end));renderWeekly(mon,r,weekMenus.menus||[]);return;}
  const menus=await api("/api/v2/player/menus?start="+d+"&end="+d);
+ let consumptionRecords=[];
+ try{const response=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionRecords=response.records||[];}
+ catch(e){if(e.status===401||e.status===403)throw e;console.warn('Registos de consumo indisponíveis',e);}
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
  const prev=document.createElement("button");prev.type="button";prev.className="week-arrow";prev.textContent="‹";prev.setAttribute("aria-label","Dia anterior");prev.onclick=()=>{day.setDate(day.getDate()-7);overview().catch(error);};strip.append(prev);
@@ -476,8 +479,15 @@ async function overview(){
     section.append(body);
    }else options.forEach((o,i)=>{const card=optionEl(o,i);card.classList.add("player-meal-option-subcard");section.append(card);});
   }
+  const consumption=consumptionRecords.find(x=>x.meal_key===meal&&x.meal_date===d&&!x.event_id);
+  if(consumption){
+   const status=document.createElement('div');status.className='consumption-recorded';
+   const label=document.createElement('strong');label.textContent='Consumo registado';status.append(label);
+   if(consumption.nutrition){const details=document.createElement('span');details.append(nutrition(consumption.nutrition));status.append(details);}
+   section.append(status);
+  }
   if(color&&(plans[color]?.[meal]||[]).length){
-   const register=document.createElement('button');register.type='button';register.className='consumption-open';register.textContent='Registar consumo';
+   const register=document.createElement('button');register.type='button';register.className='consumption-open';register.textContent=consumption?'Editar registo':'Registar consumo';
    register.onclick=()=>{register.disabled=true;openConsumptionEditor(section,d,meal).finally(()=>{register.disabled=false;});};section.append(register);
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
