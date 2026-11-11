@@ -32,6 +32,18 @@ import time
 with connect() as db:
  db.execute("INSERT INTO users(id,name,email,role,active) VALUES (?,?,?,?,1)",("synthetic","Smoke Player","smoke@example.invalid","player"))
  db.execute("INSERT INTO sessions(token,user_id,csrf,expires) VALUES (?,?,?,?)",(digest("smoke-token"),"synthetic","smoke-csrf",int(time.time())+3600))
+# Create a synthetic linked athlete and publish only a mocked source.
+with connect() as db:
+ db.execute("CREATE TABLE IF NOT EXISTS v2_athletes(id TEXT PRIMARY KEY,archived_at TEXT)")
+ db.execute("CREATE TABLE IF NOT EXISTS v2_player_links(user_id TEXT,athlete_id TEXT)")
+ db.execute("INSERT INTO v2_athletes(id) VALUES ('pilot-athlete')")
+ db.execute("INSERT INTO v2_player_links(user_id,athlete_id) VALUES ('synthetic','pilot-athlete')")
+import app
+from unittest.mock import patch
+published={"draft_id":"published-test","color":"green","options":[{"option_ref":"option-test","foods":[{"id":"rice","grams":100}]}]}
+library={"rice":{"id":"rice","active":1,"kcal":100,"protein_g":2,"carbs_g":20,"fat_g":1}}
+app.consumption_source_v2.current_source=lambda *args,**kwargs: published
+app.consumption_nutrition_v2.active_library=lambda *args,**kwargs: library
 class Quiet(WSGIRequestHandler):
  def log_message(self,*args): pass
 server=make_server("127.0.0.1",0,application,handler_class=Quiet)
@@ -63,6 +75,19 @@ try:
    with urlopen(authenticated,timeout=8) as response: linked_status=response.status
   except HTTPError as error: linked_status=error.code
   assert linked_status==404,(path,linked_status)
+ # Allowlist the synthetic athlete, then test a real HTTP save/read cycle.
+ os.environ["MILE_CONSUMPTION_PILOT_ATHLETE_IDS"]="pilot-athlete"
+ payload={"date":"2026-11-11","meal":"lunch","option_ref":"option-test","status":"all"}
+ req=Request(base+"/api/v2/player/consumption-records",data=json.dumps(payload).encode(),method="PUT",
+  headers={"Cookie":"mile_session=smoke-token","Content-Type":"application/json","X-CSRF-Token":"smoke-csrf"})
+ with urlopen(req,timeout=8) as response:
+  assert response.status==200,response.status
+ req=Request(base+"/api/v2/player/consumption-records?start=2026-11-11&end=2026-11-11",
+  headers={"Cookie":"mile_session=smoke-token"})
+ with urlopen(req,timeout=8) as response:
+  saved=json.load(response)["records"]
+ assert len(saved)==1,saved
+ assert saved[0]["nutrition"]["kcal"]==100,saved
 finally:
  server.shutdown()
 '''
