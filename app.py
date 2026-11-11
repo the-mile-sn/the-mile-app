@@ -39,6 +39,7 @@ import food_plan_drafts_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
 import meal_option_selection_v2
+import consumption_records_v2
 import food_plan_migration_v2
 import time
 from datetime import datetime, timedelta
@@ -281,6 +282,7 @@ def initialize():
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         microcycles_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
+        consumption_records_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
         food_library_v2.initialize(c)
@@ -1633,6 +1635,22 @@ def application(env, start_response):
                 except ValueError: raise Problem(400,'invalid_day_meal_color')
                 if saved is None: raise Problem(404,'not_found')
                 return respond(200,{'override':saved})
+
+            # Read-only admin access to isolated player consumption records.
+            # This never changes prescribed nutrition or microcycle averages.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                athlete = c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL", (aid,)).fetchone()
+                if not athlete: raise Problem(404, 'not_found')
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records = consumption_records_v2.read_range(
+                        c, aid, (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
 
             # Independent nutrition choice publication. Save is a draft only;
             # the player app never receives unapproved selections.
