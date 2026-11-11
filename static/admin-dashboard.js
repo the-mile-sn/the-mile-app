@@ -825,7 +825,7 @@ function ensurePlanningOnlyView(){
    const option=el("button","tm-player-search-option");
    option.type="button";option.id="tm-player-search-option-"+index;
    option.setAttribute("role","option");option.setAttribute("aria-selected","false");
-   const avatar=el("span","tm-player-search-avatar",String(player.name||"").split(/\\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
+   const avatar=el("span","tm-player-search-avatar",String(player.name||"").split(/\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
    if(player.has_photo&&player.user_id){
     const image=el("img");image.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1";
     image.alt="";image.loading="lazy";image.addEventListener("error",()=>image.remove());avatar.append(image);

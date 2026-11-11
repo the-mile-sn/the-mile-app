@@ -15,6 +15,7 @@ test("player search is an accessible selectable combobox without replacing table
  assert.match(js,/normalized\(player.username\).startsWith\(normalized\(text\)\)/);
  assert.match(js,/event.key==="ArrowDown"/);
  assert.match(js,/event.key==="Escape"/);
+ assert.ok(js.includes(String.raw`split(/\s+/)`));
  assert.match(js,/playerSearchClear.addEventListener\("click"/);
  assert.match(css,/\.tm-player-search-list\{\s*position:fixed/);
  assert.match(css,/html\[data-admin-theme="light"\] \.tm-player-search-list/);
