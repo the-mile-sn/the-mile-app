@@ -1065,7 +1065,7 @@ async function loadConsumptionRecords(){
   }
  }catch(e){root.textContent='Não foi possível carregar os registos.';status(e.message,'warn');}
 }
-$('consumption-admin-date').value=new Date().toLocaleDateString('en-CA');
+$('consumption-admin-date').value=(()=>{const now=new Date();return [now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');})();
 $('consumption-admin-refresh').addEventListener('click',()=>loadConsumptionRecords());
 
 function showBackofficeView(view){
