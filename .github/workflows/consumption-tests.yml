@@ -1,0 +1,29 @@
+name: Consumption nutrition regression tests
+
+on:
+  push:
+    branches:
+      - feature/nutrition-consumption-records
+  pull_request:
+    paths:
+      - 'consumption_nutrition_v2.py'
+      - 'test_consumption_nutrition_v2.py'
+      - '.github/workflows/consumption-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nutrition-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile nutrition module and regression tests
+        run: python -m py_compile consumption_nutrition_v2.py test_consumption_nutrition_v2.py
+      - name: Run nutrition regression tests
+        run: python -m unittest -v test_consumption_nutrition_v2.py
