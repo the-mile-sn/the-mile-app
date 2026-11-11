@@ -3096,3 +3096,148 @@ html[data-admin-theme="light"] #menus-panel .menu-planning-card .calendar-naviga
 
 /* Match MD classification typography to the date heading on all viewports. */
 #menus-panel .menu-day-heading .menu-day-classification{font-size:1em!important;line-height:inherit!important}
+
+
+/* Player profile permissions — native, responsive, in both admin themes.
+   Scoped to the existing profile panel; no other Backoffice views are altered. */
+#tm-players-profile-fields > .tm-player-permissions{
+ grid-column:1 / -1;min-width:0;box-sizing:border-box;
+ display:flex;flex-direction:column;gap:18px;
+ padding:22px 20px;border:1px solid var(--tm-shell-border,#343840);
+ border-radius:16px;background:var(--tm-shell-surface,#1b1d22);
+ color:var(--tm-shell-text,#f2f3f5);
+}
+#tm-players-profile-fields .tm-player-permissions-heading{
+ display:flex;align-items:center;gap:14px;min-width:0;
+}
+#tm-players-profile-fields .tm-player-permissions-shield{
+ flex:0 0 46px;width:46px;height:46px;display:grid;place-items:center;
+ border-radius:13px;color:var(--tm-shell-muted,#a2a7b0);
+ background:var(--tm-shell-surface-muted,#22252b);
+}
+#tm-players-profile-fields .tm-player-permissions-shield svg{
+ display:block;width:24px;height:24px;
+}
+#tm-players-profile-fields .tm-player-permissions-title{
+ margin:0;font-size:18px;line-height:1.35;letter-spacing:-.02em;
+ font-weight:650;color:var(--tm-shell-text,#f2f3f5);
+}
+#tm-players-profile-fields .tm-player-permissions-list{
+ display:grid;grid-template-columns:minmax(0,1fr);gap:12px;
+}
+#tm-players-profile-fields .tm-player-permission-row{
+ display:grid;grid-template-columns:50px minmax(0,1fr) auto;
+ align-items:center;column-gap:16px;min-width:0;padding:17px 18px;
+ border:0;border-radius:14px;
+ background:var(--tm-shell-surface-muted,#22252b);
+ transition:background .17s ease;
+}
+#tm-players-profile-fields .tm-player-permission-row.is-enabled{
+ background:rgba(54,141,90,.13);
+}
+#tm-players-profile-fields .tm-player-permission-icon{
+ display:grid;place-items:center;flex-shrink:0;
+ width:50px;height:50px;border-radius:13px;
+ color:var(--tm-shell-muted,#a2a7b0);
+ background:rgba(130,139,153,.085);
+}
+#tm-players-profile-fields .tm-player-permission-icon svg{
+ display:block;width:25px;height:25px;
+}
+#tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-icon{
+ color:#78c99e;background:rgba(59,156,102,.09);
+}
+#tm-players-profile-fields .tm-player-permission-copy{min-width:0}
+#tm-players-profile-fields .tm-player-permission-name{
+ display:block;white-space:normal;overflow-wrap:anywhere;
+ font-size:15px;line-height:1.35;font-weight:650;
+ color:var(--tm-shell-text,#f2f3f5);
+}
+#tm-players-profile-fields .tm-player-permission-description{
+ margin:5px 0 0!important;font-size:13px;line-height:1.45;
+ color:var(--tm-shell-muted,#a2a7b0)!important;
+}
+#tm-players-profile-fields .tm-player-permission-actions{
+ display:flex;align-items:center;justify-content:flex-end;gap:12px;
+ flex-shrink:0;min-width:0;
+}
+#tm-players-profile-fields .tm-player-permission-switch{
+ position:relative;display:inline-flex;align-items:center;
+ width:46px;height:28px;flex:0 0 46px;cursor:pointer;
+}
+#tm-players-profile-fields .tm-player-permission-input{
+ position:absolute;inset:0;width:100%;height:100%;
+ margin:0!important;opacity:0;cursor:inherit;
+}
+#tm-players-profile-fields .tm-player-permission-input:disabled{cursor:default}
+#tm-players-profile-fields .tm-player-permission-track{
+ position:relative;display:block;width:46px;height:27px;
+ border-radius:999px;border:1px solid rgba(130,139,153,.17);
+ box-sizing:border-box;background:#656a73;
+ transition:background .16s ease;pointer-events:none;
+}
+#tm-players-profile-fields .tm-player-permission-track::after{
+ content:"";position:absolute;left:3px;top:3px;width:19px;height:19px;
+ border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);
+ transition:transform .16s ease;
+}
+#tm-players-profile-fields .tm-player-permission-input:checked + .tm-player-permission-track{
+ background:#368a5c;border-color:rgba(54,138,92,.35);
+}
+#tm-players-profile-fields .tm-player-permission-input:checked + .tm-player-permission-track::after{
+ transform:translateX(18px);
+}
+#tm-players-profile-fields .tm-player-permission-input:focus-visible + .tm-player-permission-track{
+ outline:2px solid var(--tm-shell-focus,#77a9cf);outline-offset:3px;
+}
+#tm-players-profile-fields .tm-player-permission-state{
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:6px 11px;border-radius:999px;min-width:80px;
+ background:rgba(130,139,153,.16);color:var(--tm-shell-muted,#a2a7b0);
+ font-size:12px;font-weight:650;line-height:1.3;white-space:nowrap;
+}
+#tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-state{
+ background:rgba(59,156,102,.14);color:#85d2a7;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row{
+ background:#f4f6f9;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row.is-enabled{
+ background:#edf5f0;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-icon{
+ background:#e9edf3;color:#5f6d7e;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-icon{
+ background:#e2f0e8;color:#2b7e53;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-track{
+ background:#d5d9df;border-color:#c9cfd7;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-input:checked + .tm-player-permission-track{
+ background:#378e61;border-color:#378e61;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-state{
+ background:#e7e9ee;color:#697586;
+}
+html[data-admin-theme="light"] #tm-players-profile-fields .tm-player-permission-row.is-enabled .tm-player-permission-state{
+ background:#dceddf;color:#29784e;
+}
+@media(max-width:640px){
+ #tm-players-profile-fields > .tm-player-permissions{padding:16px;gap:15px;border-radius:14px}
+ #tm-players-profile-fields .tm-player-permission-row{
+  grid-template-columns:42px minmax(0,1fr);gap:10px 12px;padding:14px 12px;
+ }
+ #tm-players-profile-fields .tm-player-permission-icon{width:42px;height:42px;border-radius:12px}
+ #tm-players-profile-fields .tm-player-permission-icon svg{width:22px;height:22px}
+ #tm-players-profile-fields .tm-player-permission-actions{
+  grid-column:2;justify-self:start;justify-content:flex-start;
+ }
+ #tm-players-profile-fields .tm-player-permission-name{font-size:14px}
+ #tm-players-profile-fields .tm-player-permission-description{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ #tm-players-profile-fields .tm-player-permission-row,
+ #tm-players-profile-fields .tm-player-permission-track,
+ #tm-players-profile-fields .tm-player-permission-track::after{transition:none}
+}
