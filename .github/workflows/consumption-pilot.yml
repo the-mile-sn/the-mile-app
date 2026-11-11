@@ -17,6 +17,31 @@ jobs:
           python-version: '3.11'
       - name: Install runtime dependencies for HTTP smoke test
         run: pip install -r requirements.txt
+      - name: Check isolated Render staging HTTP (read-only)
+        run: |
+          python - <<'PY'
+          import time
+          from urllib.request import urlopen
+          from urllib.error import HTTPError
+          base="https://the-mile-consumption-pilot-staging.onrender.com"
+          paths=[("/",200),("/jogador-v2",200),
+                 ("/api/v2/player/consumption-records?start=2026-11-11&end=2026-11-11",401),
+                 ("/api/v2/player/consumption-foods?q=arroz",401)]
+          for path,expected in paths:
+              for attempt in range(3):
+                  try:
+                      with urlopen(base+path,timeout=75) as response:
+                          status=response.status
+                  except HTTPError as error:
+                      status=error.code
+                  except Exception:
+                      if attempt==2: raise
+                      time.sleep(8)
+                      continue
+                  assert status==expected,(path,status,expected)
+                  print(path,status)
+                  break
+          PY
       - name: Compile modules
         run: python -m py_compile app.py consumption_records_v2.py consumption_nutrition_v2.py consumption_source_v2.py
       - name: Check player JavaScript syntax
