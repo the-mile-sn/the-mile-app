@@ -91,6 +91,7 @@ function revokePlayerView(){
  window.themileRecipes?.reset();
  // An account switch must invalidate cached data and every old request.
  ++playerSessionEpoch;++overviewRequestId;++menuRenderToken;
+ consumptionPilotAllowed=null;
  overviewReadCache.clear();overviewSnapshot=null;lastOverviewPresentation=null;lastMenuPresentationWeek=null;
  setOverviewLoading(false);$("menu-loading").hidden=true;
  if(profilePhotoController){profilePhotoController.abort();profilePhotoController=null;}
