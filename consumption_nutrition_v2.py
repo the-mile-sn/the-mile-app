@@ -30,7 +30,10 @@ def _nutrition(food, library, grams):
         raise ValueError("invalid_edible_fraction")
     totals = {}
     for key in KEYS:
-        val = float(ref[key])
+        try:
+            val = float(ref[key])
+        except (KeyError, TypeError, ValueError, OverflowError):
+            raise ValueError("invalid_library_nutrition")
         if not math.isfinite(val) or val < 0:
             raise ValueError("invalid_library_nutrition")
         totals[key] = val * grams * fraction / 100
@@ -47,11 +50,15 @@ def calculate(option, library, status, edits=None, additional=None):
     """
     if status not in ("all", "partial", "none"):
         raise ValueError("invalid_status")
+    if not isinstance(option, dict) or not isinstance(library, dict):
+        raise ValueError("invalid_option")
     foods = option.get("foods") or []
     if not isinstance(foods, list):
         raise ValueError("invalid_option")
-    edits = edits or []
-    additional = additional or []
+    edits = [] if edits is None else edits
+    additional = [] if additional is None else additional
+    if not isinstance(edits, list) or not isinstance(additional, list):
+        raise ValueError("invalid_food_selection")
     if status != "partial" and (edits or additional):
         raise ValueError("unexpected_edits")
     if len(foods) > 150 or len(additional) > 100:
@@ -121,10 +128,16 @@ def calculate(option, library, status, edits=None, additional=None):
             raise ValueError("invalid_additional_food")
         grams = _amount(entry.get("grams"))
         if not grams:
-            continue
+            raise ValueError("invalid_additional_quantity")
         food = {"id": entry["id"]}
         value = _nutrition(food, library, grams)
         result.append({"id": food["id"], "grams": grams, "additional": True, "nutrition": value})
         for key in KEYS:
             totals[key] += value[key]
     return {"foods": result, "nutrition": totals}
+
+
+def active_library(connection):
+    """Trusted active catalogue for server-side consumption calculations."""
+    return {row["id"]: dict(row) for row in connection.execute(
+        "SELECT * FROM v2_food_library WHERE active=1").fetchall()}
