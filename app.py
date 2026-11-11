@@ -1739,8 +1739,8 @@ def application(env, start_response):
                 query=parse_qs(env.get('QUERY_STRING', ''))
                 search=(query.get('q') or [''])[0].strip()[:120]
                 if len(search) < 2: return respond(200, {'foods': []})
-                matches=c.execute("SELECT id, display_name, variant, reference_g, kcal, protein_g, carbs_g, fat_g FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
-                return respond(200, {'foods': [{k: f[k] for k in ('id','display_name','variant','reference_g','kcal','protein_g','carbs_g','fat_g')} for f in matches]})
+                matches=c.execute("SELECT id, display_name, variant, kcal, protein_g, carbs_g, fat_g FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
+                return respond(200, {'foods': [{k: f[k] for k in ('id','display_name','variant','kcal','protein_g','carbs_g','fat_g')} for f in matches]})
 
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
