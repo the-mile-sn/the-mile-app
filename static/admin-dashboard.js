@@ -531,42 +531,79 @@ function ensurePlanningOnlyView(){
    }
    host.append(wrapper);
   }
-  // Per-athlete nutrition service preference, separate from clinical measurements.
-  const selectionCard=el("label","profile-info-card tm-player-meal-selection");
-  selectionCard.style.cssText="display:flex;flex-direction:column;gap:8px;padding:15px;border:1px solid #36363c;border-radius:12px;min-width:0";
-  selectionCard.append(el("small","","Seleção de opções pelo nutricionista"));
-  if(!playerProfileEditing){
-   selectionCard.append(el("strong","",athlete.meal_option_selection_enabled?"Ativada":"Desativada"));
-  }else{
-   const control=el("span");control.style.cssText="display:flex;align-items:center;gap:10px;min-height:30px";
-   const checkbox=el("input");checkbox.type="checkbox";checkbox.checked=athlete.meal_option_selection_enabled===true;
-   checkbox.dataset.playerProfileField="meal_option_selection_enabled";
-   checkbox.setAttribute("aria-label","Ativar seleção de opções alimentares pelo nutricionista");
-   checkbox.style.cssText="width:18px;height:18px;margin:0;accent-color:#377c5c";
-   control.append(checkbox,el("span","",checkbox.checked?"Ativada":"Desativada"));
-   checkbox.addEventListener("change",()=>{control.lastElementChild.textContent=checkbox.checked?"Ativada":"Desativada";});
-   selectionCard.append(control);
+
+  // Player-specific access controls. Keep values in the existing profile GET/PUT
+  // contract; edits remain pending until the user clicks "Guardar perfil".
+  // The grouping is visual only; no new permissions or publication effects.
+  function permissionGlyph(parts){
+   const ns="http://www.w3.org/2000/svg";
+   const svg=document.createElementNS(ns,"svg");
+   svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("fill","none");
+   svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.7");
+   svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
+   svg.setAttribute("aria-hidden","true");
+   for(const pathData of parts){
+    const p=document.createElementNS(ns,"path");p.setAttribute("d",pathData);svg.append(p);
+   }
+   return svg;
   }
-  selectionCard.append(el("small","","Permite definir opções específicas por refeição e data no Planeamento."));
-  host.append(selectionCard);
-  // Photo guidance is a separate, OFF-by-default player entitlement.
-  const visualCard=el("label","profile-info-card tm-player-visual-portions");
-  visualCard.style.cssText="display:flex;flex-direction:column;gap:8px;padding:15px;border:1px solid var(--tm-shell-border,#36363c);border-radius:12px;min-width:0";
-  visualCard.append(el("small","","Porções visuais"));
-  if(!playerProfileEditing){
-   visualCard.append(el("strong","",athlete.visual_portions_enabled?"Ativadas":"Desativadas"));
-  }else{
-   const control=el("span");control.style.cssText="display:flex;align-items:center;gap:10px;min-height:30px";
-   const checkbox=el("input");checkbox.type="checkbox";checkbox.checked=athlete.visual_portions_enabled===true;
-   checkbox.dataset.playerProfileField="visual_portions_enabled";
-   checkbox.setAttribute("aria-label","Ativar porções visuais para este jogador");
-   checkbox.style.cssText="width:18px;height:18px;margin:0;accent-color:#377c5c";
-   control.append(checkbox,el("span","",checkbox.checked?"Ativadas":"Desativadas"));
-   checkbox.addEventListener("change",()=>{control.lastElementChild.textContent=checkbox.checked?"Ativadas":"Desativadas";});
-   visualCard.append(control);
+  const permissions=el("section","tm-player-permissions");
+  permissions.setAttribute("aria-labelledby","tm-player-permissions-title");
+  const permissionHeading=el("div","tm-player-permissions-heading");
+  const shield=el("span","tm-player-permissions-shield");
+  shield.append(permissionGlyph(["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"]));
+  const heading=el("h4","tm-player-permissions-title","Permissões da conta");
+  heading.id="tm-player-permissions-title";
+  permissionHeading.append(shield,heading);
+  permissions.append(permissionHeading);
+  const permissionList=el("div","tm-player-permissions-list");
+  function permissionRow({key,title,description,enabled,activeText,inactiveText,paths,ariaLabel}){
+   const row=el("div","tm-player-permission-row"+(enabled?" is-enabled":""));
+   const icon=el("span","tm-player-permission-icon");
+   icon.append(permissionGlyph(paths));
+   const copy=el("div","tm-player-permission-copy");
+   copy.append(el("strong","tm-player-permission-name",title));
+   copy.append(el("p","tm-player-permission-description",description));
+   const actions=el("div","tm-player-permission-actions");
+   const switchLabel=el("label","tm-player-permission-switch");
+   const input=el("input","tm-player-permission-input");
+   input.type="checkbox";input.checked=!!enabled;
+   input.disabled=!playerProfileEditing;
+   input.setAttribute("aria-label",ariaLabel);
+   if(playerProfileEditing)input.dataset.playerProfileField=key;
+   const track=el("span","tm-player-permission-track");
+   track.setAttribute("aria-hidden","true");
+   switchLabel.append(input,track);
+   const badge=el("span","tm-player-permission-state",enabled?activeText:inactiveText);
+   badge.setAttribute("aria-live",playerProfileEditing?"polite":"off");
+   input.addEventListener("change",()=>{
+    row.classList.toggle("is-enabled",input.checked);
+    badge.textContent=input.checked?activeText:inactiveText;
+   });
+   actions.append(switchLabel,badge);
+   row.append(icon,copy,actions);
+   permissionList.append(row);
   }
-  visualCard.append(el("small","","Referências fotográficas para Almoço e Jantar. A publicação na app depende ainda da aprovação final."));
-  host.append(visualCard);
+  permissionRow({
+   key:"meal_option_selection_enabled",
+   title:"Seleção de opções pelo nutricionista",
+   description:"Permite definir opções específicas por refeição e data no Planeamento.",
+   enabled:athlete.meal_option_selection_enabled,
+   activeText:"Ativada",inactiveText:"Desativada",
+   ariaLabel:"Ativar seleção de opções alimentares pelo nutricionista",
+   paths:["M9 6h12","M9 12h12","M9 18h12","m3 6 2 2 3-4","m3 12 2 2 3-4","m3 18 2 2 3-4"]
+  });
+  permissionRow({
+   key:"visual_portions_enabled",
+   title:"Porções visuais",
+   description:"Referências fotográficas para Almoço e Jantar.",
+   enabled:athlete.visual_portions_enabled,
+   activeText:"Ativadas",inactiveText:"Desativadas",
+   ariaLabel:"Ativar porções visuais para este jogador",
+   paths:["M4 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z","M7 2h13a2 2 0 0 1 2 2v12","m3 17 5-5 4 4 3-3 4 4","M7 9h.01"]
+  });
+  permissions.append(permissionList);
+  host.append(permissions);
   $("tm-players-profile-edit").hidden=playerProfileEditing;
   $("tm-players-profile-save").hidden=!playerProfileEditing;
   $("tm-players-profile-cancel").hidden=!playerProfileEditing;
