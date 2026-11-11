@@ -7,6 +7,9 @@ on:
   pull_request:
     paths:
       - 'consumption_nutrition_v2.py'
+      - 'consumption_records_v2.py'
+      - 'meal_option_selection_v2.py'
+      - 'test_consumption_persistence_v2.py'
       - 'test_consumption_nutrition_v2.py'
       - '.github/workflows/consumption-tests.yml'
   workflow_dispatch:
@@ -24,6 +27,6 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile nutrition module and regression tests
-        run: python -m py_compile consumption_nutrition_v2.py test_consumption_nutrition_v2.py
+        run: python -m py_compile consumption_nutrition_v2.py consumption_records_v2.py meal_option_selection_v2.py test_consumption_nutrition_v2.py test_consumption_persistence_v2.py
       - name: Run nutrition regression tests
-        run: python -m unittest -v test_consumption_nutrition_v2.py
+        run: python -m unittest -v test_consumption_nutrition_v2.py test_consumption_persistence_v2.py
