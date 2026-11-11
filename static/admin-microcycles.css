@@ -3303,3 +3303,13 @@ html[data-admin-theme="light"] #tm-players-settings-slot .tm-player-permission-r
 }
 
 #tm-players-page .tm-player-profile-header .tm-player-photo-control[hidden]{display:none!important}
+
+/* Planning: read-only player consumption records. */
+#consumption-panel .consumption-admin-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px}
+#consumption-panel .consumption-admin-head h3{margin:0 auto 0 0}
+#consumption-panel .consumption-admin-head input{min-height:40px;padding:8px 12px;border-radius:10px;border:1px solid rgba(130,140,155,.3);background:transparent;color:inherit}
+#consumption-admin-content{display:grid;gap:12px}
+#consumption-admin-content .consumption-admin-record{padding:16px;border-radius:14px}
+#consumption-admin-content .consumption-admin-record h4{margin:0 0 8px}
+#consumption-admin-content .consumption-admin-record ul{margin:10px 0 0;padding-left:20px}
+@media(max-width:640px){#consumption-panel .consumption-admin-head{align-items:stretch}#consumption-panel .consumption-admin-head h3{width:100%}}
