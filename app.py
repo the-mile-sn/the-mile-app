@@ -1681,6 +1681,27 @@ def application(env, start_response):
                 return respond(200, {'date': meal_date, 'meal': meal_key,
                     'event_id': event_id, 'options': source['options']})
 
+            if path == '/api/v2/player/consumption-preview' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                if user['role'] != 'player': raise Problem(403, 'forbidden')
+                link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
+                if not link: raise Problem(404, 'player_not_linked')
+                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
+                    raise Problem(403, 'consumption_pilot_not_enabled')
+                body=read_json(env)
+                if not isinstance(body,dict): raise Problem(400,'invalid_request')
+                try:
+                    source=consumption_source_v2.current_source(c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''))
+                    if not source: raise Problem(409,'published_meal_unavailable')
+                    option=next((o for o in source['options'] if o['option_ref']==body.get('option_ref')),None)
+                    if not option: raise Problem(409,'option_stale')
+                    library=consumption_nutrition_v2.active_library(c)
+                    actual=consumption_nutrition_v2.calculate(option,library,body.get('status'),body.get('edits'),body.get('additional'))
+                    planned=consumption_nutrition_v2.calculate(option,library,'all',None,None)
+                except ValueError as exc:
+                    raise Problem(400,str(exc))
+                return respond(200,{'nutrition':actual['nutrition'],'planned':planned['nutrition']})
+
             # Save confirmed consumption only against an approved, current plan.
             # Never trust client-supplied athlete, food macros or prescription.
             if path == '/api/v2/player/consumption-records' and method == 'PUT':
