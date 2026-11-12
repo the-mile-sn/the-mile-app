@@ -173,3 +173,15 @@ body[data-theme="light"] #overview .consumption-quick-actions .consumption-quick
 #overview .consumption-editor .consumption-energy-progress{border-top:0!important;padding-top:0!important;margin-top:12px!important}
 #overview .consumption-editor .consumption-energy-values{justify-content:flex-end!important}
 #overview .consumption-editor .consumption-energy-ratio{font-weight:400!important}
+
+
+/* Inline food entry matches the existing food/portion alignment */
+#overview .consumption-editor .consumption-extra{width:100%;margin:12px 0 16px}
+#overview .consumption-editor .consumption-add-fields{display:flex!important;flex-direction:column;gap:12px;padding-top:0!important}
+#overview .consumption-editor .consumption-add-row{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:10px;align-items:center}
+#overview .consumption-editor .consumption-search-wrap{position:relative;min-width:0}
+#overview .consumption-editor .consumption-search-wrap input{width:100%;padding-right:42px}
+#overview .consumption-editor .consumption-search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.7;pointer-events:none;font-size:19px}
+#overview .consumption-editor .consumption-add-row>input[type=number]{width:100%;min-width:0;text-align:center}
+#overview .consumption-editor .consumption-add-fields>button{align-self:center;width:auto;min-height:36px;padding:7px 18px;border:0!important;border-radius:999px;background:rgba(128,128,128,.18)!important;color:inherit!important;font-size:13px;font-weight:500;box-shadow:none!important}
+#overview .consumption-editor .consumption-secondary-actions{margin-bottom:8px}
