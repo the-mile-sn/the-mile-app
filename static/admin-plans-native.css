@@ -2348,3 +2348,20 @@
   padding:15px 5px!important
  }
 }
+
+/* Mobile library: hover/selection belongs to the full card, not individual cells. */
+@media(max-width:700px){
+ #tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):is(:hover,:focus-within,:active){
+  background:color-mix(in srgb,var(--lib-panel-2) 66%,var(--lib-panel))!important
+ }
+ #tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft) > td,
+ #tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):is(:hover,:focus-within,:active) > td{
+  background:transparent!important
+ }
+ #tm-plan-page #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft{background:#493915!important}
+ #tm-plan-page #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:is(:hover,:focus-within,:active){background:#59451b!important}
+ #tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft{background:#fff0bd!important}
+ #tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:is(:hover,:focus-within,:active){background:#ffe5a0!important}
+ #tm-plan-page #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td,
+ #tm-plan-page #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:is(:hover,:focus-within,:active) > td{background:transparent!important}
+}

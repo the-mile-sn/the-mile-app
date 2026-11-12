@@ -648,3 +648,23 @@ html[data-admin-theme="light"] #calendar-section .calendar-day.calendar-today.ca
   --tm-today-border:#d56b7c;
   background:#fae1e5;
 }
+
+/* Planning clarity: restore light surfaces and arrow contrast on desktop and mobile.
+   Match/Off/today nutritional states and the dark theme remain unchanged. */
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-mobile-event-toggle{
+ background:#e5ebf2!important;color:#25364b!important;box-shadow:inset 0 0 0 1px rgba(73,97,123,.07)!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-event-form{
+ background:#e5ebf2!important;color:#25364b!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day:not(.calendar-match):not(.calendar-off):not(.calendar-today):not(.calendar-selected){
+ background:#e6ebf2!important;color:#243449!important;box-shadow:inset 0 0 0 1px rgba(82,106,131,.045)!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected:not(.calendar-match):not(.calendar-off){
+ background:#dceaf8!important;color:#243449!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-navigation :is(#calendar-prev,#calendar-next),
+html[data-admin-theme="light"] #admin-workspace #calendar-section #nutrition-weekly-summary .calendar-navigation>button{
+ background:#e5ebf2!important;color:#2b4258!important;border:0!important;box-shadow:none!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section #nutrition-weekly-summary .calendar-navigation>button svg{stroke:currentColor!important}
