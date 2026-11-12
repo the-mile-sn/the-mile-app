@@ -890,17 +890,23 @@ function ensurePlanningOnlyView(){
   playerSearchClear.hidden=!term;
   const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&(selectedPlayerId!==null?p.id===selectedPlayerId:matchesPlayerSearch(p,term)));
   for(const p of items){
-   const row=el("tr"),first=el("td");
-   const link=el("button","tm-p-player");
+   const card=el("article","tm-player-card");card.setAttribute("role","listitem");
+   const identity=el("div","tm-player-card-identity");
+   const link=el("button","tm-p-player");link.type="button";
    const avatar=el("span","tm-p-avatar",p.name.split(/\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
    if(p.has_photo&&p.user_id){
     const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
    }
    const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
-   link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));first.append(link);row.append(first);
-   const statusCell=el("td");statusCell.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));row.append(statusCell);
-   const renewal=el("td","tm-p-renewal",fullDate(p.renewal_date));row.append(renewal);
-   const action=el("td","tm-p-actions");
+   link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));identity.append(link);
+   const status=el("div","tm-player-card-status");
+   status.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));
+   const renewal=el("div","tm-player-card-renewal");
+   renewal.append(el("span","tm-player-card-meta-label","Renovação"));
+   const renewalDate=el("time","tm-p-renewal",fullDate(p.renewal_date));
+   if(p.renewal_date)renewalDate.dateTime=p.renewal_date;
+   renewal.append(renewalDate);
+   const action=el("div","tm-player-card-actions");
    const actions=el("div","tm-p-actions-wrap");
    const go=el("button","tm-p-icon-action");go.type="button";
    go.title="Ver perfil";go.setAttribute("aria-label","Ver perfil de "+p.name);
@@ -912,25 +918,24 @@ function ensurePlanningOnlyView(){
    app.disabled=p.access_status!=="active"||!p.user_id;
    app.title=app.disabled?"Jogador sem acesso ativo":"Entrar na app";
    app.addEventListener("click",()=>enterPlayerApp(p.user_id,app,$("tm-players-error")));
-   actions.append(app);action.append(actions);row.append(action);
-   // Mobile: the entire player card opens the profile, except its app button.
-   // Existing desktop controls and SVGs remain unchanged.
-   row.addEventListener("click",event=>{
+   actions.append(app);action.append(actions);
+   card.append(identity,status,renewal,action);
+   // On small screens the full card opens the profile, except its action buttons.
+   card.addEventListener("click",event=>{
     if(!window.matchMedia("(max-width: 830px)").matches)return;
     if(event.target.closest("button,a,input,select,textarea"))return;
     openPlayerProfile(p.id);
    });
-   row.addEventListener("keydown",event=>{
-    if(!window.matchMedia("(max-width: 830px)").matches||event.target!==row)return;
+   card.addEventListener("keydown",event=>{
+    if(!window.matchMedia("(max-width: 830px)").matches||event.target!==card)return;
     if(event.key==="Enter"||event.key===" "){event.preventDefault();openPlayerProfile(p.id);}
    });
    if(window.matchMedia("(max-width: 830px)").matches){
-    row.tabIndex=0;
-    row.setAttribute("aria-label","Abrir perfil de "+p.name);
+    card.tabIndex=0;card.setAttribute("aria-label","Abrir perfil de "+p.name);
    }
-   body.append(row);
+   body.append(card);
   }
-  if(!items.length){const row=el("tr"),cell=el("td","tm-p-empty","Nenhum jogador corresponde aos filtros.");cell.colSpan=4;row.append(cell);body.append(row);}
+  if(!items.length)body.append(el("p","tm-p-empty","Nenhum jogador corresponde aos filtros."));
  }
  async function loadPlayers(){
   const data=await request("/api/v2/admin/players-overview");
@@ -956,18 +961,15 @@ function ensurePlanningOnlyView(){
  const playersCreateHome=playersCreateButton.parentNode;
  const playersCreateAnchor=document.createComment("tm-players-create-original-position");
  playersCreateHome.insertBefore(playersCreateAnchor,playersCreateButton);
- const playersSearchCell=$("tm-players-filter").closest("th");
+ const playersSearchCell=$("tm-players-filter-panel");
  function arrangeMobilePlayerSearch(){
   if(playersMobileQuery.matches){
    if(playersCreateButton.parentNode!==playersSearchCell)playersSearchCell.append(playersCreateButton);
-   const access=$("tm-players-access");
-   if(access.value!=="all"){
-    access.value="all";
-    access.dispatchEvent(new Event("change",{bubbles:true}));
-   }
   }else if(playersCreateButton.parentNode!==playersCreateHome){
    playersCreateHome.insertBefore(playersCreateButton,playersCreateAnchor.nextSibling);
   }
+  if(!playersPage.hidden&&!profilePanel.hidden)return;
+  if(!playersPage.hidden)renderPlayers();
  }
  playersMobileQuery.addEventListener("change",arrangeMobilePlayerSearch);
  arrangeMobilePlayerSearch();

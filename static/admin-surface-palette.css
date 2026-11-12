@@ -949,3 +949,250 @@ html[data-admin-theme] #tm-recipe-library-page .recipe-suggestions{
   font-size:16px!important;
  }
 }
+
+
+/* =============================================================
+   Dashboard + Jogadores / app-style directory · 12 Nov 2026
+   One page-level vertical scrollbar. Each player = real card/listitem,
+   never a table row. The filter area is its own filled section.
+   ============================================================= */
+
+/* Microciclo: expand the full week vertically. On narrow viewports the
+   8-column grid can still pan horizontally, but has NO fixed-height
+   internal scrolling area; all players are visible with page scrolling. */
+html[data-admin-theme] #tm-dashboard .tm-db-grid-scroll{
+ max-height:none!important;height:auto!important;min-height:0!important;
+ overflow:visible!important;border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-dashboard .tm-db-table{
+ width:100%;
+}
+@media(max-width:1150px){
+ html[data-admin-theme] #tm-dashboard .tm-db-grid-scroll{
+  max-height:none!important;height:auto!important;
+  overflow-x:auto!important;overflow-y:visible!important;
+  scrollbar-width:thin;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+ }
+}
+/* The player directory is made of independent cards. Filters stand alone. */
+html[data-admin-theme] #tm-players-page .tm-players-list-surface{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:0!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel{
+ display:grid!important;
+ grid-template-columns:minmax(0,440px) minmax(160px,220px) minmax(0,1fr);
+ align-items:center;column-gap:14px;row-gap:12px;
+ min-width:0;margin:0 0 14px;padding:14px 16px;
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;border-radius:16px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label{
+ display:block;position:relative;margin:0;max-width:none;width:100%;min-width:0;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label input{
+ box-sizing:border-box;width:100%;min-width:0;height:55px;min-height:55px;
+ padding:9px 36px 9px 38px;margin:0;
+ background:var(--tm-ui-field-on-subcard)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font:500 13px/1.35 "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-icon{
+ position:absolute;top:50%;left:13px;transform:translateY(-50%);
+ color:var(--tm-ui-muted);font-size:21px;line-height:1;pointer-events:none;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-player-search-clear{
+ position:absolute;right:8px;top:50%;transform:translateY(-50%);
+ border:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-muted);
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-header-select{
+ display:block!important;align-self:stretch;min-width:0;
+ width:100%;max-width:220px;margin:0!important;white-space:normal;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-two-line-select{
+ display:block!important;position:relative;width:100%!important;max-width:none!important;
+ height:55px!important;min-height:55px!important;
+ background:var(--tm-ui-field-on-subcard)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-select-caption{
+ position:absolute;top:7px;left:12px;right:38px;
+ font-size:10px!important;font-weight:500;color:var(--tm-ui-muted);
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-select-value{
+ position:absolute;left:12px;bottom:8px;right:38px;
+ font-size:13px!important;font-weight:600;color:var(--tm-ui-text);
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-select-arrow{
+ position:absolute;top:50%;right:12px;transform:translateY(-50%);
+ color:var(--tm-ui-muted);pointer-events:none;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-two-line-select>select{
+ position:absolute!important;inset:0!important;cursor:pointer;
+ opacity:0!important;appearance:none!important;
+ width:100%!important;max-width:none!important;min-width:0!important;
+ height:100%!important;margin:0!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-two-line-select:focus-within,
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label:focus-within{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+ border-radius:12px;
+}
+/* The list has no table scaffolding or intra-card lines. */
+html[data-admin-theme] #tm-players-page .tm-players-card-list{
+ display:flex!important;flex-direction:column;gap:9px;
+ margin:0;padding:0;background:transparent!important;
+ min-width:0;overflow:visible!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+ box-sizing:border-box;display:grid!important;
+ grid-template-columns:minmax(200px,2.1fr) minmax(110px,.85fr) minmax(120px,1fr) auto;
+ align-items:center;gap:16px;min-width:0;min-height:76px;
+ padding:14px 19px;
+ background:var(--tm-ui-card)!important;
+ border:0!important;border-radius:16px!important;box-shadow:none!important;
+ color:var(--tm-ui-text);
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-identity{
+ min-width:0;display:flex;align-items:center;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-player{
+ width:100%;min-width:0;display:flex;align-items:center;
+ padding:0!important;gap:12px!important;
+ color:var(--tm-ui-text)!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;text-align:left;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-player:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:3px;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-identity strong{
+ display:block;color:var(--tm-ui-text);font-size:13px;line-height:1.35;
+ font-weight:650;overflow-wrap:anywhere;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-identity small{
+ color:var(--tm-ui-muted);font-size:11px;line-height:1.35;margin:3px 0 0;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-avatar{
+ width:42px!important;height:42px!important;flex:0 0 42px!important;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-status{justify-self:start;min-width:0}
+html[data-admin-theme] #tm-players-page .tm-player-card-renewal{
+ min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-meta-label{
+ font-size:10px;color:var(--tm-ui-muted);font-weight:500;line-height:1.2;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-renewal{
+ color:var(--tm-ui-text);font-size:13px;line-height:1.35;font-weight:500;
+ white-space:nowrap;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-actions{
+ display:flex;justify-content:flex-end;align-items:center;min-width:0;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-actions-wrap{
+ display:flex;align-items:center;justify-content:flex-end;gap:8px;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-icon-action{
+ min-width:36px!important;min-height:36px!important;width:36px!important;height:36px!important;
+ background:var(--tm-action-icon-bg)!important;border:0!important;
+ border-radius:10px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-icon-action:hover:not(:disabled){
+ background:var(--tm-ui-hover)!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-p-empty{
+ padding:24px;border-radius:16px;text-align:center!important;
+ background:var(--tm-ui-card);color:var(--tm-ui-muted);
+}
+@media(min-width:831px) and (max-width:1120px){
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+  grid-template-columns:minmax(145px,2fr) minmax(88px,.7fr) minmax(115px,1fr) auto;
+  gap:10px;padding:12px 14px;
+ }
+}
+/* Mobile: maintain the approved two-row player card. Status filter remains
+   visible beneath search/create — unlike the previous hidden table column.
+   No clipped columns, no forced table min-width and no overlaps. */
+@media(max-width:830px){
+ html[data-admin-theme] #tm-players-page .tm-players-heading-minimal{
+  display:none!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  padding:13px;column-gap:9px;row-gap:10px;
+  margin:0 0 12px;border-radius:16px!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label{
+  grid-column:1;grid-row:1;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-new{
+  grid-column:2;grid-row:1;justify-self:end;
+  box-sizing:border-box;display:inline-flex!important;align-items:center;
+  width:auto!important;max-width:none!important;
+  min-width:0!important;min-height:44px!important;
+  padding:9px 11px!important;font-size:12px!important;
+  line-height:1.2;border-radius:12px!important;white-space:nowrap;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-header-select{
+  grid-column:1 / -1;grid-row:2;
+  max-width:none!important;width:100%!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label input,
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-two-line-select{
+  height:52px!important;min-height:52px!important;
+  font-size:16px!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-card-list{
+  gap:10px!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;
+  column-gap:12px;row-gap:15px;
+  min-height:0;padding:15px 14px;
+  border-radius:16px!important;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card-identity{grid-column:1;grid-row:1}
+ html[data-admin-theme] #tm-players-page .tm-player-card-status{grid-column:2;grid-row:1;justify-self:end}
+ html[data-admin-theme] #tm-players-page .tm-player-card-renewal{grid-column:1;grid-row:2}
+ html[data-admin-theme] #tm-players-page .tm-player-card-meta-label{display:none}
+ html[data-admin-theme] #tm-players-page .tm-player-card-renewal::before{
+  content:"Renovação: ";display:inline;color:var(--tm-ui-muted);
+  font-size:12px;line-height:1.35;margin:0;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card .tm-p-renewal{
+  font-size:12px;color:var(--tm-ui-muted);
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card-renewal{
+  display:flex;flex-direction:row;align-items:center;gap:4px;flex-wrap:wrap;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card-actions{grid-column:2;grid-row:2}
+ html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-icon-action:not(.tm-p-app-action){
+  display:none!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-app-action{
+  display:inline-flex!important;min-width:44px!important;min-height:44px!important;
+  width:44px!important;height:44px!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px;
+ }
+}
+@media(max-width:360px){
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel{
+  grid-template-columns:1fr!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label{
+  grid-column:1;grid-row:1;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-new{
+  grid-column:1;grid-row:2;justify-self:start;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-header-select{
+  grid-column:1;grid-row:3;
+ }
+}

@@ -28,6 +28,6 @@ test("Profile permissions match Gerir acesso without altering switches",()=>{
  assert.match(css,/\.tm-player-permissions-shield\{/);
  assert.match(css,/border:0!important;box-shadow:none!important/);
  assert.match(js,/profilePanel/);
- assert.match(html,/admin-dashboard\.js\?v=69/);
- assert.match(html,/admin-microcycles\.css\?v=194/);
+ assert.match(html,/admin-dashboard\.js\?v=70/);
+ assert.match(html,/admin-microcycles\.css\?v=195/);
 });

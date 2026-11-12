@@ -160,3 +160,14 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - [ ] Asset versionado; testes e Render verificados.
 
 **Direção definitiva:** o Backoffice The Mile deve parecer um único produto: discreto, funcional e legível, com fundos suaves, sem sombras, etiquetas claras e ações consistentes em todos os dispositivos.
+
+
+## 11. Dashboard e Jogadores — regras de layout aprovadas em 12 novembro 2026
+
+- O **Microciclo semanal do Dashboard** não tem altura máxima nem scroll vertical interno. Mostra todas as linhas e utiliza a rolagem vertical da página. Em ecrãs estreitos, os sete dias podem deslizar horizontalmente sem comprimir excessivamente as colunas; nunca criar uma segunda barra vertical.
+- A **lista de Jogadores** usa cartões individuais (elementos article/listitem), um por jogador, sem linhas de tabela, contornos ou sombras. Fotografia, nome, utilizador, estado, data de renovação e ações continuam visíveis.
+- **Filtros de Jogadores** formam uma secção própria, com pesquisa de nome e estado de acesso. A secção usa a cor de subcard, enquanto os campos dentro dela usam a cor de pesquisa contextual do terceiro nível.
+- O botão **Criar jogador** fica no topo à direita no desktop; no mobile integra o painel de filtros, sem duplicar o botão ou criar novos handlers.
+- No **mobile**, cada jogador é apresentado em duas linhas: identidade + estado; renovação + ação de entrar na app. O cartão inteiro abre o perfil, exceto os botões internos. O filtro de estado permanece utilizável em mobile.
+- O ícone **Ver perfil** é ação explícita no desktop. O botão de **Entrar na app** mantém a verificação de acesso e o comportamento já existente.
+- Aplicar estas regras nos temas claro/escuro e em tablet e mobile sem recorrer a tabelas artificialmente redimensionadas nem scroll vertical dentro de uma lista.
