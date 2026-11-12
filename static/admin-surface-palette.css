@@ -857,3 +857,94 @@ html[data-admin-theme] #tm-food-library-page .food-delete-icon{
  min-width:36px!important;width:36px!important;min-height:36px!important;height:36px!important;
  padding:6px!important;border-radius:10px!important;
 }
+
+/* ================================================================
+   CONTEXTUAL SURFACE DEPTH - The Mile, approved 12 Nov 2026
+   Color comes from the *parent surface*, not merely the component type.
+   On page: white/light, graphite/dark. On card: muted blue-grey/light.
+   On subcard: white/light again. No new borders or shadows.
+   Existing focus, nutritional and state-color exceptions stay in force.
+   ================================================================ */
+:root,html[data-admin-theme="dark"]{
+ --tm-ui-field-on-page:#1e2025;
+ --tm-ui-field-on-card:#282b33;
+ --tm-ui-field-on-subcard:#282b33;
+}
+html[data-admin-theme="light"]{
+ --tm-ui-field-on-page:#ffffff;
+ --tm-ui-field-on-card:#e0e7ef;
+ --tm-ui-field-on-subcard:#ffffff;
+}
+/* Explicit opt-in for new pages: choose the right surface ancestor. */
+html[data-admin-theme] .tm-ui-on-page {--tm-ui-field-current:var(--tm-ui-field-on-page)}
+html[data-admin-theme] .tm-ui-on-card {--tm-ui-field-current:var(--tm-ui-field-on-card)}
+html[data-admin-theme] .tm-ui-on-subcard {--tm-ui-field-current:var(--tm-ui-field-on-subcard)}
+html[data-admin-theme] .tm-ui-field{
+ background:var(--tm-ui-field-current,var(--tm-ui-field-on-page))!important;
+ border:0!important;box-shadow:none!important;color:var(--tm-ui-text)!important;
+}
+
+/* First level - search/filters directly on the page background.
+   Porções Visuais, standalone/embedded Plano listing and recipe toolbar. */
+html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters :is(input,select),
+html[data-admin-theme] #tm-food-library-page .tm-visual-portions-page>.tm-portion-filters :is(input,select),
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-filters :is(input,select),
+html[data-admin-theme] .tm-library-layout #plan-entry .plan-library-filters :is(input,select),
+html[data-admin-theme] #tm-recipe-library-page .recipe-library-toolbar :is(input,select){
+ background:var(--tm-ui-field-on-page)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Second level - fields inserted into a WHITE or dark principal card.
+   Muted blue-grey is intentional here; not on the outer page. */
+html[data-admin-theme] #menus-panel #profile-recipe-category-search,
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-search-results,
+html[data-admin-theme] #tm-assessments-page .tm-clinical-search-wrap input,
+html[data-admin-theme] #tm-forms-page .tm-clinical-search-wrap input,
+html[data-admin-theme] #tm-food-library-page dialog .fields :is(input,select,textarea),
+html[data-admin-theme] #tm-food-library-page .tm-portion-preview-controls select,
+html[data-admin-theme] #tm-plan-page .meal-rename-picker select,
+html[data-admin-theme] .tm-library-layout .meal-rename-picker select,
+html[data-admin-theme] #tm-menu-recipes-page .dish-new>label :is(input,select){
+ background:var(--tm-ui-field-on-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Third level - fields inserted into the pale-grey subcard.
+   Return to white in light mode; do not stack blue on blue-grey. */
+html[data-admin-theme] #tm-players-page .tm-players-list-surface .tm-players-table thead :is(.tm-players-search-label input,.tm-two-line-select),
+html[data-admin-theme] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select,
+html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-filter-row :is(input,select),
+html[data-admin-theme] .tm-library-layout .food-catalog-table .food-filter-row :is(input,select),
+html[data-admin-theme] #tm-recipe-library-page .recipe-table-filter-row :is(input,select),
+html[data-admin-theme] #menus-panel .menu-meal-card :is(select,textarea.menu-free-text),
+html[data-admin-theme] #tm-plan-page .plan-preview-group :is(input,select),
+html[data-admin-theme] .tm-library-layout .plan-preview-group :is(input,select),
+html[data-admin-theme] #tm-players-page .tm-players-create :is(input,select){
+ background:var(--tm-ui-field-on-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Form input fields in unframed subpanels inherit the same surface hierarchy. */
+html[data-admin-theme] #tm-players-page .tm-players-settings-slot .tm-access-password-form :is(input,select),
+html[data-admin-theme] #tm-players-page .tm-access-password-form :is(input,select),
+html[data-admin-theme] #assessments-admin-panel .assessment-review-group :is(input:not([readonly]),select){
+ background:var(--tm-ui-field-on-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Dropdown panels follow their input's surface, with a distinct selected row
+   but no border, shadow, or overlay on content. */
+html[data-admin-theme] #tm-players-page .tm-player-search-list,
+html[data-admin-theme] #tm-food-library-page .tm-portion-dropdown,
+html[data-admin-theme] #tm-recipe-library-page .recipe-suggestions{
+ background:var(--tm-ui-field-on-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Keep contextual hierarchy on mobile: only sizing differs.
+   Every focusable search has a minimum font size for iOS Safari. */
+@media(max-width:830px){
+ html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters :is(input,select),
+ html[data-admin-theme] #tm-food-library-page .food-filter-row :is(input,select),
+ html[data-admin-theme] #tm-plan-page .plan-library-filters :is(input,select),
+ html[data-admin-theme] .tm-library-layout .plan-library-filters :is(input,select),
+ html[data-admin-theme] #tm-recipe-library-page .recipe-table-filter-row :is(input,select){
+  font-size:16px!important;
+ }
+}

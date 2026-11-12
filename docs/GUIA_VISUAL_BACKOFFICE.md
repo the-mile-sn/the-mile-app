@@ -30,6 +30,20 @@ Tipografia: Inter Tight Medium 500; alternativas SF Pro Text e Arial.
 
 Divisores entre linhas muito subtis, usando --tm-ui-divider. Fundos de estados nutricionais e alertas não são substituídos por esta paleta.
 
+## 2A. Regra contextual de superfície (aprovada após revisão visual)
+
+O preenchimento de um campo de pesquisa, filtro ou seletor depende do NÍVEL VISUAL ONDE ESTÁ COLOCADO, não apenas do facto de ser uma pesquisa:
+
+| Contexto do campo | Claro | Escuro | Token |
+|---|---|---|---|
+| Diretamente sobre o fundo geral | #FFFFFF | #1E2025 | --tm-ui-field-on-page |
+| Dentro de um card principal | #E0E7EF | #282B33 | --tm-ui-field-on-card |
+| Dentro de um subcard | #FFFFFF | #282B33 | --tm-ui-field-on-subcard |
+
+Exemplo: o azul-acinzentado é adequado dentro de um card principal branco, mas NÃO diretamente sobre a página cinzenta, nem quando sobreposto a um subcard azul/cinzento. Nestes dois últimos contextos usar branco em modo claro. No escuro, usar grafite de profundidade equivalente. As listas pendentes seguem a superfície e não devem introduzir sombras ou contornos. Se um novo filtro mudar de contexto visual, deve mudar de token.
+
+Classes opt-in para novos ecrãs: tm-ui-on-page, tm-ui-on-card, tm-ui-on-subcard e tm-ui-field. Não determinar a cor a partir do nome da aba nem tornar todos os inputs azuis. A hierarquia card/subcard pode existir sem qualquer contorno: basta o contraste dos fundos, margens e espaçamento.
+
 ## 3. Paleta oficial de estados
 
 | Estado | Claro (fundo / texto) | Escuro (fundo / texto) |
