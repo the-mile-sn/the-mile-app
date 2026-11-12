@@ -1287,6 +1287,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const additional=[];
   const previousFoods=previous?.option_ref===select.value&&previous?.status==='partial'?(previous.consumed_foods||[]):[];
   function redraw(){
+   document.querySelectorAll('.consumption-food-sheet,.consumption-food-sheet-backdrop').forEach(node=>node.remove());document.body.classList.remove('consumption-food-sheet-open');
    foodsRoot.replaceChildren();
    const option=data.options.find(x=>x.option_ref===select.value),foods=option.foods||[];
    const groups=new Map();foods.forEach((food,i)=>{const parent=food.alternative_to??i;if(!groups.has(parent))groups.set(parent,[]);groups.get(parent).push(i);});
