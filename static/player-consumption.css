@@ -95,3 +95,16 @@ body[data-theme="light"] #overview .consumption-editor .consumption-add-trigger,
 #overview .consumption-editor .consumption-energy-ratio{font-size:15px!important;font-weight:600!important;letter-spacing:-.02em!important}
 #overview .consumption-editor .consumption-energy-percent{font-size:11px!important;font-weight:400!important;opacity:.58!important}
 @media(max-width:390px){#overview .consumption-editor .consumption-food-line{grid-template-columns:14px minmax(0,1fr) 62px 10px!important;column-gap:12px!important}}
+
+/* v7 compact rhythm and native-sized check marks */
+#overview .player-meal-option-subcard .consumption-editor,#overview .single-meal-option .consumption-editor{padding-top:12px!important;padding-bottom:14px!important}
+#overview .consumption-editor .consumption-status-group{margin:0 0 10px!important;gap:8px!important}
+#overview .consumption-editor .consumption-status-button{min-height:62px!important;padding:7px 3px!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]{width:14px!important;height:14px!important;min-width:14px!important;max-width:14px!important;min-height:14px!important;max-height:14px!important;flex:none!important;border-radius:4px!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]:checked:after{left:3px!important;top:0!important;width:5px!important;height:8px!important;border-width:0 2px 2px 0!important}
+#overview .consumption-editor .consumption-energy-values{align-items:flex-end!important;justify-content:flex-end!important;text-align:right!important}
+#overview .consumption-editor .consumption-energy-ratio{font-weight:400!important;font-size:14px!important}
+#overview .consumption-editor .consumption-energy-percent{font-weight:400!important;font-size:11px!important;opacity:.55!important}
+#overview .consumption-editor .consumption-actions{margin-top:10px!important}
+#overview .consumption-editor .consumption-energy-progress{margin-top:14px!important;padding-top:14px!important}
+#overview .consumption-editor .consumption-energy-track{margin-bottom:7px!important}
