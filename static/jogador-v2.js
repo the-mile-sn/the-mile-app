@@ -1744,11 +1744,11 @@ async function overview(){
      if(label){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
       badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
-      label.append(badge);
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.setAttribute('aria-label','Editar consumo desta opção');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);badge.after(editTag);
      }else if(optionCard){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
       badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
-      optionCard.prepend(badge);
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);badge.after(editTag);
      }
     }
    }
@@ -1776,8 +1776,7 @@ async function overview(){
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;quick.textContent='✓ Cumpri';error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
-    actions.append(quick,edit);target.append(actions,feedback);
-    if(isRecordedOption&&previous.status!=='all'){const status=document.createElement('p');status.className='consumption-recorded';status.textContent='✓ '+({partial:'Consumo parcial',none:'Não consumido'}[previous.status]||'Registado');target.append(status);}
+    if(!isRecordedOption){actions.append(quick,edit);target.append(actions,feedback);}
    });
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
