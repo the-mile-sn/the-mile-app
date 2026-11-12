@@ -4480,3 +4480,26 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags{gap:4px!important;margin-right:4px!important}
  #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags>*{padding-inline:7px!important;font-size:10px!important}
 }
+
+/* Keep option number and both pills in one non-overlapping first row. */
+#overview #day-details details.player-meal-option-subcard .plan-option-label{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ width:100%!important;min-width:0!important;gap:6px!important;
+}
+#overview #day-details details.player-meal-option-subcard .plan-option-label>.meal-option-heading-row{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:space-between!important;flex-wrap:nowrap!important;
+ width:100%!important;gap:12px!important;order:0!important;
+}
+#overview #day-details details.player-meal-option-subcard .plan-option-label>.meal-option-heading-row>small{
+ display:inline-block!important;flex:0 0 auto!important;order:0!important;
+ margin:0!important;padding:0!important;white-space:nowrap!important;
+}
+#overview #day-details details.player-meal-option-subcard .plan-option-label>.meal-option-heading-row>.meal-consumption-tags{
+ display:flex!important;flex:0 1 auto!important;flex-direction:row!important;
+ flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;
+ order:1!important;margin:0 0 0 auto!important;gap:6px!important;min-width:0!important;
+}
+#overview #day-details details.player-meal-option-subcard .plan-option-label>strong{
+ order:1!important;display:block!important;width:100%!important;
+}
