@@ -1772,11 +1772,11 @@ async function overview(){
       const selected=source.options?.[i];
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
-      feedback.textContent='Consumo registado.';await overview();
+      quick.classList.add('consumption-confirm-success');quick.textContent='✓';feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,650));if(card.tagName==='DETAILS')card.open=false;await overview();
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;quick.textContent='✓ Cumpri';error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
-    if(!isRecordedOption){actions.append(quick,edit);target.append(actions,feedback);}
+    if(!isRecordedOption){actions.append(edit,quick);target.append(actions,feedback);}
    });
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
