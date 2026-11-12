@@ -110,6 +110,49 @@ def initialize(c):
         ) WHERE kind='dish' AND dish_id IS NULL
         AND (SELECT COUNT(*) FROM v2_dish_library d
              WHERE d.name_pt=v2_weekly_menus.value)=1""")
+    # The menu value can now contain a multiline CT menu. Upgrade only the
+    # kind constraint; keep all existing records and their dish associations.
+    if hasattr(c, "conn"):
+        rule = c.execute(
+            "SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint "
+            "WHERE conrelid='v2_weekly_menus'::regclass "
+            "AND conname='v2_weekly_menus_kind_check'"
+        ).fetchone()
+        if rule is None:
+            raise RuntimeError("missing_weekly_menu_kind_check")
+        if "'text'" not in rule["definition"]:
+            c.execute("ALTER TABLE v2_weekly_menus DROP CONSTRAINT v2_weekly_menus_kind_check")
+            c.execute("ALTER TABLE v2_weekly_menus ADD CONSTRAINT v2_weekly_menus_kind_check "
+                      "CHECK (kind IN ('category','dish','text'))")
+    else:
+        definition = c.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='v2_weekly_menus'"
+        ).fetchone()
+        if definition is None:
+            raise RuntimeError("missing_weekly_menu_table")
+        if "kindin('category','dish','text')" not in "".join(definition["sql"].split()).lower():
+            c.execute("SAVEPOINT menu_text_kind_upgrade")
+            try:
+                c.execute("""CREATE TABLE v2_weekly_menus_text_upgrade (
+                    athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+                    menu_date TEXT NOT NULL,
+                    meal TEXT NOT NULL CHECK(meal IN ('lunch','dinner')),
+                    kind TEXT NOT NULL CHECK(kind IN ('category','dish','text')),
+                    value TEXT NOT NULL,
+                    dish_id TEXT REFERENCES v2_dish_library(id),
+                    PRIMARY KEY (athlete_id, menu_date, meal)
+                )""")
+                c.execute("""INSERT INTO v2_weekly_menus_text_upgrade
+                    (athlete_id,menu_date,meal,kind,value,dish_id)
+                    SELECT athlete_id,menu_date,meal,kind,value,dish_id
+                    FROM v2_weekly_menus""")
+                c.execute("DROP TABLE v2_weekly_menus")
+                c.execute("ALTER TABLE v2_weekly_menus_text_upgrade RENAME TO v2_weekly_menus")
+                c.execute("RELEASE SAVEPOINT menu_text_kind_upgrade")
+            except Exception:
+                c.execute("ROLLBACK TO SAVEPOINT menu_text_kind_upgrade")
+                c.execute("RELEASE SAVEPOINT menu_text_kind_upgrade")
+                raise
     c.execute("CREATE INDEX IF NOT EXISTS v2_weekly_menus_dish_id_idx ON v2_weekly_menus(dish_id)")
 
 
@@ -258,7 +301,7 @@ def list_menus(c, athlete_id, start, end):
 def save_menu(c, athlete_id, menu_date, meal, kind, value):
     from calendar_v2 import parse_day
     day = parse_day(menu_date).isoformat()
-    if meal not in ("lunch","dinner") or kind not in ("category","dish") or not isinstance(value,str) or not 1 <= len(value.strip()) <= 200:
+    if meal not in ("lunch","dinner") or kind not in ("category","dish","text") or not isinstance(value,str) or not 1 <= len(value.strip()) <= (2000 if kind=="text" else 200):
         raise ValueError("invalid_menu")
     if kind == "category" and value.strip() not in ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo", "Livre", "Pós-jogo", "Mix"):
         raise ValueError("invalid_menu_category")

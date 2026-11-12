@@ -4503,3 +4503,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details details.player-meal-option-subcard .plan-option-label>strong{
  order:1!important;display:block!important;width:100%!important;
 }
+
+/* Free-text CT menus use the existing meal/category card, preserving menu line breaks. */
+#overview #day-details .daily-meal-menu-name.menu-free-text-value,
+#menus .menu-entry-body .value.menu-free-text-value{white-space:pre-wrap!important;overflow-wrap:anywhere;}

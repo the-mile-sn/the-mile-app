@@ -1697,7 +1697,7 @@ async function overview(){
    if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
    if(menu){
     const p=document.createElement("div");p.className="menu-line meal-menu-card";
-    const name=document.createElement("span");name.className="daily-meal-menu-name";name.textContent=menu.value;
+    const name=document.createElement("span");name.className="daily-meal-menu-name";name.textContent=menu.value;if(menu.kind==="text")name.classList.add("menu-free-text-value");
     p.append(name);section.append(p);
     if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish"){
      p.classList.add("meal-menu-link");
@@ -2009,7 +2009,7 @@ async function menusView(){
  if(color&&color!=="none"){const dot=document.createElement("span");dot.className="color-dot "+color;title.append(dot);}
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
- const name=document.createElement("span");name.className="value";name.textContent=menu.value;
+ const name=document.createElement("span");name.className="value";name.textContent=menu.value;if(menu.kind==="text")name.classList.add("menu-free-text-value");
  const nameColumn=document.createElement("div");nameColumn.className="menu-dish-name-column";nameColumn.append(name);
  body.append(nameColumn);
  if(menu.kind==="dish"){
