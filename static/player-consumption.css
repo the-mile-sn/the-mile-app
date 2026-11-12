@@ -157,3 +157,8 @@ body[data-theme="light"] #overview .consumption-quick-actions .consumption-quick
 #overview .consumption-editor .consumption-grams-unit{display:flex!important;align-items:center!important;justify-content:center!important;align-self:stretch!important;line-height:1!important;font-size:13px!important}
 #overview .consumption-editor .consumption-save-feedback:empty{display:none!important;margin:0!important;padding:0!important;min-height:0!important}
 #overview .consumption-editor .consumption-actions{margin-top:6px!important}
+
+/* v12 — simplified consumption editor */
+#overview .consumption-editor .consumption-remove-all{display:inline-flex;align-items:center;justify-content:flex-start;align-self:flex-start;width:auto;min-height:34px;margin:8px 0 10px;padding:5px 0;background:transparent!important;border:0!important;box-shadow:none!important;color:#b6d0df!important;font-size:13px;font-weight:400;text-align:left;cursor:pointer}
+#overview .consumption-editor .consumption-remove-all:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:4px}
+#overview .consumption-editor .consumption-foods-root{gap:0}
