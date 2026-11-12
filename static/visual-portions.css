@@ -103,3 +103,20 @@
  #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters{grid-template-columns:minmax(0,1fr);max-width:100%}
  #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label :is(input,select){font-size:16px!important}
 }
+
+/* Consistent catalogue filters: category first and a wider search, aligned left. */
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters{
+ display:grid;grid-template-columns:minmax(0,35%) minmax(0,1fr)!important;
+ max-width:860px;width:100%;justify-content:start!important;align-items:start!important
+}
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label{
+ text-align:left!important;align-items:stretch!important
+}
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label :is(input,select){
+ text-align:left!important;text-align-last:left!important;direction:ltr
+}
+@media(max-width:590px){
+ #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters{
+  grid-template-columns:minmax(0,1fr)!important;max-width:100%
+ }
+}

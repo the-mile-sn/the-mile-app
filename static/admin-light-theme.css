@@ -668,3 +668,33 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section #nutrition-wee
  background:#e5ebf2!important;color:#2b4258!important;border:0!important;box-shadow:none!important
 }
 html[data-admin-theme="light"] #admin-workspace #calendar-section #nutrition-weekly-summary .calendar-navigation>button svg{stroke:currentColor!important}
+
+/* Planning light mode: visible header hierarchy and selected-day indicator. */
+html[data-admin-theme="light"] #admin-workspace #tm-admin-legacy .tm-planning-unified-header{
+ --tm-plan-shell:#e5ebf2;--tm-plan-control:#ffffff;--tm-plan-text:#243448;
+ background:#e5ebf2!important;border:1px solid #d5dee8!important;
+ box-shadow:0 1px 2px rgba(35,57,80,.04)!important
+}
+html[data-admin-theme="light"] #admin-workspace #tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{
+ background:transparent!important
+}
+html[data-admin-theme="light"] #admin-workspace #tm-admin-legacy .tm-planning-search-wrap{
+ background:#ffffff!important
+}
+html[data-admin-theme="light"] #admin-workspace #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{
+ border-top:1px solid #cbd6e2!important;background:transparent!important
+}
+html[data-admin-theme="light"] #admin-workspace #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button[aria-pressed="true"]{
+ background:#d2e2f2!important;color:#203d57!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected:not(.calendar-today){
+ outline:2px solid #78a7d0!important;outline-offset:-2px!important;
+ box-shadow:inset 0 0 0 1px rgba(88,147,200,.15)!important
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected:not(.calendar-today):not(.calendar-match):not(.calendar-off){
+ background:#d9eafa!important;color:#22384f!important
+}
+/* Today keeps its meaningful match/off background but shows selected blue on top. */
+html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected.calendar-today{
+ outline:2px solid #78a7d0!important;outline-offset:2px!important
+}
