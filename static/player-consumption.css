@@ -224,3 +224,11 @@ body[data-theme="light"] #overview .consumption-editor .consumption-secondary-ac
   font-size:16px!important;
  }
 }
+
+
+/* v17: stable input dimensions and vertically centered confirmation on iOS */
+#overview .consumption-editor .consumption-add-row{display:flex!important;align-items:center!important;gap:8px!important}
+#overview .consumption-editor .consumption-add-row .consumption-search-wrap{align-self:center!important}
+#overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
+#overview .consumption-editor .consumption-add-row>input[type=number]{font-size:16px!important;line-height:20px!important;box-sizing:border-box!important}
+#overview .consumption-editor .consumption-add-row .consumption-add-confirm{display:inline-flex!important;align-items:center!important;justify-content:center!important;align-self:center!important;vertical-align:middle!important;position:relative!important;top:0!important;transform:none!important;margin:0!important;width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;padding:0!important;line-height:1!important;flex:0 0 38px!important}
