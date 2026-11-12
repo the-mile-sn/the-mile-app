@@ -10,19 +10,19 @@
   if(document.getElementById("consumption-panel").hidden)return;
   if(!athlete.value){root.textContent="Seleciona o Jorge Fernandes no campo de jogador acima.";return;}
   root.textContent="A carregar registos…";
-  const day=date.value;if(!day){root.textContent="Seleciona uma data.";return;}
+  const day=date.value;if(!day){root.textContent="Seleciona uma data.";return;} const startDate=new Date(day+"T12:00:00");startDate.setDate(startDate.getDate()-14);const start=[startDate.getFullYear(),String(startDate.getMonth()+1).padStart(2,"0"),String(startDate.getDate()).padStart(2,"0")].join("-");
   try{
-   const response=await fetch("/api/v2/athletes/"+encodeURIComponent(athlete.value)+"/consumption-records?start="+encodeURIComponent(day)+"&end="+encodeURIComponent(day),{credentials:"same-origin"});
+   const response=await fetch("/api/v2/athletes/"+encodeURIComponent(athlete.value)+"/consumption-records?start="+encodeURIComponent(start)+"&end="+encodeURIComponent(day),{credentials:"same-origin"});
    const data=await response.json();
    if(!response.ok)throw Error(data.error||"Não foi possível consultar os registos.");
-   const records=data.records||[];
-   if(!records.length){root.innerHTML="<p>Sem registos de consumo em "+esc(day)+".</p><p>Confirma que o Jorge guardou um consumo nesta data. Se já guardou, precisamos de validar a ligação entre a app e a base de dados do backoffice.</p>";return;}
+   const records=(data.records||[]).slice().reverse();
+   if(!records.length){root.innerHTML="<p>Sem registos de consumo entre "+esc(start)+" e "+esc(day)+".</p><p>Confirma que o Jorge guardou um consumo nesta data. Se já guardou, precisamos de validar a ligação entre a app e a base de dados do backoffice.</p>";return;}
    root.innerHTML=records.map(r=>{
     const nutrition=r.nutrition||{},food=r.consumed_foods||[];
     const state={all:"Consumido",partial:"Parcialmente",none:"Não consumido"}[r.status]||"Registado";
     const option=r.prescription?.option||{};
     const foods=food.map(f=>'<li>'+esc(f.display_name||f.name||f.food_name||"Alimento")+(f.grams!=null?" · "+num(f.grams)+" g":"")+'</li>').join("");
-    return '<article class="tm-consumption-card"><div class="tm-consumption-head"><strong>'+esc(names[r.meal_key]||r.meal_key)+'</strong><span class="tm-consumption-status" data-state="'+esc(r.status)+'">'+state+'</span></div><p class="tm-consumption-option">'+esc(option.title||"Opção registada")+'</p><div class="tm-consumption-macros">'+[['Energia','kcal','kcal'],['Proteína','protein_g','g'],['Hidratos','carbs_g','g'],['Gordura','fat_g','g']].map(([label,key,unit])=>'<div><small>'+label+'</small><strong>'+num(nutrition[key])+' '+unit+'</strong></div>').join("")+'</div>'+(foods?'<details><summary>Alimentos consumidos</summary><ul>'+foods+'</ul></details>':'')+'</article>';
+    return '<article class="tm-consumption-card"><div class="tm-consumption-head"><span class="tm-consumption-date">'+esc(r.meal_date)+'</span><strong>'+esc(names[r.meal_key]||r.meal_key)+'</strong><span class="tm-consumption-status" data-state="'+esc(r.status)+'">'+state+'</span></div><p class="tm-consumption-option">'+esc(option.title||"Opção registada")+'</p><div class="tm-consumption-macros">'+[['Energia','kcal','kcal'],['Proteína','protein_g','g'],['Hidratos','carbs_g','g'],['Gordura','fat_g','g']].map(([label,key,unit])=>'<div><small>'+label+'</small><strong>'+num(nutrition[key])+' '+unit+'</strong></div>').join("")+'</div>'+(foods?'<details><summary>Alimentos consumidos</summary><ul>'+foods+'</ul></details>':'')+'</article>';
    }).join("");
   }catch(e){root.textContent="Erro ao consultar os registos: "+e.message;}
  }
