@@ -68,3 +68,11 @@ test("iPhone filters remain at least 16px and no separate responsive palette exi
  assert.match(css, /font-size:16px!important/);
  assert.ok(css.includes("--tm-ui-card"));
 });
+
+test("new stylesheet is served on admin and protected from player deployment",()=>{
+ const app=fs.readFileSync("app.py","utf8");
+ assert.match(app,/['"]\/admin-surface-palette\.css['"]\s*:\s*['"]admin-surface-palette\.css['"]/);
+ assert.match(app,/if SITE_ROLE == 'player':/);
+ const guarded=app.slice(app.indexOf("if SITE_ROLE == 'player':"),app.indexOf("elif SITE_ROLE == 'admin':"));
+ assert.match(guarded,/\/admin-surface-palette\.css/);
+});
