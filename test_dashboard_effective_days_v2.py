@@ -36,6 +36,7 @@ class DashboardEffectiveDayTests(unittest.TestCase):
         day=self.week()[0]
         self.assertEqual(day["classification"],"Geral")
         self.assertEqual(day["classification_source"],"automatic")
+        self.assertTrue(day["needs_confirmation"])
         self.assertEqual(day["colors"]["breakfast"],"yellow")
         self.assertEqual(day["colors"]["lunch"],"green")
 
@@ -51,6 +52,9 @@ class DashboardEffectiveDayTests(unittest.TestCase):
         self.assertEqual(rows[4]["classification"],"Off")
         self.assertEqual(rows[4]["colors"]["breakfast"],"blue")
         self.assertTrue(rows[4]["is_off"])
+        self.assertFalse(rows[0]["needs_confirmation"])
+        self.assertFalse(rows[1]["needs_confirmation"])
+        self.assertFalse(rows[4]["needs_confirmation"])
 
     def test_manual_day_precedence_over_auto_and_manual_meal_colour(self):
         self.c.execute("""INSERT INTO v2_day_classification_overrides
@@ -59,8 +63,28 @@ class DashboardEffectiveDayTests(unittest.TestCase):
         day=self.week(matches,{("2026-11-09","lunch"):"blue"})[0]
         self.assertEqual(day["classification"],"Geral")
         self.assertEqual(day["classification_source"],"manual")
+        self.assertFalse(day["needs_confirmation"])
         self.assertEqual(day["colors"]["breakfast"],"yellow")
         self.assertEqual(day["colors"]["lunch"],"blue")
+
+    def test_manual_meal_colour_does_not_confirm_automatic_general(self):
+        day=self.week(manual={("2026-11-09","lunch"):"blue"})[0]
+        self.assertEqual(day["classification"],"Geral")
+        self.assertTrue(day["needs_confirmation"])
+        self.assertEqual(day["colors"]["lunch"],"blue")
+
+    def test_confirming_general_and_resetting_to_auto(self):
+        self.c.execute("""INSERT INTO v2_day_classification_overrides
+                          VALUES('p1','2026-11-09','Geral','admin',1)""")
+        self.assertFalse(self.week()[0]["needs_confirmation"])
+        self.c.execute("DELETE FROM v2_day_classification_overrides WHERE athlete_id='p1'")
+        self.assertTrue(self.week()[0]["needs_confirmation"])
+
+    def test_valid_md_is_never_pending(self):
+        matches=[{"id":"game1","match_date":"2026-11-15"}]
+        day=self.week(matches)[0]
+        self.assertEqual(day["classification"],"MD-6")
+        self.assertFalse(day["needs_confirmation"])
 
     def test_manual_off_without_event_uses_off_palette(self):
         self.c.execute("""INSERT INTO v2_day_classification_overrides
@@ -69,6 +93,7 @@ class DashboardEffectiveDayTests(unittest.TestCase):
         self.assertTrue(day["is_off"])
         self.assertEqual(day["classification"],"Off")
         self.assertEqual(day["colors"]["breakfast"],"blue")
+        self.assertFalse(day["needs_confirmation"])
 
 
 if __name__=="__main__":
