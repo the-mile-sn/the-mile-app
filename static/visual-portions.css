@@ -120,3 +120,24 @@
   grid-template-columns:minmax(0,1fr)!important;max-width:100%
  }
 }
+
+
+/* Category and search share one focus surface; native selects have no inset box. */
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label{
+ position:relative;align-items:stretch;text-align:left!important
+}
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label :is(input,select){
+ appearance:none!important;-webkit-appearance:none!important;
+ text-align:left!important;text-align-last:left!important;
+ text-indent:0!important;direction:ltr!important;
+ outline:0!important;box-shadow:none!important;border:0!important
+}
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label :is(input,select):is(:focus,:focus-visible){
+ outline:0!important;box-shadow:none!important;border:0!important
+}
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label:has(select)::after{
+ content:"";position:absolute;right:17px;bottom:22px;
+ width:7px;height:7px;transform:rotate(45deg);
+ border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+ opacity:.7;pointer-events:none
+}

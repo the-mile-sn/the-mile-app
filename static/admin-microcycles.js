@@ -1340,12 +1340,45 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
  return box;
 }
 
+
+function formatCalendarPreviewDate(iso){
+ const [year,month,day]=iso.split("-").map(Number);
+ const weekdays=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+ const months=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+ const weekday=new Date(Date.UTC(year,month-1,day)).getUTCDay();
+ return weekdays[weekday]+", "+day+" "+months[month-1]+" "+year;
+}
+
 function renderDayPreview(day,host){
  host.replaceChildren();
  window.currentNutritionDay=day;
- const heading=document.createElement("h3");
- heading.textContent=day.date+" · "+(day.classification||"Geral · por definir");
- host.appendChild(heading);
+ const heading=document.createElement("header");heading.className="calendar-day-preview-heading";
+ const date=document.createElement("h3");date.textContent=formatCalendarPreviewDate(day.date);heading.append(date);
+ const field=document.createElement("label");field.className="calendar-day-classification-field";
+ const caption=document.createElement("span");caption.textContent="Microciclo";field.append(caption);
+ const select=document.createElement("select");select.className="calendar-day-classification-select";
+ select.setAttribute("aria-label","Classificar dia "+date.textContent+" ou restaurar cálculo automático");
+ const automatic=document.createElement("option");automatic.value="";
+ automatic.textContent="Auto · "+(day.automatic_classification||"Geral");select.append(automatic);
+ for(const item of model.classifications){
+  const option=document.createElement("option");option.value=item.name;option.textContent=item.name;select.append(option);
+ }
+ select.value=day.classification_override||"";
+ field.append(select);heading.append(field);host.append(heading);
+ select.addEventListener("change",async()=>{
+  const classification=select.value||null;
+  select.disabled=true;
+  try{
+   await request(matchBase()+"/calendar/day-classification",{method:"PUT",body:JSON.stringify({date:day.date,classification})});
+   selectedCalendarDay=day.date;
+   status((classification?"Classificação "+classification+" guardada":"Cálculo automático reposto")+" para "+date.textContent+".","success");
+   await loadCalendar();
+  }catch(e){
+   status("Não foi possível alterar o dia: "+e.message,"warn");
+   select.value=day.classification_override||"";
+   select.disabled=false;
+  }
+ });
  const grid=document.createElement("div");grid.className="day-meals";
  const optionsPanel=document.createElement("section");optionsPanel.className="calendar-wide-options";optionsPanel.id="calendar-wide-options";optionsPanel.hidden=true;
  const optionButtons=new Map();let expandedMeal=null;
