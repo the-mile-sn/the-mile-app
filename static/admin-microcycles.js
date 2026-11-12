@@ -1048,7 +1048,7 @@ function showBackofficeView(view){
   backofficeView=view;
   const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],consumption:["consumption-panel"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix","scenario-editor"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
-    const el=$(id);if(el)el.hidden=key!==view||!model;
+    const el=$(id);if(el)el.hidden=key!==view||(key!=="consumption"&&!model);
   }
   for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
     button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
@@ -1056,7 +1056,7 @@ function showBackofficeView(view){
   // Administrator activation stays in Definições and must not be hidden by Planning.
   if(view==="profile"&&model)loadV2Access().catch(e=>status(e.message,"warn"));
   const calendarReady=view==="calendar"?loadCalendar().catch(e=>{status(e.message,"warn");}):null;
-  if(view==="consumption"&&model&&typeof window.tmLoadConsumption==="function")window.tmLoadConsumption();
+  if(view==="consumption"&&typeof window.tmLoadConsumption==="function")window.tmLoadConsumption();
   if(view==="supplements"&&model)loadSupplementEditor().catch(e=>status(e.message,"warn"));
   if(view==="plans"&&model)loadPeriImports().catch(e=>status(e.message,"warn"));
   // Avaliações is loaded by its dedicated navigation controller.
