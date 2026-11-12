@@ -6,3 +6,22 @@
 #overview .player-meal-option-subcard .consumption-editor .consumption-food-group,#overview .single-meal-option .consumption-editor .consumption-food-group{border-bottom:1px solid rgba(255,230,180,.17)}
 
 #overview .consumption-editor .consumption-native-mode{display:none!important}#overview .consumption-editor .consumption-status-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}#overview .consumption-editor .consumption-status-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:72px;padding:8px 4px;background:rgba(27,28,29,.45);border:1px solid rgba(255,224,167,.3);border-radius:13px;color:inherit;font-size:12px;line-height:1.3}#overview .consumption-editor .consumption-status-button span:first-child{font-size:19px}#overview .consumption-editor .consumption-status-button.active{background:rgba(247,206,129,.18);border-color:#f1cf83;color:#f5d993}#overview .consumption-editor .consumption-food-name{display:flex;flex-direction:column;gap:3px;min-width:0}#overview .consumption-editor .consumption-food-name small{font-size:11px;opacity:.72}#overview .consumption-editor .consumption-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}#overview .consumption-editor .consumption-actions button{min-width:0;min-height:45px;margin:0;border-radius:12px}#overview .consumption-editor .consumption-actions .consumption-save{background:#f0ce82;color:#30271a;border:0;font-weight:700}#overview .consumption-editor .consumption-actions .consumption-cancel{background:rgba(25,25,25,.28);border:1px solid rgba(255,230,180,.3);color:inherit}
+
+
+#overview .consumption-editor{position:relative;padding-top:44px!important}
+#overview .consumption-editor .consumption-close{position:absolute;top:10px;right:10px;width:32px!important;min-height:32px!important;height:32px!important;padding:0!important;border:1px solid rgba(255,230,180,.3)!important;border-radius:10px!important;background:rgba(20,20,20,.24)!important;color:inherit!important;line-height:1!important}
+#overview .consumption-editor .consumption-option-select{display:none!important}
+#overview .consumption-editor .consumption-foods-root{display:block}
+#overview .consumption-editor .consumption-food-group{padding:0!important;margin:0!important}
+#overview .consumption-editor .consumption-food-line{display:grid;grid-template-columns:21px minmax(0,1fr) 62px 11px;align-items:center;gap:9px;min-height:53px!important;padding:7px 0!important;margin:0!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]{width:19px!important;height:19px!important;margin:0!important}
+#overview .consumption-editor .consumption-food-name{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}
+#overview .consumption-editor .consumption-food-name small{font-size:11px;opacity:.68}
+#overview .consumption-editor .consumption-food-line input[type=number]{width:62px!important;min-height:35px!important;padding:4px 5px!important}
+#overview .consumption-editor .consumption-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+#overview .consumption-editor .consumption-actions button{min-height:44px!important;width:100%;margin:0!important}
+#overview .consumption-editor .consumption-add-trigger{width:100%;min-height:44px;border:1px solid rgba(245,210,139,.5);border-radius:12px;background:rgba(245,210,139,.1);color:inherit;font-weight:600}
+#overview .consumption-editor .consumption-add-fields[hidden],#overview .consumption-editor .consumption-suggestions[hidden],#overview .consumption-editor .consumption-search-select[hidden]{display:none!important}
+#overview .consumption-editor .consumption-add-fields{display:grid;gap:8px;padding-top:12px}
+#overview .consumption-editor .consumption-suggestions{max-height:220px;overflow:auto;border:1px solid rgba(255,230,180,.2);border-radius:10px}
+#overview .consumption-editor .consumption-suggestions button{display:block;width:100%;padding:11px;text-align:left;background:transparent;color:inherit;border:0;border-bottom:1px solid rgba(255,230,180,.12)}
