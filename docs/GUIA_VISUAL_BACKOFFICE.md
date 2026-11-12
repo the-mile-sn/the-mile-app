@@ -1,6 +1,6 @@
 # The Mile — Guia Visual do Backoffice
 
-Versão 1.0 · Aprovado em 12 novembro 2026  
+Versão 1.2 · Aprovado em 12 novembro 2026  
 Âmbito: Backoffice unificado da The Mile V2, incluindo Dashboard, Jogadores, Planos, Planeamento, Menus e Receitas, Biblioteca Alimentar, Porções Visuais, Avaliações, Formulários, Definições e Contas.  
 Suportes: desktop, tablet e mobile; modo claro e escuro.  
 Fonte técnica: static/admin-surface-palette.css, carregado após os estilos das restantes abas.  
@@ -23,26 +23,28 @@ Tipografia: Inter Tight Medium 500; alternativas SF Pro Text e Arial.
 | Fundo geral | #F5F6F8 | #101114 | --tm-ui-bg |
 | Card principal | #FFFFFF | #15161A | --tm-ui-card |
 | Subcard | #F0F2F6 | #1E2025 | --tm-ui-subcard |
-| Pesquisa e seletores | #E0E7EF | #282B33 | --tm-ui-search |
+| Pesquisa no subcard (terceiro nível) | #E5EBF2 | #282B33 | --tm-ui-search |
 | Hover neutro | #E3E7EE | #303239 | --tm-ui-hover |
 | Texto principal | #1C2633 | #F2F3F5 | --tm-ui-text |
 | Texto secundário | #596675 | #A2A7B0 | --tm-ui-muted |
 
 Divisores entre linhas muito subtis, usando --tm-ui-divider. Fundos de estados nutricionais e alertas não são substituídos por esta paleta.
 
-## 2A. Regra contextual de superfície (aprovada após revisão visual)
+## 2A. Regra contextual de superfície (regra definitiva)
 
-O preenchimento de um campo de pesquisa, filtro ou seletor depende do NÍVEL VISUAL ONDE ESTÁ COLOCADO, não apenas do facto de ser uma pesquisa:
+O Backoffice tem **três superfícies encaixadas**, sem contornos ou sombras: fundo geral, card principal e subcard. A pesquisa ou filtro recebe o **nível seguinte de preenchimento**.
 
-| Contexto do campo | Claro | Escuro | Token |
+| Localização do campo | Modo claro | Modo escuro | Token |
 |---|---|---|---|
-| Diretamente sobre o fundo geral | #FFFFFF | #1E2025 | --tm-ui-field-on-page |
-| Dentro de um card principal | #E0E7EF | #282B33 | --tm-ui-field-on-card |
-| Dentro de um subcard | #FFFFFF | #282B33 | --tm-ui-field-on-subcard |
+| Diretamente sobre o fundo geral | Cor de **card principal**: #FFFFFF | Cor de **card principal**: #15161A | `--tm-ui-field-on-page` |
+| Dentro de um card principal | Cor de **subcard**: #F0F2F6 | Cor de **subcard**: #1E2025 | `--tm-ui-field-on-card` |
+| Dentro de um subcard | **Azul muito subtil**: #E5EBF2 | **Grafite-azulado subtil**: #282B33 | `--tm-ui-field-on-subcard` |
 
-Exemplo: o azul-acinzentado é adequado dentro de um card principal branco, mas NÃO diretamente sobre a página cinzenta, nem quando sobreposto a um subcard azul/cinzento. Nestes dois últimos contextos usar branco em modo claro. No escuro, usar grafite de profundidade equivalente. As listas pendentes seguem a superfície e não devem introduzir sombras ou contornos. Se um novo filtro mudar de contexto visual, deve mudar de token.
+**Exemplo aprovado:** fundo #F5F6F8 → card branco #FFFFFF → subcard #F0F2F6 → campo azul subtil #E5EBF2. Em modo escuro: fundo #101114 → card #15161A → subcard #1E2025 → campo #282B33.
 
-Classes opt-in para novos ecrãs: tm-ui-on-page, tm-ui-on-card, tm-ui-on-subcard e tm-ui-field. Não determinar a cor a partir do nome da aba nem tornar todos os inputs azuis. A hierarquia card/subcard pode existir sem qualquer contorno: basta o contraste dos fundos, margens e espaçamento.
+Não aplicar azul a todas as pesquisas. **Dentro de um card principal a pesquisa não é azul; usa a cor do subcard.** Só quando inserida num subcard usa azul muito subtil. A separação entre níveis faz-se pelo preenchimento, margens e espaçamento. Mantêm-se os contornos funcionais de foco, seleção e alertas.
+
+Classes de implementação: `tm-ui-on-page`, `tm-ui-on-card`, `tm-ui-on-subcard`, `tm-ui-field`. As listas pendentes acompanham o contexto de superfície.
 
 ## 3. Paleta oficial de estados
 

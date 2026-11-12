@@ -19,7 +19,7 @@ test("same four-level colour hierarchy exists in light and dark themes",()=>{
   ["--tm-ui-bg","#f5f6f8","#101114"],
   ["--tm-ui-card","#fff","#15161a"],
   ["--tm-ui-subcard","#f0f2f6","#1e2025"],
-  ["--tm-ui-search","#e0e7ef","#282b33"],
+  ["--tm-ui-search","#e5ebf2","#282b33"],
   ["--tm-ui-hover","#e3e7ee","#303239"]
  ]) {
   assert.equal(extract(key,"light"),light);
@@ -28,7 +28,7 @@ test("same four-level colour hierarchy exists in light and dark themes",()=>{
 });
 test("all three Backoffice entrypoints load palette last",()=>{
  for(const doc of html){
-  assert.match(doc,/admin-surface-palette\.css\?v=2/);
+  assert.match(doc,/admin-surface-palette\.css\?v=5/);
   const head=doc.slice(0,doc.indexOf("</head>"));
   assert.ok(head.lastIndexOf("admin-surface-palette.css")>head.lastIndexOf("tm-design-system.css"));
  }

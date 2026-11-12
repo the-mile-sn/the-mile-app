@@ -6,14 +6,14 @@ const guide=fs.readFileSync("docs/GUIA_VISUAL_BACKOFFICE.md","utf8");
 const html=["admin-microcycles.html","create-plan.html","food-library.html"].map(path=>fs.readFileSync("static/"+path,"utf8"));
 const context=css.slice(css.lastIndexOf("/* ================================================================\n   CONTEXTUAL SURFACE DEPTH"));
 test("three context-specific field surfaces for both themes",()=>{
- assert.match(context,/--tm-ui-field-on-page:#1e2025/);
- assert.match(context,/--tm-ui-field-on-card:#282b33/);
+ assert.match(context,/--tm-ui-field-on-page:#15161a/);
+ assert.match(context,/--tm-ui-field-on-card:#1e2025/);
  assert.match(context,/--tm-ui-field-on-subcard:#282b33/);
  assert.match(context,/--tm-ui-field-on-page:#ffffff/);
- assert.match(context,/--tm-ui-field-on-card:#e0e7ef/);
- assert.match(context,/--tm-ui-field-on-subcard:#ffffff/);
+ assert.match(context,/--tm-ui-field-on-card:#f0f2f6/);
+ assert.match(context,/--tm-ui-field-on-subcard:#e5ebf2/);
 });
-test("blue fields are only inside main cards, not placed on page or subcards",()=>{
+test("subcard fields are subtly blue, while card fields take subcard fill",()=>{
  assert.match(context,/#tm-food-library-page \.tm-portion-catalog-header \.tm-portion-filters/);
  assert.match(context,/#tm-plan-page #plan-entry \.plan-library-filters/);
  assert.match(context,/#tm-recipe-library-page \.recipe-library-toolbar/);
@@ -33,7 +33,7 @@ test("no new outlines shadows or changed semantic selection states",()=>{
  assert.match(context,/font-size:16px!important/);
 });
 test("docs and all entrypoints reflect the contextual design",()=>{
- for(const s of html)assert.match(s,/admin-surface-palette\.css\?v=4/);
+ for(const s of html)assert.match(s,/admin-surface-palette\.css\?v=5/);
  assert.match(guide,/Regra contextual de superfície/);
  assert.match(guide,/--tm-ui-field-on-page/);
  assert.match(guide,/--tm-ui-field-on-card/);

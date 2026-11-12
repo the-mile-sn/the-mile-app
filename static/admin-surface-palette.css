@@ -34,7 +34,7 @@ html[data-admin-theme="light"]{
  --tm-ui-bg:#f5f6f8;
  --tm-ui-card:#fff;
  --tm-ui-subcard:#f0f2f6;
- --tm-ui-search:#e0e7ef;
+ --tm-ui-search:#e5ebf2;
  --tm-ui-hover:#e3e7ee;
  --tm-ui-text:#1c2633;
  --tm-ui-muted:#596675;
@@ -861,19 +861,20 @@ html[data-admin-theme] #tm-food-library-page .food-delete-icon{
 /* ================================================================
    CONTEXTUAL SURFACE DEPTH - The Mile, approved 12 Nov 2026
    Color comes from the *parent surface*, not merely the component type.
-   On page: white/light, graphite/dark. On card: muted blue-grey/light.
-   On subcard: white/light again. No new borders or shadows.
+   On the page: card colour. Inside a card: subcard colour.
+   Inside a subcard: subtle blue/light or muted blue-grey/dark.
+   No decorative borders or shadows.
    Existing focus, nutritional and state-color exceptions stay in force.
    ================================================================ */
 :root,html[data-admin-theme="dark"]{
- --tm-ui-field-on-page:#1e2025;
- --tm-ui-field-on-card:#282b33;
+ --tm-ui-field-on-page:#15161a;
+ --tm-ui-field-on-card:#1e2025;
  --tm-ui-field-on-subcard:#282b33;
 }
 html[data-admin-theme="light"]{
  --tm-ui-field-on-page:#ffffff;
- --tm-ui-field-on-card:#e0e7ef;
- --tm-ui-field-on-subcard:#ffffff;
+ --tm-ui-field-on-card:#f0f2f6;
+ --tm-ui-field-on-subcard:#e5ebf2;
 }
 /* Explicit opt-in for new pages: choose the right surface ancestor. */
 html[data-admin-theme] .tm-ui-on-page {--tm-ui-field-current:var(--tm-ui-field-on-page)}
@@ -894,8 +895,8 @@ html[data-admin-theme] #tm-recipe-library-page .recipe-library-toolbar :is(input
  background:var(--tm-ui-field-on-page)!important;
  border:0!important;box-shadow:none!important;
 }
-/* Second level - fields inserted into a WHITE or dark principal card.
-   Muted blue-grey is intentional here; not on the outer page. */
+/* Second level - fields inside a principal card inherit subcard fill.
+   Light = soft grey, dark = lighter graphite. Never use blue here. */
 html[data-admin-theme] #menus-panel #profile-recipe-category-search,
 html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-search-results,
 html[data-admin-theme] #tm-assessments-page .tm-clinical-search-wrap input,
@@ -908,8 +909,8 @@ html[data-admin-theme] #tm-menu-recipes-page .dish-new>label :is(input,select){
  background:var(--tm-ui-field-on-card)!important;
  border:0!important;box-shadow:none!important;
 }
-/* Third level - fields inserted into the pale-grey subcard.
-   Return to white in light mode; do not stack blue on blue-grey. */
+/* Third level - fields inside a subcard use a very subtle blue.
+   This is the ONLY neutral field level that has a blue tint in light mode. */
 html[data-admin-theme] #tm-players-page .tm-players-list-surface .tm-players-table thead :is(.tm-players-search-label input,.tm-two-line-select),
 html[data-admin-theme] #tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select,
 html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-filter-row :is(input,select),
