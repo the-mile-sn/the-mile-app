@@ -3986,3 +3986,43 @@ html[data-admin-theme="light"] #tm-players-page #tm-players-settings-slot > .tm-
 @media(max-width:680px){
  #tm-players-page #tm-players-settings-slot{padding:18px 14px!important;}
 }
+
+
+/* Refinamento Dashboard/Jogadores 12-11-2026: accessibility and light-mode depth.
+   Neutral colors only; state colors, responsive cards and focus indicators unchanged. */
+/* Prevent iOS Safari auto-zoom when focusing the weekly Dashboard search. */
+@media(max-width:830px){
+ #tm-dashboard .tm-db-table .tm-db-search{
+  font-size:16px!important;
+  line-height:1.25!important;
+  -webkit-text-size-adjust:100%;
+ }
+}
+/* Desktop: nested filled controls, like the approved mobile search surface.
+   Clearer grey-on-grey distinction in light mode without outlines or shadows. */
+@media(min-width:831px){
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-search-label input,
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+  background:#e0e7ef!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:14px!important;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-search-label input::placeholder{
+  color:#65768b!important;opacity:1;
+ }
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-header-select .tm-select-caption,
+ html[data-admin-theme="light"] #tm-players-page .tm-players-list-surface .tm-players-table thead .tm-players-header-select .tm-select-arrow{
+  color:#66788c!important;
+ }
+}
+/* The phone action keeps its fill and focus affordance; no decorative outline. */
+#tm-players-page .tm-p-app-action,
+html[data-admin-theme="light"] #tm-players-page .tm-p-app-action{
+ border:0!important;
+ box-shadow:none!important;
+}
+#tm-players-page .tm-p-app-action:focus-visible{
+ outline:2px solid #83a7c9!important;
+ outline-offset:2px!important;
+}
