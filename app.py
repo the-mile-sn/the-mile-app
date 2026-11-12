@@ -17,6 +17,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
 import calendar_v2
@@ -279,6 +280,7 @@ def initialize():
                 if column not in existing:
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
+        consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
@@ -2450,6 +2452,19 @@ def application(env, start_response):
                                     WHERE l.user_id=?""", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'player': dict(link)})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/consumption-records') and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid = path.split('/')[4]
+                athlete = c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL", (aid,)).fetchone()
+                if not athlete: raise Problem(404, 'not_found')
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    records = consumption_records_v2.read_range(c, aid, (query.get('start') or [''])[0], (query.get('end') or [''])[0])
+                except ValueError:
+                    raise Problem(400, 'invalid_date_range')
+                return respond(200, {'records': records})
+
             if path in ('/api/v2/player/calendar', '/api/v2/player/menus') and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
