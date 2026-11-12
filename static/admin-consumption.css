@@ -32,3 +32,6 @@
 
 /* Day grouping and detail rows */
 .tm-consumption-day{margin:20px 0 0}.tm-consumption-day>h3{margin:0 0 10px;font-size:12px;font-weight:600;text-transform:capitalize;letter-spacing:0;opacity:.62}.tm-consumption-day-cards{display:grid;gap:10px}.tm-consumption-day-cards .tm-consumption-card{margin:0}.tm-consumption-meal{display:flex;flex-direction:column;gap:3px;min-width:0}.tm-consumption-meal .tm-consumption-option{margin:0}.tm-consumption-foods summary>span{font-size:17px}.tm-consumption-foods[open] summary>span{transform:rotate(180deg)}.tm-consumption-foods summary:after{content:none}.tm-consumption-foods li{display:flex;justify-content:space-between;gap:14px}.tm-consumption-foods li span:last-child{flex:none;opacity:.65;font-variant-numeric:tabular-nums}
+
+/* Borderless administrative consumption summary; retain internal separators. */
+#consumption-panel .tm-consumption-card{border:0!important;box-shadow:none!important;}

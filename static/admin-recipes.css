@@ -437,3 +437,9 @@ html[data-admin-theme="light"] #tm-recipe-library-page .recipe-table-filter-row 
 #dish-editor-list .tm-library-pagination button:disabled{opacity:.45;cursor:default}
 #tm-recipe-library-page .tm-library-pagination button:not(:disabled):hover,
 #dish-editor-list .tm-library-pagination button:not(:disabled):hover{background:rgba(127,138,155,.10)}
+
+/* Borderless culinary library and editor panels.
+   Preserve linked, pending, error, focus and control borders. */
+#tm-recipe-library-page :is(.recipe-table-scroll,#recipe-list,.recipe-editor-panel,.recipe-section,.recipe-pdf-panel,.recipe-pdf-result,.recipe-pdf-block,.recipe-reader-panel,.recipe-category-manage,.recipe-category-item){
+ border:0!important;box-shadow:none!important;
+}

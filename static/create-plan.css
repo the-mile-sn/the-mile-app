@@ -1807,3 +1807,13 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
   row-gap:12px!important;
  }
 }
+
+/* Standalone Planos: primary surfaces without decorative outlines.
+   Legacy-copy warnings, controls and focus cues retain their borders. */
+#plan-entry .plan-library-table-wrap,
+#plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):not([class*="warning"]):not([class*="selected"]),
+#plan-editor .meal:not([class*="warning"]):not([class*="alert"]),
+#plan-preview .plan-preview-heading,
+#plan-preview .plan-preview-group{
+ border:0!important;box-shadow:none!important;
+}

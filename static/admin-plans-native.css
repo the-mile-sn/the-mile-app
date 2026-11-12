@@ -2365,3 +2365,14 @@
  #tm-plan-page #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td,
  #tm-plan-page #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:is(:hover,:focus-within,:active) > td{background:transparent!important}
 }
+
+/* Borderless primary Planos surfaces, without affecting the legacy-copy
+   warning state, action buttons or focused inputs. */
+#tm-plan-page :is(.panel,.stat),
+#tm-plan-page #plan-entry .plan-library-table-wrap,
+#tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):not([class*="warning"]):not([class*="selected"]),
+#tm-plan-page #plan-editor .meal:not([class*="alert"]):not([class*="warning"]),
+#tm-plan-page #plan-preview .plan-preview-heading,
+#tm-plan-page #plan-preview .plan-preview-group{
+ border:0!important;box-shadow:none!important;
+}

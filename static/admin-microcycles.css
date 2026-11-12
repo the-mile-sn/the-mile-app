@@ -3776,3 +3776,37 @@ html[data-admin-theme="light"] #menus-panel #profile-recipe-access .tm-recipe-ca
 html[data-admin-theme="light"] #menus-panel #profile-recipe-access .tm-recipe-category-remove{background:#fbe7e9!important;color:#aa3243!important;}
 html[data-admin-theme="light"] #menus-panel #profile-recipe-access .tm-recipe-category-remove:hover{background:#f7d4d9!important;color:#8e1c30!important;}
 @media(max-width:600px){#menus-panel #profile-recipe-access{padding:16px!important;}#menus-panel #profile-recipe-access .tm-recipe-category-chip{padding:11px 12px;gap:9px;}#menus-panel #profile-recipe-access .tm-recipe-category-actions{gap:6px;}#menus-panel #profile-recipe-access .tm-recipe-category-state{padding:4px 8px;font-size:10px;}#menus-panel #profile-recipe-access .tm-recipe-category-remove{padding:5px 9px!important;font-size:11px!important;}}
+
+/* The Mile · Borderless surfaces · visual-only. No shadows or colour changes.
+   Focus rings, error/highlight states and controls remain intact. */
+#admin-workspace .tm-db-panel,
+#admin-workspace .tm-players-panel,
+#tm-players-page .tm-players-list-surface .tm-players-table thead,
+#tm-players-page .tm-players-list-surface .tm-players-table tbody tr:not([class*="warning"]):not([class*="alert"]):not([class*="pending"]):not([class*="selected"]),
+#tm-players-page .tm-players-access-management,
+#tm-players-page .tm-access-password-form,
+#tm-players-page .tm-player-loading-photo-card,
+#admin-account-panel .tm-admin-my-photo,
+#tm-forms-page #profile-monitoring,
+#tm-forms-page #profile-monitoring .monitoring-weight-chart,
+#tm-forms-page #profile-monitoring .monitoring-entry,
+#tm-assessments-page .tm-assessment-visual,
+#tm-assessments-page .tm-assessment-registry-panel,
+#tm-assessments-page .tm-clinical-metric:not(.tm-skinfold-solid):not(.tm-clinical-metric-primary),
+#tm-forms-page .tm-assessment-visual,
+#tm-forms-page .tm-assessment-registry-panel,
+#assessments-admin-panel .assessment-excel-import,
+#tm-menu-recipes-page .menu-library-section,
+#tm-menu-recipes-page .menu-create-section,
+#tm-menu-recipes-page .dish-edit-card,
+#tm-food-library-page .food-catalog-panel,
+#tm-admin-settings .tm-settings-appearance,
+#tm-settings-admins .tm-settings-appearance,
+#tm-players-page .profile-info-card,
+#admin-workspace .profile-info-card{
+ border:0!important;box-shadow:none!important;
+}
+/* The assessment accordion retains hover, open and focus borders. */
+#tm-assessments-page .tm-assessment-detail:not(:hover):not([open]):not(:focus-within){
+ border-color:transparent!important;box-shadow:none!important;
+}

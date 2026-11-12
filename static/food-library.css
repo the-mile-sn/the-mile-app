@@ -171,3 +171,6 @@ label.tm-select-label-container>.tm-two-line-select .tm-select-value{font-size:1
 .food-catalog-table td.food-edit-cell .food-delete-icon:hover{color:#ca6367;background:rgba(197,76,81,.09)}
 .food-catalog-table td.food-edit-cell button:disabled{opacity:.45;cursor:wait}
 .food-catalog-panel #feedback.sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;margin:-1px!important;padding:0!important;border:0!important}
+
+/* Standalone Biblioteca: retain existing fills, remove decorative frames. */
+.tm-library-layout .panel,.tm-library-layout .stat,.tm-library-layout .food-catalog-panel{border:0!important;box-shadow:none!important;}
