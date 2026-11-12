@@ -4412,3 +4412,19 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .player-meal-option-subcard .plan-option-label small{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
 #overview #day-details .player-meal-option-subcard .plan-option-label small .meal-registered-badge,
 #overview #day-details .player-meal-option-subcard .plan-option-label small .meal-edit-consumption-tag{margin-left:0!important}
+
+/* Compact, readable option registration actions on their own row. */
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+ gap:7px!important;margin-top:7px!important;margin-bottom:0!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-registered-badge,
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ margin:0!important;padding:3px 9px!important;border-radius:999px!important;
+ font-size:11px!important;font-weight:400!important;line-height:1.35!important;
+ white-space:nowrap!important;min-height:0!important;width:auto!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
+ background:rgba(255,255,255,.07)!important;border:1px solid rgba(200,225,240,.22)!important;
+}
