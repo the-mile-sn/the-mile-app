@@ -1281,15 +1281,13 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
   if(Number.isInteger(preferredOptionIndex)&&data.options[preferredOptionIndex])select.value=data.options[preferredOptionIndex].option_ref;
   select.className='consumption-option-select';panel.append(select);
-  const mode=document.createElement('select');for(const [value,label] of [['partial','Parcialmente'],['none','Não consumi']]){const item=document.createElement('option');item.value=value;item.textContent=label;mode.append(item);}mode.value=previous?.status==='none'?'none':'partial';mode.className='consumption-native-mode';panel.append(mode);
-  const statusGroup=document.createElement('div');statusGroup.className='consumption-status-group';
-  const buttons=[['partial','≡','Parcialmente'],['none','⊗','Não consumi']].map(([value,icon,label])=>{const b=document.createElement('button');b.type='button';b.className='consumption-status-button';b.dataset.status=value;const a=document.createElement('span');a.textContent=icon;const t=document.createElement('span');t.textContent=label;b.append(a,t);b.onclick=()=>{mode.value=value;mode.dispatchEvent(new Event('change'));};statusGroup.append(b);return b;});
-  const syncStatus=()=>buttons.forEach(b=>{const active=b.dataset.status===mode.value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});panel.append(statusGroup);syncStatus();
+  // The editor derives the saved status from food selections, not a separate mode selector.
+  const mode={value:'partial'};
   const foodsRoot=document.createElement('div');foodsRoot.className='consumption-foods-root';panel.append(foodsRoot);
   const additional=[];
   const previousFoods=previous?.option_ref===select.value&&previous?.status==='partial'?(previous.consumed_foods||[]):[];
   function redraw(){
-   foodsRoot.replaceChildren();syncStatus();if(mode.value!=='partial')return;
+   foodsRoot.replaceChildren();
    const option=data.options.find(x=>x.option_ref===select.value),foods=option.foods||[];
    const groups=new Map();foods.forEach((food,i)=>{const parent=food.alternative_to??i;if(!groups.has(parent))groups.set(parent,[]);groups.get(parent).push(i);});
    for(const indices of groups.values()){
@@ -1297,13 +1295,29 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const group=document.createElement('div');group.className='consumption-food-group';
     for(const i of indices){const food=foods[i],line=document.createElement('label');line.className='consumption-food-line';
      if(food.kind==='supplement')continue;
-     const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
+     const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previous?.status==='none'?false:initial&&previous?.status==='partial'?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
      const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';name.append(label);
      const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');if(!check.checked){grams.value='0';grams.disabled=true;}
      const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const checkVisual=document.createElement('span');checkVisual.className='consumption-check-visual';checkVisual.setAttribute('aria-hidden','true');checkWrap.append(check,checkVisual);const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';line.append(checkWrap,name,grams,unit);group.append(line);
     }foodsRoot.append(group);
    }
+   const removeAll=document.createElement('button');removeAll.type='button';removeAll.className='consumption-remove-all';
+   const syncRemoveAll=()=>{const checks=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]')];removeAll.textContent=checks.length&&checks.every(c=>!c.checked)?'Selecionar todos':'Remover todos';};
+   removeAll.onclick=()=>{
+    const checks=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]')];
+    const restore=checks.every(c=>!c.checked);
+    if(restore){
+     const groups=new Set();
+     for(const check of checks){const group=check.closest('.consumption-food-group');if(groups.has(group))continue;groups.add(group);
+      const first=group.querySelector('input[type=checkbox]');if(first){first.checked=true;const quantity=first.closest('label')?.querySelector('input[type=number]');if(quantity){const food=foods[Number(first.dataset.index)];quantity.value=String(food?.grams??0);quantity.disabled=false;}}
+     }
+    }else{for(const check of checks){check.checked=false;const quantity=check.closest('label')?.querySelector('input[type=number]');if(quantity){quantity.value='0';quantity.disabled=true;}}}
+    syncRemoveAll();queuePreview();
+   };
+   foodsRoot.append(removeAll);
+   foodsRoot.addEventListener('change',syncRemoveAll,{once:true});
+   syncRemoveAll();
    const search=document.createElement('input');search.type='search';search.placeholder='Pesquisar alimento da biblioteca';search.setAttribute('aria-label','Pesquisar alimento adicional');
    const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
    const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Inserir porção';quantity.setAttribute('aria-label','Inserir porção em gramas');
@@ -1329,8 +1343,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const updatePreview=async()=>{
    const seq=++previewSeq,option=data.options.find(x=>x.option_ref===select.value);
    if(!option)return;
-   const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
-   if(mode.value==='partial'){
+   const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
+   if(body.status==='partial'){
     body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
     body.additional=additional;
    }
@@ -1347,7 +1361,15 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const queuePreview=()=>{clearTimeout(previewTimer);previewTimer=setTimeout(updatePreview,280);};
   foodsRoot.addEventListener('input',queuePreview);foodsRoot.addEventListener('change',queuePreview);
   let initial=true;
-  mode.onchange=()=>{initial=false;additional.length=0;redraw();queuePreview();};select.onchange=()=>{initial=false;additional.length=0;redraw();queuePreview();};redraw();queuePreview();
+  select.onchange=()=>{initial=false;additional.length=0;redraw();queuePreview();};redraw();queuePreview();
+  const getConsumptionStatus=()=>{
+   const option=data.options.find(x=>x.option_ref===select.value);
+   const foods=(option?.foods||[]).filter(f=>f.kind!=='supplement');
+   const checked=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]:checked')];
+   if(!checked.length&&!additional.length)return 'none';
+   const allPlanned=foods.every((food,i)=>{const originalIndex=option.foods.indexOf(food);const input=foodsRoot.querySelector('input[type=checkbox][data-index="'+originalIndex+'"]');const plannedSelected=food.alternative_to==null;return !!input?.checked===plannedSelected&&(!input?.checked||Number(foodsRoot.querySelector('input[data-grams="'+originalIndex+'"]')?.value)===Number(food.grams??0));});
+   return allPlanned&&!additional.length?'all':'partial';
+  };
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
