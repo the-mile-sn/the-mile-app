@@ -25,5 +25,5 @@ test("Dashboard signals off variants and general, preserving five meal indicator
  assert.ok(dash.includes("const value=item.colors?.[meal]"));
  assert.ok(css.includes("button.tm-db-cell.tm-db-off"));
  assert.ok(light.includes("button.tm-db-cell.tm-db-off"));
- for(const v of ["admin-microcycles.js?v=18276","admin-dashboard.js?v=67","admin-microcycles.css?v=188","admin-light-theme.css?v=30"])assert.ok(html.includes(v));
+ for(const v of ["admin-microcycles.js?v=18276","admin-dashboard.js?v=68","admin-microcycles.css?v=189","admin-light-theme.css?v=31"])assert.ok(html.includes(v));
 });
