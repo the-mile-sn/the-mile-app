@@ -292,3 +292,11 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet{transition:height .24s cubic-bezier(.2,.8,.2,1),max-height .24s cubic-bezier(.2,.8,.2,1)!important}
 .consumption-food-sheet.is-dragging{transition:none!important;will-change:height}
 .consumption-food-sheet.is-dragging.is-expanded{height:auto!important}
+
+
+/* v24: single compact portion field and library note */
+.consumption-food-sheet-note[hidden]{display:none!important}
+.consumption-food-sheet-note{margin:16px 2px 0!important;color:rgba(229,226,218,.62)!important;font-size:13px!important;font-weight:400!important;line-height:1.5!important;white-space:pre-wrap}
+.consumption-food-sheet-portion{display:block!important;margin-top:16px!important;padding:12px 14px!important}
+.consumption-food-sheet-portion label{display:block!important;width:100%!important;color:#c9c5bd!important;font-size:13px!important}
+.consumption-food-sheet-portion input{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;flex:none!important;margin-top:8px!important;font-size:16px!important}
