@@ -15,6 +15,30 @@ import prescription_effective_v2
 MEALS = microcycles_v2.MEALS
 
 
+def resolved_week_days(c, athlete_id, start_iso, end_iso, matches, model,
+                       overrides, variants, responses, today):
+    """One effective day per date. Preserve post-match and manual meal priority."""
+    calculated = calendar_v2.classify_range(
+        start_iso, end_iso, [item["match_date"] for item in matches])
+    days = calendar_v2.effective_days(c, athlete_id, calculated)
+    baseline = {row["name"]: row["meals"] for row in model["classifications"]}
+    resolved = []
+    for day in days:
+        # An unclassified automatic day uses the configured Geral nutrition.
+        # Explicit Geral, Off and Off (+1/+2) are already resolved by effective_days.
+        classification = day["classification"] or "Geral"
+        meals = prescription_effective_v2.resolve_day(
+            day["date"], classification, baseline.get(classification, {}),
+            overrides, variants, matches, responses, today)
+        resolved.append({
+            "date": day["date"], "classification": classification,
+            "classification_source": day.get("classification_source", "automatic"),
+            "is_off": bool(day.get("is_off")),
+            "colors": {meal: meals[meal]["color"] for meal in MEALS}
+        })
+    return resolved
+
+
 def snapshot(c, week, today):
     first = calendar_v2.parse_day(week)
     current = calendar_v2.parse_day(today)
@@ -42,9 +66,6 @@ def snapshot(c, week, today):
         if model is None:
             continue
         matches = microcycles_v2.list_matches(c, aid)
-        classifications = calendar_v2.classify_range(
-            start_iso, end_iso, [m["match_date"] for m in matches])
-        baseline = {r["name"]: r["meals"] for r in model["classifications"]}
         overrides = {
             (r["meal_date"], r["meal"]): r["color"]
             for r in day_colors_v2.list_colors(c, aid, start_iso, end_iso)
@@ -74,17 +95,9 @@ def snapshot(c, week, today):
                     raw, audits_by_record.get(raw["id"], []))
             })
 
-        days = []
-        for day in classifications:
-            classification = day["classification"]
-            effective = prescription_effective_v2.resolve_day(
-                day["date"], classification, baseline.get(classification, {}),
-                overrides, variants, matches, responses, today)
-            days.append({
-                "date": day["date"],
-                "classification": classification,
-                "colors": {meal: effective[meal]["color"] for meal in MEALS}
-            })
+        days = resolved_week_days(
+            c, aid, start_iso, end_iso, matches, model,
+            overrides, variants, responses, today)
         week_rows.append({"id": aid, "name": athlete["name"], "days": days, **photos.get(aid, {"user_id": None, "has_photo": False})})
         for match in matches:
             if match["match_date"] == today:
