@@ -4553,3 +4553,25 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 /* Registered option: compact edit and undo pills beside the status. */
 #overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important;}
 #overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-undo-consumption-tag{display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;height:25px!important;min-height:25px!important;padding:0 10px!important;margin:0!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.09)!important;color:inherit!important;font-size:11px!important;line-height:1!important;font-weight:400!important;white-space:nowrap!important;box-shadow:none!important;cursor:pointer!important;}
+
+/* Meal completion reward: truly circular check and restrained confetti. */
+#overview #day-details .consumption-quick-actions .consumption-quick-confirm.consumption-confirm-success{
+  position:relative!important;isolation:isolate!important;overflow:visible!important;
+  width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;
+  max-width:46px!important;max-height:46px!important;flex:0 0 46px!important;
+  padding:0!important;aspect-ratio:1/1!important;border-radius:50%!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  line-height:1!important;transform-origin:center!important;
+  animation:mile-check-pop .68s cubic-bezier(.2,1.5,.4,1) both!important;
+}
+#overview #day-details .consumption-confetti-burst{position:absolute;inset:0;pointer-events:none;z-index:2;}
+#overview #day-details .consumption-confetti-burst i{
+  position:absolute;left:50%;top:50%;width:5px;height:9px;border-radius:2px;
+  background:#b9e6ce;opacity:0;transform:translate(-50%,-50%) rotate(var(--angle));
+  animation:mile-confetti .7s ease-out var(--delay) forwards;
+}
+#overview #day-details .consumption-confetti-burst i:nth-child(3n){background:#fff;width:4px;height:4px;border-radius:50%;}
+#overview #day-details .consumption-confetti-burst i:nth-child(3n + 1){background:#72d4a5;}
+@keyframes mile-check-pop{0%{transform:scale(.75)}35%{transform:scale(1.22)}60%{transform:scale(.93)}80%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes mile-confetti{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle)) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle)) translateY(calc(-1 * var(--distance))) rotate(100deg) scale(.7)}}
+@media(prefers-reduced-motion:reduce){#overview #day-details .consumption-quick-actions .consumption-quick-confirm.consumption-confirm-success{animation:none!important}#overview #day-details .consumption-confetti-burst{display:none!important}}
