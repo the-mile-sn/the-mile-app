@@ -3,12 +3,12 @@
  const names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"};
  const root=document.getElementById("consumption-results"), date=document.getElementById("consumption-date"),refresh=document.getElementById("consumption-refresh"),athlete=document.getElementById("athlete");
  if(!root||!date||!athlete)return;
- date.value=new Date().toLocaleDateString("en-CA");
+ const today=new Date();date.value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");
  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const num=v=>Number(v||0).toLocaleString("pt-PT",{maximumFractionDigits:1});
  async function load(){
   if(document.getElementById("consumption-panel").hidden)return;
-  if(!athlete.value){root.textContent="Seleciona um jogador.";return;}
+  if(!athlete.value){root.textContent="Seleciona o Jorge Fernandes no campo de jogador acima.";return;}
   root.textContent="A carregar registos…";
   const day=date.value;if(!day){root.textContent="Seleciona uma data.";return;}
   try{
@@ -16,7 +16,7 @@
    const data=await response.json();
    if(!response.ok)throw Error(data.error||"Não foi possível consultar os registos.");
    const records=data.records||[];
-   if(!records.length){root.textContent="Sem registos de consumo nesta data.";return;}
+   if(!records.length){root.innerHTML="<p>Sem registos de consumo em "+esc(day)+".</p><p>Confirma que o Jorge guardou um consumo nesta data. Se já guardou, precisamos de validar a ligação entre a app e a base de dados do backoffice.</p>";return;}
    root.innerHTML=records.map(r=>{
     const nutrition=r.nutrition||{},food=r.consumed_foods||[];
     const state={all:"Consumido",partial:"Parcialmente",none:"Não consumido"}[r.status]||"Registado";
