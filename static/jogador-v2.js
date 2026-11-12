@@ -1355,14 +1355,14 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,foodNote,portionStep,matches);
    fields.classList.add('consumption-food-sheet-content');fields.hidden=false;fields.style.display='block';
    sheet.append(fields);document.body.append(backdrop,sheet);
-   const closeFoodSheet=()=>{sheet.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-viewport-height');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
+   const closeFoodSheet=()=>{backdrop.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-viewport-height');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
    const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;foodNote.hidden=true;foodNote.textContent='';portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-expanded');sheet.scrollTop=0;syncSheetViewport();};
    const syncSheetViewport=()=>{
     if(sheet.hidden)return;
     const viewport=window.visualViewport;
     const visibleHeight=viewport?.height||window.innerHeight;
     const offset=Math.max(0,window.innerHeight-(viewport?.offsetTop||0)-visibleHeight);
-    sheet.style.setProperty('--sheet-keyboard-offset',offset+'px');
+    sheet.style.setProperty('--sheet-keyboard-offset',offset+'px');backdrop.style.setProperty('--sheet-keyboard-offset',offset+'px');
     sheet.style.setProperty('--sheet-viewport-height',visibleHeight+'px');
     if(offset>100){sheet.classList.add('keyboard-visible');sheet.classList.add('is-expanded');}
     else sheet.classList.remove('keyboard-visible');
@@ -1381,7 +1381,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const expandedHeight=()=>Math.max(200,(window.visualViewport?.height||window.innerHeight)-50);
    const settleSheet=expanded=>{sheet.classList.remove('is-dragging');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.toggle('is-expanded',expanded);};
    const gestureStart=e=>{
-    if(e.target.closest('button,input,select'))return;
+    if(e.target.closest('button,input,select,textarea,.consumption-suggestions'))return;
     dragStart=e.touches[0]?.clientY??0;dragStartedAt=performance.now();startHeight=sheet.getBoundingClientRect().height;
     if(!sheet.classList.contains('is-expanded'))restHeight=startHeight;
     dragging=true;dragMoved=false;sheet.classList.add('is-dragging');
@@ -1406,7 +1406,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const elapsed=Math.max(1,performance.now()-dragStartedAt),speed=delta/elapsed;
     settleSheet(delta>10&&speed>.5?true:delta< -10&&speed<-.5?false:current>midpoint);
    };
-   for(const target of [handle,header,heading]){
+   for(const target of [sheet]){
     target.addEventListener('touchstart',gestureStart,{passive:true});
     target.addEventListener('touchmove',gestureMove,{passive:false});
     target.addEventListener('touchend',gestureEnd,{passive:true});
