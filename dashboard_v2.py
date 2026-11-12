@@ -33,6 +33,7 @@ def resolved_week_days(c, athlete_id, start_iso, end_iso, matches, model,
         resolved.append({
             "date": day["date"], "classification": classification,
             "classification_source": day.get("classification_source", "automatic"),
+            "needs_confirmation": day["classification"] is None and day.get("classification_override") is None,
             "is_off": bool(day.get("is_off")),
             "colors": {meal: meals[meal]["color"] for meal in MEALS}
         })
