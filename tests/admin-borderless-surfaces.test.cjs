@@ -23,7 +23,7 @@ test("Menus VP colour and meaningful state highlights remain", () => {
 });
 
 test("Plan and recipe panels are borderless but warning rows retain framing", () => {
- for(const [p, marker] of [["admin-plans-native.css","/* Borderless primary"],["create-plan.css","/* Standalone Planos"]]) {
+ for(const [p, marker] of [["admin-plans-native.css","/* Borderless primary"],["create-plan.css","/* Standalone Planos: primary surfaces"]]) {
   const s = css(p);
   const phase = s.slice(s.lastIndexOf(marker));
   assert.match(phase, /not\(\.plan-library-legacy-draft\)/);
