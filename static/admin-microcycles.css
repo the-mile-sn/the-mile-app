@@ -3725,3 +3725,9 @@ html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>details
 #tm-dashboard button.tm-db-cell.tm-db-general-pending:focus-visible{
  outline:2px solid #9cc9ef;outline-offset:2px
 }
+
+/* Free-text CT menu editor, matching the existing menu selection fields. */
+#menus-panel .menu-meal-card .menu-free-text{display:block;width:100%;min-width:0;max-width:100%;min-height:118px;resize:vertical;box-sizing:border-box;padding:11px 13px;border:0;border-radius:12px;background:#36373e;color:#fff;font:inherit;line-height:1.45;}
+#menus-panel .menu-meal-card .menu-free-text[hidden]{display:none!important;}
+html[data-admin-theme="light"] #menus-panel .menu-meal-card .menu-free-text{background:#f0f2f5;color:#222831;}
+#menus-panel .menu-free-text-display{white-space:pre-wrap;overflow-wrap:anywhere;}

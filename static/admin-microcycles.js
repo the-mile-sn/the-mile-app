@@ -779,7 +779,7 @@ async function loadMenus(){
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
       const label=document.createElement("strong");label.textContent=names[meal];heading.append(label,color);line.appendChild(heading);
       const kind=document.createElement("select");
-      for(const [value,name] of [["category","Categoria"],["dish","Prato completo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=name;kind.appendChild(opt);}
+      for(const [value,name] of [["category","Categoria"],["dish","Prato completo"],["text","Texto livre"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=name;kind.appendChild(opt);}
       kind.value=existing?.kind||"category";kind.className="menu-kind";line.appendChild(kind);
       const category=document.createElement("select");
       const categoryNames=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"];
@@ -789,6 +789,13 @@ async function loadMenus(){
       for(const name of categories){const option=document.createElement("option");option.value=name;option.textContent=name;category.appendChild(option);}
       category.value=previousCategory||"";category.className="menu-choice";line.appendChild(category);
       const dish=document.createElement("input");dish.type="text";dish.maxLength=200;dish.placeholder="Nome do prato (base de menus em preparação)";dish.value=existing?.kind==="dish"?existing.value:"";line.appendChild(dish);
+      const freeText=document.createElement("textarea");
+      freeText.className="menu-free-text";
+      freeText.rows=5;freeText.maxLength=2000;
+      freeText.placeholder="Escrever a ementa do CT…";
+      freeText.setAttribute("aria-label","Ementa em texto livre");
+      freeText.value=existing?.kind==="text"?existing.value:"";
+      line.appendChild(freeText);
       const selectedDish=resolveAdminMenuDish(existing,dishLibrary);
       const dishFilter=document.createElement("select");dishFilter.className="menu-choice";dishFilter.setAttribute("aria-label","Filtrar pratos por categoria");
       const all=document.createElement("option");all.value="";all.textContent="Todas as categorias";dishFilter.appendChild(all);
@@ -825,16 +832,16 @@ async function loadMenus(){
       dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";updatePreview();closeSuggestions();});
       const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.className="menu-dish-image";line.appendChild(preview);
       updatePreview();
-      const toggle=()=>{category.hidden=kind.value!=="category";dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!chosenDishId;dish.hidden=true;closeSuggestions();};
+      const toggle=()=>{freeText.hidden=kind.value!=="text";category.hidden=kind.value!=="category";dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!chosenDishId;dish.hidden=true;closeSuggestions();};
       kind.addEventListener("change",toggle);toggle();
       const queue=()=>{
         const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
-        const selected=kind.value==="category"?category.value:(selectedDish?.name_pt||"");
-        if(!selected)return;
+        const selected=kind.value==="category"?category.value:kind.value==="text"?freeText.value.trim():(selectedDish?.name_pt||"");
+        if(!selected){pending.delete(date+"|"+meal);saveWeek.disabled=!pending.size;feedback.textContent=pending.size?pending.size+" refeição(ões) por guardar":"";return;}
         mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected,
           ...(kind.value==="dish"?{dish_id:selectedDish.id}:{})});
       };
-      kind.addEventListener("change",queue);category.addEventListener("change",queue);
+      kind.addEventListener("change",queue);category.addEventListener("change",queue);freeText.addEventListener("input",queue);
       section.appendChild(line);
     }
     root.appendChild(section);
@@ -932,7 +939,7 @@ async function playerShowMenus(){
    const name=document.createElement("strong");name.textContent=names[meal];line.appendChild(name);
    const color=effectiveMenuMealColor(key,day?.classification,meal,calendar);
    if(color){const dot=document.createElement("span");dot.className="plan-simple-dot meal-"+color;line.appendChild(dot);}
-   const value=document.createElement("span");value.textContent=menu.value;line.appendChild(value);
+   const value=document.createElement("span");value.textContent=menu.value;if(menu.kind==="text")value.classList.add("menu-free-text-display");line.appendChild(value);
    if(menu.kind==="dish"){const dish=resolveAdminMenuDish(menu,dishes.dishes);if(dish){const img=document.createElement("img");img.className="player-menu-photo";img.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id);img.alt=menu.value;line.appendChild(img);}}
    section.appendChild(line);
   }
@@ -1008,7 +1015,7 @@ async function loadPlayerSimulation(){
     const section=document.createElement("section");section.className="player-sim-meal";
     const title=document.createElement("h3");title.textContent=names[entry.meal];section.appendChild(title);
     if(entry.color){const bar=document.createElement("div");bar.className="meal-"+entry.color;bar.style.cssText="height:9px;border-radius:8px;margin:8px 0 15px";section.appendChild(bar);}
-    if(menu){const menuLine=document.createElement("div");menuLine.className="player-sim-menu";const label=document.createElement("small");label.textContent=menu.kind==="dish"?"Prato do dia":"Categoria do menu";const value=document.createElement("strong");value.textContent=menu.value;menuLine.append(label,value);section.appendChild(menuLine);}
+    if(menu){const menuLine=document.createElement("div");menuLine.className="player-sim-menu";const label=document.createElement("small");label.textContent=menu.kind==="dish"?"Prato do dia":menu.kind==="text"?"Ementa":"Categoria do menu";const value=document.createElement("strong");value.textContent=menu.value;if(menu.kind==="text")value.classList.add("menu-free-text-display");menuLine.append(label,value);section.appendChild(menuLine);}
     const options=entry.color?(publishedSimulation[entry.color]?.[entry.meal]||[]):[];
     if(entry.color&&!options.length){const missing=document.createElement("p");missing.className="hint";missing.textContent="Plano ainda não publicado para esta refeição.";section.appendChild(missing);}
     for(const [index,option] of options.entries()){

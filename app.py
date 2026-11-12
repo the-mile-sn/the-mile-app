@@ -2108,7 +2108,7 @@ def application(env, start_response):
                         meal=item.get('meal')
                         kind=item.get('kind')
                         value=item.get('value')
-                        if meal not in ('lunch','dinner') or kind not in ('category','dish'):
+                        if meal not in ('lunch','dinner') or kind not in ('category','dish','text'):
                             raise ValueError()
                         dish_id=item.get('dish_id')
                         value,dish_id=microcycles_v2.resolve_menu_dish(c,kind,value,dish_id)
