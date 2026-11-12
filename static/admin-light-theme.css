@@ -710,3 +710,11 @@ html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-general,
 html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-general{
  background:#edf0f4!important;border:0!important;color:#33465b!important
 }
+
+
+/* Pending automatic Geral has the same muted dashed frame as the calendar. */
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-general-pending,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-general-pending{
+ border:1.5px dashed #b49b66!important;padding:8.5px 6.5px!important;
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-pending-hint{color:#8c7144}
