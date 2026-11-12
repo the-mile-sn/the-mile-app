@@ -1772,7 +1772,7 @@ async function overview(){
       const selected=source.options?.[i];
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
-      quick.classList.add('consumption-confirm-success');quick.textContent='✓';feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,650));if(card.tagName==='DETAILS')card.open=false;await overview();
+      quick.classList.add('consumption-confirm-success');quick.textContent='✓';quick.setAttribute('aria-label','Consumo registado');if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){const burst=document.createElement('span');burst.className='consumption-confetti-burst';burst.setAttribute('aria-hidden','true');for(let j=0;j<12;j++){const p=document.createElement('i');p.style.setProperty('--angle',(j*30)+'deg');p.style.setProperty('--distance',(35+(j%3)*9)+'px');p.style.setProperty('--delay',(j%3)*35+'ms');burst.append(p);}quick.append(burst);}feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;quick.textContent='✓ Cumpri';error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
