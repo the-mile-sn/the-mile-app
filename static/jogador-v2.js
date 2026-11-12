@@ -1331,14 +1331,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    if(mode.value==='partial')body.additional=additional;
    try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
-  if(previous){
-   const remove=document.createElement('button');remove.type='button';remove.textContent='✕ Eliminar registo';remove.setAttribute('aria-label','Eliminar registo de consumo desta refeição');
-   remove.onclick=async()=>{if(!confirm('Eliminar o registo de consumo desta refeição? O plano alimentar não será alterado.'))return;
-    try{remove.disabled=true;await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:mealDate,meal:mealKey,event_id:eventId})});panel.remove();await overview();}
-    catch(e){error(e);remove.disabled=false;}
-   };panel.append(remove);
-  }
-  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.className='consumption-cancel';save.className='consumption-save';cancel.onclick=()=>panel.remove();const actions=document.createElement('div');actions.className='consumption-actions';actions.append(cancel,save);panel.append(actions);
+  save.className='consumption-save';
+  const actions=document.createElement('div');actions.className='consumption-actions';actions.append(save);panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
