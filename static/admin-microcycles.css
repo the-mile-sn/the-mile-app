@@ -3711,3 +3711,17 @@ html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>details
 #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-general{
  background:#282c34!important;color:#e7ebf2
 }
+
+
+/* Automatic Geral still has nutrition but needs date-level confirmation. */
+#tm-dashboard button.tm-db-cell.tm-db-general-pending,
+#tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-general-pending{
+ border:1.5px dashed #9a865e!important;padding:8.5px 6.5px!important;
+}
+#tm-dashboard .tm-db-pending-state{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+#tm-dashboard .tm-db-pending-hint{
+ color:#d1b981;font-size:9px;font-weight:550;line-height:1.15;letter-spacing:.01em
+}
+#tm-dashboard button.tm-db-cell.tm-db-general-pending:focus-visible{
+ outline:2px solid #9cc9ef;outline-offset:2px
+}
