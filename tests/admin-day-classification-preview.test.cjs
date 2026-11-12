@@ -24,5 +24,5 @@ test("food filter focus outlines only full card",()=>{
  assert.match(css,/\.tm-food-filter-field :is\(input,select\):is\(:focus,:focus-visible\)/);
  assert.match(portions, /\.tm-portion-filters>label:has\(select\)::after/);
  assert.match(portions, /\.tm-portion-filters>label :is\(input,select\):is\(:focus,:focus-visible\)/);
- for(const v of ["admin-microcycles.js?v=18276","admin-microcycles.css?v=188","visual-portions.css?v=7"])assert.ok(html.includes(v));
+ for(const v of ["admin-microcycles.js?v=18276","admin-microcycles.css?v=189","visual-portions.css?v=7"])assert.ok(html.includes(v));
 });
