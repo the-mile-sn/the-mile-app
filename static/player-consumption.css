@@ -162,3 +162,14 @@ body[data-theme="light"] #overview .consumption-quick-actions .consumption-quick
 #overview .consumption-editor .consumption-remove-all{display:inline-flex;align-items:center;justify-content:flex-start;align-self:flex-start;width:auto;min-height:34px;margin:8px 0 10px;padding:5px 0;background:transparent!important;border:0!important;box-shadow:none!important;color:#b6d0df!important;font-size:13px;font-weight:400;text-align:left;cursor:pointer}
 #overview .consumption-editor .consumption-remove-all:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:4px}
 #overview .consumption-editor .consumption-foods-root{gap:0}
+
+
+/* Compact secondary actions in the consumption editor */
+#overview .consumption-editor .consumption-secondary-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 18px;flex-wrap:wrap}
+#overview .consumption-editor .consumption-secondary-actions .consumption-remove-all{margin:0;color:inherit!important;opacity:.7;font-weight:400}
+#overview .consumption-editor .consumption-secondary-actions .consumption-extra{margin:0 0 0 auto;width:auto;flex:0 0 auto}
+#overview .consumption-editor .consumption-secondary-actions .consumption-add-trigger{width:auto;min-height:34px;padding:6px 13px;border:0;border-radius:999px;background:rgba(128,128,128,.16);color:inherit;font-size:13px;font-weight:400;box-shadow:none}
+#overview .consumption-editor .consumption-secondary-actions .consumption-add-fields{min-width:min(290px,80vw)}
+#overview .consumption-editor .consumption-energy-progress{border-top:0!important;padding-top:0!important;margin-top:12px!important}
+#overview .consumption-editor .consumption-energy-values{justify-content:flex-end!important}
+#overview .consumption-editor .consumption-energy-ratio{font-weight:400!important}
