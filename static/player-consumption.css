@@ -47,3 +47,16 @@ body[data-theme="light"] #overview .consumption-editor .consumption-actions .con
 #overview .consumption-editor .consumption-suggestions button:last-child{border-bottom:0!important}
 #overview .consumption-editor .consumption-add-fields>button{width:100%!important;min-height:46px!important;border:0!important;border-radius:999px!important;background:#fff!important;color:#171717!important;font-weight:650!important;font-size:14px!important}
 body[data-theme="light"] #overview .consumption-editor .consumption-add-fields>button,html[data-theme="light"] #overview .consumption-editor .consumption-add-fields>button,.light-mode #overview .consumption-editor .consumption-add-fields>button{background:#171717!important;color:#fff!important}
+
+/* Live energy comparison and paired actions */
+#overview .consumption-editor .consumption-energy-progress{margin:19px 0 4px;padding-top:18px;border-top:1px solid rgba(128,128,128,.25);font-size:12px}
+#overview .consumption-editor .consumption-energy-head,#overview .consumption-editor .consumption-energy-values{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#overview .consumption-editor .consumption-energy-head{opacity:.85}
+#overview .consumption-editor .consumption-energy-percent{font-size:13px;font-weight:700}
+#overview .consumption-editor .consumption-energy-track{height:8px;margin:12px 0;border-radius:999px;background:rgba(128,128,128,.24);overflow:hidden}
+#overview .consumption-editor .consumption-energy-fill{display:block;height:100%;width:0;border-radius:inherit;background:#b6ddcc;transition:width .22s ease}
+#overview .consumption-editor .consumption-energy-values{font-size:12px;opacity:.78}
+#overview .consumption-editor .consumption-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;margin-top:18px!important}
+#overview .consumption-editor .consumption-actions .consumption-cancel{border:0!important;border-radius:999px!important;background:rgba(128,128,128,.18)!important;color:inherit!important;font-weight:600!important}
+#overview .consumption-editor .consumption-actions .consumption-save{border-radius:999px!important}
+#overview .consumption-editor{padding-top:16px!important}
