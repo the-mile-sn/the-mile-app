@@ -75,29 +75,55 @@ def classify_range(start, end, match_dates):
             for offset in range((last - first).days + 1)]
 
 
+def initialize(c):
+    """Persist optional, date-scoped classification choices; the model is unchanged."""
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_day_classification_overrides (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        day_date TEXT NOT NULL,
+        classification TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        PRIMARY KEY (athlete_id, day_date)
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_day_classification_lookup "
+              "ON v2_day_classification_overrides(athlete_id,day_date)")
+
+
 def effective_days(c, athlete_id, days):
-    """Keep the temporal MD classification while applying Off nutrition."""
+    """Resolve nutritional classifications without changing MD chronology."""
     if not days:
         return []
+    first, last = days[0]["date"], days[-1]["date"]
     off_dates = {r["event_date"] for r in c.execute(
         "SELECT event_date FROM v2_calendar_events WHERE athlete_id=? "
         "AND kind='off' AND event_date>=? AND event_date<=?",
-        (athlete_id, days[0]["date"], days[-1]["date"])).fetchall()}
+        (athlete_id, first, last)).fetchall()}
+    overrides = {r["day_date"]: r["classification"] for r in c.execute(
+        "SELECT day_date,classification FROM v2_day_classification_overrides "
+        "WHERE athlete_id=? AND day_date>=? AND day_date<=?",
+        (athlete_id, first, last)).fetchall()}
     result = []
     for day in days:
-        original = day["classification"]
-        off = day["date"] in off_dates and original != "MD"
-        nutrition = original
-        if off:
-            if original and original.startswith("MD+1"):
-                nutrition = "Off (+1)"
-            elif original and original.startswith("MD+2"):
-                nutrition = "Off (+2)"
+        automatic = day["classification"]
+        has_off_event = day["date"] in off_dates
+        off_applies = has_off_event and automatic != "MD"
+        default = automatic
+        if off_applies:
+            if automatic and automatic.startswith("MD+1"):
+                default = "Off (+1)"
+            elif automatic and automatic.startswith("MD+2"):
+                default = "Off (+2)"
             else:
-                nutrition = "Off"
-        result.append({**day, "temporal_classification": original,
-                       "classification": nutrition, "is_off": off,
-                       "off_conflict": day["date"] in off_dates and original == "MD"})
+                default = "Off"
+        manual = overrides.get(day["date"])
+        effective = manual if manual is not None else default
+        result.append({**day, "temporal_classification": automatic,
+                       "automatic_classification": default,
+                       "classification": effective,
+                       "classification_override": manual,
+                       "classification_source": "manual" if manual is not None else "automatic",
+                       "is_off": effective in ("Off", "Off (+1)", "Off (+2)"),
+                       "off_conflict": has_off_event and automatic == "MD"})
     return result
 
 

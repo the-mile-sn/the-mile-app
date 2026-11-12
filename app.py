@@ -278,6 +278,7 @@ def initialize():
         plan_import_v2.initialize(c)
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
+        calendar_v2.initialize(c)
         peri_v2.initialize(c)
         if SITE_ROLE == 'player':
             # Release gate: do not activate the player build unless the shared
