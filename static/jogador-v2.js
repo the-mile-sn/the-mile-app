@@ -1685,6 +1685,11 @@ async function overview(){
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
   const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
+  if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
+   const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';
+   badge.textContent='✓ Registado';badge.setAttribute('aria-label','Refeição registada');
+   title.append(badge);
+  }
   section.append(head);
   const options=color?datedPlanOptions(d,meal,color):[];
   if(color||menu){
