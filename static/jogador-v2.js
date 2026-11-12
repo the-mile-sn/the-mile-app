@@ -1299,7 +1299,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
      if(food.kind==='supplement')continue;
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
-     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';const planned=document.createElement('small');planned.textContent='Plano: '+String(food.grams??0)+' g';name.append(label,planned);
+     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';name.append(label);
      const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');if(!check.checked){grams.value='0';grams.disabled=true;}
      line.append(check,name,grams,document.createTextNode(' g'));group.append(line);
     }foodsRoot.append(group);
@@ -1323,7 +1323,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    extra.append(trigger,fields);foodsRoot.append(extra);
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
-  progress.innerHTML='<div class="consumption-energy-head"><span>Progresso energético da opção</span><strong class="consumption-energy-percent">—</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><span class="consumption-energy-actual">A calcular…</span><span class="consumption-energy-planned"></span></div>';
+  progress.innerHTML='<div class="consumption-energy-head"><span>kcal</span><strong class="consumption-energy-percent">—</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><span class="consumption-energy-actual">A calcular…</span><span class="consumption-energy-planned"></span></div>';
   panel.append(progress);
   let previewSeq=0,previewTimer;
   const updatePreview=async()=>{
