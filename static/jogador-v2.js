@@ -1364,17 +1364,24 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   select.onchange=()=>{initial=false;additional.length=0;redraw();queuePreview();};redraw();queuePreview();
   const getConsumptionStatus=()=>{
    const option=data.options.find(x=>x.option_ref===select.value);
-   const foods=(option?.foods||[]).filter(f=>f.kind!=='supplement');
-   const checked=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]:checked')];
+   const foods=option?.foods||[];
+   const active=foods.map((food,i)=>({food,i})).filter(x=>x.food.kind!=='supplement');
+   const checked=active.filter(({i})=>foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked);
    if(!checked.length&&!additional.length)return 'none';
-   const allPlanned=foods.every((food,i)=>{const originalIndex=option.foods.indexOf(food);const input=foodsRoot.querySelector('input[type=checkbox][data-index="'+originalIndex+'"]');const plannedSelected=food.alternative_to==null;return !!input?.checked===plannedSelected&&(!input?.checked||Number(foodsRoot.querySelector('input[data-grams="'+originalIndex+'"]')?.value)===Number(food.grams??0));});
+   const allPlanned=active.every(({food,i})=>{
+    const input=foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]');
+    const parent=food.alternative_to??i;
+    const plannedIndex=foods.findIndex((candidate,j)=>(candidate.alternative_to??j)===parent&&candidate.kind!=='supplement');
+    const expected=i===plannedIndex;
+    return !!input?.checked===expected&&(!input?.checked||Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value)===Number(food.grams??0));
+   });
    return allPlanned&&!additional.length?'all':'partial';
   };
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
-  save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
-   if(mode.value==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
-   if(mode.value==='partial')body.additional=additional;
+  save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
+   if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
+   if(body.status==='partial')body.additional=additional;
    try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   save.className='consumption-save';
