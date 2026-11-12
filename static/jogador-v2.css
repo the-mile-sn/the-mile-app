@@ -4399,3 +4399,16 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
  font-size:11px!important;font-weight:500!important;line-height:1.3!important;white-space:nowrap!important;
 }
+
+/* Compact consumption editing next to registered option. */
+#overview #day-details .meal-edit-consumption-tag{
+ display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
+ margin-left:8px;padding:4px 10px;border-radius:999px;
+ border:1px solid rgba(200,225,240,.22);background:rgba(255,255,255,.07);
+ color:inherit;font:inherit;font-size:11px;font-weight:400;line-height:1.3;white-space:nowrap;
+ cursor:pointer;
+}
+#overview #day-details .daily-meal:not([open]) .meal-edit-consumption-tag{display:none!important}
+#overview #day-details .player-meal-option-subcard .plan-option-label small{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+#overview #day-details .player-meal-option-subcard .plan-option-label small .meal-registered-badge,
+#overview #day-details .player-meal-option-subcard .plan-option-label small .meal-edit-consumption-tag{margin-left:0!important}
