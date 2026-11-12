@@ -698,3 +698,15 @@ html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days
 html[data-admin-theme="light"] #admin-workspace #calendar-section .calendar-days .calendar-day.calendar-selected.calendar-today{
  outline:2px solid #78a7d0!important;outline-offset:2px!important
 }
+
+
+/* Dashboard: subtle Off red and neutral Geral in light mode. */
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-off,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-off{
+ background:#fcecee!important;border:1px solid #dca8b4!important;color:#823d50!important
+}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-off:hover{background:#f8dce2!important}
+html[data-admin-theme="light"] #tm-dashboard button.tm-db-cell.tm-db-general,
+html[data-admin-theme="light"] #tm-dashboard .tm-db-table tbody td.tm-db-today button.tm-db-cell.tm-db-general{
+ background:#edf0f4!important;border:0!important;color:#33465b!important
+}
