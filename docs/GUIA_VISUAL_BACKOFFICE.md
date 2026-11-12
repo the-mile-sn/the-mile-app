@@ -176,3 +176,5 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 
 - **Interação mobile e desktop:** utilizar um botão real com área de toque sobre todo o cartão de Jogadores, reservando o botão do telemóvel como ação independente. Não depender apenas de eventos `click` no elemento `article`.
 - **Pesquisa de Jogadores em modo claro:** resultados apresentados numa única lista pendente branca, sem cartões internos, divisores fortes ou sombras; realce discreto da linha no hover/foco. O modo escuro mantém o aspeto previamente aprovado.
+
+- **Pesquisa de Jogadores em duas linhas:** título «Pesquisar» em cima e o nome/placeholder «Pesquisar jogador...» em baixo, com a mesma altura e hierarquia do seletor Estado. A lista pendente fecha ao tocar fora, ao voltar a tocar no campo, por Escape ou ao escolher um resultado; o CSS deve respeitar `[hidden]` mesmo com regras `display:flex!important`. O X de limpeza fica centrado por `top:0;bottom:0;margin:auto`, sem transformações ou animações.

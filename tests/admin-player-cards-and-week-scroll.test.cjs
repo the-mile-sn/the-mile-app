@@ -71,6 +71,26 @@ test("light search suggestions are a single contiguous list",()=>{
  assert.match(css,/border:0!important;border-radius:0!important;box-shadow:none!important/);
  assert.match(css,/background:transparent!important;color:var\(--tm-ui-text\)!important/);
 });
+test("two-line player search matches Estado, and portal closes reliably",()=>{
+ assert.match(html,/class="tm-players-search-caption" aria-hidden="true">Pesquisar/);
+ assert.match(css,/\.tm-players-search-caption\{/);
+ assert.match(css,/padding:24px 44px 6px 38px!important/);
+ assert.match(css,/body \.tm-player-search-list\[hidden\]/);
+ assert.match(css,/display:none!important/);
+ assert.match(js,/wasPlayerSearchOpenAtPointerDown/);
+ assert.match(js,/playerSearchInput\.addEventListener\("pointerdown"/);
+ assert.match(js,/playerSearchInput\.addEventListener\("click"/);
+ assert.match(js,/document\.addEventListener\("pointerdown",event=>\{/);
+ assert.match(js,/document\.addEventListener\("focusin"/);
+ assert.match(js,/document\.addEventListener\("keydown"/);
+});
+test("clear-search X is stable across desktop/mobile",()=>{
+ assert.match(css,/#tm-players-search-clear\{/);
+ assert.match(css,/transform:none!important;margin:auto 0!important/);
+ assert.match(css,/transition:none!important;animation:none!important/);
+ assert.match(css,/#tm-players-search-clear svg\{/);
+ assert.match(css,/transform:none!important;transition:none!important/);
+});
 test("Light/dark card hierarchy and focus preserved; no decorative border/shadow",()=>{
  assert.match(areaStyle,/background:var\(--tm-ui-subcard\)!important/);
  assert.match(areaStyle,/background:var\(--tm-ui-field-on-subcard\)!important/);
@@ -78,6 +98,6 @@ test("Light/dark card hierarchy and focus preserved; no decorative border/shadow
  assert.match(areaStyle,/border:0!important/);
  assert.match(areaStyle,/box-shadow:none!important/);
  assert.match(areaStyle,/:focus-visible/);
- assert.match(html,/admin-dashboard\.js\?v=72/);
- assert.match(html,/admin-surface-palette\.css\?v=8/);
+ assert.match(html,/admin-dashboard\.js\?v=73/);
+ assert.match(html,/admin-surface-palette\.css\?v=9/);
 });

@@ -854,8 +854,20 @@ function ensurePlanningOnlyView(){
   playerSearchInput.setAttribute("aria-expanded","true");
   renderPlayerSuggestions();
  }
- playerSearchInput.addEventListener("focus",openPlayerSuggestions);
- playerSearchInput.addEventListener("click",openPlayerSuggestions);
+ // Pointerdown records the previous open state BEFORE the browser focuses
+ // the input; otherwise a first tap would open then immediately close it.
+ let wasPlayerSearchOpenAtPointerDown=false;
+ playerSearchInput.addEventListener("pointerdown",()=>{
+  wasPlayerSearchOpenAtPointerDown=playerSearchOpen;
+ });
+ playerSearchInput.addEventListener("focus",()=>{
+  if(!wasPlayerSearchOpenAtPointerDown)openPlayerSuggestions();
+ });
+ playerSearchInput.addEventListener("click",()=>{
+  if(wasPlayerSearchOpenAtPointerDown)closePlayerSuggestions();
+  else if(!playerSearchOpen)openPlayerSuggestions();
+  wasPlayerSearchOpenAtPointerDown=false;
+ });
  playerSearchInput.addEventListener("input",()=>{
   selectedPlayerId=null;
   playerSearchClear.hidden=!playerSearchInput.value;
@@ -877,8 +889,19 @@ function ensurePlanningOnlyView(){
   selectedPlayerId=null;playerSearchInput.value="";playerSearchClear.hidden=true;
   closePlayerSuggestions();renderPlayers();
  });
+ // Capture outside taps before other components re-render the page.
+ // The suggestions live in a document.body portal, not inside the input.
  document.addEventListener("pointerdown",event=>{
   if(playerSearchOpen&&!playerSearchHost.contains(event.target)&&!playerSearchOptions.contains(event.target))closePlayerSuggestions();
+ },true);
+ document.addEventListener("focusin",event=>{
+  if(playerSearchOpen&&!playerSearchHost.contains(event.target)&&!playerSearchOptions.contains(event.target))closePlayerSuggestions();
+ });
+ document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&playerSearchOpen)closePlayerSuggestions();
+ });
+ document.addEventListener("visibilitychange",()=>{
+  if(document.hidden&&playerSearchOpen)closePlayerSuggestions();
  });
  window.addEventListener("resize",positionPlayerSuggestions);
  window.addEventListener("scroll",positionPlayerSuggestions,true);
