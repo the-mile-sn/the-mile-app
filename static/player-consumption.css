@@ -286,3 +286,9 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 
 /* v22: responsive swipe target across sheet handle and heading */
 .consumption-food-sheet-handle,.consumption-food-sheet-header,.consumption-food-sheet h2{touch-action:none}
+
+
+/* v23: interactive finger-tracking sheet with snap only on release */
+.consumption-food-sheet{transition:height .24s cubic-bezier(.2,.8,.2,1),max-height .24s cubic-bezier(.2,.8,.2,1)!important}
+.consumption-food-sheet.is-dragging{transition:none!important;will-change:height}
+.consumption-food-sheet.is-dragging.is-expanded{height:auto!important}
