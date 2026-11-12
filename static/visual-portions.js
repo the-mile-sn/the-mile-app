@@ -5,7 +5,7 @@
  if(!root)return;
  const get=id=>document.getElementById(id);
  const foods=get("tm-food-main"),portions=get("tm-visual-portions-page");
- const tabFoods=get("tm-food-tab-foods"),tabPortions=get("tm-food-tab-portions");
+ // Navigation is provided by the shared sidebar.
  const input=get("tm-portion-file"),feedback=get("tm-portion-feedback");
  const grid=get("tm-portion-grid"),count=get("tm-portion-count");
  const search=get("tm-portion-search"),category=get("tm-portion-category");
@@ -14,14 +14,10 @@
  function mode(which){
   const visual=which==="portions";
   foods.hidden=visual;portions.hidden=!visual;
-  tabFoods.classList.toggle("is-current",!visual);
-  tabPortions.classList.toggle("is-current",visual);
-  tabFoods.setAttribute("aria-pressed",String(!visual));
-  tabPortions.setAttribute("aria-pressed",String(visual));
+  root.dataset.librarySection=visual?"portions":"foods";
   if(visual&&!loaded&&!loading)load();
  }
- tabFoods.addEventListener("click",()=>mode("foods"));
- tabPortions.addEventListener("click",()=>mode("portions"));
+ window.tmShowAdminFoodLibrarySection=mode;
  function draw(){
   const categories=[...new Set(references.map(x=>x.category))].sort((a,b)=>a.localeCompare(b,"pt"));
   const selected=category.value;
@@ -37,7 +33,7 @@
   });
   count.textContent=filtered.length+" de "+references.length+" referências";
   grid.replaceChildren();
-  if(!filtered.length){const empty=document.createElement("p");empty.textContent=references.length?"Nenhuma referência corresponde aos filtros.":"Ainda não foram importadas fotografias de porções.";grid.append(empty);return;}
+  if(!filtered.length){const empty=document.createElement("p");empty.textContent=references.length?"Nenhuma referência corresponde aos filtros.":"Ainda não existem referências fotográficas.";grid.append(empty);return;}
   for(const ref of filtered){
    const card=document.createElement("article");card.className="tm-portion-card";
    const image=document.createElement("img");image.loading="lazy";image.decoding="async";image.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id);
@@ -67,7 +63,7 @@
   try{
    const result=await request("/api/v2/visual-portions");
    references=result.references||[];loaded=true;
-   feedback.textContent=references.length?"":"Importa o pacote aprovado para adicionar as fotografias.";
+   feedback.textContent="";
    draw();
   }catch(error){feedback.textContent="Não foi possível carregar as fotografias: "+error.message;}
   finally{loading=false;}
@@ -217,5 +213,5 @@
  previewMeal.addEventListener("change",refreshOption);
  previewOption.addEventListener("change",showOptions);
 
- window.tmOpenAdminVisualPortions=()=>{if(typeof window.tmOpenAdminFoodLibrary==="function")window.tmOpenAdminFoodLibrary();mode("portions");};
+ window.tmOpenAdminVisualPortions=()=>{if(typeof window.tmOpenAdminFoodLibrary==="function")window.tmOpenAdminFoodLibrary("portions");};
 })();

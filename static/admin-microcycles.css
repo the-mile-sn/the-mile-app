@@ -3421,3 +3421,17 @@ html[data-admin-theme="light"] .tm-player-search-avatar{background:#e9edf2;color
   background:var(--lib-panel-2);color:var(--lib-fg)
  }
 }
+
+/* Food library submenu: consistent with Menus e Receitas. */
+#admin-workspace #tm-admin-food-subnav[hidden]{display:none!important}
+#admin-workspace #tm-admin-nav-food-library[aria-expanded="true"] .tm-admin-nav-chevron{transform:rotate(90deg)}
+@media(max-width:830px){
+ #admin-workspace #tm-admin-account-actions #tm-admin-food-subnav{
+ display:none!important;flex-direction:column!important;align-items:stretch!important;
+ width:100%!important;max-width:none!important;margin:0!important;
+ padding:2px 0 5px 20px!important;border:0!important;background:transparent!important;box-shadow:none!important;gap:3px!important}
+ #admin-workspace #tm-admin-account-actions #tm-admin-food-subnav.is-mobile-open:not([hidden]){display:flex!important}
+ #admin-workspace #tm-admin-account-actions #tm-admin-food-subnav .tm-admin-subnav-link{
+ width:100%!important;min-width:0!important;max-width:none!important;flex:none!important;justify-content:flex-start!important;text-align:left!important;
+ min-height:38px!important;padding:9px 12px!important;font-size:12px!important}
+}
