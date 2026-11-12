@@ -524,3 +524,336 @@ html[data-admin-theme] :is(.tm-clinical-search-wrap input,.tm-assessment-filter 
  border-bottom-color:var(--tm-ui-divider)!important;
 }
 /* Do not overwrite the scenario matrix day classifications or colour coding. */
+
+
+/* ================================================================
+   THE MILE | ESTADOS E ACOES V1 | 2026-11-12
+   Four-layer surfaces above, action and semantic tokens below.
+   State = informational pill. Action = 10/12 px button. No shadows.
+   Existing meanings, handlers, confirmations and nutrition palettes remain.
+   ================================================================ */
+:root,html[data-admin-theme="dark"]{
+ --tm-state-success-bg:#183428;--tm-state-success-fg:#8ed0ab;
+ --tm-state-pending-bg:#3b2d16;--tm-state-pending-fg:#e2c17e;
+ --tm-state-neutral-bg:#2a3038;--tm-state-neutral-fg:#aab4c2;
+ --tm-state-review-bg:#42261e;--tm-state-review-fg:#e2a188;
+ --tm-state-error-bg:#3d2128;--tm-state-error-fg:#e5a0ac;
+ --tm-action-main-bg:#2d3440;--tm-action-main-fg:#f2f3f5;--tm-action-main-hover:#38414e;
+ --tm-action-secondary-bg:#23272f;--tm-action-secondary-fg:#d6dce5;--tm-action-secondary-hover:#303640;
+ --tm-action-danger-bg:#3a2128;--tm-action-danger-fg:#f0a3af;--tm-action-danger-hover:#50303a;
+ --tm-action-icon-bg:#242830;--tm-action-ghost-fg:#a2a7b0;
+ --tm-action-radius:12px;--tm-action-compact-radius:10px;
+ --tm-action-status-radius:999px;
+}
+html[data-admin-theme="light"]{
+ --tm-state-success-bg:#ddefe4;--tm-state-success-fg:#317154;
+ --tm-state-pending-bg:#f5e8c9;--tm-state-pending-fg:#8a6327;
+ --tm-state-neutral-bg:#e7ecf2;--tm-state-neutral-fg:#607082;
+ --tm-state-review-bg:#f8e3d8;--tm-state-review-fg:#af6544;
+ --tm-state-error-bg:#f5dce0;--tm-state-error-fg:#a65362;
+ --tm-action-main-bg:#dce5ef;--tm-action-main-fg:#2e4157;--tm-action-main-hover:#d2dde8;
+ --tm-action-secondary-bg:#e8edf3;--tm-action-secondary-fg:#425468;--tm-action-secondary-hover:#dbe4ed;
+ --tm-action-danger-bg:#f4e0e3;--tm-action-danger-fg:#b15665;--tm-action-danger-hover:#ebd1d6;
+ --tm-action-icon-bg:#e6ebf1;--tm-action-ghost-fg:#596675;
+}
+
+/* Reusable primitives for any new component, independent of module. */
+html[data-admin-theme] .tm-ui-state{
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ min-height:27px;padding:4px 10px;border:0!important;
+ border-radius:var(--tm-action-status-radius)!important;
+ background:var(--tm-state-neutral-bg);color:var(--tm-state-neutral-fg);
+ font:500 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ white-space:nowrap;box-shadow:none!important;
+}
+html[data-admin-theme] .tm-ui-state[data-state="published"],
+html[data-admin-theme] .tm-ui-state[data-state="active"],
+html[data-admin-theme] .tm-ui-state[data-state="saved"],
+html[data-admin-theme] .tm-ui-state[data-state="recorded"]{
+ background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+}
+html[data-admin-theme] .tm-ui-state[data-state="draft"],
+html[data-admin-theme] .tm-ui-state[data-state="pending"],
+html[data-admin-theme] .tm-ui-state[data-state="dirty"]{
+ background:var(--tm-state-pending-bg)!important;color:var(--tm-state-pending-fg)!important;
+}
+html[data-admin-theme] .tm-ui-state[data-state="inactive"],
+html[data-admin-theme] .tm-ui-state[data-state="archived"],
+html[data-admin-theme] .tm-ui-state[data-state="hidden"]{
+ background:var(--tm-state-neutral-bg)!important;color:var(--tm-state-neutral-fg)!important;
+}
+html[data-admin-theme] .tm-ui-state[data-state="review"],
+html[data-admin-theme] .tm-ui-state[data-state="incomplete"]{
+ background:var(--tm-state-review-bg)!important;color:var(--tm-state-review-fg)!important;
+}
+html[data-admin-theme] .tm-ui-state[data-state="error"],
+html[data-admin-theme] .tm-ui-state[data-state="failed"]{
+ background:var(--tm-state-error-bg)!important;color:var(--tm-state-error-fg)!important;
+}
+
+/* Existing status pills: color and geometry only, never status semantics. */
+html[data-admin-theme] #tm-players-page .tm-p-status,
+html[data-admin-theme] #tm-plan-page :is(.plan-state-chip,.plan-state-label,.plan-publication-label),
+html[data-admin-theme] .tm-library-layout :is(.plan-state-chip,.plan-state-label,.plan-publication-label),
+html[data-admin-theme] #tm-recipe-library-page .recipe-status-tag,
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-category-state,
+html[data-admin-theme] #consumption-panel .tm-consumption-status{
+ display:inline-flex!important;align-items:center;justify-content:center;
+ min-height:27px!important;padding:4px 10px!important;
+ font-size:11px!important;font-weight:550!important;line-height:1.3!important;
+ border:0!important;border-radius:999px!important;box-shadow:none!important;
+ background:var(--tm-state-neutral-bg)!important;color:var(--tm-state-neutral-fg)!important;
+}
+/* Green = published or granted access, not an interchangeable label. */
+html[data-admin-theme] #tm-players-page .tm-p-status.tm-p-active,
+html[data-admin-theme] #tm-plan-page :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="published"],
+html[data-admin-theme] #tm-plan-page :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="transitional"],
+html[data-admin-theme] .tm-library-layout :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="published"],
+html[data-admin-theme] .tm-library-layout :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="transitional"],
+html[data-admin-theme] #tm-recipe-library-page .recipe-status-published,
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-category-state:not(.is-pending),
+html[data-admin-theme] #consumption-panel .tm-consumption-status[data-state="all"]{
+ background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="pending"],
+html[data-admin-theme] #tm-plan-page :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="dirty"],
+html[data-admin-theme] .tm-library-layout :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="pending"],
+html[data-admin-theme] .tm-library-layout :is(.plan-state-chip,.plan-state-label,.plan-publication-label)[data-state="dirty"],
+html[data-admin-theme] #tm-recipe-library-page .recipe-status-draft,
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-category-state.is-pending,
+html[data-admin-theme] #consumption-panel .tm-consumption-status[data-state="partial"]{
+ background:var(--tm-state-pending-bg)!important;color:var(--tm-state-pending-fg)!important;
+}
+html[data-admin-theme] #tm-players-page .tm-p-status:is(.tm-p-inactive,.tm-p-no_account),
+html[data-admin-theme] #consumption-panel .tm-consumption-status[data-state="none"]{
+ background:var(--tm-state-neutral-bg)!important;color:var(--tm-state-neutral-fg)!important;
+}
+
+/* Porções Visuais: status-colored TOGGLE, not a static pill. Keep aria-pressed
+   behavior and accessibility; no fake inert status element. */
+html[data-admin-theme] #tm-food-library-page .tm-portion-toggle{
+ display:inline-flex!important;align-items:center;justify-content:center;
+ min-height:28px!important;padding:4px 10px!important;
+ border:0!important;border-radius:999px!important;box-shadow:none!important;
+ background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+ font:550 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-food-library-page .tm-portion-toggle[aria-pressed="false"]{
+ background:var(--tm-state-neutral-bg)!important;color:var(--tm-state-neutral-fg)!important;
+}
+html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:disabled{opacity:.5}
+
+/* Actions: all buttons 12px, compact icons 10px, status pills 999px only.
+   A new/primary action uses the approved blue-grey; delete never uses a
+   red outline. Keep semantic confirmation/success overrides on save buttons. */
+html[data-admin-theme] :is(.tm-action-primary,.tm-action-new,.tm-action-add),
+html[data-admin-theme] #tm-food-library-page button.primary,
+html[data-admin-theme] #tm-menu-recipes-page .dish-catalog-add,
+html[data-admin-theme] #tm-recipe-library-page .recipe-primary,
+html[data-admin-theme] .tm-library-layout button.primary{
+ min-height:42px!important;border:0!important;
+ border-radius:var(--tm-action-radius)!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ box-shadow:none!important;filter:none!important;
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+ font-weight:550!important;
+}
+html[data-admin-theme] :is(.tm-action-primary,.tm-action-new,.tm-action-add):hover:not(:disabled),
+html[data-admin-theme] #tm-food-library-page button.primary:hover:not(:disabled),
+html[data-admin-theme] #tm-menu-recipes-page .dish-catalog-add:hover:not(:disabled),
+html[data-admin-theme] #tm-recipe-library-page .recipe-primary:hover:not(:disabled),
+html[data-admin-theme] .tm-library-layout button.primary:hover:not(:disabled){
+ background:var(--tm-action-main-hover)!important;filter:none!important;box-shadow:none!important;
+}
+html[data-admin-theme] .tm-action-secondary,
+html[data-admin-theme] #tm-menu-recipes-page .dish-table-edit,
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-view,
+html[data-admin-theme] #menus-panel #profile-recipe-category-save,
+html[data-admin-theme] #tm-plan-page .plan-preview-edit,
+html[data-admin-theme] .tm-library-layout .plan-preview-edit{
+ border:0!important;border-radius:var(--tm-action-radius)!important;
+ background:var(--tm-action-secondary-bg)!important;color:var(--tm-action-secondary-fg)!important;
+ box-shadow:none!important;filter:none!important;
+}
+html[data-admin-theme] .tm-action-secondary:hover:not(:disabled),
+html[data-admin-theme] #tm-menu-recipes-page .dish-table-edit:hover:not(:disabled),
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-view:hover:not(:disabled),
+html[data-admin-theme] #menus-panel #profile-recipe-category-save:hover:not(:disabled){
+ background:var(--tm-action-secondary-hover)!important;box-shadow:none!important;
+}
+html[data-admin-theme] :is(.tm-action-danger,.tm-ui-action-danger),
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-category-remove,
+html[data-admin-theme] #tm-recipe-library-page :is(.recipe-row-actions .recipe-delete,.recipe-category-danger,.recipe-pdf-remove),
+html[data-admin-theme] #tm-food-library-page .food-delete-icon{
+ border:0!important;border-radius:var(--tm-action-radius)!important;
+ background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+ box-shadow:none!important;filter:none!important;
+}
+html[data-admin-theme] :is(.tm-action-danger,.tm-ui-action-danger):hover:not(:disabled),
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-category-remove:hover:not(:disabled),
+html[data-admin-theme] #tm-recipe-library-page :is(.recipe-row-actions .recipe-delete,.recipe-category-danger,.recipe-pdf-remove):hover:not(:disabled),
+html[data-admin-theme] #tm-food-library-page .food-delete-icon:hover:not(:disabled){
+ background:var(--tm-action-danger-hover)!important;color:var(--tm-action-danger-fg)!important;
+ box-shadow:none!important;
+}
+/* Plans' legacy-copy warning row remains yellow; normal rows use neutral
+   icon buttons, with a separate destructive surface only for genuine delete. */
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft) .plan-library-row-actions button,
+html[data-admin-theme] .tm-library-layout #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft) .plan-library-row-actions button,
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-icon-button:not(.recipe-delete),
+html[data-admin-theme] #tm-players-page .tm-p-icon-action,
+html[data-admin-theme] :is(.tm-action-icon,.tm-ui-action-icon),
+html[data-admin-theme] #tm-food-library-page .food-edit-icon:not(.food-delete-icon){
+ min-height:36px!important;min-width:36px!important;
+ width:36px!important;height:36px!important;
+ padding:6px!important;border:0!important;border-radius:var(--tm-action-compact-radius)!important;
+ background:var(--tm-action-icon-bg)!important;color:var(--tm-action-secondary-fg)!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page .tm-p-app-action:not(:disabled){
+ color:var(--tm-state-success-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft) .plan-library-row-actions button:hover,
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-icon-button:not(.recipe-delete):hover,
+html[data-admin-theme] #tm-players-page .tm-p-icon-action:hover:not(:disabled),
+html[data-admin-theme] :is(.tm-action-icon,.tm-ui-action-icon):hover:not(:disabled),
+html[data-admin-theme] #tm-food-library-page .food-edit-icon:not(.food-delete-icon):hover{
+ background:var(--tm-action-secondary-hover)!important;
+}
+/* Force semantic red on trash actions without changing their delete handler. */
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-delete,
+html[data-admin-theme] #tm-food-library-page .food-delete-icon{
+ background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-delete:hover,
+html[data-admin-theme] #tm-food-library-page .food-delete-icon:hover{
+ background:var(--tm-action-danger-hover)!important;color:var(--tm-action-danger-fg)!important;
+}
+/* Components with only an SVG retain their original accessible label.
+   Never replace semantic content icons (athlete, category, photo) with action SVGs. */
+html[data-admin-theme] :is(
+ #tm-players-page .tm-p-icon-action,
+ #tm-plan-page .plan-library-row-actions button,
+ .tm-library-layout .plan-library-row-actions button,
+ #tm-recipe-library-page .recipe-row-actions .recipe-icon-button,
+ #tm-food-library-page .food-edit-icon,
+ .tm-action-icon
+) svg{
+ width:18px;height:18px;stroke-width:1.8;
+}
+/* Compact 12px action corners, no pill-shaped interactive controls. */
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-category-remove,
+html[data-admin-theme] #tm-menu-recipes-page .dish-table-edit{
+ border-radius:12px!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-icon-button,
+html[data-admin-theme] #tm-food-library-page .food-edit-icon{
+ border-radius:10px!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-view{
+ min-height:36px!important;padding:7px 12px!important;
+}
+/* Confirmed Save retains a GREEN state, not a neutral grey primary button. */
+html[data-admin-theme] #plan-editor .actions :is(#save-plan,#assign-player).is-confirmed,
+html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assign-player).is-confirmed{
+ background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Generic neutral ghost actions for future opt-in buttons. */
+html[data-admin-theme] .tm-ui-action-ghost{
+ min-height:38px;padding:8px 13px;
+ background:transparent!important;color:var(--tm-action-ghost-fg)!important;
+ border:0!important;border-radius:var(--tm-action-radius)!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] .tm-ui-action-ghost:hover{background:var(--tm-ui-hover)!important}
+
+/* Mobile interactions: compact icon graphic may be 36px, touch target 44px.
+   Do not change table columns or break the already approved mobile cards. */
+@media(max-width:830px){
+ html[data-admin-theme] #tm-players-page .tm-p-app-action,
+ html[data-admin-theme] #tm-food-library-page .food-edit-icon,
+ html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-icon-button{
+  min-width:44px!important;min-height:44px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-row-actions button{
+  min-width:36px!important;min-height:36px!important;
+ }
+}
+html[data-admin-theme] :is(
+ .tm-ui-action-ghost,.tm-ui-action-icon,.tm-ui-action-danger,
+ .tm-action-primary,.tm-action-new,.tm-action-add,.tm-action-secondary,.tm-action-danger,
+ #tm-plan-page .plan-library-row-actions button,
+ #tm-players-page .tm-p-icon-action,
+ #tm-recipe-library-page .recipe-row-actions button,
+ #tm-food-library-page .food-edit-icon,
+ #tm-food-library-page .tm-portion-toggle
+):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] :is(.tm-action-primary,.tm-action-new,.tm-action-add,.tm-action-secondary,.tm-action-danger,.tm-ui-action-icon,.tm-ui-action-ghost){transition:none!important}
+}
+
+/* Bridge the previous design-system tokens so older high-specificity buttons
+   share this palette without rewriting their event logic. */
+html[data-admin-theme]{
+ --tm-control-height:42px;--tm-control-radius:12px;
+ --tm-control-bg:var(--tm-action-secondary-bg);
+ --tm-control-ink:var(--tm-action-secondary-fg);
+ --tm-control-border:transparent;
+ --tm-control-bg-hover:var(--tm-action-secondary-hover);
+ --tm-control-new-bg:var(--tm-action-main-bg);
+ --tm-control-new-ink:var(--tm-action-main-fg);
+ --tm-control-new-border:transparent;
+ --tm-control-danger-bg:var(--tm-action-danger-bg);
+ --tm-control-danger-ink:var(--tm-action-danger-fg);
+ --tm-control-danger-border:transparent;
+ --tm-control-success-bg:var(--tm-state-success-bg);
+ --tm-control-success-ink:var(--tm-state-success-fg);
+ --tm-control-success-border:transparent;
+}
+html[data-admin-theme] .tm-action-success{
+ background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+html[data-admin-theme] body :is(
+ #plan-entry #entry-create.tm-action-new,
+ #plan-editor #new-plan.tm-action-new,
+ #tm-players-page #tm-players-new.tm-action-new,
+ #tm-menu-recipes-page #dish-add-toggle.tm-action-new,
+ #tm-recipe-library-page #recipe-add.tm-action-new,
+ #tm-assessments-page #assessment-new.tm-action-new,
+ #assessment-new.tm-action-new,
+ .food-library-top #new.tm-action-new,
+ #admin-invite-form button.tm-action-new
+){
+ background:var(--tm-action-main-bg)!important;
+ color:var(--tm-action-main-fg)!important;
+ border:0!important;border-radius:12px!important;
+ box-shadow:none!important;filter:none!important;
+ min-height:44px!important;
+}
+html[data-admin-theme] body :is(
+ #plan-entry #entry-create.tm-action-new,
+ #plan-editor #new-plan.tm-action-new,
+ #tm-players-page #tm-players-new.tm-action-new,
+ #tm-menu-recipes-page #dish-add-toggle.tm-action-new,
+ #tm-recipe-library-page #recipe-add.tm-action-new,
+ #tm-assessments-page #assessment-new.tm-action-new,
+ #assessment-new.tm-action-new,
+ .food-library-top #new.tm-action-new,
+ #admin-invite-form button.tm-action-new
+):hover:not(:disabled){
+ background:var(--tm-action-main-hover)!important;
+ box-shadow:none!important;filter:none!important;
+}
+/* Ensure icon-only destructive controls share compact action geometry. */
+html[data-admin-theme] #tm-recipe-library-page .recipe-row-actions .recipe-delete,
+html[data-admin-theme] #tm-food-library-page .food-delete-icon{
+ min-width:36px!important;width:36px!important;min-height:36px!important;height:36px!important;
+ padding:6px!important;border-radius:10px!important;
+}
