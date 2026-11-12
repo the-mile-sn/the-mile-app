@@ -214,3 +214,13 @@ body[data-theme="light"] #overview .consumption-editor .consumption-secondary-ac
  #overview .consumption-editor .consumption-add-row .consumption-search-wrap input:focus,
  #overview .consumption-editor .consumption-add-row>input[type=number]:focus{font-size:16px!important}
 }
+
+
+/* v16: apply 16px before focus, including numeric portion input, to avoid iOS focus zoom. */
+@supports (-webkit-touch-callout:none){
+ #overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
+ #overview .consumption-editor .consumption-add-row>input[type=number],
+ #overview .consumption-editor .consumption-add-row input[aria-label="Inserir porção em gramas"]{
+  font-size:16px!important;
+ }
+}
