@@ -1355,7 +1355,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,portionStep,matches);
    fields.classList.add('consumption-food-sheet-content');fields.hidden=false;fields.style.display='block';
    sheet.append(fields);document.body.append(backdrop,sheet);
-   const closeFoodSheet=()=>{sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
+   const closeFoodSheet=()=>{sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
    const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.scrollTop=0;};
    addTrigger.onclick=openFoodSheet;dismiss.onclick=closeFoodSheet;backdrop.onclick=closeFoodSheet;confirm.onclick=()=>add.click();
    const originalUpdate=updateAddState;
@@ -1363,7 +1363,12 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    search.addEventListener('input',()=>{confirm.disabled=true;portionStep.hidden=true;});
    const originalRender=renderSuggestions;
    confirm.disabled=true;
-   let touchStart=0;sheet.addEventListener('touchstart',e=>{touchStart=e.touches[0]?.clientY||0;},{passive:true});sheet.addEventListener('touchend',e=>{const delta=(e.changedTouches[0]?.clientY||0)-touchStart;if(delta>100&&sheet.scrollTop===0)closeFoodSheet();},{passive:true});
+   let dragStart=0,dragCurrent=0,dragging=false;
+   handle.addEventListener('touchstart',e=>{dragStart=e.touches[0]?.clientY||0;dragCurrent=dragStart;dragging=true;},{passive:true});
+   handle.addEventListener('touchmove',e=>{if(!dragging)return;dragCurrent=e.touches[0]?.clientY||dragStart;if(Math.abs(dragCurrent-dragStart)>8)e.preventDefault();},{passive:false});
+   handle.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;const delta=dragCurrent-dragStart;if(delta< -35)sheet.classList.add('is-expanded');else if(delta>35){if(sheet.classList.contains('is-expanded'))sheet.classList.remove('is-expanded');else closeFoodSheet();}});
+   handle.addEventListener('touchcancel',()=>{dragging=false;});
+   handle.addEventListener('click',()=>sheet.classList.toggle('is-expanded'));
    const controls=document.createElement('div');controls.className='consumption-secondary-actions';controls.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;width:100%';controls.append(addTrigger);if(removeAll.isConnected){removeAll.style.setProperty('margin','0 0 0 auto','important');removeAll.style.setProperty('align-self','center','important');removeAll.style.setProperty('position','static','important');removeAll.style.setProperty('text-align','right','important');removeAll.style.setProperty('white-space','nowrap','important');controls.append(removeAll);}foodsRoot.append(added,controls);updateAddState();
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
