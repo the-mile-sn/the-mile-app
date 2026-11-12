@@ -7,6 +7,8 @@
  const menu=sidebar?.querySelector("#tm-admin-account-actions");
  const recipes=sidebar?.querySelector("#tm-admin-recipes-subnav");
  const recipeLink=sidebar?.querySelector("#tm-admin-nav-menus-recipes");
+ const foods=sidebar?.querySelector("#tm-admin-food-subnav");
+ const foodLink=sidebar?.querySelector("#tm-admin-nav-food-library");
  if(!sidebar||!track||!more||!menu)return;
  const standalone=!!document.querySelector(".tm-library-layout");
  const mobile=()=>window.matchMedia("(max-width:830px)").matches;
@@ -17,7 +19,7 @@
  const selectedAtEntry=secondaryControls.some(node=>node.classList.contains("is-active"));
  const planning=sidebar.querySelector("#tm-admin-nav-planning");
  const plans=sidebar.querySelector("#tm-admin-nav-create-plan");
- const moving=[...secondary,...(recipes?[recipes]:[]),...(plans?[plans]:[])];
+ const moving=[...secondary,...(recipes?[recipes]:[]),...(foods?[foods]:[]),...(plans?[plans]:[])];
  const primaryIds=["tm-admin-nav-dashboard","tm-admin-nav-players","tm-admin-nav-planning","tm-admin-nav-create-plan"];
  const primary=primaryIds.map(id=>sidebar.querySelector("#"+id)).filter(Boolean);
  const markers=new Map();
@@ -26,7 +28,7 @@
   node.parentNode?.insertBefore(mark,node);
   markers.set(node,mark);
  }
- let expanded=false;
+ let expanded=false,foodExpanded=false;
  // Keep the selected mobile tab completely visible with a comfortable right inset.
  // Only scroll the horizontal track; never change the page's vertical position.
  function revealActiveTab(animate=false){
@@ -45,7 +47,7 @@
  }
  function selectedSecondary(){
   return secondaryControls.some(node=>node.classList.contains("is-active"))||
-   !!recipes?.querySelector(".is-active");
+   !!recipes?.querySelector(".is-active")||!!foods?.querySelector(".is-active");
  }
  function openMore(){
   if(!mobile())return;
@@ -60,8 +62,10 @@
   menu.classList.remove("is-mobile-open");
   more.setAttribute("aria-expanded","false");
   recipes?.classList.remove("is-mobile-open");
-  expanded=false;
+  foods?.classList.remove("is-mobile-open");
+  expanded=false;foodExpanded=false;
   if(recipeLink)recipeLink.setAttribute("aria-expanded","false");
+  if(foodLink)foodLink.setAttribute("aria-expanded","false");
   paint();
  }
  function sync(){
@@ -73,11 +77,20 @@
     recipes.classList.toggle("is-mobile-open",expanded);
     recipes.hidden=!expanded;
    }
+   if(foods&&foodLink){
+    menu.insertBefore(foods,foodLink.nextSibling);
+    foods.classList.toggle("is-mobile-open",foodExpanded);
+    foods.hidden=!foodExpanded;
+   }
    if(plans&&planning&&plans.previousElementSibling!==planning)planning.after(plans);
    if(selectedSecondary())openMore();
    if(recipes?.querySelector(".is-active")){
     expanded=true;recipes.hidden=false;recipes.classList.add("is-mobile-open");
     recipeLink?.setAttribute("aria-expanded","true");
+   }
+   if(foods?.querySelector(".is-active")){
+    foodExpanded=true;foods.hidden=false;foods.classList.add("is-mobile-open");
+    foodLink?.setAttribute("aria-expanded","true");
    }
   }else{
    collapse();
@@ -85,6 +98,8 @@
    // Main app updates this state when opening its dish/recipe library.
    if(recipes&& !standalone)recipes.hidden=!recipeLink?.classList.contains("is-active");
    if(recipes&&standalone)recipes.hidden=false;
+   if(foods&&!standalone)foods.hidden=!foodLink?.classList.contains("is-active");
+   if(foods&&standalone)foods.hidden=false;
   }
   paint();
   if(mobile())requestAnimationFrame(()=>revealActiveTab());
@@ -111,6 +126,9 @@
   if(!mobile())return;
   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
   expanded=!expanded;
+  foodExpanded=false;
+  if(foods){foods.hidden=true;foods.classList.remove("is-mobile-open");}
+  foodLink?.setAttribute("aria-expanded","false");
   if(recipes){
    recipes.hidden=!expanded;
    recipes.classList.toggle("is-mobile-open",expanded);
@@ -118,14 +136,25 @@
   recipeLink.setAttribute("aria-expanded",String(expanded));
   paint();
  },true);
+ if(foodLink)foodLink.addEventListener("click",event=>{
+  if(!mobile())return;
+  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+  foodExpanded=!foodExpanded;expanded=false;
+  if(recipes){recipes.hidden=true;recipes.classList.remove("is-mobile-open");}
+  recipeLink?.setAttribute("aria-expanded","false");
+  if(foods){foods.hidden=!foodExpanded;foods.classList.toggle("is-mobile-open",foodExpanded);}
+  foodLink.setAttribute("aria-expanded",String(foodExpanded));
+  paint();
+ },true);
  menu.addEventListener("click",event=>{
   const target=event.target.closest("a,button");
-  if(!target||target===recipeLink)return;
+  if(!target||target===recipeLink||target===foodLink)return;
   // Secondary destinations retain the expanded panel when they update in place.
   // Full page destinations initialize open when their active item is found.
   if(mobile()){
    openMore();
    if(recipes?.contains(target))expanded=true;
+   if(foods?.contains(target))foodExpanded=true;
    requestAnimationFrame(()=>{
     if(selectedSecondary())openMore();
     paint();
@@ -144,7 +173,7 @@
  });
  window.addEventListener("resize",sync);
  // Main app applies active classes during navigation, after this module loads.
- for(const node of [...secondaryControls,...primary,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[])]){
+ for(const node of [...secondaryControls,...primary,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[]),...(foods?Array.from(foods.querySelectorAll(".tm-admin-subnav-link")):[])]){
   new MutationObserver(()=>{
    if(!mobile())return;
    // When a main tab becomes active, hide the secondary panel.
