@@ -1817,3 +1817,6 @@ html[data-admin-theme="light"] #plan-entry .plan-type-tag[data-palette="vp"]{col
 #plan-preview .plan-preview-group{
  border:0!important;box-shadow:none!important;
 }
+
+/* Standalone Planos shared library panels, same card rule as embedded editor. */
+.tm-library-layout :is(.panel,.stat){border:0!important;box-shadow:none!important;}
