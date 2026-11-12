@@ -207,3 +207,10 @@ body[data-theme="light"] #overview .consumption-editor .consumption-secondary-ac
 #overview .consumption-editor .consumption-add-row .consumption-search-wrap input::placeholder,
 #overview .consumption-editor .consumption-add-row>input[type=number]::placeholder{color:var(--text-muted,#b7b3a9)!important;opacity:.65!important}
 #overview .consumption-editor .consumption-add-row .consumption-search-icon{opacity:.48!important}
+
+
+/* v15: iOS Safari requires at least 16px computed font size on focused inputs to prevent viewport auto-zoom. */
+@supports (-webkit-touch-callout:none){
+ #overview .consumption-editor .consumption-add-row .consumption-search-wrap input:focus,
+ #overview .consumption-editor .consumption-add-row>input[type=number]:focus{font-size:16px!important}
+}
