@@ -199,3 +199,11 @@ body[data-theme="light"] #overview .consumption-editor .consumption-secondary-ac
 #overview .consumption-editor .consumption-macro-values{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:0!important;opacity:.85!important}
 #overview .consumption-editor .consumption-macro-values>span{display:block!important;min-width:0!important;text-align:center!important;white-space:nowrap!important;font-size:12px!important;font-weight:400!important;font-variant-numeric:tabular-nums!important}
 @media(max-width:390px){#overview .consumption-editor .consumption-secondary-actions{column-gap:8px!important}#overview .consumption-editor .consumption-secondary-actions .consumption-add-trigger{font-size:13px!important}#overview .consumption-editor .consumption-macro-values>span{font-size:11px!important}}
+
+
+/* v14: quieter food search and portion fields */
+#overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
+#overview .consumption-editor .consumption-add-row>input[type=number]{font-size:14px!important;font-weight:400!important;color:var(--text-muted,#b7b3a9)!important}
+#overview .consumption-editor .consumption-add-row .consumption-search-wrap input::placeholder,
+#overview .consumption-editor .consumption-add-row>input[type=number]::placeholder{color:var(--text-muted,#b7b3a9)!important;opacity:.65!important}
+#overview .consumption-editor .consumption-add-row .consumption-search-icon{opacity:.48!important}
