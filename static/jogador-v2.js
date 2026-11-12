@@ -1355,28 +1355,49 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,portionStep,matches);
    fields.classList.add('consumption-food-sheet-content');fields.hidden=false;fields.style.display='block';
    sheet.append(fields);document.body.append(backdrop,sheet);
-   const closeFoodSheet=()=>{sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
-   const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.scrollTop=0;};
+   const closeFoodSheet=()=>{sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
+   const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-expanded');sheet.scrollTop=0;};
    addTrigger.onclick=openFoodSheet;dismiss.onclick=closeFoodSheet;backdrop.onclick=closeFoodSheet;confirm.onclick=()=>add.click();
    const originalUpdate=updateAddState;
    quantity.addEventListener('input',()=>{confirm.disabled=!(matches.value&&Number(quantity.value)>0);});
    search.addEventListener('input',()=>{confirm.disabled=true;portionStep.hidden=true;});
    const originalRender=renderSuggestions;
    confirm.disabled=true;
-   let dragStart=0,dragCurrent=0,dragStartedAt=0,dragging=false;
-   const gestureStart=e=>{if(e.target.closest('button,input,select'))return;dragStart=e.touches[0]?.clientY||0;dragCurrent=dragStart;dragStartedAt=performance.now();dragging=true;};
-   const gestureMove=e=>{if(!dragging)return;dragCurrent=e.touches[0]?.clientY??dragCurrent;if(Math.abs(dragCurrent-dragStart)>5)e.preventDefault();};
-   const gestureEnd=e=>{if(!dragging)return;dragging=false;const endY=e.changedTouches[0]?.clientY??dragCurrent;const delta=endY-dragStart;const elapsed=Math.max(1,performance.now()-dragStartedAt);const velocity=Math.abs(delta)/elapsed;
-    if(delta< -12||(delta< -7&&velocity>.18)){sheet.classList.add('is-expanded');}
-    else if(delta>12||(delta>7&&velocity>.18)){closeFoodSheet();}
+   let dragStart=0,startHeight=0,restHeight=0,dragging=false,dragMoved=false;
+   const expandedHeight=()=>window.innerHeight-Math.max(50,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top'))||50);
+   const settleSheet=expanded=>{sheet.classList.remove('is-dragging');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.toggle('is-expanded',expanded);};
+   const gestureStart=e=>{
+    if(e.target.closest('button,input,select'))return;
+    dragStart=e.touches[0]?.clientY??0;startHeight=sheet.getBoundingClientRect().height;
+    if(!sheet.classList.contains('is-expanded'))restHeight=startHeight;
+    dragging=true;dragMoved=false;sheet.classList.add('is-dragging');
+   };
+   const gestureMove=e=>{
+    if(!dragging)return;
+    const y=e.touches[0]?.clientY??dragStart,delta=dragStart-y;
+    if(Math.abs(delta)<3&&!dragMoved)return;
+    dragMoved=true;e.preventDefault();
+    const max=expandedHeight(),next=Math.max(0,Math.min(max,startHeight+delta));
+    sheet.style.setProperty('height',next+'px','important');
+    sheet.style.setProperty('max-height',max+'px','important');
+   };
+   const gestureEnd=e=>{
+    if(!dragging)return;dragging=false;
+    const delta=dragStart-(e.changedTouches[0]?.clientY??dragStart);
+    const current=sheet.getBoundingClientRect().height;
+    if(!dragMoved){settleSheet(sheet.classList.contains('is-expanded'));return;}
+    // Dismiss only after the finger has dragged the sheet almost entirely off screen.
+    if(current<Math.max(55,restHeight*.18)){closeFoodSheet();return;}
+    const midpoint=(restHeight+expandedHeight())/2;
+    settleSheet(current>midpoint);
    };
    for(const target of [handle,header,heading]){
     target.addEventListener('touchstart',gestureStart,{passive:true});
     target.addEventListener('touchmove',gestureMove,{passive:false});
     target.addEventListener('touchend',gestureEnd,{passive:true});
-    target.addEventListener('touchcancel',()=>{dragging=false;},{passive:true});
+    target.addEventListener('touchcancel',()=>{if(dragging){dragging=false;settleSheet(sheet.classList.contains('is-expanded'));}},{passive:true});
    }
-   handle.addEventListener('click',()=>sheet.classList.toggle('is-expanded'));
+   handle.addEventListener('click',()=>{if(!dragMoved)sheet.classList.toggle('is-expanded');});
    const controls=document.createElement('div');controls.className='consumption-secondary-actions';controls.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;width:100%';controls.append(addTrigger);if(removeAll.isConnected){removeAll.style.setProperty('margin','0 0 0 auto','important');removeAll.style.setProperty('align-self','center','important');removeAll.style.setProperty('position','static','important');removeAll.style.setProperty('text-align','right','important');removeAll.style.setProperty('white-space','nowrap','important');controls.append(removeAll);}foodsRoot.append(added,controls);updateAddState();
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
