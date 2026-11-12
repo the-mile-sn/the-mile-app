@@ -4379,3 +4379,12 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  font-size:11px!important;font-weight:500!important;line-height:1.3!important;
  white-space:nowrap!important;letter-spacing:0!important;
 }
+
+/* Registered state follows the chosen option, not the meal heading. */
+#overview #day-details .player-meal-option-subcard .plan-option-label small .meal-registered-badge,
+#overview #day-details .single-meal-option .meal-registered-badge{
+ display:inline-flex!important;align-items:center!important;vertical-align:middle!important;
+ margin-left:9px!important;padding:3px 9px!important;border-radius:999px!important;
+ background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
+ font-size:11px!important;font-weight:500!important;line-height:1.3!important;white-space:nowrap!important;
+}
