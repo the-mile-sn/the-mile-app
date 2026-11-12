@@ -1782,8 +1782,11 @@ def application(env, start_response):
                 query=parse_qs(env.get('QUERY_STRING', ''))
                 search=(query.get('q') or [''])[0].strip()[:120]
                 if len(search) < 2: return respond(200, {'foods': []})
-                matches=c.execute("SELECT id, display_name, variant, kcal, protein_g, carbs_g, fat_g FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
-                return respond(200, {'foods': [{k: f[k] for k in ('id','display_name','variant','kcal','protein_g','carbs_g','fat_g')} for f in matches]})
+                columns={row['name'] for row in c.execute("PRAGMA table_info(v2_food_library)").fetchall()}
+                note_column=next((name for name in ('note','notes','observation','observations','description','preparation_notes') if name in columns), None)
+                selected="id, display_name, variant, kcal, protein_g, carbs_g, fat_g"+((", "+note_column) if note_column else "")
+                matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
+                return respond(200, {'foods': [{**{k: f[k] for k in ('id','display_name','variant','kcal','protein_g','carbs_g','fat_g')}, 'note': (f[note_column] or '') if note_column else ''} for f in matches]})
 
             # V2 player access: self-only, no athlete id supplied by the client.
             # Accounts are not linked or activated by this read-only endpoint.
