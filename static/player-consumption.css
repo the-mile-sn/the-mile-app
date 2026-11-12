@@ -283,3 +283,6 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet.is-expanded{height:calc(100dvh - max(50px,env(safe-area-inset-top)))!important;max-height:calc(100dvh - max(50px,env(safe-area-inset-top)))!important}
 .consumption-food-sheet-handle{height:6px;width:44px;touch-action:none;cursor:grab;position:relative}
 .consumption-food-sheet-handle:before{content:"";position:absolute;left:-24px;right:-24px;top:-14px;bottom:-14px}
+
+/* v22: responsive swipe target across sheet handle and heading */
+.consumption-food-sheet-handle,.consumption-food-sheet-header,.consumption-food-sheet h2{touch-action:none}
