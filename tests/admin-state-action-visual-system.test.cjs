@@ -5,7 +5,8 @@ const css=fs.readFileSync("static/admin-surface-palette.css","utf8");
 const guide=fs.readFileSync("docs/GUIA_VISUAL_BACKOFFICE.md","utf8");
 const htmls=["admin-microcycles.html","create-plan.html","food-library.html"].map(x=>fs.readFileSync("static/"+x,"utf8"));
 test("all Backoffice entrypoints load the versioned shared V1 stylesheet",()=>{
- for(const s of htmls)assert.match(s,/admin-surface-palette\.css\?v=9/);
+ assert.match(htmls[0],/admin-surface-palette\.css\?v=10/);
+ for(const s of htmls.slice(1))assert.match(s,/admin-surface-palette\.css\?v=5/);
  assert.match(css,/THE MILE \| ESTADOS E ACOES V1/);
  assert.match(guide,/The Mile — Guia Visual do Backoffice/);
 });

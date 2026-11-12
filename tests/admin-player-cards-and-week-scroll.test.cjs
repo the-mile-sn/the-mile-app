@@ -71,10 +71,12 @@ test("light search suggestions are a single contiguous list",()=>{
  assert.match(css,/border:0!important;border-radius:0!important;box-shadow:none!important/);
  assert.match(css,/background:transparent!important;color:var\(--tm-ui-text\)!important/);
 });
-test("two-line player search matches Estado, and portal closes reliably",()=>{
- assert.match(html,/class="tm-players-search-caption" aria-hidden="true">Pesquisar/);
- assert.match(css,/\.tm-players-search-caption\{/);
- assert.match(css,/padding:24px 44px 6px 38px!important/);
+test("one-line player search has one custom X and portal closes reliably",()=>{
+ assert.match(html,/id="tm-players-filter" type="text" inputmode="search"/);
+ assert.doesNotMatch(html,/tm-players-search-caption/);
+ assert.doesNotMatch(css,/\.tm-players-search-caption\{/);
+ assert.match(css,/padding:9px 44px 9px 38px!important/);
+ assert.match(css,/#tm-players-search-clear\[hidden\]/);
  assert.match(css,/body \.tm-player-search-list\[hidden\]/);
  assert.match(css,/display:none!important/);
  assert.match(js,/wasPlayerSearchOpenAtPointerDown/);
@@ -99,5 +101,5 @@ test("Light/dark card hierarchy and focus preserved; no decorative border/shadow
  assert.match(areaStyle,/box-shadow:none!important/);
  assert.match(areaStyle,/:focus-visible/);
  assert.match(html,/admin-dashboard\.js\?v=73/);
- assert.match(html,/admin-surface-palette\.css\?v=9/);
+ assert.match(html,/admin-surface-palette\.css\?v=10/);
 });

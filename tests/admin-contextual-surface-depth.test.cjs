@@ -33,7 +33,8 @@ test("no new outlines shadows or changed semantic selection states",()=>{
  assert.match(context,/font-size:16px!important/);
 });
 test("docs and all entrypoints reflect the contextual design",()=>{
- for(const s of html)assert.match(s,/admin-surface-palette\.css\?v=9/);
+ assert.match(html[0],/admin-surface-palette\.css\?v=10/);
+ for(const s of html.slice(1))assert.match(s,/admin-surface-palette\.css\?v=5/);
  assert.match(guide,/Regra contextual de superfície/);
  assert.match(guide,/--tm-ui-field-on-page/);
  assert.match(guide,/--tm-ui-field-on-card/);

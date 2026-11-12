@@ -1272,28 +1272,23 @@ html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-cop
 }
 
 
-/* Player search combobox: actual two-line field, like the Estado select. */
+/* Player search is intentionally ONE line. Safari must not add a native X.
+   The HTML input uses type=text (inputmode=search) and one explicit clear button. */
 html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-label{
  position:relative!important;
 }
-html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-caption{
- position:absolute;top:7px;left:38px;right:46px;z-index:1;
- font:500 10px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:var(--tm-ui-muted);pointer-events:none;
- white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
 html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-filter{
- height:55px!important;min-height:55px!important;
+ width:100%!important;height:55px!important;min-height:55px!important;
  box-sizing:border-box!important;
- padding:24px 44px 6px 38px!important;
- font:600 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ padding:9px 44px 9px 38px!important;
+ font:500 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  background:var(--tm-ui-field-on-card)!important;
  border:0!important;border-radius:12px!important;
  box-shadow:none!important;
+ -webkit-appearance:none!important;appearance:none!important;
 }
 html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-filter::placeholder{
- font-weight:500!important;
- color:var(--tm-ui-muted)!important;opacity:1!important;
+ color:var(--tm-ui-muted)!important;opacity:1!important;font-weight:500!important;
 }
 /* X is fixed to the vertical centre with NO translateY / animation.
    Stable across Safari focus, desktop hover, and responsive resizing. */
@@ -1327,9 +1322,11 @@ html[data-admin-theme="dark"] body .tm-player-search-list[hidden]{
  html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-filter{
   height:52px!important;min-height:52px!important;
   font-size:16px!important;line-height:1.2!important;
-  padding-top:22px!important;padding-bottom:5px!important;
+  padding:9px 44px 9px 38px!important;
  }
- html[data-admin-theme] #tm-players-page .tm-players-filter-panel .tm-players-search-caption{
-  top:6px;
- }
+}
+
+/* The custom clear X must disappear when its button is hidden. */
+html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-search-clear[hidden]{
+ display:none!important;
 }
