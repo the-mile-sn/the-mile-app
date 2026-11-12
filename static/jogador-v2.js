@@ -1334,10 +1334,10 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const choose=(option)=>{matches.replaceChildren(option.cloneNode(true));matches.value=option.value;search.value=option.textContent; suggestions.hidden=true;};
    search.addEventListener('input',()=>{suggestions.hidden=true;setTimeout(()=>{if(!search.isConnected)return;suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>choose(opt);suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;},350);});search.addEventListener('focus',()=>{if(suggestions.childElementCount)suggestions.hidden=false;});
    fields.append(search,suggestions,matches,quantity,add,added);trigger.onclick=()=>{fields.hidden=!fields.hidden;};
-   extra.append(trigger,fields);foodsRoot.append(extra);
+   extra.append(trigger,fields);const controls=document.createElement('div');controls.className='consumption-secondary-actions';if(removeAll.isConnected)controls.append(removeAll);controls.append(extra);foodsRoot.append(controls);
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
-  progress.innerHTML='<div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong><span class="consumption-energy-percent">—</span></div>';
+  progress.innerHTML='<div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong></div>';
   panel.append(progress);
   let previewSeq=0,previewTimer;
   const updatePreview=async()=>{
@@ -1352,7 +1352,6 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const result=await api('/api/v2/player/consumption-preview',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});
     if(seq!==previewSeq||!panel.isConnected)return;
     const actual=Number(result.nutrition?.kcal||0),planned=Number(result.planned?.kcal||0),pct=planned>0?actual/planned*100:0;
-    progress.querySelector('.consumption-energy-percent').textContent=Math.round(pct)+'%';
     progress.querySelector('.consumption-energy-fill').style.width=Math.min(100,Math.max(0,pct))+'%';
     progress.querySelector('.consumption-energy-ratio').textContent=Math.round(actual)+'/'+Math.round(planned)+' kcal';
     
