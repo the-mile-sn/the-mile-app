@@ -161,39 +161,117 @@ window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-n
 let recipeAccessToken=0;
 let recipeCategoryOptions=[];
 let selectedRecipeCategories=new Set();
+let savedRecipeCategories=new Set();
+const recipeCategoryNormalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
+const recipeCategorySearch=$("profile-recipe-category-search");
+const recipeCategoryResults=$("profile-recipe-category-results");
+function closeRecipeCategoryResults(){
+ recipeCategoryResults.hidden=true;
+ recipeCategorySearch.setAttribute("aria-expanded","false");
+}
+function recipeCategoryAccessChanged(){
+ return selectedRecipeCategories.size!==savedRecipeCategories.size||
+  [...selectedRecipeCategories].some(id=>!savedRecipeCategories.has(id));
+}
+function recipeCategoryPendingFeedback(){
+ $("profile-recipe-category-feedback").textContent=recipeCategoryAccessChanged()?"Alterações por guardar.":"";
+}
+function addRecipeAccessCategory(categoryId){
+ if(!recipeCategoryOptions.some(category=>category.id===categoryId)||selectedRecipeCategories.has(categoryId))return;
+ selectedRecipeCategories.add(categoryId);
+ recipeCategorySearch.value="";
+ renderRecipeCategoryPicker();
+ recipeCategoryPendingFeedback();
+ recipeCategorySearch.focus();
+ closeRecipeCategoryResults();
+}
 function renderRecipeCategoryPicker(){
- const host=$("profile-recipe-category-list"),results=$("profile-recipe-category-results"),search=$("profile-recipe-category-search");
+ const host=$("profile-recipe-category-list"),results=recipeCategoryResults,search=recipeCategorySearch;
  host.replaceChildren();
- const chosen=recipeCategoryOptions.filter(item=>selectedRecipeCategories.has(item.id));
+ const chosen=recipeCategoryOptions.filter(category=>selectedRecipeCategories.has(category.id));
  for(const category of chosen){
-  const chip=document.createElement("div");chip.className="tm-recipe-category-chip";chip.style.cssText="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;width:100%!important;box-sizing:border-box;gap:12px;padding:10px 12px;border:1px solid #c9ced7;border-radius:11px;background:rgba(140,150,165,.08);";
-  const name=document.createElement("span");name.textContent=category.name;name.style.cssText="flex:1;min-width:0;text-align:left;";
-  const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remover "+category.name);remove.style.cssText="display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 30px!important;width:30px!important;height:30px!important;min-width:30px!important;padding:0!important;margin:0!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;line-height:1!important;";
-  remove.addEventListener("click",()=>{selectedRecipeCategories.delete(category.id);renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";});
-  chip.append(name,remove);host.append(chip);
+  const row=document.createElement("div");row.className="tm-recipe-category-chip";
+  const name=document.createElement("strong");name.className="tm-recipe-category-name";name.textContent=category.name;
+  const actions=document.createElement("div");actions.className="tm-recipe-category-actions";
+  const saved=savedRecipeCategories.has(category.id);
+  const badge=document.createElement("span");badge.className="tm-recipe-category-state"+(saved?" is-visible":" is-pending");
+  badge.textContent=saved?"Visível":"Por guardar";
+  const remove=document.createElement("button");remove.type="button";remove.className="tm-recipe-category-remove";
+  remove.textContent="Eliminar";remove.setAttribute("aria-label","Eliminar categoria "+category.name);
+  remove.title="Remover categoria após guardar";
+  remove.addEventListener("click",()=>{
+   selectedRecipeCategories.delete(category.id);
+   renderRecipeCategoryPicker();
+   recipeCategoryPendingFeedback();
+  });
+  actions.append(badge,remove);row.append(name,actions);host.append(row);
  }
- const term=search.value.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
- const available=term?recipeCategoryOptions.filter(item=>!selectedRecipeCategories.has(item.id)&&item.name.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().includes(term)):[];
+ const term=recipeCategoryNormalize(search.value);
+ const available=recipeCategoryOptions.filter(category=>
+  !selectedRecipeCategories.has(category.id)&&recipeCategoryNormalize(category.name).includes(term));
  results.replaceChildren();
  for(const category of available){
-  const option=document.createElement("button");option.type="button";option.className="tm-recipe-category-option";option.textContent=category.name;
-  option.addEventListener("click",()=>{selectedRecipeCategories.add(category.id);search.value="";renderRecipeCategoryPicker();$("profile-recipe-category-feedback").textContent="Alterações por guardar.";search.focus();});
+  const option=document.createElement("button");option.type="button";option.className="tm-recipe-category-option";
+  option.setAttribute("role","option");option.setAttribute("aria-selected","false");
+  const title=document.createElement("strong");title.className="tm-recipe-option-title";title.textContent=category.name;
+  const subtitle=document.createElement("span");subtitle.className="tm-recipe-option-subtitle";
+  subtitle.textContent="Adicionar à seleção do jogador";
+  option.append(title,subtitle);
+  option.addEventListener("mousedown",event=>event.preventDefault());
+  option.addEventListener("click",()=>addRecipeAccessCategory(category.id));
   results.append(option);
  }
- const show=term.length>0&&document.activeElement===search&&available.length>0;
- results.hidden=!show;search.setAttribute("aria-expanded",String(show));
+ if(!available.length){
+  const empty=document.createElement("div");empty.className="tm-recipe-category-empty";
+  empty.textContent=term?"Nenhuma categoria encontrada.":"Todas as categorias estão selecionadas.";
+  results.append(empty);
+ }
+ const show=document.activeElement===search;
+ results.hidden=!show;
+ search.setAttribute("aria-expanded",String(show));
 }
-$("profile-recipe-category-search").addEventListener("input",renderRecipeCategoryPicker);
-$("profile-recipe-category-search").addEventListener("focus",renderRecipeCategoryPicker);
-$("profile-recipe-category-search").addEventListener("blur",()=>{setTimeout(()=>{if(!$("profile-recipe-category-results").contains(document.activeElement)){$("profile-recipe-category-results").hidden=true;$("profile-recipe-category-search").setAttribute("aria-expanded","false");}},160);});
+recipeCategorySearch.addEventListener("input",renderRecipeCategoryPicker);
+recipeCategorySearch.addEventListener("focus",renderRecipeCategoryPicker);
+recipeCategorySearch.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){
+  closeRecipeCategoryResults();recipeCategorySearch.blur();return;
+ }
+ if(event.key==="ArrowDown"&&!recipeCategoryResults.hidden){
+  event.preventDefault();recipeCategoryResults.querySelector(".tm-recipe-category-option")?.focus();return;
+ }
+ if(event.key==="Enter"){
+  const first=recipeCategoryResults.querySelector(".tm-recipe-category-option");
+  if(first&&!recipeCategoryResults.hidden){event.preventDefault();first.click();}
+ }
+});
+recipeCategoryResults.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){event.preventDefault();closeRecipeCategoryResults();recipeCategorySearch.focus();closeRecipeCategoryResults();}
+ if(event.key==="ArrowDown"||event.key==="ArrowUp"){
+  const options=[...recipeCategoryResults.querySelectorAll(".tm-recipe-category-option")];
+  const index=options.indexOf(document.activeElement);
+  if(index>=0&&options.length){
+   event.preventDefault();options[(index+(event.key==="ArrowDown"?1:-1)+options.length)%options.length].focus();
+  }
+ }
+});
+recipeCategorySearch.addEventListener("blur",()=>{
+ setTimeout(()=>{if(!recipeCategoryResults.contains(document.activeElement))closeRecipeCategoryResults();},120);
+});
+document.addEventListener("pointerdown",event=>{
+ if(!$("profile-recipe-access").contains(event.target))closeRecipeCategoryResults();
+});
 async function loadRecipeCategoryAccess(athleteId){
  const token=++recipeAccessToken,feedback=$("profile-recipe-category-feedback");
- recipeCategoryOptions=[];selectedRecipeCategories=new Set();$("profile-recipe-category-search").value="";renderRecipeCategoryPicker();
+ recipeCategoryOptions=[];selectedRecipeCategories=new Set();savedRecipeCategories=new Set();
+ recipeCategorySearch.value="";closeRecipeCategoryResults();renderRecipeCategoryPicker();
  feedback.textContent="A carregar categorias…";
  try{
   const result=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories");
   if(token!==recipeAccessToken||$("athlete").value!==athleteId)return;
-  recipeCategoryOptions=result.categories;selectedRecipeCategories=new Set(result.category_ids);renderRecipeCategoryPicker();
+  recipeCategoryOptions=result.categories;
+  savedRecipeCategories=new Set(result.category_ids);
+  selectedRecipeCategories=new Set(result.category_ids);
+  renderRecipeCategoryPicker();
   feedback.textContent=result.categories.length?"":"Não existem categorias de receitas.";
  }catch(error){if(token===recipeAccessToken)feedback.textContent="Não foi possível carregar as categorias: "+error.message;}
 }
@@ -201,9 +279,15 @@ $("profile-recipe-category-save").addEventListener("click",async()=>{
  const athleteId=$("athlete").value,feedback=$("profile-recipe-category-feedback");
  const category_ids=Array.from(selectedRecipeCategories);
  const button=$("profile-recipe-category-save");button.disabled=true;feedback.textContent="A guardar…";
- try{await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories",{method:"PUT",body:JSON.stringify({category_ids})});
-  if($("athlete").value===athleteId)feedback.textContent="Acesso às receitas guardado.";
- }catch(error){feedback.textContent="Não foi possível guardar: "+error.message;}
+ try{
+  const response=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/recipe-categories",{method:"PUT",body:JSON.stringify({category_ids})});
+  if($("athlete").value===athleteId){
+   savedRecipeCategories=new Set(response.category_ids||category_ids);
+   selectedRecipeCategories=new Set(savedRecipeCategories);
+   renderRecipeCategoryPicker();closeRecipeCategoryResults();
+   feedback.textContent="Acesso às receitas guardado.";
+  }
+ }catch(error){if($("athlete").value===athleteId)feedback.textContent="Não foi possível guardar: "+error.message;}
  finally{button.disabled=false;}
 });
 let tmPlanningReadyPromise=null;
