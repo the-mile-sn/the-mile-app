@@ -310,3 +310,11 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet-portion{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:18px 0 0!important;border-radius:0!important}
 .consumption-food-sheet-portion label{background:transparent!important;padding:0!important;border:0!important}
 .consumption-food-sheet-portion input{width:100%!important;max-width:100%!important;min-height:46px!important;background:rgba(255,255,255,.075)!important;border:0!important;border-radius:14px!important;padding:12px 16px!important}
+
+
+/* v26: full-sheet swipe, keyboard-safe opaque underlay, consistent text inset */
+.consumption-food-sheet{touch-action:pan-y}
+.consumption-food-sheet-backdrop::after{content:"";position:fixed;left:0;right:0;bottom:0;height:var(--sheet-keyboard-offset,0px);background:#282622;pointer-events:none}
+.consumption-food-sheet-portion{margin-left:18px!important;margin-right:18px!important}
+.consumption-food-sheet-portion label{margin:0!important}
+.consumption-food-sheet-portion input{width:100%!important}
