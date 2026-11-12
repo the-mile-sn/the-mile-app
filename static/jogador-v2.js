@@ -1616,8 +1616,8 @@ async function overview(){
   const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   section.append(head);
+  const options=color?datedPlanOptions(d,meal,color):[];
   if(color||menu){
-   const options=datedPlanOptions(d,meal,color);
    const avg=average(options);
    if(avg){const p=document.createElement("span");p.className="meal-average meal-average-inline";p.append(nutrition(avg));head.append(p);}
    if(menu){
