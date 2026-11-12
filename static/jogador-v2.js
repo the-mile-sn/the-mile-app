@@ -1318,23 +1318,22 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    foodsRoot.append(removeAll);
    foodsRoot.addEventListener('change',syncRemoveAll,{once:true});
    syncRemoveAll();
-   const search=document.createElement('input');search.type='search';search.placeholder='Pesquisar alimento da biblioteca';search.setAttribute('aria-label','Pesquisar alimento adicional');
+   const search=document.createElement('input');search.type='search';search.placeholder='Inserir alimento';search.setAttribute('aria-label','Pesquisar alimento adicional');
    const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
    const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Inserir porção';quantity.setAttribute('aria-label','Inserir porção em gramas');
-   const add=document.createElement('button');add.type='button';add.textContent='+ Adicionar alimento';
+   const add=document.createElement('button');add.type='button';add.textContent='⊕ Adicionar alimento';
    const added=document.createElement('div');
    let request=0;search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;matches.append(opt);}}catch(e){if(id===request)error(e);}};
    add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;additional.push({id,grams});const line=document.createElement('div');line.textContent=matches.selectedOptions[0]?.textContent+' · '+grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{additional.splice(additional.findIndex(x=>x.id===id&&x.grams===grams),1);line.remove();queuePreview();};line.append(remove);added.append(line);quantity.value='';queuePreview();};
    if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){additional.push({id:f.id,grams:f.grams});const line=document.createElement('div');line.textContent=(f.id||'Alimento')+' · '+f.grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{const index=additional.findIndex(x=>x.id===f.id&&x.grams===f.grams);if(index>=0)additional.splice(index,1);line.remove();};line.append(remove);added.append(line);}}
    const extra=document.createElement('div');extra.className='consumption-extra';
-   const trigger=document.createElement('button');trigger.type='button';trigger.className='consumption-add-trigger';trigger.textContent='⊕  Adicionar alimento';
+   
    const fields=document.createElement('div');fields.className='consumption-add-fields';fields.hidden=true;
    const suggestions=document.createElement('div');suggestions.className='consumption-suggestions';suggestions.hidden=true;
    matches.className='consumption-search-select';matches.hidden=true;
    const choose=(option)=>{matches.replaceChildren(option.cloneNode(true));matches.value=option.value;search.value=option.textContent; suggestions.hidden=true;};
    search.addEventListener('input',()=>{suggestions.hidden=true;setTimeout(()=>{if(!search.isConnected)return;suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>choose(opt);suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;},350);});search.addEventListener('focus',()=>{if(suggestions.childElementCount)suggestions.hidden=false;});
-   fields.append(search,suggestions,matches,quantity,add,added);trigger.onclick=()=>{fields.hidden=!fields.hidden;};
-   extra.append(trigger,fields);const controls=document.createElement('div');controls.className='consumption-secondary-actions';if(removeAll.isConnected)controls.append(removeAll);controls.append(extra);foodsRoot.append(controls);
+   const searchWrap=document.createElement('div');searchWrap.className='consumption-search-wrap';const searchIcon=document.createElement('span');searchIcon.className='consumption-search-icon';searchIcon.setAttribute('aria-hidden','true');searchIcon.textContent='☷⌕';searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.append(searchWrap,quantity);fields.append(inputRow,suggestions,matches,add,added);fields.hidden=false;extra.append(fields);const controls=document.createElement('div');controls.className='consumption-secondary-actions';if(removeAll.isConnected)controls.append(removeAll);foodsRoot.append(controls,extra);
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
   progress.innerHTML='<div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong></div>';
