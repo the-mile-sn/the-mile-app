@@ -5,6 +5,8 @@ Known combined classifications and recovery-first priorities
 are applied automatically; rest days and manual overrides remain separate.
 """
 from datetime import date, timedelta
+import time
+
 
 
 def parse_day(value):
@@ -75,6 +77,40 @@ def classify_range(start, end, match_dates):
             for offset in range((last - first).days + 1)]
 
 
+
+def initialize(c):
+    """Persist optional, date-scoped classification choices; the model is unchanged."""
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_day_classification_overrides (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        day_date TEXT NOT NULL,
+        classification TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        PRIMARY KEY (athlete_id, day_date)
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_day_classification_lookup "
+              "ON v2_day_classification_overrides(athlete_id,day_date)")
+
+
+def set_day_classification(c, athlete_id, day_date, classification, actor):
+    """None resets to automatic; 'Geral' explicitly confirms a general day."""
+    from microcycles_v2 import TYPES
+    parse_day(day_date)
+    if classification is not None and classification not in TYPES:
+        raise ValueError("invalid_day_classification")
+    if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
+        return None
+    c.execute("DELETE FROM v2_day_classification_overrides WHERE athlete_id=? AND day_date=?",
+              (athlete_id, day_date))
+    if classification is not None:
+        c.execute("""INSERT INTO v2_day_classification_overrides
+            (athlete_id,day_date,classification,created_by,updated_at)
+            VALUES(?,?,?,?,?)""",
+            (athlete_id,day_date,classification,actor,int(time.time())))
+    return {"date": day_date, "classification": classification,
+            "source": "manual" if classification is not None else "automatic"}
+
+
 def effective_days(c, athlete_id, days):
     """Resolve nutritional classifications without changing MD chronology."""
     if not days:
@@ -84,21 +120,32 @@ def effective_days(c, athlete_id, days):
         "SELECT event_date FROM v2_calendar_events WHERE athlete_id=? "
         "AND kind='off' AND event_date>=? AND event_date<=?",
         (athlete_id, first, last)).fetchall()}
+    overrides = {r["day_date"]: r["classification"] for r in c.execute(
+        "SELECT day_date,classification FROM v2_day_classification_overrides "
+        "WHERE athlete_id=? AND day_date>=? AND day_date<=?",
+        (athlete_id, first, last)).fetchall()}
     result = []
     for day in days:
-        original = day["classification"]
-        is_off = day["date"] in off_dates and original != "MD"
-        effective = original
-        if is_off:
-            if original and original.startswith("MD+1"):
-                effective = "Off (+1)"
-            elif original and original.startswith("MD+2"):
-                effective = "Off (+2)"
+        automatic = day["classification"]
+        has_off_event = day["date"] in off_dates
+        off_applies = has_off_event and automatic != "MD"
+        default = automatic
+        if off_applies:
+            if automatic and automatic.startswith("MD+1"):
+                default = "Off (+1)"
+            elif automatic and automatic.startswith("MD+2"):
+                default = "Off (+2)"
             else:
-                effective = "Off"
-        result.append({**day, "temporal_classification": original,
-                       "classification": effective, "is_off": is_off,
-                       "off_conflict": day["date"] in off_dates and original == "MD"})
+                default = "Off"
+        manual = overrides.get(day["date"])
+        effective = manual if manual is not None else default
+        result.append({**day, "temporal_classification": automatic,
+                       "automatic_classification": default,
+                       "classification": effective,
+                       "classification_override": manual,
+                       "classification_source": "manual" if manual is not None else "automatic",
+                       "is_off": effective in ("Off", "Off (+1)", "Off (+2)"),
+                       "off_conflict": has_off_event and automatic == "MD"})
     return result
 
 

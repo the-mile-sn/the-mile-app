@@ -347,6 +347,7 @@ def initialize():
                 logging.exception('Planos nutrition regression checks could not run')
         events_v2.initialize(c)
         day_colors_v2.initialize(c)
+        calendar_v2.initialize(c)
         peri_v2.initialize(c)
         if SITE_ROLE == 'admin':
             try:
@@ -1624,6 +1625,21 @@ def application(env, start_response):
                         raise Problem(404, 'not_found')
                     return respond(200, {'draft': draft})
                 raise Problem(404, 'not_found')
+
+
+            # A manual choice applies to one athlete/date only. Deleting it restores
+            # automatic MD chronology and Off event handling; manual meal colours win.
+            if path.startswith('/api/v2/athletes/') and path.endswith('/calendar/day-classification') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                body=read_json(env)
+                try:
+                    saved=calendar_v2.set_day_classification(
+                        c,aid,body.get('date'),body.get('classification'),user['id'])
+                except ValueError: raise Problem(400,'invalid_day_classification')
+                if saved is None: raise Problem(404,'not_found')
+                return respond(200,{'override':saved})
 
             if path.startswith('/api/v2/athletes/') and path.endswith('/calendar/meal-color') and method == 'PUT':
                 if not user: raise Problem(401, 'unauthorized')
