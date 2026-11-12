@@ -166,8 +166,10 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 
 - O **Microciclo semanal do Dashboard** não tem altura máxima nem scroll vertical interno. Mostra todas as linhas e utiliza a rolagem vertical da página. Em ecrãs estreitos, os sete dias podem deslizar horizontalmente sem comprimir excessivamente as colunas; nunca criar uma segunda barra vertical.
 - A **lista de Jogadores** usa cartões individuais (elementos article/listitem), um por jogador, sem linhas de tabela, contornos ou sombras. Fotografia, nome, utilizador, estado, data de renovação e ações continuam visíveis.
-- **Filtros de Jogadores** formam uma secção própria, com pesquisa de nome e estado de acesso. A secção usa a cor de subcard, enquanto os campos dentro dela usam a cor de pesquisa contextual do terceiro nível.
+- **Filtros de Jogadores** formam uma secção própria colocada diretamente sobre o fundo geral: são um **card principal**, e a pesquisa de nome e o filtro de estado no interior usam **cor de subcard**. Não aplicar azul de terceiro nível neste contexto.
 - O botão **Criar jogador** fica no topo à direita no desktop; no mobile integra o painel de filtros, sem duplicar o botão ou criar novos handlers.
 - No **mobile**, cada jogador é apresentado em duas linhas: identidade + estado; renovação + ação de entrar na app. O cartão inteiro abre o perfil, exceto os botões internos. O filtro de estado permanece utilizável em mobile.
-- O ícone **Ver perfil** é ação explícita no desktop. O botão de **Entrar na app** mantém a verificação de acesso e o comportamento já existente.
+- **Não apresentar o ícone de olho «Ver perfil»** na lista: o cartão inteiro abre o perfil, com hover discreto em desktop (preenchimento de subcard), cursor interativo e navegação por teclado. O botão de **Entrar na app** é a única ação de ícone e mantém a verificação de acesso e o comportamento independente.
 - Aplicar estas regras nos temas claro/escuro e em tablet e mobile sem recorrer a tabelas artificialmente redimensionadas nem scroll vertical dentro de uma lista.
+
+- **Densidade no desktop:** cartões de jogador com altura mínima de 94 px e padding vertical de 19 px; o mobile mantém o layout de duas linhas e a altura necessária ao conteúdo.

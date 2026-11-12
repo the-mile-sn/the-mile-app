@@ -30,7 +30,7 @@ test("mobile cards preserve separate app action and expose status filter",()=>{
  assert.match(areaStyle,/@media\(max-width:830px\)/);
  assert.match(areaStyle,/\.tm-players-filter-panel #tm-players-new/);
  assert.match(areaStyle,/\.tm-players-filter-panel \.tm-players-header-select/);
- assert.match(areaStyle,/\.tm-player-card-actions \.tm-p-icon-action:not\(\.tm-p-app-action\)/);
+ assert.match(areaStyle,/\.tm-players-card-list \.tm-player-card:hover/);
  assert.match(areaStyle,/\.tm-player-card-actions \.tm-p-app-action/);
  assert.match(areaStyle,/font-size:16px!important/);
  assert.match(areaStyle,/max-width:360px/);
@@ -42,6 +42,20 @@ test("Weekly dashboard expands vertically with only necessary horizontal scroll"
  assert.match(areaStyle,/overflow-x:auto!important/);
  assert.match(areaStyle,/overflow-y:visible!important/);
 });
+test("filters use principal card fill and nested controls use subcard fill",()=>{
+ assert.match(areaStyle,/\.tm-players-filter-panel\{/);
+ assert.match(areaStyle,/background:var\(--tm-ui-card\)!important/);
+ assert.match(areaStyle,/background:var\(--tm-ui-field-on-card\)!important/);
+});
+test("whole player cards are interactive on desktop and mobile without eye button",()=>{
+ assert.match(js,/card\.tabIndex=0/);
+ assert.match(js,/card\.addEventListener\("click"/);
+ assert.match(js,/card\.addEventListener\("keydown"/);
+ assert.match(js,/event\.target\.closest\("button,a,input,select,textarea"\)/);
+ assert.doesNotMatch(js,/const go=el\("button","tm-p-icon-action"\)/);
+ assert.match(areaStyle,/min-height:94px/);
+ assert.match(areaStyle,/transition:background-color 160ms ease/);
+});
 test("Light/dark card hierarchy and focus preserved; no decorative border/shadow",()=>{
  assert.match(areaStyle,/background:var\(--tm-ui-subcard\)!important/);
  assert.match(areaStyle,/background:var\(--tm-ui-field-on-subcard\)!important/);
@@ -49,6 +63,6 @@ test("Light/dark card hierarchy and focus preserved; no decorative border/shadow
  assert.match(areaStyle,/border:0!important/);
  assert.match(areaStyle,/box-shadow:none!important/);
  assert.match(areaStyle,/:focus-visible/);
- assert.match(html,/admin-dashboard\.js\?v=70/);
- assert.match(html,/admin-surface-palette\.css\?v=6/);
+ assert.match(html,/admin-dashboard\.js\?v=71/);
+ assert.match(html,/admin-surface-palette\.css\?v=7/);
 });
