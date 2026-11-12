@@ -1310,7 +1310,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const add=document.createElement('button');add.type='button';add.textContent='+ Adicionar alimento';
    const added=document.createElement('div');
    let request=0;search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;matches.append(opt);}}catch(e){if(id===request)error(e);}};
-   add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;additional.push({id,grams});const line=document.createElement('div');line.textContent=matches.selectedOptions[0]?.textContent+' · '+grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{additional.splice(additional.findIndex(x=>x.id===id&&x.grams===grams),1);line.remove();};line.append(remove);added.append(line);quantity.value='';};
+   add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;additional.push({id,grams});const line=document.createElement('div');line.textContent=matches.selectedOptions[0]?.textContent+' · '+grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{additional.splice(additional.findIndex(x=>x.id===id&&x.grams===grams),1);line.remove();queuePreview();};line.append(remove);added.append(line);quantity.value='';queuePreview();};
    if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){additional.push({id:f.id,grams:f.grams});const line=document.createElement('div');line.textContent=(f.id||'Alimento')+' · '+f.grams+' g';const remove=document.createElement('button');remove.type='button';remove.textContent='Remover';remove.onclick=()=>{const index=additional.findIndex(x=>x.id===f.id&&x.grams===f.grams);if(index>=0)additional.splice(index,1);line.remove();};line.append(remove);added.append(line);}}
    const extra=document.createElement('div');extra.className='consumption-extra';
    const trigger=document.createElement('button');trigger.type='button';trigger.className='consumption-add-trigger';trigger.textContent='⊕  Adicionar alimento';
@@ -1322,8 +1322,32 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    fields.append(search,suggestions,matches,quantity,add,added);trigger.onclick=()=>{fields.hidden=!fields.hidden;};
    extra.append(trigger,fields);foodsRoot.append(extra);
   }
+  const progress=document.createElement('div');progress.className='consumption-energy-progress';
+  progress.innerHTML='<div class="consumption-energy-head"><span>Progresso energético da opção</span><strong class="consumption-energy-percent">—</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><span class="consumption-energy-actual">A calcular…</span><span class="consumption-energy-planned"></span></div>';
+  panel.append(progress);
+  let previewSeq=0,previewTimer;
+  const updatePreview=async()=>{
+   const seq=++previewSeq,option=data.options.find(x=>x.option_ref===select.value);
+   if(!option)return;
+   const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
+   if(mode.value==='partial'){
+    body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
+    body.additional=additional;
+   }
+   try{
+    const result=await api('/api/v2/player/consumption-preview',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});
+    if(seq!==previewSeq||!panel.isConnected)return;
+    const actual=Number(result.nutrition?.kcal||0),planned=Number(result.planned?.kcal||0),pct=planned>0?actual/planned*100:0;
+    progress.querySelector('.consumption-energy-percent').textContent=Math.round(pct)+'%';
+    progress.querySelector('.consumption-energy-fill').style.width=Math.min(100,Math.max(0,pct))+'%';
+    progress.querySelector('.consumption-energy-actual').textContent=Math.round(actual)+' kcal registadas';
+    progress.querySelector('.consumption-energy-planned').textContent=Math.round(planned)+' kcal previstas';
+   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-actual').textContent='Pré-visualização indisponível';}
+  };
+  const queuePreview=()=>{clearTimeout(previewTimer);previewTimer=setTimeout(updatePreview,280);};
+  foodsRoot.addEventListener('input',queuePreview);foodsRoot.addEventListener('change',queuePreview);
   let initial=true;
-  mode.onchange=()=>{initial=false;additional.length=0;redraw();};select.onchange=()=>{initial=false;additional.length=0;redraw();};redraw();
+  mode.onchange=()=>{initial=false;additional.length=0;redraw();queuePreview();};select.onchange=()=>{initial=false;additional.length=0;redraw();queuePreview();};redraw();queuePreview();
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
