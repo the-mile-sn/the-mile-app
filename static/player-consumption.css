@@ -79,3 +79,19 @@ body[data-theme="light"] #overview .consumption-editor .consumption-add-fields>b
 #overview .consumption-editor .consumption-energy-planned{opacity:.68!important;text-align:right}
 body[data-theme="light"] #overview .consumption-editor .consumption-add-trigger,html[data-theme="light"] #overview .consumption-editor .consumption-add-trigger,.light-mode #overview .consumption-editor .consumption-add-trigger{background:#171717!important;color:#fff!important}
 @media(max-width:390px){#overview .consumption-editor .consumption-food-line{grid-template-columns:16px minmax(0,1fr) 62px 10px!important;column-gap:9px!important}#overview .consumption-editor .consumption-food-line input[type=number]{width:62px!important}#overview .consumption-editor .consumption-energy-values>span{font-size:12px!important}}
+
+/* v6 visual polish — match option card typography and rhythm */
+#overview .consumption-editor .consumption-status-button,#overview .consumption-editor .consumption-status-button.active{font-weight:400!important;font-size:12px!important;letter-spacing:0!important;box-shadow:none!important}
+#overview .consumption-editor .consumption-status-button span:first-child{font-weight:400!important;font-size:18px!important}
+#overview .consumption-editor .consumption-food-line{grid-template-columns:14px minmax(0,1fr) 70px 12px!important;column-gap:17px!important;min-height:49px!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]{appearance:none!important;-webkit-appearance:none!important;width:14px!important;height:14px!important;min-width:14px!important;border-radius:4px!important;border:1px solid rgba(190,220,210,.75)!important;background:rgba(128,128,128,.12)!important;position:relative!important;box-shadow:none!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]:checked{background:#c1dfd2!important;border-color:#c1dfd2!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]:checked:after{content:"";position:absolute;left:3px;top:0px;width:5px;height:8px;border:solid #162a27;border-width:0 2px 2px 0;transform:rotate(45deg)}
+#overview .consumption-editor .consumption-food-name{font-size:13px!important;font-weight:400!important;line-height:1.4!important}
+#overview .consumption-editor .consumption-add-trigger{margin:18px 0 0!important}
+#overview .consumption-editor .consumption-energy-progress{margin:18px 0 0!important;padding-top:18px!important}
+#overview .consumption-editor .consumption-energy-track{margin:0 0 11px!important;height:7px!important}
+#overview .consumption-editor .consumption-energy-values{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important}
+#overview .consumption-editor .consumption-energy-ratio{font-size:15px!important;font-weight:600!important;letter-spacing:-.02em!important}
+#overview .consumption-editor .consumption-energy-percent{font-size:11px!important;font-weight:400!important;opacity:.58!important}
+@media(max-width:390px){#overview .consumption-editor .consumption-food-line{grid-template-columns:14px minmax(0,1fr) 62px 10px!important;column-gap:12px!important}}
