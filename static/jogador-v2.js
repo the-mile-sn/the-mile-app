@@ -1670,10 +1670,11 @@ async function overview(){
    cards.forEach((card,i)=>{
     if(!card)return;
     const target=card.tagName==='DETAILS'?(card.querySelector('.option-body')||card):card;
-    const register=document.createElement('button');register.type='button';register.className='consumption-open';register.textContent=previous?'Editar registo':'Registar consumo';
+    const isRecordedOption=!!previous&&previous.option_ref===options[i]?.option_ref;
+    const register=document.createElement('button');register.type='button';register.className='consumption-open';register.textContent=isRecordedOption?'Editar registo':previous?'Registar esta opção':'Registar consumo';
     register.onclick=()=>{register.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{register.disabled=false;});};
     target.append(register);
-    if(previous){const status=document.createElement('p');status.className='consumption-recorded';status.textContent='Consumo registado · '+({all:'Tudo',partial:'Parcialmente',none:'Não consumi'}[previous.status]||previous.status);target.append(status);}
+    if(isRecordedOption){const status=document.createElement('p');status.className='consumption-recorded';status.textContent='✓ '+({all:'Consumido',partial:'Consumo parcial',none:'Não consumido'}[previous.status]||'Registado');target.append(status);}
    });
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
