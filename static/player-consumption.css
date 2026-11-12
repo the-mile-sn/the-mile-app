@@ -153,3 +153,7 @@ body[data-theme="light"] #overview .consumption-quick-actions .consumption-quick
 #overview .consumption-editor .consumption-food-line{align-items:center!important}
 #overview .consumption-editor .consumption-food-line input[type=number]{align-self:center!important;vertical-align:middle!important}
 #overview .consumption-editor .consumption-food-line{line-height:1.3!important}
+
+#overview .consumption-editor .consumption-grams-unit{display:flex!important;align-items:center!important;justify-content:center!important;align-self:stretch!important;line-height:1!important;font-size:13px!important}
+#overview .consumption-editor .consumption-save-feedback:empty{display:none!important;margin:0!important;padding:0!important;min-height:0!important}
+#overview .consumption-editor .consumption-actions{margin-top:6px!important}
