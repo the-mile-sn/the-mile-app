@@ -1275,7 +1275,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   if(!panel.isConnected)return;
   if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
   panel.replaceChildren();
-  const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Fechar sem guardar');close.className='consumption-close';close.onclick=()=>panel.remove();panel.append(close);
+
   const select=document.createElement('select');
   data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||'Opção '+(i+1);select.append(item);});
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
@@ -1332,7 +1332,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   save.className='consumption-save';
-  const actions=document.createElement('div');actions.className='consumption-actions';actions.append(save);panel.append(actions);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();const actions=document.createElement('div');actions.className='consumption-actions';actions.append(cancel,save);panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
