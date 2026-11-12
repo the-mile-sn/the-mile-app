@@ -1782,7 +1782,10 @@ def application(env, start_response):
                 query=parse_qs(env.get('QUERY_STRING', ''))
                 search=(query.get('q') or [''])[0].strip()[:120]
                 if len(search) < 2: return respond(200, {'foods': []})
-                columns={row['name'] for row in c.execute("PRAGMA table_info(v2_food_library)").fetchall()}
+                try:
+                    columns={row['column_name'] for row in c.execute("SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='v2_food_library'").fetchall()}
+                except Exception:
+                    columns={row['name'] for row in c.execute("PRAGMA table_info(v2_food_library)").fetchall()}
                 note_column=next((name for name in ('note','notes','observation','observations','description','preparation_notes') if name in columns), None)
                 selected="id, display_name, variant, kcal, protein_g, carbs_g, fat_g"+((", "+note_column) if note_column else "")
                 matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
