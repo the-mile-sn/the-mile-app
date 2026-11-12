@@ -78,8 +78,8 @@ class AthleteVisualPortionsTests(unittest.TestCase):
         self.assertIn("tm-player-permissions-list",styles)
         self.assertIn('html[data-admin-theme="light"] #tm-players-settings-slot',styles)
         self.assertIn("@media(max-width:640px)",styles)
-        self.assertIn("admin-dashboard.js?v=66",html)
-        self.assertIn("admin-microcycles.css?v=186",html)
+        self.assertIn("admin-dashboard.js?v=67",html)
+        self.assertIn("admin-microcycles.css?v=188",html)
 
 
 

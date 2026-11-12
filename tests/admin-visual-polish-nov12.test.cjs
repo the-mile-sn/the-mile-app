@@ -26,5 +26,5 @@ test("light planning surfaces and arrows are legible and scoped",()=>{
  assert.ok(light.includes("#calendar-prev,#calendar-next"));
  assert.ok(light.includes("#nutrition-weekly-summary"));
  assert.ok(light.includes("#e6ebf2!important"));
- for(const v of ["admin-light-theme.css?v=29","admin-microcycles.css?v=186","visual-portions.css?v=7","admin-plans-native.css?v=7"])assert.ok(html.includes(v));
+ for(const v of ["admin-light-theme.css?v=30","admin-microcycles.css?v=188","visual-portions.css?v=7","admin-plans-native.css?v=7"])assert.ok(html.includes(v));
 });

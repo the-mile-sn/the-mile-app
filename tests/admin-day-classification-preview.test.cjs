@@ -7,8 +7,8 @@ const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 test("date header and manual classification with reset",()=>{
  assert.match(js,/formatCalendarPreviewDate\(day\.date\)/);
  assert.match(js,/return weekdays\[weekday\]\+", "\+day\+" "\+months/);
- assert.match(js,/calendar-day-classification-select/);
- assert.match(js,/const automatic=document\.createElement\("option"\)/);
+ assert.match(js,/calendar-day-classification-trigger/);
+ assert.match(js,/const choices=\[\{classification:null,label:"Automático/);
  assert.match(js,/body:JSON\.stringify\(\{date:day\.date,classification\}\)/);
  assert.match(js,/calendar\/day-classification/);
  assert.match(css,/\.calendar-day-preview-heading/);
@@ -24,5 +24,5 @@ test("food filter focus outlines only full card",()=>{
  assert.match(css,/\.tm-food-filter-field :is\(input,select\):is\(:focus,:focus-visible\)/);
  assert.match(portions, /\.tm-portion-filters>label:has\(select\)::after/);
  assert.match(portions, /\.tm-portion-filters>label :is\(input,select\):is\(:focus,:focus-visible\)/);
- for(const v of ["admin-microcycles.js?v=18275","admin-microcycles.css?v=187","visual-portions.css?v=7"])assert.ok(html.includes(v));
+ for(const v of ["admin-microcycles.js?v=18276","admin-microcycles.css?v=188","visual-portions.css?v=7"])assert.ok(html.includes(v));
 });

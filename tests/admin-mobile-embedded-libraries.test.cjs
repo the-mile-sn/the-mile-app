@@ -27,7 +27,7 @@ test("embedded plans mobile layout does not alter plan actions, state or filters
  for(const token of ['data-view-id','data-edit-id','data-delete-legacy-id','plan-type-tag','plan-state-label','library-player-filter','library-type-filter'])assert.ok(plansJS.includes(token));
 });
 test("new responsive styles are served by cache-busted integrated Backoffice",()=>{
- assert.ok(html.includes("admin-microcycles.css?v=186"));
+ assert.ok(html.includes("admin-microcycles.css?v=188"));
  assert.ok(html.includes("admin-plans-native.css?v=7"));
  assert.ok(admin.includes("@media(max-width:700px)"));
  assert.ok(plans.includes("@media(max-width:700px)"));
