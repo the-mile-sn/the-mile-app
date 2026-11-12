@@ -271,7 +271,7 @@ html[data-admin-theme] :is(.tm-player-search-list,.tm-db-player-results,.tm-clin
 
 /* 6. Legacy Planeamento: keep MD/Off/selected and pending dashed borders. */
 #tm-admin-legacy .tm-planning-unified-header,
-#tm-admin-legacy .calendar-panel,
+#tm-admin-legacy .calendar-panel:not(#menus-panel),
 #tm-admin-legacy .tm-planning-player-toolbar,
 #tm-admin-legacy #backoffice-nav{
  background:var(--tm-ui-card)!important;
