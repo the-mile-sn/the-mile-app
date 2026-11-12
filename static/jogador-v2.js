@@ -1318,9 +1318,9 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    foodsRoot.append(removeAll);
    foodsRoot.addEventListener('change',syncRemoveAll,{once:true});
    syncRemoveAll();
-   const search=document.createElement('input');search.type='search';search.placeholder='Inserir alimento';search.setAttribute('aria-label','Pesquisar alimento adicional');
+   const search=document.createElement('input');search.type='search';search.placeholder='Inserir alimento';search.setAttribute('aria-label','Pesquisar alimento adicional');search.style.fontSize='16px';
    const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
-   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Porção';quantity.setAttribute('aria-label','Inserir porção em gramas');
+   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Porção';quantity.setAttribute('aria-label','Inserir porção em gramas');quantity.style.fontSize='16px';
    const add=document.createElement('button');add.type='button';add.textContent='⊕ Adicionar alimento';
    const added=document.createElement('div');added.className='consumption-added-list';
    let request=0;const foodNames=new Map();
