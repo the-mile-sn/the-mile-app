@@ -4543,3 +4543,9 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 /* Closed option: option number, title, then registration badge. */
 #overview #day-details details.player-meal-option-subcard summary .plan-option-label>.meal-registered-badge-closed{order:2!important;}
+
+/* Compact quick consumption controls, with a brief green confirmation circle. */
+#overview #day-details .consumption-quick-actions{gap:10px!important;}
+#overview #day-details .consumption-quick-actions .consumption-quick-confirm,
+#overview #day-details .consumption-quick-actions .consumption-quick-edit{font-size:calc(1em - 2px)!important;min-height:42px!important;transition:background .22s ease,border-radius .3s ease,width .3s ease,transform .3s ease!important;}
+#overview #day-details .consumption-quick-actions .consumption-quick-confirm.consumption-confirm-success{background:#b9e6ce!important;color:#176044!important;border-radius:999px!important;width:46px!important;max-width:46px!important;min-width:46px!important;flex:0 0 46px!important;margin-inline:auto!important;font-size:24px!important;}
