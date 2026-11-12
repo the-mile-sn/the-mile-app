@@ -4428,3 +4428,30 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
  background:rgba(255,255,255,.07)!important;border:1px solid rgba(200,225,240,.22)!important;
 }
+
+/* Energy consumption ring: understated neutral percentage. */
+#overview #day-details .nutrition-consumed-center small{
+ color:var(--text-secondary,#aeb2ba)!important;
+ font-weight:400!important;
+}
+/* Option number remains its own row; badges sit below without collision. */
+#overview #day-details .player-meal-option-subcard .plan-option-label small{
+ display:block!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags{
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+ gap:7px!important;margin:7px 0 0!important;
+ position:relative!important;z-index:1!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-registered-badge,
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;height:25px!important;min-height:25px!important;
+ padding:0 10px!important;margin:0!important;border:0!important;
+ border-radius:999px!important;font-size:11px!important;line-height:1!important;
+ font-weight:400!important;white-space:nowrap!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
+ background:rgba(255,255,255,.09)!important;
+ box-shadow:none!important;outline:0!important;
+}
