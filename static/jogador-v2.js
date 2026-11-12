@@ -1355,20 +1355,34 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,foodNote,portionStep,matches);
    fields.classList.add('consumption-food-sheet-content');fields.hidden=false;fields.style.display='block';
    sheet.append(fields);document.body.append(backdrop,sheet);
-   const closeFoodSheet=()=>{sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
-   const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;foodNote.hidden=true;foodNote.textContent='';portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-expanded');sheet.scrollTop=0;};
+   const closeFoodSheet=()=>{sheet.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-viewport-height');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
+   const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;foodNote.hidden=true;foodNote.textContent='';portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-expanded');sheet.scrollTop=0;syncSheetViewport();};
+   const syncSheetViewport=()=>{
+    if(sheet.hidden)return;
+    const viewport=window.visualViewport;
+    const visibleHeight=viewport?.height||window.innerHeight;
+    const offset=Math.max(0,window.innerHeight-(viewport?.offsetTop||0)-visibleHeight);
+    sheet.style.setProperty('--sheet-keyboard-offset',offset+'px');
+    sheet.style.setProperty('--sheet-viewport-height',visibleHeight+'px');
+    if(offset>100){sheet.classList.add('keyboard-visible');sheet.classList.add('is-expanded');}
+    else sheet.classList.remove('keyboard-visible');
+   };
+   window.visualViewport?.addEventListener('resize',syncSheetViewport);
+   window.visualViewport?.addEventListener('scroll',syncSheetViewport);
+   search.addEventListener('focus',()=>{sheet.classList.add('is-expanded');syncSheetViewport();});
+   quantity.addEventListener('focus',()=>{sheet.classList.add('is-expanded');syncSheetViewport();});
    addTrigger.onclick=openFoodSheet;dismiss.onclick=closeFoodSheet;backdrop.onclick=closeFoodSheet;confirm.onclick=()=>add.click();
    const originalUpdate=updateAddState;
    quantity.addEventListener('input',()=>{confirm.disabled=!(matches.value&&Number(quantity.value)>0);});
    search.addEventListener('input',()=>{confirm.disabled=true;portionStep.hidden=true;});
    const originalRender=renderSuggestions;
    confirm.disabled=true;
-   let dragStart=0,startHeight=0,restHeight=0,dragging=false,dragMoved=false;
-   const expandedHeight=()=>window.innerHeight-Math.max(50,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top'))||50);
+   let dragStart=0,startHeight=0,restHeight=0,dragging=false,dragMoved=false,dragStartedAt=0;
+   const expandedHeight=()=>Math.max(200,(window.visualViewport?.height||window.innerHeight)-50);
    const settleSheet=expanded=>{sheet.classList.remove('is-dragging');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.toggle('is-expanded',expanded);};
    const gestureStart=e=>{
     if(e.target.closest('button,input,select'))return;
-    dragStart=e.touches[0]?.clientY??0;startHeight=sheet.getBoundingClientRect().height;
+    dragStart=e.touches[0]?.clientY??0;dragStartedAt=performance.now();startHeight=sheet.getBoundingClientRect().height;
     if(!sheet.classList.contains('is-expanded'))restHeight=startHeight;
     dragging=true;dragMoved=false;sheet.classList.add('is-dragging');
    };
@@ -1389,7 +1403,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     // Dismiss only after the finger has dragged the sheet almost entirely off screen.
     if(current<Math.max(55,restHeight*.18)){closeFoodSheet();return;}
     const midpoint=(restHeight+expandedHeight())/2;
-    settleSheet(current>midpoint);
+    const elapsed=Math.max(1,performance.now()-dragStartedAt),speed=delta/elapsed;
+    settleSheet(delta>10&&speed>.5?true:delta< -10&&speed<-.5?false:current>midpoint);
    };
    for(const target of [handle,header,heading]){
     target.addEventListener('touchstart',gestureStart,{passive:true});
