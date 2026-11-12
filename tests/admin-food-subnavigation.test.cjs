@@ -32,5 +32,5 @@ test("portions catalogue stays functional without legacy switch and testing cont
  assert.ok(css.includes("#tm-admin-food-subnav"));
 });
 test("navigation assets use matching cache versions",()=>{
- for(const ver of ["admin-nav-shell.js?v=4","admin-dashboard.js?v=67","admin-mobile-nav.js?v=10","visual-portions.js?v=4","admin-microcycles.css?v=188","visual-portions.css?v=6"])assert.ok(html.includes(ver));
+ for(const ver of ["admin-nav-shell.js?v=4","admin-dashboard.js?v=68","admin-mobile-nav.js?v=10","visual-portions.js?v=4","admin-microcycles.css?v=189","visual-portions.css?v=6"])assert.ok(html.includes(ver));
 });
