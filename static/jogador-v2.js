@@ -1691,7 +1691,7 @@ async function overview(){
     const isRecordedOption=!!previous&&previous.option_ref===options[i]?.option_ref;
     const actions=document.createElement('div');actions.className='consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
-    quick.textContent=isRecordedOption&&previous.status==='all'?'✓ Consumido':'✓ Cumpri';
+    quick.textContent=isRecordedOption&&previous.status==='all'?'✓ Consumido':'✓ Cumpri';quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
     const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
     const feedback=document.createElement('p');feedback.className='consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     quick.onclick=async()=>{
