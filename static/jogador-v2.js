@@ -1323,7 +1323,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    extra.append(trigger,fields);foodsRoot.append(extra);
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
-  progress.innerHTML='<div class="consumption-energy-head"><span>kcal</span><strong class="consumption-energy-percent">—</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><span class="consumption-energy-actual">A calcular…</span><span class="consumption-energy-planned"></span></div>';
+  progress.innerHTML='<div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong><span class="consumption-energy-percent">—</span></div>';
   panel.append(progress);
   let previewSeq=0,previewTimer;
   const updatePreview=async()=>{
@@ -1340,9 +1340,9 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const actual=Number(result.nutrition?.kcal||0),planned=Number(result.planned?.kcal||0),pct=planned>0?actual/planned*100:0;
     progress.querySelector('.consumption-energy-percent').textContent=Math.round(pct)+'%';
     progress.querySelector('.consumption-energy-fill').style.width=Math.min(100,Math.max(0,pct))+'%';
-    progress.querySelector('.consumption-energy-actual').textContent=Math.round(actual)+' kcal registadas';
-    progress.querySelector('.consumption-energy-planned').textContent=Math.round(planned)+' kcal previstas';
-   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-actual').textContent='Pré-visualização indisponível';}
+    progress.querySelector('.consumption-energy-ratio').textContent=Math.round(actual)+'/'+Math.round(planned)+' kcal';
+    
+   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-ratio').textContent='Pré-visualização indisponível';}
   };
   const queuePreview=()=>{clearTimeout(previewTimer);previewTimer=setTimeout(updatePreview,280);};
   foodsRoot.addEventListener('input',queuePreview);foodsRoot.addEventListener('change',queuePreview);
