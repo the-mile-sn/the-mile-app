@@ -333,7 +333,8 @@
 #calendar-matches{margin-bottom:22px}
 #supplements-panel .supp-associated-row.supp-published{background:rgba(80,150,112,.23)!important;border-color:rgba(125,191,150,.22)!important}
 #supplements-panel .supp-associated-row.supp-pending{background:rgba(222,162,75,.15)!important}
-#menus-panel .menu-color-label{display:inline-block!important;width:25px!important;min-width:25px!important;height:25px!important;padding:0!important;border-radius:9px!important;font-size:0!important}
+#menus-panel .menu-color-label{display:inline-block!important;flex:0 0 32px!important;width:32px!important;min-width:32px!important;height:32px!important;padding:0!important;border-radius:10px!important;font-size:0!important}
+#menus-panel .menu-color-label.meal-vp{background:#28543e!important;color:#fff!important}
 #menus-panel .menu-color-label:not([class*="meal-"]){background:#555!important}
 #tm-menu-recipes-page .menu-library-section,#tm-menu-recipes-page .menu-create-section{display:block;clear:both;margin-top:32px!important;padding:26px!important}
 #tm-menu-recipes-page .menu-library-section{margin-top:46px!important}
