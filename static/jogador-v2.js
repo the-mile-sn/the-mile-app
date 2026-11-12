@@ -1325,10 +1325,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   let initial=true;
   mode.onchange=()=>{initial=false;additional.length=0;redraw();};select.onchange=()=>{initial=false;additional.length=0;redraw();};redraw();
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
+  const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:mode.value};
    if(mode.value==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(mode.value==='partial')body.additional=additional;
-   try{save.disabled=true;await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});panel.remove();await overview();}catch(e){error(e);save.disabled=false;}
+   try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   if(previous){
    const remove=document.createElement('button');remove.type='button';remove.textContent='✕ Eliminar registo';remove.setAttribute('aria-label','Eliminar registo de consumo desta refeição');
