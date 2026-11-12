@@ -4529,3 +4529,14 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
  background:rgba(255,255,255,.09)!important;
 }
+
+/* Display registered state on collapsed option; expanded option keeps actions below foods. */
+#overview #day-details details.player-meal-option-subcard summary .meal-registered-badge-closed{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ align-self:flex-start!important;max-width:max-content!important;flex:0 0 auto!important;
+ margin:6px 0 0!important;padding:4px 10px!important;border:0!important;
+ border-radius:999px!important;background:rgba(154,224,191,.20)!important;
+ color:#b9eed2!important;font-size:11px!important;line-height:1.15!important;
+ font-weight:400!important;white-space:nowrap!important;box-shadow:none!important;
+}
+#overview #day-details details.player-meal-option-subcard[open] summary .meal-registered-badge-closed{display:none!important;}
