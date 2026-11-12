@@ -1,1 +1,31 @@
-#consumption-panel{margin-top:14px}.tm-consumption-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}.tm-consumption-toolbar input,.tm-consumption-toolbar button{border:1px solid var(--tm-border,rgba(128,128,128,.25));border-radius:12px;padding:9px 12px;background:transparent;color:inherit}.tm-consumption-card{border:1px solid rgba(128,128,128,.2);border-radius:16px;padding:16px;margin:12px 0;background:rgba(128,128,128,.045)}.tm-consumption-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.tm-consumption-status{font-size:.8rem;opacity:.8}.tm-consumption-option{opacity:.65;font-size:.85rem}.tm-consumption-macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0}.tm-consumption-macros div{display:flex;flex-direction:column;gap:4px}.tm-consumption-macros small{opacity:.6}.tm-consumption-card details{margin-top:12px}.tm-consumption-card li{margin:6px 0}@media(max-width:600px){.tm-consumption-macros{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* The Mile · Registos — restrained, responsive native admin treatment */
+#consumption-panel{margin:16px 0 24px;padding:0;border:0;background:transparent;box-shadow:none;color:inherit}
+.tm-consumption-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+.tm-consumption-toolbar label{font-size:12px;font-weight:600;letter-spacing:.01em;opacity:.65}
+.tm-consumption-toolbar input,.tm-consumption-toolbar button{min-height:40px;border:1px solid rgba(128,128,128,.22);border-radius:12px;padding:9px 13px;background:rgba(128,128,128,.065);color:inherit;font:inherit;font-size:13px;box-shadow:none}
+.tm-consumption-toolbar input{max-width:190px;color-scheme:dark}
+.tm-consumption-toolbar button{cursor:pointer;font-weight:600;background:rgba(128,128,128,.10)}
+.tm-consumption-day{margin:22px 0 10px;font-size:12px;font-weight:600;opacity:.58;letter-spacing:.015em}
+.tm-consumption-card{border:1px solid rgba(128,128,128,.17);border-radius:17px;padding:18px 19px;margin:10px 0;background:rgba(128,128,128,.045);box-shadow:none;min-width:0}
+.tm-consumption-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tm-consumption-head strong{font-size:15px;font-weight:650;letter-spacing:-.025em;line-height:1.35}
+.tm-consumption-status{flex:none;font-size:11px;font-weight:600;line-height:1.3;border-radius:99px;padding:5px 9px;background:rgba(128,128,128,.11);color:inherit}
+.tm-consumption-status[data-state="all"]{color:#83b9a5;background:rgba(91,166,135,.12)}
+.tm-consumption-status[data-state="partial"]{color:#d9b47a;background:rgba(190,145,73,.12)}
+.tm-consumption-status[data-state="none"]{opacity:.7}
+.tm-consumption-option{margin:7px 0 0;opacity:.64;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.tm-consumption-macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:17px 0 0;padding:15px 0 0;border-top:1px solid rgba(128,128,128,.13)}
+.tm-consumption-macros div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tm-consumption-macros small{font-size:11px;opacity:.57}
+.tm-consumption-macros strong{font-size:14px;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tm-consumption-card details{margin-top:15px;border-top:1px solid rgba(128,128,128,.13);padding-top:13px}
+.tm-consumption-card summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;cursor:pointer;font-size:12px;font-weight:600;opacity:.8}
+.tm-consumption-card summary::-webkit-details-marker{display:none}
+.tm-consumption-card summary:after{content:"⌄";font-size:18px;line-height:1;transition:transform .15s}
+.tm-consumption-card details[open] summary:after{transform:rotate(180deg)}
+.tm-consumption-card ul{list-style:none;padding:10px 0 0;margin:0}
+.tm-consumption-card li{padding:9px 0;font-size:12px;line-height:1.5;border-bottom:1px solid rgba(128,128,128,.09)}
+.tm-consumption-card li:last-child{border:0}
+.tm-consumption-empty{padding:22px 16px;border:1px solid rgba(128,128,128,.17);border-radius:16px;font-size:13px;opacity:.72}
+@media(max-width:600px){.tm-consumption-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px}.tm-consumption-toolbar label{grid-column:1/-1}.tm-consumption-toolbar input{max-width:none;width:100%;min-width:0}.tm-consumption-card{padding:16px}.tm-consumption-macros{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:15px}.tm-consumption-macros strong{font-size:14px}}
+@media(prefers-color-scheme:light){#consumption-panel .tm-consumption-toolbar input{color-scheme:light}}
