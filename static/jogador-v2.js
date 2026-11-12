@@ -1306,7 +1306,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    }
    const search=document.createElement('input');search.type='search';search.placeholder='Pesquisar alimento da biblioteca';search.setAttribute('aria-label','Pesquisar alimento adicional');
    const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
-   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Gramas';quantity.setAttribute('aria-label','Gramas do alimento adicional');
+   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Inserir porção';quantity.setAttribute('aria-label','Inserir porção em gramas');
    const add=document.createElement('button');add.type='button';add.textContent='+ Adicionar alimento';
    const added=document.createElement('div');
    let request=0;search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;matches.append(opt);}}catch(e){if(id===request)error(e);}};
@@ -1318,7 +1318,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const suggestions=document.createElement('div');suggestions.className='consumption-suggestions';suggestions.hidden=true;
    matches.className='consumption-search-select';matches.hidden=true;
    const choose=(option)=>{matches.replaceChildren(option.cloneNode(true));matches.value=option.value;search.value=option.textContent; suggestions.hidden=true;};
-   search.addEventListener('input',()=>{setTimeout(()=>{suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>choose(opt);suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;},250);});
+   search.addEventListener('input',()=>{suggestions.hidden=true;setTimeout(()=>{if(!search.isConnected)return;suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>choose(opt);suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;},350);});search.addEventListener('focus',()=>{if(suggestions.childElementCount)suggestions.hidden=false;});
    fields.append(search,suggestions,matches,quantity,add,added);trigger.onclick=()=>{fields.hidden=!fields.hidden;};
    extra.append(trigger,fields);foodsRoot.append(extra);
   }
