@@ -1208,3 +1208,65 @@ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-p-empty{
   grid-column:1;grid-row:3;
  }
 }
+
+
+/* Jogadores: native full-card profile button for iOS touch and desktop click. */
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+ position:relative!important;isolation:isolate;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card .tm-p-player{
+ position:static!important;cursor:pointer!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card .tm-p-player::after{
+ content:"";position:absolute;inset:0;z-index:1;cursor:pointer;
+ border-radius:16px;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card .tm-p-player:focus-visible{
+ outline:0!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card:has(.tm-p-player:focus-visible){
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card-actions{
+ position:relative!important;z-index:2;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card-actions .tm-p-app-action{
+ position:relative!important;z-index:3;
+}
+/* Dropdown claro = UMA lista contínua, não cartões dentro de cartão. */
+html[data-admin-theme="light"] body .tm-player-search-list{
+ display:flex!important;flex-direction:column!important;
+ gap:0!important;padding:5px 0!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-option{
+ display:flex!important;align-items:center;
+ box-sizing:border-box;width:100%;min-height:57px;
+ margin:0!important;padding:8px 13px!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ text-align:left;
+}
+html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-option:hover,
+html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-option.is-active,
+html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-option:focus-visible{
+ background:var(--tm-ui-subcard)!important;outline:0!important;
+}
+html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-avatar{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-copy small{
+ color:var(--tm-ui-muted)!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme="light"] body .tm-player-search-list .tm-player-search-option{
+  min-height:60px;padding:9px 12px!important;
+ }
+}
+@supports not selector(:has(*)){
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card .tm-p-player:focus-visible::after{
+  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+  outline-offset:2px;
+ }
+}

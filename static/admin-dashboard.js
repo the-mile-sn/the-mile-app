@@ -892,13 +892,13 @@ function ensurePlanningOnlyView(){
   for(const p of items){
    const card=el("article","tm-player-card");card.setAttribute("role","listitem");
    const identity=el("div","tm-player-card-identity");
-   const link=el("div","tm-p-player");
+   const link=el("button","tm-p-player");link.type="button";link.setAttribute("aria-label","Abrir perfil de "+p.name);
    const avatar=el("span","tm-p-avatar",p.name.split(/\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
    if(p.has_photo&&p.user_id){
     const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
    }
    const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
-   link.append(avatar,person);identity.append(link);
+   link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));identity.append(link);
    const status=el("div","tm-player-card-status");
    status.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));
    const renewal=el("div","tm-player-card-renewal");
@@ -916,18 +916,7 @@ function ensurePlanningOnlyView(){
    app.addEventListener("click",()=>enterPlayerApp(p.user_id,app,$("tm-players-error")));
    actions.append(app);action.append(actions);
    card.append(identity,status,renewal,action);
-   // The entire card opens the profile on desktop and mobile.
-   // The smartphone action is independent and must never trigger profile navigation.
-   card.tabIndex=0;
-   card.setAttribute("aria-label","Abrir perfil de "+p.name);
-   card.addEventListener("click",event=>{
-    if(event.target.closest("button,a,input,select,textarea"))return;
-    openPlayerProfile(p.id);
-   });
-   card.addEventListener("keydown",event=>{
-    if(event.target!==card)return;
-    if(event.key==="Enter"||event.key===" "){event.preventDefault();openPlayerProfile(p.id);}
-   });
+   // A semantic button stretches over the card; the App action remains independent.
    body.append(card);
   }
   if(!items.length)body.append(el("p","tm-p-empty","Nenhum jogador corresponde aos filtros."));

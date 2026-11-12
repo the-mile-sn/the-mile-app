@@ -28,7 +28,7 @@ test("same four-level colour hierarchy exists in light and dark themes",()=>{
 });
 test("all three Backoffice entrypoints load palette last",()=>{
  for(const doc of html){
-  assert.match(doc,/admin-surface-palette\.css\?v=7/);
+  assert.match(doc,/admin-surface-palette\.css\?v=8/);
   const head=doc.slice(0,doc.indexOf("</head>"));
   assert.ok(head.lastIndexOf("admin-surface-palette.css")>head.lastIndexOf("tm-design-system.css"));
  }

@@ -48,13 +48,28 @@ test("filters use principal card fill and nested controls use subcard fill",()=>
  assert.match(areaStyle,/background:var\(--tm-ui-field-on-card\)!important/);
 });
 test("whole player cards are interactive on desktop and mobile without eye button",()=>{
- assert.match(js,/card\.tabIndex=0/);
- assert.match(js,/card\.addEventListener\("click"/);
- assert.match(js,/card\.addEventListener\("keydown"/);
- assert.match(js,/event\.target\.closest\("button,a,input,select,textarea"\)/);
+ assert.match(js,/const link=el\("button","tm-p-player"\)/);
+ assert.match(js,/link\.addEventListener\("click",\(\)=>openPlayerProfile\(p\.id\)\)/);
+ assert.match(areaStyle,/\.tm-p-player::after/);
+ assert.match(areaStyle,/\.tm-player-card-actions/);
  assert.doesNotMatch(js,/const go=el\("button","tm-p-icon-action"\)/);
  assert.match(areaStyle,/min-height:94px/);
  assert.match(areaStyle,/transition:background-color 160ms ease/);
+});
+test("mobile profile uses a genuine full-card button and the App stays above",()=>{
+ assert.match(js,/const link=el\("button","tm-p-player"\)/);
+ assert.match(js,/link\.addEventListener\("click",\(\)=>openPlayerProfile\(p\.id\)\)/);
+ assert.doesNotMatch(js,/card\.addEventListener\("click"/);
+ assert.match(css,/\.tm-p-player::after/);
+ assert.match(css,/\.tm-player-card-actions\s*\{\s*position:relative!important;z-index:2/);
+ assert.match(css,/\.tm-p-app-action\s*\{\s*position:relative!important;z-index:3/);
+});
+test("light search suggestions are a single contiguous list",()=>{
+ assert.match(css,/html\[data-admin-theme="light"\] body \.tm-player-search-list/);
+ assert.match(css,/gap:0!important;padding:5px 0!important/);
+ assert.match(css,/\.tm-player-search-option\{/);
+ assert.match(css,/border:0!important;border-radius:0!important;box-shadow:none!important/);
+ assert.match(css,/background:transparent!important;color:var\(--tm-ui-text\)!important/);
 });
 test("Light/dark card hierarchy and focus preserved; no decorative border/shadow",()=>{
  assert.match(areaStyle,/background:var\(--tm-ui-subcard\)!important/);
@@ -63,6 +78,6 @@ test("Light/dark card hierarchy and focus preserved; no decorative border/shadow
  assert.match(areaStyle,/border:0!important/);
  assert.match(areaStyle,/box-shadow:none!important/);
  assert.match(areaStyle,/:focus-visible/);
- assert.match(html,/admin-dashboard\.js\?v=71/);
- assert.match(html,/admin-surface-palette\.css\?v=7/);
+ assert.match(html,/admin-dashboard\.js\?v=72/);
+ assert.match(html,/admin-surface-palette\.css\?v=8/);
 });
