@@ -4507,3 +4507,25 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 /* Free-text CT menus use the existing meal/category card, preserving menu line breaks. */
 #overview #day-details .daily-meal-menu-name.menu-free-text-value,
 #menus .menu-entry-body .value.menu-free-text-value{white-space:pre-wrap!important;overflow-wrap:anywhere;}
+
+/* Registered option actions appear after the final food, not in the heading. */
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:flex-start!important;flex-wrap:wrap!important;
+ gap:7px!important;margin:18px 0 0!important;padding:0!important;
+ width:100%!important;
+}
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge,
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;height:25px!important;min-height:25px!important;
+ padding:0 10px!important;margin:0!important;border:0!important;border-radius:999px!important;
+ font-size:11px!important;line-height:1!important;font-weight:400!important;white-space:nowrap!important;
+ box-shadow:none!important;
+}
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge{
+ background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
+}
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
+ background:rgba(255,255,255,.09)!important;
+}
