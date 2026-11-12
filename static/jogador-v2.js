@@ -1685,11 +1685,6 @@ async function overview(){
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
   const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
-  if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
-   const registered=document.createElement("span");registered.className="meal-registered-badge";
-   registered.textContent="✓ Registado";registered.setAttribute("aria-label","Refeição registada");
-   title.append(registered);
-  }
   section.append(head);
   const options=color?datedPlanOptions(d,meal,color):[];
   if(color||menu){
@@ -1736,6 +1731,23 @@ async function overview(){
   if(consumptionEnabled&&color&&options.length){
    const previous=consumptionRecords.find(x=>x.meal_key===meal&&x.meal_date===d&&!x.event_id);
    const cards=options.length===1?[section.querySelector('.single-meal-option')]:Array.from(section.querySelectorAll('.player-meal-option-subcard'));
+   if(previous){
+    const optionIndex=options.findIndex(option=>option.option_ref===previous.option_ref);
+    if(optionIndex>=0){
+     const optionCard=cards[optionIndex];
+     const label=optionCard?.querySelector('.plan-option-label small');
+     if(label){
+      const badge=document.createElement('span');badge.className='meal-registered-badge';
+      badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
+      label.append(badge);
+     }else if(optionCard){
+      const badge=document.createElement('span');badge.className='meal-registered-badge';
+      badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
+      optionCard.prepend(badge);
+     }
+    }
+   }
+
    cards.forEach((card,i)=>{
     if(!card)return;
     const target=card.tagName==='DETAILS'?(card.querySelector('.option-body')||card):card;
