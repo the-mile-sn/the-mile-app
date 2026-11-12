@@ -1275,17 +1275,17 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   if(!panel.isConnected)return;
   if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
   panel.replaceChildren();
-  const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Fechar sem guardar');close.onclick=()=>panel.remove();panel.append(close);
+  const close=document.createElement('button');close.type='button';close.textContent='✕';close.setAttribute('aria-label','Fechar sem guardar');close.className='consumption-close';close.onclick=()=>panel.remove();panel.append(close);
   const select=document.createElement('select');
   data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||'Opção '+(i+1);select.append(item);});
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
   if(Number.isInteger(preferredOptionIndex)&&data.options[preferredOptionIndex])select.value=data.options[preferredOptionIndex].option_ref;
-  panel.append(select);
+  select.className='consumption-option-select';panel.append(select);
   const mode=document.createElement('select');for(const [value,label] of [['all','Tudo'],['partial','Parcialmente'],['none','Não consumi']]){const item=document.createElement('option');item.value=value;item.textContent=label;mode.append(item);}mode.value=previous?.status||'all';mode.className='consumption-native-mode';panel.append(mode);
   const statusGroup=document.createElement('div');statusGroup.className='consumption-status-group';
   const buttons=[['all','✓','Tudo'],['partial','≡','Parcialmente'],['none','⊗','Não consumi']].map(([value,icon,label])=>{const b=document.createElement('button');b.type='button';b.className='consumption-status-button';b.dataset.status=value;const a=document.createElement('span');a.textContent=icon;const t=document.createElement('span');t.textContent=label;b.append(a,t);b.onclick=()=>{mode.value=value;mode.dispatchEvent(new Event('change'));};statusGroup.append(b);return b;});
   const syncStatus=()=>buttons.forEach(b=>{const active=b.dataset.status===mode.value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});panel.append(statusGroup);syncStatus();
-  const foodsRoot=document.createElement('div');panel.append(foodsRoot);
+  const foodsRoot=document.createElement('div');foodsRoot.className='consumption-foods-root';panel.append(foodsRoot);
   const additional=[];
   const previousFoods=previous?.option_ref===select.value&&previous?.status==='partial'?(previous.consumed_foods||[]):[];
   function redraw(){
@@ -1299,7 +1299,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
      if(food.kind==='supplement')continue;
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previousFoods.length?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
-     const name=document.createElement('span');name.textContent=food.display_name||food.library_name||food.name||'Alimento';
+     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';const planned=document.createElement('small');planned.textContent='Plano: '+String(food.grams??0)+' g';name.append(label,planned);
      const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');if(!check.checked){grams.value='0';grams.disabled=true;}
      line.append(check,name,grams,document.createTextNode(' g'));group.append(line);
     }foodsRoot.append(group);
@@ -1329,7 +1329,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     catch(e){error(e);remove.disabled=false;}
    };panel.append(remove);
   }
-  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();panel.append(save,cancel);
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.className='consumption-cancel';save.className='consumption-save';cancel.onclick=()=>panel.remove();const actions=document.createElement('div');actions.className='consumption-actions';actions.append(cancel,save);panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
