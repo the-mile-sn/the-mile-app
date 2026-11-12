@@ -108,3 +108,17 @@ body[data-theme="light"] #overview .consumption-editor .consumption-add-trigger,
 #overview .consumption-editor .consumption-actions{margin-top:10px!important}
 #overview .consumption-editor .consumption-energy-progress{margin-top:14px!important;padding-top:14px!important}
 #overview .consumption-editor .consumption-energy-track{margin-bottom:7px!important}
+
+/* v8 — one-tap compliance and compact edit flow */
+#overview .consumption-quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:15px 0 0}
+#overview .consumption-quick-actions button{min-height:44px;border:0;border-radius:999px;font-size:14px;font-weight:500;box-shadow:none}
+#overview .consumption-quick-confirm{background:#fff;color:#171717}
+#overview .consumption-quick-edit{background:rgba(128,128,128,.19);color:inherit}
+#overview .consumption-quick-feedback{font-size:12px;margin:5px 0 0}
+#overview .consumption-quick-feedback:empty{display:none}
+#overview .consumption-editor .consumption-status-group{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;margin:0 0 12px!important}
+#overview .consumption-editor .consumption-status-button{min-height:58px!important}
+#overview .consumption-editor .consumption-status-button.active{background:rgba(255,255,255,.17)!important}
+#overview .consumption-editor .consumption-energy-progress{margin-top:12px!important;padding-top:12px!important}
+#overview .consumption-editor .consumption-actions{margin-top:12px!important}
+body[data-theme="light"] #overview .consumption-quick-confirm,html[data-theme="light"] #overview .consumption-quick-confirm,.light-mode #overview .consumption-quick-confirm{background:#171717;color:#fff}
