@@ -1363,11 +1363,19 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    search.addEventListener('input',()=>{confirm.disabled=true;portionStep.hidden=true;});
    const originalRender=renderSuggestions;
    confirm.disabled=true;
-   let dragStart=0,dragCurrent=0,dragging=false;
-   handle.addEventListener('touchstart',e=>{dragStart=e.touches[0]?.clientY||0;dragCurrent=dragStart;dragging=true;},{passive:true});
-   handle.addEventListener('touchmove',e=>{if(!dragging)return;dragCurrent=e.touches[0]?.clientY||dragStart;if(Math.abs(dragCurrent-dragStart)>8)e.preventDefault();},{passive:false});
-   handle.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;const delta=dragCurrent-dragStart;if(delta< -35)sheet.classList.add('is-expanded');else if(delta>35){if(sheet.classList.contains('is-expanded'))sheet.classList.remove('is-expanded');else closeFoodSheet();}});
-   handle.addEventListener('touchcancel',()=>{dragging=false;});
+   let dragStart=0,dragCurrent=0,dragStartedAt=0,dragging=false;
+   const gestureStart=e=>{if(e.target.closest('button,input,select'))return;dragStart=e.touches[0]?.clientY||0;dragCurrent=dragStart;dragStartedAt=performance.now();dragging=true;};
+   const gestureMove=e=>{if(!dragging)return;dragCurrent=e.touches[0]?.clientY??dragCurrent;if(Math.abs(dragCurrent-dragStart)>5)e.preventDefault();};
+   const gestureEnd=e=>{if(!dragging)return;dragging=false;const endY=e.changedTouches[0]?.clientY??dragCurrent;const delta=endY-dragStart;const elapsed=Math.max(1,performance.now()-dragStartedAt);const velocity=Math.abs(delta)/elapsed;
+    if(delta< -12||(delta< -7&&velocity>.18)){sheet.classList.add('is-expanded');}
+    else if(delta>12||(delta>7&&velocity>.18)){closeFoodSheet();}
+   };
+   for(const target of [handle,header,heading]){
+    target.addEventListener('touchstart',gestureStart,{passive:true});
+    target.addEventListener('touchmove',gestureMove,{passive:false});
+    target.addEventListener('touchend',gestureEnd,{passive:true});
+    target.addEventListener('touchcancel',()=>{dragging=false;},{passive:true});
+   }
    handle.addEventListener('click',()=>sheet.classList.toggle('is-expanded'));
    const controls=document.createElement('div');controls.className='consumption-secondary-actions';controls.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;width:100%';controls.append(addTrigger);if(removeAll.isConnected){removeAll.style.setProperty('margin','0 0 0 auto','important');removeAll.style.setProperty('align-self','center','important');removeAll.style.setProperty('position','static','important');removeAll.style.setProperty('text-align','right','important');removeAll.style.setProperty('white-space','nowrap','important');controls.append(removeAll);}foodsRoot.append(added,controls);updateAddState();
   }
