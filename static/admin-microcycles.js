@@ -195,7 +195,7 @@ function renderRecipeCategoryPicker(){
   const actions=document.createElement("div");actions.className="tm-recipe-category-actions";
   const saved=savedRecipeCategories.has(category.id);
   const badge=document.createElement("span");badge.className="tm-recipe-category-state"+(saved?" is-visible":" is-pending");
-  badge.textContent=saved?"Visível":"Por guardar";
+  badge.textContent=saved?"Publicado":"Por guardar";
   const remove=document.createElement("button");remove.type="button";remove.className="tm-recipe-category-remove";
   remove.textContent="Eliminar";remove.setAttribute("aria-label","Eliminar categoria "+category.name);
   remove.title="Remover categoria após guardar";
