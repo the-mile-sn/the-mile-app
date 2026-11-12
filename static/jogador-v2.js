@@ -1561,6 +1561,23 @@ async function overview(){
    center.append(number);
    if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,0)+" /kg";center.append(per);}
    gauge.append(center);visual.append(gauge);
+   if(consumptionEnabled){
+    const consumed=document.createElement("div");consumed.className="nutrition-consumed-gauge";
+    const percent=total.kcal>0?Math.round(actual.kcal/total.kcal*100):0;
+    const circumference=2*Math.PI*68;
+    const progress=document.createElementNS("http://www.w3.org/2000/svg","svg");progress.setAttribute("viewBox","0 0 160 160");progress.setAttribute("aria-hidden","true");
+    for(const [stroke,ratio] of [["rgba(172,238,207,.16)",1],["#a5efd0",Math.max(0,Math.min(1,actual.kcal/total.kcal))]]){
+     const circle=document.createElementNS(progress.namespaceURI,"circle");
+     for(const [key,value] of [["cx",80],["cy",80],["r",68],["fill","none"],["stroke",stroke],["stroke-width",10],["stroke-linecap","round"],["transform","rotate(-90 80 80)"],["stroke-dasharray",circumference],["stroke-dashoffset",stroke.startsWith("rgba")?0:circumference*(1-ratio)]])circle.setAttribute(key,String(value));
+     progress.append(circle);
+    }
+    consumed.append(progress);
+    const values=document.createElement("div");values.className="nutrition-consumed-center";
+    const kcal=document.createElement("strong");kcal.textContent=fmt(actual.kcal,0);
+    const pct=document.createElement("small");pct.textContent=percent+"%";
+    values.append(kcal,pct);consumed.append(values);consumed.setAttribute("aria-label",fmt(actual.kcal,0)+" kcal consumidas, "+percent+"% do planeado");
+    visual.append(consumed);visual.classList.add("has-consumption-ring");
+   }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
    for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
     const stat=document.createElement("div");stat.className="nutrition-comparison-stat "+cls;
@@ -1574,7 +1591,7 @@ async function overview(){
    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-comparison-macro "+cls;
     const label=document.createElement("small");label.textContent=title;
-    const value=document.createElement("strong");value.textContent=fmt(total[key],0)+" g";
+    const value=document.createElement("strong");value.textContent=(consumptionEnabled?fmt(actual[key],0)+" / ":"")+fmt(total[key],0)+" g";
     cell.append(label,value);
     if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total[key]/weight,1)+" g/kg";cell.append(per);}
     compactMacros.append(cell);
