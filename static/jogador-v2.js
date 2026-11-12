@@ -1281,12 +1281,15 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
   if(Number.isInteger(preferredOptionIndex)&&data.options[preferredOptionIndex])select.value=data.options[preferredOptionIndex].option_ref;
   panel.append(select);
-  const mode=document.createElement('select');for(const [value,label] of [['all','Tudo'],['partial','Parcialmente'],['none','Não consumi']]){const item=document.createElement('option');item.value=value;item.textContent=label;mode.append(item);}mode.value=previous?.status||'all';panel.append(mode);
+  const mode=document.createElement('select');for(const [value,label] of [['all','Tudo'],['partial','Parcialmente'],['none','Não consumi']]){const item=document.createElement('option');item.value=value;item.textContent=label;mode.append(item);}mode.value=previous?.status||'all';mode.className='consumption-native-mode';panel.append(mode);
+  const statusGroup=document.createElement('div');statusGroup.className='consumption-status-group';
+  const buttons=[['all','✓','Tudo'],['partial','≡','Parcialmente'],['none','⊗','Não consumi']].map(([value,icon,label])=>{const b=document.createElement('button');b.type='button';b.className='consumption-status-button';b.dataset.status=value;const a=document.createElement('span');a.textContent=icon;const t=document.createElement('span');t.textContent=label;b.append(a,t);b.onclick=()=>{mode.value=value;mode.dispatchEvent(new Event('change'));};statusGroup.append(b);return b;});
+  const syncStatus=()=>buttons.forEach(b=>{const active=b.dataset.status===mode.value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});panel.append(statusGroup);syncStatus();
   const foodsRoot=document.createElement('div');panel.append(foodsRoot);
   const additional=[];
   const previousFoods=previous?.option_ref===select.value&&previous?.status==='partial'?(previous.consumed_foods||[]):[];
   function redraw(){
-   foodsRoot.replaceChildren();if(mode.value!=='partial')return;
+   foodsRoot.replaceChildren();syncStatus();if(mode.value!=='partial')return;
    const option=data.options.find(x=>x.option_ref===select.value),foods=option.foods||[];
    const groups=new Map();foods.forEach((food,i)=>{const parent=food.alternative_to??i;if(!groups.has(parent))groups.set(parent,[]);groups.get(parent).push(i);});
    for(const indices of groups.values()){
