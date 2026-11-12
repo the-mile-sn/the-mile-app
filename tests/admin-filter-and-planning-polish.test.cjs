@@ -31,5 +31,5 @@ test("selected light-mode day has a blue cue while off/match colors remain seman
  assert.match(light,/:not\(\.calendar-match\):not\(\.calendar-off\)/);
  assert.match(light,/\.tm-planning-unified-header\{/);
  assert.match(light,/background:#e5ebf2!important/);
- for(const name of ["admin-microcycles.css?v=188","admin-light-theme.css?v=30","visual-portions.css?v=7"])assert.ok(html.includes(name));
+ for(const name of ["admin-microcycles.css?v=189","admin-light-theme.css?v=31","visual-portions.css?v=7"])assert.ok(html.includes(name));
 });
