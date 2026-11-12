@@ -4455,3 +4455,28 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  background:rgba(255,255,255,.09)!important;
  box-shadow:none!important;outline:0!important;
 }
+
+/* Registration pills belong on the option heading line, near the chevron. */
+#overview #day-details .player-meal-option-subcard .meal-option-heading-row{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ width:100%!important;min-width:0!important;gap:12px!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-option-heading-row>small{
+ flex:0 0 auto!important;display:inline-block!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags{
+ display:flex!important;flex:0 1 auto!important;justify-content:flex-end!important;
+ flex-wrap:wrap!important;gap:6px!important;margin:0 8px 0 auto!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-registered-badge{
+ background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
+ border:0!important;box-shadow:none!important;
+}
+#overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-edit-consumption-tag{
+ background:rgba(255,255,255,.09)!important;border:0!important;box-shadow:none!important;
+}
+@media(max-width:380px){
+ #overview #day-details .player-meal-option-subcard .meal-option-heading-row{gap:7px!important}
+ #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags{gap:4px!important;margin-right:4px!important}
+ #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags>*{padding-inline:7px!important;font-size:10px!important}
+}
