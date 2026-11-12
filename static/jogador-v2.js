@@ -1744,11 +1744,11 @@ async function overview(){
      if(label){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
       badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.setAttribute('aria-label','Editar consumo desta opção');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);badge.after(editTag);
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.setAttribute('aria-label','Editar consumo desta opção');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);label.append(badge,editTag);
      }else if(optionCard){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
       badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);badge.after(editTag);
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);optionCard.prepend(badge,editTag);
      }
     }
    }
