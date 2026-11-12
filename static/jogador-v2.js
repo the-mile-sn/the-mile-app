@@ -1320,11 +1320,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    syncRemoveAll();
    const search=document.createElement('input');search.type='search';search.placeholder='Inserir alimento';search.setAttribute('aria-label','Pesquisar alimento adicional');
    const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
-   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Inserir porção';quantity.setAttribute('aria-label','Inserir porção em gramas');
+   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Porção';quantity.setAttribute('aria-label','Inserir porção em gramas');
    const add=document.createElement('button');add.type='button';add.textContent='⊕ Adicionar alimento';
-   const added=document.createElement('div');
+   const added=document.createElement('div');added.className='consumption-added-list';
    let request=0;search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;matches.append(opt);}}catch(e){if(id===request)error(e);}};
-   const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-row consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const title=document.createElement('span');title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.dataset.additional='true';const unit=document.createElement('span');unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(check,title,amount,unit);added.append(row);};
+   const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-line consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const visual=document.createElement('span');visual.className='consumption-check-visual';visual.setAttribute('aria-hidden','true');checkWrap.append(check,visual);const title=document.createElement('span');title.className='consumption-food-name';title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.setAttribute('aria-label','Quantidade consumida em gramas');const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(checkWrap,title,amount,unit);added.append(row);};
    add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;const entry={id,grams,consumed:true};additional.push(entry);renderAdditional(entry,matches.selectedOptions[0]?.textContent||search.value);quantity.value='';search.value='';matches.replaceChildren();queuePreview();};
    if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){const entry={id:f.id,grams:f.grams,consumed:f.consumed!==false};additional.push(entry);renderAdditional(entry,f.display_name||f.name||f.id||'Alimento');}}
    const extra=document.createElement('div');extra.className='consumption-extra';
@@ -1334,7 +1334,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    matches.className='consumption-search-select';matches.hidden=true;
    const choose=(option)=>{matches.replaceChildren(option.cloneNode(true));matches.value=option.value;search.value=option.textContent; suggestions.hidden=true;};
    search.addEventListener('input',()=>{suggestions.hidden=true;setTimeout(()=>{if(!search.isConnected)return;suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>choose(opt);suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;},350);});search.addEventListener('focus',()=>{if(suggestions.childElementCount)suggestions.hidden=false;});
-   const searchWrap=document.createElement('div');searchWrap.className='consumption-search-wrap';const searchIcon=document.createElement('span');searchIcon.className='consumption-search-icon';searchIcon.setAttribute('aria-hidden','true');searchIcon.textContent='☷⌕';searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.append(searchWrap,quantity);fields.append(inputRow,suggestions,matches,add,added);fields.hidden=false;extra.append(fields);const controls=document.createElement('div');controls.className='consumption-secondary-actions';if(removeAll.isConnected)controls.append(removeAll);foodsRoot.append(controls,extra);
+   const searchWrap=document.createElement('div');searchWrap.className='consumption-search-wrap';const searchIcon=document.createElement('span');searchIcon.className='consumption-search-icon';searchIcon.setAttribute('aria-hidden','true');searchIcon.textContent='☷⌕';searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.append(searchWrap,quantity);fields.append(inputRow,suggestions,matches,add);fields.hidden=false;extra.append(fields);foodsRoot.append(added);const controls=document.createElement('div');controls.className='consumption-secondary-actions';if(removeAll.isConnected)controls.append(removeAll);foodsRoot.append(controls,extra);
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
   progress.innerHTML='<div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong></div>';
@@ -1366,7 +1366,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const foods=option?.foods||[];
    const active=foods.map((food,i)=>({food,i})).filter(x=>x.food.kind!=='supplement');
    const checked=active.filter(({i})=>foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked);
-   if(!checked.length&&!additional.length)return 'none';
+   if(!checked.length&&!additional.some(x=>x.consumed&&x.grams>0))return 'none';
    const allPlanned=active.every(({food,i})=>{
     const input=foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]');
     const parent=food.alternative_to??i;
@@ -1374,13 +1374,13 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const expected=i===plannedIndex;
     return !!input?.checked===expected&&(!input?.checked||Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value)===Number(food.grams??0));
    });
-   return allPlanned&&!additional.length?'all':'partial';
+   return allPlanned&&!additional.some(x=>x.consumed&&x.grams>0)?'all':'partial';
   };
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
-   if(body.status==='partial')body.additional=additional;
+   if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
    try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   save.className='consumption-save';
