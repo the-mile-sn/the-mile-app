@@ -1354,20 +1354,48 @@ function renderDayPreview(day,host){
  window.currentNutritionDay=day;
  const heading=document.createElement("header");heading.className="calendar-day-preview-heading";
  const date=document.createElement("h3");date.textContent=formatCalendarPreviewDate(day.date);heading.append(date);
- const field=document.createElement("label");field.className="calendar-day-classification-field";
- const caption=document.createElement("span");caption.textContent="Microciclo";field.append(caption);
- const select=document.createElement("select");select.className="calendar-day-classification-select";
- select.setAttribute("aria-label","Classificar dia "+date.textContent+" ou restaurar cálculo automático");
- const automatic=document.createElement("option");automatic.value="";
- automatic.textContent="Auto · "+(day.automatic_classification||"Geral");select.append(automatic);
- for(const item of model.classifications){
-  const option=document.createElement("option");option.value=item.name;option.textContent=item.name;select.append(option);
- }
- select.value=day.classification_override||"";
- field.append(select);heading.append(field);host.append(heading);
- select.addEventListener("change",async()=>{
-  const classification=select.value||null;
-  select.disabled=true;
+ const field=document.createElement("div");field.className="calendar-day-classification-field";
+ const caption=document.createElement("span");caption.className="calendar-day-classification-caption";caption.textContent="Microciclo";
+ const trigger=document.createElement("button");trigger.type="button";trigger.className="calendar-day-classification-trigger";
+ trigger.setAttribute("role","combobox");trigger.setAttribute("aria-haspopup","listbox");
+ trigger.setAttribute("aria-expanded","false");trigger.setAttribute("aria-label","Classificar "+date.textContent);
+ const value=document.createElement("span");value.className="calendar-day-classification-value";
+ value.textContent=day.classification||"Geral";trigger.append(value);
+ const menu=document.createElement("div");menu.className="calendar-day-classification-list";
+ menu.id="classification-list-"+day.date;menu.setAttribute("role","listbox");
+ menu.setAttribute("aria-label","Classificação de "+date.textContent);menu.hidden=true;
+ trigger.setAttribute("aria-controls",menu.id);
+ const choices=[{classification:null,label:"Automático · "+(day.automatic_classification||"Geral")}]
+  .concat(model.classifications.map(item=>({classification:item.name,label:item.name})));
+ let activeIndex=Math.max(0,choices.findIndex(item=>item.classification===day.classification_override));
+ const buttons=[];
+ const highlight=index=>{
+  activeIndex=Math.max(0,Math.min(buttons.length-1,index));
+  for(const [position,button] of buttons.entries()){
+   const active=position===activeIndex;
+   button.setAttribute("aria-selected",String(active));button.classList.toggle("is-active",active);
+  }
+  trigger.setAttribute("aria-activedescendant",buttons[activeIndex].id);
+  buttons[activeIndex]?.scrollIntoView({block:"nearest"});
+ };
+ const close=()=>{
+  menu.hidden=true;trigger.setAttribute("aria-expanded","false");
+  trigger.removeAttribute("aria-activedescendant");
+  document.removeEventListener("pointerdown",outside,true);
+ };
+ const outside=event=>{if(!field.contains(event.target))close();};
+ const open=()=>{
+  if(trigger.disabled)return;
+  menu.hidden=false;trigger.setAttribute("aria-expanded","true");
+  highlight(activeIndex);
+  document.addEventListener("pointerdown",outside,true);
+  if(window.innerHeight-field.getBoundingClientRect().bottom<150)
+   field.scrollIntoView({block:"center",behavior:"smooth"});
+ };
+ const choose=async classification=>{
+  close();
+  if(classification===day.classification_override)return;
+  trigger.disabled=true;
   try{
    await request(matchBase()+"/calendar/day-classification",{method:"PUT",body:JSON.stringify({date:day.date,classification})});
    selectedCalendarDay=day.date;
@@ -1375,10 +1403,27 @@ function renderDayPreview(day,host){
    await loadCalendar();
   }catch(e){
    status("Não foi possível alterar o dia: "+e.message,"warn");
-   select.value=day.classification_override||"";
-   select.disabled=false;
+   trigger.disabled=false;
+  }
+ };
+ for(const [index,item] of choices.entries()){
+  const option=document.createElement("button");option.type="button";option.className="calendar-day-classification-option";
+  option.id=menu.id+"-"+index;option.setAttribute("role","option");
+  option.setAttribute("aria-selected",String(index===activeIndex));option.textContent=item.label;
+  option.addEventListener("click",()=>choose(item.classification));
+  buttons.push(option);menu.append(option);
+ }
+ trigger.addEventListener("click",()=>menu.hidden?open():close());
+ trigger.addEventListener("keydown",event=>{
+  if(event.key==="Escape"){if(!menu.hidden){event.preventDefault();close();}return;}
+  if(event.key==="ArrowDown"||event.key==="ArrowUp"){
+   event.preventDefault();if(menu.hidden)open();
+   else highlight(activeIndex+(event.key==="ArrowDown"?1:-1));
+  }else if(event.key==="Enter"&&!menu.hidden){
+   event.preventDefault();choose(choices[activeIndex].classification);
   }
  });
+ field.append(caption,trigger,menu);heading.append(field);host.append(heading);
  const grid=document.createElement("div");grid.className="day-meals";
  const optionsPanel=document.createElement("section");optionsPanel.className="calendar-wide-options";optionsPanel.id="calendar-wide-options";optionsPanel.hidden=true;
  const optionButtons=new Map();let expandedMeal=null;
@@ -1457,7 +1502,12 @@ function renderDayPreview(day,host){
  const livePeriOptions=liveCalendarPlans[day.date]?.peri_events||[];
  if(livePeriOptions.length){
   const details=document.createElement("details");details.className="calendar-day-peri calendar-live-peri";
-  const summary=document.createElement("summary");summary.textContent="Peri-treino e Peri-jogo";details.append(summary);
+  const summary=document.createElement("summary");
+  const periTitle=document.createElement("span");periTitle.className="calendar-peri-tile-title";periTitle.textContent="Peri-treino e Peri-jogo";
+  const periCount=document.createElement("span");periCount.className="calendar-peri-tile-info";
+  periCount.textContent=livePeriOptions.length+" "+(livePeriOptions.length===1?"período":"períodos");
+  const periAction=document.createElement("span");periAction.className="calendar-peri-tile-action";periAction.textContent="Ver opções";
+  summary.append(periTitle,periCount,periAction);details.append(summary);
   for(const peri of livePeriOptions){
    const line=document.createElement("section");line.className="calendar-live-peri-phase";
    const heading=document.createElement("strong");
@@ -1469,7 +1519,7 @@ function renderDayPreview(day,host){
    line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
    details.append(line);
   }
-  host.append(details);
+  grid.append(details);
  }
  const liveDay=liveCalendarPlans[day.date];
  const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
