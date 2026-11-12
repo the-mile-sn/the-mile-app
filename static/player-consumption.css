@@ -60,3 +60,22 @@ body[data-theme="light"] #overview .consumption-editor .consumption-add-fields>b
 #overview .consumption-editor .consumption-actions .consumption-cancel{border:0!important;border-radius:999px!important;background:rgba(128,128,128,.18)!important;color:inherit!important;font-weight:600!important}
 #overview .consumption-editor .consumption-actions .consumption-save{border-radius:999px!important}
 #overview .consumption-editor{padding-top:16px!important}
+
+/* v5: calm, aligned food rows */
+#overview .consumption-editor .consumption-add-trigger{min-height:46px!important;border:0!important;border-radius:999px!important;background:#fff!important;color:#171717!important;font-size:14px!important;font-weight:650!important;box-shadow:none!important}
+#overview .consumption-editor .consumption-food-group{border:0!important;border-bottom:0!important}
+#overview .consumption-editor .consumption-food-line{grid-template-columns:17px minmax(0,1fr) 70px 12px!important;column-gap:12px!important;min-height:49px!important;padding:6px 0!important;border:0!important;border-bottom:0!important;align-items:center!important}
+#overview .consumption-editor .consumption-food-line input[type=checkbox]{width:15px!important;height:15px!important;min-width:15px!important;border-radius:5px!important;accent-color:#c1dfd2!important}
+#overview .consumption-editor .consumption-food-name{font-size:13px!important;line-height:1.35!important;gap:0!important}
+#overview .consumption-editor .consumption-food-name small{display:none!important}
+#overview .consumption-editor .consumption-food-line input[type=number]{box-sizing:border-box!important;width:70px!important;min-height:38px!important;height:38px!important;border:0!important;border-radius:12px!important;background:rgba(128,128,128,.18)!important;color:inherit!important;text-align:center!important;padding:6px!important;font-size:13px!important;box-shadow:none!important}
+#overview .consumption-editor .consumption-food-line input[type=number]:disabled{opacity:.45!important}
+#overview .consumption-editor .consumption-energy-progress{border-top:1px solid rgba(128,128,128,.14)!important}
+#overview .consumption-editor .consumption-energy-head{opacity:1!important}
+#overview .consumption-editor .consumption-energy-head>span{font-size:15px!important;font-weight:650!important;letter-spacing:-.02em}
+#overview .consumption-editor .consumption-energy-percent{font-size:16px!important}
+#overview .consumption-editor .consumption-energy-values{opacity:1!important;align-items:baseline!important;gap:12px!important}
+#overview .consumption-editor .consumption-energy-values>span{font-size:14px!important;font-weight:600!important;font-variant-numeric:tabular-nums}
+#overview .consumption-editor .consumption-energy-planned{opacity:.68!important;text-align:right}
+body[data-theme="light"] #overview .consumption-editor .consumption-add-trigger,html[data-theme="light"] #overview .consumption-editor .consumption-add-trigger,.light-mode #overview .consumption-editor .consumption-add-trigger{background:#171717!important;color:#fff!important}
+@media(max-width:390px){#overview .consumption-editor .consumption-food-line{grid-template-columns:16px minmax(0,1fr) 62px 10px!important;column-gap:9px!important}#overview .consumption-editor .consumption-food-line input[type=number]{width:62px!important}#overview .consumption-editor .consumption-energy-values>span{font-size:12px!important}}
