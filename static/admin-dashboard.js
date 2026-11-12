@@ -1024,7 +1024,110 @@ function ensurePlanningOnlyView(){
   return normalizeSearch(query).split(/\s+/).filter(Boolean).every(term=>words.some(word=>word.startsWith(term)));
  };
  let playerQuery="";
- function renderTable(data){const head=$("tm-db-thead"),body=$("tm-db-tbody");head.replaceChildren();body.replaceChildren();const today=data.today;const header=el("tr");const name=el("th","tm-db-name-cell");const search=el("input","tm-db-search");search.type="search";search.placeholder="Filtrar jogador";search.setAttribute("aria-label","Filtrar jogadores da matriz");search.value=playerQuery;name.append(search);header.append(name);
+
+ // In-table search uses the entire first header cell and a portal dropdown,
+ // so suggestions are never clipped by the weekly grid's scroll container.
+ let dashboardPickerCleanup=null;
+ function setupDashboardPlayerPicker(search,players,applyPlayerFilter){
+  const results=el("div","tm-db-player-results");results.id="tm-db-player-results";
+  results.setAttribute("role","listbox");results.setAttribute("aria-label","Filtrar jogador no microciclo");
+  results.hidden=true;document.body.append(results);
+  let choices=[],active=-1;
+  const close=()=>{
+   results.hidden=true;search.setAttribute("aria-expanded","false");
+   search.removeAttribute("aria-activedescendant");active=-1;
+  };
+  const position=()=>{
+   if(results.hidden)return;
+   const rect=search.getBoundingClientRect();
+   const vw=document.documentElement.clientWidth;
+   const width=Math.min(Math.max(rect.width,268),Math.max(180,vw-16));
+   results.style.width=width+"px";
+   results.style.left=Math.max(8,Math.min(rect.left,vw-width-8))+"px";
+   const below=window.innerHeight-rect.bottom-10;
+   const above=rect.top-10;
+   const abovePreferred=below<200&&above>below;
+   const room=Math.max(100,abovePreferred?above:below);
+   const height=Math.min(320,room);
+   results.style.maxHeight=height+"px";
+   results.style.top=(abovePreferred?Math.max(8,rect.top-6-Math.min(height,results.scrollHeight)):rect.bottom+6)+"px";
+  };
+  const choose=value=>{
+   playerQuery=value;search.value=value;applyPlayerFilter();close();search.blur();
+  };
+  const highlight=index=>{
+   if(!choices.length)return;
+   active=(index+choices.length)%choices.length;
+   for(const [i,node] of [...results.querySelectorAll('[role="option"]')].entries()){
+    const selected=i===active;node.classList.toggle("is-active",selected);
+    node.setAttribute("aria-selected",String(selected));
+    if(selected){
+     search.setAttribute("aria-activedescendant",node.id);
+     node.scrollIntoView({block:"nearest"});
+    }
+   }
+  };
+  const open=()=>{
+   const query=search.value.trim();
+   choices=[{value:"",title:"Todos os jogadores",detail:"Mostrar o microciclo completo"}];
+   for(const player of players||[]){
+    if(matchesPlayer(player.name,query))choices.push({
+     value:player.name,title:player.name,detail:"Filtrar microciclo semanal"
+    });
+   }
+   results.replaceChildren();active=-1;search.removeAttribute("aria-activedescendant");
+   for(const [i,item] of choices.entries()){
+    const btn=el("button","tm-db-player-option");btn.type="button";
+    btn.id="tm-db-player-option-"+i;
+    btn.setAttribute("role","option");btn.setAttribute("aria-selected","false");
+    btn.append(el("strong","tm-db-player-option-title",item.title),el("small","tm-db-player-option-detail",item.detail));
+    btn.addEventListener("mousedown",event=>event.preventDefault());
+    btn.addEventListener("click",()=>choose(item.value));
+    results.append(btn);
+   }
+   if(choices.length===1&&query){
+    results.append(el("p","tm-db-player-option-empty","Nenhum jogador encontrado."));
+   }
+   results.hidden=false;search.setAttribute("aria-expanded","true");position();
+  };
+  search.addEventListener("focus",open);
+  search.addEventListener("click",open);
+  search.addEventListener("input",()=>{
+   playerQuery=search.value;applyPlayerFilter();open();
+  });
+  search.addEventListener("keydown",event=>{
+   if(event.key==="Escape"){if(!results.hidden){event.preventDefault();close();}return;}
+   if(event.key==="Tab"){close();return;}
+   if(event.key==="ArrowDown"||event.key==="ArrowUp"){
+    event.preventDefault();if(results.hidden)open();
+    highlight(active+(event.key==="ArrowDown"?1:-1));
+   }else if(event.key==="Enter"&&!results.hidden&&active>=0){
+    event.preventDefault();choose(choices[active].value);
+   }
+  });
+  const outside=event=>{
+   if(!results.hidden&&event.target!==search&&!results.contains(event.target))close();
+  };
+  const onScroll=event=>{
+   if(!results.hidden&&event.target!==results&&!results.contains(event.target))close();
+  };
+  document.addEventListener("pointerdown",outside);
+  document.addEventListener("scroll",onScroll,true);
+  window.addEventListener("resize",position);
+  dashboardPickerCleanup=()=>{
+   document.removeEventListener("pointerdown",outside);
+   document.removeEventListener("scroll",onScroll,true);
+   window.removeEventListener("resize",position);results.remove();
+  };
+ }
+ function renderTable(data){dashboardPickerCleanup?.();dashboardPickerCleanup=null;const head=$("tm-db-thead"),body=$("tm-db-tbody");head.replaceChildren();body.replaceChildren();const today=data.today;const header=el("tr");const name=el("th","tm-db-name-cell");const searchWrap=el("div","tm-db-search-wrap");const glyph=el("span","tm-db-search-glyph");
+ glyph.setAttribute("aria-hidden","true");glyph.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';
+ const search=el("input","tm-db-search");search.type="search";search.placeholder="Filtrar jogador";
+ search.setAttribute("role","combobox");search.setAttribute("aria-autocomplete","list");
+ search.setAttribute("aria-haspopup","listbox");search.setAttribute("aria-controls","tm-db-player-results");
+ search.setAttribute("aria-expanded","false");search.setAttribute("aria-label","Filtrar jogadores da matriz");
+ search.autocomplete="off";search.value=playerQuery;
+ searchWrap.append(glyph,search);name.append(searchWrap);header.append(name);
  const days=Array.from({length:7},(_,i)=>shifted(weekMonday,i));for(const [i,day] of days.entries()){const th=el("th",day===today?"tm-db-today":"");const lab=el("div","tm-db-date",["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"][i]);const d=el("div","tm-db-day",dateLabel(day));const ico=el("div","tm-db-five-cols tm-db-icon-row");for(const kind of icons){const slot=el("span");slot.append(hugeIcon(kind));ico.append(slot);}th.append(lab,d,ico);header.append(th);}head.append(header);
  for(const player of data.players||[]){const tr=el("tr");tr.dataset.name=player.name;const first=el("td","tm-db-name-cell");const btn=el("button","tm-db-player-name");const avatar=el("span","tm-db-avatar");avatar.setAttribute("aria-hidden","true");avatar.textContent=player.name.split(/\s+/).slice(0,2).map(n=>n[0]||"").join("").toUpperCase();if(player.has_photo&&player.user_id){const img=el("img","tm-db-avatar-photo");img.src="/api/players/"+encodeURIComponent(player.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);}btn.append(avatar,el("span","tm-db-player-text",player.name));btn.addEventListener("click",()=>openPlayers(player.id));first.append(btn);tr.append(first);for(const item of player.days){const td=el("td",item.date===today?"tm-db-today":"");const isOff=Boolean(item.is_off)||["Off","Off (+1)","Off (+2)"].includes(item.classification);
  const state=item.classification==="MD"?" tm-db-match":isOff?" tm-db-off":item.classification==="Geral"?" tm-db-general":"";
@@ -1044,7 +1147,7 @@ function ensurePlanningOnlyView(){
   }
   $("tm-db-count").textContent=count+" jogador"+(count===1?"":"es");
  };
- search.addEventListener("input",()=>{playerQuery=search.value;applyPlayerFilter();});
+ setupDashboardPlayerPicker(search,data.players||[],applyPlayerFilter);
  applyPlayerFilter();
  $("tm-db-week-title").textContent=dateLabel(days[0])+" – "+dateLabel(days[6]);$("tm-db-today-date").textContent=new Intl.DateTimeFormat("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(today+"T12:00:00Z"));
  }
