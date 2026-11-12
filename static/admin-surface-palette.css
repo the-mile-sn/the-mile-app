@@ -1,0 +1,526 @@
+/* The Mile — shared Backoffice surface palette (approved 2026-11-12).
+ * Light/dark + desktop/tablet/mobile. Visual-only; no layout or application logic.
+ * Scope neutral surfaces explicitly. Keep nutritional classifications, published
+ * states, warnings, legacy-copy flags, selection, dropzones and focus outlines.
+ * Semantic action vocabulary and pill/corner styles are a separate future phase. */
+
+/* 1. Four levels of depth, one palette shared by all Backoffice modules. */
+:root,html[data-admin-theme="dark"]{
+ --tm-ui-bg:#101114;
+ --tm-ui-card:#15161a;
+ --tm-ui-subcard:#1e2025;
+ --tm-ui-search:#282b33;
+ --tm-ui-hover:#303239;
+ --tm-ui-text:#f2f3f5;
+ --tm-ui-muted:#a2a7b0;
+ --tm-ui-divider:rgba(155,168,185,.085);
+ --tm-ui-sidebar:#121215;
+ --tm-ui-sidebar-edge:rgba(165,177,192,.075);
+ --tm-shell-bg:var(--tm-ui-bg);
+ --tm-shell-surface:var(--tm-ui-card);
+ --tm-shell-surface-muted:var(--tm-ui-subcard);
+ --tm-shell-surface-hover:var(--tm-ui-hover);
+ --tm-shell-text:var(--tm-ui-text);
+ --tm-shell-muted:var(--tm-ui-muted);
+ --lib-bg:var(--tm-ui-bg);
+ --lib-panel:var(--tm-ui-card);
+ --lib-panel-2:var(--tm-ui-subcard);
+ --lib-fg:var(--tm-ui-text);
+ --lib-muted:var(--tm-ui-muted);
+ --tm-control-bg:var(--tm-ui-search);
+ --tm-control-bg-hover:var(--tm-ui-hover);
+}
+html[data-admin-theme="light"]{
+ --tm-ui-bg:#f5f6f8;
+ --tm-ui-card:#fff;
+ --tm-ui-subcard:#f0f2f6;
+ --tm-ui-search:#e0e7ef;
+ --tm-ui-hover:#e3e7ee;
+ --tm-ui-text:#1c2633;
+ --tm-ui-muted:#596675;
+ --tm-ui-divider:rgba(67,84,107,.075);
+ --tm-ui-sidebar:#fff;
+ --tm-ui-sidebar-edge:rgba(80,101,126,.085);
+ --tm-shell-bg:var(--tm-ui-bg);
+ --tm-shell-surface:var(--tm-ui-card);
+ --tm-shell-surface-muted:var(--tm-ui-subcard);
+ --tm-shell-surface-hover:var(--tm-ui-hover);
+ --tm-shell-text:var(--tm-ui-text);
+ --tm-shell-muted:var(--tm-ui-muted);
+ --lib-bg:var(--tm-ui-bg);
+ --lib-panel:var(--tm-ui-card);
+ --lib-panel-2:var(--tm-ui-subcard);
+ --lib-fg:var(--tm-ui-text);
+ --lib-muted:var(--tm-ui-muted);
+ --tm-control-bg:var(--tm-ui-search);
+ --tm-control-bg-hover:var(--tm-ui-hover);
+}
+
+/* 2. Application shells and shared navigation.
+ * The mobile tab bar keeps its approved spacing and active indicators. */
+html[data-admin-theme] body,
+html[data-admin-theme] #admin-workspace,
+html[data-admin-theme] .tm-library-layout,
+html[data-admin-theme] .tm-library-layout .shell,
+html[data-admin-theme] #tm-plan-page{
+ background:var(--tm-ui-bg)!important;
+ color:var(--tm-ui-text);
+}
+html[data-admin-theme] #admin-workspace .tm-admin-sidebar,
+html[data-admin-theme] .tm-library-layout .tm-admin-sidebar{
+ background:var(--tm-ui-sidebar)!important;
+ border-right:1px solid var(--tm-ui-sidebar-edge)!important;
+}
+html[data-admin-theme] .tm-library-layout .tm-admin-sidebar-footer{
+ border-top-color:var(--tm-ui-sidebar-edge)!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace .tm-admin-sidebar,
+ html[data-admin-theme] .tm-library-layout .tm-admin-sidebar{
+  border-right:0!important;
+  border-bottom-color:var(--tm-ui-sidebar-edge)!important;
+ }
+}
+/* No decorative elevation, including the pre-existing Create action shadow. */
+html[data-admin-theme] :is(.tm-action-new,.tm-action-new:hover,.tm-action-secondary,.tm-action-primary,.tm-action-add){
+ box-shadow:none!important;
+}
+html[data-admin-theme] :is(.tm-player-search-list,.tm-db-player-results,.tm-clinical-results,.tm-planning-results,.supp-search-dropdown,.dish-recipe-suggestions,.recipe-suggestions,.meal-rename-menu){
+ box-shadow:none!important;
+}
+
+/* 3. Dashboard: approved primary cards and calm inner panels. */
+#tm-dashboard .tm-db-panel{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-dashboard :is(.tm-db-event-group,.tm-db-today-main,.tm-db-today-recent){
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-dashboard .tm-db-grid-scroll{
+ border:0!important;box-shadow:none!important;
+}
+#tm-dashboard .tm-db-table :is(th,td){
+ border-color:var(--tm-ui-divider)!important;
+}
+#tm-dashboard .tm-db-table thead th{
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-dashboard .tm-db-table tbody td{
+ background:var(--tm-ui-card)!important;
+}
+#tm-dashboard .tm-db-table :is(th,td).tm-db-name-cell{
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-dashboard .tm-db-table tbody td .tm-db-player-name:not(.tm-db-player-selected){
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-dashboard .tm-db-table tbody td .tm-db-player-name:not(.tm-db-player-selected):hover{
+ background:var(--tm-ui-hover)!important;
+}
+#tm-dashboard :is(.tm-db-controls button,.tm-db-search-wrap){
+ border:0!important;box-shadow:none!important;
+}
+#tm-dashboard .tm-db-controls button{background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important}
+#tm-dashboard .tm-db-controls button:hover{background:var(--tm-ui-hover)!important}
+#tm-dashboard .tm-db-player-results{background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important}
+#tm-dashboard .tm-db-search-wrap{background:transparent!important}
+#tm-dashboard .tm-db-search{
+ background:transparent!important;color:var(--tm-ui-text)!important;
+}
+/* Match days, Off days, General-pending, today, selection and dot colours
+ * are intentionally left under the existing semantic styles. */
+#tm-dashboard .tm-db-player-option:hover,
+#tm-dashboard .tm-db-player-option.is-active{background:var(--tm-ui-hover)!important}
+.tm-db-player-results .tm-db-player-option:hover,
+.tm-db-player-results .tm-db-player-option.is-active{background:var(--tm-ui-hover)!important}
+
+/* 4. Directory, profile and account management. */
+#tm-players-page .tm-players-panel:not(.tm-players-list-surface),
+#tm-players-page .tm-players-access-management,
+#tm-players-page #tm-players-settings-slot,
+#admin-account-panel .tm-admin-my-photo,
+#tm-admin-settings .tm-settings-appearance,
+#tm-settings-admins .tm-settings-appearance{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-players-page .tm-players-list-surface{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#tm-players-page .tm-players-list-surface .tm-players-table-scroll{
+ background:var(--tm-ui-card)!important;border:0!important;box-shadow:none!important;
+}
+#tm-players-page .tm-players-table thead,
+#tm-players-page .tm-players-table thead th{
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-players-page .tm-players-table tbody tr{
+ background:var(--tm-ui-card)!important;
+}
+#tm-players-page .tm-players-table tbody td,
+#tm-players-page .tm-players-table tbody tr td{
+ border-bottom-color:var(--tm-ui-divider)!important;
+}
+#tm-players-page .tm-players-table thead :is(.tm-players-search-label input,.tm-two-line-select){
+ background:var(--tm-ui-search)!important;border:0!important;
+ box-shadow:none!important;
+}
+/* Existing two-line controls keep equal height/corners and keyboard focus. */
+#tm-players-page .tm-players-table thead .tm-players-header-select .tm-two-line-select{
+ background:var(--tm-ui-search)!important;border:0!important;
+}
+#tm-players-page .tm-player-search-list{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-players-page .tm-player-search-option:hover,
+#tm-players-page .tm-player-search-option.is-active{
+ background:var(--tm-ui-hover)!important;
+}
+.tm-player-search-list{background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;border:0!important}
+.tm-player-search-option:hover,.tm-player-search-option.is-active{background:var(--tm-ui-hover)!important}
+#tm-players-page .profile-info-card{
+ background:var(--tm-ui-subcard)!important;border:0!important;box-shadow:none!important;
+}
+#tm-players-page .tm-player-permission-row:not(.is-enabled){
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-players-page .tm-player-permissions-shield{
+ background:transparent!important;
+}
+#tm-players-page .tm-p-icon-action:not(.tm-p-app-action){
+ background:var(--tm-ui-search)!important;
+}
+#tm-players-page .tm-p-app-action{
+ border:0!important;box-shadow:none!important;
+ background:var(--tm-ui-search)!important;
+}
+#tm-players-page .tm-p-icon-action:hover:not(:disabled){background:var(--tm-ui-hover)!important}
+@media(max-width:830px){
+ #tm-players-page .tm-players-table tbody tr{
+  background:var(--tm-ui-card)!important;
+  border:0!important;box-shadow:none!important;
+ }
+ #tm-players-page .tm-players-list-surface .tm-players-table thead{
+  background:var(--tm-ui-subcard)!important;
+ }
+ #tm-players-page .tm-players-table thead .tm-players-search-label input{
+  background:var(--tm-ui-search)!important;
+ }
+}
+/* Neutral form panels, not the success/error messages inside them. */
+#tm-players-page :is(.tm-access-password-form,.tm-player-loading-photo-card),
+#admin-account-panel .tm-admin-my-photo{
+ border:0!important;box-shadow:none!important;
+}
+#tm-players-page .tm-access-password-form{background:var(--tm-ui-subcard)!important}
+#tm-players-page #tm-players-settings-slot > .tm-player-loading-photo-card{
+ background:transparent!important;
+ border-top:1px solid var(--tm-ui-divider)!important;
+}
+
+/* 5. Assessments and form views: preserve trend and reference colour bands. */
+.tm-clinical-page #profile-monitoring,
+.tm-clinical-picker,
+.tm-assessment-registry-panel,
+.tm-assessment-visual,
+#assessments-admin-panel .assessment-excel-import{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+.tm-clinical-metric:not(.tm-clinical-metric-primary):not(.tm-skinfold-solid):not([class*="tm-clinical-trend-"]),
+.tm-assessment-detail:not([open]):not(:hover):not(:focus-within),
+#assessments-admin-panel .assessment-review-group,
+#profile-monitoring .monitoring-weight-chart,
+#profile-monitoring .monitoring-entry:not(.tm-monitoring-target){
+ background:var(--tm-ui-subcard)!important;box-shadow:none!important;
+}
+.tm-clinical-metric:not([class*="tm-clinical-trend-"]):not(.tm-clinical-metric-primary):not(.tm-skinfold-solid),
+#profile-monitoring .monitoring-weight-chart,
+#profile-monitoring .monitoring-entry:not(.tm-monitoring-target),
+#assessments-admin-panel .assessment-review-group{
+ border:0!important;
+}
+.tm-assessment-detail:not([open]):not(:hover):not(:focus-within){
+ border-color:transparent!important;
+}
+.tm-clinical-search-wrap input,
+.tm-clinical-selector select,
+.tm-assessment-filter :is(input,select),
+.tm-assessment-visual-head select,
+.tm-assessment-detail-body select,
+#assessments-admin-panel .assessment-review-top input,
+#assessments-admin-panel .assessment-review-grid input:not([readonly]){
+ background:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+.tm-clinical-results{background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;border:0!important}
+.tm-clinical-option:hover{background:var(--tm-ui-hover)!important}
+#assessments-admin-panel .assessment-history-row{
+ background:var(--tm-ui-subcard)!important;
+}
+:is(.tm-assessment-table,.tm-weight-records,.tm-postmatch-matrix) th{
+ background:var(--tm-ui-subcard)!important;
+}
+:is(.tm-assessment-table,.tm-weight-records,.tm-postmatch-matrix) td{
+ border-bottom-color:var(--tm-ui-divider)!important;
+}
+
+/* 6. Legacy Planeamento: keep MD/Off/selected and pending dashed borders. */
+#tm-admin-legacy .tm-planning-unified-header,
+#tm-admin-legacy .calendar-panel,
+#tm-admin-legacy .tm-planning-player-toolbar,
+#tm-admin-legacy #backoffice-nav{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-admin-legacy .day-preview,
+#calendar-section .day-meal,
+#tm-admin-legacy .tm-planning-create,
+#supplements-panel .supp-workflow,
+#peri-panel .peri-plan-section,
+#peri-panel .peri-history{
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-admin-legacy #tm-planning-search,
+#tm-admin-legacy .tm-planning-player-select select,
+#calendar-section .day-preview select:not(.day-color-select),
+#supplements-panel :is(input[type="search"],select),
+#peri-panel :is(input[type="search"],select){
+ background:var(--tm-ui-search)!important;
+ border:0!important;box-shadow:none!important;
+ color:var(--tm-ui-text)!important;
+}
+#tm-admin-legacy .tm-planning-results,
+#supplements-panel .supp-search-dropdown{
+ background:var(--tm-ui-search)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-admin-legacy .tm-planning-result:hover{
+ background:var(--tm-ui-hover)!important;
+}
+/* Colored .calendar-day, .day-meal-header, .meal-vp and nutrition chips are
+ * deliberately untouched. Likewise, event/supplement exceptions and dropzones. */
+
+/* 7. Menus + culinary library, preserving nutritional colours. */
+#menus-panel .menu-day-card,
+#menus-panel #profile-recipe-access,
+#tm-menu-recipes-page .menu-create-section,
+#tm-menu-recipes-page .menu-library-section,
+#tm-menu-recipes-page .dish-table-scroll,
+#tm-recipe-library-page :is(.recipe-editor-panel,.recipe-table-scroll,#recipe-list,.recipe-reader-panel,.recipe-pdf-panel,.recipe-category-manage){
+ background:var(--tm-ui-card)!important;border:0!important;box-shadow:none!important;
+}
+#menus-panel .menu-meal-card,
+#menus-panel #profile-recipe-access .tm-recipe-category-chip,
+#tm-menu-recipes-page .dish-edit-card,
+#tm-menu-recipes-page .dish-recipe-association,
+#tm-recipe-library-page :is(.recipe-section,.recipe-category-item,.recipe-pdf-result,.recipe-pdf-block,.recipe-edit-photo){
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+#menus-panel .menu-meal-card :is(select,textarea.menu-free-text),
+#menus-panel #profile-recipe-category-search,
+#menus-panel #profile-recipe-access .tm-recipe-search-results,
+#tm-menu-recipes-page .dish-catalog-filters :is(input,select),
+#tm-menu-recipes-page .dish-new>label :is(input,select),
+#tm-recipe-library-page :is(.recipe-library-toolbar,.recipe-editor-grid,.recipe-table-filter-row,.recipe-entry-field) :is(input,select,textarea){
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+#menus-panel #profile-recipe-access .tm-recipe-search-results,
+#tm-menu-recipes-page .dish-table-scroll{
+ border:0!important;box-shadow:none!important;
+}
+#menus-panel #profile-recipe-access .tm-recipe-category-option:hover,
+#menus-panel #profile-recipe-access .tm-recipe-category-option:focus-visible{
+ background:var(--tm-ui-hover)!important;
+}
+#tm-menu-recipes-page .dish-library-table th,
+#tm-recipe-library-page .recipe-table th,
+#tm-recipe-library-page .recipe-table-filter-row th{
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-menu-recipes-page .dish-library-table td,
+#tm-recipe-library-page .recipe-table td{
+ border-bottom-color:var(--tm-ui-divider)!important;
+}
+#tm-recipe-library-page{
+ --recipe-panel:var(--tm-ui-card)!important;
+ --recipe-text:var(--tm-ui-text);
+ --recipe-muted:var(--tm-ui-muted);
+}
+/* Keep photo dropzones' dashed borders, linked-ingredient warning badges and
+ * Published/Delete chips: their semantic standardisation comes next. */
+
+/* 8. Food library + visual portions, embedded in Backoffice. */
+#tm-food-library-page .food-catalog-panel,
+#tm-food-library-page .tm-portion-card,
+#tm-food-library-page .tm-portion-plan-preview{
+ background:var(--tm-ui-card)!important;border:0!important;box-shadow:none!important;
+}
+#tm-food-library-page .food-catalog-table :is(.food-header-row,.food-filter-row) th{
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-food-library-page .food-catalog-table td,
+#tm-food-library-page .food-catalog-table th{
+ border-bottom-color:var(--tm-ui-divider)!important;
+}
+#tm-food-library-page .food-filter-row :is(input,select),
+#tm-food-library-page .tm-portion-filters :is(input,select),
+#tm-food-library-page .tm-portion-preview-controls select,
+#tm-food-library-page .tm-portion-catalog-header .tm-portion-filters>label,
+#tm-food-library-page dialog .fields :is(input,select,textarea){
+ background:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-food-library-page .tm-portion-preview-group{
+ background:var(--tm-ui-subcard)!important;border:0!important;box-shadow:none!important;
+}
+#tm-food-library-page .tm-portion-preview-match:not(.has-photo){
+ background:var(--tm-ui-subcard)!important;border:0!important;
+}
+#tm-food-library-page .tm-portion-tabs{
+ background:var(--tm-ui-search)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-food-library-page .tm-portion-tab.is-current{
+ background:var(--tm-ui-card)!important;box-shadow:none!important;
+}
+/* Active/published photo badges keep their green fill. */
+
+/* 9. Plan list/editor/preview, both embedded and standalone. */
+#tm-plan-page,
+.tm-library-layout .shell{
+ background:var(--tm-ui-bg)!important;
+}
+#tm-plan-page :is(.panel,.stat),
+#tm-plan-page :is(#plan-entry .plan-library-table-wrap,#plan-editor .meal,#plan-preview .plan-preview-heading),
+.tm-library-layout :is(.panel,.stat,.plan-library-table-wrap),
+.tm-library-layout #plan-editor .meal,
+.tm-library-layout #plan-preview .plan-preview-heading{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#tm-plan-page :is(.option-content,.option-summary,.meal-average,.nutrition-list,.plan-preview-group),
+.tm-library-layout :is(.option-content,.option-summary,.meal-average,.nutrition-list,.plan-preview-group){
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+/* Do not recolour existing option selection, plan status or legacy-copy rows. */
+#tm-plan-page :is(.plan-library-table,.food-catalog-table) th,
+.tm-library-layout :is(.plan-library-table,.food-catalog-table) th{
+ background:var(--tm-ui-subcard)!important;
+}
+#tm-plan-page :is(.plan-library-table,.food-catalog-table) td,
+.tm-library-layout :is(.plan-library-table,.food-catalog-table) td{
+ border-bottom-color:var(--tm-ui-divider)!important;
+}
+#tm-plan-page :is(.plan-library-search-label input,.plan-library-filters input,.plan-library-filters select,.planhead.plan-selectors select,.meal-rename-picker select),
+.tm-library-layout :is(.plan-library-search-label input,.plan-library-filters input,.plan-library-filters select,.planhead.plan-selectors select,.meal-rename-picker select,.food-filter-row input,.food-filter-row select){
+ background:var(--tm-ui-search)!important;
+ border:0!important;box-shadow:none!important;
+ color:var(--tm-ui-text)!important;
+}
+#tm-plan-page .plan-library-table-wrap,
+.tm-library-layout .plan-library-table-wrap{
+ border:0!important;box-shadow:none!important;
+}
+/* Strong structural borders in default recipe/plan/library cards can go.
+ * Status outlines, errors, focus, calendar markers and drag targets cannot. */
+.tm-library-layout dialog{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+
+/* 10. Registos / publication and neutral settings surfaces. */
+#consumption-panel .tm-consumption-card,
+#consumption-panel .tm-consumption-empty{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#consumption-panel .tm-consumption-toolbar :is(input,button){
+ background:var(--tm-ui-search)!important;
+ border:0!important;box-shadow:none!important;
+}
+#consumption-panel .tm-consumption-card :is(li,.tm-consumption-macros,details){
+ border-color:var(--tm-ui-divider)!important;
+}
+#tm-admin-settings .tm-settings-appearance,
+#tm-settings-admins .tm-settings-appearance{
+ background:var(--tm-ui-card)!important;border:0!important;box-shadow:none!important;
+}
+
+/* 11. Explicit keyboard focus is still a functional border. */
+html[data-admin-theme] :is(#tm-plan-page,.tm-library-layout,#tm-food-library-page,#tm-recipe-library-page,#tm-menu-recipes-page,#tm-dashboard,#tm-players-page)
+ :is(input,select,textarea,button):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9);
+ outline-offset:2px;
+}
+html[data-admin-theme] :is(.tm-clinical-search-wrap input,.tm-assessment-filter input,.tm-assessment-filter select):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9);
+ outline-offset:2px;
+}
+/* iOS focus: never reintroduce the zoom effect on compact filter controls. */
+@media(max-width:830px){
+ #tm-dashboard .tm-db-search,
+ #tm-players-page #tm-players-filter,
+ #tm-plan-page input[type="search"],
+ .tm-library-layout input[type="search"],
+ #tm-recipe-library-page input[type="search"],
+ #tm-food-library-page input[type="search"]{
+  font-size:16px!important;
+  -webkit-text-size-adjust:100%;
+ }
+}
+
+/* Account, settings, legacy standalone panels and scenario editor. */
+#admin-login-panel,
+#admin-account-panel,
+#admin-access-panel,
+#athlete-weight-panel,
+#assessments-admin-panel,
+#plan-import-panel,
+#peri-panel,
+#supplements-panel,
+#player-preview-panel,
+#tm-admin-settings #tm-settings-appearance,
+#tm-admin-settings #tm-settings-admins{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#admin-login-panel :is(input[type="email"],input[type="password"]),
+#admin-account-panel #admin-password-form :is(input,select),
+#admin-account-panel #admin-invite-form :is(input,select),
+#admin-access-panel input:not([type="checkbox"]){
+ background:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+#admin-account-panel .tm-admin-my-photo{
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;box-shadow:none!important;
+}
+#scenario-editor .scenario-field,
+#scenario-editor .scenario-preview,
+#scenario-editor .scenario-day-group{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
+}
+#scenario-editor :is(.scenario-day-heading,.scenario-day-matrix thead th){
+ background:var(--tm-ui-subcard)!important;
+}
+#scenario-editor .scenario-field :is(input,select),
+#scenario-editor .scenario-preview-controls :is(input,select){
+ background:var(--tm-ui-search)!important;
+ border:0!important;box-shadow:none!important;
+}
+#scenario-editor .scenario-day-matrix :is(td,th){
+ border-bottom-color:var(--tm-ui-divider)!important;
+}
+/* Do not overwrite the scenario matrix day classifications or colour coding. */
