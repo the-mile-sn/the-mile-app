@@ -1761,26 +1761,46 @@ async function overview(){
     }
     rings.append(chart);
     const figures=document.createElement("div");figures.className="consumption-concentric-figures";
+    const energyRow=document.createElement("div");energyRow.className="consumption-concentric-energy-row";
     const energyLine=document.createElement("div");energyLine.className="consumption-concentric-energy";
-    const current=document.createElement("strong");current.textContent=fmt(actual.kcal,0);
-    const planned=document.createElement("span");planned.textContent=" / "+fmt(total.kcal,0);
-    const suffix=document.createElement("span");suffix.className="consumption-concentric-unit";suffix.textContent=" kcal";
-    energyLine.append(current,planned,suffix);figures.append(energyLine);
-    const kg=document.createElement("small");kg.className="consumption-concentric-perkg";
-    kg.textContent=hasWeight?"("+fmt(actual.kcal/weight,0)+" / "+fmt(total.kcal/weight,0)+" kcal/kg)":"Consumido / planeado";
-    figures.append(kg);
+    const current=document.createElement("strong");
+    const planned=document.createElement("span");
+    const suffix=document.createElement("span");suffix.className="consumption-concentric-unit";
+    energyLine.append(current,planned,suffix);
+    const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
+    const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
+    const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
+    mode.append(gramsButton,kgButton);energyRow.append(energyLine,mode);figures.append(energyRow);
     const details=document.createElement("div");details.className="consumption-concentric-macros";
+    const macroValues=[];
     for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
      const line=document.createElement("div");line.className="consumption-concentric-macro "+cls;
      const name=document.createElement("span");name.textContent=title;
      const amount=document.createElement("strong");amount.className="consumption-concentric-amount";
-     const consumedValue=document.createElement("span");consumedValue.className="consumption-concentric-actual";consumedValue.textContent=fmt(actual[key],0);
-     const prescribedValue=document.createElement("span");prescribedValue.className="consumption-concentric-prescribed";prescribedValue.textContent=" / "+fmt(total[key],0);
-     const grams=document.createElement("span");grams.className="consumption-concentric-unit";grams.textContent=" g";
+     const consumedValue=document.createElement("span");consumedValue.className="consumption-concentric-actual";
+     const prescribedValue=document.createElement("span");prescribedValue.className="consumption-concentric-prescribed";
+     const grams=document.createElement("span");grams.className="consumption-concentric-unit";
      amount.append(consumedValue,prescribedValue,grams);
-     const per=document.createElement("small");per.textContent=hasWeight?"("+fmt(actual[key]/weight,1)+" / "+fmt(total[key]/weight,1)+" g/kg)":"";
-     line.append(name,amount,per);details.append(line);
+     line.append(name,amount);details.append(line);
+     macroValues.push({key,consumedValue,prescribedValue,grams});
     }
+    const updateUnits=(perKg)=>{
+     gramsButton.classList.toggle("active",!perKg);kgButton.classList.toggle("active",perKg);
+     gramsButton.setAttribute("aria-pressed",String(!perKg));kgButton.setAttribute("aria-pressed",String(perKg));
+     const divisor=perKg&&hasWeight?weight:1;
+     current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
+     planned.textContent=" / "+fmt(total.kcal/divisor,0);
+     suffix.textContent=perKg?" kcal/kg":" kcal";
+     for(const item of macroValues){
+      item.consumedValue.textContent=fmt(actual[item.key]/divisor,perKg?1:0);
+      item.prescribedValue.textContent=" / "+fmt(total[item.key]/divisor,perKg?1:0);
+      item.grams.textContent=perKg?" g/kg":" g";
+     }
+    };
+    gramsButton.addEventListener("click",e=>{e.stopPropagation();updateUnits(false);});
+    kgButton.addEventListener("click",e=>{e.stopPropagation();if(hasWeight)updateUnits(true);});
+    kgButton.disabled=!hasWeight;kgButton.title=hasWeight?"":"Peso de referência indisponível";
+    updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
     for(const [name,delta,cls] of [["vs ontem",deviationPrevious,"prior"],["vs média",deviationMean,"mean"]]){
      const pill=document.createElement("div");pill.className="consumption-concentric-trend "+cls;
