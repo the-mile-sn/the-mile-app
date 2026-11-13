@@ -321,3 +321,15 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 
 /* v27: prevent expanded snap rules overriding live finger drag */
 .consumption-food-sheet.is-expanded.is-dragging{height:var(--sheet-drag-height)!important;max-height:var(--sheet-drag-max-height)!important}
+
+
+/* v28: tighter consumed-food rows; retain clear touch targets */
+#overview .consumption-editor .consumption-food-line{
+ min-height:43px!important;
+ padding:3px 0!important;
+ row-gap:0!important;
+}
+#overview .consumption-editor .consumption-food-line input[type=number]{
+ height:34px!important;
+ min-height:34px!important;
+}
