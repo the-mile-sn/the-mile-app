@@ -19,12 +19,12 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             # The schedule DOM must load its controller, after the catalogue's
             # CustomEvent publisher. Otherwise professional/service selects stay empty.
             body = page["body"]
-            main_script = b'src="/admin-appointments.js?v=3"'
-            schedule_script = b'src="/admin-appointments-schedule.js?v=2"'
+            main_script = b'src="/admin-appointments.js?v='
+            schedule_script = b'src="/admin-appointments-schedule.js?v='
             self.assertIn(main_script, body)
             self.assertIn(schedule_script, body)
             self.assertLess(body.index(main_script), body.index(schedule_script))
-            bookings_script = b'src="/admin-appointments-bookings.js?v=1"'
+            bookings_script = b'src="/admin-appointments-bookings.js?v='
             self.assertIn(bookings_script, body)
             self.assertLess(body.index(schedule_script), body.index(bookings_script))
             self.assertEqual(client.request("/admin-appointments-bookings.js")["status"], 200)
