@@ -32,6 +32,7 @@
   for(const iso of dates){
    const node=document.createElement("div");
    node.className="tm-appointments-day"+(iso===now?" is-today":"");
+   node.dataset.date=iso;
    if(iso===now)node.setAttribute("aria-current","date");
    const dayName=document.createElement("small");
    dayName.textContent=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short"}).format(utcDay(iso));
@@ -40,6 +41,7 @@
    node.append(dayName,date);
    days.append(node);
   }
+  document.dispatchEvent(new CustomEvent("tm:appointments-range",{detail:{dates,view}}));
  }
  function setView(next){
   view=next;
@@ -205,6 +207,7 @@
   const data=await api(endpoint+"/catalog");
   if(!Array.isArray(data.services)||!Array.isArray(data.professionals))throw Error("Resposta inesperada do servidor.");
   catalog=data;renderServices();renderProfessionals();
+  window.tmAppointmentsCatalog=catalog;
   document.dispatchEvent(new CustomEvent("tm:appointments-catalog",{detail:catalog}));
   return data;
  }

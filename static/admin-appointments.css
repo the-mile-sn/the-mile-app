@@ -232,3 +232,56 @@ body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#101114);color:var(
  .tm-appt-photo-large{width:72px;height:72px;min-width:72px}
 }
 @media(max-width:390px){.tm-appt-avail-week{grid-template-columns:1fr}.tm-appt-avail-period{flex-wrap:wrap}.tm-appt-preview-filters{grid-template-columns:1fr}}
+
+
+/* Phase 4.1 — internal manual booking management, no external sync. */
+.tm-appt-reservations-head{align-items:center}
+.tm-appt-bookings-panel{margin-top:17px;background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);border-radius:17px;padding:23px;min-width:0}
+.tm-appt-bookings-filters{display:grid;grid-template-columns:minmax(150px,1.25fr) minmax(165px,1.4fr) minmax(112px,.85fr) minmax(130px,.85fr) minmax(130px,.85fr) auto;gap:10px;align-items:end;padding-bottom:22px;border-bottom:1px solid var(--tm-ui-divider)}
+.tm-appt-bookings-filters .tm-appt-outline-action{min-height:40px}
+.tm-appt-booking-list-title{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:22px 0 14px}
+.tm-appt-booking-list-title h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.02em}
+.tm-appt-booking-list-title span{font-size:11px;color:var(--tm-ui-muted)}
+.tm-appt-bookings-list{display:flex;flex-direction:column;gap:9px}
+.tm-appt-booking-record{display:grid;grid-template-columns:minmax(115px,auto) minmax(180px,1fr) minmax(155px,auto);gap:20px;align-items:center;padding:16px;background:var(--tm-ui-subcard);border:1px solid var(--tm-ui-divider);border-radius:13px}
+.tm-appt-booking-record.is-cancelled{opacity:.65}
+.tm-appt-booking-when{display:flex;flex-direction:column;gap:5px;white-space:nowrap}
+.tm-appt-booking-when strong{font-size:15px;font-weight:600;line-height:1.25;font-variant-numeric:tabular-nums}
+.tm-appt-booking-when span{font-size:11px;color:var(--tm-ui-muted)}
+.tm-appt-booking-info{min-width:0}
+.tm-appt-booking-info h4{font-size:14px;margin:0 0 4px;font-weight:600;overflow-wrap:anywhere}
+.tm-appt-booking-info p{font-size:11px;margin:3px 0;color:var(--tm-ui-muted);line-height:1.5;overflow-wrap:anywhere}
+.tm-appt-booking-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;text-align:right}
+.tm-appt-booking-status{font-size:11px;font-weight:600;color:var(--tm-ui-text);white-space:nowrap}
+.tm-appt-booking-status.is-cancelled{color:var(--tm-ui-muted)}
+.tm-appt-booking-payment{color:var(--tm-ui-muted);font-size:10px}
+.tm-appt-booking-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:5px;flex-wrap:wrap}
+.tm-appt-booking-actions button{min-height:30px;background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);border-radius:8px;padding:6px 9px;color:var(--tm-ui-text);cursor:pointer;font-size:11px}
+.tm-appt-booking-actions button:hover{background:var(--tm-ui-hover)}
+.tm-appt-booking-actions button.tm-appt-booking-cancel{color:var(--tm-ui-muted)}
+.tm-appt-booking-actions button:disabled{opacity:.45;cursor:progress}
+.tm-appt-booking-empty{padding:28px 16px;text-align:center;color:var(--tm-ui-muted);font-size:12px;line-height:1.55;margin:0}
+.tm-appt-booking-customer-group{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--tm-ui-divider);padding-top:17px}
+.tm-appt-booking-customer-group h3{font-size:13px;margin:0;font-weight:600}
+.tm-appt-agenda-feed{margin-top:16px;padding-top:17px;border-top:1px solid var(--tm-ui-divider)}
+.tm-appt-agenda-feed h4{margin:0 0 12px;font-size:13px;font-weight:600}
+#tm-appt-agenda-list{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+#tm-appt-agenda-list .tm-appt-booking-record{padding:12px 14px;grid-template-columns:minmax(110px,auto) minmax(170px,1fr) auto}
+#tm-appt-agenda-list .tm-appt-booking-when strong{font-size:13px}
+#tm-appt-agenda-list .tm-appt-booking-info h4{font-size:12px}
+#tm-appt-agenda-list .tm-appt-booking-info p{font-size:11px}
+.tm-appt-agenda-count{display:block;margin-top:6px;font-size:10px;color:var(--tm-ui-muted);font-weight:600;white-space:nowrap}
+@media(max-width:1350px){.tm-appt-bookings-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.tm-appt-bookings-filters .tm-appt-outline-action{justify-self:start}}
+@media(max-width:900px){.tm-appt-booking-record{grid-template-columns:minmax(105px,auto) minmax(170px,1fr);gap:10px 14px}.tm-appt-booking-right{grid-column:2;align-items:flex-start;text-align:left}.tm-appt-bookings-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){
+ .tm-appt-reservations-head{align-items:flex-start}
+ .tm-appt-bookings-panel{padding:16px}
+ .tm-appt-bookings-filters{grid-template-columns:1fr 1fr}
+ .tm-appt-bookings-filters .tm-appt-field:nth-child(1),.tm-appt-bookings-filters .tm-appt-field:nth-child(2){grid-column:1/-1}
+ .tm-appt-booking-record,#tm-appt-agenda-list .tm-appt-booking-record{grid-template-columns:minmax(0,1fr);gap:8px}
+ .tm-appt-booking-right{grid-column:1;align-items:flex-start;text-align:left}
+ .tm-appt-booking-when{flex-direction:row;align-items:baseline;gap:10px;flex-wrap:wrap}
+ .tm-appt-booking-info h4{font-size:13px}
+ .tm-appt-bookings-filters .tm-appt-outline-action{grid-column:1/-1;justify-self:stretch}
+ .tm-appt-agenda-count{font-size:9px;white-space:normal}
+}
