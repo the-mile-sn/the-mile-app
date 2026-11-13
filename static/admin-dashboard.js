@@ -62,7 +62,7 @@
   if(dishesBtn){dishesBtn.classList.toggle("is-active",target===recipesBtn);if(target===recipesBtn)dishesBtn.setAttribute("aria-current","page");else dishesBtn.removeAttribute("aria-current");}
   if(recipeLibraryBtn){recipeLibraryBtn.classList.remove("is-active");recipeLibraryBtn.removeAttribute("aria-current");}
   legacy.classList.toggle("tm-account-only",accountView);
-  if(dashboardReturn)dashboardReturn.hidden=target===dash||target===foodLibraryBtn||target===plansBtn||!$("tm-players-profile").hidden;
+  if(dashboardReturn)dashboardReturn.hidden=target===dash||!$("tm-players-profile").hidden;
   for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
   // Mobile: make the newly selected tab visible without changing the current page.
   if(window.matchMedia("(max-width: 830px)").matches&&target?.closest(".tm-admin-mobile-nav-track")){
