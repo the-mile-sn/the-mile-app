@@ -379,3 +379,16 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 }
 .consumption-grams-wheel-option::selection{background:transparent!important}
 .consumption-grams-wheel-option::-moz-selection{background:transparent!important}
+
+
+/* v33: keep the horizontal selection band; remove only number highlight */
+.consumption-grams-wheel-band{
+ background:rgba(255,255,255,.075)!important;
+ border-radius:12px!important;
+ box-shadow:none!important;
+}
+.consumption-grams-wheel-option,.consumption-grams-wheel-option.selected{
+ background:transparent!important;
+ box-shadow:none!important;
+ outline:none!important;
+}
