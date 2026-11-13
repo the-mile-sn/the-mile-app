@@ -28,6 +28,11 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             self.assertIn(bookings_script, body)
             self.assertLess(body.index(schedule_script), body.index(bookings_script))
             self.assertEqual(client.request("/admin-appointments-bookings.js")["status"], 200)
+            google_script = b'src="/admin-appointments-google.js?v='
+            self.assertIn(google_script, body)
+            self.assertLess(body.index(bookings_script), body.index(google_script))
+            self.assertEqual(client.request("/admin-appointments-google.js")["status"], 200)
+            self.assertIn(b'id="tm-appt-google-calendar-list"', body)
             booking_markup = body.split(b'id="tm-appt-booking-dialog"', 1)[1]
             self.assertIn(b'id="tm-appt-cal-days"', booking_markup)
             self.assertIn(b'id="tm-appt-time-options"', booking_markup)
@@ -46,7 +51,7 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
     def test_player_service_does_not_expose_admin_shell(self):
         with patch.object(app, "SITE_ROLE", "player"):
             for route in ("/admin-appointments", "/admin-appointments.js",
-                          "/admin-appointments-schedule.js", "/admin-appointments-bookings.js", "/admin-appointments.css"):
+                          "/admin-appointments-schedule.js", "/admin-appointments-bookings.js", "/admin-appointments-google.js", "/admin-appointments.css"):
                 with self.subTest(route=route):
                     self.assertEqual(fixtures.Client().request(route)["status"], 404)
 

@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=33">
- <link rel="stylesheet" href="/admin-appointments.css?v=5">
+ <link rel="stylesheet" href="/admin-appointments.css?v=6">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -69,7 +69,7 @@
     </div>
     <div class="tm-appointments-info" role="note">
      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg>
-     <span>Marcações internas apenas: ainda não verificam reservas Sesami ou ocupações Google e não criam encomendas nem pagamentos Shopify.</span>
+     <span>Marcações internas apenas: verificam a disponibilidade Google quando ligada, mas ainda não incluem o Sesami e não criam encomendas nem pagamentos Shopify.</span>
     </div>
     <div class="tm-appt-bookings-panel">
      <div class="tm-appt-bookings-filters">
@@ -88,7 +88,7 @@
 
    <section id="tm-appointments-panel-disponibilidades" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-disponibilidades" tabindex="0" hidden>
     <div class="tm-appointments-panel-heading"><div><h2>Disponibilidades</h2><p>Publica horários por profissional e dia, com possibilidade de copiar períodos e bloquear intervalos.</p></div></div>
-    <div class="tm-appointments-info" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg><span>Pré-visualização interna: ainda não considera reservas no Sesami nem ocupações Google. Não publica vagas no Shopify.</span></div>
+    <div class="tm-appointments-info" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg><span>Pré-visualização interna: inclui marcações The Mile e ocupações Google apenas quando a ligação estiver ativa. Não inclui reservas do Sesami nem publica vagas no Shopify.</span></div>
     <section class="tm-appt-avail-panel" aria-label="Gestão de períodos">
      <div class="tm-appt-avail-toolbar">
       <label class="tm-appt-field tm-appt-avail-picker"><span>Profissional</span><select id="tm-appt-avail-professional"><option value="">Selecionar profissional</option></select></label>
@@ -122,12 +122,46 @@
       </header>
       <div id="tm-appt-professionals-list" class="tm-appt-catalog-list" aria-live="polite"><p class="tm-appt-placeholder">A carregar profissionais…</p></div>
      </section>
+     <section class="tm-appt-catalog-section tm-appt-google-panel" aria-labelledby="tm-appt-google-title">
+      <header class="tm-appt-catalog-header">
+       <div><h3 id="tm-appt-google-title">Google Calendar</h3>
+        <p>Liga a agenda de cada profissional e escolhe quais os calendários que bloqueiam horários.</p></div>
+       <span class="tm-appt-google-pill" id="tm-appt-google-pill">Ligação individual</span>
+      </header>
+      <div class="tm-appt-google-content">
+       <label class="tm-appt-field tm-appt-google-professional"><span>Profissional</span>
+        <select id="tm-appt-google-professional"><option value="">Selecionar profissional</option></select>
+       </label>
+       <div class="tm-appt-google-status" id="tm-appt-google-status" role="status" aria-live="polite">Seleciona um profissional para consultar a ligação.</div>
+       <div class="tm-appt-google-buttons">
+        <button type="button" class="tm-appt-outline-action" id="tm-appt-google-connect" disabled>Ligar conta Google</button>
+        <button type="button" class="tm-appt-outline-action" id="tm-appt-google-reconnect" hidden>Voltar a autorizar</button>
+        <button type="button" class="tm-appt-outline-action" id="tm-appt-google-disconnect" hidden>Desligar conta</button>
+       </div>
+       <div id="tm-appt-google-settings" class="tm-appt-google-settings" hidden>
+        <fieldset class="tm-appt-google-busy">
+         <legend>Calendários que bloqueiam vagas</legend>
+         <p>Seleciona todos os calendários onde existem compromissos que impedem consultas. Apenas os períodos ocupado/livre serão consultados.</p>
+         <div id="tm-appt-google-calendar-list" class="tm-appt-google-calendar-list"></div>
+        </fieldset>
+        <label class="tm-appt-field">
+         <span>Calendário para futuras marcações The Mile</span>
+         <select id="tm-appt-google-target"><option value="">Selecionar calendário (opcional nesta fase)</option></select>
+        </label>
+        <p class="tm-appt-form-hint">Nesta fase, a ligação consulta apenas disponibilidade. A criação, reagendamento e remoção de eventos Google serão ativados depois de concluirmos a sincronização.</p>
+        <div class="tm-appt-google-buttons">
+         <button type="button" class="tm-appt-save" id="tm-appt-google-save">Guardar calendários</button>
+        </div>
+       </div>
+       <p class="tm-appt-catalog-feedback" id="tm-appt-google-feedback" role="status" aria-live="polite"></p>
+      </div>
+     </section>
      <p id="tm-appt-catalog-feedback" class="tm-appt-catalog-feedback" role="status" aria-live="polite"></p>
      <p class="tm-appt-shopify-note">Os preços e identificadores de produto servem de referência interna. Nesta fase, guardar um serviço não altera produtos, preços ou reservas no Shopify/Sesami.</p>
     </div>
     <div class="tm-appointments-config-grid tm-appt-next-phase">
      <article class="tm-appointments-config-card"><h3>Disponibilidades e bloqueios</h3><p>Horários e exceções disponíveis na aba «Disponibilidades».</p><small>Em funcionamento interno</small></article>
-     <article class="tm-appointments-config-card"><h3>Google Calendar</h3><p>Autorização individual e consulta dos períodos ocupados.</p><small>Próximas fases</small></article>
+     <article class="tm-appointments-config-card"><h3>Google Calendar</h3><p>Ligação individual e seleção de calendários na Configuração, com sincronização de eventos numa fase posterior.</p><small>Ligação preparada</small></article>
      <article class="tm-appointments-config-card"><h3>Shopify e pagamentos</h3><p>Confirmação das reservas após pagamento e sincronização comercial.</p><small>Próximas fases</small></article>
     </div>
     <div class="tm-appointments-rules">
@@ -180,7 +214,7 @@
       <label class="tm-appt-checkbox"><input id="tm-appt-professional-online" type="checkbox" checked><span>Online</span></label>
      </div></fieldset>
      <fieldset class="tm-appt-associations"><legend>Serviços realizados</legend><div id="tm-appt-professional-services" class="tm-appt-checkbox-group"></div></fieldset>
-     <p class="tm-appt-form-hint">A ligação ao Google Calendar e as permissões de acesso serão configuradas mais tarde.</p>
+     <p class="tm-appt-form-hint">A ligação ao Google Calendar de cada profissional é gerida na secção Google Calendar da Configuração.</p>
      <p id="tm-appt-professional-error" class="tm-appt-form-error" role="alert"></p>
      <div class="tm-appt-dialog-actions"><button type="button" class="tm-appt-cancel" data-close-appointment-dialog>Cancelar</button><button type="submit" class="tm-appt-save">Guardar profissional</button></div>
     </form>
@@ -215,7 +249,7 @@
     <dialog id="tm-appt-booking-dialog" class="tm-appt-dialog" aria-labelledby="tm-appt-booking-title">
      <form id="tm-appt-booking-form" novalidate>
       <div class="tm-appt-dialog-heading"><div><span>Reservas · The Mile</span><h2 id="tm-appt-booking-title">Nova marcação interna</h2></div><button type="button" class="tm-appt-dialog-close" data-close-booking-dialog aria-label="Fechar">×</button></div>
-      <p class="tm-appt-form-hint">Não gera pagamento Shopify ou evento Google. Confirma também eventuais reservas no Sesami.</p>
+      <p class="tm-appt-form-hint">Não gera pagamento Shopify nem evento Google. Quando o Google está ligado, verifica os períodos ocupados. Confirma também eventuais reservas no Sesami.</p>
       <div class="tm-appt-dialog-grid tm-appt-booking-identity">
        <label class="tm-appt-field"><span>Profissional</span><select id="tm-appt-booking-professional" required></select></label>
        <label class="tm-appt-field"><span>Serviço</span><select id="tm-appt-booking-service" required></select></label>
@@ -265,7 +299,8 @@
  <script src="/admin-nav-shell.js?v=5" defer></script>
  <script src="/admin-appointments.js?v=4" defer></script>
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
- <script src="/admin-appointments-bookings.js?v=2" defer></script>
+ <script src="/admin-appointments-bookings.js?v=3" defer></script>
+ <script src="/admin-appointments-google.js?v=1" defer></script>
  <script src="/admin-mobile-nav.js?v=11" defer></script>
 </body>
 </html>

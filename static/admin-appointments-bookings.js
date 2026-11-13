@@ -50,6 +50,10 @@
   booking_cancelled:"Esta marcação já está cancelada.",
   booking_not_found:"A marcação não foi encontrada.",
   invalid_range:"O intervalo máximo de pesquisa é de 93 dias.",
+  google_busy:"O Google Calendar indica que este período já está ocupado.",
+  google_unavailable:"Não foi possível verificar a agenda Google. A marcação não foi gravada para evitar sobreposições.",
+  google_needs_reconnection:"A ligação Google precisa de nova autorização. Não foi possível confirmar a vaga.",
+  google_not_configured:"A ligação Google precisa de configuração no servidor antes de disponibilizar horários.",
   invalid_month:"Mês inválido.",
   invalid_booking_id:"Esta marcação já não pode ser editada.",
   invalid_status:"O estado selecionado é inválido."

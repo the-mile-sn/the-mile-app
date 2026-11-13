@@ -20,6 +20,7 @@ import microcycles_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
+import appointments_google_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -288,6 +289,7 @@ def initialize():
         appointments_catalog_v2.initialize(c)
         appointments_availability_v2.initialize(c)
         appointments_bookings_v2.initialize(c)
+        appointments_google_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -678,7 +680,7 @@ def application(env, start_response):
             headers[:] = [(key, val) for key, val in headers if key.lower() != 'cache-control']
             headers.extend([('Cache-Control', 'private, max-age=3600'), ('Vary', 'Cookie')])
         headers.extend([('Content-Type', mime), ('Content-Length', str(len(data)))])
-        start_response(f'{status} ' + {200:'OK', 201:'Created', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error'}.get(status, 'Error'), headers)
+        start_response(f'{status} ' + {200:'OK', 201:'Created', 303:'See Other', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 413:'Payload Too Large', 429:'Too Many Requests', 500:'Internal Server Error', 503:'Service Unavailable'}.get(status, 'Error'), headers)
         return [data]
 
     try:
@@ -687,7 +689,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -713,7 +715,7 @@ def application(env, start_response):
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
-            '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments.css': 'admin-appointments.css',
+            '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
@@ -789,6 +791,90 @@ def application(env, start_response):
                 return respond(200,{'event':changed})
 
             # Booking catalogue, separate from nutrition and players. No Shopify writes.
+            # Per-professional Google OAuth. The callback requires the original
+            # admin session, one-use state, and a server-side token exchange.
+            if path == '/api/v2/admin/appointments/google/callback' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    org_id, professional_id = appointments_google_v2.consume_state(
+                        c, (query.get('state') or [''])[0], user['id'])
+                except appointments_google_v2.GoogleCalendarError:
+                    raise Problem(400, 'google_invalid_state')
+                if query.get('error'):
+                    headers.append(('Location', '/admin-appointments?google=denied#configuracao'))
+                    return respond(303, b'', 'text/plain; charset=utf-8')
+                try:
+                    appointments_google_v2.complete_authorization(
+                        c, org_id, professional_id, (query.get('code') or [''])[0])
+                except appointments_google_v2.GoogleCalendarError:
+                    headers.append(('Location', '/admin-appointments?google=failed#configuracao'))
+                    return respond(303, b'', 'text/plain; charset=utf-8')
+                headers.append(('Location', '/admin-appointments?google=connected#configuracao'))
+                return respond(303, b'', 'text/plain; charset=utf-8')
+
+            if path == '/api/v2/admin/appointments/google/status' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    data = appointments_google_v2.status(
+                        c, appointments_catalog_v2.ORG_ID,
+                        (query.get('professional_id') or [''])[0])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                return respond(200, data)
+
+            if path == '/api/v2/admin/appointments/google/start' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    data = read_json(env)
+                    url = appointments_google_v2.start_authorization(
+                        c, appointments_catalog_v2.ORG_ID,
+                        data.get('professional_id'), user['id'])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                return respond(200, {'authorization_url': url})
+
+            if path == '/api/v2/admin/appointments/google/calendars' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    data = appointments_google_v2.calendars(
+                        c, appointments_catalog_v2.ORG_ID,
+                        (query.get('professional_id') or [''])[0])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                return respond(200, data)
+
+            if path == '/api/v2/admin/appointments/google/settings' and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                body = read_json(env)
+                try:
+                    data = appointments_google_v2.save_selection(
+                        c, appointments_catalog_v2.ORG_ID,
+                        body.get('professional_id'), body)
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, data)
+
+            if path == '/api/v2/admin/appointments/google/disconnect' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    appointments_google_v2.disconnect(
+                        c, appointments_catalog_v2.ORG_ID,
+                        read_json(env).get('professional_id'))
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                return respond(200, {'ok': True})
+
             if path == '/api/v2/admin/appointments/catalog' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
@@ -3255,6 +3341,8 @@ def application(env, start_response):
                     return respond(200, {'ok': True})
 
             raise Problem(404, 'not_found')
+    except appointments_google_v2.GoogleCalendarError as e:
+        return respond(503, {'error': e.code})
     except Problem as e:
         return respond(e.status, {'error': e.code})
     except sqlite3.IntegrityError:

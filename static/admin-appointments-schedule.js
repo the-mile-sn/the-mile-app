@@ -219,7 +219,7 @@
    }
    const chips=el("div","tm-appt-preview-slots");
    for(const slot of result.slots)chips.append(el("span","tm-appt-slot-chip",slot.start+"–"+slot.end));
-   host.append(chips,el("p","tm-appt-form-hint",result.slots.length+" horário(s) potenciais. Incluem bloqueios e marcações internas; não incluem Sesami nem Google Calendar."));
+   host.append(chips,el("p","tm-appt-form-hint",result.slots.length+" horário(s) potenciais. Incluem bloqueios, marcações internas e períodos Google quando a ligação está ativa; não incluem Sesami."));
   }catch(error){showPreview(error.message,true);}
  }
  $("tm-appt-preview-run").addEventListener("click",preview);
