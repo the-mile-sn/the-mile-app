@@ -1795,7 +1795,7 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-panel .scroll{
  width:100%;min-width:0;max-width:100%;overflow-x:auto;
 }
 html[data-admin-theme] #tm-food-library-page .food-catalog-table{
- box-sizing:border-box;width:100%!important;min-width:1160px!important;
+ box-sizing:border-box;width:100%!important;min-width:1040px!important;
  table-layout:fixed!important;border-collapse:collapse;
 }
 html[data-admin-theme] #tm-food-library-page .food-catalog-table col.col-category{width:19%!important}
@@ -1867,7 +1867,7 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
 }
 /* Narrow workspaces become genuine responsive cards. The actions live in the
    upper-right corner; a single padded title leaves them their own space. */
-@container tmFoodLibrary (max-width:1160px){
+@container tmFoodLibrary (max-width:970px){
  html[data-admin-theme] #tm-food-library-page .food-catalog-panel{
   background:transparent!important;border-radius:0!important;overflow:visible!important;
  }
@@ -1946,7 +1946,7 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td:nth-child(7)::before{content:"G (g)"}
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-edit-cell{
   display:flex!important;position:absolute!important;
-  top:16px!important;right:16px!important;
+  top:19px!important;right:0!important;
   align-items:center!important;justify-content:flex-end!important;
   gap:6px!important;order:0!important;z-index:1;
   width:auto!important;max-width:none!important;
