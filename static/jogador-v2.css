@@ -5201,3 +5201,23 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   transform:translateX(-35px)!important;
  }
 }
+
+
+/* Jorge: compact nutrition units switch in the energy heading. */
+#overview #day-details .consumption-concentric-energy-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;min-width:0!important}
+#overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy{min-width:0!important}
+#overview #day-details .consumption-concentric-unit-switch{display:inline-flex!important;flex:0 0 auto!important;align-items:center!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.07)!important;gap:2px!important}
+#overview #day-details .consumption-concentric-unit-switch button{border:0!important;border-radius:999px!important;background:transparent!important;color:#bcbac6!important;padding:4px 7px!important;font-size:11px!important;line-height:1.2!important;cursor:pointer!important;white-space:nowrap!important}
+#overview #day-details .consumption-concentric-unit-switch button.active{background:#5a5962!important;color:white!important}
+#overview #day-details .consumption-concentric-unit-switch button:disabled{opacity:.35!important;cursor:default!important}
+#overview #day-details .consumption-concentric-macro{grid-template-columns:minmax(0,1fr) auto!important;gap:7px!important}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>strong{grid-column:2!important;grid-row:1!important}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>small{display:none!important}
+#overview #day-details .consumption-concentric-perkg{display:none!important}
+@media(max-width:520px){
+ #overview #day-details .consumption-concentric-energy-row{gap:4px!important}
+ #overview #day-details .consumption-concentric-unit-switch button{font-size:9px!important;padding:4px 5px!important}
+ #overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy{font-size:clamp(15px,3.9vw,25px)!important}
+ #overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy>.consumption-concentric-unit{margin-left:3px!important}
+ #overview #day-details .consumption-concentric-macro{grid-template-columns:minmax(0,1fr) auto!important;gap:4px!important}
+}
