@@ -1216,6 +1216,37 @@ function reusableOverviewSnapshot(weekKey,now=Date.now()){
  return snapshot&&snapshot.weekKey===weekKey&&now>=snapshot.time&&now-snapshot.time<OVERVIEW_CACHE_MS?snapshot:null;
 }
 let lastOverviewPresentation=null;
+let mileLastCalendarSelection=null;
+function animateCalendarSelection(strip,dateKey){
+ const selected=strip.querySelector('.week-day.selected .day-number');
+ if(!selected)return;
+ const selectedButton=selected.closest('.week-day');
+ const previous=mileLastCalendarSelection;
+ const current={key:dateKey,label:selectedButton.getAttribute('aria-label'),rect:selected.getBoundingClientRect(),index:[...strip.querySelectorAll('.week-day')].indexOf(selectedButton)};
+ mileLastCalendarSelection=current;
+ if(!previous||previous.key===dateKey||current.index<0)return;
+ const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+ if(reduce)return;
+ const previousIndex=[...strip.querySelectorAll('.week-day')].findIndex(b=>b.getAttribute('aria-label')===previous.label);
+ const source=previousIndex>=0?strip.querySelectorAll('.week-day')[previousIndex]?.querySelector('.day-number'):null;
+ const from=source?.getBoundingClientRect()||previous.rect;
+ const to=current.rect;
+ if(!to.width||!from.width||Math.abs(from.left-to.left)>window.innerWidth*1.5)return;
+ const ghost=document.createElement('span');
+ ghost.className='mile-calendar-moving-circle';
+ ghost.style.cssText='position:fixed;pointer-events:none;z-index:20;border-radius:50%;background:#f3f3f5;width:'+to.width+'px;height:'+to.height+'px;left:'+to.left+'px;top:'+to.top+'px;';
+ document.body.append(ghost);
+ selected.classList.add('mile-calendar-arriving');
+ const dx=from.left-to.left,dy=from.top-to.top;
+ const animation=ghost.animate([
+  {transform:'translate3d('+dx+'px,'+dy+'px,0) scale(.92)',opacity:1},
+  {offset:.64,transform:'translate3d('+(-dx*.08)+'px,'+(-dy*.08)+'px,0) scale(1.13)',opacity:1},
+  {transform:'translate3d(0,0,0) scale(1)',opacity:1}
+ ],{duration:420,easing:'cubic-bezier(.22,.85,.25,1)'});
+ const finish=()=>{ghost.remove();selected.classList.remove('mile-calendar-arriving');};
+ animation.onfinish=finish;animation.oncancel=finish;
+ setTimeout(finish,550);
+}
 function renderPendingCalendar(mon,dateKey){
  const strip=$("week-strip");strip.replaceChildren();
  // Shared full-view swipe also covers the calendar, including during loading.
@@ -1231,6 +1262,7 @@ function renderPendingCalendar(mon,dateKey){
   ]){const span=document.createElement("span");span.className=cls;span.textContent=label;b.append(span);}
   b.onclick=()=>{day=new Date(dt);overview().catch(error);};strip.append(b);
  }
+ animateCalendarSelection(strip,dateKey);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
 }
 function setOverviewLoading(loading,mon=null,dateKey=null){
@@ -1620,6 +1652,7 @@ async function overview(){
   }
   button.onclick=()=>{pendingDailySwipeDirection=0;day=dt;overview().catch(error);};strip.append(button);
  }
+ animateCalendarSelection(strip,d);
 
  let consumptionEnabled=false,consumptionRecords=[];
  // A denied pilot must not add repeated requests to every day change.
