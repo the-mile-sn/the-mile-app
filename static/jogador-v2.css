@@ -5175,3 +5175,16 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   flex:none!important;
  }
 }
+
+
+/* Jorge phone: optical correction of actual rendered gap. The text column is
+   positioned independently of the remaining inherited grid/flex allocation. */
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  transform:translateX(9px)!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  transform:translateX(-48px)!important;
+  position:relative!important;z-index:1!important;
+ }
+}
