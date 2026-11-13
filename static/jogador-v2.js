@@ -1299,9 +1299,38 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previous?.status==='none'?false:initial&&previous?.status==='partial'?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
      const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';name.append(label);
-     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');if(!check.checked){grams.value='0';grams.disabled=true;}
+     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');grams.readOnly=true;grams.setAttribute('inputmode','none');grams.addEventListener('click',e=>{e.preventDefault();openGramsWheel(grams);});if(!check.checked){grams.value='0';grams.disabled=true;}
      const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const checkVisual=document.createElement('span');checkVisual.className='consumption-check-visual';checkVisual.setAttribute('aria-hidden','true');checkWrap.append(check,checkVisual);const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';line.append(checkWrap,name,grams,unit);group.append(line);
     }foodsRoot.append(group);
+   }
+   function openGramsWheel(input){
+    if(input.disabled)return;
+    document.querySelector('.consumption-grams-wheel-backdrop')?.remove();
+    const current=Math.max(0,Math.round(Number(input.value)||0));
+    const max=Math.max(2000,current+500);
+    const overlay=document.createElement('div');overlay.className='consumption-grams-wheel-backdrop';
+    const sheet=document.createElement('section');sheet.className='consumption-grams-wheel-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Ajustar porção');
+    const top=document.createElement('div');top.className='consumption-grams-wheel-top';
+    const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';
+    const title=document.createElement('strong');title.textContent='Porção (g)';
+    const done=document.createElement('button');done.type='button';done.textContent='Confirmar';top.append(cancel,title,done);
+    const wrap=document.createElement('div');wrap.className='consumption-grams-wheel-wrap';
+    const band=document.createElement('div');band.className='consumption-grams-wheel-band';
+    const viewport=document.createElement('div');viewport.className='consumption-grams-wheel';viewport.setAttribute('role','listbox');viewport.setAttribute('aria-label','Gramas');
+    const rail=document.createElement('div');rail.className='consumption-grams-wheel-rail';
+    const pad=()=>{const p=document.createElement('div');p.className='consumption-grams-wheel-pad';rail.append(p);};pad();
+    for(let v=0;v<=max;v++){const el=document.createElement('div');el.className='consumption-grams-wheel-option';el.textContent=String(v);rail.append(el);}
+    pad();viewport.append(rail);wrap.append(band,viewport);
+    const manual=document.createElement('button');manual.type='button';manual.className='consumption-grams-wheel-manual';manual.textContent='Introduzir valor manualmente';
+    sheet.append(top,wrap,manual);overlay.append(sheet);document.body.append(overlay);
+    let selected=current,previous=null;
+    const update=()=>{selected=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)));if(previous!==null)rail.children[previous+1]?.classList.remove('selected');rail.children[selected+1]?.classList.add('selected');previous=selected;};
+    viewport.scrollTop=current*44;update();
+    let raf=0;viewport.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});},{passive:true});
+    const close=()=>overlay.remove();
+    cancel.onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+    done.onclick=()=>{update();input.value=String(selected);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));close();};
+    manual.onclick=()=>{close();input.readOnly=false;input.setAttribute('inputmode','decimal');input.style.fontSize='16px';input.focus();input.select();};
    }
    const removeAll=document.createElement('button');removeAll.type='button';removeAll.className='consumption-remove-all';
    const syncRemoveAll=()=>{const checks=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]')];removeAll.textContent=checks.length&&checks.every(c=>!c.checked)?'Selecionar todos':'Remover todos';};
