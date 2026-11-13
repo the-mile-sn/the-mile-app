@@ -914,6 +914,16 @@ function ensurePlanningOnlyView(){
   const items=playersData.filter(p=>(filter==="all"||p.access_status===filter)&&(selectedPlayerId!==null?p.id===selectedPlayerId:matchesPlayerSearch(p,term)));
   for(const p of items){
    const card=el("article","tm-player-card");card.setAttribute("role","listitem");
+   // Show a genuine press state on touch (including iOS Safari). This does not
+   // alter navigation or the independent Entrar na app button.
+   card.addEventListener("pointerdown",event=>{
+    if(event.pointerType==="mouse"&&event.button!==0)return;
+    if(event.target.closest(".tm-player-card-actions"))return;
+    card.classList.add("is-pressing");
+   });
+   for(const type of ["pointerup","pointercancel","pointerleave"]){
+    card.addEventListener(type,()=>card.classList.remove("is-pressing"));
+   }
    const identity=el("div","tm-player-card-identity");
    const link=el("button","tm-p-player");link.type="button";link.setAttribute("aria-label","Abrir perfil de "+p.name);
    const avatar=el("span","tm-p-avatar",p.name.split(/\s+/).slice(0,2).map(part=>part[0]||"").join("").toUpperCase());
