@@ -5279,3 +5279,24 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .consumption-concentric-macro>strong{font-size:17px!important}
  #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:calc(18px + 2px)!important}
 }
+
+
+/* Jorge: prevent enlarged macro labels from colliding with values. */
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro{
+ display:flex!important;align-items:baseline!important;justify-content:space-between!important;
+ gap:12px!important;min-width:0!important;width:100%!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>span{
+ flex:0 0 auto!important;min-width:0!important;white-space:nowrap!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>strong{
+ flex:0 0 auto!important;grid-column:auto!important;grid-row:auto!important;white-space:nowrap!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+ font-size:27px!important;letter-spacing:-2px!important;
+}
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro{gap:5px!important}
+ #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>span{font-size:clamp(12px,3.15vw,16px)!important}
+ #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>strong{font-size:clamp(12px,3.25vw,17px)!important}
+}
