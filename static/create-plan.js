@@ -179,6 +179,15 @@ function draw(){
     '':'')+'</section>';
   }).join("");
   queryAll("[data-toggle]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.toggle);active=active===i?-1:i;option=0;editingFood=-1;draw()});
+  // Touch-friendly mobile expansion: the empty header area and title are also
+  // tappable. Buttons, the rename dropdown and inputs keep their own handlers.
+  queryAll("#meals>.meal>.meal-header").forEach(header=>{
+    header.onclick=event=>{
+      if(!window.matchMedia("(max-width:830px)").matches)return;
+      if(event.target.closest("button, a, input, select, textarea, .meal-rename-wrap"))return;
+      header.querySelector("[data-toggle]")?.click();
+    };
+  });
   queryAll("[data-open-meal-rename]").forEach(btn=>btn.onclick=e=>{e.stopPropagation();const panel=query('[data-meal-rename-menu="'+btn.dataset.openMealRename+'"]');queryAll(".meal-rename-menu").forEach(other=>{if(other!==panel)other.hidden=true});panel.hidden=!panel.hidden;btn.setAttribute("aria-expanded",String(!panel.hidden));});
   queryAll("[data-select-meal-name]").forEach(btn=>btn.onclick=()=>{const meal=plan.meals[Number(btn.dataset.selectMealName)];meal.name=btn.dataset.mealName;delete meal.applies_to;draw()});
 
