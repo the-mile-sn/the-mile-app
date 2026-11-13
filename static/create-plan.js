@@ -366,7 +366,7 @@ $("delete-plan").onclick=async()=>{if(!plan.id&&$("draft-list").value)plan.id=$(
 function newPlan(){$("meal-picker").hidden=true;plan={id:"",name:"Novo plano alimentar",player_id:"",athlete_id:"",player_name:"",plan_type:"",meals:[]};savedSignature=null;publicationState={state:"draft",pending_changes:false,published_at:null};lastSavedAt=null;persistenceError="";active=-1;option=0;addMeal("Pequeno almoço");status("Novo plano iniciado.")}
 async function request(url,opts){const r=await fetch(url,{credentials:"same-origin",...opts});const data=await r.json().catch(()=>null);if(!r.ok)throw Error(data?.error||data?.code||"HTTP "+r.status);return data||{}}
 async function loadDrafts(){const data=await request("/api/v2/food-plan-drafts");draftIndex=(data.drafts||[]).filter(d=>draftOwner(d));$("draft-list").innerHTML='<option value="">Selecionar plano guardado</option>'+draftIndex.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join("");$("draft-list").value=plan.id||"";$("draft-list").classList.toggle("has-selection",!!$("draft-list").value);if($("library-plan-rows"))populatePlanLibrary()}
-const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";$("plan-preview").hidden=mode!=="preview";};
+const showEntry=mode=>{ $("plan-entry").hidden=mode!=="entry";$("plan-search-selection").hidden=mode!=="search";$("plan-editor").hidden=mode!=="editor";$("plan-preview").hidden=mode!=="preview";if(nativeRoot)document.dispatchEvent(new CustomEvent("tm:plan-view-changed",{detail:{mode}}));};
 const normalizeSearch=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/\s+/g," ");
 const nameSearchRank=(name,q)=>{
   if(!q)return 0;
@@ -406,7 +406,7 @@ const renderPlanLibrary=()=>{
  const query=normalizeSearch($("library-plan-search").value.trim()),playerId=$("library-player-filter").value,type=$("library-type-filter").value;
  const rows=draftIndex.map(d=>({draft:d,owner:draftOwner(d),type:planTypeOf(d)})).filter(x=>x.owner&&(!playerId||String(x.owner?.id)===String(playerId))&&(!type||x.type===type)&&(!query||Number.isFinite(draftSearchRank(x,query)))).sort((a,b)=>draftSearchRank(a,query)-draftSearchRank(b,query)||(a.owner?.name||a.draft.player_name||"").localeCompare(b.owner?.name||b.draft.player_name||"","pt")||a.type.localeCompare(b.type,"pt")||Number(b.draft.created_at||0)-Number(a.draft.created_at||0));
  $("library-plan-count").textContent=rows.length+" resultado"+(rows.length===1?"":"s");
- $("library-plan-rows").innerHTML=rows.map(x=>{const pub=x.draft.publication||{};const state=pub.pending_changes?"pending":pub.state||"draft";const labels={published:"Publicado",pending:"Alterações por publicar",transitional:"Em uso no Planeamento",draft:"Rascunho"};const palette=previewPalette(x.type);const typeName=String(x.type||"Plano geral").replace(/^Plano\s+/i,"").replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"));return '<tr'+(x.draft.legacy_migration?' class="plan-library-legacy-draft"':'')+'><td><strong>'+esc(x.owner?.name||"Jogador não associado")+'</strong></td><td><span class="plan-type-tag" data-palette="'+palette+'">'+planTypeIcon(x.type)+esc(typeName)+'</span></td><td><span class="plan-state-label" data-state="'+esc(state)+'">'+esc(labels[state]||"Rascunho")+'</span></td><td><div class="plan-library-row-actions"><button type="button" data-view-id="'+esc(x.draft.id)+'" aria-label="Visualizar plano" title="Visualizar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button><button type="button" data-edit-id="'+esc(x.draft.id)+'" aria-label="Editar plano" title="Editar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg></button>'+(x.draft.legacy_migration?'<button type="button" data-delete-legacy-id="'+esc(x.draft.id)+'" title="Eliminar cópia antiga" aria-label="Eliminar cópia antiga"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m5-7v7"/></svg></button>':'')+'</div></td></tr>';}).join("")||'<tr><td colspan="4" class="plan-library-empty">Nenhum plano encontrado.</td></tr>';
+ $("library-plan-rows").innerHTML=rows.map(x=>{const pub=x.draft.publication||{};const state=pub.pending_changes?"pending":pub.state||"draft";const labels={published:"Publicado",pending:"Alterações por publicar",transitional:"Em uso no Planeamento",draft:"Rascunho"};const palette=previewPalette(x.type);const typeName=String(x.type||"Plano geral").replace(/^Plano\s+/i,"").replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"));return '<tr'+(x.draft.legacy_migration?' class="plan-library-legacy-draft"':'')+' data-plan-open-id="'+esc(x.draft.id)+'" tabindex="0" aria-label="Visualizar plano de '+esc(x.owner?.name||"jogador")+' — '+esc(typeName)+'"><td><strong>'+esc(x.owner?.name||"Jogador não associado")+'</strong></td><td><span class="plan-type-tag" data-palette="'+palette+'">'+planTypeIcon(x.type)+esc(typeName)+'</span></td><td><span class="plan-state-label" data-state="'+esc(state)+'">'+esc(labels[state]||"Rascunho")+'</span></td><td><div class="plan-library-row-actions"><button type="button" data-edit-id="'+esc(x.draft.id)+'" aria-label="Editar plano" title="Editar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg></button>'+(x.draft.legacy_migration?'<button type="button" data-delete-legacy-id="'+esc(x.draft.id)+'" title="Eliminar cópia antiga" aria-label="Eliminar cópia antiga"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m5-7v7"/></svg></button>':'')+'</div></td></tr>';}).join("")||'<tr><td colspan="4" class="plan-library-empty">Nenhum plano encontrado.</td></tr>';
  /* Render native mobile articles from the same sanitized table rows.
     They share the existing plan data, actions, states and nutrient badges. */
  const mobileCards=$("library-plan-cards");
@@ -414,7 +414,7 @@ const renderPlanLibrary=()=>{
   const cells=row.cells;
   if(cells.length!==4)return '<p class="plan-library-cards-empty">'+esc(cells[0]?.textContent||"Nenhum plano encontrado.")+'</p>';
   const legacy=row.classList.contains("plan-library-legacy-draft");
-  return '<article class="plan-library-card'+(legacy?' plan-library-legacy-draft':'')+'" role="listitem">'+
+  return '<article class="plan-library-card'+(legacy?' plan-library-legacy-draft':'')+'" role="listitem" data-plan-open-id="'+esc(row.dataset.planOpenId)+'" tabindex="0" aria-label="'+esc(row.getAttribute("aria-label")||"Visualizar plano")+'">'+
    '<div class="plan-library-card-name">'+cells[0].innerHTML+'</div>'+
    '<div class="plan-library-card-actions">'+cells[3].innerHTML+'</div>'+
    '<div class="plan-library-card-type">'+cells[1].innerHTML+'</div>'+
@@ -423,7 +423,6 @@ const renderPlanLibrary=()=>{
  }).join("");
  mobileCards.hidden=false;
   $("plan-entry").querySelectorAll("[data-edit-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.editId)}catch(err){status("Não foi possível abrir o plano: "+err.message)}});
- $("plan-entry").querySelectorAll("[data-view-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.viewId);renderPlanPreview();showEntry("preview")}catch(err){status("Não foi possível visualizar o plano: "+err.message)}});
  $("plan-entry").querySelectorAll("[data-delete-legacy-id]").forEach(b=>b.onclick=async()=>{
   const item=draftIndex.find(d=>d.id===b.dataset.deleteLegacyId);
   if(!item?.legacy_migration)return;
@@ -434,6 +433,30 @@ const renderPlanLibrary=()=>{
  });
 
 };
+/* Whole desktop rows and mobile cards open the read-only plan preview.
+   Editor/delete buttons remain independent and never bubble into navigation. */
+let previewOpening=false;
+async function openPlanPreview(id){
+ if(previewOpening||!id)return;
+ previewOpening=true;
+ try{await loadExistingPlan(id);renderPlanPreview();showEntry("preview")}
+ catch(err){status("Não foi possível visualizar o plano: "+err.message)}
+ finally{previewOpening=false}
+}
+for(const rootId of ["library-plan-rows","library-plan-cards"]){
+ const root=$(rootId);
+ root.addEventListener("click",event=>{
+  if(event.target.closest("button,a,input,select,textarea,[role=button]"))return;
+  const item=event.target.closest("[data-plan-open-id]");
+  if(item&&root.contains(item))openPlanPreview(item.dataset.planOpenId);
+ });
+ root.addEventListener("keydown",event=>{
+  if(event.key!=="Enter"&&event.key!==" ")return;
+  const item=event.target.closest("[data-plan-open-id]");
+  if(!item||event.target!==item||!root.contains(item))return;
+  event.preventDefault();openPlanPreview(item.dataset.planOpenId);
+ });
+}
 const populatePlanLibrary=()=>{
  const playerFilter=$("library-player-filter"),typeFilter=$("library-type-filter"),oldPlayer=playerFilter.value,oldType=typeFilter.value;
  const owners=[...new Map(draftIndex.map(d=>draftOwner(d)).filter(Boolean).map(p=>[p.id,p])).values()].sort((a,b)=>a.name.localeCompare(b.name,"pt"));
@@ -445,8 +468,14 @@ $("library-plan-search").addEventListener("input",renderPlanLibrary);
 $("library-player-filter").addEventListener("change",renderPlanLibrary);
 $("library-type-filter").addEventListener("change",renderPlanLibrary);
 const syncPlanSelectors=()=>{$("plan-player").value=players.find(p=>p.athlete_id===plan.athlete_id)?.id||plan.player_id||"";$("plan-type").value=plan.plan_type||"";refreshSelectDisplays();$("plan-player").classList.toggle("has-selection",!!plan.athlete_id);$("plan-type").classList.toggle("has-selection",!!plan.plan_type)};
-$("back-from-search").onclick=()=>showEntry("entry");
-$("back-from-editor").onclick=()=>{if(planIsDirty()&&!confirm("Existem alterações por guardar. Voltar à lista de planos sem as guardar?"))return;showEntry("entry")};
+const returnToPlanLibrary=()=>{
+ if(saveBusy||publishBusy){alert("Existe uma operação de guardar ou publicar em curso. Aguarda a conclusão antes de voltar.");return false;}
+ if(!$("plan-editor").hidden&&planIsDirty()&&!confirm("Existem alterações por guardar. Voltar à lista de planos sem as guardar?"))return false;
+ showEntry("entry");return true;
+};
+if(nativeRoot)window.tmReturnToPlanLibrary=returnToPlanLibrary;
+$("back-from-search").onclick=returnToPlanLibrary;
+$("back-from-editor").onclick=returnToPlanLibrary;
 $("new-plan").onclick=()=>{if(!confirm("Criar outro plano? Guarda primeiro as alterações que pretendes manter."))return;newPlan();showEntry("entry")};
 const loadExistingPlan=async id=>{const index=draftIndex.find(d=>String(d.id)===String(id));if(!index)throw Error("Plano não encontrado.");const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(id));const loaded=data.draft;const owner=draftOwner(index);if(!owner)throw Error("O jogador associado a este plano não existe na base de dados. É necessário rever a associação antes de editar.");if(loaded.athlete_id&&String(loaded.athlete_id)!==String(owner.athlete_id))throw Error("Inconsistência no perfil associado.");if(loaded.player_id&&String(loaded.player_id)!==String(owner.user_id||""))throw Error("Inconsistência no ID do utilizador.");loaded.id=id;loaded.athlete_id=owner.athlete_id;loaded.player_id=owner.user_id||"";loaded.player_name=owner.name;loaded.plan_type=index.plan_type;loaded.name=owner.name+" - "+index.plan_type;loaded.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));plan=loaded;publicationState=loaded.publication||index.publication||{state:"draft",pending_changes:false};lastSavedAt=loaded.updated_at||index.updated_at||null;savedSignature=planSignature();persistenceError="";active=-1;option=0;draw();syncPlanSelectors();showEntry("editor");status("")};
 const planTypeIcon=type=>{const t=String(type||"").toLowerCase();if(t.includes("peri-jogo"))return "<svg class=\"plan-peri-icon\" data-icon=\"FootballIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z\"/><path d=\"M11.7077 9.34893C11.882 9.21702 12.118 9.21702 12.2923 9.34893L14.545 11.054C14.7193 11.1859 14.7922 11.4197 14.7256 11.6332L13.8652 14.3921C13.7986 14.6055 13.6077 14.75 13.3923 14.75H10.6077C10.3923 14.75 10.2014 14.6055 10.1348 14.3921L9.27437 11.6332C9.20781 11.4197 9.28073 11.1859 9.45499 11.054L11.7077 9.34893Z\"/><path d=\"M12 9V5M15 11L19 9.5M14 15L16 18M10 14.5L8 17M9 11.5L5 10.5\"/><path d=\"M9 2.5L12.0165 4.62241L15 2.5M2 12.7998L5.19655 10.4388L3.55548 6.72045M19.4703 18.8531L15.6158 18.1555L14.2655 22M20.0298 6.19586L18.8035 9.38978L22 11.7507M8.00992 21.4059L8.05142 17.1665L4.00331 17.21\"/></svg> ";if(t.includes("peri-treino"))return "<svg class=\"plan-peri-icon\" data-icon=\"SoftDrink01Icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 7V4.34832C12 2.1606 12.3737 1.6318 14.4968 2.22769L18 3.21095\"/><path d=\"M6 7L7.1398 18.1606C7.31099 19.8368 7.39658 20.6749 7.96796 21.1813C9.1458 22.225 14.7472 22.3198 16.032 21.1813C16.6034 20.6749 16.689 19.8368 16.8602 18.1606L18 7\"/><path d=\"M5 7H19\"/><path d=\"M7 12H17\"/><path d=\"M7 16H17\"/></svg> ";return "";};
@@ -471,7 +500,7 @@ const renderPlanPreview=()=>{
  }).join("")+'</div>';
   ensurePlanReference();
 };
-$("preview-back").onclick=()=>showEntry("entry");
+$("preview-back").onclick=returnToPlanLibrary;
 $("preview-edit").onclick=()=>showEntry("editor");
 const switchExistingPlan=async(playerId,type)=>{const owner=players.find(p=>p.id===playerId);if(!owner){status("Seleciona um jogador válido.");draw();return}const match=plansForPlayer(playerId).find(d=>d.plan_type===type);if(match){try{await loadExistingPlan(match.id)}catch(err){status("Não foi possível mudar de plano: "+err.message)}return}
  if(!confirm("Ainda não existe "+type+" para "+owner.name+". Criar um novo rascunho separado, sem alterar o plano atual?")){draw();return}
