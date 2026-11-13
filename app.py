@@ -880,6 +880,25 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(400, str(exc))
                 return respond(200, result)
+            # A single read-only month request for the backoffice booking calendar.
+            # The output excludes Google Calendar and Sesami until integrated.
+            if path == '/api/v2/admin/appointments/calendar-month' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    result = appointments_availability_v2.month_preview(
+                        c, appointments_catalog_v2.ORG_ID,
+                        (query.get('professional_id') or [''])[0],
+                        (query.get('service_id') or [''])[0],
+                        (query.get('mode') or [''])[0],
+                        (query.get('month') or [''])[0],
+                        exclude_booking_id=(query.get('exclude_booking_id') or [''])[0])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, result)
             if path == '/api/v2/admin/appointments/slots-preview' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
@@ -890,7 +909,8 @@ def application(env, start_response):
                         (query.get('professional_id') or [''])[0],
                         (query.get('service_id') or [''])[0],
                         (query.get('mode') or [''])[0],
-                        (query.get('date') or [''])[0])
+                        (query.get('date') or [''])[0],
+                        exclude_booking_id=(query.get('exclude_booking_id') or [''])[0])
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 except ValueError as exc:
