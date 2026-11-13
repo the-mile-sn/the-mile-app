@@ -4575,3 +4575,21 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 @keyframes mile-check-pop{0%{transform:scale(.75)}35%{transform:scale(1.22)}60%{transform:scale(.93)}80%{transform:scale(1.06)}100%{transform:scale(1)}}
 @keyframes mile-confetti{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle)) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--angle)) translateY(calc(-1 * var(--distance))) rotate(100deg) scale(.7)}}
 @media(prefers-reduced-motion:reduce){#overview #day-details .consumption-quick-actions .consumption-quick-confirm.consumption-confirm-success{animation:none!important}#overview #day-details .consumption-confetti-burst{display:none!important}}
+
+
+/* v segmented 1: App Store-like moving selection pill */
+#overview-mode.mile-segment-animated,
+#menus-recipe-switch.mile-segment-animated,
+#plans-assessments .assessment-tabs.mile-segment-animated{position:relative!important;isolation:isolate}
+.mile-segment-animated>.mile-segment-indicator{
+ position:absolute!important;left:0;top:0;z-index:0;pointer-events:none;
+ border-radius:999px;background:#55555b;opacity:0;
+ transition:transform .32s cubic-bezier(.22,1,.36,1),width .32s cubic-bezier(.22,1,.36,1),height .32s cubic-bezier(.22,1,.36,1),opacity .12s ease;
+ will-change:transform;
+}
+.mile-segment-animated>.mile-segment-indicator.mile-segment-ready{opacity:1}
+.mile-segment-animated>button{position:relative!important;z-index:1!important;transition:color .18s ease!important}
+#overview-mode.mile-segment-animated>button[aria-pressed="true"],
+#menus-recipe-switch.mile-segment-animated>button[aria-pressed="true"],
+#plans-assessments .assessment-tabs.mile-segment-animated>button[aria-pressed="true"]{background:transparent!important;box-shadow:none!important}
+@media(prefers-reduced-motion:reduce){.mile-segment-animated>.mile-segment-indicator{transition:none!important}}
