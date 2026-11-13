@@ -321,3 +321,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Apagar opção:** botão com fundo vermelho suave e ícone trash-2 outline no estado normal e hover; seguir a mesma semântica de «Apagar plano», «Apagar refeição» e «Remover alimento».
 - **Guardar / Publicar:** Guardar neutro/principal quando acionável e secundário quando já guardado; só surge verde durante a confirmação imediata. Publicar verde semântico apenas quando acionável, secundário quando desativado (plano já publicado). Apagar plano sempre destrutivo com lixo. Manter validações, confirmações e permissões existentes.
 - **Limites:** alterações de apresentação apenas em production/the-mile-admin, sem mexer no branch main, dados, gramagens, macros, cálculos ou navegação da app dos jogadores.
+
+
+## 27. Edição de Planos — afinação final mobile (13 novembro 2026)
+
+**Âmbito exclusivo: mobile (até 830 px), em claro e escuro.** Desktop aprovado e mantido.
+
+- **Metadados acima do card principal:** mostrar apenas a pill compacta «Publicado» quando o plano já está publicado; ocultar a data de gravação e a referência no mobile (mantêm-se no desktop e internamente para o cálculo nutricional). Nos estados não publicados ou com erro, continuar a indicar o estado e, sempre que necessário, a descrição de erro/alterações por guardar ou publicar. Não duplicar a pill noutros locais.
+- **Resumo diário:** retirar a linha divisória entre os seletores e os quatro totais nutricionais, mantendo as macros, os rácios, as cores e os alinhamentos já aprovados.
+- **Cabeçalho das refeições:** nome seguido imediatamente dos ícones outline de eliminar e editar, como no desktop; a seta de expansão fica isolada na extremidade direita, centrada verticalmente no cabeçalho com uma área de toque de 44 × 44 px. Utilizar sempre a mesma grelha de duas linhas nas refeições abertas e fechadas, sem deslocar nome, macros ou ações quando se expande. Preservar handlers, confirmação destrutiva e cores oficiais.
+- **Adicionar notas:** remover a antiga restrição de 62 px herdada da vista de refeição expandida. O campo «Adicionar nota» ocupa uma linha e o botão «+ Adicionar nota» ocupa a linha seguinte com largura total, exatamente no mesmo estilo e altura (48 px) do «+ Adicionar alimento». Preservar a validação e a ação existentes.
+- **Restrições:** nenhuma alteração à edição desktop, ao backend, à seleção de opções, aos cálculos, às gramagens, aos estados reais ou à app de jogadores (branch main).
