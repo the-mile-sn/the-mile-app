@@ -1773,8 +1773,11 @@ async function overview(){
     for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
      const line=document.createElement("div");line.className="consumption-concentric-macro "+cls;
      const name=document.createElement("span");name.textContent=title;
-     const amount=document.createElement("strong");amount.textContent=fmt(actual[key],0)+" / "+fmt(total[key],0);
-     const grams=document.createElement("span");grams.className="consumption-concentric-unit";grams.textContent=" g";amount.append(grams);
+     const amount=document.createElement("strong");amount.className="consumption-concentric-amount";
+     const consumedValue=document.createElement("span");consumedValue.className="consumption-concentric-actual";consumedValue.textContent=fmt(actual[key],0);
+     const prescribedValue=document.createElement("span");prescribedValue.className="consumption-concentric-prescribed";prescribedValue.textContent=" / "+fmt(total[key],0);
+     const grams=document.createElement("span");grams.className="consumption-concentric-unit";grams.textContent=" g";
+     amount.append(consumedValue,prescribedValue,grams);
      const per=document.createElement("small");per.textContent=hasWeight?"("+fmt(actual[key]/weight,1)+" / "+fmt(total[key]/weight,1)+" g/kg)":"";
      line.append(name,amount,per);details.append(line);
     }
