@@ -4785,3 +4785,21 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  border-width:.5px!important;
  border-color:rgba(190,194,203,.48)!important;
 }
+
+
+/* Interactive daily pager: neighboring day follows the finger. */
+#overview{overflow-x:clip}
+#overview #day-details{position:relative;will-change:transform;touch-action:pan-y}
+#overview .mile-day-swipe-preview{
+ position:absolute;left:0;right:0;top:0;min-height:330px;
+ pointer-events:none;z-index:1;box-sizing:border-box;
+ padding:18px 14px;border-radius:18px;
+ background:var(--card,#242b27);color:var(--text,#f0eee9);
+ will-change:transform;overflow:hidden;
+}
+#overview .mile-day-swipe-preview-heading{font-size:15px;font-weight:600;text-transform:capitalize;margin-bottom:18px}
+#overview .mile-day-swipe-preview-skeleton{display:grid;gap:12px}
+#overview .mile-day-swipe-preview-skeleton>div{height:76px;border-radius:14px;background:rgba(155,175,165,.10);border:1px solid rgba(200,220,205,.07)}
+@media(prefers-reduced-motion:reduce){
+ #overview #day-details,#overview .mile-day-swipe-preview{transition:none!important}
+}
