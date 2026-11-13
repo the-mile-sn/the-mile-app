@@ -4967,7 +4967,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 }
 #overview #day-details .consumption-concentric-energy{
  display:flex!important;align-items:baseline!important;flex-wrap:nowrap!important;
- gap:0!important;white-space:nowrap!important;font-size:clamp(20px,3.3vw,42px)!important;
+ gap:0!important;white-space:nowrap!important;font-size:clamp(27px,4vw,52px)!important;
  line-height:1.12!important;letter-spacing:-.035em!important;
 }
 #overview #day-details .consumption-concentric-energy strong{color:#72ebbd!important;font-weight:700!important}
@@ -4998,7 +4998,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  padding-top:15px!important;margin:0!important;
 }
 #overview #day-details .consumption-concentric-macro{
- display:grid!important;grid-template-columns:minmax(80px,.85fr) minmax(110px,1fr) minmax(110px,1.2fr)!important;
+ display:grid!important;grid-template-columns:minmax(75px,.85fr) minmax(105px,1fr) minmax(105px,1.1fr)!important;
  align-items:baseline!important;column-gap:9px!important;row-gap:0!important;min-width:0!important;
 }
 #overview #day-details .consumption-concentric-macro>span{font-size:clamp(12px,1.45vw,17px)!important;color:#c5c4cf!important}
@@ -5017,11 +5017,11 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
  grid-column:2!important;grid-row:2!important;justify-self:end!important;
 }
-@media(max-width:680px){
+@media(max-width:520px){
  #overview #day-details .nutrition-comparison.consumption-concentric{
   grid-template-columns:minmax(0,.75fr) minmax(0,1.65fr)!important;column-gap:9px!important;
  }
- #overview #day-details .consumption-concentric-energy{font-size:clamp(15px,3.9vw,26px)!important}
+ #overview #day-details .consumption-concentric-energy{font-size:clamp(18px,4.5vw,29px)!important}
  #overview #day-details .consumption-concentric-trends{gap:5px!important;margin:6px 0!important}
  #overview #day-details .consumption-concentric-trend{gap:5px!important;padding:5px 7px!important;font-size:10px!important}
  #overview #day-details .consumption-concentric-macros{gap:6px!important;padding-top:8px!important}
