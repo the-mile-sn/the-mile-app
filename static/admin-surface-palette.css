@@ -1349,7 +1349,7 @@ html[data-admin-theme] #admin-login-panel{
  width:100%!important;max-width:none!important;
  min-height:100vh!important;min-height:100svh!important;
  margin:0!important;
- padding:48px 22px 32px!important;
+ padding:48px 22px 52px!important;
  border:0!important;border-radius:0!important;box-shadow:none!important;
  background:transparent!important;color:var(--tm-ui-text)!important;
  font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
@@ -1430,21 +1430,21 @@ html[data-admin-theme] #admin-login-panel .tm-admin-login-submit:focus-visible{
 html[data-admin-theme="dark"] #admin-login-panel #admin-login-error:not(:empty){color:#e2a188}
 #admin-login-panel .tm-admin-login-footer{
  display:block;flex:0 0 auto;
- margin:64px 0 0!important;padding:0!important;
+ margin:48px 0 0!important;padding:0!important;
  width:100%;max-width:448px;
  border:0!important;background:transparent!important;
  color:var(--tm-ui-muted)!important;
  text-align:center!important;
- font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
- letter-spacing:.035em!important;
+ font:500 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ letter-spacing:.03em!important;
 }
 @media(max-width:600px){
  html[data-admin-theme] #admin-login-panel{
-  padding:max(36px,env(safe-area-inset-top,0px)) 20px max(34px,calc(env(safe-area-inset-bottom,0px) + 20px))!important;
+  padding:max(36px,env(safe-area-inset-top,0px)) 20px max(52px,calc(env(safe-area-inset-bottom,0px) + 28px))!important;
  }
  #admin-login-panel .tm-admin-login-heading{margin-bottom:51px!important}
  #admin-login-panel .tm-admin-login-heading svg{
-  width:min(205px,62vw)!important;
+  width:min(170px,54vw)!important;
  }
  html[data-admin-theme] #admin-login-panel .tm-admin-login-field{
   min-height:77px!important;
@@ -1453,7 +1453,7 @@ html[data-admin-theme="dark"] #admin-login-panel #admin-login-error:not(:empty){
   min-height:54px!important;font-size:16px!important;
  }
  #admin-login-panel .tm-admin-login-footer{
-  margin-top:50px!important;font-size:15px!important;
+  margin-top:38px!important;font-size:17px!important;
  }
 }
 @media(max-height:560px){
