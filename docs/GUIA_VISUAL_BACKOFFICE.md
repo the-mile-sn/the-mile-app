@@ -211,8 +211,10 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - Preservar sem mudanças o endpoint de criação, as validações existentes, os campos obrigatórios, os limites de peso, utilizador e palavra-passe, as permissões e a atualização da lista. Erros surgem no próprio modal, sem depender de mensagens ocultas noutra aba.
 - Respeitar ambos os temas, a preferência de movimento reduzido e os tokens oficiais do Backoffice.
 
-## 15. Modal Novo alimento — alinhamento aprovado em 13 novembro 2026
+## 15. Modal Novo/Editar alimento — dois níveis no mesmo campo (13 novembro 2026)
 
-- O seletor **Tipo de pesagem** deve ter exatamente a mesma altura visível dos campos de texto e numéricos adjacentes no modal de Novo/Editar alimento (48 px), preservando as opções, dados, validações e comportamento nativo do seletor.
-- Ajuste restrito ao modal da Biblioteca Alimentar do Backoffice, sem alterar a grelha de alimentos ou os formulários de outros módulos.
+- **Todos os campos** do formulário, incluindo o seletor **Tipo de pesagem**, têm uma só superfície neutra de subcard (altura mínima 72 px), com **etiqueta na primeira linha e valor/controlo na segunda**.
+- Não colocar as etiquetas fora do preenchimento nem inserir uma segunda barra dentro do subcard; inputs e select são transparentes e têm a mesma altura interna (30 px). No mobile, texto de entrada de 16 px para evitar zoom do Safari.
+- Preservar as duas colunas de campos no desktop, a primeira linha Nome e a última Notas em largura completa; no mobile manter uma coluna, foco acessível no bloco e scroll do modal quando necessário.
+- As opções do seletor, dados nutricionais, cálculos, validações e comportamento da criação/edição mantêm-se exatamente iguais. Alteração restrita ao modal da Biblioteca Alimentar do Backoffice.
 
