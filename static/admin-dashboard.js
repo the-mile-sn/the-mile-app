@@ -35,6 +35,15 @@
  function safe(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
  function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
  const settingsPage=$("tm-admin-settings"),settingsAdmin=$("tm-settings-admins"),dashboardReturn=$("tm-dashboard-return");
+ const dashboardReturnButton=$("tm-dashboard-return-button");
+ function planDetailVisible(){return !!(plansPage&&!plansPage.hidden&&$("plan-entry")?.hidden);}
+ function syncDashboardReturn(){
+  if(!dashboardReturnButton)return;
+  const detailed=planDetailVisible();
+  dashboardReturnButton.querySelector("span").textContent=detailed?"Planos":"Início";
+  dashboardReturnButton.setAttribute("aria-label",detailed?"Voltar à lista de Planos":"Voltar ao início · Dashboard");
+ }
+ document.addEventListener("tm:plan-view-changed",syncDashboardReturn);
  const accountPanel=$("admin-account-panel"),activationPanel=$("admin-access-panel");
  const adminList=$("admin-users-list"),inviteForm=$("admin-invite-form");
  // Keep the existing administrator controls in Settings at all times.
@@ -63,6 +72,7 @@
   if(recipeLibraryBtn){recipeLibraryBtn.classList.remove("is-active");recipeLibraryBtn.removeAttribute("aria-current");}
   legacy.classList.toggle("tm-account-only",accountView);
   if(dashboardReturn)dashboardReturn.hidden=target===dash||!$("tm-players-profile").hidden;
+  syncDashboardReturn();
   for(const b of document.querySelectorAll(".tm-admin-nav-link")){b.classList.toggle("is-active",b===target);if(b===target)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
   // Mobile: make the newly selected tab visible without changing the current page.
   if(window.matchMedia("(max-width: 830px)").matches&&target?.closest(".tm-admin-mobile-nav-track")){
@@ -180,7 +190,13 @@
  window.tmOpenAdminForms=aid=>openClinical("forms",aid);
  function openDashboard(){closeClinical();if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
- $("tm-dashboard-return-button").addEventListener("click",openDashboard);
+ dashboardReturnButton.addEventListener("click",()=>{
+  if(planDetailVisible()){
+   window.tmReturnToPlanLibrary?.();
+   return;
+  }
+  openDashboard();
+ });
  $("tm-admin-brand-home").addEventListener("click",openDashboard);
 function ensurePlanningOnlyView(){
  // Clinical and personal panels are mounted in dedicated sidebar areas, not Planeamento.
@@ -298,6 +314,9 @@ function ensurePlanningOnlyView(){
   if(!plansPage||plansPage.hidden)return;
   const destination=event.target.closest(".tm-admin-sidebar .tm-admin-nav-link, #tm-admin-brand-home, #tm-dashboard-return-button, #admin-signout");
   if(!destination||destination===plansBtn)return;
+  // The contextual top Back action returns within Planos, not to Dashboard.
+  // It performs its own unsaved-changes check; do not double-confirm here.
+  if(destination===dashboardReturnButton&&planDetailVisible())return;
   if(typeof window.tmPlanCanLeave==="function"&&!window.tmPlanCanLeave()){
    event.preventDefault();event.stopImmediatePropagation();
   }
