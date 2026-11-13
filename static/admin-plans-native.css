@@ -2632,3 +2632,30 @@
  }
 }
 
+/* Mobile Planos: same short tactile feedback as Jogadores, without altering
+   nutrition badges, publication status, Edit action or card navigation. */
+@media(max-width:830px) and (pointer:coarse){
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]{
+  transition:background-color 140ms ease,transform 140ms ease!important;
+  -webkit-tap-highlight-color:transparent;
+ }
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]:not(.plan-library-legacy-draft):is(.is-pressing,.is-tapped,:active){
+  background:var(--tm-ui-subcard)!important;
+  transform:scale(.992)!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-card.plan-library-legacy-draft:is(.is-pressing,.is-tapped,:active){
+  transform:scale(.992)!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]:has(button:active){
+  transform:none!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]{
+  transition:none!important;
+ }
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]:is(.is-pressing,.is-tapped,:active){
+  transform:none!important;
+ }
+}
+
