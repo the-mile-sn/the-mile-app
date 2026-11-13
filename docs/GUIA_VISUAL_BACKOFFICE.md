@@ -258,3 +258,11 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - Na visualização, edição e eventual seleção de planos, as setas antigas isoladas `←` são substituídas pelo controlo **‹ Planos**, com SVG outline de 19 px e tipografia Inter Tight 600/13, geometria e superfícies idênticas ao comando global. Preservar os IDs e handlers, incluindo o aviso de alterações por guardar antes de abandonar o editor.
 - Na lista de Planos, ampliar apenas a geometria e tipografia das pills **Plano** e **Estado** para **13 px, Medium (500), altura mínima 32 px**, mantendo todas as cores nutricionais e os estados oficiais nos dois temas. Não alterar outras pills do Backoffice.
 
+## 21. Planos: visualização pela linha/cartão e regresso contextual (13 novembro 2026)
+
+- **Lista desktop**: clicar em qualquer zona da linha abre o plano em modo de **visualização**; a linha é acessível via teclado (Enter/Espaço). Remover o botão separado com ícone de olho. A ação **Editar** continua independente, à direita, sem propagar para visualização. A ação especial **Eliminar cópia antiga**, quando aplicável, mantém-se independente.
+- **Mobile/touch**: clicar/tocar no card principal individual abre a mesma visualização. Um único botão **Editar** no canto superior direito, com 36 × 36 px de superfície visível, ícone outline de 16 px e área de toque alargada; não colocar a ação abaixo das informações. Manter a classificação nutricional na **segunda linha, à esquerda** e o estado de publicação na **segunda linha, à direita**. Preservar a distinção entre as cores oficiais de todos os planos e temas.
+- **Navegação desktop**: o botão global superior é contextual — **‹ Início** na lista e **‹ Planos** na visualização, edição ou pesquisa interna. Não mostrar outro botão de regresso por baixo. O regresso a partir de edição mantém a proteção para alterações por guardar e operações em curso.
+- **Navegação mobile**: dado que a barra global superior está oculta na navegação móvel atual, manter o controlo interno **‹ Planos** na visualização/edição, sem o duplicar.
+- As interações da lista utilizam os **mesmos dados, handlers e IDs** da criação, edição e visualização já existentes. Não alterar API, conteúdo dos planos, estado de publicação, valores nutricionais, paletas, filtros ou app dos jogadores.
+
