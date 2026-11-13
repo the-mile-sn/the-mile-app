@@ -81,20 +81,10 @@ function enableOverviewDaySwipe(element){
    preview.style.left=content.offsetLeft+'px';
    preview.style.width=start.width+'px';
    const skeleton=document.createElement('div');skeleton.className='mile-day-swipe-preview-skeleton';
-   const nextWeek=monday(next);
-   const week=document.createElement('div');week.className='mile-swipe-week';
-   for(let i=0;i<7;i++){
-    const dt=new Date(nextWeek);dt.setDate(nextWeek.getDate()+i);
-    const cell=document.createElement('div');cell.className='mile-swipe-week-day'+(iso(dt)===iso(next)?' selected':'');
-    const weekday=document.createElement('span');weekday.textContent=dt.toLocaleDateString('pt-PT',{weekday:'short'});
-    const number=document.createElement('strong');number.textContent=dt.getDate();
-    const marker=document.createElement('small');marker.textContent='···';
-    cell.append(weekday,number,marker);week.append(cell);
-   }
    const nutrition=document.createElement('div');nutrition.className='mile-swipe-nutrition';
    nutrition.innerHTML='<div class="mile-swipe-ring"><div class="mile-swipe-ring-inner"><span></span><span></span></div></div><div class="mile-swipe-macros"><i></i><i></i><i></i></div>';
    const weight=document.createElement('div');weight.className='mile-swipe-weight';weight.innerHTML='<span></span><span></span>';
-   skeleton.append(week,nutrition,weight);
+   skeleton.append(nutrition,weight);
    for(let i=0;i<4;i++){
     const meal=document.createElement('div');meal.className='mile-swipe-meal';
     meal.innerHTML='<span class="mile-swipe-meal-label"></span><span class="mile-swipe-meal-energy"></span><span class="mile-swipe-meal-chevron">⌄</span>';
@@ -107,7 +97,7 @@ function enableOverviewDaySwipe(element){
   content.style.transition='none';content.style.transform='translate3d('+dxClamped+'px,0,0)';
   const direction=dxClamped<0?1:-1;
   const next=new Date(day);next.setDate(next.getDate()+direction);
-  preview.querySelectorAll('.mile-swipe-week-day').forEach((cell,i)=>{const dt=new Date(monday(next));dt.setDate(dt.getDate()+i);cell.classList.toggle('selected',iso(dt)===iso(next));});
+
   preview.style.transition='none';preview.style.transform='translate3d('+(dxClamped+(direction*start.width))+'px,0,0)';
  },{passive:false});
  element.addEventListener('touchend',event=>{
