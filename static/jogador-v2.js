@@ -2362,3 +2362,36 @@ function renderPlayerAssessments(){
  if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem medições publicadas nesta categoria.";target.append(empty);}
 }
 for(const button of document.querySelectorAll("[data-assessment-tab]"))button.onclick=()=>{assessmentGroup=button.dataset.assessmentTab;renderPlayerAssessments();};
+
+
+/* Shared App Store-style sliding selection indicator. */
+(function initSlidingSegmentedControls(){
+ const selectors=['#overview-mode','#menus-recipe-switch','#plans-assessments .assessment-tabs'];
+ const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+ for(const selector of selectors){
+  const nav=document.querySelector(selector);
+  if(!nav||nav.querySelector('.mile-segment-indicator'))continue;
+  const indicator=document.createElement('span');
+  indicator.className='mile-segment-indicator';
+  indicator.setAttribute('aria-hidden','true');
+  nav.prepend(indicator);
+  nav.classList.add('mile-segment-animated');
+  let initialized=false;
+  const position=()=>{
+   const selected=nav.querySelector('button[aria-pressed="true"]');
+   if(!selected)return;
+   const container=nav.getBoundingClientRect(),rect=selected.getBoundingClientRect();
+   if(!rect.width||!container.width)return;
+   indicator.style.width=rect.width+'px';
+   indicator.style.height=rect.height+'px';
+   indicator.style.transform='translate3d('+(rect.left-container.left)+'px,'+(rect.top-container.top)+'px,0)';
+   if(!initialized){indicator.classList.add('mile-segment-ready');initialized=true;}
+  };
+  const observer=new MutationObserver(position);
+  observer.observe(nav,{subtree:true,attributes:true,attributeFilter:['aria-pressed','hidden','class']});
+  nav.addEventListener('click',()=>requestAnimationFrame(position));
+  window.addEventListener('resize',position,{passive:true});
+  if(window.ResizeObserver){const resize=new ResizeObserver(position);resize.observe(nav);}
+  requestAnimationFrame(()=>requestAnimationFrame(position));
+ }
+})();
