@@ -1326,7 +1326,12 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     let selected=current,previous=null;
     const update=()=>{selected=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)));if(previous!==null)rail.children[previous+1]?.classList.remove('selected');rail.children[selected+1]?.classList.add('selected');previous=selected;};
     viewport.scrollTop=current*44;update();
-    let raf=0;viewport.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});},{passive:true});
+    let raf=0,settleTimer=0,touching=false;
+    const settle=()=>{if(touching)return;const target=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)))*44;if(Math.abs(viewport.scrollTop-target)>0.5)viewport.scrollTo({top:target,behavior:'smooth'});};
+    viewport.addEventListener('touchstart',()=>{touching=true;clearTimeout(settleTimer);},{passive:true});
+    viewport.addEventListener('touchend',()=>{touching=false;clearTimeout(settleTimer);settleTimer=setTimeout(settle,180);},{passive:true});
+    viewport.addEventListener('touchcancel',()=>{touching=false;},{passive:true});
+    viewport.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;update();});clearTimeout(settleTimer);if(!touching)settleTimer=setTimeout(settle,180);},{passive:true});
     const close=()=>overlay.remove();
     cancel.onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
     done.onclick=()=>{update();input.value=String(selected);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));close();};
