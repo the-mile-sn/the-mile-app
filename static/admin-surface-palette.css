@@ -1467,3 +1467,61 @@ html[data-admin-theme="dark"] #admin-login-panel #admin-login-error:not(:empty){
  #admin-login-panel .tm-admin-login-field,
  #admin-login-panel .tm-admin-login-submit{transition:none!important}
 }
+
+/* Jogadores: tactile cards and unified player account settings (13-11-2026). */
+/* The whole player card has an immediate pressed surface on iOS and other touch
+   devices. The App icon remains a distinct action. Keep the hover behaviour. */
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+ transition:background-color 140ms ease,transform 140ms ease!important;
+}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card.is-pressing,
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card:has(.tm-p-player:active){
+ background:var(--tm-ui-subcard)!important;
+ transform:scale(.992);
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+  transition:none!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card.is-pressing,
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card:has(.tm-p-player:active){
+  transform:none!important;
+ }
+}
+/* A single genuine subcard in BOTH themes; the nested permissions controls
+   use the third surface level, while active rows retain their green status. */
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot{
+ background:var(--tm-ui-subcard)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-permission-row:not(.is-enabled){
+ background:var(--tm-ui-search)!important;
+}
+/* 'Imagem App' belongs to the account settings subcard but is a separate
+   titled group, not a box separated by a decorative horizontal rule. */
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot > .tm-player-loading-photo-card{
+ border:0!important;border-top:0!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+ margin:24px 0 0!important;
+ padding:0!important;gap:14px!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-loading-photo-info{
+ display:flex!important;align-items:center!important;gap:11px!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-loading-photo-info svg{
+ display:block;width:18px;height:18px;flex:0 0 18px;
+ stroke-width:1.8;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-loading-photo-info strong{
+ color:var(--tm-ui-text)!important;
+ font-size:18px!important;font-weight:650!important;line-height:1.35!important;
+}
+@media(max-width:640px){
+ html[data-admin-theme] #tm-players-page #tm-players-settings-slot > .tm-player-loading-photo-card{
+  margin-top:22px!important;
+ }
+}
