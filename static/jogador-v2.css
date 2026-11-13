@@ -4680,3 +4680,26 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  66%{opacity:.72;transform:translateY(0) scale(1.035,1.09)}
  100%{opacity:0;transform:translateY(0) scale(1)}
 }
+
+
+/* v segmented 7: synchronize selected-fill color with outline spring.
+   The elastic outline remains transparent; only the static selection fill fades. */
+.mile-segment-animated>.mile-segment-indicator::before{
+ background-color:#66666c!important;
+}
+.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{
+ animation:mile-segment-selection-tone .42s ease-in-out both!important;
+}
+@keyframes mile-segment-selection-tone{
+ 0%{background-color:#515157}
+ 24%{background-color:#59595f}
+ 52%{background-color:#626268}
+ 100%{background-color:#66666c}
+}
+.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::after{
+ animation-duration:.42s!important;
+}
+.mile-segment-animated>button{transition:color .34s ease!important}
+@media(prefers-reduced-motion:reduce){
+ .mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{animation:none!important}
+}
