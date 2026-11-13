@@ -2394,3 +2394,436 @@ html[data-admin-theme="dark"] #tm-plan-page{
   grid-template-columns:minmax(0,1fr)!important;
  }
 }
+
+
+/* Plan editor visual alignment | 2026-11-13
+   Unified Backoffice only: four themes/breakpoints, no data or event changes.
+   Keep all semantic nutrition hues and save/publication states unchanged. */
+html[data-admin-theme] #tm-plan-page #plan-editor{
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+ color:var(--tm-ui-text);
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-editor-heading{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;min-height:44px!important;margin:0 0 16px!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-state-chip{
+ display:none!important; /* State is reported in the live feedback at the foot. */
+}
+html[data-admin-theme] #tm-plan-page #plan-editor #new-plan.tm-action-new{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:8px!important;flex:none!important;width:auto!important;min-height:42px!important;
+ margin-left:auto!important;padding:9px 15px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor #new-plan>span:first-child{
+ font-size:19px;line-height:1;font-weight:500;
+}
+
+/* The editor's selectors and totals become ONE principal surface; the selectors
+   use subcard fills and the four daily figures share the remainder of the card. */
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview{
+ display:grid!important;grid-template-columns:minmax(250px,36%) minmax(0,1fr)!important;
+ align-items:center!important;gap:24px!important;
+ width:100%!important;min-width:0!important;box-sizing:border-box!important;
+ margin:0 0 18px!important;padding:24px!important;
+ border:0!important;border-radius:20px!important;box-shadow:none!important;
+ background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ gap:10px!important;align-content:center!important;min-width:0!important;
+ margin:0!important;padding:0!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors>label{
+ display:block!important;width:100%!important;min-width:0!important;margin:0!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors>label::after{
+ display:none!important;content:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors .tm-two-line-select{
+ display:block!important;width:100%!important;min-width:0!important;
+ min-height:64px!important;height:64px!important;
+ background:var(--tm-ui-subcard)!important;border:0!important;
+ border-radius:13px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors .tm-select-caption{
+ color:var(--tm-ui-muted)!important;
+ font:500 12px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors .tm-select-value{
+ color:var(--tm-ui-text)!important;
+ font:500 15px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors .tm-select-arrow{
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four{
+ position:relative!important;display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ align-items:start!important;justify-content:stretch!important;
+ gap:0!important;box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;min-height:0!important;
+ margin:0!important;padding:8px 0 0!important;
+ background:transparent!important;border:0!important;
+ border-radius:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat,
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat:nth-child(n){
+ position:relative!important;display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;justify-content:flex-start!important;
+ gap:5px!important;grid-column:auto!important;grid-row:auto!important;
+ height:auto!important;min-height:0!important;min-width:0!important;width:100%!important;
+ margin:0!important;padding:6px 12px!important;
+ background:transparent!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat:first-child{
+ padding-left:0!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat+.stat{
+ border-left:1px solid var(--tm-preview-summary-divider,var(--tm-ui-divider))!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-value{
+ order:1!important;display:flex!important;align-items:baseline!important;
+ justify-content:flex-start!important;gap:3px!important;
+ width:100%!important;min-width:0!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-value strong{
+ font:600 clamp(21px,2.1vw,26px)/1.12 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ letter-spacing:-.028em!important;font-variant-numeric:tabular-nums!important;
+ white-space:nowrap!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-value small{
+ color:var(--tm-ui-muted)!important;
+ font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-label{
+ order:2!important;display:block!important;position:static!important;
+ width:auto!important;height:auto!important;min-width:0!important;
+ margin:0!important;padding:0!important;clip:auto!important;overflow:visible!important;
+ color:var(--tm-ui-muted)!important;
+ font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ text-align:left!important;white-space:normal!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .plan-perkg{
+ order:3!important;display:block!important;
+ color:var(--tm-ui-muted)!important;
+ font:500 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ text-align:left!important;white-space:nowrap!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.plan-weight-reference{
+ position:static!important;grid-column:1/-1!important;display:block!important;
+ width:100%!important;max-width:100%!important;
+ margin:12px 0 0!important;padding:0!important;text-align:left!important;
+ color:var(--tm-ui-muted)!important;
+ font:500 11px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+
+/* Cards, options and selected-state treatment: no decorative borders.
+   A slim neutral marker identifies the current option; nutrition colours remain. */
+html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal{
+ background:var(--tm-ui-card)!important;
+ border:0!important;border-radius:18px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .meal-header .meal-name>strong{
+ font-weight:600!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button{
+ position:relative!important;overflow:hidden!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:14px!important;box-shadow:none!important;
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ font-weight:500!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button.current{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button.current::before{
+ content:"";position:absolute;left:0;top:11px;bottom:11px;
+ width:3px;border-radius:3px;background:var(--tm-ui-muted);opacity:.7;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button .plan-option-number{
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button .plan-option-card-name{
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button.current .macro-values .m0 :is(b,small){color:var(--nut-kcal,#6eac81)!important}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button.current .macro-values .m1 :is(b,small){color:var(--nut-protein,#70a9d8)!important}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button.current .macro-values .m2 :is(b,small){color:var(--nut-carbs,#e2a65c)!important}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-tabs>button.current .macro-values .m3 :is(b,small){color:var(--nut-fat,#d6c168)!important}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-content{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:15px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-content :is(.option-summary,.nutrition-list,.nutrition-row){
+ background:transparent!important;border-radius:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-content .nutrition-list>.nutrition-row{
+ border:0!important;border-top:1px solid var(--tm-ui-divider)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-content .nutrition-list>.nutrition-row:first-child{
+ border-top:1px solid var(--tm-ui-divider)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-content .nutrition-list .food-identity strong{
+ color:var(--tm-ui-text)!important;
+ font-weight:500!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .option-content .nutrition-list .food-reference-note{
+ color:var(--tm-ui-muted)!important;
+}
+
+/* Shared outline trash icon for a meal, a food row or a free-text note.
+   "Remove from the plan" continues to invoke the original handler. */
+html[data-admin-theme] #tm-plan-page #plan-editor :is(.meal-delete-icon,.nutrition-list .remove-row.tm-plan-delete-action){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:none!important;
+ min-width:32px!important;width:32px!important;
+ min-height:34px!important;height:34px!important;padding:6px!important;
+ background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+ border:0!important;border-radius:10px!important;box-shadow:none!important;
+ font-size:0!important;line-height:0!important;cursor:pointer!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor :is(.meal-delete-icon,.nutrition-list .remove-row.tm-plan-delete-action):hover:not(:disabled){
+ background:var(--tm-action-danger-hover)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .tm-plan-trash-icon{
+ display:block!important;flex:none!important;
+ width:17px!important;height:17px!important;
+ stroke:currentColor!important;stroke-width:1.8!important;
+ fill:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .meal-rename-button{
+ color:var(--tm-action-secondary-fg)!important;border:0!important;
+ box-shadow:none!important;background:transparent!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .meal-rename-button:hover{
+ background:var(--tm-action-secondary-hover)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor :is(.meal-delete-icon,.nutrition-list .remove-row.tm-plan-delete-action):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+
+/* Add food, note and option controls use the official action palette. */
+html[data-admin-theme] #tm-plan-page #plan-editor .food-add :is(input,.food-search input),
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-inline-note #new-plan-note{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .food-add input::placeholder,
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-inline-note #new-plan-note::placeholder{
+ color:var(--tm-ui-muted)!important;opacity:1!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor :is(#add-food,#add-option,#add-meal-inline){
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor #add-note{
+ background:var(--tm-action-secondary-bg)!important;color:var(--tm-action-secondary-fg)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor :is(#add-food,#add-option,#add-meal-inline):hover{
+ background:var(--tm-action-main-hover)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor #add-note:hover{
+ background:var(--tm-action-secondary-hover)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor #delete-option{
+ background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor #delete-option:hover{
+ background:var(--tm-action-danger-hover)!important;
+}
+
+/* One durable status message, no extra top pill or green "Publicado" button.
+   Retain success/pending/error colours and all existing save/publish guards. */
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback{
+ display:grid!important;grid-template-columns:32px minmax(0,1fr) auto!important;
+ align-items:center!important;gap:8px 13px!important;
+ margin:16px 0 12px!important;padding:15px 17px!important;
+ border:0!important;border-left:3px solid var(--tm-state-neutral-fg)!important;
+ border-radius:14px!important;box-shadow:none!important;
+ background:var(--tm-ui-subcard)!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback:is([data-state="published"],[data-state="saved"],[data-state="transitional"]){
+ background:var(--tm-state-success-bg)!important;
+ border-left-color:var(--tm-state-success-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback:is([data-state="pending"],[data-state="dirty"],[data-state="new"]){
+ background:var(--tm-state-pending-bg)!important;
+ border-left-color:var(--tm-state-pending-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback[data-state="error"]{
+ background:var(--tm-state-error-bg)!important;
+ border-left-color:var(--tm-state-error-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback-copy{
+ grid-column:2!important;min-width:0!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback-copy>strong{
+ color:var(--tm-ui-text)!important;
+ font:600 13px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback-copy>small{
+ color:var(--tm-ui-muted)!important;
+ font:500 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback-time{
+ grid-column:3!important;color:var(--tm-ui-muted)!important;
+ font:500 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ white-space:nowrap!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions{
+ display:flex!important;justify-content:flex-end!important;align-items:center!important;
+ flex-wrap:wrap!important;gap:10px!important;
+ margin:0 0 12px!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions>button{
+ min-height:42px!important;width:auto!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions #delete-plan{
+ order:1!important;margin-right:auto!important;
+ background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions #save-plan{
+ order:2!important;min-width:120px!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions #assign-player{
+ order:3!important;min-width:136px!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions #save-plan.is-confirmed{
+ background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions #assign-player:disabled{
+ background:var(--tm-action-secondary-bg)!important;color:var(--tm-ui-muted)!important;
+ opacity:.7!important;cursor:default!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions #delete-plan:disabled{
+ opacity:.45!important;cursor:default!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(button,button:focus-visible){
+ box-shadow:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-editor .actions button:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-editor-heading{
+  margin:0 0 12px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #new-plan.tm-action-new{
+  min-height:40px!important;padding:8px 12px!important;font-size:13px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview{
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:14px!important;margin:0 0 15px!important;padding:16px!important;
+  border-radius:18px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors .tm-two-line-select{
+  height:62px!important;min-height:62px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:center!important;gap:0!important;
+  padding:18px 0 2px!important;margin:0!important;
+  border-top:1px solid var(--tm-preview-summary-divider,var(--tm-ui-divider))!important;
+  background:transparent!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat,
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat:nth-child(n){
+  align-items:center!important;justify-content:center!important;
+  gap:7px!important;padding:0 4px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat:first-child{
+  align-items:flex-start!important;padding-left:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-value{
+  justify-content:center!important;gap:2px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat:first-child .stat-value{
+  justify-content:flex-start!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-value strong{
+  font-size:clamp(18px,5.5vw,24px)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-value small{
+  position:absolute!important;width:1px!important;height:1px!important;
+  margin:-1px!important;padding:0!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .stat-label{
+  position:absolute!important;width:1px!important;height:1px!important;
+  margin:-1px!important;padding:0!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat .plan-perkg{
+  text-align:center!important;font-size:10px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.stat:first-child .plan-perkg{
+  text-align:left!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>.plan-weight-reference{
+  display:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal{
+  border-radius:17px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .option-content .nutrition-list>.nutrition-row{
+  border-top-color:var(--tm-ui-divider)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .option-content .nutrition-list .food-actions button{
+  min-height:34px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-inline-note #add-note{
+  min-height:48px!important;min-width:62px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback{
+  grid-template-columns:32px minmax(0,1fr)!important;
+  align-items:start!important;gap:9px 13px!important;padding:15px 14px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-save-feedback-time{
+  grid-column:2!important;grid-row:2!important;
+  justify-self:end!important;margin:0!important;white-space:normal!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .actions #save-plan{
+  grid-column:1!important;grid-row:1!important;
+  width:100%!important;min-width:0!important;flex:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .actions #assign-player{
+  grid-column:2!important;grid-row:1!important;
+  width:100%!important;min-width:0!important;flex:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .actions #delete-plan{
+  grid-column:2!important;grid-row:2!important;justify-self:end!important;
+  width:auto!important;min-width:0!important;margin:0!important;
+  background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] #tm-plan-page #plan-editor :is(button,.option-tabs>button){
+  transition:none!important;
+ }
+}
