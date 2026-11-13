@@ -1153,17 +1153,15 @@ async function renderWeightCard(root,date){
  }
  function chart(){
   panel.replaceChildren();
-  const heading=document.createElement("div");heading.className="daily-weight-chart-heading";
-  const t=document.createElement("strong");t.textContent="Últimos 10 dias";
-  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label","Editar peso");edit.title="Editar peso";edit.onclick=editor;heading.append(t,edit);panel.append(heading);
+  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label","Editar peso");edit.title="Editar peso";edit.onclick=editor;
   const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
-  if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(p);return;}
+  if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(edit,p);return;}
   const values=items.map(x=>Number(x.weight_kg));
   const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
   const n=items.length,range=Math.max(1,high-low);
   const mean=values.reduce((sum,v)=>sum+v,0)/n;
   const female=String(me?.sex||"").toUpperCase()==="F";
-  const surface=document.createElement("div");surface.className="daily-weight-chart-surface";
+  const surface=document.createElement("div");surface.className="daily-weight-chart-surface";surface.append(edit);
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("viewBox","0 0 340 205");svg.setAttribute("role","img");
   svg.setAttribute("aria-label","Evolução do peso nos últimos dez dias");
@@ -1192,7 +1190,9 @@ async function renderWeightCard(root,date){
   });
   surface.append(svg);
   const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent="— Média: "+format(mean)+" kg";
-  surface.append(average);panel.append(surface,detail);
+  const footer=document.createElement("div");footer.className="daily-weight-chart-footer";
+  const period=document.createElement("span");period.className="daily-weight-chart-period";period.textContent="Últimos 10 dias";
+  footer.append(period,average);surface.append(footer);panel.append(surface,detail);
  }
  // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
  const collapsedIcon=action.innerHTML,collapsedLabel=action.getAttribute("aria-label");
