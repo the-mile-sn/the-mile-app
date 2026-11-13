@@ -2576,3 +2576,59 @@
  outline:2px solid var(--tm-shell-focus,#90b8d8)!important;outline-offset:2px!important;
 }
 
+/* Planos — single edit button, whole-row/card preview and one contextual Back.
+   Nutrition pills and publication state colours are intentionally untouched. */
+#tm-plan-page #plan-entry .plan-library-table tbody tr[data-plan-open-id]{
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+#tm-plan-page #plan-entry .plan-library-table tbody tr[data-plan-open-id]:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+ outline-offset:-2px;
+}
+#tm-plan-page #plan-entry .plan-library-row-actions [data-edit-id],
+#tm-plan-page #plan-entry .plan-library-card-actions [data-edit-id]{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:36px!important;height:36px!important;
+ min-width:36px!important;min-height:36px!important;
+ border-radius:10px!important;padding:8px!important;flex:0 0 36px!important;
+}
+#tm-plan-page #plan-entry .plan-library-row-actions [data-edit-id] svg,
+#tm-plan-page #plan-entry .plan-library-card-actions [data-edit-id] svg{
+ width:16px!important;height:16px!important;flex:none!important;
+}
+#tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]{
+ cursor:pointer;transition:background-color .16s ease;
+}
+#tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+ outline-offset:2px!important;
+}
+@media(hover:hover) and (pointer:fine){
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]:hover{
+  background:var(--tm-ui-card)!important;
+ }
+}
+@media(hover:none) and (pointer:coarse){
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]:active{
+  filter:brightness(.985);
+ }
+}
+/* The existing upper navigation switches Início → Planos for inner views.
+   Hide the duplicate lower back buttons only while that upper bar is visible. */
+@media(min-width:831px){
+ #admin-workspace #tm-plan-page :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back{
+  display:none!important;
+ }
+ #admin-workspace #tm-plan-page #plan-preview .plan-preview-toolbar{
+  justify-content:flex-end!important;
+ }
+ #admin-workspace #tm-plan-page #plan-editor .plan-editor-heading{
+  justify-content:flex-end!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #tm-plan-page #plan-entry .plan-library-card[data-plan-open-id]{
+  transition:none!important;
+ }
+}
+
