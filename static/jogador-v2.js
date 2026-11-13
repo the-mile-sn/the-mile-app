@@ -1766,7 +1766,7 @@ async function overview(){
     const current=document.createElement("strong");
     const planned=document.createElement("span");
     const suffix=document.createElement("span");suffix.className="consumption-concentric-unit";
-    energyLine.append(current,planned,suffix);
+    const energyLabel=document.createElement("span");energyLabel.className="consumption-concentric-energy-label";energyLabel.textContent="kcal";energyRow.append(energyLabel);energyLine.append(current,planned,suffix);
     const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
     const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
     const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
@@ -1790,7 +1790,7 @@ async function overview(){
      const divisor=perKg&&hasWeight?weight:1;
      current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
      planned.textContent=" / "+fmt(total.kcal/divisor,0);
-     suffix.textContent=perKg?" kcal/kg":" kcal";
+     suffix.textContent=perKg?" kcal/kg":"";energyLabel.textContent=perKg?"kcal/kg":"kcal";
      for(const item of macroValues){
       item.consumedValue.textContent=fmt(actual[item.key]/divisor,perKg?1:0);
       item.prescribedValue.textContent=" / "+fmt(total[item.key]/divisor,perKg?1:0);
