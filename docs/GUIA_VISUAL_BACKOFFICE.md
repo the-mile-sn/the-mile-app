@@ -201,3 +201,13 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - Os botões **Editar** e **Eliminar** posicionam-se no **canto superior direito do cartão**, independentes do texto e com alvos de toque confortáveis. «Eliminar» mantém a cor semântica de perigo.
 - Não alterar endpoints nem comportamentos de pesquisa, paginação, edição, proteção da eliminação de alimentos em planos, nem os valores e associações nutricionais.
 - Manter a mesma hierarquia e tokens de superfícies em modo claro e escuro, desktop, tablet e mobile.
+
+## 14. Criação de jogador — modal aprovado em 13 novembro 2026
+
+- A ação **+ Criar jogador** mantém a localização aprovada na lista, incluindo a integração com os filtros em mobile; abre um **modal nativo centrado**, não um formulário expansível sobre a lista.
+- O modal tem a mesma linguagem do editor **Novo alimento**: card principal, campos na superfície de subcard, etiquetas discretas, sem contornos decorativos ou sombras.
+- Desktop: **Nome completo** ocupa a primeira linha; **Peso inicial / Sexo** e **Utilizador / Palavra-passe inicial** ocupam duas linhas de duas colunas. Mobile: uma única coluna, scroll interno somente se necessário, campos de 16 px para impedir zoom no Safari.
+- Rodapé com **Cancelar** e **Criar jogador**, alinhados à direita. A navegação por teclado e o foco permanecem funcionais; Escape, Cancelar e clique fora pedem confirmação se existirem dados introduzidos.
+- Preservar sem mudanças o endpoint de criação, as validações existentes, os campos obrigatórios, os limites de peso, utilizador e palavra-passe, as permissões e a atualização da lista. Erros surgem no próprio modal, sem depender de mensagens ocultas noutra aba.
+- Respeitar ambos os temas, a preferência de movimento reduzido e os tokens oficiais do Backoffice.
+
