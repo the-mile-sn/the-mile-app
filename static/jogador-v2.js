@@ -1750,12 +1750,12 @@ async function overview(){
     const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");
     chart.setAttribute("viewBox","0 0 200 200");chart.setAttribute("role","img");
     chart.setAttribute("aria-label","Progresso de calorias, proteína, hidratos e gordura consumidos face ao planeado");
-    for(const [key,radius,color] of [["kcal",88,"#72ebbd"],["protein_g",70,"#45baff"],["carbs_g",52,"#ff9d70"],["fat_g",34,"#f4d778"]]){
+    for(const [key,radius,color] of [["kcal",88,"#72ebbd"],["protein_g",66,"#45baff"],["carbs_g",44,"#ff9d70"],["fat_g",22,"#f4d778"]]){
      const circumference=2*Math.PI*radius;
      const ratio=total[key]>0?Math.max(0,Math.min(1,actual[key]/total[key])):0;
      for(const [stroke,progress] of [["#34363d",false],[color,true]]){
       const circle=document.createElementNS(chart.namespaceURI,"circle");
-      for(const [attr,val] of [["cx",100],["cy",100],["r",radius],["fill","none"],["stroke",stroke],["stroke-width",12],["stroke-linecap","round"],["transform","rotate(-90 100 100)"],["stroke-dasharray",circumference],["stroke-dashoffset",progress?circumference*(1-ratio):0]])circle.setAttribute(attr,String(val));
+      for(const [attr,val] of [["cx",100],["cy",100],["r",radius],["fill","none"],["stroke",stroke],["stroke-width",16],["stroke-linecap","round"],["transform","rotate(-90 100 100)"],["stroke-dasharray",circumference],["stroke-dashoffset",progress?circumference*(1-ratio):0]])circle.setAttribute(attr,String(val));
       chart.append(circle);
      }
     }
