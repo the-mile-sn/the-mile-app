@@ -4051,17 +4051,17 @@ html[data-admin-theme] #tm-players-page .tm-player-create-field{
  font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;color:var(--tm-ui-muted);
 }
 html[data-admin-theme] #tm-players-page .tm-player-create-wide{grid-column:1/-1}
-html[data-admin-theme] #tm-players-page .tm-player-create-field :is(input,select){
+html[data-admin-theme] #tm-players-page .tm-player-create-dialog .tm-player-create-field :is(input,select){
  display:block;box-sizing:border-box;width:100%;min-width:0;height:48px;margin:0;
  padding:0 14px;border:0!important;border-radius:12px!important;
  background:var(--tm-ui-field-on-card,var(--tm-ui-subcard))!important;
  color:var(--tm-ui-text)!important;box-shadow:none!important;
  font:500 15px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
 }
-html[data-admin-theme] #tm-players-page .tm-player-create-field :is(input,select)::placeholder{
+html[data-admin-theme] #tm-players-page .tm-player-create-dialog .tm-player-create-field :is(input,select)::placeholder{
  color:var(--tm-ui-muted);opacity:.77;
 }
-html[data-admin-theme] #tm-players-page .tm-player-create-field :is(input,select):focus-visible{
+html[data-admin-theme] #tm-players-page .tm-player-create-dialog .tm-player-create-field :is(input,select):focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
 }
 html[data-admin-theme] #tm-players-page .tm-player-create-feedback{
@@ -4083,6 +4083,6 @@ html[data-admin-theme] #tm-players-page .tm-player-create-actions button{
  html[data-admin-theme] #tm-players-page .tm-player-create-dialog h2{font-size:21px;margin-bottom:21px}
  html[data-admin-theme] #tm-players-page .tm-player-create-grid{grid-template-columns:minmax(0,1fr);row-gap:15px}
  html[data-admin-theme] #tm-players-page .tm-player-create-wide{grid-column:auto}
- html[data-admin-theme] #tm-players-page .tm-player-create-field :is(input,select){font-size:16px}
+ html[data-admin-theme] #tm-players-page .tm-player-create-dialog .tm-player-create-field :is(input,select){font-size:16px}
  html[data-admin-theme] #tm-players-page .tm-player-create-actions{margin-top:22px}
 }
