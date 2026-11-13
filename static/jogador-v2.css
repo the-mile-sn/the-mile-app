@@ -4919,3 +4919,14 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  width:22px!important;height:22px!important;display:block!important;
  stroke-width:2.2!important;
 }
+
+/* Weight chevron: match meal arrow optical size and right edge; override legacy 22px rule. */
+#overview .daily-weight-header .daily-weight-chevron-action{
+ width:19px!important;min-width:19px!important;flex:0 0 19px!important;
+ height:32px!important;margin-right:-5px!important;
+ background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+ padding:0!important;
+}
+#overview .daily-weight-header .daily-weight-chevron-action svg{
+ width:19px!important;height:19px!important;stroke-width:2!important;
+}
