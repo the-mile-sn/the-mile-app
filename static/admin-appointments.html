@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=33">
- <link rel="stylesheet" href="/admin-appointments.css?v=1">
+ <link rel="stylesheet" href="/admin-appointments.css?v=2">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -25,7 +25,7 @@
      <h1>Agendamentos</h1>
      <p>Gestão de consultas, avaliações e disponibilidades dos profissionais.</p>
     </div>
-    <span class="tm-appointments-phase">Estrutura inicial</span>
+    <span class="tm-appointments-phase">Serviços e profissionais</span>
    </header>
    <div class="tm-appointments-info" role="note">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg>
@@ -71,10 +71,28 @@
    </section>
    <section id="tm-appointments-panel-configuracao" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-configuracao" tabindex="0" hidden>
     <div class="tm-appointments-panel-heading"><div><h2>Configuração</h2><p>Serviços, profissionais, disponibilidades e integrações.</p></div></div>
-    <div class="tm-appointments-config-grid">
-     <article class="tm-appointments-config-card"><h3>Serviços e profissionais</h3><p>Catálogo de consultas, duração, formato e associação a profissionais.</p><small>Próxima fase</small></article>
+    <div class="tm-appt-catalog" id="tm-appt-catalog">
+     <section class="tm-appt-catalog-section" aria-labelledby="tm-appt-services-title">
+      <header class="tm-appt-catalog-header">
+       <div><h3 id="tm-appt-services-title">Serviços</h3><p>Consultas, durações, formatos e preços de referência.</p></div>
+       <button type="button" class="tm-appt-create" id="tm-appt-create-service"><span aria-hidden="true">+</span> Novo serviço</button>
+      </header>
+      <div id="tm-appt-services-list" class="tm-appt-catalog-list" aria-live="polite"><p class="tm-appt-placeholder">A carregar serviços…</p></div>
+     </section>
+     <section class="tm-appt-catalog-section" aria-labelledby="tm-appt-professionals-title">
+      <header class="tm-appt-catalog-header">
+       <div><h3 id="tm-appt-professionals-title">Profissionais</h3><p>Quem realiza cada serviço e em que formatos.</p></div>
+       <button type="button" class="tm-appt-create" id="tm-appt-create-professional"><span aria-hidden="true">+</span> Novo profissional</button>
+      </header>
+      <div id="tm-appt-professionals-list" class="tm-appt-catalog-list" aria-live="polite"><p class="tm-appt-placeholder">A carregar profissionais…</p></div>
+     </section>
+     <p id="tm-appt-catalog-feedback" class="tm-appt-catalog-feedback" role="status" aria-live="polite"></p>
+     <p class="tm-appt-shopify-note">Os preços e identificadores de produto servem de referência interna. Nesta fase, guardar um serviço não altera produtos, preços ou reservas no Shopify/Sesami.</p>
+    </div>
+    <div class="tm-appointments-config-grid tm-appt-next-phase">
      <article class="tm-appointments-config-card"><h3>Disponibilidades e bloqueios</h3><p>Períodos semanais, exceções e horários disponíveis por profissional.</p><small>Próxima fase</small></article>
-     <article class="tm-appointments-config-card"><h3>Google Calendar e Shopify</h3><p>Sincronização de períodos ocupados, reservas e estados de pagamento.</p><small>Próximas fases</small></article>
+     <article class="tm-appointments-config-card"><h3>Google Calendar</h3><p>Autorização individual e consulta dos períodos ocupados.</p><small>Próximas fases</small></article>
+     <article class="tm-appointments-config-card"><h3>Shopify e pagamentos</h3><p>Confirmação das reservas após pagamento e sincronização comercial.</p><small>Próximas fases</small></article>
     </div>
     <div class="tm-appointments-rules">
      <h3>Regras acordadas para o projeto</h3>
@@ -88,10 +106,52 @@
      </dl>
     </div>
    </section>
+   <dialog id="tm-appt-service-dialog" class="tm-appt-dialog" aria-labelledby="tm-appt-service-dialog-title">
+    <form id="tm-appt-service-form" novalidate>
+     <div class="tm-appt-dialog-heading"><div><span>Agendamentos</span><h2 id="tm-appt-service-dialog-title">Novo serviço</h2></div><button type="button" class="tm-appt-dialog-close" data-close-appointment-dialog aria-label="Fechar">×</button></div>
+     <label class="tm-appt-field tm-appt-full"><span>Nome do serviço</span><input id="tm-appt-service-name" name="name" maxlength="130" required autocomplete="off" placeholder="Ex.: Avaliação nutricional"></label>
+     <div class="tm-appt-dialog-grid">
+      <label class="tm-appt-field"><span>Categoria</span><select id="tm-appt-service-category" name="category" required><option>Wellness</option><option>Performance</option><option>Futebol Profissional</option><option>Avaliações</option><option>Outro</option></select></label>
+      <label class="tm-appt-field"><span>Duração (min)</span><input id="tm-appt-service-duration" type="number" name="duration" min="15" max="480" step="5" value="45" required></label>
+     </div>
+     <label class="tm-appt-checkbox tm-appt-availability-check"><input id="tm-appt-service-active" type="checkbox" checked><span>Serviço ativo</span></label>
+     <fieldset class="tm-appt-modes"><legend>Formatos e preços</legend>
+      <div class="tm-appt-mode">
+       <label class="tm-appt-checkbox"><input id="tm-appt-service-presencial-enabled" type="checkbox" checked><span>Presencial</span></label>
+       <label class="tm-appt-field"><span>Preço (€)</span><input id="tm-appt-service-presencial-price" type="number" min="0" max="99999.99" step=".01" inputmode="decimal" value="0" required></label>
+       <details><summary>Referências Shopify</summary><label class="tm-appt-field"><span>ID do produto</span><input id="tm-appt-service-presencial-product" autocomplete="off" placeholder="gid://shopify/Product/…"></label><label class="tm-appt-field"><span>ID da variante</span><input id="tm-appt-service-presencial-variant" autocomplete="off" placeholder="gid://shopify/ProductVariant/…"></label></details>
+      </div>
+      <div class="tm-appt-mode">
+       <label class="tm-appt-checkbox"><input id="tm-appt-service-online-enabled" type="checkbox" checked><span>Online</span></label>
+       <label class="tm-appt-field"><span>Preço (€)</span><input id="tm-appt-service-online-price" type="number" min="0" max="99999.99" step=".01" inputmode="decimal" value="0" required></label>
+       <details><summary>Referências Shopify</summary><label class="tm-appt-field"><span>ID do produto</span><input id="tm-appt-service-online-product" autocomplete="off" placeholder="gid://shopify/Product/…"></label><label class="tm-appt-field"><span>ID da variante</span><input id="tm-appt-service-online-variant" autocomplete="off" placeholder="gid://shopify/ProductVariant/…"></label></details>
+      </div>
+     </fieldset>
+     <fieldset class="tm-appt-associations"><legend>Profissionais que realizam este serviço</legend><div id="tm-appt-service-professionals" class="tm-appt-checkbox-group"></div></fieldset>
+     <p id="tm-appt-service-error" class="tm-appt-form-error" role="alert"></p>
+     <div class="tm-appt-dialog-actions"><button type="button" class="tm-appt-cancel" data-close-appointment-dialog>Cancelar</button><button type="submit" class="tm-appt-save">Guardar serviço</button></div>
+    </form>
+   </dialog>
+   <dialog id="tm-appt-professional-dialog" class="tm-appt-dialog" aria-labelledby="tm-appt-professional-dialog-title">
+    <form id="tm-appt-professional-form" novalidate>
+     <div class="tm-appt-dialog-heading"><div><span>Agendamentos</span><h2 id="tm-appt-professional-dialog-title">Novo profissional</h2></div><button type="button" class="tm-appt-dialog-close" data-close-appointment-dialog aria-label="Fechar">×</button></div>
+     <label class="tm-appt-field tm-appt-full"><span>Nome do profissional</span><input id="tm-appt-professional-name" maxlength="120" required autocomplete="name" placeholder="Nome completo"></label>
+     <label class="tm-appt-field tm-appt-full"><span>Email <small>(opcional)</small></span><input id="tm-appt-professional-email" type="email" maxlength="254" autocomplete="email" placeholder="nome@exemplo.pt"></label>
+     <label class="tm-appt-checkbox tm-appt-availability-check"><input id="tm-appt-professional-active" type="checkbox" checked><span>Profissional ativo</span></label>
+     <fieldset class="tm-appt-associations"><legend>Formatos disponibilizados</legend><div class="tm-appt-checkbox-group">
+      <label class="tm-appt-checkbox"><input id="tm-appt-professional-presencial" type="checkbox" checked><span>Presencial</span></label>
+      <label class="tm-appt-checkbox"><input id="tm-appt-professional-online" type="checkbox" checked><span>Online</span></label>
+     </div></fieldset>
+     <fieldset class="tm-appt-associations"><legend>Serviços realizados</legend><div id="tm-appt-professional-services" class="tm-appt-checkbox-group"></div></fieldset>
+     <p class="tm-appt-form-hint">A ligação ao Google Calendar e as permissões de acesso serão configuradas mais tarde.</p>
+     <p id="tm-appt-professional-error" class="tm-appt-form-error" role="alert"></p>
+     <div class="tm-appt-dialog-actions"><button type="button" class="tm-appt-cancel" data-close-appointment-dialog>Cancelar</button><button type="submit" class="tm-appt-save">Guardar profissional</button></div>
+    </form>
+   </dialog>
   </main>
  </div>
  <script src="/admin-nav-shell.js?v=5" defer></script>
- <script src="/admin-appointments.js?v=1" defer></script>
+ <script src="/admin-appointments.js?v=2" defer></script>
  <script src="/admin-mobile-nav.js?v=11" defer></script>
 </body>
 </html>
