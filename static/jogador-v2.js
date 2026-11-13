@@ -1809,7 +1809,7 @@ async function overview(){
      if(delta!==null)pill.classList.add(delta>0?"above":delta<0?"below":"neutral");
      pill.append(value,caption);if(cls==="mean"){const sep=document.createElement("span");sep.className="consumption-concentric-trend-separator";sep.textContent="|";trends.append(sep);}trends.append(pill);
     }
-    figures.append(trends,details);
+    trends.append(mode);figures.append(trends,details);
     visual.append(rings,figures);
    }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
