@@ -1330,3 +1330,105 @@ html[data-admin-theme="dark"] body .tm-player-search-list[hidden]{
 html[data-admin-theme] #tm-players-page .tm-players-filter-panel #tm-players-search-clear[hidden]{
  display:none!important;
 }
+
+/* Standalone admin login: a single secondary-colour field per input (Nov 2026). */
+/* The login is a full-page surface, never a white card laid over a grey page. */
+html[data-admin-theme]:has(#admin-login-panel:not([hidden])),
+html[data-admin-theme] body:has(#admin-login-panel:not([hidden])){
+ background:var(--tm-ui-card)!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] body:has(#admin-login-panel:not([hidden])){
+ min-height:100vh;min-height:100dvh;padding:0!important;
+}
+html[data-admin-theme] #admin-login-panel{
+ display:block;
+ box-sizing:border-box;
+ width:100%;max-width:492px!important;
+ margin:0 auto!important;
+ padding:clamp(64px,11vh,112px) 22px 40px!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+html[data-admin-theme] #admin-login-panel[hidden]{display:none!important}
+#admin-login-panel .tm-admin-login-heading{
+ display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+ margin:0 0 38px;
+ font-size:26px;line-height:1.15;font-weight:600;letter-spacing:-.035em;
+ color:var(--tm-ui-text);
+}
+#admin-login-panel .tm-admin-login-heading svg{
+ display:block;width:144px;height:auto;max-width:100%;
+ color:var(--tm-ui-text);flex:none;
+}
+#admin-login-panel .tm-admin-login-heading .tm-admin-login-separator{color:var(--tm-ui-muted);font-weight:500}
+#admin-login-panel #admin-login-form{display:flex;flex-direction:column;gap:14px}
+html[data-admin-theme] #admin-login-panel .tm-admin-login-field{
+ box-sizing:border-box;display:flex;flex-direction:column;gap:2px;
+ width:100%;min-height:80px;margin:0!important;
+ padding:14px 18px 12px!important;
+ border:0!important;border-radius:16px!important;box-shadow:none!important;
+ background:var(--tm-ui-subcard)!important;
+ color:var(--tm-ui-text)!important;
+ cursor:text;
+}
+#admin-login-panel .tm-admin-login-field .tm-admin-login-caption{
+ display:block;margin:0;
+ color:var(--tm-ui-muted)!important;
+ font:500 13px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #admin-login-panel .tm-admin-login-field input{
+ display:block;box-sizing:border-box;
+ width:100%!important;min-width:0;height:29px!important;min-height:29px!important;
+ margin:3px 0 0!important;padding:0!important;
+ border:0!important;border-radius:0!important;
+ outline:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ font:500 18px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ -webkit-appearance:none;appearance:none;
+}
+html[data-admin-theme] #admin-login-panel .tm-admin-login-field:focus-within{
+ outline:2px solid var(--tm-shell-focus,#749bc1)!important;
+ outline-offset:2px;
+}
+html[data-admin-theme] #admin-login-panel .tm-admin-login-submit{
+ align-self:flex-start;box-sizing:border-box;
+ min-height:44px!important;margin-top:8px!important;
+ padding:10px 19px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ background:#2d3440!important;color:#f2f3f5!important;
+ font:500 14px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ cursor:pointer;
+}
+html[data-admin-theme="light"] #admin-login-panel .tm-admin-login-submit{
+ background:#dce5ef!important;color:#2e4157!important;
+}
+html[data-admin-theme="light"] #admin-login-panel .tm-admin-login-submit:hover:not(:disabled){
+ background:#d2dde8!important;
+}
+html[data-admin-theme="dark"] #admin-login-panel .tm-admin-login-submit:hover:not(:disabled){
+ background:#38414e!important;
+}
+html[data-admin-theme] #admin-login-panel .tm-admin-login-submit:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#749bc1)!important;outline-offset:3px;
+}
+#admin-login-panel #admin-login-error:empty{display:none}
+#admin-login-panel #admin-login-error:not(:empty){
+ margin:18px 0 0;color:#af6544;font-size:13px;
+}
+html[data-admin-theme="dark"] #admin-login-panel #admin-login-error:not(:empty){color:#e2a188}
+@media(max-width:600px){
+ html[data-admin-theme] #admin-login-panel{
+  max-width:100%!important;padding:clamp(52px,9vh,84px) 20px 34px!important;
+ }
+ #admin-login-panel .tm-admin-login-heading{
+  font-size:23px;gap:7px;margin-bottom:30px;
+ }
+ #admin-login-panel .tm-admin-login-heading svg{width:132px}
+ html[data-admin-theme] #admin-login-panel .tm-admin-login-field{min-height:77px}
+}
+@media(prefers-reduced-motion:reduce){
+ #admin-login-panel .tm-admin-login-field,
+ #admin-login-panel .tm-admin-login-submit{transition:none!important}
+}
