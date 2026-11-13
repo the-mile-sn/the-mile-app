@@ -3349,7 +3349,7 @@ html[data-admin-theme="light"] .tm-player-search-avatar{background:#e9edf2;color
 
 /* Integrated Biblioteca Alimentar: phone-sized cards instead of a clipped desktop grid.
    CSS-only: original table cells, filtering, nutritional values and edit/delete handlers stay intact. */
-@media(max-width:700px){
+@media(max-width:700px) and (pointer:coarse){
  #tm-food-library-page .food-catalog-panel{max-width:100%;overflow:hidden}
  #tm-food-library-page .scroll{max-width:100%;width:100%;overflow-x:visible!important}
  #tm-food-library-page .food-catalog-table{display:block;width:100%!important;min-width:0!important;max-width:100%;table-layout:auto!important}
