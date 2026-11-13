@@ -287,7 +287,7 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 
 ## 24. Planos — ajustes mobile aprovados em 13 novembro 2026
 
-- **Lista mobile:** «Criar novo» fica na mesma linha da pesquisa de jogador dentro do card de filtros, reutilizando a ação de criação existente. Filtros de jogador e tipo de plano mantêm-se abaixo, com a superfície de subcard oficial. O desktop mantém a ação e os filtros originais.
+- **Lista mobile:** «Criar novo» fica na mesma linha da pesquisa de jogador, dentro do card de filtros. A pesquisa substitui o filtro redundante «Jogador» no mobile; fica apenas «Tipo de plano» na segunda linha. Ambos os níveis têm altura de 60 px e intervalo vertical uniforme de 12 px. A pesquisa filtra os planos por jogador (e continua a poder encontrar o tipo). O seletor de jogador e a ação de criação originais permanecem no desktop.
 - **Pré-visualização mobile:** o botão «Editar» passa a exibir o lápis outline à esquerda e o texto curto «Editar», seguindo o botão desktop, sem mudar o handler.
 - **Resumo nutricional do dia:** alinhar o primeiro valor (calorias totais) e o respetivo rácio à esquerda, pela mesma margem do nome do jogador e título do plano. Preservar as quatro colunas, os valores e as cores.
 - **Título repetido:** ocultar «Amarelo»/classificação como título do segundo card também no mobile; a classificação já consta em «Plano amarelo» no resumo. Preservar refeições, opções, cores e espaço de respiro.
