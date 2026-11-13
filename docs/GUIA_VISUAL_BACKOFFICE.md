@@ -240,3 +240,14 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - Alterar Ativa/Inativa atualiza apenas o cartão correspondente, sem reconstruir a grelha ou voltar a solicitar todas as fotografias visíveis.
 - Manter intactas as fotografias, pesos, categorias, dados nutricionais, associações, pré-visualizações dos planos, endpoints e permissões. Não publicar porções na app dos jogadores.
 
+## 19. Lista de Planos — desktop e mobile (13 novembro 2026)
+
+- A lista usa **Inter Tight** e mantém o padrão de ações de criação com **13 px e peso Medium 500** em modo claro e escuro.
+- **Filtros:** eliminar a pesquisa da apresentação da lista; manter **Jogador** e **Tipo de plano** no mesmo card principal (branco no claro, grafite oficial no escuro), cada um num subcard de duas linhas. Os dois filtros partilham a mesma estética da Biblioteca Alimentar. A pesquisa técnica existente permanece desligada da interface sem modificar a listagem, os filtros ou os dados.
+- **Criar novo:** um único botão e handler, colocado separadamente à direita, fora do card de filtros, tanto em desktop como em mobile.
+- **Desktop:** manter tabela tradicional, cabeçalho da mesma cor que o card principal, divisórias horizontais praticamente invisíveis e ações outline compactas. Em janelas desktop estreitas, manter tabela com deslocamento horizontal; não converter apenas por largura.
+- **Mobile/touch:** cada plano ocupa um **card principal individual**, sem bordas, sombras, títulos redundantes «PLANO» e «ESTADO» ou divisórias internas. Primeira linha: nome à esquerda e Ver/Editar à direita; segunda linha: classificação do plano e estado de publicação. Botões visíveis de 36 × 36 px, ícones outline de 16 px, com área de toque de 44 × 44 px quando viável.
+- **Cores nutricionais imutáveis:** nunca redefinir fundos, contornos ou cores de texto de `.plan-type-tag[data-palette]`. Conservar distinções oficiais por tema para Amarelo, Laranja, Azul, Verde, Verde preparação (VP), Peri-treino e Peri-jogo; Verde preparação mantém verde mais escuro que Verde. Não modificar a função `previewPalette`, os ícones de categoria, os tokens nutritivos nem estados `data-state` (Publicado/Rascunho/Alterações por publicar/Em uso).
+- **Cópias antigas:** manter o aviso visual especial, eventual botão Eliminar e o comportamento de confirmação existente.
+- Não alterar editor, pré-visualização, planos, valores, publicação, dados, APIs nem a app dos jogadores. Efeitos hover só em desktop, feedback discreto em mobile; manter foco de teclado visível.
+
