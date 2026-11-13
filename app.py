@@ -19,6 +19,7 @@ import sqlite3
 import microcycles_v2
 import appointments_catalog_v2
 import appointments_availability_v2
+import appointments_bookings_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -286,6 +287,7 @@ def initialize():
         microcycles_v2.initialize(c)
         appointments_catalog_v2.initialize(c)
         appointments_availability_v2.initialize(c)
+        appointments_bookings_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -930,6 +932,59 @@ def application(env, start_response):
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 return respond(200, {'ok': True})
+            # Phase 4.1: internal manual bookings; no Shopify or Google side-effects.
+            if path == '/api/v2/admin/appointments/bookings' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    result = appointments_bookings_v2.list_bookings(
+                        c, (query.get('from') or [''])[0],
+                        (query.get('to') or [''])[0],
+                        (query.get('professional_id') or [''])[0],
+                        (query.get('service_id') or [''])[0],
+                        (query.get('status') or ['all'])[0])
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, result)
+            if path == '/api/v2/admin/appointments/bookings' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    identifier = appointments_bookings_v2.create(
+                        c, read_json(env), user['id'])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) == 'booking_overlap' else 400, str(exc))
+                return respond(201, {'id': identifier})
+            if (path.startswith('/api/v2/admin/appointments/bookings/')
+                    and path.endswith('/cancel') and method == 'POST'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                identifier = path.rsplit('/',2)[-2]
+                body = read_json(env)
+                try:
+                    appointments_bookings_v2.cancel(
+                        c, identifier, body.get('version'), user['id'])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) == 'stale_booking' else 400, str(exc))
+                return respond(200, {'ok': True})
+            if (path.startswith('/api/v2/admin/appointments/bookings/')
+                    and method == 'PUT'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                identifier = path.rsplit('/',1)[-1]
+                try:
+                    appointments_bookings_v2.reschedule(
+                        c, identifier, read_json(env), user['id'])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) in ('booking_overlap','stale_booking') else 400, str(exc))
+                return respond(200, {'id': identifier})
             if path.startswith('/api/v2/admin/appointments/'):
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
