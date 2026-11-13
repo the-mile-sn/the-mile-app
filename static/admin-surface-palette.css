@@ -1905,8 +1905,8 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
  }
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-name{
   grid-column:1/-1!important;order:1!important;
-  box-sizing:border-box!important;padding-right:104px!important;
-  min-height:44px!important;
+  box-sizing:border-box!important;padding:7px 94px 0 0!important;
+  min-height:36px!important;
  }
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-name strong{
   font-size:15px!important;line-height:1.35!important;
@@ -1946,9 +1946,9 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td:nth-child(7)::before{content:"G (g)"}
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-edit-cell{
   display:flex!important;position:absolute!important;
-  top:19px!important;right:0!important;
+  top:16px!important;right:0!important;
   align-items:center!important;justify-content:flex-end!important;
-  gap:6px!important;order:0!important;z-index:1;
+  gap:10px!important;order:0!important;z-index:1;
   width:auto!important;max-width:none!important;
   margin:0!important;padding:0!important;
   border:0!important;white-space:nowrap!important;
@@ -1956,9 +1956,17 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
  }
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-edit-cell .food-edit-icon{
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
-  margin:0!important;padding:10px!important;
-  border:0!important;border-radius:12px!important;box-shadow:none!important;
+  position:relative!important;
+  width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+  margin:0!important;padding:8px!important;
+  border:0!important;border-radius:11px!important;box-shadow:none!important;
+ }
+ html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-edit-cell .food-edit-icon svg{
+  width:16px!important;height:16px!important;
+ }
+ /* Preserve an accessible 44px hit area even though the visible buttons are 36px. */
+ html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-edit-cell .food-edit-icon::before{
+  content:"";position:absolute;inset:-4px;pointer-events:auto;
  }
 }
 /* The two inputs stack in the same filter card when they no longer fit. */
@@ -1971,7 +1979,7 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
   font-size:16px!important;line-height:1.3!important;
  }
  html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td.food-name{
-  padding-right:106px!important;
+  padding-right:94px!important;
  }
 }
 @media(prefers-reduced-motion:reduce){
