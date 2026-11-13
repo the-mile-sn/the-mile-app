@@ -1,8 +1,8 @@
-name: Validate appointments catalogue and availability
+name: Validate appointments catalogue, availability and internal bookings
 on:
   push:
     branches:
-      - feature/appointments-availability-photo-20261113
+      - feature/appointments-manual-bookings-20261113
   pull_request:
     branches:
       - production/the-mile-admin
@@ -37,13 +37,14 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install -r requirements.txt
       - name: Python syntax
-        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py
+        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py appointments_bookings_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py test_appointments_bookings_v2.py
       - name: JavaScript syntax
         run: |
           node --check static/admin-appointments.js
           node --check static/admin-appointments-schedule.js
+          node --check static/admin-appointments-bookings.js
       - name: Appointments API and security regression
-        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_backoffice_shell
+        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_bookings_v2 test_appointments_backoffice_shell
       - name: PostgreSQL 18 compatibility and catalogue smoke
         env:
           DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
@@ -82,4 +83,52 @@ jobs:
               assert len(schedule['availability']) == 1
               assert len(schedule['blocks']) == 1
               assert schedule['blocks'][0]['note'] == 'PG test'
+          PY
+
+      - name: PostgreSQL 18 simultaneous booking regression
+        env:
+          DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
+        run: |
+          python - <<'PY'
+          import concurrent.futures
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+          import app
+          import appointments_catalog_v2 as catalogue
+          import appointments_availability_v2 as availability
+          import appointments_bookings_v2 as bookings
+
+          day=(datetime.now(ZoneInfo("Europe/Lisbon")).date()+timedelta(days=2)).isoformat()
+          with app.connect() as c:
+              bookings.initialize(c)
+              service=next(s for s in catalogue.catalog(c)['services']
+                           if s['duration_minutes']==90)
+              person=catalogue.save_professional(c,{
+                  'name':'Concurrency QA','email':'concurrency@ci.invalid','active':True,
+                  'presencial_enabled':True,'online_enabled':True,'service_ids':[service['id']]
+              })
+              availability.save_period(c,'availability',{
+                  'professional_id':person,'date':day,'start':'09:00','end':'13:00'
+              })
+          payload={
+              'professional_id':person, 'service_id':service['id'],
+              'mode':'presencial','date':day,'start':'09:00',
+              'customer_name':'CI Booking','customer_email':'',
+              'customer_phone':''
+          }
+          def attempt(i):
+              try:
+                  with app.connect() as c:
+                      return ('created',bookings.create(c,payload,'ci'))
+              except ValueError as exc:
+                  return ('rejected',str(exc))
+          with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+              results=list(pool.map(attempt,[1,2]))
+          assert len([r for r in results if r[0]=='created'])==1,results
+          assert ('rejected','booking_overlap') in results,results
+          with app.connect() as c:
+              rows=c.execute("SELECT COUNT(*) AS n FROM appt_bookings WHERE org_id=? AND professional_id=? AND status='scheduled'",
+                             (catalogue.ORG_ID,person)).fetchone()
+              assert rows['n']==1
+          print("Concurrent writers: exactly one appointment persisted",results)
           PY
