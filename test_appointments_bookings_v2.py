@@ -126,7 +126,7 @@ class ManualBookingsTests(unittest.TestCase):
         second_id=other["body"]["id"]
         self.req("/availability","POST",{"professional_id":second_id,"date":self.day,
                                          "start":"09:00","end":"13:00"})
-        change={"professional_id":second_id,**self.payload(start="09:00")}
+        change={**self.payload(start="09:00"),"professional_id":second_id}
         change["version"]=new["version"]
         result=self.req("/bookings/"+identifier,"PUT",change)
         self.assertEqual(result["status"],200,result)
@@ -155,7 +155,7 @@ class ManualBookingsTests(unittest.TestCase):
         with patch.object(app,"SITE_ROLE","player"):
             self.assertEqual(self.req("/bookings?from="+self.day+"&to="+self.day)["status"],404)
             self.assertEqual(self.req("/bookings","POST",self.payload())["status"],404)
-            self.assertEqual(self.req("/admin-appointments-bookings.js")["status"],404)
+            self.assertEqual(self.admin.request("/admin-appointments-bookings.js")["status"],404)
         with app.connect() as c:
             c.execute("INSERT INTO appt_organizations(id,name,timezone) VALUES(?,?,?)",
                       ("another-clinic","Test Clinic","Europe/Lisbon"))
