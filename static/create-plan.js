@@ -93,7 +93,7 @@ function renderPlanReference(){
  }
  const kcalKg=$("total-kcal-kg");if(kcalKg)kcalKg.textContent=valid?fmt(values[0]/w)+" kcal/kg":"";
  const note=$("plan-weight-reference");
- const label=valid?"Peso de referência: "+fmt(w)+" kg · "+planRefDate():
+ const label=valid?"Ref. "+fmt(w)+" kg · "+new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}).format(new Date(planRefDate()+"T12:00:00Z")).replace(/\./g,""):
    !plan.athlete_id?"Seleciona um jogador para calcular os rácios":
    planRef.error?"Não foi possível obter o Peso de referência.":"A consultar Peso de referência…";
  if(note){note.textContent=label;if(valid)note.dataset.tmMobileWeight=fmt(w)+" kg";else delete note.dataset.tmMobileWeight;}
@@ -125,7 +125,7 @@ function ensurePlanReference(){
 let savedSignature=null,publicationState={state:"draft",pending_changes:false,published_at:null},saveBusy=false,publishBusy=false,lastSavedAt=null,persistenceError="";
 const planSignature=()=>JSON.stringify({athlete_id:plan.athlete_id||"",player_id:plan.player_id||"",plan_type:plan.plan_type||"",meals:plan.meals});
 const planIsDirty=()=>!plan.id||savedSignature!==planSignature();
-const savedStamp=stamp=>stamp?new Date(Number(stamp)*1000).toLocaleString("pt-PT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+const savedStamp=stamp=>{if(!stamp)return "";const date=new Date(Number(stamp)*1000);const format=options=>new Intl.DateTimeFormat("pt-PT",{timeZone:"Europe/Lisbon",...options}).format(date);return format({day:"2-digit"})+" "+format({month:"short"}).replace(/\./g,"")+", "+format({hour:"2-digit",minute:"2-digit",hour12:false});};
 function renderPersistence(){
  const panel=$("plan-save-feedback");if(!panel)return;
  const title=$("plan-save-feedback-title"),desc=$("plan-save-feedback-description"),icon=$("plan-save-feedback-icon"),time=$("plan-save-feedback-time");
@@ -144,9 +144,9 @@ function renderPersistence(){
  panel.dataset.state=display;chip.dataset.state=display;chip.textContent=caption;
  title.textContent=message;desc.textContent=detail;icon.textContent=symbol;
  time.textContent=!dirty&&plan.id&&lastSavedAt?"Guardado em "+savedStamp(lastSavedAt):"";
- save.classList.toggle("is-confirmed",["saved","pending","published","transitional"].includes(display));
+ save.classList.toggle("is-confirmed",false);
  publish.classList.toggle("is-confirmed",false);
- save.textContent=saveBusy?"A guardar…":!plan.id?"Guardar rascunho":dirty?"Guardar alterações":"✓ Guardado";
+ save.textContent=saveBusy?"A guardar…":!plan.id?"Guardar rascunho":dirty?"Guardar alterações":"Guardado";
  publish.textContent=display==="published"?"Publicar":display==="pending"?"Publicar alterações":"Publicar plano";
  publish.title=display==="published"?"A versão atual já está publicada.":"";
  save.disabled=saveBusy||publishBusy||(!dirty&&!persistenceError);
@@ -173,7 +173,7 @@ function draw(){
     '<div class="option-content">'+(pendingAlternatives(o.foods)?'<p style="color:#f5b85d;font-weight:650">⚠ Média provisória: existem alternativas sem quantidade definida.</p>':'')+'<div class="option-summary'+(tmMobileOptionLayout?' tm-option-summary-mobile':'')+'"><div class="option-heading"><strong>Opção '+(option+1)+'</strong><input class="option-title" data-option-title maxlength="160" placeholder="Título da opção · Ex.: Ovos com pão" value="'+esc(o.title||'')+'"></div>'+(tmMobileOptionLayout?'<div class="tm-option-macros-mobile">'+macro(sum(o.foods),true)+'</div>':macro(sum(o.foods),true))+'</div>'+
     '<div class="nutrition-list">'+displayOrder(o).map(item=>item.type==='note'?notes[item.index]:rows[item.index]).join('')+'</div></div>'+  
     '<div class="food-add"><div class="food-search"><input id="food-search-input" type="search" autocomplete="off" placeholder="Pesquisar alimento" aria-label="Pesquisar alimento da biblioteca"><div id="food-results" class="food-results" role="listbox" hidden></div><div id="selected-food-note" class="selected-food-note" hidden></div></div><input id="food-grams" type="number" min="0.1" max="100000" step="any" value="100" aria-label="Quantidade em gramas"><span class="unit">g</span><button id="add-food">+ Adicionar alimento</button></div>'+
-    '<div class="plan-inline-note"><textarea id="new-plan-note" rows="2" placeholder="Adicionar nota" aria-label="Adicionar nota"></textarea><button type="button" id="add-note">OK</button></div><div class="meal-controls"><button id="add-option">+ Adicionar opção</button><button id="add-meal-inline">+ Adicionar refeição</button><button id="delete-option" class="delete-inline" type="button">Apagar opção</button>'+'</div>'+(plan.plan_type==="Plano Peri-jogo"?'<section class="peri-timing-panel">'+timingOrganizer(o)+'</section>':'')+
+    '<div class="plan-inline-note"><textarea id="new-plan-note" rows="2" placeholder="Adicionar nota" aria-label="Adicionar nota"></textarea><button type="button" id="add-note">+ Adicionar nota</button></div><div class="meal-controls"><button id="add-option">+ Adicionar opção</button><button id="add-meal-inline">+ Adicionar refeição</button><button id="delete-option" class="delete-inline" type="button">Apagar opção</button>'+'</div>'+(plan.plan_type==="Plano Peri-jogo"?'<section class="peri-timing-panel">'+timingOrganizer(o)+'</section>':'')+
     '':'')+'</section>';
   }).join("");
   queryAll("[data-toggle]").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.toggle);active=active===i?-1:i;option=0;editingFood=-1;draw()});
@@ -557,6 +557,8 @@ async function saveCurrentDraft(){
   lastSavedAt=result.updated_at||Math.floor(Date.now()/1000);
   savedSignature=planSignature();persistenceError="";saveBusy=false;
   renderPersistence();
+  $("save-plan").classList.add("tm-save-flash");
+  setTimeout(()=>$("save-plan")?.classList.remove("tm-save-flash"),1100);
   await loadDrafts().catch(()=>status("Rascunho guardado. A lista não foi atualizada."));
   status("Rascunho guardado na base de dados.");return true;
  }catch(err){
