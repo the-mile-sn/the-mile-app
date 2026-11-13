@@ -2458,6 +2458,12 @@
  #tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-card.plan-library-legacy-draft{
   background:#fff0bd!important;
  }
+ #tm-plan-page[data-admin-theme="dark"] #plan-entry .plan-library-card.plan-library-legacy-draft .plan-library-card-name strong{
+  color:#ffe6a4!important;
+ }
+ #tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-card.plan-library-legacy-draft .plan-library-card-name strong{
+  color:#664910!important;
+ }
  #tm-plan-page #plan-entry .plan-library-card-name{
   grid-column:1!important;grid-row:1!important;min-width:0!important;
  }
