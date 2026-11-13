@@ -4626,3 +4626,29 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  100%{background-color:#66666c}
 }
 @media(prefers-reduced-motion:reduce){.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{animation:none!important}}
+
+
+/* v segmented 4: Apple-like elastic outline only; selected fill stays still */
+.mile-segment-animated>.mile-segment-indicator::before{
+ background:#66666c!important;
+ animation:none!important;
+ transform:none!important;
+}
+.mile-segment-animated>.mile-segment-indicator::after{
+ content:"";position:absolute;inset:0;border:1.5px solid rgba(205,205,211,.88);
+ border-radius:inherit;box-sizing:border-box;background:transparent!important;
+ pointer-events:none;opacity:0;transform-origin:center;
+}
+.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::after{
+ animation:mile-segment-outline-lift .39s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes mile-segment-outline-lift{
+ 0%{opacity:0;transform:translateY(0) scale(1)}
+ 18%{opacity:.8}
+ 34%{opacity:1;transform:translateY(-3px) scale(1.045,1.17)}
+ 65%{opacity:.75;transform:translateY(-1px) scale(1.015,1.06)}
+ 100%{opacity:0;transform:translateY(0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+ .mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::after{animation:none!important}
+}
