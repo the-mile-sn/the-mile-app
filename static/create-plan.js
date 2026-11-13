@@ -445,6 +445,28 @@ async function openPlanPreview(id){
 }
 for(const rootId of ["library-plan-rows","library-plan-cards"]){
  const root=$(rootId);
+ if(rootId==="library-plan-cards"){
+  /* Safari touch feedback: press begins on pointerdown, and briefly holds after
+     release so it remains perceptible while the preview request begins. */
+  const clearPress=event=>{
+   const card=event.target.closest(".plan-library-card[data-plan-open-id]");
+   if(card&&root.contains(card)){
+    card.classList.remove("is-pressing");
+    if(event.type==="pointerup"){
+     card.classList.add("is-tapped");
+     window.setTimeout(()=>card.classList.remove("is-tapped"),165);
+    }else{card.classList.remove("is-tapped");}
+   }
+  };
+  root.addEventListener("pointerdown",event=>{
+   if(event.pointerType==="mouse"||event.target.closest("button,a,input,select,textarea,[role=button]"))return;
+   const card=event.target.closest(".plan-library-card[data-plan-open-id]");
+   if(card&&root.contains(card))card.classList.add("is-pressing");
+  });
+  for(const type of ["pointerup","pointercancel","pointerleave"]){
+   root.addEventListener(type,clearPress);
+  }
+ }
  root.addEventListener("click",event=>{
   if(event.target.closest("button,a,input,select,textarea,[role=button]"))return;
   const item=event.target.closest("[data-plan-open-id]");
