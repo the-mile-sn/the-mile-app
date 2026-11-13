@@ -1790,7 +1790,7 @@ async function overview(){
      const divisor=perKg&&hasWeight?weight:1;
      current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
      planned.textContent=" / "+fmt(total.kcal/divisor,0);
-     suffix.textContent=perKg?" kcal/kg":"";energyLabel.textContent=perKg?"kcal/kg":"kcal";
+     suffix.textContent="";energyLabel.textContent=perKg?"kcal/kg":"kcal";
      for(const item of macroValues){
       item.consumedValue.textContent=fmt(actual[item.key]/divisor,perKg?1:0);
       item.prescribedValue.textContent=" / "+fmt(total[item.key]/divisor,perKg?1:0);
@@ -1809,8 +1809,8 @@ async function overview(){
      if(delta!==null)pill.classList.add(delta>0?"above":delta<0?"below":"neutral");
      pill.append(value,caption);if(cls==="mean"){const sep=document.createElement("span");sep.className="consumption-concentric-trend-separator";sep.textContent="|";trends.append(sep);}trends.append(pill);
     }
-    trends.append(mode);figures.append(trends,details);
-    visual.append(rings,figures);
+    figures.append(trends,details);
+    visual.append(rings,figures,mode);
    }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
    for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
