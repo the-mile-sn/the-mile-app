@@ -231,3 +231,12 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - A mesma fonte e peso são aplicados independentemente do CSS específico de cada módulo; diferenças de perceção entre temas não se corrigem com pesos tipográficos diferentes.
 - Não alterar por esta regra ícones, estado clínico, outros botões sem função de criação ou dimensões das superfícies. Preserve-se o estilo de cada ação e as suas funcionalidades.
 
+## 18. Porções Visuais — filtros e carregamento progressivo (13 novembro 2026)
+
+- Filtros **Categoria** e **Pesquisar** usam o mesmo **card principal** e as mesmas **superfícies de subcard** da Biblioteca Alimentar, com etiqueta na primeira linha e seleção/pesquisa transparente na segunda. Não existe barra adicional nem contorno interior.
+- Categoria primeiro, pesquisa mais larga no desktop; quando a largura disponível do módulo deixa de ser suficiente (incluindo janelas desktop estreitas), os campos passam a uma coluna através de uma container query. Respeitar os modos claro e escuro.
+- A listagem apresenta inicialmente **16 cartões**, com botão discreto **Ver mais (16)** (ou quantidade restante). A pesquisa e a seleção continuam a abranger todas as referências e repõem a apresentação inicial em 16 cartões.
+- Os metadados leves são consultados uma vez, mas as **fotografias** só são requisitadas para os cartões criados e à medida que entram na zona visível (`loading="lazy"`). O botão Ver mais acrescenta cartões sem recriar os anteriores.
+- Alterar Ativa/Inativa atualiza apenas o cartão correspondente, sem reconstruir a grelha ou voltar a solicitar todas as fotografias visíveis.
+- Manter intactas as fotografias, pesos, categorias, dados nutricionais, associações, pré-visualizações dos planos, endpoints e permissões. Não publicar porções na app dos jogadores.
+
