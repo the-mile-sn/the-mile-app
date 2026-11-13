@@ -1234,7 +1234,7 @@ function animateCalendarSelection(strip,dateKey){
  if(!to.width||!from.width||Math.abs(from.left-to.left)>window.innerWidth*1.5)return;
  const ghost=document.createElement('span');
  ghost.className='mile-calendar-moving-circle';
- ghost.style.cssText='position:fixed;pointer-events:none;z-index:20;border-radius:50%;background:#f3f3f5;width:'+to.width+'px;height:'+to.height+'px;left:'+to.left+'px;top:'+to.top+'px;';
+ ghost.style.cssText='position:fixed;pointer-events:none;z-index:1;border-radius:50%;background:#f3f3f5;width:'+to.width+'px;height:'+to.height+'px;left:'+to.left+'px;top:'+to.top+'px;';
  document.body.append(ghost);
  selected.classList.add('mile-calendar-arriving');
  const dx=from.left-to.left,dy=from.top-to.top;
