@@ -11,6 +11,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from appointments_catalog_v2 import ORG_ID, MODES
+import appointments_google_v2 as google
 
 LISBON = ZoneInfo("Europe/Lisbon")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}$")
@@ -267,9 +268,12 @@ def preview(c, org_id, professional, service, mode, day_value, now=None, exclude
         WHERE org_id=? AND professional_id=? AND day=? AND status='scheduled'
           AND id<>?""", (org_id, professional, day.isoformat(), excluded)).fetchall()
     duration = s["duration_minutes"]
-    slots = _slots_on_day(day, duration, available, blocked, bookings, now)
+    local_start = datetime.combine(day, datetime.min.time(), LISBON)
+    local_end = datetime.combine(day + timedelta(days=1), datetime.min.time(), LISBON)
+    google_busy = google.busy_intervals(c, org_id, professional, local_start, local_end)
+    slots = _slots_on_day(day, duration, available, blocked, bookings, now, google_busy)
     return {"date": day.isoformat(), "slots": slots,
-            "preview_only": True, "includes_google": False,
+            "preview_only": True, "includes_google": google.status(c, org_id, professional)["busy_check_active"],
             "includes_bookings": True, "includes_internal_bookings": True,
             "includes_sesami": False, "timezone": "Europe/Lisbon",
             "interval_minutes": 15, "buffer_minutes": 0}
@@ -293,7 +297,7 @@ def _booking_exclusion(c, org_id, booking_id):
     return row["id"]
 
 
-def _slots_on_day(day, duration, available, blocked, bookings, now):
+def _slots_on_day(day, duration, available, blocked, bookings, now, google_busy=()):
     """Shared source of truth for one-day slots and month availability."""
     result = []
     for window in available:
@@ -306,6 +310,11 @@ def _slots_on_day(day, duration, available, blocked, bookings, now):
                 continue
             valid = _valid_lisbon_window(day, start, end)
             if valid is None or valid[0].astimezone(timezone.utc) <= now:
+                continue
+            begin_utc = valid[0].astimezone(timezone.utc)
+            finish_utc = valid[1].astimezone(timezone.utc)
+            if any(begin_utc < busy_end and busy_start < finish_utc
+                   for busy_start, busy_end in google_busy):
                 continue
             result.append({"start": display_time(start), "end": display_time(end)})
     return result
@@ -369,8 +378,13 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
                                  professional, start_iso, end_iso)
         bookings = _periods_by_day(c, "appt_bookings", org_id,
                                    professional, start_iso, end_iso, excluded)
+        google_busy = google.busy_intervals(
+            c, org_id, professional,
+            datetime.combine(max(first, today), datetime.min.time(), LISBON),
+            datetime.combine(min(last, end_limit) + timedelta(days=1), datetime.min.time(), LISBON))
     else:
         available, blocks, bookings = {}, {}, {}
+        google_busy = []
     days = []
     for day_number in range(1, last.day+1):
         current = date(first.year, first.month, day_number)
@@ -378,11 +392,11 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
         if eligible and today <= current <= end_limit:
             count = len(_slots_on_day(current, s["duration_minutes"],
                         available.get(iso, ()), blocks.get(iso, ()),
-                        bookings.get(iso, ()), now))
+                        bookings.get(iso, ()), now, google_busy))
         else:
             count = 0
         days.append({"date": iso, "slots_count": count, "available": count > 0})
 
     return {"month": month, "days": days, "timezone": "Europe/Lisbon",
             "preview_only": True, "includes_internal_bookings": True,
-            "includes_sesami": False, "includes_google": False}
+            "includes_sesami": False, "includes_google": google.status(c, org_id, professional)["busy_check_active"]}
