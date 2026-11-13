@@ -1761,11 +1761,11 @@ async function overview(){
     }
     rings.append(chart);
     const figures=document.createElement("div");figures.className="consumption-concentric-figures";
-    const unit=document.createElement("small");unit.textContent="kcal";
     const energyLine=document.createElement("div");energyLine.className="consumption-concentric-energy";
     const current=document.createElement("strong");current.textContent=fmt(actual.kcal,0);
     const planned=document.createElement("span");planned.textContent=" / "+fmt(total.kcal,0);
-    energyLine.append(current,planned);figures.append(unit,energyLine);
+    const suffix=document.createElement("span");suffix.className="consumption-concentric-unit";suffix.textContent=" kcal";
+    energyLine.append(current,planned,suffix);figures.append(energyLine);
     const kg=document.createElement("small");kg.className="consumption-concentric-perkg";
     kg.textContent=hasWeight?"("+fmt(actual.kcal/weight,0)+" / "+fmt(total.kcal/weight,0)+" kcal/kg)":"Consumido / planeado";
     figures.append(kg);
@@ -1773,11 +1773,20 @@ async function overview(){
     for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
      const line=document.createElement("div");line.className="consumption-concentric-macro "+cls;
      const name=document.createElement("span");name.textContent=title;
-     const amount=document.createElement("strong");amount.textContent=fmt(actual[key],0)+" / "+fmt(total[key],0)+" g";
+     const amount=document.createElement("strong");amount.textContent=fmt(actual[key],0)+" / "+fmt(total[key],0);
+     const grams=document.createElement("span");grams.className="consumption-concentric-unit";grams.textContent=" g";amount.append(grams);
      const per=document.createElement("small");per.textContent=hasWeight?"("+fmt(actual[key]/weight,1)+" / "+fmt(total[key]/weight,1)+" g/kg)":"";
      line.append(name,amount,per);details.append(line);
     }
-    figures.append(details);
+    const trends=document.createElement("div");trends.className="consumption-concentric-trends";
+    for(const [name,delta,cls] of [["vs ontem",deviationPrevious,"prior"],["vs média",deviationMean,"mean"]]){
+     const pill=document.createElement("div");pill.className="consumption-concentric-trend "+cls;
+     const caption=document.createElement("span");caption.textContent=name;
+     const value=document.createElement("strong");value.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
+     if(delta!==null)pill.classList.add(delta>0?"above":delta<0?"below":"neutral");
+     pill.append(caption,value);trends.append(pill);
+    }
+    figures.append(trends,details);
     visual.append(rings,figures);
    }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
@@ -1836,6 +1845,8 @@ async function overview(){
       number.textContent=(Math.round(deviationPrevious)>0?"+":"")+fmt(deviationPrevious,0)+"%";
      }
      paintRings();
+     const pill=visual.querySelector(".consumption-concentric-trend.prior");
+     if(pill){const value=pill.querySelector("strong");pill.classList.remove("above","below","neutral");pill.classList.add(deviationPrevious>0?"above":deviationPrevious<0?"below":"neutral");if(value)value.textContent=(Math.round(deviationPrevious)>0?"+":"")+fmt(deviationPrevious,0)+"%";}
     }).catch(()=>{});
    }
    function buildBars(title,key,color,scale,decimals=0){
