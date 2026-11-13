@@ -156,8 +156,26 @@ planningSearch.addEventListener("keydown",event=>{
 });
 document.addEventListener("pointerdown",event=>{if(!planningPicker.contains(event.target)){closePlanningResults();if(document.activeElement===planningSearch)planningSearch.blur();}});
 planningSearch.addEventListener("blur",()=>{closePlanningResults();});
-$("tm-planning-cancel-create").addEventListener("click",()=>{$("tm-players-create-form").hidden=true;$("new-name").value="";});
-window.tmOpenPlayerCreate=()=>{$("tm-players-create-form").hidden=false;$("new-name").focus();$("tm-players-create-form").scrollIntoView({behavior:"smooth",block:"center"});};
+const playerCreateDialog=$("tm-players-create-form"),playerCreateForm=$("tm-player-create-fields"),playerCreateFeedback=$("tm-players-create-feedback");
+const playerCreateInputIds=["new-name","new-weight","new-sex","new-username","new-password"];
+let playerCreateSubmitting=false;
+function closePlayerCreate(confirmDraft=true){
+ if(playerCreateSubmitting)return;
+ if(confirmDraft&&playerCreateInputIds.some(id=>$(id).value.trim())&&!window.confirm("Descartar os dados introduzidos para o novo jogador?"))return;
+ playerCreateDialog.close();playerCreateForm.reset();playerCreateFeedback.textContent="";
+}
+$("tm-planning-cancel-create").addEventListener("click",()=>closePlayerCreate());
+playerCreateDialog.addEventListener("cancel",event=>{event.preventDefault();closePlayerCreate();});
+playerCreateDialog.addEventListener("click",event=>{
+ if(event.target!==playerCreateDialog)return;
+ const rect=playerCreateDialog.getBoundingClientRect();
+ if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closePlayerCreate();
+});
+window.tmOpenPlayerCreate=()=>{
+ if(playerCreateDialog.open)return;
+ playerCreateForm.reset();playerCreateFeedback.textContent="";
+ playerCreateDialog.showModal();$("new-name").focus();
+};
 let recipeAccessToken=0;
 let recipeCategoryOptions=[];
 let selectedRecipeCategories=new Set();
@@ -1160,7 +1178,30 @@ for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
   button.addEventListener("click",()=>showBackofficeView(button.dataset.view));
 }
 $("athlete").addEventListener("change",()=>loadModel().catch(e=>status(e.message,"warn")));
-$("create").addEventListener("click",async()=>{const name=$("new-name").value.trim(),sex=$("new-sex").value,weightRaw=$("new-weight").value.trim(),weight=Number(weightRaw.replace(",",".")),username=$("new-username").value.trim().toLowerCase(),password=$("new-password").value;if(!name||!sex||weightRaw===""||!Number.isFinite(weight)||weight<20||weight>250||!/^[a-z]{4,40}$/.test(username)||password.length<12)return status("Preenche o nome, sexo, utilizador (4–40 letras) e palavra-passe (mínimo 12 caracteres).","warn");$("create").disabled=true;try{const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name,sex,weight_kg:weight,username,password})});for(const id of ["new-name","new-weight","new-username","new-password"])$(id).value="";$("new-sex").value="";await loadAthletes(r.athlete.id);$("tm-players-create-form").hidden=true;if(typeof window.tmRefreshPlayersList==="function")await window.tmRefreshPlayersList();status("Jogador e acesso criados.","success");}catch(e){status(e.message,"warn");}finally{$("create").disabled=false;}});
+playerCreateForm.addEventListener("submit",async event=>{
+ event.preventDefault();
+ if(playerCreateSubmitting)return;
+ const name=$("new-name").value.trim(),sex=$("new-sex").value,weightRaw=$("new-weight").value.trim(),weight=Number(weightRaw.replace(",",".")),username=$("new-username").value.trim().toLowerCase(),password=$("new-password").value;
+ if(!name||!sex||weightRaw===""||!Number.isFinite(weight)||weight<20||weight>250||!/^[a-z]{4,40}$/.test(username)||password.length<12){
+  playerCreateFeedback.textContent="Preenche o nome, peso inicial (20–250 kg), sexo, utilizador (4–40 letras) e palavra-passe (mínimo 12 caracteres).";
+  const invalid=!name?"new-name":weightRaw===""||!Number.isFinite(weight)||weight<20||weight>250?"new-weight":!sex?"new-sex":!/^[a-z]{4,40}$/.test(username)?"new-username":"new-password";
+  $(invalid).focus();return;
+ }
+ playerCreateSubmitting=true;$("create").disabled=true;$("tm-planning-cancel-create").disabled=true;
+ playerCreateFeedback.textContent="A criar jogador…";
+ try{
+  const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name,sex,weight_kg:weight,username,password})});
+  playerCreateDialog.close();playerCreateForm.reset();playerCreateFeedback.textContent="";
+  await loadAthletes(r.athlete.id);
+  if(typeof window.tmRefreshPlayersList==="function")await window.tmRefreshPlayersList();
+  status("Jogador e acesso criados.","success");
+ }catch(e){
+  if(playerCreateDialog.open){playerCreateFeedback.textContent="Não foi possível criar o jogador: "+e.message;}
+  else{status("Jogador criado. Não foi possível atualizar a lista: "+e.message,"warn");}
+ }finally{
+  playerCreateSubmitting=false;$("create").disabled=false;$("tm-planning-cancel-create").disabled=false;
+ }
+});
 start();
 
 function isoDay(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");}
