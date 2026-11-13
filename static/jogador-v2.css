@@ -4924,7 +4924,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
    Keep the existing button hit area and right-edge placement. */
 #overview .daily-weight-header .daily-weight-chevron-action{
  width:19px!important;min-width:19px!important;flex:0 0 19px!important;
- height:32px!important;margin-right:3px!important;
+ height:32px!important;margin-right:-1px!important;
  background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;
  padding:0!important;position:relative!important;
 }
