@@ -5300,3 +5300,14 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>span{font-size:clamp(12px,3.15vw,16px)!important}
  #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>strong{font-size:clamp(12px,3.25vw,17px)!important}
 }
+
+/* Jorge mobile: match the ring-to-copy gap to the ring's outer card inset.
+   Keep the approved ring diameter and the existing centered vertical alignment. */
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  transform:translateX(-27px)!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+  font-size:19px!important;letter-spacing:-1px!important;
+ }
+}
