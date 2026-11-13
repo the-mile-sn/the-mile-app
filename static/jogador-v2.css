@@ -5250,3 +5250,32 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch button{font-size:13px!important;padding:6px 9px!important;min-height:32px!important}
  #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:0!important}
 }
+
+
+/* Jorge: compact direction control, no footer pill; larger readable values. */
+#overview #day-details .nutrition-comparison.consumption-concentric{position:relative!important}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
+ position:absolute!important;top:12px!important;right:14px!important;bottom:auto!important;
+ width:34px!important;height:34px!important;padding:0!important;gap:0!important;
+ background:transparent!important;border:0!important;z-index:5!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;
+ border:0!important;border-radius:50%!important;background:transparent!important;
+ color:#c6c5ce!important;font-size:26px!important;font-weight:400!important;line-height:1!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow:disabled{opacity:.35!important}
+#overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy{font-size:clamp(32px,4.25vw,57px)!important}
+#overview #day-details .consumption-concentric-energy .consumption-concentric-unit{font-size:calc(.52em + 3px)!important}
+#overview #day-details .consumption-concentric-macro>span{font-size:clamp(17px,1.7vw,22px)!important}
+#overview #day-details .consumption-concentric-macro>strong{font-size:clamp(19px,2.05vw,28px)!important}
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:18px!important}
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{top:7px!important;right:7px!important}
+ #overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy{font-size:clamp(20px,4.1vw,30px)!important}
+ #overview #day-details .consumption-concentric-macro>span{font-size:16px!important}
+ #overview #day-details .consumption-concentric-macro>strong{font-size:17px!important}
+ #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:calc(18px + 2px)!important}
+}
