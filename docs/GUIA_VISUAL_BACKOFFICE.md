@@ -218,3 +218,10 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - Preservar as duas colunas de campos no desktop, a primeira linha Nome e a última Notas em largura completa; no mobile manter uma coluna, foco acessível no bloco e scroll do modal quando necessário.
 - As opções do seletor, dados nutricionais, cálculos, validações e comportamento da criação/edição mantêm-se exatamente iguais. Alteração restrita ao modal da Biblioteca Alimentar do Backoffice.
 
+## 16. Modais de criação — superfície e backdrop uniformizados em 13 novembro 2026
+
+- **Novo jogador** e **Novo/Editar alimento** usam o mesmo card principal: claro `#FFFFFF`, escuro `#15161A`, sem bordas/contornos decorativos e sem sombras; raio de 18 px.
+- O fundo atrás de ambos os modais usa o mesmo overlay preto `rgba(0,0,0,.76)`, para reduzir o ruído visual em desktop e mobile.
+- Os títulos seguem o mesmo estilo de Inter Tight semibold; campos, dimensões específicas e comportamentos funcionais mantêm-se.
+- As alterações são estritamente de apresentação dos dois modais. Contornos funcionais de foco dos campos continuam visíveis.
+
