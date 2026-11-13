@@ -5311,3 +5311,33 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   font-size:19px!important;letter-spacing:-1px!important;
  }
 }
+
+/* Nutrition card: plain inline comparisons and common right-edge for both controls. */
+#overview #day-details .consumption-concentric-trends{
+ gap:7px!important;margin:10px 0 12px!important;width:auto!important;
+}
+#overview #day-details .consumption-concentric-trend{
+ background:transparent!important;border:0!important;border-radius:0!important;
+ padding:0!important;gap:5px!important;justify-content:flex-start!important;
+}
+#overview #day-details .consumption-concentric-trend-separator{
+ color:#777680!important;font-weight:400!important;padding:0 2px!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
+ right:0!important;top:8px!important;width:28px!important;height:28px!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+ width:28px!important;height:28px!important;min-height:28px!important;
+ letter-spacing:normal!important;font-size:unset!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow svg{
+ width:20px!important;height:20px!important;display:block!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
+ right:0!important;
+}
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
+  right:0!important;top:7px!important;
+ }
+}
