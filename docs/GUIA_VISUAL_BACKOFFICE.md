@@ -178,3 +178,14 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Pesquisa de Jogadores em modo claro:** resultados apresentados numa única lista pendente branca, sem cartões internos, divisores fortes ou sombras; realce discreto da linha no hover/foco. O modo escuro mantém o aspeto previamente aprovado.
 
 - **Pesquisa de Jogadores em linha única:** placeholder «Pesquisar jogador...», sem subtítulo, seguindo a altura e cor dos filtros. Para evitar a duplicação do X no Safari, usar um campo `type="text"` com `inputmode="search"` e apenas o botão de limpeza personalizado. A lista pendente fecha ao tocar fora, ao voltar a tocar no campo, por Escape ou ao escolher um resultado; o CSS respeita `[hidden]`. O X é centrado sem animação.
+
+
+## 12. Perfil de Jogador — hierarquia aprovada em 13 novembro 2026
+
+- O perfil permanece dentro de **um único card principal**; as quatro secções **Dados pessoais**, **Permissões e definições da conta**, **Imagem App** e **Gerir acesso** são irmãs, com títulos alinhados ao mesmo nível, sem cartões grandes adicionais à volta das secções.
+- **Dados pessoais:** manter os campos em subcards individuais, sem alterar o conteúdo ou a edição.
+- **Permissões e definições da conta:** título com ícone de escudo, sem fundo próprio; cada uma das duas opções constitui um subcard individual. Inativas usam a superfície de subcard oficial; ativadas preservam a indicação verde e os respetivos estados.
+- **Imagem App:** título com ícone outline de imagem, sem divisória decorativa; abaixo, um subcard apenas para pré-visualização da fotografia e respetivas ações. Não agrupar este módulo com Permissões.
+- **Gerir acesso:** título com ícone de cadeado; preservar os botões existentes, cores semânticas, textos, ações e autorizações, sem fundo de secção adicional.
+- Esta hierarquia é igual nos modos claro e escuro e adapta-se a desktop, tablet e mobile, respeitando espaçamento vertical equilibrado.
+- **Microinteração de Jogadores em mobile:** ao tocar no cartão, apresentar brevemente preenchimento de subcard e escala subtil, preservando a abertura do perfil e a ação independente «Entrar na app». Respeitar `prefers-reduced-motion`.
