@@ -358,3 +358,13 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-grams-wheel-top button{width:42px;height:42px;min-width:42px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(120,120,128,.20);color:#f0eee9;border:1px solid rgba(255,255,255,.08)}
 .consumption-grams-wheel-top button:last-child{color:#b9e2cf}
 .consumption-grams-wheel-top button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+
+/* v31: free-flowing iOS wheel momentum; settle only when gesture ends */
+.consumption-grams-wheel{
+ scroll-snap-type:none!important;
+ -webkit-overflow-scrolling:touch!important;
+ touch-action:pan-y!important;
+ overscroll-behavior-y:contain;
+}
+.consumption-grams-wheel-option{scroll-snap-align:none!important}
