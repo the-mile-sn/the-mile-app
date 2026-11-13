@@ -12,6 +12,20 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: mile_test
+          POSTGRES_PASSWORD: mile_test
+          POSTGRES_DB: mile_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mile_test -d mile_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,3 +42,26 @@ jobs:
         run: node --check static/admin-appointments.js
       - name: Appointments API and security regression
         run: python -m unittest -v test_appointments_catalog_v2 test_appointments_backoffice_shell
+      - name: PostgreSQL 18 compatibility and catalogue smoke
+        env:
+          DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
+        run: |
+          python - <<'PY'
+          import app
+          import appointments_catalog_v2 as catalogue
+          with app.connect() as c:
+              catalogue.initialize(c)
+              first = catalogue.catalog(c)
+              assert len(first['services']) == 4
+              name = catalogue.save_professional(c, {
+                  'name':'PG Test','email':'test@pg.example','active':True,
+                  'presencial_enabled':True,'online_enabled':False,
+                  'service_ids':[first['services'][0]['id']]
+              })
+          with app.connect() as c:
+              catalogue.initialize(c)
+              second = catalogue.catalog(c)
+              assert len(second['services']) == 4
+              assert any(p['id'] == name for p in second['professionals'])
+              assert any(name in s['professional_ids'] for s in second['services'])
+          PY
