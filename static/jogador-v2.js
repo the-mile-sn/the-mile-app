@@ -1770,7 +1770,7 @@ async function overview(){
     const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
     const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
     const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
-    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.textContent="⇄";unitArrow.setAttribute("aria-label","Mostrar valores por kg");mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);visual.append(mode);
+    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7H5a3 3 0 0 0-3 3v1"/><path d="m16 3 4 4-4 4"/><path d="M4 17h15a3 3 0 0 0 3-3v-1"/><path d="m8 13-4 4 4 4"/></svg>';unitArrow.setAttribute("aria-label","Mostrar valores por kg");mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);visual.append(mode);
     const details=document.createElement("div");details.className="consumption-concentric-macros";
     const macroValues=[];
     for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
@@ -1785,7 +1785,7 @@ async function overview(){
      macroValues.push({key,consumedValue,prescribedValue,grams});
     }
     const updateUnits=(perKg)=>{
-     unitArrow.textContent="⇄";unitArrow.setAttribute("aria-label",perKg?"Mostrar valores em gramas":"Mostrar valores por kg");unitArrow.title=perKg?"Voltar a g e kcal":"Ver g/kg e kcal/kg";
+     unitArrow.setAttribute("aria-label",perKg?"Mostrar valores em gramas":"Mostrar valores por kg");unitArrow.title=perKg?"Voltar a g e kcal":"Ver g/kg e kcal/kg";
      gramsButton.setAttribute("aria-pressed",String(!perKg));kgButton.setAttribute("aria-pressed",String(perKg));
      const divisor=perKg&&hasWeight?weight:1;
      current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
@@ -1802,12 +1802,12 @@ async function overview(){
     unitArrow.disabled=!hasWeight;
     updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
-    for(const [name,delta,cls] of [["vs ontem",deviationPrevious,"prior"],["vs média",deviationMean,"mean"]]){
+    for(const [name,delta,cls] of [["ontem",deviationPrevious,"prior"],["média",deviationMean,"mean"]]){
      const pill=document.createElement("div");pill.className="consumption-concentric-trend "+cls;
      const caption=document.createElement("span");caption.textContent=name;
      const value=document.createElement("strong");value.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
      if(delta!==null)pill.classList.add(delta>0?"above":delta<0?"below":"neutral");
-     pill.append(caption,value);trends.append(pill);
+     pill.append(value,caption);if(cls==="mean"){const sep=document.createElement("span");sep.className="consumption-concentric-trend-separator";sep.textContent="|";trends.append(sep);}trends.append(pill);
     }
     figures.append(trends,details);
     visual.append(rings,figures);
