@@ -1,0 +1,84 @@
+/* The Mile — Agendamentos, first backoffice integration. */
+:root{color-scheme:dark}
+html[data-admin-theme="light"]{color-scheme:light}
+*{box-sizing:border-box}
+body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#101114);color:var(--tm-ui-text,#f2f3f5);font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;font-weight:500}
+.tm-appointments-body [hidden]{display:none!important}
+.tm-appointments-body button,.tm-appointments-body a{font-family:inherit}
+.tm-appointments-body button:focus-visible,.tm-appointments-body a:focus-visible{outline:2px solid #8baac5;outline-offset:3px}
+.tm-appointments-body .tm-library-layout{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.tm-appointments-body .tm-appointments-shell{min-width:0;max-width:none;width:100%;padding:35px clamp(19px,3vw,52px) 65px}
+.tm-appointments-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:23px}
+.tm-appointments-heading h1{font-size:clamp(27px,2.6vw,36px);line-height:1.14;letter-spacing:-.035em;margin:4px 0 10px;font-weight:600}
+.tm-appointments-heading p:not(.tm-appointments-eyebrow){font-size:13px;line-height:1.5;color:var(--tm-ui-muted);margin:0}
+.tm-appointments-eyebrow{font-size:11px!important;line-height:1.3!important;text-transform:uppercase;letter-spacing:.11em;color:var(--tm-ui-muted);margin:0}
+.tm-appointments-phase{border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);color:var(--tm-ui-muted);border-radius:999px;font-size:11px;white-space:nowrap;padding:8px 13px;margin-top:9px}
+.tm-appointments-info{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--tm-ui-divider);border-radius:13px;padding:14px 16px;background:var(--tm-ui-subcard);font-size:12px;line-height:1.6;color:var(--tm-ui-muted)}
+.tm-appointments-info svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.tm-appointments-tabs{display:flex;gap:7px;align-items:center;overflow-x:auto;margin:24px 0 20px;padding:0 0 9px;border-bottom:1px solid var(--tm-ui-divider)}
+.tm-appointments-tabs button{appearance:none;background:transparent;border:0;border-radius:10px;padding:11px 17px;color:var(--tm-ui-muted);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background .17s,color .17s}
+.tm-appointments-tabs button:hover{background:var(--tm-ui-hover);color:var(--tm-ui-text)}
+.tm-appointments-tabs button.is-active{background:var(--tm-ui-subcard);color:var(--tm-ui-text);font-weight:600}
+.tm-appointments-panel{min-width:0}
+.tm-appointments-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:17px}
+.tm-appointments-panel-heading h2{font-size:18px;font-weight:600;letter-spacing:-.02em;margin:0 0 4px}
+.tm-appointments-panel-heading p{font-size:12px;color:var(--tm-ui-muted);line-height:1.5;margin:0}
+.tm-appointments-view-switch{display:inline-flex;gap:3px;border-radius:11px;background:var(--tm-ui-subcard);padding:4px;flex:none}
+.tm-appointments-view-switch button{background:transparent;border:0;border-radius:8px;padding:9px 15px;color:var(--tm-ui-muted);font-size:12px;font-weight:500;cursor:pointer}
+.tm-appointments-view-switch button.is-active{background:var(--tm-ui-hover);color:var(--tm-ui-text)}
+.tm-appointments-calendar,.tm-appointments-empty-section,.tm-appointments-rules{background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);border-radius:17px}
+.tm-appointments-calendar{min-height:395px;padding:21px 22px}
+.tm-appointments-calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:19px}
+.tm-appointments-calendar-toolbar h3{font-weight:600;font-size:15px;line-height:1.4;margin:0}
+.tm-appointments-calendar-actions{display:flex;align-items:center;gap:6px}
+.tm-appointments-calendar-actions button{border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);color:var(--tm-ui-text);border-radius:9px;min-height:36px;min-width:36px;padding:7px 11px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.tm-appointments-calendar-actions button:hover{background:var(--tm-ui-hover)}
+.tm-appointments-calendar-actions svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tm-appointments-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.tm-appointments-week.is-day{grid-template-columns:minmax(0,1fr);max-width:260px}
+.tm-appointments-day{border:1px solid var(--tm-ui-divider);border-radius:11px;background:var(--tm-ui-subcard);padding:13px 9px;min-height:78px;text-align:center}
+.tm-appointments-day.is-today{border-color:color-mix(in srgb,var(--tm-ui-text) 32%,transparent)}
+.tm-appointments-day small{display:block;color:var(--tm-ui-muted);font-weight:500;font-size:11px;margin-bottom:6px}
+.tm-appointments-day strong{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.tm-appointments-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:46px 22px 36px}
+.tm-appointments-empty svg{width:27px;height:27px;fill:none;stroke:var(--tm-ui-muted);stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round;margin-bottom:12px}
+.tm-appointments-empty h3{font-weight:600;font-size:15px;margin:0 0 7px;letter-spacing:-.01em}
+.tm-appointments-empty p{font-size:12px;color:var(--tm-ui-muted);line-height:1.65;max-width:390px;margin:0}
+.tm-appointments-empty-section{min-height:290px}
+.tm-appointments-config-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tm-appointments-config-card{padding:20px;background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);border-radius:15px;min-height:160px;display:flex;flex-direction:column}
+.tm-appointments-config-card h3{font-size:14px;margin:0 0 10px;font-weight:600}
+.tm-appointments-config-card p{font-size:12px;line-height:1.65;color:var(--tm-ui-muted);margin:0 0 17px}
+.tm-appointments-config-card small{font-size:11px;color:var(--tm-ui-muted);margin-top:auto}
+.tm-appointments-rules{margin-top:15px;padding:23px}
+.tm-appointments-rules h3{font-weight:600;font-size:15px;margin:0 0 7px}
+.tm-appointments-rules>p{font-size:12px;color:var(--tm-ui-muted);margin:0 0 18px;line-height:1.5}
+.tm-appointments-rules dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:0}
+.tm-appointments-rules dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-bottom:1px solid var(--tm-ui-divider)}
+.tm-appointments-rules dt{font-size:12px;color:var(--tm-ui-muted)}
+.tm-appointments-rules dd{font-weight:600;font-size:12px;margin:0;text-align:right}
+.tm-appointments-auth{margin:min(28vh,170px) auto 0;max-width:420px;padding:26px 22px;text-align:center;font-size:14px;line-height:1.6;color:var(--tm-ui-muted)}
+.tm-appointments-auth h1{color:var(--tm-ui-text);font-size:20px}
+.tm-appointments-auth a{display:inline-block;color:var(--tm-ui-text);border:1px solid var(--tm-ui-divider);border-radius:10px;padding:9px 16px;text-decoration:none;margin-top:11px}
+@media(max-width:1000px){.tm-appointments-config-grid{grid-template-columns:1fr}.tm-appointments-config-card{min-height:0}.tm-appointments-rules dl{grid-template-columns:1fr}}
+@media(max-width:830px){
+ .tm-appointments-body .tm-library-layout{display:block}
+ .tm-appointments-body .tm-appointments-shell{padding:24px 17px 46px}
+ .tm-appointments-heading{gap:12px;flex-wrap:wrap}
+ .tm-appointments-phase{margin-top:0}
+ .tm-appointments-calendar{padding:17px 13px}
+ .tm-appointments-week{gap:4px}
+ .tm-appointments-day{min-height:72px;padding:12px 4px}
+ .tm-appointments-day strong{font-size:15px}
+ .tm-appointments-day small{font-size:10px}
+}
+@media(max-width:490px){
+ .tm-appointments-panel-heading{flex-wrap:wrap}
+ .tm-appointments-calendar-toolbar{align-items:flex-start;flex-wrap:wrap}
+ .tm-appointments-calendar-actions{margin-left:auto}
+ .tm-appointments-day strong{font-size:14px}
+ .tm-appointments-day{min-height:66px}
+ .tm-appointments-heading h1{font-size:29px}
+ .tm-appointments-tabs button{padding:10px 13px}
+}
+@media(prefers-reduced-motion:reduce){.tm-appointments-tabs button{transition:none}}
