@@ -1992,10 +1992,10 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
 /* Keep the header on the same main-card surface as the data; use type and
    spacing rather than an unnecessary secondary-colour stripe. */
 html[data-admin-theme="light"] #tm-food-library-page{
- --tm-food-row-hairline:rgba(56,74,97,.055);
+ --tm-food-row-hairline:rgba(56,74,97,.024);
 }
 html[data-admin-theme="dark"] #tm-food-library-page{
- --tm-food-row-hairline:rgba(180,193,211,.065);
+ --tm-food-row-hairline:rgba(180,193,211,.032);
 }
 html[data-admin-theme] #tm-food-library-page .food-catalog-table thead tr.food-header-row,
 html[data-admin-theme] #tm-food-library-page .food-catalog-table thead tr.food-header-row th{
