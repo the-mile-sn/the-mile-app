@@ -225,3 +225,9 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - Os títulos seguem o mesmo estilo de Inter Tight semibold; campos, dimensões específicas e comportamentos funcionais mantêm-se.
 - As alterações são estritamente de apresentação dos dois modais. Contornos funcionais de foco dos campos continuam visíveis.
 
+## 17. Tipografia das ações de criação — standard final (13 novembro 2026)
+
+- Botões de criação com classe `tm-action-new` (por exemplo **+ Novo alimento**, **+ Criar jogador**, **+ Nova receita**, **+ Novo prato**, **+ Novo plano** e **+ Nova avaliação**) devem utilizar sempre **Inter Tight Medium (500), 13 px, line-height 1.3**, em modo claro e escuro, desktop, tablet e mobile.
+- A mesma fonte e peso são aplicados independentemente do CSS específico de cada módulo; diferenças de perceção entre temas não se corrigem com pesos tipográficos diferentes.
+- Não alterar por esta regra ícones, estado clínico, outros botões sem função de criação ou dimensões das superfícies. Preserve-se o estilo de cada ação e as suas funcionalidades.
+
