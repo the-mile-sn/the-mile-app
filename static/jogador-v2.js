@@ -1744,21 +1744,41 @@ async function overview(){
    if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,0)+" /kg";center.append(per);}
    gauge.append(center);visual.append(gauge);
    if(consumptionEnabled){
-    const consumed=document.createElement("div");consumed.className="nutrition-consumed-gauge";
-    const percent=total.kcal>0?Math.round(actual.kcal/total.kcal*100):0;
-    const circumference=2*Math.PI*68;
-    const progress=document.createElementNS("http://www.w3.org/2000/svg","svg");progress.setAttribute("viewBox","0 0 160 160");progress.setAttribute("aria-hidden","true");
-    for(const [stroke,ratio] of [["rgba(172,238,207,.16)",1],["#a5efd0",Math.max(0,Math.min(1,actual.kcal/total.kcal))]]){
-     const circle=document.createElementNS(progress.namespaceURI,"circle");
-     for(const [key,value] of [["cx",80],["cy",80],["r",68],["fill","none"],["stroke",stroke],["stroke-width",12],["stroke-linecap","round"],["transform","rotate(-90 80 80)"],["stroke-dasharray",circumference],["stroke-dashoffset",stroke.startsWith("rgba")?0:circumference*(1-ratio)]])circle.setAttribute(key,String(value));
-     progress.append(circle);
+    // The pilot is permission-gated server-side: only Jorge receives consumption data.
+    visual.classList.add("has-consumption-ring","consumption-concentric");
+    const rings=document.createElement("div");rings.className="consumption-concentric-rings";
+    const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    chart.setAttribute("viewBox","0 0 200 200");chart.setAttribute("role","img");
+    chart.setAttribute("aria-label","Progresso de calorias, proteína, hidratos e gordura consumidos face ao planeado");
+    for(const [key,radius,color] of [["kcal",88,"#72ebbd"],["protein_g",70,"#45baff"],["carbs_g",52,"#ff9d70"],["fat_g",34,"#f4d778"]]){
+     const circumference=2*Math.PI*radius;
+     const ratio=total[key]>0?Math.max(0,Math.min(1,actual[key]/total[key])):0;
+     for(const [stroke,progress] of [["#34363d",false],[color,true]]){
+      const circle=document.createElementNS(chart.namespaceURI,"circle");
+      for(const [attr,val] of [["cx",100],["cy",100],["r",radius],["fill","none"],["stroke",stroke],["stroke-width",12],["stroke-linecap","round"],["transform","rotate(-90 100 100)"],["stroke-dasharray",circumference],["stroke-dashoffset",progress?circumference*(1-ratio):0]])circle.setAttribute(attr,String(val));
+      chart.append(circle);
+     }
     }
-    consumed.append(progress);
-    const values=document.createElement("div");values.className="nutrition-consumed-center";
-    const kcal=document.createElement("strong");kcal.textContent=fmt(actual.kcal,0);
-    const pct=document.createElement("small");pct.textContent=percent+"%";
-    values.append(kcal,pct);consumed.append(values);consumed.setAttribute("aria-label",fmt(actual.kcal,0)+" kcal consumidas, "+percent+"% do planeado");
-    visual.append(consumed);visual.classList.add("has-consumption-ring");
+    rings.append(chart);
+    const figures=document.createElement("div");figures.className="consumption-concentric-figures";
+    const unit=document.createElement("small");unit.textContent="kcal";
+    const energyLine=document.createElement("div");energyLine.className="consumption-concentric-energy";
+    const current=document.createElement("strong");current.textContent=fmt(actual.kcal,0);
+    const planned=document.createElement("span");planned.textContent=" / "+fmt(total.kcal,0);
+    energyLine.append(current,planned);figures.append(unit,energyLine);
+    const kg=document.createElement("small");kg.className="consumption-concentric-perkg";
+    kg.textContent=hasWeight?"("+fmt(actual.kcal/weight,0)+" / "+fmt(total.kcal/weight,0)+" kcal/kg)":"Consumido / planeado";
+    figures.append(kg);
+    const details=document.createElement("div");details.className="consumption-concentric-macros";
+    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+     const line=document.createElement("div");line.className="consumption-concentric-macro "+cls;
+     const name=document.createElement("span");name.textContent=title;
+     const amount=document.createElement("strong");amount.textContent=fmt(actual[key],0)+" / "+fmt(total[key],0)+" g";
+     const per=document.createElement("small");per.textContent=hasWeight?"("+fmt(actual[key]/weight,1)+" / "+fmt(total[key]/weight,1)+" g/kg)":"";
+     line.append(name,amount,per);details.append(line);
+    }
+    figures.append(details);
+    visual.append(rings,figures);
    }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
    for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
