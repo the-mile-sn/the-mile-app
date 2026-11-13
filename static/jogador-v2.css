@@ -4652,3 +4652,17 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 @media(prefers-reduced-motion:reduce){
  .mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::after{animation:none!important}
 }
+
+
+/* v segmented 5: wider, subtler elastic outline */
+.mile-segment-animated>.mile-segment-indicator::after{
+ border-color:rgba(153,153,160,.72)!important;
+ border-width:1.4px!important;
+}
+@keyframes mile-segment-outline-lift{
+ 0%{opacity:0;transform:translateY(0) scale(1)}
+ 16%{opacity:.7}
+ 36%{opacity:1;transform:translateY(-5px) scale(1.11,1.23)}
+ 66%{opacity:.72;transform:translateY(-1.5px) scale(1.035,1.075)}
+ 100%{opacity:0;transform:translateY(0) scale(1)}
+}
