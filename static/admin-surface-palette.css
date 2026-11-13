@@ -2183,3 +2183,123 @@ html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-card .plan-state-
  font-size:13px!important;font-weight:500!important;line-height:1.3!important;
 }
 
+/* Planos preview — desktop polish approved 13 Nov 2026.
+   Preserve the already-approved mobile presentation, nutrient-colour tokens
+   and all nested details/summary interactions. */
+html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-edit .plan-preview-edit-icon,
+html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-edit .plan-preview-edit-desktop{
+ display:none!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-edit .plan-preview-edit-mobile{
+ display:inline!important;
+}
+@media(min-width:831px){
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-toolbar{
+  display:flex!important;justify-content:flex-end!important;align-items:center!important;
+  margin:0 0 15px!important;min-height:40px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview #preview-edit.plan-preview-edit{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:8px!important;box-sizing:border-box!important;
+  min-height:42px!important;width:auto!important;padding:10px 16px!important;
+  border:0!important;border-radius:12px!important;
+  background:var(--tm-action-secondary-bg)!important;color:var(--tm-action-secondary-fg)!important;
+  box-shadow:none!important;
+  font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  letter-spacing:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview #preview-edit.plan-preview-edit:hover{
+  background:var(--tm-action-secondary-hover)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview #preview-edit.plan-preview-edit:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-edit .plan-preview-edit-icon{
+  display:block!important;width:18px!important;height:18px!important;flex:none;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-edit .plan-preview-edit-desktop{
+  display:inline!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-edit .plan-preview-edit-mobile{
+  display:none!important;
+ }
+
+ /* Restructure only the desktop heading: name, plan, discreet context, then
+    four equally spaced nutrition totals. Do not hide the reference values. */
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-heading{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  box-sizing:border-box!important;padding:28px 32px 30px!important;
+  border:0!important;border-radius:20px!important;box-shadow:none!important;
+  background:var(--tm-ui-card)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-eyebrow{
+  order:1!important;margin:0 0 5px!important;
+  color:var(--tm-ui-muted)!important;
+  font:500 14px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-heading h2{
+  order:2!important;margin:0!important;color:var(--tm-ui-text)!important;
+  font:600 24px/1.22 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  letter-spacing:-.025em!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-weight{
+  order:3!important;display:block!important;
+  position:static!important;inset:auto!important;
+  margin:8px 0 0!important;padding:0!important;
+  text-align:left!important;color:var(--tm-ui-muted)!important;
+  font:500 13px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-macros{
+  order:4!important;display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:start!important;gap:16px!important;
+  box-sizing:border-box!important;margin:22px 0 0!important;
+  padding:23px 0 0!important;
+  border:0!important;border-top:1px solid var(--tm-preview-summary-divider)!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-macros>div{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+  min-width:0!important;gap:5px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-macros>div>strong{
+  font:600 26px/1.12 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  font-variant-numeric:tabular-nums!important;
+  letter-spacing:-.028em!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-macros>div>small:not(.plan-preview-perkg){
+  display:block!important;position:static!important;
+  width:auto!important;height:auto!important;margin:0!important;padding:0!important;
+  clip:auto!important;overflow:visible!important;
+  color:var(--tm-ui-muted)!important;
+  font:500 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  white-space:normal!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-macros>div>.plan-preview-perkg{
+  display:block!important;color:var(--tm-ui-muted)!important;
+  font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ }
+
+ /* Type already appears in "Plano amarelo" above. Keep the coloured meals
+    and their option backgrounds, but remove all decorative option strokes. */
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-group-title{
+  display:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-group{
+  padding:16px 20px 20px!important;
+ }
+ html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-preview .plan-preview-group[data-palette] .plan-preview-option,
+ html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-preview .plan-preview-group .plan-preview-option{
+  border:0!important;box-shadow:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-preview .plan-preview-option>summary:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+  outline-offset:-2px!important;border-radius:14px!important;
+ }
+}
+html[data-admin-theme="light"] #tm-plan-page{
+ --tm-preview-summary-divider:rgba(67,84,107,.065);
+}
+html[data-admin-theme="dark"] #tm-plan-page{
+ --tm-preview-summary-divider:rgba(180,193,211,.085);
+}
+
