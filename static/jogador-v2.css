@@ -4593,3 +4593,22 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #menus-recipe-switch.mile-segment-animated>button[aria-pressed="true"],
 #plans-assessments .assessment-tabs.mile-segment-animated>button[aria-pressed="true"]{background:transparent!important;box-shadow:none!important}
 @media(prefers-reduced-motion:reduce){.mile-segment-animated>.mile-segment-indicator{transition:none!important}}
+
+
+/* v segmented 2: elastic upward lift, like App Store segmented selection */
+.mile-segment-animated>.mile-segment-indicator{background:transparent!important}
+.mile-segment-animated>.mile-segment-indicator::before{
+ content:"";position:absolute;inset:0;border-radius:inherit;background:#55555b;
+ transform-origin:center center;pointer-events:none;
+}
+.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{
+ animation:mile-segment-elastic-lift .39s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes mile-segment-elastic-lift{
+ 0%{transform:translateY(0) scale(1,1)}
+ 32%{transform:translateY(-3px) scale(1.045,1.17)}
+ 60%{transform:translateY(-1px) scale(1.015,1.06)}
+ 82%{transform:translateY(.5px) scale(.995,.985)}
+ 100%{transform:translateY(0) scale(1,1)}
+}
+@media(prefers-reduced-motion:reduce){.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{animation:none!important}}
