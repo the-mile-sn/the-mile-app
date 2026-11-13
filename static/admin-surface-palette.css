@@ -1674,7 +1674,7 @@ html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-playe
 html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-info h4{
  min-width:0!important;flex:1!important;margin:0!important;
 }
-html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-info svg:not(button svg){
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-info > svg{
  flex:0 0 18px!important;
 }
 /* Both Edit buttons are secondary actions placed on the white/charcoal
