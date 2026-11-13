@@ -797,8 +797,11 @@ def application(env, start_response):
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
                 query = parse_qs(env.get('QUERY_STRING', ''))
-                org_id, professional_id = appointments_google_v2.consume_state(
-                    c, (query.get('state') or [''])[0], user['id'])
+                try:
+                    org_id, professional_id = appointments_google_v2.consume_state(
+                        c, (query.get('state') or [''])[0], user['id'])
+                except appointments_google_v2.GoogleCalendarError:
+                    raise Problem(400, 'google_invalid_state')
                 if query.get('error'):
                     headers.append(('Location', '/admin-appointments?google=denied#configuracao'))
                     return respond(303, b'', 'text/plain; charset=utf-8')
