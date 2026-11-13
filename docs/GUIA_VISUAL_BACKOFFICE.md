@@ -189,3 +189,15 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Gerir acesso:** título com ícone de cadeado; preservar os botões existentes, cores semânticas, textos, ações e autorizações, sem fundo de secção adicional.
 - Esta hierarquia é igual nos modos claro e escuro e adapta-se a desktop, tablet e mobile, respeitando espaçamento vertical equilibrado.
 - **Microinteração de Jogadores em mobile:** ao tocar no cartão, apresentar brevemente preenchimento de subcard e escala subtil, preservando a abertura do perfil e a ação independente «Entrar na app». Respeitar `prefers-reduced-motion`.
+
+
+## 13. Biblioteca Alimentar — estrutura aprovada em 13 novembro 2026
+
+- Manter **Novo alimento** como ação principal fora do painel de filtros.
+- **Pesquisa e Categoria** pertencem a um único **card principal de filtros**, separado dos resultados; cada controlo usa uma só superfície de subcard, com rótulo e campo integrados. Sem borda decorativa nem barra adicional dentro do campo.
+- A apresentação dos resultados responde à **largura disponível do conteúdo** (incluindo desktops com a janela estreita), não só ao tipo de dispositivo: tabela sem colisões em ecrãs largos, cartões em contentores estreitos.
+- Na tabela larga, todos os nomes/categorias/notas devem poder quebrar linha sem sobreposição; números nutricionais permanecem alinhados e tabulares. A rolagem horizontal existe apenas como contingência em browsers antigos.
+- Nos cartões estreitos, nome, categoria, notas e quatro valores nutricionais ficam legíveis, sem contorno exterior ou divisórias decorativas. Os valores kcal/P/HC/G usam quatro subcards neutros alinhados.
+- Os botões **Editar** e **Eliminar** posicionam-se no **canto superior direito do cartão**, independentes do texto e com alvos de toque confortáveis. «Eliminar» mantém a cor semântica de perigo.
+- Não alterar endpoints nem comportamentos de pesquisa, paginação, edição, proteção da eliminação de alimentos em planos, nem os valores e associações nutricionais.
+- Manter a mesma hierarquia e tokens de superfícies em modo claro e escuro, desktop, tablet e mobile.
