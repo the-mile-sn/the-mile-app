@@ -4998,3 +4998,35 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .consumption-concentric-trend{padding:5px 8px}
  #overview #day-details .consumption-concentric-energy{font-size:clamp(16px,4.2vw,25px)!important}
 }
+
+
+/* Jorge reference composition: horizontal desktop card, three-column macro lines. */
+@media(min-width:601px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{
+  grid-template-columns:minmax(0,0.85fr) minmax(0,1.55fr)!important;
+  column-gap:24px!important;align-items:center!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  max-width:290px!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  gap:3px!important;
+ }
+ #overview #day-details .consumption-concentric-energy{font-size:clamp(25px,3.5vw,42px)!important}
+ #overview #day-details .consumption-concentric-trends{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;margin:10px 0 8px!important;
+ }
+ #overview #day-details .consumption-concentric-trend{padding:7px 10px!important}
+ #overview #day-details .consumption-concentric-macros{gap:10px!important;padding-top:12px!important}
+ #overview #day-details .consumption-concentric-macro{
+  display:grid!important;grid-template-columns:minmax(80px,.8fr) minmax(115px,1fr) minmax(115px,1fr)!important;
+  gap:8px!important;align-items:baseline!important;
+ }
+ #overview #day-details .consumption-concentric-macro>span{font-size:clamp(12px,1.65vw,17px)!important}
+ #overview #day-details .consumption-concentric-macro>strong{font-size:clamp(14px,2.1vw,23px)!important}
+ #overview #day-details .consumption-concentric-macro>small{
+  grid-column:3!important;text-align:right!important;font-size:clamp(10px,1.45vw,15px)!important;
+  white-space:nowrap!important;
+ }
+}
