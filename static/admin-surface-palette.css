@@ -1172,7 +1172,7 @@ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-p-empty{
   cursor:pointer;-webkit-tap-highlight-color:transparent;
  }
  html[data-admin-theme] #tm-players-page .tm-player-card-identity{grid-column:1;grid-row:1}
- html[data-admin-theme] #tm-players-page .tm-player-card-status{grid-column:2;grid-row:1;justify-self:end}
+ html[data-admin-theme] #tm-players-page .tm-player-card-status{grid-column:2;grid-row:2;justify-self:end;align-self:center}
  html[data-admin-theme] #tm-players-page .tm-player-card-renewal{grid-column:1;grid-row:2}
  html[data-admin-theme] #tm-players-page .tm-player-card-meta-label{display:none}
  html[data-admin-theme] #tm-players-page .tm-player-card-renewal::before{
@@ -1185,10 +1185,20 @@ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-p-empty{
  html[data-admin-theme] #tm-players-page .tm-player-card-renewal{
   display:flex;flex-direction:row;align-items:center;gap:4px;flex-wrap:wrap;
  }
- html[data-admin-theme] #tm-players-page .tm-player-card-actions{grid-column:2;grid-row:2}
+ html[data-admin-theme] #tm-players-page .tm-player-card-actions{grid-column:2;grid-row:1;justify-self:end;align-self:start}
+ /* Match the food-library and Plans mobile actions: 36px visible control,
+    16px outline icon, with a 44px expanded touch target. */
  html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-app-action{
-  display:inline-flex!important;min-width:44px!important;min-height:44px!important;
-  width:44px!important;height:44px!important;
+  display:inline-flex!important;box-sizing:border-box!important;
+  min-width:36px!important;min-height:36px!important;
+  width:36px!important;height:36px!important;flex:0 0 36px!important;
+  padding:8px!important;position:relative!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-app-action svg{
+  display:block!important;width:16px!important;height:16px!important;flex:none!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card-actions .tm-p-app-action::after{
+  content:"";position:absolute;inset:-4px;border-radius:12px;
  }
  html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card:focus-visible{
   outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px;
