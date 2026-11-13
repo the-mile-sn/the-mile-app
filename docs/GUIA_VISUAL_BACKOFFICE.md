@@ -283,3 +283,12 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Opções das refeições desktop:** manter os preenchimentos por paleta já aprovados e remover totalmente contornos e sombras decorativos das opções, em especial no tema claro. Manter foco visível e a expansão dos elementos `details/summary`.
 - Não alterar os dados, alimentos, gramagens, associações, editor, endpoints nem a app dos jogadores. As alterações de conteúdo limitam-se ao HTML do botão e à formatação da referência no próprio resumo.
 
+
+
+## 24. Planos — ajustes mobile aprovados em 13 novembro 2026
+
+- **Lista mobile:** «Criar novo» fica na mesma linha da pesquisa de jogador dentro do card de filtros, reutilizando a ação de criação existente. Filtros de jogador e tipo de plano mantêm-se abaixo, com a superfície de subcard oficial. O desktop mantém a ação e os filtros originais.
+- **Pré-visualização mobile:** o botão «Editar» passa a exibir o lápis outline à esquerda e o texto curto «Editar», seguindo o botão desktop, sem mudar o handler.
+- **Resumo nutricional do dia:** alinhar o primeiro valor (calorias totais) e o respetivo rácio à esquerda, pela mesma margem do nome do jogador e título do plano. Preservar as quatro colunas, os valores e as cores.
+- **Título repetido:** ocultar «Amarelo»/classificação como título do segundo card também no mobile; a classificação já consta em «Plano amarelo» no resumo. Preservar refeições, opções, cores e espaço de respiro.
+- Nenhuma alteração aos dados, cálculos, gramagens, estados, permissões, publicação, nem à branch main da app dos jogadores.
