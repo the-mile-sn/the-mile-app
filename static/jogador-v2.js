@@ -1154,8 +1154,8 @@ async function renderWeightCard(root,date){
  function chart(){
   panel.replaceChildren();
   const heading=document.createElement("div");heading.className="daily-weight-chart-heading";
-  const t=document.createElement("strong");t.textContent="Evolução do peso (últimos 10 dias)";
-  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=editor;heading.append(t,edit);panel.append(heading);
+  const t=document.createElement("strong");t.textContent="Últimos 10 dias";
+  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label","Editar peso");edit.title="Editar peso";edit.onclick=editor;heading.append(t,edit);panel.append(heading);
   const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
   if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(p);return;}
   const values=items.map(x=>Number(x.weight_kg));
