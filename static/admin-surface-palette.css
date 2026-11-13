@@ -3571,145 +3571,170 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
 }
 
 
-/* Plans editor mobile polish, 13 Nov 2026: stable header and note controls.
-   Dedicated mobile overrides for legacy expanded-meal selectors.
-   Desktop and the player app are intentionally untouched. */
-@media (max-width:830px){
- /* Keep a single quiet status label above the main card.
-    Critical pending/error descriptions must remain visible. */
+/* Plans editor mobile correction 13 Nov 2026.
+   Replaces the previous mobile-only patch rather than stacking a third one.
+   No desktop changes. A single stable two-row meal header layout is used for
+   both expanded and collapsed meals. */
+@media(max-width:830px){
+ /* Small status: show the state only when published; show informative warning
+    or error state pill without an oversized text block on ordinary edits. */
  html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta{
   display:flex!important;flex-direction:column!important;align-items:flex-start!important;
-  justify-content:flex-start!important;
-  width:100%!important;min-width:0!important;
-  margin:0 0 13px!important;padding:0 8px!important;gap:0!important;
-  border:0!important;background:transparent!important;box-shadow:none!important;
+  justify-content:flex-start!important;gap:5px!important;
+  margin:0 0 12px!important;padding:0 8px!important;width:100%!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta>.plan-save-feedback{
   display:flex!important;align-items:flex-start!important;justify-content:flex-start!important;
-  width:auto!important;max-width:100%!important;min-width:0!important;
-  margin:0!important;padding:0!important;gap:0!important;
+  flex-direction:column!important;gap:5px!important;
+  margin:0!important;padding:0!important;max-width:100%!important;
   background:transparent!important;border:0!important;box-shadow:none!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback-copy{
   display:flex!important;flex-direction:column!important;align-items:flex-start!important;
-  gap:5px!important;min-width:0!important;
+  justify-content:flex-start!important;gap:5px!important;
+  margin:0!important;padding:0!important;max-width:100%!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta #plan-save-feedback-time,
- html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta #plan-weight-reference{
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta #plan-weight-reference,
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback:not([data-state="error"]) #plan-save-feedback-description{
   display:none!important;
  }
- html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback[data-state="published"] #plan-save-feedback-description,
- html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback[data-state="saved"] #plan-save-feedback-description,
- html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback[data-state="transitional"] #plan-save-feedback-description{
-  display:none!important;
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback[data-state="error"] #plan-save-feedback-description{
+  display:block!important;max-width:100%!important;
+  text-align:left!important;color:var(--tm-ui-muted)!important;
  }
- /* No divider between editable selectors and daily nutrition totals. */
  html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four{
   border:0!important;border-top:0!important;box-shadow:none!important;
   margin:0!important;padding:14px 0 2px!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four::before,
  html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four::after{
-  content:none!important;display:none!important;
+  display:none!important;content:none!important;
  }
 
- /* Same 2-row arrangement for expanded/collapsed meals, matching desktop:
-    title immediately followed by delete/rename; chevron at vertical centre. */
+ /* The same grid is used expanded and collapsed. Rightmost chevron occupies
+    both rows and is centred in a generous, independently tappable 44px target. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal,
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded{
+  padding:20px 16px!important;overflow:visible!important;
+ }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header{
   position:relative!important;display:grid!important;
   grid-template-columns:minmax(0,1fr) 44px!important;
   grid-template-rows:auto auto!important;
-  box-sizing:border-box!important;align-items:center!important;
-  width:100%!important;min-width:0!important;min-height:95px!important;
-  gap:12px 4px!important;margin:0!important;padding:0!important;
+  align-items:center!important;column-gap:7px!important;row-gap:12px!important;
+  width:100%!important;min-width:0!important;min-height:82px!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
  }
+ /* The heading has a reserved action rail: no collisions even when a
+    longer meal title naturally wraps to two lines. */
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-heading-main,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-heading-main{
+  position:relative!important;display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto!important;align-items:center!important;
+  column-gap:9px!important;
   grid-column:1!important;grid-row:1!important;
-  display:flex!important;align-items:center!important;justify-content:flex-start!important;
-  flex-wrap:nowrap!important;gap:7px!important;
-  min-width:0!important;max-width:100%!important;
-  width:100%!important;margin:0!important;padding:0!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-heading-main>.meal-name,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-heading-main>.meal-name{
-  flex:0 1 auto!important;min-width:0!important;max-width:100%!important;
-  width:auto!important;margin:0!important;padding:0!important;
-  align-items:center!important;justify-content:flex-start!important;
+  display:flex!important;align-items:center!important;
+  grid-column:1!important;grid-row:1!important;
+  flex:none!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;overflow-wrap:anywhere!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-heading-main>.meal-name>strong,
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-heading-main>.meal-name>strong{
+  display:block!important;max-width:100%!important;min-width:0!important;
+  line-height:1.35!important;white-space:normal!important;overflow-wrap:anywhere!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-heading-main>.meal-header-actions,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-heading-main>.meal-header-actions{
-  display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;
-  flex:0 0 auto!important;gap:5px!important;
-  min-width:0!important;width:auto!important;max-width:max-content!important;
-  margin:0!important;padding:0!important;
+  display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;
+  grid-column:2!important;grid-row:1!important;justify-self:end!important;
+  gap:4px!important;flex:none!important;min-width:0!important;width:auto!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-heading-main>.meal-header-actions :is(.meal-delete-icon,.meal-rename-button),
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-heading-main>.meal-header-actions :is(.meal-delete-icon,.meal-rename-button){
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;flex:none!important;
+  width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;
+  padding:7px!important;margin:0!important;border:0!important;border-radius:10px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal .meal-header>.meal-heading-main .meal-rename-wrap{
+  position:relative!important;display:inline-flex!important;flex:none!important;
+  align-items:center!important;justify-content:center!important;
+  min-width:34px!important;width:34px!important;height:34px!important;z-index:20!important;
+ }
+ /* The menu must open to the LEFT of the right-hand pencil, never extend past
+    the screen edge. It stays anchored to its own button, not the meal card. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal .meal-heading-main .meal-rename-wrap>.meal-rename-menu{
+  position:absolute!important;left:auto!important;right:0!important;
+  top:calc(100% + 8px)!important;bottom:auto!important;
+  z-index:400!important;
+  box-sizing:border-box!important;
+  width:240px!important;min-width:0!important;max-width:calc(100vw - 46px)!important;
+  max-height:min(340px,55vh)!important;overflow-x:hidden!important;overflow-y:auto!important;
+  border-radius:12px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal .meal-heading-main .meal-rename-wrap>.meal-rename-menu[hidden]{
+  display:none!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-header-macros,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-header-macros{
+  display:block!important;position:static!important;inset:auto!important;
   grid-column:1!important;grid-row:2!important;
-  position:static!important;inset:auto!important;transform:none!important;
-  display:block!important;float:none!important;
-  width:100%!important;max-width:100%!important;min-width:0!important;
-  margin:0!important;padding:0!important;align-self:center!important;
+  align-self:center!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;float:none!important;transform:none!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-header-macros>.macro-values,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-header-macros>.macro-values{
-  position:static!important;inset:auto!important;
-  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  width:100%!important;max-width:100%!important;min-width:0!important;
-  gap:3px!important;margin:0!important;padding:0!important;
+  display:grid!important;position:static!important;inset:auto!important;transform:none!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:2px!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:0!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-toggle,
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-toggle{
-  position:absolute!important;top:50%!important;right:0!important;left:auto!important;bottom:auto!important;
-  transform:translateY(-50%)!important;
-  grid-column:auto!important;grid-row:auto!important;
+  position:static!important;inset:auto!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+  grid-column:2!important;grid-row:1 / 3!important;align-self:center!important;justify-self:center!important;
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
   box-sizing:border-box!important;cursor:pointer!important;
   width:44px!important;min-width:44px!important;max-width:44px!important;
   height:44px!important;min-height:44px!important;max-height:44px!important;
   margin:0!important;padding:0!important;border:0!important;border-radius:12px!important;
-  background:transparent!important;box-shadow:none!important;
-  z-index:2!important;touch-action:manipulation!important;
+  background:transparent!important;box-shadow:none!important;transform:none!important;
+  z-index:1!important;touch-action:manipulation!important;
  }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-toggle:focus-visible{
-  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
-  outline-offset:2px!important;
+  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
  }
- /* Override old mobile extra row (520px) and the expanded state (700px). */
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-header-actions,
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.meal-header>.meal-header-actions{
-  grid-column:auto!important;grid-row:auto!important;
+
+ /* Undo the legacy 62px note button in the expanded mobile meal. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.plan-inline-note{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:48px 48px!important;align-items:stretch!important;gap:8px!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
  }
- /* Note button was still constrained to 62px by a legacy expanded-meal rule.
-    Treat note creation exactly like food creation, not as a 62px OK icon. */
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.plan-inline-note,
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.plan-inline-note{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr)!important;
-  grid-template-rows:48px 48px!important;
-  align-items:stretch!important;gap:8px!important;
-  width:100%!important;max-width:100%!important;min-width:0!important;
-  box-sizing:border-box!important;
- }
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.plan-inline-note>#new-plan-note,
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.plan-inline-note>#new-plan-note{
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.plan-inline-note>#new-plan-note{
   grid-column:1!important;grid-row:1!important;
-  box-sizing:border-box!important;width:100%!important;min-width:0!important;
-  height:48px!important;min-height:48px!important;
+  min-width:0!important;width:100%!important;height:48px!important;min-height:48px!important;
  }
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.plan-inline-note>#add-note,
- html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.plan-inline-note>#add-note{
-  grid-column:1!important;grid-row:2!important;
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-mobile-expanded>.plan-inline-note>#add-note{
   display:flex!important;align-items:center!important;justify-content:center!important;
+  grid-column:1!important;grid-row:2!important;
   box-sizing:border-box!important;
-  width:100%!important;max-width:100%!important;min-width:0!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
   height:48px!important;min-height:48px!important;max-height:48px!important;
-  padding:0 16px!important;margin:0!important;
-  background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+  margin:0!important;padding:0 12px!important;
   border:0!important;border-radius:12px!important;box-shadow:none!important;
+  background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
   font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
-  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  white-space:nowrap!important;overflow:hidden!important;
  }
 }
