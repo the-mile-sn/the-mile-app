@@ -333,3 +333,21 @@ body.consumption-food-sheet-open{overflow:hidden!important}
  height:34px!important;
  min-height:34px!important;
 }
+
+
+/* v29: native-inspired portion wheel, matching the weight picker rhythm */
+.consumption-food-line input[readonly]{cursor:pointer;caret-color:transparent}
+.consumption-grams-wheel-backdrop{position:fixed;inset:0;z-index:2147483100;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}
+.consumption-grams-wheel-sheet{box-sizing:border-box;width:100%;background:#292824;color:#f0eee9;border-radius:24px 24px 0 0;padding:18px 20px max(24px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(0,0,0,.25)}
+.consumption-grams-wheel-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.consumption-grams-wheel-top button,.consumption-grams-wheel-manual{border:0;background:transparent;color:#b9dfcb;font-size:15px;padding:10px 4px}
+.consumption-grams-wheel-top strong{font-size:17px;font-weight:600}
+.consumption-grams-wheel-wrap{height:220px;position:relative;overflow:hidden}
+.consumption-grams-wheel-band{position:absolute;z-index:0;top:88px;height:44px;left:12%;right:12%;background:rgba(255,255,255,.075);border-radius:12px;pointer-events:none}
+.consumption-grams-wheel{height:220px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;position:relative;z-index:1}
+.consumption-grams-wheel::-webkit-scrollbar{display:none}
+.consumption-grams-wheel-rail{display:flex;flex-direction:column;align-items:center}
+.consumption-grams-wheel-pad{height:88px;flex:none}
+.consumption-grams-wheel-option{height:44px;min-height:44px;line-height:44px;text-align:center;font-size:20px;color:rgba(240,238,233,.43);scroll-snap-align:center}
+.consumption-grams-wheel-option.selected{font-size:25px;font-weight:600;color:#f0eee9}
+.consumption-grams-wheel-manual{display:block;margin:12px auto 0;color:rgba(240,238,233,.72);font-size:13px}
