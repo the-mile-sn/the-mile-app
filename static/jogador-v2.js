@@ -1384,12 +1384,12 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     if(e.target.closest('button,input,select,textarea,.consumption-suggestions'))return;
     dragStart=e.touches[0]?.clientY??0;dragStartedAt=performance.now();startHeight=sheet.getBoundingClientRect().height;
     if(!sheet.classList.contains('is-expanded'))restHeight=startHeight;
-    dragging=true;dragMoved=false;sheet.classList.add('is-dragging');
+    dragging=true;dragMoved=false;
    };
    const gestureMove=e=>{
     if(!dragging)return;
     const y=e.touches[0]?.clientY??dragStart,delta=dragStart-y;
-    if(Math.abs(delta)<3&&!dragMoved)return;
+    if(Math.abs(delta)<10&&!dragMoved)return;
     e.preventDefault();
     const max=expandedHeight();
     // At the fully expanded limit, consume upward overscroll without touching
@@ -1398,6 +1398,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const next=Math.max(0,Math.min(max,startHeight+delta));
     if(Math.abs(next-startHeight)<1){return;}
     dragMoved=true;
+    sheet.classList.add('is-dragging');
     sheet.style.setProperty('--sheet-drag-height',next+'px');
     sheet.style.setProperty('--sheet-drag-max-height',max+'px');
     sheet.style.setProperty('height',next+'px','important');
@@ -1407,12 +1408,12 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     if(!dragging)return;dragging=false;
     const delta=dragStart-(e.changedTouches[0]?.clientY??dragStart);
     const current=sheet.getBoundingClientRect().height;
-    if(!dragMoved){settleSheet(sheet.classList.contains('is-expanded'));return;}
+    if(!dragMoved||Math.abs(delta)<18){settleSheet(sheet.classList.contains('is-expanded'));return;}
     // Dismiss only after the finger has dragged the sheet almost entirely off screen.
     if(current<Math.max(55,restHeight*.18)){closeFoodSheet();return;}
     const midpoint=(restHeight+expandedHeight())/2;
     const elapsed=Math.max(1,performance.now()-dragStartedAt),speed=delta/elapsed;
-    settleSheet(delta>10&&speed>.5?true:delta< -10&&speed<-.5?false:current>midpoint);
+    settleSheet(delta>18&&speed>.5?true:delta< -18&&speed<-.5?false:current>midpoint);
    };
    for(const target of [sheet]){
     target.addEventListener('touchstart',gestureStart,{passive:true});
