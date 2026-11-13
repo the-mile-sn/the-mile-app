@@ -195,8 +195,8 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 
 - Manter **Novo alimento** como ação principal fora do painel de filtros.
 - **Pesquisa e Categoria** pertencem a um único **card principal de filtros**, separado dos resultados; cada controlo usa uma só superfície de subcard, com rótulo e campo integrados. Sem borda decorativa nem barra adicional dentro do campo.
-- A apresentação dos resultados responde à **largura disponível do conteúdo** (incluindo desktops com a janela estreita), não só ao tipo de dispositivo: tabela sem colisões em ecrãs largos, cartões em contentores estreitos.
-- Na tabela larga, todos os nomes/categorias/notas devem poder quebrar linha sem sobreposição; números nutricionais permanecem alinhados e tabulares. A rolagem horizontal existe apenas como contingência em browsers antigos.
+- **Desktop (mesmo com janela estreita):** manter sempre a tabela legível, com largura mínima e deslocação horizontal dentro dos resultados quando necessário; nunca converter o desktop em cartões apenas por redução da janela. **Mobile / tablet pequeno tátil:** mostrar cartões nos ecrãs compactos com pointer coarse. O cabeçalho da tabela usa a mesma superfície de card principal, não subcard; divisórias entre alimentos quase impercetíveis.
+- Na tabela, todos os nomes/categorias/notas devem poder quebrar linha sem sobreposição; números nutricionais permanecem alinhados e tabulares. A rolagem horizontal é o comportamento deliberado para desktop estreito.
 - Nos cartões estreitos, nome, categoria, notas e quatro valores nutricionais ficam legíveis, sem contorno exterior ou divisórias decorativas. Os valores kcal/P/HC/G usam quatro subcards neutros alinhados.
 - Os botões **Editar** e **Eliminar** posicionam-se no **canto superior direito do cartão**, independentes do texto e com alvos de toque confortáveis. «Eliminar» mantém a cor semântica de perigo.
 - Não alterar endpoints nem comportamentos de pesquisa, paginação, edição, proteção da eliminação de alimentos em planos, nem os valores e associações nutricionais.
