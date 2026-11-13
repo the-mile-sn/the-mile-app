@@ -323,12 +323,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Limites:** alterações de apresentação apenas em production/the-mile-admin, sem mexer no branch main, dados, gramagens, macros, cálculos ou navegação da app dos jogadores.
 
 
-## 27. Edição de Planos — afinação final mobile (13 novembro 2026)
+## 27. Edição de Planos — mobile estável (13 novembro 2026)
 
-**Âmbito exclusivo: mobile (até 830 px), em claro e escuro.** Desktop aprovado e mantido.
+**Âmbito exclusivo: mobile até 830 px, modo claro e escuro; desktop aprovado fica intacto.**
 
-- **Metadados acima do card principal:** mostrar apenas a pill compacta «Publicado» quando o plano já está publicado; ocultar a data de gravação e a referência no mobile (mantêm-se no desktop e internamente para o cálculo nutricional). Nos estados não publicados ou com erro, continuar a indicar o estado e, sempre que necessário, a descrição de erro/alterações por guardar ou publicar. Não duplicar a pill noutros locais.
-- **Resumo diário:** retirar a linha divisória entre os seletores e os quatro totais nutricionais, mantendo as macros, os rácios, as cores e os alinhamentos já aprovados.
-- **Cabeçalho das refeições:** nome seguido imediatamente dos ícones outline de eliminar e editar, como no desktop; a seta de expansão fica isolada na extremidade direita, centrada verticalmente no cabeçalho com uma área de toque de 44 × 44 px. Utilizar sempre a mesma grelha de duas linhas nas refeições abertas e fechadas, sem deslocar nome, macros ou ações quando se expande. Preservar handlers, confirmação destrutiva e cores oficiais.
-- **Adicionar notas:** remover a antiga restrição de 62 px herdada da vista de refeição expandida. O campo «Adicionar nota» ocupa uma linha e o botão «+ Adicionar nota» ocupa a linha seguinte com largura total, exatamente no mesmo estilo e altura (48 px) do «+ Adicionar alimento». Preservar a validação e a ação existentes.
-- **Restrições:** nenhuma alteração à edição desktop, ao backend, à seleção de opções, aos cálculos, às gramagens, aos estados reais ou à app de jogadores (branch main).
+- **Estado:** no mobile, quando já publicado, mostrar apenas uma pill «Publicado», fora do card nutricional. Ocultar data de gravação e referência nesse contexto (permanecem no desktop e nos cálculos). Se existirem alterações por guardar ou publicar, mostrar a respetiva pill de aviso sem parágrafo extenso; em caso de erro, conservar também a explicação do problema.
+- **Card de resumo:** sem divisor entre os seletores e as macros, mantendo os quatro valores, cores e rácios.
+- **Refeições, abertas e fechadas:** usar a mesma grelha fixa de duas linhas. Primeira linha: nome à esquerda e ações de eliminar/renomear numa zona reservada imediatamente a seguir, sem se sobrepor ao nome mesmo quando ele quebra de linha. Segunda linha: quatro macros. A seta fica isolada na extremidade direita e centrada verticalmente entre as duas linhas, com alvo de 44×44 px. Nome, valores e setas não saltam ao expandir. Manter margens internas compactas coerentes com o card de resumo.
+- **Expansão acessível:** além da seta, tocar na área livre do cabeçalho ou no título abre/fecha a refeição no mobile. O toque nos botões de eliminar, renomear ou no menu não pode acionar a expansão. Continuar a permitir foco e acionamento do botão pela navegação de teclado.
+- **Menu de renomear:** abrir ancorado à direita do lápis (menu estende-se para dentro do ecrã), com largura limitada à viewport e altura limitada com scroll interno. A abertura não altera o nome do plano nem assinala alterações por guardar: apenas a seleção efetiva de outro nome pode mudar os dados.
+- **Adicionar nota:** a linha do campo e a do botão «+ Adicionar nota» ocupam a mesma largura disponível e mantêm 48 px de altura, contrariando a regra legada de 62 px na refeição expandida.
+- **Compatibilidade:** remover/substituir a última camada de CSS mobile anterior antes de publicar nova correção; não empilhar variantes contraditórias. Manter alimentação, dados, cálculos, cores nutricionais e o branch main inalterados. Verificar visualmente em Safari/iPhone e em modo claro/escuro antes de fechar a validação.
