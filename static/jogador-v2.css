@@ -5063,3 +5063,28 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   margin:0!important;padding:0!important;z-index:2!important;
  }
 }
+
+
+/* Jorge mobile refinement: optical spacing and one-pixel legibility increase. */
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{
+  grid-template-columns:minmax(0,.60fr) minmax(0,1.75fr)!important;
+  column-gap:5px!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  justify-self:start!important;max-width:140px!important;
+  transform:translateX(-9px)!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  transform:translateX(-3px)!important;
+ }
+ #overview #day-details .consumption-concentric-energy{font-size:clamp(19px,4.5vw,30px)!important}
+ #overview #day-details .consumption-concentric-energy>span:not(.consumption-concentric-unit){margin-left:6px!important}
+ #overview #day-details .consumption-concentric-energy>.consumption-concentric-unit{font-size:calc(.48em + 1px)!important}
+ #overview #day-details .consumption-concentric-perkg{font-size:calc(clamp(11px,1.5vw,17px) + 1px)!important}
+ #overview #day-details .consumption-concentric-macro>span{font-size:12px!important}
+ #overview #day-details .consumption-concentric-macro>strong{font-size:13px!important}
+ #overview #day-details .consumption-concentric-macro>small{font-size:calc(clamp(8px,2vw,10px) + 1px)!important}
+ #overview #day-details .consumption-concentric-trend span{font-size:11px!important}
+ #overview #day-details .consumption-concentric-trend strong{font-size:10px!important}
+}
