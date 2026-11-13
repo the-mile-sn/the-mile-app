@@ -2068,3 +2068,35 @@ html[data-admin-theme] body :is(
  letter-spacing:0!important;
 }
 
+/* Porções Visuais: same filter hierarchy as Biblioteca de Alimentos, scoped
+   to the actual module width rather than viewport-only breakpoints. */
+html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters.tm-food-filter-panel{
+ display:grid!important;grid-template-columns:minmax(220px,300px) minmax(0,1fr)!important;
+ max-width:none!important;width:100%!important;min-width:0!important;
+ margin:0!important;gap:12px!important;
+ padding:16px!important;border:0!important;border-radius:16px!important;
+ background:var(--tm-ui-card)!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-food-filter-panel .tm-food-filter-field{
+ background:var(--tm-ui-subcard)!important;border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-food-filter-panel .tm-food-filter-field :is(input,select){
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0!important;padding:0!important;margin:0!important;
+ height:28px!important;min-height:28px!important;
+ color:var(--tm-ui-text)!important;
+ appearance:none!important;-webkit-appearance:none!important;
+}
+html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-food-filter-panel .tm-food-filter-field:focus-within{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+@container tmVisualPortions (max-width:680px){
+ html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-portion-filters.tm-food-filter-panel{
+  grid-template-columns:minmax(0,1fr)!important;
+  padding:14px!important;gap:10px!important;
+ }
+ html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-food-filter-panel .tm-food-filter-field :is(input,select){
+  font-size:16px!important;
+ }
+}
+
