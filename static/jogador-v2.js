@@ -77,18 +77,37 @@ function enableOverviewDaySwipe(element){
    const next=new Date(day);next.setDate(next.getDate()+(dx<0?1:-1));
    preview=document.createElement('div');preview.className='mile-day-swipe-preview';
    preview.setAttribute('aria-hidden','true');
-   const heading=document.createElement('div');heading.className='mile-day-swipe-preview-heading';
-   heading.textContent=next.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+   preview.style.top=content.offsetTop+'px';
+   preview.style.left=content.offsetLeft+'px';
+   preview.style.width=start.width+'px';
    const skeleton=document.createElement('div');skeleton.className='mile-day-swipe-preview-skeleton';
-   skeleton.innerHTML='<div></div><div></div><div></div>';
-   preview.append(heading,skeleton);content.parentElement.append(preview);
+   const nextWeek=monday(next);
+   const week=document.createElement('div');week.className='mile-swipe-week';
+   for(let i=0;i<7;i++){
+    const dt=new Date(nextWeek);dt.setDate(nextWeek.getDate()+i);
+    const cell=document.createElement('div');cell.className='mile-swipe-week-day'+(iso(dt)===iso(next)?' selected':'');
+    const weekday=document.createElement('span');weekday.textContent=dt.toLocaleDateString('pt-PT',{weekday:'short'});
+    const number=document.createElement('strong');number.textContent=dt.getDate();
+    const marker=document.createElement('small');marker.textContent='···';
+    cell.append(weekday,number,marker);week.append(cell);
+   }
+   const nutrition=document.createElement('div');nutrition.className='mile-swipe-nutrition';
+   nutrition.innerHTML='<div class="mile-swipe-ring"><div class="mile-swipe-ring-inner"><span></span><span></span></div></div><div class="mile-swipe-macros"><i></i><i></i><i></i></div>';
+   const weight=document.createElement('div');weight.className='mile-swipe-weight';weight.innerHTML='<span></span><span></span>';
+   skeleton.append(week,nutrition,weight);
+   for(let i=0;i<4;i++){
+    const meal=document.createElement('div');meal.className='mile-swipe-meal';
+    meal.innerHTML='<span class="mile-swipe-meal-label"></span><span class="mile-swipe-meal-energy"></span><span class="mile-swipe-meal-chevron">⌄</span>';
+    skeleton.append(meal);
+   }
+   preview.append(skeleton);content.parentElement.append(preview);
   }
   if(event.cancelable)event.preventDefault();
   const dxClamped=Math.max(-start.width,Math.min(start.width,dx));
   content.style.transition='none';content.style.transform='translate3d('+dxClamped+'px,0,0)';
   const direction=dxClamped<0?1:-1;
   const next=new Date(day);next.setDate(next.getDate()+direction);
-  preview.querySelector('.mile-day-swipe-preview-heading').textContent=next.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+  preview.querySelectorAll('.mile-swipe-week-day').forEach((cell,i)=>{const dt=new Date(monday(next));dt.setDate(dt.getDate()+i);cell.classList.toggle('selected',iso(dt)===iso(next));});
   preview.style.transition='none';preview.style.transform='translate3d('+(dxClamped+(direction*start.width))+'px,0,0)';
  },{passive:false});
  element.addEventListener('touchend',event=>{
