@@ -1867,7 +1867,7 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
 }
 /* Narrow workspaces become genuine responsive cards. The actions live in the
    upper-right corner; a single padded title leaves them their own space. */
-@container tmFoodLibrary (max-width:970px){
+@media (max-width:850px) and (pointer:coarse){
  html[data-admin-theme] #tm-food-library-page .food-catalog-panel{
   background:transparent!important;border-radius:0!important;overflow:visible!important;
  }
@@ -1979,3 +1979,35 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table .food-edit-icon
   transition:none!important;
  }
 }
+
+/* Food Library desktop table refinement: neutral heading and hairline rows. */
+/* Keep the header on the same main-card surface as the data; use type and
+   spacing rather than an unnecessary secondary-colour stripe. */
+html[data-admin-theme="light"] #tm-food-library-page{
+ --tm-food-row-hairline:rgba(56,74,97,.055);
+}
+html[data-admin-theme="dark"] #tm-food-library-page{
+ --tm-food-row-hairline:rgba(180,193,211,.065);
+}
+html[data-admin-theme] #tm-food-library-page .food-catalog-table thead tr.food-header-row,
+html[data-admin-theme] #tm-food-library-page .food-catalog-table thead tr.food-header-row th{
+ background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] #tm-food-library-page .food-catalog-table thead tr.food-header-row th{
+ border-bottom:1px solid var(--tm-food-row-hairline)!important;
+}
+@media (min-width:851px), (pointer:fine){
+ html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr{
+  border:0!important;
+ }
+ html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr td{
+  border-bottom:1px solid var(--tm-food-row-hairline)!important;
+ }
+ html[data-admin-theme] #tm-food-library-page .food-catalog-table tbody tr:last-child td{
+  border-bottom:0!important;
+ }
+}
+/* On mouse/trackpad desktops retain the fixed-layout table at *any*
+   browser width. The .scroll element owns horizontal overflow, avoiding
+   overlapping text when the window is narrow. The card mode above is
+   reserved for phones/small touch-only tablets. */
