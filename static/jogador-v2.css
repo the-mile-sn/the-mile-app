@@ -4907,3 +4907,15 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .daily-weight-chart-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px 3px}
 #overview .daily-weight-chart-period{font-size:11px;font-weight:400;color:#939397}
 #overview .daily-weight-chart-footer .daily-weight-chart-average{margin:0;text-align:right}
+
+/* Match the fasting-weight expand control to the meal-card chevrons. */
+#overview .daily-weight-action[aria-controls]{
+ width:24px!important;height:32px!important;flex:0 0 24px!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;padding:0!important;color:#d6d7de!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#overview .daily-weight-action[aria-controls] svg{
+ width:22px!important;height:22px!important;display:block!important;
+ stroke-width:2.2!important;
+}
