@@ -291,7 +291,7 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 /* v23: interactive finger-tracking sheet with snap only on release */
 .consumption-food-sheet{transition:height .24s cubic-bezier(.2,.8,.2,1),max-height .24s cubic-bezier(.2,.8,.2,1)!important}
 .consumption-food-sheet.is-dragging{transition:none!important;will-change:height}
-.consumption-food-sheet.is-dragging.is-expanded{height:auto!important}
+/* While dragging, inline height must override the expanded snap height. */
 
 
 /* v24: single compact portion field and library note */
@@ -318,3 +318,6 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet-portion{margin-left:18px!important;margin-right:18px!important}
 .consumption-food-sheet-portion label{margin:0!important}
 .consumption-food-sheet-portion input{width:100%!important}
+
+/* v27: prevent expanded snap rules overriding live finger drag */
+.consumption-food-sheet.is-expanded.is-dragging{height:var(--sheet-drag-height)!important;max-height:var(--sheet-drag-max-height)!important}
