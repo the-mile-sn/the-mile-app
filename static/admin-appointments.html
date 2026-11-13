@@ -170,6 +170,33 @@
      <div class="tm-appt-dialog-actions"><button type="button" class="tm-appt-cancel" data-close-appointment-dialog>Cancelar</button><button type="submit" class="tm-appt-save">Guardar profissional</button></div>
     </form>
    </dialog>
+
+    <dialog id="tm-appt-period-dialog" class="tm-appt-dialog tm-appt-small-dialog" aria-labelledby="tm-appt-period-title">
+     <form id="tm-appt-period-form">
+      <div class="tm-appt-dialog-heading"><div><span>Disponibilidades</span><h2 id="tm-appt-period-title">Novo período</h2></div><button type="button" class="tm-appt-dialog-close" data-close-appointment-dialog aria-label="Fechar">×</button></div>
+      <p class="tm-appt-form-hint" id="tm-appt-period-professional"></p>
+      <label class="tm-appt-field"><span>Data</span><input id="tm-appt-period-date" type="date" required></label>
+      <label class="tm-appt-field tm-appt-period-block-note" hidden><span>Motivo (opcional)</span><input id="tm-appt-period-note" maxlength="160" placeholder="Ex.: Formação, férias, compromisso"></label>
+      <label class="tm-appt-checkbox tm-appt-period-all-day" hidden><input id="tm-appt-period-all-day-input" type="checkbox"> Dia inteiro</label>
+      <div class="tm-appt-dialog-grid" id="tm-appt-period-time-fields">
+       <label class="tm-appt-field"><span>Início</span><input type="time" id="tm-appt-period-start" value="09:00" required></label>
+       <label class="tm-appt-field"><span>Fim</span><input type="time" id="tm-appt-period-end" value="13:00" required></label>
+      </div>
+      <p class="tm-appt-form-error" id="tm-appt-period-error" role="alert"></p>
+      <div class="tm-appt-dialog-actions"><button type="button" class="tm-appt-cancel" data-close-appointment-dialog>Cancelar</button><button class="tm-appt-save" type="submit">Guardar período</button></div>
+     </form>
+    </dialog>
+    <dialog id="tm-appt-copy-dialog" class="tm-appt-dialog tm-appt-small-dialog" aria-labelledby="tm-appt-copy-title">
+     <form id="tm-appt-copy-form">
+      <div class="tm-appt-dialog-heading"><div><span>Disponibilidades</span><h2 id="tm-appt-copy-title">Copiar disponibilidade</h2></div><button type="button" class="tm-appt-dialog-close" data-close-appointment-dialog aria-label="Fechar">×</button></div>
+      <p class="tm-appt-form-hint">Copia apenas as disponibilidades publicadas; os bloqueios não são duplicados. Períodos sobrepostos não são substituídos.</p>
+      <input type="hidden" id="tm-appt-copy-days" value="1">
+      <label class="tm-appt-field"><span>Origem</span><input id="tm-appt-copy-source" type="date" required></label>
+      <label class="tm-appt-field"><span>Destino</span><input id="tm-appt-copy-target" type="date" required></label>
+      <p class="tm-appt-form-error" id="tm-appt-copy-error" role="alert"></p>
+      <div class="tm-appt-dialog-actions"><button type="button" class="tm-appt-cancel" data-close-appointment-dialog>Cancelar</button><button class="tm-appt-save" type="submit">Copiar</button></div>
+     </form>
+    </dialog>
   </main>
  </div>
  <script src="/admin-nav-shell.js?v=5" defer></script>
