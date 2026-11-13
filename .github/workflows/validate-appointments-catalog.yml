@@ -98,10 +98,12 @@ jobs:
           import appointments_catalog_v2 as catalogue
           import appointments_availability_v2 as availability
           import appointments_bookings_v2 as bookings
+          import appointments_google_v2 as google
 
           day=(datetime.now(ZoneInfo("Europe/Lisbon")).date()+timedelta(days=2)).isoformat()
           with app.connect() as c:
               bookings.initialize(c)
+              google.initialize(c)
               service=next(s for s in catalogue.catalog(c)['services']
                            if s['duration_minutes']==90)
               person=catalogue.save_professional(c,{
