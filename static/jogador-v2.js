@@ -1755,7 +1755,7 @@ async function overview(){
      const ratio=total[key]>0?Math.max(0,Math.min(1,actual[key]/total[key])):0;
      for(const [stroke,progress] of [["#34363d",false],[color,true]]){
       const circle=document.createElementNS(chart.namespaceURI,"circle");
-      for(const [attr,val] of [["cx",100],["cy",100],["r",radius],["fill","none"],["stroke",stroke],["stroke-width",16],["stroke-linecap","round"],["transform","rotate(-90 100 100)"],["stroke-dasharray",circumference],["stroke-dashoffset",progress?circumference*(1-ratio):0]])circle.setAttribute(attr,String(val));
+      for(const [attr,val] of [["cx",100],["cy",100],["r",radius],["fill","none"],["stroke",stroke],["stroke-width",13],["stroke-linecap","round"],["transform","rotate(-90 100 100)"],["stroke-dasharray",circumference],["stroke-dashoffset",progress?circumference*(1-ratio):0]])circle.setAttribute(attr,String(val));
       chart.append(circle);
      }
     }
