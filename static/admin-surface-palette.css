@@ -3072,6 +3072,7 @@ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.mea
  padding:7px!important;border:0!important;border-radius:10px!important;
 }
 html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal>.meal-header>.meal-header-actions .meal-rename-wrap{
+ position:relative!important;z-index:10!important;
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  flex:0 0 34px!important;min-width:34px!important;width:34px!important;height:34px!important;
 }
