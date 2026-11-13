@@ -12,7 +12,7 @@
  if(!sidebar||!track||!more||!menu)return;
  const standalone=!!document.querySelector(".tm-library-layout");
  const mobile=()=>window.matchMedia("(max-width:830px)").matches;
- const ids=["tm-admin-nav-food-library","tm-admin-nav-menus-recipes","tm-admin-nav-assessments","tm-admin-nav-forms"];
+ const ids=["tm-admin-nav-food-library","tm-admin-nav-menus-recipes","tm-admin-nav-assessments","tm-admin-nav-forms","tm-admin-nav-appointments"];
  const secondary=ids.map(id=>sidebar.querySelector("#"+id)).filter(Boolean);
  const accountLinks=Array.from(menu.querySelectorAll(".tm-admin-nav-link"));
  const secondaryControls=[...secondary,...accountLinks];
