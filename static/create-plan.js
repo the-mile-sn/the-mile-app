@@ -97,7 +97,7 @@ function renderPlanReference(){
    !plan.athlete_id?"Seleciona um jogador para calcular os rácios":
    planRef.error?"Não foi possível obter o Peso de referência.":"A consultar Peso de referência…";
  if(note){note.textContent=label;if(valid)note.dataset.tmMobileWeight=fmt(w)+" kg";else delete note.dataset.tmMobileWeight;}
- const previewNote=$("plan-preview-weight");if(previewNote)previewNote.textContent=label;
+ const previewNote=$("plan-preview-weight");if(previewNote){const previewDate=valid?new Date(planRefDate()+"T12:00:00Z").toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}):"";previewNote.textContent=valid?"Referência: "+fmt(w)+" kg · "+previewDate:label;}
  queryAll("[data-plan-preview-kg]").forEach(el=>{
   const index=Number(el.dataset.planPreviewKg);
   el.textContent=valid?fmt(values[index]/w)+(index===0?" kcal/kg":" g/kg"):"";
