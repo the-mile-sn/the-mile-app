@@ -2366,7 +2366,7 @@ for(const button of document.querySelectorAll("[data-assessment-tab]"))button.on
 
 /* Shared App Store-style sliding selection indicator. */
 (function initSlidingSegmentedControls(){
- const selectors=['#overview-mode','#menus-recipe-switch','#plans-assessments .assessment-tabs'];
+ const selectors=['#overview-mode','#menus-recipe-switch','#plans-assessments .assessment-tabs','#tabs'];
  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)');
  for(const selector of selectors){
   const nav=document.querySelector(selector);
