@@ -4893,3 +4893,17 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
  transition-property:padding,left,right,border-radius,background-color,box-shadow!important;
 }
+
+/* Compact expanded weight card: chart begins immediately below header. */
+#overview .daily-weight-panel{border-top:0!important;padding:8px 17px 12px!important}
+#overview .daily-weight-chart-surface{position:relative}
+#overview .daily-weight-chart-surface>.daily-weight-edit-icon{
+ position:absolute!important;top:12px;right:12px;z-index:2;
+ display:grid!important;place-items:center!important;width:36px!important;height:36px!important;
+ padding:8px!important;border:0!important;border-radius:50%!important;
+ background:transparent!important;color:#d9dce2!important;
+}
+#overview .daily-weight-chart-surface>.daily-weight-edit-icon svg{width:20px!important;height:20px!important;display:block}
+#overview .daily-weight-chart-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px 3px}
+#overview .daily-weight-chart-period{font-size:11px;font-weight:400;color:#939397}
+#overview .daily-weight-chart-footer .daily-weight-chart-average{margin:0;text-align:right}
