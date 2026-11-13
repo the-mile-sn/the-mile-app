@@ -5341,3 +5341,14 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   right:0!important;top:7px!important;
  }
 }
+
+/* Jorge nutrition card: larger energy values and slightly higher comparisons. */
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-energy-row .consumption-concentric-energy{
+ font-size:clamp(34px,calc(4.25vw + 2px),59px)!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends{
+ transform:translateY(-4px)!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow img{
+ display:none!important;
+}
