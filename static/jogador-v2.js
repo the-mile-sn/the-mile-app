@@ -2376,12 +2376,18 @@ for(const button of document.querySelectorAll("[data-assessment-tab]"))button.on
   indicator.setAttribute('aria-hidden','true');
   nav.prepend(indicator);
   nav.classList.add('mile-segment-animated');
-  let initialized=false;
+  let initialized=false,lastSelection=null;
   const position=()=>{
    const selected=nav.querySelector('button[aria-pressed="true"]');
    if(!selected)return;
    const container=nav.getBoundingClientRect(),rect=selected.getBoundingClientRect();
    if(!rect.width||!container.width)return;
+   if(initialized&&lastSelection!==selected&&!reduce?.matches){
+    indicator.classList.remove('mile-segment-bounce');
+    void indicator.offsetWidth;
+    indicator.classList.add('mile-segment-bounce');
+   }
+   lastSelection=selected;
    indicator.style.width=rect.width+'px';
    indicator.style.height=rect.height+'px';
    indicator.style.transform='translate3d('+(rect.left-container.left)+'px,'+(rect.top-container.top)+'px,0)';
