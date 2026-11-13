@@ -5413,3 +5413,16 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:7px!important;right:0!important}
 #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends{padding-right:0!important}
 @media(max-width:520px){#overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:42px!important}}
+
+/* Center both footer actions on the exact same horizontal axis. */
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch,
+#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
+ top:auto!important;bottom:8px!important;height:28px!important;min-height:28px!important;
+ transform:none!important;margin:0!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
+ right:38px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
+ right:0!important;width:28px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+}
