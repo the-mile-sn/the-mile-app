@@ -168,7 +168,7 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - A **lista de Jogadores** usa cartões individuais (elementos article/listitem), um por jogador, sem linhas de tabela, contornos ou sombras. Fotografia, nome, utilizador, estado, data de renovação e ações continuam visíveis.
 - **Filtros de Jogadores** formam uma secção própria colocada diretamente sobre o fundo geral: são um **card principal**, e a pesquisa de nome e o filtro de estado no interior usam **cor de subcard**. Não aplicar azul de terceiro nível neste contexto.
 - O botão **Criar jogador** fica no topo à direita no desktop; no mobile integra o painel de filtros, sem duplicar o botão ou criar novos handlers.
-- No **mobile**, cada jogador é apresentado em duas linhas: identidade + estado; renovação + ação de entrar na app. O cartão inteiro abre o perfil, exceto os botões internos. O filtro de estado permanece utilizável em mobile.
+- No **mobile**, cada jogador é apresentado em duas linhas: **identidade + botão Entrar na app** (canto superior direito); **renovação + estado de acesso** (segunda linha, estado à direita). O cartão inteiro abre o perfil, exceto o botão da app. O filtro de estado permanece utilizável em mobile.
 - **Não apresentar o ícone de olho «Ver perfil»** na lista: o cartão inteiro abre o perfil, com hover discreto em desktop (preenchimento de subcard), cursor interativo e navegação por teclado. O botão de **Entrar na app** é a única ação de ícone e mantém a verificação de acesso e o comportamento independente.
 - Aplicar estas regras nos temas claro/escuro e em tablet e mobile sem recorrer a tabelas artificialmente redimensionadas nem scroll vertical dentro de uma lista.
 
@@ -265,4 +265,11 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Navegação desktop**: o botão global superior é contextual — **‹ Início** na lista e **‹ Planos** na visualização, edição ou pesquisa interna. Não mostrar outro botão de regresso por baixo. O regresso a partir de edição mantém a proteção para alterações por guardar e operações em curso.
 - **Navegação mobile**: dado que a barra global superior está oculta na navegação móvel atual, manter o controlo interno **‹ Planos** na visualização/edição, sem o duplicar.
 - As interações da lista utilizam os **mesmos dados, handlers e IDs** da criação, edição e visualização já existentes. Não alterar API, conteúdo dos planos, estado de publicação, valores nutricionais, paletas, filtros ou app dos jogadores.
+
+## 22. Afinamento dos cartões mobile — Planos e Jogadores (13 novembro 2026)
+
+- **Planos:** ao tocar no card, apresentar uma microinteração percetível mas elegante, igual à de Jogadores: realce da superfície em subcard e `scale(.992)` durante cerca de 140 ms. Usar `pointerdown` para resposta imediata no Safari e manter brevemente o estado depois de levantar o dedo. A abertura da visualização, o botão Editar e as cores das pills continuam inalterados. Respeitar `prefers-reduced-motion` e manter a cor de aviso das cópias antigas.
+- **Jogadores:** o único botão de ação, **Entrar na app**, fica sempre no **canto superior direito** no mobile, alinhado com a identidade, tal como o Editar de Planos e os botões da Biblioteca Alimentar. Botão visível de **36 × 36 px**, ícone outline de **16 px**, com área de toque ampliada para cerca de **44 × 44 px**.
+- **Jogadores, segunda linha:** data de renovação à esquerda e badge de estado (Ativo/Inativo/Sem conta) à direita. Não posicionar o botão por baixo do estado; não alterar cores, estados, permissões nem ações de acesso à app.
+- Desktop, filtros, dados dos jogadores, perfis, conteúdos dos planos e app dos jogadores ficam fora do âmbito.
 
