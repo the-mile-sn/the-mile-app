@@ -24,6 +24,10 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             self.assertIn(main_script, body)
             self.assertIn(schedule_script, body)
             self.assertLess(body.index(main_script), body.index(schedule_script))
+            bookings_script = b'src="/admin-appointments-bookings.js?v=1"'
+            self.assertIn(bookings_script, body)
+            self.assertLess(body.index(schedule_script), body.index(bookings_script))
+            self.assertEqual(client.request("/admin-appointments-bookings.js")["status"], 200)
             schedule = client.request("/admin-appointments-schedule.js")
             self.assertEqual(schedule["status"], 200)
             self.assertIn(b'tm:appointments-catalog', schedule["body"])
@@ -33,7 +37,7 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
     def test_player_service_does_not_expose_admin_shell(self):
         with patch.object(app, "SITE_ROLE", "player"):
             for route in ("/admin-appointments", "/admin-appointments.js",
-                          "/admin-appointments-schedule.js", "/admin-appointments.css"):
+                          "/admin-appointments-schedule.js", "/admin-appointments-bookings.js", "/admin-appointments.css"):
                 with self.subTest(route=route):
                     self.assertEqual(fixtures.Client().request(route)["status"], 404)
 
