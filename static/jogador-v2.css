@@ -4944,8 +4944,8 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 /* Jorge consumption pilot — single authoritative layout (no competing media overrides). */
 #overview #day-details .nutrition-comparison.consumption-concentric{
- display:grid!important;grid-template-columns:minmax(0,0.9fr) minmax(0,1.65fr)!important;
- align-items:center!important;column-gap:22px!important;row-gap:0!important;
+ display:grid!important;grid-template-columns:minmax(0,300px) minmax(0,1fr)!important;
+ align-items:center!important;column-gap:20px!important;row-gap:0!important;
  width:100%!important;min-width:0!important;max-width:100%!important;
  position:relative!important;box-sizing:border-box!important;
 }
@@ -4957,7 +4957,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
  display:block!important;grid-column:1!important;grid-row:1!important;
  width:100%!important;max-width:300px!important;aspect-ratio:1!important;
- justify-self:center!important;align-self:center!important;margin:0!important;transform:none!important;
+ justify-self:start!important;align-self:center!important;margin:0!important;transform:none!important;
 }
 #overview #day-details .consumption-concentric-rings svg{display:block;width:100%;height:100%;overflow:visible}
 #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
@@ -5131,5 +5131,21 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  }
  #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>small{
   font-size:10px!important;letter-spacing:-.025em!important;
+ }
+}
+
+
+/* Jorge desktop/tablet: content-led columns, never a 50/50 split. */
+@media(min-width:521px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{
+  grid-template-columns:minmax(0,300px) minmax(0,1fr)!important;
+  column-gap:20px!important;align-items:center!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  justify-self:start!important;align-self:center!important;
+  width:100%!important;max-width:300px!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  align-self:center!important;transform:none!important;
  }
 }
