@@ -5188,3 +5188,16 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   position:relative!important;z-index:1!important;
  }
 }
+
+
+/* Jorge mobile: enlarge the concentric rings to match the visual height of the text block.
+   Preserve the compact composition approved in the previous iteration. */
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  flex:0 0 145px!important;width:145px!important;min-width:145px!important;
+  max-width:145px!important;align-self:center!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  transform:translateX(-65px)!important;
+ }
+}
