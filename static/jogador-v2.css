@@ -5039,3 +5039,27 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>span{grid-column:1!important;grid-row:1!important;min-width:0!important}
 #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>strong{grid-column:2!important;grid-row:1!important;min-width:0!important}
 #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-macro>small{grid-column:3!important;grid-row:1!important;min-width:0!important;align-self:baseline!important}
+
+
+/* Jorge mobile polish: smaller rings and an independent, accessible chevron. */
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{
+  grid-template-columns:minmax(0,.62fr) minmax(0,1.65fr)!important;
+  column-gap:12px!important;padding-bottom:19px!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  max-width:140px!important;width:100%!important;justify-self:center!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  align-self:center!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand,
+ #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand[aria-expanded="true"],
+ #overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-comparison.consumption-concentric>.nutrition-expand{
+  position:absolute!important;grid-column:auto!important;grid-row:auto!important;
+  right:0!important;bottom:-7px!important;top:auto!important;
+  width:34px!important;height:34px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  margin:0!important;padding:0!important;z-index:2!important;
+ }
+}
