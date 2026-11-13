@@ -296,6 +296,13 @@ function draw(){
 }
 function alignNutritionHeaders(){
   queryAll(".meal").forEach(meal=>{
+    if(window.matchMedia("(max-width:830px)").matches){
+      for(const target of [meal.querySelector(".meal-header-macros"),meal.querySelector(".option-content .option-summary > .macro-values")]){
+        if(!target)continue;
+        for(const name of ["position","left","right","width","max-width","display"])target.style.removeProperty(name);
+      }
+      return;
+    }
     const rail=meal.querySelector(".option-content .nutrition-row.food-row > .macro-values");
     if(!rail)return;
     const reference=rail.getBoundingClientRect();
