@@ -6,7 +6,7 @@
  const byId=id=>document.getElementById(id);
  const root=byId("tm-appointments-root"),auth=byId("tm-appointments-auth");
  if(!root||!auth)return;
- const tabNames=["agenda","reservas","configuracao"];
+ const tabNames=["agenda","reservas","disponibilidades","configuracao"];
  const range=byId("tm-appointments-range"),days=byId("tm-appointments-days");
  const locale=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short"});
  const longRange=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",day:"numeric",month:"long",year:"numeric"});
@@ -83,7 +83,7 @@
 
  /* Service/professional catalogue (phase 2). Server is the authority. */
  let csrf="",catalog={services:[],professionals:[]};
- let editingService=null,editingProfessional=null;
+ let editingService=null,editingProfessional=null,pendingPhoto=null;
  const euros=new Intl.NumberFormat("pt-PT",{style:"currency",currency:"EUR"});
  const modeLabels={presencial:"Presencial",online:"Online"};
  const $=byId;
@@ -133,6 +133,19 @@
   return data;
  }
  const endpoint="/api/v2/admin/appointments";
+ function profileAvatar(item,large=false){
+  const node=element("span","tm-appt-photo-avatar"+(large?" tm-appt-photo-large":""));
+  const initials=(item?.name||"").trim().split(/\s+/).slice(0,2).map(x=>x.charAt(0)).join("").toUpperCase();
+  node.textContent=initials||"+";
+  if(item?.has_photo&&item.id){
+   const img=document.createElement("img");
+   img.src=endpoint+"/professionals/"+encodeURIComponent(item.id)+"/photo?v="+(item.photo_updated_at||0);
+   img.alt="";img.decoding="async";img.loading="lazy";
+   img.addEventListener("error",()=>img.remove());node.append(img);
+  }
+  return node;
+ }
+
  function statusPill(active){
   return element("span","tm-appt-status"+(active?" is-active":" is-inactive"),active?"Ativo":"Inativo");
  }
@@ -172,7 +185,8 @@
    return;
   }
   for(const item of catalog.professionals){
-   const card=element("article","tm-appt-record");
+   const card=element("article","tm-appt-record tm-appt-prof-record");
+   card.append(profileAvatar(item));
    const body=element("div","tm-appt-record-body");
    const heading=element("div","tm-appt-record-title");
    heading.append(element("h4","",item.name),statusPill(item.active));
@@ -191,6 +205,7 @@
   const data=await api(endpoint+"/catalog");
   if(!Array.isArray(data.services)||!Array.isArray(data.professionals))throw Error("Resposta inesperada do servidor.");
   catalog=data;renderServices();renderProfessionals();
+  document.dispatchEvent(new CustomEvent("tm:appointments-catalog",{detail:catalog}));
   return data;
  }
  function associationChoices(target,items,selected){
@@ -230,7 +245,13 @@
   $("tm-appt-service-name").focus();
  }
  function openProfessional(item){
-  editingProfessional=item?.id||null;
+  editingProfessional=item?.id||null;pendingPhoto=null;
+  const avatar=$("tm-appt-form-avatar");
+  avatar.replaceChildren();
+  const image=profileAvatar(item,true);
+  avatar.replaceWith(image);image.id="tm-appt-form-avatar";
+  $("tm-appt-photo-input").value="";
+  $("tm-appt-photo-remove").hidden=!item?.has_photo;
   $("tm-appt-professional-dialog-title").textContent=item?"Editar profissional":"Novo profissional";
   $("tm-appt-professional-form").reset();
   formError("professional","");
@@ -243,6 +264,35 @@
   $("tm-appt-professional-dialog").showModal();
   $("tm-appt-professional-name").focus();
  }
+ $("tm-appt-photo-input").addEventListener("change",async event=>{
+  const file=event.currentTarget.files?.[0];
+  if(!file)return;
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024){
+   formError("professional","Escolhe uma fotografia JPG, PNG ou WebP até 3 MB.");
+   event.currentTarget.value="";return;
+  }
+  try{
+   const data=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(Error("Não foi possível ler a fotografia."));
+    reader.readAsDataURL(file);
+   });
+   pendingPhoto={action:"set",data};
+   const avatar=$("tm-appt-form-avatar");avatar.replaceChildren();
+   const img=document.createElement("img");img.alt="";img.src=data;avatar.append(img);
+   $("tm-appt-photo-remove").hidden=false;formError("professional","");
+  }catch(error){formError("professional",error.message);}
+ });
+ $("tm-appt-photo-remove").addEventListener("click",()=>{
+  pendingPhoto={action:"delete"};
+  const avatar=$("tm-appt-form-avatar");avatar.replaceChildren();
+  const name=$("tm-appt-professional-name").value.trim();
+  avatar.textContent=name.split(/\s+/).slice(0,2).map(w=>w.charAt(0)).join("").toUpperCase()||"+";
+  $("tm-appt-photo-remove").hidden=true;
+  $("tm-appt-photo-input").value="";
+ });
+
  $("tm-appt-create-service").addEventListener("click",()=>openService());
  $("tm-appt-create-professional").addEventListener("click",()=>openProfessional());
  $("tm-appt-services-list").addEventListener("click",event=>{
@@ -305,9 +355,19 @@
     method=editingProfessional?"PUT":"POST";
     url=endpoint+"/professionals"+(editingProfessional?"/"+encodeURIComponent(editingProfessional):"");
    }
-   await api(url,{method,body:JSON.stringify(payload)});
+   const saved=await api(url,{method,body:JSON.stringify(payload)});
+   let photoWarning="";
+   if(type==="professional"&&pendingPhoto){
+    const id=editingProfessional||saved.id;
+    const photoUrl=endpoint+"/professionals/"+encodeURIComponent(id)+"/photo";
+    try{
+     if(pendingPhoto.action==="set")await api(photoUrl,{method:"PUT",body:JSON.stringify({photo:pendingPhoto.data})});
+     else if(pendingPhoto.action==="delete")await api(photoUrl,{method:"DELETE",body:"{}"});
+     pendingPhoto=null;
+    }catch(photoError){photoWarning="Os dados foram guardados, mas a fotografia não foi atualizada: "+photoError.message;}
+   }
    form.closest("dialog").close();
-   feedback(type==="service"?"Serviço guardado com sucesso.":"Profissional guardado com sucesso.");
+   feedback(photoWarning||(type==="service"?"Serviço guardado com sucesso.":"Profissional guardado com sucesso."),!!photoWarning);
    try{await loadCatalog();}
    catch(error){feedback("Alteração guardada, mas não foi possível atualizar a lista. Reabre a página para confirmar.",true);}
   }catch(error){formError(type,error.message);}
