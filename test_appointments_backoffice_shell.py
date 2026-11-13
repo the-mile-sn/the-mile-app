@@ -16,13 +16,24 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             self.assertIn(b"Sesami", page["body"])
             self.assertIn(b"/api/me", client.request("/admin-appointments.js")["body"])
             self.assertEqual(client.request("/admin-appointments.js")["status"], 200)
+            # The schedule DOM must load its controller, after the catalogue's
+            # CustomEvent publisher. Otherwise professional/service selects stay empty.
+            body = page["body"]
+            main_script = b'src="/admin-appointments.js?v=3"'
+            schedule_script = b'src="/admin-appointments-schedule.js?v=2"'
+            self.assertIn(main_script, body)
+            self.assertIn(schedule_script, body)
+            self.assertLess(body.index(main_script), body.index(schedule_script))
+            schedule = client.request("/admin-appointments-schedule.js")
+            self.assertEqual(schedule["status"], 200)
+            self.assertIn(b'tm:appointments-catalog', schedule["body"])
             self.assertEqual(client.request("/admin-appointments.css")["status"], 200)
             self.assertEqual(page["headers"]["Cache-Control"], "no-store")
 
     def test_player_service_does_not_expose_admin_shell(self):
         with patch.object(app, "SITE_ROLE", "player"):
             for route in ("/admin-appointments", "/admin-appointments.js",
-                          "/admin-appointments.css"):
+                          "/admin-appointments-schedule.js", "/admin-appointments.css"):
                 with self.subTest(route=route):
                     self.assertEqual(fixtures.Client().request(route)["status"], 404)
 
