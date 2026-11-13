@@ -285,3 +285,67 @@ body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#101114);color:var(
  .tm-appt-bookings-filters .tm-appt-outline-action{grid-column:1/-1;justify-self:stretch}
  .tm-appt-agenda-count{font-size:9px;white-space:normal}
 }
+
+
+/* Booking date picker — monthly site-style availability inside the backoffice modal. */
+.tm-appt-booking-date-section{
+ --tm-appt-available-bg:#f6f7f8;--tm-appt-available-ink:#202631;
+ --tm-appt-picked-bg:#aac9b4;--tm-appt-picked-ink:#192c24;
+ padding:17px;border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);
+ border-radius:14px;min-width:0;display:flex;flex-direction:column;gap:14px
+}
+html[data-admin-theme="light"] .tm-appt-booking-date-section{
+ --tm-appt-available-bg:#ffffff;--tm-appt-available-ink:#27313e;
+ --tm-appt-picked-bg:#315a4d;--tm-appt-picked-ink:#ffffff
+}
+.tm-appt-cal-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.tm-appt-cal-intro h3{margin:0 0 5px;font-size:14px;font-weight:600;letter-spacing:-.012em;color:var(--tm-ui-text)}
+.tm-appt-cal-intro p{margin:0;font-size:11px;color:var(--tm-ui-muted);line-height:1.5}
+.tm-appt-cal-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--tm-ui-muted);font-size:10px}
+.tm-appt-cal-legend span{display:inline-flex;align-items:center;gap:6px}
+.tm-appt-cal-legend i{display:inline-block;width:11px;height:11px;border-radius:4px;border:1px solid var(--tm-ui-divider);flex:none}
+.tm-appt-cal-legend .is-open{background:var(--tm-appt-available-bg);border-color:color-mix(in srgb,var(--tm-ui-text) 16%,transparent)}
+.tm-appt-cal-legend .is-unavailable{background:var(--tm-ui-search)}
+.tm-appt-month-calendar{padding:15px;background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);border-radius:13px;min-width:0}
+.tm-appt-cal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 16px}
+.tm-appt-cal-toolbar h4{margin:0;font-size:15px;font-weight:600;letter-spacing:-.018em;color:var(--tm-ui-text);text-transform:capitalize}
+.tm-appt-cal-controls{display:flex;gap:6px;align-items:center}
+.tm-appt-cal-controls button{width:34px;height:34px;flex:none;display:grid;place-items:center;border:1px solid var(--tm-ui-divider);border-radius:9px;background:var(--tm-ui-subcard);color:var(--tm-ui-text);cursor:pointer}
+.tm-appt-cal-controls button:hover:not(:disabled){background:var(--tm-ui-hover)}
+.tm-appt-cal-controls button:disabled{opacity:.35;cursor:default}
+.tm-appt-cal-controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tm-appt-cal-weekdays,.tm-appt-cal-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:6px;row-gap:7px}
+.tm-appt-cal-weekdays{margin-bottom:7px}
+.tm-appt-cal-weekdays span{text-align:center;color:var(--tm-ui-muted);font-weight:500;font-size:10px;padding:5px 0}
+.tm-appt-cal-spacer{pointer-events:none}
+.tm-appt-cal-day{appearance:none;min-width:0;width:100%;min-height:47px;padding:6px 0;border-radius:9px;font:600 13px/1 "Inter Tight",Arial,sans-serif;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;transition:transform .14s ease,background .14s ease,border-color .14s ease}
+.tm-appt-cal-day.is-unavailable{background:var(--tm-ui-search);border:1px solid transparent;color:var(--tm-ui-muted);opacity:.38;cursor:not-allowed}
+.tm-appt-cal-day.is-available{background:var(--tm-appt-available-bg);color:var(--tm-appt-available-ink);border:1px solid color-mix(in srgb,var(--tm-ui-text) 18%,transparent);cursor:pointer}
+.tm-appt-cal-day.is-available:hover:not(.is-selected){transform:translateY(-1px);border-color:color-mix(in srgb,var(--tm-ui-text) 48%,transparent)}
+.tm-appt-cal-day.is-selected,.tm-appt-cal-day.is-selected:hover{background:var(--tm-appt-picked-bg);color:var(--tm-appt-picked-ink);border:1px solid var(--tm-appt-picked-bg);box-shadow:0 0 0 2px color-mix(in srgb,var(--tm-appt-picked-bg) 28%,transparent);transform:none}
+.tm-appt-cal-day.is-today:not(.is-selected){outline:1px solid color-mix(in srgb,var(--tm-ui-text) 45%,transparent);outline-offset:1px}
+.tm-appt-cal-loading{grid-column:1/-1;min-height:100px;display:grid;place-items:center;margin:0;color:var(--tm-ui-muted);font-size:12px}
+.tm-appt-cal-feedback{min-height:16px;margin:11px 0 0;color:var(--tm-ui-muted);font-size:10px;line-height:1.5}
+.tm-appt-booking-times{border-top:1px solid var(--tm-ui-divider);padding-top:14px;min-height:90px}
+.tm-appt-times-header h4{margin:0 0 4px;font-size:13px;color:var(--tm-ui-text);font-weight:600}
+.tm-appt-times-header p{margin:0 0 13px;font-size:11px;line-height:1.45;color:var(--tm-ui-muted)}
+.tm-appt-time-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;max-width:100%}
+.tm-appt-time-button{width:100%;min-height:40px;padding:9px 7px;border:1px solid var(--tm-ui-divider);border-radius:10px;background:var(--tm-ui-card);color:var(--tm-ui-text);font:600 12px/1 "Inter Tight",Arial,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.tm-appt-time-button:hover:not(.is-selected){background:var(--tm-ui-hover);transform:translateY(-1px)}
+.tm-appt-time-button.is-selected{background:var(--tm-appt-picked-bg);border-color:var(--tm-appt-picked-bg);color:var(--tm-appt-picked-ink)}
+.tm-appt-booking-date-section :is(.tm-appt-cal-day,.tm-appt-time-button,.tm-appt-cal-controls button):focus-visible{outline:2px solid #8baac5;outline-offset:2px}
+@media(max-width:600px){
+ .tm-appt-booking-date-section{padding:12px;gap:12px}
+ .tm-appt-month-calendar{padding:11px}
+ .tm-appt-cal-toolbar{margin-bottom:11px}
+ .tm-appt-cal-toolbar h4{font-size:14px}
+ .tm-appt-cal-weekdays,.tm-appt-cal-days{column-gap:4px;row-gap:5px}
+ .tm-appt-cal-weekdays span{font-size:9px}
+ .tm-appt-cal-day{min-height:41px;font-size:12px;border-radius:8px}
+ .tm-appt-time-options{grid-template-columns:repeat(auto-fill,minmax(67px,1fr));gap:6px}
+ .tm-appt-time-button{min-height:39px;font-size:12px}
+ .tm-appt-cal-legend{font-size:9px;gap:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tm-appt-cal-day,.tm-appt-time-button{transition:none}
+}
