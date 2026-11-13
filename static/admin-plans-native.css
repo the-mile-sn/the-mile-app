@@ -2545,3 +2545,34 @@
  }
 }
 
+/* Back navigation within Planos — same visual language as "Início".
+   Keep existing preview/editor/search action handlers and editor state logic. */
+#tm-plan-page :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back{
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:flex-start!important;gap:5px!important;
+ width:auto!important;min-width:0!important;height:auto!important;min-height:37px!important;
+ padding:6px 10px 6px 2px!important;margin:0!important;
+ border:0!important;border-radius:9px!important;box-shadow:none!important;
+ background:transparent!important;
+ color:#aeb7c4!important;
+ font:600 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ text-align:left!important;letter-spacing:0!important;cursor:pointer;
+}
+#tm-plan-page[data-admin-theme="light"] :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back{
+ color:#4f657c!important;
+}
+#tm-plan-page :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back svg{
+ flex:none!important;display:block!important;width:19px!important;height:19px!important;
+}
+@media(hover:hover) and (pointer:fine){
+ #tm-plan-page[data-admin-theme="dark"] :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back:hover{
+  background:#23262e!important;color:#f1f3f6!important;filter:none!important;
+ }
+ #tm-plan-page[data-admin-theme="light"] :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back:hover{
+  background:#e6ebf2!important;color:#1c3854!important;filter:none!important;
+ }
+}
+#tm-plan-page :is(#plan-editor,#plan-preview,#plan-search-selection) .plan-back:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#90b8d8)!important;outline-offset:2px!important;
+}
+
