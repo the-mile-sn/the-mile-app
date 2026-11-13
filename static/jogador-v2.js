@@ -1390,8 +1390,14 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     if(!dragging)return;
     const y=e.touches[0]?.clientY??dragStart,delta=dragStart-y;
     if(Math.abs(delta)<3&&!dragMoved)return;
-    dragMoved=true;e.preventDefault();
-    const max=expandedHeight(),next=Math.max(0,Math.min(max,startHeight+delta));
+    e.preventDefault();
+    const max=expandedHeight();
+    // At the fully expanded limit, consume upward overscroll without touching
+    // height or triggering WebKit's rubber-band/compositor repaint.
+    if(delta>0&&startHeight>=max-2){return;}
+    const next=Math.max(0,Math.min(max,startHeight+delta));
+    if(Math.abs(next-startHeight)<1){return;}
+    dragMoved=true;
     sheet.style.setProperty('--sheet-drag-height',next+'px');
     sheet.style.setProperty('--sheet-drag-max-height',max+'px');
     sheet.style.setProperty('height',next+'px','important');
