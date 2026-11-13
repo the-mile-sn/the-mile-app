@@ -80,16 +80,17 @@ function enableOverviewDaySwipe(element){
    preview.style.top=content.offsetTop+'px';
    preview.style.left=content.offsetLeft+'px';
    preview.style.width=start.width+'px';
-   const skeleton=document.createElement('div');skeleton.className='mile-day-swipe-preview-skeleton';
-   const nutrition=document.createElement('div');nutrition.className='mile-swipe-nutrition';
-   nutrition.innerHTML='<div class="mile-swipe-ring"><div class="mile-swipe-ring-inner"><span></span><span></span></div></div><div class="mile-swipe-macros"><i></i><i></i><i></i></div>';
-   const weight=document.createElement('div');weight.className='mile-swipe-weight';weight.innerHTML='<span></span><span></span>';
-   skeleton.append(nutrition,weight);
-   for(let i=0;i<4;i++){
-    const meal=document.createElement('div');meal.className='mile-swipe-meal';
-    meal.innerHTML='<span class="mile-swipe-meal-label"></span><span class="mile-swipe-meal-energy"></span><span class="mile-swipe-meal-chevron">⌄</span>';
-    skeleton.append(meal);
-   }
+   // Clone the actual day layout so every card and its vertical position
+   // matches the current day, even when the page has been scrolled.
+   const skeleton=content.cloneNode(true);
+   skeleton.removeAttribute('id');
+   skeleton.classList.add('mile-day-swipe-preview-skeleton');
+   skeleton.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+   skeleton.querySelectorAll('input,button,select,textarea,a,[tabindex]').forEach(node=>{
+    node.removeAttribute('tabindex');node.setAttribute('aria-hidden','true');
+   });
+   skeleton.querySelectorAll('img,video,canvas,iframe').forEach(node=>node.remove());
+   skeleton.querySelectorAll('svg').forEach(node=>node.setAttribute('aria-hidden','true'));
    preview.append(skeleton);content.parentElement.append(preview);
   }
   if(event.cancelable)event.preventDefault();
