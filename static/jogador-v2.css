@@ -4861,3 +4861,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 /* Calendar date selection: moving circle owns the fill until it settles. */
 #week-strip .week-day.selected .day-number.mile-calendar-arriving{background:transparent!important}
+
+/* Date digits stay visible throughout the moving-circle animation. */
+#week-strip .week-day .day-number{position:relative;z-index:2}
