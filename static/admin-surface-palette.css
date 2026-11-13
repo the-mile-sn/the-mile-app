@@ -1525,3 +1525,97 @@ html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-loa
   margin-top:22px!important;
  }
 }
+
+/* Profile sections: flat peers with content-only subcards (13 Nov 2026). */
+/* The main profile is already a card. Its headings remain siblings at one
+   depth: Dados pessoais / Permissoes / Imagem App / Gerir acesso.
+   Do not add a large enclosing panel around the latter two groups. */
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot{
+ display:flex!important;flex-direction:column!important;
+ gap:0!important;
+ margin:0!important;
+ padding:0!important;
+ background:transparent!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot > .tm-player-permissions{
+ display:flex!important;flex-direction:column!important;
+ gap:14px!important;
+ padding:0!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-permissions-heading{
+ display:flex!important;align-items:center!important;gap:11px!important;
+ margin:0!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-permissions-title{
+ margin:0!important;
+ font-size:17px!important;line-height:1.35!important;
+ font-weight:650!important;letter-spacing:normal!important;
+ color:var(--tm-ui-text)!important;
+}
+/* Keep the enabled green signal, but use the correct subcard depth for
+   neutral/inactive permission rows in BOTH light and dark modes. */
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-permission-row:not(.is-enabled){
+ background:var(--tm-ui-subcard)!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-settings-slot .tm-player-permission-row{
+ border:0!important;border-radius:14px!important;box-shadow:none!important;
+}
+/* Image App: its own section, without a grey parent or divider. Only
+   the preview/actions area receives the same subcard fill as the options. */
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card{
+ display:flex!important;flex-direction:column!important;gap:14px!important;
+ margin:28px 0 0!important;padding:0!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-info{
+ display:flex!important;align-items:center!important;gap:11px!important;
+ margin:0!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-info svg{
+ display:block!important;flex:0 0 18px!important;
+ width:18px!important;height:18px!important;
+ stroke-width:1.8!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-info h4{
+ margin:0!important;
+ font-size:17px!important;line-height:1.35!important;
+ font-weight:650!important;letter-spacing:normal!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-surface{
+ box-sizing:border-box;width:100%;
+ min-width:0;padding:16px 18px;
+ border:0;border-radius:14px;box-shadow:none;
+ background:var(--tm-ui-subcard);
+}
+html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-editor{
+ min-width:0;
+}
+/* Access is the fourth peer section; keep its existing coloured actions. */
+html[data-admin-theme] #tm-players-page #tm-players-access-management{
+ margin:28px 0 0!important;padding:0!important;
+ background:transparent!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-access-management h4{
+ display:flex!important;align-items:center!important;gap:11px!important;
+ margin:0 0 14px!important;font-size:17px!important;
+ font-weight:650!important;line-height:1.35!important;
+ color:var(--tm-ui-text)!important;
+}
+@media(max-width:640px){
+ html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card,
+ html[data-admin-theme] #tm-players-page #tm-players-access-management{
+  margin-top:24px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-players-loading-photo-card .tm-player-loading-photo-surface{
+  padding:14px!important;
+ }
+}
