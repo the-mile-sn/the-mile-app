@@ -5397,3 +5397,19 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   font-size:12px!important;line-height:1.1!important;margin-bottom:2px!important;
  }
 }
+
+/* Nutrition compact card: unit toggle beside expand arrow, with breathing room below macros. */
+#overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:44px!important}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
+ position:absolute!important;top:auto!important;bottom:7px!important;right:38px!important;
+ width:28px!important;height:28px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ background:transparent!important;border:0!important;padding:0!important;z-index:5!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+ width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;background:transparent!important;border:0!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch svg{width:20px!important;height:20px!important;display:block!important}
+#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:7px!important;right:0!important}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends{padding-right:0!important}
+@media(max-width:520px){#overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:42px!important}}
