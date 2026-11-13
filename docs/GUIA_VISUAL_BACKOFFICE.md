@@ -273,3 +273,13 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Jogadores, segunda linha:** data de renovação à esquerda e badge de estado (Ativo/Inativo/Sem conta) à direita. Não posicionar o botão por baixo do estado; não alterar cores, estados, permissões nem ações de acesso à app.
 - Desktop, filtros, dados dos jogadores, perfis, conteúdos dos planos e app dos jogadores ficam fora do âmbito.
 
+## 23. Visualização de Planos — uniformização desktop (13 novembro 2026)
+
+- **Âmbito desta revisão: apenas desktop (largura a partir de 831 px)**. Preservar integralmente a visualização mobile aprovada, incluindo dimensão e disposição da informação nutricional, botão «Editar plano», refeições expansíveis e opções.
+- **Botão de edição desktop:** substituir o texto isolado «Editar plano» pelo botão secundário neutro **ícone outline de lápis + «Editar»**, com Inter Tight Medium 500/13 px, canto de 12 px e sem contorno ou sombra. Manter o ID `preview-edit`, o handler de edição e o alinhamento à direita na mesma faixa da navegação superior «‹ Planos».
+- **Resumo desktop:** dentro do card principal, apresentar **Jogador → Plano → Referência** à esquerda e depois uma fila equilibrada de **quatro macros**. A referência continua disponível (fundamental para cálculos): formato discreto `Referência: [peso] kg · [data por extenso]` sob o título, em vez de estar isolada no canto superior direito. Não alterar o cálculo dos rácios; alterações só na string de apresentação do resumo.
+- Valores nutricionais desktop com **26 px**, etiquetas com **13 px** e rácios com **12 px**, todos alinhados e com espaço consistente entre colunas. Separação horizontal de baixíssima opacidade entre contexto e totais; manter as quatro cores nutricionais oficiais e os modos claro/escuro.
+- A classificação («Amarelo», «Laranja», etc.) **não se repete como título** no segundo card no desktop, porque já integra «Plano [tipo]» no resumo. O segundo card começa diretamente pelas refeições com margens equilibradas.
+- **Opções das refeições desktop:** manter os preenchimentos por paleta já aprovados e remover totalmente contornos e sombras decorativos das opções, em especial no tema claro. Manter foco visível e a expansão dos elementos `details/summary`.
+- Não alterar os dados, alimentos, gramagens, associações, editor, endpoints nem a app dos jogadores. As alterações de conteúdo limitam-se ao HTML do botão e à formatação da referência no próprio resumo.
+
