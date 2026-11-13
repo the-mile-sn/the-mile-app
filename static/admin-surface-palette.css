@@ -2019,3 +2019,30 @@ html[data-admin-theme] #tm-food-library-page .food-catalog-table thead tr.food-h
    browser width. The .scroll element owns horizontal overflow, avoiding
    overlapping text when the window is narrow. The card mode above is
    reserved for phones/small touch-only tablets. */
+
+/* Shared New Player / New Food modal elevation — approved 13 November 2026.
+ * One graphite/white surface and the same dark backdrop across the two forms.
+ * Scoped to the existing dialogs: no changes to form values or behavior. */
+html[data-admin-theme] #tm-players-page #tm-players-create-form,
+html[data-admin-theme] #tm-food-library-page #editor{
+ background:var(--tm-ui-card)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;
+ outline:0!important;
+ box-shadow:none!important;
+ border-radius:18px!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-create-form::backdrop,
+html[data-admin-theme] #tm-food-library-page #editor::backdrop{
+ background:rgba(0,0,0,.76)!important;
+}
+html[data-admin-theme] #tm-food-library-page #editor h2{
+ font:600 23px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ letter-spacing:-.025em;
+ color:var(--tm-ui-text)!important;
+ margin:0 0 24px;
+}
+@media(max-width:620px){
+ html[data-admin-theme] #tm-food-library-page #editor h2{font-size:21px!important;margin-bottom:21px;}
+}
+
