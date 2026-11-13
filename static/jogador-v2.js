@@ -1770,7 +1770,7 @@ async function overview(){
     const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
     const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
     const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
-    mode.append(gramsButton,kgButton);energyRow.append(energyLine,mode);figures.append(energyRow);
+    mode.append(gramsButton,kgButton);energyRow.append(energyLine);figures.append(energyRow);visual.append(mode);
     const details=document.createElement("div");details.className="consumption-concentric-macros";
     const macroValues=[];
     for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
