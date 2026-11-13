@@ -7,9 +7,11 @@
  const foods=get("tm-food-main"),portions=get("tm-visual-portions-page");
  // Navigation is provided by the shared sidebar.
  const input=get("tm-portion-file"),feedback=get("tm-portion-feedback");
- const grid=get("tm-portion-grid"),count=get("tm-portion-count");
+ const grid=get("tm-portion-grid"),paging=get("tm-portion-paging");
+ const progress=get("tm-portion-progress"),loadMore=get("tm-portion-load-more");
  const search=get("tm-portion-search"),category=get("tm-portion-category");
- let references=[],loaded=false,loading=false;
+ const BATCH_SIZE=16;
+ let references=[],loaded=false,loading=false,filteredReferences=[],visibleCount=BATCH_SIZE;
  const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
  function mode(which){
   const visual=which==="portions";
@@ -18,6 +20,45 @@
   if(visual&&!loaded&&!loading)load();
  }
  window.tmShowAdminFoodLibrarySection=mode;
+ function makeCard(ref){
+  const card=document.createElement("article");card.className="tm-portion-card";
+  const image=document.createElement("img");image.loading="lazy";image.decoding="async";
+  image.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id);
+  image.alt=ref.photo_subject==="Carne branca"?"Fotografia de carne branca usada como exemplo para carne ou peixe, "+ref.total_g+" g":"Fotografia de "+ref.category+", "+ref.total_g+" g";
+  const info=document.createElement("div");info.className="tm-portion-info";
+  const label=document.createElement("strong");label.textContent=ref.category;
+  const grams=document.createElement("span");grams.className="tm-portion-grams";
+  grams.textContent=ref.total_g+" g";
+  info.append(label,grams);
+  if(ref.rice_g!==null&&ref.rice_g!==undefined){
+   const breakdown=document.createElement("small");breakdown.className="tm-portion-breakdown";
+   breakdown.textContent=ref.rice_g+" g arroz + "+ref.potato_g+" g batata";
+   info.append(breakdown);
+  }
+  const toggle=document.createElement("button");toggle.type="button";toggle.className="tm-portion-toggle";
+  function renderStatus(){
+   toggle.setAttribute("aria-pressed",String(!!ref.active));toggle.textContent=ref.active?"Ativa":"Inativa";
+  }
+  renderStatus();
+  toggle.addEventListener("click",async()=>{
+   toggle.disabled=true;
+   try{
+    const res=await request("/api/v2/visual-portions/"+encodeURIComponent(ref.id),{method:"PUT",body:JSON.stringify({active:!ref.active})});
+    ref.active=!!res.active;renderStatus();
+    if(!previewBody.hidden&&previewAthlete.value)previewForAthlete();
+   }catch(e){feedback.textContent="Não foi possível alterar a referência: "+e.message;}
+   finally{toggle.disabled=false;}
+  });
+  card.append(image,info,toggle);return card;
+ }
+ function updatePaging(){
+  const shown=Math.min(visibleCount,filteredReferences.length);
+  paging.hidden=filteredReferences.length===0;
+  progress.textContent="A mostrar "+shown+" de "+filteredReferences.length+" referências";
+  const remaining=filteredReferences.length-shown;
+  loadMore.hidden=remaining<=0;
+  if(remaining>0)loadMore.textContent="Ver mais ("+Math.min(BATCH_SIZE,remaining)+")";
+ }
  function draw(){
   const categories=[...new Set(references.map(x=>x.category))].sort((a,b)=>a.localeCompare(b,"pt"));
   const selected=category.value;
@@ -26,50 +67,41 @@
   for(const name of categories){const item=document.createElement("option");item.value=name;item.textContent=name;category.append(item);}
   category.value=categories.includes(selected)?selected:"";
   const term=normalize(search.value);
-  const filtered=references.filter(ref=>{
+  filteredReferences=references.filter(ref=>{
    if(category.value&&ref.category!==category.value)return false;
-   const display=ref.category+" "+ref.total_g+" g "+(ref.rice_g?"arroz "+ref.rice_g+" g batata "+ref.potato_g+" g":"");
+   const display=ref.category+" "+ref.total_g+" g "+(ref.rice_g!==null&&ref.rice_g!==undefined?"arroz "+ref.rice_g+" g batata "+ref.potato_g+" g":"");
    return !term||normalize(display).includes(term);
   });
-  count.textContent=filtered.length+" de "+references.length+" referências";
   grid.replaceChildren();
-  if(!filtered.length){const empty=document.createElement("p");empty.textContent=references.length?"Nenhuma referência corresponde aos filtros.":"Ainda não existem referências fotográficas.";grid.append(empty);return;}
-  for(const ref of filtered){
-   const card=document.createElement("article");card.className="tm-portion-card";
-   const image=document.createElement("img");image.loading="lazy";image.decoding="async";image.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id);
-   image.alt=ref.photo_subject==="Carne branca"?"Fotografia de carne branca usada como exemplo para carne ou peixe, "+ref.total_g+" g":"Fotografia de "+ref.category+", "+ref.total_g+" g";
-   const info=document.createElement("div");info.className="tm-portion-info";
-   const label=document.createElement("strong");label.textContent=ref.category;
-   const grams=document.createElement("span");grams.className="tm-portion-grams";
-   grams.textContent=ref.total_g+" g";
-   info.append(label,grams);
-   if(ref.rice_g!==null&&ref.rice_g!==undefined){
-    const breakdown=document.createElement("small");breakdown.className="tm-portion-breakdown";
-    breakdown.textContent=ref.rice_g+" g arroz + "+ref.potato_g+" g batata";
-    info.append(breakdown);
-   }
-   const toggle=document.createElement("button");toggle.type="button";toggle.className="tm-portion-toggle";toggle.setAttribute("aria-pressed",String(!!ref.active));
-   toggle.textContent=ref.active?"Ativa":"Inativa";
-   toggle.addEventListener("click",async()=>{
-    toggle.disabled=true;
-    try{const res=await request("/api/v2/visual-portions/"+encodeURIComponent(ref.id),{method:"PUT",body:JSON.stringify({active:!ref.active})});ref.active=!!res.active;draw();if(!previewBody.hidden&&previewAthlete.value)previewForAthlete();}
-    catch(e){feedback.textContent="Não foi possível alterar a referência: "+e.message;toggle.disabled=false;}
-   });
-   card.append(image,info,toggle);grid.append(card);
+  if(!filteredReferences.length){
+   const empty=document.createElement("p");empty.className="tm-portion-empty";
+   empty.textContent=references.length?"Nenhuma referência corresponde aos filtros.":"Ainda não existem referências fotográficas.";
+   grid.append(empty);updatePaging();return;
   }
+  const batch=document.createDocumentFragment();
+  for(const ref of filteredReferences.slice(0,visibleCount))batch.append(makeCard(ref));
+  grid.append(batch);updatePaging();
  }
+ function showMore(){
+  const from=Math.min(visibleCount,filteredReferences.length);
+  visibleCount=Math.min(visibleCount+BATCH_SIZE,filteredReferences.length);
+  const batch=document.createDocumentFragment();
+  for(const ref of filteredReferences.slice(from,visibleCount))batch.append(makeCard(ref));
+  grid.append(batch);updatePaging();
+ }
+ loadMore.addEventListener("click",showMore);
  async function load(){
   loading=true;feedback.textContent="A carregar referências visuais…";
   try{
    const result=await request("/api/v2/visual-portions");
-   references=result.references||[];loaded=true;
+   references=result.references||[];loaded=true;visibleCount=BATCH_SIZE;
    feedback.textContent="";
    draw();
   }catch(error){feedback.textContent="Não foi possível carregar as fotografias: "+error.message;}
   finally{loading=false;}
  }
- search.addEventListener("input",draw);
- category.addEventListener("change",draw);
+ search.addEventListener("input",()=>{visibleCount=BATCH_SIZE;draw();});
+ category.addEventListener("change",()=>{visibleCount=BATCH_SIZE;draw();});
  input.addEventListener("change",async()=>{
   const file=input.files&&input.files[0];if(!file)return;
   if(!file.name.toLowerCase().endsWith(".zip")||file.size>5*1024*1024){feedback.textContent="Seleciona o pacote ZIP aprovado (até 5 MB).";input.value="";return;}
