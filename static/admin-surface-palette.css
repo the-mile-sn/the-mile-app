@@ -2046,3 +2046,25 @@ html[data-admin-theme] #tm-food-library-page #editor h2{
  html[data-admin-theme] #tm-food-library-page #editor h2{font-size:21px!important;margin-bottom:21px;}
 }
 
+/* Universal typography for creation actions on the Backoffice.
+ * The same Inter Tight Medium 500 / 13px in both themes and at all widths.
+ * Keep icon sizes, surface fills, action geometry and non-create buttons intact. */
+html[data-admin-theme] body .tm-action-new,
+html[data-admin-theme] body :is(
+ #plan-entry #entry-create.tm-action-new,
+ #plan-editor #new-plan.tm-action-new,
+ #tm-players-page #tm-players-new.tm-action-new,
+ #tm-menu-recipes-page #dish-add-toggle.tm-action-new,
+ #tm-recipe-library-page #recipe-add.tm-action-new,
+ #tm-assessments-page #assessment-new.tm-action-new,
+ #assessment-new.tm-action-new,
+ .food-library-top #new.tm-action-new,
+ #admin-invite-form button.tm-action-new
+){
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ font-size:13px!important;
+ font-weight:500!important;
+ line-height:1.3!important;
+ letter-spacing:0!important;
+}
+
