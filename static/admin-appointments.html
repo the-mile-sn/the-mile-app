@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=33">
- <link rel="stylesheet" href="/admin-appointments.css?v=4">
+ <link rel="stylesheet" href="/admin-appointments.css?v=5">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -216,13 +216,38 @@
      <form id="tm-appt-booking-form" novalidate>
       <div class="tm-appt-dialog-heading"><div><span>Reservas · The Mile</span><h2 id="tm-appt-booking-title">Nova marcação interna</h2></div><button type="button" class="tm-appt-dialog-close" data-close-booking-dialog aria-label="Fechar">×</button></div>
       <p class="tm-appt-form-hint">Não gera pagamento Shopify ou evento Google. Confirma também eventuais reservas no Sesami.</p>
-      <div class="tm-appt-dialog-grid">
+      <div class="tm-appt-dialog-grid tm-appt-booking-identity">
        <label class="tm-appt-field"><span>Profissional</span><select id="tm-appt-booking-professional" required></select></label>
        <label class="tm-appt-field"><span>Serviço</span><select id="tm-appt-booking-service" required></select></label>
        <label class="tm-appt-field"><span>Formato</span><select id="tm-appt-booking-mode" required><option value="presencial">Presencial</option><option value="online">Online</option></select></label>
-       <label class="tm-appt-field"><span>Dia</span><input type="date" id="tm-appt-booking-date" required></label>
-       <label class="tm-appt-field tm-appt-full"><span>Horário disponível</span><select id="tm-appt-booking-start" required><option value="">Escolhe o serviço, profissional e dia</option></select></label>
       </div>
+      <section class="tm-appt-booking-date-section" aria-labelledby="tm-appt-cal-section-title">
+       <div class="tm-appt-cal-intro">
+        <div><h3 id="tm-appt-cal-section-title">Disponibilidade</h3><p>Seleciona um dia e, em seguida, um horário.</p></div>
+        <div class="tm-appt-cal-legend" aria-label="Legenda do calendário">
+         <span><i class="is-open" aria-hidden="true"></i>Com vagas</span>
+         <span><i class="is-unavailable" aria-hidden="true"></i>Indisponível</span>
+        </div>
+       </div>
+       <div class="tm-appt-month-calendar">
+        <div class="tm-appt-cal-toolbar">
+         <h4 id="tm-appt-cal-month-title" aria-live="polite">Calendário</h4>
+         <div class="tm-appt-cal-controls">
+          <button type="button" id="tm-appt-cal-prev" aria-label="Mês anterior" title="Mês anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button type="button" id="tm-appt-cal-next" aria-label="Mês seguinte" title="Mês seguinte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+         </div>
+        </div>
+        <div class="tm-appt-cal-weekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+        <div id="tm-appt-cal-days" class="tm-appt-cal-days" role="group" aria-label="Selecionar dia" aria-busy="false"></div>
+        <p id="tm-appt-cal-feedback" class="tm-appt-cal-feedback" role="status" aria-live="polite"></p>
+       </div>
+       <div class="tm-appt-booking-times">
+        <div class="tm-appt-times-header"><h4 id="tm-appt-times-title">Horários disponíveis</h4><p id="tm-appt-times-description">Seleciona um dia com vagas no calendário.</p></div>
+        <div id="tm-appt-time-options" class="tm-appt-time-options" role="group" aria-label="Selecionar horário" aria-busy="false"></div>
+       </div>
+       <input type="hidden" id="tm-appt-booking-date" name="booking_date">
+       <input type="hidden" id="tm-appt-booking-start" name="booking_start">
+      </section>
       <div class="tm-appt-booking-customer-group">
        <h3>Dados do cliente</h3>
        <label class="tm-appt-field"><span>Nome completo</span><input id="tm-appt-booking-name" required maxlength="140" autocomplete="name" placeholder="Nome do cliente"></label>
@@ -240,7 +265,7 @@
  <script src="/admin-nav-shell.js?v=5" defer></script>
  <script src="/admin-appointments.js?v=4" defer></script>
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
- <script src="/admin-appointments-bookings.js?v=1" defer></script>
+ <script src="/admin-appointments-bookings.js?v=2" defer></script>
  <script src="/admin-mobile-nav.js?v=11" defer></script>
 </body>
 </html>

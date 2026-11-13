@@ -5,7 +5,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const endpoint="/api/v2/admin/appointments";
- const state={catalog:{services:[],professionals:[]},bookings:[],editing:null,csrf:null,rangeSequence:0,agendaSequence:0,slotSequence:0};
+ const state={catalog:{services:[],professionals:[]},bookings:[],editing:null,csrf:null,rangeSequence:0,agendaSequence:0,slotSequence:0,monthSequence:0,month:"",monthDays:new Map(),selectedDate:"",selectedStart:"",visibleSlots:[]};
  const lisbon=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",day:"2-digit",month:"2-digit",year:"numeric"});
  const dayFmt=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short",year:"numeric"});
  const make=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=String(text);return node;};
@@ -50,6 +50,8 @@
   booking_cancelled:"Esta marcação já está cancelada.",
   booking_not_found:"A marcação não foi encontrada.",
   invalid_range:"O intervalo máximo de pesquisa é de 93 dias.",
+  invalid_month:"Mês inválido.",
+  invalid_booking_id:"Esta marcação já não pode ser editada.",
   invalid_status:"O estado selecionado é inválido."
  };
  async function api(path,method="GET",body){
@@ -160,6 +162,159 @@
   populate(select,eligible.map(s=>[s.id,s.name+" · "+s.duration_minutes+" min"]),"Selecionar serviço",current);
   if(!select.value&&eligible.length)select.value=eligible[0].id;
  }
+ const monthFormat=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",month:"long",year:"numeric"});
+ const monthYear=month=>new Date(month+"-01T12:00:00Z");
+ const nextMonth=(month,delta)=>{
+  const d=monthYear(month);d.setUTCMonth(d.getUTCMonth()+delta);return d.toISOString().slice(0,7);
+ };
+ function paramsForAvailability(){
+  const data={
+   professional_id:$("tm-appt-booking-professional").value,
+   service_id:$("tm-appt-booking-service").value,
+   mode:$("tm-appt-booking-mode").value
+  };
+  if(state.editing?.id)data.exclude_booking_id=state.editing.id;
+  return data;
+ }
+ function clearTime(message="Seleciona um dia com vagas no calendário."){
+  state.selectedStart="";
+  state.visibleSlots=[];
+  $("tm-appt-booking-start").value="";
+  const host=$("tm-appt-time-options");
+  host.replaceChildren();host.setAttribute("aria-busy","false");
+  $("tm-appt-times-title").textContent="Horários disponíveis";
+  $("tm-appt-times-description").textContent=message;
+ }
+ function updateMonthControls(){
+  $("tm-appt-cal-month-title").textContent=monthFormat.format(monthYear(state.month));
+  $("tm-appt-cal-prev").disabled=state.month<=isoToday().slice(0,7);
+  $("tm-appt-cal-next").disabled=state.month>=shift(isoToday(),60).slice(0,7);
+ }
+ function renderMonth(){
+  const host=$("tm-appt-cal-days");host.replaceChildren();
+  const today=isoToday(),max=shift(today,60);
+  const first=monthYear(state.month);
+  const offset=(first.getUTCDay()+6)%7;
+  for(let i=0;i<offset;i++){
+   const gap=make("span","tm-appt-cal-spacer");gap.setAttribute("aria-hidden","true");host.append(gap);
+  }
+  const daysInMonth=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0,12)).getUTCDate();
+  let count=0;
+  for(let number=1;number<=daysInMonth;number++){
+   const iso=state.month+"-"+String(number).padStart(2,"0");
+   const cell=state.monthDays.get(iso);
+   const available=!!cell?.available && iso>=today && iso<=max;
+   if(available)count++;
+   const btn=make("button","tm-appt-cal-day"+(available?" is-available":" is-unavailable")+
+     (iso===state.selectedDate?" is-selected":"")+(iso===today?" is-today":""),number);
+   btn.type="button";btn.disabled=!available;btn.dataset.date=iso;
+   btn.setAttribute("aria-pressed",String(iso===state.selectedDate));
+   btn.setAttribute("aria-label",dateLabel(iso)+(available?
+      ", "+cell.slots_count+" horários disponíveis":", sem horários disponíveis"));
+   if(iso===today)btn.setAttribute("aria-current","date");
+   if(available)btn.addEventListener("click",()=>chooseDay(iso));
+   host.append(btn);
+  }
+  $("tm-appt-cal-feedback").textContent=count?
+    count+" dia"+(count!==1?"s":"")+" com vagas neste mês.":
+    "Sem dias com horários disponíveis neste mês para esta seleção.";
+ }
+ async function loadMonth(preferredDay=null,preferredStart=""){
+  const token=++state.monthSequence;
+  ++state.slotSequence;
+  state.monthDays=new Map();
+  updateMonthControls();
+  const days=$("tm-appt-cal-days");days.setAttribute("aria-busy","true");
+  days.replaceChildren(make("p","tm-appt-cal-loading","A consultar disponibilidades…"));
+  $("tm-appt-cal-feedback").textContent="";
+  clearTime();
+  const params=paramsForAvailability();
+  if(!params.professional_id||!params.service_id){
+   days.replaceChildren();
+   days.setAttribute("aria-busy","false");
+   $("tm-appt-cal-feedback").textContent="Seleciona um profissional e um serviço para consultar vagas.";
+   return;
+  }
+  try{
+   const result=await api("/calendar-month?"+new URLSearchParams({...params,month:state.month}));
+   if(token!==state.monthSequence||!$("tm-appt-booking-dialog").open)return;
+   if(!Array.isArray(result.days)||result.month!==state.month)throw Error("Não foi possível validar o mês.");
+   state.monthDays=new Map(result.days.map(d=>[d.date,d]));
+   days.setAttribute("aria-busy","false");
+   const preferred=preferredDay&&state.monthDays.get(preferredDay)?.available?preferredDay:"";
+   state.selectedDate=preferred;
+   $("tm-appt-booking-date").value=preferred;
+   renderMonth();
+   if(preferred)await loadSlots(preferredStart);
+  }catch(error){
+   if(token!==state.monthSequence)return;
+   days.setAttribute("aria-busy","false");days.replaceChildren();
+   $("tm-appt-cal-feedback").textContent="Não foi possível consultar as disponibilidades. Tenta mudar de mês ou de serviço.";
+   $("tm-appt-booking-error").textContent=error.message;
+  }
+ }
+ function chooseDay(iso){
+  if(!state.monthDays.get(iso)?.available)return;
+  state.selectedDate=iso;
+  state.selectedStart="";
+  $("tm-appt-booking-date").value=iso;
+  $("tm-appt-booking-error").textContent="";
+  renderMonth();
+  loadSlots().catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
+ }
+ function renderSlots(){
+  const host=$("tm-appt-time-options");host.replaceChildren();
+  host.setAttribute("aria-busy","false");
+  if(!state.selectedDate){clearTime();return;}
+  $("tm-appt-times-title").textContent="Horários · "+dateLabel(state.selectedDate);
+  if(!state.visibleSlots.length){
+   $("tm-appt-times-description").textContent="Não restam horários neste dia. Seleciona outra data.";
+   return;
+  }
+  $("tm-appt-times-description").textContent="Escolhe a hora de início da consulta.";
+  for(const slot of state.visibleSlots){
+   const active=state.selectedStart===slot.start;
+   const button=make("button","tm-appt-time-button"+(active?" is-selected":""),slot.start);
+   button.type="button";button.setAttribute("aria-pressed",String(active));
+   button.setAttribute("aria-label",slot.start+" até "+slot.end);
+   button.addEventListener("click",()=>{
+    state.selectedStart=slot.start;
+    $("tm-appt-booking-start").value=slot.start;
+    $("tm-appt-booking-error").textContent="";
+    renderSlots();
+   });
+   host.append(button);
+  }
+ }
+ async function loadSlots(preferred=""){
+  const token=++state.slotSequence;
+  const date=state.selectedDate;
+  const host=$("tm-appt-time-options");host.replaceChildren();
+  host.setAttribute("aria-busy","true");
+  $("tm-appt-times-title").textContent="Horários · "+dateLabel(date);
+  $("tm-appt-times-description").textContent="A consultar horários…";
+  state.visibleSlots=[];state.selectedStart="";
+  $("tm-appt-booking-start").value="";
+  try{
+   const result=await api("/slots-preview?"+new URLSearchParams({...paramsForAvailability(),date}));
+   if(token!==state.slotSequence||date!==state.selectedDate||!$("tm-appt-booking-dialog").open)return;
+   state.visibleSlots=result.slots||[];
+   if(preferred&&state.visibleSlots.some(slot=>slot.start===preferred)){
+    state.selectedStart=preferred;
+    $("tm-appt-booking-start").value=preferred;
+   }
+   renderSlots();
+   if(!state.visibleSlots.length){
+    // The date may have become full since the month response; refresh it.
+    loadMonth().catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
+   }
+  }catch(error){
+   if(token!==state.slotSequence)return;
+   host.setAttribute("aria-busy","false");
+   $("tm-appt-times-description").textContent="Não foi possível consultar horários.";
+   $("tm-appt-booking-error").textContent=error.message;
+  }
+ }
  function enableForm(openItem){
   state.editing=openItem||null;
   const form=$("tm-appt-booking-form");
@@ -171,14 +326,21 @@
   if(!openItem&&people.length)$("tm-appt-booking-professional").value=people[0].id;
   refreshServiceChoices(openItem?.service_id);
   $("tm-appt-booking-mode").value=openItem?.mode||"presencial";
-  $("tm-appt-booking-date").min=isoToday();
-  $("tm-appt-booking-date").max=shift(isoToday(),60);
-  $("tm-appt-booking-date").value=openItem?.date||isoToday();
   $("tm-appt-booking-name").value=openItem?.customer_name||"";
   $("tm-appt-booking-email").value=openItem?.customer_email||"";
   $("tm-appt-booking-phone").value=openItem?.customer_phone||"";
+  const date=openItem?.date;
+  const today=isoToday();
+  const allowed=date&&date>=today&&date<=shift(today,60);
+  state.month=(allowed?date:today).slice(0,7);
+  state.selectedDate="";
+  state.selectedStart="";
+  $("tm-appt-booking-date").value="";
+  $("tm-appt-booking-start").value="";
+  clearTime();
   $("tm-appt-booking-dialog").showModal();
-  loadSlots(openItem?.start).catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
+  loadMonth(allowed?date:null,allowed?openItem?.start:"")
+   .catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
  }
  function openForm(item=null){
   if(!state.catalog.professionals.length||!state.catalog.services.length){
@@ -190,47 +352,43 @@
  $("tm-appt-new-booking").addEventListener("click",()=>openForm());
  for(const button of document.querySelectorAll("[data-close-booking-dialog]"))
   button.addEventListener("click",()=>button.closest("dialog").close());
- async function loadSlots(preferred){
-  const select=$("tm-appt-booking-start");
-  const sequence=++state.slotSequence;
-  select.replaceChildren();addOption(select,"","A consultar horários…");
-  const pid=$("tm-appt-booking-professional").value;
-  const sid=$("tm-appt-booking-service").value;
-  const mode=$("tm-appt-booking-mode").value;
-  const date=$("tm-appt-booking-date").value;
-  if(!pid||!sid||!date){select.replaceChildren();addOption(select,"","Seleciona profissional, serviço e dia");return;}
-  try{
-   const result=await api("/slots-preview?"+new URLSearchParams({professional_id:pid,service_id:sid,mode,date}));
-   if(sequence!==state.slotSequence)return;
-   select.replaceChildren();
-   const slots=(result.slots||[]).map(x=>[x.start,x.start+" – "+x.end]);
-   // The currently booked slot is excluded from previews because it is
-   // reserved; allow keeping it when the booking has not changed schedule.
-   const editing=state.editing;
-   if(editing&&editing.date===date&&editing.professional_id===pid&&
-      editing.service_id===sid&&editing.mode===mode&&
-      !slots.some(x=>x[0]===editing.start)){
-    slots.unshift([editing.start,editing.start+" (horário atual)"]);
-   }
-   populate(select,slots,"Selecionar horário",preferred||editing?.start);
-   if(!slots.length)$("tm-appt-booking-error").textContent="Não há horários disponíveis. Publica disponibilidade ou altera os filtros.";
-   else $("tm-appt-booking-error").textContent="";
-  }catch(error){
-   if(sequence!==state.slotSequence)return;
-   select.replaceChildren();addOption(select,"","Horários indisponíveis");
-   $("tm-appt-booking-error").textContent=error.message;
-  }
- }
- for(const id of ["tm-appt-booking-professional","tm-appt-booking-service","tm-appt-booking-mode","tm-appt-booking-date"]){
+ $("tm-appt-booking-dialog").addEventListener("close",()=>{
+  ++state.monthSequence;++state.slotSequence;
+ });
+ $("tm-appt-cal-prev").addEventListener("click",()=>{
+  if(state.month<=isoToday().slice(0,7))return;
+  state.month=nextMonth(state.month,-1);state.selectedDate="";
+  $("tm-appt-booking-date").value="";
+  loadMonth().catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
+ });
+ $("tm-appt-cal-next").addEventListener("click",()=>{
+  if(state.month>=shift(isoToday(),60).slice(0,7))return;
+  state.month=nextMonth(state.month,1);state.selectedDate="";
+  $("tm-appt-booking-date").value="";
+  loadMonth().catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
+ });
+ for(const id of ["tm-appt-booking-professional","tm-appt-booking-service","tm-appt-booking-mode"]){
   $(id).addEventListener("change",()=>{
    if(id==="tm-appt-booking-professional")refreshServiceChoices();
-   loadSlots().catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
+   $("tm-appt-booking-error").textContent="";
+   state.selectedDate="";state.selectedStart="";
+   $("tm-appt-booking-date").value="";
+   $("tm-appt-booking-start").value="";
+   loadMonth().catch(error=>{$("tm-appt-booking-error").textContent=error.message;});
   });
  }
  $("tm-appt-booking-form").addEventListener("submit",async event=>{
   event.preventDefault();
   const form=event.currentTarget;
   if(!form.reportValidity())return;
+  if(!$("tm-appt-booking-date").value||!state.monthDays.get(state.selectedDate)?.available){
+   $("tm-appt-booking-error").textContent="Seleciona um dia com horários disponíveis.";
+   return;
+  }
+  if(!$("tm-appt-booking-start").value||!state.visibleSlots.some(s=>s.start===state.selectedStart)){
+   $("tm-appt-booking-error").textContent="Seleciona um horário disponível para a consulta.";
+   return;
+  }
   const button=$("tm-appt-booking-save");
   button.disabled=true;$("tm-appt-booking-error").textContent="";
   try{
@@ -251,8 +409,14 @@
    feedback(state.editing?"Marcação interna atualizada.":"Marcação interna criada.");
    document.dispatchEvent(new CustomEvent("tm:appointments-bookings-updated"));
    await refreshBookings();
-  }catch(error){$("tm-appt-booking-error").textContent=error.message;}
-  finally{button.disabled=false;}
+  }catch(error){
+   $("tm-appt-booking-error").textContent=error.message;
+   if(/sobreposta|bloqueio|disponibilidade|alterada/.test(error.message)){
+    const date=state.selectedDate;
+    await loadMonth(date).catch(()=>{});
+    $("tm-appt-booking-error").textContent=error.message;
+   }
+  }finally{button.disabled=false;}
  });
  async function cancelBooking(item,button){
   if(!confirm("Cancelar a marcação interna de "+item.customer_name+" em "+item.date+" às "+item.start+"? Esta ação não cancela reservas no Sesami nem em Google Calendar."))return;

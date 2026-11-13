@@ -148,6 +148,96 @@ class ManualBookingsTests(unittest.TestCase):
         self.assertEqual(self.query(status="all")["body"]["bookings"][0]["customer_name"],
                          "Cliente de Teste")
 
+    def test_month_calendar_matches_actual_service_duration_and_blocks(self):
+        from urllib.parse import urlencode
+        from datetime import date
+        # This date was published as 09:00-13:00 in setUp.
+        listed = self.req("/schedule?"+urlencode({
+            "professional_id":self.pid,"from":self.day,"to":self.day
+        }))["body"]
+        self.assertEqual(len(listed["availability"]), 1)
+        original = listed["availability"][0]["id"]
+        self.assertEqual(self.req("/availability/"+original, "DELETE")["status"],200)
+        self.assertEqual(self.req("/availability","POST",{
+            "professional_id":self.pid,"date":self.day,
+            "start":"09:00","end":"10:00"})["status"],201)
+        def month(sid, mode="presencial"):
+            return self.req("/calendar-month?"+urlencode({
+                "professional_id":self.pid,"service_id":sid,
+                "mode":mode,"month":self.day[:7]
+            }))
+        too_long = month(self.first["id"])
+        self.assertEqual(too_long["status"],200,too_long)
+        data=too_long["body"]
+        self.assertTrue(data["preview_only"])
+        self.assertTrue(data["includes_internal_bookings"])
+        self.assertFalse(data["includes_sesami"])
+        self.assertFalse(data["includes_google"])
+        day = next(x for x in data["days"] if x["date"]==self.day)
+        self.assertEqual(day["slots_count"],0)
+        self.assertFalse(day["available"])
+
+        suitable=month(self.follow["id"])
+        self.assertEqual(suitable["status"],200,suitable)
+        day=next(x for x in suitable["body"]["days"] if x["date"]==self.day)
+        self.assertEqual(day["slots_count"],2)
+        self.assertTrue(day["available"])
+        self.assertEqual(len(self.req("/slots-preview?"+urlencode({
+            "professional_id":self.pid,"service_id":self.follow["id"],
+            "mode":"presencial","date":self.day}) )["body"]["slots"]),2)
+        self.assertEqual(next(x for x in month(self.follow["id"],"online")["body"]["days"]
+                              if x["date"]==self.day)["slots_count"],2)
+        self.assertEqual(self.req("/blocks","POST",{
+            "professional_id":self.pid,"date":self.day,
+            "start":"09:00","end":"10:00","note":"Indisponível"})["status"],201)
+        day=next(x for x in month(self.follow["id"])["body"]["days"] if x["date"]==self.day)
+        self.assertFalse(day["available"])
+        self.assertEqual(day["slots_count"],0)
+        self.assertEqual(self.req("/calendar-month?"+urlencode({
+            "professional_id":self.pid,"service_id":self.first["id"],
+            "mode":"presencial","month":"2026-13"}) )["status"],400)
+
+    def test_month_calendar_considers_internal_reservations_and_reschedule_exclusion(self):
+        from urllib.parse import urlencode
+        def query(exclude=None):
+            params={"professional_id":self.pid,"service_id":self.first["id"],
+                    "mode":"online","month":self.day[:7]}
+            if exclude is not None:
+                params["exclude_booking_id"]=exclude
+            return self.req("/calendar-month?"+urlencode(params))
+        before=next(x for x in query()["body"]["days"] if x["date"]==self.day)
+        self.assertEqual(before["slots_count"],11)
+        created=self.book()
+        self.assertEqual(created["status"],201,created)
+        bid=created["body"]["id"]
+        after=next(x for x in query()["body"]["days"] if x["date"]==self.day)
+        self.assertEqual(after["slots_count"],5)
+        self.assertTrue(after["available"])
+        for_edit=next(x for x in query(bid)["body"]["days"] if x["date"]==self.day)
+        self.assertEqual(for_edit["slots_count"],11)
+        daily=self.req("/slots-preview?"+urlencode({
+            "professional_id":self.pid,"service_id":self.first["id"],
+            "mode":"online","date":self.day,"exclude_booking_id":bid}))
+        self.assertEqual(daily["status"],200,daily)
+        self.assertEqual(daily["body"]["slots"][0]["start"],"09:00")
+        self.assertEqual(len(daily["body"]["slots"]),11)
+        self.assertEqual(query("no-such-booking")["status"],400)
+        self.assertEqual(query("a"*32)["status"],404)
+        item=self.query()["body"]["bookings"][0]
+        self.assertEqual(self.req("/bookings/"+bid+"/cancel","POST",
+                                  {"version":item["version"]})["status"],200)
+        self.assertEqual(next(x for x in query()["body"]["days"]
+                              if x["date"]==self.day)["slots_count"],11)
+
+    def test_month_calendar_is_admin_only(self):
+        from urllib.parse import urlencode
+        path=self.base+"/calendar-month?"+urlencode({
+            "professional_id":self.pid,"service_id":self.first["id"],
+            "mode":"presencial","month":self.day[:7]})
+        self.assertEqual(fixtures.Client().request(path)["status"],401)
+        with patch.object(app,"SITE_ROLE","player"):
+            self.assertEqual(self.admin.request(path)["status"],404)
+
     def test_authorization_and_org_boundary(self):
         self.assertEqual(fixtures.Client().request(self.base+"/bookings")["status"],401)
         self.assertEqual(fixtures.Client().request(self.base+"/bookings","POST",self.payload())["status"],401)

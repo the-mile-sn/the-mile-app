@@ -28,6 +28,15 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             self.assertIn(bookings_script, body)
             self.assertLess(body.index(schedule_script), body.index(bookings_script))
             self.assertEqual(client.request("/admin-appointments-bookings.js")["status"], 200)
+            booking_markup = body.split(b'id="tm-appt-booking-dialog"', 1)[1]
+            self.assertIn(b'id="tm-appt-cal-days"', booking_markup)
+            self.assertIn(b'id="tm-appt-time-options"', booking_markup)
+            self.assertIn(b'type="hidden" id="tm-appt-booking-date"', booking_markup)
+            self.assertIn(b'type="hidden" id="tm-appt-booking-start"', booking_markup)
+            self.assertNotIn(b'type="date" id="tm-appt-booking-date"', booking_markup)
+            booking_js = client.request("/admin-appointments-bookings.js")["body"]
+            self.assertIn(b"/calendar-month?", booking_js)
+            self.assertIn(b"/slots-preview?", booking_js)
             schedule = client.request("/admin-appointments-schedule.js")
             self.assertEqual(schedule["status"], 200)
             self.assertIn(b'tm:appointments-catalog', schedule["body"])

@@ -227,7 +227,7 @@ def _valid_lisbon_window(day, start, end):
     return a, b
 
 
-def preview(c, org_id, professional, service, mode, day_value, now=None):
+def preview(c, org_id, professional, service, mode, day_value, now=None, exclude_booking_id=None):
     """Internal approximation only. Never offer these slots as public bookable."""
     p = _professional(c, org_id, professional)
     day = clean_date(day_value)
@@ -262,25 +262,127 @@ def preview(c, org_id, professional, service, mode, day_value, now=None):
                         (org_id, professional, day.isoformat())).fetchall()
     # Internal manual reservations consume the same professional's capacity
     # for both online and presencial modes. External Sesami/Google remain unsynced.
+    excluded = _booking_exclusion(c, org_id, exclude_booking_id)
     bookings = c.execute("""SELECT start_minute,end_minute FROM appt_bookings
-        WHERE org_id=? AND professional_id=? AND day=? AND status='scheduled'""",
-        (org_id, professional, day.isoformat())).fetchall()
+        WHERE org_id=? AND professional_id=? AND day=? AND status='scheduled'
+          AND id<>?""", (org_id, professional, day.isoformat(), excluded)).fetchall()
     duration = s["duration_minutes"]
-    slots = []
-    for window in available:
-        start_min = ((window["start_minute"] + 14) // 15) * 15
-        for start in range(start_min, window["end_minute"] - duration + 1, 15):
-            end = start + duration
-            if any(start < row["end_minute"] and row["start_minute"] < end for row in blocked):
-                continue
-            if any(start < row["end_minute"] and row["start_minute"] < end for row in bookings):
-                continue
-            valid = _valid_lisbon_window(day, start, end)
-            if valid is None or valid[0].astimezone(timezone.utc) <= now:
-                continue
-            slots.append({"start": display_time(start), "end": display_time(end)})
+    slots = _slots_on_day(day, duration, available, blocked, bookings, now)
     return {"date": day.isoformat(), "slots": slots,
             "preview_only": True, "includes_google": False,
             "includes_bookings": True, "includes_internal_bookings": True,
             "includes_sesami": False, "timezone": "Europe/Lisbon",
             "interval_minutes": 15, "buffer_minutes": 0}
+
+
+def _booking_exclusion(c, org_id, booking_id):
+    """Only an existing booking from this organization can be excluded.
+
+    Supports rescheduling without hiding the booking from other users. The
+    actual write endpoint still validates the final slot transactionally.
+    """
+    if booking_id in (None, ""):
+        return ""
+    if not isinstance(booking_id, str) or not re.fullmatch(r"[0-9a-f]{32}", booking_id):
+        raise ValueError("invalid_booking_id")
+    row = c.execute("""SELECT id FROM appt_bookings
+        WHERE org_id=? AND id=? AND status='scheduled'""",
+        (org_id, booking_id)).fetchone()
+    if row is None:
+        raise LookupError("booking_not_found")
+    return row["id"]
+
+
+def _slots_on_day(day, duration, available, blocked, bookings, now):
+    """Shared source of truth for one-day slots and month availability."""
+    result = []
+    for window in available:
+        first = ((window["start_minute"] + 14) // 15) * 15
+        for start in range(first, window["end_minute"] - duration + 1, 15):
+            end = start + duration
+            if any(start < item["end_minute"] and item["start_minute"] < end for item in blocked):
+                continue
+            if any(start < item["end_minute"] and item["start_minute"] < end for item in bookings):
+                continue
+            valid = _valid_lisbon_window(day, start, end)
+            if valid is None or valid[0].astimezone(timezone.utc) <= now:
+                continue
+            result.append({"start": display_time(start), "end": display_time(end)})
+    return result
+
+
+def _periods_by_day(c, table, org_id, professional, start_date, end_date, exclusion=""):
+    # Table names come from this fixed internal allowlist, never a caller.
+    if table not in ("appt_availability_periods", "appt_manual_blocks", "appt_bookings"):
+        raise ValueError("invalid_period_source")
+    filter_sql = " AND status='scheduled' AND id<>?" if table == "appt_bookings" else ""
+    params = (org_id, professional, start_date, end_date, exclusion) if filter_sql else (
+        org_id, professional, start_date, end_date)
+    rows = c.execute("""SELECT day,start_minute,end_minute FROM """ + table +
+       """ WHERE org_id=? AND professional_id=? AND day BETWEEN ? AND ?""" +
+       filter_sql + " ORDER BY day,start_minute", params).fetchall()
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(row["day"], []).append(row)
+    return grouped
+
+
+def month_preview(c, org_id, professional, service, mode, month, now=None,
+                  exclude_booking_id=None):
+    """One read-only request for every visible date in a calendar month.
+
+    Considers published availability, manual blocks and internal bookings.
+    Does NOT know about Sesami, Google, or external payments. No writes.
+    """
+    import calendar
+
+    if not isinstance(month, str) or not re.fullmatch(r"\d{4}-\d{2}", month):
+        raise ValueError("invalid_month")
+    first = clean_date(month + "-01")
+    last = date(first.year, first.month, calendar.monthrange(first.year, first.month)[1])
+    if mode not in MODES:
+        raise ValueError("invalid_mode")
+    p = _professional(c, org_id, professional)
+    s = c.execute("""SELECT duration_minutes,active FROM appt_services
+         WHERE org_id=? AND id=?""", (org_id, service)).fetchone()
+    if s is None:
+        raise LookupError("service_not_found")
+    enabled = c.execute("""SELECT f.enabled FROM appt_professional_services x
+         JOIN appt_service_formats f ON f.org_id=x.org_id
+              AND f.service_id=x.service_id AND f.mode=?
+         WHERE x.org_id=? AND x.professional_id=? AND x.service_id=?""",
+        (mode, org_id, professional, service)).fetchone()
+    eligible = bool(p["active"] and p[mode+"_enabled"] and s["active"] and
+                    enabled and enabled["enabled"])
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        raise ValueError("invalid_now")
+    today = now.astimezone(LISBON).date()
+    end_limit = today + timedelta(days=60)
+    excluded = _booking_exclusion(c, org_id, exclude_booking_id)
+
+    if eligible and first <= end_limit and last >= today:
+        start_iso, end_iso = max(first, today).isoformat(), min(last, end_limit).isoformat()
+        available = _periods_by_day(c, "appt_availability_periods", org_id,
+                                    professional, start_iso, end_iso)
+        blocks = _periods_by_day(c, "appt_manual_blocks", org_id,
+                                 professional, start_iso, end_iso)
+        bookings = _periods_by_day(c, "appt_bookings", org_id,
+                                   professional, start_iso, end_iso, excluded)
+    else:
+        available, blocks, bookings = {}, {}, {}
+    days = []
+    for day_number in range(1, last.day+1):
+        current = date(first.year, first.month, day_number)
+        iso = current.isoformat()
+        if eligible and today <= current <= end_limit:
+            count = len(_slots_on_day(current, s["duration_minutes"],
+                        available.get(iso, ()), blocks.get(iso, ()),
+                        bookings.get(iso, ()), now))
+        else:
+            count = 0
+        days.append({"date": iso, "slots_count": count, "available": count > 0})
+
+    return {"month": month, "days": days, "timezone": "Europe/Lisbon",
+            "preview_only": True, "includes_internal_bookings": True,
+            "includes_sesami": False, "includes_google": False}
