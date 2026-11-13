@@ -1085,6 +1085,7 @@ async function renderWeightCard(root,date){
  const format=x=>Number(x).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
  const existing=!!current;
  if(existing){
+  action.classList.add("daily-weight-chevron-action");
   const top=document.createElement("strong");top.textContent=format(current.weight_kg)+" kg";value.append(top);
   if(previous){const difference=Number(current.weight_kg)-Number(previous.weight_kg);const small=document.createElement("small");small.textContent=(difference>0?"+":"")+format(difference)+" kg";value.append(small);}
   action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
