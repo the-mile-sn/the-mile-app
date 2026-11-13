@@ -5352,3 +5352,24 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow img{
  display:none!important;
 }
+
+/* Unit toggle in comparison row, aligned with percentages. */
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends{
+ display:flex!important;align-items:center!important;position:relative!important;padding-right:34px!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends>.consumption-concentric-unit-switch{
+ position:absolute!important;right:0!important;top:50%!important;bottom:auto!important;
+ transform:translateY(-50%)!important;width:28px!important;height:28px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;
+ background:transparent!important;border:0!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends>.consumption-concentric-unit-switch svg{
+ display:block!important;width:20px!important;height:20px!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-energy-row .consumption-concentric-energy{
+ font-size:clamp(33px,calc(4.25vw + 1px),58px)!important;
+}
