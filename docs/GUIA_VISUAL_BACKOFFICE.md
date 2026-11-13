@@ -307,3 +307,17 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Adicionar opção e refeição:** mesmos preenchimentos e alturas. No mobile ficam lado a lado, com «Apagar opção» destrutivo numa segunda linha alinhado à direita. Sem botões brancos excessivos no tema escuro.
 - **Rodapé:** apenas «Apagar plano» com ícone de lixo outline, «Guardar» e «Publicar». Guardar em preenchimento principal neutro; verde apenas na confirmação imediata de um guardar bem-sucedido (1100 ms), sem verde fixo depois. Publicar mantém o estado desativado quando já publicado e as validações/autorizações existentes.
 - **Verificação:** confirmar visualmente desktop claro, desktop escuro, mobile claro e mobile escuro; Safari/touch/rato; estados guardado, alterações por guardar, alterações por publicar e erros; seleção/foco e remoção/adição; evitar qualquer interferência na visualização de Planos aprovada.
+
+
+## 26. Edição de Planos — correção das regressões de alinhamento e estados (13 novembro 2026)
+
+Esta secção substitui as indicações anteriores que colocavam estado e referência dentro do card nutricional, ou que criavam uma terceira linha de ícones nas refeições mobile.
+
+- **Estado e metadados:** estado do plano, data de gravação e referência ficam em faixa contextual compacta, fora dos cards de resumo nutricional e de refeições. Não ocupar espaço dos valores diários. No mobile, distribuir em linhas discretas, sem painel verde nem grandes espaçamentos. Estados de erro, por guardar e por publicar mantêm-se explícitos. Referência na forma «Ref. 56,1 kg · 13 nov 2026» e gravação «Guardado em 05 nov, 15:42» (dia/mês curto/ano em português, sem formato ISO).
+- **Desktop:** cabeçalho da refeição com três áreas estáveis: à esquerda o nome e respetivas ações; à direita as quatro macros; no limite direito, a seta de expandir. Não sobrepor macros ou ícone de expansão. O alinhamento programático da informação nutricional continua possível na lista de ingredientes, mas **não deve reposicionar o cabeçalho da refeição**, que usa layout próprio.
+- **Mobile:** cabeçalho igual em aberto e fechado, sem salto horizontal. Primeira linha com nome à esquerda e grupo de ações à direita; segunda linha com macros à esquerda e seta de expansão à direita. Margens internas consistentes com o subcard do resumo nutricional.
+- **Opções:** aumentar diferença de superfície para a selecionada sem barra lateral; hover exclusivamente neutro e subtil em claro e escuro, sem branco ou efeitos de brilho.
+- **Adicionar alimento, nota, opção ou refeição:** base de ação da paleta oficial e hover subtil sem azul vivo, sem sombras ou efeitos de brilho. Mesma altura para os dois formulários e botões associados.
+- **Apagar opção:** botão com fundo vermelho suave e ícone trash-2 outline no estado normal e hover; seguir a mesma semântica de «Apagar plano», «Apagar refeição» e «Remover alimento».
+- **Guardar / Publicar:** Guardar neutro/principal quando acionável e secundário quando já guardado; só surge verde durante a confirmação imediata. Publicar verde semântico apenas quando acionável, secundário quando desativado (plano já publicado). Apagar plano sempre destrutivo com lixo. Manter validações, confirmações e permissões existentes.
+- **Limites:** alterações de apresentação apenas em production/the-mile-admin, sem mexer no branch main, dados, gramagens, macros, cálculos ou navegação da app dos jogadores.
