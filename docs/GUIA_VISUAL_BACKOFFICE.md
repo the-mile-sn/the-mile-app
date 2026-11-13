@@ -251,3 +251,10 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - **Cópias antigas:** manter o aviso visual especial, eventual botão Eliminar e o comportamento de confirmação existente.
 - Não alterar editor, pré-visualização, planos, valores, publicação, dados, APIs nem a app dos jogadores. Efeitos hover só em desktop, feedback discreto em mobile; manter foco de teclado visível.
 
+## 20. Regresso ao Início e navegação de Planos — 13 novembro 2026
+
+- O comando global **‹ Início**, já existente em Jogadores, Planeamento, Avaliações e Formulários, fica igualmente visível **em desktop** na Biblioteca Alimentar (incluindo Porções Visuais) e em Planos. Deve reutilizar o mesmo botão, ícone SVG, posição, tipografia e callback do Dashboard; não criar uma segunda implementação nem introduzir botões de navegação adicionais dentro das bibliotecas.
+- Em mobile, respeitar a navegação horizontal existente: o regresso global permanece oculto tal como nas outras secções.
+- Na visualização, edição e eventual seleção de planos, as setas antigas isoladas `←` são substituídas pelo controlo **‹ Planos**, com SVG outline de 19 px e tipografia Inter Tight 600/13, geometria e superfícies idênticas ao comando global. Preservar os IDs e handlers, incluindo o aviso de alterações por guardar antes de abandonar o editor.
+- Na lista de Planos, ampliar apenas a geometria e tipografia das pills **Plano** e **Estado** para **13 px, Medium (500), altura mínima 32 px**, mantendo todas as cores nutricionais e os estados oficiais nos dois temas. Não alterar outras pills do Backoffice.
+
