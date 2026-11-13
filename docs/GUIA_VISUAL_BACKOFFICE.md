@@ -205,9 +205,14 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 ## 14. Criação de jogador — modal aprovado em 13 novembro 2026
 
 - A ação **+ Criar jogador** mantém a localização aprovada na lista, incluindo a integração com os filtros em mobile; abre um **modal nativo centrado**, não um formulário expansível sobre a lista.
-- O modal tem a mesma linguagem do editor **Novo alimento**: card principal, campos na superfície de subcard, etiquetas discretas, sem contornos decorativos ou sombras.
+- O modal tem a mesma linguagem do editor **Novo alimento**: card principal e campos de **duas linhas na mesma superfície de subcard** (etiqueta discreta em cima; valor/controlo em baixo). Nenhuma etiqueta fica fora do preenchimento; sem contornos decorativos ou sombras.
 - Desktop: **Nome completo** ocupa a primeira linha; **Peso inicial / Sexo** e **Utilizador / Palavra-passe inicial** ocupam duas linhas de duas colunas. Mobile: uma única coluna, scroll interno somente se necessário, campos de 16 px para impedir zoom no Safari.
 - Rodapé com **Cancelar** e **Criar jogador**, alinhados à direita. A navegação por teclado e o foco permanecem funcionais; Escape, Cancelar e clique fora pedem confirmação se existirem dados introduzidos.
 - Preservar sem mudanças o endpoint de criação, as validações existentes, os campos obrigatórios, os limites de peso, utilizador e palavra-passe, as permissões e a atualização da lista. Erros surgem no próprio modal, sem depender de mensagens ocultas noutra aba.
 - Respeitar ambos os temas, a preferência de movimento reduzido e os tokens oficiais do Backoffice.
+
+## 15. Modal Novo alimento — alinhamento aprovado em 13 novembro 2026
+
+- O seletor **Tipo de pesagem** deve ter exatamente a mesma altura visível dos campos de texto e numéricos adjacentes no modal de Novo/Editar alimento (48 px), preservando as opções, dados, validações e comportamento nativo do seletor.
+- Ajuste restrito ao modal da Biblioteca Alimentar do Backoffice, sem alterar a grelha de alimentos ou os formulários de outros módulos.
 
