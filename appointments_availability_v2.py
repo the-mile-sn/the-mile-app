@@ -243,7 +243,8 @@ def preview(c, org_id, professional, service, mode, day_value, now=None):
     today = now.astimezone(LISBON).date()
     if day < today or day > today + timedelta(days=60):
         return {"date": day.isoformat(), "slots": [], "reason": "outside_booking_window",
-                "preview_only": True, "includes_google": False, "includes_bookings": False}
+                "preview_only": True, "includes_google": False, "includes_bookings": True,
+                "includes_internal_bookings": True, "includes_sesami": False}
     enabled = c.execute("""SELECT f.enabled FROM appt_professional_services x
         JOIN appt_service_formats f ON f.org_id=x.org_id AND f.service_id=x.service_id AND f.mode=?
         WHERE x.org_id=? AND x.professional_id=? AND x.service_id=?""",
@@ -251,13 +252,19 @@ def preview(c, org_id, professional, service, mode, day_value, now=None):
     if (not p["active"] or not s["active"] or not enabled or not enabled["enabled"] or
             not p[mode + "_enabled"]):
         return {"date": day.isoformat(), "slots": [], "reason": "service_not_available",
-                "preview_only": True, "includes_google": False, "includes_bookings": False}
+                "preview_only": True, "includes_google": False, "includes_bookings": True,
+                "includes_internal_bookings": True, "includes_sesami": False}
     available = c.execute("""SELECT start_minute,end_minute FROM appt_availability_periods
         WHERE org_id=? AND professional_id=? AND day=? ORDER BY start_minute""",
                           (org_id, professional, day.isoformat())).fetchall()
     blocked = c.execute("""SELECT start_minute,end_minute FROM appt_manual_blocks
         WHERE org_id=? AND professional_id=? AND day=?""",
                         (org_id, professional, day.isoformat())).fetchall()
+    # Internal manual reservations consume the same professional's capacity
+    # for both online and presencial modes. External Sesami/Google remain unsynced.
+    bookings = c.execute("""SELECT start_minute,end_minute FROM appt_bookings
+        WHERE org_id=? AND professional_id=? AND day=? AND status='scheduled'""",
+        (org_id, professional, day.isoformat())).fetchall()
     duration = s["duration_minutes"]
     slots = []
     for window in available:
@@ -266,11 +273,14 @@ def preview(c, org_id, professional, service, mode, day_value, now=None):
             end = start + duration
             if any(start < row["end_minute"] and row["start_minute"] < end for row in blocked):
                 continue
+            if any(start < row["end_minute"] and row["start_minute"] < end for row in bookings):
+                continue
             valid = _valid_lisbon_window(day, start, end)
             if valid is None or valid[0].astimezone(timezone.utc) <= now:
                 continue
             slots.append({"start": display_time(start), "end": display_time(end)})
     return {"date": day.isoformat(), "slots": slots,
             "preview_only": True, "includes_google": False,
-            "includes_bookings": False, "timezone": "Europe/Lisbon",
+            "includes_bookings": True, "includes_internal_bookings": True,
+            "includes_sesami": False, "timezone": "Europe/Lisbon",
             "interval_minutes": 15, "buffer_minutes": 0}
