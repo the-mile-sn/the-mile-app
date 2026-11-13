@@ -351,3 +351,10 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-grams-wheel-option{height:44px;min-height:44px;line-height:44px;text-align:center;font-size:20px;color:rgba(240,238,233,.43);scroll-snap-align:center}
 .consumption-grams-wheel-option.selected{font-size:25px;font-weight:600;color:#f0eee9}
 .consumption-grams-wheel-manual{display:block;margin:12px auto 0;color:rgba(240,238,233,.72);font-size:13px}
+
+
+/* v30: avoid iOS focus zoom and match native round sheet actions */
+#overview .consumption-editor .consumption-food-line input[readonly]{font-size:16px!important;user-select:none;-webkit-user-select:none}
+.consumption-grams-wheel-top button{width:42px;height:42px;min-width:42px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(120,120,128,.20);color:#f0eee9;border:1px solid rgba(255,255,255,.08)}
+.consumption-grams-wheel-top button:last-child{color:#b9e2cf}
+.consumption-grams-wheel-top button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
