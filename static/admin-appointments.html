@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="robots" content="noindex,nofollow">
+ <title>Agendamentos · The Mile</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+ <script src="/nutrition-theme.js?v=2"></script>
+ <link rel="stylesheet" href="/tm-design-system.css?v=13">
+ <link rel="stylesheet" href="/nutrition-nav.css?v=17">
+ <link rel="stylesheet" href="/admin-surface-palette.css?v=33">
+ <link rel="stylesheet" href="/admin-appointments.css?v=1">
+</head>
+<body class="tm-appointments-body">
+ <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
+ <div id="tm-appointments-root" class="tm-library-layout" hidden>
+  <aside class="tm-admin-sidebar" aria-label="Navegação do Backoffice" data-tm-nav-page="appointments"></aside>
+  <main class="shell tm-appointments-shell" id="tm-appointments-main">
+   <header class="tm-appointments-heading">
+    <div>
+     <p class="tm-appointments-eyebrow">Backoffice</p>
+     <h1>Agendamentos</h1>
+     <p>Gestão de consultas, avaliações e disponibilidades dos profissionais.</p>
+    </div>
+    <span class="tm-appointments-phase">Estrutura inicial</span>
+   </header>
+   <div class="tm-appointments-info" role="note">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg>
+    <span>Esta área está em preparação. As marcações reais continuam a ser geridas no Sesami até à migração.</span>
+   </div>
+   <div class="tm-appointments-tabs" role="tablist" aria-label="Áreas de agendamentos">
+    <button id="tm-appointments-tab-agenda" role="tab" type="button" aria-selected="true" aria-controls="tm-appointments-panel-agenda" class="is-active" data-appointments-tab="agenda">Agenda</button>
+    <button id="tm-appointments-tab-reservas" role="tab" type="button" aria-selected="false" aria-controls="tm-appointments-panel-reservas" tabindex="-1" data-appointments-tab="reservas">Reservas</button>
+    <button id="tm-appointments-tab-configuracao" role="tab" type="button" aria-selected="false" aria-controls="tm-appointments-panel-configuracao" tabindex="-1" data-appointments-tab="configuracao">Configuração</button>
+   </div>
+   <section id="tm-appointments-panel-agenda" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-agenda" tabindex="0">
+    <div class="tm-appointments-panel-heading">
+     <div><h2>Agenda</h2><p>Explora as datas em vista semanal ou diária.</p></div>
+     <div class="tm-appointments-view-switch" role="group" aria-label="Vista da agenda">
+      <button type="button" data-appointments-view="week" class="is-active" aria-pressed="true">Semana</button>
+      <button type="button" data-appointments-view="day" aria-pressed="false">Dia</button>
+     </div>
+    </div>
+    <div class="tm-appointments-calendar">
+     <div class="tm-appointments-calendar-toolbar">
+      <h3 id="tm-appointments-range" aria-live="polite"></h3>
+      <div class="tm-appointments-calendar-actions">
+       <button type="button" id="tm-appointments-today">Hoje</button>
+       <button type="button" id="tm-appointments-previous" aria-label="Período anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+       <button type="button" id="tm-appointments-next" aria-label="Período seguinte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+     </div>
+     <div id="tm-appointments-days" class="tm-appointments-week" aria-label="Dias da agenda"></div>
+     <div class="tm-appointments-empty">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15h3"/></svg>
+      <h3>Sem marcações para apresentar</h3>
+      <p>A agenda será ligada ao motor de reservas numa das próximas fases. Ainda não são apresentados dados reais.</p>
+     </div>
+    </div>
+   </section>
+   <section id="tm-appointments-panel-reservas" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-reservas" tabindex="0" hidden>
+    <div class="tm-appointments-panel-heading"><div><h2>Reservas</h2><p>Consulta e gestão das marcações recebidas.</p></div></div>
+    <div class="tm-appointments-empty tm-appointments-empty-section">
+     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+     <h3>Lista de reservas em preparação</h3>
+     <p>Os filtros, estados de pagamento e ações de reagendamento serão ligados quando o módulo de reservas estiver funcional.</p>
+    </div>
+   </section>
+   <section id="tm-appointments-panel-configuracao" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-configuracao" tabindex="0" hidden>
+    <div class="tm-appointments-panel-heading"><div><h2>Configuração</h2><p>Serviços, profissionais, disponibilidades e integrações.</p></div></div>
+    <div class="tm-appointments-config-grid">
+     <article class="tm-appointments-config-card"><h3>Serviços e profissionais</h3><p>Catálogo de consultas, duração, formato e associação a profissionais.</p><small>Próxima fase</small></article>
+     <article class="tm-appointments-config-card"><h3>Disponibilidades e bloqueios</h3><p>Períodos semanais, exceções e horários disponíveis por profissional.</p><small>Próxima fase</small></article>
+     <article class="tm-appointments-config-card"><h3>Google Calendar e Shopify</h3><p>Sincronização de períodos ocupados, reservas e estados de pagamento.</p><small>Próximas fases</small></article>
+    </div>
+    <div class="tm-appointments-rules">
+     <h3>Regras acordadas para o projeto</h3>
+     <p>Referência de planeamento: estas regras ainda não estão ativas nem são editáveis no backoffice.</p>
+     <dl>
+      <div><dt>Intervalos de início</dt><dd>15 minutos</dd></div>
+      <div><dt>Intervalo entre consultas</dt><dd>Sem intervalo obrigatório</dd></div>
+      <div><dt>Bloqueio no checkout</dt><dd>15 minutos</dd></div>
+      <div><dt>Antecedência máxima</dt><dd>60 dias</dd></div>
+      <div><dt>Antecedência mínima</dt><dd>Sem limite fixo</dd></div>
+     </dl>
+    </div>
+   </section>
+  </main>
+ </div>
+ <script src="/admin-nav-shell.js?v=5" defer></script>
+ <script src="/admin-appointments.js?v=1" defer></script>
+ <script src="/admin-mobile-nav.js?v=11" defer></script>
+</body>
+</html>
