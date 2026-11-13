@@ -1239,10 +1239,10 @@ function animateCalendarSelection(strip,dateKey){
  selected.classList.add('mile-calendar-arriving');
  const dx=from.left-to.left,dy=from.top-to.top;
  const animation=ghost.animate([
-  {transform:'translate3d('+dx+'px,'+dy+'px,0) scale(.92)',opacity:1},
-  {offset:.64,transform:'translate3d('+(-dx*.08)+'px,'+(-dy*.08)+'px,0) scale(1.13)',opacity:1},
+  {transform:'translate3d('+dx+'px,'+dy+'px,0) scale(.97)',opacity:1},
+  {offset:.72,transform:'translate3d('+(-dx*.025)+'px,'+(-dy*.025)+'px,0) scale(1.045)',opacity:1},
   {transform:'translate3d(0,0,0) scale(1)',opacity:1}
- ],{duration:420,easing:'cubic-bezier(.22,.85,.25,1)'});
+ ],{duration:460,easing:'cubic-bezier(.25,.75,.3,1)'});
  const finish=()=>{ghost.remove();selected.classList.remove('mile-calendar-arriving');};
  animation.onfinish=finish;animation.oncancel=finish;
  setTimeout(finish,550);
