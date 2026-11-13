@@ -219,7 +219,7 @@
    }
    const chips=el("div","tm-appt-preview-slots");
    for(const slot of result.slots)chips.append(el("span","tm-appt-slot-chip",slot.start+"–"+slot.end));
-   host.append(chips,el("p","tm-appt-form-hint",result.slots.length+" horário(s) potenciais. Não incluem ocupações do Google Calendar nem marcações do Sesami."));
+   host.append(chips,el("p","tm-appt-form-hint",result.slots.length+" horário(s) potenciais. Incluem bloqueios e marcações internas; não incluem Sesami nem Google Calendar."));
   }catch(error){showPreview(error.message,true);}
  }
  $("tm-appt-preview-run").addEventListener("click",preview);
@@ -232,6 +232,7 @@
  $("tm-appt-avail-today").addEventListener("click",()=>{state.selectedDate=today();state.weekStart=monday(state.selectedDate);$("tm-appt-preview-date").value=state.selectedDate;loadWeek().catch(e=>note(e.message,true));preview();});
  $("tm-appt-avail-prev").addEventListener("click",()=>{state.weekStart=shift(state.weekStart,-7);state.selectedDate=state.weekStart;$("tm-appt-preview-date").value=state.selectedDate;loadWeek().catch(e=>note(e.message,true));preview();});
  $("tm-appt-avail-next").addEventListener("click",()=>{state.weekStart=shift(state.weekStart,7);state.selectedDate=state.weekStart;$("tm-appt-preview-date").value=state.selectedDate;loadWeek().catch(e=>note(e.message,true));preview();});
+ document.addEventListener("tm:appointments-bookings-updated",()=>preview().catch(error=>showPreview(error.message,true)));
  $("tm-appt-preview-date").value=state.selectedDate;
  setControls();
 })();
