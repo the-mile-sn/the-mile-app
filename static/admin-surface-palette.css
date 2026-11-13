@@ -2136,8 +2136,22 @@ html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library
   background:var(--tm-ui-card)!important;
  }
 }
-/* Legacy-copy warning rows keep their own distinctive backgrounds. */
-html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td{
- background:transparent!important;
+/* Preserve the original warning palette for legacy-copy rows as an explicit
+   exception to the neutral table surface, in both appearance modes. */
+html[data-admin-theme] #tm-plan-page[data-admin-theme="dark"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td{
+ background:#493915!important;color:#f8e7b8!important;
+ border-bottom:1px solid #7d642b!important;
+}
+html[data-admin-theme] #tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td{
+ background:#fff0bd!important;color:#664910!important;
+ border-bottom:1px solid #e2c56e!important;
+}
+@media(hover:hover) and (pointer:fine){
+ html[data-admin-theme] #tm-plan-page[data-admin-theme="dark"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:hover > td{
+  background:#59451b!important;
+ }
+ html[data-admin-theme] #tm-plan-page[data-admin-theme="light"] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft:hover > td{
+  background:#ffe5a0!important;
+ }
 }
 
