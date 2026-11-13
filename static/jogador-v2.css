@@ -4874,3 +4874,22 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-consumed-gauge svg{overflow:visible}
 /* During weekly horizontal gestures retain the existing week cards and shadows. */
 #overview #weekly-view{touch-action:pan-y}
+
+/* Weight history: subdued caption and icon-only edit action. */
+#overview .daily-weight-chart-heading>strong{
+ color:#939397!important;font-weight:400!important;
+}
+#overview .daily-weight-chart-heading .daily-weight-edit-icon{
+ display:grid!important;place-items:center!important;
+ width:36px!important;height:36px!important;min-width:36px!important;
+ padding:8px!important;border:0!important;border-radius:50%!important;
+ background:transparent!important;color:#d9dce2!important;
+}
+#overview .daily-weight-chart-heading .daily-weight-edit-icon svg{width:20px;height:20px;display:block}
+/* Keep the floating navigation anchored when expanded weight panels change page height. */
+#player-panel #tabs,
+#player-panel #tabs.tabs-compact{
+ position:fixed!important;
+ bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
+ transition-property:padding,left,right,border-radius,background-color,box-shadow!important;
+}
