@@ -4858,3 +4858,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .mile-day-swipe-preview-skeleton .consumption-editor{
  display:none!important;
 }
+
+/* Calendar date selection: moving circle owns the fill until it settles. */
+#week-strip .week-day.selected .day-number.mile-calendar-arriving{background:transparent!important}
