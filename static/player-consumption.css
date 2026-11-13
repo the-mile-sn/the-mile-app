@@ -368,3 +368,14 @@ body.consumption-food-sheet-open{overflow:hidden!important}
  overscroll-behavior-y:contain;
 }
 .consumption-grams-wheel-option{scroll-snap-align:none!important}
+
+
+/* v32: remove wheel selection fill and iOS text-selection highlight */
+.consumption-grams-wheel-band{background:transparent!important;box-shadow:none!important;border:0!important}
+.consumption-grams-wheel,.consumption-grams-wheel-rail,.consumption-grams-wheel-option{
+ -webkit-user-select:none!important;user-select:none!important;
+ -webkit-touch-callout:none!important;
+ -webkit-tap-highlight-color:transparent!important;
+}
+.consumption-grams-wheel-option::selection{background:transparent!important}
+.consumption-grams-wheel-option::-moz-selection{background:transparent!important}
