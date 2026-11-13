@@ -392,3 +392,21 @@ body.consumption-food-sheet-open{overflow:hidden!important}
  box-shadow:none!important;
  outline:none!important;
 }
+
+
+/* v34: consumption macro typography matches prescribed option macro text */
+#overview .consumption-editor .consumption-macro-values{
+ opacity:1!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+#overview .consumption-editor .consumption-macro-values>span{
+ font-size:14px!important;
+ font-weight:400!important;
+ line-height:1.4!important;
+ letter-spacing:0!important;
+ color:inherit!important;
+ opacity:1!important;
+}
+@media(max-width:390px){
+ #overview .consumption-editor .consumption-macro-values>span{font-size:14px!important}
+}
