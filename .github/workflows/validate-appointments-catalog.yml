@@ -1,8 +1,8 @@
-name: Validate appointments catalog phase 2
+name: Validate appointments catalogue and availability
 on:
   push:
     branches:
-      - feature/appointments-services-professionals-20261113
+      - feature/appointments-availability-photo-20261113
   pull_request:
     branches:
       - production/the-mile-admin
@@ -37,11 +37,13 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install -r requirements.txt
       - name: Python syntax
-        run: python -m py_compile app.py appointments_catalog_v2.py test_appointments_catalog_v2.py
+        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py
       - name: JavaScript syntax
-        run: node --check static/admin-appointments.js
+        run: |
+          node --check static/admin-appointments.js
+          node --check static/admin-appointments-schedule.js
       - name: Appointments API and security regression
-        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_backoffice_shell
+        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_backoffice_shell
       - name: PostgreSQL 18 compatibility and catalogue smoke
         env:
           DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
@@ -49,8 +51,10 @@ jobs:
           python - <<'PY'
           import app
           import appointments_catalog_v2 as catalogue
+          import appointments_availability_v2 as availability
           with app.connect() as c:
               catalogue.initialize(c)
+              availability.initialize(c)
               first = catalogue.catalog(c)
               assert len(first['services']) == 4
               name = catalogue.save_professional(c, {
@@ -64,4 +68,18 @@ jobs:
               assert len(second['services']) == 4
               assert any(p['id'] == name for p in second['professionals'])
               assert any(name in s['professional_ids'] for s in second['services'])
+              day = '2026-12-10'
+              availability.save_period(c,'availability',{
+                  'professional_id':name, 'date':day,
+                  'start':'09:00','end':'13:00'
+              })
+              availability.save_period(c,'block',{
+                  'professional_id':name,'date':day,
+                  'start':'10:00','end':'11:00','note':'PG test'
+              })
+          with app.connect() as c:
+              schedule = availability.periods(c,catalogue.ORG_ID,name,day,day)
+              assert len(schedule['availability']) == 1
+              assert len(schedule['blocks']) == 1
+              assert schedule['blocks'][0]['note'] == 'PG test'
           PY

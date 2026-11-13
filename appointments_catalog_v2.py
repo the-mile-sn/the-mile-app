@@ -85,6 +85,14 @@ def initialize(c):
     CREATE INDEX IF NOT EXISTS appt_professional_services_service
         ON appt_professional_services(org_id,service_id);
     """)
+    c.execute("""CREATE TABLE IF NOT EXISTS appt_professional_photos (
+        org_id TEXT NOT NULL,
+        professional_id TEXT NOT NULL,
+        photo_data BYTEA NOT NULL,
+        updated_at BIGINT NOT NULL,
+        PRIMARY KEY(org_id,professional_id),
+        FOREIGN KEY(org_id,professional_id) REFERENCES appt_professionals(org_id,id) ON DELETE CASCADE
+    )""")
     c.execute("INSERT INTO appt_organizations(id,name,timezone) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING",
               (ORG_ID, "The Mile", "Europe/Lisbon"))
     now = int(time.time())
@@ -205,6 +213,9 @@ def catalog(c, org_id=ORG_ID):
         SELECT id,name,email,active,presencial_enabled,online_enabled,created_at,updated_at
         FROM appt_professionals WHERE org_id=? ORDER BY active DESC,name
     """, (org_id,)).fetchall()]
+    photos = {row["professional_id"]: row["updated_at"] for row in c.execute(
+        "SELECT professional_id,updated_at FROM appt_professional_photos WHERE org_id=?",
+        (org_id,)).fetchall()}
     by_service = {s["id"]: s for s in services}
     by_professional = {p["id"]: p for p in professionals}
     for s in services:
@@ -212,6 +223,8 @@ def catalog(c, org_id=ORG_ID):
         s["formats"] = {}
         s["professional_ids"] = []
     for p in professionals:
+        p["has_photo"] = p["id"] in photos
+        p["photo_updated_at"] = photos.get(p["id"])
         p["active"] = bool(p["active"])
         p["presencial_enabled"] = bool(p["presencial_enabled"])
         p["online_enabled"] = bool(p["online_enabled"])

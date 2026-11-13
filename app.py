@@ -18,6 +18,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import appointments_catalog_v2
+import appointments_availability_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -284,6 +285,7 @@ def initialize():
         consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
         appointments_catalog_v2.initialize(c)
+        appointments_availability_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -683,7 +685,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -709,7 +711,7 @@ def application(env, start_response):
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
-            '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments.css': 'admin-appointments.css',
+            '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments.css': 'admin-appointments.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
@@ -816,6 +818,39 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(400, str(exc))
                 return respond(201, {'id': pid})
+            # Private professional photo, sanitized WebP, never exposed to players.
+            if (path.startswith('/api/v2/admin/appointments/professionals/')
+                    and path.endswith('/photo') and method in ('GET', 'PUT', 'DELETE')):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                professional_id = path.rsplit('/', 2)[-2]
+                if not re.fullmatch(r'[0-9a-f]{32}', professional_id):
+                    raise Problem(404, 'professional_not_found')
+                existing = c.execute("""SELECT id FROM appt_professionals
+                    WHERE org_id=? AND id=?""",
+                    (appointments_catalog_v2.ORG_ID, professional_id)).fetchone()
+                if existing is None:
+                    raise Problem(404, 'professional_not_found')
+                if method == 'GET':
+                    photo_row = c.execute("""SELECT photo_data FROM appt_professional_photos
+                        WHERE org_id=? AND professional_id=?""",
+                        (appointments_catalog_v2.ORG_ID, professional_id)).fetchone()
+                    if photo_row is None:
+                        raise Problem(404, 'photo_not_found')
+                    return respond(200, bytes(photo_row['photo_data']), 'image/webp')
+                if method == 'DELETE':
+                    c.execute("""DELETE FROM appt_professional_photos
+                        WHERE org_id=? AND professional_id=?""",
+                        (appointments_catalog_v2.ORG_ID, professional_id))
+                    return respond(200, {'ok': True})
+                body = read_json(env)
+                photo_data, _photo_mime = prepare_admin_photo(body.get('photo'))
+                c.execute("""INSERT INTO appt_professional_photos
+                    (org_id,professional_id,photo_data,updated_at) VALUES(?,?,?,?)
+                    ON CONFLICT(org_id,professional_id) DO UPDATE SET
+                      photo_data=EXCLUDED.photo_data,updated_at=EXCLUDED.updated_at""",
+                    (appointments_catalog_v2.ORG_ID,professional_id,photo_data,int(time.time())))
+                return respond(200, {'ok': True})
             if path.startswith('/api/v2/admin/appointments/professionals/') and method == 'PUT':
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
@@ -827,6 +862,74 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(400, str(exc))
                 return respond(200, {'id': pid})
+            # Publishing periods and manual exceptions (admin only, organization-scoped).
+            if path == '/api/v2/admin/appointments/schedule' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    result = appointments_availability_v2.periods(
+                        c, appointments_catalog_v2.ORG_ID,
+                        (query.get('professional_id') or [''])[0],
+                        (query.get('from') or [''])[0],
+                        (query.get('to') or [''])[0])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, result)
+            if path == '/api/v2/admin/appointments/slots-preview' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    result = appointments_availability_v2.preview(
+                        c, appointments_catalog_v2.ORG_ID,
+                        (query.get('professional_id') or [''])[0],
+                        (query.get('service_id') or [''])[0],
+                        (query.get('mode') or [''])[0],
+                        (query.get('date') or [''])[0])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, result)
+            if path == '/api/v2/admin/appointments/availability/copy' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    result = appointments_availability_v2.copy_periods(
+                        c, read_json(env))
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc)=='overlapping_period' else 400, str(exc))
+                return respond(200, result)
+            if path in ('/api/v2/admin/appointments/availability',
+                        '/api/v2/admin/appointments/blocks') and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                kind = 'availability' if path.endswith('/availability') else 'block'
+                try:
+                    identifier = appointments_availability_v2.save_period(
+                        c, kind, read_json(env))
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc)=='overlapping_period' else 400, str(exc))
+                return respond(201, {'id': identifier})
+            if method == 'DELETE' and (
+                    path.startswith('/api/v2/admin/appointments/availability/')
+                    or path.startswith('/api/v2/admin/appointments/blocks/')):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                kind = 'availability' if '/availability/' in path else 'block'
+                try:
+                    appointments_availability_v2.remove_period(
+                        c, kind, path.rsplit('/',1)[-1])
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                return respond(200, {'ok': True})
             if path.startswith('/api/v2/admin/appointments/'):
                 if not user: raise Problem(401, 'unauthorized')
                 admin(user)
