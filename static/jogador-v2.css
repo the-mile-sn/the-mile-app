@@ -4864,3 +4864,13 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 /* Date digits stay visible throughout the moving-circle animation. */
 #week-strip .week-day .day-number{position:relative;z-index:2}
+
+
+/* Approved nutritional summary: medium-weight white title and slightly stronger rings. */
+#overview #day-details .nutrition-comparison-heading{
+ color:#f5f5f7!important;font-weight:500!important;
+}
+#overview #day-details .nutrition-comparison-gauge svg,
+#overview #day-details .nutrition-consumed-gauge svg{overflow:visible}
+/* During weekly horizontal gestures retain the existing week cards and shadows. */
+#overview #weekly-view{touch-action:pan-y}
