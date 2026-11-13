@@ -4703,3 +4703,34 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 @media(prefers-reduced-motion:reduce){
  .mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{animation:none!important}
 }
+
+
+/* v bottom-nav spring: reuse the segmented selector motion and tone */
+#player-panel #tabs.mile-segment-animated{position:fixed!important;isolation:isolate}
+#player-panel #tabs.mile-segment-animated>.mile-segment-indicator{
+ position:absolute!important;z-index:0!important;pointer-events:none!important;
+ border-radius:999px!important;opacity:0;
+}
+#player-panel #tabs.mile-segment-animated>.mile-segment-indicator.mile-segment-ready{opacity:1}
+#player-panel #tabs.mile-segment-animated>button{position:relative!important;z-index:1!important}
+#player-panel #tabs.mile-segment-animated>button[aria-pressed="true"]{
+ background:transparent!important;box-shadow:none!important;
+}
+#player-panel #tabs.mile-segment-animated>.mile-segment-indicator::before{
+ background:rgba(215,215,225,.23)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+#player-panel #tabs.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{
+ animation:mile-bottom-nav-tone .42s ease-in-out both!important;
+}
+@keyframes mile-bottom-nav-tone{
+ 0%{background-color:rgba(215,215,225,.13)}
+ 52%{background-color:rgba(215,215,225,.19)}
+ 100%{background-color:rgba(215,215,225,.23)}
+}
+#player-panel #tabs.mile-segment-animated>.mile-segment-indicator::after{
+ border:1px solid rgba(153,153,160,.72)!important;background:transparent!important;
+}
+@media(prefers-reduced-motion:reduce){
+ #player-panel #tabs.mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::before{animation:none!important}
+}
