@@ -136,7 +136,7 @@ function renderPersistence(){
  let display="new",caption="Por guardar",message="Novo plano por guardar",detail="Guarda o plano para depois o publicares no Planeamento e na app do jogador.",symbol="○";
  if(!plan.id){display="new";}
  else if(dirty){display="dirty";caption="Alterações por guardar";message="Alterações por guardar";detail="Guarda primeiro o rascunho. O Planeamento mantém a última versão aprovada.";symbol="!";}
- else if(state==="published"&&!publicationState.pending_changes){display="published";caption="Publicado";message="Plano publicado";detail="Versão aprovada disponível no Planeamento e na app do jogador.";symbol="✓";}
+ else if(state==="published"&&!publicationState.pending_changes){display="published";caption="Publicado";message=window.matchMedia("(max-width:830px)").matches?"Publicado":"Plano publicado";detail="Versão aprovada disponível no Planeamento e na app do jogador.";symbol="✓";}
  else if(state==="transitional"&&!publicationState.pending_changes){display="transitional";caption="Em uso no Planeamento";message="Guardado e já ligado ao Planeamento";detail="Plano existente preservado. Clica em Publicar para confirmar esta versão.";symbol="✓";}
  else if(publicationState.pending_changes){display="pending";caption="Alterações por publicar";message="Rascunho guardado · alterações por publicar";detail="O Planeamento e a app do jogador continuam a utilizar a última versão aprovada.";symbol="✓";}
  else {display="saved";caption="Rascunho guardado";message="Rascunho guardado com sucesso";detail="Ainda não aparece no Planeamento nem na app do jogador. Publica quando estiver validado.";symbol="✓";}
