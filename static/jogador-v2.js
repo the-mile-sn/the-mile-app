@@ -43,32 +43,63 @@ function shiftOverviewDay(offset){
 function enableOverviewDaySwipe(element){
  if(element.dataset.overviewDaySwipeBound)return;
  element.dataset.overviewDaySwipeBound="true";
- let start=null;
- element.addEventListener("touchstart",event=>{
-  start=null;
-  if(tab!=="overview"||element.hidden||event.touches.length!==1)return;
+ let start=null,active=false,preview=null,content=null;
+ const cleanup=()=>{
+  if(content){content.style.transform='';content.style.transition='';}
+  preview?.remove();preview=null;start=null;active=false;
+ };
+ const transition=(dx,done)=>{
+  if(!content){cleanup();done?.();return;}
+  content.style.transition='transform 260ms cubic-bezier(.2,.8,.2,1)';
+  content.style.transform='translate3d('+dx+'px,0,0)';
+  if(preview){preview.style.transition='transform 260ms cubic-bezier(.2,.8,.2,1)';preview.style.transform='translate3d('+dx+'px,0,0)';}
+  setTimeout(()=>{cleanup();done?.();},270);
+ };
+ element.addEventListener('touchstart',event=>{
+  cleanup();
+  if(tab!=='overview'||overviewMode!=='day'||element.hidden||event.touches.length!==1)return;
   const target=event.target;
-  if(target?.closest?.('input,select,textarea,[contenteditable],[role="slider"]'))return;
-  // Respect nested horizontal scrolling (e.g. charts), without blocking
-  // normal card buttons, vertically scrolling text or meal accordions.
+  if(target?.closest?.('input,select,textarea,[contenteditable],[role="slider"],.consumption-editor'))return;
   for(let node=target;node&&node!==element;node=node.parentElement){
-   if(node.scrollWidth>node.clientWidth+6&&
-      /^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
+   if(node.scrollWidth>node.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
   }
-  const touch=event.touches[0];
-  // Let iOS/Android handle their native back gesture at the screen edges.
-  if(touch.clientX<22||touch.clientX>window.innerWidth-22)return;
-  start={x:touch.clientX,y:touch.clientY};
+  const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
+  content=$('day-details');if(!content||content.hidden)return;
+  start={x:t.clientX,y:t.clientY,at:performance.now(),width:content.getBoundingClientRect().width};
  },{passive:true});
- element.addEventListener("touchcancel",()=>{start=null;},{passive:true});
- element.addEventListener("touchend",event=>{
-  if(!start||event.changedTouches.length!==1){start=null;return;}
-  const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
-  start=null;
-  if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.5)return;
+ element.addEventListener('touchmove',event=>{
+  if(!start||event.touches.length!==1)return;
+  const t=event.touches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
+  if(!active){
+   if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){start=null;return;}
+   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.2)return;
+   active=true;
+   const next=new Date(day);next.setDate(next.getDate()+(dx<0?1:-1));
+   preview=document.createElement('div');preview.className='mile-day-swipe-preview';
+   preview.setAttribute('aria-hidden','true');
+   const heading=document.createElement('div');heading.className='mile-day-swipe-preview-heading';
+   heading.textContent=next.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+   const skeleton=document.createElement('div');skeleton.className='mile-day-swipe-preview-skeleton';
+   skeleton.innerHTML='<div></div><div></div><div></div>';
+   preview.append(heading,skeleton);content.parentElement.append(preview);
+  }
   if(event.cancelable)event.preventDefault();
-  shiftOverviewDay(dx<0?1:-1);
+  const dxClamped=Math.max(-start.width,Math.min(start.width,dx));
+  content.style.transition='none';content.style.transform='translate3d('+dxClamped+'px,0,0)';
+  const direction=dxClamped<0?1:-1;
+  const next=new Date(day);next.setDate(next.getDate()+direction);
+  preview.querySelector('.mile-day-swipe-preview-heading').textContent=next.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+  preview.style.transition='none';preview.style.transform='translate3d('+(dxClamped+(direction*start.width))+'px,0,0)';
  },{passive:false});
+ element.addEventListener('touchend',event=>{
+  if(!start||!active){cleanup();return;}
+  const dx=event.changedTouches[0].clientX-start.x;
+  const speed=dx/Math.max(1,performance.now()-start.at);
+  const direction=dx<0?1:-1;
+  const commit=Math.abs(dx)>start.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55);
+  transition(commit?-direction*start.width:0,commit?()=>shiftOverviewDay(direction):null);
+ },{passive:true});
+ element.addEventListener('touchcancel',()=>{if(active)transition(0);else cleanup();},{passive:true});
 }
 function animateDailySwipeEntry(){
  const direction=pendingDailySwipeDirection;
