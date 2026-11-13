@@ -5373,3 +5373,27 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-energy-row .consumption-concentric-energy{
  font-size:clamp(33px,calc(4.25vw + 1px),58px)!important;
 }
+
+/* Match the text block's top and bottom to the concentric ring. */
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+ align-self:stretch!important;justify-content:space-between!important;gap:0!important;
+}
+#overview #day-details .consumption-concentric-energy-row{
+ flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;gap:0!important;
+}
+#overview #day-details .consumption-concentric-energy-label{
+ display:block!important;color:#b7b6c1!important;font-size:clamp(12px,1.8vw,21px)!important;
+ font-weight:400!important;line-height:1.15!important;margin:0 0 3px!important;
+}
+#overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy{
+ margin:0!important;
+}
+#overview #day-details .consumption-concentric-macros{margin-top:auto!important;}
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  align-self:stretch!important;justify-content:space-between!important;
+ }
+ #overview #day-details .consumption-concentric-energy-label{
+  font-size:12px!important;line-height:1.1!important;margin-bottom:2px!important;
+ }
+}
