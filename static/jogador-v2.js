@@ -1770,7 +1770,7 @@ async function overview(){
     const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
     const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
     const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
-    mode.append(gramsButton,kgButton);energyRow.append(energyLine);figures.append(energyRow);visual.append(mode);
+    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.textContent="→";unitArrow.setAttribute("aria-label","Mostrar valores por kg");mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);visual.append(mode);
     const details=document.createElement("div");details.className="consumption-concentric-macros";
     const macroValues=[];
     for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
@@ -1785,7 +1785,7 @@ async function overview(){
      macroValues.push({key,consumedValue,prescribedValue,grams});
     }
     const updateUnits=(perKg)=>{
-     gramsButton.classList.toggle("active",!perKg);kgButton.classList.toggle("active",perKg);
+     unitArrow.textContent=perKg?"←":"→";unitArrow.setAttribute("aria-label",perKg?"Mostrar valores em gramas":"Mostrar valores por kg");unitArrow.title=perKg?"Voltar a g e kcal":"Ver g/kg e kcal/kg";
      gramsButton.setAttribute("aria-pressed",String(!perKg));kgButton.setAttribute("aria-pressed",String(perKg));
      const divisor=perKg&&hasWeight?weight:1;
      current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
@@ -1797,9 +1797,9 @@ async function overview(){
       item.grams.textContent=perKg?" g/kg":" g";
      }
     };
-    gramsButton.addEventListener("click",e=>{e.stopPropagation();updateUnits(false);});
-    kgButton.addEventListener("click",e=>{e.stopPropagation();if(hasWeight)updateUnits(true);});
-    kgButton.disabled=!hasWeight;kgButton.title=hasWeight?"":"Peso de referência indisponível";
+    let showingPerKg=false;
+    unitArrow.addEventListener("click",e=>{e.stopPropagation();if(!hasWeight)return;showingPerKg=!showingPerKg;updateUnits(showingPerKg);});
+    unitArrow.disabled=!hasWeight;
     updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
     for(const [name,delta,cls] of [["vs ontem",deviationPrevious,"prior"],["vs média",deviationMean,"mean"]]){
