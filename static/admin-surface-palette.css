@@ -2155,3 +2155,21 @@ html[data-admin-theme] #tm-plan-page[data-admin-theme="light"] #plan-entry .plan
  }
 }
 
+/* Planos list: larger, clearer nutrition and publication pills.
+   Geometry/typography only; colours (data-palette/data-state) are deliberately
+   inherited unchanged in both light and dark modes. */
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-table .plan-type-tag,
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-card .plan-type-tag{
+ box-sizing:border-box!important;min-height:32px!important;
+ padding:6px 13px!important;border-radius:999px!important;
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ font-size:13px!important;font-weight:500!important;line-height:1.3!important;
+}
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-table .plan-state-label,
+html[data-admin-theme] #tm-plan-page #plan-entry .plan-library-card .plan-state-label{
+ box-sizing:border-box!important;min-height:32px!important;
+ padding:6px 13px!important;border-radius:999px!important;
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ font-size:13px!important;font-weight:500!important;line-height:1.3!important;
+}
+
