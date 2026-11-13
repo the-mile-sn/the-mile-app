@@ -43,16 +43,15 @@ function shiftOverviewDay(offset){
 function enableOverviewDaySwipe(element){
  if(element.dataset.overviewDaySwipeBound)return;
  element.dataset.overviewDaySwipeBound="true";
- let start=null,active=false,preview=null,content=null;
+ let start=null,active=false,content=null;
  const cleanup=()=>{
   if(content){content.style.transform='';content.style.transition='';}
-  preview?.remove();preview=null;start=null;active=false;
+  start=null;active=false;
  };
  const transition=(dx,done)=>{
   if(!content){cleanup();done?.();return;}
   content.style.transition='transform 260ms cubic-bezier(.2,.8,.2,1)';
   content.style.transform='translate3d('+dx+'px,0,0)';
-  if(preview){preview.style.transition='transform 260ms cubic-bezier(.2,.8,.2,1)';preview.style.transform='translate3d('+dx+'px,0,0)';}
   setTimeout(()=>{cleanup();done?.();},270);
  };
  element.addEventListener('touchstart',event=>{
@@ -74,32 +73,11 @@ function enableOverviewDaySwipe(element){
    if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){start=null;return;}
    if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.2)return;
    active=true;
-   const next=new Date(day);next.setDate(next.getDate()+(dx<0?1:-1));
-   preview=document.createElement('div');preview.className='mile-day-swipe-preview';
-   preview.setAttribute('aria-hidden','true');
-   preview.style.top=content.offsetTop+'px';
-   preview.style.left=content.offsetLeft+'px';
-   preview.style.width=start.width+'px';
-   // Clone the actual day layout so every card and its vertical position
-   // matches the current day, even when the page has been scrolled.
-   const skeleton=content.cloneNode(true);
-   skeleton.removeAttribute('id');
-   skeleton.classList.add('mile-day-swipe-preview-skeleton');
-   skeleton.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
-   skeleton.querySelectorAll('input,button,select,textarea,a,[tabindex]').forEach(node=>{
-    node.removeAttribute('tabindex');node.setAttribute('aria-hidden','true');
-   });
-   skeleton.querySelectorAll('img,video,canvas,iframe').forEach(node=>node.remove());
-   skeleton.querySelectorAll('svg').forEach(node=>node.setAttribute('aria-hidden','true'));
-   preview.append(skeleton);content.parentElement.append(preview);
+
   }
   if(event.cancelable)event.preventDefault();
   const dxClamped=Math.max(-start.width,Math.min(start.width,dx));
   content.style.transition='none';content.style.transform='translate3d('+dxClamped+'px,0,0)';
-  const direction=dxClamped<0?1:-1;
-  const next=new Date(day);next.setDate(next.getDate()+direction);
-
-  preview.style.transition='none';preview.style.transform='translate3d('+(dxClamped+(direction*start.width))+'px,0,0)';
  },{passive:false});
  element.addEventListener('touchend',event=>{
   if(!start||!active){cleanup();return;}
