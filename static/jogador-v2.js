@@ -37,7 +37,7 @@ function shiftOverviewDay(offset){
  next.setDate(next.getDate()+offset);
  day=next;
  weeklySelection=null;
- pendingDailySwipeDirection=overviewMode==="day"?offset:0;
+ pendingDailySwipeDirection=0;
  overview().catch(error);
 }
 function enableOverviewDaySwipe(element){
@@ -50,34 +50,34 @@ function enableOverviewDaySwipe(element){
  };
  const transition=(dx,done)=>{
   if(!content){cleanup();done?.();return;}
-  content.style.transition='transform 260ms cubic-bezier(.2,.8,.2,1)';
+  content.style.transition='transform 210ms cubic-bezier(.2,.8,.2,1)';
   content.style.transform='translate3d('+dx+'px,0,0)';
-  setTimeout(()=>{cleanup();done?.();},270);
+  setTimeout(()=>{cleanup();done?.();},215);
  };
  element.addEventListener('touchstart',event=>{
   cleanup();
-  if(tab!=='overview'||overviewMode!=='day'||element.hidden||event.touches.length!==1)return;
+  if(tab!=='overview'||element.hidden||event.touches.length!==1)return;
   const target=event.target;
   if(target?.closest?.('input,select,textarea,[contenteditable],[role="slider"],.consumption-editor'))return;
   for(let node=target;node&&node!==element;node=node.parentElement){
    if(node.scrollWidth>node.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(node).overflowX))return;
   }
   const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
-  content=$('day-details');if(!content||content.hidden)return;
+  content=overviewMode==='day'?$('day-details'):$('weekly-view');if(!content||content.hidden)return;
   start={x:t.clientX,y:t.clientY,at:performance.now(),width:content.getBoundingClientRect().width};
  },{passive:true});
  element.addEventListener('touchmove',event=>{
   if(!start||event.touches.length!==1)return;
   const t=event.touches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
   if(!active){
-   if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){start=null;return;}
-   if(Math.abs(dx)<9||Math.abs(dx)<Math.abs(dy)*1.2)return;
+   if(Math.abs(dy)>18&&Math.abs(dy)>Math.abs(dx)*1.35){start=null;return;}
+   if(Math.abs(dx)<8||Math.abs(dx)<Math.abs(dy)*.8)return;
    active=true;
 
   }
   if(event.cancelable)event.preventDefault();
   const dxClamped=Math.max(-start.width,Math.min(start.width,dx));
-  content.style.transition='none';content.style.transform='translate3d('+dxClamped+'px,0,0)';
+  if(overviewMode==='day'){content.style.transition='none';content.style.transform='translate3d('+dxClamped+'px,0,0)';}
  },{passive:false});
  element.addEventListener('touchend',event=>{
   if(!start||!active){cleanup();return;}
@@ -85,6 +85,7 @@ function enableOverviewDaySwipe(element){
   const speed=dx/Math.max(1,performance.now()-start.at);
   const direction=dx<0?1:-1;
   const commit=Math.abs(dx)>start.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55);
+  if(overviewMode==='week'){cleanup();if(commit)shiftOverviewDay(direction);return;}
   transition(commit?-direction*start.width:0,commit?()=>shiftOverviewDay(direction):null);
  },{passive:true});
  element.addEventListener('touchcancel',()=>{if(active)transition(0);else cleanup();},{passive:true});
@@ -1232,6 +1233,8 @@ function animateCalendarSelection(strip,dateKey){
  const from=source?.getBoundingClientRect()||previous.rect;
  const to=current.rect;
  if(!to.width||!from.width||Math.abs(from.left-to.left)>window.innerWidth*1.5)return;
+ // Across a week boundary, avoid a long backwards jump across the whole strip.
+ if(Math.abs(current.index-previous.index)>1)return;
  const ghost=document.createElement('span');
  ghost.className='mile-calendar-moving-circle';
  ghost.style.cssText='position:fixed;pointer-events:none;z-index:1;border-radius:50%;background:#f3f3f5;width:'+to.width+'px;height:'+to.height+'px;left:'+to.left+'px;top:'+to.top+'px;';
@@ -1721,7 +1724,7 @@ async function overview(){
    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 160 160");svg.setAttribute("aria-hidden","true");
    const ring=(radius,delta,pos,neg)=>{
     const track=document.createElementNS(svg.namespaceURI,"circle");
-    for(const [key,value] of [["cx",80],["cy",80],["r",radius],["stroke-width",9],["stroke","#484b52"],["fill","none"]])track.setAttribute(key,String(value));
+    for(const [key,value] of [["cx",80],["cy",80],["r",radius],["stroke-width",11],["stroke","#484b52"],["fill","none"]])track.setAttribute(key,String(value));
     svg.append(track);if(delta===null||Math.abs(delta)<.05)return;
     const magnitude=Math.min(180,Math.abs(delta)/30*180),direction=delta>=0?1:-1;
     const point=angle=>{const t=(angle-90)*Math.PI/180;return [80+radius*Math.cos(t),80+radius*Math.sin(t)]};
@@ -1729,9 +1732,9 @@ async function overview(){
     const path=document.createElementNS(svg.namespaceURI,"path");
     path.setAttribute("d",`M ${x} ${y} A ${radius} ${radius} 0 0 ${direction>0?1:0} ${endX} ${endY}`);
     path.setAttribute("stroke",delta>0?pos:neg);path.setAttribute("fill","none");
-    path.setAttribute("stroke-width","9");path.setAttribute("stroke-linecap","round");svg.append(path);
+    path.setAttribute("stroke-width","11");path.setAttribute("stroke-linecap","round");svg.append(path);
    };
-   const paintRings=()=>{svg.replaceChildren();ring(68,deviationMean,"#66d7a4","#ff996e");ring(50,deviationPrevious,"#c4e5dc","#ffb69b");};
+   const paintRings=()=>{svg.replaceChildren();ring(66,deviationMean,"#66d7a4","#ff996e");ring(52,deviationPrevious,"#c4e5dc","#ffb69b");};
    paintRings();
    gauge.append(svg);
    const center=document.createElement("div");center.className="nutrition-comparison-center";
@@ -1746,7 +1749,7 @@ async function overview(){
     const progress=document.createElementNS("http://www.w3.org/2000/svg","svg");progress.setAttribute("viewBox","0 0 160 160");progress.setAttribute("aria-hidden","true");
     for(const [stroke,ratio] of [["rgba(172,238,207,.16)",1],["#a5efd0",Math.max(0,Math.min(1,actual.kcal/total.kcal))]]){
      const circle=document.createElementNS(progress.namespaceURI,"circle");
-     for(const [key,value] of [["cx",80],["cy",80],["r",68],["fill","none"],["stroke",stroke],["stroke-width",10],["stroke-linecap","round"],["transform","rotate(-90 80 80)"],["stroke-dasharray",circumference],["stroke-dashoffset",stroke.startsWith("rgba")?0:circumference*(1-ratio)]])circle.setAttribute(key,String(value));
+     for(const [key,value] of [["cx",80],["cy",80],["r",68],["fill","none"],["stroke",stroke],["stroke-width",12],["stroke-linecap","round"],["transform","rotate(-90 80 80)"],["stroke-dasharray",circumference],["stroke-dashoffset",stroke.startsWith("rgba")?0:circumference*(1-ratio)]])circle.setAttribute(key,String(value));
      progress.append(circle);
     }
     consumed.append(progress);
