@@ -1355,7 +1355,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,foodNote,portionStep,matches);
    fields.classList.add('consumption-food-sheet-content');fields.hidden=false;fields.style.display='block';
    sheet.append(fields);document.body.append(backdrop,sheet);
-   const closeFoodSheet=()=>{backdrop.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-viewport-height');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
+   const closeFoodSheet=()=>{sheet.style.removeProperty('--sheet-drag-height');sheet.style.removeProperty('--sheet-drag-max-height');backdrop.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-keyboard-offset');sheet.style.removeProperty('--sheet-viewport-height');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-dragging');sheet.classList.remove('is-expanded');sheet.hidden=true;backdrop.hidden=true;document.body.classList.remove('consumption-food-sheet-open');search.blur();quantity.blur();};
    const openFoodSheet=()=>{search.value='';quantity.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;foodNote.hidden=true;foodNote.textContent='';portionStep.hidden=true;updateAddState();sheet.hidden=false;backdrop.hidden=false;document.body.classList.add('consumption-food-sheet-open');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.remove('is-expanded');sheet.scrollTop=0;syncSheetViewport();};
    const syncSheetViewport=()=>{
     if(sheet.hidden)return;
@@ -1379,7 +1379,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    confirm.disabled=true;
    let dragStart=0,startHeight=0,restHeight=0,dragging=false,dragMoved=false,dragStartedAt=0;
    const expandedHeight=()=>Math.max(200,(window.visualViewport?.height||window.innerHeight)-50);
-   const settleSheet=expanded=>{sheet.classList.remove('is-dragging');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.toggle('is-expanded',expanded);};
+   const settleSheet=expanded=>{sheet.style.removeProperty('--sheet-drag-height');sheet.style.removeProperty('--sheet-drag-max-height');sheet.classList.remove('is-dragging');sheet.style.removeProperty('height');sheet.style.removeProperty('max-height');sheet.classList.toggle('is-expanded',expanded);};
    const gestureStart=e=>{
     if(e.target.closest('button,input,select,textarea,.consumption-suggestions'))return;
     dragStart=e.touches[0]?.clientY??0;dragStartedAt=performance.now();startHeight=sheet.getBoundingClientRect().height;
@@ -1392,6 +1392,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     if(Math.abs(delta)<3&&!dragMoved)return;
     dragMoved=true;e.preventDefault();
     const max=expandedHeight(),next=Math.max(0,Math.min(max,startHeight+delta));
+    sheet.style.setProperty('--sheet-drag-height',next+'px');
+    sheet.style.setProperty('--sheet-drag-max-height',max+'px');
     sheet.style.setProperty('height',next+'px','important');
     sheet.style.setProperty('max-height',max+'px','important');
    };
