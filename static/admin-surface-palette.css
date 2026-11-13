@@ -1465,7 +1465,7 @@ html[data-admin-theme] #admin-login-panel .tm-admin-login-submit{
  }
  #admin-login-panel .tm-admin-login-heading svg{
   display:block!important;
-  width:min(260px,78vw)!important;
+  width:min(205px,62vw)!important;
   height:auto!important;
   flex:none!important;
  }
