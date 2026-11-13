@@ -2100,3 +2100,44 @@ html[data-admin-theme] #tm-food-library-page .tm-portion-catalog-header .tm-food
  }
 }
 
+/* Planos catalogue desktop: final header, divider and hover hierarchy (2026-11-13). */
+/* The previous light-theme table rules have higher specificity than the old
+   list overrides. Match the Food Library's visually quiet table hierarchy,
+   without altering plan/status badges or their data-palette attributes. */
+html[data-admin-theme="light"] #tm-plan-page #plan-entry{
+ --tm-plan-divider:rgba(67,84,107,.024);
+ --tm-plan-hover:rgba(67,84,107,.018);
+}
+html[data-admin-theme="dark"] #tm-plan-page #plan-entry{
+ --tm-plan-divider:rgba(180,193,211,.032);
+ --tm-plan-hover:rgba(180,193,211,.02);
+}
+html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table thead tr > th{
+ background:var(--tm-ui-card)!important;
+ color:var(--tm-ui-muted)!important;
+ border:0!important;border-bottom:1px solid var(--tm-plan-divider)!important;
+ box-shadow:none!important;
+ font:500 11px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table tbody tr > td{
+ border:0!important;border-bottom:1px solid var(--tm-plan-divider)!important;
+ box-shadow:none!important;background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table tbody tr:last-child > td{
+ border-bottom:0!important;
+}
+@media(hover:hover) and (pointer:fine){
+ html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):hover > td{
+  background:var(--tm-plan-hover)!important;
+ }
+}
+@media(hover:none){
+ html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table tbody tr:not(.plan-library-legacy-draft):hover > td{
+  background:var(--tm-ui-card)!important;
+ }
+}
+/* Legacy-copy warning rows keep their own distinctive backgrounds. */
+html[data-admin-theme] #tm-plan-page[data-admin-theme] #plan-entry .plan-library-table tbody tr.plan-library-legacy-draft > td{
+ background:transparent!important;
+}
+
