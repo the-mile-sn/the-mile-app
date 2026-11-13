@@ -334,3 +334,13 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Menu de renomear:** abrir ancorado à direita do lápis (menu estende-se para dentro do ecrã), com largura limitada à viewport e altura limitada com scroll interno. A abertura não altera o nome do plano nem assinala alterações por guardar: apenas a seleção efetiva de outro nome pode mudar os dados.
 - **Adicionar nota:** a linha do campo e a do botão «+ Adicionar nota» ocupam a mesma largura disponível e mantêm 48 px de altura, contrariando a regra legada de 62 px na refeição expandida.
 - **Compatibilidade:** remover/substituir a última camada de CSS mobile anterior antes de publicar nova correção; não empilhar variantes contraditórias. Manter alimentação, dados, cálculos, cores nutricionais e o branch main inalterados. Verificar visualmente em Safari/iPhone e em modo claro/escuro antes de fechar a validação.
+
+
+## 28. Planos — correção de especificidade do cabeçalho mobile (13 novembro 2026)
+
+- **Causa identificada:** regras do editor anteriores utilizavam `:is(.meal, .meal.tm-mobile-expanded)`, cuja especificidade CSS incluía a variante mais específica mesmo para refeições fechadas. As regras mobile posteriores com `.meal` simples perdiam a cascata; ao expandir, `.tm-mobile-expanded` mudava a prioridade e deslocava botões e seta.
+- **Correção estrutural:** os cards da edição recebem a classe estável `tm-editor-meal` em ambos os estados. A última secção mobile de `admin-surface-palette.css` usa esse seletor para todas as refeições, com **uma única geometria**, sem regras alternativas por estado.
+- **Cabeçalho mobile:** duas linhas fixas (nome + lixo/lápis imediatamente adjacentes; macros abaixo) e uma coluna lateral de 44 px com a seta centrada verticalmente nas duas linhas. O título pode reduzir largura e quebrar quando necessário sem colidir com as ações. A grelha, o padding e a posição dos ícones não dependem de aberto/fechado.
+- **Menu de renomear:** ancorado à direita do lápis, a abrir para dentro do ecrã. A interação de expandir no título/área livre não interfere com os botões.
+- **Âmbito:** CSS restrito a `max-width:830px`. Respeitar modos claro/escuro e conservar a apresentação desktop aprovada, os IDs/handlers, cálculos, gramagens, valores, estados nutricionais e app dos jogadores.
+- **QA:** verificar visualmente em Safari iOS, com card fechado, aberto, menu do lápis aberto e alternância repetida; distinguir sempre QA de código, deploy Render e QA real no browser.
