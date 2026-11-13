@@ -407,9 +407,24 @@ const renderPlanLibrary=()=>{
  const rows=draftIndex.map(d=>({draft:d,owner:draftOwner(d),type:planTypeOf(d)})).filter(x=>x.owner&&(!playerId||String(x.owner?.id)===String(playerId))&&(!type||x.type===type)&&(!query||Number.isFinite(draftSearchRank(x,query)))).sort((a,b)=>draftSearchRank(a,query)-draftSearchRank(b,query)||(a.owner?.name||a.draft.player_name||"").localeCompare(b.owner?.name||b.draft.player_name||"","pt")||a.type.localeCompare(b.type,"pt")||Number(b.draft.created_at||0)-Number(a.draft.created_at||0));
  $("library-plan-count").textContent=rows.length+" resultado"+(rows.length===1?"":"s");
  $("library-plan-rows").innerHTML=rows.map(x=>{const pub=x.draft.publication||{};const state=pub.pending_changes?"pending":pub.state||"draft";const labels={published:"Publicado",pending:"Alterações por publicar",transitional:"Em uso no Planeamento",draft:"Rascunho"};const palette=previewPalette(x.type);const typeName=String(x.type||"Plano geral").replace(/^Plano\s+/i,"").replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"));return '<tr'+(x.draft.legacy_migration?' class="plan-library-legacy-draft"':'')+'><td><strong>'+esc(x.owner?.name||"Jogador não associado")+'</strong></td><td><span class="plan-type-tag" data-palette="'+palette+'">'+planTypeIcon(x.type)+esc(typeName)+'</span></td><td><span class="plan-state-label" data-state="'+esc(state)+'">'+esc(labels[state]||"Rascunho")+'</span></td><td><div class="plan-library-row-actions"><button type="button" data-view-id="'+esc(x.draft.id)+'" aria-label="Visualizar plano" title="Visualizar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button><button type="button" data-edit-id="'+esc(x.draft.id)+'" aria-label="Editar plano" title="Editar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg></button>'+(x.draft.legacy_migration?'<button type="button" data-delete-legacy-id="'+esc(x.draft.id)+'" title="Eliminar cópia antiga" aria-label="Eliminar cópia antiga"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m5-7v7"/></svg></button>':'')+'</div></td></tr>';}).join("")||'<tr><td colspan="4" class="plan-library-empty">Nenhum plano encontrado.</td></tr>';
- $("library-plan-rows").querySelectorAll("[data-edit-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.editId)}catch(err){status("Não foi possível abrir o plano: "+err.message)}});
- $("library-plan-rows").querySelectorAll("[data-view-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.viewId);renderPlanPreview();showEntry("preview")}catch(err){status("Não foi possível visualizar o plano: "+err.message)}});
- $("library-plan-rows").querySelectorAll("[data-delete-legacy-id]").forEach(b=>b.onclick=async()=>{
+ /* Render native mobile articles from the same sanitized table rows.
+    They share the existing plan data, actions, states and nutrient badges. */
+ const mobileCards=$("library-plan-cards");
+ mobileCards.innerHTML=Array.from($("library-plan-rows").querySelectorAll("tr")).map(row=>{
+  const cells=row.cells;
+  if(cells.length!==4)return '<p class="plan-library-cards-empty">'+esc(cells[0]?.textContent||"Nenhum plano encontrado.")+'</p>';
+  const legacy=row.classList.contains("plan-library-legacy-draft");
+  return '<article class="plan-library-card'+(legacy?' plan-library-legacy-draft':'')+'" role="listitem">'+
+   '<div class="plan-library-card-name">'+cells[0].innerHTML+'</div>'+
+   '<div class="plan-library-card-actions">'+cells[3].innerHTML+'</div>'+
+   '<div class="plan-library-card-type">'+cells[1].innerHTML+'</div>'+
+   '<div class="plan-library-card-state">'+cells[2].innerHTML+'</div>'+
+  '</article>';
+ }).join("");
+ mobileCards.hidden=false;
+  $("plan-entry").querySelectorAll("[data-edit-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.editId)}catch(err){status("Não foi possível abrir o plano: "+err.message)}});
+ $("plan-entry").querySelectorAll("[data-view-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.viewId);renderPlanPreview();showEntry("preview")}catch(err){status("Não foi possível visualizar o plano: "+err.message)}});
+ $("plan-entry").querySelectorAll("[data-delete-legacy-id]").forEach(b=>b.onclick=async()=>{
   const item=draftIndex.find(d=>d.id===b.dataset.deleteLegacyId);
   if(!item?.legacy_migration)return;
   if(!confirm("Eliminar definitivamente esta cópia antiga de "+(item.player_name||"jogador")+" — "+item.plan_type+"?\\n\\nEsta operação elimina apenas o rascunho antigo. Não altera a publicação nem os planos JSON importados."))return;
