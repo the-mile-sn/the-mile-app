@@ -17,6 +17,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import appointments_catalog_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -282,6 +283,7 @@ def initialize():
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
         consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
+        appointments_catalog_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -693,7 +695,8 @@ def application(env, start_response):
                     or path.startswith('/api/v2/dishes/import')
                     or path.startswith('/api/v2/recipes')
                     or path.startswith('/api/players')
-                    or path.startswith('/api/admins')):
+                    or path.startswith('/api/admins')
+                    or path.startswith('/api/v2/admin/appointments/')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
             if (path in ('/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
@@ -780,6 +783,54 @@ def application(env, start_response):
                 except ValueError:raise Problem(400,'invalid_event')
                 if changed is None:raise Problem(404,'not_found')
                 return respond(200,{'event':changed})
+
+            # Booking catalogue, separate from nutrition and players. No Shopify writes.
+            if path == '/api/v2/admin/appointments/catalog' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                return respond(200, appointments_catalog_v2.catalog(c))
+            if path == '/api/v2/admin/appointments/services' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    sid = appointments_catalog_v2.save_service(c, read_json(env))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(201, {'id': sid})
+            if path.startswith('/api/v2/admin/appointments/services/') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    sid = appointments_catalog_v2.save_service(c, read_json(env),
+                        path.rsplit('/', 1)[-1])
+                except LookupError:
+                    raise Problem(404, 'service_not_found')
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'id': sid})
+            if path == '/api/v2/admin/appointments/professionals' and method == 'POST':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    pid = appointments_catalog_v2.save_professional(c, read_json(env))
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(201, {'id': pid})
+            if path.startswith('/api/v2/admin/appointments/professionals/') and method == 'PUT':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                try:
+                    pid = appointments_catalog_v2.save_professional(c, read_json(env),
+                        path.rsplit('/', 1)[-1])
+                except LookupError:
+                    raise Problem(404, 'professional_not_found')
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, {'id': pid})
+            if path.startswith('/api/v2/admin/appointments/'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                raise Problem(404, 'not_found')
 
             if path == '/api/v2/supplement-library/transfer' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')

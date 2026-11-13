@@ -80,13 +80,251 @@
  window.addEventListener("hashchange",()=>switchTab(location.hash.slice(1)));
  switchTab(location.hash.slice(1));
  setView("week");
+
+ /* Service/professional catalogue (phase 2). Server is the authority. */
+ let csrf="",catalog={services:[],professionals:[]};
+ let editingService=null,editingProfessional=null;
+ const euros=new Intl.NumberFormat("pt-PT",{style:"currency",currency:"EUR"});
+ const modeLabels={presencial:"Presencial",online:"Online"};
+ const $=byId;
+ function element(tag,className,text){
+  const el=document.createElement(tag);
+  if(className)el.className=className;
+  if(text!==undefined)el.textContent=String(text);
+  return el;
+ }
+ function feedback(message,isError=false){
+  const target=$("tm-appt-catalog-feedback");
+  target.textContent=message||"";
+  target.classList.toggle("is-error",!!isError);
+ }
+ function formError(type,message){
+  $(type==="service"?"tm-appt-service-error":"tm-appt-professional-error").textContent=message;
+ }
+ const errors={
+  invalid_name:"Indica um nome válido.",
+  invalid_category:"Seleciona uma categoria válida.",
+  invalid_duration:"A duração deve estar entre 15 e 480 minutos.",
+  invalid_price:"Confirma os preços indicados.",
+  invalid_formats:"Configura os formatos disponíveis.",
+  invalid_mode:"Indica os formatos disponíveis.",
+  at_least_one_format:"Seleciona pelo menos um formato.",
+  invalid_email:"Confirma o endereço de email.",
+  invalid_services:"Um dos serviços selecionados deixou de estar disponível.",
+  invalid_professionals:"Um dos profissionais selecionados deixou de estar disponível.",
+  service_name_exists:"Já existe um serviço com este nome.",
+  professional_email_exists:"Este email já está associado a um profissional.",
+  invalid_shopify_id:"Confirma os identificadores Shopify ou deixa-os vazios.",
+  variant_requires_product:"Para associar uma variante, indica também o produto Shopify.",
+  service_not_found:"O serviço deixou de estar disponível.",
+  professional_not_found:"O profissional deixou de estar disponível."
+ };
+ async function api(path,options={}){
+  const hasBody=options.body!==undefined;
+  const headers={Accept:"application/json"};
+  if(hasBody){headers["Content-Type"]="application/json";headers["X-CSRF-Token"]=csrf;}
+  const res=await fetch(path,{credentials:"same-origin",cache:"no-store",...options,headers});
+  let data={};
+  try{data=await res.json();}catch(_error){}
+  if(!res.ok){
+   if(res.status===401||res.status===403)throw new Error("A sessão expirou ou não tens acesso. Volta a iniciar sessão.");
+   throw new Error(errors[data.error]||"Não foi possível concluir a operação. Tenta novamente.");
+  }
+  return data;
+ }
+ const endpoint="/api/v2/admin/appointments";
+ function statusPill(active){
+  return element("span","tm-appt-status"+(active?" is-active":" is-inactive"),active?"Ativo":"Inativo");
+ }
+ function modesSummary(formats){
+  const out=element("div","tm-appt-row-modes");
+  for(const mode of ["presencial","online"]){
+   const item=formats?.[mode];
+   if(!item?.enabled)continue;
+   out.append(element("span","tm-appt-mode-badge",modeLabels[mode]+" · "+euros.format((item.price_cents||0)/100)));
+  }
+  if(!out.childElementCount)out.append(element("span","tm-appt-muted","Sem formatos ativos"));
+  return out;
+ }
+ function renderServices(){
+  const list=$("tm-appt-services-list");list.replaceChildren();
+  if(!catalog.services.length){
+   list.append(element("p","tm-appt-placeholder","Ainda não existem serviços. Cria o primeiro para começar."));
+   return;
+  }
+  for(const item of catalog.services){
+   const card=element("article","tm-appt-record");
+   const body=element("div","tm-appt-record-body");
+   const heading=element("div","tm-appt-record-title");
+   heading.append(element("h4","",item.name),statusPill(item.active));
+   body.append(heading,element("p","tm-appt-record-meta",item.category+" · "+item.duration_minutes+" min"),modesSummary(item.formats));
+   const names=item.professional_ids.map(id=>catalog.professionals.find(p=>p.id===id)?.name).filter(Boolean);
+   body.append(element("p","tm-appt-record-assigned",names.length?"Profissionais: "+names.join(", "):"Sem profissionais associados"));
+   const button=element("button","tm-appt-edit","Editar");
+   button.type="button";button.dataset.editService=item.id;
+   card.append(body,button);list.append(card);
+  }
+ }
+ function renderProfessionals(){
+  const list=$("tm-appt-professionals-list");list.replaceChildren();
+  if(!catalog.professionals.length){
+   list.append(element("p","tm-appt-placeholder","Ainda não existem profissionais. Adiciona o primeiro profissional."));
+   return;
+  }
+  for(const item of catalog.professionals){
+   const card=element("article","tm-appt-record");
+   const body=element("div","tm-appt-record-body");
+   const heading=element("div","tm-appt-record-title");
+   heading.append(element("h4","",item.name),statusPill(item.active));
+   body.append(heading);
+   if(item.email)body.append(element("p","tm-appt-record-meta",item.email));
+   const modes=[item.presencial_enabled?"Presencial":null,item.online_enabled?"Online":null].filter(Boolean);
+   body.append(element("p","tm-appt-record-meta",modes.join(" e ")));
+   const names=item.service_ids.map(id=>catalog.services.find(s=>s.id===id)?.name).filter(Boolean);
+   body.append(element("p","tm-appt-record-assigned",names.length?names.join(" · "):"Sem serviços associados"));
+   const button=element("button","tm-appt-edit","Editar");
+   button.type="button";button.dataset.editProfessional=item.id;
+   card.append(body,button);list.append(card);
+  }
+ }
+ async function loadCatalog(){
+  const data=await api(endpoint+"/catalog");
+  if(!Array.isArray(data.services)||!Array.isArray(data.professionals))throw Error("Resposta inesperada do servidor.");
+  catalog=data;renderServices();renderProfessionals();
+  return data;
+ }
+ function associationChoices(target,items,selected){
+  const host=$(target);host.replaceChildren();
+  if(!items.length){
+   host.append(element("p","tm-appt-form-hint","Ainda não existem opções para associar."));
+   return;
+  }
+  for(const item of items){
+   const label=element("label","tm-appt-checkbox tm-appt-choice");
+   const checkbox=document.createElement("input");
+   checkbox.type="checkbox";checkbox.value=item.id;
+   checkbox.checked=selected.includes(item.id);
+   label.append(checkbox,element("span","",item.name));
+   host.append(label);
+  }
+ }
+ function checkedIds(host){return [...$(host).querySelectorAll('input[type="checkbox"]:checked')].map(el=>el.value);}
+ function openService(item){
+  editingService=item?.id||null;
+  $("tm-appt-service-dialog-title").textContent=item?"Editar serviço":"Novo serviço";
+  $("tm-appt-service-form").reset();
+  formError("service","");
+  $("tm-appt-service-name").value=item?.name||"";
+  $("tm-appt-service-category").value=item?.category||"Wellness";
+  $("tm-appt-service-duration").value=item?.duration_minutes||45;
+  $("tm-appt-service-active").checked=item?.active??true;
+  for(const mode of ["presencial","online"]){
+   const f=item?.formats?.[mode];
+   $("tm-appt-service-"+mode+"-enabled").checked=f?.enabled??true;
+   $("tm-appt-service-"+mode+"-price").value=((f?.price_cents||0)/100).toFixed(2);
+   $("tm-appt-service-"+mode+"-product").value=f?.shopify_product_id||"";
+   $("tm-appt-service-"+mode+"-variant").value=f?.shopify_variant_id||"";
+  }
+  associationChoices("tm-appt-service-professionals",catalog.professionals,item?.professional_ids||[]);
+  $("tm-appt-service-dialog").showModal();
+  $("tm-appt-service-name").focus();
+ }
+ function openProfessional(item){
+  editingProfessional=item?.id||null;
+  $("tm-appt-professional-dialog-title").textContent=item?"Editar profissional":"Novo profissional";
+  $("tm-appt-professional-form").reset();
+  formError("professional","");
+  $("tm-appt-professional-name").value=item?.name||"";
+  $("tm-appt-professional-email").value=item?.email||"";
+  $("tm-appt-professional-active").checked=item?.active??true;
+  $("tm-appt-professional-presencial").checked=item?.presencial_enabled??true;
+  $("tm-appt-professional-online").checked=item?.online_enabled??true;
+  associationChoices("tm-appt-professional-services",catalog.services,item?.service_ids||[]);
+  $("tm-appt-professional-dialog").showModal();
+  $("tm-appt-professional-name").focus();
+ }
+ $("tm-appt-create-service").addEventListener("click",()=>openService());
+ $("tm-appt-create-professional").addEventListener("click",()=>openProfessional());
+ $("tm-appt-services-list").addEventListener("click",event=>{
+  const btn=event.target.closest("button[data-edit-service]");
+  if(!btn)return;
+  const item=catalog.services.find(s=>s.id===btn.dataset.editService);
+  if(item)openService(item);
+ });
+ $("tm-appt-professionals-list").addEventListener("click",event=>{
+  const btn=event.target.closest("button[data-edit-professional]");
+  if(!btn)return;
+  const item=catalog.professionals.find(p=>p.id===btn.dataset.editProfessional);
+  if(item)openProfessional(item);
+ });
+ for(const btn of document.querySelectorAll("[data-close-appointment-dialog]")){
+  btn.addEventListener("click",()=>btn.closest("dialog")?.close());
+ }
+ function priceCents(id){
+  const value=$(id).value.trim();
+  if(!/^\d{1,5}(?:\.\d{1,2})?$/.test(value))throw new Error("Indica um preço válido com até duas casas decimais.");
+  return Math.round(Number(value)*100);
+ }
+ async function submitForm(event,type){
+  event.preventDefault();
+  const form=event.currentTarget;
+  if(!form.reportValidity())return;
+  const submit=form.querySelector('[type="submit"]');
+  submit.disabled=true;formError(type,"");
+  try{
+   let payload,url,method;
+   if(type==="service"){
+    const formats={};
+    for(const mode of ["presencial","online"]){
+     formats[mode]={
+      enabled:$("tm-appt-service-"+mode+"-enabled").checked,
+      price_cents:priceCents("tm-appt-service-"+mode+"-price"),
+      shopify_product_id:$("tm-appt-service-"+mode+"-product").value.trim(),
+      shopify_variant_id:$("tm-appt-service-"+mode+"-variant").value.trim()
+     };
+    }
+    payload={
+     name:$("tm-appt-service-name").value.trim(),
+     category:$("tm-appt-service-category").value,
+     duration_minutes:Number($("tm-appt-service-duration").value),
+     active:$("tm-appt-service-active").checked,
+     formats,
+     professional_ids:checkedIds("tm-appt-service-professionals")
+    };
+    method=editingService?"PUT":"POST";
+    url=endpoint+"/services"+(editingService?"/"+encodeURIComponent(editingService):"");
+   }else{
+    payload={
+     name:$("tm-appt-professional-name").value.trim(),
+     email:$("tm-appt-professional-email").value.trim(),
+     active:$("tm-appt-professional-active").checked,
+     presencial_enabled:$("tm-appt-professional-presencial").checked,
+     online_enabled:$("tm-appt-professional-online").checked,
+     service_ids:checkedIds("tm-appt-professional-services")
+    };
+    method=editingProfessional?"PUT":"POST";
+    url=endpoint+"/professionals"+(editingProfessional?"/"+encodeURIComponent(editingProfessional):"");
+   }
+   await api(url,{method,body:JSON.stringify(payload)});
+   form.closest("dialog").close();
+   feedback(type==="service"?"Serviço guardado com sucesso.":"Profissional guardado com sucesso.");
+   try{await loadCatalog();}
+   catch(error){feedback("Alteração guardada, mas não foi possível atualizar a lista. Reabre a página para confirmar.",true);}
+  }catch(error){formError(type,error.message);}
+  finally{submit.disabled=false;}
+ }
+ $("tm-appt-service-form").addEventListener("submit",event=>submitForm(event,"service"));
+ $("tm-appt-professional-form").addEventListener("submit",event=>submitForm(event,"professional"));
+
  async function validate(){
   try{
    const res=await fetch("/api/me",{credentials:"same-origin",cache:"no-store",headers:{"Accept":"application/json"}});
    if(!res.ok)throw new Error("unauthorized");
    const data=await res.json();
    if(data.user?.role!=="admin")throw new Error("forbidden");
+   csrf=data.csrf||"";
    auth.hidden=true;root.hidden=false;
+   try{await loadCatalog();}catch(error){feedback(error.message,true);}
   }catch(error){
    const title=document.createElement("h1");
    title.textContent="Acesso reservado";
