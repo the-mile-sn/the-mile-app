@@ -5088,3 +5088,21 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .consumption-concentric-trend span{font-size:11px!important}
  #overview #day-details .consumption-concentric-trend strong{font-size:10px!important}
 }
+
+
+/* Jorge mobile final spacing: equal optical gap on both sides of the ring. */
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{
+  grid-template-columns:minmax(0,.60fr) minmax(0,1.75fr)!important;
+  column-gap:3px!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  transform:translateX(-7px)!important;
+ }
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-figures{
+  transform:translateX(-5px)!important;
+ }
+ #overview #day-details .consumption-concentric-energy{
+  font-size:clamp(22px,calc(4.5vw + 3px),33px)!important;
+ }
+}
