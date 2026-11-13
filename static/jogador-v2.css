@@ -4920,13 +4920,23 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  stroke-width:2.2!important;
 }
 
-/* Weight chevron: match meal arrow optical size and right edge; override legacy 22px rule. */
+/* Use exactly the same CSS-drawn disclosure chevron as the meal cards.
+   Keep the existing button hit area and right-edge placement. */
 #overview .daily-weight-header .daily-weight-chevron-action{
  width:19px!important;min-width:19px!important;flex:0 0 19px!important;
  height:32px!important;margin-right:-5px!important;
  background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;
- padding:0!important;
+ padding:0!important;position:relative!important;
 }
-#overview .daily-weight-header .daily-weight-chevron-action svg{
- width:19px!important;height:19px!important;stroke-width:2!important;
+#overview .daily-weight-header .daily-weight-chevron-action svg{display:none!important}
+#overview .daily-weight-header .daily-weight-chevron-action::after{
+ content:""!important;display:block!important;box-sizing:border-box!important;
+ width:9px!important;height:9px!important;
+ border:solid currentColor!important;border-width:0 2px 2px 0!important;
+ background:none!important;border-radius:0!important;
+ color:#c9c9cf!important;transform:rotate(45deg)!important;
+ transition:transform .16s ease!important;flex-shrink:0!important;
+}
+#overview .daily-weight-header .daily-weight-chevron-action[aria-expanded="true"]::after{
+ transform:rotate(225deg)!important;
 }
