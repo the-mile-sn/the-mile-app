@@ -57,8 +57,12 @@ def _request_json(url, body, headers):
         raise ShopifyRegistrationError("shopify_registration_invalid_destination")
     payload = body if isinstance(body, bytes) else json.dumps(body).encode("utf-8")
     request = urllib.request.Request(url, payload, headers=headers, method="POST")
+    # Never forward the client secret or access token through a redirect.
+    class _NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, file, code, message, headers, newurl):
+            return None
     try:
-        with urllib.request.urlopen(request, timeout=12) as response:
+        with urllib.request.build_opener(_NoRedirect).open(request, timeout=12) as response:
             raw = response.read(MAX_RESPONSE + 1)
         if len(raw) > MAX_RESPONSE:
             raise ShopifyRegistrationError("shopify_registration_response_too_large")
