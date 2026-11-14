@@ -4508,8 +4508,8 @@ html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal{
  --tm-meal-fg:var(--tm-ui-text);
  --tm-meal-inner:var(--tm-ui-field-on-subcard);
  box-sizing:border-box;min-width:0;
- padding:12px!important;border:0!important;box-shadow:none!important;
- border-radius:14px!important;background:var(--tm-meal-bg)!important;
+ padding:14px!important;border:0!important;box-shadow:none!important;
+ border-radius:18px!important;background:var(--tm-meal-bg)!important;
  color:var(--tm-meal-fg)!important;
 }
 html[data-admin-theme="dark"] #calendar-section .day-preview .day-meals>.day-meal[data-palette="yellow"]{--tm-meal-bg:#513c12;--tm-meal-fg:#ffdb77;--tm-meal-inner:#634d20}
@@ -4532,15 +4532,31 @@ html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-label{
 html[data-admin-theme] #calendar-section .day-preview .day-meal :is(.calendar-live-meal-nutrients,.day-meal-nutrition-empty){
  color:var(--tm-meal-fg)!important;opacity:.8;font-weight:400!important;
 }
-html[data-admin-theme] #calendar-section .day-preview .day-meal .day-color-select{
+html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select{
  background:var(--tm-meal-inner)!important;color:var(--tm-meal-fg)!important;
- border:0!important;box-shadow:none!important;border-radius:9px!important;
+ border:0!important;box-shadow:none!important;border-radius:12px!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal .calendar-options-trigger{
  display:flex!important;align-items:center!important;justify-content:center!important;
  background:var(--tm-meal-inner)!important;color:var(--tm-meal-fg)!important;
- border:0!important;border-radius:10px!important;box-shadow:none!important;
- font-weight:500!important;
+ border:0!important;border-radius:14px!important;box-shadow:none!important;
+ font-weight:500!important;min-height:39px!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meal .calendar-options-trigger:hover{
+ filter:brightness(.975);
+}
+html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close{
+ display:grid!important;place-items:center!important;flex:0 0 36px;
+ width:36px!important;height:36px!important;padding:0!important;
+ border:0!important;border-radius:11px!important;box-shadow:none!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+ cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close:hover{
+ background:var(--tm-ui-hover)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close:focus-visible{
+ outline:2px solid var(--tm-ui-muted)!important;outline-offset:2px;
 }
 html[data-admin-theme] #calendar-section .day-preview .calendar-day-classification-field{
  background:var(--tm-ui-subcard)!important;border:0!important;box-shadow:none!important;
@@ -4583,22 +4599,44 @@ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .ca
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-info{
  color:var(--tm-ui-muted)!important;font-size:12px!important;
 }
-html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- min-height:36px!important;margin:0!important;padding:7px 13px!important;
- border:0!important;border-radius:10px!important;box-shadow:none!important;
- background:var(--tm-ui-field-on-subcard)!important;color:var(--tm-ui-text)!important;
- font:500 12px "Inter Tight",sans-serif!important;
+/* One disclosure glyph only: no duplicated marker or label. */
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap>details>summary{
+ list-style:none!important;
 }
-html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap details[open] .calendar-peri-tile-action{
- background:var(--tm-ui-hover)!important;
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap>details>summary::marker{
+ content:""!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap>details>summary::-webkit-details-marker{
+ display:none!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap>details>summary::before,
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap>details>summary::after{
+ display:none!important;content:none!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action{
+ display:grid!important;place-items:center!important;flex:0 0 34px;
+ width:34px!important;height:34px!important;min-height:34px!important;
+ margin:0!important;padding:0!important;border:0!important;
+ border-radius:10px!important;box-shadow:none!important;
+ background:var(--tm-ui-field-on-subcard)!important;color:var(--tm-ui-text)!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action::after{
- display:inline-block!important;content:"";width:7px;height:7px;margin-left:9px;
- border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);
+ display:none!important;content:none!important;
 }
-html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap details[open] .calendar-peri-tile-action::after{
- transform:rotate(225deg);
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action svg{
+ transition:transform .16s ease;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap details[open] .calendar-peri-tile-action svg{
+ transform:rotate(180deg);
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-live-peri-title{
+ display:block!important;color:var(--tm-ui-text)!important;
+ margin:0 0 5px!important;font:500 13px/1.45 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-nutrients{
+ display:block!important;color:var(--tm-ui-muted)!important;
+ font:400 12px/1.4 "Inter Tight",sans-serif!important;
+ margin:0 0 9px!important;opacity:1!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-live-peri-phase{
  margin:0 15px!important;padding:15px 0!important;border-color:var(--tm-ui-divider)!important;
@@ -4641,7 +4679,7 @@ html[data-admin-theme] #calendar-section .calendar-wide-options-grid{
 }
 html[data-admin-theme] #calendar-section .calendar-wide-options-grid>.calendar-option-accordion{
  margin:0!important;padding:0!important;box-sizing:border-box;
- border:0!important;border-radius:12px!important;box-shadow:none!important;
+ border:0!important;border-radius:16px!important;box-shadow:none!important;
  overflow:hidden!important;
  background:var(--food-opt-inner,var(--tm-ui-card))!important;
  color:var(--food-opt-fg,var(--tm-ui-text))!important;
@@ -4656,6 +4694,23 @@ html[data-admin-theme] #calendar-section .calendar-option-accordion-heading stro
 }
 html[data-admin-theme] #calendar-section .calendar-option-accordion[open] .calendar-option-accordion-heading{
  margin:0 0 1px!important;border-bottom:0!important;
+}
+html[data-admin-theme] #calendar-section .calendar-option-accordion.is-single-option{
+ padding:11px 0 13px!important;
+}
+html[data-admin-theme] #calendar-section .calendar-option-accordion .calendar-single-option-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ min-height:0!important;padding:5px 15px 7px!important;
+ color:inherit!important;font:500 13px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #calendar-section .calendar-option-accordion .calendar-single-option-heading:empty{
+ display:none!important;
+}
+html[data-admin-theme] #calendar-section .calendar-option-accordion.is-single-option .calendar-day-food-macro{
+ padding-top:5px!important;margin-top:0!important;
+}
+html[data-admin-theme] #calendar-section .calendar-option-accordion.is-single-option .calendar-day-food-line:last-child{
+ margin-bottom:2px!important;
 }
 html[data-admin-theme] #calendar-section .calendar-option-accordion .calendar-day-food-macro{
  display:flex!important;flex-wrap:wrap!important;align-items:center;
