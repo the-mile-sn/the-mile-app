@@ -3935,3 +3935,43 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
   width:100%!important;max-width:100%!important;min-width:0!important;
  }
 }
+
+
+/* Backoffice desktop canvas alignment — dashboard reference, 14 Nov 2026.
+   One shared page edge across the authenticated workspace; preserve the
+   dashboard's existing interior alignment (title = secondary-card left edge).
+   The sidebar and every mobile layout remain untouched. */
+@media (min-width:831px){
+ #admin-workspace:not([hidden]) > .tm-admin-work-area{
+  box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  margin:0!important;
+  padding-inline:clamp(16px,2vw,34px)!important;
+ }
+ /* The Food Library and its visual portions already live inside the shared
+    work area. Remove their second horizontal padding/max-width layer. */
+ #admin-workspace #tm-food-library-page{
+  box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  margin-inline:0!important;padding-left:0!important;padding-right:0!important;
+ }
+ #admin-workspace #tm-food-library-page > .tm-food-library-content{
+  box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  margin-inline:0!important;
+ }
+ /* Plans previously introduced a second centred, max-1500px shell and
+    its own side padding. Match the same Dashboard page edge instead. */
+ #admin-workspace #tm-plan-page > .tm-library-layout{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  max-width:none!important;margin-inline:0!important;
+ }
+ #admin-workspace #tm-plan-page > .tm-library-layout > .shell{
+  box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  margin:0!important;padding-left:0!important;padding-right:0!important;
+ }
+ /* All remaining top-level sections, including player list/profile,
+    planning, clinical assessments, forms, menus, recipes and settings,
+    inherit exactly the same external edge from tm-admin-work-area. */
+}
