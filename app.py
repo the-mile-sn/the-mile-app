@@ -777,6 +777,19 @@ def application(env, start_response):
                     'invalid_webhook_delivery') else 400,str(exc))
             return respond(200,{'ok':True,'result':result})
 
+        if path == '/api/v2/shopify/app-proxy/ping' and method == 'GET':
+            # Signed, read-only probe for the Shopify Dev Dashboard app proxy.
+            # Never changes checkout flags, creates holds or charges customers.
+            if SITE_ROLE == 'player':
+                raise Problem(404,'not_found')
+            try:
+                appointments_shopify_bridge_v2.verify_proxy_signature(
+                    env.get('QUERY_STRING',''))
+            except appointments_shopify_bridge_v2.ShopifyBridgeError:
+                raise Problem(403,'invalid_shopify_proxy')
+            return respond(200,{'ok':True,'app_proxy_verified':True,
+                                'checkout_enabled':appointments_shopify_bridge_v2.checkout_enabled()})
+
         if path == '/api/v2/shopify/app-proxy/hold' and method == 'POST':
             if SITE_ROLE == 'player' or not appointments_shopify_bridge_v2.checkout_enabled():
                 raise Problem(404, 'not_found')
