@@ -1658,14 +1658,29 @@ async function overview(){
  }
  animateCalendarSelection(strip,d);
 
- let consumptionEnabled=false,consumptionRecords=[];
- // A denied pilot must not add repeated requests to every day change.
- if(consumptionPilotAllowed!==false){
-  try{const consumption=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);consumptionPilotAllowed=true;consumptionEnabled=true;consumptionRecords=consumption.records||[];}
-  catch(e){if(e.status===403)consumptionPilotAllowed=false;else if(e.status===401)throw e;else console.warn('Consumo indisponível',e);}
+ let consumptionEnabled=false,consumptionRecords=[],consumptionLoadError=false;
+ // Consumption is available to all linked players; do not cache a transient 403
+ // as a permanent pilot restriction. Retry short-lived request failures.
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const consumption=await api('/api/v2/player/consumption-records?start='+d+'&end='+d);
+   consumptionEnabled=true;consumptionRecords=consumption.records||[];break;
+  }catch(e){
+   if(e.status===401)throw e;
+   if(attempt===2){consumptionLoadError=true;console.warn('Registos de consumo temporariamente indisponíveis',e);}
+   else await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)));
+  }
  }
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  const root=$("day-details");root.replaceChildren();
+ if(consumptionLoadError){
+  const notice=document.createElement("p");
+  notice.setAttribute("role","status");
+  notice.textContent="Não foi possível carregar os consumos. Atualiza a página para tentar novamente.";
+  notice.style.cssText="color:var(--text-secondary,#a1a1aa);font-size:13px;padding:8px 12px;";
+  root.append(notice);
+ }
+
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
   renderWeightCard(root,d).catch(()=>{});
