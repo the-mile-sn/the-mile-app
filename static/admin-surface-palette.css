@@ -4239,11 +4239,28 @@ html[data-admin-theme] #admin-workspace #calendar-section.tm-calendar-layout>.tm
 html[data-admin-theme] #admin-workspace #calendar-section.tm-calendar-layout>.tm-calendar-day-card[hidden]{display:none!important;}
 /* Creation action matches + Criar jogador: compact action button rather than a full-width bar.
    The expanded form is the actual subcard and stays independent from the button. */
+/* One aligned heading row: month on the left, Add Event on the right.
+   Expanded form stays full-width in a second grid row. */
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card>.tm-calendar-event-subcard{
- display:flex;flex-direction:column;align-items:flex-end;
- box-sizing:border-box;min-width:0;width:100%;margin:0 0 4px!important;
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto;
+ align-items:center;column-gap:12px;row-gap:0;
+ box-sizing:border-box;min-width:0;width:100%;margin:0!important;
  padding:0!important;border:0!important;border-radius:0!important;
  background:transparent!important;box-shadow:none!important;
+}
+html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-title{
+ grid-column:1;grid-row:1;min-width:0;margin:0!important;
+ font:500 clamp(14px,1.3vw,17px)/1.35 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;text-align:left!important;
+}
+html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
+ grid-column:2;grid-row:1;justify-self:end;
+}
+html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-form{
+ grid-column:1/-1;grid-row:2;
+}
+html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-feedback{
+ grid-column:1/-1;grid-row:3;
 }
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
@@ -4309,7 +4326,8 @@ html[data-admin-theme] #admin-workspace #calendar-section .calendar-navigation{
  gap:7px!important;flex-wrap:nowrap!important;margin:15px 0 13px!important;
 }
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card>.tm-calendar-month-navigation{
- margin:3px 0 13px!important;
+ justify-content:flex-end!important;
+ margin:10px 0 17px!important;
 }
 html[data-admin-theme] #admin-workspace #calendar-section .calendar-navigation>strong{
  order:0;flex:1 1 auto;min-width:0;margin:0 auto 0 0!important;
@@ -4441,8 +4459,46 @@ html[data-admin-theme] #calendar-section .calendar-unified-heading{
 html[data-admin-theme] #calendar-section .calendar-event-identity{
  display:flex;flex:1 1 auto;flex-direction:column;gap:3px;min-width:0;padding:8px 0;
 }
-html[data-admin-theme] #calendar-section .calendar-event-identity strong{
- color:var(--tm-ui-text)!important;font:500 14px "Inter Tight",sans-serif!important;
+/* Small category labels identify event types without introducing new cards. */
+html[data-admin-theme] #calendar-section .calendar-event-identity strong.calendar-event-kind{
+ display:inline-flex;align-items:center;justify-content:center;
+ align-self:flex-start;flex:0 0 auto;
+ min-width:57px;box-sizing:border-box;
+ padding:5px 10px;border:0;border-radius:9px;
+ background:var(--tm-event-label-bg,var(--tm-ui-subcard))!important;
+ color:var(--tm-event-label-fg,var(--tm-ui-text))!important;
+ font:500 12px/1.35 "Inter Tight",sans-serif!important;
+ white-space:nowrap;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-kind--match{
+ --tm-event-label-bg:#dbeee3;--tm-event-label-fg:#295e46;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-kind--training{
+ --tm-event-label-bg:#deecf8;--tm-event-label-fg:#2e6287;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-kind--off{
+ --tm-event-label-bg:#f8e8eb;--tm-event-label-fg:#94505e;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-kind--travel{
+ --tm-event-label-bg:#ece8f7;--tm-event-label-fg:#665487;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-event-kind--supplementation{
+ --tm-event-label-bg:#e7ebef;--tm-event-label-fg:#566575;
+}
+html[data-admin-theme="dark"] #calendar-section .calendar-event-kind--match{
+ --tm-event-label-bg:#294536;--tm-event-label-fg:#a7dfb9;
+}
+html[data-admin-theme="dark"] #calendar-section .calendar-event-kind--training{
+ --tm-event-label-bg:#263d52;--tm-event-label-fg:#acd6fa;
+}
+html[data-admin-theme="dark"] #calendar-section .calendar-event-kind--off{
+ --tm-event-label-bg:#4b3038;--tm-event-label-fg:#f2bbc5;
+}
+html[data-admin-theme="dark"] #calendar-section .calendar-event-kind--travel{
+ --tm-event-label-bg:#39334d;--tm-event-label-fg:#c6b8ed;
+}
+html[data-admin-theme="dark"] #calendar-section .calendar-event-kind--supplementation{
+ --tm-event-label-bg:#303942;--tm-event-label-fg:#c6d2df;
 }
 html[data-admin-theme] #calendar-section .calendar-event-identity span{
  flex:none!important;color:var(--tm-ui-muted)!important;
@@ -4847,6 +4903,15 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
  html[data-admin-theme] #calendar-section .calendar-inline-editor>label :is(input,select){font-size:16px!important}
 }
 @media(max-width:480px){
+ html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard{
+  column-gap:8px;
+ }
+ html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-title{
+  font-size:14px!important;
+ }
+ html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
+  font-size:12px!important;padding:9px 11px!important;
+ }
  html[data-admin-theme] #calendar-section .calendar-navigation>strong{
   font-size:13px!important;
  }
