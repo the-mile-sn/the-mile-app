@@ -257,6 +257,29 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
             self.assertEqual(c.execute("SELECT COUNT(*) AS n FROM appt_shopify_confirmations")
                              .fetchone()["n"],0)
 
+    def test_admin_readiness_reports_current_mapping_without_secrets(self):
+        path="/api/v2/admin/appointments/checkout/payment-status"
+        r=self.admin.request(path)
+        self.assertEqual(r["status"],200,r)
+        data=r["body"]
+        self.assertTrue(data["shopify_app_secret_configured"])
+        self.assertEqual(data["service_formats_enabled"],8)
+        self.assertEqual(data["service_formats_mapped"],8)
+        self.assertIsNone(data["shopify_app_installation_verified"])
+        self.assertNotIn(SECRET,json.dumps(data))
+        with app.connect() as c:
+            c.execute("""UPDATE appt_service_formats SET shopify_variant_id=NULL
+                WHERE org_id=? AND service_id=? AND mode='online'""",
+                ("the-mile",self.service["id"]))
+        changed=self.admin.request(path)["body"]
+        self.assertEqual(changed["service_formats_enabled"],8)
+        self.assertEqual(changed["service_formats_mapped"],7)
+        with patch.dict("os.environ",{"MILE_SHOPIFY_APP_SECRET":""}):
+            unconfigured=self.admin.request(path)["body"]
+            self.assertFalse(unconfigured["shopify_app_secret_configured"])
+            self.assertFalse(unconfigured["webhooks_enabled"])
+            self.assertFalse(unconfigured["checkout_enabled"])
+
     def test_default_off_even_when_webhook_or_proxy_is_called(self):
         data={"id":9001234567777,"financial_status":"paid","currency":"EUR","line_items":[]}
         with patch.dict("os.environ",{"MILE_SHOPIFY_WEBHOOK_ENABLED":"0"}):

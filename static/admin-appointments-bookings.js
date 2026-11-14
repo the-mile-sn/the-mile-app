@@ -358,12 +358,20 @@
   const node=$("tm-appt-checkout-status");
   if(!node)return;
   try{
-   const result=await api("/checkout/status");
-   node.textContent="Motor interno · "+result.active_holds+
-     " bloqueio(s) ativo(s) de "+result.hold_minutes+" min. Checkout público desligado.";
-   const paid=await api("/checkout/payment-status");
-   node.textContent+=" · "+paid.confirmed_shopify_bookings+" reserva(s) Shopify confirmada(s) · "+
-     paid.payments_requiring_review+" pagamento(s) para revisão";
+   const [result,paid]=await Promise.all([
+     api("/checkout/status"),api("/checkout/payment-status")
+   ]);
+   const status=paid.checkout_enabled?"Checkout The Mile ativo":"Checkout The Mile desligado";
+   const setup=paid.shopify_app_secret_configured?"Chave da aplicação configurada":
+     "Falta configurar a chave da aplicação The Mile Booking";
+   const variantCount=paid.service_formats_mapped+"/"+paid.service_formats_enabled+
+     " formatos de serviço com variante Shopify associada";
+   const sesami=paid.sesami_migration_verified?"Migração Sesami assinalada":
+     "Migração Sesami por validar";
+   node.textContent=status+" · "+setup+" · "+variantCount+" · "+sesami+
+     " · "+result.active_holds+" retenção(ões) de "+result.hold_minutes+" min"+
+     " · "+paid.confirmed_shopify_bookings+" marcação(ões) paga(s)"+
+     " · "+paid.payments_requiring_review+" pagamento(s) para revisão";
   }catch(error){
    node.textContent="Estado de checkout temporariamente indisponível";
   }

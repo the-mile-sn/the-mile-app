@@ -25,6 +25,7 @@ from appointments_catalog_v2 import ORG_ID
 SHOP_DEFAULT = "the-mile-sports-nutrition.myshopify.com"
 PROXY_PATH_DEFAULT = "/apps/the-mile-booking"
 HEX_ID = re.compile(r"[0-9a-f]{32}\Z")
+VARIANT_GID_RE = re.compile(r"gid://shopify/ProductVariant/[1-9][0-9]*\Z")
 DELIVERY_ID = re.compile(r"[a-zA-Z0-9_-]{8,100}\Z")
 ORDER_ID = re.compile(r"[1-9][0-9]{0,19}\Z")
 MAX_WEBHOOK = 500_000
@@ -381,7 +382,27 @@ def payment_summary(c, now=None):
         WHERE org_id=?""", (ORG_ID,)).fetchone()["n"]
     reviews = c.execute("""SELECT COUNT(*) AS n FROM appt_shopify_payment_reviews
         WHERE org_id=?""", (ORG_ID,)).fetchone()["n"]
+    # Audit the CURRENT database configuration: these values may differ from
+    # the catalogue seeds and cannot be inferred from the Shopify storefront.
+    formats = c.execute("""SELECT f.shopify_variant_id,f.price_cents
+        FROM appt_service_formats f JOIN appt_services s
+          ON s.org_id=f.org_id AND s.id=f.service_id
+        WHERE f.org_id=? AND f.enabled=1 AND s.active=1""",
+        (ORG_ID,)).fetchall()
+    mapped = sum(
+        bool(VARIANT_GID_RE.fullmatch(row["shopify_variant_id"] or ""))
+        and isinstance(row["price_cents"], int)
+        and row["price_cents"] >= 0
+        for row in formats
+    )
     return {
+        # Presence only: never return secret, token or webhook payload content.
+        "shopify_app_secret_configured": _secret() is not None,
+        "shopify_expected_shop": _shop() == SHOP_DEFAULT,
+        "service_formats_enabled": len(formats),
+        "service_formats_mapped": mapped,
+        # Cannot infer a real app installation from credentials in Render.
+        "shopify_app_installation_verified": None,
         "webhooks_enabled": webhook_enabled(),
         "checkout_enabled": checkout_enabled(),
         "sesami_migration_verified": _flag("MILE_SHOPIFY_SESAMI_MIGRATED"),
