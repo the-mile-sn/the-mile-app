@@ -344,3 +344,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Menu de renomear:** ancorado à direita do lápis, a abrir para dentro do ecrã. A interação de expandir no título/área livre não interfere com os botões.
 - **Âmbito:** CSS restrito a `max-width:830px`. Respeitar modos claro/escuro e conservar a apresentação desktop aprovada, os IDs/handlers, cálculos, gramagens, valores, estados nutricionais e app dos jogadores.
 - **QA:** verificar visualmente em Safari iOS, com card fechado, aberto, menu do lápis aberto e alternância repetida; distinguir sempre QA de código, deploy Render e QA real no browser.
+
+
+## 29. Edição de Planos — alinhamento responsivo das macros desktop (14 novembro 2026)
+
+- **Problema:** o cabeçalho da refeição, o total da opção selecionada e as quatro colunas nutricionais dos alimentos tinham referências geométricas diferentes. O JavaScript só alinhava o total da opção, usando coordenadas absolutas. Ao reduzir a largura, surgiam sobreposições e deslocações.
+- **Correção:** o editor passa a medir a grelha nutricional real da primeira linha de alimento visível e a aplicar a mesma origem e largura às quatro macros do cabeçalho da refeição e do resumo da opção. As quatro colunas mantêm valores/unidades e cores semânticas sem transformação.
+- **Responsive:** se a largura medida for insuficiente para acomodar os nomes e as macros lado a lado, a refeição recebe a classe funcional CSS `tm-editor-nutrition-stacked` e o cabeçalho e o resumo da opção passam a duas linhas. Não usar valores absolutos nem forçar uma grelha horizontal que sobreponha texto em janelas estreitas. Ao voltar a alargar, recuperar o alinhamento horizontal automaticamente.
+- **Rerender e resize:** sincronizar depois do render da refeição e ao redimensionar, recalculando a partir de `getBoundingClientRect` e removendo posições inline anteriores antes de aplicar o novo modo. Os cards fechados partilham a referência quando houver uma refeição aberta.
+- **Mobile:** não modificar o layout aprovado até 830 px; preservar os quatro valores, a seta e as ações, sem sobrepor esta rotina de desktop ao CSS mobile.
+- **Âmbito:** exclusivamente CSS e geometria de apresentação na branch `production/the-mile-admin`; não alterar dados, gramagens, cálculos nutricionais, tipo de plano, associações, estados ou a app dos jogadores (`main`).
+- **QA:** verificar largura desktop normal, janela reduzida e retorno à largura inicial, incluindo opções com nomes longos e alimentos com notas extensas; confirmar código e deploy Render separadamente da validação visual no browser.
