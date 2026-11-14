@@ -481,3 +481,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - «Eventos do mês» dispõe de cartão principal, cabeçalho expansível e lista secundária com margens e divisórias muito leves. Editores inline mantêm o funcionamento já aprovado.
 - «Média semanal» ocupa cartão principal próprio. A apresentação da frase técnica «X/7 dias com prescrição nutricional completa · Fonte: Planos» foi retirada, mas a verificação de completude antes do cálculo mantém-se.
 - As regras desta estrutura estão no **mesmo bloco consolidado** de `static/admin-surface-palette.css`; não acrescentar compensações no final de outros ficheiros. Não alterar a branch `main`, a seleção de opções, os cálculos nutricionais ou a associação aos planos.
+
+
+### Microciclos — detalhe do dia e opções (14 novembro 2026, afinação)
+
+- **Paletas:** para cada refeição e painel de opções, manter os valores exatos de Planos → Visualização nos cinco estados amarelo, laranja, azul, verde e verde preparação, tanto no modo claro como no escuro. Não criar tons alternativos.
+- **Arredondamentos:** cards das refeições a 18 px; botão «Ver opções» a 14 px, seletor de cor a 12 px; opções interiores a 16 px. Sem contornos decorativos.
+- **Quantidades dos alimentos:** na apresentação, não mostrar parte decimal exclusivamente zero (por exemplo, `220,0 g` → `220 g`); manter valores fracionários reais, porções e unidades originais. Manter a precisão de macronutrientes sem alterar os dados.
+- **Opção única:** quando só existe uma opção alimentar, apresentar diretamente título útil (se houver), nutrientes e ingredientes, sem cabeçalho «Opção 1», caret ou clique adicional. Conservar a possibilidade de selecionar/publicar quando habilitada. Aplicar também aos protocolos peri.
+- **Peri-treino/Peri-jogo:** único controlo de abertura, apenas seta outline à direita, sem texto «Ver opções» e sem marcador nativo duplicado. Título do período com peso regular 400 e nutrientes na sequência visual idêntica às refeições.
+- **Fechar dia:** X discreto e acessível no cabeçalho do detalhe, à direita da classificação; fecha o card, desmarca o dia no calendário e limpa o estado local da expansão sem mexer em dados.
+- **Respeito funcional:** nenhum cálculo nutricional, alimento, porção, plano, publicação ou endpoint é alterado por estes ajustes.
