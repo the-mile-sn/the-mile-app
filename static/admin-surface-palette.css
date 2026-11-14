@@ -4515,8 +4515,15 @@ html[data-admin-theme] #calendar-section .day-preview .calendar-wide-options{
  background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
  padding:14px!important;
 }
+html[data-admin-theme="dark"] #calendar-section .calendar-wide-options[data-palette="vp"]{
+ --food-opt-bg:#28543e;--food-opt-fg:#bde6cd;--food-opt-inner:#3c6750;
+}
+html[data-admin-theme="light"] #calendar-section .calendar-wide-options[data-palette="vp"]{
+ --food-opt-bg:#d8e9de;--food-opt-fg:#24513a;--food-opt-inner:#eef7f0;
+}
 html[data-admin-theme] #calendar-section .day-preview .calendar-wide-options[data-palette]:not([data-palette=""]){
- background:var(--food-opt-bg)!important;color:var(--food-opt-fg)!important;
+ background:var(--food-opt-bg,var(--tm-ui-subcard))!important;
+ color:var(--food-opt-fg,var(--tm-ui-text))!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .calendar-wide-options-heading{
  color:inherit!important;margin-bottom:13px!important;
