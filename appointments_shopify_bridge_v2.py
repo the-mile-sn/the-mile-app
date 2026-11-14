@@ -2,7 +2,9 @@
 
 Use app-specific client secret (NOT the ChatGPT Shopify connector credential).
 The default is deliberately OFF. No public checkout can be enabled without
-an authenticated app proxy, verified webhook, and explicit Sesami migration flag.
+an authenticated app proxy, verified webhook, and either an explicit Sesami
+migration flag or a separately acknowledged manual-calendar launch mode.
+The manual mode does not read existing Google Calendar-only commitments.
 
 Only orders/paid webhooks may confirm a The Mile appointment. An expired hold,
 invalid marker, modified variant/quantity/price, or conflict is recorded for
@@ -54,9 +56,19 @@ def webhook_enabled():
     return _flag("MILE_SHOPIFY_WEBHOOK_ENABLED") and _secret() is not None and _shop() == SHOP_DEFAULT
 
 
+def manual_calendar_mode_enabled():
+    """Explicit temporary launch mode: backoffice availability/blocks only.
+
+    Does NOT claim Sesami bookings were migrated or Google is connected.
+    Existing Google-only events must be blocked manually in the backoffice.
+    """
+    return _flag("MILE_SHOPIFY_MANUAL_CALENDAR_MODE")
+
+
 def checkout_enabled():
     return (webhook_enabled() and _flag("MILE_SHOPIFY_CHECKOUT_ENABLED")
-            and _flag("MILE_SHOPIFY_SESAMI_MIGRATED"))
+            and (_flag("MILE_SHOPIFY_SESAMI_MIGRATED")
+                 or manual_calendar_mode_enabled()))
 
 
 def initialize(c):
@@ -417,6 +429,7 @@ def payment_summary(c, now=None):
         "webhooks_enabled": webhook_enabled(),
         "checkout_enabled": checkout_enabled(),
         "sesami_migration_verified": _flag("MILE_SHOPIFY_SESAMI_MIGRATED"),
+        "manual_calendar_mode_enabled": manual_calendar_mode_enabled(),
         "confirmed_shopify_bookings": confirmed,
         "payments_requiring_review": reviews,
         "processed_deliveries": c.execute(
