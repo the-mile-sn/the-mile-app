@@ -358,9 +358,13 @@
   const node=$("tm-appt-checkout-status");
   if(!node)return;
   try{
-   const [result,paid]=await Promise.all([
-     api("/checkout/status"),api("/checkout/payment-status")
+   const [result,paid,setupInfo]=await Promise.all([
+     api("/checkout/status"),api("/checkout/payment-status"),
+     api("/checkout/webhook-setup")
    ]);
+   const registration=$("tm-appt-shopify-register-paid");
+   if(registration)registration.disabled=!(setupInfo.client_id_configured&&
+     setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
    const status=paid.checkout_enabled?"Checkout The Mile ativo":"Checkout The Mile desligado";
    const setup=paid.shopify_app_secret_configured?"Chave da aplicação configurada":
      "Falta configurar a chave da aplicação The Mile Booking";
@@ -376,6 +380,32 @@
    node.textContent="Estado de checkout temporariamente indisponível";
   }
  }
+ $("tm-appt-shopify-register-paid")?.addEventListener("click",async ()=>{
+  const button=$("tm-appt-shopify-register-paid");
+  const feedback=$("tm-appt-shopify-webhook-feedback");
+  if(button.disabled)return;
+  button.disabled=true;
+  feedback.textContent="A verificar a ligação segura à Shopify…";
+  const message={
+   shopify_registration_not_ready:"Falta configurar o Client ID, o Client Secret ou ativar a receção de webhooks no Render.",
+   shopify_registration_auth_failed:"A Shopify recusou as credenciais da aplicação The Mile Booking.",
+   shopify_registration_graphql_failed:"Não foi possível consultar as subscrições da aplicação na Shopify.",
+   shopify_registration_rejected:"A Shopify não permitiu registar esta subscrição. Verifica as permissões da aplicação.",
+   shopify_registration_unavailable:"Não foi possível contactar a Shopify. Tenta novamente."
+  };
+  try{
+   const result=await api("/checkout/register-paid-webhook","POST",{});
+   feedback.textContent=result.status==="already_registered"?
+     "Webhook orders/paid já registado nesta aplicação.":
+     "Webhook orders/paid registado com sucesso na aplicação The Mile Booking.";
+  }catch(error){
+   feedback.textContent=message[error.message]||error.message||
+     "Não foi possível registar o webhook.";
+  }finally{
+   button.disabled=false;
+   loadCheckoutStatus().catch(()=>{});
+  }
+ });
  $("tm-appt-checkout-refresh")?.addEventListener("click",()=>loadCheckoutStatus());
  loadCheckoutStatus().catch(()=>{});
  $("tm-appt-new-booking").addEventListener("click",()=>openForm());
