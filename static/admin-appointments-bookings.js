@@ -370,6 +370,8 @@
    const registration=$("tm-appt-shopify-register-paid");
    if(registration)registration.disabled=!(setupInfo.client_id_configured&&
      setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
+   const smoke=$("tm-appt-shopify-smoke");
+   if(smoke)smoke.disabled=!(setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
    const status=paid.checkout_enabled?"Checkout The Mile ativo":"Checkout The Mile desligado";
    const setup=paid.shopify_app_secret_configured?"Chave da aplicação configurada":
      "Falta configurar a chave da aplicação The Mile Booking";
@@ -409,6 +411,32 @@
   }finally{
    button.disabled=false;
    loadCheckoutStatus().catch(()=>{});
+  }
+ });
+ $("tm-appt-shopify-smoke")?.addEventListener("click",async ()=>{
+  const button=$("tm-appt-shopify-smoke");
+  const feedback=$("tm-appt-shopify-smoke-feedback");
+  if(button.disabled)return;
+  button.disabled=true;
+  feedback.textContent="A verificar assinaturas e notificações fictícias, sem pagamentos…";
+  try{
+   const result=await api("/checkout/smoke-test","POST",{});
+   if(result.signature_accepted&&result.unrelated_order_ignored&&
+      result.duplicate_delivery_idempotent&&result.forged_signature_rejected&&
+      result.wrong_shop_rejected&&result.wrong_topic_rejected&&
+      result.invalid_json_rejected&&result.database_changes_persisted===false&&
+      result.created_booking===false&&result.charged_payment===false){
+     feedback.textContent="Teste interno aprovado: assinatura, rejeições e repetições validadas. "+
+       "Nenhuma reserva ou pagamento criado. Entrega real da Shopify ainda por validar.";
+   }else{
+     feedback.textContent="A simulação não confirmou todos os controlos.";
+   }
+  }catch(error){
+   feedback.textContent=error.message==="smoke_webhook_not_configured"?
+     "A receção de webhooks ainda não está configurada no Render.":
+     "Falha no teste interno. Verifica os registos do Render antes de avançar.";
+  }finally{
+   button.disabled=false;
   }
  });
  $("tm-appt-checkout-refresh")?.addEventListener("click",()=>loadCheckoutStatus());
