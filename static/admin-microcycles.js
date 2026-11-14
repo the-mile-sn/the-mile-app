@@ -1456,24 +1456,19 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
     const food=foods[item.index];if(!food)continue;
     const alternative=food.alternative_to!=null;if(alternative)line.classList.add("is-alternative");
     const amount=food.display_quantity||(food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
-    const quantity=document.createElement("span");quantity.className="calendar-food-quantity";
-    const foodName=document.createElement("span");foodName.className="calendar-food-name";
-    if(food.kind==="supplement"){foodName.textContent=food.label||"Suplemento";}
-    else{quantity.textContent=amount;foodName.textContent=(alternative?"ou ":"")+(food.display_name||food.label||food.library_name||"Alimento indisponível");}
-    line.append(quantity,foodName);
+    line.textContent=food.kind==="supplement"?(food.label||"Suplemento"):
+      (alternative?"ou ":"")+amount+" "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
    }
    section.append(line);
   }
   if(option.nutrition){
    const macros=document.createElement("div");macros.className="calendar-day-food-macro";
-   for(const [key,label,unit,digits] of [["kcal","Energia","kcal",0],["protein_g","Proteína","g",1],["carbs_g","Hidratos","g",1],["fat_g","Gordura","g",1]]){
-    const tile=document.createElement("span");tile.className="calendar-option-macro";
-    const caption=document.createElement("small");caption.textContent=label;
-    const value=document.createElement("strong");value.textContent=formatNutrition(option.nutrition[key],digits)+" "+unit;
-    tile.append(caption,value);macros.append(tile);
+   for(const [key,unit,digits,cls] of [["kcal","kcal",0,"kcal"],["protein_g","g",1,"protein"],["carbs_g","g",1,"carbs"],["fat_g","g",1,"fat"]]){
+    const metric=document.createElement("span");metric.className="calendar-option-macro calendar-option-macro-"+cls;
+    metric.textContent=formatNutrition(option.nutrition[key],digits)+" "+unit;macros.append(metric);
    }
    if(option.provisional){const provisional=document.createElement("small");provisional.className="calendar-option-provisional";provisional.textContent="Provisório";macros.append(provisional);}
-   section.append(macros);
+   section.insertBefore(macros,section.children[1]||null);
   }
   grid.append(section);
  }
@@ -1609,7 +1604,7 @@ function renderDayPreview(day,host){
   }
  }
  for(const entry of mealColorsForDay(day)){
-  const cell=document.createElement("div");cell.className="day-meal";
+  const cell=document.createElement("div");cell.className="day-meal";cell.dataset.palette=entry.color||"none";
   const colorBar=document.createElement("div");colorBar.className="day-meal-color day-meal-header"+(entry.color?" meal-"+entry.color:" day-meal-no-color");
   const label=document.createElement("span");label.className="day-meal-label";label.textContent=names[entry.meal];
   colorBar.append(label);cell.append(colorBar);
@@ -1742,7 +1737,7 @@ async function loadCalendar(){
    if(selectedNutritionWeek===todayWeek)return;
    selectedNutritionWeek=todayWeek;loadCalendar().catch(e=>status(e.message,"warn"));
   });
-  const range=document.createElement("strong");navigation.append(previous,todayButton,next,range);weekly.appendChild(navigation);
+  const range=document.createElement("strong");navigation.append(range,previous,todayButton,next);weekly.appendChild(navigation);
   const monday=new Date(selectedNutritionWeek+"T12:00:00");
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
