@@ -25,6 +25,7 @@ from appointments_catalog_v2 import ORG_ID
 SHOP_DEFAULT = "the-mile-sports-nutrition.myshopify.com"
 PROXY_PATH_DEFAULT = "/apps/the-mile-booking"
 HEX_ID = re.compile(r"[0-9a-f]{32}\Z")
+VARIANT_GID_RE = re.compile(r"gid://shopify/ProductVariant/[1-9][0-9]*\Z")
 DELIVERY_ID = re.compile(r"[a-zA-Z0-9_-]{8,100}\Z")
 ORDER_ID = re.compile(r"[1-9][0-9]{0,19}\Z")
 MAX_WEBHOOK = 500_000
@@ -389,7 +390,7 @@ def payment_summary(c, now=None):
         WHERE f.org_id=? AND f.enabled=1 AND s.active=1""",
         (ORG_ID,)).fetchall()
     mapped = sum(
-        bool(GID_RE.fullmatch(row["shopify_variant_id"] or ""))
+        bool(VARIANT_GID_RE.fullmatch(row["shopify_variant_id"] or ""))
         and isinstance(row["price_cents"], int)
         and row["price_cents"] >= 0
         for row in formats
