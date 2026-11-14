@@ -76,6 +76,7 @@ def public_catalog(c, now=None):
         "last_bookable_date": (today + timedelta(days=60)).isoformat(),
         "timezone": "Europe/Lisbon",
         "interval_minutes": rules.get(c, ORG_ID)["start_interval_minutes"],
+        "checkout_hold_minutes": rules.get(c, ORG_ID)["checkout_hold_minutes"],
         "any_professional_supported": True,
         "preview_only": True,
         "checkout_enabled": shopify_bridge.checkout_enabled(),
