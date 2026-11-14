@@ -1326,19 +1326,15 @@ async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
   const data=await api('/api/v2/player/consumption-options?'+qs);
   if(!panel.isConnected)return;
   panel.replaceChildren();
-  const title=document.createElement('p');title.textContent='Que cor consumiste?';panel.append(title);
+  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent='Que cor consumiste?';const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar seleção de cor');close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
   const colors=data.alternative_colors||[];
   if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent='Não existem outras cores com opções publicadas.';panel.append(hint);}
   for(const color of colors){
    const button=document.createElement('button');button.type='button';button.className='consumption-cancel';
-   button.textContent=color.charAt(0).toUpperCase()+color.slice(1);
+   button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
    button.onclick=()=>openConsumptionEditor(host,mealDate,mealKey,eventId,null,color);
    panel.append(button);
   }
-  const actions=document.createElement('div');actions.className='consumption-actions';
-  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>panel.remove();
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();
-  actions.append(back,cancel);panel.append(actions);
  }catch(e){if(panel.isConnected){status.textContent='Não foi possível carregar as cores.';}error(e);}
 }
 
@@ -2027,7 +2023,7 @@ async function overview(){
    if(previous&&previous.prescription?.color&&previous.prescription.color!==color){
     const note=document.createElement('div');note.className='meal-consumption-tags meal-consumption-tags-bottom';
     const label=document.createElement('span');label.className='meal-registered-badge';
-    label.textContent='✓ Consumido: '+previous.prescription.color;
+    label.textContent='✓ Consumido: '+(({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[previous.prescription.color]||previous.prescription.color);
     const editAlternative=document.createElement('button');editAlternative.type='button';
     editAlternative.className='meal-edit-consumption-tag';editAlternative.textContent='✎ Editar consumo';
     editAlternative.onclick=()=>openConsumptionEditor(section,d,meal,'',null,previous.prescription.color);
@@ -2077,9 +2073,9 @@ async function overview(){
    });
   }
   if(consumptionEnabled&&color&&options.length){
-   const change=document.createElement('button');change.type='button';change.className='consumption-cancel';
+   const change=document.createElement('button');change.type='button';change.className='consumption-cancel consumption-change-color';
    change.textContent='Alterar cor';change.setAttribute('aria-label','Registar consumo de outra cor');
-   change.style.cssText='display:block;margin:12px 0 0 auto;opacity:.78;font-size:.85em';
+   
    change.onclick=()=>openAlternativeColorPicker(section,d,meal);
    section.append(change);
   }
