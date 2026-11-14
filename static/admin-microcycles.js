@@ -1697,22 +1697,34 @@ function renderDayPreview(day,host){
  if(livePeriOptions.length){
   const details=document.createElement("details");details.className="calendar-day-peri calendar-live-peri";
   const summary=document.createElement("summary");
-  const periTitle=document.createElement("span");periTitle.className="calendar-peri-tile-title";periTitle.textContent="Peri-treino e Peri-jogo";
+  // Show the actual peri phases and their nutrients before expansion.
+  // Multiple periods are listed individually; no invented aggregated nutrition.
+  const periSummary=document.createElement("span");periSummary.className="calendar-peri-summary-content";
+  for(const peri of livePeriOptions){
+   const overview=document.createElement("span");overview.className="calendar-peri-summary-period";
+   const periodTitle=document.createElement("span");periodTitle.className="calendar-peri-tile-title";
+   periodTitle.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
+   const nutrients=document.createElement("small");nutrients.className="calendar-peri-summary-nutrition";
+   const selectedPeri=previewNutritionOption(day.date,peri.phase,peri,peri.event_id);
+   nutrients.textContent=peri.nutrition?calendarCompactNutrition(selectedPeri?.nutrition||peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
+   overview.append(periodTitle,nutrients);periSummary.append(overview);
+  }
   const periCount=document.createElement("span");periCount.className="calendar-peri-tile-info";
   periCount.textContent=livePeriOptions.length+" "+(livePeriOptions.length===1?"período":"períodos");
   const periAction=document.createElement("span");periAction.className="calendar-peri-tile-action";
   periAction.setAttribute("aria-hidden","true");
   periAction.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-  summary.append(periTitle,periCount,periAction);details.append(summary);
+  summary.append(periSummary,periCount,periAction);details.append(summary);
   for(const peri of livePeriOptions){
    const line=document.createElement("section");line.className="calendar-live-peri-phase";
-   const heading=document.createElement("span");heading.className="calendar-live-peri-title";
-   heading.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
-   line.append(heading);
-   const mac=document.createElement("small");mac.className="calendar-live-source calendar-peri-nutrients";
-   const selectedPeri=previewNutritionOption(day.date,peri.phase,peri,peri.event_id);
-   mac.textContent=peri.nutrition?calendarCompactNutrition(selectedPeri?.nutrition||peri.nutrition)+(peri.status==="provisional"?" · Provisório":""):"Valores por confirmar";
-   line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
+   // Retain the period label in multi-period expanded content only, so that
+   // each option is identifiable without duplicating the summary nutrition.
+   if(livePeriOptions.length>1){
+    const heading=document.createElement("span");heading.className="calendar-live-peri-title";
+    heading.textContent=peri.title+" · "+(peri.session==="morning"?"Manhã":"Tarde");
+    line.append(heading);
+   }
+   line.append(renderLiveMealOptions(day,peri.phase,peri));
    details.append(line);
   }
   const periWrap=document.createElement("section");periWrap.className="tm-calendar-peri-wrap";
