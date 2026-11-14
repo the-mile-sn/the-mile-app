@@ -6,7 +6,7 @@ pilot until their event-specific source has an equivalent verified adapter.
 import food_plan_player_v2 as plans
 import meal_option_selection_v2 as choices
 
-def current_source(c, athlete_id, meal_date, meal_key, event_id=""):
+def current_source(c, athlete_id, meal_date, meal_key, event_id="", consumed_color=None):
     choices.valid_key(meal_date, meal_key, event_id)
     if event_id or meal_key not in choices.BASIC:
         return None
@@ -21,8 +21,11 @@ def current_source(c, athlete_id, meal_date, meal_key, event_id=""):
     colors=calendar_v2.effective_colors(c,athlete_id,days,model)
     entry=colors.get(meal_date,{}).get(meal_key) or {}
     color=entry.get("color")
-    plan_type=plans.COLORS.get(color)
-    if not plan_type:
+    if consumed_color is not None and (not isinstance(consumed_color, str) or consumed_color not in plans.COLORS):
+        raise ValueError("invalid_consumed_color")
+    selected_color = consumed_color if consumed_color is not None else color
+    plan_type=plans.COLORS.get(selected_color)
+    if not plan_type or not plans.COLORS.get(color):
         return None
     published=plans._approved(c,athlete_id).get(plan_type)
     if not published:
@@ -53,4 +56,20 @@ def current_source(c, athlete_id, meal_date, meal_key, event_id=""):
                         "foods":foods})
     if not options:
         return None
-    return {"options":options,"draft_id":published["draft_id"],"color":color}
+    return {"options":options,"draft_id":published["draft_id"],
+            "color":selected_color,"planned_color":color}
+
+
+def available_alternative_colors(c, athlete_id, meal_date, meal_key, event_id=""):
+    """Only return other colors with valid published options for this meal."""
+    planned = current_source(c, athlete_id, meal_date, meal_key, event_id)
+    if not planned:
+        return []
+    result = []
+    for color in plans.COLORS:
+        if color == planned["planned_color"]:
+            continue
+        source = current_source(c, athlete_id, meal_date, meal_key, event_id, consumed_color=color)
+        if source and source["options"]:
+            result.append(color)
+    return result
