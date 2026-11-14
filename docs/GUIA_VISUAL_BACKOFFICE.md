@@ -386,3 +386,17 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Navegação global:** **não** antecipar o breakpoint da sidebar e da barra de navegação em todas as páginas; o novo breakpoint de 1240 px afeta apenas o conteúdo do editor de Planos. A navegação mobile real continua a partir de 830 px.
 - **Modos e segurança:** aplicar em claro e escuro, com as mesmas cores nutricionais, valores, gramagens, relações e handlers. Não alterar a vista de leitura ou `main`.
 - **QA:** comparar valores da opção e dos alimentos em desktop largo com refeição aberta; reduzir gradualmente até 1240 px, testar opções e lista de alimentos em 1200, 1100, 900 e 830 px e confirmar a transição para o mobile. Validar código, Render e apresentação no browser como fases separadas.
+
+
+## 33. Grelha horizontal do Backoffice — referência Dashboard (14 novembro 2026)
+
+**Decisão aprovada:** no desktop, a distância entre a barra lateral e a superfície principal deve ser **idêntica em todas as páginas**, usando o Dashboard como referência. O alinhamento de partida do texto «Hoje» com a aresta esquerda dos subcards «Eventos e tarefas», «Respostas recentes» e da grelha do microciclo é a referência interna; não alterar essa geometria aprovada.
+
+- **Contentor único:** `#admin-workspace > .tm-admin-work-area` usa `max-width:none`, largura total e `padding-inline:clamp(16px,2vw,34px)` em desktop (`min-width:831px`). Retirar a centralização automática e a largura máxima legadas (1600 px), sem modificar o posicionamento nem a largura da sidebar. Não aumentar nem reduzir o padding vertical das páginas.
+- **Jogadores, perfil e restantes módulos:** herdam diretamente a nova margem da área de trabalho, sem ajustar independentemente os cards internos. Inclui Planeamento, Menus e Receitas, Avaliações, Formulários, Agendamentos, Definições e Minha conta.
+- **Biblioteca Alimentar:** retirar apenas o padding horizontal redundante de `#tm-food-library-page` e o `max-width:1500px` / margens automáticas de `.tm-food-library-content`. Aplica-se à lista de alimentos e à navegação da biblioteca; os filtros e tabelas preservam paddings internos.
+- **Porções Visuais:** secção irmã da Biblioteca, segue diretamente o contentor partilhado, sem ajustes internos na grelha de fotografias, nos cartões ou na paginação.
+- **Planos:** retirar os padding horizontais adicionais e o `max-width:1500px` do `#tm-plan-page > .tm-library-layout > .shell`. Abrange lista, visualização e edição, preservando o breakpoint de 1240 px específico da edição e todas as cores, ações e fórmulas.
+- **Dashboard:** preservar os 24 px de padding interno do card principal e o alinhamento existente entre o início do seu título e a posição inicial dos subcards, sem deslocações.
+- **Responsive e temas:** os ajustes são exclusivos de desktop (`min-width:831px`); nenhum estilo novo na navegação nem em mobile até 830 px. Aplicar a claro e escuro, sem interferir em estados nutricionais, dados, funcionalidades ou na branch `main`.
+- **QA:** verificar alinhamento da margem esquerda em Dashboard, Jogadores (lista e perfil), Biblioteca Alimentar (alimentos e porções), Planos (lista, leitura, edição), Planeamento, bibliotecas de pratos/receitas e páginas clínicas, comparando também a margem direita. Testar 1440, 1280, 1024, 831 e 830 px, assegurando ausência de scroll horizontal indevido. Separar validação de código, deploy e confirmação visual no browser.
