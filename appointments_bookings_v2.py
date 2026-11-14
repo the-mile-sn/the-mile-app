@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from appointments_catalog_v2 import ORG_ID, MODES
 import appointments_availability_v2 as availability
 import appointments_google_v2 as google
+import appointments_checkout_v2 as checkout
 
 
 def initialize(c):
@@ -183,6 +184,8 @@ def _validate_candidate(c, org_id, payload, exclude=None, now=None):
     """, (org_id, pid, end_utc, start_utc, exclude or "")).fetchone()
     if conflict:
         raise ValueError("booking_overlap")
+    if checkout.active_conflict(c,org_id,pid,start_utc,end_utc,now):
+        raise ValueError("checkout_hold_conflict")
     # Read real Google free/busy under the same local booking lock. If the
     # provider cannot be reached, reject instead of accidentally double-booking.
     busy = google.busy_intervals(
