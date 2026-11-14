@@ -13,6 +13,7 @@ import appointments_catalog_v2 as catalog
 import appointments_availability_v2 as availability
 import appointments_assignment_v2 as assignment
 import appointments_shopify_bridge_v2 as shopify_bridge
+import appointments_rules_v2 as rules
 
 ORG_ID = catalog.ORG_ID
 LISBON = ZoneInfo("Europe/Lisbon")
@@ -74,7 +75,7 @@ def public_catalog(c, now=None):
         "today": today.isoformat(),
         "last_bookable_date": (today + timedelta(days=60)).isoformat(),
         "timezone": "Europe/Lisbon",
-        "interval_minutes": 15,
+        "interval_minutes": rules.get(c, ORG_ID)["start_interval_minutes"],
         "any_professional_supported": True,
         "preview_only": True,
         "checkout_enabled": shopify_bridge.checkout_enabled(),
