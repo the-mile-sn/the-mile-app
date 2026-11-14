@@ -455,3 +455,5 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - O campo e resultados mantêm a filtragem e a associação ao seletor nativo, com fecho ao tocar fora/Escape, seleção por clique/Enter e alternância ao voltar a tocar no campo aberto.
 - Respeitar desktop, tablet e mobile; no mobile, input >=16px para evitar zoom Safari; manter o foco de teclado visível.
 - Esta decisão limita-se à pesquisa do Planeamento. A uniformização de outras listas pendentes será feita por componente, sem afetar as respetivas lógicas.
+
+- **Ajuste de 14 novembro 2026:** o destaque da subsecção ativa do Planeamento («Microciclos», «Suplementação», etc.) usa preenchimento de subcard e texto principal com peso 500, sem azul intenso. O card exterior branco aprovado não deve ser suavizado nem alterado. A pesquisa inclui um único X discreto, que limpa a pesquisa ou remove a seleção do jogador; o botão fica oculto quando o campo está vazio e não há jogador selecionado.
