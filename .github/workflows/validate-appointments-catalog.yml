@@ -1,8 +1,8 @@
-name: Validate appointments Shopify owned webhook self-registration
+name: Validate appointments safe Shopify webhook smoke
 on:
   push:
     branches:
-      - feature/appointments-shopify-webhook-self-registration-20261114
+      - feature/appointments-safe-webhook-smoke-20261114
   pull_request:
     branches:
       - production/the-mile-admin
@@ -37,7 +37,7 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install -r requirements.txt
       - name: Python syntax
-        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py appointments_bookings_v2.py appointments_google_v2.py appointments_checkout_v2.py appointments_shopify_bridge_v2.py appointments_shopify_registration_v2.py test_appointments_shopify_registration_v2.py test_appointments_shopify_bridge_v2.py appointments_assignment_v2.py appointments_storefront_preview_v2.py test_appointments_storefront_preview_v2.py test_appointments_google_v2.py test_appointments_checkout_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py test_appointments_bookings_v2.py
+        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py appointments_bookings_v2.py appointments_google_v2.py appointments_checkout_v2.py appointments_shopify_bridge_v2.py appointments_shopify_registration_v2.py appointments_shopify_smoke_v2.py test_appointments_shopify_smoke_v2.py test_appointments_shopify_registration_v2.py test_appointments_shopify_bridge_v2.py appointments_assignment_v2.py appointments_storefront_preview_v2.py test_appointments_storefront_preview_v2.py test_appointments_google_v2.py test_appointments_checkout_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py test_appointments_bookings_v2.py
       - name: JavaScript syntax
         run: |
           node --check static/admin-appointments.js
@@ -45,7 +45,7 @@ jobs:
           node --check static/admin-appointments-bookings.js
           node --check static/admin-appointments-google.js
       - name: Appointments API and security regression
-        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_bookings_v2 test_appointments_google_v2 test_appointments_checkout_v2 test_appointments_shopify_registration_v2 test_appointments_shopify_bridge_v2 test_appointments_storefront_preview_v2 test_appointments_backoffice_shell
+        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_bookings_v2 test_appointments_google_v2 test_appointments_checkout_v2 test_appointments_shopify_smoke_v2 test_appointments_shopify_registration_v2 test_appointments_shopify_bridge_v2 test_appointments_storefront_preview_v2 test_appointments_backoffice_shell
       - name: PostgreSQL 18 compatibility and catalogue smoke
         env:
           DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
@@ -242,4 +242,33 @@ jobs:
           else:
               raise AssertionError('Third simultaneous hold accepted despite no capacity')
           print('Atomic automatic assignment: two distinct professionals, third rejected')
+          PY
+
+      - name: PostgreSQL 18 synthetic signed Shopify webhook leaves no changes
+        env:
+          DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
+          MILE_SHOPIFY_APP_SECRET: test-signing-secret-for-ci-only-2026-00000
+          MILE_SHOPIFY_WEBHOOK_ENABLED: '1'
+          MILE_SHOPIFY_SHOP_DOMAIN: the-mile-sports-nutrition.myshopify.com
+          MILE_SHOPIFY_CHECKOUT_ENABLED: '0'
+          MILE_SHOPIFY_SESAMI_MIGRATED: '0'
+        run: |
+          python - <<'PY'
+          import app
+          import appointments_shopify_bridge_v2 as bridge
+          import appointments_shopify_smoke_v2 as smoke
+          with app.connect() as c:
+              bridge.initialize(c)
+              before=c.execute(
+                  "SELECT COUNT(*) AS n FROM appt_shopify_webhook_deliveries"
+              ).fetchone()["n"]
+              result=smoke.run_signed_smoke(c)
+              after=c.execute(
+                  "SELECT COUNT(*) AS n FROM appt_shopify_webhook_deliveries"
+              ).fetchone()["n"]
+          assert result["signature_accepted"] and result["unrelated_order_ignored"],result
+          assert result["forged_signature_rejected"] and result["duplicate_delivery_idempotent"],result
+          assert not result["database_changes_persisted"],result
+          assert before==after,(before,after)
+          print("PostgreSQL smoke passed: signature + replay + rollback; no payment or booking")
           PY
