@@ -90,6 +90,64 @@ class PublicStorefrontPreviewTests(unittest.TestCase):
                         "csrf", "photo_data", "google_event_id", "payment_status"):
             self.assertNotIn(private, raw)
 
+    def test_public_professional_photo_is_available_only_for_bookable_profiles(self):
+        from test_admin_private_photo import sample_photo
+
+        public_photo = self.public + "/professionals/" + self.pid + "/photo"
+        admin_photo = self.private + "/professionals/" + self.pid + "/photo"
+        self.assertEqual(self.guest.request(public_photo)["status"], 404)
+
+        saved = self.admin.request(
+            admin_photo, "PUT", {"photo": sample_photo()})
+        self.assertEqual(saved["status"], 200, saved)
+
+        catalog_response = self.guest.request(self.public + "/catalog")
+        person = next(p for p in catalog_response["body"]["professionals"]
+                      if p["id"] == self.pid)
+        self.assertTrue(person["has_photo"])
+        self.assertNotIn("photo_data", json.dumps(catalog_response["body"]))
+        self.assertNotIn("photo_updated_at", json.dumps(catalog_response["body"]))
+        self.assertNotIn("email", json.dumps(person))
+
+        image = self.guest.request(public_photo, origin="https://themile.pt")
+        self.assertEqual(image["status"], 200, image)
+        self.assertEqual(image["headers"]["Content-Type"], "image/webp")
+        self.assertEqual(image["headers"]["Cache-Control"], "no-store")
+        self.assertEqual(image["headers"]["Access-Control-Allow-Origin"],
+                         "https://themile.pt")
+        self.assertEqual(image["body"][0:4], b"RIFF")
+        self.assertEqual(image["body"][8:12], b"WEBP")
+        self.assertNotIn(b"PRIVATE_CAMERA_DESCRIPTION", image["body"])
+
+        self.assertEqual(self.guest.request(public_photo + "?other=1")["status"], 400)
+        self.assertEqual(self.guest.request(
+            public_photo, origin="https://evil.example")["status"], 403)
+        self.assertEqual(self.guest.request(public_photo, "POST", {})["status"], 404)
+        self.assertEqual(self.guest.request(
+            self.public + "/professionals/" + "f"*32 + "/photo")["status"], 404)
+        self.assertEqual(self.guest.request(
+            self.public + "/professionals/not-an-id/photo")["status"], 404)
+
+        unrelated = self.admin.request(self.private + "/professionals", "POST", {
+            "name": "Sem Servico", "active": True, "email": "",
+            "presencial_enabled": True, "online_enabled": True,
+            "service_ids": [],
+        })
+        self.assertEqual(unrelated["status"], 201, unrelated)
+        unrelated_id = unrelated["body"]["id"]
+        self.assertEqual(self.admin.request(
+            self.private + "/professionals/" + unrelated_id + "/photo",
+            "PUT", {"photo": sample_photo()})["status"], 200)
+        self.assertEqual(self.guest.request(
+            self.public + "/professionals/" + unrelated_id + "/photo")["status"], 404)
+
+        profile = next(x for x in self.admin.request(self.private + "/catalog")
+                       ["body"]["professionals"] if x["id"] == self.pid)
+        profile["active"] = False
+        self.assertEqual(self.admin.request(
+            self.private + "/professionals/" + self.pid, "PUT", profile)["status"], 200)
+        self.assertEqual(self.guest.request(public_photo)["status"], 404)
+
     def test_month_and_day_match_admin_and_use_exact_service_duration(self):
         month = self.month()
         self.assertEqual(month["status"], 200, month)
