@@ -21,6 +21,7 @@ import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
 import appointments_google_v2
+import appointments_checkout_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -290,6 +291,7 @@ def initialize():
         appointments_availability_v2.initialize(c)
         appointments_bookings_v2.initialize(c)
         appointments_google_v2.initialize(c)
+        appointments_checkout_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -1038,6 +1040,36 @@ def application(env, start_response):
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 return respond(200, {'ok': True})
+            # Phase 6.1: checkout holds are ADMIN-ONLY for controlled testing.
+            # No storefront, app proxy, payment or Shopify webhook endpoints yet.
+            if path == '/api/v2/admin/appointments/checkout/status' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                return respond(200,appointments_checkout_v2.summary(c))
+            if path == '/api/v2/admin/appointments/checkout/holds' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                try:
+                    result = appointments_checkout_v2.start_hold(
+                        c, read_json(env), user['id'])
+                except LookupError as exc:
+                    raise Problem(404,str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) in (
+                        'checkout_hold_conflict','checkout_idempotency_mismatch',
+                        'checkout_hold_closed','booking_overlap') else 400,str(exc))
+                return respond(201,result)
+            if (path.startswith('/api/v2/admin/appointments/checkout/holds/')
+                    and path.endswith('/release') and method == 'POST'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                hold_id = path.split('/')[-2]
+                try:
+                    result=appointments_checkout_v2.release_hold(
+                        c,hold_id,user['id'])
+                except LookupError as exc:
+                    raise Problem(404,str(exc))
+                return respond(200,result)
             # Phase 4.1: internal manual bookings; no Shopify or Google side-effects.
             if path == '/api/v2/admin/appointments/bookings' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
