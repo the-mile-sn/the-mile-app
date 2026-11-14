@@ -48,6 +48,30 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             self.assertEqual(client.request("/admin-appointments.css")["status"], 200)
             self.assertEqual(page["headers"]["Cache-Control"], "no-store")
 
+    def test_paid_booking_smoke_button_has_new_script_and_is_clickable(self):
+        # Versioned assets are cached as immutable for 30 days. The HTML
+        # must bump the URL whenever the JS gains a new button handler.
+        with patch.object(app, "SITE_ROLE", "admin"):
+            client = fixtures.Client()
+            page = client.request("/admin-appointments")
+            self.assertEqual(page["status"], 200)
+            self.assertIn(
+                b'src="/admin-appointments-bookings.js?v=7" defer',
+                page["body"])
+            self.assertIn(
+                b'<button id="tm-appt-shopify-paid-smoke" type="button" '
+                b'class="tm-appt-checkout-refresh">',
+                page["body"])
+            script = client.request("/admin-appointments-bookings.js?v=7")
+            self.assertEqual(script["status"], 200)
+            self.assertIn(b'api("/checkout/paid-booking-smoke-test","POST",{})',
+                          script["body"])
+            self.assertNotIn(b'paidSmoke.disabled', script["body"])
+            self.assertIn(b'button.disabled=false;', script["body"])
+            self.assertEqual(
+                script["headers"]["Cache-Control"],
+                "public, max-age=2592000, immutable")
+
     def test_player_service_does_not_expose_admin_shell(self):
         with patch.object(app, "SITE_ROLE", "player"):
             for route in ("/admin-appointments", "/admin-appointments.js",

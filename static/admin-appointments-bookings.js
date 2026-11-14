@@ -372,10 +372,6 @@
      setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
    const smoke=$("tm-appt-shopify-smoke");
    if(smoke)smoke.disabled=!(setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
-   const paidSmoke=$("tm-appt-shopify-paid-smoke");
-   if(paidSmoke)paidSmoke.disabled=!(setupInfo.secret_configured&&
-     setupInfo.webhook_receiver_enabled&&!paid.checkout_enabled&&
-     paid.service_formats_mapped>0);
    const status=paid.checkout_enabled?"Checkout The Mile ativo":"Checkout The Mile desligado";
    const setup=paid.shopify_app_secret_configured?"Chave da aplicação configurada":
      "Falta configurar a chave da aplicação The Mile Booking";
@@ -471,6 +467,7 @@
    output.textContent=messages[error.message]||
      "A simulação não foi concluída. Verifica os registos do Render.";
   }finally{
+    button.disabled=false;
     loadCheckoutStatus().catch(()=>{});
   }
  });
