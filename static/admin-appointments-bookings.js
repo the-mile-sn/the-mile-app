@@ -353,6 +353,19 @@
   }
   enableForm(item);
  }
+ async function loadCheckoutStatus(){
+  const node=$("tm-appt-checkout-status");
+  if(!node)return;
+  try{
+   const result=await api("/checkout/status");
+   node.textContent="Motor interno preparado · "+result.active_holds+
+     " bloqueio(s) ativo(s) de "+result.hold_minutes+" min · Checkout público desligado";
+  }catch(error){
+   node.textContent="Estado de checkout temporariamente indisponível";
+  }
+ }
+ $("tm-appt-checkout-refresh")?.addEventListener("click",()=>loadCheckoutStatus());
+ loadCheckoutStatus().catch(()=>{});
  $("tm-appt-new-booking").addEventListener("click",()=>openForm());
  for(const button of document.querySelectorAll("[data-close-booking-dialog]"))
   button.addEventListener("click",()=>button.closest("dialog").close());
