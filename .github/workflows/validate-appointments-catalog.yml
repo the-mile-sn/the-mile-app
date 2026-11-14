@@ -1,8 +1,8 @@
-name: Validate appointments and Shopify checkout holds
+name: Validate appointments storefront preview and checkout holds
 on:
   push:
     branches:
-      - feature/appointments-checkout-holds-20261114
+      - feature/appointments-shopify-live-availability-preview-20261114
   pull_request:
     branches:
       - production/the-mile-admin
@@ -37,7 +37,7 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install -r requirements.txt
       - name: Python syntax
-        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py appointments_bookings_v2.py appointments_google_v2.py appointments_checkout_v2.py test_appointments_google_v2.py test_appointments_checkout_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py test_appointments_bookings_v2.py
+        run: python -m py_compile app.py appointments_catalog_v2.py appointments_availability_v2.py appointments_bookings_v2.py appointments_google_v2.py appointments_checkout_v2.py appointments_storefront_preview_v2.py test_appointments_storefront_preview_v2.py test_appointments_google_v2.py test_appointments_checkout_v2.py test_appointments_catalog_v2.py test_appointments_availability_v2.py test_appointments_bookings_v2.py
       - name: JavaScript syntax
         run: |
           node --check static/admin-appointments.js
@@ -45,7 +45,7 @@ jobs:
           node --check static/admin-appointments-bookings.js
           node --check static/admin-appointments-google.js
       - name: Appointments API and security regression
-        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_bookings_v2 test_appointments_google_v2 test_appointments_checkout_v2 test_appointments_backoffice_shell
+        run: python -m unittest -v test_appointments_catalog_v2 test_appointments_availability_v2 test_appointments_bookings_v2 test_appointments_google_v2 test_appointments_checkout_v2 test_appointments_storefront_preview_v2 test_appointments_backoffice_shell
       - name: PostgreSQL 18 compatibility and catalogue smoke
         env:
           DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
