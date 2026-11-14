@@ -193,7 +193,7 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
             self.assertEqual(probe(self.signed_proxy(shop="another.myshopify.com"))["status"], 403)
             self.assertEqual(probe(self.signed_proxy(timestamp=str(int(time.time())-700)))["status"], 403)
             self.assertEqual(probe(self.signed_proxy(path_prefix="/apps/other"))["status"], 403)
-            self.assertEqual(probe(self.signed_proxy(), method="POST")["status"], 404)
+            self.assertEqual(probe(self.signed_proxy(), method="POST")["status"], 401)
             with patch.object(app, "SITE_ROLE", "player"):
                 self.assertEqual(probe(self.signed_proxy())["status"], 404)
         with app.connect() as c:
