@@ -124,7 +124,7 @@
     const open=groups.find(g=>!g.panel.hidden);
     if(open){event.preventDefault();closeFlyouts();open.button.focus();}
    });
-   window.addEventListener("resize",()=>{if(compact())closeFlyouts();});
+   window.addEventListener("resize",()=>{if(compact())requestAnimationFrame(closeFlyouts);});
   }
  }
 })();
