@@ -22,6 +22,7 @@ import appointments_availability_v2
 import appointments_bookings_v2
 import appointments_google_v2
 import appointments_checkout_v2
+import appointments_rules_v2
 import appointments_shopify_bridge_v2
 import appointments_shopify_registration_v2
 import appointments_launch_readiness_v2
@@ -298,6 +299,7 @@ def initialize():
         appointments_bookings_v2.initialize(c)
         appointments_google_v2.initialize(c)
         appointments_checkout_v2.initialize(c)
+        appointments_rules_v2.initialize(c)
         appointments_shopify_bridge_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
@@ -1239,6 +1241,17 @@ def application(env, start_response):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 return respond(200,appointments_shopify_bridge_v2.payment_summary(c))
+            if path == '/api/v2/admin/appointments/rules' and method in ('GET','PUT'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200, appointments_rules_v2.get(c))
+                try:
+                    saved = appointments_rules_v2.save(c, read_json(env))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) == 'stale_booking_rules'
+                                  else 400, str(exc))
+                return respond(200, saved)
             if path == '/api/v2/admin/appointments/checkout/status' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
