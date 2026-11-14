@@ -525,3 +525,11 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Eventos do mês:** usar diretamente o card principal (sem cabeçalho secundário preenchido). Cabeçalho expansível com título, contagem e seta outline, alinhado à margem esquerda comum; eventos expandidos em lista de aspeto tabular, sem segunda superfície cheia, com divisórias suaves e lápis de edição à direita.
 - **Alinhamento horizontal:** usar o mesmo início interno para «Eventos do mês», «Média semanal», o período semanal e as métricas. Evitar somar padding do card principal com outros recuos de cabeçalho ou lista; sem offsets artificiais.
 - **Implementação:** substituir as regras existentes no bloco consolidado de `static/admin-surface-palette.css`, não acrescentar overrides. Preservar desktop/mobile, claro/escuro, cálculos e edição de eventos. `main` permanece intocada.
+
+
+### Microciclos — cabeçalho mensal e diferenciação dos eventos (14 novembro 2026)
+
+- **Cabeçalho mensal:** o nome do mês e o botão compacto «+ Adicionar evento» aparecem na mesma linha, alinhados verticalmente (título à esquerda, criação à direita), dentro do card principal. O formulário expansível ocupa a largura da linha seguinte, sem alterar os seus campos/validações. A navegação «‹ Hoje ›» mantém-se à direita numa linha abaixo, com margem de 10 px ao cabeçalho e espaço antes dos dias da semana/grelha.
+- **Eventos do mês:** os tipos de evento passam a ter identificadores compactos e subtis, sem criar cartões secundários nem hover na linha: Jogo verde, Treino azul, Folga rosa suave; Viagem e Suplementação têm tons neutros distinguíveis. Usar cores distintas para ambos os temas com contraste legível. Datas e edição inline mantêm o mesmo comportamento. Preservar as divisórias suaves e os recuos uniformizados.
+- **Mobile:** a linha de mês + criação adapta a tipografia e o espaçamento ao espaço disponível, sem alterar a grelha dos sete dias. Evitar alturas artificiais ou novos recuos no interior dos cards.
+- **Implementação:** alterações estruturais no HTML e labels no JS; estilos alterados no bloco consolidado de `static/admin-surface-palette.css`, sem acumular overrides. Sem alterações a dados nutricionais, eventos ou branch `main`.
