@@ -1699,7 +1699,14 @@ def application(env, start_response):
                     if not option: raise Problem(409,'option_stale')
                     library=consumption_nutrition_v2.active_library(c)
                     actual=consumption_nutrition_v2.calculate(option,library,body.get('status'),body.get('edits'),body.get('additional'))
-                    planned=consumption_nutrition_v2.calculate(option,library,'all',None,None)
+                    planned_source=consumption_source_v2.current_source(
+                        c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''))
+                    if not planned_source: raise Problem(409,'published_meal_unavailable')
+                    planned_option=next((o for o in planned_source['options']
+                        if o['option_ref']==body.get('option_ref')),None)
+                    if not planned_option:
+                        planned_option=planned_source['options'][0]
+                    planned=consumption_nutrition_v2.calculate(planned_option,library,'all',None,None)
                 except ValueError as exc:
                     raise Problem(400,str(exc))
                 return respond(200,{'nutrition':actual['nutrition'],'planned':planned['nutrition']})
