@@ -190,3 +190,54 @@ jobs:
               raise AssertionError('Manual booking bypassed an active checkout hold')
           print('Concurrent checkout holds: one held; second rejected; manual conflict protected')
           PY
+
+      - name: PostgreSQL 18 simultaneous any-professional checkout assignment
+        env:
+          DATABASE_URL: postgresql://mile_test:mile_test@localhost:5432/mile_test
+        run: |
+          python - <<'PY'
+          import concurrent.futures
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+          import app
+          import appointments_catalog_v2 as catalog
+          import appointments_availability_v2 as availability
+          import appointments_checkout_v2 as checkout
+
+          day=(datetime.now(ZoneInfo('Europe/Lisbon')).date()+timedelta(days=3)).isoformat()
+          with app.connect() as c:
+              svc=next(s for s in catalog.catalog(c)['services'] if s['duration_minutes']==90)
+              names=[]
+              for index in (1,2):
+                  pid=catalog.save_professional(c,{
+                      'name':'Auto Assignment QA '+str(index),
+                      'email':'auto-'+str(index)+'@ci.invalid','active':True,
+                      'presencial_enabled':True,'online_enabled':True,
+                      'service_ids':[svc['id']]
+                  })
+                  availability.save_period(c,'availability',{
+                      'professional_id':pid,'date':day,
+                      'start':'09:00','end':'13:00'
+                  })
+                  names.append(pid)
+          selected={'professional_id':'any','service_id':svc['id'],
+                    'mode':'presencial','date':day,'start':'09:00'}
+          def attempt(n):
+              with app.connect() as c:
+                  return checkout.start_hold(c,{
+                      **selected,'idempotency_key':'auto-race-2026-checkout-'+str(n)
+                  },'ci')['professional_id']
+          with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+              assigned=list(pool.map(attempt,[1,2]))
+          assert set(assigned)==set(names),('Expected both professionals assigned',assigned,names)
+          try:
+              with app.connect() as c:
+                  checkout.start_hold(c,{
+                      **selected,'idempotency_key':'auto-race-2026-checkout-third'
+                  },'ci')
+          except ValueError as error:
+              assert str(error)=='slot_no_longer_available',str(error)
+          else:
+              raise AssertionError('Third simultaneous hold accepted despite no capacity')
+          print('Atomic automatic assignment: two distinct professionals, third rejected')
+          PY
