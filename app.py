@@ -24,6 +24,7 @@ import appointments_google_v2
 import appointments_checkout_v2
 import appointments_shopify_bridge_v2
 import appointments_shopify_registration_v2
+import appointments_shopify_smoke_v2
 import appointments_storefront_preview_v2
 import consumption_records_v2
 import recipe_library_v2
@@ -1171,6 +1172,15 @@ def application(env, start_response):
                 except appointments_shopify_registration_v2.ShopifyRegistrationError as exc:
                     reason=str(exc)
                     raise Problem(409 if reason=='shopify_registration_not_ready' else 503,reason)
+                return respond(200,result)
+            if path == '/api/v2/admin/appointments/checkout/smoke-test' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                try:
+                    result=appointments_shopify_smoke_v2.run_signed_smoke(c)
+                except appointments_shopify_smoke_v2.SmokeTestError as exc:
+                    raise Problem(409 if str(exc)=='smoke_webhook_not_configured' else 503,
+                                  str(exc))
                 return respond(200,result)
             if path == '/api/v2/admin/appointments/checkout/payment-status' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
