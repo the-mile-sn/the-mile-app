@@ -2024,6 +2024,15 @@ async function overview(){
   if(consumptionEnabled&&color&&options.length){
    const previous=consumptionRecords.find(x=>x.meal_key===meal&&x.meal_date===d&&!x.event_id);
    const cards=options.length===1?[section.querySelector('.single-meal-option')]:Array.from(section.querySelectorAll('.player-meal-option-subcard'));
+   if(previous&&previous.prescription?.color&&previous.prescription.color!==color){
+    const note=document.createElement('div');note.className='meal-consumption-tags meal-consumption-tags-bottom';
+    const label=document.createElement('span');label.className='meal-registered-badge';
+    label.textContent='✓ Consumido: '+previous.prescription.color;
+    const editAlternative=document.createElement('button');editAlternative.type='button';
+    editAlternative.className='meal-edit-consumption-tag';editAlternative.textContent='✎ Editar consumo';
+    editAlternative.onclick=()=>openConsumptionEditor(section,d,meal,'',null,previous.prescription.color);
+    note.append(label,editAlternative);section.append(note);
+   }
    if(previous){
     const optionIndex=options.findIndex(option=>option.option_ref===previous.option_ref);
     if(optionIndex>=0){
