@@ -163,6 +163,47 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
         with patch.object(app,"SITE_ROLE","player"):
             self.assertEqual(request(self.signed_proxy())["status"],404)
 
+    def test_signed_proxy_probe_works_with_checkout_disabled_without_writes(self):
+        def probe(query, method="GET"):
+            env = {
+                "REQUEST_METHOD": method,
+                "PATH_INFO": "/api/v2/shopify/app-proxy/ping",
+                "QUERY_STRING": query,
+                "wsgi.input": io.BytesIO(b""),
+                "CONTENT_LENGTH": "0",
+                "REMOTE_ADDR": "127.0.0.1",
+            }
+            response = {}
+            def start(status, headers):
+                response["status"] = int(status.split()[0])
+                response["headers"] = dict(headers)
+            response["body"] = json.loads(
+                b"".join(app.application(env, start)))
+            return response
+
+        with patch.dict("os.environ", {
+            "MILE_SHOPIFY_CHECKOUT_ENABLED": "0",
+            "MILE_SHOPIFY_SESAMI_MIGRATED": "0",
+        }):
+            valid = probe(self.signed_proxy())
+            self.assertEqual(valid["status"], 200, valid)
+            self.assertIs(valid["body"]["app_proxy_verified"], True)
+            self.assertIs(valid["body"]["checkout_enabled"], False)
+            self.assertEqual(valid["headers"]["Cache-Control"], "no-store")
+            self.assertEqual(probe(self.signed_proxy(shop="another.myshopify.com"))["status"], 403)
+            self.assertEqual(probe(self.signed_proxy(timestamp=str(int(time.time())-700)))["status"], 403)
+            self.assertEqual(probe(self.signed_proxy(path_prefix="/apps/other"))["status"], 403)
+            self.assertEqual(probe(self.signed_proxy(), method="POST")["status"], 404)
+            with patch.object(app, "SITE_ROLE", "player"):
+                self.assertEqual(probe(self.signed_proxy())["status"], 404)
+        with app.connect() as c:
+            self.assertEqual(c.execute(
+                "SELECT COUNT(*) AS n FROM appt_checkout_holds"
+            ).fetchone()["n"], 0)
+            self.assertEqual(c.execute(
+                "SELECT COUNT(*) AS n FROM appt_shopify_confirmations"
+            ).fetchone()["n"], 0)
+
     def test_webhook_paid_confirms_one_and_is_idempotent(self):
         cart=self.start()
         order=self.order(cart)
