@@ -1443,10 +1443,10 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
  const grid=document.createElement("div");grid.className="calendar-wide-options-grid";
  const singleOption=(record.options||[]).length===1;
  for(const [index,option] of (record.options||[]).entries()){
-  const section=document.createElement("details");section.className="calendar-day-meal-option calendar-option-accordion";
+  const section=document.createElement(singleOption?"div":"details");section.className="calendar-day-meal-option calendar-option-accordion";
   const title=document.createElement(singleOption?"div":"summary");
   title.className=singleOption?"calendar-single-option-heading":"calendar-option-accordion-heading";
-  if(singleOption){section.open=true;section.classList.add("is-single-option");}
+  if(singleOption)section.classList.add("is-single-option");
   else{const label=document.createElement("strong");label.textContent="Opção "+(index+1)+(option.title?" · "+option.title:"");title.append(label);}
   if(singleOption&&option.title){const label=document.createElement("strong");label.textContent=option.title;title.append(label);}
   if(editable){
@@ -1601,7 +1601,8 @@ function renderDayPreview(day,host){
    event.preventDefault();choose(choices[activeIndex].classification);
   }
  });
- field.append(caption,trigger,menu);heading.append(field);
+ field.append(caption,trigger,menu);
+ const headerActions=document.createElement("div");headerActions.className="calendar-day-header-actions";headerActions.append(field);
  const closeDay=document.createElement("button");closeDay.type="button";closeDay.className="calendar-day-close";
  closeDay.setAttribute("aria-label","Fechar detalhes de "+date.textContent);closeDay.title="Fechar detalhes do dia";
  closeDay.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
@@ -1610,7 +1611,7 @@ function renderDayPreview(day,host){
   host.replaceChildren();host.hidden=true;$("calendar-day-card").hidden=true;
   document.querySelectorAll("#calendar-days .calendar-selected").forEach(el=>el.classList.remove("calendar-selected"));
  });
- heading.append(closeDay);host.append(heading);
+ headerActions.append(closeDay);heading.append(headerActions);host.append(heading);
  const grid=document.createElement("div");grid.className="day-meals";
  const optionsPanel=document.createElement("section");optionsPanel.className="calendar-wide-options";optionsPanel.id="calendar-wide-options";optionsPanel.hidden=true;
  const optionButtons=new Map();let expandedMeal=null;
