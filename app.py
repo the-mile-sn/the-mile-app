@@ -22,6 +22,7 @@ import appointments_availability_v2
 import appointments_bookings_v2
 import appointments_google_v2
 import appointments_checkout_v2
+import appointments_shopify_bridge_v2
 import appointments_storefront_preview_v2
 import consumption_records_v2
 import recipe_library_v2
@@ -293,6 +294,7 @@ def initialize():
         appointments_bookings_v2.initialize(c)
         appointments_google_v2.initialize(c)
         appointments_checkout_v2.initialize(c)
+        appointments_shopify_bridge_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         recipe_library_v2.initialize(c)
         plan_import_v2.initialize(c)
@@ -740,6 +742,60 @@ def application(env, start_response):
         if not path.startswith('/api/'):
             raise Problem(404, 'not_found')
 
+        # The Mile's FUTURE custom Shopify app — not the ChatGPT connector.
+        # Disabled by default; no checkout orders can be confirmed unless the
+        # app's own secret, domain and explicit feature flag are configured.
+        if path == '/api/v2/shopify/webhooks/orders-paid' and method == 'POST':
+            if SITE_ROLE == 'player' or not appointments_shopify_bridge_v2.webhook_enabled():
+                raise Problem(404, 'not_found')
+            try:
+                size = int(env.get('CONTENT_LENGTH') or '-1')
+            except ValueError:
+                raise Problem(400, 'invalid_content_length')
+            if not 0 < size <= appointments_shopify_bridge_v2.MAX_WEBHOOK:
+                raise Problem(400, 'invalid_webhook_body')
+            raw = env['wsgi.input'].read(size)
+            if len(raw) != size:
+                raise Problem(400, 'invalid_webhook_body')
+            webhook_headers = {
+                'X-Shopify-Hmac-Sha256': env.get('HTTP_X_SHOPIFY_HMAC_SHA256',''),
+                'X-Shopify-Webhook-Id': env.get('HTTP_X_SHOPIFY_WEBHOOK_ID',''),
+                'X-Shopify-Shop-Domain': env.get('HTTP_X_SHOPIFY_SHOP_DOMAIN',''),
+                'X-Shopify-Topic': env.get('HTTP_X_SHOPIFY_TOPIC',''),
+            }
+            try:
+                with connect() as shop_c:
+                    result=appointments_shopify_bridge_v2.paid_webhook(
+                        shop_c, raw, webhook_headers)
+            except appointments_shopify_bridge_v2.ShopifyBridgeError as exc:
+                raise Problem(403 if str(exc) in (
+                    'invalid_webhook_signature','invalid_webhook_shop',
+                    'invalid_webhook_delivery') else 400,str(exc))
+            return respond(200,{'ok':True,'result':result})
+
+        if path == '/api/v2/shopify/app-proxy/hold' and method == 'POST':
+            if SITE_ROLE == 'player' or not appointments_shopify_bridge_v2.checkout_enabled():
+                raise Problem(404, 'not_found')
+            # Validate proxy HMAC *before* using any untrusted booking input.
+            try:
+                appointments_shopify_bridge_v2.verify_proxy(
+                    env.get('QUERY_STRING',''))
+            except appointments_shopify_bridge_v2.ShopifyBridgeError:
+                raise Problem(403,'invalid_shopify_proxy')
+            # The existing server JSON validator limits body size.
+            try:
+                with connect() as shop_c:
+                    result=appointments_shopify_bridge_v2.create_checkout_hold(
+                        shop_c, env.get('QUERY_STRING',''), read_json(env))
+            except LookupError as exc:
+                raise Problem(404,str(exc))
+            except ValueError as exc:
+                raise Problem(409 if str(exc) in (
+                    'checkout_hold_conflict','checkout_idempotency_mismatch',
+                    'checkout_hold_closed','booking_overlap',
+                    'slot_no_longer_available') else 400,str(exc))
+            return respond(201,result)
+
         cookies = SimpleCookie()
         try:
             cookies.load(env.get('HTTP_COOKIE', ''))
@@ -1102,6 +1158,10 @@ def application(env, start_response):
                 return respond(200, {'ok': True})
             # Phase 6.1: checkout holds are ADMIN-ONLY for controlled testing.
             # No storefront, app proxy, payment or Shopify webhook endpoints yet.
+            if path == '/api/v2/admin/appointments/checkout/payment-status' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                return respond(200,appointments_shopify_bridge_v2.payment_summary(c))
             if path == '/api/v2/admin/appointments/checkout/status' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
