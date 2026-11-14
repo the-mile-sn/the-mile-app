@@ -133,6 +133,36 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
             with self.assertRaisesRegex(bridge.ShopifyBridgeError,"shopify_checkout_disabled"):
                 bridge.verify_proxy(self.signed_proxy())
 
+    def test_proxy_http_endpoint_is_signed_and_disabled_until_migration(self):
+        request_body=json.dumps(self.payload()).encode()
+        def request(query):
+            env={
+                "REQUEST_METHOD":"POST",
+                "PATH_INFO":"/api/v2/shopify/app-proxy/hold",
+                "QUERY_STRING":query,
+                "wsgi.input":io.BytesIO(request_body),
+                "CONTENT_LENGTH":str(len(request_body)),
+                "REMOTE_ADDR":"127.0.0.1",
+                "HTTP_ORIGIN":"https://www.themile.pt",
+            }
+            answer={}
+            def start(status,headers):
+                answer["status"]=int(status.split()[0])
+                answer["headers"]=dict(headers)
+            answer["body"]=json.loads(b"".join(app.application(env,start)))
+            return answer
+        valid=request(self.signed_proxy())
+        self.assertEqual(valid["status"],201,valid)
+        self.assertEqual(valid["body"]["quantity"],1)
+        self.assertRegex(valid["body"]["properties"]["_the_mile_proof"],r"^[0-9a-f]{64}$")
+        self.assertEqual(request(self.signed_proxy())["body"]["hold_id"],
+                         valid["body"]["hold_id"])
+        self.assertEqual(request(self.signed_proxy(shop="bad.myshopify.com"))["status"],403)
+        with patch.dict("os.environ",{"MILE_SHOPIFY_SESAMI_MIGRATED":"0"}):
+            self.assertEqual(request(self.signed_proxy())["status"],404)
+        with patch.object(app,"SITE_ROLE","player"):
+            self.assertEqual(request(self.signed_proxy())["status"],404)
+
     def test_webhook_paid_confirms_one_and_is_idempotent(self):
         cart=self.start()
         order=self.order(cart)
