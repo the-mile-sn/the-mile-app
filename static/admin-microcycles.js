@@ -2780,6 +2780,7 @@ syncCalendarEventForm();
 function setMobileCalendarEventFormOpen(open){
  const toggle=$("calendar-mobile-event-toggle");
  toggle.setAttribute("aria-expanded",String(Boolean(open)));
+ toggle.setAttribute("aria-label",open?"Fechar formulário de adicionar evento":"Adicionar evento");
 }
 function openMobileCalendarEventForm(){setMobileCalendarEventFormOpen(true);}
 $("calendar-mobile-event-toggle").addEventListener("click",()=>{
