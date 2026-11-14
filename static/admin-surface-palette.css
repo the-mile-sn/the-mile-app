@@ -4561,9 +4561,34 @@ html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-label{
 html[data-admin-theme] #calendar-section .day-preview .day-meal :is(.calendar-live-meal-nutrients,.day-meal-nutrition-empty){
  color:var(--tm-meal-fg)!important;opacity:.8;font-weight:400!important;
 }
-html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select{
+html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select-shell{
+ position:relative;display:flex;align-items:center;flex:0 1 48%;
+ min-width:0;max-width:125px;height:35px;border:0!important;
+ border-radius:14px!important;overflow:hidden!important;
  background:var(--tm-meal-inner)!important;color:var(--tm-meal-fg)!important;
- border:0!important;box-shadow:none!important;border-radius:12px!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select-shell:focus-within{
+ outline:2px solid var(--tm-meal-fg)!important;outline-offset:2px;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select-shell .day-color-select{
+ display:block!important;position:relative!important;flex:1 1 auto!important;
+ width:100%!important;max-width:none!important;min-width:0!important;
+ height:100%!important;min-height:35px!important;margin:0!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ border-radius:0!important;padding:6px 23px 6px 10px!important;
+ appearance:none!important;-webkit-appearance:none!important;
+ background:transparent!important;color:var(--tm-meal-fg)!important;
+ cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select-caret{
+ display:grid;place-items:center;position:absolute;right:7px;top:50%;
+ width:15px;height:15px;transform:translateY(-50%);
+ color:var(--tm-meal-fg)!important;pointer-events:none;
+}
+@media(max-width:1100px){
+ html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header .day-color-select-shell{
+  flex:1 1 100%;max-width:none!important;
+ }
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal .calendar-options-trigger{
  display:flex!important;align-items:center!important;justify-content:center!important;
