@@ -365,3 +365,12 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Mobile:** até 830 px, a rotina limpa apenas os estilos inline de desktop e não modifica o desenho mobile aprovado.
 - **Preservação:** não alterar valores, fórmulas, gramagens, opções, ações, estado de publicação, paleta nutricional, vista de leitura ou a branch `main`.
 - **QA:** testar refeição aberta e fechada em janela larga, intermédia e estreita, com redução/ampliação repetidas. Confirmar sempre separadamente revisão de código, deploy e visualização efetiva no browser.
+
+
+## 31. Planos — corrigir deslocação e deformação dos totais na edição desktop (14 novembro 2026)
+
+- **Problema observado após a revisão 30:** os totais da refeição mudavam de linha mesmo em janelas largas e os totais da opção selecionada apareciam muito à esquerda, porque o critério de fallback avaliava mal o espaço e gerava grelhas de duas linhas cedo demais.
+- **Correção:** no editor desktop, medir a primeira linha real de nutrientes dos alimentos e usar a sua largura e margem direita como referência comum ao cabeçalho da refeição e ao resumo da opção selecionada. Reproduzir esta posição com três colunas CSS calculadas (nome, quatro macros, margem lateral), mantendo os totais em fluxo normal, **sem qualquer posição absoluta**.
+- **Responsividade:** eliminar o breakpoint fixo de empilhamento. Passar a duas linhas apenas quando faltar espaço real para o nome ou para a área da seta. O critério não deve mudar só porque a janela passou por uma largura arbitrária. Ao redimensionar em ambos os sentidos, limpar as medidas inline anteriores antes de reaplicar a grelha.
+- **Precisão e proteção:** as quatro colunas internas usam o mesmo gap e alinhamento do rail dos alimentos. Nenhuma alteração a valores, fórmulas, refeições, opções, estados ou botões. No mobile (até 830 px), preserva-se a grelha aprovada sem alterações visuais.
+- **QA:** verificar refeição expandida em largura desktop e reduzir/aumentar gradualmente a janela, comparando a primeira coluna (kcal) e as três macros da refeição, da opção e dos alimentos. Distinguir verificações de sintaxe/código, deploy Render e validação no browser.
