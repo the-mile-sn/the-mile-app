@@ -492,3 +492,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Peri-treino/Peri-jogo:** único controlo de abertura, apenas seta outline à direita, sem texto «Ver opções» e sem marcador nativo duplicado. Título do período com peso regular 400 e nutrientes na sequência visual idêntica às refeições.
 - **Fechar dia:** X discreto e acessível no cabeçalho do detalhe, à direita da classificação; fecha o card, desmarca o dia no calendário e limpa o estado local da expansão sem mexer em dados.
 - **Respeito funcional:** nenhum cálculo nutricional, alimento, porção, plano, publicação ou endpoint é alterado por estes ajustes.
+
+
+### Microciclos — correções de interação e fidelidade visual (14 novembro 2026)
+
+- Adicionar evento: cabeçalho em superfície de subcard; hover só com a expansão fechada. Ao abrir, o cursor não deve mudar a cor da barra. Foco de teclado e lógica do formulário preservados.
+- Cores das refeições: recuperar os acentos originais mais vivos do calendário no cabeçalho (amarelo #e4c85d; laranja #e89448; azul #63a7d8; verde #72c697; verde preparação #a0d8a0), mantendo as superfícies internas de Planos → Visualização e as associações nutricionais.
+- Seletor de cor: invólucro .day-color-select-shell com raio 14 px e ícone outline, preservando o select nativo, as opções e os handlers de alteração do dia.
+- Detalhe do dia: agrupar classificação de Microciclo e botão X à direita com .calendar-day-header-actions, respeitando desktop/mobile.
+- Opção única: conteúdo imediato num elemento simples, sem details nativo nem marcador «Detalhes», mantendo seleção/publicação quando aplicáveis.
+- Eventos do mês: hover discreto por linha apenas em ecrãs com cursor, e foco visível ao editar; a linha completa não passa a ser um botão.
+- Manter os ajustes no bloco CSS consolidado do Planeamento. Não acumular compensações nos estilos antigos nem alterar cálculos, dados ou a branch main.
