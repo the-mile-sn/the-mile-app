@@ -129,6 +129,25 @@ class CheckoutHoldsTests(unittest.TestCase):
             self.assertEqual(c.execute("SELECT COUNT(*) AS n FROM appt_checkout_holds"
                 " WHERE status='held'") .fetchone()["n"],2)
 
+    def test_future_confirmed_checkout_booking_remains_blocked_after_ttl(self):
+        # Prepare the future paid-state data model only. No payment is processed.
+        created=self.admin.request(self.api+"/checkout/holds","POST",self.data())
+        self.assertEqual(created["status"],201,created)
+        with app.connect() as c:
+            c.execute("UPDATE appt_checkout_holds SET status='confirmed' WHERE id=?",
+                      (created["body"]["id"],))
+        future=datetime.now(timezone.utc)+timedelta(minutes=30)
+        with app.connect() as c:
+            occupied=checkout.active_by_date(c,"the-mile",self.pid,
+                                               self.day,self.day,future)
+            self.assertEqual(len(occupied[self.day]),1)
+        released=self.admin.request(self.api+"/checkout/holds/"+
+                                    created["body"]["id"]+"/release","POST",{})
+        self.assertEqual(released["body"]["status"],"confirmed")
+        self.assertEqual(self.admin.request(self.api+"/checkout/status")
+                         ["body"]["active_holds"],0)
+        self.assertEqual(self.day_count(),5)
+
     def test_manual_booking_before_hold_wins(self):
         created=self.admin.request(self.api+"/bookings","POST",{
             **self.data(),"customer_name":"Cliente Primeiro"
