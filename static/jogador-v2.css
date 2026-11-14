@@ -5426,3 +5426,28 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
  right:0!important;width:28px!important;display:flex!important;align-items:center!important;justify-content:center!important;
 }
+
+/* Nutrition card footer: controls no longer add visual weight below the rings/text block. */
+#overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:0!important}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-footer{
+ width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+ gap:12px;border-top:1px solid rgba(160,160,170,.17);margin-top:18px;padding:12px 0 2px;
+ grid-column:1/-1;position:relative;min-width:0;
+}
+#overview #day-details .consumption-concentric-footer-label{
+ appearance:none;background:none;border:0;color:inherit;font:inherit;font-size:14px;
+ text-align:left;padding:6px 0;min-width:0;cursor:pointer;
+}
+#overview #day-details .consumption-concentric-footer-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-shrink:0}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer .consumption-concentric-unit-switch,
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer .nutrition-expand{
+ position:static!important;inset:auto!important;transform:none!important;margin:0!important;
+ width:28px!important;height:28px!important;min-height:28px!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;padding:0!important;
+ background:transparent!important;border:0!important;
+}
+#overview #day-details .consumption-concentric-footer .consumption-concentric-unit-arrow{width:28px!important;height:28px!important;padding:0!important}
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:0!important}
+ #overview #day-details .consumption-concentric-footer-label{font-size:13px}
+}
