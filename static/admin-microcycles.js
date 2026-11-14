@@ -1677,7 +1677,8 @@ function renderDayPreview(day,host){
    line.append(mac,renderLiveMealOptions(day,peri.phase,peri));
    details.append(line);
   }
-  grid.append(details);
+  const periWrap=document.createElement("section");periWrap.className="tm-calendar-peri-wrap";
+  periWrap.append(details);host.append(periWrap);
  }
  const liveDay=liveCalendarPlans[day.date];
  const currentBlock=document.createElement("section");currentBlock.className="calendar-day-totals";
@@ -1722,10 +1723,8 @@ async function loadCalendar(){
     const anchor=today.getFullYear()===first.getFullYear()&&today.getMonth()===first.getMonth()?today:first;
     selectedNutritionWeek=isoDay(weekStart(anchor));
   }
-  let weekly=$("nutrition-weekly-summary");
-  if(!weekly){weekly=document.createElement("section");weekly.id="nutrition-weekly-summary";weekly.className="import-validation-progress";}
-  // Keep the weekly summary outside the collapsible month-events details.
-  $("calendar-month-events").insertAdjacentElement("afterend",weekly);
+  // The weekly card is a permanent sibling of the calendar, day and events cards.
+  const weekly=$("nutrition-weekly-summary");
   weekly.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
   const navigation=document.createElement("div");navigation.className="calendar-navigation tm-calendar-week-navigation";
@@ -1754,8 +1753,8 @@ async function loadCalendar(){
    weekly.append(notice);
   }
   const complete=weeklyData.days.length===7&&fullDays===7;
-  const coverage=document.createElement("p");coverage.className="calendar-week-coverage";
-  coverage.textContent=fullDays+"/7 dias com prescrição nutricional completa · Fonte: Planos";
+  // Coverage still determines the validity of the average, but is not
+  // displayed as a technical footer in the visual Backoffice.
   if(complete){
    const liveSums={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
    for(const [index,day] of liveEntries.entries())for(const key of Object.keys(liveSums))liveSums[key]+=effectiveLiveDayNutrition(weeklyData.days[index].date,day,weeklyChoices)[key];
@@ -1774,7 +1773,6 @@ async function loadCalendar(){
    warning.textContent="Média semanal indisponível: existem dias com planos em falta ou valores provisórios. Não são usados valores antigos.";
    weekly.append(warning);
   }
-  weekly.append(coverage);
   const days=$("calendar-days");days.replaceChildren();
   const monthLabel=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});$("calendar-title").textContent=monthLabel.charAt(0).toLocaleUpperCase("pt-PT")+monthLabel.slice(1);
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
@@ -1811,22 +1809,20 @@ async function loadCalendar(){
       const chosenWeek=isoDay(weekStart(new Date(day.date+"T12:00:00")));
       if(!wasSelected&&selectedNutritionWeek!==chosenWeek){selectedNutritionWeek=chosenWeek;loadCalendar().catch(e=>status(e.message,"warn"));return;}
       for(const item of days.querySelectorAll(".calendar-day"))item.classList.remove("calendar-selected");
-      if(wasSelected){preview.hidden=true;preview.replaceChildren();}else{el.classList.add("calendar-selected");preview.hidden=false;renderDayPreview(day,preview);}
+      const dayCard=$("calendar-day-card");
+      if(wasSelected){preview.hidden=true;preview.replaceChildren();dayCard.hidden=true;}
+      else{el.classList.add("calendar-selected");dayCard.hidden=false;preview.hidden=false;renderDayPreview(day,preview);}
     };
     el.addEventListener("click",selectDay);
     el.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();selectDay();}});
     if(selectedCalendarDay===day.date)el.classList.add("calendar-selected");
     days.appendChild(el);
   }
-  let preview=$("day-preview");
-  if(!preview){
-    preview=document.createElement("div");preview.id="day-preview";
-    preview.className="day-preview";
-    days.insertAdjacentElement("afterend",preview);
-  }
+  const preview=$("day-preview");
   const focused=data.days.find(d=>d.date===selectedCalendarDay);
+  $("calendar-day-card").hidden=!focused;
   preview.hidden=!focused;
-  if(focused){renderDayPreview(focused,preview);}
+  if(focused){renderDayPreview(focused,preview);}else{preview.replaceChildren();}
   const list=$("calendar-matches");list.replaceChildren();
   const combined=[
     ...(data.matches||[]).map(m=>({
