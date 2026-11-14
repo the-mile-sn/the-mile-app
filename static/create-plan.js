@@ -347,7 +347,7 @@ function alignNutritionHeaders(){
     const opt=settings(summary);
     /* The breakpoint is intentionally conservative: the previous heuristic
        stacked on wide desktops and displaced the option total. */
-    const narrow=(head&&head.label<215)||(opt&&opt.label<185)||(head&&head.gutter<36);
+    const narrow=window.innerWidth<=1240||(head&&head.label<215)||(opt&&opt.label<185)||(head&&head.gutter<36);
     if(narrow){
       meal.classList.add("tm-editor-nutrition-stacked");
       return;
