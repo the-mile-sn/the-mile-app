@@ -3734,6 +3734,20 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
    When there is no horizontal room, this class replaces overlaps with a
    legible two-row header + two-row option summary. Mobile CSS unchanged. */
 @media(min-width:831px){
+ /* Matching outer rectangles alone is not enough: the four inner grid
+    tracks also need one shared gap and cell alignment. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .meal-header-macros>.macro-values,
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .option-summary>.macro-values,
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .food-row>.macro-values{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px!important;box-sizing:border-box!important;min-width:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .meal-header-macros>.macro-values>.macro,
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .option-summary>.macro-values>.macro,
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .food-row>.macro-values>.macro{
+  box-sizing:border-box!important;min-width:0!important;
+  justify-content:flex-end!important;text-align:right!important;
+ }
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header{
   display:grid!important;
   grid-template-columns:minmax(0,1fr) 36px!important;
