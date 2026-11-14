@@ -1907,7 +1907,16 @@ async function overview(){
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
    renderMacroMode("g");
    expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");};
-   visual.append(expand);summary.append(weeklyCharts);
+   if(consumptionEnabled){
+    const footer=document.createElement("div");footer.className="consumption-concentric-footer";
+    const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent="Ver valores semanais e detalhes";
+    footerLabel.addEventListener("click",()=>expand.click());
+    const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
+    const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
+    if(unitControl)footerActions.append(unitControl);
+    footerActions.append(expand);footer.append(footerLabel,footerActions);visual.append(footer);
+   }else visual.append(expand);
+   summary.append(weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
   root.append(summary);
  }
