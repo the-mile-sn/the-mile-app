@@ -76,8 +76,9 @@ def initialize(c):
       hold_id TEXT,
       reason TEXT NOT NULL,
       created_at BIGINT NOT NULL,
-      UNIQUE (org_id, order_id, hold_id, reason)
     );
+    CREATE UNIQUE INDEX IF NOT EXISTS appt_shopify_reviews_unique
+      ON appt_shopify_payment_reviews(org_id,order_id,coalesce(hold_id,''),reason);
     CREATE INDEX IF NOT EXISTS appt_shopify_reviews_order
       ON appt_shopify_payment_reviews(org_id,order_id);
     CREATE TABLE IF NOT EXISTS appt_shopify_confirmations (
@@ -233,7 +234,7 @@ def _amount(value):
 def _review(c, order, hold_id, reason, now):
     c.execute("""INSERT INTO appt_shopify_payment_reviews
         (id,org_id,order_id,hold_id,reason,created_at)
-        VALUES(?,?,?,?,?,?) ON CONFLICT (org_id,order_id,hold_id,reason) DO NOTHING""",
+        VALUES(?,?,?,?,?,?) ON CONFLICT DO NOTHING""",
         (secrets.token_hex(16), ORG_ID, order, hold_id, reason, now))
     return "payment_review"
 
@@ -278,7 +279,9 @@ def process_paid_order(c, order, delivery_id, now=None):
     if not isinstance(lines, list) or len(lines) > 250:
         raise ShopifyBridgeError("invalid_order")
     booking_lines = [line for line in lines if isinstance(line, dict)
-                     and "_the_mile_hold" in _props(line)]
+                     and any(isinstance(p, dict) and
+                       p.get("name") in ("_the_mile_hold","_the_mile_proof")
+                       for p in (line.get("properties") or []) if isinstance(line.get("properties"), list))]
     if not booking_lines:
         result = "ignored"
     elif len(booking_lines) != 1:
@@ -286,7 +289,7 @@ def process_paid_order(c, order, delivery_id, now=None):
     else:
         line = booking_lines[0]
         properties = _props(line)
-        hold_id = properties["_the_mile_hold"]
+        hold_id = properties.get("_the_mile_hold", "")
         row = c.execute("""SELECT * FROM appt_checkout_holds
             WHERE org_id=? AND id=?""", (ORG_ID, hold_id)).fetchone() if HEX_ID.fullmatch(hold_id) else None
         if not row:
