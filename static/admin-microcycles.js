@@ -1891,7 +1891,7 @@ async function loadCalendar(){
    const card=document.createElement("div");card.className="calendar-unified-event calendar-supplement-event";
    const heading=document.createElement("div");heading.className="calendar-unified-heading";
    const label=document.createElement("div");label.className="calendar-event-identity";
-   const title=document.createElement("strong");title.textContent="Suplementação";
+   const title=document.createElement("strong");title.textContent="Suplementação";title.className="calendar-event-kind calendar-event-kind--supplementation";
    const detail=document.createElement("span");detail.textContent=calendarEventLabel(date,entry.add.map(x=>x.name).join(", "));
    label.append(title,detail);
    const edit=document.createElement("button");edit.type="button";edit.className="calendar-event-edit";edit.innerHTML=planningEditIcon();
@@ -2656,6 +2656,7 @@ function renderUnifiedEvent(ev){
  const heading=document.createElement("div");heading.className="calendar-unified-heading";
  const identity=document.createElement("div");identity.className="calendar-event-identity";
  const title=document.createElement("strong");title.textContent=CALENDAR_EVENT_NAMES[ev.kind]||ev.title;
+ title.className="calendar-event-kind calendar-event-kind--"+(["match","training","off","travel"].includes(ev.kind)?ev.kind:"other");
  const detail=ev.kind==="match"?(ev.match_time||"Jogo"):ev.kind==="off"?"Dia inteiro":ev.session==="morning"?"Manhã":"Tarde";
  const dateLabel=document.createElement("span");dateLabel.textContent=calendarEventLabel(ev.event_date,detail);
  identity.append(title,dateLabel);heading.append(identity);
