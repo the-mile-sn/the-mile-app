@@ -377,3 +377,8 @@ html[data-admin-theme="light"] .tm-appt-booking-date-section{
  .tm-appt-google-professional{max-width:none}
  .tm-appt-google-settings{padding:13px}
 }
+
+
+/* Shopify checkout: preparatory status only. No public checkout is enabled. */
+.tm-appt-checkout-refresh{margin-top:12px;padding:6px 10px;border:1px solid var(--tm-ui-divider);border-radius:9px;background:var(--tm-ui-subcard);color:var(--tm-ui-text);font-size:11px;cursor:pointer;min-height:32px;display:block}
+.tm-appt-checkout-refresh:hover{background:var(--tm-ui-hover)}
