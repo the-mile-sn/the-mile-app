@@ -131,6 +131,81 @@ class PublicStorefrontPreviewTests(unittest.TestCase):
         self.assertFalse(active["available"])
         self.assertNotIn("Private appointment", json.dumps(self.month()["body"]))
 
+    def test_any_professional_merges_slots_without_duplicates(self):
+        second = self.admin.request(self.private + "/professionals", "POST", {
+            "name": "Segunda Profissional",
+            "email": "outra-privada@the-mile.test",
+            "active": True, "presencial_enabled": True,
+            "online_enabled": True,
+            "service_ids": [self.first["id"], self.follow["id"]],
+        })
+        self.assertEqual(second["status"], 201, second)
+        other_id = second["body"]["id"]
+        added = self.admin.request(self.private + "/availability", "POST", {
+            "professional_id": other_id, "date": self.day,
+            "start": "10:00", "end": "14:00",
+        })
+        self.assertEqual(added["status"], 201, added)
+        combined = self.guest.request(self.url(
+            "slots", service=self.first["id"], mode="online",
+            date=self.day).replace(self.pid, "any"))
+        self.assertEqual(combined["status"], 200, combined)
+        result = combined["body"]
+        self.assertTrue(result["any_professional"])
+        self.assertTrue(result["provisional_assignment"])
+        slots = result["slots"]
+        self.assertEqual(len(slots), 15)
+        self.assertEqual(len({slot["start"] for slot in slots}), len(slots))
+        self.assertEqual(slots[0]["start"], "09:00")
+        self.assertEqual(slots[-1]["start"], "12:30")
+        both = next(slot for slot in slots if slot["start"] == "10:00")
+        self.assertEqual(both["professional_count"], 2)
+        self.assertIn(both["suggested_professional_id"], {self.pid, other_id})
+        self.assertEqual(slots[0]["professional_count"], 1)
+        self.assertEqual(slots[-1]["professional_count"], 1)
+        month = self.guest.request(self.url(
+            "calendar-month", service=self.first["id"], mode="online",
+            month=self.day[:7]).replace(self.pid, "any"))
+        self.assertEqual(month["status"], 200, month)
+        self.assertTrue(next(x for x in month["body"]["days"]
+                             if x["date"] == self.day)["available"])
+        # A booking of one professional must not hide the other's time.
+        booked = self.admin.request(self.private + "/bookings", "POST", {
+            "professional_id": self.pid, "service_id": self.first["id"],
+            "mode": "online", "date": self.day, "start": "10:00",
+            "customer_name": "Cliente Reserva",
+        })
+        self.assertEqual(booked["status"], 201, booked)
+        remaining = self.guest.request(self.url(
+            "slots", service=self.first["id"], mode="online",
+            date=self.day).replace(self.pid, "any"))
+        self.assertEqual(remaining["status"], 200, remaining)
+        at_ten = next(x for x in remaining["body"]["slots"]
+                      if x["start"] == "10:00")
+        self.assertEqual(at_ten["professional_count"], 1)
+        self.assertEqual(at_ten["suggested_professional_id"], other_id)
+        self.assertNotIn("outra-privada@", json.dumps(remaining["body"]))
+
+    def test_any_professional_only_includes_active_service_mode_matches(self):
+        invalid = self.guest.request(self.url(
+            "slots", service=self.first["id"], mode="fake",
+            date=self.day).replace(self.pid, "any"))
+        self.assertEqual(invalid["status"], 400)
+        other_service = "f" * 32
+        missing = self.guest.request(self.url(
+            "slots", service=other_service, date=self.day).replace(self.pid, "any"))
+        self.assertEqual(missing["status"], 404)
+        # Only the one known provider matches this service today.
+        only = self.guest.request(self.url(
+            "slots", service=self.first["id"], mode="presencial",
+            date=self.day).replace(self.pid, "any"))
+        self.assertEqual(only["status"], 200, only)
+        self.assertEqual(len(only["body"]["slots"]), 11)
+        self.assertTrue(all(x["professional_count"] == 1
+                            for x in only["body"]["slots"]))
+        self.assertEqual(only["body"]["slots"][0]["suggested_professional_id"],
+                         self.pid)
+
     def test_invalid_pairs_dates_and_unrelated_origins(self):
         self.assertEqual(self.guest.request(self.url(
             "slots", service="unknown", date=self.day))["status"], 404)
