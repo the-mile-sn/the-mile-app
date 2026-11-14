@@ -5451,3 +5451,22 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:0!important}
  #overview #day-details .consumption-concentric-footer-label{font-size:13px}
 }
+
+/* Fine alignment of nutrition summary footer and ring (Nov 14). */
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer-label{
+ padding-left:12px!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer-actions{
+ align-items:center!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer-actions .consumption-concentric-unit-switch{
+ transform:translateY(3px)!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+ position:relative!important;top:18px!important;
+}
+@media(max-width:520px){
+ #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
+  top:10px!important;
+ }
+}
