@@ -1837,17 +1837,21 @@ async function loadCalendar(){
   const supplementation=await request(matchBase()+"/supplements");
   for(const [date,entry] of Object.entries(supplementation.overrides||{})){
    if(date<isoDay(first)||date>isoDay(last)||!(entry.add||[]).length)continue;
-   const card=document.createElement("div");card.className="event-admin-row";
-   const label=document.createElement("span");
-   label.textContent=date+" · Suplementação · "+entry.add.map(x=>x.name).join(", ");
-   const edit=document.createElement("button");edit.type="button";edit.textContent="Editar suplementos";
+   const card=document.createElement("div");card.className="calendar-unified-event calendar-supplement-event";
+   const heading=document.createElement("div");heading.className="calendar-unified-heading";
+   const label=document.createElement("div");label.className="calendar-event-identity";
+   const title=document.createElement("strong");title.textContent="Suplementação";
+   const detail=document.createElement("span");detail.textContent=calendarEventLabel(date,entry.add.map(x=>x.name).join(", "));
+   label.append(title,detail);
+   const edit=document.createElement("button");edit.type="button";edit.className="calendar-event-edit";edit.innerHTML=planningEditIcon();
+   edit.setAttribute("aria-label","Editar suplementos de "+date);edit.title="Editar suplementos";
    edit.onclick=()=>{
     $("calendar-new-kind").value="supplementation";$("calendar-new-date").value=date;
     syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
     openMobileCalendarEventForm();
     $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
    };
-   card.append(label,edit);list.append(card);monthEventCount++;
+   heading.append(label,edit);card.append(heading);list.append(card);monthEventCount++;
   }
   if(!monthEventCount){const empty=document.createElement("p");empty.className="hint";empty.textContent="Sem eventos neste mês.";list.append(empty);}
   $("calendar-month-count").textContent=monthEventCount+" evento"+(monthEventCount===1?"":"s");
@@ -2586,13 +2590,27 @@ function periToggle(phase,kind,initial){
  field.append(checkbox,name);
  return {field,checkbox};
 }
+function calendarEventLabel(date,detail=""){
+ const base=formatCalendarPreviewDate(date).replace(/\\s+\\d{4}$/,"");
+ return base+(detail?" · "+detail:"");
+}
+function planningEditIcon(){
+ return '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
+}
+function planningChevronUpIcon(){
+ return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>';
+}
 function renderUnifiedEvent(ev){
  const card=document.createElement("section");card.className="calendar-unified-event";
  const heading=document.createElement("div");heading.className="calendar-unified-heading";
+ const identity=document.createElement("div");identity.className="calendar-event-identity";
  const title=document.createElement("strong");title.textContent=CALENDAR_EVENT_NAMES[ev.kind]||ev.title;
- const dateLabel=document.createElement("span");dateLabel.textContent=ev.event_date+" · "+(ev.kind==="match"&&ev.match_time?ev.match_time:ev.kind==="off"?"Dia inteiro":ev.session==="morning"?"Manhã":"Tarde");
- heading.append(title,dateLabel);
- const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";heading.append(edit);card.append(heading);
+ const detail=ev.kind==="match"?(ev.match_time||"Jogo"):ev.kind==="off"?"Dia inteiro":ev.session==="morning"?"Manhã":"Tarde";
+ const dateLabel=document.createElement("span");dateLabel.textContent=calendarEventLabel(ev.event_date,detail);
+ identity.append(title,dateLabel);heading.append(identity);
+ const edit=document.createElement("button");edit.type="button";edit.className="calendar-event-edit";edit.innerHTML=planningEditIcon();
+ edit.title="Editar";edit.setAttribute("aria-label","Editar "+title.textContent+" de "+ev.event_date);edit.setAttribute("aria-expanded","false");
+ heading.append(edit);card.append(heading);
  const controls=document.createElement("form");controls.className="calendar-inline-editor";controls.hidden=true;
  const dateWrap=document.createElement("label");dateWrap.textContent="Data";
  const date=document.createElement("input");date.type="date";date.required=true;date.value=ev.event_date;dateWrap.append(date);controls.append(dateWrap);
@@ -2610,10 +2628,27 @@ function renderUnifiedEvent(ev){
   post=periToggle("post",ev.kind,ev.post_override);
   controls.append(pre.field,post.field);
  }
- const save=document.createElement("button");save.type="submit";save.textContent="Guardar";
- const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.className="calendar-remove";
- controls.append(save,remove);
- edit.onclick=()=>{controls.hidden=!controls.hidden;edit.textContent=controls.hidden?"Editar":"Fechar";};
+ const actions=document.createElement("div");actions.className="calendar-event-actions";
+ const save=document.createElement("button");save.type="submit";save.className="tm-action-primary";save.textContent="Guardar";
+ const cancel=document.createElement("button");cancel.type="button";cancel.className="tm-action-ghost";cancel.textContent="Cancelar";
+ const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.className="calendar-remove tm-action-danger";
+ const right=document.createElement("div");right.className="calendar-event-actions-right";right.append(cancel,save);
+ actions.append(remove,right);controls.append(actions);
+ const reset=()=>{
+  date.value=ev.event_date;time.value=ev.match_time||"";period.select.value=ev.session;
+  if(ev.kind==="travel")controls.querySelector('input[maxlength="100"]').value=ev.title;
+  if(pre){pre.checkbox.checked=ev.pre_override!=="off";post.checkbox.checked=ev.post_override!=="off";}
+ };
+ const setOpen=open=>{
+  if(!open)reset();
+  controls.hidden=!open;edit.setAttribute("aria-expanded",String(open));
+  edit.innerHTML=open?planningChevronUpIcon():planningEditIcon();
+  edit.title=open?"Fechar edição":"Editar";
+  edit.setAttribute("aria-label",(open?"Fechar edição de ":"Editar ")+title.textContent+" de "+ev.event_date);
+ };
+ edit.addEventListener("click",()=>setOpen(controls.hidden));
+ cancel.addEventListener("click",()=>setOpen(false));
+ controls.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();setOpen(false);edit.focus();}});
  const feedback=$("calendar-event-feedback");
  controls.onsubmit=async e=>{
   e.preventDefault();save.disabled=true;
