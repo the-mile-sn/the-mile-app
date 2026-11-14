@@ -1673,12 +1673,16 @@ def application(env, start_response):
                 meal_key=(query.get('meal') or [''])[0]
                 event_id=(query.get('event_id') or [''])[0]
                 try:
-                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id,
+                        consumed_color=(query.get('consumed_color') or [None])[0])
                 except ValueError:
                     raise Problem(400, 'invalid_meal_key')
                 if not source: raise Problem(404, 'published_meal_unavailable')
                 return respond(200, {'date': meal_date, 'meal': meal_key,
-                    'event_id': event_id, 'options': source['options']})
+                    'event_id': event_id, 'options': source['options'],
+                    'color': source['color'], 'planned_color': source['planned_color'],
+                    'alternative_colors': consumption_source_v2.available_alternative_colors(
+                        c, link['athlete_id'], meal_date, meal_key, event_id)})
 
             if path == '/api/v2/player/consumption-preview' and method == 'POST':
                 if not user: raise Problem(401, 'unauthorized')
@@ -1688,7 +1692,8 @@ def application(env, start_response):
                 body=read_json(env)
                 if not isinstance(body,dict): raise Problem(400,'invalid_request')
                 try:
-                    source=consumption_source_v2.current_source(c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''))
+                    source=consumption_source_v2.current_source(c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''),
+                        consumed_color=body.get('consumed_color'))
                     if not source: raise Problem(409,'published_meal_unavailable')
                     option=next((o for o in source['options'] if o['option_ref']==body.get('option_ref')),None)
                     if not option: raise Problem(409,'option_stale')
@@ -1713,7 +1718,8 @@ def application(env, start_response):
                 event_id=body.get('event_id', '')
                 try:
                     meal_option_selection_v2.valid_key(meal_date, meal_key, event_id)
-                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id)
+                    source=consumption_source_v2.current_source(c, link['athlete_id'], meal_date, meal_key, event_id,
+                        consumed_color=body.get('consumed_color'))
                     if not source: raise Problem(409, 'published_meal_unavailable')
                     option_ref=body.get('option_ref')
                     option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
@@ -1726,6 +1732,7 @@ def application(env, start_response):
                         meal_key=meal_key, event_id=event_id, status=body['status'],
                         option_ref=option_ref, source_draft_id=source.get('draft_id'),
                         prescription={'option': option, 'color': source.get('color'),
+                                      'planned_color': source.get('planned_color'),
                                       'draft_id': source.get('draft_id')},
                         consumed_foods=calculated['foods'], nutrition=calculated['nutrition'])
                 except ValueError as exc:
