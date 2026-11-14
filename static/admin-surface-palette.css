@@ -4249,11 +4249,15 @@ html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .
  border-radius:13px!important;box-shadow:none!important;
  background:transparent!important;color:var(--tm-ui-text)!important;
 }
-html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle:hover{
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle:not([aria-expanded="true"]):hover{
  background:var(--tm-ui-hover)!important;
 }
-html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle[aria-expanded="true"]{
- border-radius:13px 13px 0 0!important;
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle[aria-expanded="true"],
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle[aria-expanded="true"]:hover{
+ background:transparent!important;border-radius:13px 13px 0 0!important;
+}
+html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle:focus-visible{
+ outline:2px solid var(--tm-ui-muted)!important;outline-offset:-3px;
 }
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-form{
  margin:0!important;padding:12px 14px 14px!important;
@@ -4341,9 +4345,6 @@ html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle{
  box-shadow:none!important;font:500 14px/1.35 "Inter Tight",sans-serif!important;
  cursor:pointer;
 }
-html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle:hover{
- background:var(--tm-ui-subcard)!important;
-}
 html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle .calendar-mobile-event-chevron{
  margin-left:auto;flex:none;
 }
@@ -4424,8 +4425,17 @@ html[data-admin-theme] #calendar-section #calendar-matches{
 }
 html[data-admin-theme] #calendar-section .calendar-unified-event{
  display:block!important;min-width:0;box-sizing:border-box;
- margin:0!important;padding:0 3px!important;border:0!important;border-radius:0!important;
+ margin:0!important;padding:0 8px!important;border:0!important;border-radius:10px!important;
  background:transparent!important;box-shadow:none!important;color:var(--tm-ui-text)!important;
+ transition:background-color .14s ease;
+}
+@media(hover:hover) and (pointer:fine){
+ html[data-admin-theme] #calendar-section .calendar-unified-event:hover{
+  background:var(--tm-ui-hover)!important;
+ }
+}
+html[data-admin-theme] #calendar-section .calendar-unified-event:focus-within{
+ background:var(--tm-ui-hover)!important;
 }
 html[data-admin-theme] #calendar-section .calendar-unified-event+.calendar-unified-event{
  border-top:1px solid var(--tm-ui-divider)!important;
@@ -4522,12 +4532,31 @@ html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>.day-me
 html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>.day-meal[data-palette="blue"]{--tm-meal-bg:#dceeff;--tm-meal-fg:#24577d;--tm-meal-inner:#f1f8ff}
 html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>.day-meal[data-palette="green"]{--tm-meal-bg:#d9f1e2;--tm-meal-fg:#245e40;--tm-meal-inner:#eef9f2}
 html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>.day-meal[data-palette="vp"]{--tm-meal-bg:#d8e9de;--tm-meal-fg:#24513a;--tm-meal-inner:#eef7f0}
+/* Recover the original, more saturated microcycle meal accents from
+   the approved calendar colour system, while keeping Planos inner surfaces. */
+html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="yellow"]{
+ --tm-meal-accent:#e4c85d;--tm-meal-accent-ink:#19170f;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="orange"]{
+ --tm-meal-accent:#e89448;--tm-meal-accent-ink:#1b1410;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="blue"]{
+ --tm-meal-accent:#63a7d8;--tm-meal-accent-ink:#101d27;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="green"]{
+ --tm-meal-accent:#72c697;--tm-meal-accent-ink:#102319;
+}
+html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="vp"]{
+ --tm-meal-accent:#a0d8a0;--tm-meal-accent-ink:#112511;
+}
 html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header{
- background:transparent!important;color:var(--tm-meal-fg)!important;border:0!important;
- padding:4px 0 9px!important;min-height:42px!important;
+ background:var(--tm-meal-accent,transparent)!important;
+ color:var(--tm-meal-accent-ink,var(--tm-meal-fg))!important;
+ border:0!important;border-radius:14px!important;
+ padding:9px 11px!important;min-height:45px!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-label{
- color:var(--tm-meal-fg)!important;font-weight:500!important;
+ color:var(--tm-meal-accent-ink,var(--tm-meal-fg))!important;font-weight:500!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal :is(.calendar-live-meal-nutrients,.day-meal-nutrition-empty){
  color:var(--tm-meal-fg)!important;opacity:.8;font-weight:400!important;
@@ -4544,6 +4573,17 @@ html[data-admin-theme] #calendar-section .day-preview .day-meal .calendar-option
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal .calendar-options-trigger:hover{
  filter:brightness(.975);
+}
+html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading{
+ display:flex!important;align-items:center!important;gap:14px!important;
+ justify-content:space-between!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading>.calendar-day-header-actions{
+ display:flex;align-items:center;justify-content:flex-end;gap:10px;
+ margin-left:auto;flex:0 1 auto;min-width:0;
+}
+html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading>.calendar-day-header-actions>.calendar-day-classification-field{
+ margin-left:0!important;flex:0 1 205px;min-width:155px;
 }
 html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close{
  display:grid!important;place-items:center!important;flex:0 0 36px;
@@ -4764,6 +4804,12 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
 }
 @media(max-width:830px){
  html[data-admin-theme] #calendar-section .tm-calendar-weekdays{display:none!important}
+ html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading>.calendar-day-header-actions{
+  flex:1 1 100%;justify-content:flex-end;margin-left:0!important;
+ }
+ html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading>.calendar-day-header-actions>.calendar-day-classification-field{
+  flex:0 1 195px;min-width:150px;
+ }
  html[data-admin-theme] #calendar-section .day-preview .day-meals>details.calendar-day-peri.calendar-live-peri>summary{
   min-height:55px!important;
  }
@@ -4787,5 +4833,6 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
  }
 }
 @media(prefers-reduced-motion:reduce){
- html[data-admin-theme] #calendar-section .tm-calendar-expand-icon{transition:none!important}
+ html[data-admin-theme] #calendar-section .tm-calendar-expand-icon,
+ html[data-admin-theme] #calendar-section .calendar-unified-event{transition:none!important}
 }
