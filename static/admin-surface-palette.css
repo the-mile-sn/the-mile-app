@@ -3975,3 +3975,113 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
     planning, clinical assessments, forms, menus, recipes and settings,
     inherit exactly the same external edge from tm-admin-work-area. */
 }
+
+
+/* 14 Nov 2026: compact desktop sidebar and shared inner content rail.
+   Desktop only; mobile and the existing page navigation remain unchanged. */
+@media (min-width:831px){
+ /* Match the leftmost filter contents, meals, player cards and food rows:
+    24px from the leading edge of their parent card. */
+ html[data-admin-theme] #admin-workspace #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal{
+  padding-left:24px!important;padding-right:24px!important;
+ }
+ html[data-admin-theme] #admin-workspace #tm-food-library-page .food-catalog-table .food-header-row>th:first-child,
+ html[data-admin-theme] #admin-workspace #tm-food-library-page .food-catalog-table tbody tr>td:first-child{
+  padding-left:24px!important;
+ }
+ html[data-admin-theme] #admin-workspace #tm-players-page .tm-players-card-list .tm-player-card{
+  padding-left:24px!important;padding-right:24px!important;
+ }
+ /* The compact sidebar only changes the root grid, giving the regained
+    horizontal width directly to the existing work area. */
+ #admin-workspace:not([hidden]).tm-sidebar-collapsed{
+  grid-template-columns:72px minmax(0,1fr)!important;
+ }
+ #admin-workspace .tm-admin-sidebar{
+  overflow:visible!important;
+ }
+ #admin-workspace .tm-admin-sidebar .tm-admin-brand{
+  position:relative!important;
+ }
+ #admin-workspace .tm-admin-sidebar-toggle{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  position:absolute!important;top:53px;right:9px;
+  box-sizing:border-box!important;width:32px;height:32px;min-width:32px;min-height:32px;
+  margin:0!important;padding:6px!important;
+  border:0!important;border-radius:9px!important;box-shadow:none!important;
+  background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+  cursor:pointer;z-index:5;
+  transition:background-color .16s ease,color .16s ease;
+ }
+ #admin-workspace .tm-admin-sidebar-toggle:hover,
+ #admin-workspace .tm-admin-sidebar-toggle:focus-visible{
+  color:var(--tm-ui-text)!important;background:var(--tm-action-icon-bg,var(--tm-ui-subcard))!important;
+ }
+ #admin-workspace .tm-admin-sidebar-toggle:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar{
+  box-sizing:border-box!important;
+  padding-left:10px!important;padding-right:10px!important;align-items:stretch!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-brand{
+  display:flex!important;justify-content:center!important;align-items:flex-start!important;
+  padding:12px 0 20px!important;min-height:71px!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-brand-home{
+  display:none!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-sidebar-toggle{
+  position:static!important;
+  width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;
+  flex:0 0 38px!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-side-nav{
+  min-width:0!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-nav-link{
+  box-sizing:border-box!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:44px!important;max-width:44px!important;min-width:44px!important;
+  min-height:44px!important;height:44px!important;
+  margin:0 auto!important;padding:9px!important;gap:0!important;
+  border-radius:11px!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-nav-link>.tm-admin-nav-icon{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:23px!important;min-width:23px!important;height:23px!important;
+  margin:0!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-nav-link>span:not(.tm-admin-nav-icon),
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-nav-link>.tm-admin-nav-chevron,
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-nav-heading,
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-sidebar-footer{
+  display:none!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-recipes-subnav:not([hidden]){
+  box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  position:absolute!important;left:calc(100% + 8px)!important;
+  right:auto!important;top:var(--tm-sidebar-flyout-top,80px)!important;
+  z-index:1000!important;min-width:208px!important;width:max-content!important;max-width:270px!important;
+  margin:0!important;padding:8px!important;gap:4px!important;
+  background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+  border:1px solid var(--tm-ui-divider)!important;
+  border-radius:13px!important;box-shadow:none!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-recipes-subnav:not([hidden])>.tm-admin-subnav-link{
+  display:flex!important;align-items:center!important;
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  min-height:41px!important;margin:0!important;padding:10px 12px!important;
+  border:0!important;border-radius:9px!important;
+  white-space:nowrap!important;font-size:12px!important;
+  color:var(--tm-ui-text)!important;
+ }
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-recipes-subnav:not([hidden])>.tm-admin-subnav-link:hover,
+ #admin-workspace.tm-sidebar-collapsed .tm-admin-sidebar .tm-admin-recipes-subnav:not([hidden])>.tm-admin-subnav-link:focus-visible{
+  background:var(--tm-ui-subcard)!important;
+ }
+}
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar-toggle{display:none!important;}
+}
