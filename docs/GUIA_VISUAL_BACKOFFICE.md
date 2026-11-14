@@ -470,3 +470,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Média semanal:** preservar os quatro indicadores e cálculos existentes, quatro colunas desktop e duas mobile.
 - **Manutenção:** corrigir dentro do bloco consolidado de Planeamento em `static/admin-surface-palette.css`, **substituindo** o bloco divergente de 14/11 e não acumulando overrides contraditórios. Paletas de cores referenciadas das regras existentes em `static/admin-plans-native.css`.
 - **Limites:** não modificar branch `main`, dados clínicos, autenticação, estados de publicação, associações ou integrações. Validar separadamente GitHub, deploy Render e aparência real em mobile/desktop claro/escuro.
+
+
+### Microciclos — separação estrutural dos quatro cards (14 novembro 2026)
+
+- O elemento `#calendar-section` é apenas o contentor de layout. Os cartões principais independentes são `#calendar-month-card`, `#calendar-day-card` (oculto sem dia selecionado), `#calendar-events-card` e `#nutrition-weekly-summary`.
+- O cartão do calendário contém o subcard `.tm-calendar-event-subcard`, com margem interna de 24 px no desktop e 16 px no mobile. A expansão do formulário ocorre dentro do subcard; o calendário mantém os sete dias e os estados originais.
+- Ao selecionar um dia, o cartão `#calendar-day-card` aparece imediatamente abaixo do calendário; ao desmarcar, desaparece sem deslocar nem alterar os eventos. As superfícies de refeição recuperam as paletas de Planos por `data-palette` com especificidade suficiente para não herdar o neutro.
+- O Peri-treino/Peri-jogo é renderizado em `.tm-calendar-peri-wrap` como subcard independente **dentro** do detalhe do dia, com título, contagem e botão de consulta visíveis. Continua a mostrar os períodos, opções e nutrientes originais.
+- «Eventos do mês» dispõe de cartão principal, cabeçalho expansível e lista secundária com margens e divisórias muito leves. Editores inline mantêm o funcionamento já aprovado.
+- «Média semanal» ocupa cartão principal próprio. A apresentação da frase técnica «X/7 dias com prescrição nutricional completa · Fonte: Planos» foi retirada, mas a verificação de completude antes do cálculo mantém-se.
+- As regras desta estrutura estão no **mesmo bloco consolidado** de `static/admin-surface-palette.css`; não acrescentar compensações no final de outros ficheiros. Não alterar a branch `main`, a seleção de opções, os cálculos nutricionais ou a associação aos planos.
