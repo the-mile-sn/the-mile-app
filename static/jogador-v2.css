@@ -5479,3 +5479,20 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-comparison.consumption-concentric:not(.nutrition-details-open) .consumption-concentric-footer-actions .consumption-concentric-unit-switch{display:none!important}
 
 #overview #day-details .nutrition-weekly-charts .macro-chart-switch{display:none!important}
+
+/* Alternative consumed colour — player mobile and desktop */
+#overview #day-details .consumption-change-color{display:block!important;margin:14px auto 0!important;border:0!important;background:rgba(255,255,255,.12)!important;color:inherit!important;border-radius:999px!important;padding:10px 22px!important;font-size:13px!important;font-weight:500!important;opacity:.9!important}
+#overview .consumption-editor.consumption-color-picker{position:relative}
+#overview .consumption-color-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#overview .consumption-color-header p{margin:0}
+#overview .consumption-color-close{border:0;background:transparent;color:inherit;font-size:27px;line-height:1;min-width:36px;min-height:36px;border-radius:50%;cursor:pointer}
+#overview .consumption-editor .consumption-color-option{width:100%;border:0!important;border-radius:12px!important;font-weight:600!important;min-height:46px!important;color:#18231d!important}
+#overview .consumption-editor .consumption-color-green{background:#a8dfc1!important}
+#overview .consumption-editor .consumption-color-yellow{background:#e5c66b!important}
+#overview .consumption-editor .consumption-color-orange{background:#e6ad7d!important}
+#overview .consumption-editor .consumption-color-blue{background:#a4c9e9!important}
+#overview .consumption-editor .consumption-color-red{background:#e9a6a3!important}
+#overview .consumption-editor .consumption-color-vp{background:#a8dfc1!important}
+#overview .consumption-editor .consumption-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;align-items:stretch!important}
+#overview .consumption-editor .consumption-actions>button{width:100%!important;min-width:0!important;margin:0!important;padding:9px 5px!important;min-height:42px!important;font-size:clamp(11px,2.8vw,14px)!important}
+#overview #day-details .meal-consumption-tags-bottom .meal-registered-badge{margin-left:0!important}
