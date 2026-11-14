@@ -309,60 +309,86 @@ function draw(){
    must share the same measured four-column nutrition rail. When the available
    width cannot host a title and that rail, stack totals instead of overlapping.
    On mobile, leave all positioning to the existing approved mobile CSS. */
+/* Keep all desktop nutritional totals INSIDE their own grid tracks.
+   In particular never absolutely position a grid item that already belongs to
+   grid column 2: doing so can resolve from the grid line and disappear when
+   the window grows. Both summaries use the first visible food row as the
+   shared alignment reference. Mobile remains owned by the mobile CSS. */
 function alignNutritionHeaders(){
   const mobile=window.matchMedia("(max-width:830px)").matches;
   const meals=queryAll("#plan-editor #meals>.meal.tm-editor-meal");
-  const rail=mobile?null:query("#plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-row.food-row > .macro-values");
-  const sourceMeal=rail?.closest(".tm-editor-meal");
-  const sourceRect=rail?.getBoundingClientRect();
-  const sourceMealRect=sourceMeal?.getBoundingClientRect();
-  const canMeasure=!!(sourceRect&&sourceMealRect&&sourceRect.width>0);
-  const railWidth=canMeasure?sourceRect.width:0;
-  const railRightInset=canMeasure?sourceMealRect.right-sourceRect.right:0;
-  const reset=element=>{
-    if(!element)return;
-    for(const property of ["position","left","right","top","bottom","width","max-width","display","transform"]){
-      element.style.removeProperty(property);
-    }
-  };
+  const foodRail=mobile?null:query("#plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-row.food-row > .macro-values");
+  const reference=foodRail?.getBoundingClientRect();
+  const usable=!!(reference&&reference.width>=1);
+  const removeProps=(node,props)=>{if(node)for(const prop of props)node.style.removeProperty(prop)};
+  const gridProps=["display","grid-template-columns","grid-template-rows","column-gap","row-gap"];
+  const valueProps=["position","left","right","top","bottom","inset","width","max-width","display","transform","grid-column","grid-row","justify-self"];
   meals.forEach(meal=>{
     const header=meal.querySelector(".meal-header");
-    const headerTotal=meal.querySelector(".meal-header-macros");
+    const headerValue=meal.querySelector(".meal-header-macros");
     const summary=meal.querySelector(".option-content .option-summary");
-    const optionTotal=summary?.querySelector(":scope > .macro-values");
-    const heading=meal.querySelector(".meal-heading-main");
-    const targets=[headerTotal,optionTotal];
-    if(mobile||!canMeasure||!header){
+    const optionValue=summary?.querySelector(":scope > .macro-values");
+    /* First clear the previous desktop geometry so resizing and switching
+       between narrow/wide widths always starts from a clean state. */
+    removeProps(header,gridProps);
+    removeProps(summary,gridProps);
+    removeProps(headerValue,valueProps);
+    removeProps(optionValue,valueProps);
+    if(mobile){
       meal.classList.remove("tm-editor-nutrition-stacked");
-      targets.forEach(reset);
       return;
     }
-    const mealRect=meal.getBoundingClientRect();
-    const headRect=header.getBoundingClientRect();
-    const optionRect=summary?.getBoundingClientRect();
-    const railLeft=mealRect.right-railRightInset-railWidth;
-    /* The label needs a real readable area. Never let the nutrient rail
-       intersect the meal title or option title on narrower desktop windows. */
-    const minLeft=Math.max(
-      headRect.left+Math.min(330,headRect.width*.48),
-      optionRect?optionRect.left+Math.min(315,optionRect.width*.46):0
+    if(!header||!usable){
+      meal.classList.add("tm-editor-nutrition-stacked");
+      return;
+    }
+    const gap=12;
+    const calc=(node)=>{
+      if(!node)return null;
+      const box=node.getBoundingClientRect();
+      const style=getComputedStyle(node);
+      const padLeft=parseFloat(style.paddingLeft)||0;
+      const padRight=parseFloat(style.paddingRight)||0;
+      const left=reference.left-box.left-padLeft-gap;
+      const available=box.width-padLeft-padRight;
+      const end=available-left-reference.width-2*gap;
+      return {left,end,available};
+    };
+    const head=calc(header),option=calc(summary);
+    /* Do not force 4 nutrient columns into a short title/label. At those
+       widths the approved two-row layout takes over instead. */
+    const stacked=!!(
+      !head||reference.width<220||head.left<310||head.end<36||
+      (option&&(option.left<245||option.end<0))
     );
-    const stacked=railWidth<215||railLeft<minLeft||railLeft+railWidth>headRect.right-28;
     meal.classList.toggle("tm-editor-nutrition-stacked",stacked);
-    targets.forEach(reset);
     if(stacked)return;
-    for(const [element,parent] of [[headerTotal,header],[optionTotal,summary]]){
-      if(!element||!parent)continue;
-      const parentRect=parent.getBoundingClientRect();
-      element.style.setProperty("position","absolute","important");
-      element.style.setProperty("left",(railLeft-parentRect.left).toFixed(1)+"px","important");
-      element.style.setProperty("right","auto","important");
-      element.style.setProperty("top","50%","important");
-      element.style.setProperty("bottom","auto","important");
-      element.style.setProperty("transform","translateY(-50%)","important");
-      element.style.setProperty("width",railWidth.toFixed(1)+"px","important");
-      element.style.setProperty("max-width","none","important");
-      element.style.setProperty("display",element===headerTotal?"block":"grid","important");
+    const important=(node,prop,value)=>node.style.setProperty(prop,value,"important");
+    important(header,"display","grid");
+    important(header,"grid-template-columns",head.left.toFixed(1)+"px "+reference.width.toFixed(1)+"px minmax(36px,1fr)");
+    important(header,"grid-template-rows","auto");
+    important(header,"column-gap",gap+"px");
+    /* Grid children remain in normal layout, so content cannot vanish at
+       larger viewport widths or drift into another cell on resize. */
+    important(headerValue,"position","static");
+    important(headerValue,"display","block");
+    important(headerValue,"width","100%");
+    important(headerValue,"max-width","100%");
+    important(headerValue,"transform","none");
+    important(headerValue,"grid-column","2");
+    important(headerValue,"grid-row","1");
+    if(summary&&optionValue&&option){
+      important(summary,"display","grid");
+      important(summary,"grid-template-columns",option.left.toFixed(1)+"px "+reference.width.toFixed(1)+"px minmax(0,1fr)");
+      important(summary,"grid-template-rows","auto");
+      important(summary,"column-gap",gap+"px");
+      important(optionValue,"position","static");
+      important(optionValue,"display","grid");
+      important(optionValue,"width","100%");
+      important(optionValue,"max-width","100%");
+      important(optionValue,"transform","none");
+      important(optionValue,"grid-column","2");
+      important(optionValue,"grid-row","1");
     }
   });
 }
