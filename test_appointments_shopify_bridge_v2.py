@@ -321,6 +321,28 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
             self.assertFalse(unconfigured["webhooks_enabled"])
             self.assertFalse(unconfigured["checkout_enabled"])
 
+    def test_manual_calendar_checkout_does_not_claim_sesami_migration(self):
+        # The previous Sesami app is uninstalled, but its old Google-only
+        # appointments are not synced: the merchant chose manual blocks.
+        flags = {
+            "MILE_SHOPIFY_CHECKOUT_ENABLED": "1",
+            "MILE_SHOPIFY_SESAMI_MIGRATED": "0",
+            "MILE_SHOPIFY_MANUAL_CALENDAR_MODE": "1",
+        }
+        with patch.dict("os.environ", flags):
+            self.assertTrue(bridge.checkout_enabled())
+            response = self.admin.request(
+                "/api/v2/admin/appointments/checkout/payment-status")
+            self.assertEqual(response["status"], 200, response)
+            self.assertTrue(response["body"]["checkout_enabled"])
+            self.assertTrue(response["body"]["manual_calendar_mode_enabled"])
+            self.assertFalse(response["body"]["sesami_migration_verified"])
+            self.assertNotIn(SECRET, json.dumps(response["body"]))
+        with patch.dict("os.environ", {**flags, "MILE_SHOPIFY_MANUAL_CALENDAR_MODE": "0"}):
+            self.assertFalse(bridge.checkout_enabled())
+        with patch.dict("os.environ", {**flags, "MILE_SHOPIFY_WEBHOOK_ENABLED": "0"}):
+            self.assertFalse(bridge.checkout_enabled())
+
     def test_default_off_even_when_webhook_or_proxy_is_called(self):
         data={"id":9001234567777,"financial_status":"paid","currency":"EUR","line_items":[]}
         with patch.dict("os.environ",{"MILE_SHOPIFY_WEBHOOK_ENABLED":"0"}):

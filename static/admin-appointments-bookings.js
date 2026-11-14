@@ -372,7 +372,9 @@
      const total=googleReadiness.professionals_to_check;
      const connected=googleReadiness.professionals_blocking_google;
      if(!googleReadiness.google_configured){
-       googleStatus.textContent="Google Calendar: ligação não configurada no servidor. As marcações existentes no Google ainda não bloqueiam as vagas.";
+       googleStatus.textContent=paid.manual_calendar_mode_enabled?
+         "Modo manual ativo: Google Calendar por ligar. Os compromissos que estão apenas no Google têm de ser bloqueados manualmente em Agendamentos.":
+         "Google Calendar: ligação não configurada no servidor. As marcações existentes no Google ainda não bloqueiam as vagas.";
      }else if(!total){
        googleStatus.textContent="Google Calendar: não há profissionais ativos associados a serviços para validar.";
      }else if(googleReadiness.all_professionals_blocking_google){
@@ -394,6 +396,7 @@
    const variantCount=paid.service_formats_mapped+"/"+paid.service_formats_enabled+
      " formatos de serviço com variante Shopify associada";
    const sesami=paid.sesami_migration_verified?"Migração Sesami assinalada":
+     paid.manual_calendar_mode_enabled?"Modo manual de agendamentos ativo (sem Google Calendar)":
      "Migração Sesami por validar";
    node.textContent=status+" · "+setup+" · "+variantCount+" · "+sesami+
      " · "+result.active_holds+" retenção(ões) de "+result.hold_minutes+" min"+
