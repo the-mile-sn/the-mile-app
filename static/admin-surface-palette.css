@@ -3734,6 +3734,13 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
    When there is no horizontal room, this class replaces overlaps with a
    legible two-row header + two-row option summary. Mobile CSS unchanged. */
 @media(min-width:831px){
+ /* Legacy editor styles reserved nearly half the selected option header as
+    padding-right. That shrank its layout track and shifted all 4 totals to
+    the left despite correct rail measurements. Keep normal card insets. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content>.option-summary{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  padding-left:14px!important;padding-right:14px!important;
+ }
  /* Matching outer rectangles alone is not enough: the four inner grid
     tracks also need one shared gap and cell alignment. */
  html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .meal-header-macros>.macro-values,
@@ -3801,5 +3808,104 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
   width:min(490px,100%)!important;max-width:100%!important;min-width:0!important;
   margin:0!important;padding:0!important;gap:5px!important;
+ }
+}
+
+
+/* Earlier editor-only compact transition, 14 Nov 2026.
+   The shared sidebar breakpoint stays at 830px, but Plan editing no longer
+   compresses two desktop columns into a sidebar-constrained workspace.
+   At 1240px and below the editor content adopts the readable stacked layout. */
+@media(min-width:831px) and (max-width:1240px){
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  grid-template-areas:"selectors" "stats"!important;
+  column-gap:0!important;row-gap:18px!important;
+  padding:18px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.planhead.plan-selectors{
+  grid-area:selectors!important;display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;gap:12px!important;
+  width:100%!important;min-width:0!important;margin:0!important;padding:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four{
+  grid-area:stats!important;display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-self:stretch!important;gap:0!important;
+  width:100%!important;min-width:0!important;margin:0!important;padding:3px 0 0!important;
+  border:0!important;border-top:0!important;box-shadow:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor .plan-overview>.stats.four>*{
+  min-width:0!important;
+ }
+ /* Display the meal averages in a full-width second row, like the compact
+    layout. No change to the wide desktop header or its existing alignment. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header>.meal-header-macros{
+  grid-column:1/-1!important;grid-row:2!important;
+  justify-self:stretch!important;width:100%!important;max-width:100%!important;
+  padding:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header>.meal-header-macros>.macro-values>.macro{
+  justify-content:flex-start!important;text-align:left!important;
+ }
+ /* Allow option names to wrap instead of truncating into narrow desktop
+    cards, while avoiding horizontal overflow in the sidebar layout. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-toolbar .option-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  width:100%!important;min-width:0!important;gap:9px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-toolbar .option-tabs>button{
+  box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+  width:100%!important;white-space:normal!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked .option-content>.option-summary{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  row-gap:12px!important;
+  padding:14px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked .option-content>.option-summary>.macro-values{
+  grid-column:1!important;grid-row:2!important;
+  justify-self:stretch!important;
+  width:100%!important;max-width:100%!important;
+  gap:6px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked .option-content>.option-summary>.macro-values>.macro{
+  justify-content:flex-start!important;text-align:left!important;
+ }
+}
+@media(min-width:831px) and (max-width:1100px){
+ /* In the last intermediate widths, the food's macros must not be squeezed
+    against its name and three actions. A second row is safer and clearer. */
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .nutrition-row.food-row{
+  display:grid!important;
+  grid-template-columns:20px minmax(0,1fr) 124px!important;
+  grid-template-rows:auto auto!important;
+  gap:9px 8px!important;
+  align-items:center!important;
+  min-width:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .nutrition-row.food-row>.drag-handle{
+  grid-column:1!important;grid-row:1!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .nutrition-row.food-row>.food-identity{
+  grid-column:2!important;grid-row:1!important;
+  min-width:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .nutrition-row.food-row>.food-reference-note{
+  display:none!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .nutrition-row.food-row>.food-actions{
+  grid-column:3!important;grid-row:1!important;
+  justify-self:end!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-list .nutrition-row.food-row>.macro-values{
+  grid-column:2/4!important;grid-row:2!important;
+  position:static!important;inset:auto!important;transform:none!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
  }
 }
