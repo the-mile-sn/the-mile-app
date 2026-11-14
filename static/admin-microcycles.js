@@ -1456,14 +1456,24 @@ function renderLiveMealOptions(day,meal,overrideRecord=null){
     const food=foods[item.index];if(!food)continue;
     const alternative=food.alternative_to!=null;if(alternative)line.classList.add("is-alternative");
     const amount=food.display_quantity||(food.grams==null?"Quantidade por definir":formatNutrition(Number(food.grams))+" g");
-    line.textContent=food.kind==="supplement"?(food.label||"Suplemento"):
-     (alternative?"ou ":"")+amount+" · "+(food.display_name||food.label||food.library_name||"Alimento indisponível");
+    const quantity=document.createElement("span");quantity.className="calendar-food-quantity";
+    const foodName=document.createElement("span");foodName.className="calendar-food-name";
+    if(food.kind==="supplement"){foodName.textContent=food.label||"Suplemento";}
+    else{quantity.textContent=amount;foodName.textContent=(alternative?"ou ":"")+(food.display_name||food.label||food.library_name||"Alimento indisponível");}
+    line.append(quantity,foodName);
    }
    section.append(line);
   }
   if(option.nutrition){
-   const macros=document.createElement("small");macros.className="calendar-day-food-macro";
-   macros.textContent=nutritionSummary(option.nutrition)+(option.provisional?" · Provisório":"");section.append(macros);
+   const macros=document.createElement("div");macros.className="calendar-day-food-macro";
+   for(const [key,label,unit,digits] of [["kcal","Energia","kcal",0],["protein_g","Proteína","g",1],["carbs_g","Hidratos","g",1],["fat_g","Gordura","g",1]]){
+    const tile=document.createElement("span");tile.className="calendar-option-macro";
+    const caption=document.createElement("small");caption.textContent=label;
+    const value=document.createElement("strong");value.textContent=formatNutrition(option.nutrition[key],digits)+" "+unit;
+    tile.append(caption,value);macros.append(tile);
+   }
+   if(option.provisional){const provisional=document.createElement("small");provisional.className="calendar-option-provisional";provisional.textContent="Provisório";macros.append(provisional);}
+   section.append(macros);
   }
   grid.append(section);
  }
@@ -1592,7 +1602,7 @@ function renderDayPreview(day,host){
   const heading=document.createElement("div");heading.className="calendar-wide-options-heading";
   const title=document.createElement("strong");title.textContent="Opções · "+names[meal];
   const close=document.createElement("button");close.type="button";close.className="calendar-wide-options-close";
-  close.textContent="Fechar";close.addEventListener("click",()=>toggleOptions(meal));
+  close.innerHTML=planningChevronUpIcon();close.title="Fechar opções";close.setAttribute("aria-label","Fechar opções de "+names[meal]);close.addEventListener("click",()=>toggleOptions(meal));
   heading.append(title,close);optionsPanel.append(heading,renderLiveMealOptions(day,meal));
   for(const [key,button] of optionButtons){
    const on=key===meal;button.setAttribute("aria-expanded",String(on));button.classList.toggle("is-active",on);
