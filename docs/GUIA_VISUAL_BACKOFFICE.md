@@ -457,3 +457,15 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - Esta decisão limita-se à pesquisa do Planeamento. A uniformização de outras listas pendentes será feita por componente, sem afetar as respetivas lógicas.
 
 - **Ajuste de 14 novembro 2026:** o destaque da subsecção ativa do Planeamento («Microciclos», «Suplementação», etc.) usa preenchimento de subcard e texto principal com peso 500, sem azul intenso. O card exterior branco aprovado não deve ser suavizado nem alterado. A pesquisa inclui um único X discreto, que limpa a pesquisa ou remove a seleção do jogador; o botão fica oculto quando o campo está vazio e não há jogador selecionado.
+
+
+## Microciclos — uniformização global (14 novembro 2026)
+
+- Navegação mensal, Média semanal e Dashboard: seta anterior, botão «Hoje», seta seguinte, seguidos do título/período. «Hoje» repõe o mês ou a semana atual, sem alterar os cálculos.
+- «Adicionar evento»: cabeçalho expansível em desktop e mobile; formulário com campos contextuais nas superfícies oficiais; checkboxes discretas Pré/Pós-treino e Intra/Pós-jogo. Preservar endpoints e validações.
+- Grelha mensal mobile: manter sete dias, tamanhos e classificações MD/Off, seleção, hoje, cores alimentares e tracejado de Geral por definir. Dias da semana adicionais apenas no desktop.
+- «Eventos do mês»: cabeçalho com seta outline à direita e contagem secundária; eventos em superfícies subtis, sem contornos decorativos, datas legíveis, lápis compacto e edição inline. «Cancelar» restaura os valores, «Guardar» preserva API e «Remover» conserva confirmação. Suplementação mantém o seu fluxo.
+- Detalhe do dia: preservar data, classificação, seletores de cor, refeições e os respetivos cálculos. Peri-treino e Peri-jogo numa linha horizontal independente abaixo das refeições, com expansão existente.
+- Opções alimentares: seguir Visualização de Planos com cores nutricionais subtis; alimentos em linhas de quantidade e nome; informação kcal/P/HC/G hierarquizada. Preservar notas, alternativas, seleção, guardar/publicar e avisos.
+- Média semanal: preservar valores nutricionais, com quatro métricas em desktop e duas colunas mobile; navegação compacta.
+- Respeitar claro/escuro, desktop/mobile, foco e movimento reduzido; não modificar a branch main, nem dados clínicos, autenticação, publicação e associações.
