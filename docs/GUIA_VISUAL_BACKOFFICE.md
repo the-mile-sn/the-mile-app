@@ -445,3 +445,13 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Preservação rigorosa:** manter à **direita**, sem alterar texto, formato, cor ou localização, os elementos «Guardado em …» e «Ref. … kg · …». A alteração não deve mover o peso de referência para junto da pill, nem afetar os filtros, os totais nutricionais ou os cards.
 - **Implementação:** conservar o HTML, handlers e estados. Dar flexibilidade ao grupo do estado (`flex:1`) e alinhar o texto do estado à esquerda, enquanto o horário e o peso de referência permanecem flex-items estáticos no extremo direito. Apenas CSS no editor de Planos; mobile e app dos jogadores permanecem intactos.
 - **QA:** conferir plano publicado, por guardar e com erros, desktop largo e intermédio, nos modos claro e escuro; confirmar separadamente revisão de código, deploy Render e validação no browser.
+
+
+## Planeamento — pesquisa de jogadores (14 novembro 2026)
+
+- O cabeçalho da seleção de jogador usa card principal (`--tm-ui-card`), pesquisa em subcard (`--tm-ui-subcard`) e lista de resultados numa superfície de card principal, nos modos claro e escuro.
+- Não existe divisória decorativa entre a pesquisa e as abas. Não modificar os estados semânticos destas abas nesta fase.
+- Sem jogador selecionado, não apresentar avatar vazio, traço ou reserva de espaço; após selecionar, mostrar as iniciais ou fotografia existente.
+- O campo e resultados mantêm a filtragem e a associação ao seletor nativo, com fecho ao tocar fora/Escape, seleção por clique/Enter e alternância ao voltar a tocar no campo aberto.
+- Respeitar desktop, tablet e mobile; no mobile, input >=16px para evitar zoom Safari; manter o foco de teclado visível.
+- Esta decisão limita-se à pesquisa do Planeamento. A uniformização de outras listas pendentes será feita por componente, sem afetar as respetivas lógicas.
