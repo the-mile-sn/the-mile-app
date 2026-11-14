@@ -1798,7 +1798,7 @@ async function overview(){
      }
     };
     let showingPerKg=false;
-    unitArrow.addEventListener("click",e=>{e.stopPropagation();if(!hasWeight)return;showingPerKg=!showingPerKg;updateUnits(showingPerKg);});
+    unitArrow.addEventListener("click",e=>{e.stopPropagation();if(!hasWeight)return;showingPerKg=!showingPerKg;updateUnits(showingPerKg);const weeklyMode=weeklyCharts.querySelector(".macro-chart-switch");const buttons=weeklyMode?.querySelectorAll("button");if(buttons?.length===2)buttons[showingPerKg?1:0].click();});
     unitArrow.disabled=!hasWeight;
     updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
