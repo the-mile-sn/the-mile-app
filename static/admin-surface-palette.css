@@ -4631,7 +4631,7 @@ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap det
 }
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-live-peri-title{
  display:block!important;color:var(--tm-ui-text)!important;
- margin:0 0 5px!important;font:500 13px/1.45 "Inter Tight",sans-serif!important;
+ margin:0 0 5px!important;font:400 13px/1.45 "Inter Tight",sans-serif!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-nutrients{
  display:block!important;color:var(--tm-ui-muted)!important;
