@@ -5,6 +5,7 @@
 (()=>{
  const $=id=>document.getElementById(id);
  const endpoint="/api/v2/admin/appointments";
+ let rulesVersion=0;
  const state={catalog:{services:[],professionals:[]},bookings:[],editing:null,csrf:null,rangeSequence:0,agendaSequence:0,slotSequence:0,monthSequence:0,month:"",monthDays:new Map(),selectedDate:"",selectedStart:"",visibleSlots:[]};
  const lisbon=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",day:"2-digit",month:"2-digit",year:"numeric"});
  const dayFmt=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short",year:"numeric"});
@@ -45,6 +46,9 @@
   invalid_interval:"A consulta não pode terminar depois da meia-noite.",
   invalid_dst_window:"Este horário não é válido na mudança de hora.",
   start_not_on_quarter:"Seleciona um horário múltiplo de 15 minutos.",
+  start_not_on_interval:"O horário de início não respeita o intervalo configurado.",
+  invalid_booking_rules:"Seleciona valores válidos para as regras de agendamento.",
+  stale_booking_rules:"Estas regras foram alteradas noutra sessão. Atualiza os valores e volta a guardar.",
   start_must_be_future:"A consulta tem de começar depois da hora atual.",
   outside_booking_window:"Seleciona uma data até 60 dias no futuro.",
   outside_availability:"A consulta não cabe num período disponível publicado.",
@@ -408,6 +412,47 @@
    if(googleStatus)googleStatus.textContent="Não foi possível verificar a ligação aos calendários Google.";
   }
  }
+ async function loadBookingRules(){
+  const form=$("tm-appt-rules-form");
+  if(!form)return;
+  const feedback=$("tm-appt-rules-feedback");
+  try{
+   const data=await api("/rules");
+   rulesVersion=data.version;
+   $("tm-appt-rule-start").value=String(data.start_interval_minutes);
+   $("tm-appt-rule-hold").value=String(data.checkout_hold_minutes);
+   if(feedback)feedback.textContent="";
+  }catch(error){
+   if(feedback){feedback.textContent=error.message;feedback.classList.add("is-error");}
+  }
+ }
+ $("tm-appt-rules-form")?.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const form=event.currentTarget;
+  if(!form.reportValidity())return;
+  const button=$("tm-appt-rules-save");
+  const feedback=$("tm-appt-rules-feedback");
+  const start=Number($("tm-appt-rule-start").value);
+  const hold=Number($("tm-appt-rule-hold").value);
+  button.disabled=true;
+  feedback.classList.remove("is-error");
+  feedback.textContent="A guardar alterações…";
+  try{
+   const saved=await api("/rules","PUT",{
+    start_interval_minutes:start,
+    checkout_hold_minutes:hold,
+    version:rulesVersion
+   });
+   rulesVersion=saved.version;
+   feedback.textContent="Guardado. O site usa já os novos intervalos; as retenções existentes mantêm a validade original.";
+   document.dispatchEvent(new CustomEvent("tm:appointments-rules-updated",{detail:saved}));
+   loadCheckoutStatus().catch(()=>{});
+  }catch(error){
+   feedback.textContent=error.message;feedback.classList.add("is-error");
+   if(/alteradas noutra sessão/.test(error.message))loadBookingRules().catch(()=>{});
+  }finally{button.disabled=false;}
+ });
+ loadBookingRules().catch(()=>{});
  $("tm-appt-shopify-register-paid")?.addEventListener("click",async ()=>{
   const button=$("tm-appt-shopify-register-paid");
   const feedback=$("tm-appt-shopify-webhook-feedback");
