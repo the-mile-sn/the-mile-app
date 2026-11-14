@@ -23,6 +23,7 @@ import appointments_bookings_v2
 import appointments_google_v2
 import appointments_checkout_v2
 import appointments_shopify_bridge_v2
+import appointments_shopify_registration_v2
 import appointments_storefront_preview_v2
 import consumption_records_v2
 import recipe_library_v2
@@ -1158,6 +1159,19 @@ def application(env, start_response):
                 return respond(200, {'ok': True})
             # Phase 6.1: checkout holds are ADMIN-ONLY for controlled testing.
             # No storefront, app proxy, payment or Shopify webhook endpoints yet.
+            if path == '/api/v2/admin/appointments/checkout/webhook-setup' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                return respond(200,appointments_shopify_registration_v2.setup_status())
+            if path == '/api/v2/admin/appointments/checkout/register-paid-webhook' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                try:
+                    result=appointments_shopify_registration_v2.register_paid_webhook()
+                except appointments_shopify_registration_v2.ShopifyRegistrationError as exc:
+                    reason=str(exc)
+                    raise Problem(409 if reason=='shopify_registration_not_ready' else 503,reason)
+                return respond(200,result)
             if path == '/api/v2/admin/appointments/checkout/payment-status' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
