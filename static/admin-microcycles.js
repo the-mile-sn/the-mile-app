@@ -1659,7 +1659,13 @@ function renderDayPreview(day,host){
     await loadCalendar();
    }catch(e){status("Não foi possível atualizar a cor: "+e.message,"warn");choose.disabled=false;}
   });
-  colorBar.append(choose);
+  // The select keeps the existing change handler; a styled shell owns its
+  // shape and outline, independent of native browser select rendering.
+  const colorShell=document.createElement("span");colorShell.className="day-color-select-shell";
+  const colorCaret=document.createElement("span");colorCaret.className="day-color-select-caret";
+  colorCaret.setAttribute("aria-hidden","true");
+  colorCaret.innerHTML='<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 6 3-3 3 3M5 10l3 3 3-3"/></svg>';
+  colorShell.append(choose,colorCaret);colorBar.append(colorShell);
   const liveMeal=liveCalendarPlans[day.date]?.meals?.[entry.meal];
   const selectedOption=previewNutritionOption(day.date,entry.meal,liveMeal);
   const newAverage=(liveMeal?.status==="ok"||liveMeal?.status==="provisional")?(selectedOption?.nutrition||liveMeal.nutrition):null;
