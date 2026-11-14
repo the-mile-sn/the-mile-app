@@ -52,4 +52,79 @@
   active.setAttribute("aria-expanded","true");
  }
  mount.replaceWith(nav);
+ if(page==="admin"){
+  // Desktop-only, reversible compact sidebar; mobile More is unchanged.
+  const workspace=document.getElementById("admin-workspace");
+  const brand=nav.querySelector(".tm-admin-brand");
+  if(workspace&&brand){
+   const key="tm-admin-sidebar-collapsed";
+   const toggle=document.createElement("button");
+   toggle.type="button";
+   toggle.id="tm-admin-sidebar-toggle";
+   toggle.className="tm-admin-sidebar-toggle";
+   const panelIcon=direction=>'<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.4"/><path d="M9 4v16"/><path d="'+(direction==="expand"?"m14 9 3 3-3 3":"m17 9-3 3 3 3")+'"/></svg>';
+   brand.append(toggle);
+   for(const button of nav.querySelectorAll(".tm-admin-nav-link")){
+    const label=button.querySelector("span:not(.tm-admin-nav-icon)")?.textContent?.trim();
+    if(label&&!button.hasAttribute("title"))button.title=label;
+    if(label&&!button.hasAttribute("aria-label"))button.setAttribute("aria-label",label);
+   }
+   const groups=[
+    {button:nav.querySelector("#tm-admin-nav-food-library"),panel:nav.querySelector("#tm-admin-food-subnav")},
+    {button:nav.querySelector("#tm-admin-nav-menus-recipes"),panel:nav.querySelector("#tm-admin-recipes-subnav")}
+   ].filter(group=>group.button&&group.panel);
+   const compact=()=>window.matchMedia("(min-width:831px)").matches&&workspace.classList.contains("tm-sidebar-collapsed");
+   const closeFlyouts=()=>{
+    for(const group of groups){group.panel.hidden=true;group.button.setAttribute("aria-expanded","false");}
+   };
+   const render=()=>{
+    const collapsed=workspace.classList.contains("tm-sidebar-collapsed");
+    toggle.innerHTML=panelIcon(collapsed?"expand":"collapse");
+    toggle.setAttribute("aria-label",collapsed?"Expandir barra lateral":"Recolher barra lateral");
+    toggle.setAttribute("title",collapsed?"Expandir barra lateral":"Recolher barra lateral");
+    toggle.setAttribute("aria-pressed",String(collapsed));
+   };
+   const apply=(collapsed,save=false)=>{
+    workspace.classList.toggle("tm-sidebar-collapsed",!!collapsed);
+    if(collapsed)closeFlyouts();
+    else for(const group of groups){
+     const open=group.button.classList.contains("is-active");
+     group.panel.hidden=!open;group.button.setAttribute("aria-expanded",String(open));
+    }
+    render();
+    if(save){try{localStorage.setItem(key,collapsed?"1":"0");}catch(_error){/* private mode */}}
+   };
+   let saved=false;
+   try{saved=localStorage.getItem(key)==="1";}catch(_error){/* private mode */}
+   apply(saved);
+   toggle.addEventListener("click",()=>apply(!workspace.classList.contains("tm-sidebar-collapsed"),true));
+   // Capture before normal navigation: in compact mode group icons open a
+   // flyout, never navigate to an arbitrary submenu destination.
+   document.addEventListener("click",event=>{
+    if(!compact())return;
+    const group=groups.find(g=>g.button===event.target.closest(".tm-admin-nav-link"));
+    if(!group)return;
+    event.preventDefault();event.stopImmediatePropagation();
+    const opening=group.panel.hidden;
+    closeFlyouts();
+    if(opening){
+     const top=group.button.getBoundingClientRect().top-nav.getBoundingClientRect().top;
+     group.panel.style.setProperty("--tm-sidebar-flyout-top",Math.max(8,top)+"px");
+     group.panel.hidden=false;group.button.setAttribute("aria-expanded","true");
+    }
+   },true);
+   nav.addEventListener("click",event=>{
+    if(compact()&&event.target.closest(".tm-admin-subnav-link"))requestAnimationFrame(closeFlyouts);
+   });
+   document.addEventListener("click",event=>{
+    if(compact()&&!nav.contains(event.target))closeFlyouts();
+   });
+   document.addEventListener("keydown",event=>{
+    if(event.key!=="Escape"||!compact())return;
+    const open=groups.find(g=>!g.panel.hidden);
+    if(open){event.preventDefault();closeFlyouts();open.button.focus();}
+   });
+   window.addEventListener("resize",()=>{if(compact())closeFlyouts();});
+  }
+ }
 })();
