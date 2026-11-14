@@ -3727,3 +3727,65 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
   white-space:nowrap!important;overflow:hidden!important;
  }
 }
+
+
+/* Responsive nutrient rails for desktop Plans editor, 14 November 2026.
+   Dynamic JS aligns the three totals to a single measured food-row rail.
+   When there is no horizontal room, this class replaces overlaps with a
+   legible two-row header + two-row option summary. Mobile CSS unchanged. */
+@media(min-width:831px){
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 36px!important;
+  grid-template-rows:auto auto!important;
+  column-gap:12px!important;row-gap:12px!important;
+  width:100%!important;min-width:0!important;
+  align-items:center!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header>.meal-heading-main{
+  grid-column:1!important;grid-row:1!important;
+  min-width:0!important;max-width:100%!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header>.meal-header-macros{
+  display:block!important;position:static!important;
+  inset:auto!important;transform:none!important;
+  grid-column:1/-1!important;grid-row:2!important;
+  justify-self:end!important;
+  box-sizing:border-box!important;
+  width:min(490px,100%)!important;max-width:100%!important;min-width:0!important;
+  margin:0!important;padding:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header>.meal-header-macros>.macro-values{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:100%!important;min-width:0!important;
+  gap:5px!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked>.meal-header>.meal-toggle{
+  display:inline-flex!important;position:static!important;
+  inset:auto!important;transform:none!important;
+  grid-column:2!important;grid-row:1!important;
+  justify-self:end!important;align-self:center!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked .option-content>.option-summary{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  align-items:start!important;
+  row-gap:12px!important;column-gap:0!important;
+  min-width:0!important;min-height:0!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked .option-content>.option-summary>.option-heading{
+  grid-column:1!important;grid-row:1!important;
+  min-width:0!important;max-width:100%!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor #meals>.meal.tm-editor-meal.tm-editor-nutrition-stacked .option-content>.option-summary>.macro-values{
+  display:grid!important;position:static!important;
+  inset:auto!important;transform:none!important;
+  grid-column:1!important;grid-row:2!important;
+  justify-self:end!important;box-sizing:border-box!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:min(490px,100%)!important;max-width:100%!important;min-width:0!important;
+  margin:0!important;padding:0!important;gap:5px!important;
+ }
+}
