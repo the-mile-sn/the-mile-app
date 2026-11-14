@@ -76,6 +76,7 @@ class PublicStorefrontPreviewTests(unittest.TestCase):
         self.assertFalse(body["sesami_integrated"])
         self.assertEqual(body["timezone"], "Europe/Lisbon")
         self.assertEqual(body["interval_minutes"], 15)
+        self.assertEqual(body["checkout_hold_minutes"], 15)
         first = next(x for x in body["services"] if x["id"] == self.first["id"])
         self.assertEqual(first["duration_minutes"], 90)
         self.assertEqual(first["formats"]["presencial"]["price_cents"],

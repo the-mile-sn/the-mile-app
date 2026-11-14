@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=33">
- <link rel="stylesheet" href="/admin-appointments.css?v=7">
+ <link rel="stylesheet" href="/admin-appointments.css?v=8">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -29,7 +29,7 @@
    </header>
    <div class="tm-appointments-info" role="note">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg>
-    <span>Esta área está em preparação. As marcações reais continuam a ser geridas no Sesami até à migração.</span>
+    <span>A agenda interna e os pagamentos Shopify estão ativos. Os compromissos registados apenas no Google Calendar devem ser bloqueados manualmente.</span>
    </div>
    <div class="tm-appointments-tabs" role="tablist" aria-label="Áreas de agendamentos">
     <button id="tm-appointments-tab-agenda" role="tab" type="button" aria-selected="true" aria-controls="tm-appointments-panel-agenda" class="is-active" data-appointments-tab="agenda">Agenda</button>
@@ -157,23 +157,35 @@
       </div>
      </section>
      <p id="tm-appt-catalog-feedback" class="tm-appt-catalog-feedback" role="status" aria-live="polite"></p>
-     <p class="tm-appt-shopify-note">Os preços e identificadores de produto servem de referência interna. Nesta fase, guardar um serviço não altera produtos, preços ou reservas no Shopify/Sesami.</p>
+     <p class="tm-appt-shopify-note">As alterações à duração dos serviços são utilizadas nos horários do site. Os preços e variantes Shopify só devem ser alterados após confirmar a correspondência na loja.</p>
     </div>
     <div class="tm-appointments-config-grid tm-appt-next-phase">
      <article class="tm-appointments-config-card"><h3>Disponibilidades e bloqueios</h3><p>Horários e exceções disponíveis na aba «Disponibilidades».</p><small>Em funcionamento interno</small></article>
      <article class="tm-appointments-config-card"><h3>Google Calendar</h3><p>Ligação individual e seleção de calendários na Configuração, com sincronização de eventos numa fase posterior.</p><small>Ligação preparada</small></article>
-     <article class="tm-appointments-config-card"><h3>Shopify e pagamentos</h3><p>O pagamento de consultas usa retenções temporárias de 15 minutos. Se o Google Calendar estiver desligado, bloqueia aqui os horários dos compromissos externos.</p><small id="tm-appt-checkout-status" aria-live="polite">A verificar o estado interno…</small><small id="tm-appt-checkout-google-readiness" role="status" aria-live="polite">A confirmar a ligação dos calendários Google aos horários disponíveis…</small><button id="tm-appt-checkout-refresh" type="button" class="tm-appt-checkout-refresh">Atualizar estado</button><button id="tm-appt-shopify-register-paid" type="button" class="tm-appt-checkout-refresh" disabled>Verificar e registar webhook Shopify</button><small id="tm-appt-shopify-webhook-feedback" role="status" aria-live="polite"></small><button id="tm-appt-shopify-smoke" type="button" class="tm-appt-checkout-refresh" disabled>Testar webhook (simulação segura)</button><small id="tm-appt-shopify-smoke-feedback" role="status" aria-live="polite">Teste interno; não substitui uma entrega real da Shopify.</small><button id="tm-appt-shopify-paid-smoke" type="button" class="tm-appt-checkout-refresh">Testar confirmação de reserva paga (simulação segura)</button><small id="tm-appt-shopify-paid-smoke-feedback" role="status" aria-live="polite">Ensaio fictício: retenção, pagamento e agenda, sem gravar reservas ou criar encomendas reais.</small></article>
+     <article class="tm-appointments-config-card"><h3>Shopify e pagamentos</h3><p>O pagamento utiliza uma retenção temporária configurável na secção Regras de agendamento. Os compromissos externos devem ser bloqueados manualmente enquanto o Google Calendar estiver desligado.</p><small id="tm-appt-checkout-status" aria-live="polite">A verificar o estado interno…</small><small id="tm-appt-checkout-google-readiness" role="status" aria-live="polite">A confirmar a ligação dos calendários Google aos horários disponíveis…</small><button id="tm-appt-checkout-refresh" type="button" class="tm-appt-checkout-refresh">Atualizar estado</button><button id="tm-appt-shopify-register-paid" type="button" class="tm-appt-checkout-refresh" disabled>Verificar e registar webhook Shopify</button><small id="tm-appt-shopify-webhook-feedback" role="status" aria-live="polite"></small><button id="tm-appt-shopify-smoke" type="button" class="tm-appt-checkout-refresh" disabled>Testar webhook (simulação segura)</button><small id="tm-appt-shopify-smoke-feedback" role="status" aria-live="polite">Teste interno; não substitui uma entrega real da Shopify.</small><button id="tm-appt-shopify-paid-smoke" type="button" class="tm-appt-checkout-refresh">Testar confirmação de reserva paga (simulação segura)</button><small id="tm-appt-shopify-paid-smoke-feedback" role="status" aria-live="polite">Ensaio fictício: retenção, pagamento e agenda, sem gravar reservas ou criar encomendas reais.</small></article>
     </div>
     <div class="tm-appointments-rules">
-     <h3>Regras acordadas para o projeto</h3>
-     <p>Regras de referência: os intervalos de 15 minutos, a janela de 60 dias e os bloqueios de checkout já são aplicados internamente. O checkout público permanece desligado.</p>
-     <dl>
-      <div><dt>Intervalos de início</dt><dd>15 minutos</dd></div>
-      <div><dt>Intervalo entre consultas</dt><dd>Sem intervalo obrigatório</dd></div>
-      <div><dt>Bloqueio no checkout</dt><dd>15 minutos</dd></div>
-      <div><dt>Antecedência máxima</dt><dd>60 dias</dd></div>
-      <div><dt>Antecedência mínima</dt><dd>Sem limite fixo</dd></div>
-     </dl>
+     <h3>Regras de agendamento</h3>
+     <p>Altera os horários disponíveis e a retenção temporária de vagas. Depois de guardar, o calendário do site utiliza as novas regras automaticamente.</p>
+     <form id="tm-appt-rules-form" autocomplete="off">
+      <dl>
+       <div><dt><label for="tm-appt-rule-start">Intervalos de início</label></dt><dd><select id="tm-appt-rule-start" required>
+        <option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15" selected>15 minutos</option>
+        <option value="20">20 minutos</option><option value="30">30 minutos</option><option value="60">60 minutos</option>
+       </select></dd></div>
+       <div><dt>Intervalo entre consultas</dt><dd>Sem intervalo obrigatório</dd></div>
+       <div><dt><label for="tm-appt-rule-hold">Bloqueio no checkout</label></dt><dd><select id="tm-appt-rule-hold" required>
+        <option value="5">5 minutos</option><option value="10">10 minutos</option><option value="15" selected>15 minutos</option>
+        <option value="20">20 minutos</option><option value="30">30 minutos</option>
+       </select></dd></div>
+       <div><dt>Antecedência máxima</dt><dd>60 dias</dd></div>
+       <div><dt>Antecedência mínima</dt><dd>Sem limite fixo</dd></div>
+      </dl>
+      <div class="tm-appt-rules-actions">
+       <small id="tm-appt-rules-feedback" role="status" aria-live="polite"></small>
+       <button id="tm-appt-rules-save" type="submit" class="tm-appt-save">Guardar</button>
+      </div>
+     </form>
     </div>
    </section>
    <dialog id="tm-appt-service-dialog" class="tm-appt-dialog" aria-labelledby="tm-appt-service-dialog-title">
@@ -299,7 +311,7 @@
  <script src="/admin-nav-shell.js?v=5" defer></script>
  <script src="/admin-appointments.js?v=4" defer></script>
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
- <script src="/admin-appointments-bookings.js?v=9" defer></script>
+ <script src="/admin-appointments-bookings.js?v=10" defer></script>
  <script src="/admin-appointments-google.js?v=1" defer></script>
  <script src="/admin-mobile-nav.js?v=11" defer></script>
 </body>

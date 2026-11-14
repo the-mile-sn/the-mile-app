@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timezone
 from appointments_catalog_v2 import ORG_ID
 import appointments_assignment_v2 as assignment
+import appointments_rules_v2 as rules
 
 HOLD_SECONDS = 15 * 60
 ID_RE = re.compile(r"[0-9a-f]{32}\Z")
@@ -210,7 +211,7 @@ def start_hold(c, data, actor, org_id=ORG_ID, now=None):
         price_cents,created_at,updated_at
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,'held',?,?,?,?,?)
     """, (identifier,org_id,pid,sid,mode,day,start,end,begin,finish,
-          epoch+HOLD_SECONDS,key,variant["shopify_variant_id"],variant["price_cents"],epoch,epoch))
+          epoch+rules.get(c, org_id)["checkout_hold_minutes"]*60,key,variant["shopify_variant_id"],variant["price_cents"],epoch,epoch))
     return public_status(_row(c, identifier, org_id), epoch)
 
 
@@ -238,7 +239,7 @@ def summary(c, org_id=ORG_ID, now=None):
     return {
         "phase": "checkout_preparation",
         "active_holds": row["n"],
-        "hold_minutes": 15,
+        "hold_minutes": rules.get(c, org_id)["checkout_hold_minutes"],
         "public_booking_enabled": False,
         "shopify_checkout_connected": False,
         "shopify_webhook_connected": False,

@@ -13,6 +13,7 @@ from appointments_catalog_v2 import ORG_ID, MODES
 import appointments_availability_v2 as availability
 import appointments_google_v2 as google
 import appointments_checkout_v2 as checkout
+import appointments_rules_v2 as rules
 
 
 def initialize(c):
@@ -146,8 +147,9 @@ def _validate_candidate(c, org_id, payload, exclude=None, now=None):
         raise ValueError("service_not_available")
     day = availability.clean_date(payload.get("date"))
     start = availability.clean_time(payload.get("start"))
-    if start % 15:
-        raise ValueError("start_not_on_quarter")
+    interval_minutes = rules.get(c, org_id)["start_interval_minutes"]
+    if start % interval_minutes:
+        raise ValueError("start_not_on_quarter" if interval_minutes == 15 else "start_not_on_interval")
     end = start + int(s["duration_minutes"])
     if end > 1440:
         raise ValueError("invalid_interval")

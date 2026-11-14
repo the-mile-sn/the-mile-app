@@ -57,6 +57,14 @@ body.tm-appointments-body{margin:0;background:var(--tm-ui-bg,#101114);color:var(
 .tm-appointments-rules dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-bottom:1px solid var(--tm-ui-divider)}
 .tm-appointments-rules dt{font-size:12px;color:var(--tm-ui-muted)}
 .tm-appointments-rules dd{font-weight:600;font-size:12px;margin:0;text-align:right}
+.tm-appointments-rules dl>div:has(select){align-items:center}
+.tm-appointments-rules select{width:156px;max-width:100%;min-height:38px;padding:8px 11px;border:1px solid var(--tm-ui-divider);border-radius:11px;background:var(--tm-ui-search);color:var(--tm-ui-text);font:inherit;font-size:12px;cursor:pointer;outline-offset:2px}
+.tm-appointments-rules select:focus-visible{outline:2px solid #8baac5}
+.tm-appt-rules-actions{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin-top:16px}
+.tm-appt-rules-actions button{min-width:116px;min-height:40px;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer}
+.tm-appt-rules-actions small{color:var(--tm-ui-muted);font-size:12px;line-height:1.5;text-align:right}
+.tm-appt-rules-actions small.is-error{color:#d99191}
+@media(max-width:600px){.tm-appointments-rules select{width:140px}.tm-appt-rules-actions{flex-direction:column;align-items:stretch}.tm-appt-rules-actions small{text-align:left}.tm-appt-rules-actions button{width:100%}}
 .tm-appointments-auth{margin:min(28vh,170px) auto 0;max-width:420px;padding:26px 22px;text-align:center;font-size:14px;line-height:1.6;color:var(--tm-ui-muted)}
 .tm-appointments-auth h1{color:var(--tm-ui-text);font-size:20px}
 .tm-appointments-auth a{display:inline-block;color:var(--tm-ui-text);border:1px solid var(--tm-ui-divider);border-radius:10px;padding:9px 16px;text-decoration:none;margin-top:11px}
