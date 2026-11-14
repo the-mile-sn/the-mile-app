@@ -97,10 +97,21 @@ def initialize(c):
 
 
 def verify_proxy(query_string, now=None):
-    """Shopify app proxy query signature, including repeated parameter values."""
-    secret = _secret()
-    if not checkout_enabled() or not secret:
+    """Authorize customer hold writes only after checkout is explicitly enabled."""
+    if not checkout_enabled():
         raise ShopifyBridgeError("shopify_checkout_disabled")
+    return verify_proxy_signature(query_string, now=now)
+
+
+def verify_proxy_signature(query_string, now=None):
+    """Read-only Shopify app proxy signature verification, independent of checkout.
+
+    Allows testing the storefront proxy without enabling purchases or writing
+    a hold. The signed path, shop, timestamp and HMAC must still be valid.
+    """
+    secret = _secret()
+    if not secret:
+        raise ShopifyBridgeError("shopify_not_configured")
     if not isinstance(query_string, str) or len(query_string) > 2000:
         raise ShopifyBridgeError("invalid_proxy_signature")
     parsed = parse_qs(query_string, keep_blank_values=True, strict_parsing=True)
