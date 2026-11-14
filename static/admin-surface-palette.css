@@ -329,6 +329,35 @@ html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-he
  border:0!important;border-top:0!important;
  box-shadow:none!important;
 }
+/* Selected Planning tab: understated subcard fill rather than strong blue.
+   Keep this scoped to the Planning header, both themes and all widths. */
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav button[aria-pressed="true"]{
+ background:var(--tm-ui-subcard)!important;
+ color:var(--tm-ui-text)!important;
+ font-weight:500!important;
+}
+/* One clear button, visible only when there is a player or search text. */
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-search-wrap #tm-planning-clear{
+ position:absolute;right:9px;top:50%;transform:translateY(-50%);
+ display:flex;align-items:center;justify-content:center;
+ width:32px;height:32px;padding:0;
+ background:transparent;border:0;border-radius:10px;
+ color:var(--tm-ui-muted);cursor:pointer;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-search-wrap #tm-planning-clear[hidden]{
+ display:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-search-wrap #tm-planning-clear:hover{
+ background:var(--tm-ui-hover);
+ color:var(--tm-ui-text);
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-search-wrap #tm-planning-clear:focus-visible{
+ outline:2px solid var(--tm-ui-muted);outline-offset:1px;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-search-wrap #tm-planning-clear svg{
+ width:17px;height:17px;stroke:currentColor;
+}
+
 html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-results{
  background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
  border:0!important;border-radius:12px!important;
