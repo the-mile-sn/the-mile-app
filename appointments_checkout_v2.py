@@ -99,23 +99,24 @@ def public_status(row, epoch=None):
 
 
 def active_conflict(c, org_id, professional_id, start_utc, end_utc, now=None):
-    """Check under the same professional lock used for booking writes."""
+    """Check active holds and future confirmed checkout bookings under the same lock."""
     epoch = _epoch(now)
     return c.execute("""
         SELECT 1 FROM appt_checkout_holds
-        WHERE org_id=? AND professional_id=? AND status='held'
-          AND expires_at>? AND start_utc<? AND end_utc>?
+        WHERE org_id=? AND professional_id=?
+          AND ((status='held' AND expires_at>?) OR status='confirmed')
+          AND start_utc<? AND end_utc>?
         LIMIT 1
     """, (org_id, professional_id, epoch, end_utc, start_utc)).fetchone() is not None
 
 
 def active_by_date(c, org_id, professional_id, start_day, end_day, now=None):
-    """Use a single query for a whole calendar month; expired rows never block."""
+    """Use a single query for a whole month; expired holds never block, confirmed bookings do."""
     epoch = _epoch(now)
     rows = c.execute("""
       SELECT day,start_minute,end_minute FROM appt_checkout_holds
       WHERE org_id=? AND professional_id=? AND day BETWEEN ? AND ?
-        AND status='held' AND expires_at>?
+        AND ((status='held' AND expires_at>?) OR status='confirmed')
       ORDER BY day,start_minute
     """, (org_id, professional_id, start_day, end_day, epoch)).fetchall()
     grouped = {}
