@@ -156,6 +156,22 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
         self.assertEqual(self.admin.request(
             "/api/v2/admin/appointments/checkout/payment-status")["body"]
             ["confirmed_shopify_bookings"],1)
+        listing=self.admin.request(
+            "/api/v2/admin/appointments/bookings?from="+self.day+"&to="+self.day)
+        self.assertEqual(listing["status"],200,listing)
+        bookings=listing["body"]["bookings"]
+        self.assertEqual(len(bookings),1)
+        self.assertEqual(bookings[0]["source"],"shopify")
+        self.assertEqual(bookings[0]["payment_status"],"paid")
+        self.assertEqual(bookings[0]["status"],"scheduled")
+        self.assertEqual(bookings[0]["shopify_order_id"],str(order["id"]))
+        self.assertEqual(bookings[0]["customer_name"],"Pessoa Pagou")
+        self.assertFalse(listing["body"]["internal_only"])
+        cancelled=self.admin.request(
+            "/api/v2/admin/appointments/bookings?from="+self.day+
+            "&to="+self.day+"&status=cancelled")
+        self.assertEqual(cancelled["body"]["bookings"],[])
+
 
     def test_invalid_hmac_wrong_shop_or_topic_never_changes_booking(self):
         cart=self.start()
