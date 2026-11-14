@@ -75,7 +75,7 @@ def initialize(c):
       order_id TEXT NOT NULL,
       hold_id TEXT,
       reason TEXT NOT NULL,
-      created_at BIGINT NOT NULL,
+      created_at BIGINT NOT NULL
     );
     CREATE UNIQUE INDEX IF NOT EXISTS appt_shopify_reviews_unique
       ON appt_shopify_payment_reviews(org_id,order_id,coalesce(hold_id,''),reason);
