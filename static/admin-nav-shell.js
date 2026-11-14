@@ -73,7 +73,7 @@
     const expanded=nav.querySelector(".tm-admin-recipes-subnav:not([hidden])");
     if(!expanded)return;
     const trigger=nav.querySelector('[aria-controls="'+expanded.id+'"]');
-    if(trigger){event.preventDefault();trigger.focus();}
+    if(trigger){event.preventDefault();expanded.hidden=true;trigger.setAttribute("aria-expanded","false");trigger.focus();}
    });
   }
  }
