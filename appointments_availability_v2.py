@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from appointments_catalog_v2 import ORG_ID, MODES
 import appointments_google_v2 as google
+import appointments_checkout_v2 as checkout
 
 LISBON = ZoneInfo("Europe/Lisbon")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}$")
@@ -267,15 +268,16 @@ def preview(c, org_id, professional, service, mode, day_value, now=None, exclude
     bookings = c.execute("""SELECT start_minute,end_minute FROM appt_bookings
         WHERE org_id=? AND professional_id=? AND day=? AND status='scheduled'
           AND id<>?""", (org_id, professional, day.isoformat(), excluded)).fetchall()
+    active_holds = checkout.active_by_date(c,org_id,professional,day.isoformat(),day.isoformat(),now)
     duration = s["duration_minutes"]
     local_start = datetime.combine(day, datetime.min.time(), LISBON)
     local_end = datetime.combine(day + timedelta(days=1), datetime.min.time(), LISBON)
     google_busy = google.busy_intervals(c, org_id, professional, local_start, local_end)
-    slots = _slots_on_day(day, duration, available, blocked, bookings, now, google_busy)
+    slots = _slots_on_day(day, duration, available, blocked, [*bookings,*active_holds.get(day.isoformat(),())], now, google_busy)
     return {"date": day.isoformat(), "slots": slots,
             "preview_only": True, "includes_google": google.status(c, org_id, professional)["busy_check_active"],
             "includes_bookings": True, "includes_internal_bookings": True,
-            "includes_sesami": False, "timezone": "Europe/Lisbon",
+            "includes_checkout_holds": True, "includes_sesami": False, "timezone": "Europe/Lisbon",
             "interval_minutes": 15, "buffer_minutes": 0}
 
 
@@ -378,12 +380,13 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
                                  professional, start_iso, end_iso)
         bookings = _periods_by_day(c, "appt_bookings", org_id,
                                    professional, start_iso, end_iso, excluded)
+        active_holds = checkout.active_by_date(c,org_id,professional,start_iso,end_iso,now)
         google_busy = google.busy_intervals(
             c, org_id, professional,
             datetime.combine(max(first, today), datetime.min.time(), LISBON),
             datetime.combine(min(last, end_limit) + timedelta(days=1), datetime.min.time(), LISBON))
     else:
-        available, blocks, bookings = {}, {}, {}
+        available, blocks, bookings, active_holds = {}, {}, {}, {}
         google_busy = []
     days = []
     for day_number in range(1, last.day+1):
@@ -392,11 +395,11 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
         if eligible and today <= current <= end_limit:
             count = len(_slots_on_day(current, s["duration_minutes"],
                         available.get(iso, ()), blocks.get(iso, ()),
-                        bookings.get(iso, ()), now, google_busy))
+                        [*bookings.get(iso, ()),*active_holds.get(iso, ())], now, google_busy))
         else:
             count = 0
         days.append({"date": iso, "slots_count": count, "available": count > 0})
 
     return {"month": month, "days": days, "timezone": "Europe/Lisbon",
             "preview_only": True, "includes_internal_bookings": True,
-            "includes_sesami": False, "includes_google": google.status(c, org_id, professional)["busy_check_active"]}
+            "includes_checkout_holds": True, "includes_sesami": False, "includes_google": google.status(c, org_id, professional)["busy_check_active"]}
