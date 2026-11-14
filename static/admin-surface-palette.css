@@ -4427,16 +4427,8 @@ html[data-admin-theme] #calendar-section .calendar-unified-event{
  display:block!important;min-width:0;box-sizing:border-box;
  margin:0!important;padding:0 8px!important;border:0!important;border-radius:10px!important;
  background:transparent!important;box-shadow:none!important;color:var(--tm-ui-text)!important;
- transition:background-color .14s ease;
 }
-@media(hover:hover) and (pointer:fine){
- html[data-admin-theme] #calendar-section .calendar-unified-event:hover{
-  background:var(--tm-ui-hover)!important;
- }
-}
-html[data-admin-theme] #calendar-section .calendar-unified-event:focus-within{
- background:var(--tm-ui-hover)!important;
-}
+/* Event rows are informational, not buttons: only the edit pencil has hover. */
 html[data-admin-theme] #calendar-section .calendar-unified-event+.calendar-unified-event{
  border-top:1px solid var(--tm-ui-divider)!important;
 }
@@ -4613,12 +4605,12 @@ html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-head
 html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close{
  display:grid!important;place-items:center!important;flex:0 0 36px;
  width:36px!important;height:36px!important;padding:0!important;
- border:0!important;border-radius:11px!important;box-shadow:none!important;
- background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-muted)!important;
  cursor:pointer;
 }
 html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close:hover{
- background:var(--tm-ui-hover)!important;color:var(--tm-ui-text)!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .calendar-day-preview-heading .calendar-day-close:focus-visible{
  outline:2px solid var(--tm-ui-muted)!important;outline-offset:2px;
@@ -4682,8 +4674,8 @@ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .ca
  display:grid!important;place-items:center!important;flex:0 0 34px;
  width:34px!important;height:34px!important;min-height:34px!important;
  margin:0!important;padding:0!important;border:0!important;
- border-radius:10px!important;box-shadow:none!important;
- background:var(--tm-ui-field-on-subcard)!important;color:var(--tm-ui-text)!important;
+ border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
 }
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action::after{
  display:none!important;content:none!important;
