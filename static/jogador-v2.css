@@ -5470,3 +5470,10 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   top:10px!important;
  }
 }
+
+/* Weekly nutrition detail: one unit control in the footer only. */
+#overview #day-details .nutrition-comparison.consumption-concentric + .nutrition-weekly-charts,
+#overview #day-details .nutrition-weekly-charts{border-top:0!important}
+#overview #day-details .nutrition-weekly-charts .nutrition-macro-modes,
+#overview #day-details .nutrition-weekly-charts .macro-modes{display:none!important}
+#overview #day-details .nutrition-comparison.consumption-concentric:not(.nutrition-details-open) .consumption-concentric-footer-actions .consumption-concentric-unit-switch{display:none!important}
