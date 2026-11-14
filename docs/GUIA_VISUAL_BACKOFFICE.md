@@ -355,3 +355,13 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Mobile:** não modificar o layout aprovado até 830 px; preservar os quatro valores, a seta e as ações, sem sobrepor esta rotina de desktop ao CSS mobile.
 - **Âmbito:** exclusivamente CSS e geometria de apresentação na branch `production/the-mile-admin`; não alterar dados, gramagens, cálculos nutricionais, tipo de plano, associações, estados ou a app dos jogadores (`main`).
 - **QA:** verificar largura desktop normal, janela reduzida e retorno à largura inicial, incluindo opções com nomes longos e alimentos com notas extensas; confirmar código e deploy Render separadamente da validação visual no browser.
+
+
+## 30. Edição de Planos — estabilidade da média nutricional em desktop (14 novembro 2026)
+
+- **Regressão corrigida:** o alinhamento anterior posicionava a média da refeição (`.meal-header-macros`) e o total da opção com `position:absolute`, mesmo quando eram filhos de uma grelha CSS. Em janelas largas, o total da refeição podia deixar de aparecer; quando a janela estreitava, reaparecia no fallback de duas linhas.
+- **Regra nova:** os totais da refeição e da opção permanecem sempre **dentro do fluxo das suas próprias grelhas**. O JavaScript mede as colunas nutricionais reais da primeira linha visível de alimento e atribui a mesma largura e origem às colunas 2 do cabeçalho e da opção através de `grid-template-columns`; nunca posiciona estes valores por coordenadas absolutas.
+- **Larguras intermédias:** quando a largura disponível não permite separar devidamente nome/ações, quatro macros e seta, ativa-se `tm-editor-nutrition-stacked` para passar os totais para a segunda linha sem os esconder ou sobrepor. Voltar a aumentar a janela recupera a disposição normal através de uma nova medição; remover estilos inline anteriores antes de aplicar os novos.
+- **Mobile:** até 830 px, a rotina limpa apenas os estilos inline de desktop e não modifica o desenho mobile aprovado.
+- **Preservação:** não alterar valores, fórmulas, gramagens, opções, ações, estado de publicação, paleta nutricional, vista de leitura ou a branch `main`.
+- **QA:** testar refeição aberta e fechada em janela larga, intermédia e estreita, com redução/ampliação repetidas. Confirmar sempre separadamente revisão de código, deploy e visualização efetiva no browser.
