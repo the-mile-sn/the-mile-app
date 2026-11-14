@@ -98,10 +98,11 @@
    if(contacts.length)description.append(make("p","tm-appt-booking-contact",contacts.join(" · ")));
   }
   const right=make("div","tm-appt-booking-right");
-  right.append(make("span","tm-appt-booking-status"+(item.status==="cancelled"?" is-cancelled":""),item.status==="cancelled"?"Cancelada":"Agendada · Interna"));
+  const isShopify=item.source==="shopify";
+  right.append(make("span","tm-appt-booking-status"+(item.status==="cancelled"?" is-cancelled":""),item.status==="cancelled"?"Cancelada":(isShopify?"Confirmada · Shopify":"Agendada · Interna")));
   if(!forAgenda){
-   right.append(make("span","tm-appt-booking-payment","Pagamento não associado"));
-   if(item.status==="scheduled"){
+   right.append(make("span","tm-appt-booking-payment",isShopify?"Pagamento confirmado · Encomenda "+item.shopify_order_id:"Pagamento não associado"));
+   if(item.status==="scheduled"&&!isShopify){
     const actions=make("div","tm-appt-booking-actions");
     const edit=make("button","","Reagendar / editar");
     edit.type="button";edit.addEventListener("click",()=>openForm(item));
@@ -126,7 +127,7 @@
   const list=$("tm-appt-bookings-list");list.replaceChildren();
   $("tm-appt-bookings-count").textContent=state.bookings.length+" marcação(ões)"+(result.truncated?" · lista limitada":"");
   if(!state.bookings.length){
-   list.append(make("p","tm-appt-booking-empty","Ainda não existem marcações internas para estes filtros."));
+   list.append(make("p","tm-appt-booking-empty","Ainda não existem marcações para estes filtros."));
    return;
   }
   for(const item of state.bookings)list.append(bookingLine(item));
@@ -146,7 +147,7 @@
   }
   const feed=$("tm-appt-agenda-list");feed.replaceChildren();
   if(!bookings.length){
-   feed.append(make("p","tm-appt-booking-empty","Sem marcações internas neste período."));
+   feed.append(make("p","tm-appt-booking-empty","Sem marcações neste período."));
    return;
   }
   for(const item of bookings)feed.append(bookingLine(item,true));
@@ -358,8 +359,11 @@
   if(!node)return;
   try{
    const result=await api("/checkout/status");
-   node.textContent="Motor interno preparado · "+result.active_holds+
-     " bloqueio(s) ativo(s) de "+result.hold_minutes+" min · Checkout público desligado";
+   node.textContent="Motor interno · "+result.active_holds+
+     " bloqueio(s) ativo(s) de "+result.hold_minutes+" min. Checkout público desligado.";
+   const paid=await api("/checkout/payment-status");
+   node.textContent+=" · "+paid.confirmed_shopify_bookings+" reserva(s) Shopify confirmada(s) · "+
+     paid.payments_requiring_review+" pagamento(s) para revisão";
   }catch(error){
    node.textContent="Estado de checkout temporariamente indisponível";
   }
