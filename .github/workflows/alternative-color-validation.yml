@@ -1,5 +1,8 @@
 name: Alternative color validation
 on:
+  push:
+    branches:
+      - feature/player-consumed-alternative-color
   pull_request:
     paths:
       - 'consumption_source_v2.py'
