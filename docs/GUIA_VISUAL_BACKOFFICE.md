@@ -426,3 +426,14 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Sem hover / mobile:** em dispositivos táteis sem hover e mais largos que 830 px, manter a barra completa para não ocultar destinos sem alternativa de interação. No mobile até 830 px, preservar rigorosamente a navegação horizontal atual.
 - **Compatibilidade:** modos claro e escuro mantêm os tokens e cores existentes. Não alterar a área útil fixa, os recuos internos uniformizados, a app dos jogadores (`main`), dados, gramagens, cálculos ou permissões.
 - **Validação:** testar mover o cursor sobre e para fora da sidebar, incluindo sobre submenus, navegar por ícones sem deslocar o conteúdo, usar Tab/Shift+Tab, Escape, tema claro e escuro e redução da janela. Fazer distinção entre validação de código, deploy no Render e QA visual real no browser.
+
+
+## 36. Correção hover da sidebar — sem sobreposição e com submenus automáticos (14 novembro 2026)
+
+**Correção solicitada após validação visual:** a primeira versão de hover expandia a sidebar sobre os cards de Jogadores, ocultando o texto à esquerda. Além disso, era necessário clicar em «Biblioteca Alimentar» ou «Menus e Receitas» para revelar os submenus. Esta não é a interação desejada.
+
+- **Expansão sem sobreposição:** o `#admin-workspace` passa de `grid-template-columns:72px minmax(0,1fr)` para `226px minmax(0,1fr)` durante o hover/foco de teclado da sidebar. A largura da barra e a largura da primeira coluna da grelha variam em conjunto durante 180 ms, **refluindo os cards** para a direita e garantindo que a barra não cobre informação. Ao sair o cursor, recupera os 72 px. O conteúdo pode reajustar-se, mas deve continuar visível.
+- **Subsecções automáticas:** quando o cursor entra em Biblioteca Alimentar ou Menus e Receitas, apresentar de imediato os respetivos destinos existentes, sem clique. Ao passar de um grupo ao outro, fechar o anterior; manter as subsecções abertas enquanto o cursor estiver sobre elas; ao sair da barra lateral, fechar os submenus. `aria-expanded` reflete a visibilidade.
+- **Teclado:** Tab/foco permite expandir a barra e abrir os submenus; Escape fecha o submenu e devolve foco ao seu cabeçalho. Não duplicar handlers de navegação nem alterar as rotas subjacentes ou a proteção de planos por guardar.
+- **Compatibilidade:** todas as alterações são exclusivas do desktop com hover e ponteiro preciso (`min-width:831px`). Desktop tátil sem hover e mobile conservam a navegação anterior. Respeitar modo claro/escuro e preferência de movimento reduzido.
+- **QA:** verificar que nenhum nome/fotografia de jogador ou filtro fica oculto ao expandir; hover sobre Biblioteca e Menus abre subsecções e permite clicar; submenus fecham ao sair; redimensionamento do conteúdo e cabeçalhos de Planos preservam legibilidade e alinhamento; confirmar temas claro/escuro, acesso por teclado e navegação mobile.
