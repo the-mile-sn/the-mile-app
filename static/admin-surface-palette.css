@@ -3994,12 +3994,18 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
  }
  /* The common 24px card insets above remain unchanged. */
 }
-/* Hover-to-expand desktop navigation: 72px rail reserves grid space; the
-   full 226px sidebar floats above content, without moving the main canvas.
+/* Hover-to-expand desktop navigation: 72px rail by default; the
+   entire workspace track grows to 226px when expanded, leaving cards visible.
    Mouse and keyboard both work. Touch desktop keeps the original full menu. */
 @media (min-width:831px) and (hover:hover) and (pointer:fine){
  #admin-workspace:not([hidden]).tm-sidebar-hover-enabled{
   grid-template-columns:72px minmax(0,1fr)!important;
+  transition:grid-template-columns .18s ease!important;
+ }
+ /* The expanded rail claims its own grid column; it never obscures text,
+    filters or cards in the workspace. */
+ #admin-workspace:not([hidden]).tm-sidebar-hover-enabled:has(>.tm-admin-sidebar:is(:hover,:has(:focus-visible))){
+  grid-template-columns:226px minmax(0,1fr)!important;
  }
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar{
   box-sizing:border-box!important;position:sticky!important;top:0!important;
@@ -4089,6 +4095,7 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
  }
 }
 @media (min-width:831px) and (hover:hover) and (pointer:fine) and (prefers-reduced-motion:reduce){
+ #admin-workspace:not([hidden]).tm-sidebar-hover-enabled{transition:none!important;}
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar{transition:none!important;}
 }
 /* <=830px mobile navigation, and desktop touch without hover, are unchanged. */
