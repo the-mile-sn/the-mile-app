@@ -65,15 +65,58 @@
     if(label&&!button.hasAttribute("title"))button.setAttribute("title",label);
     if(label&&!button.hasAttribute("aria-label"))button.setAttribute("aria-label",label);
    }
-   // The page-level handlers remain the single source of truth for the two
-   // nested menus. CSS hides their contents in the compact rail and exposes
-   // them normally on hover or keyboard focus. Escape closes keyboard focus.
+   // Reveal the two existing submenus on hover/focus, without requiring
+   // a click or touching page navigation handlers. Their individual links
+   // retain the original route, permissions and unsaved-edit safeguards.
+   const mouseNav=window.matchMedia("(min-width:831px) and (hover:hover) and (pointer:fine)");
+   const groups=[
+    {button:nav.querySelector("#tm-admin-nav-food-library"),panel:nav.querySelector("#tm-admin-food-subnav")},
+    {button:nav.querySelector("#tm-admin-nav-menus-recipes"),panel:nav.querySelector("#tm-admin-recipes-subnav")}
+   ].filter(group=>group.button&&group.panel);
+   const hideGroups=()=>{
+    for(const group of groups){
+     group.panel.hidden=true;
+     group.button.setAttribute("aria-expanded","false");
+    }
+   };
+   const showGroup=group=>{
+    for(const item of groups){
+     const open=item===group;
+     if(item.panel.hidden===open)item.panel.hidden=!open;
+     item.button.setAttribute("aria-expanded",String(open));
+    }
+   };
+   nav.addEventListener("pointerover",event=>{
+    if(!mouseNav.matches)return;
+    const target=event.target;
+    if(!(target instanceof Element))return;
+    const group=groups.find(item=>item.button.contains(target)||item.panel.contains(target));
+    if(group){showGroup(group);return;}
+    if(target.closest(".tm-admin-nav-link")||target.closest(".tm-admin-brand"))hideGroups();
+   });
+   nav.addEventListener("pointerleave",()=>{
+    if(mouseNav.matches)hideGroups();
+   });
+   nav.addEventListener("focusin",event=>{
+    if(!mouseNav.matches)return;
+    const target=event.target;
+    const group=groups.find(item=>item.button.contains(target)||item.panel.contains(target));
+    if(group)showGroup(group);
+    else if(target.closest?.(".tm-admin-nav-link"))hideGroups();
+   });
+   nav.addEventListener("focusout",()=>{
+    if(!mouseNav.matches)return;
+    requestAnimationFrame(()=>{
+     if(!nav.contains(document.activeElement)&&!nav.matches(":hover"))hideGroups();
+    });
+   });
    nav.addEventListener("keydown",event=>{
-    if(event.key!=="Escape")return;
-    const expanded=nav.querySelector(".tm-admin-recipes-subnav:not([hidden])");
+    if(event.key!=="Escape"||!mouseNav.matches)return;
+    const expanded=groups.find(item=>!item.panel.hidden);
     if(!expanded)return;
-    const trigger=nav.querySelector('[aria-controls="'+expanded.id+'"]');
-    if(trigger){event.preventDefault();expanded.hidden=true;trigger.setAttribute("aria-expanded","false");trigger.focus();}
+    event.preventDefault();
+    hideGroups();
+    expanded.button.focus();
    });
   }
  }
