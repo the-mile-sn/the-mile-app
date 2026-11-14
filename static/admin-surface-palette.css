@@ -4240,8 +4240,8 @@ html[data-admin-theme] #admin-workspace #calendar-section.tm-calendar-layout>.tm
 /* Creation action matches + Criar jogador: compact action button rather than a full-width bar.
    The expanded form is the actual subcard and stays independent from the button. */
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card>.tm-calendar-event-subcard{
- display:flex;flex-direction:column;align-items:flex-start;
- box-sizing:border-box;min-width:0;width:100%;margin:0 0 17px!important;
+ display:flex;flex-direction:column;align-items:flex-end;
+ box-sizing:border-box;min-width:0;width:100%;margin:0 0 4px!important;
  padding:0!important;border:0!important;border-radius:0!important;
  background:transparent!important;box-shadow:none!important;
 }
@@ -4278,7 +4278,7 @@ html[data-admin-theme] #calendar-section #calendar-events-card .calendar-event-l
  margin:0!important;padding:0!important;
 }
 html[data-admin-theme] #calendar-section #calendar-events-card #calendar-matches{
- box-sizing:border-box;margin:12px 0 0!important;padding:8px 15px!important;
+ box-sizing:border-box;margin:10px 0 0!important;padding:0!important;
 }
 html[data-admin-theme] #calendar-section #nutrition-weekly-summary{
  margin:0!important;padding:24px!important;min-width:0;
@@ -4299,7 +4299,7 @@ html[data-admin-theme] #calendar-section #nutrition-weekly-summary .nutrition-me
  html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
   min-height:43px!important;padding:10px 14px!important;
  }
- html[data-admin-theme] #calendar-section #calendar-events-card #calendar-matches{padding:7px 12px!important;}
+ html[data-admin-theme] #calendar-section #calendar-events-card #calendar-matches{padding:0!important;}
  html[data-admin-theme] #calendar-section #nutrition-weekly-summary{padding:16px!important;}
 }
 
@@ -4307,6 +4307,9 @@ html[data-admin-theme] #calendar-section #nutrition-weekly-summary .nutrition-me
 html[data-admin-theme] #admin-workspace #calendar-section .calendar-navigation{
  display:flex!important;align-items:center!important;justify-content:flex-start!important;
  gap:7px!important;flex-wrap:nowrap!important;margin:15px 0 13px!important;
+}
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card>.tm-calendar-month-navigation{
+ margin:3px 0 13px!important;
 }
 html[data-admin-theme] #admin-workspace #calendar-section .calendar-navigation>strong{
  order:0;flex:1 1 auto;min-width:0;margin:0 auto 0 0!important;
@@ -4396,14 +4399,14 @@ html[data-admin-theme] #calendar-section .tm-calendar-weekdays span{text-align:c
 
 /* MONTH EVENTS: distinct tappable accordion + ONE quiet list, not 16 cards. */
 html[data-admin-theme] #calendar-section .calendar-event-list{
- margin-top:19px!important;margin-bottom:25px!important;
+ margin:0!important;padding:0!important;
  border:0!important;box-shadow:none!important;
 }
 html[data-admin-theme] #calendar-section .calendar-event-toggle{
  display:flex!important;align-items:center!important;gap:9px!important;
- min-height:49px;margin:0!important;padding:11px 14px!important;
- border:0!important;border-radius:12px!important;box-shadow:none!important;
- background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ min-height:44px;margin:0!important;padding:8px 0!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
  font:500 15px "Inter Tight",sans-serif!important;cursor:pointer;
 }
 html[data-admin-theme] #calendar-section .calendar-event-toggle::before{content:none!important}
@@ -4419,12 +4422,12 @@ html[data-admin-theme] #calendar-section .calendar-event-list[open] .tm-calendar
 }
 html[data-admin-theme] #calendar-section #calendar-matches{
  display:flex!important;flex-direction:column!important;gap:0!important;
- margin:8px 0 0!important;padding:0 12px!important;
- border-radius:13px!important;background:var(--tm-ui-subcard)!important;
+ margin:8px 0 0!important;padding:0!important;
+ border-radius:0!important;background:transparent!important;
 }
 html[data-admin-theme] #calendar-section .calendar-unified-event{
  display:block!important;min-width:0;box-sizing:border-box;
- margin:0!important;padding:0 8px!important;border:0!important;border-radius:10px!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
  background:transparent!important;box-shadow:none!important;color:var(--tm-ui-text)!important;
 }
 /* Event rows are informational, not buttons: only the edit pencil has hover. */
@@ -4809,9 +4812,9 @@ html[data-admin-theme] #calendar-section .calendar-option-provisional{
 html[data-admin-theme] #calendar-section .calendar-option-accordion .calendar-day-food-line:last-child{
  margin-bottom:11px!important;
 }
-html[data-admin-theme] #calendar-section #nutrition-weekly-summary{margin-top:24px!important;padding-top:0!important}
+
 html[data-admin-theme] #calendar-section #nutrition-weekly-summary>h3{
- margin:0 0 9px!important;font-weight:500!important;
+ margin:0 0 9px!important;padding:0!important;text-align:left!important;font-weight:500!important;
 }
 html[data-admin-theme] #calendar-section #nutrition-weekly-summary .calendar-navigation{margin:0 0 13px!important}
 html[data-admin-theme] #calendar-section #nutrition-weekly-summary .nutrition-metric-card,
