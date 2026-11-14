@@ -372,6 +372,10 @@
      setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
    const smoke=$("tm-appt-shopify-smoke");
    if(smoke)smoke.disabled=!(setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
+   const paidSmoke=$("tm-appt-shopify-paid-smoke");
+   if(paidSmoke)paidSmoke.disabled=!(setupInfo.secret_configured&&
+     setupInfo.webhook_receiver_enabled&&!paid.checkout_enabled&&
+     paid.service_formats_mapped>0);
    const status=paid.checkout_enabled?"Checkout The Mile ativo":"Checkout The Mile desligado";
    const setup=paid.shopify_app_secret_configured?"Chave da aplicação configurada":
      "Falta configurar a chave da aplicação The Mile Booking";
@@ -437,6 +441,37 @@
      "Falha no teste interno. Verifica os registos do Render antes de avançar.";
   }finally{
    button.disabled=false;
+  }
+ });
+ $("tm-appt-shopify-paid-smoke")?.addEventListener("click",async ()=>{
+  const button=$("tm-appt-shopify-paid-smoke");
+  const output=$("tm-appt-shopify-paid-smoke-feedback");
+  if(!button||!output||button.disabled)return;
+  button.disabled=true;
+  output.textContent="A simular uma retenção, um pagamento e uma reserva fictícia…";
+  try{
+   const result=await api("/checkout/paid-booking-smoke-test","POST",{});
+   if(result.signed_hold_created&&result.signed_paid_notification_accepted&&
+      result.one_booking_confirmed&&result.booking_visible_in_backoffice&&
+      result.duplicate_deliveries_idempotent&&
+      result.database_changes_persisted===false&&
+      result.real_shopify_order_created===false&&
+      result.real_booking_created===false&&result.payment_charged===false){
+     output.textContent="Ensaio interno aprovado: reserva paga visível na agenda de teste, "+
+       "sem duplicações. Todas as alterações anuladas. Não foi criada uma encomenda real.";
+   }else{
+     output.textContent="O ensaio não confirmou todas as etapas. Verifica o Render.";
+   }
+  }catch(error){
+   const messages={
+     paid_smoke_webhook_not_configured:"É necessário ativar o recetor e configurar o segredo Shopify no Render.",
+     paid_smoke_requires_checkout_off:"A simulação só funciona com o checkout público desligado.",
+     paid_smoke_no_mapped_service:"Não existe serviço ativo com variante e preço Shopify válidos."
+   };
+   output.textContent=messages[error.message]||
+     "A simulação não foi concluída. Verifica os registos do Render.";
+  }finally{
+    loadCheckoutStatus().catch(()=>{});
   }
  });
  $("tm-appt-checkout-refresh")?.addEventListener("click",()=>loadCheckoutStatus());
