@@ -868,6 +868,28 @@ def application(env, start_response):
                     raise Problem(400, 'invalid_request')
                 public_root = '/api/v2/public/appointments/'
                 suffix = path[len(public_root):]
+                if suffix.startswith('professionals/') and suffix.endswith('/photo'):
+                    # Public-facing portraits only for currently bookable professionals.
+                    # The private admin photo endpoint and raw image records remain protected.
+                    if query:
+                        raise Problem(400, 'invalid_request')
+                    match = re.fullmatch(
+                        r'professionals/([0-9a-f]{32})/photo', suffix)
+                    if not match:
+                        raise Problem(404, 'photo_not_found')
+                    professional_id = match.group(1)
+                    public_people = appointments_storefront_preview_v2.public_catalog(
+                        c)['professionals']
+                    if not any(person['id'] == professional_id and person['has_photo']
+                               for person in public_people):
+                        raise Problem(404, 'photo_not_found')
+                    photo_row = c.execute("""SELECT photo_data FROM appt_professional_photos
+                        WHERE org_id=? AND professional_id=?""",
+                        (appointments_catalog_v2.ORG_ID,
+                         professional_id)).fetchone()
+                    if photo_row is None:
+                        raise Problem(404, 'photo_not_found')
+                    return respond(200, bytes(photo_row['photo_data']), 'image/webp')
                 if suffix == 'catalog':
                     if query:
                         raise Problem(400, 'invalid_request')
