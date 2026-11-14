@@ -303,6 +303,31 @@ def _public_booking(row):
     }
 
 
+
+def _paid_shopify_booking(row):
+    """Admin-only confirmed payments; not editable via manual-booking routes."""
+    return {
+        "id": row["id"],
+        "professional_id": row["professional_id"],
+        "service_id": row["service_id"],
+        "professional_name": row["professional_name"],
+        "service_name": row["service_name"],
+        "mode": row["mode"],
+        "date": row["day"],
+        "start": availability.display_time(row["start_minute"]),
+        "end": availability.display_time(row["end_minute"]),
+        "customer_name": row["customer_name"],
+        "customer_email": row["customer_email"],
+        "customer_phone": row["customer_phone"],
+        "status": "scheduled",
+        "source": "shopify",
+        "payment_status": "paid",
+        "shopify_order_id": row["shopify_order_id"],
+        "google_event_id": None,
+        "version": 1,
+    }
+
+
 def list_bookings(c, from_day, to_day, professional_id="", service_id="", status="all",
                   org_id=ORG_ID):
     first, last = availability.clean_date(from_day), availability.clean_date(to_day)
@@ -330,10 +355,37 @@ def list_bookings(c, from_day, to_day, professional_id="", service_id="", status
         params.append(status)
     sql += " ORDER BY b.day,b.start_minute,b.id LIMIT 301"
     rows = c.execute(sql, tuple(params)).fetchall()
+    local = [_public_booking(row) for row in rows]
+    paid = []
+    if status in ("all", "scheduled"):
+        sql_paid = """SELECT h.*,p.name AS professional_name,
+            s.name AS service_name,paid.customer_name,paid.customer_email,
+            paid.customer_phone,paid.shopify_order_id
+            FROM appt_checkout_holds h
+            JOIN appt_shopify_confirmations paid
+              ON paid.org_id=h.org_id AND paid.hold_id=h.id
+            JOIN appt_professionals p
+              ON p.org_id=h.org_id AND p.id=h.professional_id
+            JOIN appt_services s
+              ON s.org_id=h.org_id AND s.id=h.service_id
+            WHERE h.org_id=? AND h.day BETWEEN ? AND ?
+              AND h.status='confirmed'"""
+        paid_params = [org_id, first.isoformat(), last.isoformat()]
+        if professional_id:
+            sql_paid += " AND h.professional_id=?"
+            paid_params.append(professional_id)
+        if service_id:
+            sql_paid += " AND h.service_id=?"
+            paid_params.append(service_id)
+        sql_paid += " ORDER BY h.day,h.start_minute,h.id LIMIT 301"
+        paid = [_paid_shopify_booking(row) for row in
+                c.execute(sql_paid, tuple(paid_params)).fetchall()]
+    all_rows = sorted(local + paid, key=lambda x: (
+        x["date"], x["start"], x["id"]))
     return {
-        "bookings": [_public_booking(row) for row in rows[:300]],
-        "truncated": len(rows)>300,
+        "bookings": all_rows[:300],
+        "truncated": len(all_rows)>300,
         "timezone": "Europe/Lisbon",
-        "internal_only": True,
-        "integrations": {"sesami": False, "google": False, "shopify": False}
+        "internal_only": not bool(paid),
+        "integrations": {"sesami": False, "google": False, "shopify": bool(paid)}
     }
