@@ -1668,8 +1668,6 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
-                    raise Problem(403, 'consumption_pilot_not_enabled')
                 query=parse_qs(env.get('QUERY_STRING', ''))
                 meal_date=(query.get('date') or [''])[0]
                 meal_key=(query.get('meal') or [''])[0]
@@ -1687,8 +1685,6 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
-                    raise Problem(403, 'consumption_pilot_not_enabled')
                 body=read_json(env)
                 if not isinstance(body,dict): raise Problem(400,'invalid_request')
                 try:
@@ -1710,8 +1706,6 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
-                    raise Problem(403, 'consumption_pilot_not_enabled')
                 body=read_json(env)
                 if not isinstance(body, dict): raise Problem(400, 'invalid_request')
                 meal_date=body.get('date')
@@ -1743,8 +1737,6 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
-                    raise Problem(403, 'consumption_pilot_not_enabled')
                 body=read_json(env)
                 if not isinstance(body, dict): raise Problem(400, 'invalid_request')
                 try:
@@ -1762,8 +1754,6 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
-                    raise Problem(403, 'consumption_pilot_not_enabled')
                 query=parse_qs(env.get('QUERY_STRING', ''))
                 try:
                     records=consumption_records_v2.read_range(c, link['athlete_id'],
@@ -1777,8 +1767,6 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link=c.execute("SELECT l.athlete_id FROM v2_player_links l JOIN v2_athletes a ON a.id=l.athlete_id AND a.archived_at IS NULL WHERE l.user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                if str(link['athlete_id']) not in {v.strip() for v in os.environ.get('MILE_CONSUMPTION_PILOT_ATHLETE_IDS', '').split(',') if v.strip()}:
-                    raise Problem(403, 'consumption_pilot_not_enabled')
                 query=parse_qs(env.get('QUERY_STRING', ''))
                 search=(query.get('q') or [''])[0].strip()[:120]
                 if len(search) < 2: return respond(200, {'foods': []})
