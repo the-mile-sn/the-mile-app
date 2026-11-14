@@ -61,9 +61,12 @@ def save(c, data, org_id=ORG_ID):
         raise ValueError("stale_booking_rules")
     now = int(time.time())
     if current["version"] == 0:
-        c.execute("""INSERT INTO appt_booking_rules (
+        result = c.execute("""INSERT INTO appt_booking_rules (
           org_id,start_interval_minutes,checkout_hold_minutes,version,updated_at
-        ) VALUES (?,?,?,?,?)""", (org_id, start, hold, 1, now))
+        ) VALUES (?,?,?,?,?) ON CONFLICT(org_id) DO NOTHING""",
+        (org_id, start, hold, 1, now))
+        if result.rowcount != 1:
+            raise ValueError("stale_booking_rules")
     else:
         result = c.execute("""UPDATE appt_booking_rules SET
           start_interval_minutes=?, checkout_hold_minutes=?, updated_at=?,
