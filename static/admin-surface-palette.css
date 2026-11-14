@@ -4237,32 +4237,34 @@ html[data-admin-theme] #admin-workspace #calendar-section.tm-calendar-layout>.tm
  border:0!important;border-radius:20px!important;box-shadow:none!important;
 }
 html[data-admin-theme] #admin-workspace #calendar-section.tm-calendar-layout>.tm-calendar-day-card[hidden]{display:none!important;}
-/* The Add Event bar is the secondary surface, inset in the main calendar card. */
+/* Creation action matches + Criar jogador: compact action button rather than a full-width bar.
+   The expanded form is the actual subcard and stays independent from the button. */
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card>.tm-calendar-event-subcard{
+ display:flex;flex-direction:column;align-items:flex-start;
  box-sizing:border-box;min-width:0;width:100%;margin:0 0 17px!important;
- padding:0!important;border:0!important;border-radius:13px!important;
- background:var(--tm-ui-subcard)!important;box-shadow:none!important;
+ padding:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
 }
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
- width:100%!important;min-height:49px!important;margin:0!important;
- padding:11px 15px!important;border:0!important;
- border-radius:13px!important;box-shadow:none!important;
- background:transparent!important;color:var(--tm-ui-text)!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:auto!important;max-width:100%!important;flex:0 0 auto;
+ min-height:43px!important;margin:0!important;padding:10px 16px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ white-space:nowrap;
 }
-html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle:not([aria-expanded="true"]):hover{
- background:var(--tm-ui-hover)!important;
-}
-html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle[aria-expanded="true"],
-html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle[aria-expanded="true"]:hover{
- background:transparent!important;border-radius:13px 13px 0 0!important;
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle:hover:not(:disabled){
+ background:var(--tm-action-main-hover)!important;color:var(--tm-action-main-fg)!important;
 }
 html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle:focus-visible{
- outline:2px solid var(--tm-ui-muted)!important;outline-offset:-3px;
+ outline:2px solid var(--tm-ui-muted)!important;outline-offset:2px;
 }
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-form{
- margin:0!important;padding:12px 14px 14px!important;
- border:0!important;border-radius:0 0 13px 13px!important;
- background:transparent!important;
+ align-self:stretch!important;width:100%!important;
+ margin:12px 0 0!important;padding:14px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;box-shadow:none!important;
 }
 html[data-admin-theme] #calendar-section #calendar-event-feedback:empty{display:none!important}
 html[data-admin-theme] #calendar-section #calendar-event-feedback:not(:empty){
@@ -4295,7 +4297,7 @@ html[data-admin-theme] #calendar-section #nutrition-weekly-summary .nutrition-me
   padding:16px!important;border-radius:16px!important;
  }
  html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
-  min-height:49px!important;padding:12px 14px!important;
+  min-height:43px!important;padding:10px 14px!important;
  }
  html[data-admin-theme] #calendar-section #calendar-events-card #calendar-matches{padding:7px 12px!important;}
  html[data-admin-theme] #calendar-section #nutrition-weekly-summary{padding:16px!important;}
@@ -4338,18 +4340,15 @@ html[data-admin-theme] #tm-dashboard .tm-db-controls>button{order:1}
 /* Single white/main-card canvas. Form stays expandable and usable. */
 /* Main surfaces are defined on the four explicit card wrappers above. */
 html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle{
- display:flex!important;align-items:center!important;gap:10px;
- box-sizing:border-box;width:100%;min-height:49px;margin:0!important;
- padding:11px 14px;border:0!important;border-radius:12px!important;
- background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
- box-shadow:none!important;font:500 14px/1.35 "Inter Tight",sans-serif!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px;
+ box-sizing:border-box;width:auto;min-height:43px;margin:0!important;
+ padding:10px 16px;border:0!important;border-radius:12px!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ box-shadow:none!important;font:500 13px/1.3 "Inter Tight",sans-serif!important;
  cursor:pointer;
 }
-html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle .calendar-mobile-event-chevron{
- margin-left:auto;flex:none;
-}
 html[data-admin-theme] #calendar-section #calendar-mobile-event-toggle .calendar-mobile-event-plus{
- font-size:20px!important;font-weight:400;
+ font-size:19px!important;font-weight:400;line-height:1;
 }
 html[data-admin-theme] #calendar-section #calendar-event-form{
  display:none!important;align-items:stretch!important;flex-wrap:wrap!important;
@@ -4648,10 +4647,22 @@ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap>det
  margin:0!important;padding:12px 15px!important;border:0!important;
  background:transparent!important;
 }
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-summary-content{
+ display:flex;flex:1 1 auto;flex-direction:column;gap:9px;
+ min-width:0;padding:0!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-summary-period{
+ display:flex;flex-direction:column;gap:4px;min-width:0;
+}
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-title{
- flex:1 1 auto;display:block;min-width:0;min-height:0!important;
+ flex:0 1 auto;display:block;min-width:0;min-height:0!important;
  padding:0!important;background:transparent!important;
- color:var(--tm-ui-text)!important;font:500 14px/1.4 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;font:400 14px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-summary-nutrition{
+ display:block;color:var(--tm-ui-muted)!important;
+ font:400 12px/1.45 "Inter Tight",sans-serif!important;
+ white-space:normal;
 }
 html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-info{
  color:var(--tm-ui-muted)!important;font-size:12px!important;
@@ -4699,9 +4710,9 @@ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .ca
  margin:0 15px!important;padding:15px 0!important;border-color:var(--tm-ui-divider)!important;
 }
 @media(max-width:600px){
- html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap summary{flex-wrap:wrap!important;}
- html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-title{flex-basis:100%;}
- html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action{margin-left:auto!important;}
+ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap summary{flex-wrap:nowrap!important;}
+ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-summary-content{min-width:0;}
+ html[data-admin-theme] #calendar-section .day-preview .tm-calendar-peri-wrap .calendar-peri-tile-action{margin-left:0!important;}
 }
 
 /* Plan-like coloured meal-option container and its lighter inner options. */
