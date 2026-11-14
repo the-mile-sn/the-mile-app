@@ -1094,7 +1094,7 @@ def application(env, start_response):
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 except ValueError as exc:
-                    raise Problem(409 if str(exc) == 'booking_overlap' else 400, str(exc))
+                    raise Problem(409 if str(exc) in ('booking_overlap','checkout_hold_conflict') else 400, str(exc))
                 return respond(201, {'id': identifier})
             if (path.startswith('/api/v2/admin/appointments/bookings/')
                     and path.endswith('/cancel') and method == 'POST'):
@@ -1121,7 +1121,7 @@ def application(env, start_response):
                 except LookupError as exc:
                     raise Problem(404, str(exc))
                 except ValueError as exc:
-                    raise Problem(409 if str(exc) in ('booking_overlap','stale_booking') else 400, str(exc))
+                    raise Problem(409 if str(exc) in ('booking_overlap','checkout_hold_conflict','stale_booking') else 400, str(exc))
                 return respond(200, {'id': identifier})
             if path.startswith('/api/v2/admin/appointments/'):
                 if not user: raise Problem(401, 'unauthorized')
