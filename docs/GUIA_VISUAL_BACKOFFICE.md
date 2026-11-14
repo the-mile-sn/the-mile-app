@@ -503,3 +503,9 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - Opção única: conteúdo imediato num elemento simples, sem details nativo nem marcador «Detalhes», mantendo seleção/publicação quando aplicáveis.
 - Eventos do mês: hover discreto por linha apenas em ecrãs com cursor, e foco visível ao editar; a linha completa não passa a ser um botão.
 - Manter os ajustes no bloco CSS consolidado do Planeamento. Não acumular compensações nos estilos antigos nem alterar cálculos, dados ou a branch main.
+
+### Microciclos — ações secundárias sem fundo e eventos sem hover de linha (14 novembro 2026)
+
+- Seta de expansão do Peri-treino/Peri-jogo e X de fecho do dia: ícones outline isolados, sem fundo, sem cápsula e sem mudança de fundo no hover; manter a área de interação e foco de teclado acessível.
+- Eventos do mês: remover totalmente o hover de preenchimento da linha e o fundo de `:focus-within`. Conservar separadores ténues e hover/foco apenas na ação real de edição (lápis).
+- Editar as regras consolidadas em `static/admin-surface-palette.css`, sem acumular overrides. Não alterar dados, cálculos, seleção, gravação ou navegação da app dos jogadores.
