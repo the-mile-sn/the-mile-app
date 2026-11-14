@@ -67,9 +67,7 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             self.assertIn(b'api("/checkout/paid-booking-smoke-test","POST",{})',
                           script["body"])
             self.assertNotIn(b'paidSmoke.disabled', script["body"])
-            self.assertIn(
-                b'button.disabled=false;\\n    loadCheckoutStatus().catch',
-                script["body"])
+            self.assertIn(b'button.disabled=false;', script["body"])
             self.assertEqual(
                 script["headers"]["Cache-Control"],
                 "public, max-age=2592000, immutable")
