@@ -22,6 +22,7 @@ import appointments_availability_v2
 import appointments_bookings_v2
 import appointments_google_v2
 import appointments_checkout_v2
+import appointments_storefront_preview_v2
 import consumption_records_v2
 import recipe_library_v2
 import recipe_pdf_import_v2
@@ -763,6 +764,65 @@ def application(env, start_response):
                         raise Problem(403, 'origin')
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
+
+            # Shopify UNPUBLISHED theme preview only: anonymous, read-only,
+            # allowlisted public metadata. Never expose internal admin records,
+            # booking holds, payments, customer information or Google tokens.
+            if path.startswith('/api/v2/public/appointments/'):
+                if SITE_ROLE == 'player' or os.environ.get(
+                        'MILE_BOOKING_PREVIEW_ENABLED', '0') != '1':
+                    raise Problem(404, 'not_found')
+                if method != 'GET':
+                    raise Problem(404, 'not_found')
+                origin = (env.get('HTTP_ORIGIN') or '').strip()
+                public_origins = {
+                    'https://themile.pt',
+                    'https://www.themile.pt',
+                    'https://the-mile-sports-nutrition.myshopify.com',
+                }
+                if origin and origin not in public_origins:
+                    raise Problem(403, 'origin')
+                if origin:
+                    headers.extend([
+                        ('Access-Control-Allow-Origin', origin),
+                        ('Vary', 'Origin'),
+                    ])
+                raw_query = env.get('QUERY_STRING', '')
+                if len(raw_query) > 500:
+                    raise Problem(400, 'invalid_request')
+                query = parse_qs(raw_query, keep_blank_values=True)
+                if any(len(vals) != 1 for vals in query.values()):
+                    raise Problem(400, 'invalid_request')
+                public_root = '/api/v2/public/appointments/'
+                suffix = path[len(public_root):]
+                if suffix == 'catalog':
+                    if query:
+                        raise Problem(400, 'invalid_request')
+                    return respond(200, appointments_storefront_preview_v2.public_catalog(c))
+                required = {'professional_id', 'service_id', 'mode'}
+                if suffix == 'calendar-month':
+                    required.add('month')
+                elif suffix == 'slots':
+                    required.add('date')
+                else:
+                    raise Problem(404, 'not_found')
+                if set(query) != required:
+                    raise Problem(400, 'invalid_request')
+                values = {key: query[key][0] for key in required}
+                try:
+                    if suffix == 'calendar-month':
+                        result = appointments_storefront_preview_v2.public_month(
+                            c, values['professional_id'], values['service_id'],
+                            values['mode'], values['month'])
+                    else:
+                        result = appointments_storefront_preview_v2.public_day(
+                            c, values['professional_id'], values['service_id'],
+                            values['mode'], values['date'])
+                except LookupError:
+                    raise Problem(404, 'booking_selection_not_found')
+                except ValueError as exc:
+                    raise Problem(400, str(exc))
+                return respond(200, result)
 
             # Players can reschedule ordinary events, but cannot change nutrition or games.
             if path.startswith('/api/v2/player/events/') and method in ('PUT','DELETE'):
