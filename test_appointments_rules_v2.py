@@ -80,6 +80,7 @@ class BookingRulesTests(unittest.TestCase):
         public_catalog=self.guest.request(self.public+"/catalog")
         self.assertEqual(public_catalog["status"],200,public_catalog)
         self.assertEqual(public_catalog["body"]["interval_minutes"],10)
+        self.assertEqual(public_catalog["body"]["checkout_hold_minutes"],20)
         days=self.day_slots(public=True)
         self.assertEqual(days["status"],200,days)
         self.assertIn("10:40",[s["start"] for s in days["body"]["slots"]])
