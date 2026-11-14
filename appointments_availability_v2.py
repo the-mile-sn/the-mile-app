@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 from appointments_catalog_v2 import ORG_ID, MODES
 import appointments_google_v2 as google
 import appointments_checkout_v2 as checkout
+import appointments_rules_v2 as rules
 
 LISBON = ZoneInfo("Europe/Lisbon")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}$")
@@ -273,12 +274,13 @@ def preview(c, org_id, professional, service, mode, day_value, now=None, exclude
     local_start = datetime.combine(day, datetime.min.time(), LISBON)
     local_end = datetime.combine(day + timedelta(days=1), datetime.min.time(), LISBON)
     google_busy = google.busy_intervals(c, org_id, professional, local_start, local_end)
-    slots = _slots_on_day(day, duration, available, blocked, [*bookings,*active_holds.get(day.isoformat(),())], now, google_busy)
+    start_interval = rules.get(c, org_id)['start_interval_minutes']
+    slots = _slots_on_day(day, duration, available, blocked, [*bookings,*active_holds.get(day.isoformat(),())], now, google_busy, start_interval)
     return {"date": day.isoformat(), "slots": slots,
             "preview_only": True, "includes_google": google.status(c, org_id, professional)["busy_check_active"],
             "includes_bookings": True, "includes_internal_bookings": True,
             "includes_checkout_holds": True, "includes_sesami": False, "timezone": "Europe/Lisbon",
-            "interval_minutes": 15, "buffer_minutes": 0}
+            "interval_minutes": start_interval, "buffer_minutes": 0}
 
 
 def _booking_exclusion(c, org_id, booking_id):
@@ -299,12 +301,12 @@ def _booking_exclusion(c, org_id, booking_id):
     return row["id"]
 
 
-def _slots_on_day(day, duration, available, blocked, bookings, now, google_busy=()):
+def _slots_on_day(day, duration, available, blocked, bookings, now, google_busy=(), interval_minutes=15):
     """Shared source of truth for one-day slots and month availability."""
     result = []
     for window in available:
-        first = ((window["start_minute"] + 14) // 15) * 15
-        for start in range(first, window["end_minute"] - duration + 1, 15):
+        first = ((window["start_minute"] + interval_minutes - 1) // interval_minutes) * interval_minutes
+        for start in range(first, window["end_minute"] - duration + 1, interval_minutes):
             end = start + duration
             if any(start < item["end_minute"] and item["start_minute"] < end for item in blocked):
                 continue
@@ -388,6 +390,7 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
     else:
         available, blocks, bookings, active_holds = {}, {}, {}, {}
         google_busy = []
+    start_interval = rules.get(c, org_id)["start_interval_minutes"]
     days = []
     for day_number in range(1, last.day+1):
         current = date(first.year, first.month, day_number)
@@ -395,7 +398,7 @@ def month_preview(c, org_id, professional, service, mode, month, now=None,
         if eligible and today <= current <= end_limit:
             count = len(_slots_on_day(current, s["duration_minutes"],
                         available.get(iso, ()), blocks.get(iso, ()),
-                        [*bookings.get(iso, ()),*active_holds.get(iso, ())], now, google_busy))
+                        [*bookings.get(iso, ()),*active_holds.get(iso, ())], now, google_busy, start_interval))
         else:
             count = 0
         days.append({"date": iso, "slots_count": count, "available": count > 0})
