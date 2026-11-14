@@ -5496,3 +5496,5 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .consumption-editor .consumption-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;align-items:stretch!important}
 #overview .consumption-editor .consumption-actions>button{width:100%!important;min-width:0!important;margin:0!important;padding:9px 5px!important;min-height:42px!important;font-size:clamp(11px,2.8vw,14px)!important}
 #overview #day-details .meal-consumption-tags-bottom .meal-registered-badge{margin-left:0!important}
+
+#overview .consumption-editor .consumption-actions.consumption-actions-two{grid-template-columns:repeat(2,minmax(0,1fr))!important}
