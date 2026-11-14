@@ -1906,14 +1906,14 @@ async function overview(){
    };
    gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
    renderMacroMode("g");
-   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");};
+   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
    if(consumptionEnabled){
     const footer=document.createElement("div");footer.className="consumption-concentric-footer";
     const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent="Ver valores semanais e detalhes";
     footerLabel.addEventListener("click",()=>expand.click());
     const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
     const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
-    if(unitControl)footerActions.append(unitControl);
+    if(unitControl){footerActions.append(unitControl);unitControl.style.setProperty("display","none","important");}
     footerActions.append(expand);footer.append(footerLabel,footerActions);visual.append(footer);
    }else visual.append(expand);
    summary.append(weeklyCharts);
