@@ -24,6 +24,7 @@ import appointments_google_v2
 import appointments_checkout_v2
 import appointments_shopify_bridge_v2
 import appointments_shopify_registration_v2
+import appointments_launch_readiness_v2
 import appointments_shopify_smoke_v2
 import appointments_shopify_paid_booking_smoke_v2
 import appointments_storefront_preview_v2
@@ -1161,6 +1162,10 @@ def application(env, start_response):
                 return respond(200, {'ok': True})
             # Phase 6.1: checkout holds are ADMIN-ONLY for controlled testing.
             # No storefront, app proxy, payment or Shopify webhook endpoints yet.
+            if path == '/api/v2/admin/appointments/checkout/google-readiness' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                return respond(200,appointments_launch_readiness_v2.readiness(c))
             if path == '/api/v2/admin/appointments/checkout/webhook-setup' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
