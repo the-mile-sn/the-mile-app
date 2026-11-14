@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=33">
- <link rel="stylesheet" href="/admin-appointments.css?v=6">
+ <link rel="stylesheet" href="/admin-appointments.css?v=7">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -162,11 +162,11 @@
     <div class="tm-appointments-config-grid tm-appt-next-phase">
      <article class="tm-appointments-config-card"><h3>Disponibilidades e bloqueios</h3><p>Horários e exceções disponíveis na aba «Disponibilidades».</p><small>Em funcionamento interno</small></article>
      <article class="tm-appointments-config-card"><h3>Google Calendar</h3><p>Ligação individual e seleção de calendários na Configuração, com sincronização de eventos numa fase posterior.</p><small>Ligação preparada</small></article>
-     <article class="tm-appointments-config-card"><h3>Shopify e pagamentos</h3><p>Confirmação das reservas após pagamento e sincronização comercial.</p><small>Próximas fases</small></article>
+     <article class="tm-appointments-config-card"><h3>Shopify e pagamentos</h3><p>Motor de bloqueios temporários de 15 minutos preparado. A compra no site e a confirmação por pagamento ainda não estão ligadas.</p><small id="tm-appt-checkout-status" aria-live="polite">A verificar o estado interno…</small><button id="tm-appt-checkout-refresh" type="button" class="tm-appt-checkout-refresh">Atualizar estado</button></article>
     </div>
     <div class="tm-appointments-rules">
      <h3>Regras acordadas para o projeto</h3>
-     <p>Referência de planeamento: estas regras ainda não estão ativas nem são editáveis no backoffice.</p>
+     <p>Regras de referência: os intervalos de 15 minutos, a janela de 60 dias e os bloqueios de checkout já são aplicados internamente. O checkout público permanece desligado.</p>
      <dl>
       <div><dt>Intervalos de início</dt><dd>15 minutos</dd></div>
       <div><dt>Intervalo entre consultas</dt><dd>Sem intervalo obrigatório</dd></div>
@@ -299,7 +299,7 @@
  <script src="/admin-nav-shell.js?v=5" defer></script>
  <script src="/admin-appointments.js?v=4" defer></script>
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
- <script src="/admin-appointments-bookings.js?v=3" defer></script>
+ <script src="/admin-appointments-bookings.js?v=4" defer></script>
  <script src="/admin-appointments-google.js?v=1" defer></script>
  <script src="/admin-mobile-nav.js?v=11" defer></script>
 </body>
