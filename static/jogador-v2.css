@@ -5501,3 +5501,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 #overview .consumption-editor .consumption-alternative-option{display:block;width:100%;min-height:46px;border:1px solid rgba(160,175,165,.28);border-radius:12px;background:rgba(255,255,255,.09);color:inherit;font:inherit;text-align:left;padding:12px 16px;cursor:pointer}
 #overview .consumption-editor .consumption-alternative-option:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* Keep the alternative-colour action comfortably inside its meal card. */
+#overview #day-details .meal.daily-meal .consumption-change-color{margin-top:16px!important;margin-bottom:18px!important}
+#overview #day-details .consumption-change-color{margin-top:16px!important;margin-bottom:18px!important}
