@@ -363,10 +363,26 @@
   const node=$("tm-appt-checkout-status");
   if(!node)return;
   try{
-   const [result,paid,setupInfo]=await Promise.all([
+   const [result,paid,setupInfo,googleReadiness]=await Promise.all([
      api("/checkout/status"),api("/checkout/payment-status"),
-     api("/checkout/webhook-setup")
+     api("/checkout/webhook-setup"),api("/checkout/google-readiness")
    ]);
+   const googleStatus=$("tm-appt-checkout-google-readiness");
+   if(googleStatus){
+     const total=googleReadiness.professionals_to_check;
+     const connected=googleReadiness.professionals_blocking_google;
+     if(!googleReadiness.google_configured){
+       googleStatus.textContent="Google Calendar: ligação não configurada no servidor. As marcações existentes no Google ainda não bloqueiam as vagas.";
+     }else if(!total){
+       googleStatus.textContent="Google Calendar: não há profissionais ativos associados a serviços para validar.";
+     }else if(googleReadiness.all_professionals_blocking_google){
+       googleStatus.textContent="Google Calendar pronto: os horários ocupados são consultados para todos os "+total+" profissionais ativos.";
+     }else{
+       googleStatus.textContent="Google Calendar: "+connected+"/"+total+
+         " profissionais com bloqueio de horários ativo. Verificar: "+
+         googleReadiness.professionals_missing_google_blocking.join(", ")+".";
+     }
+   }
    const registration=$("tm-appt-shopify-register-paid");
    if(registration)registration.disabled=!(setupInfo.client_id_configured&&
      setupInfo.secret_configured&&setupInfo.webhook_receiver_enabled);
@@ -385,6 +401,8 @@
      " · "+paid.payments_requiring_review+" pagamento(s) para revisão";
   }catch(error){
    node.textContent="Estado de checkout temporariamente indisponível";
+   const googleStatus=$("tm-appt-checkout-google-readiness");
+   if(googleStatus)googleStatus.textContent="Não foi possível verificar a ligação aos calendários Google.";
   }
  }
  $("tm-appt-shopify-register-paid")?.addEventListener("click",async ()=>{
