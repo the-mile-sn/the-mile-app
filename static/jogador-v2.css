@@ -5477,3 +5477,5 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .nutrition-weekly-charts .nutrition-macro-modes,
 #overview #day-details .nutrition-weekly-charts .macro-modes{display:none!important}
 #overview #day-details .nutrition-comparison.consumption-concentric:not(.nutrition-details-open) .consumption-concentric-footer-actions .consumption-concentric-unit-switch{display:none!important}
+
+#overview #day-details .nutrition-weekly-charts .macro-chart-switch{display:none!important}
