@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 import appointments_catalog_v2 as catalog
 import appointments_availability_v2 as availability
+import appointments_assignment_v2 as assignment
 
 ORG_ID = catalog.ORG_ID
 LISBON = ZoneInfo("Europe/Lisbon")
@@ -72,34 +73,11 @@ def public_catalog(c, now=None):
         "last_bookable_date": (today + timedelta(days=60)).isoformat(),
         "timezone": "Europe/Lisbon",
         "interval_minutes": 15,
+        "any_professional_supported": True,
         "preview_only": True,
         "checkout_enabled": False,
         "sesami_integrated": False,
     }
-
-
-def _eligible(c, professional_id, service_id, mode):
-    """Check every public lookup against active service, person and assignment."""
-    if mode not in catalog.MODES:
-        raise ValueError("invalid_mode")
-    if not isinstance(professional_id, str) or not 1 <= len(professional_id) <= 70:
-        raise ValueError("invalid_professional")
-    if not isinstance(service_id, str) or not 1 <= len(service_id) <= 70:
-        raise ValueError("invalid_service")
-
-    match = c.execute("""
-       SELECT 1 FROM appt_professional_services ps
-       JOIN appt_professionals p ON p.id=ps.professional_id AND p.org_id=ps.org_id
-       JOIN appt_services s ON s.id=ps.service_id AND s.org_id=ps.org_id
-       JOIN appt_service_formats f ON f.org_id=s.org_id AND f.service_id=s.id
-       WHERE ps.org_id=? AND ps.professional_id=? AND ps.service_id=? AND f.mode=?
-         AND p.active=1 AND s.active=1 AND f.enabled=1
-         AND ((f.mode='presencial' AND p.presencial_enabled=1)
-          OR (f.mode='online' AND p.online_enabled=1))
-       LIMIT 1
-    """, (ORG_ID, professional_id, service_id, mode)).fetchone()
-    if not match:
-        raise LookupError("booking_selection_not_found")
 
 
 def _window(now):
@@ -107,10 +85,16 @@ def _window(now):
     return today, today + timedelta(days=60)
 
 
+def _preview_eligible(c, professional_id, service_id, mode):
+    """Reject inactive providers, unrelated service combinations, and bad IDs."""
+    return assignment.candidates(c, ORG_ID, professional_id, service_id, mode)
+
+
 def public_month(c, professional_id, service_id, mode, month, now=None):
     now = now or datetime.now(timezone.utc)
-    _eligible(c, professional_id, service_id, mode)
-    # Block enumeration of arbitrary historical dates and far-future periods.
+    if now.tzinfo is None:
+        raise ValueError("invalid_now")
+    people = _preview_eligible(c, professional_id, service_id, mode)
     if not isinstance(month, str) or len(month) != 7:
         raise ValueError("invalid_month")
     try:
@@ -121,40 +105,74 @@ def public_month(c, professional_id, service_id, mode, month, now=None):
     if (first.year, first.month) < (today.year, today.month) or (
         first.year, first.month) > (last.year, last.month):
         raise ValueError("outside_booking_window")
-    result = availability.month_preview(
-        c, ORG_ID, professional_id, service_id, mode, month, now=now,
-    )
+
+    # Union of eligible providers: a day is selectable if any provider is free.
+    # Google free/busy failures propagate (fail closed) rather than invent slots.
+    grouped = {}
+    for person in people:
+        result = availability.month_preview(
+            c, ORG_ID, person["id"], service_id, mode, month, now=now,
+        )
+        for item in result["days"]:
+            grouped[item["date"]] = (
+                grouped.get(item["date"], False) or bool(item["available"])
+            )
     return {
-        "month": result["month"],
-        "days": [
-            {"date": item["date"], "available": bool(item["available"])}
-            for item in result["days"]
-        ],
+        "month": month,
+        "days": [{"date": date, "available": grouped[date]}
+                 for date in sorted(grouped)],
         "timezone": "Europe/Lisbon",
         "preview_only": True,
         "checkout_enabled": False,
         "sesami_integrated": False,
+        "any_professional": professional_id == assignment.ANY_PROFESSIONAL,
     }
 
 
 def public_day(c, professional_id, service_id, mode, day, now=None):
     now = now or datetime.now(timezone.utc)
-    _eligible(c, professional_id, service_id, mode)
+    if now.tzinfo is None:
+        raise ValueError("invalid_now")
+    people = _preview_eligible(c, professional_id, service_id, mode)
     date = availability.clean_date(day)
     today, last = _window(now)
     if date < today or date > last:
         raise ValueError("outside_booking_window")
-    result = availability.preview(
-        c, ORG_ID, professional_id, service_id, mode, day, now=now,
-    )
+    combined = {}
+    for person in people:
+        result = availability.preview(
+            c, ORG_ID, person["id"], service_id, mode, day, now=now,
+        )
+        for slot in result["slots"]:
+            key = (slot["start"], slot["end"])
+            combined.setdefault(key, set()).add(person["id"])
+
+    any_selection = professional_id == assignment.ANY_PROFESSIONAL
+    slots = []
+    if any_selection:
+        ranked_ids = assignment.ranked_professionals(
+            c, ORG_ID, people, date, now=now,
+        )
+        for (start, end), ids in sorted(combined.items()):
+            suggested = next((pid for pid in ranked_ids if pid in ids), None)
+            if not suggested:
+                continue
+            slots.append({
+                "start": start, "end": end,
+                "professional_count": len(ids),
+                # Informational only: recompute under locks when creating a hold.
+                "suggested_professional_id": suggested,
+            })
+    else:
+        slots = [{"start": start, "end": end}
+                 for start, end in sorted(combined)]
     return {
         "date": date.isoformat(),
-        "slots": [
-            {"start": item["start"], "end": item["end"]}
-            for item in result["slots"]
-        ],
+        "slots": slots,
         "timezone": "Europe/Lisbon",
         "preview_only": True,
         "checkout_enabled": False,
         "sesami_integrated": False,
+        "any_professional": any_selection,
+        "provisional_assignment": any_selection,
     }

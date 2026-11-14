@@ -148,6 +148,76 @@ class CheckoutHoldsTests(unittest.TestCase):
                          ["body"]["active_holds"],0)
         self.assertEqual(self.day_count(),5)
 
+    def test_any_professional_assigns_under_lock_and_balances_load(self):
+        p=self.admin.request(self.api+"/professionals","POST",{
+            "name":"Outro profissional Checkout",
+            "email":"other-checkout@ci.invalid","active":True,
+            "presencial_enabled":True,"online_enabled":True,
+            "service_ids":[self.first["id"],self.follow["id"]]
+        })
+        self.assertEqual(p["status"],201,p)
+        second=p["body"]["id"]
+        created=self.admin.request(self.api+"/availability","POST",{
+            "professional_id":second,"date":self.day,"start":"09:00","end":"13:00"
+        })
+        self.assertEqual(created["status"],201,created)
+        data=self.data(key="any-first-request-0000001")
+        data["professional_id"]="any"
+        first=self.admin.request(self.api+"/checkout/holds","POST",data)
+        self.assertEqual(first["status"],201,first)
+        actual=first["body"]["professional_id"]
+        self.assertIn(actual,{self.pid,second})
+        repeat=self.admin.request(self.api+"/checkout/holds","POST",data)
+        self.assertEqual(repeat["status"],201,repeat)
+        self.assertEqual(repeat["body"]["id"],first["body"]["id"])
+        second_hold=self.admin.request(self.api+"/checkout/holds","POST",{
+            **data,"idempotency_key":"any-second-request-000002"
+        })
+        self.assertEqual(second_hold["status"],201,second_hold)
+        self.assertEqual(second_hold["body"]["professional_id"],
+                         second if actual==self.pid else self.pid)
+        impossible=self.admin.request(self.api+"/checkout/holds","POST",{
+            **data,"idempotency_key":"any-third-request-0000003"
+        })
+        self.assertEqual(impossible["status"],409,impossible)
+        self.assertEqual(impossible["body"]["error"],"slot_no_longer_available")
+        released=self.admin.request(
+            self.api+"/checkout/holds/"+first["body"]["id"]+"/release","POST",{})
+        self.assertEqual(released["status"],200)
+        recovered=self.admin.request(self.api+"/checkout/holds","POST",{
+            **data,"idempotency_key":"any-fourth-request-000004"
+        })
+        self.assertEqual(recovered["status"],201,recovered)
+        self.assertEqual(recovered["body"]["professional_id"],actual)
+
+    def test_any_professional_skips_blocked_provider(self):
+        p=self.admin.request(self.api+"/professionals","POST",{
+            "name":"Profissional só disponível ao almoço",
+            "email":"blocked-other@ci.invalid","active":True,
+            "presencial_enabled":True,"online_enabled":True,
+            "service_ids":[self.first["id"]]
+        })
+        self.assertEqual(p["status"],201,p)
+        second=p["body"]["id"]
+        self.assertEqual(self.admin.request(self.api+"/availability","POST",{
+            "professional_id":second,"date":self.day,"start":"09:00","end":"13:00"
+        })["status"],201)
+        self.assertEqual(self.admin.request(self.api+"/blocks","POST",{
+            "professional_id":second,"date":self.day,
+            "start":"09:00","end":"10:30","note":"Privado"
+        })["status"],201)
+        self.assertEqual(self.admin.request(self.api+"/bookings","POST",{
+            "professional_id":self.pid,"service_id":self.first["id"],
+            "mode":"presencial","date":self.day,"start":"09:00",
+            "customer_name":"Cliente previamente agendado"
+        })["status"],201)
+        blocked=self.admin.request(self.api+"/checkout/holds","POST",{
+            **self.data(),"professional_id":"any",
+            "idempotency_key":"any-blocked-request-000001"
+        })
+        self.assertEqual(blocked["status"],409,blocked)
+        self.assertEqual(blocked["body"]["error"],"slot_no_longer_available")
+
     def test_manual_booking_before_hold_wins(self):
         created=self.admin.request(self.api+"/bookings","POST",{
             **self.data(),"customer_name":"Cliente Primeiro"

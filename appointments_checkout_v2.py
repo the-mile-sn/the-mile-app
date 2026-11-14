@@ -10,6 +10,7 @@ import secrets
 import time
 from datetime import datetime, timezone
 from appointments_catalog_v2 import ORG_ID
+import appointments_assignment_v2 as assignment
 
 HOLD_SECONDS = 15 * 60
 ID_RE = re.compile(r"[0-9a-f]{32}\Z")
@@ -134,23 +135,36 @@ def start_hold(c, data, actor, org_id=ORG_ID, now=None):
     import appointments_bookings_v2 as bookings
     if not isinstance(data, dict):
         raise ValueError("invalid_request")
-    pid = data.get("professional_id")
-    if not isinstance(pid, str) or not 0 < len(pid) <= 70:
+    requested_pid = data.get("professional_id")
+    if not isinstance(requested_pid, str) or not 0 < len(requested_pid) <= 70:
         raise ValueError("invalid_professional")
     key = data.get("idempotency_key") or secrets.token_hex(16)
     if not isinstance(key, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,80}", key):
         raise ValueError("invalid_idempotency_key")
     epoch = _epoch(now)
     now = now or datetime.now(timezone.utc)
-    bookings._acquire_transaction_locks(c, org_id, [pid])
+    any_mode = requested_pid == assignment.ANY_PROFESSIONAL
+    if any_mode:
+        # Acquire every eligible professional lock in a stable ID order, so
+        # two customers choosing "any" cannot race to claim the same person.
+        people = assignment.candidates(
+            c, org_id, requested_pid, data.get("service_id"), data.get("mode"),
+        )
+        ids = [person["id"] for person in people]
+    else:
+        people = []
+        ids = [requested_pid]
+    bookings._acquire_transaction_locks(c, org_id, ids)
     previous = c.execute("""
       SELECT * FROM appt_checkout_holds WHERE org_id=? AND idempotency_key=?
     """, (org_id, key)).fetchone()
     if previous is not None:
-        if any(previous[field] != data.get(payload) for field,payload in (
-            ("professional_id","professional_id"),("service_id","service_id"),
-            ("mode","mode"),("day","date")
+        if any(previous[field] != data.get(payload) for field, payload in (
+            ("service_id", "service_id"), ("mode", "mode"), ("day", "date")
         )):
+            raise ValueError("checkout_idempotency_mismatch")
+        if (previous["professional_id"] not in ids if any_mode else
+                previous["professional_id"] != requested_pid):
             raise ValueError("checkout_idempotency_mismatch")
         from appointments_availability_v2 import clean_time
         if previous["start_minute"] != clean_time(data.get("start")):
@@ -158,7 +172,29 @@ def start_hold(c, data, actor, org_id=ORG_ID, now=None):
         if previous["status"] == "held" and previous["expires_at"] > epoch:
             return public_status(previous, epoch)
         raise ValueError("checkout_hold_closed")
-    chosen = bookings._validate_candidate(c, org_id, data, now=now)
+
+    if any_mode:
+        # Selection is provisional in the public preview. Real assignment is
+        # repeated and persisted only inside this transaction.
+        chosen = None
+        for candidate in assignment.ranked_professionals(
+                c, org_id, people, data.get("date"), now=now):
+            try:
+                chosen = bookings._validate_candidate(
+                    c, org_id, {**data, "professional_id": candidate}, now=now,
+                )
+                break
+            except ValueError as exc:
+                if str(exc) not in (
+                    "outside_availability", "blocked_period",
+                    "booking_overlap", "checkout_hold_conflict",
+                    "google_busy", "service_not_available",
+                ):
+                    raise
+        if chosen is None:
+            raise ValueError("slot_no_longer_available")
+    else:
+        chosen = bookings._validate_candidate(c, org_id, data, now=now)
     pid, sid, mode, day, start, end, begin, finish = chosen
     variant = c.execute("""
       SELECT f.shopify_variant_id, f.price_cents FROM appt_service_formats f

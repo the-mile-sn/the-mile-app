@@ -1117,7 +1117,7 @@ def application(env, start_response):
                 except ValueError as exc:
                     raise Problem(409 if str(exc) in (
                         'checkout_hold_conflict','checkout_idempotency_mismatch',
-                        'checkout_hold_closed','booking_overlap') else 400,str(exc))
+                        'checkout_hold_closed','booking_overlap','slot_no_longer_available') else 400,str(exc))
                 return respond(201,result)
             if (path.startswith('/api/v2/admin/appointments/checkout/holds/')
                     and path.endswith('/release') and method == 'POST'):
