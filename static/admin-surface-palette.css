@@ -4099,3 +4099,27 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar{transition:none!important;}
 }
 /* <=830px mobile navigation, and desktop touch without hover, are unchanged. */
+
+
+/* 2026-11-14 Plan editor: desktop status chip to the left, metadata stays right. */
+@media (min-width:831px){
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta{
+  display:flex!important;align-items:center!important;
+  justify-content:flex-end!important;flex-wrap:wrap!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta>.plan-save-feedback{
+  display:flex!important;flex:1 1 auto!important;min-width:0!important;
+  justify-content:space-between!important;align-items:center!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta .plan-save-feedback-copy{
+  display:flex!important;flex:1 1 auto!important;min-width:0!important;
+  align-items:center!important;justify-content:flex-start!important;
+ }
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta #plan-save-feedback-time{
+  flex:0 0 auto!important;
+ }
+ /* Preserve the existing right-aligned weight/date, typography, and colours. */
+ html[data-admin-theme] #tm-plan-page #plan-editor>.plan-editor-meta #plan-weight-reference{
+  flex:0 0 auto!important;margin-left:0!important;text-align:right!important;
+ }
+}
