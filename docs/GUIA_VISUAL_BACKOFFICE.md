@@ -509,3 +509,10 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - Seta de expansão do Peri-treino/Peri-jogo e X de fecho do dia: ícones outline isolados, sem fundo, sem cápsula e sem mudança de fundo no hover; manter a área de interação e foco de teclado acessível.
 - Eventos do mês: remover totalmente o hover de preenchimento da linha e o fundo de `:focus-within`. Conservar separadores ténues e hover/foco apenas na ação real de edição (lápis).
 - Editar as regras consolidadas em `static/admin-surface-palette.css`, sem acumular overrides. Não alterar dados, cálculos, seleção, gravação ou navegação da app dos jogadores.
+
+
+### Microciclos — identificação peri e ação Adicionar evento (14 novembro 2026)
+
+- **Peri-treino/Peri-jogo:** o cabeçalho do subcard deve identificar os períodos reais (ex.: «Pós-treino · Tarde», «Pré-jogo · Manhã») e apresentar imediatamente por baixo as kcal e macronutrientes previstos, com a mesma tipografia neutra e sequência das refeições. Havendo vários períodos, apresentar cada linha e nutrientes correspondentes sem somar valores indevidamente. O número de períodos e a seta outline mantêm-se à direita; ao expandir, mostrar opções e alimentos, sem repetir os nutrientes no corpo do período.
+- **Adicionar evento:** seguir o padrão de `+ Criar jogador`: botão de criação compacto com `--tm-action-main-bg`, `--tm-action-main-fg`, `--tm-action-main-hover`, Inter Tight Medium 500 e raio de 12 px. Sem barra de largura total nem seta decorativa; o formulário abre num subcard próprio abaixo do botão. Preservar os campos, checkboxes, gravação e leitura de `aria-expanded` para acessibilidade.
+- Desktop e mobile, claro e escuro usam os mesmos componentes e tokens. Não alterar cálculos, porções, eventos, estados de publicação ou a branch `main`. Atualizar o bloco CSS consolidado em vez de acrescentar overrides.
