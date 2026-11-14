@@ -401,7 +401,7 @@ def payment_summary(c, now=None):
         "service_formats_enabled": len(formats),
         "service_formats_mapped": mapped,
         # Cannot infer a real app installation from credentials in Render.
-        "shopify_app_installation_verified": False,
+        "shopify_app_installation_verified": None,
         "webhooks_enabled": webhook_enabled(),
         "checkout_enabled": checkout_enabled(),
         "sesami_migration_verified": _flag("MILE_SHOPIFY_SESAMI_MIGRATED"),
