@@ -56,13 +56,13 @@ class AppointmentsBackofficeShellTests(unittest.TestCase):
             page = client.request("/admin-appointments")
             self.assertEqual(page["status"], 200)
             self.assertIn(
-                b'src="/admin-appointments-bookings.js?v=9" defer',
+                b'src="/admin-appointments-bookings.js?v=10" defer',
                 page["body"])
             self.assertIn(
                 b'<button id="tm-appt-shopify-paid-smoke" type="button" '
                 b'class="tm-appt-checkout-refresh">',
                 page["body"])
-            script = client.request("/admin-appointments-bookings.js?v=9")
+            script = client.request("/admin-appointments-bookings.js?v=10")
             self.assertEqual(script["status"], 200)
             self.assertIn(b'api("/checkout/paid-booking-smoke-test","POST",{})',
                           script["body"])
