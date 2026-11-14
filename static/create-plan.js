@@ -326,7 +326,7 @@ function alignNutritionHeaders(){
     const pl=parseFloat(style.paddingLeft)||0;
     const pr=parseFloat(style.paddingRight)||0;
     const width=box.width-pl-pr;
-    const gutter=Math.max(0,box.right-pr-sourceRect.right);
+    const gutter=Math.max(0,box.right-pr-sourceRect.right-gap);
     const label=width-sourceRect.width-gutter-2*gap;
     return {label,rail:sourceRect.width,gutter};
   };
