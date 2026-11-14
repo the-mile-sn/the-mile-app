@@ -54,9 +54,11 @@ jobs:
           import app
           import appointments_catalog_v2 as catalogue
           import appointments_availability_v2 as availability
+          import appointments_rules_v2 as rules
           with app.connect() as c:
               catalogue.initialize(c)
               availability.initialize(c)
+              rules.initialize(c)
               first = catalogue.catalog(c)
               assert len(first['services']) == 4
               name = catalogue.save_professional(c, {
