@@ -305,27 +305,64 @@ function draw(){
   renderPersistence();
   ensurePlanReference();
 }
+/* Desktop Plan editor: the meal average, selected option total, and food rows
+   must share the same measured four-column nutrition rail. When the available
+   width cannot host a title and that rail, stack totals instead of overlapping.
+   On mobile, leave all positioning to the existing approved mobile CSS. */
 function alignNutritionHeaders(){
-  queryAll(".meal").forEach(meal=>{
-    if(window.matchMedia("(max-width:830px)").matches){
-      for(const target of [meal.querySelector(".meal-header-macros"),meal.querySelector(".option-content .option-summary > .macro-values")]){
-        if(!target)continue;
-        for(const name of ["position","left","right","width","max-width","display"])target.style.removeProperty(name);
-      }
+  const mobile=window.matchMedia("(max-width:830px)").matches;
+  const meals=queryAll("#plan-editor #meals>.meal.tm-editor-meal");
+  const rail=mobile?null:query("#plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-row.food-row > .macro-values");
+  const sourceMeal=rail?.closest(".tm-editor-meal");
+  const sourceRect=rail?.getBoundingClientRect();
+  const sourceMealRect=sourceMeal?.getBoundingClientRect();
+  const canMeasure=!!(sourceRect&&sourceMealRect&&sourceRect.width>0);
+  const railWidth=canMeasure?sourceRect.width:0;
+  const railRightInset=canMeasure?sourceMealRect.right-sourceRect.right:0;
+  const reset=element=>{
+    if(!element)return;
+    for(const property of ["position","left","right","top","bottom","width","max-width","display","transform"]){
+      element.style.removeProperty(property);
+    }
+  };
+  meals.forEach(meal=>{
+    const header=meal.querySelector(".meal-header");
+    const headerTotal=meal.querySelector(".meal-header-macros");
+    const summary=meal.querySelector(".option-content .option-summary");
+    const optionTotal=summary?.querySelector(":scope > .macro-values");
+    const heading=meal.querySelector(".meal-heading-main");
+    const targets=[headerTotal,optionTotal];
+    if(mobile||!canMeasure||!header){
+      meal.classList.remove("tm-editor-nutrition-stacked");
+      targets.forEach(reset);
       return;
     }
-    const rail=meal.querySelector(".option-content .nutrition-row.food-row > .macro-values");
-    if(!rail)return;
-    const reference=rail.getBoundingClientRect();
-    for(const target of [meal.querySelector(".option-content .option-summary > .macro-values")]){
-      if(!target||!target.parentElement)continue;
-      const parent=target.parentElement.getBoundingClientRect();
-      target.style.setProperty("position","absolute","important");
-      target.style.setProperty("left",(reference.left-parent.left)+"px","important");
-      target.style.setProperty("right","auto","important");
-      target.style.setProperty("width",reference.width+"px","important");
-      target.style.setProperty("max-width","none","important");
-      target.style.setProperty("display",target.classList.contains("macro-values")?"grid":"block","important");
+    const mealRect=meal.getBoundingClientRect();
+    const headRect=header.getBoundingClientRect();
+    const optionRect=summary?.getBoundingClientRect();
+    const railLeft=mealRect.right-railRightInset-railWidth;
+    /* The label needs a real readable area. Never let the nutrient rail
+       intersect the meal title or option title on narrower desktop windows. */
+    const minLeft=Math.max(
+      headRect.left+Math.min(330,headRect.width*.48),
+      optionRect?optionRect.left+Math.min(315,optionRect.width*.46):0
+    );
+    const stacked=railWidth<215||railLeft<minLeft||railLeft+railWidth>headRect.right-28;
+    meal.classList.toggle("tm-editor-nutrition-stacked",stacked);
+    targets.forEach(reset);
+    if(stacked)return;
+    for(const [element,parent] of [[headerTotal,header],[optionTotal,summary]]){
+      if(!element||!parent)continue;
+      const parentRect=parent.getBoundingClientRect();
+      element.style.setProperty("position","absolute","important");
+      element.style.setProperty("left",(railLeft-parentRect.left).toFixed(1)+"px","important");
+      element.style.setProperty("right","auto","important");
+      element.style.setProperty("top","50%","important");
+      element.style.setProperty("bottom","auto","important");
+      element.style.setProperty("transform","translateY(-50%)","important");
+      element.style.setProperty("width",railWidth.toFixed(1)+"px","important");
+      element.style.setProperty("max-width","none","important");
+      element.style.setProperty("display",element===headerTotal?"block":"grid","important");
     }
   });
 }
