@@ -4523,8 +4523,9 @@ html[data-admin-theme] #calendar-section .calendar-week-coverage{
  }
 }
 @media(max-width:830px){
+ /* Preserve the previously approved seven-column mobile calendar. */
  html[data-admin-theme] #calendar-section .tm-calendar-weekdays{
-  gap:4px;font-size:10px;
+  display:none!important;
  }
  html[data-admin-theme] #calendar-section .calendar-inline-editor>label :is(input,select){
   font-size:16px!important;
