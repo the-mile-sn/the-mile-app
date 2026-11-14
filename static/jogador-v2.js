@@ -2053,7 +2053,7 @@ async function overview(){
    cards.forEach((card,i)=>{
     if(!card)return;
     const target=card.tagName==='DETAILS'?(card.querySelector('.option-body')||card):card;
-    const isRecordedOption=!!previous&&previous.option_ref===options[i]?.option_ref;
+    const isRecordedOption=!!previous&&previous.prescription?.color===color&&previous.option_ref===options[i]?.option_ref;
     const actions=document.createElement('div');actions.className='consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
     quick.textContent=isRecordedOption&&previous.status==='all'?'✓ Consumido':'✓ Cumpri';quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
@@ -2073,7 +2073,7 @@ async function overview(){
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;quick.textContent='✓ Cumpri';error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
-    if(!isRecordedOption){actions.append(edit,quick);target.append(actions,feedback);}
+    if(!isRecordedOption&&!(previous?.prescription?.color&&previous.prescription.color!==color)){actions.append(edit,quick);target.append(actions,feedback);}
    });
   }
   if(consumptionEnabled&&color&&options.length){
