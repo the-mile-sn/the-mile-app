@@ -1723,10 +1723,16 @@ async function loadCalendar(){
   $("calendar-month-events").insertAdjacentElement("afterend",weekly);
   weekly.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="Média semanal";weekly.appendChild(heading);
-  const navigation=document.createElement("div");navigation.className="calendar-navigation";
+  const navigation=document.createElement("div");navigation.className="calendar-navigation tm-calendar-week-navigation";
   const previous=document.createElement("button");previous.type="button";previous.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';previous.setAttribute("aria-label","Semana anterior");previous.title="Semana anterior";
   const next=document.createElement("button");next.type="button";next.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';next.setAttribute("aria-label","Semana seguinte");next.title="Semana seguinte";
-  const range=document.createElement("strong");navigation.append(previous,range,next);weekly.appendChild(navigation);
+  const todayButton=document.createElement("button");todayButton.type="button";todayButton.className="tm-calendar-today";todayButton.textContent="Hoje";
+  todayButton.addEventListener("click",()=>{
+   const todayWeek=isoDay(weekStart(new Date()));
+   if(selectedNutritionWeek===todayWeek)return;
+   selectedNutritionWeek=todayWeek;loadCalendar().catch(e=>status(e.message,"warn"));
+  });
+  const range=document.createElement("strong");navigation.append(previous,todayButton,next,range);weekly.appendChild(navigation);
   const monday=new Date(selectedNutritionWeek+"T12:00:00");
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
   range.textContent=monday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short"})+" – "+sunday.toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
@@ -1765,7 +1771,7 @@ async function loadCalendar(){
   }
   weekly.append(coverage);
   const days=$("calendar-days");days.replaceChildren();
-  $("calendar-title").textContent=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
+  const monthLabel=first.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});$("calendar-title").textContent=monthLabel.charAt(0).toLocaleUpperCase("pt-PT")+monthLabel.slice(1);
   for(let i=0;i<(first.getDay()+6)%7;i++){const empty=document.createElement("div");empty.className="calendar-empty";days.appendChild(empty);}
   const todayKey=isoDay(new Date());
   for(const day of data.days){
@@ -1847,6 +1853,7 @@ async function loadCalendar(){
   $("calendar-month-count").textContent=monthEventCount+" evento"+(monthEventCount===1?"":"s");
   $("calendar-section").hidden=backofficeView!=="calendar";
 }
+$("calendar-go-today").addEventListener("click",()=>{const today=new Date();calendarMonth=new Date(today.getFullYear(),today.getMonth(),1);loadCalendar().catch(e=>status(e.message,"warn"));});
 $("calendar-prev").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 $("calendar-next").addEventListener("click",()=>{calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);loadCalendar().catch(e=>status(e.message,"warn"));});
 
