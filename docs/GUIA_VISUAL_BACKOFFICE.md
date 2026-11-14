@@ -437,3 +437,11 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Teclado:** Tab/foco permite expandir a barra e abrir os submenus; Escape fecha o submenu e devolve foco ao seu cabeçalho. Não duplicar handlers de navegação nem alterar as rotas subjacentes ou a proteção de planos por guardar.
 - **Compatibilidade:** todas as alterações são exclusivas do desktop com hover e ponteiro preciso (`min-width:831px`). Desktop tátil sem hover e mobile conservam a navegação anterior. Respeitar modo claro/escuro e preferência de movimento reduzido.
 - **QA:** verificar que nenhum nome/fotografia de jogador ou filtro fica oculto ao expandir; hover sobre Biblioteca e Menus abre subsecções e permite clicar; submenus fecham ao sair; redimensionamento do conteúdo e cabeçalhos de Planos preservam legibilidade e alinhamento; confirmar temas claro/escuro, acesso por teclado e navegação mobile.
+
+
+## 37. Edição de Planos — estado publicado à esquerda no desktop (14 novembro 2026)
+
+- **Ajuste exclusivo de desktop** (`min-width:831px`): na linha externa de metadados, colocar a pill de estado (ex.: «Plano publicado») no extremo **esquerdo**, tal como já acontece na versão mobile.
+- **Preservação rigorosa:** manter à **direita**, sem alterar texto, formato, cor ou localização, os elementos «Guardado em …» e «Ref. … kg · …». A alteração não deve mover o peso de referência para junto da pill, nem afetar os filtros, os totais nutricionais ou os cards.
+- **Implementação:** conservar o HTML, handlers e estados. Dar flexibilidade ao grupo do estado (`flex:1`) e alinhar o texto do estado à esquerda, enquanto o horário e o peso de referência permanecem flex-items estáticos no extremo direito. Apenas CSS no editor de Planos; mobile e app dos jogadores permanecem intactos.
+- **QA:** conferir plano publicado, por guardar e com erros, desktop largo e intermédio, nos modos claro e escuro; confirmar separadamente revisão de código, deploy Render e validação no browser.
