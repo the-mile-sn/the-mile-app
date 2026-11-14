@@ -27,6 +27,11 @@
   node.textContent=message||"";node.classList.toggle("is-error",isError);
  }
  const errors={
+  shopify_registration_not_ready:"Falta concluir a configuração Shopify da The Mile Booking no Render.",
+  shopify_registration_auth_failed:"A Shopify recusou a autenticação da aplicação. Confirma o Client Secret no Render.",
+  shopify_registration_graphql_failed:"A Shopify não permitiu consultar as subscrições desta aplicação.",
+  shopify_registration_rejected:"A Shopify não aceitou o webhook. Verifica as permissões e a instalação da aplicação.",
+  shopify_registration_unavailable:"Não foi possível contactar a Shopify neste momento.",
   invalid_customer_name:"Indica o nome completo do cliente.",
   invalid_customer_email:"Confirma o email do cliente.",
   invalid_customer_phone:"Confirma o telefone do cliente.",
