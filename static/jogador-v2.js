@@ -1317,13 +1317,39 @@ async function openDailyMealInMenus(dateKey,meal){
   });
  });
 }
-async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null){
+async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
+ for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
+ const panel=document.createElement('div');panel.className='consumption-editor';
+ const status=document.createElement('p');status.className='hint';status.textContent='A carregar cores disponíveis…';panel.append(status);host.append(panel);
+ try{
+  const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
+  const data=await api('/api/v2/player/consumption-options?'+qs);
+  if(!panel.isConnected)return;
+  panel.replaceChildren();
+  const title=document.createElement('p');title.textContent='Que cor consumiste?';panel.append(title);
+  const colors=data.alternative_colors||[];
+  if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent='Não existem outras cores com opções publicadas.';panel.append(hint);}
+  for(const color of colors){
+   const button=document.createElement('button');button.type='button';button.className='consumption-cancel';
+   button.textContent=color.charAt(0).toUpperCase()+color.slice(1);
+   button.onclick=()=>openConsumptionEditor(host,mealDate,mealKey,eventId,null,color);
+   panel.append(button);
+  }
+  const actions=document.createElement('div');actions.className='consumption-actions';
+  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>panel.remove();
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();
+  actions.append(back,cancel);panel.append(actions);
+ }catch(e){if(panel.isConnected){status.textContent='Não foi possível carregar as cores.';}error(e);}
+}
+
+async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
  const message=document.createElement('p');message.className='hint';message.textContent='A carregar opções publicadas…';
  panel.append(message);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
+  if(consumedColor)qs.set('consumed_color',consumedColor);
   const data=await api('/api/v2/player/consumption-options?'+qs);
   const existing=await api('/api/v2/player/consumption-records?start='+mealDate+'&end='+mealDate);
   const previous=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
@@ -1526,6 +1552,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const seq=++previewSeq,option=data.options.find(x=>x.option_ref===select.value);
    if(!option)return;
    const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
+   if(consumedColor)body.consumed_color=consumedColor;
    if(body.status==='partial'){
     body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
     body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
@@ -1561,12 +1588,13 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const save=document.createElement('button');save.type='button';save.textContent='Guardar';
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
+   if(consumedColor)body.consumed_color=consumedColor;
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
    try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   save.className='consumption-save';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();const actions=document.createElement('div');actions.className='consumption-actions';actions.append(cancel,save);panel.append(actions);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}actions.append(cancel,save);panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
@@ -1996,6 +2024,15 @@ async function overview(){
   if(consumptionEnabled&&color&&options.length){
    const previous=consumptionRecords.find(x=>x.meal_key===meal&&x.meal_date===d&&!x.event_id);
    const cards=options.length===1?[section.querySelector('.single-meal-option')]:Array.from(section.querySelectorAll('.player-meal-option-subcard'));
+   if(previous&&previous.prescription?.color&&previous.prescription.color!==color){
+    const note=document.createElement('div');note.className='meal-consumption-tags meal-consumption-tags-bottom';
+    const label=document.createElement('span');label.className='meal-registered-badge';
+    label.textContent='✓ Consumido: '+previous.prescription.color;
+    const editAlternative=document.createElement('button');editAlternative.type='button';
+    editAlternative.className='meal-edit-consumption-tag';editAlternative.textContent='✎ Editar consumo';
+    editAlternative.onclick=()=>openConsumptionEditor(section,d,meal,'',null,previous.prescription.color);
+    note.append(label,editAlternative);section.append(note);
+   }
    if(previous){
     const optionIndex=options.findIndex(option=>option.option_ref===previous.option_ref);
     if(optionIndex>=0){
@@ -2016,7 +2053,7 @@ async function overview(){
    cards.forEach((card,i)=>{
     if(!card)return;
     const target=card.tagName==='DETAILS'?(card.querySelector('.option-body')||card):card;
-    const isRecordedOption=!!previous&&previous.option_ref===options[i]?.option_ref;
+    const isRecordedOption=!!previous&&previous.prescription?.color===color&&previous.option_ref===options[i]?.option_ref;
     const actions=document.createElement('div');actions.className='consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
     quick.textContent=isRecordedOption&&previous.status==='all'?'✓ Consumido':'✓ Cumpri';quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
@@ -2036,8 +2073,15 @@ async function overview(){
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;quick.textContent='✓ Cumpri';error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
-    if(!isRecordedOption){actions.append(edit,quick);target.append(actions,feedback);}
+    if(!isRecordedOption&&!(previous?.prescription?.color&&previous.prescription.color!==color)){actions.append(edit,quick);target.append(actions,feedback);}
    });
+  }
+  if(consumptionEnabled&&color&&options.length){
+   const change=document.createElement('button');change.type='button';change.className='consumption-cancel';
+   change.textContent='Alterar cor';change.setAttribute('aria-label','Registar consumo de outra cor');
+   change.style.cssText='display:block;margin:12px 0 0 auto;opacity:.78;font-size:.85em';
+   change.onclick=()=>openAlternativeColorPicker(section,d,meal);
+   section.append(change);
   }
   attachSupplements(section,(supplementsByDay[d]||[]).filter(x=>(x.moment===meal||(meal==="lunch"&&x.moment==="lunch_or_dinner"))));
   root.append(section);
