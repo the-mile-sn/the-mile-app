@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 import appointments_catalog_v2 as catalog
 import appointments_availability_v2 as availability
 import appointments_assignment_v2 as assignment
+import appointments_shopify_bridge_v2 as shopify_bridge
 
 ORG_ID = catalog.ORG_ID
 LISBON = ZoneInfo("Europe/Lisbon")
@@ -75,7 +76,7 @@ def public_catalog(c, now=None):
         "interval_minutes": 15,
         "any_professional_supported": True,
         "preview_only": True,
-        "checkout_enabled": False,
+        "checkout_enabled": shopify_bridge.checkout_enabled(),
         "sesami_integrated": False,
     }
 
@@ -123,7 +124,7 @@ def public_month(c, professional_id, service_id, mode, month, now=None):
                  for date in sorted(grouped)],
         "timezone": "Europe/Lisbon",
         "preview_only": True,
-        "checkout_enabled": False,
+        "checkout_enabled": shopify_bridge.checkout_enabled(),
         "sesami_integrated": False,
         "any_professional": professional_id == assignment.ANY_PROFESSIONAL,
     }
@@ -171,7 +172,7 @@ def public_day(c, professional_id, service_id, mode, day, now=None):
         "slots": slots,
         "timezone": "Europe/Lisbon",
         "preview_only": True,
-        "checkout_enabled": False,
+        "checkout_enabled": shopify_bridge.checkout_enabled(),
         "sesami_integrated": False,
         "any_professional": any_selection,
         "provisional_assignment": any_selection,
