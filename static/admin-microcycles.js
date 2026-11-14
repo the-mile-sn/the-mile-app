@@ -2601,7 +2601,7 @@ function periToggle(phase,kind,initial){
  return {field,checkbox};
 }
 function calendarEventLabel(date,detail=""){
- const base=formatCalendarPreviewDate(date).replace(/\\s+\\d{4}$/,"");
+ const base=formatCalendarPreviewDate(date).replace(/ \d{4}$/,"");
  return base+(detail?" · "+detail:"");
 }
 function planningEditIcon(){
