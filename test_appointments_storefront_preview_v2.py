@@ -78,7 +78,8 @@ class PublicStorefrontPreviewTests(unittest.TestCase):
         self.assertEqual(body["interval_minutes"], 15)
         first = next(x for x in body["services"] if x["id"] == self.first["id"])
         self.assertEqual(first["duration_minutes"], 90)
-        self.assertEqual(first["formats"]["presencial"]["price_cents"], 7000)
+        self.assertEqual(first["formats"]["presencial"]["price_cents"],
+                         self.first["formats"]["presencial"]["price_cents"])
         self.assertIn(self.pid, first["professional_ids"])
         person = next(x for x in body["professionals"] if x["id"] == self.pid)
         self.assertEqual(person["name"], "Profissional Publica")
