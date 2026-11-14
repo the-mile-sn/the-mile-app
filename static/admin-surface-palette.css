@@ -300,9 +300,69 @@ html[data-admin-theme] :is(.tm-player-search-list,.tm-db-player-results,.tm-clin
  background:var(--tm-ui-search)!important;
  border:0!important;box-shadow:none!important;
 }
-#tm-admin-legacy .tm-planning-result:hover{
- background:var(--tm-ui-hover)!important;
+/* Planning player selector: same contextual surfaces as the rest of Backoffice.
+   The unified header is a main card; search is a subcard; dropdown is a
+   single card-surface list. This replaces legacy light/dark overrides. */
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header{
+ background:var(--tm-ui-card)!important;
+ border:0!important;box-shadow:none!important;
 }
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header>.tm-planning-player-toolbar{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header .tm-planning-search-wrap{
+ background:var(--tm-ui-subcard)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header #tm-planning-search{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header #tm-planning-search::placeholder{
+ color:var(--tm-ui-muted)!important;opacity:1;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-search-icon{
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header>#backoffice-nav{
+ background:transparent!important;
+ border:0!important;border-top:0!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-results{
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:12px!important;
+ box-shadow:none!important;padding:5px!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-results[hidden],
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #tm-planning-avatar[hidden]{display:none!important}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-result{
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ font-family:inherit;font-weight:500;border:0!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-result:hover,
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-result:focus-visible,
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-result[aria-selected="true"]{
+ background:var(--tm-ui-hover)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-result-empty{
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-unified-header #tm-planning-search:focus-visible{
+ outline:2px solid var(--tm-ui-muted)!important;outline-offset:2px!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-player-identity{
+  width:100%;min-width:0;
+ }
+ html[data-admin-theme] #admin-workspace #tm-admin-legacy .tm-planning-player-select{
+  min-width:0;flex:1;
+ }
+ html[data-admin-theme] #admin-workspace #tm-admin-legacy #tm-planning-search{
+  font-size:16px!important;
+ }
+}
+
 /* Colored .calendar-day, .day-meal-header, .meal-vp and nutrition chips are
  * deliberately untouched. Likewise, event/supplement exceptions and dropzones. */
 
