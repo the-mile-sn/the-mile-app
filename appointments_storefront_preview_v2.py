@@ -64,6 +64,7 @@ def public_catalog(c, now=None):
         people.append({
             "id": pid,
             "name": person["name"],
+            "has_photo": bool(person.get("has_photo")),
             "modes": [mode for mode in catalog.MODES if person[mode + "_enabled"]],
             "service_ids": [s["id"] for s in services if pid in s["professional_ids"]],
         })
