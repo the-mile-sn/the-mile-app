@@ -305,91 +305,75 @@ function draw(){
   renderPersistence();
   ensurePlanReference();
 }
-/* Desktop Plan editor: the meal average, selected option total, and food rows
-   must share the same measured four-column nutrition rail. When the available
-   width cannot host a title and that rail, stack totals instead of overlapping.
-   On mobile, leave all positioning to the existing approved mobile CSS. */
-/* Keep all desktop nutritional totals INSIDE their own grid tracks.
-   In particular never absolutely position a grid item that already belongs to
-   grid column 2: doing so can resolve from the grid line and disappear when
-   the window grows. Both summaries use the first visible food row as the
-   shared alignment reference. Mobile remains owned by the mobile CSS. */
+/* Align the four nutrient tracks without changing their document flow.
+   The visible food-row rail supplies the actual width and the right inset.
+   Never use absolute positioning, and only stack at genuinely narrow widths.
+   The existing mobile stylesheet controls widths at 830px and below. */
 function alignNutritionHeaders(){
-  const mobile=window.matchMedia("(max-width:830px)").matches;
+  const isMobile=window.matchMedia("(max-width:830px)").matches;
   const meals=queryAll("#plan-editor #meals>.meal.tm-editor-meal");
-  const foodRail=mobile?null:query("#plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-row.food-row > .macro-values");
-  const reference=foodRail?.getBoundingClientRect();
-  const usable=!!(reference&&reference.width>=1);
-  const removeProps=(node,props)=>{if(node)for(const prop of props)node.style.removeProperty(prop)};
+  const source=isMobile?null:query("#plan-editor #meals>.meal.tm-editor-meal .option-content .nutrition-row.food-row > .macro-values");
+  const sourceRect=source?.getBoundingClientRect();
+  const hasSource=!!(sourceRect&&sourceRect.width>200);
   const gridProps=["display","grid-template-columns","grid-template-rows","column-gap","row-gap"];
   const valueProps=["position","left","right","top","bottom","inset","width","max-width","display","transform","grid-column","grid-row","justify-self"];
+  const clear=(el,props)=>{if(el)props.forEach(p=>el.style.removeProperty(p))};
+  const gap=10;
+  const settings=(parent)=>{
+    if(!parent||!hasSource)return null;
+    const box=parent.getBoundingClientRect();
+    const style=getComputedStyle(parent);
+    const pl=parseFloat(style.paddingLeft)||0;
+    const pr=parseFloat(style.paddingRight)||0;
+    const width=box.width-pl-pr;
+    const gutter=Math.max(0,box.right-pr-sourceRect.right);
+    const label=width-sourceRect.width-gutter-2*gap;
+    return {label,rail:sourceRect.width,gutter};
+  };
   meals.forEach(meal=>{
     const header=meal.querySelector(".meal-header");
-    const headerValue=meal.querySelector(".meal-header-macros");
-    const summary=meal.querySelector(".option-content .option-summary");
-    const optionValue=summary?.querySelector(":scope > .macro-values");
-    /* First clear the previous desktop geometry so resizing and switching
-       between narrow/wide widths always starts from a clean state. */
-    removeProps(header,gridProps);
-    removeProps(summary,gridProps);
-    removeProps(headerValue,valueProps);
-    removeProps(optionValue,valueProps);
-    if(mobile){
-      meal.classList.remove("tm-editor-nutrition-stacked");
-      return;
-    }
-    if(!header||!usable){
+    const headerValues=header?.querySelector(".meal-header-macros");
+    const summary=meal.querySelector(".option-content>.option-summary");
+    const optionValues=summary?.querySelector(":scope > .macro-values");
+    /* Clear previous inline geometry so returning from compact to full width
+       cannot preserve an old misplaced measurement. */
+    clear(header,gridProps);
+    clear(summary,gridProps);
+    clear(headerValues,valueProps);
+    clear(optionValues,valueProps);
+    meal.classList.remove("tm-editor-nutrition-stacked");
+    if(isMobile||!hasSource||!header||!headerValues)return;
+    const head=settings(header);
+    const opt=settings(summary);
+    /* The breakpoint is intentionally conservative: the previous heuristic
+       stacked on wide desktops and displaced the option total. */
+    const narrow=window.innerWidth<=1120||(head&&head.label<190)||(opt&&opt.label<165);
+    if(narrow){
       meal.classList.add("tm-editor-nutrition-stacked");
       return;
     }
-    const gap=12;
-    const calc=(node)=>{
-      if(!node)return null;
-      const box=node.getBoundingClientRect();
-      const style=getComputedStyle(node);
-      const padLeft=parseFloat(style.paddingLeft)||0;
-      const padRight=parseFloat(style.paddingRight)||0;
-      const left=reference.left-box.left-padLeft-gap;
-      const available=box.width-padLeft-padRight;
-      const end=available-left-reference.width-2*gap;
-      return {left,end,available};
+    const apply=(parent,total,layout)=>{
+      if(!parent||!total||!layout)return;
+      const set=(el,key,val)=>el.style.setProperty(key,val,"important");
+      set(parent,"display","grid");
+      set(parent,"grid-template-columns",layout.label.toFixed(1)+"px "+layout.rail.toFixed(1)+"px "+layout.gutter.toFixed(1)+"px");
+      set(parent,"grid-template-rows","auto");
+      set(parent,"column-gap",gap+"px");
+      set(total,"position","static");
+      set(total,"left","auto");
+      set(total,"right","auto");
+      set(total,"top","auto");
+      set(total,"bottom","auto");
+      set(total,"transform","none");
+      set(total,"display",total===headerValues?"block":"grid");
+      set(total,"width","100%");
+      set(total,"max-width","100%");
+      set(total,"grid-column","2");
+      set(total,"grid-row","1");
+      set(total,"justify-self","stretch");
     };
-    const head=calc(header),option=calc(summary);
-    /* Do not force 4 nutrient columns into a short title/label. At those
-       widths the approved two-row layout takes over instead. */
-    const stacked=!!(
-      !head||reference.width<220||head.left<310||head.end<36||
-      (option&&(option.left<245||option.end<0))
-    );
-    meal.classList.toggle("tm-editor-nutrition-stacked",stacked);
-    if(stacked)return;
-    const important=(node,prop,value)=>node.style.setProperty(prop,value,"important");
-    important(header,"display","grid");
-    important(header,"grid-template-columns",head.left.toFixed(1)+"px "+reference.width.toFixed(1)+"px minmax(36px,1fr)");
-    important(header,"grid-template-rows","auto");
-    important(header,"column-gap",gap+"px");
-    /* Grid children remain in normal layout, so content cannot vanish at
-       larger viewport widths or drift into another cell on resize. */
-    important(headerValue,"position","static");
-    important(headerValue,"display","block");
-    important(headerValue,"width","100%");
-    important(headerValue,"max-width","100%");
-    important(headerValue,"transform","none");
-    important(headerValue,"grid-column","2");
-    important(headerValue,"grid-row","1");
-    if(summary&&optionValue&&option){
-      important(summary,"display","grid");
-      important(summary,"grid-template-columns",option.left.toFixed(1)+"px "+reference.width.toFixed(1)+"px minmax(0,1fr)");
-      important(summary,"grid-template-rows","auto");
-      important(summary,"column-gap",gap+"px");
-      important(optionValue,"position","static");
-      important(optionValue,"display","grid");
-      important(optionValue,"width","100%");
-      important(optionValue,"max-width","100%");
-      important(optionValue,"transform","none");
-      important(optionValue,"grid-column","2");
-      important(optionValue,"grid-row","1");
-    }
+    apply(header,headerValues,head);
+    apply(summary,optionValues,opt);
   });
 }
 window.addEventListener("resize",()=>requestAnimationFrame(alignNutritionHeaders));
