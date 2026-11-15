@@ -5694,3 +5694,84 @@ html[data-admin-theme] #supplements-panel .supp-associated-card>.supp-card-actio
  html[data-admin-theme] #tm-supplement-library-page .event-admin-row{flex-wrap:wrap}
  html[data-admin-theme] #supplements-panel .supp-associated-card>.supp-card-actions{padding:12px 16px 18px!important}
 }
+
+/* Nutritional supplements catalogue matches the food-library toolbar and table hierarchy. */
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar{
+ display:flex;justify-content:flex-end;align-items:center;margin:0 0 18px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar button{
+ display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:13px;
+ padding:12px 18px;min-height:44px;background:var(--tm-ui-search);color:var(--tm-ui-text);
+ font:500 14px/1.2 "Inter Tight",sans-serif;cursor:pointer;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-card{
+ padding:0;background:transparent;border-radius:0;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-card>.supp-workflow-body{
+ gap:16px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-legacy-import[hidden]{display:none!important}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel{
+ padding:16px;background:var(--tm-ui-card);border-radius:18px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel label{
+ display:flex;flex-direction:column;gap:7px;color:var(--tm-ui-muted);font-size:12px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel input{
+ display:block;width:100%;height:48px;padding:10px 16px;font-size:14px;
+ background:var(--tm-ui-search);border:0;border-radius:13px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-list-panel{
+ border-radius:18px;background:var(--tm-ui-card);overflow:hidden;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table-wrap{overflow-x:auto}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table{
+ width:100%;border-collapse:collapse;table-layout:auto;text-align:left;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table th{
+ padding:17px 20px;font-size:12px;font-weight:400;color:var(--tm-ui-muted);
+ border-bottom:1px solid var(--tm-ui-divider);white-space:nowrap;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table td{
+ padding:16px 20px;font-size:13px;font-weight:400;color:var(--tm-ui-text);
+ border-bottom:1px solid var(--tm-ui-divider);vertical-align:middle;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table tbody tr:last-child td{border-bottom:0}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-name{display:flex;align-items:center;gap:12px;min-width:180px}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-name img{width:42px;height:42px;object-fit:contain;border-radius:8px}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-name strong{font-weight:600;font-size:14px}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-frequency{
+ display:inline-flex;align-items:center;justify-content:center;margin:2px 6px 2px 0;
+ border:1px solid var(--tm-ui-divider);border-radius:999px;padding:6px 10px;
+ font-size:11px;font-weight:400;white-space:nowrap;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table td.tm-supp-table-actions{
+ white-space:nowrap;text-align:right;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button{
+ display:inline-flex;align-items:center;justify-content:center;margin-left:7px;
+ border:0;border-radius:11px;background:var(--tm-ui-search);color:var(--tm-ui-text);
+ padding:10px 12px;font-size:12px;font-weight:500;cursor:pointer;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions .tm-supp-library-remove{
+ color:#dc8693;background:rgba(170,54,73,.14);
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-empty{
+ padding:24px 20px;margin:0;color:var(--tm-ui-muted);font-size:14px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-editor{
+ padding:0;background:var(--tm-ui-card);border-radius:18px;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-editor:not([open]){display:none}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-editor>summary{
+ padding:20px 24px;font-weight:600;cursor:pointer;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-editor>.supp-workflow-body{padding:20px 24px}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-editor-actions{
+ display:flex;justify-content:flex-end;align-items:center;gap:12px;flex-wrap:wrap;
+}
+@media(max-width:720px){
+ html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table th,
+ html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table td{padding:13px 12px}
+ html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table{min-width:710px}
+}
