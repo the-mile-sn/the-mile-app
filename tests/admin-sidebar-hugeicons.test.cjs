@@ -2,6 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const vm = require("node:vm");
 const navigation = fs.readFileSync("static/admin-nav-shell.js", "utf8").replace(/\\"/g, '"');
 const stylesheet = fs.readFileSync("static/admin-surface-palette.css", "utf8");
 
@@ -45,4 +46,10 @@ test("all pages using the shared sidebar refresh cached assets", () => {
     assert.ok(html.includes("/admin-nav-shell.js?v=9"), page + " nav cache version");
     assert.ok(html.includes("/admin-surface-palette.css?v=63"), page + " style cache version");
   }
+});
+
+// Regression guard: malformed HTML quote escaping made the login screen blank.
+test("sidebar JavaScript parses correctly", () => {
+  const js = fs.readFileSync("static/admin-nav-shell.js", "utf8");
+  assert.doesNotThrow(() => new vm.Script(js));
 });
