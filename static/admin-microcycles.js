@@ -3379,25 +3379,43 @@ function filterSupplementLists(){
  const q=normalizeSupplementQuery($("supp-assign-search").value.trim());
  const lq=normalizeSupplementQuery($("supp-library-search").value.trim());
  const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list");
+ const emptyNotice=$("supp-library-empty");
  select.replaceChildren();list.replaceChildren();
  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar...";select.append(empty);
+ const frequencyNames={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
+ const momentNames={breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",snack:"Lanche",dinner:"Jantar",supper:"Ceia",training:"Treino",match:"Jogo"};
+ let visible=0;
  for(const item of [...supplementLibrary].sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt"))){
   const hay=normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" "));
   if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}
-  if(!lq||!hay.includes(lq))continue;
-  const row=document.createElement("div");row.className="event-admin-row";
-  if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+item.id+"/image";img.alt=item.name;img.style.cssText="height:65px;width:55px;object-fit:contain";row.append(img);}
-  const label=document.createElement("span");label.className="supp-library-product";const name=document.createElement("strong");name.textContent=item.name;label.append(name);row.append(label);
-  const actions=document.createElement("div");actions.className="supp-library-actions";const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.onclick=()=>{
-   $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;$("supp-lib-moment").value=item.moment;
-   $("supp-lib-rule").value=item.rule;$("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
-   $("supp-lib-save").dataset.editId=item.id;
-   renderLibraryPrescriptionRules(item.prescriptions);
-   const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";panel.scrollIntoView({behavior:"smooth",block:"nearest"});
-  };actions.append(edit);const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};actions.append(remove);row.append(actions);list.append(row);
+  if(lq&&!hay.includes(lq))continue;
+  visible++;
+  const row=document.createElement("tr");
+  const nameCell=document.createElement("td"),nameWrap=document.createElement("div");nameWrap.className="tm-supp-table-name";
+  if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+encodeURIComponent(item.id)+"/image";img.alt="";img.loading="lazy";nameWrap.append(img);}
+  const name=document.createElement("strong");name.textContent=item.name;nameWrap.append(name);nameCell.append(nameWrap);
+  const rules=item.prescriptions?.length?item.prescriptions:[item];
+  const doseCell=document.createElement("td"),momentCell=document.createElement("td"),frequencyCell=document.createElement("td");
+  doseCell.textContent=rules.map(p=>p.dose||"—").join(" | ");
+  momentCell.textContent=rules.map(p=>p.timing_text||momentNames[p.moment]||"Sem associação").join(" | ");
+  for(const rule of rules){const chip=document.createElement("span");chip.className="tm-supp-table-frequency";chip.textContent=frequencyNames[rule.rule]||rule.rule||"Diária";frequencyCell.append(chip);}
+  const actions=document.createElement("td");actions.className="tm-supp-table-actions";
+  const edit=document.createElement("button");edit.type="button";edit.className="tm-supp-library-edit";edit.textContent="Editar";edit.setAttribute("aria-label","Editar "+item.name);
+  edit.onclick=()=>{
+   $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;
+   $("supp-lib-moment").value=item.moment;$("supp-lib-rule").value=item.rule;
+   $("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
+   $("supp-lib-save").dataset.editId=item.id;renderLibraryPrescriptionRules(item.prescriptions);
+   const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";panel.scrollIntoView({behavior:"smooth",block:"start"});
+  };
+  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.textContent="Remover";remove.setAttribute("aria-label","Remover "+item.name);
+  remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};
+  actions.append(edit,remove);row.append(nameCell,doseCell,momentCell,frequencyCell,actions);list.append(row);
  }
+ if(emptyNotice)emptyNotice.hidden=visible>0;
  if([...select.options].some(option=>option.value===previous))select.value=previous;
 }
+
 const supplementSearchInput=$("supp-assign-search"),supplementDropdown=$("supp-search-dropdown");
 $("supp-add-toggle").onclick=()=>{
  if(!supplementEditorReady)return;
@@ -3437,6 +3455,8 @@ $("supp-lib-save").onclick=async()=>{
   delete button.dataset.editId;$("supp-lib-image").value="";
   $("supp-lib-feedback").textContent="Suplemento guardado na biblioteca.";
   await loadSupplementLibrary();
+  $("supp-library-editor").open=false;
+  resetSupplementLibraryForm();
  }catch(e){$("supp-lib-feedback").textContent=e.message;}finally{button.disabled=false;}
 };
 function addSupplementFromLibrary(item){
@@ -3500,6 +3520,20 @@ $("supp-bulk-confirm").onclick=async()=>{
  }catch(e){$("supp-bulk-results").textContent="Erro ao importar: "+e.message;}finally{button.disabled=false;}
 };
 
+function resetSupplementLibraryForm(){
+ for(const id of ["supp-lib-name","supp-lib-dose","supp-lib-timing","supp-lib-note","supp-lib-image"])$(id).value="";
+ $("supp-lib-moment").value="";$("supp-lib-rule").value="daily";
+ delete $("supp-lib-save").dataset.editId;
+ $("supp-library-editor").querySelector("summary").textContent="Novo suplemento";
+ renderLibraryPrescriptionRules([]);
+}
+$("supp-library-new").onclick=()=>{
+ resetSupplementLibraryForm();
+ $("supp-lib-feedback").textContent="";
+ const editor=$("supp-library-editor");editor.open=true;editor.scrollIntoView({behavior:"smooth",block:"start"});
+ $("supp-lib-name").focus();
+};
+$("supp-library-cancel").onclick=()=>{$("supp-library-editor").open=false;resetSupplementLibraryForm();};
 if($("supp-lib-prescriptions")){renderLibraryPrescriptionRules([]);$("supp-library-editor").addEventListener("toggle",()=>{if($("supp-library-editor").open&&!$("supp-lib-save").dataset.editId)renderLibraryPrescriptionRules([]);});}
 
 /* Historical Excel import: read-only preview, deliberate bulk confirmation. */
