@@ -3104,14 +3104,18 @@ function setSupplementEditorReady(ready){
 function setSupplementAssignmentOpen(open,focusSearch=false){
  const panel=$("supp-assign-inline"),toggle=$("supp-add-toggle"),search=$("supp-assign-search");
  if(!panel||!toggle||!search)return;
- panel.hidden=!open;
- toggle.setAttribute("aria-expanded",String(open));
- if(!open){
+ if(open){
+  panel.hidden=false;
+  if(!panel.open)panel.showModal();
+  toggle.setAttribute("aria-expanded","true");
+  if(focusSearch)search.focus();
+ }else{
+  if(panel.open)panel.close();
+  panel.hidden=true;
+  toggle.setAttribute("aria-expanded","false");
   search.value="";
   $("supp-lib-select").value="";
   $("supp-search-dropdown").hidden=true;
- }else if(focusSearch){
-  search.focus();
  }
 }
 function resetSupplementForAthlete(athleteId){
@@ -3419,9 +3423,20 @@ function filterSupplementLists(){
 const supplementSearchInput=$("supp-assign-search"),supplementDropdown=$("supp-search-dropdown");
 $("supp-add-toggle").onclick=()=>{
  if(!supplementEditorReady)return;
- const opening=$("supp-assign-inline").hidden;
+ const opening=!$("supp-assign-inline").open;
  setSupplementAssignmentOpen(opening,opening);
 };
+$("supp-select-close").onclick=()=>setSupplementAssignmentOpen(false);
+$("supp-assign-inline").addEventListener("cancel",event=>{
+ event.preventDefault();
+ setSupplementAssignmentOpen(false);
+});
+$("supp-assign-inline").addEventListener("click",event=>{
+ if(event.target===$("supp-assign-inline"))setSupplementAssignmentOpen(false);
+});
+$("supp-assign-inline").addEventListener("close",()=>{
+ setSupplementAssignmentOpen(false);
+});
 
 function showSupplementDropdown(){const q=normalizeSupplementQuery(supplementSearchInput.value.trim());supplementDropdown.replaceChildren();const matches=[...supplementLibrary].filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(q)).sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt")).slice(0,60);for(const item of matches){const button=document.createElement("button");button.type="button";button.className="supp-search-result";button.setAttribute("role","option");button.textContent=item.name;button.addEventListener("pointerdown",e=>e.preventDefault());button.onclick=()=>addSupplementFromLibrary(item);supplementDropdown.append(button);}if(!matches.length){const empty=document.createElement("div");empty.className="supp-search-empty";empty.textContent="Sem resultados";supplementDropdown.append(empty);}supplementDropdown.hidden=false;}
 supplementSearchInput.addEventListener("focus",showSupplementDropdown);
