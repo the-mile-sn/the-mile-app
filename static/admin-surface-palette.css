@@ -4597,7 +4597,7 @@ html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-
  --tm-meal-accent:#72c697;--tm-meal-accent-ink:#102319;
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="vp"]{
- --tm-meal-accent:#a0d8a0;--tm-meal-accent-ink:#112511;
+ --tm-meal-accent:#28543e;--tm-meal-accent-ink:#bde6cd;
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header{
  background:var(--tm-meal-accent,transparent)!important;
