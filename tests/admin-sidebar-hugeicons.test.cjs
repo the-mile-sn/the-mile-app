@@ -36,7 +36,8 @@ test("Início label and authentic wordmark monogram replace the generated letter
   assert.doesNotMatch(navigation, /<span>Dashboard<\/span>/);
   assert.match(navigation, /class="tm-admin-brand-monogram"[^>]+viewBox="840 0 330 244"/);
   assert.match(stylesheet, /\.tm-admin-brand-monogram\{/);
-  assert.match(stylesheet, /width:min\(152px,100%\)/);
+  assert.match(stylesheet, /width:min\(147px,100%\)/);
+  assert.match(stylesheet, /padding:0 0 0 14px!important/);
   assert.doesNotMatch(stylesheet, /font:600 20px\/1 "Inter Tight"/);
 });
 
@@ -44,7 +45,7 @@ test("all pages using the shared sidebar refresh cached assets", () => {
   for (const page of ["admin-microcycles", "create-plan", "food-library", "admin-appointments"]) {
     const html = fs.readFileSync("static/" + page + ".html", "utf8");
     assert.ok(html.includes("/admin-nav-shell.js?v=9"), page + " nav cache version");
-    assert.ok(html.includes("/admin-surface-palette.css?v=63"), page + " style cache version");
+    assert.ok(html.includes("/admin-surface-palette.css?v=64"), page + " style cache version");
   }
 });
 
