@@ -177,7 +177,7 @@
  function appendAction({card,date,mealTitle,color,meal,option,index,refresh}){
   if(!card||!matchingOption(option,index,color,meal))return;
   const button=document.createElement("button");button.type="button";button.className="tm-daily-portions-action";
-  button.append(icon(["m12 3 9 5-9 5-9-5 9-5Z","m3 13 9 5 9-5","m3 18 9 5 9-5"],"tm-portion-action-icon"));
+  
   const label=document.createElement("span");label.textContent="Ver porções";button.append(label);
   button.append(icon(["m9 18 6-6-6-6"],"tm-portion-arrow-icon"));
   button.setAttribute("aria-label","Ver porções de "+(option.title||"Opção "+option.number)+" — "+mealTitle);
