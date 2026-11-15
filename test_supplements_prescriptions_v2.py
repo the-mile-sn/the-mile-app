@@ -111,6 +111,38 @@ class SupplementPrescriptionTests(unittest.TestCase):
         self.assertEqual([x["name"] for x in self.week()["2026-11-16"]],
                          ["Creatina", "Eletrólitos"])
 
+    def test_date_exclusion_does_not_change_other_days_or_baseline(self):
+        self.publish(self.creatine("replace"), overrides={
+            "2026-11-15": {"remove": ["Creatina"], "add": []},
+        })
+        effective = self.week()
+        original = supplements_v2.days(
+            self.db, "athlete-1", "2026-11-14", "2026-11-16",
+            self.matches, [], apply_overrides=False,
+        )
+        self.assertEqual(effective["2026-11-15"], [])
+        self.assertEqual([x["dose"] for x in original["2026-11-15"]], ["10 g"])
+        self.assertEqual([x["dose"] for x in effective["2026-11-14"]], ["5 g"])
+        self.assertEqual([x["dose"] for x in effective["2026-11-16"]], ["5 g"])
+
+    def test_date_only_edit_replaces_just_that_days_dose(self):
+        self.publish(self.creatine("replace"), overrides={
+            "2026-11-15": {
+                "remove": ["Creatina"],
+                "add": [{"name": "Creatina", "library_id": "creatine-1",
+                         "dose": "3 g", "moment": "lunch", "rule": "daily",
+                         "timing_text": "Antes do jogo"}],
+            },
+        })
+        effective = self.week()
+        self.assertEqual([x["dose"] for x in effective["2026-11-15"]], ["3 g"])
+        self.assertEqual([x["dose"] for x in effective["2026-11-16"]], ["5 g"])
+        baseline = supplements_v2.days(
+            self.db, "athlete-1", "2026-11-15", "2026-11-15",
+            self.matches, [], apply_overrides=False,
+        )
+        self.assertEqual([x["dose"] for x in baseline["2026-11-15"]], ["10 g"])
+
     def test_training_prescription_replaces_daily_only_when_training(self):
         item = self.creatine("replace")
         item["prescriptions"][1]["rule"] = "training"
