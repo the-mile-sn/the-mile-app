@@ -558,3 +558,11 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Lógica de eliminação:** treinos/folgas/viagens usam o endpoint DELETE de eventos; jogos usam o DELETE de jogos já existente. O novo ícone e a ação Remover do editor reutilizam a mesma função. Suplementação não é um evento de calendário autónomo: limpar apenas `overrides[date].add` via GET/PUT de suplementos e preservar os restantes campos, incluindo `remove`.
 - **Ficheiros de implementação:** `static/admin-microcycles.js`, `static/admin-microcycles.html` e o bloco consolidado em `static/admin-surface-palette.css`. Atualizar as versões de JS/CSS da página para evitar cache. Não alterar a branch `main`, cálculos, alimentos, opções ou publicação.
 - **QA:** verificar expansão/fecho do formulário, sucesso após gravação, Escape, hover desktop, foco no teclado, confirmação de exclusão e atualização da lista, suplementação com outras opções preservadas, mobile e temas claro/escuro. Distinguir deploy/validação de código de QA visual autenticado.
+
+
+### Correção definitiva de VP no detalhe do dia — precedência e cache (15 novembro 2026)
+
+- A regra global antiga `.meal-vp` em `static/admin-microcycles.css` ainda definia **`#a0d8a0`**, apesar da paleta nova no bloco consolidado de `static/admin-surface-palette.css`. Foi substituída por **fundo `#28543e` e texto `#bde6cd`** para eliminar essa origem divergente. Esta alteração não modifica os outros quatro estados de refeição, as superfícies internas de VP ou a lógica do calendário.
+- Os estilos do detalhe em `static/admin-surface-palette.css` mantêm a mesma dupla de cores VP, com superfícies principal e interna por tema idênticas às de Planos → Visualização.
+- Atualizar os parâmetros de versão da página `static/admin-microcycles.html` para **`admin-microcycles.css?v=201` e `admin-surface-palette.css?v=61`**; não basta editar um CSS quando a URL antiga pode permanecer em cache.
+- Verificar visualmente em claro/escuro após o deploy, com VP selecionado: **cabeçalho verde escuro**, texto claro, seletor e superfície interior sem alterações. Não confundir validação de código com QA visual autenticado.
