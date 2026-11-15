@@ -14,7 +14,7 @@ const panel=html.slice(start,end);
 
 test("Suplementos associados has a standalone add button and a hidden bottom save",()=>{
  assert.ok(start>=0 && end>start);
- const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('<details class="supp-workflow supp-exceptions-card">'));
+ const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('<details class="supp-workflow"><summary>Biblioteca de suplementos</summary>'));
  assert.match(card, /<h3>Suplementos associados<\/h3>/);
  assert.match(card, /id="supp-add-toggle"[^>]*>\+ Adicionar suplemento<\/button>/);
  assert.match(card, /id="supp-save-footer"[^>]*hidden>/);
@@ -27,7 +27,7 @@ test("Suplementos associados has a standalone add button and a hidden bottom sav
  for(const id of ["supp-add-toggle","supp-save-footer","supp-save","supp-assign-inline","supp-assign-search","supp-base-list","supp-feedback"]){
   assert.equal((card.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  }
- assert.match(panel, /<summary>Exceções por jogo<\/summary>/);
+ assert.doesNotMatch(panel, /<summary>Exceções por jogo<\/summary>/);
  assert.doesNotMatch(panel, /Prescrição personalizada|id="supp-add"|id="supp-name"|id="supp-rule"/);
  assert.match(panel, /<summary>Biblioteca de suplementos<\/summary>/);
 });
