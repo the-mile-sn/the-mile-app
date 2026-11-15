@@ -7,7 +7,6 @@ const vm=require("node:vm");
 const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 const js=fs.readFileSync("static/admin-microcycles.js","utf8");
 const css=fs.readFileSync("static/admin-surface-palette.css","utf8");
-const planJs=fs.readFileSync("static/create-plan.js","utf8");
 const start=html.indexOf('<section class="calendar-panel" id="supplements-panel"');
 const end=html.indexOf('<section class="calendar-panel" id="peri-panel"',start);
 const panel=html.slice(start,end);
@@ -16,7 +15,7 @@ test("Suplementos associados has a standalone add button and a hidden bottom sav
  assert.ok(start>=0 && end>start);
  const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('<details class="supp-workflow supp-exceptions-card">'));
  assert.match(card, /<h3>Suplementos associados<\/h3>/);
- assert.match(card, /id="supp-add-toggle"[^>]*>Adicionar novo<\/button>/);
+ assert.match(card, /id="supp-add-toggle"[^>]*>\+ Adicionar novo<\/button>/);
  assert.match(card, /id="supp-save-footer"[^>]*hidden>/);
  assert.match(card, /id="supp-save"[^>]*hidden>Guardar<\/button>/);
  assert.ok(card.indexOf('id="supp-save"')>card.indexOf('id="supp-base-list"'));
@@ -86,22 +85,58 @@ test("Guardar is displayed only for pending changes, including edits and removal
  assert.match(js,/publishedSupplementExclusionsSnapshot=supplementExclusionsKey\(\)/);
 });
 
-test("supplement edit and delete icons exactly match the Planos editor SVGs",()=>{
- const planEdit=planJs.indexOf('<button class="edit-row" data-edit-food=');
- const planTrash=planJs.indexOf('<button class="remove-row tm-plan-delete-action" data-remove=',planEdit);
- assert.ok(planEdit>0 && planTrash>0);
- const iconAt=(at)=>planJs.slice(planJs.indexOf("<svg ",at),planJs.indexOf("</svg>",at)+6);
- const edit=iconAt(planEdit),trash=iconAt(planTrash);
- assert.match(edit,/PencilEdit01Icon/);
- assert.match(trash,/tm-plan-trash-icon/);
- assert.ok(js.includes(JSON.stringify(edit)));
- assert.ok(js.includes(JSON.stringify(trash)));
+test("supplement editing uses exact official Hugeicons PencilEdit01Icon and TrashIcon paths",()=>{
+ assert.doesNotThrow(()=>new vm.Script(js));
+ const match=js.match(/const supplementPlanActionIcons=(\{[^\n]+\});/);
+ assert.ok(match,"Official icons constant missing");
+ const icons=JSON.parse(match[1]);
+ assert.match(icons.edit,/data-hugeicons="PencilEdit01Icon"/);
+ assert.match(icons.remove,/data-hugeicons="TrashIcon"/);
+ assert.doesNotMatch(icons.remove,/tm-plan-trash-icon/);
+ const editD=[
+   "M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591",
+   "M11 20H17"
+ ];
+ const trashD=[
+   "M18.8516 16.3743L19.5 6H4.5L5.14839 16.3743C5.315 19.0401 5.39831 20.373 6.26426 21.1865C7.13021 22 8.46571 22 11.1367 22H12.8633C15.5343 22 16.8698 22 17.7357 21.1865C18.6017 20.373 18.685 19.0401 18.8516 16.3743Z",
+   "M15.5 6H21M15.5 6L15.3721 4.97683C15.1595 3.2762 13.7139 2 12 2C10.2861 2 8.84047 3.2762 8.6279 4.97683L8.5 6M15.5 6H8.5M3 6H8.5",
+   "M9.5 11V17M14.5 11V17"
+ ];
+ function extractD(svg){
+  return [...svg.matchAll(/<path [^>]*d="([^"]+)"/g)].map(x=>x[1]);
+ }
+ assert.deepEqual(extractD(icons.edit),editD);
+ assert.deepEqual(extractD(icons.remove),trashD);
+ assert.equal((icons.edit.match(/stroke-width="1\.5"/g)||[]).length,2);
+ assert.equal((icons.remove.match(/stroke-width="1\.5"/g)||[]).length,3);
  assert.match(js,/supp-item-edit/);
  assert.match(js,/supp-item-remove/);
  assert.match(js,/aria-label","Editar suplemento /);
  assert.match(js,/aria-label","Remover suplemento /);
- assert.match(css,/#supplements-panel #supp-base-list \.supp-item-remove/);
- assert.match(css,/--tm-action-danger-bg/);
+});
+
+test("names and protocols are separate DOM lines, not concatenated with a dot",()=>{
+ assert.match(js,/name\.className="supp-associated-name";name\.textContent=item\.name;/);
+ assert.match(js,/protocol\.className="supp-associated-protocol"/);
+ assert.match(js,/label\.append\(name,protocol\)/);
+ assert.doesNotMatch(js,/label\.textContent=item\.name\+" · "/);
+ assert.match(css,/supp-associated-row>\.supp-associated-label/);
+ assert.match(css,/flex-direction:column!important/);
+ assert.match(css,/supp-associated-protocol/);
+ assert.match(css,/color:var\(--tm-ui-muted\)!important/);
+});
+
+test("header insets align with card text and add button stays white/black by theme",()=>{
+ assert.match(css,/\.supp-associated-card>\.supp-associated-header\{\s*box-sizing:border-box!important;\s*padding:17px 20px 5px!important/);
+ assert.match(css,/\.supp-associated-row\{\s*padding-left:20px!important;padding-right:20px!important/);
+ assert.match(css,/#f6f7f8!important;color:#161719!important/);
+ assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-add-toggle/);
+ assert.match(css,/background:#1b1d23!important;color:#fff!important/);
+ assert.match(css,/supp-item-action:hover:not\(:disabled\)\{\s*background:transparent!important/);
+ assert.match(css,/supp-item-edit:hover:not\(:disabled\)\{\s*color:#f5f6f8!important/);
+ assert.match(css,/supp-item-remove:hover:not\(:disabled\)\{\s*color:#e17c89!important/);
+ assert.match(css,/admin-theme="light"\] #supplements-panel #supp-base-list \.supp-associated-actions \.supp-item-edit/);
+ assert.match(css,/admin-theme="light"\] #supplements-panel #supp-base-list \.supp-associated-actions \.supp-item-remove/);
 });
 
 test("button colors, hidden states and cached assets work in dark and light themes",()=>{
@@ -111,9 +146,9 @@ test("button colors, hidden states and cached assets work in dark and light them
  assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-save/);
  assert.match(css,/background:#1b1d23!important;color:#fff!important/);
  assert.match(css,/supp-item-action svg/);
- assert.match(html,/admin-microcycles\.js\?v=18293/);
+ assert.match(html,/admin-microcycles\.js\?v=18294/);
  for(const page of ["admin-microcycles","create-plan","food-library","admin-appointments"]){
   const p=fs.readFileSync("static/"+page+".html","utf8");
-  assert.match(p,/admin-surface-palette\.css\?v=66/);
+  assert.match(p,/admin-surface-palette\.css\?v=67/);
  }
 });
