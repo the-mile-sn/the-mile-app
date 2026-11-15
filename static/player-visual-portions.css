@@ -154,3 +154,15 @@ body.visual-portions-open{overflow:hidden}
 }
 #overview .daily-meal .tm-daily-portions-action:hover{background:transparent!important;opacity:.8!important}
 #overview .daily-meal .tm-daily-portions-action > .tm-portion-arrow-icon{width:14px!important;height:14px!important;flex-basis:14px!important;margin-left:0!important}
+
+/* Both meal text links share right alignment, independent of earlier pill rules. */
+#overview #day-details .daily-meal .tm-daily-portions-action,
+#overview .daily-meal .tm-daily-portions-action{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ align-self:flex-end!important;width:max-content!important;max-width:100%!important;
+ margin:12px 0 0 auto!important;padding:4px 0!important;
+ min-height:32px!important;height:auto!important;border:0!important;
+ background:transparent!important;color:inherit!important;opacity:1!important;
+ font:400 13px/1.3 "Inter Tight",Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
+ gap:7px!important;box-shadow:none!important;text-align:right!important;
+}
