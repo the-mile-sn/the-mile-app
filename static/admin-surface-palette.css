@@ -4259,9 +4259,7 @@ html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event
 html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-form{
  grid-column:1/-1;grid-row:2;
 }
-html[data-admin-theme] #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-feedback{
- grid-column:1/-1;grid-row:3;
-}
+/* The success message belongs inside the expanded Add Event form. */
 html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  width:auto!important;max-width:100%!important;flex:0 0 auto;
@@ -4283,9 +4281,40 @@ html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .
  border:0!important;border-radius:14px!important;
  background:var(--tm-ui-subcard)!important;box-shadow:none!important;
 }
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-event-form{
+ position:relative!important;padding-top:44px!important;
+}
+html[data-admin-theme] #calendar-section #calendar-event-form>.calendar-event-close-wrap{
+ position:absolute!important;top:8px;right:10px;z-index:1;
+ display:flex!important;justify-content:flex-end;align-items:center;
+ width:32px;height:32px;margin:0!important;
+}
+html[data-admin-theme] #calendar-section #calendar-event-close{
+ display:grid!important;place-items:center!important;
+ width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important;
+ padding:0!important;border:0!important;border-radius:9px!important;
+ background:transparent!important;color:var(--tm-ui-muted)!important;
+ box-shadow:none!important;cursor:pointer;
+}
+html[data-admin-theme] #calendar-section #calendar-event-close:hover{
+ color:var(--tm-ui-text)!important;background:var(--tm-ui-field-on-subcard)!important;
+}
+html[data-admin-theme] #calendar-section #calendar-event-close:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
 html[data-admin-theme] #calendar-section #calendar-event-feedback:empty{display:none!important}
-html[data-admin-theme] #calendar-section #calendar-event-feedback:not(:empty){
- margin:0!important;padding:4px 15px 12px!important;font-size:12px;
+html[data-admin-theme] #calendar-section #calendar-event-form>#calendar-event-feedback:not(:empty){
+ display:block!important;grid-column:1/-1!important;grid-row:auto!important;
+ flex:1 0 100%!important;order:2;width:100%;
+ margin:3px 0 0!important;padding:5px 2px 0!important;
+ font:400 12px/1.45 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #calendar-section #calendar-events-feedback:empty{display:none!important}
+html[data-admin-theme] #calendar-section #calendar-events-feedback:not(:empty){
+ margin:5px 0 0!important;padding:5px 0!important;
+ font:400 12px/1.4 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-muted)!important;
 }
 html[data-admin-theme] #calendar-section #calendar-day-card .day-preview{
  padding:0!important;margin:0!important;width:100%!important;min-width:0;
@@ -4407,6 +4436,31 @@ html[data-admin-theme] #calendar-section #calendar-event-form #calendar-add-even
  font:500 13px "Inter Tight",sans-serif!important;
 }
 
+/* Restore a subtle cursor hover, preserving every existing day fill, the
+   selected/today outlines, and the transparent dashed "Geral por definir". */
+@media(hover:hover) and (pointer:fine){
+ html[data-admin-theme] #calendar-section .calendar-days .calendar-day{
+  transition:transform .16s ease,box-shadow .16s ease;
+ }
+ html[data-admin-theme] #calendar-section .calendar-days .calendar-day:hover{
+  transform:translateY(-2px);
+ }
+ html[data-admin-theme="dark"] #calendar-section .calendar-days .calendar-day:hover:not(.calendar-selected){
+  box-shadow:0 5px 13px rgba(0,0,0,.24)!important;
+ }
+ html[data-admin-theme="light"] #calendar-section .calendar-days .calendar-day:hover:not(.calendar-selected){
+  box-shadow:0 5px 13px rgba(39,57,76,.18)!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] #calendar-section .calendar-days .calendar-day{
+  transition:none!important;
+ }
+ html[data-admin-theme] #calendar-section .calendar-days .calendar-day:hover{
+  transform:none!important;
+ }
+}
+
 /* Existing seven-column calendar and MD/Off classifications stay unchanged. */
 html[data-admin-theme] #calendar-section .tm-calendar-weekdays{
  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
@@ -4512,6 +4566,24 @@ html[data-admin-theme] #calendar-section .calendar-event-edit{
 }
 html[data-admin-theme] #calendar-section .calendar-event-edit:hover{
  background:var(--tm-ui-hover)!important;
+}
+html[data-admin-theme] #calendar-section .calendar-event-row-actions{
+ display:inline-flex!important;align-items:center;justify-content:flex-end;gap:8px;
+ flex:none;margin-left:auto;min-width:0;
+}
+html[data-admin-theme] #calendar-section .calendar-event-delete{
+ flex:0 0 35px;display:grid!important;place-items:center!important;
+ width:35px!important;height:35px!important;min-height:35px!important;padding:0!important;
+ border:0!important;border-radius:10px!important;box-shadow:none!important;
+ background:var(--tm-action-danger-bg)!important;color:var(--tm-action-danger-fg)!important;
+ cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .calendar-event-delete:hover:not(:disabled){
+ background:var(--tm-action-danger-hover)!important;
+}
+html[data-admin-theme] #calendar-section .calendar-event-delete:focus-visible,
+html[data-admin-theme] #calendar-section .calendar-event-edit:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
 }
 html[data-admin-theme] #calendar-section .calendar-inline-editor{
  display:flex!important;flex-wrap:wrap!important;gap:10px!important;
