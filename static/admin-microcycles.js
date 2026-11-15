@@ -3093,7 +3093,7 @@ let supplementMatches=[];
 let supplementAthleteId=null,supplementLoadRevision=0,supplementEditorReady=false;
 function setSupplementEditorReady(ready){
  supplementEditorReady=ready;
- for(const id of ["supp-save","supp-add","supp-add-toggle"]){
+ for(const id of ["supp-save","supp-add-toggle"]){
   const button=$(id);if(button)button.disabled=!ready;
  }
  syncSupplementSaveVisibility();
@@ -3326,10 +3326,16 @@ function renderSupplementEditor(){
   const name=document.createElement("span");name.className="supp-associated-name";name.textContent=item.name;
   const statusChip=document.createElement("span");statusChip.className="supp-status-chip "+(saved?"supp-status-saved":"supp-status-pending");statusChip.textContent=saved?"Guardado":"Pendente";
   headline.append(name);
-  const protocol=document.createElement("span");protocol.className="supp-associated-protocol";
   const rules=item.prescriptions?.length?item.prescriptions:[item];
-  protocol.textContent=rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação",labels[p.rule]||p.rule].filter(Boolean).join(" · ")).join("  |  ");
-  label.append(headline,protocol,statusChip);
+  const frequencies=document.createElement("div");frequencies.className="supp-frequency-list";
+  for(const [index,p] of rules.entries()){
+   const chip=document.createElement("span");chip.className="supp-frequency-chip";
+   chip.textContent=(rules.length>1?"Prescrição "+(index+1)+" · ":"")+(labels[p.rule]||p.rule||"Diária");
+   frequencies.append(chip);
+  }
+  const protocol=document.createElement("span");protocol.className="supp-associated-protocol";
+  protocol.textContent=rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação"].filter(Boolean).join(" · ")).join("  |  ");
+  label.append(headline,frequencies,protocol,statusChip);
   const edit=document.createElement("button");edit.type="button";edit.className="supp-item-action supp-item-edit";
   edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar suplemento "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>openSupplementPrescriptionDialog(item);
@@ -3341,13 +3347,6 @@ function renderSupplementEditor(){
  }
  syncSupplementSaveVisibility();
 }
-$("supp-add").onclick=()=>{
- if(!supplementEditorReady)return;
- const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
- if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
- supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
- $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="";renderSupplementEditor();
-};
 function supplementNeedingOverlapConfirmation(){
  const saved=supplementSavedStatuses(supplementDraft.plan,publishedSupplementSnapshot);
  return supplementDraft.plan.find((item,index)=>
