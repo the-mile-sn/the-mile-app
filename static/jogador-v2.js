@@ -2081,7 +2081,7 @@ async function overview(){
      }else if(optionCard){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
       consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';consumptionActionLabel(editTag,'Edit02Icon',' Editar consumo');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);optionCard.prepend(badge,editTag);
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';consumptionActionLabel(editTag,'Edit02Icon',' Editar consumo');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);const tagRow=document.createElement('div');tagRow.className='meal-consumption-tags meal-consumption-tags-bottom';tagRow.append(badge,editTag);optionCard.prepend(tagRow);
      }
     }
    }
