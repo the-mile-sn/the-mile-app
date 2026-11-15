@@ -3200,6 +3200,119 @@ function supplementSavedStatuses(plan,publishedSnapshot){
   return count>0;
  });
 }
+
+/* Backoffice supplementation editor: the base fields are represented by
+   Prescription 1. Nothing is published until the page's Guardar is used. */
+function openSupplementPrescriptionDialog(item){
+ if(!supplementEditorReady)return;
+ const dialog=document.createElement("dialog");dialog.className="tm-supp-prescription-dialog";
+ dialog.setAttribute("aria-label","Editar prescrições de "+item.name);
+ const panel=document.createElement("div");panel.className="tm-supp-modal-panel";
+ const header=document.createElement("div");header.className="tm-supp-modal-header";
+ const heading=document.createElement("div");heading.className="tm-supp-modal-heading";
+ const title=document.createElement("h3");title.textContent=item.name;
+ const subtitle=document.createElement("p");subtitle.textContent="Editar prescrições";
+ heading.append(title,subtitle);
+ const close=document.createElement("button");close.type="button";close.className="tm-supp-modal-close";
+ close.textContent="×";close.setAttribute("aria-label","Fechar edição");
+ close.onclick=()=>dialog.close();header.append(heading,close);
+ const content=document.createElement("div");content.className="tm-supp-modal-content";
+ const ruleList=document.createElement("div");ruleList.className="tm-supp-modal-rules";
+ const rows=[];
+ const frequency=[["daily","Diária"],["training","Dias de treino"],["md-1","MD-1"],["match","Dia de jogo (MD)"],["md+1","MD+1"]];
+ const moments=[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["snack","Lanche"],["dinner","Jantar"],["supper","Ceia"],["training","Treino"],["match","Jogo"]];
+ const inputField=(labelText,value,options=null)=>{
+  const field=document.createElement("label");field.className="tm-supp-modal-field";
+  const label=document.createElement("span");label.textContent=labelText;
+  const input=options?document.createElement("select"):document.createElement("input");
+  if(options){
+   for(const [key,text] of options){const option=document.createElement("option");option.value=key;option.textContent=text;input.append(option);}
+   if(value&&!options.some(option=>option[0]===value)){
+    const custom=document.createElement("option");custom.value=value;custom.textContent=value;input.append(custom);
+   }
+  }else input.type="text";
+  input.value=value||"";field.append(label,input);return {field,input};
+ };
+ const feedback=document.createElement("p");feedback.className="tm-supp-modal-error";feedback.setAttribute("role","alert");feedback.hidden=true;
+ const add=document.createElement("button");add.type="button";add.className="tm-supp-modal-add";
+ add.textContent="+ Adicionar outra prescrição";
+ const refresh=()=>{
+  rows.forEach((r,i)=>{
+   r.heading.textContent="Prescrição "+(i+1);
+   r.remove.disabled=rows.length===1;
+   r.choice.field.hidden=i===0;
+  });
+  add.disabled=rows.length>=12;
+  feedback.hidden=true;feedback.textContent="";
+ };
+ const appendRule=(source={})=>{
+  if(rows.length>=12)return;
+  const section=document.createElement("section");section.className="tm-supp-modal-rule";
+  const head=document.createElement("div");head.className="tm-supp-modal-rule-head";
+  const title=document.createElement("strong");
+  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-modal-remove";
+  remove.innerHTML=supplementPlanActionIcons.remove;remove.title="Remover prescrição";remove.setAttribute("aria-label","Remover esta prescrição");
+  head.append(title,remove);section.append(head);
+  const grid=document.createElement("div");grid.className="tm-supp-modal-grid";
+  const freq=inputField("Frequência",source.rule||"daily",frequency);
+  const dose=inputField("Dose",source.dose||"");
+  const moment=inputField("Associar a",source.moment||"",moments);
+  const timing=inputField("Momento ou condição",source.timing_text||"");
+  dose.input.maxLength=120;timing.input.maxLength=240;
+  grid.append(freq.field,dose.field,moment.field,timing.field);section.append(grid);
+  const note=inputField("Instruções específicas (opcional)",source.note&&source.note!==item.note?source.note:"");
+  note.field.classList.add("tm-supp-modal-wide");note.input.maxLength=400;
+  section.append(note.field);
+  const choice=inputField("Se coincidir com outra prescrição no mesmo dia",source.overlap_mode||"",[
+   ["","Selecionar como apresentar"],["add","Mostrar ambas as prescrições"],["replace","Mostrar apenas esta prescrição"]
+  ]);
+  choice.field.classList.add("tm-supp-modal-overlap-choice");
+  const warning=document.createElement("p");warning.className="tm-supp-modal-overlap-warning";
+  warning.textContent="Atenção: se as regras coincidirem, confirma se as duas tomas devem aparecer no mesmo dia ou se esta substitui as anteriores.";
+  choice.field.append(warning);section.append(choice.field);
+  const r={section,heading:title,remove,freq,dose,moment,timing,note,choice};
+  remove.onclick=()=>{if(rows.length<=1)return;const i=rows.indexOf(r);if(i>=0)rows.splice(i,1);section.remove();refresh();};
+  rows.push(r);ruleList.append(section);refresh();
+ };
+ const entries=item.prescriptions?.length?item.prescriptions:[{rule:item.rule,dose:item.dose,moment:item.moment,timing_text:item.timing_text,note:item.note}];
+ entries.forEach(appendRule);
+ add.onclick=()=>appendRule({rule:"daily",dose:item.dose,moment:"",timing_text:"",note:""});
+ content.append(ruleList,add);
+ const common=inputField("Instruções gerais (opcional)",item.note||"");
+ common.field.classList.add("tm-supp-modal-general");
+ const noteBox=document.createElement("textarea");noteBox.rows=2;noteBox.maxLength=400;noteBox.value=item.note||"";
+ common.input.replaceWith(noteBox);common.input=noteBox;
+ content.append(common.field,feedback);
+ const footer=document.createElement("div");footer.className="tm-supp-modal-footer";
+ const cancel=document.createElement("button");cancel.type="button";cancel.className="tm-supp-modal-cancel";cancel.textContent="Cancelar";cancel.onclick=()=>dialog.close();
+ const apply=document.createElement("button");apply.type="button";apply.className="tm-supp-modal-apply";apply.textContent="Aplicar alterações";
+ apply.onclick=()=>{
+  if(!supplementEditorReady)return dialog.close();
+  const invalid=rows.findIndex((r,i)=>!r.dose.input.value.trim()||(i>0&&!r.choice.input.value));
+  if(invalid>=0){
+   feedback.hidden=false;
+   feedback.textContent=!rows[invalid].dose.input.value.trim()?"Preenche a dose da Prescrição "+(invalid+1)+".":"Confirma como tratar tomas que coincidam na Prescrição "+(invalid+1)+".";
+   (!rows[invalid].dose.input.value.trim()?rows[invalid].dose.input:rows[invalid].choice.input).focus();
+   return;
+  }
+  const generalNote=common.input.value.trim();
+  const entries=rows.map((r,i)=>{
+   const p={rule:r.freq.input.value,dose:r.dose.input.value.trim(),moment:r.moment.input.value,timing_text:r.timing.input.value.trim(),note:r.note.input.value.trim()||generalNote};
+   if(i>0)p.overlap_mode=r.choice.input.value;
+   return p;
+  });
+  item.prescriptions=entries;
+  item.rule=entries[0].rule;item.dose=entries[0].dose;
+  item.moment=entries[0].moment;item.timing_text=entries[0].timing_text;
+  item.note=generalNote;
+  dialog.close();renderSupplementEditor();$("supp-feedback").textContent="";
+ };
+ footer.append(cancel,apply);panel.append(header,content,footer);dialog.append(panel);
+ dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
+ dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+ document.body.append(dialog);dialog.showModal();
+ close.focus();
+}
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
  renderSupplementMatchExclusions();
@@ -3219,40 +3332,7 @@ function renderSupplementEditor(){
   label.append(headline,protocol);
   const edit=document.createElement("button");edit.type="button";edit.className="supp-item-action supp-item-edit";
   edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar suplemento "+item.name);edit.title="Editar "+item.name;
-  edit.onclick=()=>{
-   const form=document.createElement("div");form.className="supp-inline-edit";
-   const fields=[["name","Suplemento"],["dose","Dose"],["timing_text","Momento ou condição"],["note","Instruções"]];
-   const inputs={};
-   for(const [key,title] of fields){const wrap=document.createElement("label");wrap.textContent=title;const input=document.createElement("input");input.value=item[key]||"";inputs[key]=input;wrap.append(input);form.append(wrap);}
-   for(const [key,title,options] of [["moment","Associação",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["dinner","Jantar"],["training","Treino"],["match","Jogo"]]],["rule","Frequência",[["daily","Diária"],["training","Treino"],["match","MD"],["md-1","MD-1"],["md+1","MD+1"]]]]){
-    const wrap=document.createElement("label");wrap.textContent=title;const select=document.createElement("select");for(const [value,text] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=text;select.append(opt);}select.value=item[key]||"";inputs[key]=select;wrap.append(select);form.append(wrap);
-   }
-   const prescriptions=document.createElement("div");prescriptions.className="supp-prescription-rules";
-   const rows=[];
-   function addRule(source){
-    const entry=document.createElement("div");entry.className="supp-prescription-rule";
-    const fields={};
-    for(const [key,title,options] of [["rule","Frequência",[["daily","Diária"],["training","Treino"],["md-1","MD-1"],["match","MD"],["md+1","MD+1"]]],["dose","Dose",null],["moment","Associar a",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["snack","Lanche"],["dinner","Jantar"],["supper","Ceia"],["training","Treino"],["match","Jogo"]]],["timing_text","Momento da toma",null]]){
-     const wrap=document.createElement("label");wrap.textContent=title;
-     const input=options?document.createElement("select"):document.createElement("input");
-     if(options)for(const [v,t] of options){const opt=document.createElement("option");opt.value=v;opt.textContent=t;input.append(opt);}
-     input.value=source[key]||"";fields[key]=input;wrap.append(input);entry.append(wrap);
-    }
-    const remove=document.createElement("button");remove.type="button";remove.textContent="Remover toma";remove.onclick=()=>{entry.remove();const i=rows.indexOf(fields);if(i>=0)rows.splice(i,1);};entry.append(remove);rows.push(fields);prescriptions.append(entry);
-   }
-   for(const prescription of item.prescriptions||[{rule:item.rule,dose:item.dose,moment:item.moment,timing_text:item.timing_text}])addRule(prescription);
-   const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar outra prescrição";add.onclick=()=>addRule({rule:"daily",dose:item.dose,moment:"",timing_text:""});
-   form.append(prescriptions,add);
-   const save=document.createElement("button");save.textContent="Aplicar alterações";save.type="button";save.onclick=()=>{
-    if(!inputs.name.value.trim()||!inputs.dose.value.trim())return;
-    if(!rows.length||rows.some(r=>!r.dose.value.trim()))return;
-    for(const key of Object.keys(inputs))item[key]=inputs[key].value.trim();
-    item.prescriptions=rows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:r.moment.value,timing_text:r.timing_text.value.trim(),note:item.note}));
-    $("supp-feedback").textContent="";renderSupplementEditor();
-   };
-   const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
-   form.append(save,cancel);row.replaceChildren(form);
-  };
+  edit.onclick=()=>openSupplementPrescriptionDialog(item);
   const remove=document.createElement("button");remove.type="button";remove.className="supp-item-action supp-item-remove";
   remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover suplemento "+item.name);remove.title="Remover "+item.name;
   remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="";renderSupplementEditor();};
@@ -3268,10 +3348,22 @@ $("supp-add").onclick=()=>{
  supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
  $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="";renderSupplementEditor();
 };
+function supplementNeedingOverlapConfirmation(){
+ const saved=supplementSavedStatuses(supplementDraft.plan,publishedSupplementSnapshot);
+ return supplementDraft.plan.find((item,index)=>
+  !saved[index]&&(item.prescriptions||[]).some((p,i)=>i>0&&!["add","replace"].includes(p.overlap_mode))
+ );
+}
 $("supp-save").onclick=async()=>{
  const athleteId=supplementAthleteId,revision=supplementLoadRevision;
  const stillCurrent=()=>supplementLoadRevision===revision&&supplementAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId;
  if(!supplementEditorReady||!athleteId||!stillCurrent())return;
+ const unconfirmed=supplementNeedingOverlapConfirmation();
+ if(unconfirmed){
+  $("supp-feedback").textContent="Confirma se as prescrições coincidentes devem aparecer ambas ou apenas a mais recente.";
+  openSupplementPrescriptionDialog(unconfirmed);
+  return;
+ }
  setSupplementEditorReady(false);
  try{
   const published=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});
@@ -3369,15 +3461,26 @@ $("supp-lib-save").onclick=async()=>{
 };
 function addSupplementFromLibrary(item){
  if(!supplementEditorReady||!item)return;
+ const existing=supplementDraft.plan.find(x=>item.id&&x.library_id===item.id);
+ if(existing){
+  setSupplementAssignmentOpen(false);
+  $("supp-feedback").textContent="Este suplemento já está associado. Podes acrescentar outra prescrição na edição.";
+  openSupplementPrescriptionDialog(existing);
+  return;
+ }
  if(!item.prescriptions?.length && /MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){
   $("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";
   return;
  }
- supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text,...(item.prescriptions?.length?{prescriptions:item.prescriptions.map(p=>({...p}))}:{})});
+ const associated={library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text,...(item.prescriptions?.length?{prescriptions:item.prescriptions.map(p=>({...p}))}:{})};
+ supplementDraft.plan.push(associated);
  renderSupplementEditor();
  setSupplementAssignmentOpen(false);
  $("supp-feedback").textContent="";
  $("supp-add-toggle").focus();
+ if(associated.prescriptions?.length>1&&associated.prescriptions.some((p,i)=>i>0&&!["add","replace"].includes(p.overlap_mode))){
+  openSupplementPrescriptionDialog(associated);
+ }
 }
 
 $("supp-transfer-import").onclick=async()=>{

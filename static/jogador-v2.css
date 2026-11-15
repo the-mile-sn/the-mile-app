@@ -1156,3 +1156,35 @@ header{padding:10px 0 24px}
   margin:11px 12px!important;padding:15px 14px!important;
  }
 }
+
+/* Supplement plan: show each published prescription instead of the legacy base fields. */
+#plan-detail .supplement-plan-item{
+ position:relative!important;display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;gap:3px!important;padding-top:16px!important;
+ padding-bottom:16px!important;
+}
+#plan-detail .supplement-plan-item:has(.supplement-product-image){
+ padding-left:88px!important;min-height:88px!important;
+}
+#plan-detail .supplement-plan-item .supplement-product-image{
+ position:absolute!important;left:12px!important;top:17px!important;
+ width:60px!important;height:60px!important;object-fit:contain!important;
+}
+#plan-detail .supplement-plan-item>strong{
+ display:block!important;font-size:16px!important;font-weight:650!important;line-height:1.35!important;
+}
+#plan-detail .supplement-plan-prescription{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ gap:3px!important;margin:5px 0 0!important;padding:8px 0 0!important;
+ border:0!important;border-top:1px solid rgba(155,168,185,.12)!important;
+ font-size:13px!important;line-height:1.45!important;
+}
+#plan-detail .supplement-plan-prescription .supplement-plan-dose{
+ font-size:14px!important;font-weight:600!important;
+}
+#plan-detail .supplement-plan-prescription>small{
+ color:#b7b7be!important;font-size:12px!important;
+}
+#plan-detail .supplement-plan-note{
+ white-space:pre-line!important;overflow-wrap:anywhere!important;
+}

@@ -147,10 +147,10 @@ test("button colors, hidden states and cached assets work in dark and light them
  assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-save/);
  assert.match(css,/background:#1b1d23!important;color:#fff!important/);
  assert.match(css,/supp-item-action svg/);
- assert.match(html,/admin-microcycles\.js\?v=18296/);
+ assert.match(html,/admin-microcycles\.js\?v=18297/);
  for(const page of ["admin-microcycles","create-plan","food-library","admin-appointments"]){
   const p=fs.readFileSync("static/"+page+".html","utf8");
-  assert.match(p,/admin-surface-palette\.css\?v=70/);
+  assert.match(p,/admin-surface-palette\.css\?v=71/);
  }
 });
 

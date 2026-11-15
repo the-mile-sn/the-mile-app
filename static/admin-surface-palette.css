@@ -5394,3 +5394,164 @@ html[data-admin-theme] #supplements-panel .supp-associated-card>.supp-associated
   padding:0 16px 5px!important;
  }
 }
+
+/* Suplementation prescription editor dialog: compact form, no nested cards. */
+html[data-admin-theme] dialog.tm-supp-prescription-dialog{
+ box-sizing:border-box!important;position:fixed!important;
+ width:min(720px,calc(100vw - 32px))!important;max-width:720px!important;
+ max-height:calc(100dvh - 44px)!important;
+ margin:auto!important;padding:0!important;overflow:hidden!important;
+ border:0!important;border-radius:22px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ box-shadow:0 26px 90px rgba(0,0,0,.35)!important;
+ font-family:"Inter Tight",system-ui,sans-serif!important;
+}
+html[data-admin-theme] dialog.tm-supp-prescription-dialog::backdrop{
+ background:rgba(4,5,8,.73)!important;
+ backdrop-filter:blur(3px);
+}
+html[data-admin-theme] .tm-supp-modal-panel{
+ display:flex!important;flex-direction:column!important;min-width:0!important;
+ max-height:calc(100dvh - 44px)!important;overflow:hidden!important;
+}
+html[data-admin-theme] .tm-supp-modal-header{
+ display:flex!important;align-items:flex-start!important;justify-content:space-between!important;
+ gap:16px!important;padding:25px 28px 18px!important;
+ border-bottom:1px solid var(--tm-ui-divider)!important;
+ flex:none!important;
+}
+html[data-admin-theme] .tm-supp-modal-heading>h3{
+ margin:0!important;padding:0!important;
+ font-size:23px!important;font-weight:650!important;line-height:1.2!important;
+ letter-spacing:-.025em!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] .tm-supp-modal-heading>p{
+ margin:5px 0 0!important;font-size:13px!important;color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] .tm-supp-modal-close{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 36px!important;width:36px!important;height:36px!important;
+ padding:0!important;margin:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ font-size:26px!important;font-weight:400!important;line-height:1!important;
+ color:var(--tm-ui-muted)!important;cursor:pointer!important;
+}
+html[data-admin-theme] .tm-supp-modal-close:hover{color:var(--tm-ui-text)!important}
+html[data-admin-theme] .tm-supp-modal-content{
+ flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;
+ padding:0 28px 18px!important;overscroll-behavior:contain!important;
+}
+html[data-admin-theme] .tm-supp-modal-rule{
+ padding:21px 0 23px!important;margin:0!important;
+ border:0!important;border-bottom:1px solid var(--tm-ui-divider)!important;
+ background:transparent!important;box-shadow:none!important;
+}
+html[data-admin-theme] .tm-supp-modal-rule-head{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:16px!important;min-height:28px!important;margin:0 0 13px!important;
+}
+html[data-admin-theme] .tm-supp-modal-rule-head>strong{
+ font-size:15px!important;font-weight:650!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] .tm-supp-modal-remove{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:32px!important;height:32px!important;min-width:32px!important;
+ margin:0!important;padding:5px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:#e17c89!important;cursor:pointer!important;
+}
+html[data-admin-theme] .tm-supp-modal-remove:disabled{opacity:.25!important;cursor:default!important}
+html[data-admin-theme] .tm-supp-modal-remove>svg{display:block;width:19px;height:19px;stroke:currentColor}
+html[data-admin-theme] .tm-supp-modal-grid{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:12px 14px!important;min-width:0!important;
+}
+html[data-admin-theme] .tm-supp-modal-field{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ min-width:0!important;gap:6px!important;margin:0!important;padding:0!important;
+ color:var(--tm-ui-muted)!important;
+ font-size:12px!important;font-weight:500!important;line-height:1.3!important;
+}
+html[data-admin-theme] .tm-supp-modal-field>span{font-size:12px!important;color:var(--tm-ui-muted)!important;font-weight:500!important}
+html[data-admin-theme] .tm-supp-modal-field>input,
+html[data-admin-theme] .tm-supp-modal-field>select,
+html[data-admin-theme] .tm-supp-modal-field>textarea{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;max-width:none!important;
+ min-height:44px!important;margin:0!important;padding:10px 13px!important;
+ border:1px solid var(--tm-ui-divider)!important;border-radius:12px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;font-family:inherit!important;font-size:14px!important;
+ font-weight:500!important;line-height:1.4!important;
+}
+html[data-admin-theme] .tm-supp-modal-field>textarea{
+ resize:vertical!important;min-height:67px!important;
+}
+html[data-admin-theme] .tm-supp-modal-wide{
+ margin:13px 0 0!important;
+}
+html[data-admin-theme] .tm-supp-modal-overlap-choice{
+ margin:14px 0 0!important;
+}
+html[data-admin-theme] .tm-supp-modal-overlap-choice[hidden]{display:none!important}
+html[data-admin-theme] .tm-supp-modal-overlap-warning{
+ margin:2px 0 0!important;
+ padding:0 0 0 10px!important;border-left:2px solid #d5b166!important;
+ color:var(--tm-ui-muted)!important;font-size:12px!important;
+ font-weight:450!important;line-height:1.45!important;
+}
+html[data-admin-theme] .tm-supp-modal-general{margin:20px 0 0!important}
+html[data-admin-theme] .tm-supp-modal-add{
+ display:inline-flex!important;align-items:center!important;
+ min-height:40px!important;width:auto!important;margin:15px 0 0!important;
+ padding:7px 0!important;border:0!important;background:transparent!important;
+ box-shadow:none!important;color:var(--tm-ui-text)!important;
+ font-size:13px!important;font-weight:600!important;cursor:pointer!important;
+}
+html[data-admin-theme] .tm-supp-modal-add:hover{text-decoration:underline!important}
+html[data-admin-theme] .tm-supp-modal-add:disabled{opacity:.4!important;cursor:default!important}
+html[data-admin-theme] .tm-supp-modal-error{
+ margin:15px 0 0!important;font-size:12px!important;color:#e17c89!important;
+}
+html[data-admin-theme] .tm-supp-modal-error[hidden]{display:none!important}
+html[data-admin-theme] .tm-supp-modal-footer{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ flex-wrap:wrap!important;gap:10px!important;flex:none!important;
+ margin:0!important;padding:17px 28px 20px!important;
+ border-top:1px solid var(--tm-ui-divider)!important;
+ background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] .tm-supp-modal-footer>button{
+ box-sizing:border-box!important;min-height:42px!important;
+ margin:0!important;padding:10px 19px!important;
+ border:0!important;border-radius:999px!important;box-shadow:none!important;
+ font-size:14px!important;font-weight:600!important;cursor:pointer!important;
+}
+html[data-admin-theme] .tm-supp-modal-cancel{
+ background:transparent!important;color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] .tm-supp-modal-apply{
+ background:#f6f7f8!important;color:#161719!important;
+}
+html[data-admin-theme="light"] .tm-supp-modal-apply{
+ background:#1b1d23!important;color:#fff!important;
+}
+html[data-admin-theme] .tm-supp-modal-apply:hover{filter:brightness(.94)!important}
+html[data-admin-theme] dialog.tm-supp-prescription-dialog :is(button,input,select,textarea):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+@media(max-width:620px){
+ html[data-admin-theme] dialog.tm-supp-prescription-dialog{
+  width:calc(100vw - 20px)!important;max-height:calc(100dvh - 20px)!important;
+  border-radius:17px!important;
+ }
+ html[data-admin-theme] .tm-supp-modal-panel{max-height:calc(100dvh - 20px)!important}
+ html[data-admin-theme] .tm-supp-modal-header{padding:18px 17px 14px!important}
+ html[data-admin-theme] .tm-supp-modal-heading>h3{font-size:20px!important}
+ html[data-admin-theme] .tm-supp-modal-content{padding:0 17px 16px!important}
+ html[data-admin-theme] .tm-supp-modal-grid{grid-template-columns:1fr!important;gap:10px!important}
+ html[data-admin-theme] .tm-supp-modal-field>input,
+ html[data-admin-theme] .tm-supp-modal-field>select,
+ html[data-admin-theme] .tm-supp-modal-field>textarea{font-size:16px!important}
+ html[data-admin-theme] .tm-supp-modal-footer{padding:13px 17px 16px!important}
+}

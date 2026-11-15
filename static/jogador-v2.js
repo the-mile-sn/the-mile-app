@@ -48,16 +48,33 @@ async function show(t){tab=t;for(const key of ["overview","plans","menus"])$(key
 async function renderSupplementPlan(){
  const data=await api("/api/v2/player/supplements"),root=$("plan-detail");root.replaceChildren();
  if(!data.plan.length){root.textContent="Ainda não existe plano de suplementação publicado.";return;}
- const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
+ const frequency={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
+ const meal={"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"};
  for(const item of data.plan){
-  const box=document.createElement("div");box.className="supplement-entry";
+  const box=document.createElement("div");box.className="supplement-entry supplement-plan-item";
   if(item.library_id){const img=document.createElement("img");img.className="supplement-product-image";img.src="/api/v2/supplement-library/"+encodeURIComponent(item.library_id)+"/image";img.alt=item.name;img.loading="lazy";img.onerror=()=>img.remove();box.append(img);}
-  const title=document.createElement("strong");title.textContent=item.name+" · "+item.dose;
-  const meta=document.createElement("small");meta.textContent=(labels[item.rule]||item.rule)+" · "+(item.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[item.moment]||"Sem associação");
-  box.append(title,meta);if(item.note){const note=document.createElement("small");note.textContent=item.note;box.append(note);}root.append(box);
+  const heading=document.createElement("strong");heading.textContent=item.name;box.append(heading);
+  const rules=item.prescriptions?.length?item.prescriptions:[item];
+  for(const [index,p] of rules.entries()){
+   const rule=document.createElement("div");rule.className="supplement-plan-prescription";
+   const line=document.createElement("span");line.className="supplement-plan-dose";
+   line.textContent=(rules.length>1?"Prescrição "+(index+1)+" · ":"")+p.dose;rule.append(line);
+   const meta=document.createElement("small");
+   meta.textContent=[frequency[p.rule]||p.rule,p.timing_text||meal[p.moment]||"Sem associação"].filter(Boolean).join(" · ");
+   rule.append(meta);
+   const note=p.note===undefined?(item.note||""):p.note;
+   if(note){const info=document.createElement("small");info.className="supplement-plan-note";info.textContent=note;rule.append(info);}
+   if(index>0&&p.overlap_mode){
+    const condition=document.createElement("small");condition.className="supplement-plan-overlap";
+    condition.textContent=p.overlap_mode==="replace"?"Substitui as prescrições anteriores nos dias em que coincidem.":"Mantém as restantes prescrições quando coincidem.";
+    rule.append(condition);
+   }
+   box.append(rule);
+  }
+  root.append(box);
  }
 }
-let effectiveCalendarColorsByDay={};
+
 function assignedColor(date,meal,classification){
  const resolved=effectiveCalendarColorsByDay[date]?.[meal];
  if(resolved&&Object.prototype.hasOwnProperty.call(resolved,"color"))return resolved.color;
@@ -180,8 +197,8 @@ function renderWeekly(mon,r,weekMenus=[]){
  for(const date of dates){
   for(const item of supplementsByDay[date]||[]){
    const group=item.rule==="daily"?"Diariamente":item.rule==="match"?"MD":item.rule==="md-1"?"MD-1":item.rule==="md+1"?"MD+1":item.rule==="training"?"Treino":"Outros";
-   const key=group+"|"+(item.library_id||item.name)+"|"+item.dose;
-   if(!weeklySupplements.has(key))weeklySupplements.set(key,{group,name:item.name,dose:item.dose,dates:[],timing:item.display_moment||item.timing_text||""});
+   const key=[group,item.supplement_index??(item.library_id||item.name),item.prescription_index??"legacy",item.dose,item.moment||"",item.timing_text||"",item.note||""].join("|");
+   if(!weeklySupplements.has(key))weeklySupplements.set(key,{group,name:item.name,dose:item.dose,dates:[],timing:item.display_moment||item.timing_text||"",prescriptionIndex:item.prescription_index??0,prescriptionTotal:item.prescription_total??1});
    weeklySupplements.get(key).dates.push(date);
   }
  }
@@ -193,7 +210,7 @@ function renderWeekly(mon,r,weekMenus=[]){
    if(!items.length)continue;
    const row=document.createElement("div");row.className="weekly-supplement-group";
    const label=document.createElement("strong");label.textContent=group;row.append(label);
-   for(const item of items){const entry=document.createElement("div");entry.className="weekly-supplement-entry";entry.textContent=item.name+" - "+item.dose+(item.timing?", "+item.timing.toLowerCase():"");row.append(entry);}summary.append(row);
+   for(const item of items){const entry=document.createElement("div");entry.className="weekly-supplement-entry";entry.textContent=item.name+(item.prescriptionTotal>1?" · Prescrição "+(item.prescriptionIndex+1):"")+" · "+item.dose+(item.timing?", "+item.timing.toLowerCase():"")+" · "+item.dates.length+(item.dates.length===1?" dia":" dias");row.append(entry);}summary.append(row);
   }
   root.append(summary);
  }
@@ -289,7 +306,7 @@ function supplementsCard(items){
  const title=document.createElement("summary");title.textContent="Suplementação do dia";box.append(title);
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
-  const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
+  const name=document.createElement("strong");name.textContent=x.name+(x.prescription_total>1?" · Prescrição "+((x.prescription_index??0)+1):"")+" · "+x.dose;
   const moment=document.createElement("small");moment.textContent=x.display_moment||x.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[x.moment]||"Sem associação";
   line.append(name,moment);if(x.note){const note=document.createElement("small");note.textContent=x.note;line.append(note);}box.append(line);
  }
@@ -299,7 +316,7 @@ function attachSupplements(card,items){
  if(!items.length)return;
  const area=document.createElement("div");area.className="supplement-in-meal";
  const label=document.createElement("strong");label.textContent="Suplementação";area.append(label);
- for(const x of items){const line=document.createElement("div");line.textContent=x.name+" · "+x.dose;area.append(line);}
+ for(const x of items){const line=document.createElement("div");line.textContent=x.name+(x.prescription_total>1?" · Prescrição "+((x.prescription_index??0)+1):"")+" · "+x.dose;area.append(line);}
  card.append(area);
 }
 function appendDailyEvents(host,date,session){

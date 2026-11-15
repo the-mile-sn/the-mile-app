@@ -1,0 +1,42 @@
+name: Validate supplement prescriptions and player display
+on:
+  push:
+    branches:
+      - production/the-mile-admin
+    paths:
+      - supplements_v2.py
+      - test_supplements_prescriptions_v2.py
+      - static/admin-microcycles.js
+      - static/admin-microcycles.html
+      - static/admin-surface-palette.css
+      - static/jogador-v2.js
+      - static/jogador-v2.css
+      - static/jogador-v2.html
+      - tests/supplement-prescriptions-editor.test.cjs
+      - tests/admin-supplement-associated-toolbar.test.cjs
+      - .github/workflows/validate-supplement-prescriptions.yml
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Python source and rules
+        run: |
+          python -m compileall -q supplements_v2.py app.py
+          python -m unittest -v test_supplements_prescriptions_v2
+      - name: Validate browser scripts
+        run: |
+          node --check static/admin-microcycles.js
+          node --check static/jogador-v2.js
+      - name: Validate Backoffice editor and player UI contracts
+        run: |
+          node --test tests/supplement-prescriptions-editor.test.cjs tests/admin-supplement-associated-toolbar.test.cjs

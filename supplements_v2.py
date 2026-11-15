@@ -33,7 +33,11 @@ def validate(items):
     if not isinstance(p,dict):raise ValueError("invalid_prescriptions")
     pr=p.get("rule");pd=p.get("dose");pm=p.get("moment","");pt=p.get("timing_text","");pn=p.get("note","")
     if pr not in ("daily","training","match","md-1","md+1") or any(not isinstance(v,str) for v in (pd,pm,pt,pn)) or not pd.strip() or len(pd)>120 or len(pm)>120 or len(pt)>240 or len(pn)>400:raise ValueError("invalid_prescriptions")
-    entries.append({"rule":pr,"dose":pd.strip(),"moment":pm.strip(),"timing_text":pt.strip(),"note":pn.strip()})
+    overlap_mode=p.get("overlap_mode")
+    if overlap_mode is not None and overlap_mode not in ("add","replace"):raise ValueError("invalid_overlap_mode")
+    normalized_prescription={"rule":pr,"dose":pd.strip(),"moment":pm.strip(),"timing_text":pt.strip(),"note":pn.strip()}
+    if overlap_mode is not None:normalized_prescription["overlap_mode"]=overlap_mode
+    entries.append(normalized_prescription)
    normalized["prescriptions"]=entries
   result.append(normalized)
  return result
@@ -68,19 +72,26 @@ def days(c,aid,start,end,matches,events):
  while d<=last:
   day=d.isoformat();tomorrow=(d+timedelta(days=1)).isoformat();yesterday=(d-timedelta(days=1)).isoformat()
   items=[]
-  for item in data["plan"]:
+  # Expand prescriptions separately. A later "replace" takes precedence only on
+  # dates when it is active; all other dates retain the usual/base prescription.
+  for plan_index,item in enumerate(data["plan"]):
    key=item.get("library_id") or item["name"]
-   for entry in item.get("prescriptions") or [item]:
+   active=[]
+   for prescription_index,entry in enumerate(item.get("prescriptions") or [item]):
     rule=entry["rule"]
-    if rule=="daily" or (rule=="training" and day in train_dates):
-     items.append({**item,**entry,"prescriptions":None})
-    elif rule in ("match","md-1","md+1"):
+    applies=rule=="daily" or (rule=="training" and day in train_dates)
+    if rule in ("match","md-1","md+1"):
      for match in matches:
       md=match["match_date"]
-      applies=(rule=="match" and day==md) or (rule=="md-1" and tomorrow==md) or (rule=="md+1" and yesterday==md)
-      if applies and key not in data["match_exclusions"].get(match["id"],[]):
-       items.append({**item,**entry,"prescriptions":None})
+      if key in data["match_exclusions"].get(match["id"],[]):continue
+      if (rule=="match" and day==md) or (rule=="md-1" and tomorrow==md) or (rule=="md+1" and yesterday==md):
+       applies=True
        break
+    if not applies:continue
+    resolved={**item,**entry,"prescriptions":None,"supplement_index":plan_index,"prescription_index":prescription_index,"prescription_total":len(item.get("prescriptions") or [item])}
+    if entry.get("overlap_mode")=="replace":active=[resolved]
+    else:active.append(resolved)
+   items.extend(active)
   override=data["overrides"].get(day,{})
   removed=set(override.get("remove",[]))
   items=[x for x in items if x["name"] not in removed]+override.get("add",[])
