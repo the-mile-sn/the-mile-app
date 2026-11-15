@@ -107,8 +107,8 @@ test("Popup is accessible and responsive with light/dark contrast buttons",()=>{
  assert.match(admin,/feedback\.setAttribute\("role","alert"\)/);
  assert.match(admin,/close\.setAttribute\("aria-label","Fechar edição"\)/);
  assert.match(playerCss,/supplement-plan-prescription/);
- assert.match(adminHtml,/admin-microcycles\.js\?v=18297/);
- assert.match(adminHtml,/admin-surface-palette\.css\?v=71/);
+ assert.match(adminHtml,/admin-microcycles\.js\?v=18298/);
+ assert.match(adminHtml,/admin-surface-palette\.css\?v=72/);
  assert.match(playerHtml,/jogador-v2\.js\?v=42/);
  assert.match(playerHtml,/jogador-v2\.css\?v=56/);
 });

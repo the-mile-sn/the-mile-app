@@ -3325,11 +3325,11 @@ function renderSupplementEditor(){
   const headline=document.createElement("span");headline.className="supp-associated-headline";
   const name=document.createElement("span");name.className="supp-associated-name";name.textContent=item.name;
   const statusChip=document.createElement("span");statusChip.className="supp-status-chip "+(saved?"supp-status-saved":"supp-status-pending");statusChip.textContent=saved?"Guardado":"Pendente";
-  headline.append(name,statusChip);
+  headline.append(name);
   const protocol=document.createElement("span");protocol.className="supp-associated-protocol";
   const rules=item.prescriptions?.length?item.prescriptions:[item];
   protocol.textContent=rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação",labels[p.rule]||p.rule].filter(Boolean).join(" · ")).join("  |  ");
-  label.append(headline,protocol);
+  label.append(headline,protocol,statusChip);
   const edit=document.createElement("button");edit.type="button";edit.className="supp-item-action supp-item-edit";
   edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar suplemento "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>openSupplementPrescriptionDialog(item);

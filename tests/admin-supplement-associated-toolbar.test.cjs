@@ -119,7 +119,7 @@ test("supplement editing uses exact official Hugeicons PencilEdit01Icon and Tras
 test("names and protocols are separate DOM lines, not concatenated with a dot",()=>{
  assert.match(js,/name\.className="supp-associated-name";name\.textContent=item\.name;/);
  assert.match(js,/protocol\.className="supp-associated-protocol"/);
- assert.match(js,/label\.append\(headline,protocol\)/);
+ assert.match(js,/label\.append\(headline,protocol,statusChip\)/);
  assert.doesNotMatch(js,/label\.textContent=item\.name\+" · "/);
  assert.match(css,/supp-associated-row>\.supp-associated-label/);
  assert.match(css,/flex-direction:column!important/);
@@ -147,10 +147,10 @@ test("button colors, hidden states and cached assets work in dark and light them
  assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-save/);
  assert.match(css,/background:#1b1d23!important;color:#fff!important/);
  assert.match(css,/supp-item-action svg/);
- assert.match(html,/admin-microcycles\.js\?v=18297/);
+ assert.match(html,/admin-microcycles\.js\?v=18298/);
  for(const page of ["admin-microcycles","create-plan","food-library","admin-appointments"]){
   const p=fs.readFileSync("static/"+page+".html","utf8");
-  assert.match(p,/admin-surface-palette\.css\?v=71/);
+  assert.match(p,/admin-surface-palette\.css\?v=72/);
  }
 });
 
@@ -158,8 +158,8 @@ test("button colors, hidden states and cached assets work in dark and light them
 test("Guardado/Pendente labels are inline beside the name and use the official palette",()=>{
  assert.match(js,/statusChip\.className="supp-status-chip "\+\(saved\?"supp-status-saved":"supp-status-pending"\)/);
  assert.match(js,/statusChip\.textContent=saved\?"Guardado":"Pendente"/);
- assert.match(js,/headline\.append\(name,statusChip\)/);
- assert.match(js,/label\.append\(headline,protocol\)/);
+ assert.match(js,/headline\.append\(name\);/);
+ assert.match(js,/label\.append\(headline,protocol,statusChip\)/);
  assert.match(css,/supp-associated-headline\{/);
  assert.match(css,/supp-status-chip\{/);
  assert.match(css,/border-radius:999px!important/);
@@ -275,4 +275,31 @@ test("Supplement library search left edge follows 20px/16px associated-row text 
  assert.match(html, /id="supp-assign-inline" class="supp-assignment-inline" hidden/);
  assert.match(html, /id="supp-assign-search" type="search"/);
  assert.match(css, /#supplements-panel \.supp-associated-card>\.supp-assignment-inline\[hidden\]\{display:none!important\}/);
+});
+
+
+test("Mobile moves its single add button below the last supplement without changing desktop placement",()=>{
+ const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('<details class="supp-workflow supp-exceptions-card">'));
+ assert.ok(card.indexOf('id="supp-add-toggle"')<card.indexOf('id="supp-base-list"'),"Desktop add button remains inside header");
+ assert.equal((card.match(/id="supp-add-toggle"/g)||[]).length,1,"Do not duplicate the button or click handler");
+ assert.match(css,/\/\* Supplementation: mobile action after the list/);
+ assert.match(css,/@media\(max-width:680px\)\{\s*\/\* Flatten the header only at mobile widths/);
+ assert.match(css,/\.supp-associated-card>\.supp-associated-header\{\s*display:contents!important/);
+ assert.match(css,/\.supp-associated-card>#supp-base-list\{\s*order:1!important/);
+ assert.match(css,/\.supp-associated-card>\.supp-associated-header>\.supp-associated-toolbar\{\s*order:2!important/);
+ assert.match(css,/\.supp-associated-card>#supp-assign-inline\{\s*order:3!important/);
+ assert.match(css,/\.supp-associated-card>#supp-save-footer\{\s*order:5!important/);
+ assert.match(js,/\$\("supp-add-toggle"\)\.onclick=\(\)=>/);
+ assert.match(js,/setSupplementAssignmentOpen\(opening,opening\)/);
+});
+
+test("Names use lighter medium weight and states are third-line regular labels in both themes",()=>{
+ assert.match(js,/headline\.append\(name\);/);
+ assert.match(js,/label\.append\(headline,protocol,statusChip\)/);
+ assert.doesNotMatch(js,/headline\.append\(name,statusChip\)/);
+ assert.match(css,/\.supp-associated-name\{\s*display:block!important;color:var\(--tm-ui-text\)!important;\s*font-size:16px!important;font-weight:500!important/);
+ assert.match(css,/\.supp-status-chip\{[\s\S]*?font-size:11px!important;font-weight:400!important/);
+ assert.match(css,/\.supp-status-chip\{\s*align-self:flex-start!important;margin-top:2px!important/);
+ assert.match(css,/\.supp-status-saved\{/);
+ assert.match(css,/\.supp-status-pending\{/);
 });
