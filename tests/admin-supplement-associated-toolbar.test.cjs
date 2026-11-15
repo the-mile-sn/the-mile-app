@@ -14,8 +14,8 @@ const panel=html.slice(start,end);
 
 test("Suplementos associados has a standalone add button and a hidden bottom save",()=>{
  assert.ok(start>=0 && end>start);
- const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('<details class="supp-workflow"><summary>Biblioteca de suplementos</summary>'));
- assert.match(card, /<h3>Suplementos associados<\/h3>/);
+ const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('</section>',panel.indexOf('<div class="supp-associated-card">')));
+ assert.match(card, /<h3>Suplementação<\/h3>/);
  assert.match(card, /id="supp-add-toggle"[^>]*>\+ Adicionar suplemento<\/button>/);
  assert.match(card, /id="supp-save-footer"[^>]*hidden>/);
  assert.match(card, /id="supp-save"[^>]*hidden>Guardar<\/button>/);
@@ -29,7 +29,9 @@ test("Suplementos associados has a standalone add button and a hidden bottom sav
  }
  assert.doesNotMatch(panel, /<summary>Exceções por jogo<\/summary>/);
  assert.doesNotMatch(panel, /Prescrição personalizada|id="supp-add"|id="supp-name"|id="supp-rule"/);
- assert.match(panel, /<summary>Biblioteca de suplementos<\/summary>/);
+ assert.doesNotMatch(panel, /<summary>Biblioteca de suplementos<\/summary>/);
+ assert.match(html, /id="tm-supplement-library-page"/);
+ assert.ok(html.indexOf('id="supp-add-toggle"')>html.indexOf('id="supp-base-list"'));
 });
 
 test("selected library suggestion adds directly to the draft, never auto-publishes",()=>{
