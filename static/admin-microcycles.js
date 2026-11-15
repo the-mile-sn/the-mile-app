@@ -2774,6 +2774,9 @@ function syncCalendarEventForm(){
   $("calendar-peri-flags").hidden=!(game||training);
  $("calendar-pre-label").textContent=game?"Intra-jogo":"Pré-treino";
  $("calendar-post-label").textContent=game?"Pós-jogo":"Pós-treino";
+ const submit=$("calendar-add-event");
+ submit.textContent=kind==="supplementation"?"Guardar":"Adicionar evento";
+ submit.classList.toggle("calendar-save-supplements",kind==="supplementation");
 }
 
 async function renderCalendarSupplementChoices(){
@@ -3118,7 +3121,6 @@ function resetSupplementForAthlete(athleteId){
  supplementDraft={plan:[],overrides:{}};
  publishedSupplementSnapshot="[]";publishedSupplementExclusionsSnapshot="{}";supplementMatches=[];
  $("supp-base-list").replaceChildren();
- $("supp-match-exclusions").replaceChildren();
  $("supp-feedback").textContent="";
  setSupplementAssignmentOpen(false);
  setSupplementEditorReady(false);
@@ -3161,29 +3163,6 @@ async function loadSupplementEditor(){
   if(!stillCurrent())return;
   $("supp-feedback").textContent="Não foi possível carregar a suplementação: "+e.message;
   throw e;
- }
-}
-function renderSupplementMatchExclusions(){
- const host=$("supp-match-exclusions");if(!host)return;host.replaceChildren();
- const current=supplementDraft.match_exclusions||{};
- const eligible=supplementDraft.plan.filter(item=>(item.prescriptions||[item]).some(p=>["match","md-1","md+1"].includes(p.rule)));
- if(!eligible.length||!supplementMatches.length){host.textContent="Sem protocolos associados a jogos para suspender.";return;}
- for(const match of supplementMatches){
-  const wrap=document.createElement("details");wrap.className="supp-match-exclusion";
-  const title=document.createElement("summary");title.textContent="Jogo · "+match.match_date;wrap.append(title);
-  const group=document.createElement("div");group.className="supp-match-exclusion-options";
-  for(const item of eligible){
-   const key=item.library_id||item.name;const label=document.createElement("label");const check=document.createElement("input");
-   check.type="checkbox";check.checked=(current[match.id]||[]).includes(key);
-   check.onchange=()=>{const values=new Set((supplementDraft.match_exclusions||{})[match.id]||[]);
-    if(check.checked)values.add(key);else values.delete(key);
-    supplementDraft.match_exclusions ||= {};
-    if(values.size)supplementDraft.match_exclusions[match.id]=[...values];else delete supplementDraft.match_exclusions[match.id];
-    $("supp-feedback").textContent="";syncSupplementSaveVisibility();
-   };
-   label.append(check,document.createTextNode(" Suspender "+item.name+" neste jogo (MD-1, MD e MD+1)"));group.append(label);
-  }
-  wrap.append(group);host.append(wrap);
  }
 }
 /* Official Hugeicons Core Free SVG vectors; source: @hugeicons/core-free-icons. */
@@ -3315,7 +3294,6 @@ function openSupplementPrescriptionDialog(item){
 }
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
- renderSupplementMatchExclusions();
  const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1","md+1":"MD+1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
  const savedStatuses=supplementSavedStatuses(supplementDraft.plan,publishedSupplementSnapshot);
  for(const [i,item] of supplementDraft.plan.entries()){
@@ -3335,7 +3313,9 @@ function renderSupplementEditor(){
   }
   const protocol=document.createElement("span");protocol.className="supp-associated-protocol";
   protocol.textContent=rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação"].filter(Boolean).join(" · ")).join("  |  ");
-  label.append(headline,frequencies,protocol,statusChip);
+  const badges=document.createElement("div");badges.className="supp-associated-badges";
+  badges.append(statusChip,frequencies);
+  label.append(headline,protocol,badges);
   const edit=document.createElement("button");edit.type="button";edit.className="supp-item-action supp-item-edit";
   edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar suplemento "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>openSupplementPrescriptionDialog(item);
