@@ -533,3 +533,10 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - **Eventos do mês:** os tipos de evento passam a ter identificadores compactos e subtis, sem criar cartões secundários nem hover na linha: Jogo verde, Treino azul, Folga rosa suave; Viagem e Suplementação têm tons neutros distinguíveis. Usar cores distintas para ambos os temas com contraste legível. Datas e edição inline mantêm o mesmo comportamento. Preservar as divisórias suaves e os recuos uniformizados.
 - **Mobile:** a linha de mês + criação adapta a tipografia e o espaçamento ao espaço disponível, sem alterar a grelha dos sete dias. Evitar alturas artificiais ou novos recuos no interior dos cards.
 - **Implementação:** alterações estruturais no HTML e labels no JS; estilos alterados no bloco consolidado de `static/admin-surface-palette.css`, sem acumular overrides. Sem alterações a dados nutricionais, eventos ou branch `main`.
+
+
+### Microciclos — dias por definir sem preenchimento (15 novembro 2026)
+
+- Dias cuja classificação de microciclo ainda não está definida (`.calendar-general-fallback`, «Geral · por definir»): **fundo totalmente transparente**, conservando o contorno de aviso tracejado e as barras nutricionais. Válido no desktop e mobile e nos temas claro e escuro.
+- Dias com classificação atribuída preservam as cores de preenchimento já aprovadas (MD, Off, Geral confirmado, etc.). O estado selecionado e a indicação de hoje continuam identificáveis pelo contorno, nunca por acrescentar fill a um dia por definir.
+- Implementação: retirar o `backgroundColor` inline do calendário em `static/admin-microcycles.js`; excluir `.calendar-general-fallback` das regras de fundo neutro/selecionado em `static/admin-microcycles.css` e definir uma única regra específica `background:transparent`. Sem alterações à lógica de classificação, horários, opções ou nutrientes.
