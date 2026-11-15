@@ -19,7 +19,7 @@
 })();
 (()=> {
  const $=id=>document.getElementById(id);
- const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning"),recipesBtn=$("tm-admin-nav-menus-recipes"),recipesSubnav=$("tm-admin-recipes-subnav"),recipesPage=$("tm-menu-recipes-page"),recipeLibraryPage=$("tm-recipe-library-page"),dishesBtn=$("tm-admin-nav-dishes"),recipeLibraryBtn=$("tm-admin-nav-recipe-library"),foodLibraryBtn=$("tm-admin-nav-food-library"),foodLibraryPage=$("tm-food-library-page"),foodSubnav=$("tm-admin-food-subnav"),foodFoodsBtn=$("tm-admin-nav-foods"),foodPortionsBtn=$("tm-admin-nav-visual-portions"),plansBtn=$("tm-admin-nav-create-plan"),plansPage=$("tm-plan-page");
+ const section=$("tm-dashboard"),legacy=$("tm-admin-legacy"),playersPage=$("tm-players-page"),dash=$("tm-admin-nav-dashboard"),playersBtn=$("tm-admin-nav-players"),planningBtn=$("tm-admin-nav-planning"),recipesBtn=$("tm-admin-nav-menus-recipes"),recipesSubnav=$("tm-admin-recipes-subnav"),recipesPage=$("tm-menu-recipes-page"),recipeLibraryPage=$("tm-recipe-library-page"),dishesBtn=$("tm-admin-nav-dishes"),recipeLibraryBtn=$("tm-admin-nav-recipe-library"),foodLibraryBtn=$("tm-admin-nav-food-library"),foodLibraryPage=$("tm-food-library-page"),foodSubnav=$("tm-admin-food-subnav"),foodFoodsBtn=$("tm-admin-nav-foods"),foodPortionsBtn=$("tm-admin-nav-visual-portions"),foodSupplementsBtn=$("tm-admin-nav-nutrition-supplements"),supplementLibraryPage=$("tm-supplement-library-page"),plansBtn=$("tm-admin-nav-create-plan"),plansPage=$("tm-plan-page");
  if(!section||!legacy||!dash)return;
  const meals=["breakfast","lunch","snack","dinner","supper"];
  const icons=["coffee","restaurant","veg","restaurant","moon"];
@@ -60,9 +60,10 @@
   moveAdminControls(settingsView);
   if(settingsPage)settingsPage.hidden=!settingsView;
   if(foodLibraryPage)foodLibraryPage.hidden=target!==foodLibraryBtn;
+  if(supplementLibraryPage)supplementLibraryPage.hidden=true;
   if(foodSubnav)foodSubnav.hidden=target!==foodLibraryBtn;
   if(foodLibraryBtn)foodLibraryBtn.setAttribute("aria-expanded",String(target===foodLibraryBtn));
-  if(target!==foodLibraryBtn)for(const b of [foodFoodsBtn,foodPortionsBtn]){if(b){b.classList.remove("is-active");b.removeAttribute("aria-current");}}
+  if(target!==foodLibraryBtn)for(const b of [foodFoodsBtn,foodPortionsBtn,foodSupplementsBtn]){if(b){b.classList.remove("is-active");b.removeAttribute("aria-current");}}
   if(plansPage)plansPage.hidden=target!==plansBtn;
   if(recipesPage)recipesPage.hidden=target!==recipesBtn;
   if(recipeLibraryPage)recipeLibraryPage.hidden=true;
@@ -276,15 +277,17 @@ function ensurePlanningOnlyView(){
  window.tmOpenAdminRecipeLibrary=openRecipeLibrary;
  function openFoodLibrary(which="foods"){
   if($("admin-workspace").hidden)return;
-  const selected=which==="portions"?"portions":"foods";
+  const selected=which==="portions"?"portions":which==="supplements"?"supplements":"foods";
   closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
   navActive(foodLibraryBtn);
-  if(foodLibraryPage)foodLibraryPage.hidden=false;
-  for(const [b,active] of [[foodFoodsBtn,selected==="foods"],[foodPortionsBtn,selected==="portions"]]){
+  if(foodLibraryPage)foodLibraryPage.hidden=selected==="supplements";
+  if(supplementLibraryPage)supplementLibraryPage.hidden=selected!=="supplements";
+  for(const [b,active] of [[foodFoodsBtn,selected==="foods"],[foodPortionsBtn,selected==="portions"],[foodSupplementsBtn,selected==="supplements"]]){
    if(!b)continue;b.classList.toggle("is-active",active);
    if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
   }
-  window.tmShowAdminFoodLibrarySection?.(selected);
+  if(selected!=="supplements")window.tmShowAdminFoodLibrarySection?.(selected);
+  if(selected==="supplements"&&typeof window.tmLoadSupplementLibrary==="function")window.tmLoadSupplementLibrary().catch(err=>{const feedback=$("supp-lib-feedback");if(feedback)feedback.textContent="Não foi possível carregar os suplementos: "+err.message;});
   if(selected==="foods"&&typeof window.tmEnsureAdminFoodLibrary==="function"){
    window.tmEnsureAdminFoodLibrary().catch(err=>{
     const feedback=foodLibraryPage?.querySelector("#feedback");
@@ -296,6 +299,7 @@ function ensurePlanningOnlyView(){
  if(foodLibraryBtn)foodLibraryBtn.addEventListener("click",()=>openFoodLibrary("foods"));
  if(foodFoodsBtn)foodFoodsBtn.addEventListener("click",()=>openFoodLibrary("foods"));
  if(foodPortionsBtn)foodPortionsBtn.addEventListener("click",()=>openFoodLibrary("portions"));
+ if(foodSupplementsBtn)foodSupplementsBtn.addEventListener("click",()=>openFoodLibrary("supplements"));
  window.tmOpenAdminFoodLibrary=openFoodLibrary;
  function openPlans(){
   if($("admin-workspace").hidden)return;
@@ -1198,12 +1202,13 @@ function ensurePlanningOnlyView(){
 /* Navigate from standalone nutrition pages to the corresponding Backoffice section. */
 (()=>{
  const target=new URLSearchParams(window.location.search).get("nav");
- const allowed=new Set(["players","planning","create-plan","food-library","visual-portions","menus-recipes","dishes","recipe-library","assessments","forms","dashboard","settings","account"]);
+ const allowed=new Set(["players","planning","create-plan","food-library","visual-portions","nutrition-supplements","menus-recipes","dishes","recipe-library","assessments","forms","dashboard","settings","account"]);
  if(!allowed.has(target)||target==="dashboard")return;
  const workspace=document.getElementById("admin-workspace");
  const open=()=>{if(workspace?.hidden)return false;const button=document.getElementById("tm-admin-nav-"+target);if(!button)return false;
   if(target==="food-library")window.tmOpenAdminFoodLibrary?.("foods");
   else if(target==="visual-portions")window.tmOpenAdminFoodLibrary?.("portions");
+  else if(target==="nutrition-supplements")window.tmOpenAdminFoodLibrary?.("supplements");
   else button.click();window.history.replaceState(null,"",window.location.pathname);return true};
  if(open())return;
  const observer=new MutationObserver(()=>{if(open())observer.disconnect()});
