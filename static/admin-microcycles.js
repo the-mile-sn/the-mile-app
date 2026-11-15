@@ -1527,6 +1527,124 @@ function formatCalendarPreviewDate(iso){
  return weekdays[weekday]+", "+day+" "+months[month-1]+" "+year;
 }
 
+
+let calendarSupplementBase={},calendarSupplementEffective={};
+const daySuppRows=(date,name,base=false)=>(base?calendarSupplementBase:calendarSupplementEffective)[date]?.filter(x=>x.name===name)||[];
+const daySuppItem=x=>({library_id:x.library_id||"",name:x.name,dose:x.dose,moment:x.moment||"",rule:"daily",timing_text:x.timing_text||"",note:x.note||""});
+async function updateDaySupplement(date,name,entries,restore=false){
+ const aid=model?.athlete?.id;
+ if(!aid||selectedCalendarDay!==date)throw Error("Seleciona novamente o dia.");
+ const data=await request(matchBase()+"/supplements");
+ if(model?.athlete?.id!==aid||selectedCalendarDay!==date)throw Error("O jogador ou dia mudou.");
+ const original=data.overrides?.[date]||{add:[],remove:[]};
+ const remove=new Set(original.remove||[]);
+ const add=(original.add||[]).filter(x=>x.name!==name);
+ if(restore)remove.delete(name);
+ else {
+  if(daySuppRows(date,name,true).length)remove.add(name);
+  add.push(...entries.map(daySuppItem));
+ }
+ data.overrides=data.overrides||{};
+ if(add.length||remove.size)data.overrides[date]={...original,add,remove:[...remove]};
+ else delete data.overrides[date];
+ await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(data)});
+ selectedCalendarDay=date;
+ await loadCalendar();
+}
+function renderDaySupplements(date){
+ const section=document.createElement("section");section.className="tm-day-supplementation";
+ const top=document.createElement("div");top.className="tm-day-supplementation-head";
+ const title=document.createElement("h3");title.textContent="Suplementação";
+ const add=document.createElement("button");add.type="button";add.textContent="+ Adicionar suplemento";add.className="tm-day-supplementation-add";
+ add.onclick=()=>editDaySupplement(date,null);
+ top.append(title,add);section.append(top);
+ const list=document.createElement("div");list.className="tm-day-supplementation-list";
+ const names=new Set([...(calendarSupplementBase[date]||[]),...(calendarSupplementEffective[date]||[])].map(x=>x.name));
+ for(const name of names){
+  const original=daySuppRows(date,name,true),actual=daySuppRows(date,name);
+  const row=document.createElement("div");row.className="tm-day-supplementation-row";
+  const check=document.createElement("input");check.type="checkbox";check.checked=actual.length>0;
+  check.setAttribute("aria-label","Incluir "+name+" neste dia");
+  const content=document.createElement("div");content.className="tm-day-supplementation-info";
+  const heading=document.createElement("strong");heading.textContent=name;content.append(heading);
+  for(const item of (actual.length?actual:original)){
+   const line=document.createElement("span");line.textContent=[item.dose,item.timing_text||({breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",snack:"Lanche",dinner:"Jantar",supper:"Ceia",training:"Treino",match:"Jogo"}[item.moment]||item.moment)].filter(Boolean).join(" · ");
+   content.append(line);
+  }
+  if(!actual.length){row.classList.add("is-excluded");const state=document.createElement("small");state.textContent="Excluído neste dia";content.append(state);}
+  const actions=document.createElement("div");actions.className="tm-day-supplementation-actions";
+  const edit=document.createElement("button");edit.type="button";edit.className="tm-day-supplementation-edit";
+  edit.innerHTML=supplementPlanActionIcons.edit;edit.title="Editar prescrição apenas neste dia";
+  edit.setAttribute("aria-label","Editar "+name+" neste dia");edit.onclick=()=>editDaySupplement(date,name);
+  const changed=(original.length!==actual.length)||original.some((x,i)=>!actual[i]||["dose","moment","timing_text","note"].some(k=>(x[k]||"")!==(actual[i][k]||"")));
+  if(changed){const reset=document.createElement("button");reset.type="button";reset.className="tm-day-supplementation-reset";reset.textContent="Repor protocolo";
+   reset.onclick=async()=>{reset.disabled=true;try{await updateDaySupplement(date,name,[],true);}catch(e){status("Erro: "+e.message,"warn");reset.disabled=false;}};actions.append(reset);}
+  actions.append(edit);
+  check.onchange=async()=>{check.disabled=true;edit.disabled=true;try{await updateDaySupplement(date,name,check.checked?(actual.length?actual:original):[]);}catch(e){check.checked=!check.checked;check.disabled=false;edit.disabled=false;status("Erro: "+e.message,"warn");}};
+  row.append(check,content,actions);list.append(row);
+ }
+ if(!names.size){const empty=document.createElement("p");empty.textContent="Sem suplementos previstos para este dia.";list.append(empty);}
+ section.append(list);
+ const foot=document.createElement("p");foot.className="tm-day-supplementation-foot";foot.textContent="Alterações aplicadas apenas a este dia.";section.append(foot);
+ return section;
+}
+async function editDaySupplement(date,name){
+ if(selectedCalendarDay!==date)return;
+ if(!supplementLibrary.length)await loadSupplementLibrary();
+ if(selectedCalendarDay!==date)return;
+ let source=name?(daySuppRows(date,name).length?daySuppRows(date,name):daySuppRows(date,name,true)):[];
+ let targetName=name;
+ const dlg=document.createElement("dialog");dlg.className="tm-day-supplementation-modal";
+ const head=document.createElement("div");head.className="tm-day-supplementation-modal-head";
+ const heading=document.createElement("h3");heading.textContent=name?"Editar prescrição · "+name:"Adicionar suplemento";
+ const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar");close.onclick=()=>dlg.close();
+ head.append(heading,close);dlg.append(head);
+ const form=document.createElement("form");form.className="tm-day-supplementation-form";
+ const fields=document.createElement("div"),inputs=[];
+ const draw=rows=>{
+  fields.replaceChildren();inputs.length=0;
+  for(const [i,row] of rows.entries()){
+   const group=document.createElement("fieldset");const legend=document.createElement("legend");legend.textContent="Prescrição "+(i+1);group.append(legend);
+   const field=(title,val,choices)=>{
+    const label=document.createElement("label");label.textContent=title;
+    const el=choices?document.createElement("select"):document.createElement("input");
+    if(choices)for(const [value,text] of Object.entries(choices)){const option=document.createElement("option");option.value=value;option.textContent=text;el.append(option);}
+    else el.type="text";
+    el.value=val||"";label.append(el);group.append(label);return el;
+   };
+   inputs.push({dose:field("Dose",row.dose),moment:field("Associar a",row.moment,{"":"Sem associação",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",snack:"Lanche",dinner:"Jantar",supper:"Ceia",training:"Treino",match:"Jogo"}),timing:field("Momento ou condição",row.timing_text),note:field("Instruções",row.note)});
+   fields.append(group);
+  }
+ };
+ if(!name){
+  const label=document.createElement("label");label.textContent="Suplemento da biblioteca";
+  const select=document.createElement("select");
+  const initial=document.createElement("option");initial.value="";initial.textContent="Selecionar suplemento";select.append(initial);
+  for(const item of supplementLibrary){const option=document.createElement("option");option.value=item.id;option.textContent=item.name;select.append(option);}
+  select.onchange=()=>{
+   const item=supplementLibrary.find(x=>x.id===select.value);
+   source=item?(item.prescriptions?.length?item.prescriptions.map(p=>({...item,...p})): [item]):[];
+   targetName=item?.name||null;draw(source);
+  };
+  label.append(select);form.append(label);
+ }
+ draw(source);form.append(fields);
+ const actions=document.createElement("div");actions.className="tm-day-supplementation-modal-actions";
+ const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>dlg.close();
+ const save=document.createElement("button");save.type="submit";save.textContent="Guardar neste dia";
+ actions.append(cancel,save);form.append(actions);
+ form.onsubmit=async e=>{
+  e.preventDefault();
+  if(!targetName||!inputs.length)return;
+  const rows=inputs.map((x,i)=>({...source[i],name:targetName,dose:x.dose.value.trim(),moment:x.moment.value,timing_text:x.timing.value.trim(),note:x.note.value.trim()}));
+  if(rows.some(x=>!x.dose)){status("Preenche todas as doses.","warn");return;}
+  save.disabled=true;
+  try{await updateDaySupplement(date,targetName,rows);dlg.close();}
+  catch(err){save.disabled=false;status("Erro ao guardar: "+err.message,"warn");}
+ };
+ dlg.append(form);document.body.append(dlg);dlg.addEventListener("close",()=>dlg.remove(),{once:true});dlg.showModal();
+}
+
 function renderDayPreview(day,host){
  host.replaceChildren();
  window.currentNutritionDay=day;
@@ -1688,6 +1806,7 @@ function renderDayPreview(day,host){
   grid.appendChild(cell);
  }
  host.append(grid,optionsPanel);
+ host.append(renderDaySupplements(day.date));
  // Keep the same meal expanded across the save -> publish refresh.
  if(expandedCalendarMealDate===day.date&&optionButtons.has(expandedCalendarMealKey))
   toggleOptions(expandedCalendarMealKey);
@@ -1761,6 +1880,8 @@ async function loadCalendar(){
    request(matchBase()+"/calendar?start="+from+"&end="+to+"&include_food_plans=1"),
    request(matchBase()+"/meal-options?start="+from+"&end="+to)
   ]);
+  calendarSupplementBase=data.supplements_base_by_day||{};
+  calendarSupplementEffective=data.supplements_by_day||{};
   liveCalendarPlans=data.live_food_plans?.days||{};
   mealChoiceAssignments=choices;
   dayColorOverrides=colorOverrideLookup(data.meal_color_overrides);
