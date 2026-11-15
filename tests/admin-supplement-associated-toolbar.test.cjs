@@ -20,7 +20,12 @@ test("Suplementos associados has a standalone add button and a hidden bottom sav
  assert.match(card, /id="supp-save-footer"[^>]*hidden>/);
  assert.match(card, /id="supp-save"[^>]*hidden>Guardar<\/button>/);
  assert.ok(card.indexOf('id="supp-save"')>card.indexOf('id="supp-base-list"'));
- assert.match(card, /id="supp-assign-inline"[^>]*hidden>/);
+ assert.match(card, /<dialog id="supp-assign-inline"[^>]*hidden>/);
+ assert.match(card, /id="supp-select-close"/);
+ assert.match(card, /aria-haspopup="dialog"/);
+ assert.match(js, /panel\.showModal\(\)/);
+ assert.match(js, /panel\.close\(\)/);
+ assert.match(css, /dialog\.tm-supp-select-dialog\[open\]/);
  assert.match(card, /id="supp-assign-search"/);
  assert.match(card, /id="supp-search-dropdown"/);
  assert.doesNotMatch(card, /id="supp-lib-assign"|id="supp-assign-cancel"|Associar ao jogador/);
