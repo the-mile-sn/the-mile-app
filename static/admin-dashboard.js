@@ -236,9 +236,25 @@ function ensurePlanningOnlyView(){
  }
  dash.addEventListener("click",openDashboard);
  playersBtn.addEventListener("click",openPlayersList);
- function openPlanning(){closeClinical();
+ function openPlanning(){
   if($("admin-workspace").hidden)return;
-  section.hidden=true;playersPage.hidden=true;legacy.hidden=false;navActive(planningBtn);
+  closeClinical();
+  // Return from all three library destinations to the permanent planning panel.
+  if(foodLibraryPage)foodLibraryPage.hidden=true;
+  if(supplementLibraryPage)supplementLibraryPage.hidden=true;
+  if(plansPage)plansPage.hidden=true;
+  if(recipesPage)recipesPage.hidden=true;
+  if(recipeLibraryPage)recipeLibraryPage.hidden=true;
+  section.hidden=true;
+  playersPage.hidden=true;
+  legacy.hidden=false;
+  navActive(planningBtn);
+  // Keep the current planning tab, but recover a valid tab after leaving a library.
+  const current=typeof backofficeView==="string"?backofficeView:"calendar";
+  if(typeof showBackofficeView==="function"){
+   const view=["calendar","plans","supplements","matrix","menus","player-preview"].includes(current)?current:"calendar";
+   Promise.resolve(showBackofficeView(view)).catch(err=>{if(typeof status==="function")status("Não foi possível apresentar o Planeamento: "+err.message,"warn");});
+  }
   ensurePlanningOnlyView();
   if(typeof window.tmEnsureAdminPlanning==="function")window.tmEnsureAdminPlanning().catch(err=>{if(typeof status==="function")status("Não foi possível carregar o Planeamento: "+err.message,"warn");});
   $("admin-account-panel").hidden=true;
