@@ -28,7 +28,7 @@ test("Suplementos associados has a standalone add button and a hidden bottom sav
   assert.equal((card.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  }
  assert.match(panel, /<summary>Exceções por jogo<\/summary>/);
- assert.match(panel, /<summary>Prescrição personalizada<\/summary>/);
+ assert.doesNotMatch(panel, /Prescrição personalizada|id="supp-add"|id="supp-name"|id="supp-rule"/);
  assert.match(panel, /<summary>Biblioteca de suplementos<\/summary>/);
 });
 
