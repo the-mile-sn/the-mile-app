@@ -9,14 +9,15 @@ const visual=fs.readFileSync("static/visual-portions.js","utf8");
 const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 const css=fs.readFileSync("static/admin-microcycles.css","utf8");
 const visualCss=fs.readFileSync("static/visual-portions.css","utf8");
-test("food library has two submenu destinations",()=>{
- for(const name of ["tm-admin-food-subnav","tm-admin-nav-foods","tm-admin-nav-visual-portions"])assert.ok(nav.includes(name));
- assert.ok(nav.includes('"foods","visual-portions"'));
+test("food library has three submenu destinations",()=>{
+ for(const name of ["tm-admin-food-subnav","tm-admin-nav-foods","tm-admin-nav-visual-portions","tm-admin-nav-nutrition-supplements"])assert.ok(nav.includes(name));
+ assert.ok(nav.includes('"foods","visual-portions","nutrition-supplements"'));
  assert.ok(mobile.includes("foodExpanded"));
  assert.ok(mobile.includes("foods.hidden=!foodExpanded"));
  assert.ok(admin.includes('foodPortionsBtn.addEventListener("click",()=>openFoodLibrary("portions"))'));
  assert.ok(admin.includes('foodFoodsBtn.addEventListener("click",()=>openFoodLibrary("foods"))'));
  assert.ok(admin.includes('window.tmShowAdminFoodLibrarySection?.(selected)'));
+ assert.ok(admin.includes('foodSupplementsBtn.addEventListener("click",()=>openFoodLibrary("supplements"))'));
 });
 test("portions catalogue stays functional without legacy switch and testing controls",()=>{
  assert.ok(!html.includes('class="tm-portion-tabs"'));
