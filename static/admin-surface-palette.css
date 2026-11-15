@@ -271,7 +271,7 @@ html[data-admin-theme] :is(.tm-player-search-list,.tm-db-player-results,.tm-clin
 
 /* 6. Legacy Planeamento: keep MD/Off/selected and pending dashed borders. */
 #tm-admin-legacy .tm-planning-unified-header,
-#tm-admin-legacy .calendar-panel:not(#menus-panel),
+#tm-admin-legacy .calendar-panel:not(#menus-panel):not(#supplements-panel),
 #tm-admin-legacy .tm-planning-player-toolbar,
 #tm-admin-legacy #backoffice-nav{
  background:var(--tm-ui-card)!important;
@@ -4459,6 +4459,11 @@ html[data-admin-theme] #calendar-section #calendar-event-form #calendar-add-even
  }
 }
 
+/* Calendar: date number at the top-right of each day tile; classification remains left-aligned. */
+html[data-admin-theme] #calendar-section .calendar-days .calendar-day>strong{
+ align-self:flex-end!important;text-align:right!important;
+}
+
 /* Existing seven-column calendar and MD/Off classifications stay unchanged. */
 html[data-admin-theme] #calendar-section .tm-calendar-weekdays{
  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
@@ -5085,8 +5090,8 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
 /* Supplementation: pending-save footer and Planos-matched icon actions. */
 #supplements-panel .supp-associated-card{
  display:flex!important;flex-direction:column!important;gap:14px!important;min-width:0!important;
- margin:0!important;padding:0 0 5px!important;background:transparent!important;
- border:0!important;box-shadow:none!important;
+ margin:0!important;padding:0 0 16px!important;background:var(--tm-ui-card)!important;
+ border:0!important;border-radius:20px!important;box-shadow:none!important;
 }
 #supplements-panel .supp-associated-card>.supp-associated-header{
  display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;
@@ -5096,7 +5101,8 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
 }
 #supplements-panel .supp-associated-card>.supp-assignment-inline{
  display:flex!important;align-items:center!important;flex-wrap:wrap!important;
- margin:0!important;padding:0!important;gap:10px!important;min-width:0!important;
+ box-sizing:border-box!important;width:100%!important;
+ margin:0!important;padding:0 20px!important;gap:10px!important;min-width:0!important;
  background:transparent!important;border:0!important;box-shadow:none!important;
 }
 #supplements-panel .supp-associated-card>.supp-assignment-inline[hidden]{display:none!important}
@@ -5177,6 +5183,12 @@ html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-action:focu
  }
  #supplements-panel .supp-associated-card>.supp-associated-header .supp-associated-toolbar{
   width:auto!important;flex:0 0 auto!important;
+ }
+ #supplements-panel .supp-associated-card>.supp-assignment-inline{
+  padding:0 16px!important;
+ }
+ #supplements-panel .supp-associated-card{
+  border-radius:18px!important;padding-bottom:14px!important;
  }
  #supplements-panel .supp-associated-card>.supp-assignment-inline .supp-assignment-field{
   flex:1 1 100%!important;max-width:none!important;

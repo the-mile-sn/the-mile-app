@@ -7,6 +7,7 @@ const vm=require("node:vm");
 const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 const js=fs.readFileSync("static/admin-microcycles.js","utf8");
 const css=fs.readFileSync("static/admin-surface-palette.css","utf8");
+const microCss=fs.readFileSync("static/admin-microcycles.css","utf8");
 const start=html.indexOf('<section class="calendar-panel" id="supplements-panel"');
 const end=html.indexOf('<section class="calendar-panel" id="peri-panel"',start);
 const panel=html.slice(start,end);
@@ -149,7 +150,7 @@ test("button colors, hidden states and cached assets work in dark and light them
  assert.match(html,/admin-microcycles\.js\?v=18296/);
  for(const page of ["admin-microcycles","create-plan","food-library","admin-appointments"]){
   const p=fs.readFileSync("static/"+page+".html","utf8");
-  assert.match(p,/admin-surface-palette\.css\?v=69/);
+  assert.match(p,/admin-surface-palette\.css\?v=70/);
  }
 });
 
@@ -246,4 +247,32 @@ test("pending-save explanation is removed but error and success feedback remain"
  assert.match(js,/supp-feedback"\)\.textContent="Não foi possível guardar: "/);
  assert.match(js,/Suplementação guardada e publicada para o jogador/);
  assert.match(css,/\.supp-associated-card>\.supp-associated-footer\{\s*margin:0!important;padding:0 20px 6px!important/);
+});
+
+
+test("Month day numbers align top right without moving classification and meal colors",()=>{
+ assert.match(css,/calendar-days \.calendar-day>strong\{\s*align-self:flex-end!important;text-align:right!important/);
+ const numberCreation=js.indexOf('const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);');
+ assert.ok(numberCreation>=0,"Day number still generated in its own strong element");
+ assert.match(js,/const type=document\.createElement\("span"\);type\.textContent=/);
+ assert.match(js,/const strip=document\.createElement\("div"\);strip\.className="day-color-strip"/);
+});
+
+test("Supplements associated is a standalone main card separated from workflow subcards",()=>{
+ assert.match(html, /<section class="calendar-panel" id="supplements-panel" hidden>\s*<div class="supp-associated-card">/);
+ assert.match(css, /#tm-admin-legacy \.calendar-panel:not\(#menus-panel\):not\(#supplements-panel\)/);
+ assert.match(css, /#supplements-panel \.supp-associated-card\{\s*display:flex!important;flex-direction:column!important;gap:14px!important;min-width:0!important;\s*margin:0!important;padding:0 0 16px!important;background:var\(--tm-ui-card\)!important;\s*border:0!important;border-radius:20px!important;box-shadow:none!important;/);
+ assert.match(microCss, /#supplements-panel\{border:0!important;box-shadow:none!important;background:transparent!important;padding:0!important;display:flex;flex-direction:column;gap:14px\}/);
+ assert.match(microCss, /#supplements-panel\[hidden\]\{display:none!important\}/);
+ assert.match(microCss, /#supplements-panel>details\.supp-workflow/);
+});
+
+test("Supplement library search left edge follows 20px/16px associated-row text insets",()=>{
+ assert.match(css, /#supplements-panel \.supp-associated-card>\.supp-assignment-inline\{\s*display:flex!important;align-items:center!important;flex-wrap:wrap!important;\s*box-sizing:border-box!important;width:100%!important;\s*margin:0!important;padding:0 20px!important/);
+ assert.match(css, /#supplements-panel \.supp-associated-card>\.supp-assignment-inline\{\s*padding:0 16px!important/);
+ assert.match(css, /#supplements-panel #supp-base-list \.supp-associated-row\{\s*padding-left:20px!important;padding-right:20px!important/);
+ assert.match(css, /#supplements-panel #supp-base-list \.supp-associated-row\{\s*padding-left:16px!important;padding-right:16px!important/);
+ assert.match(html, /id="supp-assign-inline" class="supp-assignment-inline" hidden/);
+ assert.match(html, /id="supp-assign-search" type="search"/);
+ assert.match(css, /#supplements-panel \.supp-associated-card>\.supp-assignment-inline\[hidden\]\{display:none!important\}/);
 });
