@@ -5575,7 +5575,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
    Explicit meal-ink avoids white inherited from the global button rule. */
 #overview #day-details .meal.daily-meal > button.consumption-change-color,
 #overview #day-details .daily-meal:has(> .single-meal-option) > button.consumption-change-color{
- margin-right:26px!important;
+ margin-right:17px!important;
  margin-left:auto!important;
  margin-bottom:12px!important;
  color:color-mix(in srgb,var(--meal-ink) 58%,white)!important;
