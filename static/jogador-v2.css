@@ -5619,3 +5619,18 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  padding:0 9px!important;margin:0!important;line-height:1!important;
  font-size:11px!important;flex:0 0 auto!important;
 }
+
+/* Alternative consumption pickers belong to the CURRENT meal, not the
+   generic dark editor. Keep both steps on the exact meal colour surface. */
+#overview #day-details .daily-meal.tone-blue > .consumption-editor.consumption-color-picker{background:var(--meal-blue)!important;color:var(--meal-blue-text)!important;}
+#overview #day-details .daily-meal.tone-yellow > .consumption-editor.consumption-color-picker{background:var(--meal-yellow)!important;color:var(--meal-yellow-text)!important;}
+#overview #day-details .daily-meal.tone-orange > .consumption-editor.consumption-color-picker{background:var(--meal-orange)!important;color:var(--meal-orange-text)!important;}
+#overview #day-details .daily-meal.tone-green > .consumption-editor.consumption-color-picker{background:var(--meal-green)!important;color:var(--meal-green-text)!important;}
+#overview #day-details .daily-meal.tone-vp > .consumption-editor.consumption-color-picker{background:var(--meal-vp)!important;color:var(--meal-vp-text)!important;}
+#overview #day-details .daily-meal > .consumption-editor.consumption-color-picker{
+ box-shadow:none!important;border-color:color-mix(in srgb,currentColor 18%,transparent)!important;
+}
+#overview #day-details .daily-meal > .consumption-editor.consumption-color-picker .consumption-alternative-option,
+#overview #day-details .daily-meal > .consumption-editor.consumption-color-picker .consumption-cancel:not(.consumption-color-option){
+ color:inherit!important;border-color:color-mix(in srgb,currentColor 25%,transparent)!important;
+}
