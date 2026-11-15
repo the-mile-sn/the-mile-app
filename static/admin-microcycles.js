@@ -1902,7 +1902,27 @@ async function loadCalendar(){
     openMobileCalendarEventForm();
     $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
    };
-   heading.append(label,edit);card.append(heading);list.append(card);monthEventCount++;
+   const trash=document.createElement("button");trash.type="button";trash.className="calendar-event-delete";
+    trash.innerHTML=planningTrashIcon();trash.title="Eliminar";
+    trash.setAttribute("aria-label","Eliminar suplementação de "+date);
+    trash.onclick=async()=>{
+     if(!confirm("Eliminar a suplementação de "+calendarEventLabel(date)+"?"))return;
+     trash.disabled=true;
+     const feedback=$("calendar-events-feedback");
+     try{
+      const data=await request(matchBase()+"/supplements");
+      const current=data.overrides?.[date];
+      if(current){
+       data.overrides[date]={...current,add:[]};
+       await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(data)});
+      }
+      feedback.textContent="Suplementação eliminada.";
+      await loadCalendar();
+     }catch(err){feedback.textContent="Erro ao eliminar a suplementação: "+err.message;}
+     finally{trash.disabled=false;}
+    };
+    const actions=document.createElement("div");actions.className="calendar-event-row-actions";
+    actions.append(edit,trash);heading.append(label,actions);card.append(heading);list.append(card);monthEventCount++;
   }
   if(!monthEventCount){const empty=document.createElement("p");empty.className="hint";empty.textContent="Sem eventos neste mês.";list.append(empty);}
   $("calendar-month-count").textContent=monthEventCount+" evento"+(monthEventCount===1?"":"s");
@@ -2648,6 +2668,9 @@ function calendarEventLabel(date,detail=""){
 function planningEditIcon(){
  return '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
 }
+function planningTrashIcon(){
+ return '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 10v6M14 10v6"/></svg>';
+}
 function planningChevronUpIcon(){
  return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>';
 }
@@ -2662,7 +2685,11 @@ function renderUnifiedEvent(ev){
  identity.append(title,dateLabel);heading.append(identity);
  const edit=document.createElement("button");edit.type="button";edit.className="calendar-event-edit";edit.innerHTML=planningEditIcon();
  edit.title="Editar";edit.setAttribute("aria-label","Editar "+title.textContent+" de "+ev.event_date);edit.setAttribute("aria-expanded","false");
- heading.append(edit);card.append(heading);
+ const trash=document.createElement("button");trash.type="button";trash.className="calendar-event-delete";
+ trash.innerHTML=planningTrashIcon();trash.title="Eliminar";
+ trash.setAttribute("aria-label","Eliminar "+title.textContent+" de "+ev.event_date);
+ const rowActions=document.createElement("div");rowActions.className="calendar-event-row-actions";
+ rowActions.append(edit,trash);heading.append(rowActions);card.append(heading);
  const controls=document.createElement("form");controls.className="calendar-inline-editor";controls.hidden=true;
  const dateWrap=document.createElement("label");dateWrap.textContent="Data";
  const date=document.createElement("input");date.type="date";date.required=true;date.value=ev.event_date;dateWrap.append(date);controls.append(dateWrap);
@@ -2701,7 +2728,7 @@ function renderUnifiedEvent(ev){
  edit.addEventListener("click",()=>setOpen(controls.hidden));
  cancel.addEventListener("click",()=>setOpen(false));
  controls.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();setOpen(false);edit.focus();}});
- const feedback=$("calendar-event-feedback");
+ const feedback=$("calendar-events-feedback");
  controls.onsubmit=async e=>{
   e.preventDefault();save.disabled=true;
   try{
@@ -2719,14 +2746,16 @@ function renderUnifiedEvent(ev){
    await loadCalendar();
   }catch(err){feedback.textContent="Erro ao guardar: "+err.message;}finally{save.disabled=false;}
  };
- remove.onclick=async()=>{
-  if(!confirm("Remover "+(CALENDAR_EVENT_NAMES[ev.kind]||"evento")+" de "+ev.event_date+"?"))return;
-  remove.disabled=true;
+ const deleteEvent=async()=>{
+  if(!confirm("Eliminar "+(CALENDAR_EVENT_NAMES[ev.kind]||"evento")+" de "+ev.event_date+"?"))return;
+  remove.disabled=true;trash.disabled=true;
   try{
    const url=ev.kind==="match"?matchBase()+"/matches/"+encodeURIComponent(ev.id):calendarEventEndpoint()+"/"+encodeURIComponent(ev.id);
-   await request(url,{method:"DELETE"});feedback.textContent="Evento removido.";await loadCalendar();
-  }catch(err){feedback.textContent="Erro ao remover: "+err.message;}finally{remove.disabled=false;}
+   await request(url,{method:"DELETE"});feedback.textContent="Evento eliminado.";await loadCalendar();
+  }catch(err){feedback.textContent="Erro ao eliminar: "+err.message;}
+  finally{remove.disabled=false;trash.disabled=false;}
  };
+ remove.onclick=deleteEvent;trash.onclick=deleteEvent;
  card.append(controls);return card;
 }
 async function saveMatchPeri(matchId,pre,post){
@@ -2782,17 +2811,28 @@ function setMobileCalendarEventFormOpen(open){
  const toggle=$("calendar-mobile-event-toggle");
  toggle.setAttribute("aria-expanded",String(Boolean(open)));
  toggle.setAttribute("aria-label",open?"Fechar formulário de adicionar evento":"Adicionar evento");
+ $("calendar-event-feedback").textContent="";
 }
 function openMobileCalendarEventForm(){setMobileCalendarEventFormOpen(true);}
 $("calendar-mobile-event-toggle").addEventListener("click",()=>{
  const toggle=$("calendar-mobile-event-toggle");
  setMobileCalendarEventFormOpen(toggle.getAttribute("aria-expanded")!=="true");
 });
+$("calendar-event-close").addEventListener("click",()=>{
+ setMobileCalendarEventFormOpen(false);
+ $("calendar-mobile-event-toggle").focus();
+});
+$("calendar-event-form").addEventListener("keydown",event=>{
+ if(event.key==="Escape"){
+  event.preventDefault();setMobileCalendarEventFormOpen(false);
+  $("calendar-mobile-event-toggle").focus();
+ }
+});
 $("calendar-event-form").addEventListener("submit",async e=>{
  e.preventDefault();
  if(!model)return;
  const kind=$("calendar-new-kind").value,date=$("calendar-new-date").value;
- const button=$("calendar-add-event"),feedback=$("calendar-event-feedback");button.disabled=true;
+ const button=$("calendar-add-event"),feedback=$("calendar-event-feedback");button.disabled=true;feedback.textContent="";
  try{
   if(kind==="supplementation"){
    await saveCalendarSupplements(date);
