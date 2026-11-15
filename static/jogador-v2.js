@@ -299,6 +299,21 @@ function iconToSvg(nodes){
  const append=(items,parent)=>{for(const node of items||[]){if(!Array.isArray(node))continue;const [tag,props,children]=node;if(typeof tag!=="string"||!["path","circle","rect","line","polyline","polygon","ellipse","g"].includes(tag))continue;const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(props||{})){if(k==="key"||k==="ref"||typeof v==="object")continue;el.setAttribute(k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),String(v));}parent.append(el);if(Array.isArray(children))append(children,el);}};
  append(nodes,svg);return svg;
 }
+// Official Hugeicons icon data, unchanged from @hugeicons/core-free-icons.
+hugeiconsOfficial["UndoIcon"]=[
+  ["path", { d: "M3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C8.79275 3 5.97733 4.67765 4.38341 7.20327M3.29339 3.00076L3.46556 5.05452C3.58958 6.53384 3.65159 7.27349 4.13359 7.68914C4.61559 8.10479 5.32673 8.03185 6.74899 7.88595L8.79339 7.67625", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }]
+];
+hugeiconsOfficial["Edit02Icon"]=[
+  ["path", { d: "M14.0737 3.88545C14.8189 3.07808 15.1915 2.6744 15.5874 2.43893C16.5427 1.87076 17.7191 1.85309 18.6904 2.39232C19.0929 2.6158 19.4769 3.00812 20.245 3.79276C21.0131 4.5774 21.3972 4.96972 21.6159 5.38093C22.1438 6.37312 22.1265 7.57479 21.5703 8.5507C21.3398 8.95516 20.9446 9.33578 20.1543 10.097L10.7506 19.1543C9.25288 20.5969 8.504 21.3182 7.56806 21.6837C6.63212 22.0493 5.6032 22.0224 3.54536 21.9686L3.26538 21.9613C2.63891 21.9449 2.32567 21.9367 2.14359 21.73C1.9615 21.5234 1.98636 21.2043 2.03608 20.5662L2.06308 20.2197C2.20301 18.4235 2.27297 17.5255 2.62371 16.7182C2.97444 15.9109 3.57944 15.2555 4.78943 13.9445L14.0737 3.88545Z", stroke: "currentColor", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M13 4L20 11", stroke: "currentColor", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }],
+  ["path", { d: "M14 22L22 22", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "2" }]
+];
+hugeiconsOfficial["CheckmarkCircle02Icon"]=[
+  ["path", { d: "M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z", stroke: "currentColor", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M8 12.5L10.5 15L16 9", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }]
+];
+function consumptionActionIcon(name){const span=document.createElement('span');span.className='consumption-action-icon';span.setAttribute('aria-hidden','true');span.append(iconToSvg(hugeiconsOfficial[name]));return span;}
+function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionActionIcon(name),document.createTextNode(label));}
 function updateOfficialIcons(){
  if(!hugeiconsOfficial)return;
  for(const icon of document.querySelectorAll(".mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);const raw=hugeiconsOfficial[hugeiconsNames[name]];if(raw&&Array.isArray(raw)){icon.replaceChildren(iconToSvg(raw));icon.dataset.official="true";}}
@@ -1996,7 +2011,7 @@ async function overview(){
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
    const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';
-   badge.textContent='✓ Registado';badge.setAttribute('aria-label','Refeição registada');
+   consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Refeição registada');
    title.append(badge);
   }
   section.append(head);
@@ -2061,12 +2076,12 @@ async function overview(){
      const label=optionCard?.querySelector('.plan-option-label small');
      if(label){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
-      badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar';editTag.setAttribute('aria-label','Editar consumo desta opção');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);const tagRow=document.createElement('div');tagRow.className='meal-consumption-tags meal-consumption-tags-bottom';const undoTag=document.createElement('button');undoTag.type='button';undoTag.className='meal-undo-consumption-tag';undoTag.textContent='↶ Anular';undoTag.setAttribute('aria-label','Anular registo de consumo desta opção');undoTag.onclick=async(event)=>{event.preventDefault();event.stopPropagation();if(undoTag.disabled)return;undoTag.disabled=true;editTag.disabled=true;undoTag.textContent='A anular…';try{await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:''})});await overview();}catch(e){undoTag.disabled=false;editTag.disabled=false;undoTag.textContent='↶ Anular';error(e);}};tagRow.append(badge,editTag,undoTag);const target=optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard;target.append(tagRow);if(optionCard.tagName==='DETAILS'){const summaryLabel=optionCard.querySelector('summary .plan-option-label');if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';closedBadge.textContent='✓ Registado';closedBadge.setAttribute('aria-label','Opção registada');summaryLabel.append(closedBadge);}}
+      consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Opção registada');
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';consumptionActionLabel(editTag,'Edit02Icon',' Editar');editTag.setAttribute('aria-label','Editar consumo desta opção');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);const tagRow=document.createElement('div');tagRow.className='meal-consumption-tags meal-consumption-tags-bottom';const undoTag=document.createElement('button');undoTag.type='button';undoTag.className='meal-undo-consumption-tag';consumptionActionLabel(undoTag,'UndoIcon',' Anular');undoTag.setAttribute('aria-label','Anular registo de consumo desta opção');undoTag.onclick=async(event)=>{event.preventDefault();event.stopPropagation();if(undoTag.disabled)return;undoTag.disabled=true;editTag.disabled=true;undoTag.textContent='A anular…';try{await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:''})});await overview();}catch(e){undoTag.disabled=false;editTag.disabled=false;consumptionActionLabel(undoTag,'UndoIcon',' Anular');error(e);}};tagRow.append(badge,editTag,undoTag);const target=optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard;target.append(tagRow);if(optionCard.tagName==='DETAILS'){const summaryLabel=optionCard.querySelector('summary .plan-option-label');if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',' Registado');closedBadge.setAttribute('aria-label','Opção registada');summaryLabel.append(closedBadge);}}
      }else if(optionCard){
       const badge=document.createElement('span');badge.className='meal-registered-badge';
-      badge.textContent='✓ Registado';badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';editTag.textContent='✎ Editar consumo';editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);optionCard.prepend(badge,editTag);
+      consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Opção registada');
+      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';consumptionActionLabel(editTag,'Edit02Icon',' Editar consumo');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);optionCard.prepend(badge,editTag);
      }
     }
    }
@@ -2077,7 +2092,7 @@ async function overview(){
     const isRecordedOption=!!previous&&previous.prescription?.color===color&&previous.option_ref===options[i]?.option_ref;
     const actions=document.createElement('div');actions.className='consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
-    quick.textContent=isRecordedOption&&previous.status==='all'?'✓ Consumido':'✓ Cumpri';quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
+    consumptionActionLabel(quick,'CheckmarkCircle02Icon',isRecordedOption&&previous.status==='all'?' Consumido':' Cumpri');quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
     const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
     const feedback=document.createElement('p');feedback.className='consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     quick.onclick=async()=>{
@@ -2090,8 +2105,8 @@ async function overview(){
       const selected=source.options?.[i];
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
-      quick.classList.add('consumption-confirm-success');quick.textContent='✓';quick.setAttribute('aria-label','Consumo registado');if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){const burst=document.createElement('span');burst.className='consumption-confetti-burst';burst.setAttribute('aria-hidden','true');for(let j=0;j<12;j++){const p=document.createElement('i');p.style.setProperty('--angle',(j*30)+'deg');p.style.setProperty('--distance',(35+(j%3)*9)+'px');p.style.setProperty('--delay',(j%3)*35+'ms');burst.append(p);}quick.append(burst);}feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
-     }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;quick.textContent='✓ Cumpri';error(e);}
+      quick.classList.add('consumption-confirm-success');quick.replaceChildren(consumptionActionIcon('CheckmarkCircle02Icon'));quick.setAttribute('aria-label','Consumo registado');if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){const burst=document.createElement('span');burst.className='consumption-confetti-burst';burst.setAttribute('aria-hidden','true');for(let j=0;j<12;j++){const p=document.createElement('i');p.style.setProperty('--angle',(j*30)+'deg');p.style.setProperty('--distance',(35+(j%3)*9)+'px');p.style.setProperty('--delay',(j%3)*35+'ms');burst.append(p);}quick.append(burst);}feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
+     }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
     if(!isRecordedOption&&!(previous?.prescription?.color&&previous.prescription.color!==color)){actions.append(edit,quick);target.append(actions,feedback);}
