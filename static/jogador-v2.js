@@ -2114,7 +2114,7 @@ async function overview(){
   }
   if(consumptionEnabled&&color&&options.length){
    const change=document.createElement('button');change.type='button';change.className='consumption-cancel consumption-change-color';
-   change.textContent='Alterar cor';change.setAttribute('aria-label','Registar consumo de outra cor');
+   change.textContent='Alterar cor';change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label','Registar consumo de outra cor');
    
    change.onclick=()=>openAlternativeColorPicker(section,d,meal);
    section.append(change);
