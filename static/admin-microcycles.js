@@ -2006,45 +2006,6 @@ async function loadCalendar(){
   ].sort((a,b)=>a.event_date.localeCompare(b.event_date)||(a.session===b.session?0:a.session==="morning"?-1:1));
   let monthEventCount=combined.length;
   for(const ev of combined)list.append(renderUnifiedEvent(ev));
-  const supplementation=await request(matchBase()+"/supplements");
-  for(const [date,entry] of Object.entries(supplementation.overrides||{})){
-   if(date<isoDay(first)||date>isoDay(last)||!(entry.add||[]).length)continue;
-   const card=document.createElement("div");card.className="calendar-unified-event calendar-supplement-event";
-   const heading=document.createElement("div");heading.className="calendar-unified-heading";
-   const label=document.createElement("div");label.className="calendar-event-identity";
-   const title=document.createElement("strong");title.textContent="Suplementação";title.className="calendar-event-kind calendar-event-kind--supplementation";
-   const detail=document.createElement("span");detail.textContent=calendarEventLabel(date,entry.add.map(x=>x.name).join(", "));
-   label.append(title,detail);
-   const edit=document.createElement("button");edit.type="button";edit.className="calendar-event-edit";edit.innerHTML=planningEditIcon();
-   edit.setAttribute("aria-label","Editar suplementos de "+date);edit.title="Editar suplementos";
-   edit.onclick=()=>{
-    $("calendar-new-kind").value="supplementation";$("calendar-new-date").value=date;
-    syncCalendarEventForm();renderCalendarSupplementChoices().catch(e=>status(e.message,"warn"));
-    openMobileCalendarEventForm();
-    $("calendar-event-form").scrollIntoView({behavior:"smooth",block:"center"});
-   };
-   const trash=document.createElement("button");trash.type="button";trash.className="calendar-event-delete";
-    trash.innerHTML=planningTrashIcon();trash.title="Eliminar";
-    trash.setAttribute("aria-label","Eliminar suplementação de "+date);
-    trash.onclick=async()=>{
-     if(!confirm("Eliminar a suplementação de "+calendarEventLabel(date)+"?"))return;
-     trash.disabled=true;
-     const feedback=$("calendar-events-feedback");
-     try{
-      const data=await request(matchBase()+"/supplements");
-      const current=data.overrides?.[date];
-      if(current){
-       data.overrides[date]={...current,add:[]};
-       await request(matchBase()+"/supplements",{method:"PUT",body:JSON.stringify(data)});
-      }
-      feedback.textContent="Suplementação eliminada.";
-      await loadCalendar();
-     }catch(err){feedback.textContent="Erro ao eliminar a suplementação: "+err.message;}
-     finally{trash.disabled=false;}
-    };
-    const actions=document.createElement("div");actions.className="calendar-event-row-actions";
-    actions.append(edit,trash);heading.append(label,actions);card.append(heading);list.append(card);monthEventCount++;
-  }
   if(!monthEventCount){const empty=document.createElement("p");empty.className="hint";empty.textContent="Sem eventos neste mês.";list.append(empty);}
   $("calendar-month-count").textContent=monthEventCount+" evento"+(monthEventCount===1?"":"s");
   $("calendar-section").hidden=backofficeView!=="calendar";
