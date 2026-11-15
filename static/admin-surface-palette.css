@@ -5607,3 +5607,38 @@ html[data-admin-theme] #supplements-panel #supp-base-list .supp-frequency-chip{
  font-size:11px!important;font-weight:400!important;line-height:1.2!important;
  white-space:nowrap!important;letter-spacing:0!important;
 }
+
+/* Status and prescription frequency live on the same badge row. */
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-badges{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ flex-wrap:wrap!important;gap:7px!important;margin-top:2px!important;min-width:0!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-badges .supp-frequency-list{
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px!important;
+ margin:0!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-badges .supp-frequency-chip{
+ min-height:27px!important;padding:0 10px!important;border-radius:999px!important;
+ font-size:11px!important;font-weight:400!important;line-height:1!important;
+}
+/* Supplement day editor uses the primary Add Event pill size, but saves instead of adding. */
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-event-form #calendar-add-event.calendar-save-supplements{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:auto!important;min-width:0!important;min-height:43px!important;height:43px!important;
+ padding:10px 17px!important;border:0!important;border-radius:999px!important;
+ background:#f6f7f8!important;color:#161719!important;
+ font:500 14px/1.25 "Inter Tight",sans-serif!important;
+ box-shadow:none!important;white-space:nowrap!important;
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-event-form #calendar-add-event.calendar-save-supplements{
+ background:#1b1d23!important;color:#fff!important;
+}
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-event-form #calendar-add-event.calendar-save-supplements:hover:not(:disabled){
+ filter:brightness(.94)!important;
+}
+@media(max-width:680px){
+ html[data-admin-theme] #admin-workspace #calendar-section #calendar-event-form #calendar-add-event.calendar-save-supplements{
+ width:auto!important;min-height:43px!important;height:43px!important;
+ font-size:14px!important;padding:10px 17px!important;
+ }
+}
