@@ -2278,6 +2278,8 @@ def application(env, start_response):
                                      'meal_color_overrides':day_colors_v2.list_colors(c,aid,start,end),
                                      'match_peri_overrides':[dict(r) for r in override_rows],
                                      'effective_colors':effective_colors,
+                                     'supplements_by_day':supplements_v2.days(c,aid,start,end,matches,event_data),
+                                     'supplements_base_by_day':supplements_v2.days(c,aid,start,end,matches,event_data,apply_overrides=False),
                                       **({'live_food_plans':food_plan_calendar_bridge_v2.resolve(c,aid,effective_colors,event_data,matches,{(row['match_id'],row['phase']):row['state'] for row in override_rows})} if (query.get('include_food_plans') or [''])[0]=='1' else {})})
             if path.startswith('/api/v2/athletes/') and path.endswith('/recipe-categories') and method in ('GET','PUT'):
                 if not user: raise Problem(401,'unauthorized')
