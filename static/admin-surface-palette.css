@@ -5775,3 +5775,11 @@ html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-editor-actio
  html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table td{padding:13px 12px}
  html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table{min-width:710px}
 }
+
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button{
+ width:36px!important;height:36px!important;min-width:36px!important;
+ padding:0!important;vertical-align:middle;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button svg{
+ display:block;width:17px;height:17px;stroke:currentColor;
+}
