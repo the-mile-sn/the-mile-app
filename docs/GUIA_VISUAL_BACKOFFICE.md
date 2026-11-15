@@ -540,3 +540,10 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - Dias cuja classificação de microciclo ainda não está definida (`.calendar-general-fallback`, «Geral · por definir»): **fundo totalmente transparente**, conservando o contorno de aviso tracejado e as barras nutricionais. Válido no desktop e mobile e nos temas claro e escuro.
 - Dias com classificação atribuída preservam as cores de preenchimento já aprovadas (MD, Off, Geral confirmado, etc.). O estado selecionado e a indicação de hoje continuam identificáveis pelo contorno, nunca por acrescentar fill a um dia por definir.
 - Implementação: retirar o `backgroundColor` inline do calendário em `static/admin-microcycles.js`; excluir `.calendar-general-fallback` das regras de fundo neutro/selecionado em `static/admin-microcycles.css` e `static/admin-light-theme.css`, e definir uma única regra específica `background:transparent`. Sem alterações à lógica de classificação, horários, opções ou nutrientes.
+
+
+### Microciclos — cabeçalho VP com verde profundo (15 novembro 2026)
+
+- Em **Planeamento → Microciclos → Detalhes do dia**, o cabeçalho das refeições `VP · Verde preparação` passa a utilizar o verde profundo aprovado em **Planos → Visualização**: fundo `#28543e` e texto `#bde6cd`, nos temas claro e escuro. A opção interna e a superfície da refeição mantêm os tokens existentes, distintos para cada tema.
+- Esta regra substitui **apenas para VP** a indicação anterior de acento claro `#a0d8a0` no cabeçalho do detalhe; os acentos amarelo, laranja, azul e verde normal permanecem como estavam.
+- Alteração localizada na declaração `--tm-meal-accent`/`--tm-meal-accent-ink` de `[data-palette="vp"]` no bloco consolidado de `static/admin-surface-palette.css`. Sem alterações aos seletores, opções, dados nutricionais ou à app dos jogadores.
