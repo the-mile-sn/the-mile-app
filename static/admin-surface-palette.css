@@ -4436,28 +4436,24 @@ html[data-admin-theme] #calendar-section #calendar-event-form #calendar-add-even
  font:500 13px "Inter Tight",sans-serif!important;
 }
 
-/* Restore a subtle cursor hover, preserving every existing day fill, the
-   selected/today outlines, and the transparent dashed "Geral por definir". */
+/* Calendar day hover: a gentle change of the existing semantic fill.
+   No translation, shadow or additional card; keep undecided days transparent.
+   The extra #calendar-month-card specificity takes precedence over legacy
+   background shorthands without resetting MD/Off/selected/today backgrounds. */
 @media(hover:hover) and (pointer:fine){
- html[data-admin-theme] #calendar-section .calendar-days .calendar-day{
-  transition:transform .16s ease,box-shadow .16s ease;
+ html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-month-card .calendar-days .calendar-day:not(.calendar-general-fallback):hover{
+  background-image:linear-gradient(rgba(37,59,82,.045),rgba(37,59,82,.045))!important;
  }
- html[data-admin-theme] #calendar-section .calendar-days .calendar-day:hover{
-  transform:translateY(-2px);
+ html[data-admin-theme="dark"] #admin-workspace #calendar-section #calendar-month-card .calendar-days .calendar-day:not(.calendar-general-fallback):hover{
+  background-image:linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06))!important;
  }
- html[data-admin-theme="dark"] #calendar-section .calendar-days .calendar-day:hover:not(.calendar-selected){
-  box-shadow:0 5px 13px rgba(0,0,0,.24)!important;
+ /* Undecided days never receive a fill; their existing dashed outline
+    gains only a barely stronger tint on pointer hover. */
+ html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-month-card .calendar-days .calendar-day.calendar-general-fallback:not(.calendar-selected):not(.calendar-today):hover{
+  outline-color:#917545!important;
  }
- html[data-admin-theme="light"] #calendar-section .calendar-days .calendar-day:hover:not(.calendar-selected){
-  box-shadow:0 5px 13px rgba(39,57,76,.18)!important;
- }
-}
-@media(prefers-reduced-motion:reduce){
- html[data-admin-theme] #calendar-section .calendar-days .calendar-day{
-  transition:none!important;
- }
- html[data-admin-theme] #calendar-section .calendar-days .calendar-day:hover{
-  transform:none!important;
+ html[data-admin-theme="dark"] #admin-workspace #calendar-section #calendar-month-card .calendar-days .calendar-day.calendar-general-fallback:not(.calendar-selected):not(.calendar-today):hover{
+  outline-color:#c5a76e!important;
  }
 }
 
