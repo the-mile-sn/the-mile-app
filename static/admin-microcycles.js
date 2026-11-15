@@ -1829,7 +1829,7 @@ async function loadCalendar(){
   const todayKey=isoDay(new Date());
   for(const day of data.days){
     const isToday=day.date===todayKey;
-    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback")+(day.is_off?" calendar-off":"")+(isToday?" calendar-today":"");if(!day.classification&&!isToday){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";el.style.backgroundColor="rgba(162,138,85,.10)";}
+    const el=document.createElement("div");el.className="calendar-day"+(day.needs_review?" calendar-review":"")+(day.classification?"":" calendar-general-fallback")+(day.is_off?" calendar-off":"")+(isToday?" calendar-today":"");if(!day.classification&&!isToday){el.style.outline="1px dashed #a28a55";el.style.outlineOffset="-3px";}
     if(isToday)el.setAttribute("aria-current","date");
     const date=document.createElement("strong");date.textContent=Number(day.date.slice(-2));el.appendChild(date);
     const type=document.createElement("span");type.textContent=day.needs_review?"Rever":day.classification||"Geral · por definir";el.appendChild(type);
