@@ -5783,3 +5783,83 @@ html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button
 html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button svg{
  display:block;width:17px;height:17px;stroke:currentColor;
 }
+
+/* Library assignment opens in a native modal. Never move the player list. */
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog:not([open]),
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog[hidden]{
+ display:none!important;
+}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog[open]{
+ position:fixed!important;inset:0!important;box-sizing:border-box!important;
+ width:min(610px,calc(100vw - 28px))!important;max-width:610px!important;
+ max-height:min(700px,calc(100dvh - 32px))!important;
+ margin:auto!important;padding:0!important;overflow:visible!important;
+ display:flex!important;flex-direction:column!important;gap:0!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:22px!important;box-shadow:0 22px 75px rgba(0,0,0,.38)!important;
+ font-family:"Inter Tight",system-ui,sans-serif!important;
+}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog::backdrop{
+ background:rgba(4,5,8,.72)!important;backdrop-filter:blur(3px);
+}
+html[data-admin-theme] #supplements-panel .tm-supp-select-head{
+ display:flex!important;align-items:flex-start!important;justify-content:space-between!important;
+ gap:16px!important;padding:24px 26px 16px!important;
+ border-bottom:1px solid var(--tm-ui-divider)!important;
+}
+html[data-admin-theme] #supplements-panel .tm-supp-select-head h3{
+ margin:0 0 5px!important;padding:0!important;font-size:23px!important;
+ line-height:1.2!important;font-weight:600!important;
+}
+html[data-admin-theme] #supplements-panel .tm-supp-select-head p{
+ margin:0!important;font-size:13px!important;font-weight:400!important;color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #supplements-panel .tm-supp-select-close{
+ display:inline-flex!important;justify-content:center!important;align-items:center!important;
+ flex:none!important;width:33px!important;height:33px!important;margin:0!important;
+ padding:0!important;border:0!important;border-radius:10px!important;
+ background:transparent!important;color:var(--tm-ui-muted)!important;
+ font:400 27px/1 "Inter Tight",sans-serif!important;cursor:pointer!important;
+}
+html[data-admin-theme] #supplements-panel .tm-supp-select-close:hover{background:var(--tm-ui-hover)!important;color:var(--tm-ui-text)!important}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog>.supp-assignment-field{
+ display:flex!important;flex-direction:column!important;flex:1 1 auto!important;
+ min-width:0!important;max-width:none!important;
+ margin:0!important;padding:18px 26px 24px!important;box-sizing:border-box!important;
+ position:relative!important;overflow:hidden!important;
+}
+html[data-admin-theme] #supplements-panel .tm-supp-search-label{
+ font-size:12px!important;font-weight:400!important;color:var(--tm-ui-muted)!important;
+ margin:0 0 8px!important;
+}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog #supp-assign-search{
+ flex:none!important;width:100%!important;min-height:49px!important;
+ padding:12px 15px!important;background:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;border:1px solid var(--tm-ui-divider)!important;
+ border-radius:12px!important;box-shadow:none!important;font-size:14px!important;
+}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog #supp-search-dropdown{
+ position:static!important;display:block!important;flex:1 1 auto!important;
+ min-height:0!important;max-height:350px!important;overflow-y:auto!important;
+ width:100%!important;margin:8px 0 0!important;padding:4px!important;box-sizing:border-box!important;
+ background:transparent!important;border:0!important;border-radius:12px!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog #supp-search-dropdown[hidden]{display:none!important}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog .supp-search-result{
+ color:var(--tm-ui-text)!important;padding:12px 14px!important;border:0!important;
+ border-radius:10px!important;background:transparent!important;
+ font-size:14px!important;font-weight:400!important;
+}
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog .supp-search-result:hover,
+html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog .supp-search-result:focus{
+ background:var(--tm-ui-hover)!important;
+}
+@media(max-width:680px){
+ html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog[open]{
+  width:calc(100vw - 24px)!important;max-height:calc(100dvh - 26px)!important;border-radius:18px!important;
+ }
+ html[data-admin-theme] #supplements-panel .tm-supp-select-head{padding:20px 18px 14px!important}
+ html[data-admin-theme] #supplements-panel .tm-supp-select-head h3{font-size:20px!important}
+ html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog>.supp-assignment-field{padding:16px 18px 22px!important}
+}
