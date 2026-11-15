@@ -4083,6 +4083,9 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
  }
  /* The common 24px card insets above remain unchanged. */
 }
+/* Sidebar brand: the compact monogram uses the existing The Mile wordmark's M outline. */
+#admin-workspace .tm-admin-brand-wordmark,.tm-library-layout .tm-admin-brand-wordmark{width:min(152px,100%);}
+.tm-admin-sidebar .tm-admin-brand-monogram{display:none;}
 /* Hover-to-expand desktop navigation: 72px rail by default; the
    entire workspace track grows to 226px when expanded, leaving cards visible.
    Mouse and keyboard both work. Touch desktop keeps the original full menu. */
@@ -4113,23 +4116,22 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
   align-items:center!important;justify-content:center!important;
   height:71px!important;min-height:71px!important;margin:0!important;padding:10px 0!important;
  }
- #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand::before{
-  content:"M";display:inline-flex;align-items:center;justify-content:center;
-  flex:none;width:38px;height:38px;border-radius:11px;
-  font:600 20px/1 "Inter Tight",Arial,sans-serif;color:var(--tm-ui-text)!important;
- }
+ #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand::before{content:none!important;display:none!important;}
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand-home{
-  display:none!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:none!important;width:44px!important;height:44px!important;margin:0 auto!important;padding:0!important;
  }
- #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand::before{
-  display:none!important;
+ #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand-monogram{
+  display:block!important;width:30px!important;height:auto!important;flex:none!important;
  }
+ #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-brand-wordmark{display:none!important;}
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand-home{
   display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;
-  width:100%!important;margin:0!important;padding:0!important;
+  width:100%!important;height:44px!important;margin:0!important;padding:0!important;
  }
+ #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand-monogram{display:none!important;}
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar:is(:hover,:has(:focus-visible)) .tm-admin-brand-wordmark{
-  width:min(168px,100%)!important;max-width:100%!important;height:auto!important;
+  display:block!important;width:min(152px,100%)!important;max-width:100%!important;height:auto!important;
  }
  #admin-workspace.tm-sidebar-hover-enabled .tm-admin-sidebar .tm-admin-side-nav{
   box-sizing:border-box!important;min-width:0!important;gap:3px!important;
