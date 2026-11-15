@@ -5505,3 +5505,9 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 /* Keep the alternative-colour action comfortably inside its meal card. */
 #overview #day-details .meal.daily-meal .consumption-change-color{margin-top:16px!important;margin-bottom:18px!important}
 #overview #day-details .consumption-change-color{margin-top:16px!important;margin-bottom:18px!important}
+
+/* Official Hugeicons for consumption action labels. */
+#overview #day-details .consumption-action-icon{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;flex:0 0 15px;vertical-align:middle;line-height:0;margin-right:5px;}
+#overview #day-details .consumption-action-icon svg{display:block;width:100%;height:100%;fill:none;overflow:visible;}
+#overview #day-details .meal-registered-badge .consumption-action-icon{width:14px;height:14px;flex-basis:14px;}
+#overview #day-details .consumption-confirm-success .consumption-action-icon{width:20px;height:20px;flex-basis:20px;margin-right:0;}
