@@ -5603,3 +5603,19 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 /* Separate registration actions from the first food line on lunch/dinner. */
 #overview #day-details .daily-meal .meal-consumption-tags:has(.meal-edit-consumption-tag):not(.meal-consumption-tags-bottom){margin-bottom:13px!important;}
 #overview #day-details .daily-meal .meal-consumption-tags-bottom:has(+ .foods){margin-bottom:13px!important;}
+
+/* Single-option recorded consumption: badges are now siblings in a flex row,
+   not independent prepend elements. Override old badge margins and create
+   a reliable gap before the food list. */
+#overview #day-details .single-meal-option > .meal-consumption-tags-bottom{
+ display:flex!important;flex-flow:row wrap!important;align-items:center!important;
+ justify-content:flex-start!important;gap:7px!important;
+ margin:0 0 15px!important;padding:0!important;width:100%!important;
+}
+#overview #day-details .single-meal-option > .meal-consumption-tags-bottom > .meal-registered-badge,
+#overview #day-details .single-meal-option > .meal-consumption-tags-bottom > .meal-edit-consumption-tag{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;height:24px!important;min-height:24px!important;max-height:24px!important;
+ padding:0 9px!important;margin:0!important;line-height:1!important;
+ font-size:11px!important;flex:0 0 auto!important;
+}
