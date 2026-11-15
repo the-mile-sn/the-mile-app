@@ -5863,3 +5863,125 @@ html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog .supp-sea
  html[data-admin-theme] #supplements-panel .tm-supp-select-head h3{font-size:20px!important}
  html[data-admin-theme] #supplements-panel dialog.tm-supp-select-dialog>.supp-assignment-field{padding:16px 18px 22px!important}
 }
+
+/* Date-specific supplementation, shown below meal colours in Microciclos. */
+html[data-admin-theme] #calendar-section .tm-day-supplementation{
+ margin-top:20px!important;padding-top:18px!important;
+ border-top:1px solid var(--tm-ui-divider)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-head{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+ margin-bottom:15px;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-head h3{
+ margin:0!important;font:600 18px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-add{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:40px;padding:10px 16px;border:0;border-radius:999px;
+ background:var(--tm-ui-search);color:var(--tm-ui-text);
+ font:500 13px/1.2 "Inter Tight",sans-serif;cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-list{
+ background:var(--tm-ui-subcard);border-radius:15px;overflow:hidden;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-row{
+ display:flex;align-items:center;gap:12px;padding:14px 16px;
+ border-bottom:1px solid var(--tm-ui-divider);
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-row:last-child{border-bottom:0}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-row>input[type="checkbox"]{
+ width:19px;height:19px;margin:0;flex:none;accent-color:#72c5a3;cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-info{
+ display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-info strong{
+ font:500 14px/1.3 "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-info span,
+html[data-admin-theme] #calendar-section .tm-day-supplementation-info small{
+ font:400 12px/1.45 "Inter Tight",sans-serif;color:var(--tm-ui-muted);
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-row.is-excluded .tm-day-supplementation-info{opacity:.65}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-actions{
+ display:flex;align-items:center;gap:8px;flex:none;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-edit{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:35px;height:35px;border:0;border-radius:10px;
+ background:transparent;color:var(--tm-ui-text);cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-edit svg{width:18px;height:18px}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-edit:hover{background:var(--tm-ui-hover)}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-reset{
+ border:0;background:transparent;color:var(--tm-ui-muted);
+ font:400 11px/1.3 "Inter Tight",sans-serif;cursor:pointer;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-foot{
+ margin:11px 0 0;color:var(--tm-ui-muted);font-size:11px;
+}
+html[data-admin-theme] #calendar-section .tm-day-supplementation-list>p{
+ margin:0;padding:16px;color:var(--tm-ui-muted);font-size:13px;
+}
+html[data-admin-theme] dialog.tm-day-supplementation-modal{
+ box-sizing:border-box;position:fixed;margin:auto;
+ width:min(680px,calc(100vw - 28px));max-width:680px;
+ max-height:calc(100dvh - 40px);overflow-y:auto;
+ padding:0;border:0;border-radius:21px;background:var(--tm-ui-card);
+ color:var(--tm-ui-text);font-family:"Inter Tight",system-ui,sans-serif;
+ box-shadow:0 24px 75px rgba(0,0,0,.4);
+}
+html[data-admin-theme] dialog.tm-day-supplementation-modal::backdrop{
+ background:rgba(4,5,8,.72);backdrop-filter:blur(3px);
+}
+html[data-admin-theme] .tm-day-supplementation-modal-head{
+ display:flex;justify-content:space-between;align-items:center;gap:14px;
+ padding:22px 24px;border-bottom:1px solid var(--tm-ui-divider);
+}
+html[data-admin-theme] .tm-day-supplementation-modal-head h3{
+ margin:0;font-size:20px;font-weight:600;
+}
+html[data-admin-theme] .tm-day-supplementation-modal-head button{
+ width:32px;height:32px;border:0;background:transparent;
+ color:var(--tm-ui-muted);font-size:26px;cursor:pointer;
+}
+html[data-admin-theme] .tm-day-supplementation-form{
+ padding:22px 24px 25px;display:flex;flex-direction:column;gap:17px;
+}
+html[data-admin-theme] .tm-day-supplementation-form>label,
+html[data-admin-theme] .tm-day-supplementation-form fieldset label{
+ display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--tm-ui-muted);
+}
+html[data-admin-theme] .tm-day-supplementation-form :is(input,select){
+ box-sizing:border-box;width:100%;min-height:43px;padding:10px 12px;
+ border:1px solid var(--tm-ui-divider);border-radius:11px;
+ color:var(--tm-ui-text);background:var(--tm-ui-search);
+ font:400 14px "Inter Tight",sans-serif;
+}
+html[data-admin-theme] .tm-day-supplementation-form fieldset{
+ display:grid;grid-template-columns:1fr 1fr;gap:12px;
+ margin:0 0 14px;padding:14px;border:1px solid var(--tm-ui-divider);border-radius:13px;
+}
+html[data-admin-theme] .tm-day-supplementation-form fieldset legend{
+ font:500 13px "Inter Tight",sans-serif;padding:0 6px;
+}
+html[data-admin-theme] .tm-day-supplementation-modal-actions{
+ display:flex;justify-content:flex-end;gap:10px;align-items:center;
+}
+html[data-admin-theme] .tm-day-supplementation-modal-actions button{
+ min-height:42px;padding:9px 17px;border-radius:999px;cursor:pointer;
+}
+html[data-admin-theme] .tm-day-supplementation-modal-actions button[type="submit"]{
+ border:0;background:#f6f7f8;color:#161719;
+}
+html[data-admin-theme="light"] .tm-day-supplementation-modal-actions button[type="submit"]{
+ background:#1b1d23;color:#fff;
+}
+@media(max-width:680px){
+ html[data-admin-theme] #calendar-section .tm-day-supplementation-row{padding:12px 10px;gap:8px}
+ html[data-admin-theme] #calendar-section .tm-day-supplementation-actions{gap:2px}
+ html[data-admin-theme] #calendar-section .tm-day-supplementation-reset{max-width:62px}
+ html[data-admin-theme] .tm-day-supplementation-form{padding:16px}
+ html[data-admin-theme] .tm-day-supplementation-form fieldset{grid-template-columns:1fr}
+}
