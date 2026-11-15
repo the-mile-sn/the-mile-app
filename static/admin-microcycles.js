@@ -3400,7 +3400,7 @@ function filterSupplementLists(){
   momentCell.textContent=rules.map(p=>p.timing_text||momentNames[p.moment]||"Sem associação").join(" | ");
   for(const rule of rules){const chip=document.createElement("span");chip.className="tm-supp-table-frequency";chip.textContent=frequencyNames[rule.rule]||rule.rule||"Diária";frequencyCell.append(chip);}
   const actions=document.createElement("td");actions.className="tm-supp-table-actions";
-  const edit=document.createElement("button");edit.type="button";edit.className="tm-supp-library-edit";edit.textContent="Editar";edit.setAttribute("aria-label","Editar "+item.name);
+  const edit=document.createElement("button");edit.type="button";edit.className="tm-supp-library-edit";edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>{
    $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;
    $("supp-lib-moment").value=item.moment;$("supp-lib-rule").value=item.rule;
@@ -3408,7 +3408,7 @@ function filterSupplementLists(){
    $("supp-lib-save").dataset.editId=item.id;renderLibraryPrescriptionRules(item.prescriptions);
    const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";panel.scrollIntoView({behavior:"smooth",block:"start"});
   };
-  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.textContent="Remover";remove.setAttribute("aria-label","Remover "+item.name);
+  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
   remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};
   actions.append(edit,remove);row.append(nameCell,doseCell,momentCell,frequencyCell,actions);list.append(row);
  }
