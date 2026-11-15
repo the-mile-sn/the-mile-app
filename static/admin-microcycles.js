@@ -3416,6 +3416,7 @@ async function loadSupplementLibrary(){
  const data=await request("/api/v2/supplement-library");supplementLibrary=data.items||[];
  filterSupplementLists();
 }
+window.tmLoadSupplementLibrary=loadSupplementLibrary;
 $("supp-lib-save").onclick=async()=>{
  const button=$("supp-lib-save");button.disabled=true;
  try{
