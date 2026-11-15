@@ -49,7 +49,7 @@ test("selected library suggestion adds directly to the draft, never auto-publish
  assert.equal(env.supplementDraft.plan.length,1);
  assert.equal(env.supplementDraft.plan[0].library_id,"lib-1");
  assert.deepEqual(notifications,["render","open:false","focus"]);
- assert.match(nodes["supp-feedback"].textContent,/Alterações por guardar/);
+ assert.equal(nodes["supp-feedback"].textContent,"");
 });
 
 test("Guardar is displayed only for pending changes, including edits and removals",()=>{
@@ -146,10 +146,10 @@ test("button colors, hidden states and cached assets work in dark and light them
  assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-save/);
  assert.match(css,/background:#1b1d23!important;color:#fff!important/);
  assert.match(css,/supp-item-action svg/);
- assert.match(html,/admin-microcycles\.js\?v=18295/);
+ assert.match(html,/admin-microcycles\.js\?v=18296/);
  for(const page of ["admin-microcycles","create-plan","food-library","admin-appointments"]){
   const p=fs.readFileSync("static/"+page+".html","utf8");
-  assert.match(p,/admin-surface-palette\.css\?v=68/);
+  assert.match(p,/admin-surface-palette\.css\?v=69/);
  }
 });
 
@@ -203,4 +203,47 @@ test("both add actions are contrast-colored full pills; event toggle remains the
  assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-add-toggle/);
  assert.match(css,/\.tm-calendar-event-subcard>#calendar-mobile-event-toggle\{\s*border:0!important;border-radius:999px!important/);
  assert.match(css,/admin-theme="light"\] #admin-workspace #calendar-section #calendar-month-card \.tm-calendar-event-subcard>#calendar-mobile-event-toggle/);
+});
+
+
+test("Microciclos month title is in the same row as previous Hoje next buttons",()=>{
+ const cardStart=html.indexOf('<div id="calendar-month-card"');
+ const calendarEnd=html.indexOf('<div id="calendar-day-card"',cardStart);
+ assert.ok(cardStart>=0 && calendarEnd>cardStart);
+ const card=html.slice(cardStart,calendarEnd);
+ const headerStart=card.indexOf('<div class="tm-calendar-month-heading">');
+ const navigationStart=card.indexOf('<div class="calendar-navigation tm-calendar-month-navigation">');
+ const headerEnd=card.indexOf('</div>',navigationStart)+6;
+ assert.ok(headerStart>=0 && navigationStart>headerStart && headerEnd>navigationStart);
+ const header=card.slice(headerStart,headerEnd);
+ assert.match(header,/<strong id="calendar-title"><\/strong>/);
+ for(const id of ["calendar-prev","calendar-go-today","calendar-next"])
+  assert.match(header,new RegExp('id="'+id+'"'));
+ assert.equal((card.match(/id="calendar-title"/g)||[]).length,1);
+ assert.match(css,/\.tm-calendar-month-heading>#calendar-title/);
+ assert.match(css,/\.tm-calendar-month-heading>\.tm-calendar-month-navigation/);
+});
+
+test("Adicionar evento moved below calendar days, still opens its adjacent form",()=>{
+ const cardStart=html.indexOf('<div id="calendar-month-card"');
+ const calendarEnd=html.indexOf('<div id="calendar-day-card"',cardStart);
+ const card=html.slice(cardStart,calendarEnd);
+ const dayIndex=card.indexOf('id="calendar-days"');
+ const buttonIndex=card.indexOf('id="calendar-mobile-event-toggle"');
+ const formIndex=card.indexOf('id="calendar-event-form"');
+ assert.ok(dayIndex>=0 && dayIndex<buttonIndex && buttonIndex<formIndex);
+ assert.match(card,/<\/button>\s*<form id="calendar-event-form" class="calendar-event-form">/);
+ assert.match(css,/\.tm-calendar-event-subcard>#calendar-mobile-event-toggle/);
+ assert.match(css,/grid-column:2!important;grid-row:1!important;justify-self:end!important/);
+ assert.match(css,/\.tm-calendar-event-subcard>#calendar-event-form/);
+ assert.match(js,/setMobileCalendarEventFormOpen\(open\)/);
+ assert.match(js,/\$\("calendar-mobile-event-toggle"\)\.addEventListener\("click"/);
+});
+
+test("pending-save explanation is removed but error and success feedback remain",()=>{
+ assert.doesNotMatch(js,/supp-feedback"\)\.textContent="Alterações por guardar/);
+ assert.doesNotMatch(js,/supp-feedback"\)\.textContent="Exceções por guardar/);
+ assert.match(js,/supp-feedback"\)\.textContent="Não foi possível guardar: "/);
+ assert.match(js,/Suplementação guardada e publicada para o jogador/);
+ assert.match(css,/\.supp-associated-card>\.supp-associated-footer\{\s*margin:0!important;padding:0 20px 6px!important/);
 });

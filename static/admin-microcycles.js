@@ -3179,7 +3179,7 @@ function renderSupplementMatchExclusions(){
     if(check.checked)values.add(key);else values.delete(key);
     supplementDraft.match_exclusions ||= {};
     if(values.size)supplementDraft.match_exclusions[match.id]=[...values];else delete supplementDraft.match_exclusions[match.id];
-    $("supp-feedback").textContent="Exceções por guardar.";syncSupplementSaveVisibility();
+    $("supp-feedback").textContent="";syncSupplementSaveVisibility();
    };
    label.append(check,document.createTextNode(" Suspender "+item.name+" neste jogo (MD-1, MD e MD+1)"));group.append(label);
   }
@@ -3248,14 +3248,14 @@ function renderSupplementEditor(){
     if(!rows.length||rows.some(r=>!r.dose.value.trim()))return;
     for(const key of Object.keys(inputs))item[key]=inputs[key].value.trim();
     item.prescriptions=rows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:r.moment.value,timing_text:r.timing_text.value.trim(),note:item.note}));
-    $("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();
+    $("supp-feedback").textContent="";renderSupplementEditor();
    };
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
    form.append(save,cancel);row.replaceChildren(form);
   };
   const remove=document.createElement("button");remove.type="button";remove.className="supp-item-action supp-item-remove";
   remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover suplemento "+item.name);remove.title="Remover "+item.name;
-  remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();};
+  remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="";renderSupplementEditor();};
   const controls=document.createElement("div");controls.className="supp-associated-actions";controls.append(edit,remove);
   row.append(label,controls);list.append(row);
  }
@@ -3266,7 +3266,7 @@ $("supp-add").onclick=()=>{
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
  if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
  supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
- $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();
+ $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="";renderSupplementEditor();
 };
 $("supp-save").onclick=async()=>{
  const athleteId=supplementAthleteId,revision=supplementLoadRevision;
@@ -3376,7 +3376,7 @@ function addSupplementFromLibrary(item){
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text,...(item.prescriptions?.length?{prescriptions:item.prescriptions.map(p=>({...p}))}:{})});
  renderSupplementEditor();
  setSupplementAssignmentOpen(false);
- $("supp-feedback").textContent="Alterações por guardar. Revê e clica em Guardar.";
+ $("supp-feedback").textContent="";
  $("supp-add-toggle").focus();
 }
 
