@@ -1215,6 +1215,9 @@ async function renderWeightCard(root,date){
  const closeIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
  action.setAttribute("aria-controls",panel.id);
  action.setAttribute("aria-expanded","false");
+ header.addEventListener("click",event=>{if(event.target.closest("button"))return;if(!action.disabled)action.click();});
+ header.setAttribute("role","button");header.setAttribute("tabindex","0");
+ header.addEventListener("keydown",event=>{if(event.target!==header)return;if(event.key==="Enter"||event.key===" "){event.preventDefault();if(!action.disabled)action.click();}});
  action.onclick=()=>{
   panel.hidden=!panel.hidden;
   const expanded=!panel.hidden;
@@ -1993,7 +1996,7 @@ async function overview(){
     const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
     const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
     if(unitControl){footerActions.append(unitControl);unitControl.style.setProperty("display","none","important");}
-    footerActions.append(expand);footer.append(footerLabel,footerActions);visual.append(footer);
+    footerActions.append(expand);footer.append(footerLabel,footerActions);footer.addEventListener("click",event=>{if(event.target.closest("button"))return;expand.click();});footer.append(footerLabel,footerActions);visual.append(footer);
    }else visual.append(expand);
    summary.append(weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
