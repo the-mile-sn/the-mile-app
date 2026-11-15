@@ -5593,3 +5593,17 @@ html[data-admin-theme] #supplements-panel #supp-base-list .supp-status-chip{
   order:5!important;
  }
 }
+
+/* Frequency chips distinguish prescription rules without repeating them in the detail line. */
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-frequency-list{
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px!important;
+ margin:2px 0!important;min-width:0!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-frequency-chip{
+ display:inline-flex!important;align-items:center!important;min-height:24px!important;
+ padding:4px 9px!important;border-radius:999px!important;
+ border:1px solid var(--tm-ui-divider)!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ font-size:11px!important;font-weight:400!important;line-height:1.2!important;
+ white-space:nowrap!important;letter-spacing:0!important;
+}
