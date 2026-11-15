@@ -3092,8 +3092,21 @@ let supplementMatches=[];
 let supplementAthleteId=null,supplementLoadRevision=0,supplementEditorReady=false;
 function setSupplementEditorReady(ready){
  supplementEditorReady=ready;
- for(const id of ["supp-save","supp-add","supp-lib-assign"]){
+ for(const id of ["supp-save","supp-add","supp-lib-assign","supp-add-toggle"]){
   const button=$(id);if(button)button.disabled=!ready;
+ }
+}
+function setSupplementAssignmentOpen(open,focusSearch=false){
+ const panel=$("supp-assign-inline"),toggle=$("supp-add-toggle"),search=$("supp-assign-search");
+ if(!panel||!toggle||!search)return;
+ panel.hidden=!open;
+ toggle.setAttribute("aria-expanded",String(open));
+ if(!open){
+  search.value="";
+  $("supp-lib-select").value="";
+  $("supp-search-dropdown").hidden=true;
+ }else if(focusSearch){
+  search.focus();
  }
 }
 function resetSupplementForAthlete(athleteId){
@@ -3105,6 +3118,7 @@ function resetSupplementForAthlete(athleteId){
  $("supp-base-list").replaceChildren();
  $("supp-match-exclusions").replaceChildren();
  $("supp-feedback").textContent="";
+ setSupplementAssignmentOpen(false);
  setSupplementEditorReady(false);
 }
 function supplementPublishedKey(){return JSON.stringify(supplementDraft.plan);}
@@ -3152,7 +3166,7 @@ function renderSupplementMatchExclusions(){
     if(check.checked)values.add(key);else values.delete(key);
     supplementDraft.match_exclusions ||= {};
     if(values.size)supplementDraft.match_exclusions[match.id]=[...values];else delete supplementDraft.match_exclusions[match.id];
-    $("supp-feedback").textContent="Exceções por publicar.";
+    $("supp-feedback").textContent="Exceções por guardar.";
    };
    label.append(check,document.createTextNode(" Suspender "+item.name+" neste jogo (MD-1, MD e MD+1)"));group.append(label);
   }
@@ -3199,13 +3213,13 @@ function renderSupplementEditor(){
     if(!rows.length||rows.some(r=>!r.dose.value.trim()))return;
     for(const key of Object.keys(inputs))item[key]=inputs[key].value.trim();
     item.prescriptions=rows.map(r=>({rule:r.rule.value,dose:r.dose.value.trim(),moment:r.moment.value,timing_text:r.timing_text.value.trim(),note:item.note}));
-    $("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
+    $("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();
    };
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
    form.append(save,cancel);row.replaceChildren(form);
   };
   const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";
-  remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();};
+  remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();};
   const controls=document.createElement("div");controls.className="supp-associated-actions";controls.append(edit,remove);
   row.append(label,controls);list.append(row);
  }
@@ -3215,7 +3229,7 @@ $("supp-add").onclick=()=>{
  const name=$("supp-name").value.trim(),dose=$("supp-dose").value.trim();
  if(!name||!dose)return $("supp-feedback").textContent="Preenche suplemento e dose.";
  supplementDraft.plan.push({name,dose,moment:$("supp-moment").value,rule:$("supp-rule").value,note:""});
- $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="Alterações por publicar.";renderSupplementEditor();
+ $("supp-name").value="";$("supp-dose").value="";$("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();
 };
 $("supp-save").onclick=async()=>{
  const athleteId=supplementAthleteId,revision=supplementLoadRevision;
@@ -3226,7 +3240,7 @@ $("supp-save").onclick=async()=>{
   const published=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});
   if(!stillCurrent())return;
   supplementDraft=published;publishedSupplementSnapshot=supplementPublishedKey();
-  renderSupplementEditor();$("supp-feedback").textContent="Suplementação publicada para o jogador.";
+  renderSupplementEditor();$("supp-feedback").textContent="Suplementação guardada e publicada para o jogador.";
  }catch(e){
   if(stillCurrent())$("supp-feedback").textContent="Não foi possível guardar: "+e.message;
  }finally{
@@ -3277,6 +3291,15 @@ function filterSupplementLists(){
  if([...select.options].some(option=>option.value===previous))select.value=previous;
 }
 const supplementSearchInput=$("supp-assign-search"),supplementDropdown=$("supp-search-dropdown");
+$("supp-add-toggle").onclick=()=>{
+ if(!supplementEditorReady)return;
+ const opening=$("supp-assign-inline").hidden;
+ setSupplementAssignmentOpen(opening,opening);
+};
+$("supp-assign-cancel").onclick=()=>{
+ setSupplementAssignmentOpen(false);
+ $("supp-add-toggle").focus();
+};
 function showSupplementDropdown(){const q=normalizeSupplementQuery(supplementSearchInput.value.trim());supplementDropdown.replaceChildren();const matches=[...supplementLibrary].filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(q)).sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt")).slice(0,60);for(const item of matches){const button=document.createElement("button");button.type="button";button.className="supp-search-result";button.setAttribute("role","option");button.textContent=item.name;button.addEventListener("pointerdown",e=>e.preventDefault());button.onclick=()=>{supplementSearchInput.value=item.name;$("supp-lib-select").value=item.id;supplementDropdown.hidden=true;supplementSearchInput.blur();};supplementDropdown.append(button);}if(!matches.length){const empty=document.createElement("div");empty.className="supp-search-empty";empty.textContent="Sem resultados";supplementDropdown.append(empty);}supplementDropdown.hidden=false;}
 supplementSearchInput.addEventListener("focus",showSupplementDropdown);
 supplementSearchInput.addEventListener("input",showSupplementDropdown);
@@ -3316,7 +3339,7 @@ $("supp-lib-assign").onclick=()=>{
  if(!item){$("supp-feedback").textContent="Seleciona uma sugestão exata da lista.";return;}
  if(!item.prescriptions?.length && /MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){$("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";return;}
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text,...(item.prescriptions?.length?{prescriptions:item.prescriptions.map(p=>({...p}))}:{})});
- renderSupplementEditor();$("supp-feedback").textContent="Alterações por publicar. Revê e clica em Publicar suplementação do jogador.";
+ renderSupplementEditor();setSupplementAssignmentOpen(false);$("supp-feedback").textContent="Alterações por guardar. Revê e clica em Guardar.";
 };
 
 $("supp-transfer-import").onclick=async()=>{

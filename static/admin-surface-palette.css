@@ -5002,3 +5002,82 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
  html[data-admin-theme] #calendar-section .tm-calendar-expand-icon,
  html[data-admin-theme] #calendar-section .calendar-unified-event{transition:none!important}
 }
+
+/* Supplementation: one associated-supplements section with an inline add flow.
+   This stays on the page surface (no extra workflow card). */
+#supplements-panel .supp-associated-header{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px 18px!important;flex-wrap:wrap!important;min-width:0;
+}
+#supplements-panel .supp-associated-header>h3{
+ margin:0!important;font-size:clamp(19px,2.5vw,24px)!important;letter-spacing:-.025em!important;
+ line-height:1.25!important;font-weight:650!important;
+}
+#supplements-panel .supp-associated-toolbar{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ flex-wrap:wrap!important;gap:9px!important;margin-left:auto!important;
+}
+#supplements-panel .supp-associated-toolbar>button{
+ min-height:40px!important;width:auto!important;max-width:100%!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ padding:9px 15px!important;margin:0!important;cursor:pointer;
+ font-size:13px!important;font-weight:600!important;line-height:1.2!important;
+}
+#supplements-panel #supp-add-toggle{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+}
+#supplements-panel #supp-add-toggle:hover:not(:disabled){background:var(--tm-ui-hover)!important}
+#supplements-panel .supp-associated-toolbar>button:disabled{opacity:.55;cursor:default!important}
+#supplements-panel .supp-associated-toolbar>button:focus-visible,
+#supplements-panel .supp-assignment-inline button:focus-visible{
+ outline:2px solid var(--tm-ui-text)!important;outline-offset:2px!important;
+}
+#supplements-panel>.supp-assignment-inline{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+ gap:10px!important;padding:0!important;margin:0 0 2px!important;
+ min-width:0!important;background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#supplements-panel>.supp-assignment-inline[hidden]{display:none!important}
+#supplements-panel .supp-assignment-inline>.supp-assignment-field{
+ position:relative!important;display:block!important;
+ flex:1 1 280px!important;min-width:210px!important;max-width:600px!important;
+ margin:0!important;
+}
+#supplements-panel .supp-assignment-inline #supp-assign-search{
+ box-sizing:border-box!important;display:block!important;
+ width:100%!important;max-width:none!important;min-height:42px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+#supplements-panel .supp-assignment-inline #supp-lib-select[hidden]{display:none!important}
+#supplements-panel .supp-assignment-inline .supp-assignment-actions{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ flex-wrap:wrap!important;gap:8px!important;margin:0!important;
+}
+#supplements-panel .supp-assignment-inline .supp-assignment-actions button{
+ min-height:40px!important;padding:9px 13px!important;margin:0!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+#supplements-panel .supp-assignment-inline #supp-assign-cancel{
+ background:transparent!important;color:var(--tm-ui-muted)!important;
+}
+#supplements-panel .supp-assignment-inline #supp-assign-cancel:hover{color:var(--tm-ui-text)!important}
+#supplements-panel .supp-assignment-inline .supp-search-dropdown{
+ background:var(--tm-ui-subcard)!important;box-shadow:none!important;
+ border:0!important;border-radius:0 0 12px 12px!important;color:var(--tm-ui-text)!important;
+}
+#supplements-panel .supp-assignment-inline .supp-search-result{color:var(--tm-ui-text)!important}
+#supplements-panel .supp-assignment-inline .supp-search-result:is(:hover,:focus-visible){
+ background:var(--tm-ui-hover)!important;
+}
+@media(max-width:680px){
+ #supplements-panel .supp-associated-toolbar{width:100%!important;justify-content:flex-end!important}
+ #supplements-panel .supp-assignment-inline>.supp-assignment-field{
+  flex:1 1 100%!important;min-width:0!important;max-width:none!important;
+ }
+ #supplements-panel .supp-assignment-inline .supp-assignment-actions{width:100%!important}
+ #supplements-panel .supp-associated-toolbar>button{min-height:40px!important}
+}
+@media(max-width:830px){
+ #supplements-panel .supp-assignment-inline #supp-assign-search{font-size:16px!important}
+}
