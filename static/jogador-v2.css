@@ -5511,3 +5511,20 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .consumption-action-icon svg{display:block;width:100%;height:100%;fill:none;overflow:visible;}
 #overview #day-details .meal-registered-badge .consumption-action-icon{width:14px;height:14px;flex-basis:14px;}
 #overview #day-details .consumption-confirm-success .consumption-action-icon{width:20px;height:20px;flex-basis:20px;margin-right:0;}
+
+/* Consumption action: same text + outline chevron style as Ver porções. */
+#overview #day-details .daily-meal .consumption-change-color,
+#overview #day-details .consumption-change-color{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:7px!important;width:max-content!important;min-height:32px!important;
+ margin:12px 0 0!important;padding:4px 0!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;color:inherit!important;font-size:13px!important;font-weight:400!important;
+ opacity:1!important;text-transform:none!important;
+}
+#overview #day-details .consumption-change-color::after{content:"";display:block;width:14px;height:14px;flex:0 0 14px;
+ background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;}
+#overview #day-details .consumption-change-color:hover{opacity:.8!important}
+/* Equal registered/edit heights, including mobile. */
+#overview #day-details .meal-consumption-tags .meal-registered-badge,
+#overview #day-details .meal-consumption-tags .meal-edit-consumption-tag{box-sizing:border-box!important;height:25px!important;min-height:25px!important;max-height:25px!important;padding-top:0!important;padding-bottom:0!important;line-height:1!important;vertical-align:middle!important;}
