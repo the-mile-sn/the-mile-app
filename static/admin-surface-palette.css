@@ -5185,7 +5185,7 @@ html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-action:focu
 }
 
 /* Suplementação — header insets, two-line protocol and original Hugeicons.
-   Keep published/pending card colours and original save semantics intact. */
+   Association rows are now transparent; coloured state is a status pill. */
 html[data-admin-theme] #supplements-panel .supp-associated-card>.supp-associated-header{
  box-sizing:border-box!important;
  padding:17px 20px 5px!important;
@@ -5214,7 +5214,7 @@ html[data-admin-theme] #supplements-panel .supp-associated-card #supp-add-toggle
 html[data-admin-theme] #supplements-panel .supp-associated-card #supp-add-toggle:hover:not(:disabled){
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  min-height:43px!important;width:auto!important;padding:10px 17px!important;
- border:0!important;border-radius:12px!important;
+ border:0!important;border-radius:999px!important;
  background:#f6f7f8!important;color:#161719!important;
  box-shadow:none!important;font-size:14px!important;font-weight:650!important;
  line-height:1.25!important;white-space:nowrap!important;cursor:pointer!important;
@@ -5265,4 +5265,71 @@ html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-action:hove
   padding:0 16px 12px!important;
  }
  html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-protocol{font-size:12.5px!important}
+}
+
+/* Suplementação: simple list rows (no individual coloured cards).
+   Preserve the primary card and accessible edit/delete controls. */
+html[data-admin-theme] #supplements-panel #supp-base-list{
+ display:flex!important;flex-direction:column!important;gap:0!important;
+ margin:0!important;padding:0!important;background:transparent!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-row,
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-row.supp-published,
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-row.supp-pending{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ box-sizing:border-box!important;min-height:76px!important;gap:14px!important;
+ margin:0!important;padding:14px 20px!important;
+ border:0!important;border-bottom:1px solid var(--tm-ui-divider)!important;
+ border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;text-align:left!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-row:last-child{
+ border-bottom:0!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-headline{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ flex-wrap:wrap!important;gap:8px!important;min-width:0!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-status-chip{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;min-height:27px!important;height:27px!important;
+ flex:none!important;padding:0 10px!important;
+ border:0!important;border-radius:999px!important;box-shadow:none!important;
+ font-size:11px!important;font-weight:550!important;line-height:1!important;
+ letter-spacing:0!important;white-space:nowrap!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-status-saved{
+ background:#183428!important;color:#8ED0AB!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-status-pending{
+ background:#3B2D16!important;color:#E2C17E!important;
+}
+html[data-admin-theme="light"] #supplements-panel #supp-base-list .supp-status-saved{
+ background:#DDEFE4!important;color:#317154!important;
+}
+html[data-admin-theme="light"] #supplements-panel #supp-base-list .supp-status-pending{
+ background:#F5E8C9!important;color:#8A6327!important;
+}
+/* Microciclos: keep the existing expandable Add Event control and text,
+   but use the same contrasting full-round action as Add Supplement. */
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
+ border:0!important;border-radius:999px!important;box-shadow:none!important;
+ background:#f6f7f8!important;color:#161719!important;
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle{
+ background:#1b1d23!important;color:#fff!important;
+}
+html[data-admin-theme] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle:hover:not(:disabled){
+ background:#f6f7f8!important;color:#161719!important;filter:brightness(.94)!important;
+}
+html[data-admin-theme="light"] #admin-workspace #calendar-section #calendar-month-card .tm-calendar-event-subcard>#calendar-mobile-event-toggle:hover:not(:disabled){
+ background:#1b1d23!important;color:#fff!important;
+}
+@media(max-width:680px){
+ html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-row{
+  padding-left:16px!important;padding-right:16px!important;min-height:70px!important;
+ }
+ html[data-admin-theme] #supplements-panel #supp-base-list .supp-status-chip{
+  min-height:26px!important;height:26px!important;
+ }
 }

@@ -3188,18 +3188,35 @@ function renderSupplementMatchExclusions(){
 }
 /* Official Hugeicons Core Free SVG vectors; source: @hugeicons/core-free-icons. */
 const supplementPlanActionIcons={"edit":"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" aria-hidden=\"true\" data-hugeicons=\"PencilEdit01Icon\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"/><path d=\"M11 20H17\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"1.5\"/></svg>","remove":"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" aria-hidden=\"true\" data-hugeicons=\"TrashIcon\"><path d=\"M18.8516 16.3743L19.5 6H4.5L5.14839 16.3743C5.315 19.0401 5.39831 20.373 6.26426 21.1865C7.13021 22 8.46571 22 11.1367 22H12.8633C15.5343 22 16.8698 22 17.7357 21.1865C18.6017 20.373 18.685 19.0401 18.8516 16.3743Z\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"/><path d=\"M15.5 6H21M15.5 6L15.3721 4.97683C15.1595 3.2762 13.7139 2 12 2C10.2861 2 8.84047 3.2762 8.6279 4.97683L8.5 6M15.5 6H8.5M3 6H8.5\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"/><path d=\"M9.5 11V17M14.5 11V17\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"/></svg>"};
+function supplementSavedStatuses(plan,publishedSnapshot){
+ const savedCounts=new Map();
+ for(const oldItem of JSON.parse(publishedSnapshot||"[]")){
+  const key=JSON.stringify(oldItem);
+  savedCounts.set(key,(savedCounts.get(key)||0)+1);
+ }
+ return plan.map(item=>{
+  const key=JSON.stringify(item),count=savedCounts.get(key)||0;
+  if(count)savedCounts.set(key,count-1);
+  return count>0;
+ });
+}
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
  renderSupplementMatchExclusions();
  const labels={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1","md+1":"MD+1",breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",dinner:"Jantar",snack:"Lanche",supper:"Ceia"};
+ const savedStatuses=supplementSavedStatuses(supplementDraft.plan,publishedSupplementSnapshot);
  for(const [i,item] of supplementDraft.plan.entries()){
-  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(JSON.stringify(item)===(JSON.parse(publishedSupplementSnapshot)[i]===undefined?"":JSON.stringify(JSON.parse(publishedSupplementSnapshot)[i]))?"supp-published":"supp-pending");
+  const saved=savedStatuses[i];
+  const row=document.createElement("div");row.className="event-admin-row supp-associated-row";row.classList.add(saved?"supp-published":"supp-pending");
   const label=document.createElement("span");label.className="supp-associated-label";
+  const headline=document.createElement("span");headline.className="supp-associated-headline";
   const name=document.createElement("span");name.className="supp-associated-name";name.textContent=item.name;
+  const statusChip=document.createElement("span");statusChip.className="supp-status-chip "+(saved?"supp-status-saved":"supp-status-pending");statusChip.textContent=saved?"Guardado":"Pendente";
+  headline.append(name,statusChip);
   const protocol=document.createElement("span");protocol.className="supp-associated-protocol";
   const rules=item.prescriptions?.length?item.prescriptions:[item];
   protocol.textContent=rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação",labels[p.rule]||p.rule].filter(Boolean).join(" · ")).join("  |  ");
-  label.append(name,protocol);
+  label.append(headline,protocol);
   const edit=document.createElement("button");edit.type="button";edit.className="supp-item-action supp-item-edit";
   edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar suplemento "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>{

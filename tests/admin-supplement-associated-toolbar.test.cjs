@@ -15,7 +15,7 @@ test("Suplementos associados has a standalone add button and a hidden bottom sav
  assert.ok(start>=0 && end>start);
  const card=panel.slice(panel.indexOf('<div class="supp-associated-card">'),panel.indexOf('<details class="supp-workflow supp-exceptions-card">'));
  assert.match(card, /<h3>Suplementos associados<\/h3>/);
- assert.match(card, /id="supp-add-toggle"[^>]*>\+ Adicionar novo<\/button>/);
+ assert.match(card, /id="supp-add-toggle"[^>]*>\+ Adicionar suplemento<\/button>/);
  assert.match(card, /id="supp-save-footer"[^>]*hidden>/);
  assert.match(card, /id="supp-save"[^>]*hidden>Guardar<\/button>/);
  assert.ok(card.indexOf('id="supp-save"')>card.indexOf('id="supp-base-list"'));
@@ -118,7 +118,7 @@ test("supplement editing uses exact official Hugeicons PencilEdit01Icon and Tras
 test("names and protocols are separate DOM lines, not concatenated with a dot",()=>{
  assert.match(js,/name\.className="supp-associated-name";name\.textContent=item\.name;/);
  assert.match(js,/protocol\.className="supp-associated-protocol"/);
- assert.match(js,/label\.append\(name,protocol\)/);
+ assert.match(js,/label\.append\(headline,protocol\)/);
  assert.doesNotMatch(js,/label\.textContent=item\.name\+" · "/);
  assert.match(css,/supp-associated-row>\.supp-associated-label/);
  assert.match(css,/flex-direction:column!important/);
@@ -146,9 +146,61 @@ test("button colors, hidden states and cached assets work in dark and light them
  assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-save/);
  assert.match(css,/background:#1b1d23!important;color:#fff!important/);
  assert.match(css,/supp-item-action svg/);
- assert.match(html,/admin-microcycles\.js\?v=18294/);
+ assert.match(html,/admin-microcycles\.js\?v=18295/);
  for(const page of ["admin-microcycles","create-plan","food-library","admin-appointments"]){
   const p=fs.readFileSync("static/"+page+".html","utf8");
-  assert.match(p,/admin-surface-palette\.css\?v=67/);
+  assert.match(p,/admin-surface-palette\.css\?v=68/);
  }
+});
+
+
+test("Guardado/Pendente labels are inline beside the name and use the official palette",()=>{
+ assert.match(js,/statusChip\.className="supp-status-chip "\+\(saved\?"supp-status-saved":"supp-status-pending"\)/);
+ assert.match(js,/statusChip\.textContent=saved\?"Guardado":"Pendente"/);
+ assert.match(js,/headline\.append\(name,statusChip\)/);
+ assert.match(js,/label\.append\(headline,protocol\)/);
+ assert.match(css,/supp-associated-headline\{/);
+ assert.match(css,/supp-status-chip\{/);
+ assert.match(css,/border-radius:999px!important/);
+ for(const token of [
+  "#183428!important;color:#8ED0AB!important",
+  "#3B2D16!important;color:#E2C17E!important",
+  "#DDEFE4!important;color:#317154!important",
+  "#F5E8C9!important;color:#8A6327!important",
+ ]) assert.ok(css.includes(token),"Missing official status palette "+token);
+});
+
+test("rows are transparent and separated by lines, without publication card fills",()=>{
+ assert.match(css,/\/\* Suplementação: simple list rows/);
+ assert.match(css,/\.supp-associated-row\.supp-published,/);
+ assert.match(css,/\.supp-associated-row\.supp-pending\{/);
+ assert.match(css,/border-bottom:1px solid var\(--tm-ui-divider\)!important/);
+ assert.match(css,/border-radius:0!important;background:transparent!important/);
+ assert.match(css,/\.supp-associated-row:last-child\{\s*border-bottom:0!important/);
+});
+
+test("saved-state matching handles deletions, editing, reordering and duplicates",()=>{
+ const from=js.indexOf("function supplementSavedStatuses(plan,publishedSnapshot){");
+ const to=js.indexOf("function renderSupplementEditor(){",from);
+ assert.ok(from>=0&&to>from);
+ const source=js.slice(from,to);
+ const check=(current,published)=>{
+  const code=source+"\nJSON.stringify(supplementSavedStatuses("+JSON.stringify(current)+","+JSON.stringify(JSON.stringify(published))+"));";
+  return JSON.parse(vm.runInNewContext(code));
+ };
+ assert.deepEqual(check([{a:1},{b:2}],[{a:1},{b:2}]),[true,true]);
+ assert.deepEqual(check([{b:2}],[{a:1},{b:2}]),[true]);
+ assert.deepEqual(check([{b:2},{a:1}],[{a:1},{b:2}]),[true,true]);
+ assert.deepEqual(check([{a:9},{b:2}],[{a:1},{b:2}]),[false,true]);
+ assert.deepEqual(check([{a:1},{a:1}],[{a:1}]),[true,false]);
+});
+
+test("both add actions are contrast-colored full pills; event toggle remains the original control",()=>{
+ const eventControl=html.match(/<button type="button" id="calendar-mobile-event-toggle"[^>]+><span class="calendar-mobile-event-plus"[^>]*>\+<\/span><span>Adicionar evento<\/span><\/button>/);
+ assert.ok(eventControl);
+ assert.match(css,/\.supp-associated-card #supp-add-toggle/);
+ assert.match(css,/border:0!important;border-radius:999px!important;\s*background:#f6f7f8!important;color:#161719!important/);
+ assert.match(css,/admin-theme="light"\] #supplements-panel \.supp-associated-card #supp-add-toggle/);
+ assert.match(css,/\.tm-calendar-event-subcard>#calendar-mobile-event-toggle\{\s*border:0!important;border-radius:999px!important/);
+ assert.match(css,/admin-theme="light"\] #admin-workspace #calendar-section #calendar-month-card \.tm-calendar-event-subcard>#calendar-mobile-event-toggle/);
 });
