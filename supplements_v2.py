@@ -63,7 +63,7 @@ def save(c,aid,payload):
  c.execute("""INSERT INTO v2_supplements(athlete_id,plan_json,overrides_json,match_exclusions_json) VALUES(?,?,?,?)
  ON CONFLICT(athlete_id) DO UPDATE SET plan_json=excluded.plan_json,overrides_json=excluded.overrides_json,match_exclusions_json=excluded.match_exclusions_json""",(aid,json.dumps(plan,ensure_ascii=False),json.dumps(clean,ensure_ascii=False),json.dumps(clean_exclusions,ensure_ascii=False)))
  return {"plan":plan,"overrides":clean,"match_exclusions":clean_exclusions}
-def days(c,aid,start,end,matches,events):
+def days(c,aid,start,end,matches,events,apply_overrides=True):
  data=read(c,aid);match_dates={m["match_date"] for m in matches};train_dates={e["event_date"] for e in events if e.get("kind")=="training"}
  from datetime import timedelta
  result={}
@@ -92,9 +92,10 @@ def days(c,aid,start,end,matches,events):
     if entry.get("overlap_mode")=="replace":active=[resolved]
     else:active.append(resolved)
    items.extend(active)
-  override=data["overrides"].get(day,{})
-  removed=set(override.get("remove",[]))
-  items=[x for x in items if x["name"] not in removed]+override.get("add",[])
+  if apply_overrides:
+   override=data["overrides"].get(day,{})
+   removed=set(override.get("remove",[]))
+   items=[x for x in items if x["name"] not in removed]+override.get("add",[])
   result[day]=[dict(x,display_moment=x.get("timing_text") or ("Almoço ou jantar" if x["moment"]=="lunch_or_dinner" else "")) for x in items]
   d+=timedelta(days=1)
  return result
