@@ -5528,3 +5528,29 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 /* Equal registered/edit heights, including mobile. */
 #overview #day-details .meal-consumption-tags .meal-registered-badge,
 #overview #day-details .meal-consumption-tags .meal-edit-consumption-tag{box-sizing:border-box!important;height:25px!important;min-height:25px!important;max-height:25px!important;padding-top:0!important;padding-bottom:0!important;line-height:1!important;vertical-align:middle!important;}
+
+/* Final meal action alignment: override older centered and spaced rules. */
+#overview #day-details .meal.daily-meal > .consumption-change-color,
+#overview #day-details .daily-meal .consumption-change-color,
+#overview #day-details .consumption-change-color{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ align-self:flex-end!important;width:max-content!important;max-width:100%!important;
+ margin:12px 0 0 auto!important;padding:4px 0!important;
+ min-height:32px!important;height:auto!important;border:0!important;
+ background:transparent!important;color:inherit!important;opacity:1!important;
+ font:400 13px/1.3 "Inter Tight",Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
+ gap:7px!important;box-shadow:none!important;text-align:right!important;
+}
+#overview #day-details .consumption-change-color::after{content:none!important;display:none!important}
+#overview #day-details .consumption-change-color .consumption-link-chevron{display:block!important;width:14px!important;height:14px!important;flex:0 0 14px!important;}
+/* Identical measured height of registered and edit pills, including button borders. */
+#overview #day-details .meal-consumption-tags-bottom .meal-registered-badge,
+#overview #day-details .meal-consumption-tags-bottom .meal-edit-consumption-tag,
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge,
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ height:25px!important;min-height:25px!important;max-height:25px!important;
+ padding:0 10px!important;margin:0!important;border-radius:999px!important;
+ line-height:1!important;font-size:11px!important;flex:0 0 auto!important;
+}
+#overview #day-details .meal-consumption-tags-bottom .meal-edit-consumption-tag{border:1px solid rgba(200,225,240,.22)!important;}
