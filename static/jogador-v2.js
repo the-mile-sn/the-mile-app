@@ -1337,7 +1337,7 @@ async function openDailyMealInMenus(dateKey,meal){
 }
 async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
- const panel=document.createElement('div');panel.className='consumption-editor';
+ const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
  const status=document.createElement('p');status.className='hint';status.textContent='A carregar cores disponíveis…';panel.append(status);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
