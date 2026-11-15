@@ -5569,3 +5569,20 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .daily-meal > .consumption-change-color .consumption-link-chevron{
  color:inherit!important;
 }
+
+/* Final unified meal action positioning. Both links use the same 26px right
+   inset (12px subcard margin + 14px padding), including breakfast/snacks.
+   Explicit meal-ink avoids white inherited from the global button rule. */
+#overview #day-details .meal.daily-meal > button.consumption-change-color,
+#overview #day-details .daily-meal:has(> .single-meal-option) > button.consumption-change-color{
+ margin-right:26px!important;
+ margin-left:auto!important;
+ margin-bottom:12px!important;
+ color:color-mix(in srgb,var(--meal-ink) 58%,white)!important;
+}
+#overview #day-details .meal.daily-meal:has(.tm-daily-portions-action) > button.consumption-change-color{
+ margin-top:-12px!important;
+}
+#overview #day-details .meal.daily-meal > button.consumption-change-color svg{
+ color:inherit!important;stroke:currentColor!important;
+}
