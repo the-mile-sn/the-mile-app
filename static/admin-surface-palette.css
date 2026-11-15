@@ -5081,3 +5081,105 @@ html[data-admin-theme] #calendar-section .calendar-day-totals .nutrition-metric-
 @media(max-width:830px){
  #supplements-panel .supp-assignment-inline #supp-assign-search{font-size:16px!important}
 }
+
+/* Supplementation: pending-save footer and Planos-matched icon actions. */
+#supplements-panel .supp-associated-card{
+ display:flex!important;flex-direction:column!important;gap:14px!important;min-width:0!important;
+ margin:0!important;padding:0 0 5px!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;
+}
+#supplements-panel .supp-associated-card>.supp-associated-header{
+ display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;
+}
+#supplements-panel .supp-associated-card>.supp-associated-header .supp-associated-toolbar{
+ margin-left:auto!important;justify-content:flex-end!important;flex:none!important;
+}
+#supplements-panel .supp-associated-card>.supp-assignment-inline{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+ margin:0!important;padding:0!important;gap:10px!important;min-width:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#supplements-panel .supp-associated-card>.supp-assignment-inline[hidden]{display:none!important}
+#supplements-panel .supp-associated-card>.supp-assignment-inline .supp-assignment-field{
+ position:relative!important;display:block!important;
+ flex:1 1 310px!important;max-width:600px!important;min-width:0!important;margin:0!important;
+}
+html[data-admin-theme] #supplements-panel .supp-associated-card #supp-assign-search{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;max-width:none!important;min-height:43px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ padding:12px 14px!important;margin:0!important;
+}
+#supplements-panel .supp-associated-card .supp-search-dropdown{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;border:0!important;border-radius:0 0 12px 12px!important;
+}
+#supplements-panel .supp-associated-card #supp-feedback:empty{display:none!important}
+#supplements-panel .supp-associated-card .supp-associated-footer{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ margin:2px 0 0!important;padding:0!important;min-width:0!important;
+}
+#supplements-panel .supp-associated-card .supp-associated-footer[hidden]{display:none!important}
+#supplements-panel .supp-associated-card .supp-associated-footer #supp-save[hidden]{display:none!important}
+html[data-admin-theme] #supplements-panel .supp-associated-card #supp-save{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:auto!important;min-width:105px!important;min-height:42px!important;
+ padding:10px 19px!important;margin:0!important;
+ background:#f6f7f8!important;color:#161719!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font-size:14px!important;font-weight:650!important;line-height:1.2!important;
+ cursor:pointer;
+}
+html[data-admin-theme="light"] #supplements-panel .supp-associated-card #supp-save{
+ background:#1b1d23!important;color:#fff!important;
+}
+html[data-admin-theme] #supplements-panel .supp-associated-card #supp-save:hover:not(:disabled){filter:brightness(.94)}
+html[data-admin-theme] #supplements-panel .supp-associated-card #supp-save:disabled{opacity:.6;cursor:default}
+/* Use the same 24px pencil and trash outlines used by Planos' food editor,
+   in the compact Backoffice action system. Keep destructive actions red. */
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-actions{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ flex-shrink:0!important;gap:5px!important;margin-left:auto!important;flex-wrap:nowrap!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-actions .supp-item-action{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 34px!important;width:34px!important;min-width:34px!important;max-width:34px!important;
+ height:34px!important;min-height:34px!important;max-height:34px!important;
+ padding:7px!important;margin:0!important;
+ border:0!important;border-radius:10px!important;box-shadow:none!important;
+ cursor:pointer!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-edit{
+ background:var(--tm-action-icon-bg,var(--tm-ui-subcard))!important;
+ color:var(--tm-action-secondary-fg,var(--tm-ui-text))!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-edit:hover:not(:disabled){
+ background:var(--tm-action-secondary-hover,var(--tm-ui-hover))!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-remove{
+ background:var(--tm-action-danger-bg,rgba(188,56,71,.14))!important;
+ color:var(--tm-action-danger-fg,#d16b76)!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-remove:hover:not(:disabled){
+ background:var(--tm-action-danger-hover,rgba(188,56,71,.24))!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-action svg{
+ display:block!important;flex:none!important;width:18px!important;height:18px!important;
+ stroke:currentColor!important;
+}
+html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-action:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+@media(max-width:680px){
+ #supplements-panel .supp-associated-card>.supp-associated-header{
+  align-items:flex-start!important;flex-wrap:wrap!important;
+ }
+ #supplements-panel .supp-associated-card>.supp-associated-header .supp-associated-toolbar{
+  width:auto!important;flex:0 0 auto!important;
+ }
+ #supplements-panel .supp-associated-card>.supp-assignment-inline .supp-assignment-field{
+  flex:1 1 100%!important;max-width:none!important;
+ }
+ html[data-admin-theme] #supplements-panel .supp-associated-card #supp-assign-search{font-size:16px!important}
+}

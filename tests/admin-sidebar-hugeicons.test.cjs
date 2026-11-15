@@ -45,7 +45,7 @@ test("all pages using the shared sidebar refresh cached assets", () => {
   for (const page of ["admin-microcycles", "create-plan", "food-library", "admin-appointments"]) {
     const html = fs.readFileSync("static/" + page + ".html", "utf8");
     assert.ok(html.includes("/admin-nav-shell.js?v=9"), page + " nav cache version");
-    assert.ok(html.includes("/admin-surface-palette.css?v=65"), page + " style cache version");
+    assert.ok(html.includes("/admin-surface-palette.css?v=66"), page + " style cache version");
   }
 });
 

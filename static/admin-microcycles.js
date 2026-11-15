@@ -3088,13 +3088,15 @@ $("peri-import").addEventListener("click",async()=>{
 
 let supplementDraft={plan:[],overrides:{}};
 let publishedSupplementSnapshot="[]";
+let publishedSupplementExclusionsSnapshot="{}";
 let supplementMatches=[];
 let supplementAthleteId=null,supplementLoadRevision=0,supplementEditorReady=false;
 function setSupplementEditorReady(ready){
  supplementEditorReady=ready;
- for(const id of ["supp-save","supp-add","supp-lib-assign","supp-add-toggle"]){
+ for(const id of ["supp-save","supp-add","supp-add-toggle"]){
   const button=$(id);if(button)button.disabled=!ready;
  }
+ syncSupplementSaveVisibility();
 }
 function setSupplementAssignmentOpen(open,focusSearch=false){
  const panel=$("supp-assign-inline"),toggle=$("supp-add-toggle"),search=$("supp-assign-search");
@@ -3114,7 +3116,7 @@ function resetSupplementForAthlete(athleteId){
  supplementAthleteId=athleteId;
  ++supplementLoadRevision;
  supplementDraft={plan:[],overrides:{}};
- publishedSupplementSnapshot="[]";supplementMatches=[];
+ publishedSupplementSnapshot="[]";publishedSupplementExclusionsSnapshot="{}";supplementMatches=[];
  $("supp-base-list").replaceChildren();
  $("supp-match-exclusions").replaceChildren();
  $("supp-feedback").textContent="";
@@ -3122,7 +3124,18 @@ function resetSupplementForAthlete(athleteId){
  setSupplementEditorReady(false);
 }
 function supplementPublishedKey(){return JSON.stringify(supplementDraft.plan);}
-function supplementPending(){return supplementPublishedKey()!==publishedSupplementSnapshot;}
+function supplementExclusionsKey(){return JSON.stringify(supplementDraft.match_exclusions||{});}
+function supplementPending(){
+ return supplementPublishedKey()!==publishedSupplementSnapshot
+  ||supplementExclusionsKey()!==publishedSupplementExclusionsSnapshot;
+}
+function syncSupplementSaveVisibility(){
+ const save=$("supp-save"),footer=$("supp-save-footer");
+ if(!save||!footer)return;
+ const show=supplementEditorReady&&supplementPending();
+ save.hidden=!show;
+ footer.hidden=!show;
+}
 async function loadSupplementEditor(){
  if(!model||$("athlete").value!==model.athlete.id)return;
  const athleteId=model.athlete.id;
@@ -3139,7 +3152,7 @@ async function loadSupplementEditor(){
   const today=new Date();const first=new Date(today.getFullYear(),today.getMonth(),1);const last=new Date(first);last.setDate(last.getDate()+55);
   const calendar=await request(base+"/calendar?start="+isoDay(first)+"&end="+isoDay(last));
   if(!stillCurrent())return;
-  supplementDraft=draft;publishedSupplementSnapshot=supplementPublishedKey();
+  supplementDraft=draft;publishedSupplementSnapshot=supplementPublishedKey();publishedSupplementExclusionsSnapshot=supplementExclusionsKey();
   supplementMatches=calendar.matches||[];
   renderSupplementEditor();
   $("supp-feedback").textContent="";
@@ -3166,13 +3179,14 @@ function renderSupplementMatchExclusions(){
     if(check.checked)values.add(key);else values.delete(key);
     supplementDraft.match_exclusions ||= {};
     if(values.size)supplementDraft.match_exclusions[match.id]=[...values];else delete supplementDraft.match_exclusions[match.id];
-    $("supp-feedback").textContent="Exceções por guardar.";
+    $("supp-feedback").textContent="Exceções por guardar.";syncSupplementSaveVisibility();
    };
    label.append(check,document.createTextNode(" Suspender "+item.name+" neste jogo (MD-1, MD e MD+1)"));group.append(label);
   }
   wrap.append(group);host.append(wrap);
  }
 }
+const supplementPlanActionIcons={edit:"<svg viewBox=\"0 0 24 24\" width=\"17\" height=\"17\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" data-hugeicons=\"PencilEdit01Icon\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>",remove:"<svg class=\"tm-plan-trash-icon\" viewBox=\"0 0 24 24\" width=\"17\" height=\"17\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m5-7v7\"/></svg>"};
 function renderSupplementEditor(){
  const list=$("supp-base-list");list.replaceChildren();
  renderSupplementMatchExclusions();
@@ -3183,7 +3197,8 @@ function renderSupplementEditor(){
   
   const rules=item.prescriptions?.length?item.prescriptions:[item];
   label.textContent=item.name+" · "+rules.map(p=>[p.dose,p.timing_text||labels[p.moment]||p.moment||"Sem associação",labels[p.rule]||p.rule].filter(Boolean).join(" · ")).join("  |  ");
-  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";
+  const edit=document.createElement("button");edit.type="button";edit.className="supp-item-action supp-item-edit";
+  edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar suplemento "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>{
    const form=document.createElement("div");form.className="supp-inline-edit";
    const fields=[["name","Suplemento"],["dose","Dose"],["timing_text","Momento ou condição"],["note","Instruções"]];
@@ -3218,11 +3233,13 @@ function renderSupplementEditor(){
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.onclick=()=>renderSupplementEditor();
    form.append(save,cancel);row.replaceChildren(form);
   };
-  const remove=document.createElement("button");remove.type="button";remove.textContent="Remover";
+  const remove=document.createElement("button");remove.type="button";remove.className="supp-item-action supp-item-remove";
+  remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover suplemento "+item.name);remove.title="Remover "+item.name;
   remove.onclick=()=>{supplementDraft.plan.splice(i,1);$("supp-feedback").textContent="Alterações por guardar.";renderSupplementEditor();};
   const controls=document.createElement("div");controls.className="supp-associated-actions";controls.append(edit,remove);
   row.append(label,controls);list.append(row);
  }
+ syncSupplementSaveVisibility();
 }
 $("supp-add").onclick=()=>{
  if(!supplementEditorReady)return;
@@ -3239,7 +3256,7 @@ $("supp-save").onclick=async()=>{
  try{
   const published=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/supplements",{method:"PUT",body:JSON.stringify(supplementDraft)});
   if(!stillCurrent())return;
-  supplementDraft=published;publishedSupplementSnapshot=supplementPublishedKey();
+  supplementDraft=published;publishedSupplementSnapshot=supplementPublishedKey();publishedSupplementExclusionsSnapshot=supplementExclusionsKey();
   renderSupplementEditor();$("supp-feedback").textContent="Suplementação guardada e publicada para o jogador.";
  }catch(e){
   if(stillCurrent())$("supp-feedback").textContent="Não foi possível guardar: "+e.message;
@@ -3296,14 +3313,11 @@ $("supp-add-toggle").onclick=()=>{
  const opening=$("supp-assign-inline").hidden;
  setSupplementAssignmentOpen(opening,opening);
 };
-$("supp-assign-cancel").onclick=()=>{
- setSupplementAssignmentOpen(false);
- $("supp-add-toggle").focus();
-};
-function showSupplementDropdown(){const q=normalizeSupplementQuery(supplementSearchInput.value.trim());supplementDropdown.replaceChildren();const matches=[...supplementLibrary].filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(q)).sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt")).slice(0,60);for(const item of matches){const button=document.createElement("button");button.type="button";button.className="supp-search-result";button.setAttribute("role","option");button.textContent=item.name;button.addEventListener("pointerdown",e=>e.preventDefault());button.onclick=()=>{supplementSearchInput.value=item.name;$("supp-lib-select").value=item.id;supplementDropdown.hidden=true;supplementSearchInput.blur();};supplementDropdown.append(button);}if(!matches.length){const empty=document.createElement("div");empty.className="supp-search-empty";empty.textContent="Sem resultados";supplementDropdown.append(empty);}supplementDropdown.hidden=false;}
+
+function showSupplementDropdown(){const q=normalizeSupplementQuery(supplementSearchInput.value.trim());supplementDropdown.replaceChildren();const matches=[...supplementLibrary].filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(q)).sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt")).slice(0,60);for(const item of matches){const button=document.createElement("button");button.type="button";button.className="supp-search-result";button.setAttribute("role","option");button.textContent=item.name;button.addEventListener("pointerdown",e=>e.preventDefault());button.onclick=()=>addSupplementFromLibrary(item);supplementDropdown.append(button);}if(!matches.length){const empty=document.createElement("div");empty.className="supp-search-empty";empty.textContent="Sem resultados";supplementDropdown.append(empty);}supplementDropdown.hidden=false;}
 supplementSearchInput.addEventListener("focus",showSupplementDropdown);
 supplementSearchInput.addEventListener("input",showSupplementDropdown);
-supplementSearchInput.addEventListener("keydown",e=>{if(e.key==="Escape"){supplementDropdown.hidden=true;}if(e.key==="Enter"&&!supplementDropdown.hidden){const first=supplementDropdown.querySelector("button");if(first){e.preventDefault();first.click();}}});
+supplementSearchInput.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();setSupplementAssignmentOpen(false);$("supp-add-toggle").focus();}if(e.key==="Enter"&&!supplementDropdown.hidden){const first=supplementDropdown.querySelector("button");if(first){e.preventDefault();first.click();}}});
 supplementSearchInput.addEventListener("blur",()=>{setTimeout(()=>{supplementDropdown.hidden=true;},120);});
 $("supp-assign-search").addEventListener("input",()=>{const exact=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT"));$("supp-lib-select").value=exact?.id||"";});
 $("supp-library-search").addEventListener("input",filterSupplementLists);
@@ -3333,14 +3347,18 @@ $("supp-lib-save").onclick=async()=>{
   await loadSupplementLibrary();
  }catch(e){$("supp-lib-feedback").textContent=e.message;}finally{button.disabled=false;}
 };
-$("supp-lib-assign").onclick=()=>{
- if(!supplementEditorReady)return;
- const query=$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT");const item=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===query);
- if(!item){$("supp-feedback").textContent="Seleciona uma sugestão exata da lista.";return;}
- if(!item.prescriptions?.length && /MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){$("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";return;}
+function addSupplementFromLibrary(item){
+ if(!supplementEditorReady||!item)return;
+ if(!item.prescriptions?.length && /MD-1|MD\+1|MD e|Variável|Conforme descrito|dias sem treino|dias com treino|Fase de carga/i.test([item.timing_text,item.note,item.dose].join(" "))){
+  $("supp-feedback").textContent="Este protocolo exige revisão da regra antes de ser associado ao jogador.";
+  return;
+ }
  supplementDraft.plan.push({library_id:item.id,name:item.name,dose:item.dose,moment:item.moment,rule:item.rule,note:item.note,timing_text:item.timing_text,...(item.prescriptions?.length?{prescriptions:item.prescriptions.map(p=>({...p}))}:{})});
- renderSupplementEditor();setSupplementAssignmentOpen(false);$("supp-feedback").textContent="Alterações por guardar. Revê e clica em Guardar.";
-};
+ renderSupplementEditor();
+ setSupplementAssignmentOpen(false);
+ $("supp-feedback").textContent="Alterações por guardar. Revê e clica em Guardar.";
+ $("supp-add-toggle").focus();
+}
 
 $("supp-transfer-import").onclick=async()=>{
  const file=$("supp-transfer-file").files?.[0],feedback=$("supp-transfer-feedback");
