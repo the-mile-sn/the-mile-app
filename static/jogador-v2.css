@@ -5586,3 +5586,20 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .meal.daily-meal > button.consumption-change-color svg{
  color:inherit!important;stroke:currentColor!important;
 }
+
+/* Consumption badges: fix button intrinsic min-height and align optical height. */
+#overview #day-details .daily-meal .meal-consumption-tags .meal-registered-badge,
+#overview #day-details .daily-meal .meal-consumption-tags .meal-edit-consumption-tag,
+#overview #day-details .daily-meal .meal-consumption-tags-bottom .meal-registered-badge,
+#overview #day-details .daily-meal .meal-consumption-tags-bottom .meal-edit-consumption-tag{
+ box-sizing:border-box!important;height:24px!important;min-height:24px!important;max-height:24px!important;
+ padding:0 10px!important;margin-top:0!important;margin-bottom:0!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ line-height:1!important;vertical-align:middle!important;appearance:none!important;
+}
+#overview #day-details .daily-meal .meal-consumption-tags .meal-edit-consumption-tag{
+ border:1px solid rgba(200,225,240,.22)!important;
+}
+/* Separate registration actions from the first food line on lunch/dinner. */
+#overview #day-details .daily-meal .meal-consumption-tags:has(.meal-edit-consumption-tag):not(.meal-consumption-tags-bottom){margin-bottom:13px!important;}
+#overview #day-details .daily-meal .meal-consumption-tags-bottom:has(+ .foods){margin-bottom:13px!important;}
