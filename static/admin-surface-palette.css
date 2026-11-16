@@ -4587,6 +4587,10 @@ html[data-admin-theme] #scenario-editor .scenario-minute-card{
  background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
  font:500 12.5px/1.3 "Inter Tight",sans-serif!important;
 }
+/* The neutral minute tile is a deeper (lighter) surface in dark mode. */
+html[data-admin-theme="dark"] #scenario-editor .scenario-minute-card{
+ background:var(--tm-ui-search)!important;
+}
 html[data-admin-theme] #scenario-editor .scenario-meal-cell{
  display:block!important;min-width:0!important;margin:0!important;
  color:var(--tm-ui-text)!important;
@@ -4683,6 +4687,9 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
   margin:0!important;padding:12px!important;border-radius:12px!important;
   background:var(--tm-ui-card)!important;
  }
+ html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-variant-row{
+  background:var(--tm-ui-search)!important;
+ }
  html[data-admin-theme] #scenario-editor .scenario-minute-card{
   display:block!important;width:100%;padding:1px 0 5px!important;
   min-height:0!important;background:transparent!important;border-radius:0!important;
@@ -4701,6 +4708,29 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
   font-size:16px!important;padding:9px 36px 9px 12px!important;
  }
 }
+/* Mobile light: Safari tap highlights ignore rounded corners. Scope this fix
+   to expandable headings; do not affect nutrition selector focus or dark theme. */
+@media(max-width:830px){
+ html[data-admin-theme="light"] #matrix .model-mobile-summary,
+ html[data-admin-theme="light"] #scenario-editor>.scenario-main-summary,
+ html[data-admin-theme="light"] #scenario-editor .scenario-day-heading{
+  -webkit-tap-highlight-color:transparent;
+ }
+ html[data-admin-theme="light"] #matrix .model-mobile-summary:focus:not(:focus-visible),
+ html[data-admin-theme="light"] #scenario-editor>.scenario-main-summary:focus:not(:focus-visible),
+ html[data-admin-theme="light"] #scenario-editor .scenario-day-heading:focus:not(:focus-visible){
+  outline:none!important;box-shadow:none!important;
+ }
+ html[data-admin-theme="light"] #matrix .model-mobile-card:not([open])>.model-mobile-summary:active{
+  border-radius:13px!important;
+  background:rgba(53,72,96,.06)!important;
+ }
+ html[data-admin-theme="light"] #scenario-editor>.scenario-main-summary:active,
+ html[data-admin-theme="light"] #scenario-editor .scenario-day-heading:active{
+  border-radius:11px!important;
+  background:rgba(53,72,96,.055)!important;
+ }
+}
 @media(prefers-reduced-motion:reduce){
  html[data-admin-theme] #scenario-editor :is(.scenario-main-chevron,.scenario-day-chevron){transition:none!important}
 }
@@ -4714,19 +4744,19 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
  }
  html[data-admin-theme="light"] #admin-workspace #matrix .model-select-shell>.model-color-select:hover:not(:disabled),
  html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:hover:not(:disabled){
-  filter:brightness(.972);
+  filter:brightness(.93);
  }
  html[data-admin-theme="dark"] #admin-workspace #matrix .model-select-shell>.model-color-select:hover:not(:disabled),
  html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:hover:not(:disabled){
-  filter:brightness(1.075);
+  filter:brightness(1.18);
  }
  html[data-admin-theme="light"] #admin-workspace #matrix .model-color-select[data-color="none"]:hover:not(:disabled),
  html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-color-select[data-color="none"]:hover:not(:disabled){
-  border-color:rgba(66,82,106,.30)!important;
+  border-color:rgba(66,82,106,.46)!important;
  }
  html[data-admin-theme="dark"] #admin-workspace #matrix .model-color-select[data-color="none"]:hover:not(:disabled),
  html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-color-select[data-color="none"]:hover:not(:disabled){
-  border-color:rgba(184,198,213,.34)!important;
+  border-color:rgba(184,198,213,.54)!important;
  }
 }
 /* Keep expanded headings visible beneath sticky navigation. */
