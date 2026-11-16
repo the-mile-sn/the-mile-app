@@ -1188,8 +1188,13 @@ function renderMenuWeekGrid(menus,calendarData,start){
    const td=document.createElement("td");const button=document.createElement("button");button.type="button";
    button.className="tm-menu-week-cell"+(item?" is-saved":" is-empty");
    button.setAttribute("aria-label",mealName+" · "+d.date+" · "+(item?.value||"Por definir"));
+   button.dataset.color=color||"none";
+   const mealHeader=document.createElement("span");mealHeader.className="tm-menu-week-meal-header";
    const mealHeading=document.createElement("span");mealHeading.className="tm-menu-week-meal-label";
-   mealHeading.textContent=mealName;button.append(mealHeading);
+   mealHeading.textContent=mealName;
+   const colorBadge=document.createElement("span");colorBadge.className="tm-menu-week-color-badge";
+   colorBadge.setAttribute("aria-hidden","true");
+   mealHeader.append(mealHeading,colorBadge);button.append(mealHeader);
    if(item?.kind==="dish"&&item.dish_id){
     const img=document.createElement("img");img.alt="";img.loading="lazy";
     img.decoding="async";img.fetchPriority="low";
@@ -1199,7 +1204,6 @@ function renderMenuWeekGrid(menus,calendarData,start){
     placeholder.setAttribute("aria-hidden","true");button.append(placeholder);
    }
    const row=document.createElement("span");row.className="tm-menu-week-name";
-   if(color){const dot=document.createElement("span");dot.className="tm-menu-week-dot";dot.dataset.color=color;row.append(dot);}
    const text=document.createElement("span");text.textContent=item?.value||"Por definir";row.append(text);
    button.append(row);
    button.addEventListener("click",()=>{
@@ -1329,6 +1333,11 @@ async function loadMenus(){
       const picker=document.createElement("div");picker.className="menu-combobox";line.appendChild(picker);
       const lastUseNote=document.createElement("p");lastUseNote.className="menu-last-used-note";lastUseNote.hidden=true;line.append(lastUseNote);
       const dishSearch=document.createElement("input");dishSearch.type="search";dishSearch.className="menu-choice";dishSearch.placeholder="Pesquisar e selecionar prato…";dishSearch.autocomplete="off";dishSearch.setAttribute("role","combobox");dishSearch.setAttribute("aria-autocomplete","list");dishSearch.setAttribute("aria-expanded","false");picker.appendChild(dishSearch);
+      const clearDishSearch=document.createElement("button");clearDishSearch.type="button";
+      clearDishSearch.className="tm-menu-dish-search-clear";clearDishSearch.setAttribute("aria-label","Limpar pesquisa do prato");
+      clearDishSearch.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>';
+      picker.appendChild(clearDishSearch);
+      const updateClearDishSearch=()=>{clearDishSearch.hidden=!dishSearch.value;};
       const suggestions=document.createElement("div");suggestions.className="menu-suggestions";suggestions.setAttribute("role","listbox");suggestions.hidden=true;picker.appendChild(suggestions);
       let chosenDishId=selectedDish?.id||"";
       dishSearch.value=selectedDish?.name_pt||"";
@@ -1354,8 +1363,15 @@ async function loadMenus(){
         }
        }catch(e){lastUseNote.hidden=true;}
       };
-      const updatePreview=()=>{const item=dishLibrary.find(x=>x.id===chosenDishId);preview.hidden=!item;if(item)preview.src="/api/v2/dishes/image/"+encodeURIComponent(item.id)+"?thumb=1&menu=1";};
-      const pickDish=item=>{chosenDishId=item.id;dishSearch.value=item.name_pt;closeSuggestions();updatePreview();showLastUse();queue();};
+      const updatePreview=()=>{
+       const item=dishLibrary.find(x=>x.id===chosenDishId);
+       const show=kind.value==="dish"&&Boolean(item);
+       preview.hidden=!show;
+       photoWrap.hidden=!show;
+       mealLayout.classList.toggle("has-menu-photo",show);
+       if(show)preview.src="/api/v2/dishes/image/"+encodeURIComponent(item.id)+"?thumb=1&menu=1";
+      };
+      const pickDish=item=>{chosenDishId=item.id;dishSearch.value=item.name_pt;updateClearDishSearch();closeSuggestions();updatePreview();showLastUse();queue();};
       const showSuggestions=()=>{
         suggestions.replaceChildren();
         const items=candidates();
@@ -1368,16 +1384,33 @@ async function loadMenus(){
         suggestions.hidden=false;dishSearch.setAttribute("aria-expanded","true");
       };
       dishSearch.addEventListener("focus",showSuggestions);
-      dishSearch.addEventListener("input",()=>{chosenDishId="";showLastUse();updatePreview();showSuggestions();});
+      dishSearch.addEventListener("input",()=>{chosenDishId="";updateClearDishSearch();showLastUse();updatePreview();showSuggestions();});
+      clearDishSearch.addEventListener("click",()=>{
+       dishSearch.value="";chosenDishId="";updateClearDishSearch();showLastUse();
+       updatePreview();closeSuggestions();dishSearch.focus();
+      });
       dishSearch.addEventListener("keydown",e=>{
         if(e.key==="Escape"){closeSuggestions();dishSearch.blur();}
         if(e.key==="Enter"&&!suggestions.hidden){e.preventDefault();const item=candidates()[0];if(item)pickDish(item);}
       });
       dishSearch.addEventListener("blur",()=>{setTimeout(closeSuggestions,120);});
-      dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";showLastUse();updatePreview();closeSuggestions();});
+      dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";updateClearDishSearch();showLastUse();updatePreview();closeSuggestions();});
       const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.className="menu-dish-image";line.appendChild(preview);
+      // Group the existing editor fields without re-creating any controls or
+      // listeners. Only the admin layout changes: photo on the right.
+      const mealLayout=document.createElement("div");mealLayout.className="tm-menu-meal-layout";
+      const mealFields=document.createElement("div");mealFields.className="tm-menu-meal-fields";
+      for(const field of [kind,category,dish,freeText,dishFilter,picker,lastUseNote])mealFields.append(field);
+      const photoWrap=document.createElement("div");photoWrap.className="tm-menu-meal-photo";
+      photoWrap.append(preview);mealLayout.append(mealFields,photoWrap);line.append(mealLayout);
+      updateClearDishSearch();
       updatePreview();
-      const toggle=()=>{freeText.hidden=kind.value!=="text";category.hidden=kind.value!=="category";dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!chosenDishId;dish.hidden=true;closeSuggestions();showLastUse();};
+      const toggle=()=>{
+       freeText.hidden=kind.value!=="text";category.hidden=kind.value!=="category";
+       dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";
+       dishFilter.hidden=kind.value!=="dish";dish.hidden=true;closeSuggestions();
+       updateClearDishSearch();updatePreview();showLastUse();
+      };
       kind.addEventListener("change",toggle);toggle();
       const saveMessage=document.createElement("small");saveMessage.className="tm-menu-meal-feedback";saveMessage.setAttribute("role","status");line.append(saveMessage);
       let saveSerial=Promise.resolve(),saveVersion=0,saveTimer=null;
