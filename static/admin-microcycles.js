@@ -468,6 +468,20 @@ $("scenario-parity-run").addEventListener("click",async()=>{
 });
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
 const scenarioVariants=[["very_low","0 min · Não jogou"],["low","1–29 min"],["medium","30–59 min"]];
+// Scroll only after a user opens a details header, not during initial rendering
+// or closing. The existing native <details> interaction stays intact.
+function revealScenarioHeaderAfterOpen(details,summary){
+ requestAnimationFrame(()=>{
+  if(!details.open||details.hidden||!details.isConnected||!summary?.isConnected)return;
+  const reduceMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  summary.scrollIntoView({behavior:reduceMotion?"auto":"smooth",block:"start",inline:"nearest"});
+ });
+}
+const scenarioMainDetails=$("scenario-editor");
+const scenarioMainSummary=scenarioMainDetails?.querySelector(".scenario-main-summary");
+scenarioMainSummary?.addEventListener("click",()=>{
+ if(!scenarioMainDetails.open)revealScenarioHeaderAfterOpen(scenarioMainDetails,scenarioMainSummary);
+});
 let scenarioCells=[];
 async function loadScenarioEditor(){
  if(!model)return;
@@ -495,6 +509,11 @@ function renderScenarioEditor(){
   groupChevron.setAttribute("aria-hidden","true");
   groupChevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
   groupHeader.append(heading,groupChevron);group.append(groupHeader);
+  // Native summary click includes pointer and keyboard activation.
+  // Avoid scrolling for groups already open by default on desktop.
+  groupHeader.addEventListener("click",()=>{
+   if(!group.open&&scenarioMainDetails?.open)revealScenarioHeaderAfterOpen(group,groupHeader);
+  });
   const content=document.createElement("div");content.className="scenario-day-content";
   const labels=document.createElement("div");labels.className="scenario-options-head";
   for(const title of ["Minutos de jogo",...model.meals.map(meal=>names[meal]||meal)]){
