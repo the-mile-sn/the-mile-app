@@ -1075,6 +1075,21 @@ let menuDisplayMode="day",menuLastUseCache=new Map();
 const menuSaveJobs=new Set(),menuDraftFlushers=new Set();
 let menuHistoryPages=[null],menuHistoryPage=0,menuHistoryToken=0,menuHistoryTimer=null;
 const menuHistoryPageSize=12;
+// Only user-visible, safely constructed text nodes are highlighted. The
+// server remains responsible for finding days and matching dish-only meals.
+function appendMenuHistoryHighlightedText(cell,value,search){
+ if(!search){cell.textContent=value;return;}
+ const foldedValue=value.toLocaleLowerCase("pt-PT");
+ const foldedSearch=search.toLocaleLowerCase("pt-PT");
+ let cursor=0,next;
+ while((next=foldedValue.indexOf(foldedSearch,cursor))!==-1){
+  cell.append(document.createTextNode(value.slice(cursor,next)));
+  const mark=document.createElement("mark");mark.className="tm-menu-history-hit";
+  mark.textContent=value.slice(next,next+search.length);
+  cell.append(mark);cursor=next+search.length;
+ }
+ cell.append(document.createTextNode(value.slice(cursor)));
+}
 // A fresh query is executed by the server for each page; no bulk history
 // download or client-side filtering of undisplayed menu rows.
 async function loadMenuHistory(reset=true){
@@ -1103,8 +1118,17 @@ async function loadMenuHistory(reset=true){
    type.textContent=entry.classification||"—";
    tr.append(dateCell,type);
    for(const field of ["lunch","dinner"]){
-    const td=document.createElement("td");td.textContent=entry[field]||"—";
-    if(!entry[field])td.className="is-empty";
+    const td=document.createElement("td");
+    if(entry[field]){
+     appendMenuHistoryHighlightedText(td,entry[field],search);
+    }else if(search){
+     // A matching day may contain only lunch or only dinner.
+     // Keep empty desktop columns aligned, hide them in mobile cards.
+     td.className="is-filtered-out";
+     td.setAttribute("aria-label","Sem correspondência nesta refeição");
+    }else{
+     td.textContent="—";td.className="is-empty";
+    }
     tr.append(td);
    }
    tbody.append(tr);
