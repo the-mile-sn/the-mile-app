@@ -7824,3 +7824,13 @@ html[data-admin-theme] body #tm-recipe-library-page .tm-recipe-filter-panel .tm-
   grid-template-columns:1fr!important;
  }
 }
+
+/* No blue nested outline on supplement form fields; retain visible caret.
+   The surrounding filled subcard is the field boundary. */
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body>label:focus-within,
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-library-dialog .supp-prescription-library .supp-prescription-rule>label.tm-supp-two-line-field:focus-within{
+ outline:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-library-dialog :is(input,select,textarea):focus-visible{
+ outline:0!important;box-shadow:none!important;
+}
