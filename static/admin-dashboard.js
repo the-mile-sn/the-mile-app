@@ -269,6 +269,7 @@ function ensurePlanningOnlyView(){
   navActive(foodLibraryBtn);
   if(foodLibraryPage)foodLibraryPage.hidden=true;
   if(recipesPage)recipesPage.hidden=false;
+  for(const btn of [foodFoodsBtn,foodPortionsBtn,foodSupplementsBtn,recipeLibraryBtn])if(btn){btn.classList.remove("is-active");btn.removeAttribute("aria-current");}
   if(dishesBtn){dishesBtn.classList.add("is-active");dishesBtn.setAttribute("aria-current","page");}
   if(recipeLibraryPage)recipeLibraryPage.hidden=true;
   const feedback=$("dish-catalog-feedback");
@@ -286,7 +287,7 @@ function ensurePlanningOnlyView(){
   if(foodLibraryPage)foodLibraryPage.hidden=true;
   recipesPage.hidden=true;
   recipeLibraryPage.hidden=false;
-  dishesBtn.classList.remove("is-active");dishesBtn.removeAttribute("aria-current");
+  for(const btn of [foodFoodsBtn,foodPortionsBtn,foodSupplementsBtn,dishesBtn])if(btn){btn.classList.remove("is-active");btn.removeAttribute("aria-current");}
   recipeLibraryBtn.classList.add("is-active");recipeLibraryBtn.setAttribute("aria-current","page");
   const loadPromise=typeof window.tmLoadRecipeLibrary==="function"?window.tmLoadRecipeLibrary():Promise.resolve();
   window.scrollTo({top:0,behavior:"smooth"});
