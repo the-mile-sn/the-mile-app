@@ -7900,3 +7900,23 @@ html[data-admin-theme] body #tm-recipe-library-page #recipe-reader-panel .recipe
 html[data-admin-theme] body #admin-workspace #tm-food-library-page{
  padding-top:0!important;
 }
+
+/* Libraries: common vertical origin and first filter/search card baseline.
+   All five library views use 44px for the top action slot plus a 16px gap.
+   Visual portions has no visible top action, so reserve the same slot there. */
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page,
+ #tm-supplement-library-page,
+ #tm-menu-recipes-page,
+ #tm-recipe-library-page,
+ #tm-visual-portions-page
+){
+ padding-top:0!important;
+ margin-top:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-catalog-header{
+ margin-top:60px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-feedback:empty{
+ display:none!important;
+}
