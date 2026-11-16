@@ -266,8 +266,10 @@ function ensurePlanningOnlyView(){
  function openMenusRecipes(){
   if($("admin-workspace").hidden)return;
   closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
-  navActive(recipesBtn);
+  navActive(foodLibraryBtn);
+  if(foodLibraryPage)foodLibraryPage.hidden=true;
   if(recipesPage)recipesPage.hidden=false;
+  if(dishesBtn){dishesBtn.classList.add("is-active");dishesBtn.setAttribute("aria-current","page");}
   if(recipeLibraryPage)recipeLibraryPage.hidden=true;
   const feedback=$("dish-catalog-feedback");
   if(typeof window.tmLoadDishLibrary==="function"){
@@ -275,12 +277,13 @@ function ensurePlanningOnlyView(){
   }
   window.scrollTo({top:0,behavior:"smooth"});
  }
- if(recipesBtn&&dishesBtn){recipesBtn.addEventListener("click",openMenusRecipes);dishesBtn.addEventListener("click",openMenusRecipes);}
+ if(dishesBtn)dishesBtn.addEventListener("click",openMenusRecipes);
  window.tmOpenAdminMenusRecipes=openMenusRecipes;
  function openRecipeLibrary(){
   if($("admin-workspace").hidden)return;
   closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
-  navActive(recipesBtn);
+  navActive(foodLibraryBtn);
+  if(foodLibraryPage)foodLibraryPage.hidden=true;
   recipesPage.hidden=true;
   recipeLibraryPage.hidden=false;
   dishesBtn.classList.remove("is-active");dishesBtn.removeAttribute("aria-current");
@@ -298,7 +301,7 @@ function ensurePlanningOnlyView(){
   navActive(foodLibraryBtn);
   if(foodLibraryPage)foodLibraryPage.hidden=selected==="supplements";
   if(supplementLibraryPage)supplementLibraryPage.hidden=selected!=="supplements";
-  for(const [b,active] of [[foodFoodsBtn,selected==="foods"],[foodPortionsBtn,selected==="portions"],[foodSupplementsBtn,selected==="supplements"]]){
+  for(const [b,active] of [[foodFoodsBtn,selected==="foods"],[foodPortionsBtn,selected==="portions"],[foodSupplementsBtn,selected==="supplements"],[dishesBtn,false],[recipeLibraryBtn,false]]){
    if(!b)continue;b.classList.toggle("is-active",active);
    if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
   }
@@ -1223,6 +1226,8 @@ function ensurePlanningOnlyView(){
  const workspace=document.getElementById("admin-workspace");
  const open=()=>{if(workspace?.hidden)return false;const button=document.getElementById("tm-admin-nav-"+target);if(!button)return false;
   if(target==="food-library")window.tmOpenAdminFoodLibrary?.("foods");
+  else if(target==="menus-recipes"||target==="dishes")window.tmOpenAdminMenusRecipes?.();
+  else if(target==="recipe-library")window.tmOpenAdminRecipeLibrary?.();
   else if(target==="visual-portions")window.tmOpenAdminFoodLibrary?.("portions");
   else if(target==="nutrition-supplements")window.tmOpenAdminFoodLibrary?.("supplements");
   else button.click();window.history.replaceState(null,"",window.location.pathname);return true};
