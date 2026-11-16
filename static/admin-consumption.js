@@ -121,23 +121,67 @@
   return result;
  }
  function metric(k,n){return n&&numeric(n[k])!==null?num(n[k]):"—";}
- function summary(records, microcycle){
+ function progressCircle(key,consumed,planned,index){
+  const palette=["#65dfae","#47b7f5","#ff9872","#eed072"];
+  const ratio=planned&&planned[key]>0?Math.max(0,Math.min(1,consumed[key]/planned[key])):0;
+  const radius=72-index*15;
+  const circumference=2*Math.PI*radius;
+  return '<circle class="tm-record-arc-track" cx="94" cy="94" r="'+radius+'"/>'+
+    '<circle class="tm-record-arc-fill" cx="94" cy="94" r="'+radius+'" stroke="'+palette[index]+'" stroke-dasharray="'+circumference.toFixed(2)+'" stroke-dashoffset="'+(circumference*(1-ratio)).toFixed(2)+'"/>';
+ }
+ function summary(records,microcycle){
   const consumed=Object.fromEntries(keys.map(([k])=>[k,0]));
   for(const record of records){
    const n=values(record.nutrition);
    if(n)for(const [k] of keys)consumed[k]+=n[k];
   }
+  // Preserve the existing Microciclos goal and its option-average policy unchanged.
   const planned=microcycle?.state==="complete"?values(microcycle.nutrition):null;
   const changed=records.filter(r=>r.status==="partial"||(r.status==="all"&&changes(r)?.length>0)).length;
-  const ringRatio=planned&&planned.kcal>0?Math.max(0,Math.min(100,consumed.kcal/planned.kcal*100)):null;
-  const ringStyle=ringRatio===null?"":' style="--tm-record-progress:'+ringRatio.toFixed(2)+'%"';
+  const rings='<svg viewBox="0 0 188 188" role="img" aria-label="Progresso de energia, proteína, hidratos e gordura" class="tm-record-four-rings">'+
+   keys.map(([key],i)=>progressCircle(key,consumed,planned,i)).join("")+'</svg>';
+  const kcalTotal=planned?num(planned.kcal):"—";
+  const metric=(key,label,color)=>{
+   const value=num(consumed[key]),goal=planned?num(planned[key]):"—";
+   return '<div class="tm-record-macro-row"><span>'+label+'</span><strong><span style="color:'+color+'">'+value+'</span> <span class="tm-record-goal">/ '+goal+' g</span></strong></div>';
+  };
   return '<section class="tm-record-overview" aria-label="Resumo nutricional dos registos do dia">'+
-    '<div class="tm-record-overview-leading"><div class="tm-record-ring"'+ringStyle+'><span>'+(ringRatio===null?'—':Math.round(consumed.kcal/planned.kcal*100)+'%')+'</span></div>'+
-    '<div><h3>Resumo nutricional</h3><p>'+records.length+' '+(records.length===1?'refeição registada':'refeições registadas')+'</p>'+
-    (changed?'<span class="tm-record-changes-count">'+changed+' com alterações ou consumo parcial</span>':'')+'</div></div>'+
-    '<div class="tm-record-metrics">'+keys.map(([k,label,unit])=>{const pct=planned&&planned[k]>0?Math.max(0,Math.min(100,consumed[k]/planned[k]*100)):0;return '<div class="tm-record-metric"><span>'+label+'</span><strong>'+num(consumed[k])+' <small>/ '+(planned?num(planned[k]):'—')+' '+unit+'</small></strong><div class="tm-record-track" role="meter" aria-label="'+label+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(pct)+'"><span style="width:'+pct.toFixed(1)+'%"></span></div></div>';}).join("")+'</div>'+
-    '<p class="tm-record-coverage">Consumido registado / planeado em Microciclos para este dia'+(!planned?' · Planeamento nutricional completo indisponível.':'.')+' O planeamento pode incluir médias de opções equivalentes. Refeições sem registo não são consideradas não consumidas.</p>'+
-   '</section>';
+   '<div class="tm-record-rings">'+rings+'</div>'+
+   '<div class="tm-record-overview-content">'+
+    '<div class="tm-record-overview-top"><h3>Resumo nutricional</h3><span class="tm-record-consumed-tag">Consumido</span></div>'+
+    '<div class="tm-record-kcal-caption">kcal</div>'+
+    '<div class="tm-record-kcal-value"><strong>'+num(consumed.kcal)+'</strong><span> / '+kcalTotal+'</span></div>'+
+    '<div class="tm-record-macros">'+
+     metric("protein_g","Proteína","#47b7f5")+
+     metric("carbs_g","Hidratos","#ff9872")+
+     metric("fat_g","Gordura","#d9b751")+
+    '</div>'+
+    '<div class="tm-record-counts"><span>'+records.length+' '+(records.length===1?'refeição registada':'refeições registadas')+'</span>'+
+    (changed?'<span>'+changed+' com alterações ou consumo parcial</span>':'')+'</div>'+
+   '</div>'+
+   '<p class="tm-record-coverage">Consumido registado / planeado em Microciclos para este dia'+(!planned?' · Planeamento nutricional completo indisponível.':'.')+' O planeamento pode incluir médias de opções equivalentes. Refeições sem registo não são consideradas não consumidas.</p>'+
+  '</section>';
+ }
+ function optionLabel(r,microcycle){
+  const option=r.prescription?.option||{};
+  const name=String(option.title||"").trim();
+  const savedIndex=[r.option_index,r.prescription?.option_index,r.prescription?.selected_option_index,option.option_index,option.index,option.number].find(v=>Number.isInteger(Number(v))&&Number(v)>=1&&Number(v)<=30&&v!=null);
+  let index=savedIndex==null?null:Number(savedIndex);
+  const choices=r.event_id?(microcycle?.peri_events||[]).find(e=>e.event_id===r.event_id&&e.phase===r.meal_key)?.options:microcycle?.meals?.[r.meal_key]?.options;
+  if(Array.isArray(choices)&&choices.length){
+   const ref=String(r.option_ref||r.prescription?.option_ref||option.option_ref||"");
+   const match=ref?choices.findIndex(o=>o.option_ref===ref):-1;
+   if(match>=0)index=match+1;
+   else if(index==null&&name){
+    const matches=choices.map((o,i)=>({i,title:String(o.title||"").trim()})).filter(o=>o.title&&o.title===name);
+    if(matches.length===1)index=matches[0].i+1;
+   }
+  }
+  const prefix=name.match(/^Op(?:ç|c)(?:ã|a)o\s+(\d+)\b/i);
+  if(index==null&&prefix)index=Number(prefix[1]);
+  if(index==null)return name;
+  const start="Opção "+index;
+  return name&&!/^Op(?:ç|c)(?:ã|a)o\s+\d+$/i.test(name)?start+" - "+name:start;
  }
  function foodDetails(r){
   const foods=Array.isArray(r.consumed_foods)?r.consumed_foods:[];
@@ -160,7 +204,7 @@
   if(!rows.length)return '<p class="tm-record-detail-note">Não existem alimentos detalhados neste registo.</p>';
   return '<div class="tm-record-food-heading">Alimentos consumidos e alterações</div><ul class="tm-record-food-list">'+rows.join("")+'</ul>';
  }
- function card(r){
+ function card(r,microcycle){
   const status={all:"Consumido",partial:"Parcial",none:"Não consumido"}[r.status]||"Registado";
   const diff=changes(r),changed=diff&&diff.length>0;
   const showDetails=r.status!=="all"||changed;
@@ -168,7 +212,7 @@
   const taken=values(r.nutrition);
   const reference=exactPlan(r);
   const badges='<span class="tm-consumption-status" data-state="'+esc(r.status)+'">'+status+'</span>'+(changed?'<span class="tm-record-edited">Alterações</span>':'');
-  const headline='<div class="tm-record-meal-title"><strong>'+esc(names[r.meal_key]||r.meal_key||"Refeição")+'</strong><span>'+esc(option.title||"")+'</span></div>';
+  const headline='<div class="tm-record-meal-title"><strong>'+esc(names[r.meal_key]||r.meal_key||"Refeição")+'</strong><span>'+esc(optionLabel(r,microcycle))+'</span></div>';
   const mini='<span class="tm-record-mini"> '+(taken?num(taken.kcal)+" kcal":"—")+(reference?" / "+num(reference.kcal)+" kcal planeadas":"")+'</span>';
   if(!showDetails)return '<article class="tm-consumption-card tm-record-compact"><div class="tm-consumption-head">'+headline+'<div class="tm-record-head-right">'+badges+mini+'</div></div></article>';
   return '<details class="tm-consumption-card tm-record-expandable"><summary class="tm-record-card-summary">'+headline+'<div class="tm-record-head-right">'+badges+mini+'<span class="tm-record-chevron" aria-hidden="true">⌄</span></div></summary>'+
@@ -197,7 +241,7 @@
    if(records.some(r=>(r.consumed_foods||[]).some(f=>!foodName(f))))await libraryLookup();
    if(seq!==requestNumber||panel.hidden||!athlete.value||date.value!==day)return;
    if(!records.length){root.innerHTML='<p class="tm-consumption-empty">Sem registos</p>';return;}
-   root.innerHTML=summary(records,plannedData?.live_food_plans?.days?.[day])+'<section class="tm-record-meals" aria-label="Refeições registadas"><h3>Refeições</h3>'+records.map(card).join("")+'</section>';
+   root.innerHTML=summary(records,plannedData?.live_food_plans?.days?.[day])+'<section class="tm-record-meals" aria-label="Refeições registadas"><h3>Refeições</h3>'+records.map(r=>card(r,plannedData?.live_food_plans?.days?.[day])).join("")+'</section>';
   }catch(e){if(seq===requestNumber)root.textContent="Erro ao consultar os registos: "+e.message;}
  }
  window.tmLoadConsumption=load;
