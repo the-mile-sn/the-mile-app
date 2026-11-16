@@ -571,7 +571,13 @@ function render(){
   const group=linkedControls.get(row);
   if(group)for(const [meal,selects] of group.entries()){
    const value=row.meals?.[meal]||"";
-   for(const select of selects){select.value=value;select.dataset.color=value||"none";}
+   for(const select of selects){
+    select.value=value;
+    select.dataset.color=value||"none";
+    if(select.parentElement?.classList.contains("model-select-shell")){
+     select.parentElement.dataset.color=value||"none";
+    }
+   }
   }
   const visual=rowVisuals.get(row);
   if(!visual)return;
@@ -597,6 +603,14 @@ function render(){
    const option=document.createElement("option");option.value=value;option.textContent=label;select.append(option);
   }
   select.value=row.meals?.[meal]||"";
+  const shell=document.createElement("span");
+  shell.className="model-select-shell";
+  shell.dataset.color=select.dataset.color;
+  const caret=document.createElement("span");
+  caret.className="model-select-chevron";
+  caret.setAttribute("aria-hidden","true");
+  caret.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  shell.append(select,caret);
   registerControl(row,meal,select);
   select.addEventListener("change",async()=>{
    const previous=row.meals?.[meal]||null,next=select.value||null;
@@ -624,7 +638,7 @@ function render(){
     for(const item of group)item.disabled=false;
    }
   });
-  return select;
+  return shell;
  }
  for(const row of model.classifications){
   const visuals={indicators:[],swatches:[],feedback:null};
