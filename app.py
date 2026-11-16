@@ -2542,6 +2542,21 @@ def application(env, start_response):
                     c.execute("INSERT INTO v2_dish_library(id,category,name_pt,name_en,image_filename) VALUES(?,?,?,?,?)",(dish_id,category.strip(),name_pt.strip(),name_en.strip(),filename))
                     c.commit()
                 return respond(200,{'id':dish_id,'ok':True})
+            if path.startswith('/api/v2/dishes/') and method == 'DELETE':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                dish_id = path[len('/api/v2/dishes/'):]
+                if not re.fullmatch(r'[a-z0-9-]{4,60}', dish_id):
+                    raise Problem(404, 'not_found')
+                dish = c.execute(
+                    "SELECT id,name_pt,name_en,category,active FROM v2_dish_library WHERE id=?",
+                    (dish_id,)).fetchone()
+                if not dish or not dish['active']:
+                    raise Problem(404, 'not_found')
+                # Soft archive instead of physical deletion, preserving linked menus and recipes.
+                microcycles_v2.update_dish(c, dish_id, dish['name_pt'],
+                    dish['name_en'], dish['category'], False)
+                return respond(200, {'ok': True, 'archived': True})
             if path == '/api/v2/dishes/edit' and method == 'PUT':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
