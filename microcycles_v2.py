@@ -3,6 +3,7 @@ import json
 import re
 import secrets
 import time
+from datetime import date as current_date
 
 TYPES = (
     "MD", "MD-1", "MD-2", "MD-3", "MD-4", "MD-5", "MD-6", "MD+1", "MD+2",
@@ -158,6 +159,25 @@ def initialize(c):
                 c.execute("RELEASE SAVEPOINT menu_text_kind_upgrade")
                 raise
     c.execute("CREATE INDEX IF NOT EXISTS v2_weekly_menus_dish_id_idx ON v2_weekly_menus(dish_id)")
+    # Independent menu history: one stable snapshot per athlete/date/meal.
+    # This never writes to the player menu table and is safe to rerun on startup.
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_menu_history (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        menu_date TEXT NOT NULL,
+        meal TEXT NOT NULL CHECK(meal IN ('lunch','dinner')),
+        kind TEXT NOT NULL,
+        value TEXT NOT NULL,
+        dish_id TEXT,
+        saved_at BIGINT NOT NULL,
+        PRIMARY KEY(athlete_id,menu_date,meal)
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_menu_history_player_date_idx ON v2_menu_history(athlete_id,menu_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS v2_menu_history_player_dish_idx ON v2_menu_history(athlete_id,dish_id,menu_date)")
+    # Backfill previously saved menus, without overwriting historical snapshots.
+    c.execute("""INSERT INTO v2_menu_history(athlete_id,menu_date,meal,kind,value,dish_id,saved_at)
+        SELECT athlete_id,menu_date,meal,kind,value,dish_id,?
+        FROM v2_weekly_menus WHERE 1=1
+        ON CONFLICT(athlete_id,menu_date,meal) DO NOTHING""", (int(time.time()),))
 
 
 def list_athletes(c):
@@ -364,6 +384,62 @@ def menu_dish_id_audit(c):
             "unresolved_names": names}
 
 
+def record_menu_history(c, athlete_id, day, meal, kind, value, dish_id):
+    """Upsert a scheduled entry until the day has passed, then freeze it.
+
+    This preserves what was previously planned if someone later edits a past
+    menu in the editable scheduling table. No duplicate per autosave.
+    """
+    today = current_date.today().isoformat()
+    c.execute("""INSERT INTO v2_menu_history(athlete_id,menu_date,meal,kind,value,dish_id,saved_at)
+      VALUES(?,?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
+      DO UPDATE SET kind=excluded.kind,value=excluded.value,
+        dish_id=excluded.dish_id,saved_at=excluded.saved_at
+      WHERE excluded.menu_date>=?""",
+      (athlete_id,day,meal,kind,value,dish_id,int(time.time()),today))
+
+
+def list_menu_history(c, athlete_id, before=None, limit=60):
+    """Simple chronological snapshots grouped by date for the backoffice only."""
+    from calendar_v2 import parse_day
+    if not isinstance(limit,int) or not 1 <= limit <= 120:
+        raise ValueError("invalid_history_limit")
+    today=current_date.today().isoformat()
+    if before is not None:
+        before=parse_day(before).isoformat()
+        if before <= "1900-01-01":
+            raise ValueError("invalid_history_cursor")
+        rows=c.execute("""SELECT menu_date,meal,kind,value,dish_id FROM v2_menu_history
+          WHERE athlete_id=? AND menu_date<? AND menu_date<=?
+          ORDER BY menu_date DESC,meal ASC LIMIT ?""",
+          (athlete_id,before,today,limit*2+2)).fetchall()
+    else:
+        rows=c.execute("""SELECT menu_date,meal,kind,value,dish_id FROM v2_menu_history
+          WHERE athlete_id=? AND menu_date<=?
+          ORDER BY menu_date DESC,meal ASC LIMIT ?""",
+          (athlete_id,today,limit*2+2)).fetchall()
+    output={}
+    for row in rows:
+        item=output.setdefault(row["menu_date"],{"date":row["menu_date"],"lunch":None,"dinner":None})
+        item[row["meal"]]=row["value"]
+    days=list(output.values())
+    return {"days":days[:limit],"has_more":len(days)>limit}
+
+
+def last_menu_dish_use(c, athlete_id, dish_id, before):
+    """Last earlier date this exact dish appeared in the player's saved menu."""
+    from calendar_v2 import parse_day
+    if not isinstance(dish_id,str) or not 1<=len(dish_id)<=100:
+        raise ValueError("invalid_menu_dish")
+    end=parse_day(before).isoformat()
+    today=current_date.today().isoformat()
+    row=c.execute("""SELECT MAX(menu_date) AS last_used FROM v2_menu_history
+       WHERE athlete_id=? AND kind='dish' AND dish_id=?
+         AND menu_date<? AND menu_date<=?""",
+       (athlete_id,dish_id,end,today)).fetchone()
+    return row["last_used"] if row else None
+
+
 def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None):
     from calendar_v2 import parse_day
     day = parse_day(menu_date).isoformat()
@@ -378,6 +454,7 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None):
                  VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
                  DO UPDATE SET kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
               (athlete_id,day,meal,kind,value,dish_id))
+    record_menu_history(c, athlete_id, day, meal, kind, value, dish_id)
     c.commit()
     return {"menu_date":day,"meal":meal,"kind":kind,"value":value,"dish_id":dish_id}
 
