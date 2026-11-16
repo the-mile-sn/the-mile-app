@@ -7333,3 +7333,12 @@ html[data-admin-theme] #admin-workspace #tm-admin-legacy > :is(
   #menus-panel,
   #consumption-panel
 ){margin-top:0!important;}
+
+/* Desktop correction: Microciclos is the spacing reference, not Suplementacao.
+   Set one explicit header-to-panel gap for every Planeamento tab; do not
+   touch mobile (already approved), card padding or internal panel gaps. */
+@media (min-width:831px){
+ html[data-admin-theme] #admin-workspace #tm-admin-legacy > .tm-planning-unified-header{
+  margin-bottom:16px!important;
+ }
+}
