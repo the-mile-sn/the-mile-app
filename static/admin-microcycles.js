@@ -4019,7 +4019,7 @@ function filterSupplementLists(){
  const emptyNotice=$("supp-library-empty");
  const pager=$("supp-library-pagination");
  select.replaceChildren();list.replaceChildren();
- const matches=supplementLibrary.filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(lq));
+ const matches=[...supplementLibrary].sort((a,b)=>supplementRank(a,q)-supplementRank(b,q)||normalizeSupplementQuery(a.name).localeCompare(normalizeSupplementQuery(b.name),"pt")).filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(lq));
  const totalPages=Math.max(1,Math.ceil(matches.length/supplementLibraryPageSize));
  supplementLibraryPage=Math.min(Math.max(1,supplementLibraryPage),totalPages);
  const firstVisible=(supplementLibraryPage-1)*supplementLibraryPageSize;
