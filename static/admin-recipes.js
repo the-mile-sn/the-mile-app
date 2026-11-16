@@ -287,7 +287,7 @@
   const recipe=recipeReaderCache.get(previous);
   if(recipe){
    paintReadRecipe(recipe);
-   $("recipe-reader-panel").scrollIntoView({behavior:"smooth",block:"start"});
+   $("recipe-reader-panel").scrollTop=0;
   }else await openReadRecipe(previous);
  }
  function labelledInput(label,value,onChange,placeholder){
@@ -1142,8 +1142,8 @@
   else if(!$("recipe-editor-panel").hidden)closeEditor();
  });
  $("recipe-modal-backdrop")?.addEventListener("click",()=>{
+  // Avoid losing unsaved ingredients by dismissing the editor accidentally.
   if(!$("recipe-reader-panel").hidden)closeReadRecipe();
-  else if(!$("recipe-editor-panel").hidden)closeEditor();
  });
  $("recipe-add").addEventListener("click",()=>openRecipe(null));
  function setRecipeCategoriesOpen(open){
