@@ -8309,3 +8309,123 @@ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page #tm-portio
   padding-left:6px!important;
  }
 }
+
+/* Recipe category manager — collapsible clean catalogue with coloured mini cards. */
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-manage{
+ box-sizing:border-box!important;
+ margin:20px 0 16px!important;padding:20px 22px 24px!important;
+ border:0!important;border-radius:18px!important;box-shadow:none!important;
+ background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-manage[hidden]{display:none!important}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-header{
+ margin:0 0 20px!important;display:block!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-close.recipe-category-collapse{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ width:100%!important;min-height:48px!important;padding:0!important;margin:0!important;
+ text-align:left!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
+ color:var(--tm-ui-text)!important;cursor:pointer!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-heading{
+ display:flex!important;flex-direction:column!important;gap:4px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-heading strong{
+ font:600 18px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-heading small{
+ font:400 12px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-chevron{
+ font:500 25px/1 "Inter Tight",Arial,sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create{
+ display:flex!important;align-items:end!important;gap:12px!important;
+ margin:0 0 18px!important;flex-wrap:wrap!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create label{
+ box-sizing:border-box!important;display:flex!important;flex:1 1 340px!important;
+ flex-direction:column!important;gap:7px!important;min-width:0!important;
+ max-width:none!important;
+ color:var(--tm-ui-muted)!important;
+ font:500 12px/1.3 "Inter Tight",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create input{
+ box-sizing:border-box!important;width:100%!important;height:48px!important;
+ margin:0!important;padding:12px 15px!important;
+ border:0!important;border-radius:12px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:500 14px/1.3 "Inter Tight",Arial,sans-serif!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-create-category{
+ flex:0 0 auto!important;height:48px!important;
+ padding:0 18px!important;border:0!important;border-radius:12px!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ font:500 14px/1.3 "Inter Tight",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-create-category:hover{
+ background:var(--tm-action-main-hover)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-categories{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:12px!important;align-items:stretch!important;margin-top:16px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-categories .recipe-category-item{
+ box-sizing:border-box!important;display:flex!important;
+ align-items:center!important;justify-content:space-between!important;gap:8px!important;
+ min-width:0!important;min-height:76px!important;margin:0!important;
+ padding:12px!important;border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-badge{
+ box-sizing:border-box!important;display:inline-block!important;
+ flex:0 1 auto!important;min-width:0!important;max-width:100%!important;
+ margin:0!important;padding:7px 10px!important;border-radius:9px!important;
+ font:500 12px/1.3 "Inter Tight",Arial,sans-serif!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-actions{
+ display:flex!important;flex:0 0 auto!important;gap:7px!important;
+ align-items:center!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-actions button{
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:10px!important;
+ background:var(--tm-action-secondary-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-secondary-fg,var(--tm-ui-text))!important;cursor:pointer!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-actions button svg{
+ width:17px!important;height:17px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-actions .recipe-category-edit-icon:hover{
+ background:var(--tm-action-secondary-hover,var(--tm-ui-hover))!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-actions .recipe-category-delete-icon{
+ background:var(--tm-action-danger-bg,rgba(188,60,82,.12))!important;
+ color:var(--tm-action-danger-fg,#c65368)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-actions .recipe-category-delete-icon:hover{
+ background:var(--tm-action-danger-hover,rgba(188,60,82,.22))!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit:not([hidden]){
+ margin:0 0 16px!important;padding:16px!important;
+ border:0!important;border-radius:14px!important;background:var(--tm-ui-subcard)!important;
+}
+@media(max-width:1150px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-categories{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:830px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-categories{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:560px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-manage{padding:16px!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-categories{grid-template-columns:minmax(0,1fr)!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-create-category{width:100%!important}
+}
