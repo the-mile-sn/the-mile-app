@@ -26,7 +26,7 @@
  const num=v=>v===null||v===undefined?"—":Number(v).toLocaleString("pt-PT",{maximumFractionDigits:1});
  const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
  const localDate=s=>new Date(s+"T12:00:00");
- const niceDay=s=>localDate(s).toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+ const niceDay=s=>localDate(s).toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/-feira\b/g,"");
  const today=()=>iso(new Date());
  if(!date.value)date.value=today();
  let requestNumber=0;
@@ -156,18 +156,19 @@
   return '<section class="tm-record-overview" aria-label="Resumo nutricional dos registos do dia">'+
    '<div class="tm-record-rings">'+rings+'</div>'+
    '<div class="tm-record-overview-content">'+
+    '<div class="tm-record-kcal-group">'+
     '<div class="tm-record-overview-top"><h3>Resumo nutricional</h3><span class="tm-record-consumed-tag">Consumido</span></div>'+
     '<div class="tm-record-kcal-caption">kcal</div>'+
     '<div class="tm-record-kcal-value"><strong>'+num(consumed.kcal)+'</strong><span> / '+kcalTotal+'</span></div>'+
+    '<div class="tm-record-counts"><span>'+records.length+' '+(records.length===1?'refeição registada':'refeições registadas')+'</span>'+
+    (changed?'<span>'+changed+' com alterações ou consumo parcial</span>':'')+'</div>'+
+    '</div>'+
     '<div class="tm-record-macros">'+
      metric("protein_g","Proteína","#47b7f5")+
      metric("carbs_g","Hidratos","#ff9872")+
      metric("fat_g","Gordura","#d9b751")+
     '</div>'+
-    '<div class="tm-record-counts"><span>'+records.length+' '+(records.length===1?'refeição registada':'refeições registadas')+'</span>'+
-    (changed?'<span>'+changed+' com alterações ou consumo parcial</span>':'')+'</div>'+
    '</div>'+
-   '<p class="tm-record-coverage">Consumido registado / planeado em Microciclos para este dia'+(!planned?' · Planeamento nutricional completo indisponível.':'.')+' O planeamento pode incluir médias de opções equivalentes. Refeições sem registo não são consideradas não consumidas.</p>'+
   '</section>';
  }
  function optionLabel(r,microcycle){
@@ -202,7 +203,7 @@
    const grams=foodGrams(food);
    const quantity=matching?.type==="edited"?num(matching.before)+" g → "+num(matching.after)+" g":
      grams!==null?num(grams)+" g":"—";
-   const badge=matching?'<span class="tm-record-change" data-kind="'+matching.type+'">'+(matching.type==="added"?"Adicionado":"Quantidade alterada")+'</span>':"";
+   const badge=matching?'<span class="tm-record-change" data-kind="'+matching.type+'">'+(matching.type==="added"?"Adicionado":"Quantidade alterada")+'</span>':'<span class="tm-record-change" data-kind="consumed">Consumido</span>';
    rows.push('<li><span>'+esc(foodName(food)||"Alimento sem nome disponível")+'</span><span>'+esc(quantity)+'</span>'+badge+'</li>');
   }
   // Removed items are not part of the eaten list, but remain visible for review.
