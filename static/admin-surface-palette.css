@@ -9877,3 +9877,15 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
 }
 
+
+
+/* P4 food close: neutral keyboard focus, no forced blue ring */
+html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor button#food-editor-close.tm-library-modal-x:focus-visible{
+ outline:2px solid var(--tm-ui-divider,#747984)!important;
+ outline-offset:2px!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor button#food-editor-close.tm-library-modal-x:focus:not(:focus-visible){
+ outline:0!important;
+ box-shadow:none!important;
+}
