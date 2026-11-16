@@ -3044,6 +3044,28 @@ function refreshDishTableCategories(){
  }
  select.value=[...select.options].some(o=>o.value===previous)?previous:"";
 }
+// Palette families mirror Recipes: related culinary categories retain related hues.
+function dishCategoryTone(value){
+ const name=normalizedDishText(value).trim();
+ if(!name)return "slate";
+ if(/carne branca|frango|peru|aves/.test(name))return "rose";
+ if(/carne vermelha|vaca|vitela|porco|borrego/.test(name))return "red";
+ if(/peixe magro|peixe branco/.test(name))return "teal";
+ if(/peixe gordo|peixe azul/.test(name))return "blue";
+ if(/camarao|marisco|crustaceo/.test(name))return "indigo";
+ if(/polvo|lula|cefalopode/.test(name))return "violet";
+ if(/peixe/.test(name))return "cyan";
+ if(/ovo/.test(name))return "amber";
+ if(/sopa|creme/.test(name))return "mint";
+ if(/vegetal|vegetar|legume/.test(name))return "violet";
+ if(/panqueca|bolo|sobremesa|doce/.test(name))return "violet";
+ if(/pao|cereal|arroz|massa|batata|acompanhamento/.test(name))return "orange";
+ if(/aveia|papa|pequeno almoco/.test(name))return "orange";
+ if(/molho/.test(name))return "lime";
+ const tones=["mint","cyan","orange","lime","teal","amber","blue","violet"];
+ let hash=0;for(let i=0;i<name.length;i++)hash=(hash*31+name.charCodeAt(i))>>>0;
+ return tones[hash%tones.length];
+}
 function renderDishEditor(){
  const host=$("dish-editor-list");if(!host)return;
  const search=$("dish-search"),category=$("dish-category-filter");
@@ -3096,7 +3118,7 @@ function renderDishEditor(){
  }
  for(const dish of matches){
   const tr=document.createElement("tr");tr.className="dish-table-row";
-  const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";categoryCell.textContent=dish.category||"—";tr.append(categoryCell);
+  const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";const categoryBadge=document.createElement("span");categoryBadge.className="dish-category-pill dish-category-"+dishCategoryTone(dish.category);categoryBadge.textContent=dish.category||"—";categoryCell.append(categoryBadge);tr.append(categoryCell);
   const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?thumb=1";photo.alt="";photo.loading="lazy";photo.decoding="async";photo.className="dish-table-photo";photoCell.append(photo);tr.append(photoCell);
   for(const [value,cls] of [[dish.name_pt,"dish-table-title"],[dish.name_en||"—","dish-table-subtitle"]]){
    const td=document.createElement("td");td.className=cls;td.textContent=value;
