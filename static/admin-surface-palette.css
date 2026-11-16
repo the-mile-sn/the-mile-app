@@ -9897,7 +9897,7 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
  html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel > .scroll,
  html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-table,
  html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-table > tbody {
-  background:#101114!important;
+  background:var(--tm-ui-bg)!important;
   border:0!important;box-shadow:none!important;
   overflow:visible!important;
  }
@@ -9909,7 +9909,7 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
   position:relative!important;width:100%!important;min-width:0!important;
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
   margin:0 0 14px!important;padding:16px!important;
-  background:#202228!important;border:1px solid #2a2d34!important;
+  background:var(--tm-ui-card)!important;border:0!important;
   border-radius:17px!important;box-shadow:none!important;
   height:auto!important;min-height:0!important;
  }
@@ -9918,13 +9918,13 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
  }
  html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards {
   display:flex!important;flex-direction:column!important;gap:14px!important;
-  background:#101114!important;
+  background:var(--tm-ui-bg)!important;
  }
  html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards > article.tm-food-mobile-card {
   box-sizing:border-box!important;display:flex!important;
   flex-direction:column!important;gap:10px!important;
   width:100%!important;margin:0!important;padding:16px!important;
-  background:#202228!important;border:1px solid #2a2d34!important;
+  background:var(--tm-ui-card)!important;border:0!important;
   border-radius:17px!important;box-shadow:none!important;
  }
  html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-catalog-panel,
@@ -9932,10 +9932,32 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
  html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-catalog-table,
  html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-catalog-table > tbody,
  html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards {
-  background:#f7f8fa!important;
+  background:var(--tm-ui-bg)!important;
  }
  html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-catalog-table > tbody > tr,
  html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards > article.tm-food-mobile-card{
-  background:#fff!important;border-color:#e7eaf0!important;
+  background:var(--tm-ui-card)!important;border:0!important;
+ }
+}
+
+/* Official Visual Guide v1.2: mobile food surfaces match Supplements exactly.
+   No decorative outlines or alternate palette values. */
+@media (max-width:850px) and (pointer:coarse) {
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel {
+  background:transparent!important;border:0!important;box-shadow:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards > article.tm-food-mobile-card {
+  background:var(--tm-ui-card)!important;border:0!important;outline:0!important;box-shadow:none!important;
+  border-radius:16px!important;padding:14px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-macro {
+  background:var(--tm-ui-subcard)!important;border:0!important;box-shadow:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button:not(.food-delete-icon) {
+  background:var(--tm-ui-action-secondary-bg,#242830)!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button.food-delete-icon {
+  background:var(--tm-ui-action-danger-bg,#3a2128)!important;
  }
 }
