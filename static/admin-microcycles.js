@@ -1138,6 +1138,25 @@ $("menu-history-next").addEventListener("click",()=>{
   ++menuHistoryPage;loadMenuHistory(false);
  }
 });
+// The day/week toggle must exist independently of the history controls:
+// both helpers are used while loading a week and when switching views.
+function setMenuDisplayMode(mode){
+  menuDisplayMode=mode==="week"?"week":"day";
+  const daily=menuDisplayMode==="day";
+  $("menu-grid").hidden=!daily;
+  $("menu-weekly").hidden=daily;
+  $("menu-view-day").setAttribute("aria-pressed",String(daily));
+  $("menu-view-week").setAttribute("aria-pressed",String(!daily));
+}
+function formatMenuWeek(start,finish){
+  const months=["janeiro","fevereiro","março","abril","maio","junho",
+    "julho","agosto","setembro","outubro","novembro","dezembro"];
+  if(start.getMonth()===finish.getMonth()&&start.getFullYear()===finish.getFullYear()){
+    return start.getDate()+"–"+finish.getDate()+" "+months[start.getMonth()]+" "+start.getFullYear();
+  }
+  return start.getDate()+" "+months[start.getMonth()]+" – "+
+    finish.getDate()+" "+months[finish.getMonth()]+" "+finish.getFullYear();
+}
 $("menu-view-day").addEventListener("click",()=>setMenuDisplayMode("day"));
 $("menu-view-week").addEventListener("click",()=>{
  for(const flush of [...menuDraftFlushers])flush();
