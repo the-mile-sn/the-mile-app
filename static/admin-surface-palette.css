@@ -8825,3 +8825,50 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-cat
 #tm-recipe-library-page #recipe-reader-panel .recipe-reader-header-actions :is(#recipe-reader-edit,#recipe-reader-close):hover{
  background:var(--tm-action-secondary-hover,var(--tm-ui-hover))!important;
 }
+
+/* Dishes catalogue: recipe-matched compact coloured pills; no change to edit/delete buttons. */
+#tm-menu-recipes-page .dish-library-table .dish-table-category .dish-category-pill{
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ width:max-content!important;max-width:100%!important;min-height:26px!important;
+ padding:5px 9px!important;margin:0!important;
+ border:1px solid var(--dish-pill-ink)!important;border-radius:999px!important;
+ background:var(--dish-pill-bg)!important;color:var(--dish-pill-ink)!important;
+ font:500 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+}
+#tm-menu-recipes-page .dish-category-rose{--dish-pill-bg:#fce8f1;--dish-pill-ink:#9d426a}
+#tm-menu-recipes-page .dish-category-red{--dish-pill-bg:#fce8e9;--dish-pill-ink:#ac3038}
+#tm-menu-recipes-page .dish-category-teal{--dish-pill-bg:#dff5f1;--dish-pill-ink:#186a62}
+#tm-menu-recipes-page .dish-category-blue{--dish-pill-bg:#e6efff;--dish-pill-ink:#265c9d}
+#tm-menu-recipes-page .dish-category-amber{--dish-pill-bg:#fff1d9;--dish-pill-ink:#94601c}
+#tm-menu-recipes-page .dish-category-violet{--dish-pill-bg:#f1e9fc;--dish-pill-ink:#75409c}
+#tm-menu-recipes-page .dish-category-mint{--dish-pill-bg:#e4f6e9;--dish-pill-ink:#2f7544}
+#tm-menu-recipes-page .dish-category-orange{--dish-pill-bg:#fff0e5;--dish-pill-ink:#a65728}
+#tm-menu-recipes-page .dish-category-indigo{--dish-pill-bg:#e9ecfd;--dish-pill-ink:#4d5caa}
+#tm-menu-recipes-page .dish-category-cyan{--dish-pill-bg:#e0f3fc;--dish-pill-ink:#25718d}
+#tm-menu-recipes-page .dish-category-lime{--dish-pill-bg:#eef5dc;--dish-pill-ink:#5c731f}
+#tm-menu-recipes-page .dish-category-slate{--dish-pill-bg:#edf0f4;--dish-pill-ink:#526477}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-rose{--dish-pill-bg:rgba(224,106,150,.16);--dish-pill-ink:#f0a8c7}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-red{--dish-pill-bg:rgba(220,78,82,.16);--dish-pill-ink:#ef999b}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-teal{--dish-pill-bg:rgba(55,165,156,.16);--dish-pill-ink:#8edbd2}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-blue{--dish-pill-bg:rgba(74,136,222,.18);--dish-pill-ink:#a4c9fc}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-amber{--dish-pill-bg:rgba(226,168,54,.16);--dish-pill-ink:#f0cc85}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-violet{--dish-pill-bg:rgba(156,103,216,.18);--dish-pill-ink:#cfb2f3}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-mint{--dish-pill-bg:rgba(72,174,116,.15);--dish-pill-ink:#a9e1bd}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-orange{--dish-pill-bg:rgba(226,127,63,.17);--dish-pill-ink:#f6b993}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-indigo{--dish-pill-bg:rgba(89,104,196,.18);--dish-pill-ink:#b8c3fd}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-cyan{--dish-pill-bg:rgba(60,163,199,.15);--dish-pill-ink:#a6ddec}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-lime{--dish-pill-bg:rgba(150,180,61,.16);--dish-pill-ink:#c8df98}
+#tm-menu-recipes-page[data-admin-theme="dark"] .dish-category-slate{--dish-pill-bg:rgba(135,149,173,.17);--dish-pill-ink:#ccd5e1}
+/* Filter "Pesquisar prato" text lines up with header and dish names, not photo edge.
+   27.6% matches the category + photo columns at standard desktop width. */
+@media(min-width:851px){
+ #tm-menu-recipes-page #dish-outside-filters.tm-dish-filter-panel{
+  grid-template-columns:minmax(0,27.6%) minmax(0,1fr)!important;
+  column-gap:12px!important;
+ }
+ #tm-menu-recipes-page .dish-library-table :is(th,td):nth-child(3){
+  padding-left:13px!important;
+ }
+}
