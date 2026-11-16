@@ -7201,3 +7201,91 @@ html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-
   font-size:16px!important;
  }
 }
+
+
+/* MENUS mobile — history as readable day cards, week swipe snapping (16 Nov 2026).
+   Keep the same HTML history table and AJAX filtering/pagination: only
+   the mobile presentation changes. Do not touch saved menu data. */
+@media (max-width:830px){
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll{
+  width:100%!important;max-width:100%!important;overflow-x:visible!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll>table{
+  display:block!important;min-width:0!important;width:100%!important;
+  border-spacing:0!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll thead{
+  display:none!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  row-gap:12px!important;min-width:0!important;width:100%!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr{
+  display:grid!important;box-sizing:border-box!important;min-width:0!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-areas:"date microcycle" "lunch lunch" "dinner dinner"!important;
+  gap:14px 12px!important;
+  margin:0!important;padding:15px 16px!important;
+  background:var(--tm-ui-subcard)!important;
+  border:0!important;border-radius:14px!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>th,
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td{
+  box-sizing:border-box!important;display:block!important;
+  min-width:0!important;width:auto!important;max-width:100%!important;
+  margin:0!important;padding:0!important;
+  border:0!important;background:transparent!important;
+  text-align:left!important;white-space:normal!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;
+  font:400 13px/1.48 "Inter Tight",sans-serif!important;
+  color:var(--tm-ui-text)!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>th:first-child{
+  grid-area:date!important;font-weight:500!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td:nth-child(2){
+  grid-area:microcycle!important;
+  justify-self:end!important;white-space:nowrap!important;
+  color:var(--tm-ui-muted)!important;
+  font-size:12px!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td:nth-child(3){
+  grid-area:lunch!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td:nth-child(4){
+  grid-area:dinner!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td:nth-child(n+3)::before{
+  display:block!important;margin:0 0 5px!important;
+  font:400 11px/1.35 "Inter Tight",sans-serif!important;
+  color:var(--tm-ui-muted)!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td:nth-child(3)::before{
+  content:"Almoço";
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody>tr>td:nth-child(4)::before{
+  content:"Jantar";
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-pagination{
+  justify-content:center!important;
+ }
+ /* Only the week overview scrolls sideways, with each day column as a
+    snap stop. The next day remains partially visible as an affordance. */
+ html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly{
+  overflow-x:auto!important;overflow-y:hidden!important;
+  scroll-snap-type:x mandatory!important;
+  scroll-padding-inline-start:0px!important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-table thead th{
+  scroll-snap-align:start!important;
+  scroll-snap-stop:normal!important;
+ }
+}
+@media(max-width:830px) and (prefers-reduced-motion:reduce){
+ html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly{
+  scroll-behavior:auto!important;
+ }
+}
