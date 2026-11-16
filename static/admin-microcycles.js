@@ -1083,12 +1083,12 @@ function appendMenuHistoryHighlightedText(cell,value,search){
  const foldedSearch=search.toLocaleLowerCase("pt-PT");
  let cursor=0,next;
  while((next=foldedValue.indexOf(foldedSearch,cursor))!==-1){
-  cell.append(document.createTextNode(value.slice(cursor,next)));
+  if(next>cursor)cell.append(document.createTextNode(value.slice(cursor,next)));
   const mark=document.createElement("mark");mark.className="tm-menu-history-hit";
   mark.textContent=value.slice(next,next+search.length);
   cell.append(mark);cursor=next+search.length;
  }
- cell.append(document.createTextNode(value.slice(cursor)));
+ if(cursor<value.length)cell.append(document.createTextNode(value.slice(cursor)));
 }
 // A fresh query is executed by the server for each page; no bulk history
 // download or client-side filtering of undisplayed menu rows.
