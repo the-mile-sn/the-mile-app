@@ -539,25 +539,19 @@ function renderScenarioEditor(){
   table.append(tbody);scroller.append(table);group.append(scroller);target.append(group);
  }
 }
-/* Model editor: wide, scan-friendly table and a dedicated mobile accordion.
-   Both presentations edit the same classification records through one save path. */
+/* Model editor: desktop rows as quiet subcards, mobile native accordions.
+   Both presentations share the same existing save path. */
 function render(){
  const root=$("matrix");root.replaceChildren();
  if(!model){root.hidden=true;return;}
  const athleteId=model.athlete.id;
  const mealKeys=model.meals||[];
  const linkedControls=new Map(),rowVisuals=new Map();
- const header=document.createElement("header");header.className="model-config-header";
- const headingGroup=document.createElement("div");headingGroup.className="model-config-heading";
- const title=document.createElement("h2");title.textContent="Modelo do microciclo";
- const subtitle=document.createElement("p");
- subtitle.textContent="Define a cor de cada refeição por classificação. As alterações são guardadas automaticamente.";
- headingGroup.append(title,subtitle);header.append(headingGroup);root.append(header);
  const desktop=document.createElement("div");desktop.className="model-config-table-wrap";
  desktop.setAttribute("role","region");desktop.setAttribute("aria-label","Modelo do microciclo por classificação");
  const table=document.createElement("table");table.className="model-effective-matrix";
  const thead=document.createElement("thead"),headRow=document.createElement("tr");
- for(const label of ["Classificação",...mealKeys.map(meal=>names[meal]||meal)]){
+ for(const label of ["Dias do microciclo",...mealKeys.map(meal=>names[meal]||meal)]){
   const th=document.createElement("th");th.scope="col";th.textContent=label;headRow.append(th);
  }
  thead.append(headRow);table.append(thead);
@@ -586,8 +580,6 @@ function render(){
    dot.title=row.configured?"Classificação configurada":"Classificação por configurar";
    dot.setAttribute("aria-label",dot.title);
   }
-  const present=mealKeys.filter(meal=>Boolean(row.meals?.[meal])).length;
-  visual.count.textContent=present+" de "+mealKeys.length+" refeições";
   for(const [meal,swatch] of visual.swatches){
    const value=row.meals?.[meal]||"";
    swatch.dataset.color=value||"none";
@@ -633,7 +625,7 @@ function render(){
   return select;
  }
  for(const row of model.classifications){
-  const visuals={indicators:[],count:null,swatches:[],feedback:null};
+  const visuals={indicators:[],swatches:[],feedback:null};
   rowVisuals.set(row,visuals);
   const tr=document.createElement("tr");
   const rowHead=document.createElement("th");rowHead.scope="row";rowHead.className="model-class-heading";
@@ -650,10 +642,9 @@ function render(){
   const label=document.createElement("strong");label.className="model-mobile-class-name";
   const mobileDot=document.createElement("span");mobileDot.className="model-class-status";visuals.indicators.push(mobileDot);
   label.append(mobileDot,document.createTextNode(row.name));
-  const count=document.createElement("span");count.className="model-mobile-count";visuals.count=count;
   const chevron=document.createElement("span");chevron.className="model-mobile-chevron";chevron.setAttribute("aria-hidden","true");
   chevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-  summaryTop.append(label,count,chevron);
+  summaryTop.append(label,chevron);
   const preview=document.createElement("span");preview.className="model-mobile-preview";
   preview.setAttribute("aria-hidden","true");
   for(const meal of mealKeys){
