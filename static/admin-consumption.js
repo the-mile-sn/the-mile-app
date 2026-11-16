@@ -13,6 +13,14 @@
  const dateLabel=document.getElementById("consumption-date-label");
  const calendarButton=document.getElementById("consumption-date-edit");
  if(!panel||!root||!date||!athlete)return;
+ // Backoffice is online-only. Remove any previous player-origin Service Worker
+ // registered under this admin hostname so older cached bundles cannot reappear.
+ if("serviceWorker" in navigator){
+  navigator.serviceWorker.getRegistrations().then(registrations=>
+   Promise.all(registrations.filter(r=>new URL(r.scope).origin===location.origin).map(r=>r.unregister()))
+  ).catch(()=>{});
+ }
+
  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const numeric=v=>typeof v==="number"&&Number.isFinite(v)?v:null;
  const num=v=>v===null||v===undefined?"—":Number(v).toLocaleString("pt-PT",{maximumFractionDigits:1});
