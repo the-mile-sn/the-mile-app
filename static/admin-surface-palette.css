@@ -8257,3 +8257,41 @@ html[data-admin-theme] body #admin-workspace :is(
  #tm-menu-recipes-page .dish-table-actions,
  #tm-recipe-library-page .recipe-row-actions
 ) button+button{margin-left:10px!important}
+
+/* Final Library rhythm: exactly 16px after the filter surface. */
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-card>.supp-workflow-body{
+ gap:16px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-search-panel{
+ margin:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-catalog-header{
+ margin-bottom:16px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-filters.tm-food-filter-panel{
+ margin-bottom:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-feedback:empty{
+ display:none!important;margin:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-visual-portions-page #tm-portion-grid{
+ margin-top:0!important;
+}
+/* Align the Recipe table column starts to the 4 filter field boundaries:
+   category/search ~22%, type ~66%, status ~83%.
+   Keep photo immediately before the Recipe text instead of a large blank cell. */
+@media(min-width:851px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table{
+  width:100%!important;table-layout:fixed!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(1){width:17%!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(2){
+  width:5%!important;padding-left:0!important;padding-right:4px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(3){
+  width:44%!important;padding-left:12px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(4){width:17%!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(5){width:10%!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(6){width:7%!important}
+}
