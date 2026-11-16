@@ -577,7 +577,9 @@ function render(){
   if(!visual)return;
   for(const dot of visual.indicators){
    dot.dataset.configured=String(Boolean(row.configured));
-   dot.title=row.configured?"Classificação configurada":"Classificação por configurar";
+   const dayType=row.name.trim()==="MD"?"Jogo":/^Off(?:\s|$)/i.test(row.name.trim())?"Folga":"";
+   const configuredStatus=row.configured?"Classificação configurada":"Classificação por configurar";
+   dot.title=dayType?dayType+" · "+configuredStatus:configuredStatus;
    dot.setAttribute("aria-label",dot.title);
   }
   for(const [meal,swatch] of visual.swatches){
@@ -628,25 +630,20 @@ function render(){
   const visuals={indicators:[],swatches:[],feedback:null};
   rowVisuals.set(row,visuals);
   const tr=document.createElement("tr");
+  const isMatchDay=row.name.trim()==="MD",isRestDay=/^Off(?:\s|$)/i.test(row.name.trim());
+  const dayClass=isMatchDay?"model-day--match":isRestDay?"model-day--off":null;
+  if(dayClass)tr.classList.add(dayClass);
   const rowHead=document.createElement("th");rowHead.scope="row";rowHead.className="model-class-heading";
   const rowLabel=document.createElement("span");rowLabel.className="model-class-label";
   const dot=document.createElement("span");dot.className="model-class-status";visuals.indicators.push(dot);
   const name=document.createElement("span");name.textContent=row.name;rowLabel.append(dot,name);
-  // Reuse the approved Jogo/Folga semantics from Events of the month, but
-  // only in the desktop model table. Configured/unconfigured stays a separate dot.
-  const isMatchDay=row.name.trim()==="MD",isRestDay=/^Off(?:\s|$)/i.test(row.name.trim());
-  if(isMatchDay||isRestDay){
-   const kind=document.createElement("span");
-   kind.className="model-day-kind "+(isMatchDay?"model-day-kind--match":"model-day-kind--off");
-   kind.textContent=isMatchDay?"Jogo":"Folga";
-   rowLabel.append(kind);
-  }
   rowHead.append(rowLabel);tr.append(rowHead);
   for(const meal of mealKeys){
    const td=document.createElement("td");td.append(makeColorSelect(row,meal));tr.append(td);
   }
   tbody.append(tr);
   const details=document.createElement("details");details.className="model-mobile-card";
+  if(dayClass)details.classList.add(dayClass);
   const summary=document.createElement("summary");summary.className="model-mobile-summary";
   const summaryTop=document.createElement("span");summaryTop.className="model-mobile-summary-top";
   const label=document.createElement("strong");label.className="model-mobile-class-name";
