@@ -4216,6 +4216,8 @@ $("supp-library-cancel").onclick=()=>{
 $("supp-library-dialog")?.addEventListener("close",()=>{
  $("supp-library-editor").open=false;resetSupplementLibraryForm();
 });
+// The details summary is a visual modal title; it must not collapse the form.
+$("supp-library-editor")?.querySelector("summary")?.addEventListener("click",event=>event.preventDefault());
 if($("supp-lib-prescriptions")){renderLibraryPrescriptionRules([]);$("supp-library-editor").addEventListener("toggle",()=>{if($("supp-library-editor").open&&!$("supp-lib-save").dataset.editId)renderLibraryPrescriptionRules([]);});}
 
 /* Historical Excel import: read-only preview, deliberate bulk confirmation. */
