@@ -20,6 +20,25 @@ function updatePager(){
  next.addEventListener("click",()=>load(page+1));
  nav.append(back,current,next);
 }
+/* On phones remove the legacy table from the live DOM rather than relying on
+   multiple competing media rules to hide its wrapper. Restore it on desktop. */
+const foodMobileQuery=window.matchMedia("(max-width: 700px)");
+let detachedFoodTable=null;
+function syncFoodLayout(){
+ if(!embeddedRoot)return;
+ const host=embeddedRoot.querySelector(".food-mobile-cards");
+ const panel=embeddedRoot.querySelector(".food-catalog-panel");
+ if(!host||!panel)return;
+ if(foodMobileQuery.matches){
+  const tableWrapper=panel.querySelector(":scope > .scroll");
+  if(tableWrapper){detachedFoodTable=tableWrapper;tableWrapper.remove();}
+  host.hidden=false;
+ }else{
+  if(detachedFoodTable&&!detachedFoodTable.isConnected)panel.insertBefore(detachedFoodTable,host);
+  host.hidden=true;
+ }
+}
+foodMobileQuery.addEventListener?.("change",syncFoodLayout);
 function draw(){
  $("rows").innerHTML=foods.map(f=>'<tr><td class="food-category">'+esc(f.category||"—")+'</td><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td class="food-edit-cell"><button type="button" class="food-edit-icon" data-edit="'+esc(f.id)+'" aria-label="Editar '+esc(f.display_name)+'" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg></button><button type="button" class="food-edit-icon food-delete-icon" data-delete="'+esc(f.id)+'" aria-label="Eliminar '+esc(f.display_name)+'" title="Eliminar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg></button></td></tr>').join("");
  const mobileHost=embeddedRoot?.querySelector(".food-mobile-cards");
@@ -36,6 +55,7 @@ function draw(){
     '<div class="tm-food-mobile-macros">'+values.map(([label,key])=>'<div class="tm-food-mobile-macro"><span>'+label+'</span><strong>'+fmt(f[key])+'</strong></div>').join("")+'</div></article>';
   }).join("");
  }
+ syncFoodLayout();
  $("empty").hidden=foods.length!==0;
  $("feedback").textContent="";
  updatePager();
