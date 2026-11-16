@@ -165,7 +165,7 @@
  function optionLabel(r,microcycle){
   const option=r.prescription?.option||{};
   const name=String(option.title||"").trim();
-  const savedIndex=[r.option_index,r.prescription?.option_index,r.prescription?.selected_option_index,option.option_index,option.index,option.number].find(v=>Number.isInteger(Number(v))&&Number(v)>=1&&Number(v)<=30&&v!=null);
+  const savedIndex=[r.option_index,r.prescription?.option_index,r.prescription?.selected_option_index,option.option_index,option.number].find(v=>Number.isInteger(Number(v))&&Number(v)>=1&&Number(v)<=30&&v!=null);
   let index=savedIndex==null?null:Number(savedIndex);
   const choices=r.event_id?(microcycle?.peri_events||[]).find(e=>e.event_id===r.event_id&&e.phase===r.meal_key)?.options:microcycle?.meals?.[r.meal_key]?.options;
   if(Array.isArray(choices)&&choices.length){
@@ -181,7 +181,8 @@
   if(index==null&&prefix)index=Number(prefix[1]);
   if(index==null)return name;
   const start="Opção "+index;
-  return name&&!/^Op(?:ç|c)(?:ã|a)o\s+\d+$/i.test(name)?start+" - "+name:start;
+  const cleanTitle=name.replace(/^Op(?:ç|c)(?:ã|a)o\s+\d+\s*[-–—:]?\s*/i,"").trim();
+  return cleanTitle?start+" - "+cleanTitle:start;
  }
  function foodDetails(r){
   const foods=Array.isArray(r.consumed_foods)?r.consumed_foods:[];
