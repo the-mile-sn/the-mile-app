@@ -4216,6 +4216,202 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
 }
 
 
+/* PLANEAMENTO > MODELO — responsive configuration editor (16 Nov 2026).
+   Desktop retains the familiar matrix; mobile uses compact native accordions.
+   These declarations replace obsolete zebra/panel styling without affecting
+   the separate scenario editor, saved values or nutritional colour meanings. */
+html[data-admin-theme] #admin-workspace #matrix{
+ display:block!important;box-sizing:border-box;width:100%;min-width:0;
+ margin:0!important;padding:24px!important;overflow:hidden!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:20px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #matrix[hidden]{display:none!important}
+html[data-admin-theme] #matrix .model-config-header{
+ display:flex!important;align-items:flex-start;justify-content:flex-start;
+ margin:0 0 18px!important;padding:0!important;min-width:0;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #matrix .model-config-heading{min-width:0;max-width:720px}
+html[data-admin-theme] #matrix .model-config-heading h2{
+ margin:0 0 5px!important;color:var(--tm-ui-text)!important;
+ font:500 19px/1.35 "Inter Tight",sans-serif!important;letter-spacing:-.016em;
+}
+html[data-admin-theme] #matrix .model-config-heading p{
+ margin:0!important;max-width:680px;color:var(--tm-ui-muted)!important;
+ font:400 12.5px/1.5 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #matrix .model-config-table-wrap{
+ width:100%;max-width:100%;min-width:0;overflow-x:auto;
+ scrollbar-width:thin;
+}
+html[data-admin-theme] #matrix .model-effective-matrix{
+ display:table!important;width:100%!important;max-width:none!important;
+ min-width:830px!important;margin:0!important;
+ table-layout:fixed!important;border-collapse:collapse!important;border-spacing:0!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix :is(th,td){
+ box-sizing:border-box;vertical-align:middle!important;text-align:left!important;
+ background:transparent!important;border:0!important;
+ border-bottom:1px solid var(--tm-ui-divider)!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix thead th{
+ padding:9px 7px 13px!important;color:var(--tm-ui-muted)!important;
+ font:500 12px/1.4 "Inter Tight",sans-serif!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix thead th:first-child{
+ padding-left:12px!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix tbody :is(th,td){
+ padding:6px 5px!important;height:51px!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix tbody th:first-child,
+html[data-admin-theme] #matrix .model-effective-matrix thead th:first-child{
+ width:148px!important;min-width:148px!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix tbody th:first-child{
+ padding-left:12px!important;
+}
+html[data-admin-theme] #matrix .model-effective-matrix tbody tr:last-child :is(th,td){
+ border-bottom:0!important;
+}
+html[data-admin-theme="light"] #matrix .model-effective-matrix tbody tr:hover :is(th,td){
+ background:rgba(48,66,86,.025)!important;
+}
+html[data-admin-theme="dark"] #matrix .model-effective-matrix tbody tr:hover :is(th,td){
+ background:rgba(255,255,255,.024)!important;
+}
+html[data-admin-theme] #matrix .model-class-label,
+html[data-admin-theme] #matrix .model-mobile-class-name{
+ display:inline-flex!important;align-items:center;gap:9px;
+ font:500 13.5px/1.35 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;white-space:nowrap;
+}
+html[data-admin-theme] #matrix .model-class-status{
+ display:inline-block;box-sizing:border-box;flex:0 0 9px;
+ width:9px;height:9px;border-radius:50%;
+ background:transparent;border:1.5px solid var(--tm-ui-muted);
+}
+html[data-admin-theme] #matrix .model-class-status[data-configured="true"]{
+ background:var(--tm-ui-text);border-color:var(--tm-ui-text);
+}
+html[data-admin-theme] #matrix .microcycle-color-select.model-color-select{
+ display:block!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ height:39px!important;min-height:39px!important;margin:0!important;
+ padding:7px 10px!important;border:0!important;border-radius:10px!important;
+ box-shadow:none!important;
+ font:500 12.5px/1.2 "Inter Tight",sans-serif!important;
+ cursor:pointer;text-overflow:ellipsis;appearance:auto!important;
+}
+html[data-admin-theme] #matrix .microcycle-color-select.model-color-select[data-color="none"]{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #matrix .microcycle-color-select.model-color-select:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+ outline-offset:2px!important;
+}
+html[data-admin-theme] #matrix .microcycle-color-select.model-color-select:disabled{
+ opacity:.65!important;cursor:wait;
+}
+html[data-admin-theme="light"] #matrix .microcycle-color-select.model-color-select option{
+ background:#fff!important;color:#1c2633!important;
+}
+html[data-admin-theme="dark"] #matrix .microcycle-color-select.model-color-select option{
+ background:#232329!important;color:#f2f3f5!important;
+}
+html[data-admin-theme] #matrix .model-mobile-list{display:none!important}
+
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace #matrix{
+  padding:16px!important;border-radius:16px!important;
+ }
+ html[data-admin-theme] #matrix .model-config-header{
+  margin-bottom:16px!important;
+ }
+ html[data-admin-theme] #matrix .model-config-heading h2{font-size:17px!important}
+ html[data-admin-theme] #matrix .model-config-heading p{font-size:12px!important}
+ html[data-admin-theme] #matrix .model-config-table-wrap{display:none!important}
+ html[data-admin-theme] #matrix .model-mobile-list{
+  display:grid!important;grid-template-columns:minmax(0,1fr);gap:9px;
+  min-width:0;
+ }
+ html[data-admin-theme] #matrix .model-mobile-card{
+  min-width:0;margin:0!important;border:0!important;border-radius:13px!important;
+  background:var(--tm-ui-subcard)!important;box-shadow:none!important;overflow:hidden;
+ }
+ html[data-admin-theme] #matrix .model-mobile-summary{
+  display:flex;flex-direction:column;gap:11px;
+  box-sizing:border-box;min-height:69px;padding:13px 14px;
+  color:var(--tm-ui-text)!important;cursor:pointer;
+  list-style:none;
+ }
+ html[data-admin-theme] #matrix .model-mobile-summary::-webkit-details-marker{display:none}
+ html[data-admin-theme] #matrix .model-mobile-summary::marker{content:""}
+ html[data-admin-theme] #matrix .model-mobile-summary:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+  outline-offset:-3px;border-radius:13px;
+ }
+ html[data-admin-theme] #matrix .model-mobile-summary-top{
+  display:flex;align-items:center;gap:10px;min-width:0;width:100%;
+ }
+ html[data-admin-theme] #matrix .model-mobile-class-name{
+  flex:0 0 auto;min-width:0;font-size:14px!important;
+ }
+ html[data-admin-theme] #matrix .model-mobile-count{
+  margin-left:auto;color:var(--tm-ui-muted)!important;
+  font:400 11.5px/1.3 "Inter Tight",sans-serif!important;white-space:nowrap;
+ }
+ html[data-admin-theme] #matrix .model-mobile-chevron{
+  flex:0 0 18px;width:18px;height:18px;color:var(--tm-ui-muted);
+  display:grid;place-items:center;
+ }
+ html[data-admin-theme] #matrix .model-mobile-chevron svg{
+  transition:transform .18s ease;
+ }
+ html[data-admin-theme] #matrix .model-mobile-card[open] .model-mobile-chevron svg{
+  transform:rotate(180deg);
+ }
+ html[data-admin-theme] #matrix .model-mobile-preview{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:5px;width:100%;min-width:0;
+ }
+ html[data-admin-theme] #matrix .model-mobile-swatch{
+  height:6px;min-width:0;border-radius:6px;background:var(--tm-ui-field-on-subcard);
+ }
+ html[data-admin-theme] #matrix .model-mobile-swatch[data-color="yellow"]{background:#e9c95b}
+ html[data-admin-theme] #matrix .model-mobile-swatch[data-color="orange"]{background:#e6a66c}
+ html[data-admin-theme] #matrix .model-mobile-swatch[data-color="blue"]{background:#85b5e5}
+ html[data-admin-theme] #matrix .model-mobile-swatch[data-color="green"]{background:#92cfa4}
+ html[data-admin-theme] #matrix .model-mobile-swatch[data-color="vp"]{background:#28543e}
+ html[data-admin-theme] #matrix .model-mobile-fields{
+  display:grid!important;grid-template-columns:minmax(0,1fr);gap:12px;
+  padding:2px 14px 15px;min-width:0;
+ }
+ html[data-admin-theme] #matrix .model-mobile-field{
+  display:flex!important;flex-direction:column;align-items:stretch;
+  gap:6px;min-width:0;margin:0!important;color:var(--tm-ui-text)!important;
+ }
+ html[data-admin-theme] #matrix .model-mobile-field>span{
+  color:var(--tm-ui-muted)!important;font:400 12px/1.4 "Inter Tight",sans-serif!important;
+ }
+ html[data-admin-theme] #matrix .model-mobile-field .microcycle-color-select.model-color-select{
+  width:100%!important;height:44px!important;min-height:44px!important;
+  padding:10px 12px!important;border-radius:11px!important;
+  font-size:16px!important;
+ }
+ html[data-admin-theme] #matrix .model-mobile-feedback{
+  margin:0!important;padding:0;color:var(--tm-ui-muted)!important;
+  font:400 12px/1.4 "Inter Tight",sans-serif!important;
+ }
+ html[data-admin-theme] #matrix .model-mobile-feedback:empty{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] #matrix .model-mobile-chevron svg{transition:none!important}
+}
+
 /* 2026-11-14 Planning calendar harmonization — consolidated replacement (v2).
    Align to Planos > Visualização. Keep old state colours, selection logic,
    publication controls and mobile calendar geometry. No cumulative overrides. */
