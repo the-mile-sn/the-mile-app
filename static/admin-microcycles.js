@@ -3051,11 +3051,18 @@ function renderDishEditor(){
  const hadSearchFocus=document.activeElement===search;
  const cursor=hadSearchFocus?search.selectionStart:null;
  const hadCategoryFocus=document.activeElement===category;
- parking.append(search,category);
+ // Move the complete fields to the temporary parking area, rather than their
+ // inner inputs. Otherwise every redraw leaves two empty caption cards behind.
+ for(const input of [category,search]){
+  const parent=input.closest(".tm-dish-filter-field");
+  if(parent)parking.append(parent);else parking.append(input);
+ }
  host.replaceChildren();
  refreshDishTableCategories();
  const externalFilters=$("dish-outside-filters");
  if(externalFilters){
+  // Defensive cleanup for previously stranded caption wrappers.
+  for(const stale of externalFilters.querySelectorAll(".tm-dish-filter-field"))if(!stale.querySelector("input,select"))stale.remove();
   for(const [input,caption] of [[category,"Categoria"],[search,"Pesquisar"]]){
    let field=input.closest(".tm-dish-filter-field");
    if(!field){
