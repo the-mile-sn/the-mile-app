@@ -4547,6 +4547,26 @@ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading{
  background:transparent!important;color:var(--tm-ui-text)!important;
  border:0!important;list-style:none!important;cursor:pointer;
 }
+/* Desktop: closed scenarios have symmetric internal spacing, so the title
+   and chevron share the true vertical center of the full rounded subcard. */
+@media(min-width:831px){
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group:not([open]){
+  padding:0!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group:not([open])>.scenario-day-heading{
+  box-sizing:border-box!important;min-height:66px!important;
+  padding:0 16px!important;align-items:center!important;
+ }
+}
+@media(min-width:831px) and (hover:hover) and (pointer:fine){
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group:not([open]){
+  transition:background-color .16s ease;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group:not([open]):hover{
+  background:color-mix(in srgb,var(--tm-ui-subcard) 55%,var(--tm-ui-hover))!important;
+ }
+}
+
 html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading::-webkit-details-marker{display:none}
 html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading::marker{content:""}
 html[data-admin-theme] #scenario-editor .scenario-day-title{
@@ -4742,7 +4762,10 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
  html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group{
   transition:background-color .14s ease;
  }
- html[data-admin-theme] #admin-workspace #scenario-editor.tm-mobile-card-press{
+ /* Native iOS may drop the pointer's active state during the smooth scroll;
+    use either the JS press class or a direct summary active state. */
+ html[data-admin-theme] #admin-workspace #scenario-editor.tm-mobile-card-press,
+ html[data-admin-theme] #admin-workspace #scenario-editor:has(>.scenario-main-summary:active){
   background:var(--tm-ui-subcard)!important;
  }
  html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group.tm-mobile-card-press{
