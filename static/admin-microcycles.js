@@ -4055,7 +4055,9 @@ function filterSupplementLists(){
    $("supp-lib-moment").value=item.moment;$("supp-lib-rule").value=item.rule;
    $("supp-lib-timing").value=item.timing_text||"";$("supp-lib-note").value=item.note||"";
    $("supp-lib-save").dataset.editId=item.id;renderLibraryPrescriptionRules(item.prescriptions);
-   const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";panel.scrollIntoView({behavior:"smooth",block:"start"});
+   const panel=$("supp-library-editor");panel.open=true;panel.querySelector("summary").textContent="Editar suplemento";
+   const dialog=$("supp-library-dialog");if(dialog&&!dialog.open)dialog.showModal();
+   $("supp-lib-name").focus();
   };
   const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
   remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};
@@ -4128,6 +4130,7 @@ $("supp-lib-save").onclick=async()=>{
   $("supp-lib-feedback").textContent="Suplemento guardado na biblioteca.";
   await loadSupplementLibrary();
   $("supp-library-editor").open=false;
+  const dialog=$("supp-library-dialog");if(dialog?.open)dialog.close();
   resetSupplementLibraryForm();
  }catch(e){$("supp-lib-feedback").textContent=e.message;}finally{button.disabled=false;}
 };
@@ -4202,10 +4205,17 @@ function resetSupplementLibraryForm(){
 $("supp-library-new").onclick=()=>{
  resetSupplementLibraryForm();
  $("supp-lib-feedback").textContent="";
- const editor=$("supp-library-editor");editor.open=true;editor.scrollIntoView({behavior:"smooth",block:"start"});
+ const editor=$("supp-library-editor");editor.open=true;
+ const dialog=$("supp-library-dialog");if(dialog&&!dialog.open)dialog.showModal();
  $("supp-lib-name").focus();
 };
-$("supp-library-cancel").onclick=()=>{$("supp-library-editor").open=false;resetSupplementLibraryForm();};
+$("supp-library-cancel").onclick=()=>{
+ const dialog=$("supp-library-dialog");if(dialog?.open)dialog.close();
+ $("supp-library-editor").open=false;resetSupplementLibraryForm();
+};
+$("supp-library-dialog")?.addEventListener("close",()=>{
+ $("supp-library-editor").open=false;resetSupplementLibraryForm();
+});
 if($("supp-lib-prescriptions")){renderLibraryPrescriptionRules([]);$("supp-library-editor").addEventListener("toggle",()=>{if($("supp-library-editor").open&&!$("supp-lib-save").dataset.editId)renderLibraryPrescriptionRules([]);});}
 
 /* Historical Excel import: read-only preview, deliberate bulk confirmation. */
