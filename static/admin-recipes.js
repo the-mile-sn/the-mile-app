@@ -83,14 +83,20 @@
   updateSelect("recipe-filter-category",categories,"Todas as categorias");
   updateSelect("recipe-pdf-category",categories,"Selecionar categoria");
   const host=$("recipe-categories");host.replaceChildren();
+  const count=$("recipe-category-count");
+  if(count)count.textContent=categories.length+" "+(categories.length===1?"categoria":"categorias");
   for(const entry of categories){
    const item=node("div","recipe-category-item");
-   item.append(recipeCategoryBadge(entry.id,entry.name));
-   const edit=button("Editar",()=>editCategory(entry),"recipe-category-small");
-   edit.setAttribute("aria-label","Editar categoria "+entry.name);
-   const remove=button("Eliminar",()=>removeCategory(entry),"recipe-category-small recipe-category-danger");
-   remove.setAttribute("aria-label","Eliminar categoria "+entry.name);
-   item.append(edit,remove);host.append(item);
+   const badge=recipeCategoryBadge(entry.id,entry.name);
+   badge.classList.add("recipe-category-card-badge");
+   const actions=node("div","recipe-category-card-actions");
+   const edit=button("",()=>editCategory(entry),"recipe-category-small recipe-category-edit-icon");
+   edit.append(recipeListIcon("edit"));
+   edit.title="Editar categoria";edit.setAttribute("aria-label","Editar categoria "+entry.name);
+   const remove=button("",()=>removeCategory(entry),"recipe-category-small recipe-category-danger recipe-category-delete-icon");
+   remove.append(recipeListIcon("trash"));
+   remove.title="Eliminar categoria";remove.setAttribute("aria-label","Eliminar categoria "+entry.name);
+   actions.append(edit,remove);item.append(badge,actions);host.append(item);
   }
  }
  function activeRecipeFilters(){
