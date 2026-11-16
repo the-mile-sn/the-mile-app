@@ -2985,11 +2985,15 @@ async function loadDishLibrary(){
 window.tmLoadDishLibrary=loadDishLibrary;
 function setDishAddPanel(open){
  const panel=$("dish-add-panel"),toggle=$("dish-add-toggle");
+ const backdrop=$("dish-add-backdrop");
+ if(backdrop)backdrop.hidden=!open;
  panel.hidden=!open;
  toggle.setAttribute("aria-expanded",String(open));
  if(open)$("new-dish-pt").focus();
 }
 $("dish-add-toggle").addEventListener("click",()=>setDishAddPanel($("dish-add-panel").hidden));
+$("dish-add-backdrop")?.addEventListener("click",()=>setDishAddPanel(false));
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("dish-add-panel").hidden)setDishAddPanel(false);});
 $("dish-add-cancel").addEventListener("click",()=>{
  for(const id of ["new-dish-pt","new-dish-en","new-dish-photo"])$(id).value="";
  $("new-dish-category").value="";
@@ -3050,15 +3054,16 @@ function renderDishEditor(){
  parking.append(search,category);
  host.replaceChildren();
  refreshDishTableCategories();
+ $("dish-outside-filters")?.append(category,search);
  const query=normalizedDishText($("dish-search").value).trim();
  const filter=$("dish-category-filter")?.value||"";
  const matches=dishTableRows;
  const wrap=document.createElement("div");wrap.className="dish-table-scroll";
  const table=document.createElement("table");table.className="dish-library-table";
  const thead=document.createElement("thead"),head=document.createElement("tr");head.className="dish-table-filter-row";
- const categoryHeading=document.createElement("th");categoryHeading.append(category);
+ const categoryHeading=document.createElement("th");categoryHeading.textContent="Categoria";
  const photoHeading=document.createElement("th");photoHeading.textContent="Foto";
- const dishHeading=document.createElement("th");dishHeading.append(search);
+ const dishHeading=document.createElement("th");dishHeading.textContent="Prato";
  const englishHeading=document.createElement("th");englishHeading.textContent="Nome inglês";
  const actionsHeading=document.createElement("th");actionsHeading.textContent="Ações";
  head.append(categoryHeading,photoHeading,dishHeading,englishHeading,actionsHeading);
@@ -3087,7 +3092,7 @@ function renderDishEditor(){
    tr.append(td);
   }
   const actions=document.createElement("td");actions.className="dish-table-actions";
-  const edit=document.createElement("button");edit.type="button";edit.textContent="Editar";edit.className="dish-table-edit";
+  const edit=document.createElement("button");edit.type="button";edit.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.className="dish-table-edit";edit.title="Editar prato";
   edit.setAttribute("aria-expanded","false");edit.setAttribute("aria-label","Editar "+dish.name_pt);
   actions.append(edit);tr.append(actions);tbody.append(tr);
   const detailRow=document.createElement("tr");detailRow.className="dish-table-detail";detailRow.hidden=true;
@@ -3095,11 +3100,11 @@ function renderDishEditor(){
   edit.addEventListener("click",async()=>{
    detailRow.hidden=!detailRow.hidden;
    edit.setAttribute("aria-expanded",String(!detailRow.hidden));
-   edit.textContent=detailRow.hidden?"Editar":"Fechar";
+   edit.setAttribute("aria-label",(detailRow.hidden?"Editar ":"Fechar edição de ")+dish.name_pt);
    if(detailRow.hidden||detailCell.children.length)return;
    try{await ensureDishRecipeChoices();}catch(error){
     $("dish-catalog-feedback").textContent="Não foi possível carregar receitas associáveis: "+error.message;
-    detailRow.hidden=true;edit.textContent="Editar";edit.setAttribute("aria-expanded","false");return;
+    detailRow.hidden=true;edit.setAttribute("aria-expanded","false");return;
    }
    if(detailRow.hidden)return;
    const editor=document.createElement("div");editor.className="dish-edit-fields dish-table-editor";
