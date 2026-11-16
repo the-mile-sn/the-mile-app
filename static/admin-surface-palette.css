@@ -8115,3 +8115,42 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-tab
 html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table tbody td:first-child{
  padding-left:26px!important;
 }
+
+/* Culinary catalogues: align table content to filter fields, including long titles. */
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table :is(thead th:first-child,tbody tr.dish-table-row>td:first-child){
+ padding-left:30px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field :is(input,select){
+ text-align:left!important;text-indent:0!important;padding-left:0!important;margin-left:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field>span{
+ text-align:left!important;margin-left:0!important;padding-left:0!important;
+}
+/* Recipe photo is deliberately narrow: Recipe text starts under the search field. */
+@media(min-width:851px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table{
+  table-layout:fixed!important;width:100%!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(1){width:20%!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(2){
+  width:5%!important;padding-left:0!important;padding-right:4px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(3){width:33%!important;padding-left:14px!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(4){width:14%!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(5){width:14%!important}
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(6){width:14%!important}
+}
+/* Actions: two equal icon controls, a fixed 10px gap, aligned with filter card inset. */
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table td.dish-table-actions,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table td.recipe-row-actions{
+ box-sizing:border-box!important;text-align:right!important;
+ white-space:nowrap!important;padding-right:16px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-table-actions button+button,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-row-actions button+button{
+ margin-left:10px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table th:last-child,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table th:last-child{
+ padding-right:16px!important;
+}
