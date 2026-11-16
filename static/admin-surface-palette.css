@@ -4485,6 +4485,219 @@ html[data-admin-theme] #matrix .model-mobile-list{display:none!important}
  html[data-admin-theme] #matrix .model-mobile-chevron svg{transition:none!important}
 }
 
+/* PLANEAMENTO > MODELO | Cenários pós-jogo, 16 Nov 2026.
+   One collapsible parent card, scenario subcards and responsive 3-variant editor.
+   Preserve independent scenario-cell saves and High inheritance. */
+html[data-admin-theme] #admin-workspace #scenario-editor{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;margin:18px 0 0!important;
+ padding:22px 24px!important;border:0!important;border-radius:20px!important;
+ background:var(--tm-ui-card)!important;box-shadow:none!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor[hidden]{display:none!important}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary{
+ display:flex!important;align-items:center;justify-content:space-between;
+ gap:15px;min-height:32px;margin:0!important;padding:0!important;
+ list-style:none!important;cursor:pointer;
+ color:var(--tm-ui-text)!important;font:500 18px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary::-webkit-details-marker{display:none}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary::marker{content:""}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary svg{
+ width:19px;height:19px;flex:none;transform:rotate(0deg);
+ color:var(--tm-ui-muted);transition:transform .18s ease;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor[open]>.scenario-main-summary svg{
+ transform:rotate(180deg);
+}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary:focus-visible,
+html[data-admin-theme] #scenario-editor .scenario-day-heading:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:4px!important;
+ border-radius:6px;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor #scenario-cells{
+ display:grid!important;grid-template-columns:minmax(0,1fr);
+ gap:12px!important;min-width:0!important;
+ margin:20px 0 0!important;padding:0!important;
+ border:0!important;overflow:visible!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group{
+ display:block!important;min-width:0!important;
+ margin:0!important;padding:13px 15px 15px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;
+ box-shadow:none!important;overflow:hidden!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading{
+ display:flex!important;align-items:center;justify-content:space-between;gap:12px;
+ min-width:0!important;margin:0!important;padding:5px 1px 12px!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ border:0!important;list-style:none!important;cursor:pointer;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading::-webkit-details-marker{display:none}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading::marker{content:""}
+html[data-admin-theme] #scenario-editor .scenario-day-title{
+ margin:0!important;font:500 15px/1.4 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-day-hint{
+ margin-left:auto;color:var(--tm-ui-muted)!important;
+ font:400 12px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-day-chevron{
+ width:18px;height:18px;display:grid;place-items:center;flex:none;
+ color:var(--tm-ui-muted);transition:transform .18s ease;
+}
+html[data-admin-theme] #scenario-editor .scenario-day-group[open] .scenario-day-chevron{
+ transform:rotate(180deg);
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-content{
+ display:grid;gap:7px;min-width:0;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-options-head,
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-variant-row{
+ display:grid!important;grid-template-columns:148px repeat(5,minmax(0,1fr));
+ column-gap:10px;align-items:center;min-width:0;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-options-head{
+ padding:2px 7px 4px!important;margin:0!important;
+ color:var(--tm-ui-muted)!important;background:transparent!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-options-head span{
+ font:500 12px/1.45 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-muted)!important;min-width:0;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-variant-row{
+ padding:3px 7px!important;margin:0!important;
+ min-height:49px;box-sizing:border-box!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-minute-card{
+ display:flex;align-items:center;min-height:42px;min-width:0;
+ padding:0 12px;box-sizing:border-box;border-radius:12px;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ font:500 12.5px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-meal-cell{
+ display:block!important;min-width:0!important;margin:0!important;
+ color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-meal-name{display:none!important}
+html[data-admin-theme] #scenario-editor .scenario-select-shell{
+ position:relative!important;display:block!important;min-width:0!important;width:100%!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select{
+ display:block!important;box-sizing:border-box!important;
+ width:100%!important;max-width:none!important;min-width:0!important;
+ height:42px!important;min-height:42px!important;
+ margin:0!important;padding:8px 34px 8px 11px!important;
+ border:0!important;border-radius:12px!important;
+ background-image:none!important;box-shadow:none!important;
+ -webkit-appearance:none!important;appearance:none!important;
+ font:500 12px/1.3 "Inter Tight",sans-serif!important;
+ text-overflow:ellipsis;cursor:pointer;
+}
+html[data-admin-theme] #scenario-editor .scenario-select-chevron{
+ display:grid!important;place-items:center!important;
+ position:absolute!important;top:50%;right:10px;transform:translateY(-50%);
+ width:16px;height:16px;z-index:1;pointer-events:none;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-select-chevron svg{
+ display:block!important;width:16px;height:16px;
+}
+html[data-admin-theme] #scenario-editor .scenario-select-shell[data-color="yellow"] .scenario-select-chevron{color:var(--tm-nutrition-ink-yellow)!important}
+html[data-admin-theme] #scenario-editor .scenario-select-shell[data-color="orange"] .scenario-select-chevron{color:var(--tm-nutrition-ink-orange)!important}
+html[data-admin-theme] #scenario-editor .scenario-select-shell[data-color="blue"] .scenario-select-chevron{color:var(--tm-nutrition-ink-blue)!important}
+html[data-admin-theme] #scenario-editor .scenario-select-shell[data-color="green"] .scenario-select-chevron{color:var(--tm-nutrition-ink-green)!important}
+html[data-admin-theme] #scenario-editor .scenario-select-shell[data-color="vp"] .scenario-select-chevron{color:var(--tm-nutrition-ink-vp)!important}
+html[data-admin-theme="light"] #scenario-editor{--tm-scenario-empty-outline:rgba(66,82,106,.17)}
+html[data-admin-theme="dark"] #scenario-editor{--tm-scenario-empty-outline:rgba(184,198,213,.17)}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select[data-color="none"]{
+ background:transparent!important;color:var(--tm-ui-muted)!important;
+ border:1px solid var(--tm-scenario-empty-outline)!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select[data-color="yellow"]{
+ background:#e9c95b!important;color:var(--tm-nutrition-ink-yellow)!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select[data-color="orange"]{
+ background:#e6a66c!important;color:var(--tm-nutrition-ink-orange)!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select[data-color="blue"]{
+ background:#85b5e5!important;color:var(--tm-nutrition-ink-blue)!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select[data-color="green"]{
+ background:#92cfa4!important;color:var(--tm-nutrition-ink-green)!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select[data-color="vp"]{
+ background:#28543e!important;color:var(--tm-nutrition-ink-vp)!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-color-select:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+html[data-admin-theme] #scenario-editor .scenario-color-select:disabled{opacity:.65;cursor:wait}
+html[data-admin-theme="light"] #scenario-editor .scenario-color-select option{
+ background:#fff!important;color:#1c2633!important;
+}
+html[data-admin-theme="dark"] #scenario-editor .scenario-color-select option{
+ background:#232329!important;color:#f2f3f5!important;
+}
+html[data-admin-theme] #scenario-editor #scenario-feedback:empty{display:none!important}
+html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
+ margin:12px 0 0!important;padding:2px 0!important;
+ color:var(--tm-ui-muted)!important;
+ font:400 12px/1.5 "Inter Tight",sans-serif!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace #scenario-editor{
+  margin-top:14px!important;padding:17px 16px!important;border-radius:16px!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary{
+  font-size:17px!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor #scenario-cells{
+  gap:9px!important;margin-top:15px!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group{
+  padding:12px!important;border-radius:13px!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading{
+  padding:3px 2px 5px!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-content{
+  gap:9px!important;margin-top:10px;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-options-head{display:none!important}
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-variant-row{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  row-gap:12px!important;min-width:0!important;
+  margin:0!important;padding:12px!important;border-radius:12px!important;
+  background:var(--tm-ui-card)!important;
+ }
+ html[data-admin-theme] #scenario-editor .scenario-minute-card{
+  display:block!important;width:100%;padding:1px 0 5px!important;
+  min-height:0!important;background:transparent!important;border-radius:0!important;
+  font-size:13px!important;
+ }
+ html[data-admin-theme] #scenario-editor .scenario-meal-cell{
+  display:grid!important;grid-template-columns:minmax(0,1fr);
+  gap:5px!important;
+ }
+ html[data-admin-theme] #scenario-editor .scenario-meal-name{
+  display:block!important;color:var(--tm-ui-muted)!important;
+  font:400 12px/1.4 "Inter Tight",sans-serif!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select{
+  width:100%!important;height:44px!important;min-height:44px!important;
+  font-size:16px!important;padding:9px 36px 9px 12px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] #scenario-editor :is(.scenario-main-summary svg,.scenario-day-chevron){transition:none!important}
+}
+
 /* 2026-11-14 Planning calendar harmonization — consolidated replacement (v2).
    Align to Planos > Visualização. Keep old state colours, selection logic,
    publication controls and mobile calendar geometry. No cumulative overrides. */
