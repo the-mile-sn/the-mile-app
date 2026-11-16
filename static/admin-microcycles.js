@@ -631,7 +631,17 @@ function render(){
   const rowHead=document.createElement("th");rowHead.scope="row";rowHead.className="model-class-heading";
   const rowLabel=document.createElement("span");rowLabel.className="model-class-label";
   const dot=document.createElement("span");dot.className="model-class-status";visuals.indicators.push(dot);
-  const name=document.createElement("span");name.textContent=row.name;rowLabel.append(dot,name);rowHead.append(rowLabel);tr.append(rowHead);
+  const name=document.createElement("span");name.textContent=row.name;rowLabel.append(dot,name);
+  // Reuse the approved Jogo/Folga semantics from Events of the month, but
+  // only in the desktop model table. Configured/unconfigured stays a separate dot.
+  const isMatchDay=row.name.trim()==="MD",isRestDay=/^Off(?:\\s|$)/i.test(row.name.trim());
+  if(isMatchDay||isRestDay){
+   const kind=document.createElement("span");
+   kind.className="model-day-kind "+(isMatchDay?"model-day-kind--match":"model-day-kind--off");
+   kind.textContent=isMatchDay?"Jogo":"Folga";
+   rowLabel.append(kind);
+  }
+  rowHead.append(rowLabel);tr.append(rowHead);
   for(const meal of mealKeys){
    const td=document.createElement("td");td.append(makeColorSelect(row,meal));tr.append(td);
   }
