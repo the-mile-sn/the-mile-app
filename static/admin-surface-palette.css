@@ -4282,14 +4282,7 @@ html[data-admin-theme] #matrix .model-effective-matrix tbody th:first-child,
 html[data-admin-theme] #matrix .model-effective-matrix thead th:first-child{
  width:148px!important;min-width:148px!important;
 }
-@media(hover:hover) and (pointer:fine){
- html[data-admin-theme="light"] #admin-workspace #matrix .model-effective-matrix tbody tr:hover .model-class-label{
-  filter:brightness(.986);
- }
- html[data-admin-theme="dark"] #admin-workspace #matrix .model-effective-matrix tbody tr:hover .model-class-label{
-  filter:brightness(1.065);
- }
-}
+/* Classification/day tiles are informational, never hover-highlighted. */
 html[data-admin-theme] #matrix .model-class-label,
 html[data-admin-theme] #matrix .model-mobile-class-name{
  display:inline-flex!important;align-items:center;gap:9px;
@@ -4710,6 +4703,48 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
 }
 @media(prefers-reduced-motion:reduce){
  html[data-admin-theme] #scenario-editor :is(.scenario-main-chevron,.scenario-day-chevron){transition:none!important}
+}
+
+/* 16 Nov 2026 — only editable color selectors respond to desktop hover.
+   Neutral day tiles never suggest clickability. */
+@media (hover:hover) and (pointer:fine){
+ html[data-admin-theme] #admin-workspace #matrix .model-select-shell>.model-color-select:not(:disabled),
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:not(:disabled){
+  transition:filter .16s ease, border-color .16s ease;
+ }
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-select-shell>.model-color-select:hover:not(:disabled),
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:hover:not(:disabled){
+  filter:brightness(.972);
+ }
+ html[data-admin-theme="dark"] #admin-workspace #matrix .model-select-shell>.model-color-select:hover:not(:disabled),
+ html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:hover:not(:disabled){
+  filter:brightness(1.075);
+ }
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-color-select[data-color="none"]:hover:not(:disabled),
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-color-select[data-color="none"]:hover:not(:disabled){
+  border-color:rgba(66,82,106,.30)!important;
+ }
+ html[data-admin-theme="dark"] #admin-workspace #matrix .model-color-select[data-color="none"]:hover:not(:disabled),
+ html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-color-select[data-color="none"]:hover:not(:disabled){
+  border-color:rgba(184,198,213,.34)!important;
+ }
+}
+/* Keep expanded headings visible beneath sticky navigation. */
+html[data-admin-theme] #scenario-editor>.scenario-main-summary,
+html[data-admin-theme] #scenario-editor .scenario-day-heading{
+ scroll-margin-top:90px;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #scenario-editor>.scenario-main-summary,
+ html[data-admin-theme] #scenario-editor .scenario-day-heading{
+  scroll-margin-top:72px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] #admin-workspace #matrix .model-select-shell>.model-color-select,
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select{
+  transition:none!important;
+ }
 }
 
 /* 2026-11-14 Planning calendar harmonization — consolidated replacement (v2).
