@@ -4216,6 +4216,16 @@ html[data-admin-theme] #tm-plan-page #plan-editor .actions :is(#save-plan,#assig
 }
 
 
+/* Nutrition-accent ink: chromatic, contrast-safe lettering on coloured
+   headers/selects. Shared by Modelo and Microciclos, in both admin themes. */
+html[data-admin-theme] #admin-workspace{
+ --tm-nutrition-ink-yellow:#65480c;
+ --tm-nutrition-ink-orange:#5f300e;
+ --tm-nutrition-ink-blue:#103650;
+ --tm-nutrition-ink-green:#164b32;
+ --tm-nutrition-ink-vp:#bde6cd;
+}
+
 /* PLANEAMENTO > MODELO — microcycle rows as subcards, mobile native accordions.
    No zebra, tables drawn without internal borders; leave scenario editor alone. */
 html[data-admin-theme] #admin-workspace #matrix{
@@ -4286,6 +4296,27 @@ html[data-admin-theme] #matrix .model-class-status{
 html[data-admin-theme] #matrix .model-class-status[data-configured="true"]{
  background:var(--tm-ui-text);border-color:var(--tm-ui-text);
 }
+/* Small semantic badges in the desktop rows; reuse Event-list Jogo/Folga
+   colours. They do not replace the separate configured-status dot. */
+html[data-admin-theme] #matrix .model-day-kind{
+ display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;flex:none;
+ padding:3px 7px!important;border:0!important;border-radius:8px!important;
+ font:500 10.5px/1.2 "Inter Tight",sans-serif!important;
+ white-space:nowrap;letter-spacing:0;
+}
+html[data-admin-theme="light"] #matrix .model-day-kind--match{
+ background:#dbeee3!important;color:#295e46!important;
+}
+html[data-admin-theme="light"] #matrix .model-day-kind--off{
+ background:#f8e8eb!important;color:#94505e!important;
+}
+html[data-admin-theme="dark"] #matrix .model-day-kind--match{
+ background:#294536!important;color:#a7dfb9!important;
+}
+html[data-admin-theme="dark"] #matrix .model-day-kind--off{
+ background:#4b3038!important;color:#f2bbc5!important;
+}
 html[data-admin-theme] #matrix .microcycle-color-select.model-color-select{
  display:block!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;
  height:42px!important;min-height:42px!important;margin:0!important;
@@ -4296,6 +4327,31 @@ html[data-admin-theme] #matrix .microcycle-color-select.model-color-select{
 }
 html[data-admin-theme] #matrix .microcycle-color-select.model-color-select[data-color="none"]{
  background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+}
+/* Desktop only: an empty meal is still a field within a subcard, so it
+   needs the third surface level. Keep the already-approved mobile intact. */
+@media(min-width:831px){
+ html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="none"]{
+  background:var(--tm-ui-field-on-subcard)!important;
+  color:var(--tm-ui-muted)!important;
+ }
+}
+/* Native selects keep their categorical fills; use darker text in the
+   corresponding hue (not generic black). This also works on mobile. */
+html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="yellow"]{
+ color:var(--tm-nutrition-ink-yellow)!important;
+}
+html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="orange"]{
+ color:var(--tm-nutrition-ink-orange)!important;
+}
+html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="blue"]{
+ color:var(--tm-nutrition-ink-blue)!important;
+}
+html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="green"]{
+ color:var(--tm-nutrition-ink-green)!important;
+}
+html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="vp"]{
+ color:var(--tm-nutrition-ink-vp)!important;
 }
 html[data-admin-theme] #matrix .microcycle-color-select.model-color-select:focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
@@ -4835,19 +4891,19 @@ html[data-admin-theme="light"] #calendar-section .day-preview .day-meals>.day-me
 /* Recover the original, more saturated microcycle meal accents from
    the approved calendar colour system, while keeping Planos inner surfaces. */
 html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="yellow"]{
- --tm-meal-accent:#e4c85d;--tm-meal-accent-ink:#19170f;
+ --tm-meal-accent:#e4c85d;--tm-meal-accent-ink:var(--tm-nutrition-ink-yellow);
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="orange"]{
- --tm-meal-accent:#e89448;--tm-meal-accent-ink:#1b1410;
+ --tm-meal-accent:#e89448;--tm-meal-accent-ink:var(--tm-nutrition-ink-orange);
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="blue"]{
- --tm-meal-accent:#63a7d8;--tm-meal-accent-ink:#101d27;
+ --tm-meal-accent:#63a7d8;--tm-meal-accent-ink:var(--tm-nutrition-ink-blue);
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="green"]{
- --tm-meal-accent:#72c697;--tm-meal-accent-ink:#102319;
+ --tm-meal-accent:#72c697;--tm-meal-accent-ink:var(--tm-nutrition-ink-green);
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meals>.day-meal[data-palette="vp"]{
- --tm-meal-accent:#28543e;--tm-meal-accent-ink:#bde6cd;
+ --tm-meal-accent:#28543e;--tm-meal-accent-ink:var(--tm-nutrition-ink-vp);
 }
 html[data-admin-theme] #calendar-section .day-preview .day-meal .day-meal-header{
  background:var(--tm-meal-accent,transparent)!important;
