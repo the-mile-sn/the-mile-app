@@ -483,38 +483,56 @@ function renderScenarioEditor(){
  if(!model)return;
  const target=$("scenario-cells");target.replaceChildren();
  const athleteId=model.athlete.id;
+ const wide=typeof window.matchMedia==="function"&&window.matchMedia("(min-width:831px)").matches;
  for(const type of scenarioTypes){
-  const group=document.createElement("section");group.className="scenario-day-group";
-  const groupHeader=document.createElement("div");groupHeader.className="scenario-day-heading";
-  const heading=document.createElement("h4");heading.textContent=type;
-  groupHeader.append(heading);group.append(groupHeader);
-  const scroller=document.createElement("div");scroller.className="scenario-day-scroll";
-  const table=document.createElement("table");table.className="scenario-matrix scenario-day-matrix";
-  table.setAttribute("aria-label","Cenários pós-jogo "+type);
-  const thead=document.createElement("thead"),head=document.createElement("tr");
-  for(const title of ["Minutos de jogo",...model.meals.map(meal=>names[meal])]){
-   const th=document.createElement("th");th.scope="col";th.textContent=title;head.append(th);
+  // An independent subcard for each scenario, open by default on desktop,
+  // compact and expandable on mobile. The top-level card is collapsible too.
+  const group=document.createElement("details");group.className="scenario-day-group";
+  group.open=wide;
+  const groupHeader=document.createElement("summary");groupHeader.className="scenario-day-heading";
+  const heading=document.createElement("strong");heading.className="scenario-day-title";heading.textContent=type;
+  const groupHint=document.createElement("span");groupHint.className="scenario-day-hint";
+  groupHint.textContent="3 intervalos";
+  const groupChevron=document.createElement("span");groupChevron.className="scenario-day-chevron";
+  groupChevron.setAttribute("aria-hidden","true");
+  groupChevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  groupHeader.append(heading,groupHint,groupChevron);group.append(groupHeader);
+  const content=document.createElement("div");content.className="scenario-day-content";
+  const labels=document.createElement("div");labels.className="scenario-options-head";
+  for(const title of ["Minutos de jogo",...model.meals.map(meal=>names[meal]||meal)]){
+   const name=document.createElement("span");name.textContent=title;labels.append(name);
   }
-  thead.append(head);table.append(thead);
-  const tbody=document.createElement("tbody");
+  content.append(labels);
   const baseline=model.classifications.find(row=>row.name===type);
   for(const [scenario,scenarioLabel] of scenarioVariants){
-   const tr=document.createElement("tr");tr.className="scenario-variant-row";
-   const scenarioCell=document.createElement("th");scenarioCell.scope="row";scenarioCell.textContent=scenarioLabel;tr.append(scenarioCell);
+   const row=document.createElement("div");row.className="scenario-variant-row";
+   row.setAttribute("role","group");
+   row.setAttribute("aria-label",type+" · "+scenarioLabel);
+   const minutes=document.createElement("div");minutes.className="scenario-minute-card";
+   minutes.textContent=scenarioLabel;row.append(minutes);
    for(const meal of model.meals){
-    const td=document.createElement("td"),select=document.createElement("select");
+    const cell=document.createElement("label");cell.className="scenario-meal-cell";
+    const mobileLabel=document.createElement("span");mobileLabel.className="scenario-meal-name";
+    mobileLabel.textContent=names[meal]||meal;
+    const shell=document.createElement("span");shell.className="scenario-select-shell";
+    const select=document.createElement("select");select.className="microcycle-color-select scenario-color-select";
     const base=baseline?.meals?.[meal]||null;
     const current=scenarioCells.find(x=>x.classification===type&&x.scenario===scenario&&x.meal===meal);
     let savedColor=current?.color||"";
-    select.className="microcycle-color-select";
-    select.setAttribute("aria-label",type+" "+scenarioLabel+" "+names[meal]);
+    select.setAttribute("aria-label",type+" · "+scenarioLabel+" · "+(names[meal]||meal));
     const defaultOption=document.createElement("option");defaultOption.value="";
     defaultOption.textContent="Igual ao High"+(base?" · "+(colors[base]||base):" · sem refeição");
     select.append(defaultOption);
     for(const color of model.colors){
-     const option=document.createElement("option");option.value=color;option.textContent=colors[color]||color;select.append(option);
+     const option=document.createElement("option");option.value=color;option.textContent=colors[color]||color;
+     select.append(option);
     }
     select.value=savedColor;select.dataset.color=savedColor||base||"none";
+    shell.dataset.color=select.dataset.color;
+    const chevron=document.createElement("span");chevron.className="scenario-select-chevron";
+    chevron.setAttribute("aria-hidden","true");
+    chevron.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+    shell.append(select,chevron);
     select.addEventListener("change",async()=>{
      const next=select.value||null;select.disabled=true;
      try{
@@ -526,17 +544,19 @@ function renderScenarioEditor(){
       if(next)scenarioCells.push({classification:type,scenario,meal,color:next});
       savedColor=next||"";
       select.dataset.color=savedColor||base||"none";
-      $("scenario-feedback").textContent="Guardado: "+type+" · "+scenarioLabel+" · "+names[meal]+". A prescrição atual não foi alterada.";
+      shell.dataset.color=select.dataset.color;
+      $("scenario-feedback").textContent="Guardado: "+type+" · "+scenarioLabel+" · "+(names[meal]||meal)+". A prescrição atual não foi alterada.";
      }catch(error){
       select.value=savedColor;select.dataset.color=savedColor||base||"none";
+      shell.dataset.color=select.dataset.color;
       if(model?.athlete?.id===athleteId)$("scenario-feedback").textContent="Não foi possível guardar: "+error.message;
      }finally{select.disabled=false;}
     });
-    td.append(select);tr.append(td);
+    cell.append(mobileLabel,shell);row.append(cell);
    }
-   tbody.append(tr);
+   content.append(row);
   }
-  table.append(tbody);scroller.append(table);group.append(scroller);target.append(group);
+  group.append(content);target.append(group);
  }
 }
 /* Model editor: desktop rows as quiet subcards, mobile native accordions.
