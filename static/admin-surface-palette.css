@@ -7503,3 +7503,198 @@ html[data-admin-theme] #tm-recipe-library-page :is(#recipe-reader-panel,#recipe-
   padding:17px!important;max-height:calc(100dvh - 20px)!important;
  }
 }
+
+/* Biblioteca polish: one visual system shared with Alimentos. */
+/* Supplement catalogue: keep original read/write implementation but use its own modal. */
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar #supp-library-new{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:13px!important;
+ font:500 13px/1.3 "Inter Tight",sans-serif!important;
+ min-height:44px!important;padding:12px 18px!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar #supp-library-new:hover{background:var(--tm-ui-hover)!important}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel{
+ background:var(--tm-ui-card)!important;padding:16px!important;
+ border-radius:16px!important;border:0!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel label{
+ display:block!important;padding:0!important;margin:0!important;background:transparent!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel #supp-library-search{
+ display:block!important;width:100%!important;height:67px!important;min-height:67px!important;
+ padding:16px!important;border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:500 15px/1.3 "Inter Tight",sans-serif!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button{
+ background:var(--tm-action-icon-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-secondary-fg,var(--tm-ui-text))!important;
+ border:0!important;width:36px!important;height:36px!important;
+ min-width:36px!important;padding:0!important;border-radius:11px!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions .tm-supp-library-remove{
+ background:rgba(170,54,73,.14)!important;color:#cf7180!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-table-actions button svg{
+ display:block;width:18px;height:18px;pointer-events:none;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog:not([open]){
+ display:none!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog[open]{
+ position:fixed!important;inset:0!important;box-sizing:border-box!important;
+ display:block!important;width:min(750px,calc(100vw - 28px))!important;
+ max-width:750px!important;max-height:calc(100dvh - 32px)!important;
+ margin:auto!important;padding:25px!important;overflow-y:auto!important;
+ border:0!important;border-radius:20px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ box-shadow:0 20px 80px rgba(0,0,0,.35)!important;
+ font-family:"Inter Tight",system-ui,sans-serif!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog::backdrop{
+ background:rgba(0,0,0,.72)!important;backdrop-filter:blur(3px);
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor{
+ display:block!important;position:static!important;margin:0!important;
+ padding:0!important;box-shadow:none!important;border:0!important;
+ border-radius:0!important;background:transparent!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>summary{
+ list-style:none!important;padding:0 0 22px!important;
+ font:600 23px/1.25 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;cursor:default!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>summary::-webkit-details-marker{display:none}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body{
+ padding:0!important;display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body>label{
+ display:flex!important;flex-direction:column!important;gap:6px!important;
+ min-height:82px!important;padding:13px 15px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+ font:500 12px/1.3 "Inter Tight",sans-serif!important;
+ box-sizing:border-box!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body>label:has(textarea),
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body>.supp-prescription-library{
+ grid-column:1/-1;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body>label :is(input,select,textarea){
+ display:block!important;box-sizing:border-box!important;width:100%!important;
+ height:34px!important;min-height:34px!important;
+ padding:3px 0!important;margin:0!important;border:0!important;
+ border-radius:0!important;background:transparent!important;
+ color:var(--tm-ui-text)!important;box-shadow:none!important;
+ font:500 15px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body>label textarea{
+ height:52px!important;resize:vertical!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions{
+ grid-column:1/-1;display:flex!important;justify-content:flex-end!important;
+ gap:10px!important;padding-top:12px!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions button{
+ border:0!important;border-radius:12px!important;min-height:44px!important;
+ padding:10px 18px!important;font:500 14px/1.2 "Inter Tight",sans-serif!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save{
+ background:var(--tm-action-main-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-main-fg,var(--tm-ui-text))!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-lib-feedback{grid-column:1/-1}
+@media(max-width:620px){
+ html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog[open]{padding:18px!important}
+ html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-dialog #supp-library-editor>.supp-workflow-body{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+}
+/* Pratos: four full-width 2-line input rows, same geometry as the food editor. */
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel.tm-dish-popup:not([hidden]){
+ width:min(620px,calc(100vw - 28px))!important;padding:28px!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-new{
+ display:flex!important;flex-direction:column!important;gap:12px!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-new>label{
+ display:flex!important;flex-direction:column!important;gap:8px!important;
+ width:100%!important;min-width:0!important;padding:13px 16px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;box-shadow:none!important;
+ box-sizing:border-box!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-new>label .tm-dish-caption{
+ display:block!important;color:var(--tm-ui-muted)!important;
+ font:500 12px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-new>label :is(input,select){
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ height:35px!important;min-height:35px!important;margin:0!important;
+ padding:0!important;background:transparent!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;border-radius:0!important;
+ font:500 15px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-new>label.dish-photo-label .dish-photo-dropzone{
+ box-sizing:border-box!important;min-height:74px!important;width:100%!important;
+ border:1px dashed var(--tm-ui-divider)!important;border-radius:12px!important;
+ background:transparent!important;color:var(--tm-ui-muted)!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ gap:12px!important;padding:12px!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-form-actions{
+ width:100%!important;display:flex!important;justify-content:flex-end!important;
+ flex-wrap:wrap!important;gap:10px!important;margin:10px 0 0!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-form-actions button{
+ min-height:44px!important;border:0!important;border-radius:12px!important;
+ padding:10px 18px!important;background:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;font:500 14px/1.2 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel .dish-form-actions .dish-add-save{
+ background:var(--tm-action-main-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-main-fg,var(--tm-ui-text))!important;
+}
+/* Culinary lists: subtler hairline rows, preserving row click/focus. */
+html[data-admin-theme] #tm-menu-recipes-page .dish-library-table tbody td,
+html[data-admin-theme] #tm-recipe-library-page .recipe-table tbody td{
+ border-bottom:1px solid color-mix(in srgb,var(--tm-ui-divider) 38%,transparent)!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page .dish-library-table tbody tr:last-child td,
+html[data-admin-theme] #tm-recipe-library-page .recipe-table tbody tr:last-child td{
+ border-bottom:0!important;
+}
+/* Receita editor: match Alimentos' filled two-line fields, preserve ingredient controls. */
+html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-grid{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;
+}
+html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-grid>label{
+ display:flex!important;flex-direction:column!important;gap:7px!important;
+ padding:12px 15px!important;border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-muted)!important;
+ font:500 12px/1.3 "Inter Tight",sans-serif!important;box-sizing:border-box!important;
+}
+html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-grid>label :is(input,select){
+ display:block!important;width:100%!important;min-height:34px!important;height:34px!important;
+ padding:0!important;margin:0!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;border-radius:0!important;
+ color:var(--tm-ui-text)!important;font:500 15px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-grid .recipe-wide{
+ grid-column:1/-1!important;
+}
+html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-title h3{
+ font:600 23px/1.2 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-actions button{
+ border-radius:12px!important;
+}
+@media(max-width:620px){
+ html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel.tm-dish-popup:not([hidden]){padding:18px!important}
+ html[data-admin-theme] #tm-recipe-library-page #recipe-editor-panel .recipe-editor-grid{
+  grid-template-columns:1fr!important;
+ }
+}
