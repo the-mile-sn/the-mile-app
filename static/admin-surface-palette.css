@@ -7154,6 +7154,9 @@ html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .tm-menu-meal-fi
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
  outline-offset:2px!important;
 }
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .tm-menu-meal-fields .menu-combobox>textarea.tm-menu-dish-query[hidden]{
+ display:none!important;
+}
 /* Keep the close icon anchored to the first line rather than the middle of
    a taller textarea. Existing custom button still clears the selection only
    after a deliberate click. */
