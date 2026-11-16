@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'the-mile-shell-v121-test-calendar';
+const CACHE = 'the-mile-shell-v122-admin-network-only';
 const SHELL = ['/', '/style.css?v=145', '/app.js?v=150', '/logo.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/pdf-open.html', '/pdf-open.css', '/pdf-open.js'];
 
 self.addEventListener('install', event => {
@@ -19,6 +19,9 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  // Admin assets must never use the player's offline/cache-first strategy.
+  // In particular, the Registos JS/CSS were previously served stale on the custom domain.
+  if (url.pathname.startsWith('/admin-') || url.pathname.startsWith('/admin/') || url.pathname === '/admin-microcycles') return;
 
   const networkFirst = request.mode === 'navigate' || ['/app.js','/style.css','/sw.js','/manifest.webmanifest','/admin-microcycles.js','/admin-microcycles.css'].includes(url.pathname);
   if (networkFirst) {
