@@ -8796,3 +8796,9 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-cat
  font-size:11px!important;font-weight:500!important;line-height:1.3!important;
  letter-spacing:normal!important;
 }
+
+#tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge{
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ font-size:11px!important;font-weight:500!important;line-height:1.3!important;
+ letter-spacing:normal!important;
+}
