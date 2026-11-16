@@ -6,7 +6,7 @@ const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 
 test("weekly overview has seven columns and equal-height lunch and dinner rows",()=>{
  assert.match(css,/\.tm-menu-week-table\{[\s\S]*?grid-template-columns:repeat\(7,minmax\(0,1fr\)\)!important/);
- assert.match(css,/grid-template-rows:auto repeat\(2,minmax\(215px,1fr\)\)!important/);
+ assert.match(css,/grid-template-rows:auto repeat\(2,minmax\(265px,1fr\)\)!important/);
  assert.match(css,/\.tm-menu-week-table :is\(thead,tbody,tr\)\{\s*display:contents!important/);
  assert.match(css,/\.tm-menu-week-cell\{[\s\S]*?height:100%!important/);
  assert.match(css,/\.tm-menu-week-name>span:last-child\{\s*display:block;overflow-wrap:anywhere;white-space:normal/);
@@ -18,6 +18,10 @@ test("weekly cards show muted meal labels and visible nutritional color squares"
  assert.match(css,/\.tm-menu-week-meal-label\{[\s\S]*?color:var\(--tm-ui-muted\)!important/);
  assert.match(css,/\.tm-menu-week-color-badge\{[\s\S]*?width:19px;height:19px/);
  assert.doesNotMatch(js,/dot\.className="tm-menu-week-dot"/);
+ assert.match(js,/button\.classList\.add\("tm-menu-week-no-photo"\)/);
+ assert.doesNotMatch(js,/className="tm-menu-week-placeholder"/);
+ assert.match(css,/padding:19px 17px 21px!important/);
+ assert.match(css,/\.tm-menu-week-cell\.tm-menu-week-no-photo\{/);
 });
 
 test("day editor moves unchanged native controls into a left column and image to the right",()=>{
@@ -32,14 +36,18 @@ test("day editor moves unchanged native controls into a left column and image to
 test("day dish-search uses one reliably positioned clear button without native Safari cross",()=>{
  assert.match(js,/clearDishSearch\.className="tm-menu-dish-search-clear"/);
  assert.match(js,/clearDishSearch\.addEventListener\("click",/);
- assert.match(js,/const updateClearDishSearch=\(\)=>\{clearDishSearch\.hidden=!dishSearch\.value;\}/);
+ assert.match(js,/const updateClearDishSearch=\(\)=>\{/);
+ assert.match(js,/const dishSearch=document\.createElement\("textarea"\)/);
+ assert.match(js,/Math\.max\(66,dishSearch\.scrollHeight\|\|66\)/);
+ assert.match(css,/\.menu-combobox>textarea\.tm-menu-dish-query\{/);
+ assert.match(css,/\.tm-menu-meal-fields>select\{\s*min-height:52px!important/);
  assert.match(css,/\.menu-combobox>input\[type="search"\]::-webkit-search-cancel-button/);
  assert.match(css,/\.menu-combobox>\.tm-menu-dish-search-clear\{/);
  assert.match(css,/\.tm-menu-dish-search-clear\[hidden\]\{\s*display:none!important/);
 });
 
 test("week and day assets are cache-bumped",()=>{
- assert.match(html,/admin-microcycles\.js\?v=18319/);
- assert.match(html,/admin-surface-palette\.css\?v=97/);
+ assert.match(html,/admin-microcycles\.js\?v=18320/);
+ assert.match(html,/admin-surface-palette\.css\?v=98/);
  assert.doesNotThrow(()=>new Function(js));
 });
