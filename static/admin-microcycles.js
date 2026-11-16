@@ -1221,7 +1221,10 @@ function resetMenusForAthlete(athleteId){
  menuLastUseCache.clear();
  $("menu-history-list").replaceChildren();
  menuHistoryPages=[null];menuHistoryPage=0;++menuHistoryToken;
+ if(menuHistoryTimer!==null){clearTimeout(menuHistoryTimer);menuHistoryTimer=null;}
  $("menu-history-search").value="";
+ $("menu-history-prev").disabled=true;$("menu-history-next").disabled=true;
+ $("menu-history-page").textContent="Página 1";
 }
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 // Single source of truth for menu meal colors, identical on mobile and desktop.
