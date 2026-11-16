@@ -159,6 +159,9 @@ class MenuDishIdTests(unittest.TestCase):
         self.assertEqual(next_page["days"][0]["dinner"],"Outra receita")
         self.assertFalse(next_page["has_more"])
         self.assertEqual(menus.list_menu_history(self.c,"a1",query="Absent")["days"],[])
+        # Search is for complete dishes, never for generic menu categories.
+        menus.save_menu(self.c,"a1",earlier,"dinner","category","Carne branca")
+        self.assertEqual(menus.list_menu_history(self.c,"a1",query="Carne branca")["days"],[])
         with self.assertRaises(ValueError):
             menus.list_menu_history(self.c,"a1",query="x"*91)
 
