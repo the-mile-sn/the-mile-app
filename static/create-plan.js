@@ -503,11 +503,37 @@ const renderPlanLibrary=()=>{
 /* Whole desktop rows and mobile cards open the read-only plan preview.
    Editor/delete buttons remain independent and never bubble into navigation. */
 let previewOpening=false;
-async function openPlanPreview(id){
+let planLibraryReturnPoint=null;
+function rememberPlanLibraryPosition(id,source){
+ const card=source?.closest?.("[data-plan-open-id]")||document.querySelector('[data-plan-open-id="'+CSS.escape(String(id))+'"]');
+ planLibraryReturnPoint={
+  id:String(id),
+  top:window.scrollY,
+  offset:card?.getBoundingClientRect().top??null
+ };
+}
+function restorePlanLibraryPosition(){
+ const saved=planLibraryReturnPoint;
+ if(!saved)return;
+ planLibraryReturnPoint=null;
+ // The list was hidden while viewing the preview; wait for its final layout.
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const visible=[...document.querySelectorAll("[data-plan-open-id]")].find(el=>
+   el.dataset.planOpenId===saved.id&&el.getClientRects().length>0
+  );
+  if(visible&&saved.offset!==null){
+   window.scrollTo({top:Math.max(0,window.scrollY+visible.getBoundingClientRect().top-saved.offset),behavior:"instant"});
+  }else{
+   window.scrollTo({top:saved.top,behavior:"instant"});
+  }
+ }));
+}
+async function openPlanPreview(id,source){
  if(previewOpening||!id)return;
+ rememberPlanLibraryPosition(id,source);
  previewOpening=true;
  try{await loadExistingPlan(id);renderPlanPreview();showEntry("preview")}
- catch(err){status("Não foi possível visualizar o plano: "+err.message)}
+ catch(err){planLibraryReturnPoint=null;status("Não foi possível visualizar o plano: "+err.message)}
  finally{previewOpening=false}
 }
 for(const rootId of ["library-plan-rows","library-plan-cards"]){
@@ -537,13 +563,13 @@ for(const rootId of ["library-plan-rows","library-plan-cards"]){
  root.addEventListener("click",event=>{
   if(event.target.closest("button,a,input,select,textarea,[role=button]"))return;
   const item=event.target.closest("[data-plan-open-id]");
-  if(item&&root.contains(item))openPlanPreview(item.dataset.planOpenId);
+  if(item&&root.contains(item))openPlanPreview(item.dataset.planOpenId,item);
  });
  root.addEventListener("keydown",event=>{
   if(event.key!=="Enter"&&event.key!==" ")return;
   const item=event.target.closest("[data-plan-open-id]");
   if(!item||event.target!==item||!root.contains(item))return;
-  event.preventDefault();openPlanPreview(item.dataset.planOpenId);
+  event.preventDefault();openPlanPreview(item.dataset.planOpenId,item);
  });
 }
 const populatePlanLibrary=()=>{
@@ -560,7 +586,9 @@ const syncPlanSelectors=()=>{$("plan-player").value=players.find(p=>p.athlete_id
 const returnToPlanLibrary=()=>{
  if(saveBusy||publishBusy){alert("Existe uma operação de guardar ou publicar em curso. Aguarda a conclusão antes de voltar.");return false;}
  if(!$("plan-editor").hidden&&planIsDirty()&&!confirm("Existem alterações por guardar. Voltar à lista de planos sem as guardar?"))return false;
- showEntry("entry");return true;
+ showEntry("entry");
+ restorePlanLibraryPosition();
+ return true;
 };
 if(nativeRoot)window.tmReturnToPlanLibrary=returnToPlanLibrary;
 $("back-from-search").onclick=returnToPlanLibrary;
