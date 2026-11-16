@@ -4677,6 +4677,10 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
  html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading{
   padding:3px 2px 5px!important;
  }
+ /* Every scenario has three intervals, so omit the repeated count on mobile. */
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-hint{
+  display:none!important;
+ }
  html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-content{
   gap:9px!important;margin-top:10px;
  }
