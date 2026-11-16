@@ -521,7 +521,7 @@ function renderScenarioEditor(){
     let savedColor=current?.color||"";
     select.setAttribute("aria-label",type+" · "+scenarioLabel+" · "+(names[meal]||meal));
     const defaultOption=document.createElement("option");defaultOption.value="";
-    defaultOption.textContent="Igual ao High"+(base?" · "+(colors[base]||base):" · sem refeição");
+    defaultOption.textContent="Igual ao modelo"+(base?" · "+(colors[base]||base):" · sem refeição");
     select.append(defaultOption);
     for(const color of model.colors){
      const option=document.createElement("option");option.value=color;option.textContent=colors[color]||color;
