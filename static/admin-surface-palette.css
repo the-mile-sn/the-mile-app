@@ -7895,3 +7895,8 @@ html[data-admin-theme] body #tm-recipe-library-page #recipe-editor-panel .recipe
 html[data-admin-theme] body #tm-recipe-library-page #recipe-reader-panel .recipe-reader-navigation .tm-library-modal-x{
  margin:0!important;
 }
+
+/* Library page origin: Food Library must start at the same top edge as Supplements. */
+html[data-admin-theme] body #admin-workspace #tm-food-library-page{
+ padding-top:0!important;
+}
