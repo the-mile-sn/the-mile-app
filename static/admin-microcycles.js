@@ -1073,52 +1073,71 @@ let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 let menusAthleteId=null,menusLoadRevision=0;
 let menuDisplayMode="day",menuLastUseCache=new Map();
 const menuSaveJobs=new Set(),menuDraftFlushers=new Set();
-let menuHistoryCursor=null,menuHistoryLoading=false;
-// A single editor produces both layouts; the week grid only navigates to it.
-function setMenuDisplayMode(mode){
- menuDisplayMode=mode==="week"?"week":"day";
- const daily=menuDisplayMode==="day";
- $("menu-grid").hidden=!daily;$("menu-weekly").hidden=daily;
- $("menu-view-day").setAttribute("aria-pressed",String(daily));
- $("menu-view-week").setAttribute("aria-pressed",String(!daily));
-}
-function formatMenuWeek(start,finish){
- const months=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
- return start.getMonth()===finish.getMonth()&&start.getFullYear()===finish.getFullYear()?
- start.getDate()+"–"+finish.getDate()+" "+months[start.getMonth()]+" "+start.getFullYear():
- start.getDate()+" "+months[start.getMonth()]+" – "+finish.getDate()+" "+months[finish.getMonth()]+" "+finish.getFullYear();
-}
+let menuHistoryPages=[null],menuHistoryPage=0,menuHistoryToken=0,menuHistoryTimer=null;
+const menuHistoryPageSize=12;
+// A fresh query is executed by the server for each page; no bulk history
+// download or client-side filtering of undisplayed menu rows.
 async function loadMenuHistory(reset=true){
- const details=$("menu-history");if(!details.open||menuHistoryLoading||!model?.athlete?.id)return;
- const aid=model.athlete.id;
- if(reset){menuHistoryCursor=null;$("menu-history-list").replaceChildren();}
- menuHistoryLoading=true;
- const feedback=$("menu-history-feedback");feedback.textContent="A consultar histórico…";
+ const details=$("menu-history");if(!details.open||!model?.athlete?.id)return;
+ const athleteId=model.athlete.id;
+ if(reset){menuHistoryPages=[null];menuHistoryPage=0;}
+ const currentPage=menuHistoryPage,token=++menuHistoryToken;
+ const feedback=$("menu-history-feedback");
+ feedback.textContent="A consultar histórico…";
+ const search=$("menu-history-search").value.trim();
+ const cursor=menuHistoryPages[currentPage]||null;
+ const params=new URLSearchParams({limit:String(menuHistoryPageSize)});
+ if(search)params.set("q",search);
+ if(cursor)params.set("before",cursor);
+ $("menu-history-prev").disabled=true;$("menu-history-next").disabled=true;
  try{
-  const before=menuHistoryCursor?"&before="+encodeURIComponent(menuHistoryCursor):"";
-  const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/menus/history?limit=50"+before);
-  if(model?.athlete?.id!==aid)return;
+  const data=await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/menus/history?"+params.toString());
+  if(token!==menuHistoryToken||model?.athlete?.id!==athleteId||!details.open)return;
+  const tbody=$("menu-history-list");tbody.replaceChildren();
   for(const entry of data.days||[]){
    const tr=document.createElement("tr");
    const dateCell=document.createElement("th");dateCell.scope="row";
    const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(entry.date);
    dateCell.textContent=match?match[3]+"/"+match[2]+"/"+match[1]:entry.date;
-   tr.append(dateCell);
+   const type=document.createElement("td");type.className="tm-menu-history-classification";
+   type.textContent=entry.classification||"—";
+   tr.append(dateCell,type);
    for(const field of ["lunch","dinner"]){
     const td=document.createElement("td");td.textContent=entry[field]||"—";
     if(!entry[field])td.className="is-empty";
     tr.append(td);
    }
-   $("menu-history-list").append(tr);
+   tbody.append(tr);
   }
-  menuHistoryCursor=(data.days||[]).at(-1)?.date||null;
-  $("menu-history-more").hidden=!data.has_more||!menuHistoryCursor;
-  feedback.textContent=$("menu-history-list").children.length?"":"Sem menus anteriores registados.";
- }catch(error){if(model?.athlete?.id===aid)feedback.textContent="Não foi possível consultar o histórico: "+error.message;}
- finally{menuHistoryLoading=false;}
+  if(data.has_more&&data.days?.length){
+   menuHistoryPages[currentPage+1]=data.days.at(-1).date;
+  }else menuHistoryPages.length=currentPage+1;
+  $("menu-history-prev").disabled=currentPage===0;
+  $("menu-history-next").disabled=!data.has_more;
+  $("menu-history-page").textContent="Página "+(currentPage+1);
+  feedback.textContent=(data.days||[]).length?"":search?"Nenhum prato encontrado neste histórico.":"Sem menus anteriores registados.";
+ }catch(error){
+  if(token!==menuHistoryToken||model?.athlete?.id!==athleteId)return;
+  feedback.textContent="Não foi possível consultar o histórico: "+error.message;
+  $("menu-history-prev").disabled=currentPage===0;
+ }
 }
-$("menu-history").addEventListener("toggle",()=>{if($("menu-history").open)loadMenuHistory(true);});
-$("menu-history-more").addEventListener("click",()=>loadMenuHistory(false));
+$("menu-history").addEventListener("toggle",()=>{
+ if($("menu-history").open)loadMenuHistory(true);
+ else ++menuHistoryToken;
+});
+$("menu-history-search").addEventListener("input",()=>{
+ if(menuHistoryTimer!==null)clearTimeout(menuHistoryTimer);
+ menuHistoryTimer=setTimeout(()=>{menuHistoryTimer=null;loadMenuHistory(true);},300);
+});
+$("menu-history-prev").addEventListener("click",()=>{
+ if(menuHistoryPage>0){--menuHistoryPage;loadMenuHistory(false);}
+});
+$("menu-history-next").addEventListener("click",()=>{
+ if(!$("menu-history-next").disabled&&menuHistoryPages[menuHistoryPage+1]){
+  ++menuHistoryPage;loadMenuHistory(false);
+ }
+});
 $("menu-view-day").addEventListener("click",()=>setMenuDisplayMode("day"));
 $("menu-view-week").addEventListener("click",()=>{
  for(const flush of [...menuDraftFlushers])flush();
@@ -1128,7 +1147,7 @@ function renderMenuWeekGrid(menus,calendarData,start){
  const target=$("menu-weekly");target.replaceChildren();
  const table=document.createElement("table");table.className="tm-menu-week-table";
  const thead=document.createElement("thead"),headRow=document.createElement("tr");
- const corner=document.createElement("th");corner.scope="col";corner.textContent="Refeição";headRow.append(corner);
+
  const days=[];
  for(let i=0;i<7;i++){
   const day=new Date(start);day.setDate(start.getDate()+i);
@@ -1143,16 +1162,19 @@ function renderMenuWeekGrid(menus,calendarData,start){
  thead.append(headRow);table.append(thead);
  const tbody=document.createElement("tbody");
  for(const [meal,mealName] of [["lunch","Almoço"],["dinner","Jantar"]]){
-  const tr=document.createElement("tr"),title=document.createElement("th");title.scope="row";title.textContent=mealName;tr.append(title);
+  const tr=document.createElement("tr");
   for(const d of days){
    const item=menus.find(m=>m.menu_date===d.date&&m.meal===meal);
    const color=effectiveMenuMealColor(d.date,d.classification,meal,calendarData);
    const td=document.createElement("td");const button=document.createElement("button");button.type="button";
    button.className="tm-menu-week-cell"+(item?" is-saved":" is-empty");
    button.setAttribute("aria-label",mealName+" · "+d.date+" · "+(item?.value||"Por definir"));
+   const mealHeading=document.createElement("span");mealHeading.className="tm-menu-week-meal-label";
+   mealHeading.textContent=mealName;button.append(mealHeading);
    if(item?.kind==="dish"&&item.dish_id){
     const img=document.createElement("img");img.alt="";img.loading="lazy";
-    img.src="/api/v2/dishes/image/"+encodeURIComponent(item.dish_id);button.append(img);
+    img.decoding="async";img.fetchPriority="low";
+    img.src="/api/v2/dishes/image/"+encodeURIComponent(item.dish_id)+"?thumb=1&menu=1";button.append(img);
    }else{
     const placeholder=document.createElement("span");placeholder.className="tm-menu-week-placeholder";
     placeholder.setAttribute("aria-hidden","true");button.append(placeholder);
@@ -1198,7 +1220,8 @@ function resetMenusForAthlete(athleteId){
  $("menu-save-feedback").textContent="";
  menuLastUseCache.clear();
  $("menu-history-list").replaceChildren();
- menuHistoryCursor=null;
+ menuHistoryPages=[null];menuHistoryPage=0;++menuHistoryToken;
+ $("menu-history-search").value="";
 }
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 // Single source of truth for menu meal colors, identical on mobile and desktop.
@@ -1309,7 +1332,7 @@ async function loadMenus(){
         }
        }catch(e){lastUseNote.hidden=true;}
       };
-      const updatePreview=()=>{const item=dishLibrary.find(x=>x.id===chosenDishId);preview.hidden=!item;if(item)preview.src="/api/v2/dishes/image/"+encodeURIComponent(item.id);};
+      const updatePreview=()=>{const item=dishLibrary.find(x=>x.id===chosenDishId);preview.hidden=!item;if(item)preview.src="/api/v2/dishes/image/"+encodeURIComponent(item.id)+"?thumb=1&menu=1";};
       const pickDish=item=>{chosenDishId=item.id;dishSearch.value=item.name_pt;closeSuggestions();updatePreview();showLastUse();queue();};
       const showSuggestions=()=>{
         suggestions.replaceChildren();
