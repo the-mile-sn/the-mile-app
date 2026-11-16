@@ -141,11 +141,7 @@
    const remove=button("",()=>deleteRecipe(r),"recipe-icon-button recipe-delete");
    remove.append(recipeListIcon("trash"));
    remove.title="Eliminar";remove.setAttribute("aria-label","Eliminar receita "+r.name);
-   const publish=button("",()=>publishFromList(r),"recipe-icon-button recipe-publish-action");
-   publish.append(recipeListIcon(r.status==="published"?"check":"upload"));
-   publish.title=r.status==="published"?"Publicada — voltar a rascunho":"Publicar receita";
-   publish.setAttribute("aria-label",publish.title+": "+r.name);
-   actions.append(edit,publish,remove);
+   actions.append(edit,remove);
    tr.tabIndex=0;tr.classList.add("tm-recipe-clickable-row");
    tr.setAttribute("aria-label","Ver receita "+r.name);
    tr.addEventListener("click",event=>{if(!event.target.closest("button,a,input,select,textarea"))openReadRecipe(r.id);});
