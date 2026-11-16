@@ -1071,6 +1071,115 @@ $("save-athlete-profile").addEventListener("click",async()=>{
 let selectedNutritionWeek=null,periByDay={},dayColorOverrides={},effectiveAdminColorsByDay={};
 let backofficeView="calendar",menuWeek=new Date(),menuLookup={},dishLibrary=[];
 let menusAthleteId=null,menusLoadRevision=0;
+let menuDisplayMode="day",menuLastUseCache=new Map();
+const menuSaveJobs=new Set(),menuDraftFlushers=new Set();
+let menuHistoryCursor=null,menuHistoryLoading=false;
+// A single editor produces both layouts; the week grid only navigates to it.
+function setMenuDisplayMode(mode){
+ menuDisplayMode=mode==="week"?"week":"day";
+ const daily=menuDisplayMode==="day";
+ $("menu-grid").hidden=!daily;$("menu-weekly").hidden=daily;
+ $("menu-view-day").setAttribute("aria-pressed",String(daily));
+ $("menu-view-week").setAttribute("aria-pressed",String(!daily));
+}
+function formatMenuWeek(start,finish){
+ const months=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+ return start.getMonth()===finish.getMonth()&&start.getFullYear()===finish.getFullYear()?
+ start.getDate()+"–"+finish.getDate()+" "+months[start.getMonth()]+" "+start.getFullYear():
+ start.getDate()+" "+months[start.getMonth()]+" – "+finish.getDate()+" "+months[finish.getMonth()]+" "+finish.getFullYear();
+}
+async function loadMenuHistory(reset=true){
+ const details=$("menu-history");if(!details.open||menuHistoryLoading||!model?.athlete?.id)return;
+ const aid=model.athlete.id;
+ if(reset){menuHistoryCursor=null;$("menu-history-list").replaceChildren();}
+ menuHistoryLoading=true;
+ const feedback=$("menu-history-feedback");feedback.textContent="A consultar histórico…";
+ try{
+  const before=menuHistoryCursor?"&before="+encodeURIComponent(menuHistoryCursor):"";
+  const data=await request("/api/v2/athletes/"+encodeURIComponent(aid)+"/menus/history?limit=50"+before);
+  if(model?.athlete?.id!==aid)return;
+  for(const entry of data.days||[]){
+   const tr=document.createElement("tr");
+   const dateCell=document.createElement("th");dateCell.scope="row";
+   const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(entry.date);
+   dateCell.textContent=match?match[3]+"/"+match[2]+"/"+match[1]:entry.date;
+   tr.append(dateCell);
+   for(const field of ["lunch","dinner"]){
+    const td=document.createElement("td");td.textContent=entry[field]||"—";
+    if(!entry[field])td.className="is-empty";
+    tr.append(td);
+   }
+   $("menu-history-list").append(tr);
+  }
+  menuHistoryCursor=(data.days||[]).at(-1)?.date||null;
+  $("menu-history-more").hidden=!data.has_more||!menuHistoryCursor;
+  feedback.textContent=$("menu-history-list").children.length?"":"Sem menus anteriores registados.";
+ }catch(error){if(model?.athlete?.id===aid)feedback.textContent="Não foi possível consultar o histórico: "+error.message;}
+ finally{menuHistoryLoading=false;}
+}
+$("menu-history").addEventListener("toggle",()=>{if($("menu-history").open)loadMenuHistory(true);});
+$("menu-history-more").addEventListener("click",()=>loadMenuHistory(false));
+$("menu-view-day").addEventListener("click",()=>setMenuDisplayMode("day"));
+$("menu-view-week").addEventListener("click",()=>{
+ for(const flush of [...menuDraftFlushers])flush();
+ setMenuDisplayMode("week");
+});
+function renderMenuWeekGrid(menus,calendarData,start){
+ const target=$("menu-weekly");target.replaceChildren();
+ const table=document.createElement("table");table.className="tm-menu-week-table";
+ const thead=document.createElement("thead"),headRow=document.createElement("tr");
+ const corner=document.createElement("th");corner.scope="col";corner.textContent="Refeição";headRow.append(corner);
+ const days=[];
+ for(let i=0;i<7;i++){
+  const day=new Date(start);day.setDate(start.getDate()+i);
+  const date=isoDay(day),weekday=["Dom.","Seg.","Ter.","Qua.","Qui.","Sex.","Sáb."][day.getDay()];
+  const classification=calendarData.days.find(x=>x.date===date)?.classification||"Geral";
+  days.push({date,weekday,day:day.getDate(),classification});
+  const th=document.createElement("th");th.scope="col";th.innerHTML="";
+  const label=document.createElement("span");label.textContent=weekday+" "+day.getDate();
+  const md=document.createElement("small");md.textContent=classification;
+  th.append(label,md);headRow.append(th);
+ }
+ thead.append(headRow);table.append(thead);
+ const tbody=document.createElement("tbody");
+ for(const [meal,mealName] of [["lunch","Almoço"],["dinner","Jantar"]]){
+  const tr=document.createElement("tr"),title=document.createElement("th");title.scope="row";title.textContent=mealName;tr.append(title);
+  for(const d of days){
+   const item=menus.find(m=>m.menu_date===d.date&&m.meal===meal);
+   const color=effectiveMenuMealColor(d.date,d.classification,meal,calendarData);
+   const td=document.createElement("td");const button=document.createElement("button");button.type="button";
+   button.className="tm-menu-week-cell"+(item?" is-saved":" is-empty");
+   button.setAttribute("aria-label",mealName+" · "+d.date+" · "+(item?.value||"Por definir"));
+   if(item?.kind==="dish"&&item.dish_id){
+    const img=document.createElement("img");img.alt="";img.loading="lazy";
+    img.src="/api/v2/dishes/image/"+encodeURIComponent(item.dish_id);button.append(img);
+   }else{
+    const placeholder=document.createElement("span");placeholder.className="tm-menu-week-placeholder";
+    placeholder.setAttribute("aria-hidden","true");button.append(placeholder);
+   }
+   const row=document.createElement("span");row.className="tm-menu-week-name";
+   if(color){const dot=document.createElement("span");dot.className="tm-menu-week-dot";dot.dataset.color=color;row.append(dot);}
+   const text=document.createElement("span");text.textContent=item?.value||"Por definir";row.append(text);
+   button.append(row);
+   button.addEventListener("click",()=>{
+    setMenuDisplayMode("day");
+    const card=[...$("menu-grid").querySelectorAll(".menu-day-card")].find(x=>x.dataset.date===d.date);
+    const target=card?.querySelector('.menu-meal-card[data-meal="'+meal+'"]');
+    if(target){
+     requestAnimationFrame(()=>{
+      target.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"});
+      target.classList.add("tm-menu-jump-highlight");
+      setTimeout(()=>target.classList.remove("tm-menu-jump-highlight"),1200);
+     });
+    }
+   });
+   td.append(button);tr.append(td);
+  }
+  tbody.append(tr);
+ }
+ table.append(tbody);target.append(table);
+}
+
 function resolveAdminMenuDish(existing,library){
  if(!existing||existing.kind!=="dish")return null;
  if(existing.dish_id)return library.find(item=>item.id===existing.dish_id)||null;
@@ -1087,6 +1196,9 @@ function resetMenusForAthlete(athleteId){
  $("menu-week").textContent="";
  const save=$("save-menu-week");save.disabled=true;save.onclick=null;
  $("menu-save-feedback").textContent="";
+ menuLastUseCache.clear();
+ $("menu-history-list").replaceChildren();
+ menuHistoryCursor=null;
 }
 function weekStart(date){const d=new Date(date);d.setHours(12,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d;}
 // Single source of truth for menu meal colors, identical on mobile and desktop.
@@ -1110,7 +1222,8 @@ async function loadMenus(){
   const root=$("menu-grid"),saveWeek=$("save-menu-week"),feedback=$("menu-save-feedback");
   root.replaceChildren();saveWeek.disabled=true;saveWeek.onclick=null;
   feedback.textContent="A carregar semana…";
-  $("menu-week").textContent=begin+" — "+end;
+  $("menu-week").textContent=formatMenuWeek(start,finish);
+  setMenuDisplayMode(menuDisplayMode);
   const data=await request(base+"/menus?start="+begin+"&end="+end);
   if(!stillCurrent())return;
   const dishes=await request("/api/v2/dishes");
@@ -1120,34 +1233,26 @@ async function loadMenus(){
   dishLibrary=dishes.dishes;
   renderDishEditor();refreshDishCategories();
   const calendar=calendarData.days;
-  const pending=new Map();
-  saveWeek.disabled=true;feedback.textContent="";
-  const mark=(key,entry)=>{if(!stillCurrent())return;pending.set(key,entry);saveWeek.disabled=false;feedback.textContent=pending.size+" refeição(ões) por guardar";};
-  saveWeek.onclick=async()=>{
-    if(!stillCurrent()||!pending.size)return;
-    saveWeek.disabled=true;feedback.textContent="A guardar a semana…";
-    try{
-      await request(base+"/menus/batch",{method:"PUT",body:JSON.stringify({items:[...pending.values()]})});
-      if(!stillCurrent())return;
-      await loadMenus();
-      if(menusAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&isoDay(weekStart(menuWeek))===begin){
-        feedback.textContent="Semana guardada com sucesso.";status("Menus da semana guardados.","success");
-      }
-    }catch(e){
-      if(menusAthleteId===athleteId&&$("athlete").value===athleteId&&model?.athlete?.id===athleteId&&isoDay(weekStart(menuWeek))===begin){
-        feedback.textContent="Erro ao guardar: "+e.message;saveWeek.disabled=false;
-      }
-    }
+  // Autosave replaces the old batch-save button. Each meal is independent
+  // and serialised so delayed text edits cannot overwrite newer selections.
+  saveWeek.disabled=true;saveWeek.hidden=true;
+  feedback.textContent="As alterações são guardadas automaticamente.";
+  const refreshSaved=(entry)=>{
+   const index=data.menus.findIndex(x=>x.menu_date===entry.menu_date&&x.meal===entry.meal);
+   if(index>=0)data.menus[index]=entry;else data.menus.push(entry);
+   renderMenuWeekGrid(data.menus,calendarData,start);
+   menuLastUseCache.clear();
+   if($("menu-history").open)loadMenuHistory(true);
   };
   for(let i=0;i<7;i++){
     const day=new Date(start);day.setDate(start.getDate()+i);const date=isoDay(day);
-    const section=document.createElement("section");section.className="menu-day-card";
+    const section=document.createElement("section");section.className="menu-day-card";section.dataset.date=date;
     const calendarDay=calendar.find(item=>item.date===date);
     const effectiveClassification=calendarDay?.classification||"Geral";
     const title=document.createElement("h3");title.className="menu-day-heading";const dateLabel=document.createElement("span");const weekday=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][day.getDay()];const month=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][day.getMonth()];dateLabel.textContent=`${weekday}, ${day.getDate()} ${month} ${day.getFullYear()}`;const mdLabel=document.createElement("span");mdLabel.className="menu-day-classification";mdLabel.textContent=effectiveClassification;title.append(dateLabel,mdLabel);section.appendChild(title);
     for(const meal of ["lunch","dinner"]){
       const existing=data.menus.find(x=>x.menu_date===date&&x.meal===meal);
-      const line=document.createElement("div");line.className="menu-meal-card";
+      const line=document.createElement("div");line.className="menu-meal-card";line.dataset.meal=meal;
       const heading=document.createElement("div");heading.className="menu-meal-heading";
       const assignedColor=effectiveMenuMealColor(date,effectiveClassification,meal,calendarData);
       const color=document.createElement("span");color.className="menu-color-label"+(assignedColor?" meal-"+assignedColor:"");color.textContent="";color.setAttribute("aria-label",assignedColor?(colors[assignedColor]||assignedColor):"Sem cor");color.title=color.getAttribute("aria-label");
@@ -1177,14 +1282,35 @@ async function loadMenus(){
       for(const name of libraryCategories){const opt=document.createElement("option");opt.value=name;opt.textContent=name;dishFilter.appendChild(opt);}
       dishFilter.value=selectedDish?.category||"";line.appendChild(dishFilter);
       const picker=document.createElement("div");picker.className="menu-combobox";line.appendChild(picker);
+      const lastUseNote=document.createElement("p");lastUseNote.className="menu-last-used-note";lastUseNote.hidden=true;line.append(lastUseNote);
       const dishSearch=document.createElement("input");dishSearch.type="search";dishSearch.className="menu-choice";dishSearch.placeholder="Pesquisar e selecionar prato…";dishSearch.autocomplete="off";dishSearch.setAttribute("role","combobox");dishSearch.setAttribute("aria-autocomplete","list");dishSearch.setAttribute("aria-expanded","false");picker.appendChild(dishSearch);
       const suggestions=document.createElement("div");suggestions.className="menu-suggestions";suggestions.setAttribute("role","listbox");suggestions.hidden=true;picker.appendChild(suggestions);
       let chosenDishId=selectedDish?.id||"";
       dishSearch.value=selectedDish?.name_pt||"";
       const candidates=()=>dishLibrary.filter(x=>(x.active||x.id===selectedDish?.id)&&(!dishFilter.value||x.category===dishFilter.value)&&(!dishSearch.value.trim()||x.name_pt.toLocaleLowerCase("pt-PT").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").includes(dishSearch.value.trim().toLocaleLowerCase("pt-PT").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")))).slice(0,30);
       const closeSuggestions=()=>{suggestions.hidden=true;dishSearch.setAttribute("aria-expanded","false");};
+      let lastUseVersion=0;
+      const showLastUse=async()=>{
+       const version=++lastUseVersion;
+       lastUseNote.hidden=true;lastUseNote.textContent="";
+       if(kind.value!=="dish"||!chosenDishId)return;
+       const id=chosenDishId,key=athleteId+"|"+date+"|"+id;
+       try{
+        let latest=menuLastUseCache.get(key);
+        if(latest===undefined){
+         const result=await request(base+"/menus/dish-last-used?dish_id="+encodeURIComponent(id)+"&before="+encodeURIComponent(date));
+         latest=result.last_used||null;menuLastUseCache.set(key,latest);
+        }
+        if(version!==lastUseVersion||chosenDishId!==id||kind.value!=="dish"||!stillCurrent())return;
+        if(latest){
+         const [y,m,d]=latest.split("-");
+         lastUseNote.textContent="Última vez no menu: "+d+"/"+m+"/"+y;
+         lastUseNote.hidden=false;
+        }
+       }catch(e){lastUseNote.hidden=true;}
+      };
       const updatePreview=()=>{const item=dishLibrary.find(x=>x.id===chosenDishId);preview.hidden=!item;if(item)preview.src="/api/v2/dishes/image/"+encodeURIComponent(item.id);};
-      const pickDish=item=>{chosenDishId=item.id;dishSearch.value=item.name_pt;closeSuggestions();updatePreview();queue();};
+      const pickDish=item=>{chosenDishId=item.id;dishSearch.value=item.name_pt;closeSuggestions();updatePreview();showLastUse();queue();};
       const showSuggestions=()=>{
         suggestions.replaceChildren();
         const items=candidates();
@@ -1197,32 +1323,73 @@ async function loadMenus(){
         suggestions.hidden=false;dishSearch.setAttribute("aria-expanded","true");
       };
       dishSearch.addEventListener("focus",showSuggestions);
-      dishSearch.addEventListener("input",()=>{chosenDishId="";updatePreview();showSuggestions();});
+      dishSearch.addEventListener("input",()=>{chosenDishId="";showLastUse();updatePreview();showSuggestions();});
       dishSearch.addEventListener("keydown",e=>{
         if(e.key==="Escape"){closeSuggestions();dishSearch.blur();}
         if(e.key==="Enter"&&!suggestions.hidden){e.preventDefault();const item=candidates()[0];if(item)pickDish(item);}
       });
       dishSearch.addEventListener("blur",()=>{setTimeout(closeSuggestions,120);});
-      dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";updatePreview();closeSuggestions();});
+      dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";showLastUse();updatePreview();closeSuggestions();});
       const preview=document.createElement("img");preview.alt="Fotografia do prato";preview.className="menu-dish-image";line.appendChild(preview);
       updatePreview();
-      const toggle=()=>{freeText.hidden=kind.value!=="text";category.hidden=kind.value!=="category";dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!chosenDishId;dish.hidden=true;closeSuggestions();};
+      const toggle=()=>{freeText.hidden=kind.value!=="text";category.hidden=kind.value!=="category";dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";dishFilter.hidden=kind.value!=="dish";preview.hidden=kind.value!=="dish"||!chosenDishId;dish.hidden=true;closeSuggestions();showLastUse();};
       kind.addEventListener("change",toggle);toggle();
+      const saveMessage=document.createElement("small");saveMessage.className="tm-menu-meal-feedback";saveMessage.setAttribute("role","status");line.append(saveMessage);
+      let saveSerial=Promise.resolve(),saveVersion=0,saveTimer=null;
+      let lastSaved=existing?{menu_date:date,meal,kind:existing.kind,value:existing.value,dish_id:existing.dish_id||null}:null;
+      const persist=(entry)=>{
+       const version=++saveVersion;
+       const action=saveSerial.then(async()=>{
+        if(version!==saveVersion)return;
+        if(lastSaved&&lastSaved.kind===entry.kind&&lastSaved.value===entry.value&&(lastSaved.dish_id||null)===(entry.dish_id||null)){
+         saveMessage.textContent="";return;
+        }
+        saveMessage.textContent="A guardar…";
+        try{
+         const response=await request(base+"/menus",{method:"PUT",body:JSON.stringify(entry)});
+         lastSaved=response.menu;
+         refreshSaved(response.menu);
+         if(version===saveVersion&&stillCurrent())saveMessage.textContent="Guardado automaticamente";
+        }catch(error){
+         if(version===saveVersion&&stillCurrent())saveMessage.textContent="Não foi possível guardar. Altera novamente para tentar.";
+        }
+       });
+       saveSerial=action.catch(()=>{});
+       menuSaveJobs.add(action);action.then(()=>menuSaveJobs.delete(action),()=>menuSaveJobs.delete(action));
+      };
+      const flush=()=>{if(saveTimer!==null){clearTimeout(saveTimer);saveTimer=null;menuDraftFlushers.delete(flush);if(draftEntry)persist(draftEntry);}};
+      let draftEntry=null;
       const queue=()=>{
-        const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
-        const selected=kind.value==="category"?category.value:kind.value==="text"?freeText.value.trim():(selectedDish?.name_pt||"");
-        if(!selected){pending.delete(date+"|"+meal);saveWeek.disabled=!pending.size;feedback.textContent=pending.size?pending.size+" refeição(ões) por guardar":"";return;}
-        mark(date+"|"+meal,{menu_date:date,meal,kind:kind.value,value:selected,
-          ...(kind.value==="dish"?{dish_id:selectedDish.id}:{})});
+       const selectedDish=dishLibrary.find(x=>x.id===chosenDishId);
+       const selected=kind.value==="category"?category.value:kind.value==="text"?freeText.value.trim():(selectedDish?.name_pt||"");
+       // Empty or incomplete pickers are never auto-committed.
+       if(!selected){saveMessage.textContent=kind.value==="dish"?"Seleciona um prato completo.":"";return;}
+       const entry={menu_date:date,meal,kind:kind.value,value:selected,
+        ...(kind.value==="dish"?{dish_id:selectedDish.id}:{})};
+       if(saveTimer!==null){clearTimeout(saveTimer);saveTimer=null;menuDraftFlushers.delete(flush);}
+       if(kind.value==="text"){
+        draftEntry=entry;saveMessage.textContent="Por guardar…";
+        menuDraftFlushers.add(flush);saveTimer=setTimeout(flush,650);
+       }else{draftEntry=null;persist(entry);}
       };
       kind.addEventListener("change",queue);category.addEventListener("change",queue);freeText.addEventListener("input",queue);
       section.appendChild(line);
     }
     root.appendChild(section);
   }
+  renderMenuWeekGrid(data.menus,calendarData,start);
+  setMenuDisplayMode(menuDisplayMode);
 }
-$("menu-prev").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()-7);loadMenus().catch(e=>status(e.message,"warn"));});
-$("menu-next").addEventListener("click",()=>{menuWeek=weekStart(menuWeek);menuWeek.setDate(menuWeek.getDate()+7);loadMenus().catch(e=>status(e.message,"warn"));});
+async function navigateMenuWeek(delta,goToday=false){
+ for(const flush of [...menuDraftFlushers])flush();
+ await Promise.all([...menuSaveJobs]);
+ menuWeek=goToday?new Date():weekStart(menuWeek);
+ if(!goToday)menuWeek.setDate(menuWeek.getDate()+delta*7);
+ loadMenus().catch(e=>status(e.message,"warn"));
+}
+$("menu-prev").addEventListener("click",()=>navigateMenuWeek(-1));
+$("menu-next").addEventListener("click",()=>navigateMenuWeek(1));
+$("menu-go-today").addEventListener("click",()=>navigateMenuWeek(0,true));
 
 let simulationDay=new Date(),publishedSimulation={};
 let playerView="overview",playerSelectedPlan=null,playerMenuWeek=new Date();
