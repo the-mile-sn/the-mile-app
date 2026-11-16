@@ -8429,3 +8429,105 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-cat
  html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-categories{grid-template-columns:minmax(0,1fr)!important}
  html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-create-category{width:100%!important}
 }
+
+/* Recipe category manager: visible collapsible card below pagination. */
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-manage{
+ display:block!important;
+ width:100%!important;
+ margin:16px 0 22px!important;
+ padding:16px 20px!important;
+ border:0!important;border-radius:18px!important;
+ background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-body[hidden]{
+ display:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-header{
+ margin-bottom:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-toggle.recipe-category-collapse{
+ min-height:52px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-body:not([hidden]){
+ margin-top:20px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create label.recipe-category-field{
+ box-sizing:border-box!important;position:relative!important;
+ display:flex!important;flex:1 1 340px!important;
+ flex-direction:column!important;justify-content:center!important;
+ gap:5px!important;margin:0!important;
+ min-width:0!important;min-height:68px!important;
+ padding:12px 16px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create label.recipe-category-field>span{
+ margin:0!important;padding:0!important;
+ color:var(--tm-ui-muted)!important;
+ font:500 12px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-new-category{
+ box-sizing:border-box!important;display:block!important;
+ height:28px!important;min-height:28px!important;max-height:28px!important;
+ padding:0!important;margin:0!important;width:100%!important;
+ border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;outline:0!important;
+ color:var(--tm-ui-text)!important;
+ font:500 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-new-category:focus-visible,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit input:focus-visible{
+ outline:none!important;box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create label.recipe-category-field:focus-within,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit .recipe-category-edit-label:focus-within{
+ outline:2px solid var(--tm-shell-focus,#88a6c2)!important;
+ outline-offset:2px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-create-category{
+ height:68px!important;min-height:68px!important;align-self:stretch!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit .recipe-category-edit-label{
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+ justify-content:center!important;gap:5px!important;
+ max-width:none!important;min-height:68px!important;margin:0!important;
+ padding:12px 16px!important;border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit .recipe-category-edit-label>span{
+ display:block!important;margin:0!important;padding:0!important;
+ font:500 12px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit .recipe-category-edit-label>input{
+ box-sizing:border-box!important;display:block!important;
+ width:100%!important;max-width:none!important;
+ height:28px!important;min-height:28px!important;max-height:28px!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ font:500 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit .recipe-category-edit-actions button{
+ min-height:44px!important;padding:10px 18px!important;
+ border:0!important;border-radius:12px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ font:500 14px/1.2 "Inter Tight",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-edit .recipe-category-edit-actions .recipe-primary{
+ background:var(--tm-action-main-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-main-fg,var(--tm-ui-text))!important;
+}
+/* Category labels are informational pills, not buttons: the editable actions remain explicit. */
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-card-badge{
+ border-radius:999px!important;
+}
+/* Keep the muted golden eggs pill clear and legible in both themes. */
+html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-category-item:has(.recipe-category-card-badge.recipe-category-amber) .recipe-category-card-badge{
+ background:#fff0c8!important;color:#90631c!important;
+}
+@media(max-width:560px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-category-create #recipe-create-category{
+  height:48px!important;min-height:48px!important;
+ }
+}
