@@ -7320,3 +7320,16 @@ html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll mar
   display:none!important;
  }
 }
+
+
+/* 2026-11-16 — Planeamento: align first card in every player tab to Microciclos.
+   Legacy .calendar-panel adds a 22px top margin to Supplements, Menus and
+   Registos, unlike the calendar. Keep the established unified-header spacing
+   and all card interiors intact across desktop/mobile and light/dark themes. */
+html[data-admin-theme] #admin-workspace #tm-admin-legacy > :is(
+  #calendar-section,
+  #supplements-panel,
+  #matrix,
+  #menus-panel,
+  #consumption-panel
+){margin-top:0!important;}
