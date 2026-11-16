@@ -399,31 +399,57 @@ def record_menu_history(c, athlete_id, day, meal, kind, value, dish_id):
       (athlete_id,day,meal,kind,value,dish_id,int(time.time()),today))
 
 
-def list_menu_history(c, athlete_id, before=None, limit=60):
-    """Simple chronological snapshots grouped by date for the backoffice only."""
-    from calendar_v2 import parse_day
-    if not isinstance(limit,int) or not 1 <= limit <= 120:
+def list_menu_history(c, athlete_id, before=None, limit=12, query=None):
+    """Paginate real menu dates, with server-side dish search and classifications.
+
+    Results are always scoped to one player; search matches either meal and
+    preserves both lunch/dinner in the returned dated row. At most limit+1
+    date keys are read, never the full archive.
+    """
+    from calendar_v2 import parse_day, classify_calendar_day, effective_days
+    if not isinstance(limit,int) or not 1 <= limit <= 40:
         raise ValueError("invalid_history_limit")
+    if query is not None and (not isinstance(query,str) or len(query)>90):
+        raise ValueError("invalid_history_search")
+    needle=(query or "").strip()
     today=current_date.today().isoformat()
+    predicates=["h.athlete_id=?","h.menu_date<=?"]
+    params=[athlete_id,today]
     if before is not None:
         before=parse_day(before).isoformat()
-        if before <= "1900-01-01":
-            raise ValueError("invalid_history_cursor")
-        rows=c.execute("""SELECT menu_date,meal,kind,value,dish_id FROM v2_menu_history
-          WHERE athlete_id=? AND menu_date<? AND menu_date<=?
-          ORDER BY menu_date DESC,meal ASC LIMIT ?""",
-          (athlete_id,before,today,limit*2+2)).fetchall()
-    else:
-        rows=c.execute("""SELECT menu_date,meal,kind,value,dish_id FROM v2_menu_history
-          WHERE athlete_id=? AND menu_date<=?
-          ORDER BY menu_date DESC,meal ASC LIMIT ?""",
-          (athlete_id,today,limit*2+2)).fetchall()
-    output={}
+        predicates.append("h.menu_date<?")
+        params.append(before)
+    if needle:
+        # Escape LIKE metacharacters, so the query means literal dish text.
+        safe=needle.replace("!","!!").replace("%","!%").replace("_","!_")
+        predicates.append("""EXISTS (
+          SELECT 1 FROM v2_menu_history x
+          WHERE x.athlete_id=h.athlete_id AND x.menu_date=h.menu_date
+          AND LOWER(x.value) LIKE LOWER(?) ESCAPE '!'
+        )""")
+        params.append("%"+safe+"%")
+    dates=c.execute("""SELECT DISTINCT h.menu_date FROM v2_menu_history h
+      WHERE """+" AND ".join(predicates)+
+      " ORDER BY h.menu_date DESC LIMIT ?",
+      tuple(params+[limit+1])).fetchall()
+    has_more=len(dates)>limit
+    selected=[r["menu_date"] for r in dates[:limit]]
+    if not selected:
+        return {"days":[],"has_more":False}
+    placeholders=",".join(["?"]*len(selected))
+    rows=c.execute("""SELECT menu_date,meal,value FROM v2_menu_history
+      WHERE athlete_id=? AND menu_date IN ("""+placeholders+
+      ") ORDER BY menu_date DESC,meal",tuple([athlete_id]+selected)).fetchall()
+    records={d:{"date":d,"classification":None,"lunch":None,"dinner":None} for d in selected}
     for row in rows:
-        item=output.setdefault(row["menu_date"],{"date":row["menu_date"],"lunch":None,"dinner":None})
-        item[row["meal"]]=row["value"]
-    days=list(output.values())
-    return {"days":days[:limit],"has_more":len(days)>limit}
+        records[row["menu_date"]][row["meal"]]=row["value"]
+    # Reuse the exact same effective-classification resolver as the calendar.
+    matches=[r["match_date"] for r in list_matches(c,athlete_id)]
+    chronologic=[classify_calendar_day(day,matches) for day in sorted(selected)]
+    effective=effective_days(c,athlete_id,chronologic)
+    for day in effective:
+        records[day["date"]]["classification"]=day["classification"] or "Geral"
+    return {"days":[records[d] for d in selected],"has_more":has_more}
 
 
 def last_menu_dish_use(c, athlete_id, dish_id, before):
