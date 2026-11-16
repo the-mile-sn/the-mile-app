@@ -2684,8 +2684,36 @@ def application(env, start_response):
                       VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
                       kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
                       (aid,date,meal,kind,value,dish_id))
+                    microcycles_v2.record_menu_history(c,aid,date,meal,kind,value,dish_id)
                 c.commit()
                 return respond(200,{'saved':len(validated)})
+            if path.startswith('/api/v2/athletes/') and path.endswith('/menus/history') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'not_found')
+                q=parse_qs(env.get('QUERY_STRING',''))
+                try:
+                    limit=int((q.get('limit') or ['60'])[0])
+                    before=(q.get('before') or [None])[0]
+                    result=microcycles_v2.list_menu_history(c,aid,before,limit)
+                except (ValueError,TypeError):
+                    raise Problem(400,'invalid_menu_history')
+                return respond(200,result)
+            if path.startswith('/api/v2/athletes/') and path.endswith('/menus/dish-last-used') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                aid=path.split('/')[4]
+                if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'not_found')
+                q=parse_qs(env.get('QUERY_STRING',''))
+                try:
+                    used=microcycles_v2.last_menu_dish_use(c,aid,
+                        (q.get('dish_id') or [''])[0],(q.get('before') or [''])[0])
+                except (ValueError,TypeError):
+                    raise Problem(400,'invalid_menu_usage')
+                return respond(200,{'last_used':used})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus'):
                 if not user:
                     raise Problem(401, 'unauthorized')
