@@ -108,6 +108,8 @@ function open(food){
   if(input)input.value=value??"";
  }
  $("form-feedback").textContent="";$("editor").showModal();
+ const nameInput=$("food-form").elements.namedItem("display_name");
+ if(nameInput)nameInput.focus({preventScroll:true});
 }
 $("new").addEventListener("click",()=>open(null));
 $("cancel").addEventListener("click",()=>$("editor").close());
