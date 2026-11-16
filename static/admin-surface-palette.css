@@ -6623,3 +6623,314 @@ html[data-admin-theme="light"] .tm-day-supplementation-modal-actions button[type
  html[data-admin-theme] .tm-day-supplementation-form{padding:16px}
  html[data-admin-theme] .tm-day-supplementation-form fieldset{grid-template-columns:1fr}
 }
+
+
+/* PLANEAMENTO > MENUS E RECEITAS — approved 16 Nov 2026.
+   Visual-only: player photo URLs, image files and app styles never change.
+   Hierarchy: main card / day subcard / meal third-level card. */
+html[data-admin-theme] #admin-workspace #menus-panel{
+ display:flex!important;flex-direction:column!important;gap:14px!important;
+ min-width:0!important;background:transparent!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel>.menu-planning-card,
+html[data-admin-theme] #admin-workspace #menus-panel>.tm-menu-history-card,
+html[data-admin-theme] #admin-workspace #menus-panel>#profile-recipe-access{
+ display:block!important;box-sizing:border-box!important;min-width:0!important;
+ margin:0!important;padding:20px 22px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:20px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-toolbar{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px 18px!important;flex-wrap:wrap!important;margin:0 0 18px!important;
+}
+html[data-admin-theme] #menus-panel #menu-week{
+ color:var(--tm-ui-text)!important;
+ font:500 clamp(16px,1.4vw,19px)/1.35 "Inter Tight",sans-serif!important;
+ text-align:left!important;white-space:normal!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-toolbar-right{
+ display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-nav,
+html[data-admin-theme] #menus-panel .tm-menu-view-toggle{
+ display:inline-flex;align-items:center;gap:5px;margin:0;
+ background:var(--tm-ui-subcard);border-radius:999px;padding:4px;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-nav>button,
+html[data-admin-theme] #menus-panel .tm-menu-view-toggle>button{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ height:33px;min-height:33px;min-width:33px;padding:5px 12px;
+ border:0!important;border-radius:999px!important;box-shadow:none!important;
+ font:400 12px/1.3 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;background:transparent!important;
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-nav>button:not(:nth-child(2)){
+ font-size:23px!important;font-weight:400!important;width:34px;padding:0;
+}
+html[data-admin-theme] #menus-panel .tm-menu-view-toggle>button[aria-pressed="true"]{
+ background:var(--tm-ui-card)!important;font-weight:500!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-nav>button:hover,
+html[data-admin-theme] #menus-panel .tm-menu-view-toggle>button:hover:not([aria-pressed="true"]){
+ background:var(--tm-ui-hover)!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-nav>button:focus-visible,
+html[data-admin-theme] #menus-panel .tm-menu-view-toggle>button:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+html[data-admin-theme] #menus-panel #menu-grid{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:13px!important;
+ min-width:0!important;
+}
+html[data-admin-theme] #menus-panel #menu-grid[hidden],
+html[data-admin-theme] #menus-panel #menu-weekly[hidden],
+html[data-admin-theme] #menus-panel #save-menu-week[hidden]{display:none!important}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid>.menu-day-card{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:10px 12px!important;min-width:0!important;
+ padding:14px 15px!important;margin:0!important;border:0!important;
+ border-radius:16px!important;background:var(--tm-ui-subcard)!important;
+ color:var(--tm-ui-text)!important;box-shadow:none!important;
+}
+html[data-admin-theme] #menus-panel #menu-grid .menu-day-heading{
+ grid-column:1/-1!important;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:12px!important;
+ margin:0 0 2px!important;padding:0 2px!important;
+ color:var(--tm-ui-text)!important;font:500 15px/1.4 "Inter Tight",sans-serif!important;
+ text-transform:capitalize!important;
+}
+html[data-admin-theme] #menus-panel #menu-grid .menu-day-classification{
+ flex:none!important;white-space:nowrap!important;
+ font:400 13px/1.35 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .menu-meal-card{
+ display:flex!important;flex-direction:column!important;gap:9px!important;
+ min-width:0!important;margin:0!important;padding:13px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #menus-panel .menu-meal-heading{
+ margin:0 0 6px!important;
+}
+html[data-admin-theme] #menus-panel .menu-meal-heading strong{
+ font:500 14px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel .menu-meal-card :is(select,.menu-free-text,.menu-choice),
+html[data-admin-theme] #admin-workspace #menus-panel .menu-meal-card .menu-combobox>input{
+ box-sizing:border-box!important;min-height:40px!important;min-width:0!important;
+ width:100%!important;border:0!important;border-radius:11px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:400 13px/1.4 "Inter Tight",sans-serif!important;
+ padding:9px 12px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #menus-panel .menu-meal-card .menu-combobox>input{height:43px!important}
+html[data-admin-theme] #menus-panel .menu-meal-card :is(.menu-choice,.menu-free-text):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+html[data-admin-theme] #admin-workspace #menus-panel .menu-dish-image{
+ display:block;object-fit:contain!important;
+ background:transparent!important;box-shadow:none!important;
+ border:0!important;max-width:200px;max-height:130px;
+}
+html[data-admin-theme] #menus-panel .menu-last-used-note{
+ margin:0!important;padding:0 1px!important;
+ color:var(--tm-ui-muted)!important;font:400 11px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #menus-panel .menu-last-used-note[hidden]{display:none!important}
+html[data-admin-theme] #menus-panel .tm-menu-meal-feedback{
+ min-height:0;color:var(--tm-ui-muted)!important;
+ font:400 10.5px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-meal-feedback:empty{display:none!important}
+html[data-admin-theme] #menus-panel .tm-menu-save-feedback{
+ margin:12px 0 0!important;color:var(--tm-ui-muted)!important;
+ font:400 11px/1.4 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #menus-panel #menu-grid .menu-meal-card.tm-menu-jump-highlight{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+/* Seven-day overview: read-only cards; selecting a cell opens the real editor. */
+html[data-admin-theme] #menus-panel #menu-weekly{
+ max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-inline:contain;
+ scrollbar-width:thin;scrollbar-color:var(--tm-ui-muted) transparent;
+}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table{
+ border-collapse:separate!important;border-spacing:7px!important;
+ min-width:1120px!important;width:100%!important;table-layout:fixed!important;
+ background:transparent!important;margin:-7px!important;
+}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table th,
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table td{
+ box-sizing:border-box;padding:0!important;border:0!important;
+ text-align:left!important;vertical-align:top!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table th:first-child{
+ width:88px!important;min-width:88px!important;
+ font:500 12px/1.4 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+ position:sticky;left:0;z-index:2;background:var(--tm-ui-card)!important;
+}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table thead th:not(:first-child){
+ text-align:center!important;padding:12px 6px!important;
+ border-radius:12px!important;background:var(--tm-ui-subcard)!important;
+ font:500 12px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table thead th span{display:block}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table thead th small{
+ display:block;margin-top:4px;
+ color:var(--tm-ui-muted);font:400 10px/1.3 "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table tbody>tr>th{
+ padding-top:18px!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-cell{
+ display:flex!important;flex-direction:column;align-items:stretch;gap:8px;
+ width:100%!important;min-height:155px!important;padding:10px!important;
+ border:0!important;border-radius:13px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;text-align:left!important;cursor:pointer;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-cell:hover{
+ background:var(--tm-ui-hover)!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-cell:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-cell>img,
+html[data-admin-theme] #menus-panel .tm-menu-week-placeholder{
+ display:block!important;width:100%!important;height:90px!important;
+ object-fit:contain!important;border-radius:9px!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-placeholder{
+ background:var(--tm-ui-search)!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-name{
+ display:flex;align-items:flex-start;gap:6px;min-width:0;
+ font:400 11px/1.4 "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-name>span:last-child{
+ display:-webkit-box;overflow:hidden;overflow-wrap:anywhere;
+ -webkit-box-orient:vertical;-webkit-line-clamp:2;
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-dot{
+ width:8px;height:8px;border-radius:50%;flex:none;margin-top:3px;
+ background:var(--tm-ui-muted);
+}
+html[data-admin-theme] #menus-panel .tm-menu-week-dot[data-color="yellow"]{background:#e9c95b}
+html[data-admin-theme] #menus-panel .tm-menu-week-dot[data-color="orange"]{background:#e6a66c}
+html[data-admin-theme] #menus-panel .tm-menu-week-dot[data-color="blue"]{background:#85b5e5}
+html[data-admin-theme] #menus-panel .tm-menu-week-dot[data-color="green"]{background:#92cfa4}
+html[data-admin-theme] #menus-panel .tm-menu-week-dot[data-color="vp"]{background:#28543e}
+html[data-admin-theme] #menus-panel .tm-menu-week-cell.is-empty .tm-menu-week-name{
+ color:var(--tm-ui-muted)!important;
+}
+/* Collapsible history and player recipe permissions use the same main-card
+   geometry. The history is date/lunch/dinner only, never meal metadata. */
+html[data-admin-theme] #menus-panel :is(.tm-menu-history-summary,.tm-recipe-access-summary){
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px;min-height:36px;padding:0!important;margin:0!important;
+ list-style:none!important;cursor:pointer;color:var(--tm-ui-text)!important;
+ font:500 18px/1.4 "Inter Tight",sans-serif!important;
+ -webkit-tap-highlight-color:transparent;
+}
+html[data-admin-theme] #menus-panel :is(.tm-menu-history-summary,.tm-recipe-access-summary)::marker{content:""}
+html[data-admin-theme] #menus-panel :is(.tm-menu-history-summary,.tm-recipe-access-summary)::-webkit-details-marker{display:none}
+html[data-admin-theme] #menus-panel .tm-menu-accordion-title{
+ display:inline-flex;align-items:center;gap:10px;min-width:0;
+}
+html[data-admin-theme] #menus-panel .tm-menu-accordion-title>svg{
+ width:21px;height:21px;flex:none;
+}
+html[data-admin-theme] #menus-panel .tm-menu-accordion-chevron{
+ width:18px;height:18px;flex:none;transition:transform .16s ease;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #menus-panel :is(#menu-history,#profile-recipe-access)[open] .tm-menu-accordion-chevron{
+ transform:rotate(180deg);
+}
+html[data-admin-theme] #menus-panel :is(.tm-menu-history-summary,.tm-recipe-access-summary):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+ outline-offset:4px;border-radius:8px;
+}
+html[data-admin-theme] #menus-panel #menu-history:not([open])>.tm-menu-history-inner,
+html[data-admin-theme] #menus-panel #profile-recipe-access:not([open])>.tm-recipe-access-content{display:none!important}
+html[data-admin-theme] #menus-panel :is(.tm-menu-history-inner,.tm-recipe-access-content){
+ margin-top:16px!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll{
+ overflow-x:auto;max-width:100%;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll>table{
+ width:100%!important;min-width:480px!important;border-collapse:collapse!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll th,
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll td{
+ padding:12px 10px!important;border:0!important;
+ border-bottom:1px solid var(--tm-ui-divider)!important;
+ background:transparent!important;vertical-align:top;
+ font:400 12px/1.45 "Inter Tight",sans-serif!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll thead th{
+ font-weight:500!important;color:var(--tm-ui-muted)!important;
+ text-align:left!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll tbody th{
+ font-weight:500!important;white-space:nowrap!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll .is-empty{
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-feedback,
+html[data-admin-theme] #menus-panel #menu-history-more{
+ margin:10px 0 0;color:var(--tm-ui-muted);
+ font:400 12px/1.4 "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #menus-panel #menu-history-more{
+ border:0;border-radius:999px;background:var(--tm-ui-subcard);
+ padding:9px 15px;cursor:pointer;
+}
+html[data-admin-theme] #menus-panel #menu-history-more[hidden]{display:none!important}
+html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-access .tm-recipe-category-chip{
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-category-search,
+html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-access .tm-recipe-search-results{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+}
+/* Mobile: controls wrap but date always stays left; editor remains one column.
+   Horizontal view deliberately scrolls instead of shrinking seven columns. */
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace #menus-panel>.menu-planning-card,
+ html[data-admin-theme] #admin-workspace #menus-panel>.tm-menu-history-card,
+ html[data-admin-theme] #admin-workspace #menus-panel>#profile-recipe-access{
+  padding:17px 15px!important;border-radius:17px!important;
+ }
+ html[data-admin-theme] #menus-panel .tm-menu-toolbar{align-items:flex-start!important}
+ html[data-admin-theme] #menus-panel .tm-menu-toolbar-right{
+  justify-content:space-between!important;flex-wrap:wrap;width:100%;
+ }
+ html[data-admin-theme] #menus-panel .tm-menu-week-nav,
+ html[data-admin-theme] #menus-panel .tm-menu-view-toggle{gap:2px}
+ html[data-admin-theme] #admin-workspace #menus-panel #menu-grid>.menu-day-card{
+  grid-template-columns:minmax(0,1fr)!important;
+  padding:12px!important;border-radius:15px!important;
+ }
+ html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .menu-meal-card{
+  padding:12px!important;border-radius:13px!important;
+ }
+ html[data-admin-theme] #menus-panel #menu-grid .menu-day-heading{
+  font-size:14px!important;
+ }
+ html[data-admin-theme] #menus-panel #menu-grid .menu-day-classification{
+  font-size:12px!important;
+ }
+ html[data-admin-theme] #menus-panel :is(.tm-menu-history-summary,.tm-recipe-access-summary){
+  font-size:17px!important;
+ }
+}
