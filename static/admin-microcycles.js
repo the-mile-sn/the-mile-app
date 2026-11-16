@@ -539,7 +539,150 @@ function renderScenarioEditor(){
   table.append(tbody);scroller.append(table);group.append(scroller);target.append(group);
  }
 }
-function render(){const root=$("matrix");root.replaceChildren();const tbl=document.createElement("table");tbl.className="model-effective-matrix";const header=document.createElement("tr");for(const label of ["Classificação","Pequeno-almoço","Almoço","Lanche","Jantar","Ceia"]){const th=document.createElement("th");th.textContent=label;header.appendChild(th);}tbl.appendChild(header);for(const row of model.classifications){const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=(row.configured?"● ":"○ ")+row.name;tr.appendChild(title);for(const meal of model.meals){const td=document.createElement("td"),sel=document.createElement("select");sel.setAttribute("aria-label",row.name+" "+names[meal]);for(const [value,label] of [["","— Sem refeição"],...model.colors.map(c=>[c,colors[c]||c])]){const o=document.createElement("option");o.value=value;o.textContent=label;sel.appendChild(o);}sel.value=row.meals[meal]||"";sel.classList.add("microcycle-color-select");sel.dataset.color=sel.value||"none";sel.addEventListener("change",async()=>{const prior=row.meals[meal];const next=sel.value||null;sel.disabled=true;status("A guardar "+row.name+" · "+names[meal]+"…");try{await request("/api/v2/athletes/"+encodeURIComponent(model.athlete.id)+"/microcycles/"+encodeURIComponent(row.name),{method:"PUT",body:JSON.stringify({meal,color:next})});row.meals[meal]=next;sel.dataset.color=next||"none";row.configured=true;title.textContent="● "+row.name;status("Guardado: "+row.name+" · "+names[meal]+".","success");}catch(e){sel.value=prior||"";status("Não foi possível guardar: "+e.message,"warn");}finally{sel.disabled=false;}});td.appendChild(sel);tr.appendChild(td);}tbl.appendChild(tr);}root.appendChild(tbl);root.hidden=backofficeView!=="matrix";}
+/* Model editor: wide, scan-friendly table and a dedicated mobile accordion.
+   Both presentations edit the same classification records through one save path. */
+function render(){
+ const root=$("matrix");root.replaceChildren();
+ if(!model){root.hidden=true;return;}
+ const athleteId=model.athlete.id;
+ const mealKeys=model.meals||[];
+ const linkedControls=new Map(),rowVisuals=new Map();
+ const header=document.createElement("header");header.className="model-config-header";
+ const headingGroup=document.createElement("div");headingGroup.className="model-config-heading";
+ const title=document.createElement("h2");title.textContent="Modelo do microciclo";
+ const subtitle=document.createElement("p");
+ subtitle.textContent="Define a cor de cada refeição por classificação. As alterações são guardadas automaticamente.";
+ headingGroup.append(title,subtitle);header.append(headingGroup);root.append(header);
+ const desktop=document.createElement("div");desktop.className="model-config-table-wrap";
+ desktop.setAttribute("role","region");desktop.setAttribute("aria-label","Modelo do microciclo por classificação");
+ const table=document.createElement("table");table.className="model-effective-matrix";
+ const thead=document.createElement("thead"),headRow=document.createElement("tr");
+ for(const label of ["Classificação",...mealKeys.map(meal=>names[meal]||meal)]){
+  const th=document.createElement("th");th.scope="col";th.textContent=label;headRow.append(th);
+ }
+ thead.append(headRow);table.append(thead);
+ const tbody=document.createElement("tbody");
+ const mobile=document.createElement("div");mobile.className="model-mobile-list";
+ mobile.setAttribute("aria-label","Classificações do modelo");
+ function modelColorLabel(color){
+  return color?(colors[color]||color):"Sem refeição";
+ }
+ function registerControl(row,meal,control){
+  if(!linkedControls.has(row))linkedControls.set(row,new Map());
+  const group=linkedControls.get(row);
+  if(!group.has(meal))group.set(meal,[]);
+  group.get(meal).push(control);
+ }
+ function refreshRow(row){
+  const group=linkedControls.get(row);
+  if(group)for(const [meal,selects] of group.entries()){
+   const value=row.meals?.[meal]||"";
+   for(const select of selects){select.value=value;select.dataset.color=value||"none";}
+  }
+  const visual=rowVisuals.get(row);
+  if(!visual)return;
+  for(const dot of visual.indicators){
+   dot.dataset.configured=String(Boolean(row.configured));
+   dot.title=row.configured?"Classificação configurada":"Classificação por configurar";
+   dot.setAttribute("aria-label",dot.title);
+  }
+  const present=mealKeys.filter(meal=>Boolean(row.meals?.[meal])).length;
+  visual.count.textContent=present+" de "+mealKeys.length+" refeições";
+  for(const [meal,swatch] of visual.swatches){
+   const value=row.meals?.[meal]||"";
+   swatch.dataset.color=value||"none";
+   swatch.title=(names[meal]||meal)+": "+modelColorLabel(value);
+  }
+ }
+ function makeColorSelect(row,meal){
+  const select=document.createElement("select");
+  select.className="microcycle-color-select model-color-select";
+  select.dataset.color=row.meals?.[meal]||"none";
+  select.setAttribute("aria-label",row.name+" · "+(names[meal]||meal));
+  for(const [value,label] of [["","— Sem refeição"],...model.colors.map(color=>[color,colors[color]||color])]){
+   const option=document.createElement("option");option.value=value;option.textContent=label;select.append(option);
+  }
+  select.value=row.meals?.[meal]||"";
+  registerControl(row,meal,select);
+  select.addEventListener("change",async()=>{
+   const previous=row.meals?.[meal]||null,next=select.value||null;
+   if(previous===next)return;
+   const group=linkedControls.get(row)?.get(meal)||[select];
+   const feedback=rowVisuals.get(row)?.feedback;
+   for(const item of group)item.disabled=true;
+   if(feedback)feedback.textContent="A guardar…";
+   status("A guardar "+row.name+" · "+(names[meal]||meal)+"…");
+   try{
+    await request("/api/v2/athletes/"+encodeURIComponent(athleteId)+"/microcycles/"+encodeURIComponent(row.name),{
+     method:"PUT",body:JSON.stringify({meal,color:next})
+    });
+    if(model?.athlete?.id!==athleteId)return;
+    row.meals[meal]=next;row.configured=true;
+    refreshRow(row);
+    if(feedback)feedback.textContent="Guardado";
+    status("Guardado: "+row.name+" · "+(names[meal]||meal)+".","success");
+   }catch(error){
+    if(model?.athlete?.id!==athleteId)return;
+    refreshRow(row);
+    if(feedback)feedback.textContent="Não foi possível guardar.";
+    status("Não foi possível guardar: "+error.message,"warn");
+   }finally{
+    for(const item of group)item.disabled=false;
+   }
+  });
+  return select;
+ }
+ for(const row of model.classifications){
+  const visuals={indicators:[],count:null,swatches:[],feedback:null};
+  rowVisuals.set(row,visuals);
+  const tr=document.createElement("tr");
+  const rowHead=document.createElement("th");rowHead.scope="row";rowHead.className="model-class-heading";
+  const rowLabel=document.createElement("span");rowLabel.className="model-class-label";
+  const dot=document.createElement("span");dot.className="model-class-status";visuals.indicators.push(dot);
+  const name=document.createElement("span");name.textContent=row.name;rowLabel.append(dot,name);rowHead.append(rowLabel);tr.append(rowHead);
+  for(const meal of mealKeys){
+   const td=document.createElement("td");td.append(makeColorSelect(row,meal));tr.append(td);
+  }
+  tbody.append(tr);
+  const details=document.createElement("details");details.className="model-mobile-card";
+  const summary=document.createElement("summary");summary.className="model-mobile-summary";
+  const summaryTop=document.createElement("span");summaryTop.className="model-mobile-summary-top";
+  const label=document.createElement("strong");label.className="model-mobile-class-name";
+  const mobileDot=document.createElement("span");mobileDot.className="model-class-status";visuals.indicators.push(mobileDot);
+  label.append(mobileDot,document.createTextNode(row.name));
+  const count=document.createElement("span");count.className="model-mobile-count";visuals.count=count;
+  const chevron=document.createElement("span");chevron.className="model-mobile-chevron";chevron.setAttribute("aria-hidden","true");
+  chevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  summaryTop.append(label,count,chevron);
+  const preview=document.createElement("span");preview.className="model-mobile-preview";
+  preview.setAttribute("aria-hidden","true");
+  for(const meal of mealKeys){
+   const swatch=document.createElement("span");swatch.className="model-mobile-swatch";
+   visuals.swatches.push([meal,swatch]);preview.append(swatch);
+  }
+  summary.append(summaryTop,preview);details.append(summary);
+  const fields=document.createElement("div");fields.className="model-mobile-fields";
+  for(const meal of mealKeys){
+   const field=document.createElement("label");field.className="model-mobile-field";
+   const caption=document.createElement("span");caption.textContent=names[meal]||meal;
+   field.append(caption,makeColorSelect(row,meal));fields.append(field);
+  }
+  const feedback=document.createElement("p");feedback.className="model-mobile-feedback";
+  feedback.setAttribute("role","status");feedback.setAttribute("aria-live","polite");visuals.feedback=feedback;
+  fields.append(feedback);details.append(fields);
+  details.addEventListener("toggle",()=>{
+   if(!details.open)return;
+   for(const other of mobile.querySelectorAll(".model-mobile-card")){
+    if(other!==details)other.open=false;
+   }
+  });
+  mobile.append(details);
+  refreshRow(row);
+ }
+ table.append(tbody);desktop.append(table);
+ root.append(desktop,mobile);
+ root.hidden=backofficeView!=="matrix";
+}
 $("filipe-activate").addEventListener("click",async()=>{
   const button=$("filipe-activate"),feedback=$("admin-access-feedback");
   button.disabled=true;feedback.textContent="A verificar a conta do Filipe...";
