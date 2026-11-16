@@ -3113,7 +3113,24 @@ function renderDishEditor(){
   const actions=document.createElement("td");actions.className="dish-table-actions";
   const edit=document.createElement("button");edit.type="button";edit.innerHTML=supplementPlanActionIcons.edit;edit.className="dish-table-edit";edit.title="Editar prato";
   edit.setAttribute("aria-expanded","false");edit.setAttribute("aria-label","Editar "+dish.name_pt);
-  actions.append(edit);tr.append(actions);tbody.append(tr);
+  const removeDish=document.createElement("button");removeDish.type="button";
+  removeDish.className="dish-table-delete";
+  removeDish.innerHTML=supplementPlanActionIcons.remove;
+  removeDish.setAttribute("aria-label","Eliminar "+dish.name_pt);
+  removeDish.title="Eliminar prato";
+  removeDish.addEventListener("click",async()=>{
+   if(!confirm("Eliminar o prato «"+dish.name_pt+"» da biblioteca? O registo será arquivado para preservar associações existentes."))return;
+   removeDish.disabled=true;
+   try{
+    await request("/api/v2/dishes/"+encodeURIComponent(dish.id),{method:"DELETE"});
+    await loadDishLibrary();
+    $("dish-catalog-feedback").textContent="Prato removido da biblioteca.";
+   }catch(error){
+    $("dish-catalog-feedback").textContent="Não foi possível eliminar o prato: "+error.message;
+    removeDish.disabled=false;
+   }
+  });
+  actions.append(edit,removeDish);tr.append(actions);tbody.append(tr);
   const detailRow=document.createElement("tr");detailRow.className="dish-table-detail";detailRow.hidden=true;
   const detailCell=document.createElement("td");detailCell.colSpan=5;detailRow.append(detailCell);tbody.append(detailRow);
   edit.addEventListener("click",async()=>{
