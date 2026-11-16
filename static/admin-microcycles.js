@@ -1727,7 +1727,7 @@ function showBackofficeView(view){
   backofficeView=view;
   const sections={profile:["athlete-weight-panel"],calendar:["calendar-section"],consumption:["consumption-panel"],plans:["plan-import-panel","peri-panel"],supplements:["supplements-panel"],matrix:["matrix","scenario-editor"],menus:["menus-panel"],"player-preview":["player-preview-panel"]};
   for(const [key,ids] of Object.entries(sections))for(const id of ids){
-    const el=$(id);if(el)el.hidden=key!==view||(key!=="consumption"&&!model);
+    const el=$(id);if(el)el.hidden=key!==view||(!model);
   }
   for(const button of document.querySelectorAll("#backoffice-nav [data-view]")){
     button.setAttribute("aria-pressed",button.dataset.view===view?"true":"false");
