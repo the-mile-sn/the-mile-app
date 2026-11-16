@@ -3084,7 +3084,7 @@ function renderDishEditor(){
  const photoHeading=document.createElement("th");photoHeading.textContent="Foto";
  const dishHeading=document.createElement("th");dishHeading.textContent="Prato";
  const englishHeading=document.createElement("th");englishHeading.textContent="Nome inglês";
- const actionsHeading=document.createElement("th");actionsHeading.textContent="Ações";
+ const actionsHeading=document.createElement("th");actionsHeading.setAttribute("aria-label","Controlos de edição e eliminação");
  head.append(categoryHeading,photoHeading,dishHeading,englishHeading,actionsHeading);
  thead.append(head);table.append(thead);
  const tbody=document.createElement("tbody");
