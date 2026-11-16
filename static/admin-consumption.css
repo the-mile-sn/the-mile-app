@@ -182,3 +182,33 @@ html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-
  #consumption-panel .tm-record-day>strong{font-size:14px;line-height:1.35}
  #consumption-panel .tm-record-calendar-button{flex:0 0 38px!important;width:38px!important;height:38px!important}
 }
+
+/* Registos: anchored date popover and visible nutrition progress. */
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-date-popover{
+ position:fixed!important;z-index:11000!important;width:310px;max-width:calc(100vw - 24px);
+ padding:13px!important;border:1px solid var(--rec-line)!important;border-radius:16px!important;
+ background:var(--rec-card)!important;color:var(--rec-text)!important;
+ box-shadow:0 12px 36px rgba(0,0,0,.20)!important;
+}
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-date-popover[hidden]{
+ display:none!important;
+}
+#consumption-panel .tm-record-picker-top{display:flex;align-items:center;gap:6px;justify-content:space-between;margin-bottom:12px}
+#consumption-panel .tm-record-picker-top strong{font-size:14px;font-weight:500;text-transform:capitalize;flex:1;text-align:center}
+#consumption-panel .tm-record-picker-top button{border:0;background:var(--rec-sub);color:var(--rec-text);border-radius:9px;width:32px;height:32px;padding:0;font-size:19px;cursor:pointer}
+#consumption-panel .tm-record-picker-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;align-items:center;text-align:center}
+#consumption-panel .tm-record-picker-grid .tm-record-weekday{font-size:11px;color:var(--rec-muted);padding:7px 0}
+#consumption-panel .tm-record-picker-grid button{min-width:0;width:100%;min-height:34px;border:0;border-radius:8px;background:transparent;color:var(--rec-text);font-size:12px;padding:3px;cursor:pointer}
+#consumption-panel .tm-record-picker-grid button:hover{background:var(--rec-sub)}
+#consumption-panel .tm-record-picker-grid button.is-selected{background:var(--rec-field);font-weight:600}
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-metric .tm-record-track{
+ height:7px!important;overflow:hidden;border-radius:999px;background:var(--rec-sub)!important;
+ margin-top:12px!important;width:100%;display:block!important;
+}
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-metric .tm-record-track>span{
+ display:block!important;height:100%!important;max-width:100%;border-radius:999px;
+ background:#78add6!important;
+}
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-ring{
+ background:conic-gradient(#78add6 var(--tm-record-progress,0%),var(--rec-sub) 0)!important;
+}
