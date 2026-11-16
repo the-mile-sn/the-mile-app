@@ -8295,3 +8295,17 @@ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page #tm-portio
  html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(5){width:10%!important}
  html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(th,td):nth-child(6){width:7%!important}
 }
+
+/* Recipe catalogue: align text baselines (not card edges) with filters above.
+   The same inset applies to the heading and every data row. */
+@media(min-width:851px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(thead th,tbody td):nth-child(3){
+  padding-left:26px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(thead th,tbody td):nth-child(4){
+  padding-left:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table :is(thead th,tbody td):nth-child(5){
+  padding-left:6px!important;
+ }
+}
