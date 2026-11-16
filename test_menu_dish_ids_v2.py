@@ -1,6 +1,7 @@
 """Backward-compatible, non-destructive menu dish ID migration tests."""
 import sqlite3
 import unittest
+from datetime import date, timedelta
 
 import microcycles_v2 as menus
 
@@ -95,6 +96,49 @@ class MenuDishIdTests(unittest.TestCase):
         menus.initialize(c)
         self.assertIsNone(c.execute("SELECT dish_id FROM v2_weekly_menus WHERE meal='dinner'").fetchone()[0])
         c.close()
+
+
+    def test_history_is_scoped_to_athlete_and_past_days_remain_unchanged(self):
+        previous=(date.today()-timedelta(days=3)).isoformat()
+        future=(date.today()+timedelta(days=3)).isoformat()
+        menus.save_menu(self.c,"a1",previous,"lunch","dish","Frango original","d1")
+        # Past history must not disappear when someone later edits that slot.
+        menus.save_menu(self.c,"a1",previous,"lunch","dish","Outra receita","d2")
+        stored=menus.list_menu_history(self.c,"a1")
+        row=next(d for d in stored["days"] if d["date"]==previous)
+        self.assertEqual(row["lunch"],"Frango original")
+        self.assertEqual(menus.list_menus(self.c,"a1",previous,previous)[0]["dish_id"],"d2")
+        self.assertEqual(menus.last_menu_dish_use(self.c,"a1","d1",future),previous)
+        self.c.execute("INSERT INTO v2_athletes (id,name,created_at) VALUES ('a2','Outro jogador',2)")
+        self.assertEqual(menus.list_menu_history(self.c,"a2")["days"],[])
+        self.assertIsNone(menus.last_menu_dish_use(self.c,"a2","d1",future))
+
+    def test_scheduled_future_changes_reuse_one_history_row(self):
+        future=(date.today()+timedelta(days=7)).isoformat()
+        menus.save_menu(self.c,"a1",future,"dinner","dish","Frango original","d1")
+        menus.save_menu(self.c,"a1",future,"dinner","dish","Outra receita","d2")
+        count=self.c.execute("SELECT COUNT(*) FROM v2_menu_history WHERE athlete_id='a1' AND menu_date=? AND meal='dinner'",(future,)).fetchone()[0]
+        self.assertEqual(count,1)
+        record=self.c.execute("SELECT dish_id FROM v2_menu_history WHERE athlete_id='a1' AND menu_date=? AND meal='dinner'",(future,)).fetchone()
+        self.assertEqual(record["dish_id"],"d2")
+        self.assertFalse(any(day["date"]==future for day in menus.list_menu_history(self.c,"a1")["days"]))
+
+    def test_repeated_schema_initialization_preserves_original_snapshot(self):
+        previous=(date.today()-timedelta(days=5)).isoformat()
+        menus.save_menu(self.c,"a1",previous,"dinner","dish","Frango original","d1")
+        menus.save_menu(self.c,"a1",previous,"dinner","dish","Outra receita","d2")
+        menus.initialize(self.c)
+        latest=self.c.execute("SELECT value,dish_id FROM v2_menu_history WHERE athlete_id='a1' AND menu_date=?",(previous,)).fetchone()
+        self.assertEqual((latest["value"],latest["dish_id"]),("Frango original","d1"))
+
+    def test_history_one_row_per_date_with_both_meals(self):
+        previous=(date.today()-timedelta(days=1)).isoformat()
+        menus.save_menu(self.c,"a1",previous,"lunch","category","Carne branca")
+        menus.save_menu(self.c,"a1",previous,"dinner","dish","Frango original","d1")
+        record=menus.list_menu_history(self.c,"a1")["days"][0]
+        self.assertEqual(record["date"],previous)
+        self.assertEqual(record["lunch"],"Carne branca")
+        self.assertEqual(record["dinner"],"Frango original")
 
 
 if __name__=="__main__":
