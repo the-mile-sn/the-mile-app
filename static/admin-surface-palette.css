@@ -4708,28 +4708,75 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
   font-size:16px!important;padding:9px 36px 9px 12px!important;
  }
 }
-/* Mobile light: Safari tap highlights ignore rounded corners. Scope this fix
-   to expandable headings; do not affect nutrition selector focus or dark theme. */
+/* Mobile light — reliable rounded press overlay. Keep MD/Off fills.
+   Eliminate Safari rectangular tap highlighting in nested summaries. */
 @media(max-width:830px){
- html[data-admin-theme="light"] #matrix .model-mobile-summary,
- html[data-admin-theme="light"] #scenario-editor>.scenario-main-summary,
- html[data-admin-theme="light"] #scenario-editor .scenario-day-heading{
-  -webkit-tap-highlight-color:transparent;
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-card,
+  #scenario-editor,
+  #scenario-editor .scenario-day-group
+ ),
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ ),
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ ) *{
+  -webkit-tap-highlight-color:transparent!important;
  }
- html[data-admin-theme="light"] #matrix .model-mobile-summary:focus:not(:focus-visible),
- html[data-admin-theme="light"] #scenario-editor>.scenario-main-summary:focus:not(:focus-visible),
- html[data-admin-theme="light"] #scenario-editor .scenario-day-heading:focus:not(:focus-visible){
-  outline:none!important;box-shadow:none!important;
- }
- html[data-admin-theme="light"] #matrix .model-mobile-card:not([open])>.model-mobile-summary:active{
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ ){
+  position:relative!important;
+  -webkit-user-select:none;
+  user-select:none;
   border-radius:13px!important;
-  background:rgba(53,72,96,.06)!important;
+  isolation:isolate;
  }
- html[data-admin-theme="light"] #scenario-editor>.scenario-main-summary:active,
- html[data-admin-theme="light"] #scenario-editor .scenario-day-heading:active{
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor>.scenario-main-summary{
+  border-radius:12px!important;
+ }
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-day-heading{
   border-radius:11px!important;
-  background:rgba(53,72,96,.055)!important;
  }
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ )::after{
+  content:"";
+  position:absolute;inset:0;z-index:1;
+  border-radius:inherit;pointer-events:none;
+  background:rgba(37,53,77,.13);
+  opacity:0;transition:opacity .1s ease-out;
+ }
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ ):is(:active,.tm-mobile-touch-press)::after{
+  opacity:1;
+ }
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ ):focus:not(:focus-visible){
+  outline:none!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme="light"] #admin-workspace :is(
+  #matrix .model-mobile-summary,
+  #scenario-editor>.scenario-main-summary,
+  #scenario-editor .scenario-day-heading
+ )::after{transition:none!important}
 }
 @media(prefers-reduced-motion:reduce){
  html[data-admin-theme] #scenario-editor :is(.scenario-main-chevron,.scenario-day-chevron){transition:none!important}
