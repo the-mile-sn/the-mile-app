@@ -400,11 +400,12 @@ def record_menu_history(c, athlete_id, day, meal, kind, value, dish_id):
 
 
 def list_menu_history(c, athlete_id, before=None, limit=12, query=None):
-    """Paginate real menu dates, with server-side dish search and classifications.
+    """Paginate menu days; show only matching complete-dish meals when filtered.
 
-    Results are always scoped to one player; search matches either meal and
-    preserves both lunch/dinner in the returned dated row. At most limit+1
-    date keys are read, never the full archive.
+    All results are scoped to the selected athlete. An unfiltered result
+    includes both meals, whereas a filtered result sets nonmatching meals
+    to None without removing the date or its microcycle classification.
+    Only limit+1 date keys are read to support cursor pagination.
     """
     from calendar_v2 import parse_day, classify_calendar_day, effective_days
     if not isinstance(limit,int) or not 1 <= limit <= 40:
@@ -438,9 +439,16 @@ def list_menu_history(c, athlete_id, before=None, limit=12, query=None):
     if not selected:
         return {"days":[],"has_more":False}
     placeholders=",".join(["?"]*len(selected))
-    rows=c.execute("""SELECT menu_date,meal,value FROM v2_menu_history
-      WHERE athlete_id=? AND menu_date IN ("""+placeholders+
-      ") ORDER BY menu_date DESC,meal",tuple([athlete_id]+selected)).fetchall()
+    row_sql="""SELECT menu_date,meal,value FROM v2_menu_history
+      WHERE athlete_id=? AND menu_date IN ("""+placeholders+")"
+    row_params=[athlete_id]+selected
+    if needle:
+        # Use exactly the same escaped, dish-only predicate as the date
+        # query above. No nonmatching lunch/dinner is included in results.
+        row_sql+=" AND kind='dish' AND LOWER(value) LIKE LOWER(?) ESCAPE '!'"
+        row_params.append("%"+safe+"%")
+    row_sql+=" ORDER BY menu_date DESC,meal"
+    rows=c.execute(row_sql,tuple(row_params)).fetchall()
     records={d:{"date":d,"classification":None,"lunch":None,"dinner":None} for d in selected}
     for row in rows:
         records[row["menu_date"]][row["meal"]]=row["value"]
