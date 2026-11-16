@@ -2695,9 +2695,10 @@ def application(env, start_response):
                     raise Problem(404,'not_found')
                 q=parse_qs(env.get('QUERY_STRING',''))
                 try:
-                    limit=int((q.get('limit') or ['60'])[0])
+                    limit=int((q.get('limit') or ['12'])[0])
                     before=(q.get('before') or [None])[0]
-                    result=microcycles_v2.list_menu_history(c,aid,before,limit)
+                    search=(q.get('q') or [''])[0]
+                    result=microcycles_v2.list_menu_history(c,aid,before,limit,search)
                 except (ValueError,TypeError):
                     raise Problem(400,'invalid_menu_history')
                 return respond(200,result)
