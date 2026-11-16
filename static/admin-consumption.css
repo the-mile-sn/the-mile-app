@@ -325,3 +325,58 @@ html[data-admin-theme="dark"] #consumption-panel .tm-record-food-list .tm-record
  }
  #consumption-panel .tm-record-macros{column-gap:9px}
 }
+
+/* 16 Nov: Registos mobile date controls and compact expanded nutrition. */
+#consumption-panel .tm-record-day{gap:10px}
+#consumption-panel .tm-record-day>strong{white-space:nowrap}
+@media(max-width:600px){
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-consumption-toolbar{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;gap:5px!important;padding:14px 13px!important;
+ }
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-day{
+  min-width:0;width:auto!important;display:flex!important;justify-content:flex-start!important;
+  align-items:center!important;gap:5px!important;
+ }
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-day>strong{
+  min-width:0;font-size:clamp(10px,2.55vw,12px)!important;
+  font-weight:500!important;line-height:1.25!important;
+  white-space:nowrap!important;letter-spacing:-.025em!important;
+ }
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-calendar-button{
+  width:28px!important;height:30px!important;min-height:30px!important;
+  flex:0 0 28px!important;border-radius:9px!important;
+ }
+ #consumption-panel .tm-record-calendar-button svg{width:16px;height:16px}
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-day-nav{
+  display:flex!important;justify-content:flex-end!important;align-items:center!important;
+  width:auto!important;gap:4px!important;flex:0 0 auto!important;
+ }
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-day-nav button{
+  min-width:28px!important;width:28px!important;height:30px!important;min-height:30px!important;
+  padding:2px!important;border-radius:9px!important;font-size:16px!important;
+ }
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-day-nav #consumption-today{
+  width:auto!important;min-width:41px!important;padding:2px 7px!important;font-size:11px!important;
+ }
+ #consumption-panel .tm-record-meal-metrics{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px!important;padding:12px 0!important;
+ }
+ #consumption-panel .tm-record-meal-metrics div{min-width:0;gap:7px}
+ #consumption-panel .tm-record-meal-metrics small{font-size:10px!important;white-space:nowrap}
+ #consumption-panel .tm-record-meal-metrics strong{
+  font-size:clamp(10px,2.8vw,12px)!important;font-weight:500!important;
+  white-space:nowrap!important;letter-spacing:-.02em;
+ }
+}
+@media(max-width:370px){
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-consumption-toolbar{
+  padding:12px 9px!important;gap:3px!important;
+ }
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-day>strong{
+  font-size:9px!important;
+ }
+ #consumption-panel .tm-record-meal-metrics{gap:3px!important}
+ #consumption-panel .tm-record-meal-metrics strong{font-size:10px!important}
+}
