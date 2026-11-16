@@ -491,12 +491,10 @@ function renderScenarioEditor(){
   group.open=wide;
   const groupHeader=document.createElement("summary");groupHeader.className="scenario-day-heading";
   const heading=document.createElement("strong");heading.className="scenario-day-title";heading.textContent=type;
-  const groupHint=document.createElement("span");groupHint.className="scenario-day-hint";
-  groupHint.textContent="3 intervalos";
   const groupChevron=document.createElement("span");groupChevron.className="scenario-day-chevron";
   groupChevron.setAttribute("aria-hidden","true");
   groupChevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-  groupHeader.append(heading,groupHint,groupChevron);group.append(groupHeader);
+  groupHeader.append(heading,groupChevron);group.append(groupHeader);
   const content=document.createElement("div");content.className="scenario-day-content";
   const labels=document.createElement("div");labels.className="scenario-options-head";
   for(const title of ["Minutos de jogo",...model.meals.map(meal=>names[meal]||meal)]){
