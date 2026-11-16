@@ -468,33 +468,47 @@ $("scenario-parity-run").addEventListener("click",async()=>{
 });
 // Explicit touch feedback persists through a fast tap and does not interfere
 // with the browser's native <summary> click or keyboard interaction.
-function enableModelAccordionTouchFeedback(summary){
- if(!summary)return;
+function enableModelAccordionTouchFeedback(target){
+ if(!target)return;
+ // Preserve the already-approved Modelo interaction; post-match needs a
+ // card-level press state, and its native color selects need separate feedback.
+ const isModel=target.classList.contains("model-mobile-summary");
+ const isPostMatchHeading=target.matches(".scenario-main-summary,.scenario-day-heading");
+ const isScenarioSelect=target.classList.contains("scenario-color-select");
+ const surface=isPostMatchHeading?target.parentElement:
+  isScenarioSelect?target.closest(".scenario-select-shell"):null;
  let clearPress=null;
+ const setPressed=(pressed)=>{
+  target.classList.toggle("tm-mobile-touch-press",pressed);
+  if(isPostMatchHeading)surface?.classList.toggle("tm-mobile-card-press",pressed);
+  if(isScenarioSelect)surface?.classList.toggle("tm-mobile-touch-press",pressed);
+ };
  const finish=(delay)=>{
   if(clearPress!==null){clearTimeout(clearPress);clearPress=null;}
-  if(delay===0){summary.classList.remove("tm-mobile-touch-press");return;}
-  clearPress=setTimeout(()=>{
-   summary.classList.remove("tm-mobile-touch-press");
-   clearPress=null;
-  },delay);
+  if(!delay){setPressed(false);return;}
+  clearPress=setTimeout(()=>{setPressed(false);clearPress=null;},delay);
  };
  const start=()=>{
   if(!window.matchMedia("(max-width:830px)").matches)return;
-  if(document.documentElement.dataset.adminTheme!=="light")return;
+  if(isModel&&document.documentElement.dataset.adminTheme!=="light")return;
   if(clearPress!==null){clearTimeout(clearPress);clearPress=null;}
-  summary.classList.add("tm-mobile-touch-press");
+  setPressed(true);
  };
+ // Attach touch listeners on iOS even where PointerEvent exists: a native
+ // select can open its picker and immediately cancel the pointer sequence.
+ target.addEventListener("touchstart",start,{passive:true});
+ target.addEventListener("touchend",()=>finish(230),{passive:true});
+ target.addEventListener("touchcancel",()=>finish(isScenarioSelect?230:0),{passive:true});
  if(window.PointerEvent){
-  summary.addEventListener("pointerdown",event=>{
-   if(event.pointerType==="touch"&&event.isPrimary)start();
+  target.addEventListener("pointerdown",(event)=>{
+   if(event.isPrimary&&event.pointerType==="touch")start();
   },{passive:true});
-  summary.addEventListener("pointerup",()=>finish(210),{passive:true});
-  summary.addEventListener("pointercancel",()=>finish(0),{passive:true});
- }else{
-  summary.addEventListener("touchstart",start,{passive:true});
-  summary.addEventListener("touchend",()=>finish(210),{passive:true});
-  summary.addEventListener("touchcancel",()=>finish(0),{passive:true});
+  target.addEventListener("pointerup",()=>finish(230),{passive:true});
+  target.addEventListener("pointercancel",()=>finish(isScenarioSelect?230:0),{passive:true});
+ }
+ if(isScenarioSelect){
+  target.addEventListener("change",()=>finish(150));
+  target.addEventListener("blur",()=>finish(0));
  }
 }
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
@@ -583,6 +597,7 @@ function renderScenarioEditor(){
     chevron.setAttribute("aria-hidden","true");
     chevron.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
     shell.append(select,chevron);
+    enableModelAccordionTouchFeedback(select);
     select.addEventListener("change",async()=>{
      const next=select.value||null;select.disabled=true;
      try{
