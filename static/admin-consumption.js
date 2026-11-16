@@ -26,7 +26,7 @@
  const num=v=>v===null||v===undefined?"—":Number(v).toLocaleString("pt-PT",{maximumFractionDigits:1});
  const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
  const localDate=s=>new Date(s+"T12:00:00");
- const niceDay=s=>localDate(s).toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/-feira\b/g,"");
+ const niceDay=s=>localDate(s).toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/-feira\b/g,"").replace(/\s+de\s+/g," ");
  const today=()=>iso(new Date());
  if(!date.value)date.value=today();
  let requestNumber=0;
