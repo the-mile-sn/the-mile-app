@@ -3054,7 +3054,18 @@ function renderDishEditor(){
  parking.append(search,category);
  host.replaceChildren();
  refreshDishTableCategories();
- $("dish-outside-filters")?.append(category,search);
+ const externalFilters=$("dish-outside-filters");
+ if(externalFilters){
+  for(const [input,caption] of [[category,"Categoria"],[search,"Pesquisar"]]){
+   let field=input.closest(".tm-dish-filter-field");
+   if(!field){
+    field=document.createElement("label");field.className="tm-dish-filter-field";
+    const title=document.createElement("span");title.textContent=caption;
+    field.append(title,input);
+   }
+   externalFilters.append(field);
+  }
+ }
  const query=normalizedDishText($("dish-search").value).trim();
  const filter=$("dish-category-filter")?.value||"";
  const matches=dishTableRows;
