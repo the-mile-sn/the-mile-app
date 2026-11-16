@@ -4515,11 +4515,18 @@ html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary{
 }
 html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary::-webkit-details-marker{display:none}
 html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary::marker{content:""}
-html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary svg{
- width:19px;height:19px;flex:none;transform:rotate(0deg);
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary .scenario-main-title{
+ display:inline-flex!important;align-items:center;gap:10px;min-width:0;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary .scenario-main-icon{
+ display:block!important;flex:none;width:21px;height:21px;
+ color:var(--tm-ui-text)!important;transform:none!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary>.scenario-main-chevron{
+ display:block!important;width:19px;height:19px;flex:none;transform:rotate(0deg);
  color:var(--tm-ui-muted);transition:transform .18s ease;
 }
-html[data-admin-theme] #admin-workspace #scenario-editor[open]>.scenario-main-summary svg{
+html[data-admin-theme] #admin-workspace #scenario-editor[open]>.scenario-main-summary>.scenario-main-chevron{
  transform:rotate(180deg);
 }
 html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary:focus-visible,
@@ -4702,7 +4709,7 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
  }
 }
 @media(prefers-reduced-motion:reduce){
- html[data-admin-theme] #scenario-editor :is(.scenario-main-summary svg,.scenario-day-chevron){transition:none!important}
+ html[data-admin-theme] #scenario-editor :is(.scenario-main-chevron,.scenario-day-chevron){transition:none!important}
 }
 
 /* 2026-11-14 Planning calendar harmonization — consolidated replacement (v2).
