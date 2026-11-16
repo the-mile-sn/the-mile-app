@@ -6,7 +6,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 import zipfile
 import hashlib
 import gzip
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from threading import Lock
 import hmac
 import json
@@ -422,6 +422,64 @@ def admin_library_thumbnail(image_data, size=240):
         while len(_admin_thumbnail_cache) > 128:
             _admin_thumbnail_cache.popitem(last=False)
     return compressed
+
+
+def admin_menu_thumbnail(image_data, size=240):
+    """Admin-only light transparent WebP for the weekly menu overview.
+
+    Keep the original images untouched for players. Only remove connected
+    near-black *outer backdrop* pixels when a bright central dish exists;
+    never crop or erase regions within the plate.
+    """
+    key=("menus-alpha",size,hashlib.sha256(image_data).digest())
+    with _admin_thumbnail_lock:
+        cached=_admin_thumbnail_cache.get(key)
+        if cached is not None:
+            _admin_thumbnail_cache.move_to_end(key)
+            return cached
+    with Image.open(io.BytesIO(image_data)) as original:
+        image=ImageOps.exif_transpose(original).convert("RGBA")
+        image.thumbnail((size,size))
+        width,height=image.size
+        pixels=image.load()
+        center=[pixels[x,y] for y in range(height//3,2*height//3,max(1,height//12))
+                for x in range(width//3,2*width//3,max(1,width//12))]
+        # Skip dark dishes/photos where it is unsafe to distinguish background.
+        bright=sum(1 for rgb in center if max(rgb[:3])>100)
+        if bright >= max(2,len(center)//6):
+            visited=set()
+            queue=deque()
+            def dark(x,y):
+                r,g,b,a=pixels[x,y]
+                return a>0 and max(r,g,b)<=32
+            for x in range(width):
+                if dark(x,0): queue.append((x,0))
+                if dark(x,height-1): queue.append((x,height-1))
+            for y in range(height):
+                if dark(0,y): queue.append((0,y))
+                if dark(width-1,y): queue.append((width-1,y))
+            while queue:
+                x,y=queue.popleft()
+                if (x,y) in visited or not dark(x,y):
+                    continue
+                visited.add((x,y))
+                if x>0: queue.append((x-1,y))
+                if x+1<width: queue.append((x+1,y))
+                if y>0: queue.append((x,y-1))
+                if y+1<height: queue.append((x,y+1))
+            if len(visited) >= width*height//12:
+                for x,y in visited:
+                    r,g,b,_=pixels[x,y]
+                    pixels[x,y]=(r,g,b,0)
+        out=io.BytesIO()
+        image.save(out,format="WEBP",quality=72,method=4)
+        thumbnail=out.getvalue()
+    with _admin_thumbnail_lock:
+        _admin_thumbnail_cache[key]=thumbnail
+        _admin_thumbnail_cache.move_to_end(key)
+        while len(_admin_thumbnail_cache)>128:
+            _admin_thumbnail_cache.popitem(last=False)
+    return thumbnail
 
 
 def read_dish_image(c, filename):
@@ -2605,8 +2663,11 @@ def application(env, start_response):
                 if not dish: raise Problem(404,'not_found')
                 image_data=read_dish_image(c,dish['image_filename'])
                 if image_data is None: raise Problem(404,'not_found')
-                if parse_qs(env.get('QUERY_STRING', '')).get('thumb') == ['1']:
-                    image_data=admin_library_thumbnail(image_data)
+                args=parse_qs(env.get('QUERY_STRING', ''))
+                if args.get('thumb') == ['1']:
+                    image_data=(admin_menu_thumbnail(image_data)
+                        if args.get('menu') == ['1']
+                        else admin_library_thumbnail(image_data))
                 return respond(200,image_data,'image/webp')
             if path.startswith('/api/v2/athletes/') and path.endswith('/profile') and method in ('GET', 'PUT'):
                 if not user: raise Problem(401,'unauthorized')
