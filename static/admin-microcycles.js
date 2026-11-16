@@ -3836,7 +3836,7 @@ function tmNormalizeAdminActionIcons(root){
   if(!button.querySelector("svg"))continue;
   if((button.textContent||"").trim())continue;
   const label=(button.getAttribute("aria-label")||button.getAttribute("title")||"").trim();
-  const kind=/^(editar|edit)(?:\\b|\\s)/i.test(label)?"edit":/^(eliminar|apagar|remover|delete)(?:\\b|\\s)/i.test(label)?"remove":null;
+  const kind=/^(editar|edit)(?:\b|\s)/i.test(label)?"edit":/^(eliminar|apagar|remover|delete)(?:\b|\s)/i.test(label)?"remove":null;
   if(!kind)continue;
   const old=button.querySelector("svg");
   if(old.getAttribute("data-hugeicons")===(kind==="edit"?"PencilEdit01Icon":"TrashIcon"))continue;
