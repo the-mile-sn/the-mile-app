@@ -212,3 +212,72 @@ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-metric .tm
 html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-ring{
  background:conic-gradient(#78add6 var(--tm-record-progress,0%),var(--rec-sub) 0)!important;
 }
+
+/* Registos / same nutrition hierarchy and four-color rings as the player app.
+   All numbers retain the existing Microciclos source and calculation. */
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-overview{
+ display:grid!important;grid-template-columns: minmax(180px,235px) minmax(0,1fr)!important;
+ gap:12px 30px!important;align-items:center!important;padding:24px 27px!important;
+}
+html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-rings{
+ width:100%;max-width:222px;min-width:0;margin:auto;
+}
+#consumption-panel .tm-record-four-rings{display:block;width:100%;height:auto;overflow:visible;transform:rotate(-90deg)}
+#consumption-panel .tm-record-arc-track,#consumption-panel .tm-record-arc-fill{
+ fill:none;stroke-width:11;stroke-linecap:round;
+}
+#consumption-panel .tm-record-arc-track{stroke:rgba(145,151,165,.18)}
+#consumption-panel .tm-record-arc-fill{transition:stroke-dashoffset .28s ease}
+#consumption-panel .tm-record-overview-content{min-width:0;padding:3px 0}
+#consumption-panel .tm-record-overview-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+#consumption-panel .tm-record-overview-top h3{font-size:16px;font-weight:500;margin:0;color:var(--rec-text)}
+#consumption-panel .tm-record-consumed-tag{
+ display:inline-flex;align-items:center;background:rgba(100,217,170,.12);
+ color:#61bc91;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:500;
+}
+#consumption-panel .tm-record-kcal-caption{font-size:13px;color:var(--rec-muted);margin:0 0 4px}
+#consumption-panel .tm-record-kcal-value{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;margin:0 0 17px;font-variant-numeric:tabular-nums}
+#consumption-panel .tm-record-kcal-value strong{font-size:clamp(30px,3.5vw,46px);line-height:1.1;font-weight:550;color:#61dca8;letter-spacing:-.035em}
+#consumption-panel .tm-record-kcal-value>span{font-size:clamp(25px,2.8vw,39px);line-height:1.1;font-weight:400;color:var(--rec-muted);letter-spacing:-.035em}
+#consumption-panel .tm-record-macros{display:grid;grid-template-columns:1fr;gap:9px;padding-top:15px;border-top:1px solid var(--rec-line)}
+#consumption-panel .tm-record-macro-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0}
+#consumption-panel .tm-record-macro-row>span{font-size:16px;color:var(--rec-muted)}
+#consumption-panel .tm-record-macro-row strong{font-size:19px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+#consumption-panel .tm-record-macro-row .tm-record-goal{font-size:17px;color:var(--rec-muted);font-weight:400}
+#consumption-panel .tm-record-counts{display:flex;flex-wrap:wrap;gap:8px 15px;padding-top:15px;color:var(--rec-muted);font-size:12px}
+#consumption-panel .tm-record-coverage{grid-column:1/-1!important;margin-top:5px}
+#consumption-panel .tm-record-meal-title>span{line-height:1.4;overflow-wrap:anywhere}
+html[data-admin-theme="light"] #consumption-panel .tm-record-consumed-tag{color:#357453}
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-overview{
+  grid-template-columns:minmax(130px,180px) minmax(0,1fr)!important;
+  gap:14px 18px!important;padding:20px!important;
+ }
+ #consumption-panel .tm-record-kcal-value strong{font-size:34px}
+ #consumption-panel .tm-record-kcal-value>span{font-size:27px}
+ #consumption-panel .tm-record-macro-row>span{font-size:14px}
+ #consumption-panel .tm-record-macro-row strong{font-size:16px}
+ #consumption-panel .tm-record-macro-row .tm-record-goal{font-size:14px}
+}
+@media(max-width:560px){
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-overview{
+  grid-template-columns:minmax(90px,125px) minmax(0,1fr)!important;
+  gap:12px!important;padding:17px!important;
+ }
+ #consumption-panel .tm-record-rings{max-width:125px}
+ #consumption-panel .tm-record-overview-top{margin-bottom:8px;gap:6px}
+ #consumption-panel .tm-record-overview-top h3{font-size:13px}
+ #consumption-panel .tm-record-consumed-tag{font-size:10px;padding:3px 8px}
+ #consumption-panel .tm-record-kcal-caption{font-size:11px}
+ #consumption-panel .tm-record-kcal-value{gap:3px;margin-bottom:10px}
+ #consumption-panel .tm-record-kcal-value strong{font-size:25px}
+ #consumption-panel .tm-record-kcal-value>span{font-size:20px}
+ #consumption-panel .tm-record-macros{gap:5px;padding-top:9px}
+ #consumption-panel .tm-record-macro-row{gap:3px}
+ #consumption-panel .tm-record-macro-row>span{font-size:11px}
+ #consumption-panel .tm-record-macro-row strong{font-size:12px}
+ #consumption-panel .tm-record-macro-row .tm-record-goal{font-size:11px}
+ #consumption-panel .tm-record-counts{font-size:10px;padding-top:9px}
+ #consumption-panel .tm-record-coverage{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){#consumption-panel .tm-record-arc-fill{transition:none}}
