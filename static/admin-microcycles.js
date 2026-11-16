@@ -1200,8 +1200,9 @@ function renderMenuWeekGrid(menus,calendarData,start){
     img.decoding="async";img.fetchPriority="low";
     img.src="/api/v2/dishes/image/"+encodeURIComponent(item.dish_id)+"?thumb=1&menu=1";button.append(img);
    }else{
-    const placeholder=document.createElement("span");placeholder.className="tm-menu-week-placeholder";
-    placeholder.setAttribute("aria-hidden","true");button.append(placeholder);
+    // Only complete dishes have photographs. Category/text/empty cells
+    // show their menu label directly below the meal header.
+    button.classList.add("tm-menu-week-no-photo");
    }
    const row=document.createElement("span");row.className="tm-menu-week-name";
    const text=document.createElement("span");text.textContent=item?.value||"Por definir";row.append(text);
@@ -1332,12 +1333,21 @@ async function loadMenus(){
       dishFilter.value=selectedDish?.category||"";line.appendChild(dishFilter);
       const picker=document.createElement("div");picker.className="menu-combobox";line.appendChild(picker);
       const lastUseNote=document.createElement("p");lastUseNote.className="menu-last-used-note";lastUseNote.hidden=true;line.append(lastUseNote);
-      const dishSearch=document.createElement("input");dishSearch.type="search";dishSearch.className="menu-choice";dishSearch.placeholder="Pesquisar e selecionar prato…";dishSearch.autocomplete="off";dishSearch.setAttribute("role","combobox");dishSearch.setAttribute("aria-autocomplete","list");dishSearch.setAttribute("aria-expanded","false");picker.appendChild(dishSearch);
+      const dishSearch=document.createElement("textarea");dishSearch.rows=2;dishSearch.wrap="soft";dishSearch.maxLength=230;dishSearch.className="menu-choice tm-menu-dish-query";dishSearch.placeholder="Pesquisar e selecionar prato…";dishSearch.autocomplete="off";dishSearch.setAttribute("role","combobox");dishSearch.setAttribute("aria-autocomplete","list");dishSearch.setAttribute("aria-expanded","false");dishSearch.setAttribute("aria-label","Pesquisar e selecionar prato completo");picker.appendChild(dishSearch);
       const clearDishSearch=document.createElement("button");clearDishSearch.type="button";
       clearDishSearch.className="tm-menu-dish-search-clear";clearDishSearch.setAttribute("aria-label","Limpar pesquisa do prato");
       clearDishSearch.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>';
       picker.appendChild(clearDishSearch);
-      const updateClearDishSearch=()=>{clearDishSearch.hidden=!dishSearch.value;};
+      const resizeDishSearch=()=>{
+       // A native one-line search control can never wrap a long dish name.
+       // Size the existing combobox to its content, including selected names.
+       dishSearch.style.height="auto";
+       if(!dishSearch.hidden)dishSearch.style.height=Math.max(66,dishSearch.scrollHeight||66)+"px";
+      };
+      const updateClearDishSearch=()=>{
+       clearDishSearch.hidden=!dishSearch.value;
+       resizeDishSearch();
+      };
       const suggestions=document.createElement("div");suggestions.className="menu-suggestions";suggestions.setAttribute("role","listbox");suggestions.hidden=true;picker.appendChild(suggestions);
       let chosenDishId=selectedDish?.id||"";
       dishSearch.value=selectedDish?.name_pt||"";
@@ -1391,7 +1401,10 @@ async function loadMenus(){
       });
       dishSearch.addEventListener("keydown",e=>{
         if(e.key==="Escape"){closeSuggestions();dishSearch.blur();}
-        if(e.key==="Enter"&&!suggestions.hidden){e.preventDefault();const item=candidates()[0];if(item)pickDish(item);}
+        if(e.key==="Enter"){
+         e.preventDefault();
+         if(!suggestions.hidden){const item=candidates()[0];if(item)pickDish(item);}
+        }
       });
       dishSearch.addEventListener("blur",()=>{setTimeout(closeSuggestions,120);});
       dishFilter.addEventListener("change",()=>{chosenDishId="";dishSearch.value="";updateClearDishSearch();showLastUse();updatePreview();closeSuggestions();});
@@ -1410,8 +1423,10 @@ async function loadMenus(){
        dishSearch.hidden=kind.value!=="dish";picker.hidden=kind.value!=="dish";
        dishFilter.hidden=kind.value!=="dish";dish.hidden=true;closeSuggestions();
        updateClearDishSearch();updatePreview();showLastUse();
+       requestAnimationFrame(resizeDishSearch);
       };
       kind.addEventListener("change",toggle);toggle();
+      requestAnimationFrame(()=>{if(dishSearch.isConnected)resizeDishSearch();});
       const saveMessage=document.createElement("small");saveMessage.className="tm-menu-meal-feedback";saveMessage.setAttribute("role","status");line.append(saveMessage);
       let saveSerial=Promise.resolve(),saveVersion=0,saveTimer=null;
       let lastSaved=existing?{menu_date:date,meal,kind:existing.kind,value:existing.value,dish_id:existing.dish_id||null}:null;
