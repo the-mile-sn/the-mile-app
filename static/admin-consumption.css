@@ -145,3 +145,40 @@ html[data-admin-theme="light"] #consumption-panel .tm-record-date-select input{c
 @media(prefers-reduced-motion:reduce){
  #consumption-panel .tm-record-chevron{transition:none}
 }
+/* 16 Nov — Registos refinement: match the existing Planning navigation. */
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel[hidden]{
+ display:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-record-day>strong{
+ text-transform:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-record-calendar-button{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;
+ width:40px;height:40px;min-height:40px;padding:0;border:0;border-radius:12px;
+ background:var(--rec-sub)!important;color:var(--rec-muted)!important;cursor:pointer;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-record-calendar-button:hover{
+ background:var(--tm-ui-hover)!important;color:var(--rec-text)!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-record-calendar-button:focus-visible{
+ outline:2px solid var(--rec-muted);outline-offset:2px;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel input.tm-record-native-date{
+ position:absolute!important;width:1px!important;height:1px!important;
+ min-height:1px!important;max-width:1px!important;padding:0!important;
+ opacity:0!important;pointer-events:none!important;overflow:hidden!important;
+ border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-consumption-empty{
+ padding:20px 24px!important;min-height:unset!important;
+ margin:0!important;border:0!important;background:var(--rec-card)!important;
+ border-radius:20px!important;color:var(--rec-muted)!important;font-weight:400!important;
+}
+#consumption-panel .tm-record-food-heading{
+ color:var(--rec-muted);font-size:12px;margin:16px 0 0;font-weight:500;
+}
+@media(max-width:600px){
+ #consumption-panel .tm-record-day{gap:8px}
+ #consumption-panel .tm-record-day>strong{font-size:14px;line-height:1.35}
+ #consumption-panel .tm-record-calendar-button{flex:0 0 38px!important;width:38px!important;height:38px!important}
+}
