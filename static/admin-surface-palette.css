@@ -7214,8 +7214,12 @@ html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-
   display:block!important;min-width:0!important;width:100%!important;
   border-spacing:0!important;
  }
+ /* Visually hide column headings but keep the original table headers
+    in the accessibility tree for screen readers. */
  html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll thead{
-  display:none!important;
+  position:absolute!important;width:1px!important;height:1px!important;
+  overflow:hidden!important;clip:rect(0,0,0,0)!important;
+  clip-path:inset(50%)!important;white-space:nowrap!important;
  }
  html[data-admin-theme] #admin-workspace #menus-panel .tm-menu-history-scroll tbody{
   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
