@@ -8085,3 +8085,33 @@ html[data-admin-theme] body #tm-menu-recipes-page .dish-library-table thead th:l
  min-width:108px!important;
  text-align:right!important;
 }
+
+/* Recipe catalogue: align filter captions, selected values, and first table column. */
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field{
+ box-sizing:border-box!important;
+ text-align:left!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field>span,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field :is(input,select){
+ box-sizing:border-box!important;
+ margin-left:0!important;
+ padding-left:0!important;
+ text-indent:0!important;
+ text-align:left!important;
+ width:100%!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field select{
+ -webkit-appearance:none!important;
+ appearance:none!important;
+ text-align-last:left!important;
+ padding-right:22px!important;
+ background-color:transparent!important;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378889a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+ background-repeat:no-repeat!important;
+ background-position:right center!important;
+ background-size:17px 17px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table thead th:first-child,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table tbody td:first-child{
+ padding-left:26px!important;
+}
