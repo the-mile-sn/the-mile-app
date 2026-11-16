@@ -516,7 +516,7 @@ def import_dish_catalog(c, catalog_rows):
 
 def page_dish_library(c, query="", category="", page=1, page_size=25):
     """Return only requested dish rows; leave full catalogue for menu selectors."""
-    conditions, params = [], []
+    conditions, params = ["active=1"], []
     if query:
         conditions.append("(LOWER(name_pt) LIKE ? OR LOWER(name_en) LIKE ? OR LOWER(category) LIKE ?)")
         params.extend(["%"+query.lower()+"%"]*3)
