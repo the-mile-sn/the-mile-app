@@ -4049,7 +4049,7 @@ function filterSupplementLists(){
   momentCell.textContent=rules.map(p=>p.timing_text||momentNames[p.moment]||"Sem associação").join(" | ");
   for(const rule of rules){const chip=document.createElement("span");chip.className="tm-supp-table-frequency";chip.textContent=frequencyNames[rule.rule]||rule.rule||"Diária";frequencyCell.append(chip);}
   const actions=document.createElement("td");actions.className="tm-supp-table-actions";
-  const edit=document.createElement("button");edit.type="button";edit.className="tm-supp-library-edit";edit.innerHTML=supplementPlanActionIcons.edit;edit.setAttribute("aria-label","Editar "+item.name);edit.title="Editar "+item.name;
+  const edit=document.createElement("button");edit.type="button";edit.className="tm-supp-library-edit";edit.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label","Editar "+item.name);edit.title="Editar "+item.name;
   edit.onclick=()=>{
    $("supp-lib-name").value=item.name;$("supp-lib-dose").value=item.dose;
    $("supp-lib-moment").value=item.moment;$("supp-lib-rule").value=item.rule;
@@ -4059,7 +4059,7 @@ function filterSupplementLists(){
    const dialog=$("supp-library-dialog");if(dialog&&!dialog.open)dialog.showModal();
    $("supp-lib-name").focus();
   };
-  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
+  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6v13m8-13v13M5 6l1 15h12l1-15M9 6V4h6v2"/></svg>';remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
   remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};
   actions.append(edit,remove);row.append(nameCell,doseCell,momentCell,frequencyCell,actions);list.append(row);
  }
