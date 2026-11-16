@@ -4257,29 +4257,37 @@ html[data-admin-theme] #matrix .model-effective-matrix thead th{
 html[data-admin-theme] #matrix .model-effective-matrix thead th:first-child{
  padding-left:12px!important;
 }
-/* Each desktop microcycle day is a single subcard spanning all columns.
-   Extra specificity is intentional: override old light-theme zebra rules. */
+/* Desktop: separate each day as its OWN compact colored/neutral tile,
+   with genuine clear space before its five editable meal fields.
+   The row is no longer one uninterrupted gray subcard. */
 html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr > :is(th,td){
- padding:9px 6px!important;height:60px!important;
+ padding:7px 6px!important;height:58px!important;
  border:0!important;box-shadow:none!important;
- background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ background:transparent!important;color:var(--tm-ui-text)!important;
 }
-html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr > th:first-child{
- padding-left:14px!important;border-radius:14px 0 0 14px!important;
+html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr > th.model-class-heading{
+ padding:7px 6px!important;border:0!important;border-radius:0!important;
+ background:transparent!important;
+}
+html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr > th.model-class-heading .model-class-label{
+ display:flex!important;align-items:center!important;box-sizing:border-box!important;
+ width:calc(100% - 10px)!important;min-height:44px!important;
+ padding:0 12px!important;border:0!important;border-radius:12px!important;
+ background:var(--tm-model-day-bg,var(--tm-ui-subcard))!important;
 }
 html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr > td:last-child{
- padding-right:9px!important;border-radius:0 14px 14px 0!important;
+ padding-right:6px!important;border-radius:0!important;
 }
 html[data-admin-theme] #matrix .model-effective-matrix tbody th:first-child,
 html[data-admin-theme] #matrix .model-effective-matrix thead th:first-child{
  width:148px!important;min-width:148px!important;
 }
 @media(hover:hover) and (pointer:fine){
- html[data-admin-theme="light"] #admin-workspace #matrix .model-effective-matrix tbody tr:hover > :is(th,td){
-  background-image:linear-gradient(rgba(41,60,80,.023),rgba(41,60,80,.023))!important;
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-effective-matrix tbody tr:hover .model-class-label{
+  filter:brightness(.986);
  }
- html[data-admin-theme="dark"] #admin-workspace #matrix .model-effective-matrix tbody tr:hover > :is(th,td){
-  background-image:linear-gradient(rgba(255,255,255,.025),rgba(255,255,255,.025))!important;
+ html[data-admin-theme="dark"] #admin-workspace #matrix .model-effective-matrix tbody tr:hover .model-class-label{
+  filter:brightness(1.065);
  }
 }
 html[data-admin-theme] #matrix .model-class-label,
@@ -4318,12 +4326,8 @@ html[data-admin-theme] #matrix .model-day--match .model-class-status[data-config
 html[data-admin-theme] #matrix .model-day--off .model-class-status[data-configured="true"]{
  background:var(--tm-model-day-dot)!important;
 }
-@media(min-width:831px){
- html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr.model-day--match > th.model-class-heading,
- html[data-admin-theme] #admin-workspace #matrix .model-effective-matrix tbody tr.model-day--off > th.model-class-heading{
-  background:var(--tm-model-day-bg)!important;
- }
-}
+/* Match/Off tiles inherit --tm-model-day-bg from .model-day--match/--off.
+   Their entire small tile is tinted, with no partial-color boundary. */
 html[data-admin-theme] #matrix .microcycle-color-select.model-color-select{
  display:block!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;
  height:42px!important;min-height:42px!important;margin:0!important;
@@ -4358,23 +4362,31 @@ html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-c
 html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="vp"]{
  color:var(--tm-nutrition-ink-vp)!important;
 }
-/* Native select chrome flattened the declared corners in Safari.
-   Keep native keyboard/select interaction but draw a consistent single chevron
-   and 12px corners across all meal colors. */
-html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select{
+/* Reliable overlay chevron for native <select>: a real pointer-events:none
+   SVG next to the control, not a background image Safari can suppress.
+   The visible control remains the native select with keyboard support. */
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell{
+ position:relative!important;display:block!important;
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+}
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell>.microcycle-color-select.model-color-select{
  -webkit-appearance:none!important;appearance:none!important;
+ background-image:none!important;
  border-radius:12px!important;padding-right:36px!important;
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232e4157' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
- background-repeat:no-repeat!important;
- background-position:right 11px center!important;
- background-size:16px 16px!important;
 }
-html[data-admin-theme] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="vp"]{
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dce7e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+html[data-admin-theme] #admin-workspace #matrix .model-select-chevron{
+ position:absolute;right:11px;top:50%;transform:translateY(-50%);
+ display:grid;place-items:center;width:17px;height:17px;
+ color:var(--tm-ui-muted);pointer-events:none;z-index:1;
 }
-html[data-admin-theme="dark"] #admin-workspace #matrix .microcycle-color-select.model-color-select[data-color="none"]{
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a2a7b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+html[data-admin-theme] #admin-workspace #matrix .model-select-chevron svg{
+ display:block;width:17px;height:17px;
 }
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell[data-color="yellow"] .model-select-chevron{color:var(--tm-nutrition-ink-yellow)}
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell[data-color="orange"] .model-select-chevron{color:var(--tm-nutrition-ink-orange)}
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell[data-color="blue"] .model-select-chevron{color:var(--tm-nutrition-ink-blue)}
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell[data-color="green"] .model-select-chevron{color:var(--tm-nutrition-ink-green)}
+html[data-admin-theme] #admin-workspace #matrix .model-select-shell[data-color="vp"] .model-select-chevron{color:var(--tm-nutrition-ink-vp)}
 html[data-admin-theme] #matrix .microcycle-color-select.model-color-select:focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
  outline-offset:2px!important;
@@ -4449,7 +4461,7 @@ html[data-admin-theme] #matrix .model-mobile-list{display:none!important}
  html[data-admin-theme] #matrix .model-mobile-swatch[data-color="vp"]{background:#28543e}
  html[data-admin-theme] #matrix .model-mobile-fields{
   display:grid!important;grid-template-columns:minmax(0,1fr);gap:12px;
-  padding:2px 14px 15px;min-width:0;
+  padding:18px 14px 15px;min-width:0;
  }
  html[data-admin-theme] #matrix .model-mobile-field{
   display:flex!important;flex-direction:column;align-items:stretch;
