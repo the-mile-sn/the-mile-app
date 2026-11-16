@@ -8773,3 +8773,26 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-cat
 #tm-recipe-library-page #recipe-category-body #recipe-categories .recipe-category-card-actions button{
  border-radius:11px!important;
 }
+
+/* Recipe reader edit: same pencil language as library quick actions. */
+#tm-recipe-library-page #recipe-reader-panel .recipe-reader-header-actions #recipe-reader-edit.recipe-reader-edit-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+ box-sizing:border-box!important;padding:0!important;margin:0!important;
+ border:0!important;border-radius:11px!important;
+ background:var(--tm-action-secondary-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-secondary-fg,var(--tm-ui-text))!important;
+ box-shadow:none!important;cursor:pointer!important;
+}
+#tm-recipe-library-page #recipe-reader-panel .recipe-reader-header-actions #recipe-reader-edit.recipe-reader-edit-icon:hover{
+ background:var(--tm-action-secondary-hover,var(--tm-ui-hover))!important;
+}
+#tm-recipe-library-page #recipe-reader-panel .recipe-reader-header-actions #recipe-reader-edit.recipe-reader-edit-icon svg{
+ display:block!important;width:19px!important;height:19px!important;pointer-events:none!important;
+}
+/* Category manager labels match the text used by the table badges exactly. */
+#tm-recipe-library-page #recipe-category-body #recipe-categories .recipe-category-badge.recipe-category-card-badge{
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ font-size:11px!important;font-weight:500!important;line-height:1.3!important;
+ letter-spacing:normal!important;
+}
