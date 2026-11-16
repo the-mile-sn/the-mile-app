@@ -7393,3 +7393,113 @@ html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination butt
 html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination button:not(:disabled):hover{
  background:var(--tm-ui-hover);
 }
+
+/* 16 Nov library refinements - restrict to admin library surfaces. */
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel{
+ background:var(--tm-ui-card)!important;border:0!important;border-radius:18px!important;
+ padding:16px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel input{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar #supp-library-new{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ padding:12px 18px!important;min-height:44px!important;
+ border-radius:13px!important;
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination{
+ margin:16px 0 0!important;padding:0!important;border:0!important;
+ display:flex!important;justify-content:center!important;
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination[hidden]{display:none!important}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination button{
+ background:var(--tm-ui-search)!important;
+}
+/* Dishes: external filters and an accessible modal using the existing form. */
+html[data-admin-theme] #tm-menu-recipes-page .dish-catalog-filters{
+ justify-content:flex-end!important;margin-bottom:12px!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page .tm-dish-filter-panel{
+ display:grid!important;grid-template-columns:minmax(180px,1fr) minmax(240px,2fr);
+ gap:14px;align-items:center;background:var(--tm-ui-card)!important;
+ padding:16px!important;margin:0 0 16px!important;border-radius:18px!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page .tm-dish-filter-panel :is(input,select){
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;border-radius:12px!important;
+ padding:12px 15px!important;height:48px!important;min-height:48px!important;
+ width:100%!important;font-size:14px!important;box-sizing:border-box!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page .dish-table-edit{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:38px!important;height:38px!important;padding:0!important;min-width:38px!important;
+ border-radius:11px!important;background:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;font-size:0!important;border:0!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page .dish-table-edit svg{width:18px;height:18px}
+html[data-admin-theme] #tm-menu-recipes-page .dish-table-filter-row th{
+ background:var(--tm-ui-card)!important;font-weight:400!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] .tm-library-popup-backdrop:not([hidden]){
+ position:fixed!important;inset:0!important;z-index:20010!important;
+ background:rgba(0,0,0,.66)!important;backdrop-filter:blur(3px);
+ display:block!important;
+}
+html[data-admin-theme] .tm-library-popup-backdrop[hidden]{display:none!important}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel.tm-dish-popup:not([hidden]){
+ position:fixed!important;inset:50% auto auto 50%!important;
+ transform:translate(-50%,-50%)!important;z-index:20011!important;
+ box-sizing:border-box!important;width:min(670px,calc(100vw - 28px))!important;
+ max-height:calc(100dvh - 32px)!important;overflow-y:auto!important;
+ padding:28px!important;margin:0!important;border:0!important;
+ border-radius:20px!important;background:var(--tm-ui-card)!important;
+ box-shadow:0 20px 80px rgba(0,0,0,.28)!important;
+}
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-panel.tm-dish-popup[hidden]{display:none!important}
+/* Recipes: independent toolbar and fixed overlay for reader/editor, without replacing save logic. */
+html[data-admin-theme] #tm-recipe-library-page .tm-recipe-filter-panel{
+ display:grid!important;grid-template-columns:minmax(140px,1fr) minmax(220px,2fr) minmax(135px,.8fr) minmax(135px,.8fr);
+ gap:12px;align-items:center;background:var(--tm-ui-card)!important;
+ padding:16px!important;margin:0 0 16px!important;border-radius:18px!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .tm-recipe-filter-field{
+ display:flex!important;flex-direction:column!important;gap:7px!important;
+ font-size:12px!important;color:var(--tm-ui-muted)!important;min-width:0;
+}
+html[data-admin-theme] #tm-recipe-library-page .tm-recipe-filter-field :is(input,select){
+ height:48px!important;min-height:48px!important;width:100%!important;
+ box-sizing:border-box!important;padding:10px 14px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;border-radius:12px!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .tm-recipe-clickable-row{cursor:pointer}
+html[data-admin-theme] #tm-recipe-library-page .tm-recipe-clickable-row:hover td{
+ background:var(--tm-ui-hover)!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .tm-recipe-clickable-row:focus-visible{
+ outline:2px solid var(--tm-ui-muted);outline-offset:-3px;
+}
+html[data-admin-theme] #tm-recipe-library-page :is(#recipe-reader-panel,#recipe-editor-panel):not([hidden]){
+ display:block!important;position:fixed!important;z-index:20011!important;
+ box-sizing:border-box!important;
+ top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;
+ width:min(950px,calc(100vw - 28px))!important;
+ max-height:calc(100dvh - 32px)!important;
+ overflow:auto!important;overscroll-behavior:contain!important;
+ margin:0!important;padding:26px!important;
+ border:0!important;border-radius:20px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ box-shadow:0 20px 80px rgba(0,0,0,.28)!important;
+}
+html[data-admin-theme] #tm-recipe-library-page :is(#recipe-reader-panel,#recipe-editor-panel)[hidden]{display:none!important}
+@media(max-width:740px){
+ html[data-admin-theme] #tm-menu-recipes-page .tm-dish-filter-panel,
+ html[data-admin-theme] #tm-recipe-library-page .tm-recipe-filter-panel{
+  grid-template-columns:1fr!important;gap:10px!important;
+ }
+ html[data-admin-theme] #tm-recipe-library-page :is(#recipe-reader-panel,#recipe-editor-panel):not([hidden]){
+  padding:17px!important;max-height:calc(100dvh - 20px)!important;
+ }
+}
