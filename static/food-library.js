@@ -95,6 +95,7 @@ function open(food){
 }
 $("new").addEventListener("click",()=>open(null));
 $("cancel").addEventListener("click",()=>$("editor").close());
+$("food-editor-close")?.addEventListener("click",()=>$("editor").close());
 $("food-form").addEventListener("submit",async event=>{
  event.preventDefault();
  const data=Object.fromEntries(new FormData(event.target));
