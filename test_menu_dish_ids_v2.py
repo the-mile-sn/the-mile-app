@@ -154,9 +154,12 @@ class MenuDishIdTests(unittest.TestCase):
         self.assertEqual([x["date"] for x in all_days["days"]],[later])
         self.assertTrue(all_days["has_more"])
         self.assertEqual(all_days["days"][0]["classification"],"Geral")
+        self.assertIsNone(all_days["days"][0]["lunch"])
+        self.assertEqual(all_days["days"][0]["dinner"],"Frango original")
         next_page=menus.list_menu_history(self.c,"a1",before=later,limit=1,query="Frango")
         self.assertEqual([x["date"] for x in next_page["days"]],[earlier])
-        self.assertEqual(next_page["days"][0]["dinner"],"Outra receita")
+        self.assertEqual(next_page["days"][0]["lunch"],"Frango original")
+        self.assertIsNone(next_page["days"][0]["dinner"])
         self.assertFalse(next_page["has_more"])
         self.assertEqual(menus.list_menu_history(self.c,"a1",query="Absent")["days"],[])
         # Search is for complete dishes, never for generic menu categories.
@@ -164,6 +167,37 @@ class MenuDishIdTests(unittest.TestCase):
         self.assertEqual(menus.list_menu_history(self.c,"a1",query="Carne branca")["days"],[])
         with self.assertRaises(ValueError):
             menus.list_menu_history(self.c,"a1",query="x"*91)
+
+    def test_history_shows_both_meals_only_when_each_matches_query(self):
+        previous=(date.today()-timedelta(days=2)).isoformat()
+        menus.save_menu(self.c,"a1",previous,"lunch","dish","Frango original","d1")
+        menus.save_menu(self.c,"a1",previous,"dinner","dish","Frango original","d1")
+        found=menus.list_menu_history(self.c,"a1",query="FRANGO")["days"][0]
+        self.assertEqual(found["lunch"],"Frango original")
+        self.assertEqual(found["dinner"],"Frango original")
+        unfiltered=menus.list_menu_history(self.c,"a1",query="")["days"][0]
+        self.assertEqual(unfiltered["lunch"],"Frango original")
+        self.assertEqual(unfiltered["dinner"],"Frango original")
+
+    def test_history_search_clear_restores_unrelated_meal(self):
+        previous=(date.today()-timedelta(days=1)).isoformat()
+        menus.save_menu(self.c,"a1",previous,"lunch","dish","Frango original","d1")
+        menus.save_menu(self.c,"a1",previous,"dinner","dish","Outra receita","d2")
+        filtered=menus.list_menu_history(self.c,"a1",query="frango")["days"][0]
+        self.assertEqual(filtered["lunch"],"Frango original")
+        self.assertIsNone(filtered["dinner"])
+        cleared=menus.list_menu_history(self.c,"a1")["days"][0]
+        self.assertEqual(cleared["dinner"],"Outra receita")
+
+    def test_history_search_escapes_like_wildcards(self):
+        previous=(date.today()-timedelta(days=1)).isoformat()
+        self.add_dish("d3","Frango especial 100%")
+        menus.save_menu(self.c,"a1",previous,"lunch","dish","Frango especial 100%","d3")
+        menus.save_menu(self.c,"a1",previous,"dinner","dish","Outra receita","d2")
+        percent=menus.list_menu_history(self.c,"a1",query="%")["days"][0]
+        self.assertEqual(percent["lunch"],"Frango especial 100%")
+        self.assertIsNone(percent["dinner"])
+        self.assertEqual(menus.list_menu_history(self.c,"a1",query="_")["days"],[])
 
     def test_history_uses_effective_microcycle_classification(self):
         game=(date.today()-timedelta(days=1)).isoformat()
