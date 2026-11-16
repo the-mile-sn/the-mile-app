@@ -4496,6 +4496,14 @@ html[data-admin-theme] #admin-workspace #scenario-editor{
  color:var(--tm-ui-text)!important;
 }
 html[data-admin-theme] #admin-workspace #scenario-editor[hidden]{display:none!important}
+/* Author-level display declarations must not bypass the native <details>
+   collapsed state; enforce it for both nesting levels. */
+html[data-admin-theme] #admin-workspace #scenario-editor:not([open])> :not(.scenario-main-summary){
+ display:none!important;
+}
+html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group:not([open])>.scenario-day-content{
+ display:none!important;
+}
 html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary{
  display:flex!important;align-items:center;justify-content:space-between;
  gap:15px;min-height:32px;margin:0!important;padding:0!important;
