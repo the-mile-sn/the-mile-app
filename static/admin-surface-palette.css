@@ -6628,7 +6628,10 @@ html[data-admin-theme="light"] .tm-day-supplementation-modal-actions button[type
 /* PLANEAMENTO > MENUS E RECEITAS — approved 16 Nov 2026.
    Visual-only: player photo URLs, image files and app styles never change.
    Hierarchy: main card / day subcard / meal third-level card. */
-html[data-admin-theme] #admin-workspace #menus-panel{
+/* Never override the router's hidden attribute: this was the cause of
+   menus appearing on Microciclos, Modelo and without an athlete selected. */
+html[data-admin-theme] #admin-workspace #menus-panel[hidden]{display:none!important}
+html[data-admin-theme] #admin-workspace #menus-panel:not([hidden]){
  display:flex!important;flex-direction:column!important;gap:14px!important;
  min-width:0!important;background:transparent!important;
 }
@@ -6760,7 +6763,7 @@ html[data-admin-theme] #menus-panel #menu-weekly{
 }
 html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table{
  border-collapse:separate!important;border-spacing:7px!important;
- min-width:1120px!important;width:100%!important;table-layout:fixed!important;
+ min-width:1410px!important;width:100%!important;table-layout:fixed!important;
  background:transparent!important;margin:-7px!important;
 }
 html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table th,
@@ -6769,13 +6772,7 @@ html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table td{
  text-align:left!important;vertical-align:top!important;
  background:transparent!important;
 }
-html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table th:first-child{
- width:88px!important;min-width:88px!important;
- font:500 12px/1.4 "Inter Tight",sans-serif!important;
- color:var(--tm-ui-muted)!important;
- position:sticky;left:0;z-index:2;background:var(--tm-ui-card)!important;
-}
-html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table thead th:not(:first-child){
+html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table thead th{
  text-align:center!important;padding:12px 6px!important;
  border-radius:12px!important;background:var(--tm-ui-subcard)!important;
  font:500 12px/1.3 "Inter Tight",sans-serif!important;
@@ -6785,12 +6782,9 @@ html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table thead th sm
  display:block;margin-top:4px;
  color:var(--tm-ui-muted);font:400 10px/1.3 "Inter Tight",sans-serif;
 }
-html[data-admin-theme] #menus-panel #menu-weekly .tm-menu-week-table tbody>tr>th{
- padding-top:18px!important;
-}
 html[data-admin-theme] #menus-panel .tm-menu-week-cell{
  display:flex!important;flex-direction:column;align-items:stretch;gap:8px;
- width:100%!important;min-height:155px!important;padding:10px!important;
+ width:100%!important;min-height:185px!important;padding:11px!important;
  border:0!important;border-radius:13px!important;
  background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
  box-shadow:none!important;text-align:left!important;cursor:pointer;
@@ -6801,9 +6795,13 @@ html[data-admin-theme] #menus-panel .tm-menu-week-cell:hover{
 html[data-admin-theme] #menus-panel .tm-menu-week-cell:focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
 }
+html[data-admin-theme] #menus-panel .tm-menu-week-meal-label{
+ font:500 12px/1.25 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-text)!important;
+}
 html[data-admin-theme] #menus-panel .tm-menu-week-cell>img,
 html[data-admin-theme] #menus-panel .tm-menu-week-placeholder{
- display:block!important;width:100%!important;height:90px!important;
+ display:block!important;width:100%!important;height:76px!important;
  object-fit:contain!important;border-radius:9px!important;
  background:transparent!important;
 }
@@ -6812,11 +6810,10 @@ html[data-admin-theme] #menus-panel .tm-menu-week-placeholder{
 }
 html[data-admin-theme] #menus-panel .tm-menu-week-name{
  display:flex;align-items:flex-start;gap:6px;min-width:0;
- font:400 11px/1.4 "Inter Tight",sans-serif;
+ font:400 12px/1.45 "Inter Tight",sans-serif;
 }
 html[data-admin-theme] #menus-panel .tm-menu-week-name>span:last-child{
- display:-webkit-box;overflow:hidden;overflow-wrap:anywhere;
- -webkit-box-orient:vertical;-webkit-line-clamp:2;
+ display:block;overflow-wrap:anywhere;white-space:normal;
 }
 html[data-admin-theme] #menus-panel .tm-menu-week-dot{
  width:8px;height:8px;border-radius:50%;flex:none;margin-top:3px;
@@ -6867,13 +6864,13 @@ html[data-admin-theme] #menus-panel .tm-menu-history-scroll{
  overflow-x:auto;max-width:100%;
 }
 html[data-admin-theme] #menus-panel .tm-menu-history-scroll>table{
- width:100%!important;min-width:480px!important;border-collapse:collapse!important;
+ width:100%!important;min-width:720px!important;border-collapse:collapse!important;
 }
 html[data-admin-theme] #menus-panel .tm-menu-history-scroll th,
 html[data-admin-theme] #menus-panel .tm-menu-history-scroll td{
  padding:12px 10px!important;border:0!important;
  border-bottom:1px solid var(--tm-ui-divider)!important;
- background:transparent!important;vertical-align:top;
+ background:transparent!important;vertical-align:top;text-align:left!important;
  font:400 12px/1.45 "Inter Tight",sans-serif!important;color:var(--tm-ui-text)!important;
 }
 html[data-admin-theme] #menus-panel .tm-menu-history-scroll thead th{
@@ -6882,6 +6879,11 @@ html[data-admin-theme] #menus-panel .tm-menu-history-scroll thead th{
 }
 html[data-admin-theme] #menus-panel .tm-menu-history-scroll tbody th{
  font-weight:500!important;white-space:nowrap!important;
+ width:112px!important;min-width:105px!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-scroll td.tm-menu-history-classification{
+ font-weight:400!important;white-space:nowrap!important;
+ width:110px!important;color:var(--tm-ui-muted)!important;
 }
 html[data-admin-theme] #menus-panel .tm-menu-history-scroll .is-empty{
  color:var(--tm-ui-muted)!important;
@@ -6899,9 +6901,68 @@ html[data-admin-theme] #menus-panel #menu-history-more[hidden]{display:none!impo
 html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-access .tm-recipe-category-chip{
  background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
 }
+/* Search fields live directly inside a principal white/graphite card:
+   use SECOND surface depth, not the blue-tinted third level. */
 html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-category-search,
 html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-access .tm-recipe-search-results{
- background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ background:var(--tm-ui-field-on-card)!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-category-search{
+ border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #profile-recipe-category-search:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-save-actions{
+ display:flex!important;justify-content:flex-end!important;align-items:center!important;
+}
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-save-actions .hint{
+ order:1!important;margin-right:auto!important;
+}
+html[data-admin-theme] #menus-panel #profile-recipe-access .tm-recipe-save-actions #profile-recipe-category-save{
+ order:2!important;margin-left:auto!important;
+}
+/* History search and pager are inside the principal card, styled as
+   minimal neutral fields/buttons, without downloading every history row. */
+html[data-admin-theme] #menus-panel .tm-menu-history-tools{
+ display:flex;justify-content:flex-start;align-items:center;
+ gap:12px;margin:0 0 16px!important;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-search-label{
+ display:flex;flex-direction:column;gap:6px;max-width:430px;
+ width:100%;color:var(--tm-ui-muted)!important;
+ font:400 12px/1.4 "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-search-field{
+ position:relative;display:flex;align-items:center;min-width:0;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-search-field>svg{
+ position:absolute;left:13px;width:17px;height:17px;
+ color:var(--tm-ui-muted);pointer-events:none;
+}
+html[data-admin-theme] #menus-panel #menu-history-search{
+ box-sizing:border-box;width:100%;min-width:0;height:43px;
+ border:0;border-radius:12px;padding:9px 12px 9px 40px;
+ background:var(--tm-ui-field-on-card)!important;color:var(--tm-ui-text)!important;
+ font:400 13px/1.4 "Inter Tight",sans-serif;box-shadow:none!important;
+}
+html[data-admin-theme] #menus-panel #menu-history-search:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-pagination{
+ display:flex;align-items:center;justify-content:flex-end;
+ flex-wrap:wrap;gap:12px;margin:15px 0 0;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-pagination>button{
+ min-height:34px;padding:8px 13px;border:0;border-radius:999px;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:400 12px/1.3 "Inter Tight",sans-serif;cursor:pointer;
+}
+html[data-admin-theme] #menus-panel .tm-menu-history-pagination>button:disabled{
+ opacity:.42!important;cursor:default;
+}
+html[data-admin-theme] #menus-panel #menu-history-page{
+ font:400 12px/1.3 "Inter Tight",sans-serif;color:var(--tm-ui-muted);
 }
 /* Mobile: controls wrap but date always stays left; editor remains one column.
    Horizontal view deliberately scrolls instead of shrinking seven columns. */
