@@ -2,6 +2,20 @@
 /* Backoffice culinary recipes: isolated from meal prescriptions and player views. */
 (()=>{
  const $=id=>document.getElementById(id);
+ // Keep existing filter nodes, values and listeners; only change their presentation.
+ const filterHost=$("recipe-external-filters");
+ if(filterHost){
+  for(const [id,caption] of [["recipe-filter-category","Categoria"],["recipe-search","Pesquisar"],["recipe-filter-type","Tipo"],["recipe-filter-status","Estado"]]){
+   const input=$(id);
+   const cell=input?.closest("th");
+   if(!input||!cell)continue;
+   const wrapper=document.createElement("label");wrapper.className="tm-recipe-filter-field";
+   const label=document.createElement("span");label.textContent=caption;
+   wrapper.append(label,input);filterHost.append(wrapper);
+   cell.textContent=caption==="Pesquisar"?"Receita":caption;
+  }
+ }
+
  const blank=()=>({id:"",name:"",category_id:"",recipe_type:"standard",status:"draft",servings:1,sections:[{title:"",ingredients:[{name:"",quantity:"",unit:""}]}],steps:[""],notes:"",photo_key:null});
  let recipeLastLoadedAt=0,categories=[],recipes=[],recipeRows=[],recipeTotal=0,recipePage=1,recipePages=1,recipeQueryRevision=0,recipeSearchTimer=null,fullRecipeIndexLoaded=false,current=null,openedId=null,busy=false,loaded=false;
  let recipeReaderHistory=[],recipeReaderCache=new Map(),recipeReaderToken=0,recipeReaderEditorVisible=false;
