@@ -7920,3 +7920,103 @@ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portio
 html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-feedback:empty{
  display:none!important;
 }
+
+/* Library actions and pagination: consistent interaction language (16 Nov). */
+/* Row-hover is not an action: only the pencil and trash carry hover feedback. */
+html[data-admin-theme] body #tm-menu-recipes-page .dish-library-table tbody tr.dish-table-row:hover>td,
+html[data-admin-theme] body #tm-recipe-library-page .recipe-table tbody tr:hover>td{
+ background:var(--tm-ui-card)!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-library-table tbody tr.dish-table-row,
+html[data-admin-theme] body #tm-recipe-library-page .recipe-table tbody tr{
+ transition:none!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-table-actions button,
+html[data-admin-theme] body #tm-recipe-library-page .recipe-row-actions :is(.recipe-edit-action,.recipe-delete),
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-table-actions :is(.tm-supp-library-edit,.tm-supp-library-remove){
+ box-sizing:border-box!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+ padding:0!important;border:0!important;border-radius:11px!important;
+ cursor:pointer!important;transition:background .15s ease,color .15s ease!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-table-actions .dish-table-edit,
+html[data-admin-theme] body #tm-recipe-library-page .recipe-row-actions .recipe-edit-action,
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-table-actions .tm-supp-library-edit{
+ background:var(--tm-action-secondary-bg,var(--tm-ui-search))!important;
+ color:var(--tm-action-secondary-fg,var(--tm-ui-text))!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-table-actions .dish-table-delete,
+html[data-admin-theme] body #tm-recipe-library-page .recipe-row-actions .recipe-delete,
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-table-actions .tm-supp-library-remove{
+ background:var(--tm-action-danger-bg,rgba(188,60,82,.12))!important;
+ color:var(--tm-action-danger-fg,#c65368)!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-table-actions .dish-table-edit:hover:not(:disabled),
+html[data-admin-theme] body #tm-recipe-library-page .recipe-row-actions .recipe-edit-action:hover:not(:disabled),
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-table-actions .tm-supp-library-edit:hover:not(:disabled){
+ background:var(--tm-action-secondary-hover,var(--tm-ui-hover))!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-table-actions .dish-table-delete:hover:not(:disabled),
+html[data-admin-theme] body #tm-recipe-library-page .recipe-row-actions .recipe-delete:hover:not(:disabled),
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-table-actions .tm-supp-library-remove:hover:not(:disabled){
+ background:var(--tm-action-danger-hover,rgba(188,60,82,.22))!important;
+}
+html[data-admin-theme] body #tm-menu-recipes-page .dish-table-actions button svg,
+html[data-admin-theme] body #tm-recipe-library-page .recipe-row-actions :is(.recipe-edit-action,.recipe-delete) svg,
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-table-actions button svg{
+ width:18px!important;height:18px!important;
+}
+/* Same controls, order, typography, and visual depth across catalogues. */
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-pagination,
+ #tm-supplement-library-page #supp-library-pagination,
+ #tm-menu-recipes-page .tm-library-pagination,
+ #tm-recipe-library-page .tm-library-pagination
+){
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex-wrap:wrap!important;gap:14px!important;
+ margin:20px 0 12px!important;padding:12px 0!important;
+ border:0!important;background:transparent!important;
+ color:var(--tm-ui-muted)!important;
+ font:500 14px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-pagination,
+ #tm-supplement-library-page #supp-library-pagination,
+ #tm-menu-recipes-page .tm-library-pagination,
+ #tm-recipe-library-page .tm-library-pagination
+)[hidden]{display:none!important}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-pagination,
+ #tm-supplement-library-page #supp-library-pagination,
+ #tm-menu-recipes-page .tm-library-pagination,
+ #tm-recipe-library-page .tm-library-pagination
+) button{
+ box-sizing:border-box!important;min-height:44px!important;padding:10px 17px!important;
+ border:1px solid var(--tm-ui-divider)!important;border-radius:12px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ font:500 14px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ box-shadow:none!important;cursor:pointer!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-pagination,
+ #tm-supplement-library-page #supp-library-pagination,
+ #tm-menu-recipes-page .tm-library-pagination,
+ #tm-recipe-library-page .tm-library-pagination
+) button:hover:not(:disabled){background:var(--tm-ui-hover)!important}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-pagination,
+ #tm-supplement-library-page #supp-library-pagination,
+ #tm-menu-recipes-page .tm-library-pagination,
+ #tm-recipe-library-page .tm-library-pagination
+) button:disabled{
+ background:var(--tm-ui-search)!important;opacity:.42!important;cursor:default!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-pagination,
+ #tm-supplement-library-page #supp-library-pagination,
+ #tm-menu-recipes-page .tm-library-pagination,
+ #tm-recipe-library-page .tm-library-pagination
+) :is(span,.tm-library-page-label){font:500 14px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;color:var(--tm-ui-muted)!important}
