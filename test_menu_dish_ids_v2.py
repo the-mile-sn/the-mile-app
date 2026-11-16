@@ -4,6 +4,8 @@ import unittest
 from datetime import date, timedelta
 
 import microcycles_v2 as menus
+import calendar_v2
+import events_v2
 
 
 class MenuDishIdTests(unittest.TestCase):
@@ -11,6 +13,8 @@ class MenuDishIdTests(unittest.TestCase):
         self.c = sqlite3.connect(":memory:")
         self.c.row_factory = sqlite3.Row
         menus.initialize(self.c)
+        calendar_v2.initialize(self.c)
+        events_v2.initialize(self.c)
         self.c.execute("INSERT INTO v2_athletes (id,name,created_at) VALUES ('a1','Teste',1)")
         self.add_dish("d1", "Frango original")
         self.add_dish("d2", "Outra receita")
@@ -139,6 +143,31 @@ class MenuDishIdTests(unittest.TestCase):
         self.assertEqual(record["date"],previous)
         self.assertEqual(record["lunch"],"Carne branca")
         self.assertEqual(record["dinner"],"Frango original")
+
+    def test_history_search_and_cursor_paginate_only_matching_days(self):
+        earlier=(date.today()-timedelta(days=4)).isoformat()
+        later=(date.today()-timedelta(days=2)).isoformat()
+        menus.save_menu(self.c,"a1",earlier,"lunch","dish","Frango original","d1")
+        menus.save_menu(self.c,"a1",earlier,"dinner","dish","Outra receita","d2")
+        menus.save_menu(self.c,"a1",later,"dinner","dish","Frango original","d1")
+        all_days=menus.list_menu_history(self.c,"a1",limit=1,query="Frango")
+        self.assertEqual([x["date"] for x in all_days["days"]],[later])
+        self.assertTrue(all_days["has_more"])
+        self.assertEqual(all_days["days"][0]["classification"],"Geral")
+        next_page=menus.list_menu_history(self.c,"a1",before=later,limit=1,query="Frango")
+        self.assertEqual([x["date"] for x in next_page["days"]],[earlier])
+        self.assertEqual(next_page["days"][0]["dinner"],"Outra receita")
+        self.assertFalse(next_page["has_more"])
+        self.assertEqual(menus.list_menu_history(self.c,"a1",query="Absent")["days"],[])
+        with self.assertRaises(ValueError):
+            menus.list_menu_history(self.c,"a1",query="x"*91)
+
+    def test_history_uses_effective_microcycle_classification(self):
+        game=(date.today()-timedelta(days=1)).isoformat()
+        menus.save_menu(self.c,"a1",game,"lunch","dish","Frango original","d1")
+        self.c.execute("INSERT INTO v2_match_events(id,athlete_id,match_date,created_at) VALUES('m1','a1',?,1)",(game,))
+        result=menus.list_menu_history(self.c,"a1")["days"]
+        self.assertEqual(result[0]["classification"],"MD")
 
 
 if __name__=="__main__":
