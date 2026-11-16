@@ -8659,3 +8659,41 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-cat
   gap:10px!important;
  }
 }
+
+/* Recipe category badges match the approved Plan pills: tinted fill, colored
+   outline and text. This selector does not depend on html theme state. */
+#tm-recipe-library-page #recipe-category-body #recipe-categories{
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+ justify-content:flex-start!important;gap:12px!important;
+ width:100%!important;margin:16px 0 0!important;
+ grid-template-columns:none!important;
+}
+#tm-recipe-library-page #recipe-category-body #recipe-categories>.recipe-category-item{
+ display:inline-flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:flex-start!important;
+ flex:0 0 auto!important;gap:8px!important;
+ width:auto!important;min-width:0!important;max-width:100%!important;
+ min-height:0!important;margin:0!important;padding:0!important;
+ border:0!important;border-radius:0!important;
+ box-shadow:none!important;background:transparent!important;
+}
+#tm-recipe-library-page #recipe-category-body #recipe-categories .recipe-category-badge.recipe-category-card-badge{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:auto!important;min-height:40px!important;min-width:0!important;
+ max-width:100%!important;margin:0!important;padding:8px 18px!important;
+ border:1.5px solid var(--category-ink)!important;
+ border-radius:999px!important;
+ background:var(--category-bg)!important;color:var(--category-ink)!important;
+ font:500 15px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ box-shadow:none!important;
+}
+#tm-recipe-library-page #recipe-category-body #recipe-categories .recipe-category-card-actions{
+ display:inline-flex!important;align-items:center!important;gap:6px!important;
+ flex:0 0 auto!important;
+}
+#tm-recipe-library-page #recipe-category-body #recipe-categories .recipe-category-card-actions button{
+ display:inline-flex!important;width:34px!important;height:34px!important;
+ min-width:34px!important;min-height:34px!important;
+ border-radius:999px!important;
+}
