@@ -8872,3 +8872,31 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-cat
   padding-left:13px!important;
  }
 }
+
+/* Pratos: narrow Category to the Recipes proportion; align the start of the
+   search text, "Prato" header, and dish names as a single desktop grid. */
+@media(min-width:851px){
+ #tm-menu-recipes-page .dish-library-table{
+  table-layout:fixed!important;width:100%!important;
+ }
+ #tm-menu-recipes-page .dish-library-table :is(th,td):nth-child(1){
+  width:17%!important;
+ }
+ #tm-menu-recipes-page .dish-library-table :is(th,td):nth-child(2){
+  width:7%!important;
+  padding-left:4px!important;padding-right:4px!important;
+ }
+ #tm-menu-recipes-page .dish-library-table :is(th,td):nth-child(3){
+  width:38%!important;padding-left:13px!important;
+ }
+ #tm-menu-recipes-page .dish-library-table :is(th,td):nth-child(4){
+  width:29%!important;
+ }
+ #tm-menu-recipes-page .dish-library-table :is(th,td):nth-child(5){
+  width:9%!important;min-width:100px!important;
+ }
+ #tm-menu-recipes-page #dish-outside-filters.tm-dish-filter-panel{
+  grid-template-columns:minmax(0,22%) minmax(0,1fr)!important;
+  column-gap:12px!important;
+ }
+}
