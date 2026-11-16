@@ -3092,7 +3092,7 @@ function renderDishEditor(){
    tr.append(td);
   }
   const actions=document.createElement("td");actions.className="dish-table-actions";
-  const edit=document.createElement("button");edit.type="button";edit.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.className="dish-table-edit";edit.title="Editar prato";
+  const edit=document.createElement("button");edit.type="button";edit.innerHTML=supplementPlanActionIcons.edit;edit.className="dish-table-edit";edit.title="Editar prato";
   edit.setAttribute("aria-expanded","false");edit.setAttribute("aria-label","Editar "+dish.name_pt);
   actions.append(edit);tr.append(actions);tbody.append(tr);
   const detailRow=document.createElement("tr");detailRow.className="dish-table-detail";detailRow.hidden=true;
@@ -4002,7 +4002,7 @@ function renderLibraryPrescriptionRules(values){
  const add=(source={})=>{
   const entry=document.createElement("div");entry.className="supp-prescription-rule";const fields={};
   for(const [key,title,options] of [["rule","Frequência",[["daily","Diária"],["training","Treino"],["md-1","MD-1"],["match","MD"],["md+1","MD+1"]]],["dose","Dose",null],["moment","Associar a",[["","Sem associação"],["breakfast","Pequeno-almoço"],["lunch","Almoço"],["lunch_or_dinner","Almoço ou jantar"],["snack","Lanche"],["dinner","Jantar"],["supper","Ceia"],["training","Treino"],["match","Jogo"]]],["timing_text","Momento da toma",null]]){
-   const wrap=document.createElement("label");wrap.textContent=title;const input=options?document.createElement("select"):document.createElement("input");
+   const wrap=document.createElement("label");wrap.className="tm-supp-two-line-field";const caption=document.createElement("span");caption.textContent=title;wrap.append(caption);const input=options?document.createElement("select"):document.createElement("input");
    if(options)for(const [value,label] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=label;input.append(opt);}
    input.value=source[key]||"";fields[key]=input;wrap.append(input);entry.append(wrap);
   }
@@ -4059,7 +4059,7 @@ function filterSupplementLists(){
    const dialog=$("supp-library-dialog");if(dialog&&!dialog.open)dialog.showModal();
    $("supp-lib-name").focus();
   };
-  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6v13m8-13v13M5 6l1 15h12l1-15M9 6V4h6v2"/></svg>';remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
+  const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
   remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};
   actions.append(edit,remove);row.append(nameCell,doseCell,momentCell,frequencyCell,actions);list.append(row);
  }
