@@ -22,6 +22,19 @@ function updatePager(){
 }
 function draw(){
  $("rows").innerHTML=foods.map(f=>'<tr><td class="food-category">'+esc(f.category||"—")+'</td><td class="food-name"><strong>'+esc(f.display_name)+'</strong></td><td class="food-notes">'+esc(f.notes||"—")+'</td>'+["kcal","protein_g","carbs_g","fat_g"].map(k=>'<td class="num">'+fmt(f[k])+'</td>').join("")+'<td class="food-edit-cell"><button type="button" class="food-edit-icon" data-edit="'+esc(f.id)+'" aria-label="Editar '+esc(f.display_name)+'" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg></button><button type="button" class="food-edit-icon food-delete-icon" data-delete="'+esc(f.id)+'" aria-label="Eliminar '+esc(f.display_name)+'" title="Eliminar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/></svg></button></td></tr>').join("");
+ const mobileHost=embeddedRoot?.querySelector(".food-catalog-panel .food-mobile-cards");
+ if(mobileHost){
+  mobileHost.innerHTML=foods.map((f,index)=>{
+   const actions=$("rows").children[index]?.querySelector(".food-edit-cell")?.innerHTML||"";
+   const values=[["kcal","kcal"],["P (g)","protein_g"],["HC (g)","carbs_g"],["G (g)","fat_g"]];
+   return '<article class="tm-food-mobile-card" aria-label="'+esc(f.display_name)+'">'+
+    '<div class="tm-food-mobile-top"><strong class="tm-food-mobile-name">'+esc(f.display_name)+'</strong>'+
+    '<div class="tm-food-mobile-actions">'+actions+'</div></div>'+
+    '<div class="tm-food-mobile-meta">Categoria · '+esc(f.category||"—")+'</div>'+
+    '<div class="tm-food-mobile-meta">Notas · '+esc(f.notes||"—")+'</div>'+
+    '<div class="tm-food-mobile-macros">'+values.map(([label,key])=>'<div class="tm-food-mobile-macro"><span>'+label+'</span><strong>'+fmt(f[key])+'</strong></div>').join("")+'</div></article>';
+  }).join("");
+ }
  $("empty").hidden=foods.length!==0;
  $("feedback").textContent="";
  updatePager();
@@ -57,17 +70,19 @@ $("search").addEventListener("input",()=>{
  searchTimer=setTimeout(()=>load(1),250);
 });
 $("category").addEventListener("change",()=>load(1));
-$("rows").addEventListener("click",event=>{
+function onFoodAction(event){
  const editButton=event.target.closest("[data-edit]");
- if(editButton){open(foods.find(f=>f.id===editButton.dataset.edit));return;}
+ if(editButton){open(foods.find(f=>String(f.id)===editButton.dataset.edit));return;}
  const deleteButton=event.target.closest("[data-delete]");
  if(deleteButton)archiveFood(deleteButton.dataset.delete);
-});
+}
+$("rows").addEventListener("click",onFoodAction);
+embeddedRoot?.querySelector(".food-mobile-cards")?.addEventListener("click",onFoodAction);
 async function archiveFood(id){
  const food=foods.find(item=>item.id===id);
  if(!food)return;
  if(!confirm("Eliminar o alimento \""+food.display_name+"\" da Biblioteca Alimentar?\n\nNão será possível se estiver associado a um plano."))return;
- const button=[...$("rows").querySelectorAll("[data-delete]")].find(item=>item.dataset.delete===id);
+ const button=[...embeddedRoot.querySelectorAll("[data-delete]")].find(item=>item.dataset.delete===String(id));
  if(button)button.disabled=true;
  try{
   const response=await fetch("/api/v2/food-library/"+encodeURIComponent(id),{
