@@ -1224,7 +1224,7 @@ function ensurePlanningOnlyView(){
  const allowed=new Set(["players","planning","create-plan","food-library","visual-portions","nutrition-supplements","menus-recipes","dishes","recipe-library","assessments","forms","dashboard","settings","account"]);
  if(!allowed.has(target)||target==="dashboard")return;
  const workspace=document.getElementById("admin-workspace");
- const open=()=>{if(workspace?.hidden)return false;const button=document.getElementById("tm-admin-nav-"+target);if(!button)return false;
+ const open=()=>{if(workspace?.hidden)return false;const button=document.getElementById("tm-admin-nav-"+(target==="menus-recipes"?"dishes":target));if(!button)return false;
   if(target==="food-library")window.tmOpenAdminFoodLibrary?.("foods");
   else if(target==="menus-recipes"||target==="dishes")window.tmOpenAdminMenusRecipes?.();
   else if(target==="recipe-library")window.tmOpenAdminRecipeLibrary?.();
