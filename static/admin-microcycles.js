@@ -498,13 +498,23 @@ function enableModelAccordionTouchFeedback(target){
  // select can open its picker and immediately cancel the pointer sequence.
  target.addEventListener("touchstart",start,{passive:true});
  target.addEventListener("touchend",()=>finish(230),{passive:true});
- target.addEventListener("touchcancel",()=>finish(isScenarioSelect?230:0),{passive:true});
+ target.addEventListener("touchcancel",()=>finish(isPostMatchHeading?360:isScenarioSelect?230:0),{passive:true});
  if(window.PointerEvent){
   target.addEventListener("pointerdown",(event)=>{
    if(event.isPrimary&&event.pointerType==="touch")start();
   },{passive:true});
   target.addEventListener("pointerup",()=>finish(230),{passive:true});
-  target.addEventListener("pointercancel",()=>finish(isScenarioSelect?230:0),{passive:true});
+  target.addEventListener("pointercancel",()=>finish(isPostMatchHeading?360:isScenarioSelect?230:0),{passive:true});
+ }
+ // A summary can receive a synthetic click after iOS cancels its pointer
+ // sequence to scroll the newly expanded panel. The real click guarantees a
+ // visible card-level reaction, without interfering with native toggle.
+ if(isPostMatchHeading&&target.classList.contains("scenario-main-summary")){
+  target.addEventListener("click",()=>{
+   if(!window.matchMedia("(max-width:830px) and (pointer:coarse)").matches)return;
+   setPressed(true);
+   finish(360);
+  });
  }
  if(isScenarioSelect){
   target.addEventListener("change",()=>finish(150));
