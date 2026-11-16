@@ -4498,9 +4498,12 @@ html[data-admin-theme] #admin-workspace #scenario-editor{
 html[data-admin-theme] #admin-workspace #scenario-editor[hidden]{display:none!important}
 /* Author-level display declarations must not bypass the native <details>
    collapsed state; enforce it for both nesting levels. */
-html[data-admin-theme] #admin-workspace #scenario-editor:not([open])> :not(.scenario-main-summary){
+html[data-admin-theme] #admin-workspace #scenario-editor:not([open])> :not(.scenario-main-summary),
+html[data-admin-theme] #admin-workspace #scenario-editor:not([open])>#scenario-cells{
  display:none!important;
 }
+/* The content-grid rules below also use two IDs, so the closed-state rule
+   must share that specificity or the body would remain visible. */
 html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group:not([open])>.scenario-day-content{
  display:none!important;
 }
