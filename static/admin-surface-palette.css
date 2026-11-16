@@ -8154,3 +8154,106 @@ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library
 html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table th:last-child{
  padding-right:16px!important;
 }
+
+/* Unified Library two-line filters and tables; guide: Inter Tight 12px caption
+   (muted) over 15px/500 value, 67px field, 14px inner and 16px outer radius. */
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-filter-panel,
+ #tm-menu-recipes-page .tm-dish-filter-panel,
+ #tm-recipe-library-page .tm-recipe-filter-panel
+){
+ box-sizing:border-box!important;padding:16px!important;
+ border-radius:16px!important;background:var(--tm-ui-card)!important;
+ gap:12px!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-filter-panel .tm-food-filter-field,
+ #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field,
+ #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field
+){
+ box-sizing:border-box!important;position:relative!important;
+ display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;justify-content:center!important;
+ min-height:67px!important;width:100%!important;min-width:0!important;
+ gap:5px!important;padding:12px 16px!important;margin:0!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-filter-panel .tm-food-filter-caption,
+ #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field>span,
+ #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field>span
+){
+ display:block!important;
+ font:500 12px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+ padding:0!important;margin:0!important;text-align:left!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-filter-panel .tm-food-filter-field,
+ #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field,
+ #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field
+) :is(input,select){
+ box-sizing:border-box!important;
+ display:block!important;width:100%!important;min-width:0!important;
+ height:28px!important;min-height:28px!important;max-height:28px!important;
+ margin:0!important;padding:0!important;
+ text-align:left!important;text-indent:0!important;
+ border:0!important;border-radius:0!important;
+ background-color:transparent!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;outline:0!important;
+ font:500 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-filter-panel .tm-food-filter-field,
+ #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field,
+ #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field
+) input::placeholder{
+ color:var(--tm-ui-muted)!important;opacity:1!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page .tm-food-filter-panel .tm-food-filter-field,
+ #tm-menu-recipes-page .tm-dish-filter-panel .tm-dish-filter-field,
+ #tm-recipe-library-page .tm-recipe-filter-panel .tm-recipe-filter-field
+) select{
+ -webkit-appearance:none!important;appearance:none!important;
+ text-align-last:left!important;padding-right:24px!important;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378889a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+ background-position:right center!important;background-size:17px 17px!important;
+ background-repeat:no-repeat!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-menu-recipes-page .dish-table-scroll,
+ #tm-menu-recipes-page #dish-editor-list .dish-table-scroll,
+ #tm-recipe-library-page .recipe-table-scroll,
+ #tm-food-library-page .food-catalog-panel
+){
+ box-sizing:border-box!important;border:0!important;border-radius:16px!important;
+ overflow:hidden!important;background:var(--tm-ui-card)!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-table-scroll,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table-scroll{
+ overflow-x:auto!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-menu-recipes-page .dish-library-table,
+ #tm-recipe-library-page .recipe-table
+) :is(thead th:first-child,tbody td:first-child){
+ padding-left:32px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table .dish-table-actions{
+ padding-right:16px!important;text-align:right!important;
+}
+/* Keep paired actions on one line and symmetrical across both catalogues. */
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-menu-recipes-page .dish-table-actions,
+ #tm-recipe-library-page .recipe-row-actions
+){
+ white-space:nowrap!important;min-width:100px!important;
+ padding-right:16px!important;text-align:right!important;
+}
+html[data-admin-theme] body #admin-workspace :is(
+ #tm-menu-recipes-page .dish-table-actions,
+ #tm-recipe-library-page .recipe-row-actions
+) button+button{margin-left:10px!important}
