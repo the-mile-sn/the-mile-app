@@ -466,6 +466,37 @@ $("scenario-parity-run").addEventListener("click",async()=>{
  }catch(error){status.textContent="Falha na comparação: "+error.message;}
  finally{button.disabled=false;}
 });
+// Explicit touch feedback persists through a fast tap and does not interfere
+// with the browser's native <summary> click or keyboard interaction.
+function enableModelAccordionTouchFeedback(summary){
+ if(!summary)return;
+ let clearPress=null;
+ const finish=(delay)=>{
+  if(clearPress!==null){clearTimeout(clearPress);clearPress=null;}
+  if(delay===0){summary.classList.remove("tm-mobile-touch-press");return;}
+  clearPress=setTimeout(()=>{
+   summary.classList.remove("tm-mobile-touch-press");
+   clearPress=null;
+  },delay);
+ };
+ const start=()=>{
+  if(!window.matchMedia("(max-width:830px)").matches)return;
+  if(document.documentElement.dataset.adminTheme!=="light")return;
+  if(clearPress!==null){clearTimeout(clearPress);clearPress=null;}
+  summary.classList.add("tm-mobile-touch-press");
+ };
+ if(window.PointerEvent){
+  summary.addEventListener("pointerdown",event=>{
+   if(event.pointerType==="touch"&&event.isPrimary)start();
+  },{passive:true});
+  summary.addEventListener("pointerup",()=>finish(210),{passive:true});
+  summary.addEventListener("pointercancel",()=>finish(0),{passive:true});
+ }else{
+  summary.addEventListener("touchstart",start,{passive:true});
+  summary.addEventListener("touchend",()=>finish(210),{passive:true});
+  summary.addEventListener("touchcancel",()=>finish(0),{passive:true});
+ }
+}
 const scenarioTypes=["MD+1","MD+2","MD+1/-3","MD+2/-2","MD+1/-2","MD+2/-1"];
 const scenarioVariants=[["very_low","0 min · Não jogou"],["low","1–29 min"],["medium","30–59 min"]];
 // Scroll only after a user opens a details header, not during initial rendering
@@ -479,6 +510,7 @@ function revealScenarioHeaderAfterOpen(details,summary){
 }
 const scenarioMainDetails=$("scenario-editor");
 const scenarioMainSummary=scenarioMainDetails?.querySelector(".scenario-main-summary");
+enableModelAccordionTouchFeedback(scenarioMainSummary);
 scenarioMainSummary?.addEventListener("click",()=>{
  if(!scenarioMainDetails.open)revealScenarioHeaderAfterOpen(scenarioMainDetails,scenarioMainSummary);
 });
@@ -509,6 +541,7 @@ function renderScenarioEditor(){
   groupChevron.setAttribute("aria-hidden","true");
   groupChevron.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
   groupHeader.append(heading,groupChevron);group.append(groupHeader);
+  enableModelAccordionTouchFeedback(groupHeader);
   // Native summary click includes pointer and keyboard activation.
   // Avoid scrolling for groups already open by default on desktop.
   groupHeader.addEventListener("click",()=>{
@@ -710,6 +743,7 @@ function render(){
    visuals.swatches.push([meal,swatch]);preview.append(swatch);
   }
   summary.append(summaryTop,preview);details.append(summary);
+  enableModelAccordionTouchFeedback(summary);
   const fields=document.createElement("div");fields.className="model-mobile-fields";
   for(const meal of mealKeys){
    const field=document.createElement("label");field.className="model-mobile-field";
