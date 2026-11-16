@@ -446,7 +446,7 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None):
     if meal not in ("lunch","dinner") or kind not in ("category","dish","text"):
         raise ValueError("invalid_menu")
     value, dish_id = resolve_menu_dish(c, kind, value, dish_id)
-    if kind == "category" and value not in ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo", "Livre", "Pós-jogo", "Mix"):
+    if kind == "category" and value not in ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo", "Livre", "Pós-jogo", "Mix", "CT", "Estágio"):
         raise ValueError("invalid_menu_category")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
