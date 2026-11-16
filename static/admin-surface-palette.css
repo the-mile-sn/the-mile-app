@@ -4708,75 +4708,82 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
   font-size:16px!important;padding:9px 36px 9px 12px!important;
  }
 }
-/* Mobile light — reliable rounded press overlay. Keep MD/Off fills.
-   Eliminate Safari rectangular tap highlighting in nested summaries. */
+/* MOBILE TOUCH (both themes) — feedback belongs to the card itself,
+   not to an extra rectangle painted inside the summary. Safari's native tap
+   highlight must not compete with the card's rounded corners. */
 @media(max-width:830px){
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-card,
-  #scenario-editor,
-  #scenario-editor .scenario-day-group
- ),
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- ),
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- ) *{
+ html[data-admin-theme] #admin-workspace #scenario-editor,
+ html[data-admin-theme] #admin-workspace #scenario-editor :is(summary,details,.scenario-select-shell,select),
+ html[data-admin-theme] #admin-workspace #scenario-editor :is(summary,.scenario-select-shell) *,
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-mobile-summary{
   -webkit-tap-highlight-color:transparent!important;
  }
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- ){
+ /* The upper Modelo cards already work: preserve their previous light
+    touch overlay and leave the approved dark version unchanged. */
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-mobile-summary{
   position:relative!important;
-  -webkit-user-select:none;
-  user-select:none;
-  border-radius:13px!important;
-  isolation:isolate;
+  -webkit-user-select:none;user-select:none;
+  border-radius:13px!important;isolation:isolate;
  }
- html[data-admin-theme="light"] #admin-workspace #scenario-editor>.scenario-main-summary{
-  border-radius:12px!important;
- }
- html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-day-heading{
-  border-radius:11px!important;
- }
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- )::after{
-  content:"";
-  position:absolute;inset:0;z-index:1;
-  border-radius:inherit;pointer-events:none;
-  background:rgba(37,53,77,.13);
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-mobile-summary::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  border-radius:inherit;background:rgba(37,53,77,.13);
   opacity:0;transition:opacity .1s ease-out;
  }
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- ):is(:active,.tm-mobile-touch-press)::after{
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-mobile-summary:is(:active,.tm-mobile-touch-press)::after{
   opacity:1;
  }
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- ):focus:not(:focus-visible){
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-mobile-summary:focus:not(:focus-visible){
   outline:none!important;
+ }
+ /* The existing card is the interactive visual surface. No new inner
+    backgrounds, overlays, shadows or extra rounded rectangles. */
+ html[data-admin-theme] #admin-workspace #scenario-editor,
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group{
+  transition:background-color .14s ease;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor.tm-mobile-card-press{
+  background:var(--tm-ui-subcard)!important;
+ }
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group.tm-mobile-card-press{
+  background:var(--tm-ui-hover)!important;
+ }
+ /* Touch focus must never leave a box-shaped outline. Keyboard focus stays
+    visible unless this specific heading is being pressed by touch. */
+ html[data-admin-theme] #admin-workspace #scenario-editor.tm-mobile-card-press>.scenario-main-summary:focus-visible,
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group.tm-mobile-card-press>.scenario-day-heading:focus-visible,
+ html[data-admin-theme] #admin-workspace #scenario-editor>.scenario-main-summary:focus:not(:focus-visible),
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading:focus:not(:focus-visible){
+  outline:none!important;
+ }
+ /* Native iOS selects often do not retain :active when the picker opens,
+    so the JS adds a short-lived class to the existing select shell. */
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select{
+  -webkit-tap-highlight-color:transparent!important;
+  transition:filter .12s ease,box-shadow .12s ease;
+ }
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-select-shell.tm-mobile-touch-press>.scenario-color-select:not(:disabled),
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:active:not(:disabled){
+  filter:brightness(.88);
+ }
+ html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-select-shell.tm-mobile-touch-press>.scenario-color-select:not(:disabled),
+ html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-select-shell>.scenario-color-select:active:not(:disabled){
+  filter:brightness(1.16);
+ }
+ html[data-admin-theme="light"] #admin-workspace #scenario-editor .scenario-select-shell.tm-mobile-touch-press>.scenario-color-select[data-color="none"]:not(:disabled){
+  box-shadow:inset 0 0 0 9999px rgba(66,82,106,.10)!important;
+ }
+ html[data-admin-theme="dark"] #admin-workspace #scenario-editor .scenario-select-shell.tm-mobile-touch-press>.scenario-color-select[data-color="none"]:not(:disabled){
+  box-shadow:inset 0 0 0 9999px rgba(184,198,213,.13)!important;
  }
 }
 @media(prefers-reduced-motion:reduce){
- html[data-admin-theme="light"] #admin-workspace :is(
-  #matrix .model-mobile-summary,
-  #scenario-editor>.scenario-main-summary,
-  #scenario-editor .scenario-day-heading
- )::after{transition:none!important}
+ html[data-admin-theme="light"] #admin-workspace #matrix .model-mobile-summary::after,
+ html[data-admin-theme] #admin-workspace #scenario-editor,
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-group,
+ html[data-admin-theme] #admin-workspace #scenario-editor .scenario-color-select{
+  transition:none!important;
+ }
 }
 @media(prefers-reduced-motion:reduce){
  html[data-admin-theme] #scenario-editor :is(.scenario-main-chevron,.scenario-day-chevron){transition:none!important}
