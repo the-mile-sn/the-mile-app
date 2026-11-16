@@ -425,6 +425,7 @@ def list_menu_history(c, athlete_id, before=None, limit=12, query=None):
         predicates.append("""EXISTS (
           SELECT 1 FROM v2_menu_history x
           WHERE x.athlete_id=h.athlete_id AND x.menu_date=h.menu_date
+          AND x.kind='dish'
           AND LOWER(x.value) LIKE LOWER(?) ESCAPE '!'
         )""")
         params.append("%"+safe+"%")
