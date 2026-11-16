@@ -4007,6 +4007,8 @@ function renderLibraryPrescriptionRules(values){
  $("supp-lib-add-rule").onclick=()=>add({rule:"daily",dose:"",moment:"",timing_text:""});
 }
 let supplementLibrary=[];
+let supplementLibraryPage=1;
+const supplementLibraryPageSize=15;
 const normalizeSupplementQuery=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT");
 const supplementRank=(item,q)=>{const name=normalizeSupplementQuery(item.name);return !q||name.startsWith(q)?0:name.split(/\s+/).some(word=>word.startsWith(q))?1:name.includes(q)?2:3;};
 
@@ -4015,7 +4017,13 @@ function filterSupplementLists(){
  const lq=normalizeSupplementQuery($("supp-library-search").value.trim());
  const select=$("supp-lib-select"),previous=select.value,list=$("supp-lib-list");
  const emptyNotice=$("supp-library-empty");
+ const pager=$("supp-library-pagination");
  select.replaceChildren();list.replaceChildren();
+ const matches=supplementLibrary.filter(item=>normalizeSupplementQuery([item.name,item.dose,item.note,item.timing_text].join(" ")).includes(lq));
+ const totalPages=Math.max(1,Math.ceil(matches.length/supplementLibraryPageSize));
+ supplementLibraryPage=Math.min(Math.max(1,supplementLibraryPage),totalPages);
+ const firstVisible=(supplementLibraryPage-1)*supplementLibraryPageSize;
+ const pageItems=new Set(matches.slice(firstVisible,firstVisible+supplementLibraryPageSize).map(item=>String(item.id)));
  const empty=document.createElement("option");empty.value="";empty.textContent="Selecionar...";select.append(empty);
  const frequencyNames={daily:"Diária",training:"Treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
  const momentNames={breakfast:"Pequeno-almoço",lunch:"Almoço",lunch_or_dinner:"Almoço ou jantar",snack:"Lanche",dinner:"Jantar",supper:"Ceia",training:"Treino",match:"Jogo"};
@@ -4025,6 +4033,7 @@ function filterSupplementLists(){
   if(hay.includes(q)){const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.name;select.append(opt);}
   if(lq&&!hay.includes(lq))continue;
   visible++;
+  if(!pageItems.has(String(item.id)))continue;
   const row=document.createElement("tr");
   const nameCell=document.createElement("td"),nameWrap=document.createElement("div");nameWrap.className="tm-supp-table-name";
   if(item.has_image){const img=document.createElement("img");img.src="/api/v2/supplement-library/"+encodeURIComponent(item.id)+"/image";img.alt="";img.loading="lazy";nameWrap.append(img);}
@@ -4049,6 +4058,18 @@ function filterSupplementLists(){
  }
  if(emptyNotice)emptyNotice.hidden=visible>0;
  if([...select.options].some(option=>option.value===previous))select.value=previous;
+ if(pager){
+  pager.replaceChildren();
+  pager.hidden=totalPages<=1;
+  if(totalPages>1){
+   const previous=document.createElement("button");previous.type="button";previous.textContent="Anterior";previous.disabled=supplementLibraryPage<=1;
+   previous.onclick=()=>{supplementLibraryPage--;filterSupplementLists();};
+   const label=document.createElement("span");label.textContent="Página "+supplementLibraryPage+" de "+totalPages;
+   const next=document.createElement("button");next.type="button";next.textContent="Seguinte";next.disabled=supplementLibraryPage>=totalPages;
+   next.onclick=()=>{supplementLibraryPage++;filterSupplementLists();};
+   pager.append(previous,label,next);
+  }
+ }
 }
 
 const supplementSearchInput=$("supp-assign-search"),supplementDropdown=$("supp-search-dropdown");
@@ -4075,7 +4096,7 @@ supplementSearchInput.addEventListener("input",showSupplementDropdown);
 supplementSearchInput.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();setSupplementAssignmentOpen(false);$("supp-add-toggle").focus();}if(e.key==="Enter"&&!supplementDropdown.hidden){const first=supplementDropdown.querySelector("button");if(first){e.preventDefault();first.click();}}});
 supplementSearchInput.addEventListener("blur",()=>{setTimeout(()=>{supplementDropdown.hidden=true;},120);});
 $("supp-assign-search").addEventListener("input",()=>{const exact=supplementLibrary.find(x=>x.name.toLocaleLowerCase("pt-PT")===$("supp-assign-search").value.trim().toLocaleLowerCase("pt-PT"));$("supp-lib-select").value=exact?.id||"";});
-$("supp-library-search").addEventListener("input",filterSupplementLists);
+$("supp-library-search").addEventListener("input",()=>{supplementLibraryPage=1;filterSupplementLists();});
 async function loadSupplementLibrary(){
  const data=await request("/api/v2/supplement-library");supplementLibrary=data.items||[];
  filterSupplementLists();
