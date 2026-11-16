@@ -614,3 +614,10 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - Manter a seta de expansão no lado direito e limitar **exclusivamente a ela** a rotação do estado aberto/fechado. O ícone de apito nunca roda.
 - **Não adicionar** barras de minutos, pontos, contagens, ícones por intervalo nem indicadores de participação às três categorias. As linhas continuam apenas «0 min · Não jogou», «1–29 min» e «30–59 min» em texto.
 - Não alterar cartões, minutos, herança «Igual ao modelo», cores nutricionais ou gravação automática. Branch `main` intocada. Validar cabeçalho em ambos os temas e formatos.
+
+
+### Modelo — hover funcional, scroll ao expandir e FootballIcon (16 novembro 2026)
+
+- Apenas os **seletores editáveis de cores** no Modelo geral e nos Ajustes pós-jogo apresentam hover subtil em desktop com cursor. **Os cartões dos dias do microciclo são informativos e não têm hover**, inclusive quando o cursor atravessa a linha.
+- Ao abrir o card principal «Ajustes pós-jogo», deslocar suavemente a página para deixar o cabeçalho à vista e revelar o conteúdo. O mesmo aplica-se ao abrir um cenário interior. Ao fechar, não deslocar; respeitar a preferência de movimento reduzido. Aplica-se a desktop e mobile sem substituir o comportamento nativo de `<details>` e `<summary>`.
+- Substituir o apito desenhado manualmente pelo SVG oficial **Hugeicons FootballIcon** (Stroke Rounded, licença MIT), com `data-hugeicons="FootballIcon"` e o mesmo alinhamento do título. Não aplicar rotação ao ícone; apenas aos chevrons. Gravação nutricional, cores selecionadas, categorias e app do jogador inalteradas.
