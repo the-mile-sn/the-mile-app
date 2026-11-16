@@ -3127,8 +3127,7 @@ function renderDishEditor(){
     const tag=document.createElement("small");tag.className="dish-recipe-indicator";
     const linkedCount=associated?.recipes?.length||0;
     const hasRecipe=linkedCount>0||Boolean(associated?.recipe_id);
-    tag.textContent=hasRecipe?(linkedCount>1?linkedCount+" receitas associadas":"Receita associada"):"";
-    tag.hidden=!hasRecipe;td.append(tag);
+    if(hasRecipe){tag.textContent=linkedCount>1?linkedCount+" receitas associadas":"Receita associada";td.append(tag);}
    }
    tr.append(td);
   }
