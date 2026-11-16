@@ -9794,3 +9794,86 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
 #tm-food-library-page #editor #food-editor-close.tm-library-modal-x:focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
 }
+
+/* TM FOOD MOBILE: CSP-safe extracted structural rules v139 */
+
+/* Mobile food cards are independent DOM articles. The legacy table is desktop-only. */
+#tm-food-library-page .food-mobile-cards { display:none; }
+@media screen and (max-width: 700px) {
+ #admin-workspace #tm-food-library-page .food-catalog-panel,
+ #admin-workspace #tm-food-library-page .food-catalog-panel .scroll {
+   background:transparent!important; border:0!important; box-shadow:none!important; padding:0!important;
+ }
+ #admin-workspace #tm-food-library-page .food-catalog-panel .scroll {display:none!important}
+ #admin-workspace #tm-food-library-page .food-mobile-cards {
+   display:flex!important; flex-direction:column!important; gap:14px!important;
+   width:100%!important; margin:0!important; padding:0!important;
+ }
+ #admin-workspace #tm-food-library-page .food-mobile-cards > article.tm-food-mobile-card {
+   box-sizing:border-box!important; position:relative!important;
+   display:flex!important;flex-direction:column!important;gap:10px!important;
+   width:100%!important; min-width:0!important;
+   margin:0!important; padding:15px!important;
+   background:var(--tm-ui-card,#202228)!important;
+   border:1px solid var(--tm-ui-divider,#30343b)!important;
+   border-radius:16px!important;box-shadow:none!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-top {
+   display:flex!important;justify-content:space-between!important;align-items:flex-start!important;gap:10px!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-name {
+   flex:1 1 auto!important;min-width:0!important;overflow-wrap:anywhere!important;
+   font:600 15px/1.4 "Inter Tight",Arial,sans-serif!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-actions {
+   display:flex!important;gap:7px!important;flex:0 0 auto!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-actions button {
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   width:35px!important;height:35px!important;min-width:35px!important;min-height:35px!important;
+   margin:0!important;padding:0!important;border:0!important;border-radius:10px!important;
+   background:var(--tm-ui-subcard,#292b31)!important;color:var(--tm-ui-text,#fff)!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-actions button.food-delete-icon {
+   color:#db758e!important;background:rgba(170,61,91,.14)!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-actions button svg {width:17px!important;height:17px!important}
+ #admin-workspace #tm-food-library-page .tm-food-mobile-meta {
+   color:var(--tm-ui-muted,#9da4ae)!important;
+   font:400 12px/1.4 "Inter Tight",Arial,sans-serif!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-macros {
+   display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-macro {
+   display:flex!important;flex-direction:column!important;justify-content:center!important;
+   align-items:center!important;gap:5px!important;
+   min-height:61px!important;min-width:0!important;padding:9px 2px!important;
+   background:var(--tm-ui-subcard,#292b31)!important;border-radius:11px!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-macro span {
+   font:400 11px/1.2 "Inter Tight",Arial,sans-serif!important;color:var(--tm-ui-muted,#9da4ae)!important;
+ }
+ #admin-workspace #tm-food-library-page .tm-food-mobile-macro strong {
+   font:500 13px/1.3 "Inter Tight",Arial,sans-serif!important;color:var(--tm-ui-text,#fff)!important;
+ }
+}
+/* Use one source of truth for the food dialog close button dimensions. */
+#admin-workspace #tm-food-library-page dialog#editor #food-editor-close.tm-library-modal-x,
+#admin-workspace #tm-food-library-page dialog#editor #food-editor-close.tm-library-modal-x:focus {
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:0 0 38px!important;
+ width:38px!important;height:38px!important;
+ min-width:38px!important;min-height:38px!important;max-width:38px!important;max-height:38px!important;
+ padding:0!important;margin:0!important;border:0!important;border-radius:11px!important;
+ background:var(--tm-ui-search,#292b31)!important;color:var(--tm-ui-text,#fff)!important;
+ outline:0!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent!important;
+}
+#admin-workspace #tm-food-library-page dialog#editor #food-editor-close.tm-library-modal-x svg {
+ display:block!important;flex:0 0 15px!important;width:15px!important;height:15px!important;
+ stroke-width:1.55!important;pointer-events:none!important;
+}
+#admin-workspace #tm-food-library-page dialog#editor #food-editor-close.tm-library-modal-x:focus-visible {
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+
