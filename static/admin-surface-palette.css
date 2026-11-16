@@ -4553,10 +4553,6 @@ html[data-admin-theme] #scenario-editor .scenario-day-title{
  margin:0!important;font:500 15px/1.4 "Inter Tight",sans-serif!important;
  color:var(--tm-ui-text)!important;
 }
-html[data-admin-theme] #scenario-editor .scenario-day-hint{
- margin-left:auto;color:var(--tm-ui-muted)!important;
- font:400 12px/1.3 "Inter Tight",sans-serif!important;
-}
 html[data-admin-theme] #scenario-editor .scenario-day-chevron{
  width:18px;height:18px;display:grid;place-items:center;flex:none;
  color:var(--tm-ui-muted);transition:transform .18s ease;
@@ -4676,10 +4672,6 @@ html[data-admin-theme] #scenario-editor #scenario-feedback:not(:empty){
  }
  html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-heading{
   padding:3px 2px 5px!important;
- }
- /* Every scenario has three intervals, so omit the repeated count on mobile. */
- html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-hint{
-  display:none!important;
  }
  html[data-admin-theme] #admin-workspace #scenario-editor .scenario-day-content{
   gap:9px!important;margin-top:10px;
