@@ -46,7 +46,7 @@
   const names=[
    ["carne branca","rose"],["carne vermelha","red"],
    ["peixe magro","teal"],["peixe gordo","blue"],
-   ["peixe","cyan"]
+   ["peixe","cyan"],["ovos","amber"]
   ];
   for(const cat of categories){
    const exact=names.find(([name])=>norm(cat.name)===name);
@@ -247,7 +247,7 @@
   // Present the reader before fetching: the clicked dish never lands on an
   // apparently empty catalogue while waiting for this single recipe.
   $("recipe-editor-panel").hidden=true;
-  $("recipe-category-manage").hidden=true;
+  setRecipeCategoriesOpen(false);
   $("recipe-pdf-panel").hidden=true;
   $("recipe-reader-content").replaceChildren();
   $("recipe-reader-feedback").textContent="A carregar receita…";
@@ -715,10 +715,11 @@
   const form=$("recipe-category-edit");
   form.hidden=false;
   form.replaceChildren();
-  form.append(node("label","recipe-category-edit-label","Alterar nome da categoria"));
+  const fieldLabel=node("label","recipe-category-edit-label");
+  fieldLabel.append(node("span","","Alterar nome da categoria"));
   const field=node("input");field.type="text";field.maxLength=90;field.value=entry.name;
   field.setAttribute("aria-label","Novo nome para "+entry.name);
-  form.append(field);
+  fieldLabel.append(field);form.append(fieldLabel);
   const actions=node("div","recipe-category-edit-actions");
   const save=button("Guardar",async()=>{
    const name=field.value.trim(),feedback=$("recipe-category-feedback");
@@ -1149,12 +1150,12 @@
  });
  $("recipe-add").addEventListener("click",()=>openRecipe(null));
  function setRecipeCategoriesOpen(open){
-  $("recipe-category-manage").hidden=!open;
+  $("recipe-category-body").hidden=!open;
   $("recipe-category-toggle").setAttribute("aria-expanded",String(open));
-  if(open)$("recipe-new-category").focus();
+  const chevron=$("recipe-category-toggle").querySelector(".recipe-category-chevron");
+  if(chevron)chevron.textContent=open?"⌃":"⌄";
  }
- $("recipe-category-toggle").addEventListener("click",()=>setRecipeCategoriesOpen($("recipe-category-manage").hidden));
- $("recipe-category-close").addEventListener("click",()=>setRecipeCategoriesOpen(false));
+ $("recipe-category-toggle").addEventListener("click",()=>setRecipeCategoriesOpen($("recipe-category-body").hidden));
  $("recipe-close").addEventListener("click",closeEditor);
  $("recipe-cancel").addEventListener("click",closeEditor);
  $("recipe-save").addEventListener("click",saveRecipe);
