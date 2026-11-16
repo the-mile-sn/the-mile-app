@@ -46,7 +46,7 @@
   const names=[
    ["carne branca","rose"],["carne vermelha","red"],
    ["peixe magro","teal"],["peixe gordo","blue"],
-   ["peixe","cyan"],["ovos","amber"]
+   ["peixe","cyan"],["ovos","amber"],["sopas e cremes","mint"]
   ];
   for(const cat of categories){
    const exact=names.find(([name])=>norm(cat.name)===name);
