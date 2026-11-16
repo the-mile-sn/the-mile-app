@@ -7124,3 +7124,77 @@ html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .menu-combobox>.
   margin:0!important;
  }
 }
+
+
+/* MENUS — 16 Nov 2026. Full dish names and more breathing room in week.
+   The third-level meal panels and nutritional colors are unchanged. */
+
+/* Day view: make both native selectors easier to read and operate. */
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .tm-menu-meal-fields>select{
+ min-height:52px!important;
+ padding:12px 15px!important;
+ font-size:13px!important;line-height:1.45!important;
+ border-radius:12px!important;
+}
+/* The selected dish name is a wrapping search combobox, not a one-line input:
+   full-length plate names remain visible as the control grows. */
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .tm-menu-meal-fields .menu-combobox>textarea.tm-menu-dish-query{
+ box-sizing:border-box!important;
+ display:block;width:100%!important;min-width:0!important;
+ min-height:66px!important;max-height:none!important;
+ padding:13px 48px 13px 15px!important;
+ margin:0!important;border:0!important;border-radius:12px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:400 13px/1.5 "Inter Tight",sans-serif!important;
+ white-space:pre-wrap!important;overflow-wrap:anywhere!important;
+ resize:none!important;overflow-y:hidden!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .tm-menu-meal-fields .menu-combobox>textarea.tm-menu-dish-query:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+ outline-offset:2px!important;
+}
+/* Keep the close icon anchored to the first line rather than the middle of
+   a taller textarea. Existing custom button still clears the selection only
+   after a deliberate click. */
+html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .menu-combobox>.tm-menu-dish-search-clear{
+ top:12px!important;bottom:auto!important;
+ transform:none!important;
+}
+
+/* Week view: generous card padding and spacing between label, photo, and
+   description; the seven-day matrix retains its equal-height rows. */
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-table{
+ grid-template-rows:auto repeat(2,minmax(265px,1fr))!important;
+ row-gap:12px!important;column-gap:10px!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-cell{
+ min-height:265px!important;
+ padding:19px 17px 21px!important;
+ gap:15px!important;
+ justify-content:flex-start!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-cell>img{
+ height:92px!important;width:100%!important;
+ object-fit:contain!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-meal-header{
+ margin-bottom:1px!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-name{
+ padding:1px 0!important;margin:0!important;
+ line-height:1.5!important;
+}
+/* Categories such as "Estágio" and free-text entries never reserve an
+   empty image area. The label comes straight after the header. */
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-cell.tm-menu-week-no-photo{
+ gap:14px!important;
+}
+html[data-admin-theme] #admin-workspace #menus-panel #menu-weekly .tm-menu-week-cell.tm-menu-week-no-photo .tm-menu-week-name{
+ margin-top:2px!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #admin-workspace #menus-panel #menu-grid .tm-menu-meal-fields .menu-combobox>textarea.tm-menu-dish-query{
+  font-size:16px!important;
+ }
+}
