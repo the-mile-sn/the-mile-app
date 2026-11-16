@@ -7342,3 +7342,54 @@ html[data-admin-theme] #admin-workspace #tm-admin-legacy > :is(
   margin-bottom:16px!important;
  }
 }
+
+/* Biblioteca: same hierarchy as Alimentos — supplements, dishes and recipes.
+   Scoped to library pages; planning/player sections remain untouched. */
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-visually-hidden{
+ position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
+ margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;
+ white-space:nowrap!important;border:0!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-search-panel label{
+ position:relative!important;display:block!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar #supp-library-new,
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-toggle,
+html[data-admin-theme] #tm-recipe-library-page #recipe-add{
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;border-radius:12px!important;
+ font-weight:500!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-toolbar #supp-library-new:hover,
+html[data-admin-theme] #tm-menu-recipes-page #dish-add-toggle:hover,
+html[data-admin-theme] #tm-recipe-library-page #recipe-add:hover{
+ background:var(--tm-ui-hover)!important;
+}
+html[data-admin-theme] #tm-supplement-library-page .tm-supp-library-table thead th,
+html[data-admin-theme] #tm-menu-recipes-page .dish-library-table thead th,
+html[data-admin-theme] #tm-recipe-library-page .recipe-table thead th{
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-muted)!important;
+ font-weight:400!important;border-bottom:1px solid var(--tm-ui-divider)!important;
+}
+html[data-admin-theme] #tm-recipe-library-page .recipe-table-filter-row :is(input,select){
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination.tm-library-pagination{
+ display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;
+ padding:14px 16px;margin:0;color:var(--tm-ui-muted);font-size:12px;
+ border-top:1px solid var(--tm-ui-divider);
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination[hidden]{
+ display:none!important;
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination button{
+ border:1px solid var(--tm-ui-divider);border-radius:9px;
+ padding:7px 12px;font:inherit;background:transparent;color:var(--tm-ui-text);cursor:pointer;
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination button:disabled{
+ opacity:.4;cursor:default;
+}
+html[data-admin-theme] #tm-supplement-library-page #supp-library-pagination button:not(:disabled):hover{
+ background:var(--tm-ui-hover);
+}
