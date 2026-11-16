@@ -9631,3 +9631,28 @@ html[data-admin-theme] body :is(
  stroke-width:1.55!important;flex:0 0 15px!important;
  pointer-events:none!important;
 }
+
+
+/* FOOD EDITOR X: specificity and focus correction P4 */
+html[data-admin-theme] body #admin-workspace #tm-food-library-page #editor #food-editor-close.tm-library-modal-x{
+ box-sizing:border-box!important;
+ position:static!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ flex:0 0 38px!important;width:38px!important;height:38px!important;
+ min-width:38px!important;min-height:38px!important;
+ max-width:38px!important;max-height:38px!important;
+ padding:0!important;margin:0!important;
+ border:0!important;border-radius:11px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;outline:0!important;
+ outline-offset:0!important;appearance:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page #editor #food-editor-close.tm-library-modal-x svg{
+ display:block!important;width:15px!important;height:15px!important;
+ min-width:15px!important;min-height:15px!important;
+ stroke-width:1.55!important;pointer-events:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page #editor #food-editor-close.tm-library-modal-x:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;
+ outline-offset:2px!important;
+}
