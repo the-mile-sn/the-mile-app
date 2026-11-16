@@ -634,7 +634,7 @@ function render(){
   const name=document.createElement("span");name.textContent=row.name;rowLabel.append(dot,name);
   // Reuse the approved Jogo/Folga semantics from Events of the month, but
   // only in the desktop model table. Configured/unconfigured stays a separate dot.
-  const isMatchDay=row.name.trim()==="MD",isRestDay=/^Off(?:\\s|$)/i.test(row.name.trim());
+  const isMatchDay=row.name.trim()==="MD",isRestDay=/^Off(?:\s|$)/i.test(row.name.trim());
   if(isMatchDay||isRestDay){
    const kind=document.createElement("span");
    kind.className="model-day-kind "+(isMatchDay?"model-day-kind--match":"model-day-kind--off");
