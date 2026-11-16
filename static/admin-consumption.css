@@ -281,3 +281,47 @@ html[data-admin-theme="light"] #consumption-panel .tm-record-consumed-tag{color:
  #consumption-panel .tm-record-coverage{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){#consumption-panel .tm-record-arc-fill{transition:none}}
+
+/* 16 Nov final Registos polish: desktop hierarchy and consumed food labels. */
+#consumption-panel .tm-record-overview .tm-record-kcal-group{min-width:0}
+#consumption-panel .tm-record-food-list .tm-record-change[data-kind="consumed"]{
+ background:rgba(79,150,112,.12);color:#357453;font-weight:500;
+}
+html[data-admin-theme="dark"] #consumption-panel .tm-record-food-list .tm-record-change[data-kind="consumed"]{
+ color:#77c99b;
+}
+@media(min-width:1100px){
+ html[data-admin-theme] #admin-workspace #consumption-panel .tm-record-overview{
+  grid-template-columns:minmax(165px,220px) minmax(0,1fr)!important;
+  column-gap:27px!important;
+  padding:24px 28px!important;
+ }
+ #consumption-panel .tm-record-overview-content{
+  display:grid;grid-template-columns:minmax(240px,.85fr) minmax(360px,1.15fr);
+  gap:20px;align-items:center;min-width:0;
+ }
+ #consumption-panel .tm-record-kcal-value{
+  flex-wrap:nowrap;gap:6px;margin-bottom:3px;
+ }
+ #consumption-panel .tm-record-kcal-value strong{font-size:clamp(29px,2.9vw,43px)}
+ #consumption-panel .tm-record-kcal-value>span{font-size:clamp(25px,2.6vw,38px)}
+ #consumption-panel .tm-record-counts{padding-top:5px}
+ #consumption-panel .tm-record-macros{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:16px;
+  border:0;padding:0;align-items:center;
+ }
+ #consumption-panel .tm-record-macro-row{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;min-width:0;
+ }
+ #consumption-panel .tm-record-macro-row>span{font-size:13px;line-height:1.3}
+ #consumption-panel .tm-record-macro-row strong{
+  font-size:clamp(15px,1.55vw,20px);line-height:1.3;white-space:nowrap;
+ }
+ #consumption-panel .tm-record-macro-row .tm-record-goal{font-size:clamp(13px,1.2vw,17px)}
+}
+@media(min-width:1100px) and (max-width:1320px){
+ #consumption-panel .tm-record-overview-content{
+  grid-template-columns:minmax(220px,.75fr) minmax(330px,1.25fr);gap:12px;
+ }
+ #consumption-panel .tm-record-macros{column-gap:9px}
+}
