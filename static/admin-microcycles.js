@@ -1140,6 +1140,13 @@ $("menu-history-next").addEventListener("click",()=>{
 });
 // The day/week toggle must exist independently of the history controls:
 // both helpers are used while loading a week and when switching views.
+function resizeVisibleMenuDishQueries(){
+ const root=$("menu-grid");if(!root||root.hidden)return;
+ for(const query of root.querySelectorAll(".tm-menu-dish-query:not([hidden])")){
+  query.style.height="auto";
+  query.style.height=Math.max(66,query.scrollHeight||66)+"px";
+ }
+}
 function setMenuDisplayMode(mode){
   menuDisplayMode=mode==="week"?"week":"day";
   const daily=menuDisplayMode==="day";
@@ -1147,7 +1154,10 @@ function setMenuDisplayMode(mode){
   $("menu-weekly").hidden=daily;
   $("menu-view-day").setAttribute("aria-pressed",String(daily));
   $("menu-view-week").setAttribute("aria-pressed",String(!daily));
+  if(daily)requestAnimationFrame(resizeVisibleMenuDishQueries);
 }
+// Keep names fully readable when a desktop window is narrowed or the phone rotates.
+window.addEventListener("resize",()=>requestAnimationFrame(resizeVisibleMenuDishQueries));
 function formatMenuWeek(start,finish){
   const months=["janeiro","fevereiro","março","abril","maio","junho",
     "julho","agosto","setembro","outubro","novembro","dezembro"];
