@@ -1111,6 +1111,10 @@ async function loadMenuHistory(reset=true){
   const tbody=$("menu-history-list");tbody.replaceChildren();
   for(const entry of data.days||[]){
    const tr=document.createElement("tr");
+   if(search){
+    if(entry.lunch&&!entry.dinner)tr.classList.add("tm-menu-history-only-lunch");
+    if(entry.dinner&&!entry.lunch)tr.classList.add("tm-menu-history-only-dinner");
+   }
    const dateCell=document.createElement("th");dateCell.scope="row";
    const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(entry.date);
    dateCell.textContent=match?match[3]+"/"+match[2]+"/"+match[1]:entry.date;
