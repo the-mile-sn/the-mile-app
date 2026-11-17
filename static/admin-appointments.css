@@ -476,3 +476,32 @@ html[data-admin-theme="light"] .tm-appt-booking-date-section{
  #tm-appt-booking-dialog .tm-appt-dialog-grid{grid-template-columns:minmax(0,1fr)}
  #tm-appt-booking-dialog .tm-appt-booking-date-section{padding:12px}
 }
+
+/* Professional identity in the agenda: same semantic colour on events and pills. */
+.tm-appt-calendar-event.is-raquel{border-left-color:#B784F7}
+.tm-appt-calendar-event.is-juliana{border-left-color:#46B37B}
+.tm-appt-calendar-event.is-beatriz{border-left-color:#5B8DEF}
+.tm-appt-calendar-event.is-neutral{border-left-color:var(--tm-ui-muted)}
+#tm-appt-agenda-list .tm-appt-booking-meta-tags{
+ display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:9px;min-width:0;
+}
+#tm-appt-agenda-list .tm-appt-tag{
+ box-sizing:border-box;display:inline-flex;align-items:center;max-width:100%;
+ min-height:26px;padding:4px 10px;border-radius:999px;
+ font:400 11px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ background:color-mix(in srgb,var(--tm-ui-text) 7%,transparent);
+ border:1px solid color-mix(in srgb,var(--tm-ui-text) 12%,transparent);
+ color:var(--tm-ui-text);overflow-wrap:anywhere;
+}
+#tm-appt-agenda-list .tm-appt-tag-professional.is-raquel{
+ color:#C9A6FF;background:rgba(183,132,247,.07);border-color:rgba(183,132,247,.12);
+}
+#tm-appt-agenda-list .tm-appt-tag-professional.is-juliana{
+ color:#79D2A4;background:rgba(70,179,123,.07);border-color:rgba(70,179,123,.12);
+}
+#tm-appt-agenda-list .tm-appt-tag-professional.is-beatriz{
+ color:#94B9FF;background:rgba(91,141,239,.07);border-color:rgba(91,141,239,.12);
+}
+html[data-admin-theme="light"] #tm-appt-agenda-list .tm-appt-tag-professional.is-raquel{color:#7843B6}
+html[data-admin-theme="light"] #tm-appt-agenda-list .tm-appt-tag-professional.is-juliana{color:#217E50}
+html[data-admin-theme="light"] #tm-appt-agenda-list .tm-appt-tag-professional.is-beatriz{color:#2B60B7}
