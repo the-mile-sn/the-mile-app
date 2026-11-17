@@ -12073,3 +12073,24 @@ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .tm-f
   outline:2px solid var(--tm-shell-focus,#88aeca)!important;outline-offset:-3px!important;
  }
 }
+
+
+/* Specificity guard against legacy per-tone rules; only outline, never colour/fill. */
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge[class*="recipe-category-"],
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-badges .recipe-category-badge[class*="recipe-category-"],
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill[class*="dish-category-"],
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table .dish-table-category .dish-category-pill[class*="dish-category-"]{
+ height:26px!important;min-height:26px!important;max-height:26px!important;
+ padding:0 9px!important;
+ font:500 11px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ border:1px solid color-mix(in srgb,currentColor 28%,transparent)!important;
+ border-radius:999px!important;
+}
+html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-table-actions button.tm-supp-library-edit,
+html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-table-actions button.tm-supp-library-edit:is(:hover,:focus,:active){
+ background:#F0F2F6!important;color:#253246!important;
+ border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-table-actions button.tm-supp-library-edit svg{
+ color:#253246!important;stroke:#253246!important;opacity:1!important;
+}
