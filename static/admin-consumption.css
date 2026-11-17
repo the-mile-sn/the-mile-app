@@ -401,3 +401,30 @@ html[data-admin-theme] #consumption-panel .tm-record-macro-row[data-nutrient="ca
 html[data-admin-theme] #consumption-panel .tm-record-macro-row[data-nutrient="fat_g"] .tm-record-macro-consumed{
  color:#eed072!important;
 }
+
+/* Registos v14: clearer whole-number macro totals, desktop and mobile. */
+html[data-admin-theme] #consumption-panel .tm-record-overview .tm-record-macro-row strong{
+ font-size:clamp(20px,1.7vw,23px)!important;
+ font-weight:600!important;
+ line-height:1.25!important;
+}
+html[data-admin-theme] #consumption-panel .tm-record-overview .tm-record-macro-row .tm-record-goal{
+ font-size:clamp(16px,1.35vw,18px)!important;
+ font-weight:450!important;
+}
+@media(max-width:830px){
+ html[data-admin-theme] #consumption-panel .tm-record-overview .tm-record-macro-row strong{
+  font-size:17px!important;
+ }
+ html[data-admin-theme] #consumption-panel .tm-record-overview .tm-record-macro-row .tm-record-goal{
+  font-size:14px!important;
+ }
+}
+@media(max-width:560px){
+ html[data-admin-theme] #consumption-panel .tm-record-overview .tm-record-macro-row strong{
+  font-size:13px!important;
+ }
+ html[data-admin-theme] #consumption-panel .tm-record-overview .tm-record-macro-row .tm-record-goal{
+  font-size:11px!important;
+ }
+}
