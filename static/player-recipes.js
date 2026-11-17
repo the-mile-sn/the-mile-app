@@ -105,7 +105,8 @@
    const root=node("div","recipe-list");
    if(!groups.size){message("Ainda não existem receitas publicadas nas categorias disponíveis.");return;}
    for(const group of groups.values()){
-    const representative=group.items.find(x=>x.has_photo);
+    const preferred=group.items.find(x=>x.id===group.items[0]?.category_cover_recipe_id&&x.has_photo);
+    const representative=preferred||group.items.find(x=>x.has_photo);
     root.append(card(group.name,
      group.items.length===1?"1 receita":group.items.length+" receitas",
      representative?.id,()=>{
