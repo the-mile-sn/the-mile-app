@@ -32,6 +32,7 @@ class PlanPdfTests(unittest.TestCase):
         self.assertIn("Jogador Teste",cover)
         self.assertNotIn("Hidratos médios",cover)
         self.assertIn("Resumo nutricional",summary)
+        self.assertNotIn("Distribuição do anel",summary)
         for term in ("Pequeno-almoço","Lanche","70 g","Ou Pão integral","Acompanhar com fruta"):
             self.assertIn(term,detail)
         self.assertNotIn("Total médio",detail)
@@ -128,8 +129,27 @@ class PlanPdfTests(unittest.TestCase):
         summary=pages[1].extract_text()
         for meal in ("Pequeno-almoço","Almoço","Lanche","Jantar"):
             self.assertIn(meal,summary)
-        self.assertIn("Distribuição do anel",summary)
+        self.assertNotIn("Distribuição do anel",summary)
         self.assertNotIn("Jantar",pages[2].extract_text().split("Opção 1")[0])
+
+    def test_cover_uses_linked_player_photo(self):
+        from PIL import Image
+        picture = BytesIO()
+        Image.new("RGB",(120,80),"#C99F31").save(picture,format="PNG")
+        class PhotoConnection(MockConnection):
+            def execute(self,query,args):
+                if "v2_player_links" in query:
+                    class Cursor:
+                        def fetchone(self):
+                            return {"photo":picture.getvalue()}
+                    return Cursor()
+                return super().execute(query,args)
+        plan=self.plan()
+        plan["athlete_id"]="athlete-001"
+        data=render_editor_pdf(PhotoConnection(),plan)
+        pages=PdfReader(BytesIO(data)).pages
+        self.assertGreaterEqual(len(pages[0].images),2)
+        self.assertNotIn("Distribuição do anel",pages[1].extract_text())
 
     def test_incomplete_is_rejected(self):
         with self.assertRaises(ValueError):
