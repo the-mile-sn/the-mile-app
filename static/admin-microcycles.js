@@ -2989,7 +2989,8 @@ function setDishAddPanel(open){
  if(backdrop)backdrop.hidden=!open;
  panel.hidden=!open;
  toggle.setAttribute("aria-expanded",String(open));
- if(open)$("new-dish-pt").focus();
+ // Abrir o modal sem selecionar campos nem invocar o teclado mobile.
+ if(open)document.activeElement?.blur?.();
 }
 $("dish-add-toggle").addEventListener("click",()=>setDishAddPanel($("dish-add-panel").hidden));
 $("dish-add-backdrop")?.addEventListener("click",()=>setDishAddPanel(false));
@@ -3289,22 +3290,22 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
     associationState.textContent="";
     for(const item of linked){
      const line=document.createElement("div");line.className="dish-recipe-association-actions";
-     const name=document.createElement("span");name.className="dish-recipe-card-name";name.textContent=item.recipe_name+(item.recipe_status==="draft"?" · Rascunho":"");
-     const view=document.createElement("button");view.type="button";view.textContent="";view.setAttribute("aria-label","Ver receita: "+item.recipe_name);view.title="Ver receita";view.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
-     view.className="dish-recipe-association-view";
-     view.addEventListener("click",async()=>{
+     const name=document.createElement("button");name.type="button";name.className="dish-recipe-card-name dish-recipe-open";
+     name.textContent=item.recipe_name+(item.recipe_status==="draft"?" · Rascunho":"");
+     name.setAttribute("aria-label","Ver receita: "+item.recipe_name);name.title="Ver receita";
+     name.addEventListener("click",async()=>{
       if(typeof window.tmOpenAdminDishRecipe!=="function"){
        associationState.textContent="A vista de receitas está indisponível.";return;
       }
-      view.disabled=true;
-      try{await window.tmOpenAdminDishRecipe(item.recipe_id);}
-      catch(error){associationState.textContent="Não foi possível abrir: "+error.message;}
-      finally{view.disabled=false;}
+      name.disabled=true;
+      try{closeDialog();await window.tmOpenAdminDishRecipe(item.recipe_id);}
+      catch(error){$("dish-catalog-feedback").textContent="Não foi possível abrir a receita: "+error.message;}
+      finally{name.disabled=false;}
      });
      const remove=document.createElement("button");remove.type="button";
      remove.textContent="";remove.className="dish-recipe-association-clear";remove.setAttribute("aria-label","Desassociar receita: "+item.recipe_name);remove.title="Desassociar receita";remove.innerHTML=supplementPlanActionIcons.remove;
      remove.addEventListener("click",()=>persistAssociation(item.recipe_id,"DELETE"));
-     const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(view,remove);line.append(name,actions);associationList.append(line);
+     const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(remove);line.append(name,actions);associationList.append(line);
     }
     for(const rowTag of [...tr.querySelectorAll(".dish-recipe-indicator-category"),...(mobileCard?.querySelectorAll(".dish-recipe-indicator-category")||[])]){
      rowTag.hidden=!linked.length;
@@ -3318,7 +3319,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
     const q=normalizedDishText(associationSearch.value.trim());
     return !linkedRecipes().some(link=>link.recipe_id===item.id)
      &&(!q||normalizedDishText(item.name+" "+item.category).includes(q));
-   }).slice(0,25);
+   }).slice(0,10);
    const persistAssociation=async(recipeId,method="POST")=>{
     if(savingAssociation)return;
     savingAssociation=true;associationSearch.disabled=true;
@@ -3356,7 +3357,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
     }
     associationSuggestions.hidden=false;associationSearch.setAttribute("aria-expanded","true");
    };
-   associationSearch.addEventListener("focus",()=>{associationSearch.value="";renderAssociationSuggestions();});
+   associationSearch.addEventListener("focus",()=>{renderAssociationSuggestions();});
    associationSearch.addEventListener("input",renderAssociationSuggestions);
    associationSearch.addEventListener("keydown",event=>{
     if(event.key==="Escape"){closeAssociationSuggestions();associationSearch.blur();}
@@ -3404,8 +3405,8 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    dialog.append(header,editor,footer);
    (document.getElementById("admin-workspace")||document.body).append(dialog);
    dialog.showModal();
-   const firstInput=editor.querySelector('input:not([type="file"])');
-   if(firstInput)firstInput.focus({preventScroll:true});
+   // Evitar foco automático nos campos; o utilizador escolhe onde editar.
+   close.focus({preventScroll:true});
   });
  }
  table.append(tbody);wrap.append(table);host.append(wrap,mobileCards);
