@@ -10535,3 +10535,127 @@ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-categor
  border-width:1px!important;
  box-shadow:none!important;
 }
+
+
+/* P4 DISH V153: true standalone mobile articles and matching create/edit form */
+#tm-menu-recipes-page .dish-mobile-cards{display:none!important}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor{
+ display:flex!important;flex-direction:column!important;gap:12px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>label{
+ display:flex!important;flex-direction:column!important;gap:5px!important;
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ padding:10px 12px!important;margin:0!important;
+ background:var(--tm-ui-subcard)!important;border:0!important;border-radius:12px!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>label input,
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>label select{
+ min-width:0!important;width:100%!important;box-sizing:border-box!important;
+ min-height:30px!important;height:auto!important;
+ padding:4px 0!important;margin:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ outline:0!important;border-radius:0!important;
+ color:var(--tm-ui-text)!important;font-size:16px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>.dish-edit-photo-label{
+ min-height:112px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>.dish-edit-photo-label input{
+ min-height:62px!important;
+ border:1px dashed var(--tm-ui-divider)!important;border-radius:12px!important;
+ padding:14px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-association{
+ width:100%!important;min-width:0!important;
+ margin-top:6px!important;padding:14px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-association .dish-recipe-combobox input{
+ font-size:16px!important;min-width:0!important;width:100%!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-card-buttons button{
+ box-sizing:border-box!important;width:36px!important;height:36px!important;
+ min-width:36px!important;min-height:36px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:10px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-association-clear{
+ color:#d77b8e!important;
+}
+@media (max-width:700px){
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page #dish-editor-list .dish-table-scroll{
+  display:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page #dish-editor-list .dish-mobile-cards{
+  box-sizing:border-box!important;display:flex!important;
+  flex-direction:column!important;gap:14px!important;
+  width:100%!important;margin:0!important;padding:0!important;
+  background:transparent!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-card{
+  box-sizing:border-box!important;display:flex!important;
+  flex-direction:column!important;gap:10px!important;
+  min-width:0!important;width:100%!important;
+  padding:14px!important;margin:0!important;
+  border:0!important;border-radius:17px!important;
+  background:var(--tm-ui-card)!important;box-shadow:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-header{
+  display:flex!important;align-items:flex-start!important;
+  justify-content:space-between!important;gap:8px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  gap:6px!important;flex:1 1 auto!important;min-width:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill{
+  display:inline-flex!important;align-items:center!important;
+  padding:4px 9px!important;min-height:24px!important;
+  border:1px solid color-mix(in srgb,currentColor 42%,transparent)!important;
+  background:color-mix(in srgb,currentColor 12%,transparent)!important;
+  border-radius:999px!important;font:500 11px/1.35 "Inter Tight",Arial,sans-serif!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-recipe-indicator-category:not([hidden]){
+  display:inline-flex!important;align-items:center!important;
+  min-height:24px!important;padding:4px 9px!important;
+  border:0!important;border-radius:999px!important;
+  background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
+  font:500 11px/1.35 "Inter Tight",Arial,sans-serif!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-recipe-indicator-category[hidden]{
+  display:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-actions{
+  display:flex!important;flex:0 0 auto!important;gap:6px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-actions button{
+  box-sizing:border-box!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
+  width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+  padding:0!important;margin:0!important;border:0!important;border-radius:11px!important;
+  background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-actions .dish-table-delete{
+  background:var(--tm-action-danger-bg,#3a2128)!important;color:#d77b8e!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-actions svg{
+  width:17px!important;height:17px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-body{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 76px!important;
+  align-items:start!important;gap:12px!important;min-width:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-title{
+  min-width:0!important;overflow-wrap:anywhere!important;
+  font:600 15px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  color:var(--tm-ui-text)!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-body img{
+  display:block!important;justify-self:end!important;
+  width:76px!important;height:76px!important;max-width:76px!important;
+  object-fit:contain!important;border:0!important;border-radius:10px!important;
+  background:transparent!important;box-shadow:none!important;
+ }
+}
