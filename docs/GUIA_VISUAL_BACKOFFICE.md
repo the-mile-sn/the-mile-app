@@ -1,6 +1,6 @@
 # The Mile — Guia Visual do Backoffice
 
-Versão 1.2 · Aprovado em 12 novembro 2026  
+Versão 1.3 · Base aprovada em 12 novembro 2026; padrão universal de pills aprovado em 17 novembro 2026  
 Âmbito: Backoffice unificado da The Mile V2, incluindo Dashboard, Jogadores, Planos, Planeamento, Menus e Receitas, Biblioteca Alimentar, Porções Visuais, Avaliações, Formulários, Definições e Contas.  
 Suportes: desktop, tablet e mobile; modo claro e escuro.  
 Fonte técnica: static/admin-surface-palette.css, carregado após os estilos das restantes abas.  
@@ -11,7 +11,7 @@ Tipografia: Inter Tight Medium 500; alternativas SF Pro Text e Arial.
 1. Seguir a linguagem visual do Dashboard e do Planeamento: áreas definidas por preenchimentos suaves, não por molduras decorativas.
 2. Nunca acrescentar sombras aos cartões, botões ou listas pendentes.
 3. Usar quatro níveis estáveis de profundidade: fundo geral, card principal, subcard e pesquisa/seletor.
-4. Os estados informativos são pills. As ações são botões com cantos de 12 px (ou 10 px nos ícones compactos). Não tornar ações normais em pills.
+4. Estados, categorias, classificações e etiquetas informativas seguem um único padrão de pill definido na secção 3A. As ações continuam a ser botões, não pills decorativas, salvo exceções interativas explicitamente identificadas.
 5. Preservar contornos com significado: foco, seleção, aviso, erro, classificação nutricional, MD/Off, Geral por definir e drag-and-drop.
 6. Usar os mesmos estilos em todas as abas e nos dois temas. Não criar cores novas para um único módulo sem aprovação.
 7. Não alterar comportamentos, dados, permissões, cálculos ou nomenclaturas clínicas por razões meramente estéticas.
@@ -56,7 +56,39 @@ Classes de implementação: `tm-ui-on-page`, `tm-ui-on-card`, `tm-ui-on-subcard`
 | Atenção — Rever, Incompleto | #F8E3D8 / #AF6544 | #42261E / #E2A188 |
 | Erro — Erro, Falha | #F5DCE0 / #A65362 | #3D2128 / #E5A0AC |
 
-Geometria das etiquetas: altura 26–28 px, raio total (999 px), texto de 11 px, peso 500–550, padding horizontal 10 px, sem contorno e sem sombra. O estado deve estar sempre escrito; não depender só da cor.
+Geometria das etiquetas: aplicar o padrão universal da secção 3A (26 px de altura, 11 px, Inter Tight Regular 400, fundo cromático a 7%, contorno de 1 px a 12%, raio 999 px, sem sombra). O estado deve estar sempre escrito; não depender só da cor.
+
+## 3A. Padrão universal de pills — decisão final aprovada em 17 novembro 2026
+
+**Fonte normativa atual para todas as pills informativas do Backoffice**, independentemente de módulo ou dispositivo: Planos (classificações e estados), Pratos, Receitas (categorias e publicação), Alimentos, Suplementos, Porções Visuais, Jogadores, eventos e restantes bibliotecas. Substitui todas as dimensões, pesos e acabamentos diferentes descritos nas secções históricas abaixo, incluindo as antigas pills 26–28 px sem contorno e as pills de Planos 32 px / 13 px. **Não altera os cartões nutricionais preenchidos, os seletores de refeição nem os contornos funcionais de foco/seleção.**
+
+| Propriedade | Valor único obrigatório |
+|---|---|
+| Altura | **26 px**, mesma em desktop e mobile |
+| Fonte e tamanho | **Inter Tight Regular 400, 11 px** |
+| Raio | **999 px** (pill completamente arredondada) |
+| Padding horizontal | **9 px** |
+| Fundo | Cor cromática de texto da própria pill, com **7% de opacidade** sobre a superfície real |
+| Contorno | **1 px solid**, cor cromática de texto da própria pill, com **12% de opacidade** |
+| Sombra | **Nenhuma** |
+| Alinhamento | Texto centrado verticalmente; sem peso bold ou semibold |
+| Temas | Mesma geometria e opacidades, com cor de texto apropriada a claro/escuro |
+
+**Derivação cromática:** `pill-background = color-mix(in srgb, var(--pill-ink) 7%, transparent)`; `pill-border = 1px solid color-mix(in srgb, var(--pill-ink) 12%, transparent)`. Alternativas rgba equivalentes são aceitáveis, mas não fundos sólidos nem opacidades arbitrárias. Evitar sobreposições com regras de maior especificidade que voltem a impor geometrias ou cores antigas.
+
+**Identidade da cor:** manter os tons de texto já aprovados para as classificações nutricionais, para cada categoria de receita/prato e para as famílias de estado. O tema escuro usa a variante de tinta legível da mesma família cromática; o tema claro usa a variante própria. A cor atribuída a uma categoria deve manter-se estável entre desktop, mobile, listagem, leitura e edição, sem depender da posição na lista. Não criar mapeamentos categoria→cor arbitrários sem confirmação dos dados existentes.
+
+**Estados — cor do texto existente, que serve também para gerar fundo/contorno da pill:**
+
+| Família | Exemplos | Claro (ink) | Escuro (ink) |
+|---|---|---|---|
+| Positivo | Publicado, Ativo, Registado | `#317154` | `#8ED0AB` |
+| Pendente | Rascunho, Por guardar, Por publicar | `#8A6327` | `#E2C17E` |
+| Neutro | Inativo, Oculto, Arquivado | `#607082` | `#AAB4C2` |
+| Atenção | Rever, Incompleto | `#AF6544` | `#E2A188` |
+| Erro | Erro, Falha | `#A65362` | `#E5A0AC` |
+
+**Importante:** este bloco fixa a documentação, **não certifica que o CSS atual já aplica a regra**. A conformidade do produto requer auditoria e implementação separadas, expressamente autorizadas. O histórico do guia permanece abaixo para rastreabilidade; em caso de divergência de pills, esta secção prevalece.
 
 ## 4. Ações e botões
 
@@ -75,7 +107,7 @@ Dimensões:
 - Secundário: 38–40 px, raio 12 px.
 - Compacto com texto: 32–36 px, raio 10 px.
 - Ícone isolado: 36 × 36 px, raio 10 px; área de toque mobile preferencialmente 44 × 44 px.
-- Estado: pill (999 px), não botão.
+- Etiqueta informativa: pill universal (secção 3A), não botão. Controlos interativos identificados como tal continuam acessíveis.
 
 Exceção: em Porções Visuais, Ativa/Inativa é uma interação real com aria-pressed; pode manter o aspeto de etiqueta pill, mas continua a ser um botão acessível. Um botão de Guardar confirmado pode usar verde de sucesso sem alterar a cor neutra da ação ainda não concluída.
 
@@ -150,7 +182,7 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 
 - [ ] Quatro níveis de superfície e cores do tema corretos.
 - [ ] Sem sombras nem contornos meramente decorativos.
-- [ ] Estado em pill; ação com 12 px; ícone compacto com 10 px.
+- [ ] Todas as pills informativas seguem a secção 3A; ações mantêm a geometria própria de botões (12 px, ou 10 px nos ícones compactos).
 - [ ] Terminologia fiel à função; Eliminar diferente de Remover e Desativar.
 - [ ] Ícones outline consistentes, com etiquetas acessíveis.
 - [ ] Navegação e foco de teclado corretos.
@@ -256,7 +288,7 @@ Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa
 - O comando global **‹ Início**, já existente em Jogadores, Planeamento, Avaliações e Formulários, fica igualmente visível **em desktop** na Biblioteca Alimentar (incluindo Porções Visuais) e em Planos. Deve reutilizar o mesmo botão, ícone SVG, posição, tipografia e callback do Dashboard; não criar uma segunda implementação nem introduzir botões de navegação adicionais dentro das bibliotecas.
 - Em mobile, respeitar a navegação horizontal existente: o regresso global permanece oculto tal como nas outras secções.
 - Na visualização, edição e eventual seleção de planos, as setas antigas isoladas `←` são substituídas pelo controlo **‹ Planos**, com SVG outline de 19 px e tipografia Inter Tight 600/13, geometria e superfícies idênticas ao comando global. Preservar os IDs e handlers, incluindo o aviso de alterações por guardar antes de abandonar o editor.
-- Na lista de Planos, ampliar apenas a geometria e tipografia das pills **Plano** e **Estado** para **13 px, Medium (500), altura mínima 32 px**, mantendo todas as cores nutricionais e os estados oficiais nos dois temas. Não alterar outras pills do Backoffice.
+- **Regra substituída em 17/11:** as pills de Plano e Estado usam agora a geometria universal (26 px de altura, 11 px, Inter Tight Regular 400), idêntica à de todas as restantes bibliotecas; preservar cores nutricionais e significados dos estados em ambos os temas.
 
 ## 21. Planos: visualização pela linha/cartão e regresso contextual (13 novembro 2026)
 
@@ -724,7 +756,7 @@ Esta secção substitui as indicações anteriores que colocavam estado e refer�
 - Superfícies do backoffice: nível 1 `--tm-ui-card` (#FFFFFF claro, #15161A escuro); nível 2 `--tm-ui-subcard` (#F0F2F6 claro, #1E2025 escuro); nível 3 `--tm-ui-search` (#E5EBF2 claro, #282B33 escuro). Escolher a superfície em função da profundidade real: popup/card > subcard > campo interior ou item associado. Não deixar campos de pesquisa fundidos com a superfície-mãe.
 - Botões novos, Cancelar e Guardar seguem os componentes/padrões da criação aprovados, com tokens semânticos `--tm-action-main-bg`/`--tm-action-main-fg`, alturas e raios consistentes. X dos modais = mesmo botão de fechar e SVG da criação; evitar foco automático em inputs na abertura dos modais mobile, para não abrir o teclado.
 - Campos com etiqueta sobre valor: **etiqueta e conteúdo começam no mesmo recuo esquerdo**; nenhum campo pode acrescentar indentação interna arbitrária. Em mobile, manter `font-size:16px` nos campos editáveis para evitar zoom do Safari.
-- Pills de categoria: contorno de 1 px **muito subtil**, como em Planos, com fundo/transparência consistente; pill verde para receita associada junto à categoria nos cards de Pratos. Não mostrar o nome inglês na listagem mobile de Pratos (apesar de permanecer editável no formulário).
+- Pills de categoria, receita associada e estados: aplicar sem exceção o padrão universal da secção 3A, com contorno de 1 px a 12% da cor de texto e fundo cromático a 7%; manter a cor semântica da categoria/associação. Não mostrar o nome inglês na listagem mobile de Pratos (apesar de permanecer editável no formulário).
 - Hover/foco: microinteração por mudança discreta de preenchimento da superfície do **card clicável** (token `--tm-ui-hover`), nunca sublinhar o nome. Em mobile dar feedback ao toque; respeitar `prefers-reduced-motion` e manter foco de teclado visível. Nunca pintar cartões meramente informativos como se fossem botões.
 
 ### Biblioteca Pratos — resultado aprovado (desktop e mobile)
