@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=171">
- <link rel="stylesheet" href="/admin-appointments.css?v=10">
+ <link rel="stylesheet" href="/admin-appointments.css?v=11">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -68,7 +68,7 @@
    <section id="tm-appointments-panel-reservas" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-reservas" tabindex="0" hidden>
     <div class="tm-appointments-panel-heading tm-appt-reservations-head">
      <div><h2>Reservas</h2><p>Criação e gestão de marcações internas.</p></div>
-     <button type="button" class="tm-appt-create" id="tm-appt-new-booking">+ Nova marcação</button>
+
     </div>
     <div class="tm-appointments-info" role="note">
      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5M12 7.5h.01"/></svg>
@@ -263,7 +263,7 @@
     </dialog>
     <dialog id="tm-appt-booking-dialog" class="tm-appt-dialog" aria-labelledby="tm-appt-booking-title">
      <form id="tm-appt-booking-form" novalidate>
-      <div class="tm-appt-dialog-heading"><div><span>Reservas · The Mile</span><h2 id="tm-appt-booking-title">Nova marcação interna</h2></div><button type="button" class="tm-appt-dialog-close" data-close-booking-dialog aria-label="Fechar">×</button></div>
+      <div class="tm-appt-dialog-heading"><div><h2 id="tm-appt-booking-title">Nova marcação</h2></div><button type="button" class="tm-appt-dialog-close" data-close-booking-dialog aria-label="Fechar"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
       <p class="tm-appt-form-hint">Não gera pagamento Shopify nem evento Google. Quando o Google está ligado, verifica os períodos ocupados. Confirma também eventuais reservas no Sesami.</p>
       <div class="tm-appt-dialog-grid tm-appt-booking-identity">
        <label class="tm-appt-field"><span>Profissional</span><select id="tm-appt-booking-professional" required></select></label>
@@ -314,7 +314,7 @@
  <script src="/admin-nav-shell.js?v=12" defer></script>
  <script src="/admin-appointments.js?v=5" defer></script>
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
- <script src="/admin-appointments-bookings.js?v=12" defer></script>
+ <script src="/admin-appointments-bookings.js?v=13" defer></script>
  <script src="/admin-appointments-google.js?v=1" defer></script>
  <script src="/admin-mobile-nav.js?v=14" defer></script>
 </body>
