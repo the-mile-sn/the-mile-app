@@ -10984,3 +10984,24 @@ html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-table-
  color:var(--tm-ui-muted)!important;
  opacity:1!important;
 }
+
+/* P5 v157 — linked recipe: card microinteraction, never underline its label. */
+html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-recipe-association-actions>.dish-recipe-open,
+html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-recipe-association-actions>.dish-recipe-open:is(:hover,:active,:focus,:focus-visible){
+ text-decoration:none!important;
+ text-decoration-line:none!important;
+}
+@media (hover:hover) and (pointer:fine){
+ html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-recipe-association-actions:has(>.dish-recipe-open:hover){
+  background:var(--tm-ui-hover)!important;
+  transition:background-color .16s ease!important;
+ }
+}
+html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-recipe-association-actions:has(>.dish-recipe-open:active){
+ background:var(--tm-ui-hover)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-recipe-association-actions{
+  transition:none!important;
+ }
+}
