@@ -10198,3 +10198,76 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-po
   max-width:86px!important;max-height:86px!important;
  }
 }
+
+
+/* VISUAL PORTION PHOTO EDIT V150 */
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card{
+ position:relative!important;
+ grid-template-rows:36px minmax(76px,auto)!important;
+ row-gap:7px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card>.tm-portion-info{
+ grid-column:1!important;grid-row:1 / 3!important;
+ justify-content:flex-start!important;align-self:start!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card>.tm-portion-photo-edit{
+ grid-column:2!important;grid-row:1!important;justify-self:end!important;align-self:start!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+ padding:0!important;margin:0!important;
+ color:var(--tm-action-secondary-fg,var(--tm-ui-text))!important;
+ background:var(--tm-action-secondary-bg,var(--tm-ui-subcard))!important;
+ border:0!important;border-radius:10px!important;box-shadow:none!important;
+ cursor:pointer!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card>.tm-portion-photo-edit svg{
+ width:18px!important;height:18px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card>.tm-portion-photo-edit:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card>img{
+ grid-column:2!important;grid-row:2!important;
+ justify-self:end!important;align-self:start!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor{
+ box-sizing:border-box!important;width:min(520px,calc(100vw - 30px))!important;
+ max-height:calc(100dvh - 30px)!important;overflow-y:auto!important;
+ padding:22px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:18px!important;box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor::backdrop{
+ background:rgba(0,0,0,.76)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor h3{
+ font:600 20px/1.3 "Inter Tight",Arial,sans-serif!important;margin:0 0 12px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-help,
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-feedback{
+ font:400 13px/1.5 "Inter Tight",Arial,sans-serif!important;
+ color:var(--tm-ui-muted)!important;margin:8px 0 12px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-preview{
+ display:block!important;width:160px!important;height:160px!important;max-width:100%!important;
+ object-fit:contain!important;background:transparent!important;border:0!important;
+ border-radius:12px!important;margin:12px auto!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-input{
+ box-sizing:border-box!important;display:block!important;width:100%!important;
+ font:400 16px/1.5 "Inter Tight",Arial,sans-serif!important;
+ color:var(--tm-ui-text)!important;background:var(--tm-ui-subcard)!important;
+ border:0!important;border-radius:12px!important;padding:12px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-actions{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ gap:10px!important;margin-top:18px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-actions button{
+ padding:10px 13px!important;border:0!important;border-radius:12px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:500 13px/1.3 "Inter Tight",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-actions .tm-action-primary{
+ background:var(--tm-action-primary-bg,#2d3440)!important;color:var(--tm-action-primary-fg,#f2f3f5)!important;
+}
