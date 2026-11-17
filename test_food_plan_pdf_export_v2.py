@@ -1,4 +1,4 @@
-"""Representative saved-editor PDF export tests."""
+"""Regression checks for branded Planos PDF without touching saved data."""
 import unittest
 from io import BytesIO
 from pypdf import PdfReader
@@ -14,25 +14,39 @@ class MockConnection:
         return Cursor()
 
 class PlanPdfTests(unittest.TestCase):
-    def test_draft_and_alternative(self):
-        plan={"player_name":"Jogador Teste","plan_type":"Plano amarelo",
-              "meals":[{"name":"Intermédia","options":[{"title":"Pão com ovos",
-                "foods":[{"id":"food1","grams":70,"display_quantity":"70 g"},
-                         {"id":"food1","grams":80,"alternative_to":0,"display_quantity":"80 g"}],
-                "notes":["Acompanhar com fruta"],"order":[{"type":"food","index":0},
-                     {"type":"food","index":1},{"type":"note","index":0}]}]}]}
-        pdf=render_editor_pdf(MockConnection(),plan)
-        self.assertTrue(pdf.startswith(b"%PDF-"))
-        content=" ".join(page.extract_text() for page in PdfReader(BytesIO(pdf)).pages)
-        for term in ("Jogador Teste","Pequeno-almoço","Lanche","70 g","Ou Pão integral","Acompanhar com fruta","Total médio"):
-            self.assertIn(term,content)
+    def plan(self):
+        return {"player_name":"Jogador Teste","plan_type":"Plano amarelo",
+            "meals":[{"name":"Intermédia","options":[{"title":"Pão com ovos",
+              "foods":[{"id":"food1","grams":70,"display_quantity":"70 g"},
+                       {"id":"food1","grams":80,"alternative_to":0,"display_quantity":"80 g"}],
+              "notes":["Acompanhar com fruta"],"order":[{"type":"food","index":0},
+                 {"type":"food","index":1},{"type":"note","index":0}]}]}]}
+
+    def test_cover_summary_and_option_contents(self):
+        pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),self.plan()))).pages
+        self.assertGreaterEqual(len(pages),3)
+        cover=pages[0].extract_text()
+        summary=pages[1].extract_text()
+        detail=" ".join(p.extract_text() for p in pages[2:])
+        self.assertIn("Plano alimentar",cover)
+        self.assertIn("Jogador Teste",cover)
+        self.assertIn("Hidratos médios",cover)
+        self.assertIn("Resumo nutricional",summary)
+        for term in ("Pequeno-almoço","Lanche","70 g","Ou Pão integral","Acompanhar com fruta"):
+            self.assertIn(term,detail)
+        self.assertNotIn("Total médio",detail)
+        self.assertNotIn("Alimento / notas",detail)
+        self.assertNotIn("Qtd.",detail)
+        self.assertGreaterEqual(len(pages[0].images),1)
+
     def test_shared_groups_default_to_four_meals(self):
         groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
                 {"name":"Principal","options":[{"foods":[{"id":"food1","grams":200}]}]}]
         selected=_selected_meals(groups,None)
         self.assertEqual([x[1] for x in selected],["Pequeno almoço","Almoço","Lanche","Jantar"])
         plan={"player_name":"Jogador","plan_type":"Plano amarelo","meals":groups}
-        text=" ".join(p.extract_text() for p in PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages)
+        pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages
+        text=" ".join(p.extract_text() for p in pages)
         for name in ("Pequeno-almoço","Almoço","Lanche","Jantar","1500 kcal"):
             self.assertIn(name,text)
 
@@ -40,14 +54,24 @@ class PlanPdfTests(unittest.TestCase):
         groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
                 {"name":"Principal","options":[{"foods":[{"id":"food1","grams":200}]}]}]
         plan={"player_name":"Jogador","meals":groups}
-        pdf=render_editor_pdf(MockConnection(),plan,["0:0","1:0","0:1"])
-        text=" ".join(p.extract_text() for p in PdfReader(BytesIO(pdf)).pages)
+        pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan,["0:0","1:0","0:1"]))).pages
+        text=" ".join(p.extract_text() for p in pages)
         self.assertNotIn("Jantar",text)
         self.assertIn("1000 kcal",text)
         with self.assertRaises(ValueError):
             render_editor_pdf(MockConnection(),plan,["0:0","99:0"])
         with self.assertRaises(ValueError):
             render_editor_pdf(MockConnection(),plan,[])
+
+    def test_option_kept_on_one_page_if_it_fits(self):
+        plan=self.plan()
+        opts=plan["meals"][0]["options"]
+        opts[:]=[dict(opts[0],title="Batido %02d"%i) for i in range(7)]
+        pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages
+        for i in range(7):
+            label="Opção "+str(i+1)+" · Batido %02d"%i
+            containing=[n for n,p in enumerate(pages) if label in p.extract_text()]
+            self.assertEqual(len(containing),2) # once for breakfast and once for snack
 
     def test_incomplete_is_rejected(self):
         with self.assertRaises(ValueError):
