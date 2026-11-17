@@ -353,11 +353,11 @@
    $("tm-appt-booking-error").textContent=error.message;
   }
  }
- function enableForm(openItem){
+ function enableForm(openItem,preferredDate=""){
   state.editing=openItem||null;
   const form=$("tm-appt-booking-form");
   form.reset();
-  $("tm-appt-booking-title").textContent=openItem?"Reagendar / editar marcação":"Nova marcação interna";
+  $("tm-appt-booking-title").textContent=openItem?"Reagendar / editar marcação":"Nova marcação";
   $("tm-appt-booking-error").textContent="";
   const people=state.catalog.professionals.filter(p=>p.active||p.id===openItem?.professional_id);
   populate($("tm-appt-booking-professional"),people.map(p=>[p.id,p.name]),"Selecionar profissional",openItem?.professional_id);
@@ -367,7 +367,7 @@
   $("tm-appt-booking-name").value=openItem?.customer_name||"";
   $("tm-appt-booking-email").value=openItem?.customer_email||"";
   $("tm-appt-booking-phone").value=openItem?.customer_phone||"";
-  const date=openItem?.date;
+  const date=openItem?.date||preferredDate;
   const today=isoToday();
   const allowed=date&&date>=today&&date<=shift(today,60);
   state.month=(allowed?date:today).slice(0,7);
@@ -387,7 +387,8 @@
    showAgendaError(message);
    return;
   }
-  enableForm(item);
+  const chosenDate=!item?document.querySelector("#tm-appointments-days .tm-appointments-day.is-selected")?.dataset.date||"":"";
+  enableForm(item,chosenDate);
  }
  async function loadCheckoutStatus(){
   const node=$("tm-appt-checkout-status");
