@@ -11580,3 +11580,129 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-
   height:185px!important;
  }
 }
+
+/* The Mile: mobile horizontal navigation, isolated from desktop and page cards. */
+@media(max-width:830px){
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav{
+  display:flex!important;flex-direction:column!important;
+  align-items:stretch!important;position:relative!important;
+  overflow:visible!important;min-height:0!important;height:auto!important;
+  padding:0 0 5px!important;gap:0!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track{
+  display:flex!important;align-items:center!important;
+  width:100%!important;max-width:100%!important;
+  box-sizing:border-box!important;min-height:57px!important;
+  padding:5px 16px 8px 18px!important;margin:0!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  flex-wrap:nowrap!important;scrollbar-width:none!important;
+  scroll-snap-type:x proximity!important;
+  overscroll-behavior-x:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track::-webkit-scrollbar{
+  display:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track>.tm-admin-side-nav{
+  display:contents!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link{
+  box-sizing:border-box!important;display:inline-flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:center!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:43px!important;min-height:43px!important;flex:0 0 auto!important;
+  margin:0!important;padding:8px 12px!important;gap:7px!important;
+  background:transparent!important;border:0!important;border-radius:11px!important;
+  color:var(--tm-ui-muted,#a0a9b7)!important;
+  font:500 12px/1.2 "Inter Tight",Arial,sans-serif!important;
+  white-space:nowrap!important;text-decoration:none!important;
+  scroll-snap-align:start!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link:is(.is-active,.tm-mobile-current){
+  background:var(--tm-ui-subcard,#282b33)!important;
+  color:var(--tm-ui-text,#ffffff)!important;
+  font-weight:600!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#88aeca)!important;outline-offset:-2px!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-more-trigger{
+  display:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-chevron{
+  display:none!important;
+ }
+ /* One contextual strip, only in a library subsection. */
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-food-subnav:not([hidden]){
+  box-sizing:border-box!important;display:flex!important;
+  flex:0 0 auto!important;flex-direction:row!important;align-items:center!important;
+  justify-content:flex-start!important;flex-wrap:nowrap!important;
+  width:100%!important;max-width:100%!important;
+  height:47px!important;min-height:47px!important;gap:7px!important;
+  padding:3px 18px 8px!important;margin:0!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  scrollbar-width:none!important;-webkit-overflow-scrolling:touch!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-food-subnav[hidden]{
+  display:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-food-subnav::-webkit-scrollbar{
+  display:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-food-subnav .tm-admin-subnav-link{
+  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+  justify-content:center!important;flex:0 0 auto!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:35px!important;min-height:35px!important;padding:7px 12px!important;
+  margin:0!important;border:1px solid transparent!important;border-radius:999px!important;
+  background:var(--tm-ui-subcard,#282b33)!important;
+  color:var(--tm-ui-muted,#a0a9b7)!important;
+  font:500 12px/1.2 "Inter Tight",Arial,sans-serif!important;
+  text-decoration:none!important;white-space:nowrap!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-food-subnav .tm-admin-subnav-link.is-active{
+  background:var(--tm-ui-search,#34363c)!important;
+  color:var(--tm-ui-text,#fff)!important;
+  border-color:color-mix(in srgb,var(--tm-ui-muted,#a0a9b7) 30%,transparent)!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-food-subnav .tm-admin-subnav-link:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#88aeca)!important;outline-offset:2px!important;
+ }
+ /* Settings / account remain independently accessible, not in the work tabs. */
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions{
+  box-sizing:border-box!important;position:absolute!important;
+  z-index:7!important;top:0!important;right:4px!important;
+  left:auto!important;bottom:auto!important;inset:auto 4px auto auto!important;
+  width:74px!important;max-width:74px!important;min-width:74px!important;
+  height:43px!important;min-height:43px!important;margin:5px 0 0!important;
+  padding:0!important;gap:0!important;display:flex!important;
+  flex-direction:row!important;align-items:center!important;justify-content:space-between!important;
+  background:var(--tm-ui-card,#15161a)!important;
+  border:0!important;border-radius:10px!important;box-shadow:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions>.tm-admin-nav-link{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 34px!important;width:34px!important;min-width:34px!important;
+  height:43px!important;min-height:43px!important;padding:0!important;
+  border:0!important;border-radius:10px!important;background:transparent!important;
+  color:var(--tm-ui-muted,#a0a9b7)!important;opacity:1!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions>.tm-admin-nav-link>span:not(.tm-admin-nav-icon){
+  display:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions .tm-admin-nav-chevron{
+  display:none!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions .tm-admin-nav-icon{
+  display:inline-flex!important;width:20px!important;height:20px!important;
+  align-items:center!important;justify-content:center!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions>.tm-admin-nav-link:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#88aeca)!important;outline-offset:-2px!important;
+ }
+ #admin-workspace .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track{
+  padding-right:90px!important;
+ }
+}
