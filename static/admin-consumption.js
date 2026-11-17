@@ -199,7 +199,7 @@
    keys.map(([key],i)=>progressCircle(key,consumed,planned,i)).join("")+'</svg>';
   const kcalTotal=planned?kcal(planned.kcal):"—";
   const metric=(key,label,color)=>{
-   const value=num(consumed[key]),goal=planned?num(planned[key]):"—";
+   const value=kcal(consumed[key]),goal=planned?kcal(planned[key]):"—";
    return '<div class="tm-record-macro-row" data-nutrient="'+key+'"><span>'+label+'</span><strong><span class="tm-record-macro-consumed" style="color:'+color+'">'+value+'</span> <span class="tm-record-goal">/ '+goal+' g</span></strong></div>';
   };
   return '<section class="tm-record-overview" aria-label="Resumo nutricional dos registos do dia">'+
