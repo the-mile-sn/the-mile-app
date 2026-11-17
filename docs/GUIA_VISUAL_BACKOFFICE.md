@@ -1,86 +1,54 @@
-# The Mile — Guia Visual do Backoffice
+# THE MILE — Guia Visual Oficial do Backoffice
 
-Versão 1.3 · Base aprovada em 12 novembro 2026; padrão universal de pills aprovado em 17 novembro 2026  
-Âmbito: Backoffice unificado da The Mile V2, incluindo Dashboard, Jogadores, Planos, Planeamento, Menus e Receitas, Biblioteca Alimentar, Porções Visuais, Avaliações, Formulários, Definições e Contas.  
-Suportes: desktop, tablet e mobile; modo claro e escuro.  
-Fonte técnica: static/admin-surface-palette.css, carregado após os estilos das restantes abas.  
-Tipografia: Inter Tight Medium 500; alternativas SF Pro Text e Arial.
+**Versão consolidada 2.0 · 17 novembro 2026**  
+**Âmbito:** Backoffice administrativo The Mile, `admin.themile.pt`, branch `production/the-mile-admin`; desktop, tablet, mobile; modo claro e escuro.  
+**Estado:** decisões aprovadas consolidadas; a uniformização visual de Biblioteca > Receitas continua **pendente de validação no produto**.  
+**Arquivo integral anterior:** [Guia pré-consolidação de 17/11](historico/GUIA_VISUAL_BACKOFFICE_pre_consolidacao_2026-11-17.md). O arquivo preserva todas as decisões intermediárias, os diagnósticos, os testes e as referências técnicas históricas.
 
-## 1. Princípios de identidade visual
+> **Fonte normativa para novas alterações visuais:** este guia. Os valores correntes do CSS podem divergir; a existência de uma regra documental não demonstra que tenha sido aplicada. Não interpretar este documento como autorização para modificar código da app ou o Admin.
 
-1. Seguir a linguagem visual do Dashboard e do Planeamento: áreas definidas por preenchimentos suaves, não por molduras decorativas.
-2. Nunca acrescentar sombras aos cartões, botões ou listas pendentes.
-3. Usar quatro níveis estáveis de profundidade: fundo geral, card principal, subcard e pesquisa/seletor.
-4. Estados, categorias, classificações e etiquetas informativas seguem um único padrão de pill definido na secção 3A. As ações continuam a ser botões, não pills decorativas, salvo exceções interativas explicitamente identificadas.
-5. Preservar contornos com significado: foco, seleção, aviso, erro, classificação nutricional, MD/Off, Geral por definir e drag-and-drop.
-6. Usar os mesmos estilos em todas as abas e nos dois temas. Não criar cores novas para um único módulo sem aprovação.
-7. Não alterar comportamentos, dados, permissões, cálculos ou nomenclaturas clínicas por razões meramente estéticas.
+## 1. Identidade, tipografia e hierarquia
 
-## 2. Paleta neutra oficial
+- Direção: produto unificado, discreto, funcional, sem molduras decorativas, brilhos, sombras ou contornos excessivamente destacados. O contraste provém da hierarquia de superfícies e texto.
+- Fonte principal **Inter Tight**, com SF Pro Text e Arial como alternativas. Texto base do sistema **Medium 500** quando previsto nos componentes; títulos podem ser semibold conforme hierarquia. **Exceção obrigatória: todas as pills são Regular 400**, sem negrito.
+- Texto principal: **#1C2633** claro / **#F2F3F5** escuro; secundário: **#596675** claro / **#A2A7B0** escuro.
+- Não alterar dados, modelos clínicos, publicação, permissões, nutrição, associações ou endpoints para corrigir apenas a apresentação.
+- Contornos de foco, avisos clínicos, seleção, categorias nutricionais e drag-and-drop têm significado funcional: nunca os remover por regras globais.
 
-| Elemento | Modo claro | Modo escuro | Token |
+### Superfícies (design tokens)
+
+| Papel | Claro | Escuro | Token |
 |---|---|---|---|
-| Fundo geral | #F5F6F8 | #101114 | --tm-ui-bg |
-| Card principal | #FFFFFF | #15161A | --tm-ui-card |
-| Subcard | #F0F2F6 | #1E2025 | --tm-ui-subcard |
-| Pesquisa no subcard (terceiro nível) | #E5EBF2 | #282B33 | --tm-ui-search |
-| Hover neutro | #E3E7EE | #303239 | --tm-ui-hover |
-| Texto principal | #1C2633 | #F2F3F5 | --tm-ui-text |
-| Texto secundário | #596675 | #A2A7B0 | --tm-ui-muted |
+| Fundo geral | `#F5F6F8` | `#101114` | `--tm-ui-bg` |
+| Card principal | `#FFFFFF` | `#15161A` | `--tm-ui-card` |
+| Subcard | `#F0F2F6` | `#1E2025` | `--tm-ui-subcard` |
+| Campo dentro de subcard | `#E5EBF2` | `#282B33` | `--tm-ui-search` |
+| Hover neutro | `#E3E7EE` | `#303239` | `--tm-ui-hover` |
 
-Divisores entre linhas muito subtis, usando --tm-ui-divider. Fundos de estados nutricionais e alertas não são substituídos por esta paleta.
+**Contexto obrigatório:** campo diretamente na página → fundo de card; campo num card → fundo de subcard; campo num subcard → fundo de terceiro nível. Não aplicar o azul subtil a todos os campos indiscriminadamente. Sem bordas decorativas ou sombras. Listas pendentes acompanham a hierarquia real.
 
-## 2A. Regra contextual de superfície (regra definitiva)
+## 2. Padrão universal de pills — decisão final de 17/11
 
-O Backoffice tem **três superfícies encaixadas**, sem contornos ou sombras: fundo geral, card principal e subcard. A pesquisa ou filtro recebe o **nível seguinte de preenchimento**.
+**Vale para todas as etiquetas informativas**: classificação de Planos, estado de publicação, categorias de Receitas e Pratos, receita associada, Jogos/Treinos nos eventos, estados de jogadores e restantes bibliotecas. Não criar tratamentos especiais de geometria entre módulos nem entre desktop e mobile.
 
-| Localização do campo | Modo claro | Modo escuro | Token |
-|---|---|---|---|
-| Diretamente sobre o fundo geral | Cor de **card principal**: #FFFFFF | Cor de **card principal**: #15161A | `--tm-ui-field-on-page` |
-| Dentro de um card principal | Cor de **subcard**: #F0F2F6 | Cor de **subcard**: #1E2025 | `--tm-ui-field-on-card` |
-| Dentro de um subcard | **Azul muito subtil**: #E5EBF2 | **Grafite-azulado subtil**: #282B33 | `--tm-ui-field-on-subcard` |
-
-**Exemplo aprovado:** fundo #F5F6F8 → card branco #FFFFFF → subcard #F0F2F6 → campo azul subtil #E5EBF2. Em modo escuro: fundo #101114 → card #15161A → subcard #1E2025 → campo #282B33.
-
-Não aplicar azul a todas as pesquisas. **Dentro de um card principal a pesquisa não é azul; usa a cor do subcard.** Só quando inserida num subcard usa azul muito subtil. A separação entre níveis faz-se pelo preenchimento, margens e espaçamento. Mantêm-se os contornos funcionais de foco, seleção e alertas.
-
-Classes de implementação: `tm-ui-on-page`, `tm-ui-on-card`, `tm-ui-on-subcard`, `tm-ui-field`. As listas pendentes acompanham o contexto de superfície.
-
-## 3. Paleta oficial de estados
-
-| Estado | Claro (fundo / texto) | Escuro (fundo / texto) |
-|---|---|---|
-| Positivo — Publicado, Ativo, Registado | #DDEFE4 / #317154 | #183428 / #8ED0AB |
-| Pendente — Rascunho, Por guardar, Por publicar | #F5E8C9 / #8A6327 | #3B2D16 / #E2C17E |
-| Neutro — Inativo, Oculto, Arquivado | #E7ECF2 / #607082 | #2A3038 / #AAB4C2 |
-| Atenção — Rever, Incompleto | #F8E3D8 / #AF6544 | #42261E / #E2A188 |
-| Erro — Erro, Falha | #F5DCE0 / #A65362 | #3D2128 / #E5A0AC |
-
-Geometria das etiquetas: aplicar o padrão universal da secção 3A (26 px de altura, 11 px, Inter Tight Regular 400, fundo cromático a 7%, contorno de 1 px a 12%, raio 999 px, sem sombra). O estado deve estar sempre escrito; não depender só da cor.
-
-## 3A. Padrão universal de pills — decisão final aprovada em 17 novembro 2026
-
-**Fonte normativa atual para todas as pills informativas do Backoffice**, independentemente de módulo ou dispositivo: Planos (classificações e estados), Pratos, Receitas (categorias e publicação), Alimentos, Suplementos, Porções Visuais, Jogadores, eventos e restantes bibliotecas. Substitui todas as dimensões, pesos e acabamentos diferentes descritos nas secções históricas abaixo, incluindo as antigas pills 26–28 px sem contorno e as pills de Planos 32 px / 13 px. **Não altera os cartões nutricionais preenchidos, os seletores de refeição nem os contornos funcionais de foco/seleção.**
-
-| Propriedade | Valor único obrigatório |
+| Propriedade | Valor único |
 |---|---|
-| Altura | **26 px**, mesma em desktop e mobile |
-| Fonte e tamanho | **Inter Tight Regular 400, 11 px** |
-| Raio | **999 px** (pill completamente arredondada) |
+| Altura | **26 px** |
+| Tipo de letra | **Inter Tight Regular 400, 11 px** |
+| Raio | **999 px** |
 | Padding horizontal | **9 px** |
-| Fundo | Cor cromática de texto da própria pill, com **7% de opacidade** sobre a superfície real |
-| Contorno | **1 px solid**, cor cromática de texto da própria pill, com **12% de opacidade** |
-| Sombra | **Nenhuma** |
-| Alinhamento | Texto centrado verticalmente; sem peso bold ou semibold |
-| Temas | Mesma geometria e opacidades, com cor de texto apropriada a claro/escuro |
+| Fundo | Cor do texto da própria pill com **7% de opacidade** |
+| Contorno | **1 px**, cor do texto com **12% de opacidade** |
+| Sombra | **nenhuma** |
+| Temas/dispositivos | Mesma geometria e opacidades no claro, escuro, desktop e mobile; só a tinta cromática é adaptada ao tema |
 
-**Derivação cromática:** `pill-background = color-mix(in srgb, var(--pill-ink) 7%, transparent)`; `pill-border = 1px solid color-mix(in srgb, var(--pill-ink) 12%, transparent)`. Alternativas rgba equivalentes são aceitáveis, mas não fundos sólidos nem opacidades arbitrárias. Evitar sobreposições com regras de maior especificidade que voltem a impor geometrias ou cores antigas.
+CSS de referência para implementação futura (não aplicado nesta atualização documental): `background:color-mix(in srgb,var(--pill-ink) 7%,transparent)`; `border:1px solid color-mix(in srgb,var(--pill-ink) 12%,transparent)`. O texto deve manter uma cor legível, não receber opacidade de 7%.
 
-**Identidade da cor:** manter os tons de texto já aprovados para as classificações nutricionais, para cada categoria de receita/prato e para as famílias de estado. O tema escuro usa a variante de tinta legível da mesma família cromática; o tema claro usa a variante própria. A cor atribuída a uma categoria deve manter-se estável entre desktop, mobile, listagem, leitura e edição, sem depender da posição na lista. Não criar mapeamentos categoria→cor arbitrários sem confirmação dos dados existentes.
+**Atenção:** o padrão das pills **não se aplica** aos cards nutricionais preenchidos, aos seletores coloridos das refeições, a dropzones, aos botões interativos nem às molduras funcionais de foco/seleção. Estados e categorias partilham geometria, mas mantêm cor e significado próprios.
 
-**Estados — cor do texto existente, que serve também para gerar fundo/contorno da pill:**
+### 2.1. Estados — tinta cromática oficial
 
-| Família | Exemplos | Claro (ink) | Escuro (ink) |
+| Família | Exemplo | Claro | Escuro |
 |---|---|---|---|
 | Positivo | Publicado, Ativo, Registado | `#317154` | `#8ED0AB` |
 | Pendente | Rascunho, Por guardar, Por publicar | `#8A6327` | `#E2C17E` |
@@ -88,696 +56,178 @@ Geometria das etiquetas: aplicar o padrão universal da secção 3A (26 px de al
 | Atenção | Rever, Incompleto | `#AF6544` | `#E2A188` |
 | Erro | Erro, Falha | `#A65362` | `#E5A0AC` |
 
-**Importante:** este bloco fixa a documentação, **não certifica que o CSS atual já aplica a regra**. A conformidade do produto requer auditoria e implementação separadas, expressamente autorizadas. O histórico do guia permanece abaixo para rastreabilidade; em caso de divergência de pills, esta secção prevalece.
+A tintura acima gera **também o fundo a 7% e o contorno a 12%**. Estado não é botão. Nunca depender apenas da cor. **Guardar ≠ Publicar**, **Por guardar ≠ Por publicar**, **Registado ≠ Publicado**. Eliminar apaga definitivamente (com confirmação); Remover desfaz associação; Desativar preserva dados; Arquivar conserva histórico.
 
-## 4. Ações e botões
+### 2.2. Categorias de Receitas — famílias cromáticas existentes
 
-| Tipo | Funções | Claro (fundo / texto) | Escuro (fundo / texto) |
+Manter as famílias cromáticas **e a correspondência real de cada categoria** já existente no projeto; não reatribuir cores arbitrariamente por ordenação. O nome/categoria mantém a mesma família em lista, cartão mobile, filtro e leitura. Texto por tema:
+
+| Família | Claro | Escuro |
+|---|---|---|
+| Rosa | `#9D426A` | `#F0A8C7` |
+| Vermelho | `#AC3038` | `#EF999B` |
+| Turquesa | `#186A62` | `#8EDBD2` |
+| Azul | `#265C9D` | `#A4C9FC` |
+| Âmbar | `#94601C` | `#F0CC85` |
+| Violeta | `#75409C` | `#CFB2F3` |
+| Menta | `#2F7544` | `#A9E1BD` |
+| Laranja | `#A65728` | `#F6B993` |
+| Índigo | `#4C56A1` | `#B9C1FF` |
+| Ciano | `#226D88` | `#9BD8EB` |
+| Lima | `#5C731F` | `#C8DF98` |
+| Ardósia | `#526477` | `#CCD5E1` |
+
+Todas seguem **a mesma geometria e opacidades da secção 2**; não usar os fundos sólidos antigos. O mapa exato nome de categoria → cor deve ser lido dos registos e da implementação antes de qualquer alteração de código.
+
+### 2.3. Cores dos planos nutricionais — preservadas
+
+**Distinguir três papéis:** (1) a identidade cromática de uma classificação, (2) a sua *pill* translúcida conforme secção 2 e (3) o **card de refeição ou seletor nutricional preenchido**, que **não** deve ser tornado transparente. O tom dos cards muda entre temas para legibilidade, sem mudar a identidade do plano.
+
+| Plano | Tom identificador usado nas etiquetas | Fundo card claro / texto | Fundo card escuro / texto |
 |---|---|---|---|
-| Principal | Criar, Guardar, Publicar, Novo alimento | #DCE5EF / #2E4157 | #2D3440 / #F2F3F5 |
-| Secundário | Ver, Editar, Duplicar, Abrir | #E8EDF3 / #425468 | #23272F / #D6DCE5 |
-| Destrutivo | Eliminar | #F4E0E3 / #B15665 | #3A2128 / #F0A3AF |
-| Fantasma | Cancelar, Voltar, Fechar | transparente / #596675 | transparente / #A2A7B0 |
-| Ícone neutro | Ver perfil, App, Editar | #E6EBF1 | #242830 |
-
-Hover do botão principal: #D2DDE8 (claro), #38414E (escuro). Ações destrutivas têm um vermelho suave mais evidente ao passar o cursor, sem contornos ou sombras.
-
-Dimensões:
-- Principal: 42–44 px de altura, raio 12 px.
-- Secundário: 38–40 px, raio 12 px.
-- Compacto com texto: 32–36 px, raio 10 px.
-- Ícone isolado: 36 × 36 px, raio 10 px; área de toque mobile preferencialmente 44 × 44 px.
-- Etiqueta informativa: pill universal (secção 3A), não botão. Controlos interativos identificados como tal continuam acessíveis.
-
-Exceção: em Porções Visuais, Ativa/Inativa é uma interação real com aria-pressed; pode manter o aspeto de etiqueta pill, mas continua a ser um botão acessível. Um botão de Guardar confirmado pode usar verde de sucesso sem alterar a cor neutra da ação ainda não concluída.
-
-## 5. Terminologia — o significado prevalece
-
-| Termo | Significado |
-|---|---|
-| Publicado / Publicada | Conteúdo efetivamente publicado e disponível |
-| Rascunho | Conteúdo existente ainda não publicado |
-| Por guardar | Alterações locais não persistidas |
-| Por publicar | Alterações guardadas mas ainda sem publicação |
-| Ativo / Ativa | Jogador, conta ou referência disponível |
-| Inativo / Inativa | Funcionalidade ou referência preservada mas desligada |
-| Arquivado / Arquivada | Item preservado para histórico |
-| Registado / Registada | Registo concluído, não sinónimo de publicado |
-| Rever | Informação a validar, diferente de erro |
-| Erro / Falha | Falha efetiva, não simples estado pendente |
+| Amarelo | `#D4B651` | `#FFF0BB` / `#725313` | `#513C12` / `#FFDB77` |
+| Laranja | `#D99555` | `#FFDFC3` / `#804717` | `#53351C` / `#FFCA95` |
+| Azul | `#6FA9DA` | `#DCEEFF` / `#24577D` | `#203E54` / `#A8D8FB` |
+| Verde | `#6EBC8D` | `#D9F1E2` / `#245E40` | `#234535` / `#A7E1B9` |
+| Verde preparação (VP) | `#28543E` | `#D8E9DE` / `#24513A` | `#28543E` / `#BDE6CD` |
 
-Usar concordância de género quando se refere a um objeto: receita publicada, porção ativa, jogador ativo. Não trocar Visível, Ativo e Publicado arbitrariamente.
-
-Ações:
-- Eliminar = eliminação definitiva; confirmar e explicar consequências.
-- Remover = retirar uma seleção, foto ou associação sem apagar necessariamente o objeto original.
-- Desativar = suspender disponibilidade, preservando os dados.
-- Arquivar = manter em histórico.
-- Guardar = persistir dados; não pressupõe publicação.
-- Publicar = disponibilizar versão validada.
-- Bloquear / Reativar acesso = modificar permissões/sessões, não apagar contas.
-
-## 6. Ícones oficiais
-
-Estilo outline, traço ~1,8 px, normalmente 18 px, mesma família Lucide/SVG já aprovada e sem mistura de ícones sólidos ou emojis decorativos. Utilizar texto nos botões de formulários e ícones isolados apenas em ações compactas.
-
-| Ação | Ícone |
-|---|---|
-| Criar | plus |
-| Editar | pencil |
-| Ver | eye |
-| Ocultar | eye-off |
-| Duplicar | copy |
-| Guardar | save |
-| Confirmar | check |
-| Eliminar | trash-2 |
-| Arquivar | archive |
-| Cancelar/Fechar | x |
-| Entrar na App | smartphone |
-| Rever/Alerta | triangle-alert |
-
-Um botão só com ícone precisa de nome acessível específico e tooltip no desktop. Não acrescentar ícones a estados quando estes não ajudam a leitura.
-
-## 7. Desktop, tablet, mobile e acessibilidade
-
-Desktop (a partir de 831 px): tabela completa, filtros alinhados, botões compactos. Tablet: manter a mesma paleta e reorganizar filtros quando faltar espaço. Mobile (até 830 px): preservar os cartões responsivos aprovados, áreas de toque acessíveis e consistência nas ações. As listas pendentes devem abrir sem sobreposição inadequada e sem cortar conteúdo.
-
-No Safari do iPhone, campos que recebem foco devem usar pelo menos 16 px de letra para evitar zoom automático. Manter foco de teclado visível, com outline de 2 px; esse contorno é funcional e não deve ser removido. Respeitar movimento reduzido; verificar contraste de texto e ícones. Não usar apenas cor para comunicar estado.
-
-## 8. Exceções obrigatórias
+A pill usa a variante de texto legível do tema da classificação, com fundo 7% e borda 12%. A cor do card preenchido e a cor do seletor seguem as paletas existentes e os seus tokens por contexto. **Peri-treino e Peri-jogo** conservam as suas regras cromáticas existentes: não criar um HEX novo sem validar os tokens implementados. Os planos VP devem manter verde profundo e não voltar ao verde claro legado no cabeçalho de detalhe do dia.
 
-Preservar cores nutricionais de refeições e macros; indicador VP verde-garrafa #28543E; dias MD e Off, folgas, dia selecionado, hoje e o tracejado de Geral por definir. Preservar estados e métricas clínicas (favoráveis/desfavoráveis), avisos, validação, indicação amarela de cópias antigas dos planos, dropzones, foco de teclado e seleção ativa. Não remover estes contornos com uma regra global.
-
-## 9. Implementação e manutenção
-
-- Fonte única: static/admin-surface-palette.css, com tokens de superfície, estado e ação.
-- Classes reutilizáveis para novos componentes: tm-ui-state e data-state; tm-ui-action-icon; tm-ui-action-danger; tm-ui-action-ghost.
-- Classes de ação existentes: tm-action-primary, tm-action-secondary, tm-action-new, tm-action-danger, tm-action-success.
-- Entradas técnicas que carregam o tema comum: admin-microcycles.html, create-plan.html e food-library.html. São partes do mesmo Backoffice unificado, não páginas separadas na experiência do utilizador.
-- A folha partilhada deve ser carregada por último. Atualizar a versão do CSS nos três HTML sempre que mudar, devido à cache dos browsers.
-- Evitar valores HEX copiados em componentes; usar os tokens semânticos em novos módulos.
-- Novos estados ou ações devem receber nome, ícone e significado acordados antes de entrarem na app.
-
-## 10. Checklist para cada alteração
-
-- [ ] Quatro níveis de superfície e cores do tema corretos.
-- [ ] Sem sombras nem contornos meramente decorativos.
-- [ ] Todas as pills informativas seguem a secção 3A; ações mantêm a geometria própria de botões (12 px, ou 10 px nos ícones compactos).
-- [ ] Terminologia fiel à função; Eliminar diferente de Remover e Desativar.
-- [ ] Ícones outline consistentes, com etiquetas acessíveis.
-- [ ] Navegação e foco de teclado corretos.
-- [ ] Desktop, tablet, mobile, claro, escuro e Safari sem zoom verificados.
-- [ ] Estados clínicos/nutricionais e alertas preservados.
-- [ ] Nenhuma alteração acidental a dados, publicação, acesso ou cálculos.
-- [ ] Asset versionado; testes e Render verificados.
-
-**Direção definitiva:** o Backoffice The Mile deve parecer um único produto: discreto, funcional e legível, com fundos suaves, sem sombras, etiquetas claras e ações consistentes em todos os dispositivos.
-
-
-## 11. Dashboard e Jogadores — regras de layout aprovadas em 12 novembro 2026
+## 3. Botões, ações, ícones e formulários
 
-- O **Microciclo semanal do Dashboard** não tem altura máxima nem scroll vertical interno. Mostra todas as linhas e utiliza a rolagem vertical da página. Em ecrãs estreitos, os sete dias podem deslizar horizontalmente sem comprimir excessivamente as colunas; nunca criar uma segunda barra vertical.
-- A **lista de Jogadores** usa cartões individuais (elementos article/listitem), um por jogador, sem linhas de tabela, contornos ou sombras. Fotografia, nome, utilizador, estado, data de renovação e ações continuam visíveis.
-- **Filtros de Jogadores** formam uma secção própria colocada diretamente sobre o fundo geral: são um **card principal**, e a pesquisa de nome e o filtro de estado no interior usam **cor de subcard**. Não aplicar azul de terceiro nível neste contexto.
-- O botão **Criar jogador** fica no topo à direita no desktop; no mobile integra o painel de filtros, sem duplicar o botão ou criar novos handlers.
-- No **mobile**, cada jogador é apresentado em duas linhas: **identidade + botão Entrar na app** (canto superior direito); **renovação + estado de acesso** (segunda linha, estado à direita). O cartão inteiro abre o perfil, exceto o botão da app. O filtro de estado permanece utilizável em mobile.
-- **Não apresentar o ícone de olho «Ver perfil»** na lista: o cartão inteiro abre o perfil, com hover discreto em desktop (preenchimento de subcard), cursor interativo e navegação por teclado. O botão de **Entrar na app** é a única ação de ícone e mantém a verificação de acesso e o comportamento independente.
-- Aplicar estas regras nos temas claro/escuro e em tablet e mobile sem recorrer a tabelas artificialmente redimensionadas nem scroll vertical dentro de uma lista.
+- **Ações não são pills**: principal 42–44 px, raio 12 px; secundário 38–40 px, raio 12 px; compacto com texto 32–36 px, raio 10 px; só ícone habitualmente 36 × 36 px, raio 10 px, com alvo móvel preferencial de 44 × 44 px. As dimensões especiais de seletores nutricionais não definem pills.
+- Criar, Guardar, Publicar: botões com a cor semântica de ação aprovada; Cancelar/Voltar/Fechar: ação fantasma; Eliminar: perigo suave, com confirmação. Botões de criação: **Inter Tight Medium 500 / 13 px**, consistentes nos dois temas.
+- Guardar pode dar feedback positivo transitório; não equivale a Publicar. No editor de Planos, o verde de confirmação após guardar é breve (1100 ms); Publicar só é ação positiva quando disponível.
+- **Ícones oficiais das ações rápidas: Hugeicons** existentes no código; **PencilEdit01Icon** para editar, **TrashIcon** para eliminar. Outros ícones devem ser os próprios componentes Hugeicons aprovados, não desenhos improvisados, nem misturas arbitrárias com Lucide. Formato outline consistente, tipicamente ~18 px.
+- Fechar modal: X pequeno e fino, **sem contorno nem preenchimento decorativo**, com foco de teclado acessível. O clique fora, Escape e proteção contra perda de dados dependem do formulário.
+- Modais de criação/edição: card principal sem moldura ou sombra, raio habitual 18 px e backdrop preto de referência `rgba(0,0,0,.76)`; campos de duas linhas **etiqueta sobre valor**, com o mesmo recuo esquerdo, numa superfície de subcard única, sem input interno duplicado.
+- Novo/Editar alimento: campos de pelo menos 72 px quando em cartão de duas linhas, controlo interno transparente; pesquisa em superfície dependente da sua profundidade real. Popups de Pratos seguem a estrutura do popup «Adicionar novo prato».
+- Inputs editáveis no Safari/iPhone: pelo menos **16 px** quando recebem foco para evitar zoom. Preservar outline de foco funcional (normalmente 2 px) e rótulos acessíveis. Não abrir teclado mobile automaticamente sem necessidade.
+- Um card clicável tem feedback discreto no próprio card e deve conservar ações internas independentes; não criar hover em linhas meramente informativas. Respeitar `prefers-reduced-motion`.
 
-- **Densidade no desktop:** cartões de jogador com altura mínima de 94 px e padding vertical de 19 px; o mobile mantém o layout de duas linhas e a altura necessária ao conteúdo.
+## 4. Navegação e estrutura partilhada
 
-- **Interação mobile e desktop:** utilizar um botão real com área de toque sobre todo o cartão de Jogadores, reservando o botão do telemóvel como ação independente. Não depender apenas de eventos `click` no elemento `article`.
-- **Pesquisa de Jogadores em modo claro:** resultados apresentados numa única lista pendente branca, sem cartões internos, divisores fortes ou sombras; realce discreto da linha no hover/foco. O modo escuro mantém o aspeto previamente aprovado.
+- **Branches separadas:** Admin = `production/the-mile-admin`; app dos jogadores = `main`. A uniformização do Admin não altera a app.
+- Dashboard é a referência para o **início horizontal da área de conteúdo e recuos internos**. Desktop: área `#admin-workspace > .tm-admin-work-area` fluida, com `padding-inline:clamp(16px,2vw,34px)`; recuo interno base de cards 24 px. Mobile (até 830 px) preserva as margens dos cards de Início, uniformes entre bibliotecas.
+- Sidebar desktop com cursor: **compacta por predefinição (72 px)**, expande automaticamente por hover/foco (aprox. 226 px), **refluindo a grelha e o conteúdo sem cobrir os cards**; submenus abrem automaticamente ao passar o cursor/foco. **Não há botão de colapso**. Desktop tátil sem hover mantém alternativa navegável. Mobile conserva barra de navegação própria.
+- Desktop a partir de 831 px; mobile até 830 px, salvo disposições específicas de componente. Em janelas desktop estreitas, manter tabelas onde aprovado com scroll horizontal interno; no mobile usar cartões verdadeiros onde definidos.
+- Comandos de regresso contextuais «‹ Início» / «‹ Planos» sem duplicação. Manter proteção de alterações por guardar ao sair do editor.
+- Não confundir validação de sintaxe, testes, deploy Render e validação visual autenticada: são verificações diferentes.
 
-- **Pesquisa de Jogadores em linha única:** placeholder «Pesquisar jogador...», sem subtítulo, seguindo a altura e cor dos filtros. Para evitar a duplicação do X no Safari, usar um campo `type="text"` com `inputmode="search"` e apenas o botão de limpeza personalizado. A lista pendente fecha ao tocar fora, ao voltar a tocar no campo, por Escape ou ao escolher um resultado; o CSS respeita `[hidden]`. O X é centrado sem animação.
+## 5. Dashboard, Jogadores e Conta
 
+- Dashboard: microciclo semanal sem scroll vertical próprio; a página faz scroll. Em largura estreita, sete dias podem deslizar horizontalmente.
+- Jogadores: **um cartão individual por jogador**, sem linhas de tabela; fotografia, nome, utilizador, estado e renovação. Card inteiro abre perfil, com foco/teclado; «Entrar na app» é ação independente no canto superior direito. Sem botão de olho «Ver perfil». No mobile: identidade e app na primeira linha; renovação e estado na segunda.
+- Filtros de jogadores: card principal com pesquisa e filtro em subcard, sem azul do terceiro nível nesse contexto. Pesquisa compacta com um só X. Não mostrar avatar vazio quando não existe jogador selecionado.
+- Perfil: um único card principal com quatro secções irmãs: Dados pessoais, Permissões e definições da conta, Imagem App e Gerir acesso. Subcards internos só nos locais apropriados, não grandes contornos adicionais.
+- Criar jogador: modal centrado, campos label/valor em subcard e ações Cancelar/Criar; layouts responsivos sem alterar validação e segurança.
+- Clicar/tocar em cartões navegáveis tem feedback no card, não no texto nem em botões vizinhos; ícones acessíveis e ações independentes.
 
-## 12. Perfil de Jogador — hierarquia aprovada em 13 novembro 2026
+## 6. Planos
 
-- O perfil permanece dentro de **um único card principal**; as quatro secções **Dados pessoais**, **Permissões e definições da conta**, **Imagem App** e **Gerir acesso** são irmãs, com títulos alinhados ao mesmo nível, sem cartões grandes adicionais à volta das secções.
-- **Dados pessoais:** manter os campos em subcards individuais, sem alterar o conteúdo ou a edição.
-- **Permissões e definições da conta:** título com ícone de escudo, sem fundo próprio; cada uma das duas opções constitui um subcard individual. Inativas usam a superfície de subcard oficial; ativadas preservam a indicação verde e os respetivos estados.
-- **Imagem App:** título com ícone outline de imagem, sem divisória decorativa; abaixo, um subcard apenas para pré-visualização da fotografia e respetivas ações. Não agrupar este módulo com Permissões.
-- **Gerir acesso:** título com ícone de cadeado; preservar os botões existentes, cores semânticas, textos, ações e autorizações, sem fundo de secção adicional.
-- Esta hierarquia é igual nos modos claro e escuro e adapta-se a desktop, tablet e mobile, respeitando espaçamento vertical equilibrado.
-- **Microinteração de Jogadores em mobile:** ao tocar no cartão, apresentar brevemente preenchimento de subcard e escala subtil, preservando a abertura do perfil e a ação independente «Entrar na app». Respeitar `prefers-reduced-motion`.
+### Listagem
 
+- Desktop: tabela com filtros Jogador e Tipo de plano, sem pesquisa redundante, com divisores e hover quase impercetíveis; linha clicável abre visualização; Editar e eliminação especial são ações independentes. Desktop estreito: scroll horizontal, sem cartões artificiais.
+- Mobile: cartões `article` individuais; **pesquisa de jogador + Criar** na primeira linha do painel de filtros, Tipo de plano abaixo. O cartão abre a visualização; Editar no canto superior direito, estado e tipo na segunda linha. Não converter linhas de tabela em cartões apenas com CSS.
+- Classificação e estado usam **pills universais secção 2**, mesmo onde a documentação histórica dizia 32 px / 13 px; proteger paletas nutricionais e estados reais.
+- Cópias antigas mantêm aviso específico e confirmação de eliminação.
 
-## 13. Biblioteca Alimentar — estrutura aprovada em 13 novembro 2026
+### Visualização
 
-- Manter **Novo alimento** como ação principal fora do painel de filtros.
-- **Pesquisa e Categoria** pertencem a um único **card principal de filtros**, separado dos resultados; cada controlo usa uma só superfície de subcard, com rótulo e campo integrados. Sem borda decorativa nem barra adicional dentro do campo.
-- **Desktop (mesmo com janela estreita):** manter sempre a tabela legível, com largura mínima e deslocação horizontal dentro dos resultados quando necessário; nunca converter o desktop em cartões apenas por redução da janela. **Mobile / tablet pequeno tátil:** mostrar cartões nos ecrãs compactos com pointer coarse. O cabeçalho da tabela usa a mesma superfície de card principal, não subcard; divisórias entre alimentos quase impercetíveis.
-- Na tabela, todos os nomes/categorias/notas devem poder quebrar linha sem sobreposição; números nutricionais permanecem alinhados e tabulares. A rolagem horizontal é o comportamento deliberado para desktop estreito.
-- Nos cartões estreitos, nome, categoria, notas e quatro valores nutricionais ficam legíveis, sem contorno exterior ou divisórias decorativas. Os valores kcal/P/HC/G usam quatro subcards neutros alinhados.
-- Os botões **Editar** e **Eliminar** posicionam-se no **canto superior direito do cartão**, independentes do texto e com alvos de toque confortáveis. «Eliminar» mantém a cor semântica de perigo.
-- Não alterar endpoints nem comportamentos de pesquisa, paginação, edição, proteção da eliminação de alimentos em planos, nem os valores e associações nutricionais.
-- Manter a mesma hierarquia e tokens de superfícies em modo claro e escuro, desktop, tablet e mobile.
+- Desktop: cabeçalho Jogador → Plano → Referência, quatro valores nutricionais alinhados, com cores e rácios preservados; remover títulos de classificação repetidos no segundo card. Edição por botão com lápis + «Editar», não ícone de olho.
+- Mobile: conservar resumo nutricional em quatro colunas, título sem repetição, botão Editar compacto. A navegação contextual «‹ Planos» permanece disponível sem duplicação.
 
-## 14. Criação de jogador — modal aprovado em 13 novembro 2026
+### Edição
 
-- A ação **+ Criar jogador** mantém a localização aprovada na lista, incluindo a integração com os filtros em mobile; abre um **modal nativo centrado**, não um formulário expansível sobre a lista.
-- O modal tem a mesma linguagem do editor **Novo alimento**: card principal e campos de **duas linhas na mesma superfície de subcard** (etiqueta discreta em cima; valor/controlo em baixo). Nenhuma etiqueta fica fora do preenchimento; sem contornos decorativos ou sombras.
-- Desktop: **Nome completo** ocupa a primeira linha; **Peso inicial / Sexo** e **Utilizador / Palavra-passe inicial** ocupam duas linhas de duas colunas. Mobile: uma única coluna, scroll interno somente se necessário, campos de 16 px para impedir zoom no Safari.
-- Rodapé com **Cancelar** e **Criar jogador**, alinhados à direita. A navegação por teclado e o foco permanecem funcionais; Escape, Cancelar e clique fora pedem confirmação se existirem dados introduzidos.
-- Preservar sem mudanças o endpoint de criação, as validações existentes, os campos obrigatórios, os limites de peso, utilizador e palavra-passe, as permissões e a atualização da lista. Erros surgem no próprio modal, sem depender de mensagens ocultas noutra aba.
-- Respeitar ambos os temas, a preferência de movimento reduzido e os tokens oficiais do Backoffice.
+- Novo plano no topo, não duplicado no rodapé. Resumo com seletores e quatro totais; kcal/proteína/hidratos/gordura preservam cores e cálculos. Seleção ativa muda discretamente a superfície da opção, sem barra lateral.
+- Metadados e estado **fora do card nutricional**, em faixa contextual. Desktop: estado à esquerda, «Guardado em» e «Ref.» à direita. Mobile publicado: mostrar pill «Publicado» e ocultar referência/data de gravação nesse estado, sem eliminar informação dos cálculos.
+- Refeições: ações independentes, sem sobreposições com macros ou seta. Mobile: duas linhas estáveis, nome e ações em cima, macros em baixo, seta na coluna lateral centrada; abrir/fechar sem saltos de layout. A região livre do cabeçalho também expande, sem interferir com botões.
+- Macros da refeição e da opção alinhadas pela grelha nutricional real dos alimentos **em fluxo CSS, nunca com `position:absolute`**. Recalcular em resize. Conteúdo compacto do editor a partir do limite intermédio de 1240 px; em 831–1100 px reorganizar alimentos em duas linhas conforme espaço. Não alterar o breakpoint geral da navegação (830 px).
+- Campos e ações de adicionar alimento e nota com 48 px; preservar opções, gramagens, estados e validações. Guardar neutro com feedback positivo transitório; Publicar conforme disponibilidade; Apagar destrutivo. Não empilhar novas regras responsivas contraditórias.
 
-## 15. Modal Novo/Editar alimento — dois níveis no mesmo campo (13 novembro 2026)
+## 7. Bibliotecas
 
-- **Todos os campos** do formulário, incluindo o seletor **Tipo de pesagem**, têm uma só superfície neutra de subcard (altura mínima 72 px), com **etiqueta na primeira linha e valor/controlo na segunda**.
-- Não colocar as etiquetas fora do preenchimento nem inserir uma segunda barra dentro do subcard; inputs e select são transparentes e têm a mesma altura interna (30 px). No mobile, texto de entrada de 16 px para evitar zoom do Safari.
-- Preservar as duas colunas de campos no desktop, a primeira linha Nome e a última Notas em largura completa; no mobile manter uma coluna, foco acessível no bloco e scroll do modal quando necessário.
-- As opções do seletor, dados nutricionais, cálculos, validações e comportamento da criação/edição mantêm-se exatamente iguais. Alteração restrita ao modal da Biblioteca Alimentar do Backoffice.
+### Regras transversais
 
-## 16. Modais de criação — superfície e backdrop uniformizados em 13 novembro 2026
+- Cards e filtros acompanham superfície contextual da secção 1. Em mobile, margens iguais às aprovadas em Início, **cards independentes por item**, sem contornos fortes.
+- Ações rápidas editar/eliminar em posição e dimensões uniformes, normalmente no topo direito do cartão mobile; usar Hugeicons oficiais. Campo label/valor sem recuos internos divergentes. Fotografias sem fundo CSS opaco e com `object-fit:contain` onde aprovado.
+- **Todas** as categorias, associações e estados em pills seguem secção 2 (26 px, 11 px/400, 7%/12%), sem exceções por biblioteca.
 
-- **Novo jogador** e **Novo/Editar alimento** usam o mesmo card principal: claro `#FFFFFF`, escuro `#15161A`, sem bordas/contornos decorativos e sem sombras; raio de 18 px.
-- O fundo atrás de ambos os modais usa o mesmo overlay preto `rgba(0,0,0,.76)`, para reduzir o ruído visual em desktop e mobile.
-- Os títulos seguem o mesmo estilo de Inter Tight semibold; campos, dimensões específicas e comportamentos funcionais mantêm-se.
-- As alterações são estritamente de apresentação dos dois modais. Contornos funcionais de foco dos campos continuam visíveis.
+### Alimentos
 
-## 17. Tipografia das ações de criação — standard final (13 novembro 2026)
+- Filtros Pesquisa + Categoria num card principal; cada controlo em subcard de duas linhas, sem barra de input interna. «Novo alimento» fora do card de filtros.
+- Desktop: tabela com scroll interno em janela estreita, dados nutricionais tabulares. Mobile: um card por alimento com quatro valores kcal/P/HC/G em subcards neutros; ações no topo direito.
+- Novo/Editar alimento: campos label/valor com uma única superfície, sem bordas decorativas nem zoom Safari.
 
-- Botões de criação com classe `tm-action-new` (por exemplo **+ Novo alimento**, **+ Criar jogador**, **+ Nova receita**, **+ Novo prato**, **+ Novo plano** e **+ Nova avaliação**) devem utilizar sempre **Inter Tight Medium (500), 13 px, line-height 1.3**, em modo claro e escuro, desktop, tablet e mobile.
-- A mesma fonte e peso são aplicados independentemente do CSS específico de cada módulo; diferenças de perceção entre temas não se corrigem com pesos tipográficos diferentes.
-- Não alterar por esta regra ícones, estado clínico, outros botões sem função de criação ou dimensões das superfícies. Preserve-se o estilo de cada ação e as suas funcionalidades.
+### Suplementos
 
-## 18. Porções Visuais — filtros e carregamento progressivo (13 novembro 2026)
+- Manter os cards e formulários já aprovados, alinhamento dos botões «Novo» e das ações rápidas com as restantes bibliotecas; prescrições, doses e dados funcionais intocados. Estados informativos seguem pill universal.
 
-- Filtros **Categoria** e **Pesquisar** usam o mesmo **card principal** e as mesmas **superfícies de subcard** da Biblioteca Alimentar, com etiqueta na primeira linha e seleção/pesquisa transparente na segunda. Não existe barra adicional nem contorno interior.
-- Categoria primeiro, pesquisa mais larga no desktop; quando a largura disponível do módulo deixa de ser suficiente (incluindo janelas desktop estreitas), os campos passam a uma coluna através de uma container query. Respeitar os modos claro e escuro.
-- A listagem apresenta inicialmente **16 cartões**, com botão discreto **Ver mais (16)** (ou quantidade restante). A pesquisa e a seleção continuam a abranger todas as referências e repõem a apresentação inicial em 16 cartões.
-- Os metadados leves são consultados uma vez, mas as **fotografias** só são requisitadas para os cartões criados e à medida que entram na zona visível (`loading="lazy"`). O botão Ver mais acrescenta cartões sem recriar os anteriores.
-- Alterar Ativa/Inativa atualiza apenas o cartão correspondente, sem reconstruir a grelha ou voltar a solicitar todas as fotografias visíveis.
-- Manter intactas as fotografias, pesos, categorias, dados nutricionais, associações, pré-visualizações dos planos, endpoints e permissões. Não publicar porções na app dos jogadores.
+### Porções Visuais
 
-## 19. Lista de Planos — desktop e mobile (13 novembro 2026)
+- Filtros Categoria/Pesquisar no mesmo card e superfícies de subcard, com disposição responsiva. Carregamento inicial de 16 cartões; «Ver mais (16)» e carregamento lazy de imagens. Ativa/Inativa é **controlo interativo**, mesmo que visualmente se pareça com etiqueta; preservar `aria-pressed`.
+- Preservar a marcação VP verde-garrafa `#28543E` e o comportamento já aprovado, sem publicar porções por alterações cosméticas.
 
-- A lista usa **Inter Tight** e mantém o padrão de ações de criação com **13 px e peso Medium 500** em modo claro e escuro.
-- **Filtros:** eliminar a pesquisa da apresentação da lista; manter **Jogador** e **Tipo de plano** no mesmo card principal (branco no claro, grafite oficial no escuro), cada um num subcard de duas linhas. Os dois filtros partilham a mesma estética da Biblioteca Alimentar. A pesquisa técnica existente permanece desligada da interface sem modificar a listagem, os filtros ou os dados.
-- **Criar novo:** um único botão e handler, colocado separadamente à direita, fora do card de filtros, tanto em desktop como em mobile.
-- **Desktop:** manter tabela tradicional, cabeçalho com a mesma superfície do card principal e divisórias quase invisíveis (**2,4% claro / 3,2% escuro**). O hover das linhas deve ser **muito subtil** (**1,8% claro / 2% escuro**), nunca uma faixa cinzenta forte. Garantir precedência sobre o CSS antigo do tema claro. Em janelas desktop estreitas, manter tabela com deslocamento horizontal; não converter apenas por largura.
-- **Mobile/touch:** cada plano ocupa um **card `<article>` verdadeiro**, separado da tabela desktop, sem bordas, sombras, títulos redundantes «PLANO» e «ESTADO» ou divisórias internas. A conversão visual de elementos `<tr>` em cartões através de CSS não é suficientemente estável no Safari iOS e não deve voltar a ser usada. Primeira linha: nome à esquerda e Ver/Editar à direita; segunda linha: classificação do plano e estado de publicação. Botões visíveis de 36 × 36 px, ícones outline de 16 px, com área de toque alargada. Desativar a seleção acidental de texto nos cartões sem impedir o foco dos botões. As duas vistas devem utilizar exatamente os mesmos dados, estados, cores e handlers.
-- **Cores nutricionais imutáveis:** nunca redefinir fundos, contornos ou cores de texto de `.plan-type-tag[data-palette]`. Conservar distinções oficiais por tema para Amarelo, Laranja, Azul, Verde, Verde preparação (VP), Peri-treino e Peri-jogo; Verde preparação mantém verde mais escuro que Verde. Não modificar a função `previewPalette`, os ícones de categoria, os tokens nutritivos nem estados `data-state` (Publicado/Rascunho/Alterações por publicar/Em uso).
-- **Cópias antigas:** manter o aviso visual especial, eventual botão Eliminar e o comportamento de confirmação existente.
-- Não alterar editor, pré-visualização, planos, valores, publicação, dados, APIs nem a app dos jogadores. Efeitos hover só em desktop, feedback discreto em mobile; manter foco de teclado visível.
+### Pratos
 
-## 20. Regresso ao Início e navegação de Planos — 13 novembro 2026
+- Desktop: tabela e miniaturas sem fundo CSS opaco. Mobile: **um card por prato**; categoria e receita associada junto ao cabeçalho, ações topo direito; nome/descrição à esquerda e fotografia à direita; sem nome inglês na listagem mobile.
+- Modal «Adicionar novo prato» é a referência para editar: Categoria → Nome PT → Nome EN opcional → Fotografia; upload e Guardar no mesmo fluxo, sem botão «Alterar fotografia».
+- Associar receita: campo de pesquisa dentro de subcard, com lista vertical, uma receita por linha. Associação existente em subcard, nome clicável sem olho ou sublinhado; caixote independente para **desassociar**, sem eliminar a receita da biblioteca.
 
-- O comando global **‹ Início**, já existente em Jogadores, Planeamento, Avaliações e Formulários, fica igualmente visível **em desktop** na Biblioteca Alimentar (incluindo Porções Visuais) e em Planos. Deve reutilizar o mesmo botão, ícone SVG, posição, tipografia e callback do Dashboard; não criar uma segunda implementação nem introduzir botões de navegação adicionais dentro das bibliotecas.
-- Em mobile, respeitar a navegação horizontal existente: o regresso global permanece oculto tal como nas outras secções.
-- Na visualização, edição e eventual seleção de planos, as setas antigas isoladas `←` são substituídas pelo controlo **‹ Planos**, com SVG outline de 19 px e tipografia Inter Tight 600/13, geometria e superfícies idênticas ao comando global. Preservar os IDs e handlers, incluindo o aviso de alterações por guardar antes de abandonar o editor.
-- **Regra substituída em 17/11:** as pills de Plano e Estado usam agora a geometria universal (26 px de altura, 11 px, Inter Tight Regular 400), idêntica à de todas as restantes bibliotecas; preservar cores nutricionais e significados dos estados em ambos os temas.
+### Receitas — **pendente de QA visual final**
 
-## 21. Planos: visualização pela linha/cartão e regresso contextual (13 novembro 2026)
+- Biblioteca > Receitas é distinta de Planeamento > Menus e receitas (gestão por jogador).
+- Uniformizar categorias, estados, ações, cards mobile, fotografias e formulários pelo padrão acima. Pills no desktop **não podem voltar a ter contorno forte, peso bold ou dimensão maior que o padrão universal**. A conversa de 17/11 P2 reportou repetidas inconsistências apesar de correções; **não declarar resolvido sem validação visual**.
+- A associação categoria → família cromática deve permanecer estável; a paleta textual está na secção 2.2.
+- Modal Nova/Editar receita: manter estrutura e funcionalidades existentes; rever X, Cancelar, Guardar, campos, pesquisa e leitura segundo os componentes aprovados, sem modificação funcional nesta consolidação.
 
-- **Lista desktop**: clicar em qualquer zona da linha abre o plano em modo de **visualização**; a linha é acessível via teclado (Enter/Espaço). Remover o botão separado com ícone de olho. A ação **Editar** continua independente, à direita, sem propagar para visualização. A ação especial **Eliminar cópia antiga**, quando aplicável, mantém-se independente.
-- **Mobile/touch**: clicar/tocar no card principal individual abre a mesma visualização. Um único botão **Editar** no canto superior direito, com 36 × 36 px de superfície visível, ícone outline de 16 px e área de toque alargada; não colocar a ação abaixo das informações. Manter a classificação nutricional na **segunda linha, à esquerda** e o estado de publicação na **segunda linha, à direita**. Preservar a distinção entre as cores oficiais de todos os planos e temas.
-- **Navegação desktop**: o botão global superior é contextual — **‹ Início** na lista e **‹ Planos** na visualização, edição ou pesquisa interna. Não mostrar outro botão de regresso por baixo. O regresso a partir de edição mantém a proteção para alterações por guardar e operações em curso.
-- **Navegação mobile**: dado que a barra global superior está oculta na navegação móvel atual, manter o controlo interno **‹ Planos** na visualização/edição, sem o duplicar.
-- As interações da lista utilizam os **mesmos dados, handlers e IDs** da criação, edição e visualização já existentes. Não alterar API, conteúdo dos planos, estado de publicação, valores nutricionais, paletas, filtros ou app dos jogadores.
+## 8. Planeamento
 
-## 22. Afinamento dos cartões mobile — Planos e Jogadores (13 novembro 2026)
+### Pesquisa de jogador
 
-- **Planos:** ao tocar no card, apresentar uma microinteração percetível mas elegante, igual à de Jogadores: realce da superfície em subcard e `scale(.992)` durante cerca de 140 ms. Usar `pointerdown` para resposta imediata no Safari e manter brevemente o estado depois de levantar o dedo. A abertura da visualização, o botão Editar e as cores das pills continuam inalterados. Respeitar `prefers-reduced-motion` e manter a cor de aviso das cópias antigas.
-- **Jogadores:** o único botão de ação, **Entrar na app**, fica sempre no **canto superior direito** no mobile, alinhado com a identidade, tal como o Editar de Planos e os botões da Biblioteca Alimentar. Botão visível de **36 × 36 px**, ícone outline de **16 px**, com área de toque ampliada para cerca de **44 × 44 px**.
-- **Jogadores, segunda linha:** data de renovação à esquerda e badge de estado (Ativo/Inativo/Sem conta) à direita. Não posicionar o botão por baixo do estado; não alterar cores, estados, permissões nem ações de acesso à app.
-- Desktop, filtros, dados dos jogadores, perfis, conteúdos dos planos e app dos jogadores ficam fora do âmbito.
+- Card principal com pesquisa em subcard e lista de resultados adequada; sem divisória decorativa entre pesquisa e abas. Sem avatar reservado quando vazio; X único discreto; subsecção ativa em preenchimento suave, sem azul intenso.
 
-## 23. Visualização de Planos — uniformização desktop (13 novembro 2026)
+### Microciclos — calendário e eventos
 
-- **Âmbito desta revisão: apenas desktop (largura a partir de 831 px)**. Preservar integralmente a visualização mobile aprovada, incluindo dimensão e disposição da informação nutricional, botão «Editar plano», refeições expansíveis e opções.
-- **Botão de edição desktop:** substituir o texto isolado «Editar plano» pelo botão secundário neutro **ícone outline de lápis + «Editar»**, com Inter Tight Medium 500/13 px, canto de 12 px e sem contorno ou sombra. Manter o ID `preview-edit`, o handler de edição e o alinhamento à direita na mesma faixa da navegação superior «‹ Planos».
-- **Resumo desktop:** dentro do card principal, apresentar **Jogador → Plano → Referência** à esquerda e depois uma fila equilibrada de **quatro macros**. A referência continua disponível (fundamental para cálculos): formato discreto `Referência: [peso] kg · [data por extenso]` sob o título, em vez de estar isolada no canto superior direito. Não alterar o cálculo dos rácios; alterações só na string de apresentação do resumo.
-- Valores nutricionais desktop com **26 px**, etiquetas com **13 px** e rácios com **12 px**, todos alinhados e com espaço consistente entre colunas. Separação horizontal de baixíssima opacidade entre contexto e totais; manter as quatro cores nutricionais oficiais e os modos claro/escuro.
-- A classificação («Amarelo», «Laranja», etc.) **não se repete como título** no segundo card no desktop, porque já integra «Plano [tipo]» no resumo. O segundo card começa diretamente pelas refeições com margens equilibradas.
-- **Opções das refeições desktop:** manter os preenchimentos por paleta já aprovados e remover totalmente contornos e sombras decorativos das opções, em especial no tema claro. Manter foco visível e a expansão dos elementos `details/summary`.
-- Não alterar os dados, alimentos, gramagens, associações, editor, endpoints nem a app dos jogadores. As alterações de conteúdo limitam-se ao HTML do botão e à formatação da referência no próprio resumo.
+- **Layout atual aprovado por fotografia em 17/11 (prevalece sobre esquemas antigos):** na linha superior **«Novembro de 2026» à esquerda** e controlos **‹ Hoje › à direita**; **calendário abaixo**; botão **«+ Adicionar evento» no fundo, à direita do card do calendário**. Não mover o botão para a linha do mês nem para o topo.
+- Calendário de sete colunas também no mobile; manter cores das refeições, MD/Off, hoje e seleção. **Geral por definir:** fundo transparente, contorno tracejado e barras nutricionais; dias definidos têm preenchimento de estado.
+- Detalhe do dia em card independente abaixo do calendário, com cartões de refeição nas cores de Planos, incluindo VP com fundo `#28543E` e texto `#BDE6CD` no cabeçalho. Peri-treino/peri-jogo identificam o período real e mostram nutrientes sem duplicação. X do dia sem fundo nem contorno decorativo.
+- **Eventos do mês — preservar imagem aprovada em 17/11:** card principal colapsável, título e contagem no cabeçalho, lista vertical simples com divisórias ténues; cada linha tem pill de evento, data/detalhe e Editar/Eliminar à direita. **Hover apenas nos botões reais**, nunca na linha informativa. Identidade de evento: Jogo verde, Treino azul, Folga rosa suave; restantes tipos com cores coerentes. Preservar a eliminação com confirmação e as regras existentes dos overrides de suplementação.
+- Média semanal em card principal próprio, quatro indicadores e cálculos preservados.
 
+### Modelo e Ajustes pós-jogo
 
+- **Modelo — preservar a fotografia aprovada em 17/11:** matriz desktop com coluna esquerda «Dias do microciclo» em **cartões individuais por dia**, separados visualmente dos seletores coloridos de Pequeno-almoço, Almoço, Lanche, Jantar e Ceia. Sem faixa contínua a atravessar toda a linha. MD com cartão verde suave, Off rosa suave, restantes neutros; ponto de estado próprio. «Sem refeição» transparente com contorno funcional subtil; seletor com raio 12 px e chevron. No mobile manter os cartões expansíveis com cinco barras e campos, sem contagem redundante.
+- Seletores nutricionais têm preenchimento cromático próprio (não são pills). As alterações de cor no Modelo são guardadas automaticamente, com herança e endpoint existentes.
+- «Ajustes pós-jogo»: card principal colapsável, cenários em subcards; designação **«Igual ao modelo»**, sem «3 intervalos» redundante. Três linhas «0 min · Não jogou», «1–29 min», «30–59 min» sem barras ou indicadores adicionais.
+- Ícone de cabeçalho: **Hugeicons FootballIcon**, substituindo apito desenhado à mão. Apenas o chevron roda. Feedback mobile na **superfície do próprio card** nos dois temas, não em pseudo-overlays retangulares; preservar scroll de abertura e foco. Desktop: hover nos seletores editáveis, não nos cartões informativos de dias.
 
-## 24. Planos — ajustes mobile aprovados em 13 novembro 2026
+### Menus e receitas (Planeamento)
 
-- **Lista mobile:** «Criar novo» fica na mesma linha da pesquisa de jogador, dentro do card de filtros. A pesquisa substitui o filtro redundante «Jogador» no mobile; fica apenas «Tipo de plano» na segunda linha. Ambos os níveis têm altura de 60 px e intervalo vertical uniforme de 12 px. A pesquisa filtra os planos por jogador (e continua a poder encontrar o tipo). O seletor de jogador e a ação de criação originais permanecem no desktop.
-- **Pré-visualização mobile:** o botão «Editar» passa a exibir o lápis outline à esquerda e o texto curto «Editar», seguindo o botão desktop, sem mudar o handler.
-- **Resumo nutricional do dia:** alinhar o primeiro valor (calorias totais) e o respetivo rácio à esquerda, pela mesma margem do nome do jogador e título do plano. Preservar as quatro colunas, os valores e as cores.
-- **Título repetido:** ocultar «Amarelo»/classificação como título do segundo card também no mobile; a classificação já consta em «Plano amarelo» no resumo. Preservar refeições, opções, cores e espaço de respiro.
-- Nenhuma alteração aos dados, cálculos, gramagens, estados, permissões, publicação, nem à branch main da app dos jogadores.
+- Menus diários e semanais conservam gravação automática e histórico por jogador. A semana tem sete dias (Seg–Dom) e refeições Almoço/Jantar, com nome completo, cores nutricionais e fotografias de pratos efetivos; categorias genéricas **não recebem fotografia placeholder**.
+- Vista diária: controlos à esquerda, fotografia do prato à direita quando existe; apenas um X acessível na pesquisa. Cards e inputs usam superfícies contextualizadas.
+- Histórico: desktop com **Data | Microciclo | Almoço | Jantar**. Mobile com **um cartão por data**. Pesquisa só por pratos completos realmente correspondentes, mostrando apenas almoço/jantar que coincide; sem resultados acessórios. Paginação por 12 datas e realce subtil das ocorrências; sem filtro repõe as duas refeições.
+- Vista semanal no mobile com scroll horizontal e snap por dia; manter alturas e legibilidade. Em Planeamento > Receitas, o card colapsável e os filtros de categorias seguem as superfícies corretas; não confundir com a Biblioteca > Receitas.
 
+### Registos
 
-## 25. Edição de Planos — uniformização integral (13 novembro 2026)
+- Comparar consumo com prescrição guardada, respeitando a alternativa `option_index` efetivamente escolhida; não marcar alternativas não escolhidas como alimentos omitidos. «Parcial» quando há omissão ou redução; aumentos apenas com alimentos previstos consumidos podem ser «Consumido + Alterações». Preservar cautela quando o snapshot não permite comparação segura.
+- Energia e totais de macros no resumo sem casas decimais **apenas na apresentação**; cálculos internos com precisão integral. Anéis kcal/proteína/hidratos/gordura; valores consumidos de proteína `#47B7F5`, hidratos `#FF9872`, gordura `#EED072`, com leve destaque semibold 600; objetivos neutros e mais discretos.
 
-- **Âmbito:** editor do Backoffice V2 nas combinações desktop/mobile × claro/escuro. Preservar dados, cálculo de calorias e macros, pesos de referência, gramagens, alternativas, ordem e reordenação, opções, ações de edição, estados de publicação, validações, confirmações e endpoints. Nunca alterar a app do jogador (branch main).
-- **Navegação e criação:** único botão «+ Novo plano» no canto superior direito, na faixa contextual de «‹ Planos». ID e confirmação anterior preservados; não repetir no rodapé.
-- **Resumo e seletores:** um único card principal, com seletores no subcard oficial. No desktop: seletores à esquerda, macros afastadas à direita; cada total usa apenas duas linhas: **valor + unidade** na mesma cor, depois **nome da macro · rácio em g/kg** num único nível neutro (para kcal, apenas o rácio). No mobile: seletores lado a lado, quatro totais na mesma linha com calorias à esquerda e os rácios por baixo. Preservar cores, unidades e rácios em todos os níveis, sem mudar a fórmula.
-- **Metadados:** indicador de estado compacto e data de gravação na zona superior direita do card de resumo; referência «Ref. 56,1 kg · 13 nov 2026», usando dia/mês curto em português, sem ISO bruto. Data de gravação «Guardado em 05 nov, 15:42». O antigo painel verde do rodapé não existe; estados de erro, alterações por guardar e por publicar continuam explícitos na área superior. Não repetir «Publicado» noutras zonas.
-- **Refeições:** card principal neutro, sem contorno/sombra. No mobile, o nome e a seta de expansão ficam separados das ações; em ecrãs pequenos, macros e ações usam linhas distintas para preservar legibilidade e área de toque. No desktop, manter totais alinhados pelos nutrientes dos alimentos. Preservar expansão, renomear, apagar e opções.
-- **Opções alimentares:** subcard neutro nas opções inativas; opção ativa com preenchimento ligeiramente diferente, **sem barra lateral**. «Opção X» é etiqueta secundária (400, neutra); o **nome da opção** tem destaque. Nunca alterar as cores de kcal, proteína, hidratos e gordura ao selecionar uma opção; unidades kcal e g herdam a cor do valor correspondente em cartões, cabeçalhos e linhas.
-- **Ações por alimento:** alternativa, lápis e lixo com **a mesma geometria 34×34 px e alinhamento**; alternativa e edição usam superfície neutra subtil, lixo utiliza a cor destrutiva oficial. Remoção de nota e de refeição também usa o lixo outline, sem alterar handlers nem apagar registos da biblioteca.
-- **Adicionar alimento e nota:** campos e botões com a **mesma altura (48 px)** e linguagem visual. OK passa a «+ Adicionar nota», mantendo a validação de nota existente. No desktop cada campo e respetivo botão ficam na mesma linha, com largura consistente do botão; no mobile pesquisa + porção na primeira linha e botão de adição abaixo, seguido de campo de nota e botão de adição abaixo, ambos da mesma largura.
-- **Adicionar opção e refeição:** mesmos preenchimentos e alturas. No mobile ficam lado a lado, com «Apagar opção» destrutivo numa segunda linha alinhado à direita. Sem botões brancos excessivos no tema escuro.
-- **Rodapé:** apenas «Apagar plano» com ícone de lixo outline, «Guardar» e «Publicar». Guardar em preenchimento principal neutro; verde apenas na confirmação imediata de um guardar bem-sucedido (1100 ms), sem verde fixo depois. Publicar mantém o estado desativado quando já publicado e as validações/autorizações existentes.
-- **Verificação:** confirmar visualmente desktop claro, desktop escuro, mobile claro e mobile escuro; Safari/touch/rato; estados guardado, alterações por guardar, alterações por publicar e erros; seleção/foco e remoção/adição; evitar qualquer interferência na visualização de Planos aprovada.
+## 9. Acessibilidade, QA e manutenção
 
+- Validar: desktop largo/estreito, tablet, mobile, temas claro/escuro, Safari/iPhone, teclado, foco e áreas de toque; não sacrificar acessibilidade para remover contornos decorativos.
+- Distinguir **regra documentada**, **código alterado**, **testes aprovados**, **deploy Live** e **QA visual autenticado**. Nenhuma destas etapas substitui outra.
+- Tokens principais: `static/admin-surface-palette.css`; estilos partilhados `static/tm-design-system.css`; Planos `static/admin-plans-native.css`; Receitas `static/admin-recipes.css`. Os pontos de entrada do Admin referenciam os assets com versões de cache: atualizar apenas quando houver alteração autorizada de código.
+- Manter alterações visuais isoladas no Admin; nunca modificar o código da branch `main` para resolver questões estéticas do Backoffice.
+- **Histórico:** [arquivo integral de decisões e correções anteriores](historico/GUIA_VISUAL_BACKOFFICE_pre_consolidacao_2026-11-17.md). Em caso de divergência entre uma regra histórica e este guia, prevalece a regra atual aqui registada.
 
-## 26. Edição de Planos — correção das regressões de alinhamento e estados (13 novembro 2026)
+## 10. Pendências documentais e de implementação
 
-Esta secção substitui as indicações anteriores que colocavam estado e referência dentro do card nutricional, ou que criavam uma terceira linha de ícones nas refeições mobile.
+1. **Pills:** o padrão único 26/11/400, 7%/12% está **aprovado como documentação**, mas a aplicação real pode conter estilos legados; a uniformização de CSS necessita de autorização própria.
+2. **Receitas no desktop:** o contorno e as dimensões das categorias ainda não tinham sido validados visualmente na conversa P2; não declarar concluído.
+3. **Mapeamento de categorias:** as 12 famílias cromáticas estão documentadas, mas não declarar uma correspondência nome → cor como garantida sem verificar os registos reais.
+4. **Peri-treino/Peri-jogo:** preservar os tokens cromáticos existentes; completar uma tabela de cores específicas apenas após a respetiva verificação.
+5. **Guia vs CSS:** esta consolidação **não modifica nem audita exaustivamente a cascata CSS**. Corrigir divergências no código só mediante pedido explícito.
 
-- **Estado e metadados:** estado do plano, data de gravação e referência ficam em faixa contextual compacta, fora dos cards de resumo nutricional e de refeições. Não ocupar espaço dos valores diários. No mobile, distribuir em linhas discretas, sem painel verde nem grandes espaçamentos. Estados de erro, por guardar e por publicar mantêm-se explícitos. Referência na forma «Ref. 56,1 kg · 13 nov 2026» e gravação «Guardado em 05 nov, 15:42» (dia/mês curto/ano em português, sem formato ISO).
-- **Desktop:** cabeçalho da refeição com três áreas estáveis: à esquerda o nome e respetivas ações; à direita as quatro macros; no limite direito, a seta de expandir. Não sobrepor macros ou ícone de expansão. O alinhamento programático da informação nutricional continua possível na lista de ingredientes, mas **não deve reposicionar o cabeçalho da refeição**, que usa layout próprio.
-- **Mobile:** cabeçalho igual em aberto e fechado, sem salto horizontal. Primeira linha com nome à esquerda e grupo de ações à direita; segunda linha com macros à esquerda e seta de expansão à direita. Margens internas consistentes com o subcard do resumo nutricional.
-- **Opções:** aumentar diferença de superfície para a selecionada sem barra lateral; hover exclusivamente neutro e subtil em claro e escuro, sem branco ou efeitos de brilho.
-- **Adicionar alimento, nota, opção ou refeição:** base de ação da paleta oficial e hover subtil sem azul vivo, sem sombras ou efeitos de brilho. Mesma altura para os dois formulários e botões associados.
-- **Apagar opção:** botão com fundo vermelho suave e ícone trash-2 outline no estado normal e hover; seguir a mesma semântica de «Apagar plano», «Apagar refeição» e «Remover alimento».
-- **Guardar / Publicar:** Guardar neutro/principal quando acionável e secundário quando já guardado; só surge verde durante a confirmação imediata. Publicar verde semântico apenas quando acionável, secundário quando desativado (plano já publicado). Apagar plano sempre destrutivo com lixo. Manter validações, confirmações e permissões existentes.
-- **Limites:** alterações de apresentação apenas em production/the-mile-admin, sem mexer no branch main, dados, gramagens, macros, cálculos ou navegação da app dos jogadores.
-
-
-## 27. Edição de Planos — mobile estável (13 novembro 2026)
-
-**Âmbito exclusivo: mobile até 830 px, modo claro e escuro; desktop aprovado fica intacto.**
-
-- **Estado:** no mobile, quando já publicado, mostrar apenas uma pill «Publicado», fora do card nutricional. Ocultar data de gravação e referência nesse contexto (permanecem no desktop e nos cálculos). Se existirem alterações por guardar ou publicar, mostrar a respetiva pill de aviso sem parágrafo extenso; em caso de erro, conservar também a explicação do problema.
-- **Card de resumo:** sem divisor entre os seletores e as macros, mantendo os quatro valores, cores e rácios.
-- **Refeições, abertas e fechadas:** usar a mesma grelha fixa de duas linhas. Primeira linha: nome à esquerda e ações de eliminar/renomear numa zona reservada imediatamente a seguir, sem se sobrepor ao nome mesmo quando ele quebra de linha. Segunda linha: quatro macros. A seta fica isolada na extremidade direita e centrada verticalmente entre as duas linhas, com alvo de 44×44 px. Nome, valores e setas não saltam ao expandir. Manter margens internas compactas coerentes com o card de resumo.
-- **Expansão acessível:** além da seta, tocar na área livre do cabeçalho ou no título abre/fecha a refeição no mobile. O toque nos botões de eliminar, renomear ou no menu não pode acionar a expansão. Continuar a permitir foco e acionamento do botão pela navegação de teclado.
-- **Menu de renomear:** abrir ancorado à direita do lápis (menu estende-se para dentro do ecrã), com largura limitada à viewport e altura limitada com scroll interno. A abertura não altera o nome do plano nem assinala alterações por guardar: apenas a seleção efetiva de outro nome pode mudar os dados.
-- **Adicionar nota:** a linha do campo e a do botão «+ Adicionar nota» ocupam a mesma largura disponível e mantêm 48 px de altura, contrariando a regra legada de 62 px na refeição expandida.
-- **Compatibilidade:** remover/substituir a última camada de CSS mobile anterior antes de publicar nova correção; não empilhar variantes contraditórias. Manter alimentação, dados, cálculos, cores nutricionais e o branch main inalterados. Verificar visualmente em Safari/iPhone e em modo claro/escuro antes de fechar a validação.
-
-
-## 28. Planos — correção de especificidade do cabeçalho mobile (13 novembro 2026)
-
-- **Causa identificada:** regras do editor anteriores utilizavam `:is(.meal, .meal.tm-mobile-expanded)`, cuja especificidade CSS incluía a variante mais específica mesmo para refeições fechadas. As regras mobile posteriores com `.meal` simples perdiam a cascata; ao expandir, `.tm-mobile-expanded` mudava a prioridade e deslocava botões e seta.
-- **Correção estrutural:** os cards da edição recebem a classe estável `tm-editor-meal` em ambos os estados. A última secção mobile de `admin-surface-palette.css` usa esse seletor para todas as refeições, com **uma única geometria**, sem regras alternativas por estado.
-- **Cabeçalho mobile:** duas linhas fixas (nome + lixo/lápis imediatamente adjacentes; macros abaixo) e uma coluna lateral de 44 px com a seta centrada verticalmente nas duas linhas. O título pode reduzir largura e quebrar quando necessário sem colidir com as ações. A grelha, o padding e a posição dos ícones não dependem de aberto/fechado.
-- **Menu de renomear:** ancorado à direita do lápis, a abrir para dentro do ecrã. A interação de expandir no título/área livre não interfere com os botões.
-- **Âmbito:** CSS restrito a `max-width:830px`. Respeitar modos claro/escuro e conservar a apresentação desktop aprovada, os IDs/handlers, cálculos, gramagens, valores, estados nutricionais e app dos jogadores.
-- **QA:** verificar visualmente em Safari iOS, com card fechado, aberto, menu do lápis aberto e alternância repetida; distinguir sempre QA de código, deploy Render e QA real no browser.
-
-
-## 29. Edição de Planos — alinhamento responsivo das macros desktop (14 novembro 2026)
-
-- **Problema:** o cabeçalho da refeição, o total da opção selecionada e as quatro colunas nutricionais dos alimentos tinham referências geométricas diferentes. O JavaScript só alinhava o total da opção, usando coordenadas absolutas. Ao reduzir a largura, surgiam sobreposições e deslocações.
-- **Correção:** o editor passa a medir a grelha nutricional real da primeira linha de alimento visível e a aplicar a mesma origem e largura às quatro macros do cabeçalho da refeição e do resumo da opção. As quatro colunas mantêm valores/unidades e cores semânticas sem transformação.
-- **Responsive:** se a largura medida for insuficiente para acomodar os nomes e as macros lado a lado, a refeição recebe a classe funcional CSS `tm-editor-nutrition-stacked` e o cabeçalho e o resumo da opção passam a duas linhas. Não usar valores absolutos nem forçar uma grelha horizontal que sobreponha texto em janelas estreitas. Ao voltar a alargar, recuperar o alinhamento horizontal automaticamente.
-- **Rerender e resize:** sincronizar depois do render da refeição e ao redimensionar, recalculando a partir de `getBoundingClientRect` e removendo posições inline anteriores antes de aplicar o novo modo. Os cards fechados partilham a referência quando houver uma refeição aberta.
-- **Mobile:** não modificar o layout aprovado até 830 px; preservar os quatro valores, a seta e as ações, sem sobrepor esta rotina de desktop ao CSS mobile.
-- **Âmbito:** exclusivamente CSS e geometria de apresentação na branch `production/the-mile-admin`; não alterar dados, gramagens, cálculos nutricionais, tipo de plano, associações, estados ou a app dos jogadores (`main`).
-- **QA:** verificar largura desktop normal, janela reduzida e retorno à largura inicial, incluindo opções com nomes longos e alimentos com notas extensas; confirmar código e deploy Render separadamente da validação visual no browser.
-
-
-## 30. Edição de Planos — estabilidade da média nutricional em desktop (14 novembro 2026)
-
-- **Regressão corrigida:** o alinhamento anterior posicionava a média da refeição (`.meal-header-macros`) e o total da opção com `position:absolute`, mesmo quando eram filhos de uma grelha CSS. Em janelas largas, o total da refeição podia deixar de aparecer; quando a janela estreitava, reaparecia no fallback de duas linhas.
-- **Regra nova:** os totais da refeição e da opção permanecem sempre **dentro do fluxo das suas próprias grelhas**. O JavaScript mede as colunas nutricionais reais da primeira linha visível de alimento e atribui a mesma largura e origem às colunas 2 do cabeçalho e da opção através de `grid-template-columns`; nunca posiciona estes valores por coordenadas absolutas.
-- **Larguras intermédias:** quando a largura disponível não permite separar devidamente nome/ações, quatro macros e seta, ativa-se `tm-editor-nutrition-stacked` para passar os totais para a segunda linha sem os esconder ou sobrepor. Voltar a aumentar a janela recupera a disposição normal através de uma nova medição; remover estilos inline anteriores antes de aplicar os novos.
-- **Mobile:** até 830 px, a rotina limpa apenas os estilos inline de desktop e não modifica o desenho mobile aprovado.
-- **Preservação:** não alterar valores, fórmulas, gramagens, opções, ações, estado de publicação, paleta nutricional, vista de leitura ou a branch `main`.
-- **QA:** testar refeição aberta e fechada em janela larga, intermédia e estreita, com redução/ampliação repetidas. Confirmar sempre separadamente revisão de código, deploy e visualização efetiva no browser.
-
-
-## 31. Planos — corrigir deslocação e deformação dos totais na edição desktop (14 novembro 2026)
-
-- **Problema observado após a revisão 30:** os totais da refeição mudavam de linha mesmo em janelas largas e os totais da opção selecionada apareciam muito à esquerda, porque o critério de fallback avaliava mal o espaço e gerava grelhas de duas linhas cedo demais.
-- **Correção:** no editor desktop, medir a primeira linha real de nutrientes dos alimentos e usar a sua largura e margem direita como referência comum ao cabeçalho da refeição e ao resumo da opção selecionada. Reproduzir esta posição com três colunas CSS calculadas (nome, quatro macros, margem lateral), mantendo os totais em fluxo normal, **sem qualquer posição absoluta**.
-- **Responsividade:** eliminar o breakpoint fixo de empilhamento. Passar a duas linhas apenas quando faltar espaço real para o nome ou para a área da seta. O critério não deve mudar só porque a janela passou por uma largura arbitrária. Ao redimensionar em ambos os sentidos, limpar as medidas inline anteriores antes de reaplicar a grelha.
-- **Precisão e proteção:** as quatro colunas internas usam o mesmo gap e alinhamento do rail dos alimentos. Nenhuma alteração a valores, fórmulas, refeições, opções, estados ou botões. No mobile (até 830 px), preserva-se a grelha aprovada sem alterações visuais.
-- **QA:** verificar refeição expandida em largura desktop e reduzir/aumentar gradualmente a janela, comparando a primeira coluna (kcal) e as três macros da refeição, da opção e dos alimentos. Distinguir verificações de sintaxe/código, deploy Render e validação no browser.
-
-
-## 32. Edição de Planos — total da opção e transição compacta (14 novembro 2026)
-
-**Problemas observados:** a média da refeição já estava correta, mas o resumo da opção selecionada continuava muito deslocado para a esquerda em desktop; em janelas intermédias, o card principal comprimido sobrepunha valores e rótulos.
-
-- **Causa da opção:** um estilo antigo reservava `padding-right:calc(var(--nutrition-rail) + var(--nutrition-actions))` no `.option-summary`. Esse espaço era descontado pelo cálculo de posicionamento do total, fazendo a grelha arrancar demasiado à esquerda. Apenas no editor desktop (mais de 830 px), repor um padding normal de 14 px em ambos os lados. A rotina de alinhamento continua a usar a posição real das quatro macros dos alimentos para alinhar cabeçalho da refeição e opção.
-- **Breakpoint da edição:** a partir de 1240 px de largura de viewport, ao reduzir a janela, entrar numa apresentação **compacta do conteúdo da edição de Planos**, mantendo o comportamento mobile existente até 830 px. Entre 831 e 1240 px: colocar a dupla de filtros lado a lado em cima e os quatro totais nutricionais por baixo, em largura total; retirar divisória adicional; usar as duas linhas do cabeçalho das refeições tanto abertas como fechadas; renderizar as opções em duas colunas; mostrar nome da opção e as suas macros em linhas próprias.
-- **Alimentos na faixa mais estreita (831–1100 px):** nome e três ações na primeira linha, quatro macros na segunda, para não comprimir as colunas. Conservar drag-handle e ações, sem alterar dados.
-- **Navegação global:** **não** antecipar o breakpoint da sidebar e da barra de navegação em todas as páginas; o novo breakpoint de 1240 px afeta apenas o conteúdo do editor de Planos. A navegação mobile real continua a partir de 830 px.
-- **Modos e segurança:** aplicar em claro e escuro, com as mesmas cores nutricionais, valores, gramagens, relações e handlers. Não alterar a vista de leitura ou `main`.
-- **QA:** comparar valores da opção e dos alimentos em desktop largo com refeição aberta; reduzir gradualmente até 1240 px, testar opções e lista de alimentos em 1200, 1100, 900 e 830 px e confirmar a transição para o mobile. Validar código, Render e apresentação no browser como fases separadas.
-
-
-## 33. Grelha horizontal do Backoffice — referência Dashboard (14 novembro 2026)
-
-**Decisão aprovada:** no desktop, a distância entre a barra lateral e a superfície principal deve ser **idêntica em todas as páginas**, usando o Dashboard como referência. O alinhamento de partida do texto «Hoje» com a aresta esquerda dos subcards «Eventos e tarefas», «Respostas recentes» e da grelha do microciclo é a referência interna; não alterar essa geometria aprovada.
-
-- **Contentor único:** `#admin-workspace > .tm-admin-work-area` usa `max-width:none`, largura total e `padding-inline:clamp(16px,2vw,34px)` em desktop (`min-width:831px`). Retirar a centralização automática e a largura máxima legadas (1600 px), sem modificar o posicionamento nem a largura da sidebar. Não aumentar nem reduzir o padding vertical das páginas.
-- **Jogadores, perfil e restantes módulos:** herdam diretamente a nova margem da área de trabalho, sem ajustar independentemente os cards internos. Inclui Planeamento, Menus e Receitas, Avaliações, Formulários, Agendamentos, Definições e Minha conta.
-- **Biblioteca Alimentar:** retirar apenas o padding horizontal redundante de `#tm-food-library-page` e o `max-width:1500px` / margens automáticas de `.tm-food-library-content`. Aplica-se à lista de alimentos e à navegação da biblioteca; os filtros e tabelas preservam paddings internos.
-- **Porções Visuais:** secção irmã da Biblioteca, segue diretamente o contentor partilhado, sem ajustes internos na grelha de fotografias, nos cartões ou na paginação.
-- **Planos:** retirar os padding horizontais adicionais e o `max-width:1500px` do `#tm-plan-page > .tm-library-layout > .shell`. Abrange lista, visualização e edição, preservando o breakpoint de 1240 px específico da edição e todas as cores, ações e fórmulas.
-- **Dashboard:** preservar os 24 px de padding interno do card principal e o alinhamento existente entre o início do seu título e a posição inicial dos subcards, sem deslocações.
-- **Responsive e temas:** os ajustes são exclusivos de desktop (`min-width:831px`); nenhum estilo novo na navegação nem em mobile até 830 px. Aplicar a claro e escuro, sem interferir em estados nutricionais, dados, funcionalidades ou na branch `main`.
-- **QA:** verificar alinhamento da margem esquerda em Dashboard, Jogadores (lista e perfil), Biblioteca Alimentar (alimentos e porções), Planos (lista, leitura, edição), Planeamento, bibliotecas de pratos/receitas e páginas clínicas, comparando também a margem direita. Testar 1440, 1280, 1024, 831 e 830 px, assegurando ausência de scroll horizontal indevido. Separar validação de código, deploy e confirmação visual no browser.
-
-
-## 34. Recuos internos e barra lateral recolhível no desktop (14 novembro 2026)
-
-**Objetivo aprovado:** manter a largura dos cards principais já alinhada pelo Dashboard e uniformizar o ponto de início dos elementos **dentro** dos cards de módulos distintos. Acrescentar um modo de navegação lateral compacta para ganhar espaço horizontal, sem alterar a organização mobile.
-
-- **Recuo interno de referência:** 24 px no desktop (`min-width:831px`). No editor de Planos, a zona interna das refeições utiliza `padding-inline:24px`, alinhada com os filtros do card principal; a rotina existente de alinhamento da nutrição continua a medir a grelha dos alimentos. Na Biblioteca Alimentar, o cabeçalho da primeira coluna e a primeira célula de cada alimento usam `padding-left:24px`, mantendo a geometria das outras colunas. Nos Jogadores, cada cartão da lista utiliza 24 px horizontais em vez de 22 px. Apenas recuos internos, nunca deslocar a aresta do card ou as margens globais aprovadas.
-- **Colapso da sidebar (desktop):** botão outline discreto, sempre visível no início da navegação, com alternância entre vista completa e compacta. A grelha do workspace muda apenas no modo compactado para `72px minmax(0,1fr)`, atribuindo todo o espaço recuperado à área de conteúdos; a vista completa conserva as medidas anteriores.
-- **Conteúdo colapsado:** mostrar apenas os ícones de cada destino; manter `title` e `aria-label` para identificação, navegação por teclado e acessibilidade. O botão tem texto acessível «Recolher barra lateral» ou «Expandir barra lateral» e expõe `aria-pressed`. Preservar ativo, cores, outline e funcionalidade dos destinos.
-- **Submenus:** Biblioteca Alimentar e Menus e Receitas abrem por clique num pequeno painel lateral junto ao ícone correspondente, com as opções originais. O clique no ícone no modo compacto apenas abre/fecha o painel; a navegação continua a ocorrer ao clicar numa subsecção. Fechar o painel ao clicar fora, ao selecionar um item ou ao premir Escape; garantir que abrir o submenu não dispara a navegação inadvertida ou o aviso de saída de plano não guardado.
-- **Preferência:** guardar estado no `localStorage` do browser em `tm-admin-sidebar-collapsed`. Não introduzir preferências no servidor ou em contas de jogadores. Não alterar o comportamento do mobile (até 830 px), a barra horizontal, a opção Mais ou as transições responsivas de edição de Planos.
-- **Tema e segurança:** suportar claro e escuro com os mesmos tokens de superfície da paleta; não alterar cálculos, dados, gramagens, publicação, permissões, nem a branch `main`.
-- **QA:** testar menu expandido/recolhido, recarregamento com preferência, navegação direta por ícones e pelos dois submenus, clique exterior, Escape, hover/focus, mudança de tema, resize desktop/mobile, e a saída de editor com alterações não guardadas. Comparar os recuos em Planos, Biblioteca Alimentar e Jogadores, e verificar que não há clipping horizontal.
-
-
-## 35. Barra lateral automática por hover — sem botão (14 novembro 2026)
-
-**Nova decisão aprovada:** substituir o botão de colapsar/expandir por uma **barra lateral compacta por predefinição**, que expande automaticamente ao passar o cursor e volta a compactar quando o cursor sai. Remover o botão anterior do cabeçalho; a identidade The Mile é apresentada com um símbolo «M» na versão compacta e com o logótipo completo quando aberta.
-
-- **Desktop com cursor/trackpad:** em ecrãs acima de 830 px e com `hover:hover` e `pointer:fine`, a grelha principal reserva sempre **72 px** para a barra lateral. Quando o cursor passa sobre a barra, a própria superfície expande visualmente para **226 px**, **sobrepondo-se** à página; a grelha e os cards principais não se deslocam. Transição discreta de 180 ms, desativada quando o sistema pede movimento reduzido.
-- **Ícones estáveis:** tanto compactos como expandidos, as ações mantêm altura de 44 px e o início das linhas e os próprios ícones não saltam ao passar o cursor. Na versão compacta, ocultar apenas texto e chevrons visualmente e manter rótulos `aria-label` e `title` acessíveis.
-- **Submenus e navegação:** na barra expandida, Biblioteca Alimentar e Menus e Receitas utilizam as suas listas originais. Não duplicar handlers de navegação nem alterar o comportamento das permissões ou o fluxo de alterações não guardadas. Os submenus são ocultos visualmente quando a barra está compacta. A seta e o estado de seleção continuam coerentes.
-- **Teclado:** aplicar a mesma expansão quando um controlo da navegação recebe `:focus-visible`; Escape fecha o submenu aberto e devolve o foco ao respetivo botão. Um clique por rato não deve deixar a barra artificialmente aberta depois de o cursor sair.
-- **Sem hover / mobile:** em dispositivos táteis sem hover e mais largos que 830 px, manter a barra completa para não ocultar destinos sem alternativa de interação. No mobile até 830 px, preservar rigorosamente a navegação horizontal atual.
-- **Compatibilidade:** modos claro e escuro mantêm os tokens e cores existentes. Não alterar a área útil fixa, os recuos internos uniformizados, a app dos jogadores (`main`), dados, gramagens, cálculos ou permissões.
-- **Validação:** testar mover o cursor sobre e para fora da sidebar, incluindo sobre submenus, navegar por ícones sem deslocar o conteúdo, usar Tab/Shift+Tab, Escape, tema claro e escuro e redução da janela. Fazer distinção entre validação de código, deploy no Render e QA visual real no browser.
-
-
-## 36. Correção hover da sidebar — sem sobreposição e com submenus automáticos (14 novembro 2026)
-
-**Correção solicitada após validação visual:** a primeira versão de hover expandia a sidebar sobre os cards de Jogadores, ocultando o texto à esquerda. Além disso, era necessário clicar em «Biblioteca Alimentar» ou «Menus e Receitas» para revelar os submenus. Esta não é a interação desejada.
-
-- **Expansão sem sobreposição:** o `#admin-workspace` passa de `grid-template-columns:72px minmax(0,1fr)` para `226px minmax(0,1fr)` durante o hover/foco de teclado da sidebar. A largura da barra e a largura da primeira coluna da grelha variam em conjunto durante 180 ms, **refluindo os cards** para a direita e garantindo que a barra não cobre informação. Ao sair o cursor, recupera os 72 px. O conteúdo pode reajustar-se, mas deve continuar visível.
-- **Subsecções automáticas:** quando o cursor entra em Biblioteca Alimentar ou Menus e Receitas, apresentar de imediato os respetivos destinos existentes, sem clique. Ao passar de um grupo ao outro, fechar o anterior; manter as subsecções abertas enquanto o cursor estiver sobre elas; ao sair da barra lateral, fechar os submenus. `aria-expanded` reflete a visibilidade.
-- **Teclado:** Tab/foco permite expandir a barra e abrir os submenus; Escape fecha o submenu e devolve foco ao seu cabeçalho. Não duplicar handlers de navegação nem alterar as rotas subjacentes ou a proteção de planos por guardar.
-- **Compatibilidade:** todas as alterações são exclusivas do desktop com hover e ponteiro preciso (`min-width:831px`). Desktop tátil sem hover e mobile conservam a navegação anterior. Respeitar modo claro/escuro e preferência de movimento reduzido.
-- **QA:** verificar que nenhum nome/fotografia de jogador ou filtro fica oculto ao expandir; hover sobre Biblioteca e Menus abre subsecções e permite clicar; submenus fecham ao sair; redimensionamento do conteúdo e cabeçalhos de Planos preservam legibilidade e alinhamento; confirmar temas claro/escuro, acesso por teclado e navegação mobile.
-
-
-## 37. Edição de Planos — estado publicado à esquerda no desktop (14 novembro 2026)
-
-- **Ajuste exclusivo de desktop** (`min-width:831px`): na linha externa de metadados, colocar a pill de estado (ex.: «Plano publicado») no extremo **esquerdo**, tal como já acontece na versão mobile.
-- **Preservação rigorosa:** manter à **direita**, sem alterar texto, formato, cor ou localização, os elementos «Guardado em …» e «Ref. … kg · …». A alteração não deve mover o peso de referência para junto da pill, nem afetar os filtros, os totais nutricionais ou os cards.
-- **Implementação:** conservar o HTML, handlers e estados. Dar flexibilidade ao grupo do estado (`flex:1`) e alinhar o texto do estado à esquerda, enquanto o horário e o peso de referência permanecem flex-items estáticos no extremo direito. Apenas CSS no editor de Planos; mobile e app dos jogadores permanecem intactos.
-- **QA:** conferir plano publicado, por guardar e com erros, desktop largo e intermédio, nos modos claro e escuro; confirmar separadamente revisão de código, deploy Render e validação no browser.
-
-
-## Planeamento — pesquisa de jogadores (14 novembro 2026)
-
-- O cabeçalho da seleção de jogador usa card principal (`--tm-ui-card`), pesquisa em subcard (`--tm-ui-subcard`) e lista de resultados numa superfície de card principal, nos modos claro e escuro.
-- Não existe divisória decorativa entre a pesquisa e as abas. Não modificar os estados semânticos destas abas nesta fase.
-- Sem jogador selecionado, não apresentar avatar vazio, traço ou reserva de espaço; após selecionar, mostrar as iniciais ou fotografia existente.
-- O campo e resultados mantêm a filtragem e a associação ao seletor nativo, com fecho ao tocar fora/Escape, seleção por clique/Enter e alternância ao voltar a tocar no campo aberto.
-- Respeitar desktop, tablet e mobile; no mobile, input >=16px para evitar zoom Safari; manter o foco de teclado visível.
-- Esta decisão limita-se à pesquisa do Planeamento. A uniformização de outras listas pendentes será feita por componente, sem afetar as respetivas lógicas.
-
-- **Ajuste de 14 novembro 2026:** o destaque da subsecção ativa do Planeamento («Microciclos», «Suplementação», etc.) usa preenchimento de subcard e texto principal com peso 500, sem azul intenso. O card exterior branco aprovado não deve ser suavizado nem alterado. A pesquisa inclui um único X discreto, que limpa a pesquisa ou remove a seleção do jogador; o botão fica oculto quando o campo está vazio e não há jogador selecionado.
-
-
-## Microciclos — uniformização global (14 novembro 2026, revisão de consistência)
-
-- **Navegação aprovada após revisão:** título do mês/período à esquerda; controlos «‹  Hoje  ›» agrupados **à direita** no calendário mensal, Média semanal e Dashboard. «Hoje» repõe o mês ou a semana atual; conservar cálculo e dados.
-- **Superfícies:** calendário, Adicionar evento e detalhe usam a hierarquia card principal/subcard/campo definida no guia, sem saltos bruscos de fundo entre secções. A barra Adicionar evento integra a superfície principal; o formulário pode expandir em subcard.
-- **Calendário:** conservar rigorosamente a grelha de 7 colunas no mobile, cores de refeições, MD/Off, Geral por definir, destaque de hoje e dia selecionado. Os nomes dos dias adicionados ficam visíveis apenas no desktop.
-- **Eventos do mês:** cabeçalho expansível identificável por uma superfície de subcard e seta outline à direita; resultados expandidos numa **lista única discreta com divisórias muito suaves**, sem uma sucessão de 16 cards preenchidos. Preservar datas legíveis, lápis compacto e editor inline aprovado, incluindo Cancelar, Guardar, Remover e fluxo próprio de suplementos.
-- **Detalhe do dia e refeições:** referência direta dos cartões coloridos de **Planos → Visualização**. Refeições lado a lado no desktop com superfícies nutricionais específicas por cor (amarelo, laranja, azul, verde, verde preparação/VP); evitar cartões brancos neutros por refeição. Manter seletores de cor e nutrientes existentes. Peri-treino/Peri-jogo ocupa uma linha horizontal independente e expansível.
-- **Opções alimentares:** mesma lógica de Planos → Visualização: agrupamento na cor da refeição e opção em tonalidade mais clara; título e kcal/P/HC/G em linha compacta perto do início; alimentos em linhas simples «quantidade + nome», sem colunas separadas nem quatro cards de macros. Manter estados de opção selecionada/guardada/publicada, notas, alternativas, alertas e integração com os planos.
-- **Média semanal:** preservar os quatro indicadores e cálculos existentes, quatro colunas desktop e duas mobile.
-- **Manutenção:** corrigir dentro do bloco consolidado de Planeamento em `static/admin-surface-palette.css`, **substituindo** o bloco divergente de 14/11 e não acumulando overrides contraditórios. Paletas de cores referenciadas das regras existentes em `static/admin-plans-native.css`.
-- **Limites:** não modificar branch `main`, dados clínicos, autenticação, estados de publicação, associações ou integrações. Validar separadamente GitHub, deploy Render e aparência real em mobile/desktop claro/escuro.
-
-
-### Microciclos — separação estrutural dos quatro cards (14 novembro 2026)
-
-- O elemento `#calendar-section` é apenas o contentor de layout. Os cartões principais independentes são `#calendar-month-card`, `#calendar-day-card` (oculto sem dia selecionado), `#calendar-events-card` e `#nutrition-weekly-summary`.
-- O cartão do calendário contém o subcard `.tm-calendar-event-subcard`, com margem interna de 24 px no desktop e 16 px no mobile. A expansão do formulário ocorre dentro do subcard; o calendário mantém os sete dias e os estados originais.
-- Ao selecionar um dia, o cartão `#calendar-day-card` aparece imediatamente abaixo do calendário; ao desmarcar, desaparece sem deslocar nem alterar os eventos. As superfícies de refeição recuperam as paletas de Planos por `data-palette` com especificidade suficiente para não herdar o neutro.
-- O Peri-treino/Peri-jogo é renderizado em `.tm-calendar-peri-wrap` como subcard independente **dentro** do detalhe do dia, com título, contagem e botão de consulta visíveis. Continua a mostrar os períodos, opções e nutrientes originais.
-- «Eventos do mês» dispõe de cartão principal, cabeçalho expansível e lista secundária com margens e divisórias muito leves. Editores inline mantêm o funcionamento já aprovado.
-- «Média semanal» ocupa cartão principal próprio. A apresentação da frase técnica «X/7 dias com prescrição nutricional completa · Fonte: Planos» foi retirada, mas a verificação de completude antes do cálculo mantém-se.
-- As regras desta estrutura estão no **mesmo bloco consolidado** de `static/admin-surface-palette.css`; não acrescentar compensações no final de outros ficheiros. Não alterar a branch `main`, a seleção de opções, os cálculos nutricionais ou a associação aos planos.
-
-
-### Microciclos — detalhe do dia e opções (14 novembro 2026, afinação)
-
-- **Paletas:** para cada refeição e painel de opções, manter os valores exatos de Planos → Visualização nos cinco estados amarelo, laranja, azul, verde e verde preparação, tanto no modo claro como no escuro. Não criar tons alternativos.
-- **Arredondamentos:** cards das refeições a 18 px; botão «Ver opções» a 14 px, seletor de cor a 12 px; opções interiores a 16 px. Sem contornos decorativos.
-- **Quantidades dos alimentos:** na apresentação, não mostrar parte decimal exclusivamente zero (por exemplo, `220,0 g` → `220 g`); manter valores fracionários reais, porções e unidades originais. Manter a precisão de macronutrientes sem alterar os dados.
-- **Opção única:** quando só existe uma opção alimentar, apresentar diretamente título útil (se houver), nutrientes e ingredientes, sem cabeçalho «Opção 1», caret ou clique adicional. Conservar a possibilidade de selecionar/publicar quando habilitada. Aplicar também aos protocolos peri.
-- **Peri-treino/Peri-jogo:** único controlo de abertura, apenas seta outline à direita, sem texto «Ver opções» e sem marcador nativo duplicado. Título do período com peso regular 400 e nutrientes na sequência visual idêntica às refeições.
-- **Fechar dia:** X discreto e acessível no cabeçalho do detalhe, à direita da classificação; fecha o card, desmarca o dia no calendário e limpa o estado local da expansão sem mexer em dados.
-- **Respeito funcional:** nenhum cálculo nutricional, alimento, porção, plano, publicação ou endpoint é alterado por estes ajustes.
-
-
-### Microciclos — correções de interação e fidelidade visual (14 novembro 2026)
-
-- Adicionar evento: cabeçalho em superfície de subcard; hover só com a expansão fechada. Ao abrir, o cursor não deve mudar a cor da barra. Foco de teclado e lógica do formulário preservados.
-- Cores das refeições: recuperar os acentos originais mais vivos do calendário no cabeçalho (amarelo #e4c85d; laranja #e89448; azul #63a7d8; verde #72c697; verde preparação #a0d8a0), mantendo as superfícies internas de Planos → Visualização e as associações nutricionais.
-- Seletor de cor: invólucro .day-color-select-shell com raio 14 px e ícone outline, preservando o select nativo, as opções e os handlers de alteração do dia.
-- Detalhe do dia: agrupar classificação de Microciclo e botão X à direita com .calendar-day-header-actions, respeitando desktop/mobile.
-- Opção única: conteúdo imediato num elemento simples, sem details nativo nem marcador «Detalhes», mantendo seleção/publicação quando aplicáveis.
-- Eventos do mês: hover discreto por linha apenas em ecrãs com cursor, e foco visível ao editar; a linha completa não passa a ser um botão.
-- Manter os ajustes no bloco CSS consolidado do Planeamento. Não acumular compensações nos estilos antigos nem alterar cálculos, dados ou a branch main.
-
-### Microciclos — ações secundárias sem fundo e eventos sem hover de linha (14 novembro 2026)
-
-- Seta de expansão do Peri-treino/Peri-jogo e X de fecho do dia: ícones outline isolados, sem fundo, sem cápsula e sem mudança de fundo no hover; manter a área de interação e foco de teclado acessível.
-- Eventos do mês: remover totalmente o hover de preenchimento da linha e o fundo de `:focus-within`. Conservar separadores ténues e hover/foco apenas na ação real de edição (lápis).
-- Editar as regras consolidadas em `static/admin-surface-palette.css`, sem acumular overrides. Não alterar dados, cálculos, seleção, gravação ou navegação da app dos jogadores.
-
-
-### Microciclos — identificação peri e ação Adicionar evento (14 novembro 2026)
-
-- **Peri-treino/Peri-jogo:** o cabeçalho do subcard deve identificar os períodos reais (ex.: «Pós-treino · Tarde», «Pré-jogo · Manhã») e apresentar imediatamente por baixo as kcal e macronutrientes previstos, com a mesma tipografia neutra e sequência das refeições. Havendo vários períodos, apresentar cada linha e nutrientes correspondentes sem somar valores indevidamente. O número de períodos e a seta outline mantêm-se à direita; ao expandir, mostrar opções e alimentos, sem repetir os nutrientes no corpo do período.
-- **Adicionar evento:** seguir o padrão de `+ Criar jogador`: botão de criação compacto com `--tm-action-main-bg`, `--tm-action-main-fg`, `--tm-action-main-hover`, Inter Tight Medium 500 e raio de 12 px. Sem barra de largura total nem seta decorativa; o formulário abre num subcard próprio abaixo do botão. Preservar os campos, checkboxes, gravação e leitura de `aria-expanded` para acessibilidade.
-- Desktop e mobile, claro e escuro usam os mesmos componentes e tokens. Não alterar cálculos, porções, eventos, estados de publicação ou a branch `main`. Atualizar o bloco CSS consolidado em vez de acrescentar overrides.
-
-
-### Microciclos — alinhamento dos cards e da navegação (14 novembro 2026)
-
-- **Adicionar evento:** manter o botão compacto no topo direito do card principal do calendário, alinhado pela margem interna direita de 24 px no desktop e 16 px no mobile. O formulário continua a expandir em subcard de largura completa abaixo, sem mover o botão para a esquerda.
-- **Título do mês:** título à esquerda e navegação «‹ Hoje ›» à direita, na linha imediatamente abaixo da ação de adicionar; reduzir a distância vertical ao topo, sem alterar a grelha nem as cores.
-- **Eventos do mês:** usar diretamente o card principal (sem cabeçalho secundário preenchido). Cabeçalho expansível com título, contagem e seta outline, alinhado à margem esquerda comum; eventos expandidos em lista de aspeto tabular, sem segunda superfície cheia, com divisórias suaves e lápis de edição à direita.
-- **Alinhamento horizontal:** usar o mesmo início interno para «Eventos do mês», «Média semanal», o período semanal e as métricas. Evitar somar padding do card principal com outros recuos de cabeçalho ou lista; sem offsets artificiais.
-- **Implementação:** substituir as regras existentes no bloco consolidado de `static/admin-surface-palette.css`, não acrescentar overrides. Preservar desktop/mobile, claro/escuro, cálculos e edição de eventos. `main` permanece intocada.
-
-
-### Microciclos — cabeçalho mensal e diferenciação dos eventos (14 novembro 2026)
-
-- **Cabeçalho mensal:** o nome do mês e o botão compacto «+ Adicionar evento» aparecem na mesma linha, alinhados verticalmente (título à esquerda, criação à direita), dentro do card principal. O formulário expansível ocupa a largura da linha seguinte, sem alterar os seus campos/validações. A navegação «‹ Hoje ›» mantém-se à direita numa linha abaixo, com margem de 10 px ao cabeçalho e espaço antes dos dias da semana/grelha.
-- **Eventos do mês:** os tipos de evento passam a ter identificadores compactos e subtis, sem criar cartões secundários nem hover na linha: Jogo verde, Treino azul, Folga rosa suave; Viagem e Suplementação têm tons neutros distinguíveis. Usar cores distintas para ambos os temas com contraste legível. Datas e edição inline mantêm o mesmo comportamento. Preservar as divisórias suaves e os recuos uniformizados.
-- **Mobile:** a linha de mês + criação adapta a tipografia e o espaçamento ao espaço disponível, sem alterar a grelha dos sete dias. Evitar alturas artificiais ou novos recuos no interior dos cards.
-- **Implementação:** alterações estruturais no HTML e labels no JS; estilos alterados no bloco consolidado de `static/admin-surface-palette.css`, sem acumular overrides. Sem alterações a dados nutricionais, eventos ou branch `main`.
-
-
-### Microciclos — dias por definir sem preenchimento (15 novembro 2026)
-
-- Dias cuja classificação de microciclo ainda não está definida (`.calendar-general-fallback`, «Geral · por definir»): **fundo totalmente transparente**, conservando o contorno de aviso tracejado e as barras nutricionais. Válido no desktop e mobile e nos temas claro e escuro.
-- Dias com classificação atribuída preservam as cores de preenchimento já aprovadas (MD, Off, Geral confirmado, etc.). O estado selecionado e a indicação de hoje continuam identificáveis pelo contorno, nunca por acrescentar fill a um dia por definir.
-- Implementação: retirar o `backgroundColor` inline do calendário em `static/admin-microcycles.js`; excluir `.calendar-general-fallback` das regras de fundo neutro/selecionado em `static/admin-microcycles.css` e `static/admin-light-theme.css`, e definir uma única regra específica `background:transparent`. Sem alterações à lógica de classificação, horários, opções ou nutrientes.
-
-
-### Microciclos — cabeçalho VP com verde profundo (15 novembro 2026)
-
-- Em **Planeamento → Microciclos → Detalhes do dia**, o cabeçalho das refeições `VP · Verde preparação` passa a utilizar o verde profundo aprovado em **Planos → Visualização**: fundo `#28543e` e texto `#bde6cd`, nos temas claro e escuro. A opção interna e a superfície da refeição mantêm os tokens existentes, distintos para cada tema.
-- Esta regra substitui **apenas para VP** a indicação anterior de acento claro `#a0d8a0` no cabeçalho do detalhe; os acentos amarelo, laranja, azul e verde normal permanecem como estavam.
-- Alteração localizada na declaração `--tm-meal-accent`/`--tm-meal-accent-ink` de `[data-palette="vp"]` no bloco consolidado de `static/admin-surface-palette.css`. Sem alterações aos seletores, opções, dados nutricionais ou à app dos jogadores.
-
-
-### Microciclos — fecho de eventos, feedback e eliminação direta (15 novembro 2026)
-
-- **Adicionar evento:** o formulário expansível tem X outline discreto, acessível e sem alterar os campos. O botão principal continua a abrir e fechar; Escape também fecha e devolve o foco ao botão. O formulário só é fechado localmente, sem gravar ou remover dados.
-- **Feedback de criação:** a mensagem «Evento adicionado ao calendário.» ou «Suplementação do dia atualizada.» aparece **dentro do subcard do formulário aberto**, após as ações. Ao fechar ou reabrir, o feedback anterior é limpo. Feedback de edição e eliminação pertence ao card independente «Eventos do mês».
-- **Dias do calendário:** em ecrãs com rato e ponteiro preciso, o hover consiste exclusivamente numa **alteração muito subtil da tonalidade do preenchimento existente**, sem sombras, translação, escala ou movimento dos cartões. Preservar as cores MD/Off/Geral, os contornos de hoje/selecionado e a composição nutricional. Os dias «Geral · por definir» continuam **totalmente transparentes**, podendo apenas ganhar uma ligeira ênfase no contorno tracejado ao passar o cursor. A regra aplica-se nos temas claro e escuro.
-- **Eventos do mês:** lápis e lixo vermelho em ações compactas na mesma linha, lado direito e com a mesma altura, nos dois temas e em mobile. O lixo segue os tokens destrutivos já usados em Planos; pedir confirmação antes de apagar.
-- **Lógica de eliminação:** treinos/folgas/viagens usam o endpoint DELETE de eventos; jogos usam o DELETE de jogos já existente. O novo ícone e a ação Remover do editor reutilizam a mesma função. Suplementação não é um evento de calendário autónomo: limpar apenas `overrides[date].add` via GET/PUT de suplementos e preservar os restantes campos, incluindo `remove`.
-- **Ficheiros de implementação:** `static/admin-microcycles.js`, `static/admin-microcycles.html` e o bloco consolidado em `static/admin-surface-palette.css`. Atualizar as versões de JS/CSS da página para evitar cache. Não alterar a branch `main`, cálculos, alimentos, opções ou publicação.
-- **QA:** verificar expansão/fecho do formulário, sucesso após gravação, Escape, hover desktop, foco no teclado, confirmação de exclusão e atualização da lista, suplementação com outras opções preservadas, mobile e temas claro/escuro. Distinguir deploy/validação de código de QA visual autenticado.
-
-
-### Correção definitiva de VP no detalhe do dia — precedência e cache (15 novembro 2026)
-
-- A regra global antiga `.meal-vp` em `static/admin-microcycles.css` ainda definia **`#a0d8a0`**, apesar da paleta nova no bloco consolidado de `static/admin-surface-palette.css`. Foi substituída por **fundo `#28543e` e texto `#bde6cd`** para eliminar essa origem divergente. Esta alteração não modifica os outros quatro estados de refeição, as superfícies internas de VP ou a lógica do calendário.
-- Os estilos do detalhe em `static/admin-surface-palette.css` mantêm a mesma dupla de cores VP, com superfícies principal e interna por tema idênticas às de Planos → Visualização.
-- Atualizar os parâmetros de versão da página `static/admin-microcycles.html` para **`admin-microcycles.css?v=201` e `admin-surface-palette.css?v=61`**; não basta editar um CSS quando a URL antiga pode permanecer em cache.
-- Verificar visualmente em claro/escuro após o deploy, com VP selecionado: **cabeçalho verde escuro**, texto claro, seletor e superfície interior sem alterações. Não confundir validação de código com QA visual autenticado.
-
-
-## Planeamento → Modelo — organização responsiva (16 novembro 2026)
-
-- **Função:** configuração pouco frequente das cores das refeições por classificação de microciclo. A leitura deve ser imediata, com o mínimo de decoração. Preservar os nomes das classificações, cinco refeições, cores nutricionais e a lógica da gravação automática por alteração.
-- **Desktop (a partir de 831 px) — revisão aprovada em 16/11:** remover o título e o subtítulo de introdução; a aba «Modelo» no cabeçalho já identifica a página. Na primeira coluna, usar «Dias do microciclo» em vez de «Classificação». Em vez de uma tabela visual com linhas alternadas, apresentar **um subcard neutro por dia/classificação**, estendido horizontalmente ao longo das cinco refeições alinhadas. A tabela permanece semanticamente acessível, mas cada fila constitui um subcard único, com fundo `--tm-ui-subcard`, cantos externos de 14 px, afastamento vertical de 8 px, sem bordas/divisórias internas nem zebra. Os seletores de cor têm raio de 12 px (não pills), são legíveis e preservam a paleta nutricional; hover muito discreto apenas na cor do subcard, sem sombra ou movimento. À largura intermédia, o contentor pode ter scroll horizontal interno, nunca da página.
-- **Mobile (até 830 px) — revisão aprovada em 16/11:** manter os **cartões expansíveis nativos** existentes e os respetivos cinco campos verticais, rótulos, cor e gravação. No resumo fechado, mostrar apenas o nome, o ponto de estado, a seta de expansão à direita e as cinco barras de cor; **retirar «X de 5 refeições»** por redundância com as barras. Fonte mínima de 16 px nos seletores para evitar zoom Safari iOS. Abrir uma classificação fecha as outras; preservar teclado, foco visível e a geometria dos cartões.
-- **Sincronização:** desktop e mobile são duas representações do mesmo \`model.classifications\`; ambos usam o mesmo \`PUT /api/v2/athletes/{id}/microcycles/{classification}\` existente. A gravação continua a ocorrer quando o seletor muda, sem botão «Guardar» novo. Depois de sucesso, atualizar controlos homólogos, segmentos mobile e indicador «Configurado»; em falha, restaurar a seleção anterior e mostrar erro. Não alterar dados clínicos, suplementos, menus, cálculos, estados nem endpoints.
-- **Estética:** card principal \`--tm-ui-card\`; cartões mobile \`--tm-ui-subcard\`, seletores de refeições configuradas com as cores atuais e «Sem refeição» neutro. VP usa verde profundo \`#28543e\`, não o verde claro legado. Inter Tight 400/500, raios de 10–13 px, sem sombras ou contornos decorativos.
-- **Implementação:** estrutura e gravação em \`static/admin-microcycles.js\`; CSS consolidado em \`static/admin-surface-palette.css\`; renovação de versões em \`static/admin-microcycles.html\`. A secção de cenários pós-jogo (\`#scenario-editor\`) e a branch \`main\` ficam intocadas.
-- **QA:** validar 320/375/430/768 px, desktop estreito/largo, claro/escuro, abrir/fechar, teclado, mudança para uma cor ou «Sem refeição», sucesso/falha de gravação, ausência de scroll horizontal da página e retorno à aba após navegar. **A secção «Cenários pós-jogo» fica intocada nesta revisão**, para uma uniformização posterior baseada no padrão aprovado na zona superior. Distinguir inspeção do código, deploy Render e validação visual autenticada.
-
-
-### Modelo e detalhe dos Microciclos — legibilidade de cores e tipologia MD/Off (16 novembro 2026)
-
-- **Refeições sem cor no Modelo (desktop e mobile):** o seletor «— Sem refeição» tem **fundo transparente**, sem preenchimento, com **contorno muito subtil** em ambos os temas e texto neutro `--tm-ui-muted`. O contorno tem a função de assinalar um campo editável, sem adicionar uma nova cor de estado. No mobile, preservar o resto da organização aprovada, incluindo o resumo em barras.
-- **Texto cromático em Modelo:** as designações Amarelo, Laranja, Azul, Verde e VP nos seletores usam uma tinta legível da **mesma família cromática**, em vez de texto preto, nos dois temas. Não alterar preenchimentos nem dados. VP mantém fundo `#28543e` e texto claro. Tokens `--tm-nutrition-ink-{yellow,orange,blue,green,vp}` no CSS consolidado.
-- **Detalhes do dia em Microciclos:** manter as cores de fundo aprovadas nos cabeçalhos; escrever também o **nome da refeição** num tom cromático associado à sua cor, em vez de preto neutro. Os tons escolhidos reforçam o contraste no cabeçalho saturado. Não modificar opções, nutrientes, controlo de cores nem a estrutura dos cards.
-- **Sinalização MD e Off no Modelo (desktop e mobile):** **não acrescentar etiquetas «Jogo» nem «Folga»**. Reutilizar o ponto já existente: **verde** no dia MD e **rosa/vermelho suave** nos dias Off, Off (+1) e Off (+2), preservando o significado configurado (ponto cheio) / por configurar (ponto vazado). No desktop, colorir apenas a célula do nome do dia com um preenchimento muito suave; no mobile, sinalizar o cabeçalho do cartão expansível com a mesma tonalidade, mantendo o corpo e as cinco barras de refeição intactos. Todos os restantes dias continuam neutros. Indicar também Jogo/Folga no nome acessível do ponto.
-- **Cantos e acessibilidade:** seletores nutricionais com **12 px de raio real** em desktop e mobile; normalizar a aparência de Safari e usar uma seta própria discreta, preservando o seletor nativo funcional. O contorno de «Sem refeição» é a única moldura visível, além do foco acessível. Sem sombras ou contornos decorativos nos cards. Alterações apenas de interface, sem tocar em gravação, classificações, cálculos nem cenários pós-jogo. A branch `main` permanece intocada. QA em desktop/mobile, claro/escuro, seletor vazio e com cor, foco, abertura, seleção e gravação, distinguindo inspeção de código de validação visual autenticada.
-
-
-### Modelo — cartões dos dias separados, setas e espaçamento mobile (16 novembro 2026)
-
-- **Desktop:** cada classificação aparece agora num pequeno cartão próprio (primeira coluna), com os quatro cantos arredondados a 12 px e separação física clara dos cinco seletores alimentares. O restante fundo da linha é o do cartão principal, **sem faixa neutra contínua**. MD fica totalmente verde suave e Off/Off (+1)/Off (+2) totalmente rosa suave **apenas no cartão do dia**; restantes dias neutros. Mantêm-se o ponto verde/rosa e a ausência de etiquetas textuais.
-- **Seletores:** manter os fundos nutricionais e a tinta cromática já aprovados, bem como «Sem refeição» transparente com contorno subtil. A ação de mudar a cor usa uma **seta (chevron para baixo)**, não um lápis; aplicar seta SVG visível, não-interativa (pointer-events:none), sobre o seletor nativo para consistência no Safari. A função de seleção e gravação automática mantém-se intacta, tal como o foco e a navegação por teclado. O seletor conserva raios de 12 px.
-- **Mobile:** os cartões, barras coloridas, fundo do cabeçalho MD/Off, campos e lógica permanecem iguais; aumentar apenas o espaço entre o fim do cabeçalho colorido expandido e o rótulo «Pequeno-almoço», através do padding superior de `.model-mobile-fields` de 2 px para 18 px.
-- **Implementação:** `static/admin-microcycles.js` passa a envolver cada select numa `.model-select-shell` com `.model-select-chevron`; `refreshRow` mantém sincronizado o valor cromático da seta e dos dois controlos. CSS limitado ao bloco do Modelo em `static/admin-surface-palette.css`. Sem alterações aos Cenários pós-jogo, dados, prescrições nem branch `main`.
-- **QA:** confirmar desktop claro/escuro com MD/Off como cartões isolados sem fratura de cor, separação das restantes células, seta visível em cada seletor com e sem refeição, abertura da lista e gravação; no mobile testar expanded MD/Off e a folga vertical após o cabeçalho. QA visual autenticado separado de testes de sintaxe e deploy.
-
-
-### Planeamento → Modelo — Ajustes pós-jogo expansíveis (16 novembro 2026)
-
-- **Estrutura principal:** a secção «Ajustes pós-jogo» deve ser um **único card principal colapsável** (`#scenario-editor`, elemento `<details>` e `<summary>`), com título à esquerda, chevron outline à direita, sem sombreados. Inicialmente fechado para não prolongar a página de configuração; clicar em qualquer parte da linha do cabeçalho ou usar teclado para expandir/fechar. Colapsar não remove nem altera dados.
-- **Subcards:** ao expandir, mostrar os seis cenários existentes (`MD+1`, `MD+2`, `MD+1/-3`, `MD+2/-2`, `MD+1/-2`, `MD+2/-1`) como **subcards neutros independentes**, com raio 14px e espaço vertical uniforme. Cada cenário tem cabeçalho com classificação e chevron para expandir, **sem contagem «3 intervalos» em desktop ou mobile**, dado que todos têm os mesmos três intervalos. Evitar tabela com alternância de fundos e divisórias fortes.
-- **Desktop:** os subcards internos abrem por predefinição no primeiro carregamento em larguras de 831px ou mais. Dentro de cada subcard, apresentar linha de cabeçalhos «Minutos de jogo» e as cinco refeições; três linhas (`0 min · Não jogou`, `1–29 min`, `30–59 min`) com cartão neutro para os minutos e seletores de cor horizontais, no mesmo tamanho, alinhamento, raio 12px, tinta cromática e seta SVG da matriz superior do Modelo.
-- **Mobile:** por predefinição os subcards internos estão fechados. Ao abrir um cenário, apresentar os três intervalos como cartões distintos, cada um com os cinco campos rotulados e seletores a ocupar toda a largura; evitar scroll horizontal e manter fonte mínima 16px nos selects para não provocar zoom no iPhone. O estado do card principal e dos subcards segue o comportamento nativo `<details>` e mantém foco visível.
-- **Herança e gravação:** usar a opção **«Igual ao modelo»** (em vez da nomenclatura antiga «Igual ao High») e a indicação da cor base. Valor vazio significa herdar a classificação base, e uma cor explícita substitui-a apenas nesse cenário. A cor visual do seletor resulta de `savedColor || base || none`. Usar **exatamente o mesmo endpoint `PUT /api/v2/athletes/{id}/scenario-cells`** e a mesma gravação automática, com feedback de sucesso/falha e reposição da seleção anterior em caso de erro. Sem alterar classificações, cálculo nutricional, prescrições ou outras áreas do backoffice.
-- **Temas:** card principal `--tm-ui-card`, subcards `--tm-ui-subcard` e superfície interna para os intervalos. Sem zebra forte, sombras, bordas decorativas ou cores novas. Manter VP em verde profundo e «Sem refeição» transparente com contorno subtil. Os diagnósticos técnicos que já estavam ocultos permanecem ocultos.
-- **Ficheiros e QA:** HTML em `static/admin-microcycles.html`, renderização e gravação em `static/admin-microcycles.js`, estilo consolidado em `static/admin-surface-palette.css`. Verificar DOM `<details>` fechado/aberto sem conteúdo visível incorretamente (incluindo com CSS `!important`), desktop claro/escuro, mobile 320–430px, listas pendentes/teclado, herança do modelo, erro e sucesso de gravação, seis cenários e 3×5 campos por cenário. Não alterar `main` nem a app dos jogadores. Distinguir build/deploy de validação visual autenticada.
-
-
-### Ajustes pós-jogo — ícone de apito no cabeçalho (16 novembro 2026)
-
-- Mostrar um **apito outline** de 21 px, em tom de texto neutro, imediatamente à esquerda de «Ajustes pós-jogo», em desktop e mobile. Alinhar pelo centro vertical do título, com 10 px de intervalo. O apito é decorativo (`aria-hidden`), sem ação própria.
-- Manter a seta de expansão no lado direito e limitar **exclusivamente a ela** a rotação do estado aberto/fechado. O ícone de apito nunca roda.
-- **Não adicionar** barras de minutos, pontos, contagens, ícones por intervalo nem indicadores de participação às três categorias. As linhas continuam apenas «0 min · Não jogou», «1–29 min» e «30–59 min» em texto.
-- Não alterar cartões, minutos, herança «Igual ao modelo», cores nutricionais ou gravação automática. Branch `main` intocada. Validar cabeçalho em ambos os temas e formatos.
-
-
-### Modelo — hover funcional, scroll ao expandir e FootballIcon (16 novembro 2026)
-
-- Apenas os **seletores editáveis de cores** no Modelo geral e nos Ajustes pós-jogo apresentam hover subtil em desktop com cursor. **Os cartões dos dias do microciclo são informativos e não têm hover**, inclusive quando o cursor atravessa a linha.
-- Ao abrir o card principal «Ajustes pós-jogo», deslocar suavemente a página para deixar o cabeçalho à vista e revelar o conteúdo. O mesmo aplica-se ao abrir um cenário interior. Ao fechar, não deslocar; respeitar a preferência de movimento reduzido. Aplica-se a desktop e mobile sem substituir o comportamento nativo de `<details>` e `<summary>`.
-- Substituir o apito desenhado manualmente pelo SVG oficial **Hugeicons FootballIcon** (Stroke Rounded, licença MIT), com `data-hugeicons="FootballIcon"` e o mesmo alinhamento do título. Não aplicar rotação ao ícone; apenas aos chevrons. Gravação nutricional, cores selecionadas, categorias e app do jogador inalteradas.
-
-### Modelo — segundo subcard e feedback visual (16 novembro 2026, afinação)
-
-- **Hierarquia escura:** em «Ajustes pós-jogo», o card principal usa `--tm-ui-card` (#15161A), o subcard do cenário usa `--tm-ui-subcard` (#1E2025), e o segundo subcard dos intervalos usa `--tm-ui-search` (#282B33), mais claro que o pai. No desktop a célula dos minutos usa o terceiro nível; no mobile o cartão inteiro do intervalo usa-o, com o rótulo interior transparente. Preservar o comportamento e os fundos do modo claro.
-- **Hover desktop:** só os seletores editáveis das cores no Modelo e nos Ajustes pós-jogo têm hover, agora com contraste mais perceptível nos dois temas. A cor guardada nunca muda. Sem hover nos cartões informativos dos dias; seletores vazios permanecem transparentes com contorno funcional ligeiramente reforçado no hover.
-- **Mobile claro:** desativar o realce retangular nativo no toque dos cabeçalhos `<summary>` (dias, Ajustes pós-jogo e cenários), substituindo-o por resposta transitória arredondada, mantendo o foco de teclado `:focus-visible`, a expansão nativa e as cores especiais de MD/Off. O tema escuro permanece visualmente inalterado.
-- Exclusivamente CSS do backoffice e renovação de versão em `static/admin-microcycles.html`. Sem alterar dados, APIs, seleções nutricionais ou a branch `main`. Validar nos dois temas e tamanhos após publicação.
-
-### Planeamento → Modelo — resposta táctil consistente, mobile claro (16 novembro 2026)
-
-- O fundo de MD/Off no Modelo tinha especificidade superior à antiga regra de `:active`, anulando o feedback. O resumo principal «Ajustes pós-jogo» podia mostrar o realce retangular nativo de Safari; os cabeçalhos de cada cenário não apresentavam sinal de interação útil.
-- Aplicar `-webkit-tap-highlight-color:transparent` aos cartões expansíveis, respectivos `<summary>` e filhos; mostrar sobre o resumo pressionado um overlay translúcido com cantos arredondados, sem substituir o fundo da classificação. Atinge **todos os dias do Modelo**, incluindo MD/Off, o card «Ajustes pós-jogo» e cada cenário MD+1, MD+2 etc.
-- O overlay aparece em `:active` e é reforçado pela classe breve `tm-mobile-touch-press` via Pointer Events (touch fallback), persistindo cerca de 210 ms após largar. Não bloquear `<details>`, scroll, foco de teclado ou gravação. O feedback é **exclusivo do mobile em tema claro**; não alterar o mobile escuro, os seletores de cor nem os intervalos informativos.
-- Alterações confinadas a CSS/JS do backoffice e ao versionamento de assets; QA visual autenticado em Safari iOS continua distinto de inspeção estática e publicação Render.
-
-
-### Ajustes pós-jogo — corrigir toque dos cards e cores em ambos os temas (16 novembro 2026)
-
-- **Diagnóstico:** as regras de `:active` e o pseudo-elemento aplicado diretamente aos `summary` geravam faixas retangulares ou cápsulas cinzentas **dentro** dos cartões, em vez de animar o próprio cartão. Os seletores nativos das cores não tinham feedback táctil persistente enquanto o picker do iOS abria. A tentativa anterior de corrigir apenas o tema claro não resolvia o tema escuro.
-- **Cards de pós-jogo:** remover integralmente o pseudo-overlay dos dois cabeçalhos pós-jogo; sinalizar o toque no respetivo elemento `<details>` (`#scenario-editor` ou `.scenario-day-group`) com `.tm-mobile-card-press` e usar a própria superfície do cartão como feedback. Estado normal mantém `--tm-ui-card` / `--tm-ui-subcard`; durante o toque, usar `--tm-ui-subcard` / `--tm-ui-hover` em **ambos os temas**, preservando os raios originais e sem retângulos internos. Anular o tap highlight nativo dos cabeçalhos e descendentes; foco visível de teclado permanece.
-- **Seletores de cor pós-jogo:** atribuir feedback táctil à `.scenario-select-shell` via classe temporária `tm-mobile-touch-press` e aplicar `filter:brightness()` no `select` com maior contraste em tema claro/escuro, sem alterar a cor de prescrição. Para «sem refeição», usar preenchimento translúcido temporário mantendo o contorno. Limpar o estado após o toque e ao perder foco. Preservar os pickers nativos e a gravação automática.
-- **Modelo principal:** a resposta ao toque já aprovada nos dias permanece sem alterações de comportamento nem paleta. Aplicar apenas em mobile (até 830 px). Não alterar `main`, a aplicação do jogador, dados clínicos, endpoint ou lógica de seleção; verificar os dois temas em iPhone real após deploy.
-
-### Ajustes pós-jogo — feedback do card principal e alinhamento desktop (16 novembro 2026)
-
-- **Toque no card principal (mobile claro e escuro):** o scroll suave na abertura podia cancelar imediatamente os eventos de toque, fazendo desaparecer o feedback antes de ser percetível. Reforçar a resposta da própria superfície `#scenario-editor` no `click` real do cabeçalho, mantendo `tm-mobile-card-press` por cerca de 360 ms também nos cancelamentos por scroll; complementar com `:has(>.scenario-main-summary:active)` para feedback enquanto o dedo estiver pousado. Não adicionar fundos ou cápsulas ao `summary`, respeitar o raio original e não bloquear a expansão nativa.
-- **Cenários fechados no desktop:** o antigo cabeçalho tinha `padding:5px 1px 12px`, desalinhando MD+1 e chevron com o centro geométrico do card. Só quando o cenário está fechado e a largura é ≥831 px, substituir por card sem padding e `summary` de 66 px com alinhamento vertical centrado e padding lateral simétrico de 16 px. O conteúdo aberto fica intocado.
-- **Hover dos cenários fechados no desktop:** em dispositivos com cursor, transição breve de preenchimento apenas na superfície do card fechado, com mistura subtil de `--tm-ui-subcard` e `--tm-ui-hover`, em ambos os temas. Não estender aos cards de dias do Modelo geral, que continuam informativos e sem hover.
-- Manter o feedback já confirmado nos cenários e nos seletores de cor (mobile claro/escuro), cálculos, gravação, etiquetas, ordem, app de jogadores e branch `main` intactos. CSS/JS do backoffice atualizados com versões próprias; QA browser autenticado separado da publicação.
-
-
-## Planeamento > Menus e receitas — vista semanal, gravação automática e histórico (16/11/2026)
-
-**Objetivo:** ter um editor diário e uma vista semanal horizontal para consulta rápida, mantendo todas as refeições e categorias por jogador. A app do jogador não sofre alterações de imagem, fontes, URL, CSS ou comportamento.
-
-- **Cabeçalho:** eliminar "Planeamento semanal". Mostrar o intervalo da semana à esquerda em português (ex.: "16–22 novembro 2026"). À direita, alternador `Por dia | Semana` e navegação `‹ Hoje ›`; refletir a semana selecionada. Dia da semana em tipografia mais discreta e classificação (MD-5 etc.) à direita.
-- **Superfícies:** o cartão principal de menus é `--tm-ui-card` (branco no tema claro, #15161A escuro); cada dia usa `--tm-ui-subcard` (#F0F2F6 claro, #1E2025 escuro); cada refeição usa `--tm-ui-search` (#E5EBF2 claro, #282B33 escuro). Os campos de edição têm contraste próprio, sem trocar a cor nutricional atribuída. No desktop, almoço e jantar em duas colunas; no mobile, em coluna única.
-- **Vista semanal:** uma grelha de sete dias, colunas Seg–Dom e linhas almoço/jantar; apresentar fotografia quando o prato completo tem `dish_id`, nome do menu e pequeno indicador da cor nutricional. Categorias, texto livre e dias por preencher mostram representação simples sem imagem. A grelha pode ser deslizada horizontalmente no mobile. Tocar/clicar numa célula muda para `Por dia` e desloca até à edição da refeição. Os dois modos reutilizam os mesmos dados e o mesmo mecanismo de gravação (nunca criar dois editores).
-- **Fotografias:** usar os mesmos ficheiros e endpoint existentes `/api/v2/dishes/image/{dish_id}`, com `object-fit: contain` e sem fundo CSS opaco no Backoffice. Não retocar imagens reais, remover pixels pretos dos ficheiros, alterar assets ou alterar a forma de apresentação na app do jogador. Qualquer preto incorporado na imagem de origem necessita tratamento de imagem separado e aprovação específica.
-- **Gravação automática:** substituir a necessidade de `Guardar semana` por gravação individual de cada refeição válida via `PUT /api/v2/athletes/{id}/menus`. Uma categoria ou prato escolhido pode ser guardado imediatamente; texto livre tem debounce de ~650ms. Escritas da mesma refeição ficam serializadas, impedindo que respostas atrasadas reponham versões antigas. Exibir apenas confirmação discreta "Guardado automaticamente" / erro; não apagar uma prescrição quando o utilizador ainda está a selecionar uma alternativa. A navegação semanal aguarda as escritas iniciadas.
-- **Histórico:** card principal `Histórico de menus` colapsável abaixo do editor, com ícone de histórico, apenas três colunas `Data | Almoço | Jantar`, ordenado da data mais recente para a mais antiga. Endpoint administrativo separado `/menus/history`, por jogador, limite e paginação opcional. A tabela `v2_menu_history` migra os menus já guardados e mantém um registo por `(athlete_id,menu_date,meal)`; alterações futuras à programação atualizam a sua versão no histórico até à data, mas o histórico de dias passados mantém o valor registado, mesmo se a programação desse dia for editada posteriormente. Um clique de gravação automática não cria duplicados.
-- **Última utilização do prato:** para `kind="dish"` com `dish_id` resolvido, apresentar junto ao seletor a nota `Última vez no menu: DD/MM/AAAA` apenas quando houver uma data anterior, associada àquele jogador e àquele identificador de prato. `GET /menus/dish-last-used` consulta o histórico, não conta datas futuras ou o próprio dia. Nunca mostrar para categorias, texto livre ou pratos novos. Não interpretar a nota como prova de consumo efetivo.
-- **Receitas:** card principal colapsável com ícone de livro, de superfície branca no tema claro, seguido de pesquisa e subcards das categorias autorizadas ao jogador. Manter o comportamento de guardado, estados publicado/por guardar e seleção de categorias; esta área gere permissões, não a biblioteca global de receitas.
-- **Isolamento e verificação:** todas as alterações de HTML, JS e CSS limitadas a `static/admin-microcycles.*`, `static/admin-surface-palette.css` e guia. No backend, criar registo histórico independente e endpoints administrativos sem mudar `/api/v2/player/menus`, as imagens ou os modelos de cores. Validar em mobile claro/escuro, desktop e testes do histórico; branch `production/the-mile-admin` com deploy manual Render.
-
-
-### Menus e receitas — correções de validação visual (16/11/2026)
-
-- **Visibilidade:** o painel `#menus-panel` só pode estar visível quando a aba Menus e receitas está ativa e há jogador selecionado. Respeitar explicitamente `[hidden]` mesmo com estilos `display:flex!important`; nunca mostrar menus, histórico ou receitas em Microciclos, Suplementação ou Modelo, nem durante a pesquisa inicial sem jogador.
-- **Vista semanal:** eliminar coluna «Refeição» da grelha e colocar «Almoço»/«Jantar» no topo de cada card da refeição. Mostrar os nomes completos dos pratos, com múltiplas linhas se necessário, permitindo aumentar a largura mínima da grelha horizontal. Evitar truncagem e ocultação de texto por `line-clamp`. A seleção da célula continua a abrir o editor diário; os indicadores de cor mantêm-se.
-- **Fotografias:** usar apenas para o backoffice miniaturas WebP comprimidas do endpoint já existente, com query `?thumb=1&menu=1`, carregamento `lazy` e descodificação assíncrona. O modo de miniaturas específico dos menus elimina apenas fundos quase pretos contíguos ao limite exterior da fotografia e só quando há conteúdo central claro suficiente. Não faz crop do prato nem altera os originais. **Nunca aplicar esta transparência à app do jogador** ou à resposta original do endpoint.
-- **Histórico:** quatro colunas, todas alinhadas à esquerda: `Data | Microciclo | Almoço | Jantar`. Os dias de microciclo são resolvidos pelo mesmo algoritmo efetivo da agenda (jogos, descanso e classificações manuais), não por valores inventados. Pesquisa por nome de prato no cabeçalho, pesquisando almoço/jantar no servidor; devolve os dias coincidentes, mantendo as duas refeições visíveis na respetiva linha. Paginação por cursor de 12 dias de cada vez (Anterior/Página n/Seguinte), sem descarregar todo o histórico para o browser; pedidos sempre isolados pelo jogador selecionado.
-- **Receitas:** não repetir o título «Receitas» dentro do card principal expansível. O campo de pesquisa está **diretamente no card principal**, logo deve usar `--tm-ui-field-on-card` (segundo nível: #F0F2F6 no claro, #1E2025 no escuro), e não `--tm-ui-search` do terceiro nível. Posicionar o botão `Guardar` à direita e manter estados de permissão/categorias sem alteração.
-- **Regressão:** manter a gravação automática por refeição, o histórico congelado para dias passados, a separação por jogador e todas as opções editáveis. Validar [hidden] na navegação, pesquisa/paginação e imagens por tema e dispositivo; o deploy Render não substitui a validação autenticada.
-
-
-### Menus — altura uniforme, cor nutricional e fotografia lateral (16/11/2026)
-
-- **Vista Semana:** os sete cabeçalhos (Seg.–Dom.) mantêm o mesmo alinhamento. As 14 células de almoço e jantar usam grelha CSS comum de sete colunas, com duas linhas de altura igual e ajuste automático ao nome mais longo. Não cortar o nome completo do prato, mesmo quando um prato como cordon bleu ocupa mais linhas. Aumentar a largura mínima da vista horizontal para 1530 px com scroll próprio em janelas menores.
-- **Hierarquia:** «Almoço» e «Jantar» no topo **dentro** de cada célula com 11 px, 400 regular e cor `--tm-ui-muted`, semelhante aos dias e classificações do microciclo. Remover o pontinho colorido isolado; mostrar em vez disso um quadrado nutricional visível de 19×19 px, com as mesmas cores do Modelo, ao lado do título da refeição. Sem etiquetas decorativas.
-- **Vista Por dia (desktop):** manter o card da refeição, cabeçalho e gravação automática existentes. Agrupar os controlos editáveis à esquerda e colocar a miniatura do prato à direita (até 160 px), apenas quando há prato completo selecionado. Categorias genéricas e texto livre ocupam a largura total. No mobile estreito (≤680 px), apresentar a fotografia abaixo dos controlos, ligeiramente mais pequena, para preservar legibilidade e o tamanho útil das caixas de pesquisa.
-- **X de limpeza do prato:** não depender do botão de cancelamento nativo de `input[type=search]` do Safari, que podia deslocar-se para fora do campo. Usar botão acessível e discreto `tm-menu-dish-search-clear` ancorado ao canto direito **dentro** do campo, com comportamento de limpar pesquisa/seleção local; não apagar automaticamente a refeição anteriormente guardada sem nova seleção. Não interferir com sugestões, autosave, escolha de categorias ou dados do jogador.
-- **Fotografias da app do jogador:** preservar ficheiros originais, endpoints e design da app. No backoffice, continuar a utilizar a miniatura `?thumb=1&menu=1` já aprovada, sem alterar imagens persistidas.
-- **Qualidade:** testes de regressão estáticos específicos em `tests/admin-menus-weekly-layout-regression.test.cjs`; verificar em browser real ambos os modos e temas, nome mais longo, ausência de foto, X e fotografias à direita. O deploy Render não substitui validação visual autenticada.
-
-
-### Menus — refinamento de altura e categorias sem fotografia (16 novembro 2026)
-
-- **Por dia:** os seletores nativos `Prato completo / Categoria / Texto livre` e os respetivos filtros têm altura mínima de 52 px no desktop e mobile, com mais padding vertical. O campo de procura/seleção de **prato completo** passa de `input[type=search]` de uma única linha para `textarea` com duas linhas mínimas e altura calculada pelo conteúdo, de modo que o nome do prato possa **ser lido integralmente**. Manter comportamento de combobox de sugestões, `Enter` para selecionar, `Escape` para fechar, botão X de limpeza dentro do campo, nota de última utilização e lógica de gravação automática sem alterações. O campo readapta-se ao trocar `Semana / Por dia` e ao redimensionar o ecrã. Nos dispositivos mobile usar tamanho 16 px para evitar zoom de foco no iOS.
-- **Semana:** manter exatamente sete colunas e duas linhas de altura uniforme, aumentando a altura mínima de cada linha para 265 px, padding interno para `19px 17px 21px` e espaçamento de 15 px entre título, fotografia e descrição. Os nomes completos dos pratos e os quadrados das cores nutricionais mantêm-se intactos.
-- **Categorias sem foto:** quando a entrada não representa um prato completo com `dish_id` (por exemplo, «Estágio», «Livre», texto livre ou por definir), **não renderizar um placeholder de fotografia**; o texto aparece diretamente a seguir ao título da refeição. Não alterar o histórico, receitas, API, dados ou imagens originais da aplicação dos jogadores.
-- **Isolamento e testes:** aplicar apenas no JS/CSS/HTML do backoffice na branch `production/the-mile-admin`, manter a versão dos assets atualizada e verificar os testes de regressão dos Menus. QA visual real em desktop e mobile, temas claro e escuro, continua distinto da publicação no Render.
-
-
-### Menus e receitas — Histórico em cartões e navegação semanal no mobile (16/11/2026)
-
-- **Histórico, mobile (≤830 px):** ao expandir «Histórico de menus», reutilizar os mesmos registos e os mesmos controlos de pesquisa/paginação, mas apresentar cada data num cartão de segundo nível (`--tm-ui-subcard`), com a data à esquerda e a classificação do microciclo à direita. Abaixo, apresentar duas secções simples «Almoço» e «Jantar», com o texto completo e sem cortar. Sem deslocação horizontal da tabela no mobile; no desktop manter intacta a tabela de quatro colunas (Data | Microciclo | Almoço | Jantar). Cabeçalhos da tabela devem continuar disponíveis a leitores de ecrã mesmo estando visualmente ocultos no mobile.
-- **Pesquisa e paginação:** manter `#menu-history-search` com pesquisa server-side por prato completo, consulta exclusiva do jogador selecionado e debounce de 300 ms, e manter os 12 dias por página com Anterior / Página n / Seguinte. O layout mobile apenas transforma visualmente as linhas; nenhuma duplicação de pedidos, histórico ou dados.
-- **Vista Semana, mobile:** preservar largura e altura dos cartões com nomes completos, fotografia e indicação da cor nutricional. Ativar `scroll-snap-type:x mandatory` no contentor horizontal com `scroll-snap-align:start` em cada cabeçalho de dia, permitindo deslizar e encaixar por dia. Manter parcialmente visível o dia seguinte para comunicar a possibilidade de deslizar. Respeitar movimento reduzido.
-- **Isolamento:** somente `static/admin-surface-palette.css` e a sua versão de cache no HTML; JavaScript de carregamento, filtros, histórico e gravação, Receitas, desktop e app dos jogadores sem alterações. Testes de regressão em `tests/admin-menus-mobile-history-week-regression.test.cjs`; publicação no Render não substitui validação visual autenticada em iPhone e Android.
-
-
-### Histórico de menus — pesquisa por refeição correspondente (16/11/2026)
-
-- **Campo de pesquisa:** remover o texto visual redundante «Pesquisar prato» acima do campo. Manter somente a lupa e o placeholder «Pesquisar almoço ou jantar…», com nome acessível `aria-label="Pesquisar prato no histórico"`.
-- **Resultados filtrados:** ao pesquisar um prato completo (por exemplo, «frango»), devolver apenas as datas em que existe correspondência real no almoço e/ou jantar desse jogador. Na data devolvida, manter data e classificação do microciclo, mas apresentar **somente as refeições cujo nome do prato completo corresponda ao termo pesquisado**. Se só o almoço corresponder, não mostrar o jantar; se ambas as refeições corresponderem, mostrar ambas. Uma categoria genérica ou refeição de texto livre não constitui correspondência de prato completo.
-- **Desktop:** preservar a tabela com quatro colunas e o respetivo alinhamento. A célula de uma refeição sem correspondência fica visualmente vazia, preservando a coluna.
-- **Mobile:** manter cartões por dia. Quando só uma refeição corresponde, ocultar a outra secção inteiramente, incluindo o título e a linha de grelha, sem deixar espaços vazios.
-- **Destaque:** realçar com um `<mark>` neutro e muito subtil as ocorrências do termo pesquisado dentro do nome do prato. Construir o conteúdo com `document.createTextNode` e `textContent`, nunca interpolar os nomes dos pratos em HTML.
-- **Sem filtro:** ao limpar a pesquisa, voltar a mostrar todas as refeições do dia, como anteriormente. Manter a paginação de 12 datas, pesquisa server-side, os cursores, filtros por jogador e todas as prescrições e funções de gravação automática. Nenhuma alteração à app dos jogadores.
-- **Implementação:** `list_menu_history` continua a paginar por datas, mas filtra os registos por `kind='dish'` e `LOWER(value) LIKE` parametrizado também ao recuperar cada almoço/jantar. A tabela `v2_menu_history` e a semântica de congelamento do passado mantêm-se intactas. Testar um único match no almoço, match só no jantar, ambos, pesquisa vazia, categoria genérica, caracteres especiais e paginação. Publicar unicamente na branch `production/the-mile-admin`.
-
-
-## 17 novembro 2026 — Bibliotecas: uniformização aprovada (Pratos) e transição para Receitas
-
-**Contexto:** Backoffice em `admin.themile.pt`, serviço Render `the-mile-admin`, repositório `the-mile-sn/the-mile-app`, branch `production/the-mile-admin`. A app do jogador é um produto/interface separado, publicada na branch `main`. Nunca alterar a app ao polir o backoffice sem pedido explícito. As bibliotecas **Alimentos, Suplementos e Pratos** foram visualmente aprovadas como referências para a próxima secção, **Receitas**. Validar sempre desktop/mobile e tema claro/escuro.
-
-### Hierarquia visual e padrões transversais aprovados
-
-- Tipografia `Inter Tight`; ícones Hugeicons definidos no código. Uniformizar ícones de edição e remoção (PencilEdit01Icon e TrashIcon conforme os componentes existentes), dimensões, pesos e posicionamento das ações rápidas. Evitar olhos, X e outros controlos substitutos quando o card é clicável; o botão de eliminação deve ser uma ação independente, sem acionar a abertura.
-- Superfícies do backoffice: nível 1 `--tm-ui-card` (#FFFFFF claro, #15161A escuro); nível 2 `--tm-ui-subcard` (#F0F2F6 claro, #1E2025 escuro); nível 3 `--tm-ui-search` (#E5EBF2 claro, #282B33 escuro). Escolher a superfície em função da profundidade real: popup/card > subcard > campo interior ou item associado. Não deixar campos de pesquisa fundidos com a superfície-mãe.
-- Botões novos, Cancelar e Guardar seguem os componentes/padrões da criação aprovados, com tokens semânticos `--tm-action-main-bg`/`--tm-action-main-fg`, alturas e raios consistentes. X dos modais = mesmo botão de fechar e SVG da criação; evitar foco automático em inputs na abertura dos modais mobile, para não abrir o teclado.
-- Campos com etiqueta sobre valor: **etiqueta e conteúdo começam no mesmo recuo esquerdo**; nenhum campo pode acrescentar indentação interna arbitrária. Em mobile, manter `font-size:16px` nos campos editáveis para evitar zoom do Safari.
-- Pills de categoria, receita associada e estados: aplicar sem exceção o padrão universal da secção 3A, com contorno de 1 px a 12% da cor de texto e fundo cromático a 7%; manter a cor semântica da categoria/associação. Não mostrar o nome inglês na listagem mobile de Pratos (apesar de permanecer editável no formulário).
-- Hover/foco: microinteração por mudança discreta de preenchimento da superfície do **card clicável** (token `--tm-ui-hover`), nunca sublinhar o nome. Em mobile dar feedback ao toque; respeitar `prefers-reduced-motion` e manter foco de teclado visível. Nunca pintar cartões meramente informativos como se fossem botões.
-
-### Biblioteca Pratos — resultado aprovado (desktop e mobile)
-
-- Mobile: **um card independente por prato**; tags de categoria e receita associada no cabeçalho, ações editar e eliminar no canto superior direito, nome/descrição à esquerda e fotografia à direita. Cada card usa `--tm-ui-card`, separação entre cards e fotografia em `object-fit:contain`, sem fundo CSS opaco. Desktop: conservar a tabela; miniaturas sem fundo CSS opaco, mantendo dimensões e alinhamento. A remoção de fundos que estejam incorporados nos próprios ficheiros é matéria separada, não uma regra geral para alterar imagens originais.
-- Popup `Adicionar novo prato` é a referência canónica do formulário de edição: primeiro Categoria, depois Nome PT, Nome EN opcional, Fotografia; inputs em cards de duas linhas com etiquetas e valores alinhados. A fotografia usa a mesma dropzone tracejada, ícone de imagem e texto «Arraste uma imagem ou clique para selecionar», com click/arrastar. Escolher nova foto e guardar aplica tudo no mesmo fluxo; não acrescentar botão específico «Alterar fotografia».
-- Popup `Editar prato` deve usar o mesmo X, Cancelar e Guardar da criação. «Associar receita» em subcard, com campo de pesquisa em superfície nível 3 e resultados em **lista vertical, uma receita por linha**, sem chips/botões dispersos; resultados limitados em altura com scroll.
-- Receita já associada: um subcard de nível 3, nome alinhado à esquerda e clicável para abrir a receita em modo leitura, **sem ícone de olho e sem sublinhado ao hover**. Botão de desassociar separado à direita, caixote do lixo vermelho e centrado; desassociar não elimina a receita da biblioteca. Funcionar nos dois temas e tamanhos de ecrã.
-- Preservar associação/remoção existentes, opções, imagens e dados; mudanças de UI sem alterações imprevistas de API e sem repercussão na app dos jogadores. Versões de CSS/JS atualizadas nos pontos de entrada, com verificação de publicação no Render.
-
-### Planeamento > Registos — correções técnicas e apresentação aprovadas em 17/11
-
-- Refeições com alternativas: comparar a prescrição guardada com o consumo usando `option_index` do alimento efetivamente escolhido; agrupar membros pelo campo `alternative_to` e não tratar alternativas não escolhidas como alimentos omitidos. Exibir diferenças de quantidade original → consumida, adições, remoções e alternativa selecionada quando os dados permitem comparação segura. Quando o snapshot antigo for insuficiente para uma comparação segura, preservar a mensagem de cautela, sem inventar diferenças.
-- **Significado visual de Parcial:** pelo menos um alimento omitido ou quantidade consumida inferior à prevista. Se todos os alimentos aplicáveis foram consumidos e só houve aumento de quantidade ou escolha de alternativa, mostrar **Consumido + Alterações**. Reduções mostram **Parcial + Alterações**. Não reescrever estados técnicos guardados nem alterar o cálculo da nutrição de consumo apenas para mudar as etiquetas visuais.
-- Resumo nutricional com anéis kcal/proteína/hidratos/gordura. Exibição do valor de energia consumida e objetivo **sem casas decimais** (arredondar para inteiro apenas na UI), tanto no resumo como nas linhas de refeição. No resumo, valores consumidos e objetivos de proteína/hidratos/gordura também **inteiros**, sem casas decimais; dados e cálculos internos mantêm precisão.
-- Valores consumidos dos macros no resumo com as cores dos anéis: proteína `#47B7F5`, hidratos `#FF9872`, gordura `#EED072`; referência em cor neutra. Dar um destaque tipográfico apenas subtil aos números: valores consumidos um pouco maiores e semibold (600), objetivos mais discretos; versões responsivas desktop/mobile.
-- Ficheiros principais dos Registos: `static/admin-consumption.js`, `static/admin-consumption.css`; testes de alternativas em `tests/admin-consumption-alternatives.test.cjs` (a existência no repositório não demonstra que foram executados). Ficheiro `static/admin-microcycles.html` controla as versões de cache dos assets.
-
-### Próxima biblioteca: Receitas — trabalho ainda por iniciar nesta fase
-
-- A etapa seguinte é auditar **Biblioteca > Receitas**, sem confundir com «Receitas» dentro de Planeamento > Menus e receitas, que gere permissões por jogador.
-- Comparar a listagem desktop e os cards mobile de Receitas com os padrões já aprovados em Alimentos, Suplementos e Pratos: cards separados em mobile, subtileza de pills e contornos, distâncias, hierarquia informativa, ações rápidas e fotografias sem fundo CSS opaco. Auditar também «Nova receita», ver/editar receita, X, Cancelar, Guardar, inputs, pesquisas e estados vazios.
-- Ler o código real antes de mudar: `static/admin-recipes.js` / `.css`, `static/admin-microcycles.*`, `static/admin-surface-palette.css`, componentes HTML e o presente guia. Trabalhar incrementalmente, preservar dados e funcionalidades, não misturar estilos de Pratos/Receitas nem afetar a app do jogador.
-- Publicação: GitHub `production/the-mile-admin` → Render `the-mile-admin`. Confirmar deploy `Live` e distinguir sempre o sucesso técnico de QA visual autenticado em claro/escuro e desktop/mobile. O guia tem de ser atualizado sempre que houver uma decisão visual aprovada.
+**Nota de edição:** esta versão retira do manual operativo cronologias e tentativas substituídas; elas permanecem no arquivo integral e nos commits GitHub. Nenhum comportamento do produto foi alterado pela edição deste documento.
