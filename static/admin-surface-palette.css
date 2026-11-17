@@ -10374,3 +10374,164 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-p
   display:none!important;
  }
 }
+
+
+/* P4 DISH V152: real mobile card gaps, subtle pills and responsive edit modal */
+/* Editing is a modal in both layouts, never an inline detail row. */
+html[data-admin-theme] body #admin-workspace .dish-edit-modal{
+ box-sizing:border-box!important;
+ width:min(720px,calc(100vw - 32px))!important;
+ max-width:720px!important;max-height:min(88dvh,900px)!important;
+ padding:24px!important;overflow-x:hidden!important;overflow-y:auto!important;
+ margin:auto!important;
+ position:fixed!important;inset:0!important;
+ color:var(--tm-ui-text)!important;background:var(--tm-ui-card)!important;
+ border:0!important;border-radius:18px!important;
+ box-shadow:0 20px 70px rgba(0,0,0,.28)!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal::backdrop{
+ background:rgba(0,0,0,.70)!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-header{
+ display:flex!important;justify-content:space-between!important;align-items:center!important;
+ gap:16px!important;margin:0 0 20px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-header h2{
+ font:600 22px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ margin:0!important;color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-header>.tm-library-modal-x{
+ box-sizing:border-box!important;flex:0 0 38px!important;
+ width:38px!important;height:38px!important;
+ min-width:38px!important;min-height:38px!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ border:0!important;border-radius:11px!important;
+ padding:0!important;background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor{
+ box-sizing:border-box!important;display:grid!important;
+ grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ gap:14px!important;width:100%!important;
+ padding:0!important;margin:0!important;
+ background:transparent!important;box-shadow:none!important;border:0!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>label{
+ min-width:0!important;width:100%!important;
+ display:flex!important;flex-direction:column!important;
+ gap:7px!important;
+ color:var(--tm-ui-muted)!important;
+ font:400 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>label:first-child,
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>.dish-recipe-association{
+ grid-column:1/-1!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor>label input,
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor input[type="search"],
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor select{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;min-height:48px!important;
+ padding:12px!important;
+ color:var(--tm-ui-text)!important;background:var(--tm-ui-subcard)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ font:400 16px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-association{
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+ overflow:visible!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-association-actions{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;min-width:0!important;max-width:100%!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-card-name{
+ min-width:0!important;flex:1 1 auto!important;
+ overflow-wrap:anywhere!important;white-space:normal!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-card-buttons{
+ position:static!important;flex:0 0 auto!important;
+ display:flex!important;gap:6px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-footer{
+ display:flex!important;justify-content:flex-end!important;align-items:center!important;
+ gap:10px!important;margin-top:20px!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-footer button{
+ box-sizing:border-box!important;min-height:40px!important;
+ border:0!important;border-radius:12px!important;
+ padding:10px 15px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:500 14px/1.35 "Inter Tight",Arial,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-footer .tm-action-primary{
+ background:var(--tm-action-primary-bg,#2d3440)!important;
+ color:var(--tm-action-primary-fg,#f2f3f5)!important;
+}
+@media (max-width:700px) {
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal{
+  box-sizing:border-box!important;
+  width:calc(100vw - 24px)!important;
+  max-height:calc(100dvh - 28px)!important;
+  padding:18px!important;
+ }
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-table-editor{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal input,
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal select,
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal textarea{
+  font-size:16px!important;
+ }
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-combobox,
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-association-list{
+  min-width:0!important;width:100%!important;max-width:100%!important;
+ }
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-recipe-card-buttons button{
+  width:36px!important;height:36px!important;min-width:36px!important;
+ }
+ html[data-admin-theme] body #admin-workspace .dish-edit-modal .dish-edit-modal-footer{
+  flex-wrap:wrap!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page,
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .menu-library-card,
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-catalog-surface,
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-table-scroll,
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table,
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody{
+  background:transparent!important;
+  border:0!important;box-shadow:none!important;
+  overflow:visible!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody{
+  display:block!important;
+  padding:0!important;margin:0!important;width:100%!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody>tr.dish-table-row{
+  box-sizing:border-box!important;
+  display:grid!important;
+  margin:0 0 14px!important;
+  padding:14px!important;width:100%!important;
+  background:var(--tm-ui-card)!important;border:0!important;border-radius:17px!important;
+  box-shadow:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody>tr.dish-table-row:last-child{
+  margin-bottom:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody>tr.dish-table-detail{
+  display:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table .dish-table-category .dish-category-pill{
+  border:1px solid color-mix(in srgb,currentColor 42%,transparent)!important;
+  box-shadow:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table .dish-table-title .dish-recipe-indicator{
+  display:none!important;
+ }
+}
+/* Restore a subtle plan-style outline everywhere, without changing category tone. */
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-category-pill{
+ border-color:color-mix(in srgb,currentColor 42%,transparent)!important;
+ border-width:1px!important;
+ box-shadow:none!important;
+}
