@@ -11722,7 +11722,7 @@ border:1px solid color-mix(in srgb,#9d426a 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-rose{
 background:#fce8f1!important;color:#9d426a!important;
-border-color:color-mix(in srgb,#9d426a 60%,transparent)!important;
+border-color:color-mix(in srgb,#9d426a 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-rose,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-rose{
@@ -11731,7 +11731,7 @@ border:1px solid color-mix(in srgb,#f0a8c7 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-rose{
 background:rgba(224,106,150,.16)!important;color:#f0a8c7!important;
-border-color:color-mix(in srgb,#f0a8c7 60%,transparent)!important;
+border-color:color-mix(in srgb,#f0a8c7 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-red,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-red{
@@ -11740,7 +11740,7 @@ border:1px solid color-mix(in srgb,#ac3038 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-red{
 background:#fce8e9!important;color:#ac3038!important;
-border-color:color-mix(in srgb,#ac3038 60%,transparent)!important;
+border-color:color-mix(in srgb,#ac3038 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-red,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-red{
@@ -11749,7 +11749,7 @@ border:1px solid color-mix(in srgb,#ef999b 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-red{
 background:rgba(220,78,82,.16)!important;color:#ef999b!important;
-border-color:color-mix(in srgb,#ef999b 60%,transparent)!important;
+border-color:color-mix(in srgb,#ef999b 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-teal,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-teal{
@@ -11758,7 +11758,7 @@ border:1px solid color-mix(in srgb,#186a62 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-teal{
 background:#dff5f1!important;color:#186a62!important;
-border-color:color-mix(in srgb,#186a62 60%,transparent)!important;
+border-color:color-mix(in srgb,#186a62 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-teal,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-teal{
@@ -11767,7 +11767,7 @@ border:1px solid color-mix(in srgb,#8edbd2 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-teal{
 background:rgba(55,165,156,.16)!important;color:#8edbd2!important;
-border-color:color-mix(in srgb,#8edbd2 60%,transparent)!important;
+border-color:color-mix(in srgb,#8edbd2 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-blue,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-blue{
@@ -11776,7 +11776,7 @@ border:1px solid color-mix(in srgb,#265c9d 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-blue{
 background:#e6efff!important;color:#265c9d!important;
-border-color:color-mix(in srgb,#265c9d 60%,transparent)!important;
+border-color:color-mix(in srgb,#265c9d 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-blue,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-blue{
@@ -11785,7 +11785,7 @@ border:1px solid color-mix(in srgb,#a4c9fc 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-blue{
 background:rgba(74,136,222,.18)!important;color:#a4c9fc!important;
-border-color:color-mix(in srgb,#a4c9fc 60%,transparent)!important;
+border-color:color-mix(in srgb,#a4c9fc 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-amber,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-amber{
@@ -11794,7 +11794,7 @@ border:1px solid color-mix(in srgb,#94601c 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-amber{
 background:#fff1d9!important;color:#94601c!important;
-border-color:color-mix(in srgb,#94601c 60%,transparent)!important;
+border-color:color-mix(in srgb,#94601c 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-amber,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-amber{
@@ -11803,7 +11803,7 @@ border:1px solid color-mix(in srgb,#f0cc85 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-amber{
 background:rgba(226,168,54,.16)!important;color:#f0cc85!important;
-border-color:color-mix(in srgb,#f0cc85 60%,transparent)!important;
+border-color:color-mix(in srgb,#f0cc85 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-violet,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-violet{
@@ -11812,7 +11812,7 @@ border:1px solid color-mix(in srgb,#75409c 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-violet{
 background:#f1e9fc!important;color:#75409c!important;
-border-color:color-mix(in srgb,#75409c 60%,transparent)!important;
+border-color:color-mix(in srgb,#75409c 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-violet,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-violet{
@@ -11821,7 +11821,7 @@ border:1px solid color-mix(in srgb,#cfb2f3 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-violet{
 background:rgba(156,103,216,.18)!important;color:#cfb2f3!important;
-border-color:color-mix(in srgb,#cfb2f3 60%,transparent)!important;
+border-color:color-mix(in srgb,#cfb2f3 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-mint,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-mint{
@@ -11830,7 +11830,7 @@ border:1px solid color-mix(in srgb,#2f7544 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-mint{
 background:#e4f6e9!important;color:#2f7544!important;
-border-color:color-mix(in srgb,#2f7544 60%,transparent)!important;
+border-color:color-mix(in srgb,#2f7544 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-mint,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-mint{
@@ -11839,7 +11839,7 @@ border:1px solid color-mix(in srgb,#a9e1bd 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-mint{
 background:rgba(72,174,116,.15)!important;color:#a9e1bd!important;
-border-color:color-mix(in srgb,#a9e1bd 60%,transparent)!important;
+border-color:color-mix(in srgb,#a9e1bd 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-orange,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-orange{
@@ -11848,7 +11848,7 @@ border:1px solid color-mix(in srgb,#a65728 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-orange{
 background:#fff0e5!important;color:#a65728!important;
-border-color:color-mix(in srgb,#a65728 60%,transparent)!important;
+border-color:color-mix(in srgb,#a65728 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-orange,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-orange{
@@ -11857,7 +11857,7 @@ border:1px solid color-mix(in srgb,#f6b993 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-orange{
 background:rgba(226,127,63,.17)!important;color:#f6b993!important;
-border-color:color-mix(in srgb,#f6b993 60%,transparent)!important;
+border-color:color-mix(in srgb,#f6b993 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-indigo,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-indigo{
@@ -11866,7 +11866,7 @@ border:1px solid color-mix(in srgb,#4c56a1 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-indigo{
 background:#e9ebfc!important;color:#4c56a1!important;
-border-color:color-mix(in srgb,#4c56a1 60%,transparent)!important;
+border-color:color-mix(in srgb,#4c56a1 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-indigo,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-indigo{
@@ -11875,7 +11875,7 @@ border:1px solid color-mix(in srgb,#b9c1ff 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-indigo{
 background:rgba(111,121,218,.18)!important;color:#b9c1ff!important;
-border-color:color-mix(in srgb,#b9c1ff 60%,transparent)!important;
+border-color:color-mix(in srgb,#b9c1ff 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-cyan,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-cyan{
@@ -11884,7 +11884,7 @@ border:1px solid color-mix(in srgb,#226d88 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-cyan{
 background:#e0f3fa!important;color:#226d88!important;
-border-color:color-mix(in srgb,#226d88 60%,transparent)!important;
+border-color:color-mix(in srgb,#226d88 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-cyan,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-cyan{
@@ -11893,7 +11893,7 @@ border:1px solid color-mix(in srgb,#9bd8eb 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-cyan{
 background:rgba(65,162,192,.18)!important;color:#9bd8eb!important;
-border-color:color-mix(in srgb,#9bd8eb 60%,transparent)!important;
+border-color:color-mix(in srgb,#9bd8eb 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-lime,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-lime{
@@ -11902,7 +11902,7 @@ border:1px solid color-mix(in srgb,#5c731f 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-lime{
 background:#eef5dc!important;color:#5c731f!important;
-border-color:color-mix(in srgb,#5c731f 60%,transparent)!important;
+border-color:color-mix(in srgb,#5c731f 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-lime,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-lime{
@@ -11911,7 +11911,7 @@ border:1px solid color-mix(in srgb,#c8df98 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-lime{
 background:rgba(150,180,61,.16)!important;color:#c8df98!important;
-border-color:color-mix(in srgb,#c8df98 60%,transparent)!important;
+border-color:color-mix(in srgb,#c8df98 20%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-slate,
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-slate{
@@ -11920,7 +11920,7 @@ border:1px solid color-mix(in srgb,#526477 60%,transparent)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-slate{
 background:#edf0f4!important;color:#526477!important;
-border-color:color-mix(in srgb,#526477 60%,transparent)!important;
+border-color:color-mix(in srgb,#526477 20%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-slate,
 html[data-admin-theme="dark"] body #admin-workspace #tm-menu-recipes-page .dish-table-category .dish-category-pill.dish-category-slate{
@@ -11929,7 +11929,7 @@ border:1px solid color-mix(in srgb,#ccd5e1 60%,transparent)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge.recipe-category-slate{
 background:rgba(135,149,173,.17)!important;color:#ccd5e1!important;
-border-color:color-mix(in srgb,#ccd5e1 60%,transparent)!important;
+border-color:color-mix(in srgb,#ccd5e1 20%,transparent)!important;
 }
 
 
