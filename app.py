@@ -1591,7 +1591,12 @@ def application(env, start_response):
                     raise Problem(404,'not_found')
                 draft=food_plan_drafts_v2.get(c,parts[3])
                 if draft is None: raise Problem(404,'not_found')
-                try: pdf=food_plan_pdf_export_v2.render_editor_pdf(c,draft)
+                query=parse_qs(env.get('QUERY_STRING',''),keep_blank_values=True)
+                raw=query.get('meals')
+                if raw is not None and (len(raw)!=1 or not raw[0] or len(raw[0])>500):
+                    raise Problem(400,'invalid_pdf_meals')
+                selected=raw[0].split(',') if raw is not None else None
+                try: pdf=food_plan_pdf_export_v2.render_editor_pdf(c,draft,selected)
                 except ValueError: raise Problem(409,'plan_pdf_incomplete')
                 headers.append(('Content-Disposition', 'attachment; filename="the-mile-plano.pdf"'))
                 return respond(200,pdf,'application/pdf')
