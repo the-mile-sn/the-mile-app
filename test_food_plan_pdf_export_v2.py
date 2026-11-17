@@ -41,6 +41,9 @@ class PlanPdfTests(unittest.TestCase):
         self.assertNotIn("Qtd.",detail)
         self.assertGreaterEqual(len(pages[0].images),1)
         self.assertIn("www.themile.pt",pages[-1].extract_text())
+        self.assertIn("Plano alimentar - Jogador Teste",pages[1].extract_text())
+        self.assertIn("www.themile.pt",pages[1].extract_text())
+        self.assertIn("Opção 1",detail)
 
     def test_shared_groups_default_to_four_meals(self):
         groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
