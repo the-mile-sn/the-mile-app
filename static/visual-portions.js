@@ -66,8 +66,94 @@
    },"image/webp",.9);
   }catch(_error){/* Keep the original image if canvas processing is unavailable. */}
  }
+
+ /* The edit action replaces one reference photo, never its weight, category or state. */
+ const photoEditor=document.createElement("dialog");
+ photoEditor.className="tm-portion-photo-editor";
+ photoEditor.setAttribute("aria-label","Substituir fotografia da porção");
+ const editorTitle=document.createElement("h3");editorTitle.textContent="Editar fotografia";
+ const editorDescription=document.createElement("p");editorDescription.className="tm-portion-photo-help";
+ editorDescription.textContent="Substitui apenas a fotografia desta porção. Usa preferencialmente uma imagem PNG ou WebP com fundo transparente.";
+ const editorPreview=document.createElement("img");editorPreview.className="tm-portion-photo-preview";editorPreview.alt="Pré-visualização da fotografia selecionada";
+ const editorFile=document.createElement("input");editorFile.type="file";editorFile.accept="image/png,image/webp,image/jpeg";editorFile.className="tm-portion-photo-input";editorFile.setAttribute("aria-label","Escolher nova fotografia");
+ const editorFeedback=document.createElement("p");editorFeedback.className="tm-portion-photo-feedback";editorFeedback.setAttribute("role","status");
+ const editorActions=document.createElement("div");editorActions.className="tm-portion-photo-actions";
+ const editorCancel=document.createElement("button");editorCancel.type="button";editorCancel.textContent="Cancelar";editorCancel.className="tm-action-secondary";
+ const editorSave=document.createElement("button");editorSave.type="button";editorSave.textContent="Guardar fotografia";editorSave.className="tm-action-primary";
+ editorActions.append(editorCancel,editorSave);
+ photoEditor.append(editorTitle,editorDescription,editorPreview,editorFile,editorFeedback,editorActions);
+ portions.append(photoEditor);
+ let editingReference=null,selectedImageUrl=null;
+ function clearEditorPreview(){
+  if(selectedImageUrl)URL.revokeObjectURL(selectedImageUrl);
+  selectedImageUrl=null;
+ }
+ function closePhotoEditor(){
+  if(photoEditor.open)photoEditor.close();
+  clearEditorPreview();editingReference=null;editorFile.value="";
+ }
+ editorCancel.addEventListener("click",closePhotoEditor);
+ photoEditor.addEventListener("close",()=>{clearEditorPreview();editingReference=null;editorFile.value="";});
+ editorFile.addEventListener("change",()=>{
+  clearEditorPreview();
+  const file=editorFile.files?.[0];
+  if(!file)return;
+  if(!["image/png","image/jpeg","image/webp"].includes(file.type)){editorFeedback.textContent="Seleciona uma imagem PNG, JPEG ou WebP.";return;}
+  selectedImageUrl=URL.createObjectURL(file);
+  editorPreview.src=selectedImageUrl;
+  editorFeedback.textContent="";
+ });
+ function openPhotoEditor(ref){
+  editingReference=ref;editorFile.value="";editorFeedback.textContent="";
+  clearEditorPreview();
+  editorTitle.textContent="Editar fotografia · "+ref.category+" "+ref.total_g+" g";
+  editorPreview.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id)+"?t="+Date.now();
+  photoEditor.showModal();
+ }
+ async function prepareWebp(file){
+  const source=await createImageBitmap(file);
+  try{
+   const max=1200,scale=Math.min(1,max/Math.max(source.width,source.height));
+   const canvas=document.createElement("canvas");
+   canvas.width=Math.max(1,Math.round(source.width*scale));
+   canvas.height=Math.max(1,Math.round(source.height*scale));
+   const ctx=canvas.getContext("2d");
+   if(!ctx)throw Error("Não foi possível processar a fotografia.");
+   ctx.drawImage(source,0,0,canvas.width,canvas.height);
+   let blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",.88));
+   if(blob&&blob.size>512*1024)blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",.7));
+   if(!blob||blob.type!=="image/webp"||blob.size>512*1024)throw Error("A fotografia é demasiado grande. Escolhe uma imagem mais pequena.");
+   return blob;
+  }finally{source.close();}
+ }
+ editorSave.addEventListener("click",async()=>{
+  const file=editorFile.files?.[0],ref=editingReference;
+  if(!file||!ref){editorFeedback.textContent="Seleciona primeiro uma fotografia.";return;}
+  if(!["image/png","image/jpeg","image/webp"].includes(file.type)){editorFeedback.textContent="Formato de imagem inválido.";return;}
+  editorSave.disabled=true;editorCancel.disabled=true;editorFeedback.textContent="A guardar fotografia…";
+  try{
+   const blob=await prepareWebp(file);
+   const res=await fetch("/api/v2/visual-portions/image/"+encodeURIComponent(ref.id),{
+    method:"POST",credentials:"same-origin",
+    headers:{"Accept":"application/json","Content-Type":"image/webp","X-CSRF-Token":csrf},
+    body:blob
+   });
+   const payload=await res.json();
+   if(!res.ok)throw Error(payload.error||"Falha ao guardar fotografia.");
+   const current=ref;closePhotoEditor();
+   for(const card of grid.querySelectorAll(".tm-portion-card[data-ref-id]")){
+    if(card.dataset.refId!==current.id)continue;
+    const picture=card.querySelector(":scope > img");
+    if(!picture)continue;
+    picture.dataset.photoMarginsChecked="1";
+    picture.src="/api/v2/visual-portions/image/"+encodeURIComponent(current.id)+"?v="+Date.now();
+   }
+   feedback.textContent="Fotografia de "+current.category+" "+current.total_g+" g atualizada.";
+  }catch(error){editorFeedback.textContent=error.message||"Não foi possível guardar a fotografia.";}
+  finally{editorSave.disabled=false;editorCancel.disabled=false;}
+ });
  function makeCard(ref){
-  const card=document.createElement("article");card.className="tm-portion-card";
+  const card=document.createElement("article");card.className="tm-portion-card";card.dataset.refId=ref.id;
   const image=document.createElement("img");image.loading="lazy";image.decoding="async";
   image.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id);
   image.alt=ref.photo_subject==="Carne branca"?"Fotografia de carne branca usada como exemplo para carne ou peixe, "+ref.total_g+" g":"Fotografia de "+ref.category+", "+ref.total_g+" g";
@@ -98,7 +184,12 @@
   const heading=document.createElement("div");heading.className="tm-portion-heading";
   heading.append(label,toggle);
   info.prepend(heading);
-  card.append(info,image);
+  const edit=document.createElement("button");edit.type="button";edit.className="tm-portion-photo-edit tm-ui-action-icon";
+  edit.title="Editar fotografia de "+ref.category+" "+ref.total_g+" g";
+  edit.setAttribute("aria-label",edit.title);
+  edit.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
+  edit.addEventListener("click",()=>openPhotoEditor(ref));
+  card.append(info,image,edit);
   image.addEventListener("load",()=>clearWhitePhotoMargins(image),{once:true});
   return card;
  }
