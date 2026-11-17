@@ -16,7 +16,7 @@ from PIL import Image, UnidentifiedImageError
 CATEGORIES = {"Arroz", "Arroz com leguminosas", "Massa", "Batata", "Arroz + Batata", "Carne branca"}
 MAX_ARCHIVE = 5 * 1024 * 1024
 MAX_EXPANDED = 20 * 1024 * 1024
-MAX_PHOTO = 512 * 1024
+MAX_PHOTO = 3 * 1024 * 1024  # Allow editing high-detail photos without manual resizing
 REF_ID = re.compile(r"^[a-f0-9]{24}$")
 
 
