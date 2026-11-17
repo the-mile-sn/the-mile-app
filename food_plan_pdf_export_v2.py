@@ -1,5 +1,6 @@
 """The Mile saved-plan PDF: branded cover, daily summary and pagination-safe options."""
 from io import BytesIO
+from PIL import Image, ImageOps, UnidentifiedImageError
 from pathlib import Path
 from datetime import date
 from math import cos, sin, radians
@@ -111,7 +112,23 @@ def _style(name, size, leading, color=INK, bold=False, space_before=0, space_aft
                           alignment=alignment, keepWithNext=keep_next)
 
 
-def _draw_cover(canvas, doc, plan):
+def _player_photo(c, plan):
+    """Read the linked player's existing private photo for an admin-authorised PDF."""
+    athlete_id = plan.get("athlete_id")
+    if not athlete_id:
+        return None
+    row = c.execute(
+        """SELECT u.photo FROM v2_player_links l
+           JOIN users u ON u.id = l.user_id
+           WHERE l.athlete_id = ? AND u.role = 'player' LIMIT 1""",
+        (str(athlete_id),)
+    ).fetchone()
+    if not row:
+        return None
+    return row["photo"] if hasattr(row, "keys") else row[0]
+
+
+def _draw_cover(canvas, doc, plan, photo_bytes=None):
     """A4 editorial cover; always embed the genuine brand asset."""
     canvas.saveState()
     canvas.setTitle("Plano alimentar - The Mile")
@@ -123,11 +140,32 @@ def _draw_cover(canvas, doc, plan):
     canvas.setFillColor(colors.HexColor("#111318"))
     player = str(plan.get("player_name") or "Jogador")
     font_size = 35
-    max_width = A4[0] - 46 * mm
+    max_width = (107 if photo_bytes else 164) * mm
     while stringWidth(player, "InterTight", font_size) > max_width and font_size > 19:
         font_size -= 1
     canvas.setFont("InterTight", font_size)
     canvas.drawString(x, y - 18 * mm, player)
+
+    if photo_bytes:
+        try:
+            # Square centre-crop the existing portrait, preserving EXIF orientation.
+            # Keep bytes in memory only; do not write an athlete photo to the repo.
+            with Image.open(BytesIO(bytes(photo_bytes))) as img:
+                portrait = ImageOps.fit(ImageOps.exif_transpose(img).convert("RGB"),
+                                        (440,440), method=Image.Resampling.LANCZOS)
+                crop = ImageReader(portrait)
+                size = 45 * mm
+                left = A4[0] - 23*mm - size
+                bottom = y - 18*mm - 10*mm
+                canvas.saveState()
+                circle = canvas.beginPath()
+                circle.circle(left + size/2, bottom + size/2, size/2)
+                canvas.clipPath(circle, stroke=0, fill=0)
+                canvas.drawImage(crop, left, bottom, size, size, mask="auto")
+                canvas.restoreState()
+        except (UnidentifiedImageError, OSError, ValueError):
+            # A missing/corrupt photo must never prevent plan export.
+            pass
 
     label = str(plan.get("plan_type") or "").lower()
     if "amarelo" in label:
@@ -353,10 +391,10 @@ class NutritionMealOverview(Flowable):
 
     def draw(self):
         c=self.canv
-        x_ring, y_ring = 41, 30
+        x_ring, y_ring = 41, 26
         c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight",12)
-        c.drawString(0,64,self.name)
+        c.drawString(0,69,self.name)
         energy=self.values[0]
         fraction = min(1.0,_share(energy,self.daily_kcal)/100)
         _draw_ring(c,x_ring,y_ring,26,19,[(fraction,"#CBE6C6")])
@@ -443,9 +481,7 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
         Paragraph("Resumo nutricional",summary_head),
         Paragraph("Valores de referência: média das opções de cada refeição selecionada.",
                   summary_description),
-        NutritionDailyOverview(daily,weight,cw),
-        Paragraph("Distribuição do anel: percentagem da energia calculada pelos macronutrientes (4/4/9).",
-                  _style("ring_note",7.4,10,color="#939397",space_after=6))]
+        NutritionDailyOverview(daily,weight,cw)]
     # Compact meal flowables keep the entire normal daily selection on one A4 page.
     # For unusually large custom meal lists, ReportLab may paginate rather than clip.
     for name,values in meal_averages:
@@ -528,8 +564,10 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
             # A genuinely oversized option may split rather than overflow the page.
             story.append(KeepTogether(content))
 
+    photo_bytes = _player_photo(c, plan)
+
     def first_page(canvas, document):
-        _draw_cover(canvas, document, plan)
+        _draw_cover(canvas, document, plan, photo_bytes)
 
     doc.build(story, onFirstPage=first_page,
               onLaterPages=lambda canvas, document: _later_page_chrome(canvas, document, plan))
