@@ -10106,3 +10106,28 @@ html[data-admin-theme] body #tm-supplement-library-page .tm-supp-mobile-photo-ce
   margin:0!important;padding:0!important;
  }
 }
+
+
+/* P4 SUPPLEMENTS MOBILE V146: match 76px dish/recipe image */
+@media (max-width:830px) and (pointer:coarse) {
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr{
+  grid-template-columns:minmax(0,1fr) 82px!important;
+  column-gap:10px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td.tm-supp-mobile-photo-cell{
+  width:82px!important;min-width:0!important;
+  justify-content:flex-end!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table .tm-supp-mobile-photo-cell img{
+  width:76px!important;height:76px!important;
+  min-width:76px!important;max-width:76px!important;
+  min-height:76px!important;max-height:76px!important;
+  object-fit:contain!important;border-radius:10px!important;
+ }
+ /* The title/action row is unchanged; dose and moment wrap within column one. */
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(2),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(3),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(4){
+  max-width:100%!important;overflow-wrap:anywhere!important;
+ }
+}
