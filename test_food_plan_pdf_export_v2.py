@@ -30,14 +30,17 @@ class PlanPdfTests(unittest.TestCase):
         detail=" ".join(p.extract_text() for p in pages[2:])
         self.assertIn("Plano alimentar",cover)
         self.assertIn("Jogador Teste",cover)
-        self.assertIn("Hidratos médios",cover)
+        self.assertNotIn("Hidratos médios",cover)
         self.assertIn("Resumo nutricional",summary)
         for term in ("Pequeno-almoço","Lanche","70 g","Ou Pão integral","Acompanhar com fruta"):
             self.assertIn(term,detail)
         self.assertNotIn("Total médio",detail)
+        self.assertIn("g HC",detail)
+        self.assertIn("g P",detail)
         self.assertNotIn("Alimento / notas",detail)
         self.assertNotIn("Qtd.",detail)
         self.assertGreaterEqual(len(pages[0].images),1)
+        self.assertIn("www.themile.pt",pages[-1].extract_text())
 
     def test_shared_groups_default_to_four_meals(self):
         groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
@@ -62,6 +65,18 @@ class PlanPdfTests(unittest.TestCase):
             render_editor_pdf(MockConnection(),plan,["0:0","99:0"])
         with self.assertRaises(ValueError):
             render_editor_pdf(MockConnection(),plan,[])
+
+    def test_meal_heading_always_accompanies_first_option(self):
+        plan=self.plan()
+        opts=plan["meals"][0]["options"]
+        opts[:]=[dict(opts[0],title="Batido %02d" % i) for i in range(8)]
+        pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages
+        for page in pages[2:]:
+            content=page.extract_text()
+            if "Lanche" in content:
+                self.assertIn("Opção 1",content)
+            if "Pequeno-almoço" in content:
+                self.assertIn("Opção 1",content)
 
     def test_option_kept_on_one_page_if_it_fits(self):
         plan=self.plan()
