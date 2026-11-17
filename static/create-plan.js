@@ -154,11 +154,6 @@ function renderPersistence(){
  publish.title=display==="published"?"A versão atual já está publicada.":"";
  save.disabled=saveBusy||publishBusy||(!dirty&&!persistenceError);
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
- const exportButton=$("export-plan-pdf");
- if(exportButton){
-   exportButton.disabled=saveBusy||publishBusy||dirty||!plan.id;
-   exportButton.title=dirty?"Guarda primeiro as alterações para gerar o PDF.":"Exportar o plano guardado, sem publicar";
- }
 
 }
 const refreshSelectDisplays=()=>queryAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
@@ -476,11 +471,13 @@ const draftMeta=d=>{
  return '<small style="display:block;opacity:.7;margin-top:6px;font-weight:400">'+esc(origin)+" · Guardado "+esc(date)+'</small>'+
   '<span class="plan-publication-label" data-state="'+esc(state)+'">'+esc(caption)+'</span>';
 };
+/* Original MIT-licensed Hugeicons Pdf01Icon, Stroke Rounded (hugeicons/hugeicons/packages/core-free-icons/src/Pdf01Icon.ts). */
+const pdf01IconSvg="<svg data-hugeicons=\"Pdf01Icon\" viewBox=\"0 0 24 24\" width=\"19\" height=\"19\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 13V10.6569C20 9.83935 20 9.4306 19.8478 9.06306C19.6955 8.69552 19.4065 8.40649 18.8284 7.82843L14.0919 3.09188C13.593 2.593 13.3436 2.34355 13.0345 2.19575C12.9702 2.165 12.9044 2.13772 12.8372 2.11401C12.5141 2 12.1614 2 11.4558 2C8.21082 2 6.58831 2 5.48933 2.88607C5.26731 3.06508 5.06508 3.26731 4.88607 3.48933C4 4.58831 4 6.21082 4 9.45584V13M13 2.5V3C13 5.82843 13 7.24264 13.8787 8.12132C14.7574 9 16.1716 9 19 9H19.5\"/><path d=\"M19.75 16H17.25C16.6977 16 16.25 16.4477 16.25 17V19M16.25 19V22M16.25 19H19.25M4.25 22V19.5M4.25 19.5V16H6C6.9665 16 7.75 16.7835 7.75 17.75C7.75 18.7165 6.9665 19.5 6 19.5H4.25ZM10.25 16H11.75C12.8546 16 13.75 16.8954 13.75 18V20C13.75 21.1046 12.8546 22 11.75 22H10.25V16Z\"/></svg>";
 const renderPlanLibrary=()=>{
  const query=normalizeSearch($("library-plan-search").value.trim()),playerId=window.matchMedia("(max-width:830px)").matches?"":$("library-player-filter").value,type=$("library-type-filter").value;
  const rows=draftIndex.map(d=>({draft:d,owner:draftOwner(d),type:planTypeOf(d)})).filter(x=>x.owner&&(!playerId||String(x.owner?.id)===String(playerId))&&(!type||x.type===type)&&(!query||Number.isFinite(draftSearchRank(x,query)))).sort((a,b)=>draftSearchRank(a,query)-draftSearchRank(b,query)||(a.owner?.name||a.draft.player_name||"").localeCompare(b.owner?.name||b.draft.player_name||"","pt")||a.type.localeCompare(b.type,"pt")||Number(b.draft.created_at||0)-Number(a.draft.created_at||0));
  $("library-plan-count").textContent=rows.length+" resultado"+(rows.length===1?"":"s");
- $("library-plan-rows").innerHTML=rows.map(x=>{const pub=x.draft.publication||{};const state=pub.pending_changes?"pending":pub.state||"draft";const labels={published:"Publicado",pending:"Alterações por publicar",transitional:"Em uso no Planeamento",draft:"Rascunho"};const palette=previewPalette(x.type);const typeName=String(x.type||"Plano geral").replace(/^Plano\s+/i,"").replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"));return '<tr'+(x.draft.legacy_migration?' class="plan-library-legacy-draft"':'')+' data-plan-open-id="'+esc(x.draft.id)+'" tabindex="0" aria-label="Visualizar plano de '+esc(x.owner?.name||"jogador")+' — '+esc(typeName)+'"><td><strong>'+esc(x.owner?.name||"Jogador não associado")+'</strong></td><td><span class="plan-type-tag" data-palette="'+palette+'">'+planTypeIcon(x.type)+esc(typeName)+'</span></td><td><span class="plan-state-label" data-state="'+esc(state)+'">'+esc(labels[state]||"Rascunho")+'</span></td><td><div class="plan-library-row-actions"><button type="button" data-edit-id="'+esc(x.draft.id)+'" aria-label="Editar plano" title="Editar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg></button>'+(x.draft.legacy_migration?'<button type="button" data-delete-legacy-id="'+esc(x.draft.id)+'" title="Eliminar cópia antiga" aria-label="Eliminar cópia antiga"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m5-7v7"/></svg></button>':'')+'</div></td></tr>';}).join("")||'<tr><td colspan="4" class="plan-library-empty">Nenhum plano encontrado.</td></tr>';
+ $("library-plan-rows").innerHTML=rows.map(x=>{const pub=x.draft.publication||{};const state=pub.pending_changes?"pending":pub.state||"draft";const labels={published:"Publicado",pending:"Alterações por publicar",transitional:"Em uso no Planeamento",draft:"Rascunho"};const palette=previewPalette(x.type);const typeName=String(x.type||"Plano geral").replace(/^Plano\s+/i,"").replace(/^./u,letter=>letter.toLocaleUpperCase("pt-PT"));return '<tr'+(x.draft.legacy_migration?' class="plan-library-legacy-draft"':'')+' data-plan-open-id="'+esc(x.draft.id)+'" tabindex="0" aria-label="Visualizar plano de '+esc(x.owner?.name||"jogador")+' — '+esc(typeName)+'"><td><strong>'+esc(x.owner?.name||"Jogador não associado")+'</strong></td><td><span class="plan-type-tag" data-palette="'+palette+'">'+planTypeIcon(x.type)+esc(typeName)+'</span></td><td><span class="plan-state-label" data-state="'+esc(state)+'">'+esc(labels[state]||"Rascunho")+'</span></td><td><div class="plan-library-row-actions"><button type="button" data-edit-id="'+esc(x.draft.id)+'" aria-label="Editar plano" title="Editar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 5.5 18.5 8.5M4 20l4.3-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg></button><button type="button" data-export-pdf-id="'+esc(x.draft.id)+'" aria-label="Gerar PDF do plano" title="Gerar PDF">'+pdf01IconSvg+'</button>'+(x.draft.legacy_migration?'<button type="button" data-delete-legacy-id="'+esc(x.draft.id)+'" title="Eliminar cópia antiga" aria-label="Eliminar cópia antiga"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6m5 4v7m5-7v7"/></svg></button>':'')+'</div></td></tr>';}).join("")||'<tr><td colspan="4" class="plan-library-empty">Nenhum plano encontrado.</td></tr>';
  /* Render native mobile articles from the same sanitized table rows.
     They share the existing plan data, actions, states and nutrient badges. */
  const mobileCards=$("library-plan-cards");
@@ -497,6 +494,15 @@ const renderPlanLibrary=()=>{
  }).join("");
  mobileCards.hidden=false;
   $("plan-entry").querySelectorAll("[data-edit-id]").forEach(b=>b.onclick=async()=>{try{await loadExistingPlan(b.dataset.editId)}catch(err){status("Não foi possível abrir o plano: "+err.message)}});
+ $("plan-entry").querySelectorAll("[data-export-pdf-id]").forEach(b=>b.onclick=async()=>{
+  b.disabled=true;
+  try{
+   await loadExistingPlan(b.dataset.exportPdfId,{keepList:true});
+   openPdfMealDialog();
+  }catch(err){
+   status("Não foi possível preparar o PDF: "+err.message);
+  }finally{b.disabled=false;}
+ });
  $("plan-entry").querySelectorAll("[data-delete-legacy-id]").forEach(b=>b.onclick=async()=>{
   const item=draftIndex.find(d=>d.id===b.dataset.deleteLegacyId);
   if(!item?.legacy_migration)return;
@@ -601,7 +607,7 @@ if(nativeRoot)window.tmReturnToPlanLibrary=returnToPlanLibrary;
 $("back-from-search").onclick=returnToPlanLibrary;
 $("back-from-editor").onclick=returnToPlanLibrary;
 $("new-plan").onclick=()=>{if(!confirm("Criar outro plano? Guarda primeiro as alterações que pretendes manter."))return;newPlan();showEntry("entry")};
-const loadExistingPlan=async id=>{const index=draftIndex.find(d=>String(d.id)===String(id));if(!index)throw Error("Plano não encontrado.");const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(id));const loaded=data.draft;const owner=draftOwner(index);if(!owner)throw Error("O jogador associado a este plano não existe na base de dados. É necessário rever a associação antes de editar.");if(loaded.athlete_id&&String(loaded.athlete_id)!==String(owner.athlete_id))throw Error("Inconsistência no perfil associado.");if(loaded.player_id&&String(loaded.player_id)!==String(owner.user_id||""))throw Error("Inconsistência no ID do utilizador.");loaded.id=id;loaded.athlete_id=owner.athlete_id;loaded.player_id=owner.user_id||"";loaded.player_name=owner.name;loaded.plan_type=index.plan_type;loaded.name=owner.name+" - "+index.plan_type;loaded.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));plan=loaded;publicationState=loaded.publication||index.publication||{state:"draft",pending_changes:false};lastSavedAt=loaded.updated_at||index.updated_at||null;savedSignature=planSignature();persistenceError="";active=-1;option=0;draw();syncPlanSelectors();showEntry("editor");status("")};
+const loadExistingPlan=async(id,{keepList=false}={})=>{const index=draftIndex.find(d=>String(d.id)===String(id));if(!index)throw Error("Plano não encontrado.");const data=await request("/api/v2/food-plan-drafts/"+encodeURIComponent(id));const loaded=data.draft;const owner=draftOwner(index);if(!owner)throw Error("O jogador associado a este plano não existe na base de dados. É necessário rever a associação antes de editar.");if(loaded.athlete_id&&String(loaded.athlete_id)!==String(owner.athlete_id))throw Error("Inconsistência no perfil associado.");if(loaded.player_id&&String(loaded.player_id)!==String(owner.user_id||""))throw Error("Inconsistência no ID do utilizador.");loaded.id=id;loaded.athlete_id=owner.athlete_id;loaded.player_id=owner.user_id||"";loaded.player_name=owner.name;loaded.plan_type=index.plan_type;loaded.name=owner.name+" - "+index.plan_type;loaded.meals.forEach(m=>m.options.forEach(o=>o.notes=o.notes||[]));plan=loaded;publicationState=loaded.publication||index.publication||{state:"draft",pending_changes:false};lastSavedAt=loaded.updated_at||index.updated_at||null;savedSignature=planSignature();persistenceError="";active=-1;option=0;draw();syncPlanSelectors();if(!keepList)showEntry("editor");status("")};
 const planTypeIcon=type=>{const t=String(type||"").toLowerCase();if(t.includes("peri-jogo"))return "<svg class=\"plan-peri-icon\" data-icon=\"FootballIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z\"/><path d=\"M11.7077 9.34893C11.882 9.21702 12.118 9.21702 12.2923 9.34893L14.545 11.054C14.7193 11.1859 14.7922 11.4197 14.7256 11.6332L13.8652 14.3921C13.7986 14.6055 13.6077 14.75 13.3923 14.75H10.6077C10.3923 14.75 10.2014 14.6055 10.1348 14.3921L9.27437 11.6332C9.20781 11.4197 9.28073 11.1859 9.45499 11.054L11.7077 9.34893Z\"/><path d=\"M12 9V5M15 11L19 9.5M14 15L16 18M10 14.5L8 17M9 11.5L5 10.5\"/><path d=\"M9 2.5L12.0165 4.62241L15 2.5M2 12.7998L5.19655 10.4388L3.55548 6.72045M19.4703 18.8531L15.6158 18.1555L14.2655 22M20.0298 6.19586L18.8035 9.38978L22 11.7507M8.00992 21.4059L8.05142 17.1665L4.00331 17.21\"/></svg> ";if(t.includes("peri-treino"))return "<svg class=\"plan-peri-icon\" data-icon=\"SoftDrink01Icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 7V4.34832C12 2.1606 12.3737 1.6318 14.4968 2.22769L18 3.21095\"/><path d=\"M6 7L7.1398 18.1606C7.31099 19.8368 7.39658 20.6749 7.96796 21.1813C9.1458 22.225 14.7472 22.3198 16.032 21.1813C16.6034 20.6749 16.689 19.8368 16.8602 18.1606L18 7\"/><path d=\"M5 7H19\"/><path d=\"M7 12H17\"/><path d=\"M7 16H17\"/></svg> ";return "";};
 const previewPalette=type=>{
  const key=String(type||"").toLowerCase();
@@ -698,7 +704,7 @@ function updatePdfMealSummary(){
  const empty=$("tm-pdf-no-meals");
  if(empty)empty.hidden=Boolean(selected.length);
 }
-$("export-plan-pdf").onclick=()=>{
+function openPdfMealDialog(){
  if(!plan.id||planIsDirty()){status("Guarda primeiro as alterações antes de gerar o PDF.");return;}
  pdfMealChoices.replaceChildren();
  for(const slot of pdfMealSlots()){
@@ -711,7 +717,7 @@ $("export-plan-pdf").onclick=()=>{
  }
  updatePdfMealSummary();
  pdfMealDialog.showModal();
-};
+}
 $("tm-pdf-meal-cancel").onclick=()=>pdfMealDialog.close();
 pdfMealDialog.addEventListener("click",event=>{
  if(event.target===pdfMealDialog)pdfMealDialog.close();
