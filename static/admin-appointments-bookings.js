@@ -94,6 +94,13 @@
   refreshBookings().catch(error=>feedback(error.message,true));
  }
  document.addEventListener("tm:appointments-catalog",event=>catalogChanged(event.detail));
+ function professionalColorClass(name){
+  const normalized=String(name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
+  if(normalized==="raquel gomes")return "is-raquel";
+  if(normalized==="juliana leiras")return "is-juliana";
+  if(normalized==="beatriz gandra")return "is-beatriz";
+  return "is-neutral";
+ }
  function bookingLine(item,forAgenda=false){
   const card=make("article","tm-appt-booking-record"+(item.status==="cancelled"?" is-cancelled":""));
   const time=make("div","tm-appt-booking-when");
@@ -101,7 +108,15 @@
   if(!forAgenda)time.append(make("span","",dateLabel(item.date)));
   const description=make("div","tm-appt-booking-info");
   description.append(make("h4","",item.customer_name));
-  description.append(make("p","",item.service_name+" · "+item.professional_name+" · "+(item.mode==="online"?"Online":"Presencial")));
+  if(forAgenda){
+   const tags=make("div","tm-appt-booking-meta-tags");
+   tags.append(make("span","tm-appt-tag",item.service_name));
+   tags.append(make("span","tm-appt-tag tm-appt-tag-professional "+professionalColorClass(item.professional_name),item.professional_name));
+   tags.append(make("span","tm-appt-tag",item.mode==="online"?"Online":"Presencial"));
+   description.append(tags);
+  }else{
+   description.append(make("p","",item.service_name+" · "+item.professional_name+" · "+(item.mode==="online"?"Online":"Presencial")));
+  }
   if(!forAgenda){
    const contacts=[item.customer_email,item.customer_phone].filter(Boolean);
    if(contacts.length)description.append(make("p","tm-appt-booking-contact",contacts.join(" · ")));
@@ -172,7 +187,7 @@
    const entries=(grouped.get(card.dataset.date)||[]).sort((a,b)=>a.start.localeCompare(b.start));
    for(const item of entries){
     const label=item.start+" "+appointmentDisplayName(item.customer_name);
-    const event=make("span","tm-appt-calendar-event",label);
+    const event=make("span","tm-appt-calendar-event "+professionalColorClass(item.professional_name),label);
     event.title=item.start+"–"+item.end+" · "+item.customer_name+" · "+item.service_name;
     card.append(event);
    }
