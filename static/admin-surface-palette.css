@@ -11005,3 +11005,19 @@ html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-recipe
   transition:none!important;
  }
 }
+
+/* P5 v158 — desktop dish photographs: no dark backing plate, same as mobile. */
+@media(min-width:831px){
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page #dish-editor-list .dish-library-table tbody tr.dish-table-row td:nth-child(2){
+  background:transparent!important;
+  box-shadow:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page #dish-editor-list .dish-library-table img.dish-table-photo{
+  display:block!important;
+  object-fit:contain!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+ }
+}
