@@ -153,6 +153,12 @@ function renderPersistence(){
  publish.title=display==="published"?"A versão atual já está publicada.":"";
  save.disabled=saveBusy||publishBusy||(!dirty&&!persistenceError);
  publish.disabled=saveBusy||publishBusy||dirty||display==="published";
+ const exportButton=$("export-plan-pdf");
+ if(exportButton){
+   exportButton.disabled=saveBusy||publishBusy||dirty||!plan.id;
+   exportButton.title=dirty?"Guarda primeiro as alterações para gerar o PDF.":"Exportar o plano guardado, sem publicar";
+ }
+
 }
 const refreshSelectDisplays=()=>queryAll(".tm-two-line-select>select").forEach(el=>el.dispatchEvent(new Event("tm-refresh-select")));
 
@@ -660,6 +666,27 @@ async function saveCurrentDraft(){
  }
 }
 $("save-plan").onclick=()=>saveCurrentDraft();
+$("export-plan-pdf").onclick=async()=>{
+ if(!plan.id||planIsDirty()){status("Guarda primeiro as alterações antes de gerar o PDF.");return;}
+ const button=$("export-plan-pdf");
+ button.disabled=true;
+ try{
+  const response=await fetch("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id)+"/pdf",{credentials:"same-origin",cache:"no-store"});
+  if(!response.ok){
+   const error=await response.json().catch(()=>({}));
+   throw new Error(error.error||"Não foi possível gerar o PDF");
+  }
+  const blob=await response.blob();
+  if(!blob.size||!blob.type.includes("pdf"))throw new Error("Resposta PDF inválida");
+  const link=document.createElement("a"),url=URL.createObjectURL(blob);
+  link.href=url;link.download="The-Mile-"+String(plan.plan_type||"Plano").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".pdf";
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  status("PDF gerado a partir do plano guardado. O plano não foi publicado.");
+ }catch(error){status("Erro ao gerar PDF: "+error.message);}
+ finally{renderPersistence();}
+};
+
 $("assign-player").onclick=async()=>{
  if(!plan.id||planIsDirty()){
   persistenceError="Guarda primeiro todas as alterações com «Guardar rascunho».";
