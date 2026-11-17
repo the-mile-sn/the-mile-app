@@ -110,8 +110,8 @@
   description.append(make("h4","",item.customer_name));
   if(forAgenda){
    const tags=make("div","tm-appt-booking-meta-tags");
-   tags.append(make("span","tm-appt-tag",item.service_name));
    tags.append(make("span","tm-appt-tag tm-appt-tag-professional "+professionalColorClass(item.professional_name),item.professional_name));
+   tags.append(make("span","tm-appt-tag",item.service_name));
    tags.append(make("span","tm-appt-tag",item.mode==="online"?"Online":"Presencial"));
    description.append(tags);
   }else{
