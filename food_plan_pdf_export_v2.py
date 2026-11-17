@@ -10,6 +10,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, Flowable
@@ -24,7 +26,12 @@ ACCENTS = {
 NUTRIENT_COLORS = ("#6EAC81", "#70A9D8", "#E2A65C", "#D6C168")
 INK = "#242831"
 MUTED = "#737780"
-LOGO_PATH = Path(__file__).resolve().parent / "static" / "logo-black.png"
+ROOT = Path(__file__).resolve().parent
+LOGO_PATH = ROOT / "static" / "logo-black.png"
+FONT_DIR = ROOT / "static" / "fonts"
+pdfmetrics.registerFont(TTFont("InterTight", str(FONT_DIR / "InterTight-Regular.ttf")))
+pdfmetrics.registerFont(TTFont("InterTight-Bold", str(FONT_DIR / "InterTight-Bold.ttf")))
+pdfmetrics.registerFontFamily("InterTight", normal="InterTight", bold="InterTight-Bold")
 
 
 def _text(value):
@@ -95,7 +102,7 @@ def _amount(i, amount):
 
 def _style(name, size, leading, color=INK, bold=False, space_before=0, space_after=0,
            alignment=0, keep_next=False):
-    return ParagraphStyle(name, fontName="Helvetica-Bold" if bold else "Helvetica",
+    return ParagraphStyle(name, fontName="InterTight-Bold" if bold else "InterTight",
                           fontSize=size, leading=leading, textColor=colors.HexColor(color),
                           spaceBefore=space_before, spaceAfter=space_after,
                           alignment=alignment, keepWithNext=keep_next)
@@ -106,17 +113,17 @@ def _draw_cover(canvas, doc, plan):
     canvas.saveState()
     canvas.setTitle("Plano alimentar - The Mile")
     canvas.setFillColor(colors.HexColor("#939397"))
-    canvas.setFont("Helvetica-Bold", 33)
+    canvas.setFont("InterTight-Bold", 35)
     x = 23 * mm
-    y = A4[1] - 75 * mm
+    y = A4[1] - 12 * mm - 35
     canvas.drawString(x, y, "Plano alimentar")
     canvas.setFillColor(colors.HexColor("#111318"))
     player = str(plan.get("player_name") or "Jogador")
-    font_size = 33
+    font_size = 35
     max_width = A4[0] - 46 * mm
-    while stringWidth(player, "Helvetica-Bold", font_size) > max_width and font_size > 19:
+    while stringWidth(player, "InterTight-Bold", font_size) > max_width and font_size > 19:
         font_size -= 1
-    canvas.setFont("Helvetica-Bold", font_size)
+    canvas.setFont("InterTight-Bold", font_size)
     canvas.drawString(x, y - 18 * mm, player)
 
     label = str(plan.get("plan_type") or "").lower()
@@ -146,26 +153,42 @@ def _draw_cover(canvas, doc, plan):
     canvas.restoreState()
 
 
-def _footer(canvas, doc):
+def _later_page_chrome(canvas, doc, plan):
+    """Balanced brand header and restrained footer from page two onwards."""
     canvas.saveState()
+    left, right = 17 * mm, A4[0] - 17 * mm
+    canvas.setFillColor(colors.HexColor("#858A91"))
+    canvas.setFont("InterTight", 8)
+    name = str(plan.get("player_name") or "Jogador")
+    heading = "Plano alimentar - " + name
+    # Avoid touching the logo area even with long player names.
+    available = A4[0] - 17*mm - 17*mm - 35*mm
+    while stringWidth(heading, "InterTight", 8) > available and len(heading) > 19:
+        heading = heading[:-2] + "…"
+    canvas.drawString(left, A4[1] - 11 * mm, heading)
+    logo = ImageReader(str(LOGO_PATH))
+    iw, ih = logo.getSize()
+    ratio = min(27*mm/iw, 8*mm/ih)
+    w, h = iw*ratio, ih*ratio
+    canvas.drawImage(logo, right - w, A4[1] - 13*mm, w, h, mask="auto")
     canvas.setStrokeColor(colors.HexColor("#E7E8EA"))
-    canvas.setLineWidth(0.5)
-    canvas.line(17 * mm, 16.5 * mm, A4[0] - 17 * mm, 16.5 * mm)
-    canvas.setFillColor(colors.HexColor("#868A91"))
-    canvas.setFont("Helvetica", 8)
-    canvas.drawString(17 * mm, 11 * mm, "www.themile.pt")
-    canvas.drawRightString(A4[0] - 17 * mm, 11 * mm, str(doc.page))
+    canvas.setLineWidth(.5)
+    canvas.line(left, 16.5*mm, right, 16.5*mm)
+    canvas.setFillColor(colors.HexColor("#858A91"))
+    canvas.setFont("InterTight", 8)
+    canvas.drawString(left, 11*mm, "www.themile.pt")
+    canvas.drawRightString(right, 11*mm, str(doc.page))
     canvas.restoreState()
 
 
 class MacroPills(Flowable):
-    """Four nutritional labels above each option title."""
-    def __init__(self, values, available_width):
+    """Four actual Inter Tight pill labels, right-aligned on the option-title row."""
+    def __init__(self, values, width):
         Flowable.__init__(self)
         self.values = values
-        self.width = available_width
-        self.height = 33
-        self.hAlign = "LEFT"
+        self.width = width
+        self.height = 27
+        self.hAlign = "RIGHT"
 
     def draw(self):
         labels = [
@@ -175,17 +198,22 @@ class MacroPills(Flowable):
             _amount(3, self.values[3]) + " g G",
         ]
         backgrounds = ("#EAF4EC", "#EAF2FA", "#FFF1E5", "#FBF7DE")
-        widths = [stringWidth(label, "Helvetica-Bold", 9.3) + 19 for label in labels]
-        spacing = 7
-        x = self.width - (sum(widths) + spacing * 3)
-        c = self.canv
-        for label, w, fg, fill in zip(labels, widths, NUTRIENT_COLORS, backgrounds):
-            c.setFillColor(colors.HexColor(fill))
-            c.roundRect(x, 9, w, 22, 10, fill=1, stroke=0)
-            c.setFillColor(colors.HexColor(fg))
-            c.setFont("Helvetica-Bold", 9.3)
-            c.drawCentredString(x + w/2, 16, label)
-            x += w + spacing
+        font, fontsize, pad, gap = "InterTight-Bold", 10, 13, 5
+        widths = [stringWidth(text, font, fontsize) + pad for text in labels]
+        # Keep the four labels in their own allocated column on narrow A4 pages.
+        if sum(widths) + 3*gap > self.width:
+            gap = 3
+            pad = max(5, (self.width - sum(stringWidth(t,font,fontsize) for t in labels) - 3*gap)/4)
+            widths = [stringWidth(text,font,fontsize)+pad for text in labels]
+        start = self.width - sum(widths) - 3*gap
+        canvas = self.canv
+        for label, width, fg, bg in zip(labels,widths,NUTRIENT_COLORS,backgrounds):
+            canvas.setFillColor(colors.HexColor(bg))
+            canvas.roundRect(start, 3, width, 22, 11, stroke=0, fill=1)
+            canvas.setFont(font, fontsize)
+            canvas.setFillColor(colors.HexColor(fg))
+            canvas.drawCentredString(start + width/2, 10, label)
+            start += width + gap
 
 
 def render_editor_pdf(c, plan, selected_meal_keys=None):
@@ -208,17 +236,17 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
 
     out = BytesIO()
     doc = SimpleDocTemplate(out, pagesize=A4, leftMargin=17*mm, rightMargin=17*mm,
-                            topMargin=21*mm, bottomMargin=20*mm,
+                            topMargin=25*mm, bottomMargin=20*mm,
                             title="Plano alimentar - The Mile", author="The Mile")
-    regular = _style("food", 8.6, 12, space_after=0)
-    muted = _style("muted", 8, 11, color="#737780")
-    right = _style("right", 8.3, 11.5, color="#60656E", alignment=TA_RIGHT)
-    header = _style("header", 8.3, 12, color="#737780", alignment=TA_RIGHT)
-    section = _style("section", 15, 19, color=ACCENTS.get(plan.get("plan_type"), "#343942"),
+    regular = _style("food", 10, 13.2, space_after=0)
+    muted = _style("muted", 10, 13.2, color="#737780")
+    right = _style("right", 10, 13.2, color="#60656E", alignment=TA_RIGHT)
+    header = _style("header", 10, 13.2, color="#737780", alignment=TA_RIGHT)
+    section = _style("section", 16, 20, color=ACCENTS.get(plan.get("plan_type"), "#343942"),
                      bold=True, space_before=15, space_after=11, keep_next=True)
-    option_title = _style("option", 11.5, 16, bold=True, space_after=9, keep_next=True)
+    option_title = _style("option", 14, 18, bold=True, space_after=0, keep_next=True)
     summary_head = _style("summary_head", 21, 26, bold=True, space_after=12)
-    summary_description = _style("summary_description", 9, 14, color="#737780", space_after=16)
+    summary_description = _style("summary_description", 10, 14, color="#737780", space_after=16)
 
     cw = A4[0] - 34 * mm
     widths = [cw*.115, cw*.49, cw*.099, cw*.099, cw*.099, cw*.098]
@@ -279,12 +307,21 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
             continue
         for oi, option in enumerate(options):
             totals = _option_average(option, library)
-            content = ([meal_heading] if oi == 0 else []) + [
-                MacroPills(totals, cw),
-                Paragraph("Opção " + str(oi+1) +
-                          (" · " + _text(option.get("title")) if option.get("title") else ""),
-                          option_title)
-            ]
+            option_label = Paragraph(
+                "Opção " + str(oi+1) +
+                (" · " + _text(option.get("title")) if option.get("title") else ""),
+                option_title)
+            option_header = Table(
+                [[option_label, MacroPills(totals, cw*.54)]],
+                colWidths=[cw*.46,cw*.54], hAlign="LEFT")
+            option_header.setStyle(TableStyle([
+                ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+                ("LEFTPADDING",(0,0),(-1,-1),0),
+                ("RIGHTPADDING",(0,0),(-1,-1),0),
+                ("TOPPADDING",(0,0),(-1,-1),0),
+                ("BOTTOMPADDING",(0,0),(-1,-1),9),
+            ]))
+            content = ([meal_heading] if oi == 0 else []) + [option_header]
             # Only numerical nutrient headers: no Qtd. or Alimento / notas.
             rows = [["", "", *[Paragraph(s, header) for s in ("kcal", "P (g)", "HC (g)", "G (g)")]]]
             foods = option.get("foods") or []
@@ -339,5 +376,6 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
     def first_page(canvas, document):
         _draw_cover(canvas, document, plan)
 
-    doc.build(story, onFirstPage=first_page, onLaterPages=_footer)
+    doc.build(story, onFirstPage=first_page,
+              onLaterPages=lambda canvas, document: _later_page_chrome(canvas, document, plan))
     return out.getvalue()
