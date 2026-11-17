@@ -389,3 +389,15 @@ html[data-admin-theme="dark"] #consumption-panel .tm-record-food-list .tm-record
 html[data-admin-theme="light"] #consumption-panel .tm-record-change[data-kind="substituted"]{
  color:#376d99;
 }
+
+/* Registos: consumed macros match the three corresponding nutrition rings.
+   Scope only the summary consumed numbers; targets and labels retain neutral tone. */
+html[data-admin-theme] #consumption-panel .tm-record-macro-row[data-nutrient="protein_g"] .tm-record-macro-consumed{
+ color:#47b7f5!important;
+}
+html[data-admin-theme] #consumption-panel .tm-record-macro-row[data-nutrient="carbs_g"] .tm-record-macro-consumed{
+ color:#ff9872!important;
+}
+html[data-admin-theme] #consumption-panel .tm-record-macro-row[data-nutrient="fat_g"] .tm-record-macro-consumed{
+ color:#eed072!important;
+}
