@@ -104,7 +104,7 @@ def render_editor_pdf(c, plan):
                     continue
                 ref=library.get(food.get("id"))
                 quantity=food.get("display_quantity") or (
-                    (str(food["grams"]).rstrip("0").rstrip(".")+" g") if food.get("grams") is not None else "Por definir")
+                    (("%g" % food["grams"])+" g") if food.get("grams") is not None else "Por definir")
                 if food.get("grams")==0: quantity="0 g"
                 label=food.get("display_name") or food.get("label") or (ref or {}).get("display_name") or "Alimento"
                 if food.get("alternative_to") is not None:label="Ou "+label
