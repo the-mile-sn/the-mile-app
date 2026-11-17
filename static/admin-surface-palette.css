@@ -12393,3 +12393,11 @@ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog 
 html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-grid[hidden]{
  display:none!important;
 }
+
+/* Supplements: quiet X, without a background tile or border. */
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page #supp-library-dialog #supp-library-close.tm-library-modal-x,
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page #supp-library-dialog #supp-library-close.tm-library-modal-x:hover,
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page #supp-library-dialog #supp-library-close.tm-library-modal-x:focus:not(:focus-visible){
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:var(--tm-ui-text)!important;
+}
