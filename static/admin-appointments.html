@@ -12,7 +12,7 @@
  <link rel="stylesheet" href="/tm-design-system.css?v=13">
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=171">
- <link rel="stylesheet" href="/admin-appointments.css?v=8">
+ <link rel="stylesheet" href="/admin-appointments.css?v=9">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -39,9 +39,10 @@
    </div>
    <section id="tm-appointments-panel-agenda" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-agenda" tabindex="0">
     <div class="tm-appointments-panel-heading">
-     <div><h2>Agenda</h2><p>Explora as datas em vista semanal ou diária.</p></div>
+     <div><h2>Agenda</h2><p>Consulta e navega pelas marcações em vista mensal, semanal ou diária.</p></div>
      <div class="tm-appointments-view-switch" role="group" aria-label="Vista da agenda">
-      <button type="button" data-appointments-view="week" class="is-active" aria-pressed="true">Semana</button>
+      <button type="button" data-appointments-view="month" class="is-active" aria-pressed="true">Mês</button>
+       <button type="button" data-appointments-view="week" aria-pressed="false">Semana</button>
       <button type="button" data-appointments-view="day" aria-pressed="false">Dia</button>
      </div>
     </div>
@@ -54,9 +55,11 @@
        <button type="button" id="tm-appointments-next" aria-label="Período seguinte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
       </div>
      </div>
-     <div id="tm-appointments-days" class="tm-appointments-week" aria-label="Dias da agenda"></div>
+     <div id="tm-appointments-weekdays" class="tm-appointments-weekdays" aria-hidden="true" hidden><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+      <div id="tm-appointments-days" class="tm-appointments-week" aria-label="Dias da agenda"></div>
+      <div class="tm-appointments-calendar-footer"><button type="button" class="tm-appt-create" id="tm-appt-agenda-new-booking">+ Adicionar marcação</button></div>
      <div class="tm-appt-agenda-feed">
-      <h4>Marcações internas deste período</h4>
+      <h4>Marcações internas</h4>
       <div id="tm-appt-agenda-list" aria-live="polite"><p class="tm-appt-placeholder">A carregar marcações internas…</p></div>
       <p class="tm-appt-form-hint">Não inclui reservas do Sesami nem compromissos Google Calendar.</p>
      </div>
@@ -309,9 +312,9 @@
   </main>
  </div>
  <script src="/admin-nav-shell.js?v=12" defer></script>
- <script src="/admin-appointments.js?v=4" defer></script>
+ <script src="/admin-appointments.js?v=5" defer></script>
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
- <script src="/admin-appointments-bookings.js?v=10" defer></script>
+ <script src="/admin-appointments-bookings.js?v=11" defer></script>
  <script src="/admin-appointments-google.js?v=1" defer></script>
  <script src="/admin-mobile-nav.js?v=14" defer></script>
 </body>
