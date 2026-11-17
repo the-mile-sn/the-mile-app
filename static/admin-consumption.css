@@ -380,3 +380,12 @@ html[data-admin-theme="dark"] #consumption-panel .tm-record-food-list .tm-record
  #consumption-panel .tm-record-meal-metrics{gap:3px!important}
  #consumption-panel .tm-record-meal-metrics strong{font-size:10px!important}
 }
+
+/* Consumption difference: an explicitly selected alternative is a recorded change. */
+#consumption-panel .tm-record-change[data-kind="substituted"]{
+ background:rgba(87,135,179,.13);
+ color:#83b6d9;
+}
+html[data-admin-theme="light"] #consumption-panel .tm-record-change[data-kind="substituted"]{
+ color:#376d99;
+}
