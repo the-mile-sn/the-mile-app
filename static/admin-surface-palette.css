@@ -12384,3 +12384,11 @@ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog 
   font-size:25px!important;
  }
 }
+
+/* Ensure values, not just their wrappers, inherit the Planos semantic macro colours. */
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-value :is(strong,span){
+ color:inherit!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-grid[hidden]{
+ display:none!important;
+}

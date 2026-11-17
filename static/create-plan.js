@@ -104,6 +104,7 @@ function renderPlanReference(){
   const index=Number(el.dataset.planPreviewKg);
   el.textContent=valid?fmt(values[index]/w)+(index===0?" kcal/kg":" g/kg"):"";
  });
+ if($("tm-pdf-meals-dialog")?.open)updatePdfMealSummary();
 }
 function ensurePlanReference(){
  const athlete=String(plan.athlete_id||"");
@@ -685,7 +686,6 @@ function updatePdfMealSummary(){
  }
  pdfMealConfirm.disabled=!selected.length;
  const weightReady=Boolean(plan.athlete_id&&planRef.key===String(plan.athlete_id)+"|"+planRefDate()&&Number.isFinite(planRef.weight)&&planRef.weight>0);
- const units=["kcal","g","g","g"];
  for(let i=0;i<4;i++){
    const amount=$("tm-pdf-total-"+i);
    const ratio=$("tm-pdf-ratio-"+i);
