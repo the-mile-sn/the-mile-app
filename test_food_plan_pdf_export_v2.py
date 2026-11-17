@@ -24,7 +24,7 @@ class PlanPdfTests(unittest.TestCase):
         pdf=render_editor_pdf(MockConnection(),plan)
         self.assertTrue(pdf.startswith(b"%PDF-"))
         content=" ".join(page.extract_text() for page in PdfReader(BytesIO(pdf)).pages)
-        for term in ("Jogador Teste","Intermédia","70 g","Ou Pão integral","Acompanhar com fruta","Total médio"):
+        for term in ("Jogador Teste","Pequeno-almoço","Lanche","70 g","Ou Pão integral","Acompanhar com fruta","Total médio"):
             self.assertIn(term,content)
     def test_shared_groups_default_to_four_meals(self):
         groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
