@@ -107,7 +107,14 @@
   time.append(make("strong","",item.start+"–"+item.end));
   if(!forAgenda)time.append(make("span","",dateLabel(item.date)));
   const description=make("div","tm-appt-booking-info");
-  description.append(make("h4","",item.customer_name));
+  if(forAgenda){
+   const identity=make("div","tm-appt-agenda-identity");
+   identity.append(make("strong","tm-appt-agenda-hours",item.start+"–"+item.end));
+   identity.append(make("h4","",item.customer_name));
+   description.append(identity);
+  }else{
+   description.append(make("h4","",item.customer_name));
+  }
   if(forAgenda){
    const tags=make("div","tm-appt-booking-meta-tags");
    tags.append(make("span","tm-appt-tag tm-appt-tag-professional "+professionalColorClass(item.professional_name),item.professional_name));
@@ -135,7 +142,8 @@
     actions.append(edit,cancel);right.append(actions);
    }
   }
-  card.append(time,description,right);
+  if(forAgenda)card.append(description,right);
+  else card.append(time,description,right);
   return card;
  }
  async function loadList(){
@@ -160,6 +168,13 @@
   const parts=String(value||"").trim().split(/\s+/).filter(Boolean);
   return parts.length>1?parts[0]+" "+parts[parts.length-1]:(parts[0]||"Cliente");
  }
+ function agendaDateLabel(iso){
+  if(!iso)return "Hoje";
+  const date=new Date(iso+"T12:00:00Z");
+  const weekday=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"long"}).format(date);
+  const month=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",month:"long"}).format(date);
+  return weekday.charAt(0).toUpperCase()+weekday.slice(1)+", "+date.getUTCDate()+" "+month+" "+date.getUTCFullYear();
+ }
  function showAgendaError(message){
   const feed=$("tm-appt-agenda-list");
   if(feed)feed.replaceChildren(make("p","tm-appt-booking-empty",message));
@@ -171,7 +186,7 @@
   const token=++state.agendaSequence;
   const selected=document.querySelector("#tm-appointments-days .tm-appointments-day.is-selected")?.dataset.date;
   const heading=document.querySelector(".tm-appt-agenda-feed h4");
-  if(heading)heading.textContent="Marcações de "+(selected?dateLabel(selected):"hoje");
+  if(heading)heading.textContent=agendaDateLabel(selected);
   const feed=$("tm-appt-agenda-list");
   feed.replaceChildren(make("p","tm-appt-booking-empty","A carregar marcações…"));
   const params=new URLSearchParams({from:dates[0],to:dates[dates.length-1],status:"scheduled"});
