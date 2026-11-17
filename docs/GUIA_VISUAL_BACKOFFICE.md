@@ -140,6 +140,34 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 
 **Nota:** esta lista documenta decisões aprovadas para duas interfaces diferentes. **Não autoriza alterações à app dos jogadores nem ao Backoffice.** A branch do Admin continua `production/the-mile-admin` e a da app `main`. O uso do `FootballIcon` em «Ajustes pós-jogo» no Admin mantém-se conforme a secção Modelo.
 
+## 3B. Ações rápidas, hover desktop e microinterações mobile — 17/11
+
+### Ações rápidas: geometria e semântica
+
+- **Editar:** usar o componente Hugeicons `PencilEdit01Icon`, outline; botão compacto em **superfície neutra de subcard** (modo claro `#E6EBF1` como referência de ação neutra; escuro `#242830`), com cor de texto/ícone principal, sem borda ou sombra decorativa.
+- **Eliminar:** usar **`TrashIcon` sempre dentro de um botão/card de ação vermelho suave**, não um ícone vermelho solto nem um botão neutro. Referência de botão destrutivo: **claro fundo `#F4E0E3`, ícone `#B15665`; escuro fundo `#3A2128`, ícone `#F0A3AF`**. O vermelho de fundo é uma superfície de ação, **não uma pill informativa** e não segue a regra de fundo a 7%.
+- **Uniformização:** par Editar/Eliminar com a mesma dimensão, raio e alinhamento na mesma área. Referência para ações rápidas isoladas: **36 × 36 px, raio 10 px, ícone outline ~18 px**, alvo táctil alargado a ~44 × 44 px no mobile quando possível. Distinguir esta referência global de geometrias de editor específicas já existentes e validadas.
+- Preservar `aria-label`, tooltip onde útil, foco de teclado e confirmação antes de eliminar. Se «Remover» significa apenas desassociar, a ação continua semanticamente destrutiva relativamente à ligação, sem eliminar o objeto de origem. Não propagar clique do botão para o card pai.
+
+### Hover, rato e teclado (desktop)
+
+- **Ações rápidas:** alterar **apenas o próprio botão** em hover; Editar passa para um neutro ligeiramente mais evidente (hover neutro `#E3E7EE` claro / `#303239` escuro como referência); Eliminar ganha vermelho suave um pouco mais marcado, sem sombras, deslocações, brilho ou contornos decorativos. Não alterar a cor do card completo ao passar o cursor sobre uma ação rápida.
+- **Cards navegáveis:** quando o card inteiro abre detalhe, aplicar mudança **subtil da superfície do próprio card**, não sublinhar o título. A ação interna Editar/Eliminar continua independente.
+- **Linhas informativas (ex.: Eventos do mês) e cartões informativos (ex.: coluna dos dias no Modelo):** **sem hover da linha/card**; hover só nos controlos realmente editáveis.
+- **Seletores editáveis** no Modelo e Ajustes pós-jogo: hover discreto na superfície do seletor sem mudar a cor prescrita. Sidebar: expande por hover/foco com reflow do conteúdo, sem sobreposição.
+- **Teclado:** `:focus-visible` com contorno funcional legível; não confundir contorno de acessibilidade com moldura decorativa.
+
+### Microinterações (mobile e toque)
+
+- Não usar comportamento de hover como principal sinal de interação. O **feedback táctil aparece na superfície do elemento realmente acionado** e mantém-se brevemente após o toque.
+- **Cards navegáveis de Jogadores e Planos:** preenchimento de subcard e escala discreta `scale(.992)` durante cerca de **140 ms**, conforme decisão aprovada; não deslocar layout nem alterar dados. O botão interno acionado não deve também abrir o card.
+- **Ações rápidas:** feedback breve no **fundo do próprio botão** neutro ou destrutivo, preservando a cor vermelha do lixo. Manter ícones centrados e alvos confortáveis; não animar a linha toda quando só se toca em Editar/Eliminar.
+- **Ajustes pós-jogo:** feedback na própria superfície do card, **nunca overlay retangular dentro do `summary`**. Nas revisões históricas foi usada a classe `tm-mobile-card-press` e uma duração aproximada de **360 ms** no card principal para resistir a cancelamentos por scroll; não generalizar essa duração a todos os componentes sem validação.
+- Seletores nativos preservam a abertura normal do picker e foco; evitar highlight retangular do Safari nos cards aprovados, sem retirar indicadores de foco acessível.
+- **`prefers-reduced-motion`:** retirar/atenuar transições e escalas, mantendo feedback de estado e acessibilidade.
+
+**Nota de verificação:** as cores e comportamentos acima foram recuperados das decisões previamente aprovadas e do histórico documental. Este guia define como a interface **deve** ser; não certifica que todos os módulos atuais já correspondam à regra. O PDF visual inclui exemplos estáticos de estado normal/hover/toque, não animações executáveis.
+
 ## 4. Navegação e estrutura partilhada
 
 - **Branches separadas:** Admin = `production/the-mile-admin`; app dos jogadores = `main`. A uniformização do Admin não altera a app.
