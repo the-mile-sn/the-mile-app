@@ -545,3 +545,25 @@ html[data-admin-theme="light"] body.tm-appointments-body #tm-appt-new-booking{
 html[data-admin-theme="light"] body.tm-appointments-body #tm-appt-new-booking:hover{
  background:#343840!important;color:#fff!important;
 }
+
+/* Selected-day appointments: a single inline time/name heading, followed by tags and status. */
+#tm-appt-agenda-list .tm-appt-booking-record{
+ display:flex;flex-direction:column;align-items:stretch;gap:9px;
+}
+#tm-appt-agenda-list .tm-appt-booking-info{width:100%}
+#tm-appt-agenda-list .tm-appt-agenda-identity{
+ display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:3px;
+}
+#tm-appt-agenda-list .tm-appt-agenda-hours{
+ font-size:13px;font-weight:600;line-height:1.35;white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+#tm-appt-agenda-list .tm-appt-agenda-identity h4{
+ margin:0;font-size:13px;font-weight:600;line-height:1.35;
+}
+#tm-appt-agenda-list .tm-appt-booking-meta-tags{margin-top:9px}
+#tm-appt-agenda-list .tm-appt-booking-right{
+ align-items:flex-start;text-align:left;grid-column:auto;
+}
+#tm-appt-agenda-list .tm-appt-booking-status{
+ color:var(--tm-ui-muted);font-weight:400;font-size:11px;
+}
