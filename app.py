@@ -1632,6 +1632,15 @@ def application(env, start_response):
                     except ValueError:
                         raise Problem(400,'invalid_visual_portion_archive')
                     return respond(200,result)
+                if path.startswith('/api/v2/visual-portions/image/') and method == 'POST':
+                    try:
+                        result = visual_portions_v2.replace_image(
+                            c, path.rsplit('/',1)[-1],
+                            read_body(env, visual_portions_v2.MAX_PHOTO))
+                    except ValueError:
+                        raise Problem(400, 'invalid_visual_portion_photo')
+                    if result is None: raise Problem(404, 'not_found')
+                    return respond(200,result)
                 if path.startswith('/api/v2/visual-portions/image/') and method == 'GET':
                     data=visual_portions_v2.get_image(c,path.rsplit('/',1)[-1])
                     if data is None: raise Problem(404,'not_found')
