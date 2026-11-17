@@ -3212,7 +3212,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    const editor=document.createElement("div");editor.className="dish-edit-fields dish-table-editor";
    const closeDialog=()=>{if(dialog?.open)dialog.close();};
    close.addEventListener("click",closeDialog);
-   dialog.addEventListener("close",()=>{edit.setAttribute("aria-expanded","false");});
+   dialog.addEventListener("close",()=>{edit.setAttribute("aria-expanded","false");dialog.remove();dialog=null;});
    dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
    edit.setAttribute("aria-expanded","true");
    const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
