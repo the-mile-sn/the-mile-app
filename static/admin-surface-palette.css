@@ -9961,3 +9961,47 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
   background:var(--tm-ui-action-danger-bg,#3a2128)!important;
  }
 }
+
+
+/* P4 V143: preserve guide surfaces while exposing actual gaps between food cards */
+@media screen and (max-width:850px) {
+ /* The list container must be page-coloured, NOT the same colour as each card.
+    This covers both the legacy table and the standalone mobile articles. */
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel > .scroll,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-catalog-table,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-catalog-table > tbody,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-mobile-cards {
+  background:var(--tm-ui-bg)!important;
+  border:0!important;box-shadow:none!important;
+  border-radius:0!important;
+  padding:0!important;margin-left:0!important;margin-right:0!important;
+  overflow:visible!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-mobile-cards {
+  display:flex!important;flex-direction:column!important;
+  gap:14px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-mobile-cards > article.tm-food-mobile-card {
+  display:flex!important;flex-direction:column!important;
+  box-sizing:border-box!important;width:100%!important;
+  margin:0!important;padding:14px!important;
+  background:var(--tm-ui-card)!important;
+  border:0!important;outline:0!important;box-shadow:none!important;
+  border-radius:16px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-catalog-table > tbody > tr {
+  display:grid!important;box-sizing:border-box!important;
+  width:100%!important;margin:0 0 14px!important;padding:14px!important;
+  background:var(--tm-ui-card)!important;
+  border:0!important;outline:0!important;box-shadow:none!important;
+  border-radius:16px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel .food-catalog-table > tbody > tr:last-child{
+  margin-bottom:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-macro,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-table > tbody > tr > td.num{
+  background:var(--tm-ui-subcard)!important;
+ }
+}
