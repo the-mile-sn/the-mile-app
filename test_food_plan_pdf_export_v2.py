@@ -143,7 +143,7 @@ class PlanPdfTests(unittest.TestCase):
                         def fetchone(self):
                             return {"photo":picture.getvalue()}
                     return Cursor()
-                if "v2_daily_weighins" in query or "v2_body_assessments" in query:
+                if "v2_daily_weighins" in query or "v2_body_assessments" in query or "v2_athletes" in query:
                     class EmptyCursor:
                         def fetchall(self):
                             return []
