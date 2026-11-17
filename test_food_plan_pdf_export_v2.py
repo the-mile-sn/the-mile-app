@@ -39,6 +39,8 @@ class PlanPdfTests(unittest.TestCase):
         self.assertIn("g P",detail)
         self.assertNotIn("Alimento / notas",detail)
         self.assertNotIn("Qtd.",detail)
+        self.assertNotIn("P (g)",detail)
+        self.assertNotIn("HC (g)",detail)
         self.assertGreaterEqual(len(pages[0].images),1)
         self.assertIn("www.themile.pt",pages[-1].extract_text())
         self.assertIn("Plano alimentar - Jogador Teste",pages[1].extract_text())
@@ -87,7 +89,7 @@ class PlanPdfTests(unittest.TestCase):
         opts[:]=[dict(opts[0],title="Batido %02d"%i) for i in range(7)]
         pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages
         for i in range(7):
-            label="Opção "+str(i+1)+" · Batido %02d"%i
+            label="Batido %02d"%i
             containing=[n for n,p in enumerate(pages) if label in p.extract_text()]
             self.assertEqual(len(containing),2) # once for breakfast and once for snack
 
