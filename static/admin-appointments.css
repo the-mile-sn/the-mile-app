@@ -505,3 +505,18 @@ html[data-admin-theme="light"] .tm-appt-booking-date-section{
 html[data-admin-theme="light"] #tm-appt-agenda-list .tm-appt-tag-professional.is-raquel{color:#7843B6}
 html[data-admin-theme="light"] #tm-appt-agenda-list .tm-appt-tag-professional.is-juliana{color:#217E50}
 html[data-admin-theme="light"] #tm-appt-agenda-list .tm-appt-tag-professional.is-beatriz{color:#2B60B7}
+
+/* The Mile typography contract: use Inter Tight consistently in appointments.
+   SF Pro is retained as the Apple fallback; Arial only as the last fallback. */
+body.tm-appointments-body,
+body.tm-appointments-body :is(button,input,select,textarea,option),
+body.tm-appointments-body :is(.tm-appointments-day,.tm-appt-calendar-event,.tm-appt-booking-record,.tm-appt-booking-meta-tags,.tm-appt-tag){
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+body.tm-appointments-body .tm-appt-calendar-event{
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+ font-weight:500;
+}
+body.tm-appointments-body #tm-appt-agenda-list .tm-appt-tag{
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+}
