@@ -334,16 +334,17 @@ class NutritionDailyOverview(Flowable):
         cx, cy, radius = 86, 97, 64
         _draw_ring(c, cx, cy, radius, 45, list(zip(shares, palette)))
         c.setFillColor(colors.HexColor("#111318"))
+        # Centre the energy value in the ring and balance the line spacing.
         c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight", 10)
-        c.drawCentredString(cx, cy+22, "kcal")
+        c.drawCentredString(cx, cy+24, "kcal")
         c.setFillColor(colors.HexColor("#111318"))
         c.setFont("InterTight-Bold", 27)
-        c.drawCentredString(cx, cy-2, _amount(0, energy))
+        c.drawCentredString(cx, cy-6, _amount(0, energy))
         if self.weight_kg:
             c.setFillColor(colors.HexColor("#939397"))
             c.setFont("InterTight", 10)
-            c.drawCentredString(cx, cy-23, "%.0f/kg" % (energy/self.weight_kg))
+            c.drawCentredString(cx, cy-30, "%.0f/kg" % (energy/self.weight_kg))
 
         x = 192
         right = self.width-4
@@ -388,6 +389,7 @@ class NutritionMealOverview(Flowable):
         c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight-Bold",11)
         c.drawString(0,53,self.name)
+        c.setFillColor(colors.HexColor("#242831"))
         c.setFont("InterTight-Bold",14)
         c.drawString(0,30,_amount(0,energy)+" kcal")
         c.setFillColor(colors.HexColor("#737780"))
