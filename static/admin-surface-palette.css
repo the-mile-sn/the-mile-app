@@ -10952,3 +10952,35 @@ html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-edit-m
   min-height:74px!important;gap:10px!important;font-size:13px!important;
  }
 }
+
+/* P5 v156: level-three search surface, identical to the linked recipe row. */
+html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-table-editor .dish-recipe-association .dish-recipe-combobox{
+ box-sizing:border-box!important;
+ display:block!important;
+ width:100%!important;
+ min-width:0!important;
+ background:var(--tm-ui-search)!important;
+ border:0!important;
+ border-radius:11px!important;
+}
+html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-table-editor .dish-recipe-association .dish-recipe-combobox>input[type="search"]{
+ box-sizing:border-box!important;
+ display:block!important;
+ width:100%!important;
+ min-height:48px!important;
+ padding:12px 14px!important;
+ margin:0!important;
+ background:var(--tm-ui-search)!important;
+ background-color:var(--tm-ui-search)!important;
+ color:var(--tm-ui-text)!important;
+ border:0!important;
+ border-radius:11px!important;
+ box-shadow:none!important;
+ font:400 16px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ -webkit-appearance:none!important;
+ appearance:none!important;
+}
+html[data-admin-theme] body #admin-workspace dialog.dish-edit-modal .dish-table-editor .dish-recipe-association .dish-recipe-combobox>input[type="search"]::placeholder{
+ color:var(--tm-ui-muted)!important;
+ opacity:1!important;
+}
