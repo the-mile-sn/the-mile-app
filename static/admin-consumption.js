@@ -104,29 +104,77 @@
   return n?"name:"+n:null;
  }
  function foodGrams(f){const g=Number(f.grams);return f.grams!=null&&Number.isFinite(g)&&g>=0?g:null;}
- function foodMap(items){
-  if(!Array.isArray(items))return null;
-  const map=new Map();
-  for(const f of items){
-   if(!f||typeof f!=="object"||f.alternative_to!=null)return null;
-   const key=foodId(f),grams=foodGrams(f);
-   if(!key||grams===null||map.has(key))return null;
-   map.set(key,{food:f,grams});
-  }
-  return map;
- }
  function changes(record){
   const original=record.prescription?.option?.foods;
-  const planned=foodMap(original),consumed=foodMap(record.consumed_foods);
-  if(!planned||!consumed)return null;
-  const result=[];
-  for(const [id,item] of planned){
-   const actual=consumed.get(id);
-   if(!actual)result.push({name:foodName(item.food),before:item.grams,after:null,type:"removed"});
-   else if(Math.abs(item.grams-actual.grams)>.01)result.push({name:foodName(actual.food),before:item.grams,after:actual.grams,type:"edited"});
+  const consumed=record.consumed_foods;
+  if(!Array.isArray(original)||!Array.isArray(consumed))return null;
+  // The saved option_index is the reliable link to the published option.
+  // Foods with alternative_to belong to one equivalence group: only the
+  // selected member should be compared, never every available alternative.
+  const groups=new Map(),indexToGroup=new Map();
+  for(let i=0;i<original.length;i++){
+   const f=original[i];
+   if(!f||typeof f!=="object")return null;
+   if(f.kind==="supplement")continue;
+   const parent=f.alternative_to==null?i:Number(f.alternative_to);
+   if(!Number.isInteger(parent)||parent<0||parent>=original.length)return null;
+   if(parent!==i&&original[parent]?.alternative_to!=null)return null;
+   if(!groups.has(parent))groups.set(parent,[]);
+   groups.get(parent).push(i);indexToGroup.set(i,parent);
   }
-  for(const [id,item] of consumed)if(!planned.has(id))result.push({name:foodName(item.food),before:null,after:item.grams,type:"added"});
+  const selected=new Map(),extras=[];
+  for(const food of consumed){
+   if(!food||typeof food!=="object")return null;
+   const grams=foodGrams(food);
+   if(grams===null)return null;
+   const isAdditional=food.additional===true;
+   let index=null;
+   if(!isAdditional&&food.option_index!=null){
+    index=Number(food.option_index);
+    if(!Number.isInteger(index)||!indexToGroup.has(index))return null;
+   }else if(!isAdditional){
+    // Backward compatibility with records saved before option_index.
+    const identity=foodId(food);
+    const matches=original.map((f,i)=>({f,i})).filter(({f,i})=>indexToGroup.has(i)&&foodId(f)===identity);
+    if(matches.length!==1)return null;
+    index=matches[0].i;
+   }
+   if(index===null){extras.push(food);continue;}
+   const group=indexToGroup.get(index);
+   if(selected.has(group))return null;
+   selected.set(group,{index,food,grams});
+  }
+  const result=[];
+  for(const [group,members] of groups){
+   const base=original[members[0]];
+   const actual=selected.get(group);
+   if(!actual){
+    const grams=foodGrams(base);
+    if(grams===null)return null;
+    result.push({name:foodName(base),before:grams,after:null,type:"removed",group});
+    continue;
+   }
+   const planned=original[actual.index];
+   const before=foodGrams(planned);
+   if(before===null)return null;
+   if(actual.index!==members[0]){
+    result.push({name:foodName(actual.food)||foodName(planned),before:null,after:actual.grams,type:"substituted",index:actual.index,group});
+   }
+   if(Math.abs(before-actual.grams)>.01){
+    result.push({name:foodName(actual.food)||foodName(planned),before,after:actual.grams,type:"edited",index:actual.index,group});
+   }
+  }
+  for(const food of extras)result.push({name:foodName(food),before:null,after:foodGrams(food),type:"added",id:foodId(food)});
   return result;
+ }
+ function displayStatus(record,diffs){
+  if(record.status==="none")return "none";
+  if(record.status==="all")return "all";
+  if(record.status!=="partial"||diffs===null)return record.status;
+  // A positive portion change (or a substitution/addition) is not partial
+  // consumption. A missing food or a smaller consumed portion is partial.
+  return diffs.some(change=>change.type==="removed"||
+   (change.type==="edited"&&change.after<change.before-.01))?"partial":"all";
  }
  function metric(k,n){return n&&numeric(n[k])!==null?num(n[k]):"—";}
  function progressCircle(key,consumed,planned,index){
@@ -145,7 +193,7 @@
   }
   // Preserve the existing Microciclos goal and its option-average policy unchanged.
   const planned=microcycle?.state==="complete"?values(microcycle.nutrition):null;
-  const changed=records.filter(r=>r.status==="partial"||(r.status==="all"&&changes(r)?.length>0)).length;
+  const changed=records.filter(r=>{const diff=changes(r);return displayStatus(r,diff)==="partial"||(diff?.length>0);}).length;
   const rings='<svg viewBox="0 0 188 188" role="img" aria-label="Progresso de energia, proteína, hidratos e gordura" class="tm-record-four-rings">'+
    keys.map(([key],i)=>progressCircle(key,consumed,planned,i)).join("")+'</svg>';
   const kcalTotal=planned?num(planned.kcal):"—";
@@ -199,11 +247,13 @@
   const rows=[];
   // Always show foods actually consumed in partial / edited meals.
   for(const food of foods){
-   const matching=diffs?.find(x=>x.name===foodName(food)&&x.type!=="removed");
+   const matching=diffs?.find(x=>x.type==="edited"&&x.index===Number(food.option_index))||
+    diffs?.find(x=>x.type==="added"&&x.id===foodId(food))||
+    diffs?.find(x=>x.type==="substituted"&&x.index===Number(food.option_index));
    const grams=foodGrams(food);
    const quantity=matching?.type==="edited"?num(matching.before)+" g → "+num(matching.after)+" g":
      grams!==null?num(grams)+" g":"—";
-   const badge=matching?'<span class="tm-record-change" data-kind="'+matching.type+'">'+(matching.type==="added"?"Adicionado":"Quantidade alterada")+'</span>':'<span class="tm-record-change" data-kind="consumed">Consumido</span>';
+   const badge=matching?'<span class="tm-record-change" data-kind="'+matching.type+'">'+(matching.type==="added"?"Adicionado":matching.type==="substituted"?"Alternativa escolhida":"Quantidade alterada")+'</span>':'<span class="tm-record-change" data-kind="consumed">Consumido</span>';
    rows.push('<li><span>'+esc(foodName(food)||"Alimento sem nome disponível")+'</span><span>'+esc(quantity)+'</span>'+badge+'</li>');
   }
   // Removed items are not part of the eaten list, but remain visible for review.
@@ -215,13 +265,14 @@
   return '<div class="tm-record-food-heading">Alimentos consumidos e alterações</div><ul class="tm-record-food-list">'+rows.join("")+'</ul>';
  }
  function card(r,microcycle){
-  const status={all:"Consumido",partial:"Parcial",none:"Não consumido"}[r.status]||"Registado";
-  const diff=changes(r),changed=diff&&diff.length>0;
-  const showDetails=r.status!=="all"||changed;
+  const diff=changes(r),shownStatus=displayStatus(r,diff);
+  const status={all:"Consumido",partial:"Parcial",none:"Não consumido"}[shownStatus]||"Registado";
+  const changed=diff&&diff.length>0;
+  const showDetails=shownStatus!=="all"||changed;
   const option=r.prescription?.option||{};
   const taken=values(r.nutrition);
   const reference=exactPlan(r);
-  const badges='<span class="tm-consumption-status" data-state="'+esc(r.status)+'">'+status+'</span>'+(changed?'<span class="tm-record-edited">Alterações</span>':'');
+  const badges='<span class="tm-consumption-status" data-state="'+esc(shownStatus)+'">'+status+'</span>'+(changed?'<span class="tm-record-edited">Alterações</span>':'');
   const headline='<div class="tm-record-meal-title"><strong>'+esc(names[r.meal_key]||r.meal_key||"Refeição")+'</strong><span>'+esc(optionLabel(r,microcycle))+'</span></div>';
   const mini='<span class="tm-record-mini"> '+(taken?num(taken.kcal)+" kcal":"—")+(reference?" / "+num(reference.kcal)+" kcal planeadas":"")+'</span>';
   if(!showDetails)return '<article class="tm-consumption-card tm-record-compact"><div class="tm-consumption-head">'+headline+'<div class="tm-record-head-right">'+badges+mini+'</div></div></article>';
