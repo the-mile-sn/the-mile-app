@@ -19,6 +19,9 @@ def initialize(c):
     c.execute("""CREATE TABLE IF NOT EXISTS v2_recipe_categories (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at BIGINT NOT NULL
     )""")
+    from microcycles_v2 import _table_columns
+    if "cover_recipe_id" not in _table_columns(c, "v2_recipe_categories"):
+        c.execute("ALTER TABLE v2_recipe_categories ADD COLUMN cover_recipe_id TEXT")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_recipe_library (
         id TEXT PRIMARY KEY,
         category_id TEXT NOT NULL REFERENCES v2_recipe_categories(id),
@@ -53,7 +56,7 @@ def initialize(c):
 def library_for_athlete(c, athlete_id):
     """Independent library: only published recipes in allowed categories."""
     rows = c.execute("""SELECT r.id,r.name,r.category_id,cat.name AS category,
-                               r.servings,r.updated_at,r.photo_key
+                               r.servings,r.updated_at,r.photo_key,cat.cover_recipe_id
         FROM v2_recipe_library r
         JOIN v2_recipe_categories cat ON cat.id=r.category_id
         JOIN v2_athlete_recipe_category_access access
@@ -62,7 +65,8 @@ def library_for_athlete(c, athlete_id):
         ORDER BY cat.name,r.name""", (athlete_id,)).fetchall()
     return [{**{key: row[key] for key in
                 ("id", "name", "category_id", "category", "servings", "updated_at")},
-             "has_photo": bool(row["photo_key"])} for row in rows]
+             "has_photo": bool(row["photo_key"]),
+             "category_cover_recipe_id":row["cover_recipe_id"]} for row in rows]
 
 
 def _menu_dish_access_sql():
