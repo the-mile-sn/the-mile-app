@@ -24,6 +24,7 @@ import supplements_v2
 import assessments_v2
 import weight_reference_v2
 import plan_import_v2
+import plan_export_pdf_v2
 import food_plan_player_v2
 import player_visual_portions_v2
 import meal_option_selection_v2
@@ -945,6 +946,19 @@ def application(env, start_response):
                     return respond(200,{'options_by_color':plan_import_v2.published_meal_options(c,athlete_id)})
                 if len(segments) == 6 and segments[5] == 'publication-history' and method == 'GET':
                     return respond(200,{'history':plan_import_v2.publication_history(c,athlete_id)})
+                if len(segments) == 7 and segments[6] == 'pdf' and method == 'GET':
+                    draft = plan_import_v2.get_draft(c, athlete_id, segments[5])
+                    if draft is None:
+                        raise Problem(404, 'not_found')
+                    athlete = c.execute("SELECT name, weight_kg FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone()
+                    if athlete is None:
+                        raise Problem(404, 'not_found')
+                    try:
+                        document = plan_export_pdf_v2.render_plan_pdf(draft, dict(athlete))
+                    except ValueError:
+                        raise Problem(400, 'invalid_plan_pdf')
+                    headers.append(('Content-Disposition', "attachment; filename=the-mile-plano-" + draft['color'] + ".pdf"))
+                    return respond(200, document, 'application/pdf')
                 if len(segments) == 7 and segments[6] == 'publish' and method == 'POST':
                     body=read_json(env)
                     if body.get('confirmation')!='PUBLICAR' or body.get('athlete_id')!=athlete_id:
