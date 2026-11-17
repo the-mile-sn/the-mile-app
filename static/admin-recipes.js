@@ -87,19 +87,26 @@
   if(count)count.textContent=categories.length+" "+(categories.length===1?"categoria":"categorias");
   for(const entry of categories){
    const item=node("div","recipe-category-item");
+   const thumbBox=node("div","tm-recipe-category-thumb");
+   if(entry.cover_preview_recipe_id){
+    const img=node("img","");
+    img.src="/api/v2/recipes/image/"+encodeURIComponent(entry.cover_preview_recipe_id)+"?thumb=1&v="+encodeURIComponent(entry.cover_preview_updated_at||0);
+    img.alt="Capa de "+entry.name;img.loading="lazy";img.decoding="async";
+    thumbBox.append(img);
+   }else{
+    thumbBox.append(node("span","tm-recipe-cover-empty","—"));
+    thumbBox.setAttribute("aria-label","Sem fotografia de capa");
+   }
    const badge=recipeCategoryBadge(entry.id,entry.name);
    badge.classList.add("recipe-category-card-badge");
    const actions=node("div","recipe-category-card-actions");
    const edit=button("",()=>editCategory(entry),"recipe-category-small recipe-category-edit-icon");
    edit.append(recipeListIcon("edit"));
-   edit.title="Editar categoria";edit.setAttribute("aria-label","Editar categoria "+entry.name);
+   edit.title="Editar categoria e capa";edit.setAttribute("aria-label","Editar categoria e capa de "+entry.name);
    const remove=button("",()=>removeCategory(entry),"recipe-category-small recipe-category-danger recipe-category-delete-icon");
    remove.append(recipeListIcon("trash"));
    remove.title="Eliminar categoria";remove.setAttribute("aria-label","Eliminar categoria "+entry.name);
-   const cover=button("Capa",()=>editCategoryCover(entry),"recipe-category-small recipe-category-cover-action");
-   cover.setAttribute("aria-label","Escolher capa de "+entry.name);
-   cover.title="Escolher fotografia da categoria";
-   actions.append(cover,edit,remove);item.append(badge,actions);host.append(item);
+   actions.append(edit,remove);item.append(thumbBox,badge,actions);host.append(item);
   }
  }
  function activeRecipeFilters(){
@@ -745,107 +752,100 @@
   finally{action.disabled=false;}
  }
 
- async function editCategoryCover(entry){
-  if(busy)return;
-  const form=$("recipe-category-edit");
-  form.hidden=false;form.replaceChildren();
-  form.append(node("h4","tm-recipe-cover-heading","Capa · "+entry.name));
-  form.append(node("p","recipe-category-edit-info",
-   "Escolhe uma receita publicada desta categoria. A fotografia escolhida será a capa na app dos jogadores."));
-  const feedback=node("p","hint");feedback.setAttribute("role","status");
-  form.append(feedback);
-  const preview=node("div","tm-recipe-cover-preview");
-  const pickerLabel=node("label","recipe-category-edit-label");
-  pickerLabel.append(node("span","","Fotografia de capa"));
-  const picker=node("select","tm-recipe-cover-picker");
-  picker.setAttribute("aria-label","Receita para capa de "+entry.name);
-  pickerLabel.append(picker);form.append(pickerLabel,preview);
-  const actions=node("div","recipe-category-edit-actions");
-  const save=button("Guardar capa",async()=>{
-   if(busy)return;
-   busy=true;save.disabled=true;feedback.textContent="A guardar capa…";
-   try{
-    const selected=picker.value||null;
-    await request("/api/v2/recipes/categories/"+encodeURIComponent(entry.id)+"/cover",{
-     method:"PUT",body:JSON.stringify({cover_recipe_id:selected})
-    });
-    await loadLibrary();
-    form.hidden=true;form.replaceChildren();
-    $("recipe-category-feedback").textContent=selected?
-     "Capa definida para «"+entry.name+"».":"Capa automática reposta para «"+entry.name+"».";
-   }catch(error){
-    feedback.textContent="Não foi possível guardar a capa: "+error.message;
-   }finally{busy=false;save.disabled=false;}
-  },"recipe-primary");
-  actions.append(button("Cancelar",()=>{form.hidden=true;form.replaceChildren();}),save);
-  form.append(actions);
-  feedback.textContent="A carregar fotografias disponíveis…";
-  try{
-   await ensureFullRecipeIndex();
-   if(!form.isConnected||form.hidden)return;
-   const candidates=recipes.filter(r=>r.category_id===entry.id&&r.status==="published"&&r.photo_key);
-   picker.replaceChildren();
-   const automatic=node("option","","Automática (primeira receita com fotografia)");
-   automatic.value="";picker.append(automatic);
-   for(const recipe of candidates){
-    const option=node("option","",recipe.name);
-    option.value=recipe.id;picker.append(option);
-   }
-   picker.value=candidates.some(r=>r.id===entry.cover_recipe_id)?entry.cover_recipe_id:"";
-   const repaint=()=>{
-    preview.replaceChildren();
-    const selected=candidates.find(r=>r.id===picker.value);
-    if(selected){
-     const photo=node("img","tm-recipe-cover-photo");
-     photo.alt="Capa selecionada: "+selected.name;
-     photo.src="/api/v2/recipes/image/"+encodeURIComponent(selected.id)+"?thumb=1&v="+encodeURIComponent(selected.updated_at||0);
-     preview.append(photo,node("p","",selected.name));
-    }else{
-     preview.append(node("p","recipe-category-edit-info",
-      "Sem capa fixa: a app apresenta automaticamente a primeira fotografia disponível."));
-    }
-   };
-   picker.addEventListener("change",repaint);repaint();
-   feedback.textContent=candidates.length?
-    "Disponíveis "+candidates.length+" receitas publicadas com fotografia.":
-    "Ainda não existem receitas publicadas com fotografia nesta categoria.";
-  }catch(error){feedback.textContent="Não foi possível carregar receitas: "+error.message;save.disabled=true;}
- }
- 
  async function editCategory(entry){
   if(busy)return;
-  const form=$("recipe-category-edit");
-  form.hidden=false;
-  form.replaceChildren();
-  const fieldLabel=node("label","recipe-category-edit-label");
-  fieldLabel.append(node("span","","Alterar nome da categoria"));
+  const previous=$("tm-recipe-category-dialog");
+  if(previous){previous.close();previous.remove();}
+  const dialog=node("dialog","tm-recipe-category-dialog");
+  dialog.id="tm-recipe-category-dialog";
+  dialog.setAttribute("aria-label","Editar categoria "+entry.name);
+  const heading=node("div","tm-recipe-category-dialog-heading");
+  heading.append(node("h3","","Editar categoria"));
+  const close=button("×",()=>dialog.close(),"tm-library-modal-x tm-recipe-category-close");
+  close.setAttribute("aria-label","Fechar");heading.append(close);dialog.append(heading);
+  const nameLabel=node("label","tm-recipe-category-name-field");
+  nameLabel.append(node("span","","Nome da categoria"));
   const field=node("input");field.type="text";field.maxLength=90;field.value=entry.name;
-  field.setAttribute("aria-label","Novo nome para "+entry.name);
-  fieldLabel.append(field);form.append(fieldLabel);
-  const actions=node("div","recipe-category-edit-actions");
+  field.setAttribute("aria-label","Nome da categoria");
+  nameLabel.append(field);dialog.append(nameLabel);
+  dialog.append(node("h4","tm-recipe-category-cover-title","Fotografia de capa"));
+  const preview=node("div","tm-recipe-category-cover-preview");
+  dialog.append(preview);
+  const gallery=node("div","tm-recipe-category-cover-gallery");
+  gallery.setAttribute("role","group");
+  gallery.setAttribute("aria-label","Fotografias disponíveis na categoria");dialog.append(gallery);
+  const feedback=node("p","tm-recipe-category-dialog-feedback");
+  feedback.setAttribute("role","status");dialog.append(feedback);
+  const actions=node("div","tm-recipe-category-dialog-actions");
+  let selectedId=entry.cover_recipe_id||"";
   const save=button("Guardar",async()=>{
-   const name=field.value.trim(),feedback=$("recipe-category-feedback");
-   if(!name){feedback.textContent="Indica o nome da categoria.";return;}
    if(busy)return;
-   busy=true;save.disabled=true;
+   const name=field.value.trim();
+   if(!name){feedback.textContent="Indica o nome da categoria.";return;}
+   busy=true;save.disabled=true;feedback.textContent="";
    try{
-    await request("/api/v2/recipes/categories/"+encodeURIComponent(entry.id),{
-     method:"PUT",body:JSON.stringify({name})
-    });
+    const path="/api/v2/recipes/categories/"+encodeURIComponent(entry.id);
+    if(name!==entry.name)await request(path,{method:"PUT",body:JSON.stringify({name})});
+    if(selectedId!==(entry.cover_recipe_id||"")){
+     await request(path+"/cover",{method:"PUT",body:JSON.stringify({cover_recipe_id:selectedId||null})});
+    }
+    dialog.close();
     const categoryId=current?.category_id;
     await loadLibrary();
     if(current&&categoryId)$("recipe-category").value=categoryId;
-    form.hidden=true;form.replaceChildren();
-    feedback.textContent="Categoria atualizada. As receitas mantêm a sua categoria e respetivos IDs.";
+    $("recipe-category-feedback").textContent="Categoria atualizada.";
    }catch(error){
     feedback.textContent=error.message==="duplicate_recipe_category"?
-     "Já existe uma categoria com esse nome.":"Não foi possível alterar a categoria: "+error.message;
+     "Já existe uma categoria com esse nome.":"Não foi possível guardar: "+error.message;
    }finally{busy=false;save.disabled=false;}
-  },"recipe-primary");
-  const cancel=button("Cancelar",()=>{form.hidden=true;form.replaceChildren();});
-  actions.append(save,cancel);form.append(actions);
-  field.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();save.click();}});
-  field.focus();field.select();
+  },"tm-action-primary");
+  actions.append(button("Cancelar",()=>dialog.close(),"tm-action-secondary"),save);
+  dialog.append(actions);
+  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+  $("tm-recipe-library-page").append(dialog);
+  dialog.showModal();
+  feedback.textContent="A carregar fotografias…";
+  try{
+   await ensureFullRecipeIndex();
+   if(!dialog.isConnected||!dialog.open)return;
+   const candidates=recipes.filter(r=>r.category_id===entry.id&&r.status==="published"&&r.photo_key);
+   if(!candidates.some(r=>r.id===selectedId))selectedId="";
+   const automatic=candidates[0]||null;
+   const thumbnailUrl=r=>"/api/v2/recipes/image/"+encodeURIComponent(r.id)+
+    "?thumb=1&v="+encodeURIComponent(r.updated_at||0);
+   const paintSelection=()=>{
+    preview.replaceChildren();
+    const chosen=candidates.find(r=>r.id===selectedId)||automatic;
+    if(chosen){
+     const photo=node("img","tm-recipe-category-cover-large");
+     photo.src=thumbnailUrl(chosen);photo.alt="Fotografia de "+chosen.name;
+     preview.append(photo);
+    }else preview.append(node("span","tm-recipe-cover-empty","Sem fotografia"));
+    for(const choice of gallery.querySelectorAll("button[data-cover-id]")){
+     const active=choice.dataset.coverId===selectedId;
+     choice.setAttribute("aria-pressed",String(active));
+     choice.classList.toggle("is-selected",active);
+    }
+   };
+   const addChoice=(recipe,label)=>{
+    const choice=button("",()=>{selectedId=recipe?.id||"";paintSelection();},"tm-recipe-cover-choice");
+    choice.dataset.coverId=recipe?.id||"";
+    choice.setAttribute("aria-pressed","false");
+    choice.setAttribute("aria-label",label);
+    if(recipe){
+     const image=node("img","");
+     image.src=thumbnailUrl(recipe);image.alt="";image.loading="lazy";
+     choice.append(image);
+    }else choice.append(node("span","tm-recipe-cover-auto-label","Auto"));
+    gallery.append(choice);
+   };
+   addChoice(null,"Capa automática");
+   for(const recipe of candidates)addChoice(recipe,recipe.name);
+   paintSelection();
+   feedback.textContent=candidates.length?"":"Sem receitas publicadas com fotografia.";
+  }catch(error){
+   if(dialog.isConnected)feedback.textContent="Não foi possível carregar fotografias: "+error.message;
+  }
  }
  async function removeCategory(entry){
   if(busy)return;
