@@ -3127,7 +3127,14 @@ function renderDishEditor(){
     const tag=document.createElement("small");tag.className="dish-recipe-indicator";
     const linkedCount=associated?.recipes?.length||0;
     const hasRecipe=linkedCount>0||Boolean(associated?.recipe_id);
-    if(hasRecipe){tag.textContent=linkedCount>1?linkedCount+" receitas associadas":"Receita associada";td.append(tag);}
+    const categoryTag=tag.cloneNode(false);
+    categoryTag.classList.add("dish-recipe-indicator-category");
+    categoryTag.hidden=!hasRecipe;
+    if(hasRecipe){
+     tag.textContent=linkedCount>1?linkedCount+" receitas associadas":"Receita associada";
+     categoryTag.textContent=tag.textContent;td.append(tag);
+    }
+    categoryCell.append(categoryTag);
    }
    tr.append(td);
   }
@@ -3228,8 +3235,10 @@ function renderDishEditor(){
      remove.addEventListener("click",()=>persistAssociation(item.recipe_id,"DELETE"));
      const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(view,remove);line.append(name,actions);associationList.append(line);
     }
-    const rowTag=tr.querySelector(".dish-recipe-indicator");
-    if(rowTag){rowTag.hidden=!linked.length;rowTag.textContent=linked.length?(linked.length===1?"Receita associada":linked.length+" receitas associadas"):"";}
+    for(const rowTag of tr.querySelectorAll(".dish-recipe-indicator")){
+     rowTag.hidden=!linked.length;
+     rowTag.textContent=linked.length?(linked.length===1?"Receita associada":linked.length+" receitas associadas"):"";
+    }
    };
    const closeAssociationSuggestions=()=>{
     associationSuggestions.hidden=true;associationSearch.setAttribute("aria-expanded","false");
