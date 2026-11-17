@@ -22,6 +22,9 @@ def initialize(c):
     )""")
     c.execute("""CREATE UNIQUE INDEX IF NOT EXISTS v2_recipe_categories_name
         ON v2_recipe_categories(name)""")
+    from microcycles_v2 import _table_columns
+    if "cover_recipe_id" not in _table_columns(c, "v2_recipe_categories"):
+        c.execute("ALTER TABLE v2_recipe_categories ADD COLUMN cover_recipe_id TEXT")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_recipe_library (
         id TEXT PRIMARY KEY,
         category_id TEXT NOT NULL REFERENCES v2_recipe_categories(id),
@@ -82,8 +85,34 @@ def _text(value, limit, required=False):
 
 def list_categories(c):
     return [dict(r) for r in c.execute(
-        "SELECT id,name FROM v2_recipe_categories ORDER BY name"
+        "SELECT id,name,cover_recipe_id FROM v2_recipe_categories ORDER BY name"
     ).fetchall()]
+
+
+def set_category_cover(c, category_id, recipe_id):
+    """Store a stable recipe reference, not a duplicated image blob."""
+    if not isinstance(category_id, str) or not _IDENTIFIER.fullmatch(category_id):
+        return None
+    category = c.execute(
+        "SELECT id,name FROM v2_recipe_categories WHERE id=?", (category_id,)
+    ).fetchone()
+    if category is None:
+        return None
+    if recipe_id is not None:
+        if not isinstance(recipe_id, str) or not _IDENTIFIER.fullmatch(recipe_id):
+            raise ValueError("invalid_category_cover")
+        selected = c.execute(
+            "SELECT id FROM v2_recipe_library WHERE id=? AND category_id=? "
+            "AND status='published' AND photo_key IS NOT NULL",
+            (recipe_id, category_id)
+        ).fetchone()
+        if selected is None:
+            raise ValueError("invalid_category_cover")
+    c.execute("UPDATE v2_recipe_categories SET cover_recipe_id=? WHERE id=?",
+              (recipe_id, category_id))
+    c.commit()
+    return {"id":category["id"], "name":category["name"],
+            "cover_recipe_id":recipe_id}
 
 
 def create_category(c, name):
