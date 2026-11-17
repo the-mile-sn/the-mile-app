@@ -12189,3 +12189,105 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-
   box-shadow:none!important;
  }
 }
+
+/* PDF meal modal + supplement save: aligned with shared backoffice contrast and subcard surfaces (2026-11-17). */
+html[data-admin-theme] body #admin-workspace #tm-plan-page dialog#tm-pdf-meals-dialog[open]{
+ box-sizing:border-box!important;
+ width:min(620px,calc(100vw - 28px))!important;max-width:620px!important;
+ max-height:calc(100dvh - 32px)!important;overflow-y:auto!important;
+ margin:auto!important;padding:0!important;
+ border:0!important;border-radius:20px!important;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ box-shadow:0 20px 80px rgba(0,0,0,.35)!important;
+ font-family:"Inter Tight",system-ui,sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page dialog#tm-pdf-meals-dialog::backdrop{
+ background:rgba(0,0,0,.72)!important;backdrop-filter:blur(3px);
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-content{
+ box-sizing:border-box!important;padding:25px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-header{
+ display:flex!important;align-items:center!important;gap:16px!important;justify-content:space-between!important;
+ margin:0 0 18px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-header h2{
+ font:600 23px/1.25 "Inter Tight",sans-serif!important;letter-spacing:-.02em!important;
+ color:var(--tm-ui-text)!important;margin:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-cancel{
+ display:grid!important;place-items:center!important;flex:0 0 38px!important;
+ width:38px!important;height:38px!important;min-width:38px!important;
+ border:0!important;border-radius:12px!important;
+ background:var(--tm-ui-search)!important;color:var(--tm-ui-text)!important;
+ font:400 23px/1 "Inter Tight",sans-serif!important;box-shadow:none!important;
+ padding:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-description{
+ margin:0 0 20px!important;font:400 13px/1.55 "Inter Tight",sans-serif!important;
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choices{
+ display:grid!important;gap:10px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;gap:12px!important;
+ min-height:58px!important;padding:14px 16px!important;
+ border:0!important;border-radius:14px!important;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ font:500 15px/1.3 "Inter Tight",sans-serif!important;cursor:pointer!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice:focus-within{
+ outline:2px solid var(--tm-shell-focus,#80a7cf)!important;outline-offset:2px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice input{
+ flex:0 0 17px!important;width:17px!important;height:17px!important;margin:0!important;
+ accent-color:var(--tm-shell-focus,#82a8c9)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-total{
+ box-sizing:border-box!important;border:0!important;border-radius:14px!important;
+ margin:16px 0 0!important;padding:16px!important;
+ background:var(--tm-ui-subcard)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-total small,
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-total p{
+ color:var(--tm-ui-muted)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-total strong{
+ color:var(--tm-ui-text)!important;font:600 16px/1.45 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-actions{
+ justify-content:flex-end!important;margin:18px 0 0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm,
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save{
+ min-height:44px!important;min-width:130px!important;padding:10px 18px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ background:#f6f7f8!important;color:#161719!important;
+ font:600 14px/1.25 "Inter Tight",sans-serif!important;
+ cursor:pointer!important;
+}
+html[data-admin-theme="light"] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm,
+html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save{
+ background:#1b1d23!important;color:#fff!important;
+}
+html[data-admin-theme="dark"] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm:hover:not(:disabled),
+html[data-admin-theme="dark"] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save:hover:not(:disabled){
+ background:#e4e7eb!important;
+}
+html[data-admin-theme="light"] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm:hover:not(:disabled),
+html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save:hover:not(:disabled){
+ background:#353943!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm:disabled,
+html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save:disabled{
+ opacity:.5!important;cursor:default!important;
+}
+@media(max-width:620px){
+ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-content{
+  padding:20px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meals-actions button{
+  width:100%!important;
+ }
+}
