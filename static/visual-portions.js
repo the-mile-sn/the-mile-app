@@ -110,29 +110,28 @@
   editorPreview.src="/api/v2/visual-portions/image/"+encodeURIComponent(ref.id)+"?t="+Date.now();
   photoEditor.showModal();
  }
- async function prepareWebp(file){
+ async function preparePhotoUpload(file){
+  // Safari may export PNG when asked for WebP. Send supported originals to the
+  // server, which converts and validates them while preserving transparency.
+  const limit=12*1024*1024;
+  if(file.size<=limit)return file;
   let source;
   try{source=await createImageBitmap(file);}
-  catch(_error){throw Error("Não foi possível abrir esta imagem. Experimenta PNG, JPEG ou WebP.");}
+  catch(_error){throw Error("Não foi possível abrir esta fotografia. Experimenta um ficheiro PNG ou JPEG.");}
   try{
-   const limit=3*1024*1024;
    const canvas=document.createElement("canvas");
    const ctx=canvas.getContext("2d");
-   if(!ctx)throw Error("Não foi possível processar a fotografia neste dispositivo.");
-   const largest=Math.max(source.width,source.height);
-   if(!largest)throw Error("Fotografia inválida.");
-   for(const maxSide of [1200,960,800,640,480]){
-    const scale=Math.min(1,maxSide/largest);
+   if(!ctx)throw Error("Não foi possível preparar a fotografia.");
+   for(const size of [1600,1200,900,700]){
+    const scale=Math.min(1,size/Math.max(source.width,source.height));
     canvas.width=Math.max(1,Math.round(source.width*scale));
     canvas.height=Math.max(1,Math.round(source.height*scale));
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(source,0,0,canvas.width,canvas.height);
-    for(const quality of [.86,.72,.56,.4]){
-     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
-     if(blob&&blob.type==="image/webp"&&blob.size<=limit)return blob;
-    }
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+    if(blob&&blob.size<=limit)return blob;
    }
-   throw Error("Não foi possível comprimir automaticamente esta fotografia. Experimenta outro formato.");
+   throw Error("Não foi possível preparar esta fotografia. Usa uma imagem até 12 MB.");
   }finally{source.close();}
  }
  editorSave.addEventListener("click",async()=>{
@@ -141,10 +140,10 @@
   if(!["image/png","image/jpeg","image/webp"].includes(file.type)){editorFeedback.textContent="Formato de imagem inválido.";return;}
   editorSave.disabled=true;editorCancel.disabled=true;editorFeedback.textContent="A guardar fotografia…";
   try{
-   const blob=await prepareWebp(file);
+   const blob=await preparePhotoUpload(file);
    const res=await fetch("/api/v2/visual-portions/image/"+encodeURIComponent(ref.id),{
     method:"POST",credentials:"same-origin",
-    headers:{"Accept":"application/json","Content-Type":"image/webp","X-CSRF-Token":csrf},
+    headers:{"Accept":"application/json","Content-Type":blob.type||"application/octet-stream","X-CSRF-Token":csrf},
     body:blob
    });
    const payload=await res.json();
