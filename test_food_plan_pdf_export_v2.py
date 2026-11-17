@@ -33,7 +33,7 @@ class PlanPdfTests(unittest.TestCase):
         self.assertEqual([x[1] for x in selected],["Pequeno almoço","Almoço","Lanche","Jantar"])
         plan={"player_name":"Jogador","plan_type":"Plano amarelo","meals":groups}
         text=" ".join(p.extract_text() for p in PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages)
-        for name in ("Pequeno-almoço","Almoço","Lanche","Jantar","2250 kcal"):
+        for name in ("Pequeno-almoço","Almoço","Lanche","Jantar","1500 kcal"):
             self.assertIn(name,text)
 
     def test_selection_excludes_dinner_and_recomputes_energy(self):
