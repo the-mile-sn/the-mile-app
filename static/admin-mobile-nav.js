@@ -44,7 +44,7 @@
  function refresh(animate=false){
   if(!mobile())return;
   const selected=selectedPrimary();
-  navLinks.forEach(link=>{
+  allTabs.forEach(link=>{
    const active=link===selected;
    link.classList.toggle("tm-mobile-current",active);
    if(active)link.setAttribute("data-mobile-active","true");
@@ -68,14 +68,16 @@
   if(mobile()){
    sidebar.classList.add("tm-complete-mobile-nav");
    more?.setAttribute("hidden","");
-   // Settings stay in a separate compact account control.
+   // Restore original link placement when switching to desktop.
    account.classList.remove("is-mobile-open");
+   for(const {link} of accountAnchors)if(link.parentNode!==main)main.append(link);
    if(food&&food.parentNode!==sidebar)sidebar.insertBefore(food,account);
    // All work areas already exist as main nav links; no IDs or handlers change.
    refresh(false);
   }else{
    sidebar.classList.remove("tm-complete-mobile-nav");
    more?.removeAttribute("hidden");
+   for(const {link,marker} of accountAnchors)if(marker.parentNode)marker.after(link);
    if(food&&foodAnchor.parentNode)foodAnchor.after(food);
    food?.classList.remove("tm-mobile-subnav-open");
    if(food)food.hidden=!hasActive(foodLink);
