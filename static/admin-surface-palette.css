@@ -10045,3 +10045,64 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page dialog#editor
   margin:0!important;
  }
 }
+
+
+/* Dedicated photograph column (desktop uses the existing inline image). */
+html[data-admin-theme] body #tm-supplement-library-page .tm-supp-mobile-photo-cell{display:none!important;}
+/* P4 SUPPLEMENTS MOBILE V145: photo beside dose, no vertical dead space */
+@media (max-width:830px) and (pointer:coarse) {
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 72px!important;
+  grid-template-rows:auto auto auto auto!important;
+  gap:7px 10px!important;
+  align-items:start!important;
+  position:relative!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:first-child,
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:first-child:has(.tm-supp-table-name img){
+  box-sizing:border-box!important;
+  grid-column:1/-1!important;grid-row:1!important;
+  min-height:38px!important;height:auto!important;
+  padding:0 93px 0 0!important;
+  margin:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table .tm-supp-table-name{
+  display:block!important;width:100%!important;min-width:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table .tm-supp-table-name>img{
+  display:none!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(2),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(3),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(4){
+  grid-column:1!important;max-width:100%!important;min-width:0!important;
+  width:100%!important;box-sizing:border-box!important;
+  padding:0!important;margin:0!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(2){grid-row:2!important;}
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(3){grid-row:3!important;}
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td:nth-child(4){grid-row:4!important;}
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td.tm-supp-mobile-photo-cell{
+  display:flex!important;grid-column:2!important;grid-row:2 / span 3!important;
+  align-items:flex-start!important;justify-content:flex-end!important;
+  width:72px!important;min-width:0!important;
+  margin:0!important;padding:0!important;
+  position:static!important;
+  background:transparent!important;border:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table .tm-supp-mobile-photo-cell img{
+  display:block!important;position:static!important;
+  width:48px!important;height:48px!important;max-width:48px!important;
+  min-width:48px!important;object-fit:contain!important;
+  margin:0!important;border-radius:9px!important;
+ }
+ /* Explicitly preserve the already-approved top-right action placement. */
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table tbody tr>td.tm-supp-table-actions{
+  position:absolute!important;top:14px!important;right:14px!important;
+  display:flex!important;gap:8px!important;
+  width:auto!important;grid-column:auto!important;
+  margin:0!important;padding:0!important;
+ }
+}
