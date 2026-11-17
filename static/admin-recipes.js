@@ -96,7 +96,10 @@
    const remove=button("",()=>removeCategory(entry),"recipe-category-small recipe-category-danger recipe-category-delete-icon");
    remove.append(recipeListIcon("trash"));
    remove.title="Eliminar categoria";remove.setAttribute("aria-label","Eliminar categoria "+entry.name);
-   actions.append(edit,remove);item.append(badge,actions);host.append(item);
+   const cover=button("Capa",()=>editCategoryCover(entry),"recipe-category-small recipe-category-cover-action");
+   cover.setAttribute("aria-label","Escolher capa de "+entry.name);
+   cover.title="Escolher fotografia da categoria";
+   actions.append(cover,edit,remove);item.append(badge,actions);host.append(item);
   }
  }
  function activeRecipeFilters(){
@@ -742,6 +745,73 @@
   finally{action.disabled=false;}
  }
 
+ async function editCategoryCover(entry){
+  if(busy)return;
+  const form=$("recipe-category-edit");
+  form.hidden=false;form.replaceChildren();
+  form.append(node("h4","tm-recipe-cover-heading","Capa · "+entry.name));
+  form.append(node("p","recipe-category-edit-info",
+   "Escolhe uma receita publicada desta categoria. A fotografia escolhida será a capa na app dos jogadores."));
+  const feedback=node("p","hint");feedback.setAttribute("role","status");
+  form.append(feedback);
+  const preview=node("div","tm-recipe-cover-preview");
+  const pickerLabel=node("label","recipe-category-edit-label");
+  pickerLabel.append(node("span","","Fotografia de capa"));
+  const picker=node("select","tm-recipe-cover-picker");
+  picker.setAttribute("aria-label","Receita para capa de "+entry.name);
+  pickerLabel.append(picker);form.append(pickerLabel,preview);
+  const actions=node("div","recipe-category-edit-actions");
+  const save=button("Guardar capa",async()=>{
+   if(busy)return;
+   busy=true;save.disabled=true;feedback.textContent="A guardar capa…";
+   try{
+    const selected=picker.value||null;
+    await request("/api/v2/recipes/categories/"+encodeURIComponent(entry.id)+"/cover",{
+     method:"PUT",body:JSON.stringify({cover_recipe_id:selected})
+    });
+    await loadLibrary();
+    form.hidden=true;form.replaceChildren();
+    $("recipe-category-feedback").textContent=selected?
+     "Capa definida para «"+entry.name+"».":"Capa automática reposta para «"+entry.name+"».";
+   }catch(error){
+    feedback.textContent="Não foi possível guardar a capa: "+error.message;
+   }finally{busy=false;save.disabled=false;}
+  },"recipe-primary");
+  actions.append(button("Cancelar",()=>{form.hidden=true;form.replaceChildren();}),save);
+  form.append(actions);
+  feedback.textContent="A carregar fotografias disponíveis…";
+  try{
+   await ensureFullRecipeIndex();
+   if(!form.isConnected||form.hidden)return;
+   const candidates=recipes.filter(r=>r.category_id===entry.id&&r.status==="published"&&r.photo_key);
+   picker.replaceChildren();
+   const automatic=node("option","","Automática (primeira receita com fotografia)");
+   automatic.value="";picker.append(automatic);
+   for(const recipe of candidates){
+    const option=node("option","",recipe.name);
+    option.value=recipe.id;picker.append(option);
+   }
+   picker.value=candidates.some(r=>r.id===entry.cover_recipe_id)?entry.cover_recipe_id:"";
+   const repaint=()=>{
+    preview.replaceChildren();
+    const selected=candidates.find(r=>r.id===picker.value);
+    if(selected){
+     const photo=node("img","tm-recipe-cover-photo");
+     photo.alt="Capa selecionada: "+selected.name;
+     photo.src="/api/v2/recipes/image/"+encodeURIComponent(selected.id)+"?thumb=1&v="+encodeURIComponent(selected.updated_at||0);
+     preview.append(photo,node("p","",selected.name));
+    }else{
+     preview.append(node("p","recipe-category-edit-info",
+      "Sem capa fixa: a app apresenta automaticamente a primeira fotografia disponível."));
+    }
+   };
+   picker.addEventListener("change",repaint);repaint();
+   feedback.textContent=candidates.length?
+    "Disponíveis "+candidates.length+" receitas publicadas com fotografia.":
+    "Ainda não existem receitas publicadas com fotografia nesta categoria.";
+  }catch(error){feedback.textContent="Não foi possível carregar receitas: "+error.message;save.disabled=true;}
+ }
+ 
  async function editCategory(entry){
   if(busy)return;
   const form=$("recipe-category-edit");
