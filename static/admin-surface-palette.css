@@ -12094,3 +12094,56 @@ html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page
 html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-table-actions button.tm-supp-library-edit svg{
  color:#253246!important;stroke:#253246!important;opacity:1!important;
 }
+
+
+/* 17 November mobile QA: match Início page outer gutter across library pages. */
+@media(max-width:830px){
+ html[data-admin-theme] body #admin-workspace .tm-admin-work-area:not(:has(#tm-dashboard:not([hidden]))){
+  box-sizing:border-box!important;padding-left:12px!important;padding-right:12px!important;
+ }
+ html[data-admin-theme] body #admin-workspace :is(
+ #tm-food-library-page,#tm-supplement-library-page,#tm-menu-recipes-page,
+ #tm-recipe-library-page
+ ){
+  box-sizing:border-box!important;max-width:100%!important;min-width:0!important;
+ }
+}
+/* Food catalogue: target actual mobile article markup and beat legacy .food-mobile-cards rule. */
+@media(max-width:850px){
+ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button:not(.food-delete-icon),
+ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button:not(.food-delete-icon):is(:focus,:active,:hover){
+  background:#F0F2F6!important;color:#253246!important;border:0!important;
+  box-shadow:none!important;opacity:1!important;
+ }
+ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button:not(.food-delete-icon) svg,
+ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button:not(.food-delete-icon) svg *{
+  color:#253246!important;stroke:#253246!important;opacity:1!important;
+ }
+ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .food-mobile-cards .tm-food-mobile-actions button.food-delete-icon{
+  background:#F7E2E7!important;color:#B45169!important;border:0!important;box-shadow:none!important;
+ }
+}
+/* Category pills: exactly one geometry, on the real catalogue markup.
+   The backgrounds and ink remain their registered category-specific tones. */
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody .dish-table-category .dish-category-pill,
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-card .dish-mobile-tags .dish-category-pill,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table tbody .recipe-category-cell .recipe-category-badge,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-card .tm-recipe-mobile-badges .recipe-category-badge{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;width:max-content!important;max-width:100%!important;
+ height:26px!important;min-height:26px!important;max-height:26px!important;
+ padding:0 9px!important;margin:0!important;
+ border:1px solid color-mix(in srgb,currentColor 22%,transparent)!important;
+ border-radius:999px!important;box-shadow:none!important;
+ font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ letter-spacing:normal!important;white-space:nowrap!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-card .dish-mobile-tags .dish-recipe-indicator-category:not([hidden]),
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-card .tm-recipe-mobile-badges .recipe-status-tag{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;width:max-content!important;max-width:100%!important;
+ height:26px!important;min-height:26px!important;max-height:26px!important;
+ padding:0 9px!important;margin:0!important;border:0!important;
+ border-radius:999px!important;font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ white-space:nowrap!important;
+}
