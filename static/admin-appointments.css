@@ -419,3 +419,14 @@ html[data-admin-theme="light"] .tm-appt-booking-date-section{
  .tm-appointments-weekdays{font-size:10px}
  .tm-appointments-calendar-toolbar{flex-wrap:wrap}
 }
+
+/* Compact appointments in monthly cells, like native calendar event labels. */
+.tm-appointments-week.is-month .tm-appointments-day{overflow:hidden;align-items:stretch;gap:5px}
+.tm-appointments-week.is-month .tm-appointments-day strong{order:0;margin-left:auto;flex:none}
+.tm-appt-calendar-event{display:block;max-width:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;line-height:1.4;color:var(--tm-ui-text);text-align:left;border-left:3px solid #76a2ce;padding-left:6px;font-weight:400}
+.tm-appointments-week.is-month .tm-appt-calendar-event{flex:none}
+.tm-appointments-week.is-week .tm-appt-calendar-event,.tm-appointments-week.is-day .tm-appt-calendar-event{max-width:100%}
+@media(max-width:760px){
+ .tm-appointments-week.is-month .tm-appt-calendar-event{font-size:9px;padding-left:3px;border-left-width:2px}
+ .tm-appointments-week.is-month .tm-appointments-day{gap:4px}
+}
