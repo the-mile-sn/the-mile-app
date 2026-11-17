@@ -12301,8 +12301,9 @@ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog 
  flex:0 0 32px!important;padding:0!important;
  color:var(--tm-ui-text)!important;font:400 23px/1 "Inter Tight",sans-serif!important;
 }
-html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-cancel:focus-visible{
- outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;border-radius:6px!important;
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-cancel:is(:focus,:focus-visible,:hover,:active){
+ outline:0!important;outline-offset:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
 }
 html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice input[type="checkbox"]{
  -webkit-appearance:none!important;appearance:none!important;
