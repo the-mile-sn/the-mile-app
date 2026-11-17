@@ -8,8 +8,8 @@
  if(!root||!auth)return;
  const tabNames=["agenda","reservas","disponibilidades","configuracao"];
  const range=byId("tm-appointments-range"),days=byId("tm-appointments-days");
- const locale=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short"});
  const longRange=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",day:"numeric",month:"long",year:"numeric"});
+ const monthFormat=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",month:"long",year:"numeric"});
  const lisbon=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",year:"numeric",month:"2-digit",day:"2-digit"});
  function todayInLisbon(){
   const parts=Object.fromEntries(lisbon.formatToParts(new Date()).map(part=>[part.type,part.value]));
@@ -17,33 +17,55 @@
  }
  function utcDay(iso){return new Date(iso+"T12:00:00Z");}
  function shift(iso,delta){const d=utcDay(iso);d.setUTCDate(d.getUTCDate()+delta);return d.toISOString().slice(0,10);}
- function monday(iso){const day=(utcDay(iso).getUTCDay()+6)%7;return shift(iso,-day);}
- let selected=todayInLisbon(),view="week";
+ function monday(iso){return shift(iso,-((utcDay(iso).getUTCDay()+6)%7));}
+ function shiftMonth(iso,delta){
+  const d=utcDay(iso),day=d.getUTCDate();
+  const target=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+delta+1,0,12));
+  target.setUTCDate(Math.min(day,target.getUTCDate()));
+  return target.toISOString().slice(0,10);
+ }
+ let selected=todayInLisbon(),view="month";
  function render(){
-  const now=todayInLisbon(),dates=view==="day"?[selected]:Array.from({length:7},(_,i)=>shift(monday(selected),i));
-  const first=dates[0],last=dates[dates.length-1];
-  const title=view==="day"?longRange.format(utcDay(selected)):
+  const now=todayInLisbon();
+  const first=view==="month"?selected.slice(0,7)+"-01":view==="week"?monday(selected):selected;
+  const last=view==="month"?shift(shiftMonth(first,1),-1):view==="week"?shift(first,6):selected;
+  const dates=Array.from({length:Math.round((utcDay(last)-utcDay(first))/86400000)+1},(_,i)=>shift(first,i));
+  range.textContent=view==="month"?monthFormat.format(utcDay(first)):
+   view==="day"?longRange.format(utcDay(selected)):
    new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short",timeZone:"UTC"}).format(utcDay(first))+" – "+longRange.format(utcDay(last));
-  range.textContent=title;
-  byId("tm-appointments-previous").setAttribute("aria-label",view==="week"?"Semana anterior":"Dia anterior");
-  byId("tm-appointments-next").setAttribute("aria-label",view==="week"?"Semana seguinte":"Dia seguinte");
-  days.classList.toggle("is-day",view==="day");
+  const labels={month:["Mês anterior","Mês seguinte"],week:["Semana anterior","Semana seguinte"],day:["Dia anterior","Dia seguinte"]};
+  byId("tm-appointments-previous").setAttribute("aria-label",labels[view][0]);
+  byId("tm-appointments-next").setAttribute("aria-label",labels[view][1]);
+  days.className="tm-appointments-week is-"+view;
+  byId("tm-appointments-weekdays").hidden=view!=="month";
   days.replaceChildren();
+  if(view==="month"){
+   for(let i=0;i<(utcDay(first).getUTCDay()+6)%7;i++){
+    const blank=document.createElement("span");
+    blank.className="tm-appointments-day-blank";blank.setAttribute("aria-hidden","true");days.append(blank);
+   }
+  }
   for(const iso of dates){
-   const node=document.createElement("div");
-   node.className="tm-appointments-day"+(iso===now?" is-today":"");
+   const node=document.createElement("button");
+   node.type="button";
+   node.className="tm-appointments-day"+(iso===now?" is-today":"")+(iso===selected?" is-selected":"");
    node.dataset.date=iso;
+   node.setAttribute("aria-label",longRange.format(utcDay(iso)));
+   node.setAttribute("aria-pressed",String(iso===selected));
    if(iso===now)node.setAttribute("aria-current","date");
    const dayName=document.createElement("small");
    dayName.textContent=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short"}).format(utcDay(iso));
    const date=document.createElement("strong");
-   date.textContent=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",day:"2-digit",month:"short"}).format(utcDay(iso));
+   date.textContent=view==="month"?String(utcDay(iso).getUTCDate()):
+    new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",day:"2-digit",month:"short"}).format(utcDay(iso));
    node.append(dayName,date);
+   node.addEventListener("click",()=>{selected=iso;render();});
    days.append(node);
   }
-  document.dispatchEvent(new CustomEvent("tm:appointments-range",{detail:{dates,view}}));
+  document.dispatchEvent(new CustomEvent("tm:appointments-range",{detail:{dates,view,selected}}));
  }
  function setView(next){
+  if(!["month","week","day"].includes(next))return;
   view=next;
   for(const btn of document.querySelectorAll("[data-appointments-view]")){
    const active=btn.dataset.appointmentsView===next;
@@ -77,11 +99,11 @@
  }
  document.querySelectorAll("[data-appointments-view]").forEach(btn=>btn.addEventListener("click",()=>setView(btn.dataset.appointmentsView)));
  byId("tm-appointments-today").addEventListener("click",()=>{selected=todayInLisbon();render();});
- byId("tm-appointments-previous").addEventListener("click",()=>{selected=shift(selected,view==="week"?-7:-1);render();});
- byId("tm-appointments-next").addEventListener("click",()=>{selected=shift(selected,view==="week"?7:1);render();});
+ byId("tm-appointments-previous").addEventListener("click",()=>{selected=view==="month"?shiftMonth(selected,-1):shift(selected,view==="week"?-7:-1);render();});
+ byId("tm-appointments-next").addEventListener("click",()=>{selected=view==="month"?shiftMonth(selected,1):shift(selected,view==="week"?7:1);render();});
  window.addEventListener("hashchange",()=>switchTab(location.hash.slice(1)));
  switchTab(location.hash.slice(1));
- setView("week");
+ setView("month");
 
  /* Service/professional catalogue (phase 2). Server is the authority. */
  let csrf="",catalog={services:[],professionals:[]};
