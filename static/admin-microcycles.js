@@ -3117,9 +3117,44 @@ function renderDishEditor(){
   tr.append(td);tbody.append(tr);
  }
  for(const dish of matches){
-  const tr=document.createElement("tr");tr.className="dish-table-row";
+  /* Only transparentize near-black matte that is connected to the outside edge.
+   Does not change stored dish photos or any internal pixels of the plate. */
+function tidyDishThumbnailMatte(img){
+ if(img.dataset.matteChecked)return;
+ img.dataset.matteChecked="1";
+ if(!img.naturalWidth||!img.naturalHeight)return;
+ try{
+  const canvas=document.createElement("canvas");
+  canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+  const ctx=canvas.getContext("2d",{willReadFrequently:true});if(!ctx)return;
+  ctx.drawImage(img,0,0);
+  const frame=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const a=frame.data,w=canvas.width,h=canvas.height,n=w*h;
+  const nearBlack=i=>{const p=i*4;return a[p+3]>235&&a[p]<34&&a[p+1]<34&&a[p+2]<34;};
+  let corners=0;for(const i of [0,w-1,(h-1)*w,w*h-1])if(nearBlack(i))corners++;
+  if(corners<3)return;
+  const seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;
+  const visit=i=>{if(seen[i]||!nearBlack(i))return;seen[i]=1;queue[tail++]=i;};
+  for(let x=0;x<w;x++){visit(x);visit((h-1)*w+x);}
+  for(let y=1;y<h-1;y++){visit(y*w);visit(y*w+w-1);}
+  if(tail<Math.max(10,(w+h)/10))return;
+  while(head<tail){
+   const i=queue[head++],x=i%w,y=(i-x)/w;
+   if(x>0)visit(i-1);if(x<w-1)visit(i+1);if(y>0)visit(i-w);if(y<h-1)visit(i+w);
+  }
+  for(let i=0;i<n;i++)if(seen[i])a[i*4+3]=0;
+  ctx.putImageData(frame,0,0);
+  canvas.toBlob(blob=>{
+   if(!blob||!img.isConnected)return;
+   const url=URL.createObjectURL(blob);
+   img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});
+   img.src=url;
+  },"image/png");
+ }catch(_error){/* Leave unchanged if browser canvas is unavailable. */}
+}
+const tr=document.createElement("tr");tr.className="dish-table-row";
   const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";const categoryBadge=document.createElement("span");categoryBadge.className="dish-category-pill dish-category-"+dishCategoryTone(dish.category);categoryBadge.textContent=dish.category||"—";categoryCell.append(categoryBadge);tr.append(categoryCell);
-  const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?thumb=1";photo.alt="";photo.loading="lazy";photo.decoding="async";photo.className="dish-table-photo";photoCell.append(photo);tr.append(photoCell);
+  const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?thumb=1";photo.alt="";photo.loading="lazy";photo.decoding="async";photo.className="dish-table-photo";photo.addEventListener("load",()=>tidyDishThumbnailMatte(photo),{once:true});photoCell.append(photo);tr.append(photoCell);
   for(const [value,cls] of [[dish.name_pt,"dish-table-title"],[dish.name_en||"—","dish-table-subtitle"]]){
    const td=document.createElement("td");td.className=cls;td.textContent=value;
    if(cls==="dish-table-title"){
