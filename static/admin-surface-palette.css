@@ -12291,3 +12291,96 @@ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-sup
   width:100%!important;
  }
 }
+
+
+/* PDF meal dialog: brand-close, circular choice, and Planos macro summary parity. */
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-cancel{
+ background:transparent!important;border:0!important;outline:0!important;
+ border-radius:0!important;box-shadow:none!important;
+ width:32px!important;height:32px!important;min-width:32px!important;
+ flex:0 0 32px!important;padding:0!important;
+ color:var(--tm-ui-text)!important;font:400 23px/1 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-cancel:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;border-radius:6px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice input[type="checkbox"]{
+ -webkit-appearance:none!important;appearance:none!important;
+ box-sizing:border-box!important;position:relative!important;display:grid!important;place-items:center!important;
+ width:19px!important;height:19px!important;min-width:19px!important;flex:0 0 19px!important;
+ margin:0!important;padding:0!important;border-radius:50%!important;
+ border:1px solid var(--tm-ui-muted)!important;background:transparent!important;
+ box-shadow:none!important;cursor:pointer!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice input[type="checkbox"]:checked{
+ border-color:#8dbbdc!important;background:#8dbbdc!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice input[type="checkbox"]:checked::after{
+ content:"✓";color:#fff;font:700 14px/1 Arial,sans-serif;display:block;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-choice input[type="checkbox"]:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:3px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-meal-total{
+ display:block!important;background:transparent!important;border:0!important;border-radius:0!important;
+ padding:0!important;margin:24px 0 0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-heading{
+ font:500 12px/1.4 "Inter Tight",sans-serif!important;color:var(--tm-ui-muted)!important;
+ margin:0 0 12px!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-grid{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:0!important;margin:0!important;align-items:start!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-cell{
+ box-sizing:border-box!important;min-width:0!important;padding:0 12px!important;
+ border-left:1px solid var(--tm-ui-divider)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-cell:first-child{
+ padding-left:0!important;border-left:0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-value{
+ display:flex!important;align-items:baseline!important;flex-wrap:nowrap!important;
+ gap:4px!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-value strong{
+ font:700 clamp(23px,2.7vw,29px)/1.15 "Inter Tight",sans-serif!important;letter-spacing:-.025em!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-value span{
+ font:500 12px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-energy .tm-pdf-summary-value{
+ color:var(--nut-kcal,#6eac81)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-protein .tm-pdf-summary-value{
+ color:var(--nut-protein,#70a9d8)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-carbs .tm-pdf-summary-value{
+ color:var(--nut-carbs,#e2a65c)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-fat .tm-pdf-summary-value{
+ color:var(--nut-fat,#d6c168)!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-cell>p{
+ font:500 11px/1.45 "Inter Tight",sans-serif!important;color:var(--tm-ui-muted)!important;
+ margin:8px 0 0!important;white-space:normal!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-note{
+ font:400 11px/1.4 "Inter Tight",sans-serif!important;color:var(--tm-ui-muted)!important;
+ margin:15px 0 0!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-no-meals{
+ margin:4px 0 0!important;color:var(--tm-ui-muted)!important;font:500 13px/1.4 "Inter Tight",sans-serif!important;
+}
+@media(max-width:560px){
+ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;row-gap:17px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-cell:nth-child(3){
+  border-left:0!important;padding-left:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog .tm-pdf-summary-value strong{
+  font-size:25px!important;
+ }
+}

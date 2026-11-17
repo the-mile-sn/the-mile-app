@@ -676,7 +676,6 @@ const pdfMealSlots=()=>plan.meals.flatMap((meal,mi)=>
    const rank=s=>({"pequeno almoco":0,"almoco":1,"lanche":2,"jantar":3,"ceia":4})[normalizeMealName(s)]??5;
    return rank(a.label)-rank(b.label);
  });
-const formatPdfNutrients=values=>fmtKcal(values[0])+" kcal · P "+fmt(values[1])+" g · HC "+fmt(values[2])+" g · G "+fmt(values[3])+" g";
 function updatePdfMealSummary(){
  const selected=[...pdfMealChoices.querySelectorAll('input[type="checkbox"]:checked')];
  const totals=[0,0,0,0];
@@ -685,7 +684,19 @@ function updatePdfMealSummary(){
    values.forEach((value,i)=>totals[i]+=value);
  }
  pdfMealConfirm.disabled=!selected.length;
- pdfMealSummary.textContent=selected.length?"Total diário de referência · "+formatPdfNutrients(totals):"Seleciona pelo menos uma refeição.";
+ const weightReady=Boolean(plan.athlete_id&&planRef.key===String(plan.athlete_id)+"|"+planRefDate()&&Number.isFinite(planRef.weight)&&planRef.weight>0);
+ const units=["kcal","g","g","g"];
+ for(let i=0;i<4;i++){
+   const amount=$("tm-pdf-total-"+i);
+   const ratio=$("tm-pdf-ratio-"+i);
+   if(amount)amount.textContent=i===0?fmtKcal(totals[i]):fmt(totals[i]);
+   if(ratio)ratio.textContent=weightReady?(fmt(totals[i]/planRef.weight)+(i===0?" kcal/kg":" g/kg")):"—";
+ }
+ const note=$("tm-pdf-weight-note");
+ if(note)note.textContent=weightReady?"Referência: "+fmt(planRef.weight)+" kg":"Peso de referência indisponível: rácios por kg não apresentados.";
+ pdfMealSummary.hidden=!selected.length;
+ const empty=$("tm-pdf-no-meals");
+ if(empty)empty.hidden=Boolean(selected.length);
 }
 $("export-plan-pdf").onclick=()=>{
  if(!plan.id||planIsDirty()){status("Guarda primeiro as alterações antes de gerar o PDF.");return;}
