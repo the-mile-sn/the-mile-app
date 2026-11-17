@@ -14,10 +14,23 @@
  food?.parentNode?.insertBefore(foodAnchor,food);
  const navLinks=Array.from(main.querySelectorAll(":scope > .tm-admin-nav-link"));
  const options=Array.from(account.querySelectorAll(":scope > .tm-admin-nav-link"));
- const iconSettings=options.find(link=>link.getAttribute("href")?.includes("settings"));
+ const accountAnchors=options.map(link=>{
+  const marker=document.createComment("Original account navigation position");
+  link.parentNode.insertBefore(marker,link);
+  return {link,marker};
+ });
+ const allTabs=[...navLinks,...options];
+ const nameFor=link=>link.getAttribute("aria-label")||link.getAttribute("title")||
+  link.querySelector("span:not(.tm-admin-nav-icon)")?.textContent?.trim()||"Secção";
+ allTabs.forEach(link=>{
+  const name=nameFor(link);
+  link.setAttribute("aria-label",name);
+  link.setAttribute("title",name);
+ });
+
  const hasActive=node=>!!node?.classList.contains("is-active")||node?.getAttribute("aria-current")==="page";
  const currentFood=()=>hasActive(foodLink)||!!food?.querySelector(".is-active,[aria-current='page']");
- const selectedPrimary=()=>currentFood()?foodLink:navLinks.find(hasActive)||navLinks.find(a=>a.getAttribute("href")===window.location.pathname);
+ const selectedPrimary=()=>currentFood()?foodLink:allTabs.find(hasActive)||allTabs.find(a=>a.getAttribute("href")===window.location.pathname);
  const scrollElementInto=(container,node,animate=false)=>{
   if(!container||!node||!mobile())return;
   const visible=container.getBoundingClientRect(),rect=node.getBoundingClientRect();
@@ -66,12 +79,12 @@
    if(food&&foodAnchor.parentNode)foodAnchor.after(food);
    food?.classList.remove("tm-mobile-subnav-open");
    if(food)food.hidden=!hasActive(foodLink);
-   navLinks.forEach(link=>{link.classList.remove("tm-mobile-current");link.removeAttribute("data-mobile-active");});
+   allTabs.forEach(link=>{link.classList.remove("tm-mobile-current");link.removeAttribute("data-mobile-active");});
    previousPrimary=null;
   }
  }
  // Observes existing application route state; does not override navigation.
- const watch=[...navLinks,...(food?Array.from(food.querySelectorAll("a")):[]),...options];
+ const watch=[...allTabs,...(food?Array.from(food.querySelectorAll("a")):[])];
  for(const node of watch)new MutationObserver(()=>{if(mobile())requestAnimationFrame(()=>refresh(true));})
   .observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
  if(foodLink)foodLink.addEventListener("click",()=>{
@@ -79,7 +92,7 @@
  });
  track.addEventListener("keydown",event=>{
   if(!mobile()||!["ArrowLeft","ArrowRight"].includes(event.key))return;
-  const focusable=navLinks.filter(link=>!link.hidden);
+  const focusable=allTabs.filter(link=>!link.hidden);
   const idx=focusable.indexOf(document.activeElement);
   if(idx<0)return;
   const next=focusable[idx+(event.key==="ArrowRight"?1:-1)];
