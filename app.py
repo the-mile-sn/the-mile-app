@@ -2410,6 +2410,17 @@ def application(env, start_response):
                         except ValueError:
                             raise Problem(400,'invalid_recipe_category')
                         return respond(200,{'category':category})
+                if path.startswith('/api/v2/recipes/categories/') and path.endswith('/cover') and method == 'PUT':
+                    parts=path.strip('/').split('/')
+                    if len(parts)!=6 or parts[:4]!=['api','v2','recipes','categories'] or parts[5]!='cover':
+                        raise Problem(404,'not_found')
+                    body=read_json(env)
+                    try:
+                        category=recipe_library_v2.set_category_cover(c,parts[4],body.get('cover_recipe_id'))
+                    except ValueError:
+                        raise Problem(400,'invalid_category_cover')
+                    if category is None: raise Problem(404,'not_found')
+                    return respond(200,{'category':category})
                 if path.startswith('/api/v2/recipes/categories/'):
                     category_id=path.rsplit('/',1)[-1]
                     if not re.fullmatch(r'[a-f0-9]{24}',category_id):
