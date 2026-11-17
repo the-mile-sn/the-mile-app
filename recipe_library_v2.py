@@ -84,9 +84,27 @@ def _text(value, limit, required=False):
 
 
 def list_categories(c):
-    return [dict(r) for r in c.execute(
-        "SELECT id,name,cover_recipe_id FROM v2_recipe_categories ORDER BY name"
-    ).fetchall()]
+    return [dict(r) for r in c.execute("""
+        SELECT c.id,c.name,c.cover_recipe_id,
+          COALESCE(
+            (SELECT r.id FROM v2_recipe_library r
+             WHERE r.id=c.cover_recipe_id AND r.category_id=c.id
+               AND r.status='published' AND r.photo_key IS NOT NULL),
+            (SELECT r.id FROM v2_recipe_library r
+             WHERE r.category_id=c.id AND r.status='published'
+               AND r.photo_key IS NOT NULL ORDER BY r.name,r.id LIMIT 1)
+          ) AS cover_preview_recipe_id,
+          (SELECT r.updated_at FROM v2_recipe_library r
+           WHERE r.id=COALESCE(
+             (SELECT r2.id FROM v2_recipe_library r2
+              WHERE r2.id=c.cover_recipe_id AND r2.category_id=c.id
+                AND r2.status='published' AND r2.photo_key IS NOT NULL),
+             (SELECT r2.id FROM v2_recipe_library r2
+              WHERE r2.category_id=c.id AND r2.status='published'
+                AND r2.photo_key IS NOT NULL ORDER BY r2.name,r2.id LIMIT 1)
+           )) AS cover_preview_updated_at
+        FROM v2_recipe_categories c ORDER BY c.name
+    """).fetchall()]
 
 
 def set_category_cover(c, category_id, recipe_id):
