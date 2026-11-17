@@ -3116,6 +3116,7 @@ function renderDishEditor(){
   td.colSpan=5;td.className="dish-table-empty";
   td.textContent=dishTableTotal?"Nenhum prato corresponde à pesquisa.":"Ainda não existem pratos na biblioteca.";
   tr.append(td);tbody.append(tr);
+  const emptyMobile=document.createElement("p");emptyMobile.className="dish-mobile-empty";emptyMobile.textContent=td.textContent;mobileCards.append(emptyMobile);
  }
  for(const dish of matches){
   /* Only transparentize near-black matte that is connected to the outside edge.
