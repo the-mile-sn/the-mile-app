@@ -12,7 +12,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, Flowable
 )
 
 KEYS = ("kcal", "protein_g", "carbs_g", "fat_g")
@@ -24,7 +24,7 @@ ACCENTS = {
 NUTRIENT_COLORS = ("#6EAC81", "#70A9D8", "#E2A65C", "#D6C168")
 INK = "#242831"
 MUTED = "#737780"
-LOGO_PATH = Path(__file__).resolve().parent / "static" / "logo.png"
+LOGO_PATH = Path(__file__).resolve().parent / "static" / "logo-black.png"
 
 
 def _text(value):
@@ -121,22 +121,19 @@ def _draw_cover(canvas, doc, plan):
 
     label = str(plan.get("plan_type") or "").lower()
     if "amarelo" in label:
-        hue, title, lit = "#C99F31", "Hidratos médios", 2
+        hue, lit = "#C99F31", 2
     elif "laranja" in label:
-        hue, title, lit = "#D88744", "Hidratos elevados", 3
+        hue, lit = "#D88744", 3
     elif "verde" in label:
-        hue, title, lit = "#56A77F", "Hidratos reduzidos", 1
+        hue, lit = "#56A77F", 1
     elif "azul" in label:
-        hue, title, lit = "#528BB8", "Plano azul", 2
+        hue, lit = "#528BB8", 2
     else:
-        hue, title, lit = "#939397", (plan.get("plan_type") or "Plano alimentar"), 2
+        hue, lit = "#939397", 2
     sy = y - 46 * mm
     for i in range(3):
         canvas.setFillColor(colors.HexColor(hue) if i < lit else colors.HexColor("#ECEDEF"))
         canvas.roundRect(x, sy - i * 5.5 * mm, 21 * mm, 3 * mm, 1.5 * mm, fill=1, stroke=0)
-    canvas.setFillColor(colors.HexColor("#555962"))
-    canvas.setFont("Helvetica", 12)
-    canvas.drawString(x + 30 * mm, sy - 6 * mm, title)
 
     if not LOGO_PATH.is_file():
         raise ValueError("missing_original_the_mile_logo")
@@ -156,9 +153,39 @@ def _footer(canvas, doc):
     canvas.line(17 * mm, 16.5 * mm, A4[0] - 17 * mm, 16.5 * mm)
     canvas.setFillColor(colors.HexColor("#868A91"))
     canvas.setFont("Helvetica", 8)
-    canvas.drawString(17 * mm, 11 * mm, "THE MILE")
+    canvas.drawString(17 * mm, 11 * mm, "www.themile.pt")
     canvas.drawRightString(A4[0] - 17 * mm, 11 * mm, str(doc.page))
     canvas.restoreState()
+
+
+class MacroPills(Flowable):
+    """Four nutritional labels above each option title."""
+    def __init__(self, values, available_width):
+        Flowable.__init__(self)
+        self.values = values
+        self.width = available_width
+        self.height = 33
+        self.hAlign = "LEFT"
+
+    def draw(self):
+        labels = [
+            _amount(0, self.values[0]) + " kcal",
+            _amount(1, self.values[1]) + " g P",
+            _amount(2, self.values[2]) + " g HC",
+            _amount(3, self.values[3]) + " g G",
+        ]
+        backgrounds = ("#EAF4EC", "#EAF2FA", "#FFF1E5", "#FBF7DE")
+        widths = [stringWidth(label, "Helvetica-Bold", 9.3) + 19 for label in labels]
+        spacing = 7
+        x = self.width - (sum(widths) + spacing * 3)
+        c = self.canv
+        for label, w, fg, fill in zip(labels, widths, NUTRIENT_COLORS, backgrounds):
+            c.setFillColor(colors.HexColor(fill))
+            c.roundRect(x, 9, w, 22, 10, fill=1, stroke=0)
+            c.setFillColor(colors.HexColor(fg))
+            c.setFont("Helvetica-Bold", 9.3)
+            c.drawCentredString(x + w/2, 16, label)
+            x += w + spacing
 
 
 def render_editor_pdf(c, plan, selected_meal_keys=None):
@@ -193,10 +220,6 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
     summary_head = _style("summary_head", 21, 26, bold=True, space_after=12)
     summary_description = _style("summary_description", 9, 14, color="#737780", space_after=16)
 
-    total_styles = [
-        _style("total_%d" % i, 10.2, 14, color=hue, bold=True, alignment=TA_RIGHT)
-        for i, hue in enumerate(NUTRIENT_COLORS)
-    ]
     cw = A4[0] - 34 * mm
     widths = [cw*.115, cw*.49, cw*.099, cw*.099, cw*.099, cw*.098]
 
@@ -249,11 +272,19 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
     story.extend([breakdown, PageBreak()])
 
     for _, meal_name, meal in chosen_meals:
-        story.append(Paragraph(_text(meal_name.replace("Pequeno almoço","Pequeno-almoço")), section))
-        for oi, option in enumerate(meal.get("options") or []):
-            content = [Paragraph("Opção " + str(oi+1) +
-                                 (" · " + _text(option.get("title")) if option.get("title") else ""),
-                                 option_title)]
+        meal_heading = Paragraph(_text(meal_name.replace("Pequeno almoço","Pequeno-almoço")), section)
+        options = meal.get("options") or []
+        if not options:
+            story.append(meal_heading)
+            continue
+        for oi, option in enumerate(options):
+            totals = _option_average(option, library)
+            content = ([meal_heading] if oi == 0 else []) + [
+                MacroPills(totals, cw),
+                Paragraph("Opção " + str(oi+1) +
+                          (" · " + _text(option.get("title")) if option.get("title") else ""),
+                          option_title)
+            ]
             # Only numerical nutrient headers: no Qtd. or Alimento / notas.
             rows = [["", "", *[Paragraph(s, header) for s in ("kcal", "P (g)", "HC (g)", "G (g)")]]]
             foods = option.get("foods") or []
@@ -300,19 +331,7 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
                 ("LINEBELOW", (0,1), (-1,-1), .2, colors.HexColor("#E7E8EA")),
             ]))
             content.append(table)
-            totals = _option_average(option, library)
-            total_row = Table([["", "", *[
-                Paragraph(_amount(i, value) + (" kcal" if i == 0 else " g"), total_styles[i])
-                for i, value in enumerate(totals)]]], colWidths=widths, hAlign="LEFT")
-            total_row.setStyle(TableStyle([
-                ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-                ("TOPPADDING", (0,0), (-1,-1), 10),
-                ("BOTTOMPADDING", (0,0), (-1,-1), 9),
-                ("LEFTPADDING", (0,0), (-1,-1), 4),
-                ("RIGHTPADDING", (0,0), (-1,-1), 4),
-                ("LINEABOVE", (0,0), (-1,0), .7, colors.HexColor("#DDE0E3")),
-            ]))
-            content.extend([total_row, Spacer(1, 8*mm)])
+            content.append(Spacer(1, 8*mm))
             # Move the complete option to the following page if it will fit there.
             # A genuinely oversized option may split rather than overflow the page.
             story.append(KeepTogether(content))
