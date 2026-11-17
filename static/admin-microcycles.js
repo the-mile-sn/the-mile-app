@@ -3229,7 +3229,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    const heading=document.createElement("h2");heading.textContent="Editar prato";
    const close=document.createElement("button");close.type="button";
    close.className="tm-library-modal-x";close.setAttribute("aria-label","Fechar edição");
-   close.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+   close.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
    header.append(heading,close);
    const editor=document.createElement("div");editor.className="dish-edit-fields dish-table-editor";
    const closeDialog=()=>{if(dialog?.open)dialog.close();};
@@ -3254,15 +3254,28 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
     const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;
     field.append(input);editor.append(field);inputs.push(input);
    }
-   const photoLabel=document.createElement("label");photoLabel.className="dish-edit-photo-label";photoLabel.textContent="Fotografia";
-   const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";
-   photoLabel.append(photoInput);editor.append(photoLabel);
+   const photoLabel=document.createElement("label");photoLabel.className="dish-edit-photo-label dish-photo-label";
+   const photoCaption=document.createElement("span");photoCaption.className="tm-dish-caption";photoCaption.textContent="Fotografia";
+   const photoDrop=document.createElement("span");photoDrop.className="dish-photo-dropzone";
+   photoDrop.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m4 17 5-5 3.5 3.5 3-3 4.5 4.5"/></svg>';
+   const photoStatus=document.createElement("span");photoStatus.textContent="Arraste uma imagem ou clique para selecionar";
+   photoDrop.append(photoStatus);
+   const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoInput.className="dish-photo-input";
+   photoInput.addEventListener("change",()=>{photoStatus.textContent=photoInput.files?.[0]?.name||"Arraste uma imagem ou clique para selecionar";});
+   for(const type of ["dragenter","dragover"])photoDrop.addEventListener(type,event=>{event.preventDefault();photoDrop.classList.add("is-dragging");});
+   for(const type of ["dragleave","drop"])photoDrop.addEventListener(type,event=>{event.preventDefault();photoDrop.classList.remove("is-dragging");});
+   photoDrop.addEventListener("drop",event=>{
+    const file=event.dataTransfer?.files?.[0];if(!file)return;
+    if(!file.type.startsWith("image/")){photoStatus.textContent="Seleciona uma fotografia válida.";return;}
+    try{const transfer=new DataTransfer();transfer.items.add(file);photoInput.files=transfer.files;photoInput.dispatchEvent(new Event("change",{bubbles:true}));}
+    catch(_error){photoStatus.textContent="Seleciona o ficheiro para anexar a fotografia.";}
+   });
+   photoLabel.append(photoCaption,photoDrop,photoInput);editor.append(photoLabel);
    const association=document.createElement("section");association.className="dish-recipe-association";
    const associationHeading=document.createElement("h4");associationHeading.textContent="Associar receita";
    const associationHint=document.createElement("p");associationHint.className="dish-recipe-association-hint";
    associationHint.textContent="";
-   const associationSearchLabel=document.createElement("label");associationSearchLabel.className="dish-recipe-combobox-label";
-   associationSearchLabel.textContent="";
+   const associationSearchLabel=document.createElement("div");associationSearchLabel.className="dish-recipe-combobox-label";
    const associationCombo=document.createElement("div");associationCombo.className="dish-recipe-combobox";
    const associationSearch=document.createElement("input");associationSearch.type="search";
    associationSearch.placeholder="Pesquisar receita pelo nome ou categoria";
@@ -3270,6 +3283,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    associationSearch.setAttribute("aria-autocomplete","list");
    associationSearch.setAttribute("aria-expanded","false");
    associationSearch.setAttribute("aria-label","Pesquisar e associar receita ao prato "+dish.name_pt);
+   associationSearch.setAttribute("aria-haspopup","listbox");
    const associationSuggestions=document.createElement("div");
    associationSuggestions.className="dish-recipe-suggestions";
    associationSuggestions.id="dish-recipe-suggestions-"+dish.id;
@@ -3388,7 +3402,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    const footer=document.createElement("div");footer.className="dish-edit-modal-footer";
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.className="tm-action-secondary";
    cancel.addEventListener("click",closeDialog);
-   const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";save.className="tm-action-primary";
+   const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";save.className="dish-add-save tm-action-primary";
    save.onclick=async()=>{
     if(!inputs[0].value.trim()||!categoryInput.value.trim()){
      $("dish-catalog-feedback").textContent="Indica a categoria e o nome português do prato.";return;
@@ -3406,7 +3420,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    (document.getElementById("admin-workspace")||document.body).append(dialog);
    dialog.showModal();
    // Evitar foco automático nos campos; o utilizador escolhe onde editar.
-   close.focus({preventScroll:true});
+   dialog.setAttribute("tabindex","-1");dialog.focus({preventScroll:true});
   });
  }
  table.append(tbody);wrap.append(table);host.append(wrap,mobileCards);
