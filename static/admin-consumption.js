@@ -24,6 +24,7 @@
  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const numeric=v=>typeof v==="number"&&Number.isFinite(v)?v:null;
  const num=v=>v===null||v===undefined?"—":Number(v).toLocaleString("pt-PT",{maximumFractionDigits:1});
+ const kcal=v=>v===null||v===undefined?"—":Math.round(Number(v)).toLocaleString("pt-PT",{maximumFractionDigits:0});
  const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
  const localDate=s=>new Date(s+"T12:00:00");
  const niceDay=s=>localDate(s).toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/-feira\b/g,"").replace(/\s+de\s+/g," ");
@@ -176,7 +177,7 @@
   return diffs.some(change=>change.type==="removed"||
    (change.type==="edited"&&change.after<change.before-.01))?"partial":"all";
  }
- function metric(k,n){return n&&numeric(n[k])!==null?num(n[k]):"—";}
+ function metric(k,n){return n&&numeric(n[k])!==null?(k==="kcal"?kcal(n[k]):num(n[k])):"—";}
  function progressCircle(key,consumed,planned,index){
   const palette=["#65dfae","#47b7f5","#ff9872","#eed072"];
   const ratio=planned&&planned[key]>0?Math.max(0,Math.min(1,consumed[key]/planned[key])):0;
@@ -196,10 +197,10 @@
   const changed=records.filter(r=>{const diff=changes(r);return displayStatus(r,diff)==="partial"||(diff?.length>0);}).length;
   const rings='<svg viewBox="0 0 188 188" role="img" aria-label="Progresso de energia, proteína, hidratos e gordura" class="tm-record-four-rings">'+
    keys.map(([key],i)=>progressCircle(key,consumed,planned,i)).join("")+'</svg>';
-  const kcalTotal=planned?num(planned.kcal):"—";
+  const kcalTotal=planned?kcal(planned.kcal):"—";
   const metric=(key,label,color)=>{
    const value=num(consumed[key]),goal=planned?num(planned[key]):"—";
-   return '<div class="tm-record-macro-row"><span>'+label+'</span><strong><span style="color:'+color+'">'+value+'</span> <span class="tm-record-goal">/ '+goal+' g</span></strong></div>';
+   return '<div class="tm-record-macro-row" data-nutrient="'+key+'"><span>'+label+'</span><strong><span class="tm-record-macro-consumed" style="color:'+color+'">'+value+'</span> <span class="tm-record-goal">/ '+goal+' g</span></strong></div>';
   };
   return '<section class="tm-record-overview" aria-label="Resumo nutricional dos registos do dia">'+
    '<div class="tm-record-rings">'+rings+'</div>'+
@@ -207,7 +208,7 @@
     '<div class="tm-record-kcal-group">'+
     '<div class="tm-record-overview-top"><h3>Resumo nutricional</h3><span class="tm-record-consumed-tag">Consumido</span></div>'+
     '<div class="tm-record-kcal-caption">kcal</div>'+
-    '<div class="tm-record-kcal-value"><strong>'+num(consumed.kcal)+'</strong><span> / '+kcalTotal+'</span></div>'+
+    '<div class="tm-record-kcal-value"><strong>'+kcal(consumed.kcal)+'</strong><span> / '+kcalTotal+'</span></div>'+
     '<div class="tm-record-counts"><span>'+records.length+' '+(records.length===1?'refeição registada':'refeições registadas')+'</span>'+
     (changed?'<span>'+changed+' com alterações ou consumo parcial</span>':'')+'</div>'+
     '</div>'+
@@ -274,7 +275,7 @@
   const reference=exactPlan(r);
   const badges='<span class="tm-consumption-status" data-state="'+esc(shownStatus)+'">'+status+'</span>'+(changed?'<span class="tm-record-edited">Alterações</span>':'');
   const headline='<div class="tm-record-meal-title"><strong>'+esc(names[r.meal_key]||r.meal_key||"Refeição")+'</strong><span>'+esc(optionLabel(r,microcycle))+'</span></div>';
-  const mini='<span class="tm-record-mini"> '+(taken?num(taken.kcal)+" kcal":"—")+(reference?" / "+num(reference.kcal)+" kcal planeadas":"")+'</span>';
+  const mini='<span class="tm-record-mini"> '+(taken?kcal(taken.kcal)+" kcal":"—")+(reference?" / "+kcal(reference.kcal)+" kcal planeadas":"")+'</span>';
   if(!showDetails)return '<article class="tm-consumption-card tm-record-compact"><div class="tm-consumption-head">'+headline+'<div class="tm-record-head-right">'+badges+mini+'</div></div></article>';
   return '<details class="tm-consumption-card tm-record-expandable"><summary class="tm-record-card-summary">'+headline+'<div class="tm-record-head-right">'+badges+mini+'<span class="tm-record-chevron" aria-hidden="true">⌄</span></div></summary>'+
     '<div class="tm-record-card-body"><div class="tm-record-meal-metrics">'+keys.map(([k,label,unit])=>'<div><small>'+label+'</small><strong>'+metric(k,taken)+' '+unit+'</strong></div>').join("")+'</div>'+
