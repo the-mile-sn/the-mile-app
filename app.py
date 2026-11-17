@@ -49,6 +49,7 @@ import food_library_v2
 import visual_portions_v2
 import visual_portion_matching_v2
 import food_plan_drafts_v2
+import food_plan_pdf_export_v2
 import food_plan_publications_v2
 import food_plan_calendar_bridge_v2
 import meal_option_selection_v2
@@ -1581,6 +1582,19 @@ def application(env, start_response):
                 except ValueError as error:
                     raise Problem(409,str(error))
                 return respond(200,{'transfer':result})
+            # Export exactly the saved editor draft, without publication side effects.
+            if path.startswith('/api/v2/food-plan-drafts/') and path.endswith('/pdf') and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5 or parts[:3]!=['api','v2','food-plan-drafts'] or parts[4]!='pdf':
+                    raise Problem(404,'not_found')
+                draft=food_plan_drafts_v2.get(c,parts[3])
+                if draft is None: raise Problem(404,'not_found')
+                try: pdf=food_plan_pdf_export_v2.render_editor_pdf(c,draft)
+                except ValueError: raise Problem(409,'plan_pdf_incomplete')
+                headers.append(('Content-Disposition', 'attachment; filename="the-mile-plano.pdf"'))
+                return respond(200,pdf,'application/pdf')
             if path.startswith('/api/v2/food-plan-drafts/') and path.endswith('/publish') and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
