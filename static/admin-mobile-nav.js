@@ -1,201 +1,93 @@
-/* The Mile Admin: mobile-only navigation; original desktop elements are restored at wider breakpoints. */
+/* The Mile Admin: complete horizontal mobile navigation.
+   Reuses existing destinations, events and desktop sidebar without touching page layouts. */
 (()=>{
- // Navigation markup is mounted by admin-nav-shell.js.
  const sidebar=document.querySelector(".tm-admin-sidebar");
  const track=sidebar?.querySelector(".tm-admin-mobile-nav-track");
- const more=sidebar?.querySelector(".tm-admin-more-trigger");
- const menu=sidebar?.querySelector("#tm-admin-account-actions");
- const recipes=sidebar?.querySelector("#tm-admin-recipes-subnav");
- const recipeLink=sidebar?.querySelector("#tm-admin-nav-menus-recipes");
- const foods=sidebar?.querySelector("#tm-admin-food-subnav");
+ const main=track?.querySelector(".tm-admin-side-nav");
+ const more=track?.querySelector(".tm-admin-more-trigger");
+ const account=sidebar?.querySelector("#tm-admin-account-actions");
+ const food=sidebar?.querySelector("#tm-admin-food-subnav");
  const foodLink=sidebar?.querySelector("#tm-admin-nav-food-library");
- if(!sidebar||!track||!more||!menu)return;
- const standalone=!!document.querySelector(".tm-library-layout");
+ if(!sidebar||!track||!main||!account)return;
  const mobile=()=>window.matchMedia("(max-width:830px)").matches;
- const ids=["tm-admin-nav-food-library","tm-admin-nav-assessments","tm-admin-nav-forms","tm-admin-nav-appointments"];
- const secondary=ids.map(id=>sidebar.querySelector("#"+id)).filter(Boolean);
- const accountLinks=Array.from(menu.querySelectorAll(".tm-admin-nav-link"));
- const secondaryControls=[...secondary,...accountLinks];
- const selectedAtEntry=secondaryControls.some(node=>node.classList.contains("is-active"));
- const planning=sidebar.querySelector("#tm-admin-nav-planning");
- const plans=sidebar.querySelector("#tm-admin-nav-create-plan");
- const moving=[...secondary,...(recipes?[recipes]:[]),...(foods?[foods]:[]),...(plans?[plans]:[])];
- const primaryIds=["tm-admin-nav-dashboard","tm-admin-nav-players","tm-admin-nav-planning","tm-admin-nav-create-plan"];
- const primary=primaryIds.map(id=>sidebar.querySelector("#"+id)).filter(Boolean);
- const markers=new Map();
- for(const node of moving){
-  const mark=document.createComment("Original admin navigation position");
-  node.parentNode?.insertBefore(mark,node);
-  markers.set(node,mark);
- }
- let expanded=false,foodExpanded=false;
- // Keep the selected mobile tab completely visible with a comfortable right inset.
- // Only scroll the horizontal track; never change the page's vertical position.
- function revealActiveTab(animate=false){
-  if(!mobile())return;
-  const selected=primary.find(node=>node.classList.contains("is-active"));
-  if(!selected)return;
-  const trackRect=track.getBoundingClientRect();
-  const rect=selected.getBoundingClientRect();
-  const inset=16;
-  const left=trackRect.left+inset;
-  const right=trackRect.right-inset;
+ const foodAnchor=document.createComment("The Mile food subnav desktop location");
+ food?.parentNode?.insertBefore(foodAnchor,food);
+ const navLinks=Array.from(main.querySelectorAll(":scope > .tm-admin-nav-link"));
+ const options=Array.from(account.querySelectorAll(":scope > .tm-admin-nav-link"));
+ const iconSettings=options.find(link=>link.getAttribute("href")?.includes("settings"));
+ const hasActive=node=>!!node?.classList.contains("is-active")||node?.getAttribute("aria-current")==="page";
+ const currentFood=()=>hasActive(foodLink)||!!food?.querySelector(".is-active,[aria-current='page']");
+ const selectedPrimary=()=>currentFood()?foodLink:navLinks.find(hasActive)||navLinks.find(a=>a.getAttribute("href")===window.location.pathname);
+ const scrollElementInto=(container,node,animate=false)=>{
+  if(!container||!node||!mobile())return;
+  const visible=container.getBoundingClientRect(),rect=node.getBoundingClientRect();
+  const inset=18;
   let delta=0;
-  if(rect.right>right)delta=rect.right-right;
-  else if(rect.left<left)delta=rect.left-left;
-  if(Math.abs(delta)>1)track.scrollBy({left:delta,behavior:animate?"smooth":"instant"});
- }
- function selectedSecondary(){
-  return secondaryControls.some(node=>node.classList.contains("is-active"))||
-   !!recipes?.querySelector(".is-active")||!!foods?.querySelector(".is-active");
- }
- function openMore(){
+  if(rect.right>visible.right-inset)delta=rect.right-(visible.right-inset);
+  else if(rect.left<visible.left+inset)delta=rect.left-(visible.left+inset);
+  if(Math.abs(delta)>2)container.scrollBy({left:delta,behavior:animate?"smooth":"instant"});
+ };
+ let previousPrimary=null;
+ function refresh(animate=false){
   if(!mobile())return;
-  menu.classList.add("is-mobile-open");
-  more.setAttribute("aria-expanded","true");
-  paint();
- }
- function paint(){
-  more.classList.toggle("is-active",mobile()&&(menu.classList.contains("is-mobile-open")||selectedSecondary()));
- }
- function collapse(){
-  menu.classList.remove("is-mobile-open");
-  more.setAttribute("aria-expanded","false");
-  recipes?.classList.remove("is-mobile-open");
-  foods?.classList.remove("is-mobile-open");
-  expanded=false;foodExpanded=false;
-  if(recipeLink)recipeLink.setAttribute("aria-expanded","false");
-  if(foodLink)foodLink.setAttribute("aria-expanded","false");
-  paint();
+  const selected=selectedPrimary();
+  navLinks.forEach(link=>{
+   const active=link===selected;
+   link.classList.toggle("tm-mobile-current",active);
+   if(active)link.setAttribute("data-mobile-active","true");
+   else link.removeAttribute("data-mobile-active");
+  });
+  if(food){
+   const visible=currentFood();
+   food.hidden=!visible;
+   food.classList.toggle("tm-mobile-subnav-open",visible);
+   if(visible){
+    const sub=food.querySelector(".is-active,[aria-current='page']");
+    if(sub)scrollElementInto(food,sub,animate);
+   }
+  }
+  if(selected&&selected!==previousPrimary){
+   scrollElementInto(track,selected,animate);
+   previousPrimary=selected;
+  }
  }
  function sync(){
   if(mobile()){
-   const first=menu.firstElementChild;
-   for(const node of secondary)menu.insertBefore(node,first);
-   if(recipes&&recipeLink){
-    menu.insertBefore(recipes,recipeLink.nextSibling);
-    recipes.classList.toggle("is-mobile-open",expanded);
-    recipes.hidden=!expanded;
-   }
-   if(foods&&foodLink){
-    menu.insertBefore(foods,foodLink.nextSibling);
-    foods.classList.toggle("is-mobile-open",foodExpanded);
-    foods.hidden=!foodExpanded;
-   }
-   if(plans&&planning&&plans.previousElementSibling!==planning)planning.after(plans);
-   if(selectedSecondary())openMore();
-   if(recipes?.querySelector(".is-active")){
-    expanded=true;recipes.hidden=false;recipes.classList.add("is-mobile-open");
-    recipeLink?.setAttribute("aria-expanded","true");
-   }
-   if(foods?.querySelector(".is-active")){
-    foodExpanded=true;foods.hidden=false;foods.classList.add("is-mobile-open");
-    foodLink?.setAttribute("aria-expanded","true");
-   }
+   sidebar.classList.add("tm-complete-mobile-nav");
+   more?.setAttribute("hidden","");
+   // Settings stay in a separate compact account control.
+   account.classList.remove("is-mobile-open");
+   if(food&&food.parentNode!==sidebar)sidebar.insertBefore(food,account);
+   // All work areas already exist as main nav links; no IDs or handlers change.
+   refresh(false);
   }else{
-   collapse();
-   for(const [node,mark] of markers)if(mark.parentNode)mark.after(node);
-   // Main app updates this state when opening its dish/recipe library.
-   if(recipes&& !standalone)recipes.hidden=!recipeLink?.classList.contains("is-active");
-   if(recipes&&standalone)recipes.hidden=false;
-   if(foods&&!standalone)foods.hidden=!foodLink?.classList.contains("is-active");
-   if(foods&&standalone)foods.hidden=false;
+   sidebar.classList.remove("tm-complete-mobile-nav");
+   more?.removeAttribute("hidden");
+   if(food&&foodAnchor.parentNode)foodAnchor.after(food);
+   food?.classList.remove("tm-mobile-subnav-open");
+   if(food)food.hidden=!hasActive(foodLink);
+   navLinks.forEach(link=>{link.classList.remove("tm-mobile-current");link.removeAttribute("data-mobile-active");});
+   previousPrimary=null;
   }
-  paint();
-  if(mobile())requestAnimationFrame(()=>revealActiveTab());
  }
- // Choosing a primary destination must collapse More immediately, even if
- // navigation is asynchronous or the previous secondary item is still active.
- for(const node of primary){
-  node.addEventListener("click",()=>{
-   if(mobile()){
-    collapse();
-    requestAnimationFrame(()=>revealActiveTab(true));
-   }
-  },true);
- }
- more.addEventListener("click",event=>{
-  if(!mobile())return;
-  event.preventDefault();event.stopPropagation();
-  const opening=!menu.classList.contains("is-mobile-open");
-  collapse();
-  if(opening)openMore();
-  paint();
+ // Observes existing application route state; does not override navigation.
+ const watch=[...navLinks,...(food?Array.from(food.querySelectorAll("a")):[]),...options];
+ for(const node of watch)new MutationObserver(()=>{if(mobile())requestAnimationFrame(()=>refresh(true));})
+  .observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
+ if(foodLink)foodLink.addEventListener("click",()=>{
+  if(mobile())requestAnimationFrame(()=>refresh(true));
  });
- if(recipeLink)recipeLink.addEventListener("click",event=>{
-  if(!mobile())return;
-  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-  expanded=!expanded;
-  foodExpanded=false;
-  if(foods){foods.hidden=true;foods.classList.remove("is-mobile-open");}
-  foodLink?.setAttribute("aria-expanded","false");
-  if(recipes){
-   recipes.hidden=!expanded;
-   recipes.classList.toggle("is-mobile-open",expanded);
-  }
-  recipeLink.setAttribute("aria-expanded",String(expanded));
-  paint();
- },true);
- if(foodLink)foodLink.addEventListener("click",event=>{
-  if(!mobile())return;
-  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-  foodExpanded=!foodExpanded;expanded=false;
-  if(recipes){recipes.hidden=true;recipes.classList.remove("is-mobile-open");}
-  recipeLink?.setAttribute("aria-expanded","false");
-  if(foods){foods.hidden=!foodExpanded;foods.classList.toggle("is-mobile-open",foodExpanded);}
-  foodLink.setAttribute("aria-expanded",String(foodExpanded));
-  paint();
- },true);
- menu.addEventListener("click",event=>{
-  const target=event.target.closest("a,button");
-  if(!target||target===recipeLink||target===foodLink)return;
-  // Secondary destinations retain the expanded panel when they update in place.
-  // Full page destinations initialize open when their active item is found.
-  if(mobile()){
-   openMore();
-   if(recipes?.contains(target))expanded=true;
-   if(foods?.contains(target))foodExpanded=true;
-   requestAnimationFrame(()=>{
-    if(selectedSecondary())openMore();
-    paint();
-   });
-  }
+ track.addEventListener("keydown",event=>{
+  if(!mobile()||!["ArrowLeft","ArrowRight"].includes(event.key))return;
+  const focusable=navLinks.filter(link=>!link.hidden);
+  const idx=focusable.indexOf(document.activeElement);
+  if(idx<0)return;
+  const next=focusable[idx+(event.key==="ArrowRight"?1:-1)];
+  if(next){event.preventDefault();next.focus();scrollElementInto(track,next,true);}
  });
- document.addEventListener("click",event=>{
-  if(sidebar.contains(event.target))return;
-  // A selected secondary page stays in its expanded navigation context.
-  // Tapping its search fields must not collapse More and move the page.
-  if(selectedSecondary())return;
-  collapse();
- });
- document.addEventListener("keydown",event=>{
-  if(event.key==="Escape"&&menu.classList.contains("is-mobile-open")){collapse();more.focus();}
- });
- window.addEventListener("resize",sync);
- // Main app applies active classes during navigation, after this module loads.
- for(const node of [...secondaryControls,...primary,...(recipes?Array.from(recipes.querySelectorAll(".tm-admin-subnav-link")):[]),...(foods?Array.from(foods.querySelectorAll(".tm-admin-subnav-link")):[])]){
-  new MutationObserver(()=>{
-   if(!mobile())return;
-   // When a main tab becomes active, hide the secondary panel.
-   // Its active state can otherwise survive while a previous view is closing.
-   if(primary.some(item=>item.classList.contains("is-active"))&&!selectedSecondary()){
-    collapse();
-   }else if(selectedSecondary()){
-    openMore();
-   }else{
-    paint();
-   }
-   requestAnimationFrame(()=>revealActiveTab(true));
-  }).observe(node,{attributes:true,attributeFilter:["class","aria-current"]});
- }
+ window.addEventListener("resize",sync,{passive:true});
  sync();
- if(mobile())requestAnimationFrame(()=>revealActiveTab());
- // Entering a standalone secondary page resets the scroll position. Keep "Mais"
- // in view so navigation and sibling destinations remain immediately accessible.
- if(standalone&&mobile()&&selectedAtEntry){
-  track.scrollLeft=track.scrollWidth;
- }
-
+ requestAnimationFrame(()=>refresh(false));
 })();
 
 /* The Mile: shared clear-search action, on desktop and mobile.
