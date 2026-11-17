@@ -64,6 +64,23 @@ def get_image(c, reference_id):
     return base64.b64decode(row["data_base64"]) if row else None
 
 
+
+def replace_image(c, reference_id, raw):
+    """Replace only this reference's photograph; keep its nutritional metadata and state."""
+    if not REF_ID.fullmatch(str(reference_id or "")):
+        raise ValueError("invalid_reference")
+    digest = _verified_photo(raw)
+    current = c.execute("SELECT id FROM v2_visual_portions WHERE id=?", (reference_id,)).fetchone()
+    if current is None:
+        return None
+    c.execute("INSERT INTO v2_visual_portion_images(sha256,data_base64) VALUES(?,?) ON CONFLICT(sha256) DO NOTHING",
+              (digest, base64.b64encode(raw).decode("ascii")))
+    c.execute("UPDATE v2_visual_portions SET image_sha256=?,updated_at=? WHERE id=?",
+              (digest, int(time.time()), reference_id))
+    c.commit()
+    return {"updated": True, "image_sha256": digest, "reference_id": reference_id}
+
+
 def set_active(c, reference_id, active):
     if not REF_ID.fullmatch(str(reference_id or "")) or type(active) is not bool:
         raise ValueError("invalid_reference")
