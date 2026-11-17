@@ -250,7 +250,7 @@
   $("tm-appt-booking-start").value="";
   const host=$("tm-appt-time-options");
   host.replaceChildren();host.setAttribute("aria-busy","false");
-  $("tm-appt-times-title").textContent="Horários disponíveis";
+  $("tm-appt-times-title").textContent="Seleciona uma data";
   $("tm-appt-times-description").textContent=message;
  }
  function updateMonthControls(){
@@ -334,7 +334,7 @@
   const host=$("tm-appt-time-options");host.replaceChildren();
   host.setAttribute("aria-busy","false");
   if(!state.selectedDate){clearTime();return;}
-  $("tm-appt-times-title").textContent="Horários · "+dateLabel(state.selectedDate);
+  $("tm-appt-times-title").textContent=agendaDateLabel(state.selectedDate);
   if(!state.visibleSlots.length){
    $("tm-appt-times-description").textContent="Não restam horários neste dia. Seleciona outra data.";
    return;
@@ -359,7 +359,7 @@
   const date=state.selectedDate;
   const host=$("tm-appt-time-options");host.replaceChildren();
   host.setAttribute("aria-busy","true");
-  $("tm-appt-times-title").textContent="Horários · "+dateLabel(date);
+  $("tm-appt-times-title").textContent=agendaDateLabel(date);
   $("tm-appt-times-description").textContent="A consultar horários…";
   state.visibleSlots=[];state.selectedStart="";
   $("tm-appt-booking-start").value="";
