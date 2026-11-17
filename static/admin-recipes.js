@@ -533,6 +533,7 @@
  function syncPublicationActions(){
   const published=current?.status==="published";
   $("recipe-publication-label").textContent=published?"Publicada":"Rascunho";
+  $("recipe-publication-label").className="recipe-status-tag "+(published?"recipe-status-published":"recipe-status-draft");
   $("recipe-publication").value=published?"published":"draft";
   $("recipe-publish").hidden=!current?.id||published;
   $("recipe-unpublish").hidden=!current?.id||!published;
