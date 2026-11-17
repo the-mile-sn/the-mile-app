@@ -5,7 +5,7 @@ import unicodedata
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.enums import TA_RIGHT, TA_CENTER
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
@@ -113,7 +113,7 @@ def _draw_cover(canvas, doc, plan):
     canvas.saveState()
     canvas.setTitle("Plano alimentar - The Mile")
     canvas.setFillColor(colors.HexColor("#939397"))
-    canvas.setFont("InterTight-Bold", 35)
+    canvas.setFont("InterTight", 35)
     x = 23 * mm
     y = A4[1] - 12 * mm - 35
     canvas.drawString(x, y, "Plano alimentar")
@@ -121,9 +121,9 @@ def _draw_cover(canvas, doc, plan):
     player = str(plan.get("player_name") or "Jogador")
     font_size = 35
     max_width = A4[0] - 46 * mm
-    while stringWidth(player, "InterTight-Bold", font_size) > max_width and font_size > 19:
+    while stringWidth(player, "InterTight", font_size) > max_width and font_size > 19:
         font_size -= 1
-    canvas.setFont("InterTight-Bold", font_size)
+    canvas.setFont("InterTight", font_size)
     canvas.drawString(x, y - 18 * mm, player)
 
     label = str(plan.get("plan_type") or "").lower()
@@ -140,7 +140,7 @@ def _draw_cover(canvas, doc, plan):
     sy = y - 46 * mm
     for i in range(3):
         canvas.setFillColor(colors.HexColor(hue) if i < lit else colors.HexColor("#ECEDEF"))
-        canvas.roundRect(x, sy - i * 5.5 * mm, 21 * mm, 3 * mm, 1.5 * mm, fill=1, stroke=0)
+        canvas.roundRect(x, sy - i * 4.2 * mm, 21 * mm, 3 * mm, 1.5 * mm, fill=1, stroke=0)
 
     if not LOGO_PATH.is_file():
         raise ValueError("missing_original_the_mile_logo")
@@ -182,13 +182,14 @@ def _later_page_chrome(canvas, doc, plan):
 
 
 class MacroPills(Flowable):
-    """Four actual Inter Tight pill labels, right-aligned on the option-title row."""
-    def __init__(self, values, width):
+    """Pills centered precisely above the corresponding four food columns."""
+    def __init__(self, values, numeric_widths):
         Flowable.__init__(self)
         self.values = values
-        self.width = width
-        self.height = 27
-        self.hAlign = "RIGHT"
+        self.numeric_widths = numeric_widths
+        self.width = sum(numeric_widths)
+        self.height = 31
+        self.hAlign = "LEFT"
 
     def draw(self):
         labels = [
@@ -198,22 +199,19 @@ class MacroPills(Flowable):
             _amount(3, self.values[3]) + " g G",
         ]
         backgrounds = ("#EAF4EC", "#EAF2FA", "#FFF1E5", "#FBF7DE")
-        font, fontsize, pad, gap = "InterTight-Bold", 10, 13, 5
-        widths = [stringWidth(text, font, fontsize) + pad for text in labels]
-        # Keep the four labels in their own allocated column on narrow A4 pages.
-        if sum(widths) + 3*gap > self.width:
-            gap = 3
-            pad = max(5, (self.width - sum(stringWidth(t,font,fontsize) for t in labels) - 3*gap)/4)
-            widths = [stringWidth(text,font,fontsize)+pad for text in labels]
-        start = self.width - sum(widths) - 3*gap
-        canvas = self.canv
-        for label, width, fg, bg in zip(labels,widths,NUTRIENT_COLORS,backgrounds):
-            canvas.setFillColor(colors.HexColor(bg))
-            canvas.roundRect(start, 3, width, 22, 11, stroke=0, fill=1)
-            canvas.setFont(font, fontsize)
-            canvas.setFillColor(colors.HexColor(fg))
-            canvas.drawCentredString(start + width/2, 10, label)
-            start += width + gap
+        cursor = 0
+        for label, column_width, fg, bg in zip(
+                labels, self.numeric_widths, NUTRIENT_COLORS, backgrounds):
+            measured = stringWidth(label, "InterTight-Bold", 9)
+            pill_width = min(column_width - 2, measured + 8)
+            center = cursor + column_width / 2
+            self.canv.setFillColor(colors.HexColor(bg))
+            self.canv.roundRect(center - pill_width / 2, 6,
+                                pill_width, 19, 9.5, stroke=0, fill=1)
+            self.canv.setFillColor(colors.HexColor(fg))
+            self.canv.setFont("InterTight-Bold", 9)
+            self.canv.drawCentredString(center, 12, label)
+            cursor += column_width
 
 
 def render_editor_pdf(c, plan, selected_meal_keys=None):
@@ -238,13 +236,15 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
     doc = SimpleDocTemplate(out, pagesize=A4, leftMargin=17*mm, rightMargin=17*mm,
                             topMargin=25*mm, bottomMargin=20*mm,
                             title="Plano alimentar - The Mile", author="The Mile")
-    regular = _style("food", 10, 13.2, space_after=0)
-    muted = _style("muted", 10, 13.2, color="#737780")
-    right = _style("right", 10, 13.2, color="#60656E", alignment=TA_RIGHT)
-    header = _style("header", 10, 13.2, color="#737780", alignment=TA_RIGHT)
+    regular = _style("food", 9, 12, space_after=0)
+    muted = _style("muted", 9, 12, color="#737780")
+    right = _style("right", 9, 12, color="#939397", alignment=TA_CENTER)
+    breakdown_number = _style("breakdown_number", 9, 12, color="#939397", alignment=TA_RIGHT)
+    
     section = _style("section", 16, 20, color=ACCENTS.get(plan.get("plan_type"), "#343942"),
                      bold=True, space_before=15, space_after=11, keep_next=True)
-    option_title = _style("option", 14, 18, bold=True, space_after=0, keep_next=True)
+    option_index = _style("option_index", 12, 15, color="#939397", space_after=2, keep_next=True)
+    option_title = _style("option_title", 12, 16, color="#111318", bold=True, space_after=0, keep_next=True)
     summary_head = _style("summary_head", 21, 26, bold=True, space_after=12)
     summary_description = _style("summary_description", 10, 14, color="#737780", space_after=16)
 
@@ -289,7 +289,7 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
     for name, values in meal_averages:
         rows.append([Paragraph(_text(name.replace("Pequeno almoço", "Pequeno-almoço")), regular)] +
                     [Paragraph(_amount(i, values[i]) + (" kcal" if i==0 else " g"),
-                               right) for i in range(4)])
+                               breakdown_number) for i in range(4)])
     breakdown = Table(rows, colWidths=[cw*.40]+[cw*.15]*4, hAlign="LEFT")
     breakdown.setStyle(TableStyle([
         ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
@@ -307,23 +307,23 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
             continue
         for oi, option in enumerate(options):
             totals = _option_average(option, library)
-            option_label = Paragraph(
-                "Opção " + str(oi+1) +
-                (" · " + _text(option.get("title")) if option.get("title") else ""),
-                option_title)
+            option_label = [
+                Paragraph("Opção " + str(oi + 1), option_index),
+                Paragraph(_text(option.get("title") or ""), option_title),
+            ]
             option_header = Table(
-                [[option_label, MacroPills(totals, cw*.54)]],
-                colWidths=[cw*.46,cw*.54], hAlign="LEFT")
+                [[option_label, MacroPills(totals, widths[2:])]],
+                colWidths=[sum(widths[:2]), sum(widths[2:])], hAlign="LEFT")
             option_header.setStyle(TableStyle([
-                ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
-                ("LEFTPADDING",(0,0),(-1,-1),0),
-                ("RIGHTPADDING",(0,0),(-1,-1),0),
-                ("TOPPADDING",(0,0),(-1,-1),0),
-                ("BOTTOMPADDING",(0,0),(-1,-1),9),
+                ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                ("LEFTPADDING", (0,0), (-1,-1), 0),
+                ("RIGHTPADDING", (0,0), (-1,-1), 0),
+                ("TOPPADDING", (0,0), (-1,-1), 0),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 12),
             ]))
             content = ([meal_heading] if oi == 0 else []) + [option_header]
-            # Only numerical nutrient headers: no Qtd. or Alimento / notas.
-            rows = [["", "", *[Paragraph(s, header) for s in ("kcal", "P (g)", "HC (g)", "G (g)")]]]
+            # The pill captions are the nutrient legend; no redundant header row.
+            rows = []
             foods = option.get("foods") or []
             notes = option.get("notes") or []
             ordered = option.get("order") or (
@@ -364,8 +364,9 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
                 ("RIGHTPADDING", (0,0), (-1,-1), 4),
                 ("TOPPADDING", (0,0), (-1,-1), 5),
                 ("BOTTOMPADDING", (0,0), (-1,-1), 5),
-                ("LINEBELOW", (0,0), (-1,0), .5, colors.HexColor("#DDE0E3")),
-                ("LINEBELOW", (0,1), (-1,-1), .2, colors.HexColor("#E7E8EA")),
+                ("LINEBELOW", (0,0), (-1,-1), .2, colors.HexColor("#E7E8EA")),
+                ("LEFTPADDING", (2,0), (-1,-1), 0),
+                ("RIGHTPADDING", (2,0), (-1,-1), 0),
             ]))
             content.append(table)
             content.append(Spacer(1, 8*mm))
