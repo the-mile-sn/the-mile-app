@@ -111,19 +111,28 @@
   photoEditor.showModal();
  }
  async function prepareWebp(file){
-  const source=await createImageBitmap(file);
+  let source;
+  try{source=await createImageBitmap(file);}
+  catch(_error){throw Error("Não foi possível abrir esta imagem. Experimenta PNG, JPEG ou WebP.");}
   try{
-   const max=1200,scale=Math.min(1,max/Math.max(source.width,source.height));
+   const limit=3*1024*1024;
    const canvas=document.createElement("canvas");
-   canvas.width=Math.max(1,Math.round(source.width*scale));
-   canvas.height=Math.max(1,Math.round(source.height*scale));
    const ctx=canvas.getContext("2d");
-   if(!ctx)throw Error("Não foi possível processar a fotografia.");
-   ctx.drawImage(source,0,0,canvas.width,canvas.height);
-   let blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",.88));
-   if(blob&&blob.size>512*1024)blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",.7));
-   if(!blob||blob.type!=="image/webp"||blob.size>512*1024)throw Error("A fotografia é demasiado grande. Escolhe uma imagem mais pequena.");
-   return blob;
+   if(!ctx)throw Error("Não foi possível processar a fotografia neste dispositivo.");
+   const largest=Math.max(source.width,source.height);
+   if(!largest)throw Error("Fotografia inválida.");
+   for(const maxSide of [1200,960,800,640,480]){
+    const scale=Math.min(1,maxSide/largest);
+    canvas.width=Math.max(1,Math.round(source.width*scale));
+    canvas.height=Math.max(1,Math.round(source.height*scale));
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(source,0,0,canvas.width,canvas.height);
+    for(const quality of [.86,.72,.56,.4]){
+     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
+     if(blob&&blob.type==="image/webp"&&blob.size<=limit)return blob;
+    }
+   }
+   throw Error("Não foi possível comprimir automaticamente esta fotografia. Experimenta outro formato.");
   }finally{source.close();}
  }
  editorSave.addEventListener("click",async()=>{
