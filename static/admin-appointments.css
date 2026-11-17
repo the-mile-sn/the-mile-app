@@ -520,3 +520,28 @@ body.tm-appointments-body .tm-appt-calendar-event{
 body.tm-appointments-body #tm-appt-agenda-list .tm-appt-tag{
  font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
 }
+
+/* Appointments typography: use the same Inter Tight face as Microcycles.
+   Explicitly override form controls and font shorthand declarations. */
+html body.tm-appointments-body #tm-appointments-root,
+html body.tm-appointments-body #tm-appointments-root :where(h1,h2,h3,h4,p,span,small,strong,div,button,input,select,textarea,option,label,article,time){
+ font-family:"Inter Tight",system-ui,sans-serif!important;
+}
+html body.tm-appointments-body #tm-appointments-root{font-weight:500}
+html body.tm-appointments-body #tm-appointments-root :is(input,select,textarea,button){font-weight:500}
+html body.tm-appointments-body #tm-appointments-root #tm-appt-agenda-list .tm-appt-tag{font-weight:400}
+/* Match the white, high-contrast pill used by the Microcycles quick action. */
+html body.tm-appointments-body #tm-appt-new-booking{
+ background:#f5f6f7!important;color:#17191c!important;
+ border:1px solid transparent!important;border-radius:999px!important;
+ font-weight:500!important;box-shadow:none!important;
+}
+html body.tm-appointments-body #tm-appt-new-booking:hover{
+ background:#e3e5e8!important;color:#17191c!important;
+}
+html[data-admin-theme="light"] body.tm-appointments-body #tm-appt-new-booking{
+ background:#202228!important;color:#fff!important;
+}
+html[data-admin-theme="light"] body.tm-appointments-body #tm-appt-new-booking:hover{
+ background:#343840!important;color:#fff!important;
+}
