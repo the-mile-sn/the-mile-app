@@ -2,7 +2,7 @@
 import unittest
 from io import BytesIO
 from pypdf import PdfReader
-from food_plan_pdf_export_v2 import render_editor_pdf, _selected_meals
+from food_plan_pdf_export_v2 import render_editor_pdf, _selected_meals, _macro_ring_shares
 
 class MockConnection:
     def execute(self, query, args):
@@ -101,8 +101,8 @@ class PlanPdfTests(unittest.TestCase):
         self.assertAlmostEqual(_meal_shares(vals)[2],36.0)
         self.assertAlmostEqual(_share(250,1000),25.0)
         self.assertEqual(_share(100,0),0.0)
-        self.assertEqual(NutritionDailyOverview(vals,None,400).height,218)
-        self.assertEqual(NutritionMealOverview("Almoço",vals,2000,400).height,92)
+        self.assertEqual(NutritionDailyOverview(vals,None,400).height,190)
+        self.assertEqual(NutritionMealOverview("Almoço",vals,2000,400).height,75)
         pdf=render_editor_pdf(MockConnection(),self.plan(),["0:0"])
         pages=PdfReader(BytesIO(pdf)).pages
         self.assertIn("Resumo nutricional",pages[1].extract_text())
@@ -111,6 +111,25 @@ class PlanPdfTests(unittest.TestCase):
         self.assertIn("Proteínas",all_text)
         self.assertIn("Hidratos",all_text)
         self.assertIn("Gorduras",all_text)
+
+    def test_macro_ring_has_no_empty_sector(self):
+        values=[2576,131.5,346.5,57.7]
+        shares=_macro_ring_shares(values)
+        self.assertAlmostEqual(sum(shares),1.0,places=12)
+        self.assertAlmostEqual(shares[0],526/(526+1386+519.3),places=5)
+        self.assertAlmostEqual(shares[1],1386/(526+1386+519.3),places=5)
+        self.assertEqual(_macro_ring_shares([0,0,0,0]),[0.0,0.0,0.0])
+
+    def test_four_meal_summary_stays_on_second_page(self):
+        groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
+                {"name":"Principal","options":[{"foods":[{"id":"food1","grams":200}]}]}]
+        plan={"player_name":"Jogador","plan_type":"Plano amarelo","meals":groups}
+        pages=PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages
+        summary=pages[1].extract_text()
+        for meal in ("Pequeno-almoço","Almoço","Lanche","Jantar"):
+            self.assertIn(meal,summary)
+        self.assertIn("Distribuição do anel",summary)
+        self.assertNotIn("Jantar",pages[2].extract_text().split("Opção 1")[0])
 
     def test_incomplete_is_rejected(self):
         with self.assertRaises(ValueError):

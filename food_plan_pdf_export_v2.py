@@ -225,10 +225,27 @@ def _share(numerator, denominator):
 
 
 def _meal_shares(values):
-    """Macro energy shares within this meal: 4/4/9 kcal per gram."""
+    """Actual percentage of meal kcal supplied by each macro (4/4/9)."""
     energy = values[0]
     return [_share(values[1]*4, energy), _share(values[2]*4, energy),
             _share(values[3]*9, energy)]
+
+
+def _macro_ring_shares(values):
+    """Full 100% ring of macro-derived energy, independent of food-label kcal discrepancy.
+
+    Individual grams are first converted to kcal using 4/4/9. Because labelled
+    total kcal can differ due to rounding, fibre, or food database conventions,
+    the three sectors are normalised to their own energy sum. The centre still
+    displays the plan's declared kcal total, without changing its value.
+    """
+    parts = [max(0.0, float(values[1])*4),
+             max(0.0, float(values[2])*4),
+             max(0.0, float(values[3])*9)]
+    total = sum(parts)
+    if total <= 0:
+        return [0.0, 0.0, 0.0]
+    return [parts[0]/total, parts[1]/total, 1.0-(parts[0]+parts[1])/total]
 
 
 def _reference_weight(c, plan):
@@ -269,18 +286,15 @@ class NutritionDailyOverview(Flowable):
         self.values = totals
         self.weight_kg = reference_weight
         self.width = width
-        self.height = 218
+        self.height = 190
 
     def draw(self):
         c = self.canv
         energy, p, hc, fat = self.values
-        center_x, center_y, radius = self.width/2, 110, 73
-        shares = _meal_shares(self.values)
-        # Small energy discrepancies remain visible as a neutral wedge.
-        denominator = max(energy, p*4 + hc*4 + fat*9, 1)
-        segments = [(v/denominator, color) for v, color in
-                    ((p*4, "#D5E0F2"), (hc*4, "#F9E0D0"), (fat*9, "#FFF0BF"))]
-        _draw_ring(c,center_x,center_y,radius,41,segments)
+        center_x, center_y, radius = self.width/2, 98, 63
+        shares = _macro_ring_shares(self.values)
+        segments = list(zip(shares, ("#D5E0F2", "#F9E0D0", "#FFF0BF")))
+        _draw_ring(c,center_x,center_y,radius,36,segments)
         c.setFillColor(colors.HexColor("#111318"))
         c.setFont("InterTight",25)
         c.drawCentredString(center_x,center_y+1,_amount(0,energy))
@@ -292,8 +306,8 @@ class NutritionDailyOverview(Flowable):
         for fraction, _ in segments:
             angle = start - fraction*180
             if fraction >= 0.06:
-                x = center_x + 57*cos(radians(angle))
-                y = center_y + 57*sin(radians(angle))
+                x = center_x + 49*cos(radians(angle))
+                y = center_y + 49*sin(radians(angle))
                 c.setFillColor(colors.HexColor("#39404A"))
                 c.setFont("InterTight-Bold",9)
                 c.drawCentredString(x,y,str(round(fraction*100))+"%")
@@ -317,13 +331,13 @@ class NutritionDailyOverview(Flowable):
         weight = self.weight_kg
         def ratio(v,unit):
             return ("%.1f "%(v/weight)+unit) if weight else "—"
-        metric(0,196,"Gorduras",_amount(1,fat)+" g",ratio(fat,"g/kg"),
+        metric(0,173,"Gorduras",_amount(1,fat)+" g",ratio(fat,"g/kg"),
                "#8A6F17","#FFF1CB")
-        metric(self.width-119,196,"Proteínas",_amount(1,p)+" g",ratio(p,"g/kg"),
+        metric(self.width-119,173,"Proteínas",_amount(1,p)+" g",ratio(p,"g/kg"),
                "#426D9C","#E7EEF8")
-        metric(0,88,"Hidratos",_amount(1,hc)+" g",ratio(hc,"g/kg"),
+        metric(0,77,"Hidratos",_amount(1,hc)+" g",ratio(hc,"g/kg"),
                "#A96836","#FBE9DE")
-        metric(self.width-119,88,"Valor energético",_amount(0,energy)+" kcal",
+        metric(self.width-119,77,"Valor energético",_amount(0,energy)+" kcal",
                ratio(energy,"kcal/kg"),"#477D57","#E8F2E5")
 
 
@@ -335,19 +349,19 @@ class NutritionMealOverview(Flowable):
         self.values = values
         self.daily_kcal = daily_kcal
         self.width = width
-        self.height = 92
+        self.height = 75
 
     def draw(self):
         c=self.canv
-        x_ring, y_ring = 45, 37
+        x_ring, y_ring = 41, 30
         c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight",12)
-        c.drawString(0,78,self.name)
+        c.drawString(0,64,self.name)
         energy=self.values[0]
         fraction = min(1.0,_share(energy,self.daily_kcal)/100)
-        _draw_ring(c,x_ring,y_ring,31,23,[(fraction,"#CBE6C6")])
+        _draw_ring(c,x_ring,y_ring,26,19,[(fraction,"#CBE6C6")])
         c.setFillColor(colors.HexColor("#15171B"))
-        c.setFont("InterTight",16)
+        c.setFont("InterTight",15)
         c.drawCentredString(x_ring,y_ring+1,_amount(0,energy))
         c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight",9)
@@ -363,15 +377,15 @@ class NutritionMealOverview(Flowable):
             bar_w = cell_w - 17
             c.setFillColor(colors.HexColor("#15171B"))
             c.setFont("InterTight",13)
-            c.drawCentredString(x+bar_w/2,52,_amount(1,value)+" g")
+            c.drawCentredString(x+bar_w/2,43,_amount(1,value)+" g")
             c.setFillColor(colors.HexColor("#939397"))
             c.setFont("InterTight",9.5)
-            c.drawCentredString(x+bar_w/2,38,label)
+            c.drawCentredString(x+bar_w/2,29,label)
             c.setFillColor(colors.HexColor("#F1F1F3"))
-            c.roundRect(x,15,bar_w,12,6,stroke=0,fill=1)
+            c.roundRect(x,7,bar_w,11,5.5,stroke=0,fill=1)
             if share > 0:
                 c.setFillColor(colors.HexColor(accent))
-                c.roundRect(x,15,max(6,bar_w*min(share/100,1)),12,6,stroke=0,fill=1)
+                c.roundRect(x,7,max(6,bar_w*min(share/100,1)),11,5.5,stroke=0,fill=1)
 
 
 def render_editor_pdf(c, plan, selected_meal_keys=None):
@@ -429,10 +443,14 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
         Paragraph("Resumo nutricional",summary_head),
         Paragraph("Valores de referência: média das opções de cada refeição selecionada.",
                   summary_description),
-        NutritionDailyOverview(daily,weight,cw),Spacer(1,9*mm)]
+        NutritionDailyOverview(daily,weight,cw),
+        Paragraph("Distribuição do anel: percentagem da energia calculada pelos macronutrientes (4/4/9).",
+                  _style("ring_note",7.4,10,color="#939397",space_after=6))]
+    # Compact meal flowables keep the entire normal daily selection on one A4 page.
+    # For unusually large custom meal lists, ReportLab may paginate rather than clip.
     for name,values in meal_averages:
         story.append(NutritionMealOverview(name,values,daily[0],cw))
-        story.append(Spacer(1,5*mm))
+        story.append(Spacer(1,2*mm))
     story.append(PageBreak())
 
     for _, meal_name, meal in chosen_meals:
