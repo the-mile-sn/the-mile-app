@@ -3110,6 +3110,7 @@ function renderDishEditor(){
  head.append(categoryHeading,photoHeading,dishHeading,englishHeading,actionsHeading);
  thead.append(head);table.append(thead);
  const tbody=document.createElement("tbody");
+ const mobileCards=document.createElement("div");mobileCards.className="dish-mobile-cards";
  if(!matches.length){
   const tr=document.createElement("tr"),td=document.createElement("td");
   td.colSpan=5;td.className="dish-table-empty";
@@ -3152,6 +3153,7 @@ function tidyDishThumbnailMatte(img){
   },"image/png");
  }catch(_error){/* Leave unchanged if browser canvas is unavailable. */}
 }
+let mobileCard=null;
 const tr=document.createElement("tr");tr.className="dish-table-row";
   const categoryCell=document.createElement("td");categoryCell.className="dish-table-category";const categoryBadge=document.createElement("span");categoryBadge.className="dish-category-pill dish-category-"+dishCategoryTone(dish.category);categoryBadge.textContent=dish.category||"—";categoryCell.append(categoryBadge);tr.append(categoryCell);
   const photoCell=document.createElement("td");const photo=document.createElement("img");photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?thumb=1";photo.alt="";photo.loading="lazy";photo.decoding="async";photo.className="dish-table-photo";photo.addEventListener("load",()=>tidyDishThumbnailMatte(photo),{once:true});photoCell.append(photo);tr.append(photoCell);
@@ -3194,6 +3196,24 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    }
   });
   actions.append(edit,removeDish);tr.append(actions);tbody.append(tr);
+  mobileCard=document.createElement("article");mobileCard.className="dish-mobile-card";
+  const mobileHeader=document.createElement("div");mobileHeader.className="dish-mobile-header";
+  const mobileTags=document.createElement("div");mobileTags.className="dish-mobile-tags";
+  mobileTags.append(categoryBadge.cloneNode(true));
+  const linkedTag=categoryCell.querySelector(".dish-recipe-indicator-category");
+  if(linkedTag)mobileTags.append(linkedTag.cloneNode(true));
+  const mobileActions=document.createElement("div");mobileActions.className="dish-mobile-actions";
+  for(const original of [edit,removeDish]){
+   const button=original.cloneNode(true);
+   button.addEventListener("click",()=>original.click());mobileActions.append(button);
+  }
+  mobileHeader.append(mobileTags,mobileActions);
+  const mobileBody=document.createElement("div");mobileBody.className="dish-mobile-body";
+  const mobileTitle=document.createElement("div");mobileTitle.className="dish-mobile-title";mobileTitle.textContent=dish.name_pt;
+  const mobilePhoto=photo.cloneNode(true);
+  mobilePhoto.addEventListener("load",()=>tidyDishThumbnailMatte(mobilePhoto),{once:true});
+  mobileBody.append(mobileTitle,mobilePhoto);mobileCard.append(mobileHeader,mobileBody);
+  mobileCards.append(mobileCard);
   let dialog=null;
   edit.addEventListener("click",async()=>{
    if(dialog?.open)return;
@@ -3215,19 +3235,26 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    dialog.addEventListener("close",()=>{edit.setAttribute("aria-expanded","false");dialog.remove();dialog=null;});
    dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
    edit.setAttribute("aria-expanded","true");
-   const photoLabel=document.createElement("label");photoLabel.textContent="Substituir fotografia";
-   const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";photoLabel.append(photoInput);editor.append(photoLabel);
-   const photoButton=document.createElement("button");photoButton.type="button";photoButton.textContent="Atualizar fotografia";
-   photoButton.onclick=async()=>{if(!photoInput.files[0])return;photoButton.disabled=true;
-    try{await uploadDishPhoto(photoInput.files[0],{id:dish.id});photoInput.value="";photo.src="/api/v2/dishes/image/"+encodeURIComponent(dish.id)+"?v="+Date.now();$("dish-catalog-feedback").textContent="Fotografia atualizada.";}
-    catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;}finally{photoButton.disabled=false;}
-   };editor.append(photoButton);
+   const categoryField=document.createElement("label");categoryField.className="dish-edit-category";categoryField.textContent="Categoria";
+   const categoryInput=document.createElement("select");categoryInput.required=true;
+   const categoryOptions=new Set([dish.category]);
+   const categoryDropdown=$("new-dish-category");
+   if(categoryDropdown)for(const option of categoryDropdown.options){if(option.value)categoryOptions.add(option.value);}
+   for(const value of categoryOptions){
+    if(!value)continue;
+    const option=document.createElement("option");option.value=value;option.textContent=value;categoryInput.append(option);
+   }
+   categoryInput.value=dish.category||"";
+   categoryField.append(categoryInput);editor.append(categoryField);
    const inputs=[];
-   for(const [key,label] of [["name_pt","Nome português"],["name_en","Nome inglês"],["category","Categoria"]]){
-    const field=document.createElement("label");field.textContent=label;
+   for(const [key,label] of [["name_pt","Nome do prato (português)"],["name_en","Nome do prato (inglês) (opcional)"]]){
+    const field=document.createElement("label");field.className="dish-edit-field-"+key;field.textContent=label;
     const input=document.createElement("input");input.value=dish[key]||"";input.maxLength=200;
     field.append(input);editor.append(field);inputs.push(input);
    }
+   const photoLabel=document.createElement("label");photoLabel.className="dish-edit-photo-label";photoLabel.textContent="Fotografia";
+   const photoInput=document.createElement("input");photoInput.type="file";photoInput.accept="image/*";
+   photoLabel.append(photoInput);editor.append(photoLabel);
    const association=document.createElement("section");association.className="dish-recipe-association";
    const associationHeading=document.createElement("h4");associationHeading.textContent="Associar receita";
    const associationHint=document.createElement("p");associationHint.className="dish-recipe-association-hint";
@@ -3274,11 +3301,11 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
       finally{view.disabled=false;}
      });
      const remove=document.createElement("button");remove.type="button";
-     remove.textContent="";remove.className="dish-recipe-association-clear";remove.setAttribute("aria-label","Desassociar receita: "+item.recipe_name);remove.title="Desassociar receita";remove.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+     remove.textContent="";remove.className="dish-recipe-association-clear";remove.setAttribute("aria-label","Desassociar receita: "+item.recipe_name);remove.title="Desassociar receita";remove.innerHTML=supplementPlanActionIcons.remove;
      remove.addEventListener("click",()=>persistAssociation(item.recipe_id,"DELETE"));
      const actions=document.createElement("div");actions.className="dish-recipe-card-buttons";actions.append(view,remove);line.append(name,actions);associationList.append(line);
     }
-    for(const rowTag of tr.querySelectorAll(".dish-recipe-indicator-category")){
+    for(const rowTag of [...tr.querySelectorAll(".dish-recipe-indicator-category"),...(mobileCard?.querySelectorAll(".dish-recipe-indicator-category")||[])]){
      rowTag.hidden=!linked.length;
      rowTag.textContent=linked.length?(linked.length===1?"Receita associada":linked.length+" receitas associadas"):"";
     }
@@ -3360,10 +3387,15 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancelar";cancel.className="tm-action-secondary";
    cancel.addEventListener("click",closeDialog);
    const save=document.createElement("button");save.type="button";save.textContent="Guardar alterações";save.className="tm-action-primary";
-   save.onclick=async()=>{save.disabled=true;
+   save.onclick=async()=>{
+    if(!inputs[0].value.trim()||!categoryInput.value.trim()){
+     $("dish-catalog-feedback").textContent="Indica a categoria e o nome português do prato.";return;
+    }
+    save.disabled=true;
     try{
-     await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:inputs[2].value,active:true})});
-     dish.name_pt=inputs[0].value.trim();dish.name_en=inputs[1].value.trim();dish.category=inputs[2].value.trim();dish.active=1;
+     if(photoInput.files?.[0])await uploadDishPhoto(photoInput.files[0],{id:dish.id});
+     await request("/api/v2/dishes/edit",{method:"PUT",body:JSON.stringify({id:dish.id,name_pt:inputs[0].value,name_en:inputs[1].value,category:categoryInput.value,active:true})});
+     dish.name_pt=inputs[0].value.trim();dish.name_en=inputs[1].value.trim();dish.category=categoryInput.value.trim();dish.active=1;
      $("dish-catalog-feedback").textContent="Prato atualizado na biblioteca.";
      closeDialog();refreshDishCategories();await fetchDishPage(dishTablePage);
     }catch(e){$("dish-catalog-feedback").textContent="Erro: "+e.message;save.disabled=false;}
@@ -3375,7 +3407,7 @@ const tr=document.createElement("tr");tr.className="dish-table-row";
    if(firstInput)firstInput.focus({preventScroll:true});
   });
  }
- table.append(tbody);wrap.append(table);host.append(wrap);
+ table.append(tbody);wrap.append(table);host.append(wrap,mobileCards);
  if(dishTablePages>1){
   const pages=document.createElement("div");pages.className="tm-library-pagination";
   pages.setAttribute("aria-label","Paginação dos pratos");
