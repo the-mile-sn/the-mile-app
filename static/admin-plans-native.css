@@ -2678,3 +2678,18 @@
 #tm-plan-page .tm-pdf-meals-actions{display:flex;justify-content:flex-end;margin-top:20px}
 #tm-plan-page .tm-pdf-meals-actions button{min-height:40px}
 @media(max-width:550px){#tm-plan-page .tm-pdf-meals-content{padding:20px}#tm-plan-page .tm-pdf-meals-actions button{width:100%}}
+
+/* Plan library PDF action: exact Hugeicons Pdf01Icon, aligned with PencilEdit action. */
+#tm-plan-page #plan-entry .plan-library-row-actions [data-export-pdf-id],
+#tm-plan-page #plan-entry .plan-library-card-actions [data-export-pdf-id]{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;width:36px!important;height:36px!important;
+ min-width:36px!important;min-height:36px!important;flex:0 0 36px!important;
+ padding:8px!important;border-radius:10px!important;
+}
+#tm-plan-page #plan-entry .plan-library-row-actions [data-export-pdf-id] svg,
+#tm-plan-page #plan-entry .plan-library-card-actions [data-export-pdf-id] svg{
+ display:block!important;width:16px!important;height:16px!important;flex:none!important;
+ stroke:currentColor!important;stroke-width:1.5!important;fill:none!important;
+}
+#tm-plan-page #plan-entry [data-export-pdf-id]:disabled{opacity:.55!important;cursor:wait!important}
