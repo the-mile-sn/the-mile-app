@@ -20,6 +20,52 @@
   if(visual&&!loaded&&!loading)load();
  }
  window.tmShowAdminFoodLibrarySection=mode;
+ /* Some approved WebP files contain opaque white in their outside margins.
+    Remove only near-white pixels connected to an outer edge, never alter
+    stored photographs or opaque pixels enclosed by the plate. */
+ function clearWhitePhotoMargins(image){
+  if(image.dataset.photoMarginsChecked)return;
+  image.dataset.photoMarginsChecked="1";
+  if(!image.naturalWidth||!image.naturalHeight)return;
+  const canvas=document.createElement("canvas");
+  const scale=Math.min(1,600/Math.max(image.naturalWidth,image.naturalHeight));
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+  canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+  const ctx=canvas.getContext("2d",{willReadFrequently:true});
+  if(!ctx)return;
+  try{
+   ctx.drawImage(image,0,0,canvas.width,canvas.height);
+   const frame=ctx.getImageData(0,0,canvas.width,canvas.height);
+   const data=frame.data,w=canvas.width,h=canvas.height,n=w*h;
+   const white=i=>{
+    const p=i*4;
+    return data[p+3]>240&&data[p]>=245&&data[p+1]>=245&&data[p+2]>=245
+      &&Math.max(data[p],data[p+1],data[p+2])-Math.min(data[p],data[p+1],data[p+2])<=8;
+   };
+   let corners=0;
+   for(const i of [0,w-1,(h-1)*w,h*w-1])if(white(i))corners++;
+   if(corners<2)return; // already transparent, or no white photo backdrop
+   const visited=new Uint8Array(n),queue=new Int32Array(n);
+   let head=0,tail=0;
+   const add=i=>{if(visited[i]||!white(i))return;visited[i]=1;queue[tail++]=i;};
+   for(let x=0;x<w;x++){add(x);add((h-1)*w+x);}
+   for(let y=1;y<h-1;y++){add(y*w);add(y*w+w-1);}
+   if(!tail)return;
+   while(head<tail){
+    const i=queue[head++],x=i%w,y=(i-x)/w;
+    if(x>0)add(i-1);if(x<w-1)add(i+1);
+    if(y>0)add(i-w);if(y<h-1)add(i+w);
+   }
+   for(let i=0;i<n;i++)if(visited[i])data[i*4+3]=0;
+   ctx.putImageData(frame,0,0);
+   canvas.toBlob(blob=>{
+    if(!blob||!image.isConnected)return;
+    const url=URL.createObjectURL(blob);
+    image.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});
+    image.src=url;
+   },"image/webp",.9);
+  }catch(_error){/* Keep the original image if canvas processing is unavailable. */}
+ }
  function makeCard(ref){
   const card=document.createElement("article");card.className="tm-portion-card";
   const image=document.createElement("img");image.loading="lazy";image.decoding="async";
@@ -49,7 +95,12 @@
    }catch(e){feedback.textContent="Não foi possível alterar a referência: "+e.message;}
    finally{toggle.disabled=false;}
   });
-  card.append(image,info,toggle);return card;
+  const heading=document.createElement("div");heading.className="tm-portion-heading";
+  heading.append(label,toggle);
+  info.prepend(heading);
+  card.append(info,image);
+  image.addEventListener("load",()=>clearWhitePhotoMargins(image),{once:true});
+  return card;
  }
  function updatePaging(){
   const shown=Math.min(visibleCount,filteredReferences.length);
