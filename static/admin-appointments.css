@@ -430,3 +430,49 @@ html[data-admin-theme="light"] .tm-appt-booking-date-section{
  .tm-appointments-week.is-month .tm-appt-calendar-event{font-size:9px;padding-left:3px;border-left-width:2px}
  .tm-appointments-week.is-month .tm-appointments-day{gap:4px}
 }
+
+/* Booking popup: same visual system as the Supplement library editor. */
+#tm-appt-booking-dialog.tm-appt-dialog{
+ width:min(750px,calc(100vw - 28px));max-height:calc(100dvh - 32px);
+ border:0;border-radius:20px;background:var(--tm-ui-card);
+ box-shadow:0 20px 80px rgba(0,0,0,.35);
+}
+#tm-appt-booking-dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(3px)}
+#tm-appt-booking-dialog form{padding:25px;gap:16px}
+#tm-appt-booking-dialog .tm-appt-dialog-heading{align-items:center;margin:0 0 4px}
+#tm-appt-booking-dialog .tm-appt-dialog-heading h2{font-size:23px;font-weight:600;line-height:1.25}
+#tm-appt-booking-dialog .tm-appt-field{
+ display:flex;flex-direction:column;gap:6px;min-height:82px;padding:13px 15px;
+ border:0;border-radius:14px;background:var(--tm-ui-subcard);
+ color:var(--tm-ui-muted);font-size:12px;box-sizing:border-box;
+}
+#tm-appt-booking-dialog .tm-appt-field :is(input,select){
+ width:100%;height:34px;min-height:34px;margin:0;padding:3px 0;
+ border:0;border-radius:0;background:transparent;box-shadow:none;
+ color:var(--tm-ui-text);font:500 15px/1.3 "Inter Tight",sans-serif;
+}
+#tm-appt-booking-dialog .tm-appt-field :is(input,select):focus-visible{outline:2px solid #8baac5;outline-offset:3px}
+#tm-appt-booking-dialog .tm-appt-booking-date-section{
+ border:0;border-radius:14px;background:var(--tm-ui-subcard);padding:17px;
+}
+#tm-appt-booking-dialog .tm-appt-booking-customer-group{gap:12px}
+#tm-appt-booking-dialog .tm-appt-booking-customer-group h3{font-size:16px}
+#tm-appt-booking-dialog .tm-appt-dialog-actions button{
+ border:0;border-radius:12px;min-height:44px;padding:10px 18px;
+ font:500 14px/1.2 "Inter Tight",sans-serif;
+}
+#tm-appt-booking-dialog .tm-appt-cancel{background:var(--tm-ui-search);color:var(--tm-ui-text)}
+#tm-appt-booking-dialog .tm-appt-save{background:var(--tm-action-main-bg,#f4f5f6);color:var(--tm-action-main-fg,#17181a)}
+#tm-appt-booking-dialog .tm-appt-dialog-close{
+ display:inline-flex;align-items:center;justify-content:center;flex:none;
+ width:32px;height:32px;padding:4px;border:0!important;border-radius:8px;
+ background:transparent!important;color:var(--tm-ui-text);
+ font-size:0;box-shadow:none!important;
+}
+#tm-appt-booking-dialog .tm-appt-dialog-close:hover{color:var(--tm-ui-muted)}
+#tm-appt-booking-dialog .tm-appt-dialog-close svg{display:block;pointer-events:none}
+@media(max-width:620px){
+ #tm-appt-booking-dialog form{padding:18px}
+ #tm-appt-booking-dialog .tm-appt-dialog-grid{grid-template-columns:minmax(0,1fr)}
+ #tm-appt-booking-dialog .tm-appt-booking-date-section{padding:12px}
+}
