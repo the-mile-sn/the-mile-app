@@ -142,24 +142,32 @@
   for(const item of state.bookings)list.append(bookingLine(item));
  }
  async function loadAgenda(){
-  const dates=[...document.querySelectorAll("#tm-appointments-days .tm-appointments-day")].map(n=>n.dataset.date).filter(Boolean);
+  const cards=[...document.querySelectorAll("#tm-appointments-days .tm-appointments-day")];
+  const dates=cards.map(n=>n.dataset.date).filter(Boolean);
   if(!dates.length)return;
   const token=++state.agendaSequence;
   const params=new URLSearchParams({from:dates[0],to:dates[dates.length-1],status:"scheduled"});
   const result=await api("/bookings?"+params);
   if(token!==state.agendaSequence)return;
-  const bookings=result.bookings||[];
-  for(const card of document.querySelectorAll("#tm-appointments-days .tm-appointments-day")){
+  const bookings=result.bookings||[],counts=new Map();
+  for(const item of bookings)counts.set(item.date,(counts.get(item.date)||0)+1);
+  for(const card of cards){
    card.querySelectorAll(".tm-appt-agenda-count").forEach(el=>el.remove());
-   const count=bookings.filter(b=>b.date===card.dataset.date).length;
-   if(count)card.append(make("span","tm-appt-agenda-count",count+" marcação(ões)"));
+   const count=counts.get(card.dataset.date)||0;
+   if(count)card.append(make("span","tm-appt-agenda-count",count+" marcação"+(count===1?"":"ões")));
   }
+  const active=document.querySelector("[data-appointments-view].is-active")?.dataset.appointmentsView||"month";
+  const selected=document.querySelector("#tm-appointments-days .tm-appointments-day.is-selected")?.dataset.date;
+  const visible=active==="week"?bookings:bookings.filter(item=>item.date===selected);
+  const heading=document.querySelector(".tm-appt-agenda-feed h4");
+  if(heading)heading.textContent=active==="week"?"Marcações desta semana":"Marcações de "+(selected?dateLabel(selected):"hoje");
   const feed=$("tm-appt-agenda-list");feed.replaceChildren();
-  if(!bookings.length){
-   feed.append(make("p","tm-appt-booking-empty","Sem marcações neste período."));
+  if(!visible.length){
+   feed.append(make("p","tm-appt-booking-empty","Sem marcações para "+(active==="week"?"esta semana":"este dia")+"."));
    return;
   }
-  for(const item of bookings)feed.append(bookingLine(item,true));
+  visible.sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
+  for(const item of visible)feed.append(bookingLine(item,true));
  }
  async function refreshBookings(){
   await Promise.all([loadList().catch(error=>feedback(error.message,true)),loadAgenda().catch(error=>feedback(error.message,true))]);
@@ -540,6 +548,7 @@
  $("tm-appt-checkout-refresh")?.addEventListener("click",()=>loadCheckoutStatus());
  loadCheckoutStatus().catch(()=>{});
  $("tm-appt-new-booking").addEventListener("click",()=>openForm());
+ $("tm-appt-agenda-new-booking")?.addEventListener("click",()=>openForm());
  for(const button of document.querySelectorAll("[data-close-booking-dialog]"))
   button.addEventListener("click",()=>button.closest("dialog").close());
  $("tm-appt-booking-dialog").addEventListener("close",()=>{
