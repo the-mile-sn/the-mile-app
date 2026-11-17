@@ -93,6 +93,25 @@ class PlanPdfTests(unittest.TestCase):
             containing=[n for n,p in enumerate(pages) if label in p.extract_text()]
             self.assertEqual(len(containing),2) # once for breakfast and once for snack
 
+    def test_visual_summary_calculations_and_selected_meals(self):
+        from food_plan_pdf_export_v2 import _meal_shares, _share, NutritionDailyOverview, NutritionMealOverview
+        vals=[500,25,50,20]
+        self.assertAlmostEqual(_meal_shares(vals)[0],20.0)
+        self.assertAlmostEqual(_meal_shares(vals)[1],40.0)
+        self.assertAlmostEqual(_meal_shares(vals)[2],36.0)
+        self.assertAlmostEqual(_share(250,1000),25.0)
+        self.assertEqual(_share(100,0),0.0)
+        self.assertEqual(NutritionDailyOverview(vals,None,400).height,218)
+        self.assertEqual(NutritionMealOverview("Almoço",vals,2000,400).height,92)
+        pdf=render_editor_pdf(MockConnection(),self.plan(),["0:0"])
+        pages=PdfReader(BytesIO(pdf)).pages
+        self.assertIn("Resumo nutricional",pages[1].extract_text())
+        all_text=" ".join(page.extract_text() for page in pages)
+        self.assertNotIn("Lanche",all_text)
+        self.assertIn("Proteínas",all_text)
+        self.assertIn("Hidratos",all_text)
+        self.assertIn("Gorduras",all_text)
+
     def test_incomplete_is_rejected(self):
         with self.assertRaises(ValueError):
             render_editor_pdf(MockConnection(),{"meals":[]})
