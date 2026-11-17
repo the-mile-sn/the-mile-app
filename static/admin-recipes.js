@@ -113,6 +113,8 @@
  function paintList(){
   // Repaint only tbody: retain search focus, filter selections and table width.
   const host=$("recipe-list-body");host.replaceChildren();
+  const mobileHost=$("recipe-mobile-cards");
+  if(mobileHost)mobileHost.replaceChildren();
   const visible=recipeRows;
   $("recipe-result-count").textContent=recipeTotal+" receitas";
   paintRecipePagination();
@@ -153,6 +155,35 @@
    tr.addEventListener("click",event=>{if(!event.target.closest("button,a,input,select,textarea"))openReadRecipe(r.id);});
    tr.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&event.target===tr){event.preventDefault();openReadRecipe(r.id);}});
    tr.append(actions);host.append(tr);
+   if(mobileHost){
+    const card=node("article","tm-recipe-mobile-card");
+    card.tabIndex=0;card.setAttribute("role","button");
+    card.setAttribute("aria-label","Ver receita "+r.name);
+    const top=node("div","tm-recipe-mobile-top");
+    const badges=node("div","tm-recipe-mobile-badges");
+    badges.append(recipeCategoryBadge(r.category_id,r.category));
+    badges.append(node("span","recipe-status-tag "+(r.status==="draft"?"recipe-status-draft":"recipe-status-published"),r.status==="draft"?"Rascunho":"Publicada"));
+    const quick=node("div","tm-recipe-mobile-actions");
+    const editMobile=button("",()=>openRecipe(r.id),"recipe-icon-button recipe-edit-action");
+    editMobile.append(recipeListIcon("edit"));editMobile.setAttribute("aria-label","Editar receita "+r.name);
+    const deleteMobile=button("",()=>deleteRecipe(r),"recipe-icon-button recipe-delete");
+    deleteMobile.append(recipeListIcon("trash"));deleteMobile.setAttribute("aria-label","Eliminar receita "+r.name);
+    quick.append(editMobile,deleteMobile);top.append(badges,quick);
+    const body=node("div","tm-recipe-mobile-body");
+    const description=node("div","tm-recipe-mobile-description");
+    description.append(node("strong","tm-recipe-mobile-name",r.name));
+    description.append(node("span","tm-recipe-mobile-meta",(r.recipe_type==="adaptable"?"Adaptável ao plano":"Receita padrão")+(r.servings?" · "+r.servings+" "+(r.servings===1?"dose":"doses"):"")));
+    const media=node("div","tm-recipe-mobile-media");
+    if(r.photo_key){
+     const photo=node("img","tm-recipe-mobile-photo");
+     photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id)+"?thumb=1";
+     photo.alt="";photo.loading="lazy";photo.decoding="async";media.append(photo);
+    }
+    body.append(description,media);card.append(top,body);
+    card.addEventListener("click",event=>{if(!event.target.closest("button"))openReadRecipe(r.id);});
+    card.addEventListener("keydown",event=>{if(event.target===card&&(event.key==="Enter"||event.key===" ")){event.preventDefault();openReadRecipe(r.id);}});
+    mobileHost.append(card);
+   }
   }
  }
  function syncRecipePopup(){
