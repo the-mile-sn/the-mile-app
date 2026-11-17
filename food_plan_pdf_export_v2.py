@@ -332,16 +332,18 @@ class NutritionDailyOverview(Flowable):
         shares = _macro_ring_shares(self.values)
         palette = ("#D5E0F2", "#F9E0D0", "#FFF0BF")
         cx, cy, radius = 86, 97, 64
-        _draw_ring(c, cx, cy, radius, 38, list(zip(shares, palette)))
+        _draw_ring(c, cx, cy, radius, 45, list(zip(shares, palette)))
         c.setFillColor(colors.HexColor("#111318"))
-        c.setFont("InterTight-Bold", 24)
-        c.drawCentredString(cx, cy+5, _amount(0, energy))
         c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight", 10)
-        c.drawCentredString(cx, cy-11, "kcal")
+        c.drawCentredString(cx, cy+22, "kcal")
+        c.setFillColor(colors.HexColor("#111318"))
+        c.setFont("InterTight-Bold", 27)
+        c.drawCentredString(cx, cy-2, _amount(0, energy))
         if self.weight_kg:
-            c.setFont("InterTight", 9)
-            c.drawCentredString(cx, cy-26, "%.1f kcal/kg" % (energy/self.weight_kg))
+            c.setFillColor(colors.HexColor("#939397"))
+            c.setFont("InterTight", 10)
+            c.drawCentredString(cx, cy-23, "%.0f/kg" % (energy/self.weight_kg))
 
         x = 192
         right = self.width-4
@@ -371,8 +373,9 @@ class NutritionDailyOverview(Flowable):
 
 class NutritionMealOverview(Flowable):
     """One editorial meal row: kcal, daily percent and three macro bars."""
-    def __init__(self, name, values, daily_kcal, width):
+    def __init__(self, name, values, daily_kcal, width, show_divider=True):
         Flowable.__init__(self)
+        self.show_divider = show_divider
         self.name = name.replace("Pequeno almoço","Pequeno-almoço")
         self.values = values
         self.daily_kcal = daily_kcal
@@ -382,7 +385,7 @@ class NutritionMealOverview(Flowable):
     def draw(self):
         c = self.canv
         energy = self.values[0]
-        c.setFillColor(colors.HexColor("#242831"))
+        c.setFillColor(colors.HexColor("#939397"))
         c.setFont("InterTight-Bold",11)
         c.drawString(0,53,self.name)
         c.setFont("InterTight-Bold",14)
@@ -412,9 +415,10 @@ class NutritionMealOverview(Flowable):
                 c.setFillColor(colors.HexColor(accent))
                 c.roundRect(x,26,min(bar_width,max(4,bar_width*min(macro_share/100,1))),
                             8,4,stroke=0,fill=1)
-        c.setLineWidth(.5)
-        c.setStrokeColor(colors.HexColor("#E7E8EA"))
-        c.line(0,4,self.width,4)
+        if self.show_divider:
+            c.setLineWidth(.5)
+            c.setStrokeColor(colors.HexColor("#E7E8EA"))
+            c.line(0,4,self.width,4)
 
 
 def render_editor_pdf(c, plan, selected_meal_keys=None):
@@ -477,8 +481,9 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
                   color="#242831", bold=True, space_after=9))]
     # Compact meal flowables keep the entire normal daily selection on one A4 page.
     # For unusually large custom meal lists, ReportLab may paginate rather than clip.
-    for name,values in meal_averages:
-        story.append(NutritionMealOverview(name,values,daily[0],cw))
+    for meal_index,(name,values) in enumerate(meal_averages):
+        story.append(NutritionMealOverview(name,values,daily[0],cw,
+                                           show_divider=meal_index < len(meal_averages)-1))
         story.append(Spacer(1,2*mm))
     story.append(PageBreak())
 
