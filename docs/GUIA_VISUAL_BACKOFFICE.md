@@ -105,6 +105,41 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 - Inputs editáveis no Safari/iPhone: pelo menos **16 px** quando recebem foco para evitar zoom. Preservar outline de foco funcional (normalmente 2 px) e rótulos acessíveis. Não abrir teclado mobile automaticamente sem necessidade.
 - Um card clicável tem feedback discreto no próprio card e deve conservar ações internas independentes; não criar hover em linhas meramente informativas. Respeitar `prefers-reduced-motion`.
 
+## 3A. Catálogo oficial de ícones Hugeicons — aprovado em 17/11
+
+**Usar exclusivamente os ícones oficiais indicados pelos nomes de exportação abaixo**, sem redesenhar versões semelhantes nem trocar por Lucide ou emojis. O nome listado é a identidade normativa; a dimensão pode adaptar-se ao contexto sem alterar o desenho do ícone. No manual PDF visual, apresentar os SVG originais Hugeicons quando disponíveis.
+
+### App dos jogadores
+
+| Função | Hugeicons oficial |
+|---|---|
+| Pequeno-almoço | `Coffee03Icon` |
+| Snack | `VegetarianFoodIcon` |
+| Almoço / Jantar | `Restaurant02Icon` |
+| Ceia | `Moon02Icon` |
+| Jogo | `FootballIcon` |
+| Treino | `FootballPitchIcon` |
+| Pós-treino | `SoftDrink01Icon` |
+| Pós-jogo | `SoftDrink01Icon` |
+| Página inicial | `Home09Icon` |
+| Planos | `Files01Icon` |
+| Inserir novo | `AddCircleIcon` |
+| Menus | `MenuRestaurantIcon` |
+| Perfil | `User03Icon` |
+| Formulário jogo | `FootballPitchIcon` |
+| Formulário peso | `WeightScaleIcon` |
+
+### Backoffice
+
+| Função | Hugeicons oficial |
+|---|---|
+| Eliminar / caixote do lixo | `TrashIcon` |
+| Editar | `PencilEdit01Icon` |
+| Biblioteca | `LibraryBigIcon` |
+| Criar planos | `ClipboardPlusIcon` |
+
+**Nota:** esta lista documenta decisões aprovadas para duas interfaces diferentes. **Não autoriza alterações à app dos jogadores nem ao Backoffice.** A branch do Admin continua `production/the-mile-admin` e a da app `main`. O uso do `FootballIcon` em «Ajustes pós-jogo» no Admin mantém-se conforme a secção Modelo.
+
 ## 4. Navegação e estrutura partilhada
 
 - **Branches separadas:** Admin = `production/the-mile-admin`; app dos jogadores = `main`. A uniformização do Admin não altera a app.
