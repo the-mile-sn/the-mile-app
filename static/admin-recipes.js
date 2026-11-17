@@ -130,7 +130,7 @@
    const photoCell=node("td");
    if(r.photo_key){
     const photo=node("img","recipe-thumb");
-    photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id)+"?thumb=1";
+    photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id)+"?thumb=1&v="+encodeURIComponent(r.updated_at||0);
     photo.decoding="async";
     photo.loading="lazy";photo.alt="";photoCell.append(photo);
    }else photoCell.append(node("div","recipe-thumb recipe-thumb-empty","—"));
@@ -176,7 +176,7 @@
     const media=node("div","tm-recipe-mobile-media");
     if(r.photo_key){
      const photo=node("img","tm-recipe-mobile-photo");
-     photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id)+"?thumb=1";
+     photo.src="/api/v2/recipes/image/"+encodeURIComponent(r.id)+"?thumb=1&v="+encodeURIComponent(r.updated_at||0);
      photo.alt="";photo.loading="lazy";photo.decoding="async";media.append(photo);
     }
     body.append(description,media);card.append(top,body);
