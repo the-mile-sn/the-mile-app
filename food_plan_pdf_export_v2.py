@@ -168,14 +168,16 @@ def _draw_cover(canvas, doc, plan, photo_bytes=None):
             pass
 
     label = str(plan.get("plan_type") or "").lower()
-    if "amarelo" in label:
-        hue, lit = "#C99F31", 2
+    if "verde preparação" in label or "verde preparacao" in label:
+        hue, lit = "#235C40", 3
     elif "laranja" in label:
-        hue, lit = "#D88744", 3
-    elif "verde" in label:
-        hue, lit = "#56A77F", 1
+        hue, lit = "#D88744", 1
+    elif "amarelo" in label:
+        hue, lit = "#C99F31", 2
     elif "azul" in label:
         hue, lit = "#528BB8", 2
+    elif "verde" in label:
+        hue, lit = "#56A77F", 3
     else:
         hue, lit = "#939397", 2
     sy = y - 30 * mm
