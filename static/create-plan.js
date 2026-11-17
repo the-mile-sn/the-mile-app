@@ -673,7 +673,7 @@ const pdfMealConfirm=$("tm-pdf-meal-confirm");
 const pdfMealSlots=()=>plan.meals.flatMap((meal,mi)=>
  mealSlots(meal).map((slot,si)=>({key:mi+":"+si,label:slot,meal})))
  .sort((a,b)=>{
-   const rank=s=>{"pequeno almoco":0,"almoco":1,"lanche":2,"jantar":3,"ceia":4}[normalizeMealName(s)]??5;
+   const rank=s=>({"pequeno almoco":0,"almoco":1,"lanche":2,"jantar":3,"ceia":4})[normalizeMealName(s)]??5;
    return rank(a.label)-rank(b.label);
  });
 const formatPdfNutrients=values=>fmtKcal(values[0])+" kcal · P "+fmt(values[1])+" g · HC "+fmt(values[2])+" g · G "+fmt(values[3])+" g";
