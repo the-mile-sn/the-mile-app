@@ -11931,3 +11931,60 @@ html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page .rec
 background:rgba(135,149,173,.17)!important;color:#ccd5e1!important;
 border-color:color-mix(in srgb,#ccd5e1 60%,transparent)!important;
 }
+
+
+/* Approved icon-only mobile navigation: no floating account card or active tile. */
+@media(max-width:830px){
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav{
+  padding-bottom:0!important;border:0!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track{
+  box-sizing:border-box!important;min-height:58px!important;height:58px!important;
+  gap:4px!important;padding:0 15px!important;margin:0!important;
+  border-bottom:1px solid var(--tm-ui-divider,#34363c)!important;
+  scroll-padding-inline:15px!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link{
+  box-sizing:border-box!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
+  position:relative!important;width:54px!important;min-width:54px!important;
+  max-width:54px!important;height:57px!important;min-height:57px!important;
+  flex:0 0 54px!important;margin:0!important;padding:0!important;
+  gap:0!important;border-radius:0!important;border:0!important;
+  background:transparent!important;color:var(--tm-ui-muted,#a0a9b7)!important;
+  font-size:0!important;box-shadow:none!important;
+  scroll-snap-align:center!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link>span:not(.tm-admin-nav-icon){
+  display:none!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link .tm-admin-nav-icon{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:23px!important;height:23px!important;min-width:23px!important;
+  margin:0!important;padding:0!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link .tm-admin-side-icon{
+  display:block!important;width:23px!important;height:23px!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link:is(.is-active,.tm-mobile-current){
+  color:var(--tm-ui-text,#fff)!important;background:transparent!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link:is(.is-active,.tm-mobile-current)::after{
+  content:""!important;display:block!important;position:absolute!important;
+  bottom:0!important;left:4px!important;right:4px!important;
+  height:3px!important;border-radius:3px 3px 0 0!important;
+  background:var(--tm-shell-focus,#88aeca)!important;pointer-events:none!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track .tm-admin-nav-link:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#88aeca)!important;
+  outline-offset:-5px!important;border-radius:8px!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav>#tm-admin-account-actions{
+  display:none!important;position:static!important;width:0!important;
+  height:0!important;min-height:0!important;overflow:hidden!important;
+ }
+ :is(#admin-workspace,#tm-appointments-root) .tm-admin-sidebar.tm-complete-mobile-nav .tm-admin-mobile-nav-track{
+  padding-right:15px!important;
+ }
+}
