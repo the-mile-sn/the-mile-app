@@ -666,26 +666,69 @@ async function saveCurrentDraft(){
  }
 }
 $("save-plan").onclick=()=>saveCurrentDraft();
-$("export-plan-pdf").onclick=async()=>{
+const pdfMealDialog=$("tm-pdf-meals-dialog");
+const pdfMealChoices=$("tm-pdf-meal-choices");
+const pdfMealSummary=$("tm-pdf-meal-summary");
+const pdfMealConfirm=$("tm-pdf-meal-confirm");
+const pdfMealSlots=()=>plan.meals.flatMap((meal,mi)=>
+ mealSlots(meal).map((slot,si)=>({key:mi+":"+si,label:slot,meal})))
+ .sort((a,b)=>{
+   const rank=s=>{"pequeno almoco":0,"almoco":1,"lanche":2,"jantar":3,"ceia":4}[normalizeMealName(s)]??5;
+   return rank(a.label)-rank(b.label);
+ });
+const formatPdfNutrients=values=>fmtKcal(values[0])+" kcal · P "+fmt(values[1])+" g · HC "+fmt(values[2])+" g · G "+fmt(values[3])+" g";
+function updatePdfMealSummary(){
+ const selected=[...pdfMealChoices.querySelectorAll('input[type="checkbox"]:checked')];
+ const totals=[0,0,0,0];
+ for(const input of selected){
+   const values=average(plan.meals[Number(input.dataset.mealIndex)]);
+   values.forEach((value,i)=>totals[i]+=value);
+ }
+ pdfMealConfirm.disabled=!selected.length;
+ pdfMealSummary.textContent=selected.length?"Total diário de referência · "+formatPdfNutrients(totals):"Seleciona pelo menos uma refeição.";
+}
+$("export-plan-pdf").onclick=()=>{
  if(!plan.id||planIsDirty()){status("Guarda primeiro as alterações antes de gerar o PDF.");return;}
- const button=$("export-plan-pdf");
- button.disabled=true;
- try{
-  const response=await fetch("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id)+"/pdf",{credentials:"same-origin",cache:"no-store"});
-  if(!response.ok){
-   const error=await response.json().catch(()=>({}));
-   throw new Error(error.error||"Não foi possível gerar o PDF");
-  }
-  const blob=await response.blob();
-  if(!blob.size||!blob.type.includes("pdf"))throw new Error("Resposta PDF inválida");
-  const link=document.createElement("a"),url=URL.createObjectURL(blob);
-  link.href=url;link.download="The-Mile-"+String(plan.plan_type||"Plano").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".pdf";
-  document.body.appendChild(link);link.click();link.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
-  status("PDF gerado a partir do plano guardado. O plano não foi publicado.");
- }catch(error){status("Erro ao gerar PDF: "+error.message);}
- finally{renderPersistence();}
+ pdfMealChoices.replaceChildren();
+ for(const slot of pdfMealSlots()){
+   const row=document.createElement("label");row.className="tm-pdf-meal-choice";
+   const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=true;
+   checkbox.value=slot.key;checkbox.dataset.mealIndex=slot.key.split(":")[0];
+   checkbox.addEventListener("change",updatePdfMealSummary);
+   const text=document.createElement("span");text.textContent=slot.label;
+   row.append(checkbox,text);pdfMealChoices.appendChild(row);
+ }
+ updatePdfMealSummary();
+ pdfMealDialog.showModal();
 };
+$("tm-pdf-meal-cancel").onclick=()=>pdfMealDialog.close();
+pdfMealDialog.addEventListener("click",event=>{
+ if(event.target===pdfMealDialog)pdfMealDialog.close();
+});
+pdfMealConfirm.onclick=async()=>{
+ if(planIsDirty()||!plan.id){pdfMealDialog.close();status("Guarda primeiro as alterações.");return;}
+ const selected=[...pdfMealChoices.querySelectorAll('input[type="checkbox"]:checked')].map(c=>c.value);
+ if(!selected.length)return;
+ pdfMealConfirm.disabled=true;
+ try{
+   const params=new URLSearchParams({meals:selected.join(",")});
+   const response=await fetch("/api/v2/food-plan-drafts/"+encodeURIComponent(plan.id)+"/pdf?"+params,{credentials:"same-origin",cache:"no-store"});
+   if(!response.ok){
+     const error=await response.json().catch(()=>({}));
+     throw new Error(error.error||"Não foi possível gerar o PDF");
+   }
+   const blob=await response.blob();
+   if(!blob.size||!blob.type.includes("pdf"))throw new Error("Resposta PDF inválida");
+   const link=document.createElement("a"),url=URL.createObjectURL(blob);
+   link.href=url;link.download="The-Mile-"+String(plan.plan_type||"Plano").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".pdf";
+   document.body.appendChild(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   pdfMealDialog.close();
+   status("PDF gerado com as refeições selecionadas. O plano não foi alterado.");
+ }catch(error){status("Erro ao gerar PDF: "+error.message);}
+ finally{updatePdfMealSummary();}
+};
+
 
 $("assign-player").onclick=async()=>{
  if(!plan.id||planIsDirty()){

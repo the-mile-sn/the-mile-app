@@ -2,7 +2,7 @@
 import unittest
 from io import BytesIO
 from pypdf import PdfReader
-from food_plan_pdf_export_v2 import render_editor_pdf
+from food_plan_pdf_export_v2 import render_editor_pdf, _selected_meals
 
 class MockConnection:
     def execute(self, query, args):
@@ -26,6 +26,29 @@ class PlanPdfTests(unittest.TestCase):
         content=" ".join(page.extract_text() for page in PdfReader(BytesIO(pdf)).pages)
         for term in ("Jogador Teste","Intermédia","70 g","Ou Pão integral","Acompanhar com fruta","Total médio"):
             self.assertIn(term,content)
+    def test_shared_groups_default_to_four_meals(self):
+        groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
+                {"name":"Principal","options":[{"foods":[{"id":"food1","grams":200}]}]}]
+        selected=_selected_meals(groups,None)
+        self.assertEqual([x[1] for x in selected],["Pequeno almoço","Almoço","Lanche","Jantar"])
+        plan={"player_name":"Jogador","plan_type":"Plano amarelo","meals":groups}
+        text=" ".join(p.extract_text() for p in PdfReader(BytesIO(render_editor_pdf(MockConnection(),plan))).pages)
+        for name in ("Pequeno-almoço","Almoço","Lanche","Jantar","2250 kcal"):
+            self.assertIn(name,text)
+
+    def test_selection_excludes_dinner_and_recomputes_energy(self):
+        groups=[{"name":"Intermédia","options":[{"foods":[{"id":"food1","grams":100}]}]},
+                {"name":"Principal","options":[{"foods":[{"id":"food1","grams":200}]}]}]
+        plan={"player_name":"Jogador","meals":groups}
+        pdf=render_editor_pdf(MockConnection(),plan,["0:0","1:0","0:1"])
+        text=" ".join(p.extract_text() for p in PdfReader(BytesIO(pdf)).pages)
+        self.assertNotIn("Jantar",text)
+        self.assertIn("1000 kcal",text)
+        with self.assertRaises(ValueError):
+            render_editor_pdf(MockConnection(),plan,["0:0","99:0"])
+        with self.assertRaises(ValueError):
+            render_editor_pdf(MockConnection(),plan,[])
+
     def test_incomplete_is_rejected(self):
         with self.assertRaises(ValueError):
             render_editor_pdf(MockConnection(),{"meals":[]})

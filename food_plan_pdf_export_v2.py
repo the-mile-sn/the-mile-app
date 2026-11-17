@@ -1,5 +1,7 @@
 """PDF export of the saved backoffice meal-plan editor; read-only and admin-only at route."""
 from io import BytesIO
+import unicodedata
+import re
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
@@ -46,11 +48,43 @@ def _option_average(option, library):
     return totals
 
 
-def render_editor_pdf(c, plan):
+
+def _meal_slots(meal):
+    slots = meal.get("applies_to")
+    if isinstance(slots, list) and slots:
+        return [str(slot) for slot in slots]
+    name = str(meal.get("name") or "Refeição")
+    normalized = unicodedata.normalize("NFD", name.lower())
+    normalized = " ".join("".join(c for c in normalized if unicodedata.category(c) != "Mn").split())
+    if "intermedia" in normalized or ("pequeno almoco" in normalized and "lanche" in normalized):
+        return ["Pequeno almoço", "Lanche"]
+    if "principal" in normalized or ("almoco" in normalized and "jantar" in normalized):
+        return ["Almoço", "Jantar"]
+    return [name]
+
+
+def _selected_meals(meals, keys):
+    available = [(f"{mi}:{si}", slot, meal)
+                 for mi, meal in enumerate(meals)
+                 for si, slot in enumerate(_meal_slots(meal))]
+    if keys is not None:
+        selected = set(keys)
+        if not selected or len(selected) != len(keys) or not selected.issubset({row[0] for row in available}):
+            raise ValueError("invalid_meals")
+        available = [row for row in available if row[0] in selected]
+    order = {"pequeno almoco": 0, "almoco": 1, "lanche": 2, "jantar": 3, "ceia": 4}
+    def rank(row):
+        norm = unicodedata.normalize("NFD", row[1].lower())
+        norm = " ".join("".join(c for c in norm if unicodedata.category(c) != "Mn").split())
+        return order.get(norm, 5)
+    return sorted(available, key=rank)
+
+def render_editor_pdf(c, plan, selected_meal_keys=None):
     """Export the stored content; never modify draft, publication, or athlete rows."""
     meals = plan.get("meals")
     if not isinstance(meals, list) or not meals:
         raise ValueError("empty_plan")
+    chosen_meals = _selected_meals(meals, selected_meal_keys)
     identifiers = {f.get("id") for meal in meals for option in meal.get("options", [])
                    for f in option.get("foods", []) if f.get("kind","food")=="food" and f.get("id")}
     library = {}
@@ -81,8 +115,21 @@ def render_editor_pdf(c, plan):
            Paragraph(_text(plan.get("player_name") or "Jogador"),regular),
            Paragraph(_text(plan.get("plan_type") or plan.get("name") or ""),muted),
            Spacer(1,6*mm)]
-    for meal in meals:
-        story.append(Paragraph(_text(meal.get("name") or "Refeição"),sect))
+    daily = [0.0] * len(KEYS)
+    for _, _, meal in chosen_meals:
+        options = meal.get("options") or []
+        if not options:
+            continue
+        option_values = [_option_average(option, library) for option in options]
+        for i in range(len(KEYS)):
+            daily[i] += sum(values[i] for values in option_values) / len(option_values)
+    story.append(Paragraph("Resumo diário de referência",sect))
+    story.append(Paragraph(
+        f"{daily[0]:.0f} kcal  |  P {daily[1]:.1f} g  |  HC {daily[2]:.1f} g  |  G {daily[3]:.1f} g", regular))
+    story.append(Paragraph("Estimativa: média das opções por refeição selecionada.",muted))
+    story.append(Spacer(1,4*mm))
+    for _, meal_name, meal in chosen_meals:
+        story.append(Paragraph(_text(meal_name.replace("Pequeno almoço","Pequeno-almoço")),sect))
         for oi, option in enumerate(meal.get("options") or []):
             story.append(Paragraph("Opção "+str(oi+1)+(" · "+_text(option.get("title")) if option.get("title") else ""),opt))
             rows=[[Paragraph("Qtd.",muted),Paragraph("Alimento / notas",muted),

@@ -2659,3 +2659,22 @@
  }
 }
 
+
+/* Plan PDF export meal selection. Reuses the backoffice visual system. */
+#tm-plan-page .tm-pdf-meals-dialog{border:1px solid var(--tm-ui-border,#e4e7eb);border-radius:18px;max-width:min(460px,calc(100vw - 32px));width:100%;padding:0;background:var(--tm-ui-card,#fff);color:var(--tm-ui-text,#222);box-shadow:0 20px 65px rgba(17,24,39,.15)}
+#tm-plan-page .tm-pdf-meals-dialog::backdrop{background:rgba(15,23,42,.34)}
+#tm-plan-page .tm-pdf-meals-content{padding:24px}
+#tm-plan-page .tm-pdf-meals-header{display:flex;align-items:center;justify-content:space-between;gap:20px}
+#tm-plan-page .tm-pdf-meals-header h2{margin:0;font-size:20px;font-weight:650;letter-spacing:-.02em}
+#tm-plan-page .tm-pdf-meals-close{border:0;background:none;font-size:24px;font-weight:300;color:inherit;cursor:pointer;padding:0 4px}
+#tm-plan-page .tm-pdf-meals-description{font-size:13px;line-height:1.6;color:var(--tm-ui-text-muted,#68717b);margin:12px 0 18px}
+#tm-plan-page .tm-pdf-meal-choices{display:grid;gap:8px}
+#tm-plan-page .tm-pdf-meal-choice{display:flex;align-items:center;gap:12px;border:1px solid var(--tm-ui-border,#e4e7eb);border-radius:12px;padding:13px 15px;cursor:pointer;font-weight:550}
+#tm-plan-page .tm-pdf-meal-choice input{accent-color:var(--tm-ui-accent,#243c58);width:17px;height:17px;margin:0}
+#tm-plan-page .tm-pdf-meal-total{border-top:1px solid var(--tm-ui-border,#e4e7eb);margin-top:20px;padding-top:16px;display:grid;gap:5px}
+#tm-plan-page .tm-pdf-meal-total small{font-size:12px;color:var(--tm-ui-text-muted,#68717b)}
+#tm-plan-page .tm-pdf-meal-total strong{font-size:15px;font-weight:650;line-height:1.45}
+#tm-plan-page .tm-pdf-meal-total p{font-size:11px;line-height:1.45;color:var(--tm-ui-text-muted,#68717b);margin:3px 0 0}
+#tm-plan-page .tm-pdf-meals-actions{display:flex;justify-content:flex-end;margin-top:20px}
+#tm-plan-page .tm-pdf-meals-actions button{min-height:40px}
+@media(max-width:550px){#tm-plan-page .tm-pdf-meals-content{padding:20px}#tm-plan-page .tm-pdf-meals-actions button{width:100%}}
