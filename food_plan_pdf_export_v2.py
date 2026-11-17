@@ -1,6 +1,9 @@
 """The Mile saved-plan PDF: branded cover, daily summary and pagination-safe options."""
 from io import BytesIO
 from pathlib import Path
+from datetime import date
+from math import cos, sin, radians
+import monitoring_v2
 import unicodedata
 from xml.sax.saxutils import escape
 
@@ -137,7 +140,7 @@ def _draw_cover(canvas, doc, plan):
         hue, lit = "#528BB8", 2
     else:
         hue, lit = "#939397", 2
-    sy = y - 46 * mm
+    sy = y - 30 * mm
     for i in range(3):
         canvas.setFillColor(colors.HexColor(hue) if i < lit else colors.HexColor("#ECEDEF"))
         canvas.roundRect(x, sy - i * 4.2 * mm, 21 * mm, 3 * mm, 1.5 * mm, fill=1, stroke=0)
@@ -214,6 +217,163 @@ class MacroPills(Flowable):
             cursor += column_width
 
 
+def _share(numerator, denominator):
+    """A percent of actual plan kcal, not the total grams of macros."""
+    if denominator is None or denominator <= 0:
+        return 0.0
+    return max(0.0, 100.0 * float(numerator) / float(denominator))
+
+
+def _meal_shares(values):
+    """Macro energy shares within this meal: 4/4/9 kcal per gram."""
+    energy = values[0]
+    return [_share(values[1]*4, energy), _share(values[2]*4, energy),
+            _share(values[3]*9, energy)]
+
+
+def _reference_weight(c, plan):
+    """Reuse the backoffice athlete reference, without synthesizing kilograms."""
+    athlete_id = plan.get("athlete_id")
+    if not athlete_id:
+        return None
+    try:
+        ref = monitoring_v2.reference_weight(c, str(athlete_id), date.today().isoformat())
+        weight = float((ref or {}).get("weight_kg") or 0)
+        return weight if weight > 0 else None
+    except (ValueError, TypeError, KeyError):
+        return None
+
+
+def _draw_ring(canvas, cx, cy, radius, hole, segments, neutral="#F0F1F3"):
+    """Draw vector wedges, preserving a neutral remainder if 4/4/9 differs from kcal."""
+    canvas.setFillColor(colors.HexColor(neutral))
+    canvas.circle(cx, cy, radius, stroke=0, fill=1)
+    start = 90.0
+    for fraction, fill in segments:
+        fraction = min(max(fraction, 0.0), 1.0)
+        extent = 360.0 * fraction
+        if extent <= 0:
+            continue
+        canvas.setFillColor(colors.HexColor(fill))
+        canvas.wedge(cx-radius, cy-radius, cx+radius, cy+radius,
+                     startAng=start, extent=-extent, stroke=0, fill=1)
+        start -= extent
+    canvas.setFillColor(colors.white)
+    canvas.circle(cx, cy, hole, stroke=0, fill=1)
+
+
+class NutritionDailyOverview(Flowable):
+    """Daily macro-energy distribution and four lightweight reference metrics."""
+    def __init__(self, totals, reference_weight, width):
+        Flowable.__init__(self)
+        self.values = totals
+        self.weight_kg = reference_weight
+        self.width = width
+        self.height = 218
+
+    def draw(self):
+        c = self.canv
+        energy, p, hc, fat = self.values
+        center_x, center_y, radius = self.width/2, 110, 73
+        shares = _meal_shares(self.values)
+        # Small energy discrepancies remain visible as a neutral wedge.
+        denominator = max(energy, p*4 + hc*4 + fat*9, 1)
+        segments = [(v/denominator, color) for v, color in
+                    ((p*4, "#D5E0F2"), (hc*4, "#F9E0D0"), (fat*9, "#FFF0BF"))]
+        _draw_ring(c,center_x,center_y,radius,41,segments)
+        c.setFillColor(colors.HexColor("#111318"))
+        c.setFont("InterTight",25)
+        c.drawCentredString(center_x,center_y+1,_amount(0,energy))
+        c.setFillColor(colors.HexColor("#939397"))
+        c.setFont("InterTight",11)
+        c.drawCentredString(center_x,center_y-15,"kcal")
+
+        start = 90.0
+        for fraction, _ in segments:
+            angle = start - fraction*180
+            if fraction >= 0.06:
+                x = center_x + 57*cos(radians(angle))
+                y = center_y + 57*sin(radians(angle))
+                c.setFillColor(colors.HexColor("#39404A"))
+                c.setFont("InterTight-Bold",9)
+                c.drawCentredString(x,y,str(round(fraction*100))+"%")
+            start -= fraction*360
+
+        def metric(x, top, title, value, ratio, accent, fill):
+            box_width, row_h = 119, 25
+            c.setFillColor(colors.HexColor("#939397"))
+            c.setFont("InterTight",10)
+            c.drawCentredString(x+box_width/2,top+12,title)
+            c.setFillColor(colors.HexColor(fill))
+            c.roundRect(x,top-row_h,box_width,row_h,0,fill=1,stroke=0)
+            c.setFillColor(colors.HexColor(accent))
+            c.setFont("InterTight-Bold",13)
+            c.drawCentredString(x+box_width/2,top-17,value)
+            c.setFillColor(colors.HexColor(fill))
+            c.rect(x,top-47,box_width,20,stroke=0,fill=1)
+            c.setFillColor(colors.HexColor(accent))
+            c.setFont("InterTight",9.5)
+            c.drawCentredString(x+box_width/2,top-41,ratio)
+        weight = self.weight_kg
+        def ratio(v,unit):
+            return ("%.1f "%(v/weight)+unit) if weight else "—"
+        metric(0,196,"Gorduras",_amount(1,fat)+" g",ratio(fat,"g/kg"),
+               "#8A6F17","#FFF1CB")
+        metric(self.width-119,196,"Proteínas",_amount(1,p)+" g",ratio(p,"g/kg"),
+               "#426D9C","#E7EEF8")
+        metric(0,88,"Hidratos",_amount(1,hc)+" g",ratio(hc,"g/kg"),
+               "#A96836","#FBE9DE")
+        metric(self.width-119,88,"Valor energético",_amount(0,energy)+" kcal",
+               ratio(energy,"kcal/kg"),"#477D57","#E8F2E5")
+
+
+class NutritionMealOverview(Flowable):
+    """Energy ring = share of day's kcal; bars = macro kcal share of the meal."""
+    def __init__(self, name, values, daily_kcal, width):
+        Flowable.__init__(self)
+        self.name = name.replace("Pequeno almoço","Pequeno-almoço")
+        self.values = values
+        self.daily_kcal = daily_kcal
+        self.width = width
+        self.height = 92
+
+    def draw(self):
+        c=self.canv
+        x_ring, y_ring = 45, 37
+        c.setFillColor(colors.HexColor("#939397"))
+        c.setFont("InterTight",12)
+        c.drawString(0,78,self.name)
+        energy=self.values[0]
+        fraction = min(1.0,_share(energy,self.daily_kcal)/100)
+        _draw_ring(c,x_ring,y_ring,31,23,[(fraction,"#CBE6C6")])
+        c.setFillColor(colors.HexColor("#15171B"))
+        c.setFont("InterTight",16)
+        c.drawCentredString(x_ring,y_ring+1,_amount(0,energy))
+        c.setFillColor(colors.HexColor("#939397"))
+        c.setFont("InterTight",9)
+        c.drawCentredString(x_ring,y_ring-11,"kcal")
+        shares = _meal_shares(self.values)
+        start = 112
+        usable = self.width-start
+        cell_w = usable/3
+        for i,(label,value,share,accent) in enumerate(zip(
+                ("Proteínas","Hidratos","Gorduras"),self.values[1:],shares,
+                ("#B6C6E5","#EBC5B2","#F5DE9E"))):
+            x = start + i*cell_w + 6
+            bar_w = cell_w - 17
+            c.setFillColor(colors.HexColor("#15171B"))
+            c.setFont("InterTight",13)
+            c.drawCentredString(x+bar_w/2,52,_amount(1,value)+" g")
+            c.setFillColor(colors.HexColor("#939397"))
+            c.setFont("InterTight",9.5)
+            c.drawCentredString(x+bar_w/2,38,label)
+            c.setFillColor(colors.HexColor("#F1F1F3"))
+            c.roundRect(x,15,bar_w,12,6,stroke=0,fill=1)
+            if share > 0:
+                c.setFillColor(colors.HexColor(accent))
+                c.roundRect(x,15,max(6,bar_w*min(share/100,1)),12,6,stroke=0,fill=1)
+
+
 def render_editor_pdf(c, plan, selected_meal_keys=None):
     """Read-only PDF export; shares the same saved data and meal selection as backoffice."""
     meals = plan.get("meals")
@@ -263,41 +423,17 @@ def render_editor_pdf(c, plan, selected_meal_keys=None):
         meal_averages.append((name, average))
         daily = [a + b for a, b in zip(daily, average)]
 
-    # First page is cover (drawn by first-page callback). The second introduces nutrition.
-    story = [Spacer(1, 1), PageBreak(),
-             Paragraph("Resumo nutricional", summary_head),
-             Paragraph("Referência diária calculada a partir da média das opções de cada refeição selecionada.",
-                       summary_description)]
-    summary_grid = Table([
-        [Paragraph(("%.0f" if i==0 else "%.1f") % daily[i] + (" kcal" if i==0 else " g"),
-                   _style("daily_%d" % i, 17, 22, color=NUTRIENT_COLORS[i], bold=True))
-         for i in range(4)],
-        [Paragraph(text, muted) for text in ("Energia", "Proteína", "Hidratos", "Gordura")]
-    ], colWidths=[cw/4]*4, hAlign="LEFT")
-    summary_grid.setStyle(TableStyle([
-        ("VALIGN", (0,0), (-1,-1), "TOP"),
-        ("LEFTPADDING", (0,0), (-1,-1), 7),
-        ("RIGHTPADDING", (0,0), (-1,-1), 7),
-        ("TOPPADDING", (0,0), (-1,0), 12),
-        ("BOTTOMPADDING", (0,-1), (-1,-1), 12),
-        ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#F6F7F8")),
-    ]))
-    story.extend([summary_grid, Spacer(1, 12*mm),
-                  Paragraph("Distribuição por refeição", _style("meal_breakdown", 13, 18,
-                           bold=True, space_after=9))])
-    rows = []
-    for name, values in meal_averages:
-        rows.append([Paragraph(_text(name.replace("Pequeno almoço", "Pequeno-almoço")), regular)] +
-                    [Paragraph(_amount(i, values[i]) + (" kcal" if i==0 else " g"),
-                               breakdown_number) for i in range(4)])
-    breakdown = Table(rows, colWidths=[cw*.40]+[cw*.15]*4, hAlign="LEFT")
-    breakdown.setStyle(TableStyle([
-        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-        ("LINEBELOW", (0,0), (-1,-1), .4, colors.HexColor("#E7E8EA")),
-        ("TOPPADDING", (0,0), (-1,-1), 9),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 9),
-    ]))
-    story.extend([breakdown, PageBreak()])
+    # Cover remains separate; the summary uses vector rings and bars.
+    weight = _reference_weight(c, plan)
+    story = [Spacer(1,1),PageBreak(),
+        Paragraph("Resumo nutricional",summary_head),
+        Paragraph("Valores de referência: média das opções de cada refeição selecionada.",
+                  summary_description),
+        NutritionDailyOverview(daily,weight,cw),Spacer(1,9*mm)]
+    for name,values in meal_averages:
+        story.append(NutritionMealOverview(name,values,daily[0],cw))
+        story.append(Spacer(1,5*mm))
+    story.append(PageBreak())
 
     for _, meal_name, meal in chosen_meals:
         meal_heading = Paragraph(_text(meal_name.replace("Pequeno almoço","Pequeno-almoço")), section)
