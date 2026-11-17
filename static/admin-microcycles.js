@@ -4145,7 +4145,9 @@ function filterSupplementLists(){
   };
   const remove=document.createElement("button");remove.type="button";remove.className="tm-supp-library-remove";remove.innerHTML=supplementPlanActionIcons.remove;remove.setAttribute("aria-label","Remover "+item.name);remove.title="Remover "+item.name;
   remove.onclick=async()=>{if(!confirm("Remover este produto da biblioteca? As prescrições já atribuídas aos jogadores não serão alteradas."))return;try{await request("/api/v2/supplement-library/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSupplementLibrary();}catch(e){$("supp-lib-feedback").textContent="Não foi possível remover: "+e.message;}};
-  actions.append(edit,remove);row.append(nameCell,doseCell,momentCell,frequencyCell,actions);list.append(row);
+  actions.append(edit,remove);row.append(nameCell,doseCell,momentCell,frequencyCell,actions);
+  if(item.has_image){const photoCell=document.createElement("td");photoCell.className="tm-supp-mobile-photo-cell";const photo=nameWrap.querySelector("img");if(photo){const mobilePhoto=photo.cloneNode(true);mobilePhoto.alt="";photoCell.append(mobilePhoto);row.append(photoCell);}}
+  list.append(row);
  }
  if(emptyNotice)emptyNotice.hidden=visible>0;
  if([...select.options].some(option=>option.value===previous))select.value=previous;
