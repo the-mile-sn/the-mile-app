@@ -146,7 +146,7 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 
 - **Editar:** usar o componente Hugeicons `PencilEdit01Icon`, outline; botão compacto em **superfície neutra de subcard** (modo claro `#E6EBF1` como referência de ação neutra; escuro `#242830`), com cor de texto/ícone principal, sem borda ou sombra decorativa.
 - **Eliminar:** usar **`TrashIcon` sempre dentro de um botão/card de ação vermelho suave**, não um ícone vermelho solto nem um botão neutro. Referência de botão destrutivo: **claro fundo `#F4E0E3`, ícone `#B15665`; escuro fundo `#3A2128`, ícone `#F0A3AF`**. O vermelho de fundo é uma superfície de ação, **não uma pill informativa** e não segue a regra de fundo a 7%.
-- **Uniformização:** par Editar/Eliminar com a mesma dimensão, raio e alinhamento na mesma área. Referência para ações rápidas isoladas: **36 × 36 px, raio 10 px, ícone outline ~18 px**, alvo táctil alargado a ~44 × 44 px no mobile quando possível. Distinguir esta referência global de geometrias de editor específicas já existentes e validadas.
+- **Uniformização:** par Editar/Eliminar com a mesma dimensão, raio e alinhamento na mesma área. Referência para ações rápidas isoladas: **36 × 36 px, raio 12 px, ícone outline ~18 px**, alvo táctil alargado a ~44 × 44 px no mobile quando possível. Distinguir esta referência global de geometrias de editor específicas já existentes e validadas.
 - Preservar `aria-label`, tooltip onde útil, foco de teclado e confirmação antes de eliminar. Se «Remover» significa apenas desassociar, a ação continua semanticamente destrutiva relativamente à ligação, sem eliminar o objeto de origem. Não propagar clique do botão para o card pai.
 
 ### Hover, rato e teclado (desktop)
