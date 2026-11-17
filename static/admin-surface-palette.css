@@ -12147,3 +12147,44 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-
  border-radius:999px!important;font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  white-space:nowrap!important;
 }
+
+
+/* Mobile canvas: remove old extra library gutters, use same 12px external inset as Início. */
+@media(max-width:830px){
+ html[data-admin-theme] body #admin-workspace > .tm-admin-work-area{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  padding-inline:12px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page,
+ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page{
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  margin-inline:0!important;padding-left:0!important;padding-right:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page > .tm-food-library-content,
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .food-catalog-panel,
+ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-catalog-header,
+ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page #tm-portion-grid{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  max-width:100%!important;margin-left:0!important;margin-right:0!important;
+  padding-left:0!important;padding-right:0!important;
+ }
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-food-filter-panel,
+ html[data-admin-theme] body #admin-workspace #tm-visual-portions-page .tm-portion-filters{
+  width:100%!important;box-sizing:border-box!important;
+ }
+}
+/* Desktop Recipes: reuse the same quiet category pill as mobile, without touching its colour. */
+@media(min-width:831px){
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page table.recipe-table tbody tr td.recipe-category-cell .recipe-category-badge{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;width:max-content!important;max-width:100%!important;
+  height:26px!important;min-height:26px!important;max-height:26px!important;
+  padding:0 9px!important;margin:0!important;
+  border:1px solid color-mix(in srgb,currentColor 20%,transparent)!important;
+  border-radius:999px!important;
+  font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
+  font-size:11px!important;font-weight:500!important;line-height:1.2!important;
+  letter-spacing:normal!important;white-space:nowrap!important;
+  box-shadow:none!important;
+ }
+}
