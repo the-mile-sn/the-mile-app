@@ -16,7 +16,8 @@ from PIL import Image, UnidentifiedImageError
 CATEGORIES = {"Arroz", "Arroz com leguminosas", "Massa", "Batata", "Arroz + Batata", "Carne branca"}
 MAX_ARCHIVE = 5 * 1024 * 1024
 MAX_EXPANDED = 20 * 1024 * 1024
-MAX_PHOTO = 3 * 1024 * 1024  # Allow editing high-detail photos without manual resizing
+MAX_PHOTO = 3 * 1024 * 1024  # Stored WebP maximum
+MAX_PHOTO_UPLOAD = 12 * 1024 * 1024  # PNG/JPEG/WebP input for single-photo editor
 REF_ID = re.compile(r"^[a-f0-9]{24}$")
 
 
@@ -69,6 +70,34 @@ def replace_image(c, reference_id, raw):
     """Replace only this reference's photograph; keep its nutritional metadata and state."""
     if not REF_ID.fullmatch(str(reference_id or "")):
         raise ValueError("invalid_reference")
+    if not isinstance(raw, bytes) or len(raw) > MAX_PHOTO_UPLOAD:
+        raise ValueError("invalid_photo")
+    try:
+        with Image.open(io.BytesIO(raw)) as image:
+            if image.format not in ("PNG", "JPEG", "WEBP"):
+                raise ValueError("invalid_photo")
+            if image.width < 1 or image.height < 1 or image.width * image.height > 24_000_000:
+                raise ValueError("invalid_photo")
+            from PIL import ImageOps
+            picture = ImageOps.exif_transpose(image)
+            picture.load()
+            picture = picture.convert("RGBA" if "A" in picture.getbands() or "transparency" in picture.info else "RGB")
+            for max_side in (1800, 1400, 1100, 900, 700):
+                output = picture.copy()
+                output.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+                for quality in (88, 75, 60):
+                    buffer = io.BytesIO()
+                    output.save(buffer, format="WEBP", quality=quality, method=4)
+                    if buffer.tell() <= MAX_PHOTO:
+                        raw = buffer.getvalue()
+                        break
+                else:
+                    continue
+                break
+            else:
+                raise ValueError("invalid_photo")
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise ValueError("invalid_photo")
     digest = _verified_photo(raw)
     current = c.execute("SELECT id FROM v2_visual_portions WHERE id=?", (reference_id,)).fetchone()
     if current is None:
