@@ -718,23 +718,34 @@ html[data-admin-theme] #consumption-panel .tm-consumption-status[data-state="non
  background:var(--tm-state-neutral-bg)!important;color:var(--tm-state-neutral-fg)!important;
 }
 
-/* Porções Visuais: status-colored TOGGLE, not a static pill. Keep aria-pressed
-   behavior and accessibility; no fake inert status element. */
+/* Porções Visuais: interactive status controls use the shared subtle pill
+   geometry. Preserve aria-pressed, keyboard focus and server-side toggling. */
 html[data-admin-theme] #tm-food-library-page .tm-portion-toggle{
- display:inline-flex!important;align-items:center;justify-content:center;
- min-height:28px!important;padding:4px 10px!important;
- border:0!important;border-radius:999px!important;box-shadow:none!important;
- background:var(--tm-state-success-bg)!important;color:var(--tm-state-success-fg)!important;
- font:550 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ height:26px!important;min-height:26px!important;max-height:26px!important;
+ padding:0 9px!important;margin:0!important;
+ border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
+ border-radius:999px!important;box-shadow:none!important;
+ background:color-mix(in srgb,currentColor 7%,transparent)!important;
+ color:var(--tm-state-success-fg)!important;
+ font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ cursor:pointer;
 }
 html[data-admin-theme] #tm-food-library-page .tm-portion-toggle[aria-pressed="false"]{
- background:var(--tm-state-neutral-bg)!important;color:var(--tm-state-neutral-fg)!important;
+ color:var(--tm-state-neutral-fg)!important;
+ background:color-mix(in srgb,currentColor 7%,transparent)!important;
+ border-color:color-mix(in srgb,currentColor 12%,transparent)!important;
+}
+@media(hover:hover) and (pointer:fine){
+ html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:not(:disabled):hover{
+  background:color-mix(in srgb,currentColor 12%,transparent)!important;
+ }
 }
 html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
 }
-html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:disabled{opacity:.5}
-
+html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:disabled{opacity:.5;cursor:wait}
 /* Actions: all buttons 12px, compact icons 10px, status pills 999px only.
    A new/primary action uses the approved blue-grey; delete never uses a
    red outline. Keep semantic confirmation/success overrides on save buttons. */
