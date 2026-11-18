@@ -903,6 +903,13 @@ def application(env, start_response):
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
 
+            # Chef must never inherit player/admin document or clinical endpoints.
+            # Each permitted Chef endpoint verifies the athlete from this session.
+            if user and user['role'] == 'chef' and path.startswith('/api/'):
+                if (path not in ('/api/me','/api/login','/api/logout','/api/change-password')
+                        and not path.startswith('/api/v2/chef/')):
+                    raise Problem(403, 'forbidden')
+
             # Shopify UNPUBLISHED theme preview only: anonymous, read-only,
             # allowlisted public metadata. Never expose internal admin records,
             # booking holds, payments, customer information or Google tokens.
@@ -3392,6 +3399,9 @@ def application(env, start_response):
                     data = player_dict(user)
                     data['weight_form_url'] = WEIGHT_FORM_M if user['sex'] == 'M' else WEIGHT_FORM_F if user['sex'] == 'F' else ''
                     data['game_form_url'] = GAME_FORM
+                elif user['role'] == 'chef':
+                    data = {'id': user['id'], 'name': user['name'],
+                            'username': user['username'], 'role': 'chef'}
                 else:
                     data = {'id': user['id'], 'name': user['name'], 'email': user['email'], 'role': user['role'], 'has_photo': bool(user['photo'])}
                 return respond(200, {'user': data, 'csrf': user['csrf']})
