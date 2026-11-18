@@ -12724,17 +12724,19 @@ html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-s
 html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-select>.tm-select-caption{top:10px!important}
 html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-select>.tm-select-value{bottom:10px!important}
 
-/* iPhone: Safari auto-zooms focused inputs whose COMPUTED font is below 16px.
-   Scope only the Admin and preserve manual pinch-to-zoom. */
+/* iOS input typography: one authoritative mobile rule for the five
+   library pages. Explicit section IDs win against their older form-specific
+   font shorthands without changing desktop typography or browser zoom. */
 @media(max-width:830px) {
- html[data-admin-theme] body #admin-workspace :is(
- input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
- textarea,select,[contenteditable="true"]
- ),html[data-admin-theme] body #admin-workspace :is(
- input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
- textarea,select,[contenteditable="true"]
- ):focus {
+ html[data-admin-theme] body #admin-workspace
+ :is(#tm-food-library-page,#tm-supplement-library-page,#tm-visual-portions-page,#tm-menu-recipes-page,#tm-recipe-library-page)
+ :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),textarea,select,[contenteditable="true"]),
+ html[data-admin-theme] body #admin-workspace
+ :is(#tm-food-library-page,#tm-supplement-library-page,#tm-visual-portions-page,#tm-menu-recipes-page,#tm-recipe-library-page)
+ :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),textarea,select,[contenteditable="true"]):focus,
+ html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel > input.tm-select-search {
   font-size:16px!important;
+  -webkit-text-size-adjust:100%;
  }
  html[data-admin-theme] body #admin-workspace .tm-select-options {
   max-height:min(46dvh,290px)!important;
