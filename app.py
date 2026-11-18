@@ -18,6 +18,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import chef_accounts_v2
+import chef_collaboration_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
@@ -298,6 +299,7 @@ def initialize():
         consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
         chef_accounts_v2.initialize(c)
+        chef_collaboration_v2.initialize(c)
         appointments_catalog_v2.initialize(c)
         appointments_availability_v2.initialize(c)
         appointments_bookings_v2.initialize(c)
@@ -2984,6 +2986,26 @@ def application(env, start_response):
                     c.commit()
                     return respond(200,{'chef':{'id':chef_id,'active':active}})
                 raise Problem(404,'not_found')
+            if path == '/api/v2/admin/chef-activity' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                q=parse_qs(env.get('QUERY_STRING',''))
+                aid=(q.get('athlete_id') or [None])[0]
+                if aid is not None and not c.execute(
+                    "SELECT id FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'athlete_not_found')
+                return respond(200,{'activity':chef_collaboration_v2.activity(c,aid,100)})
+            if path == '/api/v2/admin/chef-reviews' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if not isinstance(body,dict): raise Problem(400,'invalid_review')
+                try:
+                    result=chef_collaboration_v2.review(
+                        c,body.get('id'),user['id'],body.get('decision'),body.get('dish_id'))
+                except LookupError: raise Problem(404,'audit_not_found')
+                except (ValueError,TypeError): raise Problem(400,'invalid_review')
+                return respond(200,result)
             if path == '/api/v2/admin/dashboard' and method == 'GET':
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
@@ -3249,11 +3271,58 @@ def application(env, start_response):
                               (body['language'],user['id']))
                     c.commit()
                     return respond(200,{'language':body['language']})
-                if method != 'GET': raise Problem(403,'forbidden')
                 if path == '/api/v2/chef/me':
                     return respond(200,{'chef':{'id':user['id'],'name':user['name'],
                          'username':user['username'],'language':athlete['language']},
                          'player':{'id':aid,'name':athlete['name']}})
+                if path == '/api/v2/chef/menu-executions' and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    try:
+                        items=chef_collaboration_v2.executions(
+                            c,aid,(q.get('start') or [''])[0],(q.get('end') or [''])[0])
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_execution_range')
+                    return respond(200,{'executions':items})
+                if path == '/api/v2/chef/menu-executions' and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_execution')
+                    try:
+                        result=chef_collaboration_v2.record_execution(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),body.get('state'),
+                            body.get('served_description',''),body.get('note',''))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_execution')
+                    return respond(201,{'execution':result})
+                if path == '/api/v2/chef/menu-proposals' and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_proposal')
+                    try:
+                        result=chef_collaboration_v2.propose_dish(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),
+                            body.get('name'),body.get('note',''))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_proposal')
+                    return respond(201,{'proposal':result})
+                if path == '/api/v2/chef/menus' and method=='PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_menu')
+                    try:
+                        result=chef_collaboration_v2.save_menu(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),
+                            body.get('kind'),body.get('value'),body.get('dish_id'))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_menu')
+                    return respond(200,{'menu':result})
+                if path == '/api/v2/chef/dishes' and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    search=(q.get('q') or [''])[0]
+                    if not isinstance(search,str) or len(search)>90:
+                        raise Problem(400,'invalid_search')
+                    rows=c.execute("""SELECT id,name_pt,category
+                      FROM v2_dish_library WHERE active=1
+                        AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
+                        ('%'+search+'%',)).fetchall()
+                    return respond(200,{'dishes':[dict(row) for row in rows]})
                 if path == '/api/v2/chef/menus':
                     query=parse_qs(env.get('QUERY_STRING',''))
                     try:
@@ -3261,6 +3330,7 @@ def application(env, start_response):
                     except (ValueError,TypeError):
                         raise Problem(400,'invalid_menu_range')
                     return respond(200,{'menus':items})
+                if method != 'GET': raise Problem(403,'forbidden')
                 if path == '/api/v2/chef/calendar':
                     q=parse_qs(env.get('QUERY_STRING',''))
                     first=(q.get('start') or [''])[0]
