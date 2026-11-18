@@ -1,14 +1,14 @@
 "use strict";
-/* The Mile | Chef management inside Planning > Menus.
-   No duplicated menu store or athlete editor. Admin-only API, checked by server. */
+/* The Mile | Chef accounts live in Clientes; menu audit stays in Planeamento. */
 (() => {
   const menusPanel=document.getElementById("menus-panel");
   const history=document.getElementById("menu-history");
-  if(!menusPanel || !history) return;
+  const clientsPanel=document.getElementById("tm-clients-chefs-panel");
+  if(!menusPanel || !history || !clientsPanel) return;
   const section=document.createElement("details");
   section.id="tm-chef-management";section.className="tm-chef-management tm-menu-history-card";
   section.innerHTML=`
-    <summary class="tm-chef-summary">Chefs <span id="tm-chef-pending" class="tm-chef-count" hidden></span></summary>
+    <summary class="tm-chef-summary">Contas Chef</summary>
     <div class="tm-chef-content">
       <div class="tm-chef-head"><h3>Contas Chef</h3><p>Um chef pode planear para um jogador associado. As prescrições nutricionais continuam sob responsabilidade da The Mile.</p></div>
       <form id="tm-chef-create" class="tm-chef-form" novalidate>
@@ -21,15 +21,22 @@
         <p class="tm-chef-error" id="tm-chef-create-feedback" role="alert"></p>
       </form>
       <div id="tm-chef-accounts" class="tm-chef-accounts"></div>
-      <div class="tm-chef-divider"></div>
-      <div class="tm-chef-head"><h3>Alterações e execução</h3><p>Histórico de quem alterou o planeamento e do que foi efetivamente servido. Os registos de execução não apagam os menus planeados.</p></div>
+      <p id="tm-chef-account-feedback" role="status"></p>
+    </div>`;
+  clientsPanel.append(section);
+  const review=document.createElement("details");
+  review.id="tm-chef-menu-review";review.className="tm-chef-management tm-menu-history-card";
+  review.innerHTML=`
+    <summary class="tm-chef-summary">Alterações e execução <span id="tm-chef-pending" class="tm-chef-count" hidden></span></summary>
+    <div class="tm-chef-content">
+      <div class="tm-chef-head"><h3>Histórico e validações</h3><p>Consulta quem alterou o planeamento e o que foi servido. Os registos de execução não apagam os menus planeados.</p></div>
       <label class="tm-chef-filter">Jogador<select id="tm-chef-filter-player"><option value="">Todos os jogadores</option></select></label>
       <div id="tm-chef-activity" class="tm-chef-activity"></div>
       <p id="tm-chef-feedback" role="status"></p>
     </div>`;
-  history.insertAdjacentElement("afterend",section);
+  history.insertAdjacentElement("afterend",review);
   const $=id=>document.getElementById(id);
-  const form=$("tm-chef-create"),feedback=$("tm-chef-feedback");
+  const form=$("tm-chef-create"),feedback=$("tm-chef-feedback"),accountFeedback=$("tm-chef-account-feedback");
   let admins=[],knownPlayers=[],csrf="";
   async function api(path,options={}){
     if(!csrf){
@@ -88,19 +95,19 @@
           await api("/api/v2/admin/chefs/"+encodeURIComponent(chef.id),{
             method:"PUT",body:JSON.stringify({active})
           });
-          feedback.textContent="Estado da conta atualizado.";await loadAccounts();
-        }catch(e){feedback.textContent=noteMessage(e);}
+          accountFeedback.textContent="Estado da conta atualizado.";await loadAccounts();
+        }catch(e){accountFeedback.textContent=noteMessage(e);}
       }));
       controls.append(button("Alterar passe",async()=>{
         const password=window.prompt("Nova palavra-passe (mínimo 12 caracteres) para "+chef.name+":");
         if(password===null)return;
-        if(password.length<12){feedback.textContent="A palavra-passe deve ter 12 ou mais caracteres.";return;}
+        if(password.length<12){accountFeedback.textContent="A palavra-passe deve ter 12 ou mais caracteres.";return;}
         try{
           await api("/api/v2/admin/chefs/"+encodeURIComponent(chef.id)+"/password-reset",{
             method:"POST",body:JSON.stringify({password})
           });
-          feedback.textContent="Palavra-passe alterada e sessões anteriores terminadas.";
-        }catch(e){feedback.textContent=noteMessage(e);}
+          accountFeedback.textContent="Palavra-passe alterada e sessões anteriores terminadas.";
+        }catch(e){accountFeedback.textContent=noteMessage(e);}
       }));
       row.append(info,controls);host.append(row);
     }
@@ -187,8 +194,14 @@
   }
   section.addEventListener("toggle",async()=>{
     if(!section.open)return;
+    accountFeedback.textContent="";
+    try{await loadPlayers();await loadAccounts();}
+    catch(e){accountFeedback.textContent=noteMessage(e);}
+  });
+  review.addEventListener("toggle",async()=>{
+    if(!review.open)return;
     feedback.textContent="";
-    try{await loadPlayers();await Promise.all([loadAccounts(),loadActivity()]);}
+    try{await loadPlayers();await loadActivity();}
     catch(e){feedback.textContent=noteMessage(e);}
   });
   $("tm-chef-filter-player").onchange=()=>loadActivity().catch(e=>feedback.textContent=noteMessage(e));

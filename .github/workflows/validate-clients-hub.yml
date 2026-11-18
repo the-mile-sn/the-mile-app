@@ -1,0 +1,24 @@
+name: Validate Clientes account hub
+on:
+  push:
+    branches: [feature/clients-account-types-hub]
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  validate-clients:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: node --check static/admin-clients.js
+      - run: node --check static/admin-chefs.js
+      - run: node --check static/admin-nav-shell.js
+      - run: node --test tests/client-account-hub.test.cjs
+      - run: python -m py_compile app.py

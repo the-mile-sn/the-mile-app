@@ -1,0 +1,53 @@
+/* Clientes: clear account-type navigation, native controls, restrained The Mile UI. */
+#tm-clients-types{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 22px;padding:5px;background:rgba(145,151,165,.08);border:1px solid rgba(125,135,145,.13);border-radius:14px;max-width:max-content}
+#tm-clients-types[hidden],#tm-clients-consultations-panel[hidden],#tm-clients-chefs-panel[hidden],#tm-clients-create-shortcut[hidden]{display:none!important}
+#tm-clients-types [role=tab]{border:0;border-radius:10px;padding:11px 17px;background:transparent;color:inherit;font:600 13px "Inter Tight",sans-serif;cursor:pointer;white-space:nowrap;min-height:40px}
+#tm-clients-types [role=tab][aria-selected=true]{background:var(--tm-light-surface,#fff);box-shadow:0 1px 3px rgba(0,0,0,.08);color:inherit}
+#tm-clients-types [role=tab]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+#tm-clients-chefs-panel{padding:0 0 22px;min-width:0}
+#tm-clients-chefs-panel #tm-chef-management{margin:0}
+#tm-clients-consultations-panel{background:var(--tm-light-surface,#fff);border:1px solid rgba(100,109,124,.14);border-radius:18px;padding:23px;max-width:750px}
+#tm-clients-consultations-panel h2{margin:0 0 10px;font-size:19px;font-weight:600;letter-spacing:-.02em}
+#tm-clients-consultations-panel p{font-size:14px;line-height:1.6;color:var(--tm-text-secondary,#777a80);margin:8px 0}
+#tm-clients-consultations-panel .tm-client-appointments-link{display:inline-flex;margin-top:10px;padding:10px 14px;border:1px solid rgba(120,130,145,.25);border-radius:11px;color:inherit;text-decoration:none;font-size:13px;font-weight:600}
+#tm-clients-consultations-panel .tm-client-appointments-link:hover{background:rgba(122,132,150,.08)}
+#tm-clients-create-shortcut{margin:0 0 13px}
+#tm-clients-create-shortcut button{width:100%;min-height:43px}
+#tm-clients-create-choice{border:1px solid rgba(116,125,136,.20);border-radius:21px;padding:0;max-width:min(440px,calc(100vw - 32px));width:100%;background:var(--tm-light-surface,#fff);color:inherit;box-shadow:0 19px 70px rgba(0,0,0,.22)}
+#tm-clients-create-choice::backdrop{background:rgba(15,19,28,.50);backdrop-filter:blur(3px)}
+#tm-clients-create-choice .tm-clients-choice-inner{padding:26px;position:relative}
+#tm-clients-create-choice h2{font-size:23px;letter-spacing:-.035em;font-weight:600;margin:0 0 4px}
+#tm-clients-create-choice p{font-size:13px;color:#81838d;margin:0 0 20px;line-height:1.5}
+#tm-clients-create-choice .tm-clients-choice-close{position:absolute;top:17px;right:16px;width:30px;height:30px;border:0;border-radius:9px;background:rgba(128,128,140,.07);color:inherit;cursor:pointer;font-size:20px;font-weight:400;line-height:1}
+#tm-clients-create-choice .tm-clients-choice-options{display:grid;gap:9px}
+#tm-clients-create-choice [data-new-client-type]{width:100%;text-align:left;display:flex;flex-direction:column;gap:4px;padding:16px;background:transparent;border:1px solid rgba(126,136,149,.23);border-radius:13px;cursor:pointer;color:inherit}
+#tm-clients-create-choice [data-new-client-type]:hover,#tm-clients-create-choice [data-new-client-type]:focus-visible{background:rgba(122,134,153,.07);border-color:rgba(126,136,149,.42)}
+#tm-clients-create-choice [data-new-client-type] strong{font-size:15px;font-weight:600}
+#tm-clients-create-choice [data-new-client-type] span{font-size:12px;line-height:1.5;color:#7b7e87}
+#tm-chef-management #tm-chef-account-feedback{font-size:12px;color:#68717e;min-height:16px}
+#tm-chef-menu-review{margin-top:16px;background:var(--tm-light-surface,#fff);border:1px solid rgba(100,109,124,.14);border-radius:17px;overflow:hidden}
+#tm-chef-menu-review .tm-chef-summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 21px;font-size:16px;font-weight:600}
+#tm-chef-menu-review .tm-chef-summary::-webkit-details-marker{display:none}
+#tm-chef-menu-review .tm-chef-summary:after{content:"⌄";color:#747982;font-size:18px}
+#tm-chef-menu-review[open] .tm-chef-summary:after{transform:rotate(180deg)}
+#tm-chef-menu-review .tm-chef-content{padding:2px 21px 23px}
+#tm-chef-menu-review .tm-chef-head h3{font-size:17px;margin:13px 0 5px}
+#tm-chef-menu-review .tm-chef-head p{font-size:13px;color:#77818b;line-height:1.5}
+#tm-chef-menu-review .tm-chef-filter{display:flex;flex-direction:column;gap:5px;max-width:320px;font-size:12px;margin:13px 0}
+#tm-chef-menu-review .tm-chef-filter select{min-height:40px;border-radius:10px;font-size:16px;padding:8px;background:var(--tm-light-surface,#fff);color:inherit;border:1px solid rgba(110,119,133,.25)}
+#tm-chef-menu-review .tm-chef-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#tm-chef-menu-review .tm-chef-activity-card{border:1px solid rgba(110,119,133,.15);border-radius:13px;padding:13px;min-width:0}
+#tm-chef-menu-review .tm-chef-event-head{display:flex;flex-direction:column;gap:4px}
+#tm-chef-menu-review .tm-chef-event-head strong{font-size:13px}
+#tm-chef-menu-review .tm-chef-event-head small,#tm-chef-menu-review .tm-chef-muted,#tm-chef-menu-review .tm-chef-event-actor{font-size:12px;color:#75808b}
+#tm-chef-menu-review .tm-chef-activity-card p{font-size:12px;line-height:1.5}
+#tm-chef-menu-review .tm-chef-approve{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+#tm-chef-menu-review .tm-chef-approve input,#tm-chef-menu-review .tm-chef-approve select{width:100%;min-height:40px;border-radius:10px;font-size:16px;border:1px solid rgba(100,109,124,.2);padding:8px;background:var(--tm-light-surface,#fff);color:inherit}
+@media(min-width:831px){#tm-clients-create-shortcut{display:none!important}}
+@media(max-width:830px){
+ #tm-clients-types{width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:16px}
+ #tm-clients-types [role=tab]{font-size:11px;padding:10px 5px;min-height:39px}
+ #tm-clients-create-choice .tm-clients-choice-inner{padding:22px}
+ #tm-chef-menu-review .tm-chef-content{padding:0 14px 18px}
+ #tm-chef-menu-review .tm-chef-activity{grid-template-columns:1fr}
+}
