@@ -12141,6 +12141,16 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-rea
  font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  letter-spacing:normal!important;white-space:nowrap!important;
 }
+/* Publication is an informational state, not a filled action button. */
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page :is(.recipe-table,.tm-recipe-mobile-card,.recipe-reader-eyebrow) .recipe-status-tag{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ height:26px!important;min-height:26px!important;max-height:26px!important;
+ padding:0 9px!important;margin:0!important;border-radius:999px!important;
+ border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
+ background:color-mix(in srgb,currentColor 7%,transparent)!important;
+ font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ box-shadow:none!important;white-space:nowrap!important;
+}
 html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-card .dish-mobile-tags .dish-recipe-indicator-category:not([hidden]),
 html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-card .tm-recipe-mobile-badges .recipe-status-tag{
  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
