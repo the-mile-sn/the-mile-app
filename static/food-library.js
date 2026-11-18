@@ -198,7 +198,7 @@ function setup(select){
  const list=document.createElement('div');list.className='tm-select-options';list.setAttribute('role','listbox');
  panel.append(list);
  const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.classList.add('tm-select-legacy-preserved');legacy.append(shell);shell.append(select,trigger,panel);shell.classList.add('tm-select-preserve-field');}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
- select.classList.add('tm-select-native');
+ select.classList.add('tm-select-native');select.style.setProperty('display','none','important');select.style.setProperty('position','absolute','important');select.style.setProperty('width','0px','important');select.style.setProperty('height','0px','important');
  if(['library-player-filter','library-type-filter'].includes(select.id)){shell.classList.add('tm-select-plan-filter');trigger.setAttribute('data-caption',select.id==='library-player-filter'?'Jogador':'Tipo de plano')}
  const state={select,shell,trigger,label,panel,list,search:null};
  instances.set(select,state);
@@ -226,7 +226,7 @@ function setup(select){
   instances.forEach((other)=>{if(other!==state){other.panel.hidden=true;other.trigger.setAttribute('aria-expanded','false');other.shell.classList.remove('tm-select-open')}});
   panel.hidden=false;trigger.setAttribute('aria-expanded','true');shell.classList.add('tm-select-open');
   if(select.options.length>10&&!state.search&& !['library-player-filter','plan-player'].includes(select.id)){
-   const input=document.createElement('input');input.className='tm-select-search';input.type='search';input.placeholder='Pesquisar...';input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
+   const input=document.createElement('input');input.className='tm-select-search';input.type='search';input.placeholder='Pesquisar...';input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;input.style.setProperty('display','block','important');input.style.setProperty('box-sizing','border-box','important');input.style.setProperty('width','calc(100% - 16px)','important');input.style.setProperty('height','44px','important');input.style.setProperty('min-height','44px','important');input.style.setProperty('padding','0 14px','important');input.style.setProperty('margin','8px 8px 14px','important');input.style.setProperty('background','var(--tm-ui-search, #f0f2f5)','important');input.style.setProperty('border','1px solid #dbe0e6','important');input.style.setProperty('border-radius','11px','important');input.style.setProperty('font','400 14px/44px "Inter Tight", Arial, sans-serif','important');
   }
   if(state.search)state.search.value='';
   render();(state.search||list.querySelector('[aria-selected="true"]')||list.querySelector('button'))?.focus();
