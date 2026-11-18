@@ -12402,22 +12402,20 @@ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page #supp-l
  color:var(--tm-ui-text)!important;
 }
 
-/* Desktop recipe catalogue ONLY: category labels match the approved subtle
-   publication-pill treatment. Do not change mobile, status or category manager. */
+/* Desktop recipe table: reuse the exact ink/fill tokens of the approved
+   category-manager badges. Restrict to catalogue rows, never status or mobile. */
 @media (min-width:851px){
- html[data-admin-theme="light"] body #admin-workspace #tm-recipe-library-page table.recipe-table tbody tr td.recipe-category-cell > span.recipe-category-badge[class*="recipe-category-"],
- html[data-admin-theme="dark"] body #admin-workspace #tm-recipe-library-page table.recipe-table tbody tr td.recipe-category-cell > span.recipe-category-badge[class*="recipe-category-"]{
-  box-sizing:border-box!important;
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-list table.recipe-table tbody tr td.recipe-category-cell > span.recipe-category-badge{
+  box-sizing:border-box!important;display:inline-flex!important;
+  align-items:center!important;justify-content:center!important;
   width:max-content!important;max-width:100%!important;
   height:26px!important;min-height:26px!important;max-height:26px!important;
   padding:0 9px!important;margin:0!important;
-  border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
-  border-radius:999px!important;
-  background:color-mix(in srgb,currentColor 7%,transparent)!important;
-  box-shadow:none!important;
-  font-family:"Inter Tight","SF Pro Text",Arial,sans-serif!important;
-  font-size:11px!important;font-weight:400!important;line-height:1.2!important;
+  color:var(--category-ink)!important;
+  background:color-mix(in srgb,var(--category-ink) 7%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--category-ink) 12%,transparent)!important;
+  border-radius:999px!important;box-shadow:none!important;
+  font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
   letter-spacing:normal!important;white-space:nowrap!important;
  }
 }
