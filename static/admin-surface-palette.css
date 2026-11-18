@@ -12128,14 +12128,17 @@ html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page
 html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table tbody .dish-table-category .dish-category-pill,
 html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-card .dish-mobile-tags .dish-category-pill,
 html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table tbody .recipe-category-cell .recipe-category-badge,
-html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-card .tm-recipe-mobile-badges .recipe-category-badge{
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-card .tm-recipe-mobile-badges .recipe-category-badge,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page #recipe-category-body #recipe-categories .recipe-category-card-badge,
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-reader-eyebrow .recipe-category-badge{
  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
  flex:0 0 auto!important;width:max-content!important;max-width:100%!important;
  height:26px!important;min-height:26px!important;max-height:26px!important;
  padding:0 9px!important;margin:0!important;
- border:1px solid color-mix(in srgb,currentColor 22%,transparent)!important;
+ border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
  border-radius:999px!important;box-shadow:none!important;
- font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ background:color-mix(in srgb,currentColor 7%,transparent)!important;
+ font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  letter-spacing:normal!important;white-space:nowrap!important;
 }
 html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-card .dish-mobile-tags .dish-recipe-indicator-category:not([hidden]),
@@ -12143,8 +12146,10 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-
  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
  flex:0 0 auto!important;width:max-content!important;max-width:100%!important;
  height:26px!important;min-height:26px!important;max-height:26px!important;
- padding:0 9px!important;margin:0!important;border:0!important;
- border-radius:999px!important;font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+ padding:0 9px!important;margin:0!important;
+ border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
+ background:color-mix(in srgb,currentColor 7%,transparent)!important;
+ border-radius:999px!important;font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  white-space:nowrap!important;
 }
 
@@ -12173,23 +12178,6 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-
   width:100%!important;box-sizing:border-box!important;
  }
 }
-/* Desktop recipe catalogue: compact Pratos-sized badge with a very faint outline.
-   Applies to real table nodes only; mobile badges are intentionally unchanged. */
-@media(min-width:831px){
- html[data-admin-theme] body #admin-workspace #tm-recipe-library-page table.recipe-table tbody tr td.recipe-category-cell span.recipe-category-badge[class*="recipe-category-"]{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  box-sizing:border-box!important;flex:none!important;
-  width:max-content!important;max-width:100%!important;min-width:0!important;
-  height:22px!important;min-height:22px!important;max-height:22px!important;
-  padding:0 7px!important;margin:0!important;
-  border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
-  border-radius:999px!important;
-  font:500 10px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
-  letter-spacing:normal!important;white-space:nowrap!important;
-  box-shadow:none!important;
- }
-}
-
 /* PDF meal modal + supplement save: aligned with shared backoffice contrast and subcard surfaces (2026-11-17). */
 html[data-admin-theme] body #admin-workspace #tm-plan-page dialog#tm-pdf-meals-dialog[open]{
  box-sizing:border-box!important;
