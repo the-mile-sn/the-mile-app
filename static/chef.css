@@ -74,3 +74,18 @@ button:focus-visible,input:focus-visible{outline:2px solid #707078;outline-offse
 .error{color:#a32424!important;min-height:1em}
 .loading{text-align:center;color:var(--muted);padding:80px 0}
 @media(max-width:640px){.top{height:64px;padding:0 18px}.page{width:calc(100% - 32px);padding:23px 0 116px}.grid-meals,.menu-list{grid-template-columns:1fr}.day-picker{gap:5px}.day-picker button{min-height:58px;border-radius:11px;font-size:16px}.day-picker button small{font-size:9px}.meal-card,.panel,.menu-day{padding:17px}.bottom-nav{padding:7px 9px calc(7px + env(safe-area-inset-bottom,0px))}.bottom-nav button{font-size:11px;padding:13px 3px}.top-details{gap:7px;font-size:12px}.top-details #top-name{max-width:125px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+
+/* Chef collaboration: compact editors remain visually subordinate to the menu. */
+.chef-inline-edit{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
+.chef-inline-edit summary{font-size:12px;color:#575762;cursor:pointer;user-select:none}
+.chef-editor,.chef-menu-editor{display:flex;flex-direction:column;gap:10px;margin-top:11px}
+.chef-input{width:100%;background:#fafafa;border:1px solid #dedee3;border-radius:10px;padding:10px 12px;min-height:41px;color:#222;font-size:16px}
+textarea.chef-input{min-height:68px;resize:vertical}
+.chef-menu-editor{border:1px solid var(--line);border-radius:13px;padding:13px;background:#fafafb}
+.chef-secondary{border:1px solid #dedee3;border-radius:10px;background:#fff;color:#35353a;padding:9px 12px;font-weight:500;font-size:12px;margin-top:12px}
+.chef-edit-actions{display:flex;gap:8px;align-items:center}
+.chef-edit-actions .chef-secondary{margin:0}
+.chef-save{margin-top:0}
+.chef-exec-current{font-size:12px;color:#5b5b62;line-height:1.5}
+.chef-feedback{color:#666;min-height:16px;font-size:12px;margin:4px 0}
