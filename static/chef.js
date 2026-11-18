@@ -88,7 +88,7 @@ async function init(){
     const response=await request("/api/me");
     csrf=response.csrf||"";
     sessionUser=response.user;
-    if(!sessionUser || sessionUser.role!=="chef"){renderLogin();show("login");return;}
+    if(!sessionUser || sessionUser.role!=="chef"){location.replace("/");return;}
     const me=await request("/api/v2/chef/me");
     chef=me.chef;player=me.player;
     lang=chef.language==="en"?"en":"pt";
@@ -96,7 +96,7 @@ async function init(){
     show("chef");
     await loadWeek();
   }catch(err){
-    if(err.status===401||err.status===403){renderLogin();show("login");}
+    if(err.status===401){location.replace("/");}
     else {el("loading-view").textContent=txt().fail;}
   }
 }
@@ -701,6 +701,13 @@ el("screen").addEventListener("touchend",event=>{
 },{passive:true});
 el("top-logout").onclick=async()=>{
   try{await request("/api/logout","POST",{});}catch(e){}
-  csrf="";sessionUser=null;chef=null;player=null;location.replace("/chef");
+  csrf="";sessionUser=null;chef=null;player=null;location.replace("/");
 };
 init();
+
+// The Mile is one installable app; players and chefs use the same root-scope worker.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js", {scope:"/"}).catch(() => {});
+  });
+}

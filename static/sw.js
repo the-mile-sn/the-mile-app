@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'the-mile-shell-v122-player-session';
+const CACHE = 'the-mile-shell-v123-shared-player-chef';
 const SHELL = ['/', '/style.css?v=145', '/app.js?v=150', '/logo.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/pdf-open.html', '/pdf-open.css', '/pdf-open.js'];
 
 self.addEventListener('install', event => {
@@ -20,7 +20,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
-  const networkFirst = request.mode === 'navigate' || ['/app.js','/style.css','/sw.js','/manifest.webmanifest','/admin-microcycles.js','/admin-microcycles.css','/jogador-v2.js','/jogador-v2.css','/jogador-v2.html'].includes(url.pathname);
+  const networkFirst = request.mode === 'navigate' || ['/app.js','/style.css','/sw.js','/manifest.webmanifest','/admin-microcycles.js','/admin-microcycles.css','/jogador-v2.js','/jogador-v2.css','/jogador-v2.html','/chef.js','/chef.css','/chef'].includes(url.pathname);
   if (networkFirst) {
     event.respondWith(
       fetch(request).then(response => {

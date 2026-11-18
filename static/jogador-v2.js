@@ -2661,3 +2661,10 @@ for(const button of document.querySelectorAll("[data-assessment-tab]"))button.on
   requestAnimationFrame(()=>requestAnimationFrame(position));
  }
 })();
+
+// The Mile is one installable app; players and chefs use the same root-scope worker.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js", {scope:"/"}).catch(() => {});
+  });
+}
