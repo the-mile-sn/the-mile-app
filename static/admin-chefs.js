@@ -120,10 +120,6 @@
     chefProfile.hidden=true;
   }
   window.tmDismissChefProfile=dismissChefProfile;
-  $("tm-clients-chef-profile-back")?.addEventListener("click",()=>{
-    dismissChefProfile();
-    window.tmClientsCloseChefProfile?.();
-  });
   $("tm-chef-profile-toggle")?.addEventListener("click",async event=>{
     const item=selectedChef;
     if(!item)return;

@@ -695,3 +695,9 @@ html[data-admin-theme] #tm-players-page #tm-clients-chef-profile #tm-chef-profil
   transform:none!important;
  }
 }
+
+/* A hidden filter is always hidden on profile detail views.
+   The general desktop grid rule must not override the hidden attribute. */
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel[hidden]{
+ display:none!important;
+}

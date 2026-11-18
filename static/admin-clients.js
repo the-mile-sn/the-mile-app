@@ -15,11 +15,15 @@
   const profile=document.getElementById("tm-players-profile");
   const chefProfile=document.getElementById("tm-clients-chef-profile");
   const heading=page?.querySelector(".tm-players-heading");
+  // Use the very same return control and location as the Player profile.
+  const sharedProfileNav=document.getElementById("tm-players-profile-nav");
+  const sharedBackButton=document.getElementById("tm-players-profile-back");
+  const dashboardReturn=document.getElementById("tm-dashboard-return");
   const consultations=document.getElementById("tm-clients-consultations-panel");
   const chefsPanel=document.getElementById("tm-clients-chefs-panel");
   const search=document.getElementById("tm-players-filter");
   const status=document.getElementById("tm-players-access");
-  if(!page||!selector||!value||!chooser||!newButton||!panel||!list||!players||!chefsList||!archive||!profile||!chefProfile||!consultations||!chefsPanel||!search||!status)return;
+  if(!page||!selector||!value||!chooser||!newButton||!panel||!list||!players||!chefsList||!archive||!profile||!chefProfile||!sharedProfileNav||!sharedBackButton||!dashboardReturn||!consultations||!chefsPanel||!search||!status)return;
 
   const validTypes=new Set(["all","acompanhamento","consulta","chef"]);
   let selected="all";
@@ -131,16 +135,32 @@
   new MutationObserver(syncProfileVisibility).observe(chefProfile,{attributes:true,attributeFilter:["hidden"]});
   window.tmClientsShowChefProfile=()=>{
     chefProfile.hidden=false;
+    // Match the Player profile exactly: hide the generic "Início" breadcrumb
+    // and show the shared "Clientes" control above the profile content.
+    dashboardReturn.hidden=true;
+    sharedProfileNav.hidden=false;
     selectType(selected);
   };
   window.tmClientsCloseChefProfile=()=>{
     chefProfile.hidden=true;
+    sharedProfileNav.hidden=true;
+    dashboardReturn.hidden=false;
     selectType(selected);
   };
+  // The Player profile also listens to this button. Intercept only while a Chef
+  // is open; leave the Player's original click handler completely unchanged.
+  sharedBackButton.addEventListener("click",event=>{
+    if(chefProfile.hidden)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.tmDismissChefProfile?.();
+    window.tmClientsCloseChefProfile();
+  },true);
   // Re-entering Clientes shows the full client list, not a separate account tab.
   document.getElementById("tm-admin-nav-players")?.addEventListener("click",()=>{
     window.tmDismissChefProfile?.();
     chefProfile.hidden=true;
+    sharedProfileNav.hidden=true;
     selectType("all");
   },true);
   new MutationObserver(()=>{
@@ -148,6 +168,7 @@
       closeChefModal();
       window.tmDismissChefProfile?.();
       chefProfile.hidden=true;
+      sharedProfileNav.hidden=true;
     }
     if(!page.hidden&&!detailVisible())selectType(selected);
   }).observe(page,{attributes:true,attributeFilter:["hidden"]});
