@@ -12566,3 +12566,16 @@ html[data-admin-theme] body #admin-workspace :is(.tm-clinical-option,.tm-plannin
 #admin-workspace .tm-select-shell > .tm-select-panel:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 #admin-workspace .tm-select-shell > .tm-select-panel[hidden]{display:none!important}
 #admin-workspace .tm-select-shell .tm-select-chevron{display:inline-block!important;flex:none!important}
+
+/* Select field composition: preserve original single-surface filter design. */
+html[data-admin-theme] body #admin-workspace .tm-food-filter-field:has(.tm-select-shell),
+html[data-admin-theme] body #admin-workspace .tm-dish-filter-field:has(.tm-select-shell),
+html[data-admin-theme] body #admin-workspace .tm-recipe-filter-field:has(.tm-select-shell){outline:none!important;box-shadow:none!important}
+html[data-admin-theme] body #admin-workspace .tm-select-shell > select.tm-select-native{background-image:none!important;display:none!important}
+html[data-admin-theme] body #admin-workspace :is(.tm-food-filter-field,.tm-dish-filter-field,.tm-recipe-filter-field) .tm-select-shell>.tm-select-trigger{background:transparent!important;border:0!important;border-radius:0!important;min-height:32px!important;height:auto!important;padding:2px 0!important;outline:none!important;box-shadow:none!important;font-size:14px!important}
+html[data-admin-theme] body #admin-workspace :is(.tm-food-filter-field,.tm-dish-filter-field,.tm-recipe-filter-field) .tm-select-shell>.tm-select-trigger:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:3px!important}
+html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-chevron{width:18px!important;height:18px!important;font-size:0!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important}
+html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-chevron svg{display:block!important;width:18px!important;height:18px!important}
+html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel{min-width:100%;padding:6px!important;border-radius:14px!important}
+html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-search{border:0!important;outline:none!important;background:var(--tm-ui-search)!important;border-radius:9px!important;padding:0 12px!important;margin:0 0 5px!important}
+html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-option{font-size:13px!important;font-weight:400!important;min-height:42px!important;padding:9px 12px!important}
