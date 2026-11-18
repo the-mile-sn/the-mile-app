@@ -46,8 +46,18 @@ function setup(select){
   panel.hidden=false;trigger.setAttribute('aria-expanded','true');shell.classList.add('tm-select-open');
   if(select.options.length>9&&!state.search){
    const input=document.createElement('input');input.className='tm-select-search';input.type='search';input.placeholder='Pesquisar...';
-   // The surface is owned by the theme CSS, not an inline !important value.
-   // Keep theme switching correct and avoid inheriting a deeper surface token.input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
+   // Match the second-level surface exactly. Legacy input selectors can
+   // override inherited tokens, so resolve the approved colour at this node.
+   const syncSearchSurface=()=>{
+    const dark=document.documentElement.getAttribute('data-admin-theme')==='dark';
+    const surface=dark?'#1e2025':'#f0f2f6';
+    input.style.setProperty('background-color',surface,'important');
+    input.style.setProperty('background',surface,'important');
+    input.style.setProperty('background-image','none','important');
+   };
+   syncSearchSurface();
+   const themeObserver=new MutationObserver(syncSearchSurface);
+   themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-admin-theme']});input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
   }
   if(state.search)state.search.value='';
   render();(state.search||list.querySelector('[aria-selected="true"]')||list.querySelector('button'))?.focus();
