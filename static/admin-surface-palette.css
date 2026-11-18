@@ -12579,3 +12579,27 @@ html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-chevron
 html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel{min-width:100%;padding:6px!important;border-radius:14px!important}
 html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-search{border:0!important;outline:none!important;background:var(--tm-ui-search)!important;border-radius:9px!important;padding:0 12px!important;margin:0 0 5px!important}
 html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-option{font-size:13px!important;font-weight:400!important;min-height:42px!important;padding:9px 12px!important}
+
+/* Preserve approved two-line filters; only replace the dropdown mechanism. */
+#admin-workspace .tm-food-filter-field:has(.tm-select-shell)::after,
+#admin-workspace .tm-food-filter-field:has(.tm-select-shell)::before,
+#admin-workspace .tm-portion-category-filter:has(.tm-select-shell)::after,
+#admin-workspace .tm-portion-category-filter:has(.tm-select-shell)::before{content:none!important;display:none!important}
+#admin-workspace .tm-food-filter-field:has(.tm-select-shell) .tm-select-shell{width:100%!important}
+#admin-workspace .tm-select-shell .tm-select-option[aria-selected="true"]{background:color-mix(in srgb,var(--tm-ui-text) 6%,transparent)!important}
+#admin-workspace .tm-select-shell .tm-select-check{display:none!important}
+#admin-workspace .tm-select-shell .tm-select-search{height:36px!important;font-size:12px!important;margin:0 0 6px!important;border:0!important;box-shadow:none!important}
+#admin-workspace .tm-select-shell .tm-select-search:focus{outline:1px solid color-mix(in srgb,var(--tm-ui-text) 20%,transparent)!important;outline-offset:0!important}
+#admin-workspace .tm-select-shell .tm-select-option{min-height:40px!important}
+#admin-workspace .tm-select-shell .tm-select-options{max-height:290px!important}
+#admin-workspace .tm-select-shell .tm-select-panel{top:calc(100% + 5px)!important}
+#admin-workspace .tm-select-shell .tm-select-chevron{transform:none!important}
+#admin-workspace .tm-select-shell.tm-select-open .tm-select-chevron{transform:rotate(180deg)!important}
+/* Plan filters: original outer filter remains, no second field row. */
+#admin-workspace .plan-library-player-filter:has(.tm-select-plan-filter),
+#admin-workspace .plan-library-type-filter:has(.tm-select-plan-filter){position:relative!important;display:block!important;box-sizing:border-box!important;min-height:62px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#admin-workspace .tm-select-plan-filter{width:100%!important;display:block!important}
+#admin-workspace .tm-select-plan-filter>.tm-select-trigger{min-height:62px!important;display:flex!important;align-items:flex-end!important;padding:27px 14px 10px!important;background:var(--tm-ui-search)!important;border:0!important;border-radius:12px!important;position:relative!important}
+#admin-workspace .tm-select-plan-filter>.tm-select-trigger::before{content:attr(data-caption);position:absolute;top:10px;left:14px;color:var(--tm-ui-muted);font:400 12px/1.2 "Inter Tight",Arial,sans-serif}
+#admin-workspace .tm-select-plan-filter>.tm-select-trigger .tm-select-value{font:400 14px/1.3 "Inter Tight",Arial,sans-serif}
+#admin-workspace .tm-select-plan-filter>.tm-select-trigger .tm-select-chevron{align-self:center!important;margin-top:8px}
