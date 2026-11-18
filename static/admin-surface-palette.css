@@ -720,7 +720,7 @@ html[data-admin-theme] #consumption-panel .tm-consumption-status[data-state="non
 
 /* Porções Visuais: interactive status controls use the shared subtle pill
    geometry. Preserve aria-pressed, keyboard focus and server-side toggling. */
-html[data-admin-theme] #tm-food-library-page .tm-portion-toggle{
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card .tm-portion-heading > button.tm-portion-toggle{
  box-sizing:border-box!important;display:inline-flex!important;
  align-items:center!important;justify-content:center!important;
  height:26px!important;min-height:26px!important;max-height:26px!important;
@@ -732,20 +732,20 @@ html[data-admin-theme] #tm-food-library-page .tm-portion-toggle{
  font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  cursor:pointer;
 }
-html[data-admin-theme] #tm-food-library-page .tm-portion-toggle[aria-pressed="false"]{
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card .tm-portion-heading > button.tm-portion-toggle[aria-pressed="false"]{
  color:var(--tm-state-neutral-fg)!important;
  background:color-mix(in srgb,currentColor 7%,transparent)!important;
  border-color:color-mix(in srgb,currentColor 12%,transparent)!important;
 }
 @media(hover:hover) and (pointer:fine){
- html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:not(:disabled):hover{
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card .tm-portion-heading > button.tm-portion-toggle:not(:disabled):hover{
   background:color-mix(in srgb,currentColor 12%,transparent)!important;
  }
 }
-html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:focus-visible{
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card .tm-portion-heading > button.tm-portion-toggle:focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important;
 }
-html[data-admin-theme] #tm-food-library-page .tm-portion-toggle:disabled{opacity:.5;cursor:wait}
+html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card .tm-portion-heading > button.tm-portion-toggle:disabled{opacity:.5;cursor:wait}
 /* Actions: all buttons 12px, compact icons 10px, status pills 999px only.
    A new/primary action uses the approved blue-grey; delete never uses a
    red outline. Keep semantic confirmation/success overrides on save buttons. */
@@ -12428,5 +12428,20 @@ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page #supp-l
   border-radius:999px!important;box-shadow:none!important;
   font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
   letter-spacing:normal!important;white-space:nowrap!important;
+ }
+}
+
+/* Mouse hover on library edit/delete controls. Keep touch behavior unchanged. */
+@media(hover:hover) and (pointer:fine){
+ html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-visual-portions-page .tm-portion-card > button.tm-portion-photo-edit:hover:not(:disabled),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table .tm-supp-table-actions button.tm-supp-library-edit:hover:not(:disabled),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-mobile-actions button.tm-supp-library-edit:hover:not(:disabled){
+  background:var(--tm-action-secondary-hover,var(--tm-ui-hover))!important;
+  filter:brightness(.94);
+ }
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-table .tm-supp-table-actions button.tm-supp-library-remove:hover:not(:disabled),
+ html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-mobile-actions button.tm-supp-library-remove:hover:not(:disabled){
+  background:var(--tm-action-danger-hover,rgba(188,60,82,.22))!important;
+  filter:brightness(.94);
  }
 }
