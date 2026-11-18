@@ -60,8 +60,41 @@ function setup(select){
   instances.forEach((other)=>{if(other!==state){other.panel.hidden=true;other.trigger.setAttribute('aria-expanded','false');other.shell.classList.remove('tm-select-open')}});
   panel.hidden=false;trigger.setAttribute('aria-expanded','true');shell.classList.add('tm-select-open');
   if(select.options.length>9&&!state.search){
-   const input=document.createElement('input');input.className='tm-select-search';input.type='search';input.placeholder='Pesquisar...';
-input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
+   const categorySearch=['category','recipe-filter-category','recipe-category'].includes(select.id);
+   const input=document.createElement('input');
+   input.className='tm-select-search';
+   input.type=categorySearch?'text':'search';
+   input.placeholder='Pesquisar...';
+   input.setAttribute('aria-label','Pesquisar opções');
+   input.autocomplete='off';
+   if(categorySearch){
+    // Isolate category search from legacy form styles (including !important).
+    // The input remains a real, accessible input; users can still zoom manually.
+    const host=document.createElement('span');
+    host.className='tm-category-search-host';
+    const shadow=host.attachShadow({mode:'open'});
+    const style=document.createElement('style');
+    style.textContent=`
+      :host{display:block;width:100%;box-sizing:border-box;margin:0 0 10px}
+      input{display:block;box-sizing:border-box;width:100%;height:44px;margin:0;
+        padding:0 12px;border:0;border-bottom:2px solid transparent;
+        border-radius:0;outline:0;box-shadow:none;background:transparent;
+        appearance:none;-webkit-appearance:none;color:var(--tm-ui-text,#222);
+        caret-color:currentColor;font:400 17px/1.3 "Inter Tight",Arial,sans-serif;
+        -webkit-text-size-adjust:100%}
+      input::placeholder{color:var(--tm-ui-muted,#82858d);opacity:1}
+      input:focus-visible{border-bottom-color:var(--tm-shell-focus,#82a8c9)}
+    `;
+    input.setAttribute('inputmode','search');
+    input.setAttribute('enterkeyhint','search');
+    input.spellcheck=false;
+    shadow.append(style,input);
+    panel.insertBefore(host,list);
+   }else{
+    panel.insertBefore(input,list);
+   }
+   input.addEventListener('input',render);
+   state.search=input;
   }
   if(state.search)state.search.value='';
   render();
