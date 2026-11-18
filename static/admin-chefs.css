@@ -1,0 +1,39 @@
+/* The Mile / Planning / Menus and recipes / Chefs */
+#tm-chef-management{margin-top:16px;background:var(--tm-light-surface,#fff);border:1px solid rgba(100,109,124,.14);border-radius:17px;overflow:hidden}
+#tm-chef-management .tm-chef-summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 21px;font-size:17px;font-weight:600;color:inherit}
+#tm-chef-management .tm-chef-summary::-webkit-details-marker{display:none}
+#tm-chef-management .tm-chef-summary:after{content:"⌄";font-size:19px;color:#747982}
+#tm-chef-management[open] .tm-chef-summary:after{transform:rotate(180deg)}
+#tm-chef-management .tm-chef-content{padding:2px 21px 23px}
+#tm-chef-management .tm-chef-head h3{font-size:17px;letter-spacing:-.02em;margin:14px 0 3px}
+#tm-chef-management .tm-chef-head p{font-size:13px;color:#76808b;margin:0 0 15px;line-height:1.5}
+#tm-chef-management .tm-chef-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 15px;align-items:end}
+#tm-chef-management label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:inherit}
+#tm-chef-management :is(input,select){min-width:0;width:100%;background:var(--tm-light-surface,#fff);color:inherit;border:1px solid rgba(106,116,132,.25);border-radius:10px;min-height:41px;padding:10px 12px;font-size:16px;box-sizing:border-box}
+#tm-chef-management .tm-chef-create-actions{display:flex;align-items:end}
+#tm-chef-management .tm-chef-create-actions button{width:100%}
+#tm-chef-management button{font-size:12px;border-radius:10px;min-height:35px}
+#tm-chef-management .tm-chef-error{grid-column:1/-1;color:#ac3434;font-size:12px;min-height:16px;margin:0}
+#tm-chef-management .tm-chef-accounts{margin:17px 0}
+#tm-chef-management .tm-chef-account{border-top:1px solid rgba(106,116,132,.14);display:flex;justify-content:space-between;gap:16px;padding:14px 0;align-items:center}
+#tm-chef-management .tm-chef-account-info{display:flex;flex-direction:column;gap:4px}
+#tm-chef-management .tm-chef-account-info strong{font-size:14px}
+#tm-chef-management .tm-chef-account-info small{font-size:12px;color:#6b7280}
+#tm-chef-management .tm-chef-account-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+#tm-chef-management .tm-chef-state,#tm-chef-management .tm-chef-count{font-size:11px;font-weight:600;padding:5px 9px;border-radius:999px;background:#e7f4ea;color:#328359}
+#tm-chef-management .tm-chef-state.is-off{background:#f0f0f1;color:#777}
+#tm-chef-management .tm-chef-count{background:#eef0f4;color:#606673}
+#tm-chef-management .tm-chef-divider{height:1px;background:rgba(106,116,132,.15);margin:22px 0}
+#tm-chef-management .tm-chef-filter{max-width:340px;margin:6px 0 14px}
+#tm-chef-management .tm-chef-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#tm-chef-management .tm-chef-activity-card{border:1px solid rgba(106,116,132,.14);background:rgba(132,142,154,.035);border-radius:13px;padding:14px;min-width:0}
+#tm-chef-management .tm-chef-event-head{display:flex;flex-direction:column;gap:5px}
+#tm-chef-management .tm-chef-event-head strong{font-size:13px;line-height:1.4}
+#tm-chef-management .tm-chef-event-head small{font-size:11px;color:#778}
+#tm-chef-management .tm-chef-activity-card p{font-size:12px;line-height:1.5;margin:7px 0}
+#tm-chef-management .tm-chef-muted,#tm-chef-management .tm-chef-event-actor{color:#727b88;font-size:12px;line-height:1.5}
+#tm-chef-management .tm-chef-pending-note{display:block;font-size:11px;color:#aa741a;margin:7px 0}
+#tm-chef-management .tm-chef-approve{display:flex;flex-direction:column;gap:7px;margin:13px 0}
+#tm-chef-management .tm-chef-approve button{align-self:start}
+#tm-chef-management #tm-chef-feedback{font-size:12px;color:#64748b;min-height:16px}
+@media(max-width:740px){#tm-chef-management .tm-chef-content{padding:0 14px 18px}#tm-chef-management .tm-chef-summary{padding:15px}#tm-chef-management .tm-chef-form{grid-template-columns:1fr}#tm-chef-management .tm-chef-activity{grid-template-columns:1fr}#tm-chef-management .tm-chef-account{align-items:start;flex-direction:column}#tm-chef-management .tm-chef-account-actions{width:100%}}
