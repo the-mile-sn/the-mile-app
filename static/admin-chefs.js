@@ -34,6 +34,12 @@
       <svg class="tm-menu-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </summary>
     <div class="tm-chef-content tm-menu-history-inner">
+      <nav class="tm-chef-activity-filters" aria-label="Filtrar alterações e execução">
+        <button type="button" class="tm-chef-activity-filter" data-chef-activity-filter="all" aria-pressed="true">Todos</button>
+        <button type="button" class="tm-chef-activity-filter" data-chef-activity-filter="menu" aria-pressed="false">Alterações de menu</button>
+        <button type="button" class="tm-chef-activity-filter" data-chef-activity-filter="execution" aria-pressed="false">Execuções</button>
+        <button type="button" class="tm-chef-activity-filter" data-chef-activity-filter="pending" aria-pressed="false">Por analisar</button>
+      </nav>
       <div id="tm-chef-activity" class="tm-chef-activity"></div>
       <p id="tm-chef-feedback" role="status"></p>
     </div>`;
@@ -277,8 +283,8 @@
   const stateLabels={served_planned:"Servido conforme planeado",served_changed:"Servido com alterações",ate_out:"Jogador comeu fora",chef_off:"Chef de folga"};
   async function pickerForProposal(entry,container){
     const wrap=node("div","tm-chef-approve");
-    const q=node("input","");q.type="search";q.placeholder="Pesquisar prato aprovado";q.maxLength=90;
-    const select=node("select","");
+    const q=node("input","");q.type="search";q.placeholder="Pesquisar prato aprovado";q.setAttribute("aria-label","Pesquisar prato aprovado");q.maxLength=90;
+    const select=node("select","");select.setAttribute("aria-label","Prato aprovado para associar");
     const hint=node("small","tm-chef-muted","Aprova associando a um prato já validado na Biblioteca. Se for novo, cria-o primeiro na Biblioteca de Pratos.");
     const approve=button("Aprovar com prato",async()=>{
       if(!select.value){feedback.textContent="Seleciona primeiro um prato aprovado.";return;}
@@ -300,64 +306,192 @@
     q.oninput=()=>{clearTimeout(t);t=setTimeout(load,240);};
     await load();
   }
+  // The same audit events are displayed for the player selected in Planeamento.
+  // These entries are not themselves new menu versions and never confirm consumption.
   let activityRevision=0;
+  let activityFilter="all";
+  const activityFilters=Array.from(review.querySelectorAll("[data-chef-activity-filter]"));
+  const activityHost=$("tm-chef-activity");
+  const activityPending=$("tm-chef-pending");
+  const pendingActivity=e=>e.event_type==="menu"&&
+    (e.status==="pending_review"||e.status==="pending_validation");
+  function activityDate(iso){
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(iso||"")))return String(iso||"");
+    const d=new Date(iso+"T12:00:00");
+    return new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short"}).format(d);
+  }
+  function activityClock(stamp){
+    const date=new Date(Number(stamp)*1000);
+    return Number.isFinite(date.getTime())?
+      new Intl.DateTimeFormat("pt-PT",{hour:"2-digit",minute:"2-digit"}).format(date):"";
+  }
+  function activityTitle(entry){
+    if(entry.event_type==="execution")return "Execução registada";
+    if(entry.action==="dish_proposal")return "Proposta de prato";
+    if(entry.action==="proposal_approved")return "Proposta aprovada";
+    if(entry.action==="plan_deleted")return "Menu removido";
+    if(entry.action==="plan_updated")return entry.previous_kind?"Menu alterado":"Menu definido";
+    return "Registo de menu";
+  }
+  function activityStatus(entry){
+    if(entry.event_type==="execution")return {label:"Registado",tone:"positive"};
+    const status={
+      pending_review:["Por analisar","attention"],
+      pending_validation:["A validar","pending"],
+      reviewed:["Analisado","neutral"],
+      approved:["Aprovada","positive"],
+      rejected:["Rejeitada","error"],
+      recorded:["Registado","neutral"]
+    };
+    const found=status[entry.status]||["Registado","neutral"];
+    return {label:found[0],tone:found[1]};
+  }
+  function activityDescription(entry){
+    if(entry.event_type==="execution"){
+      const current=stateLabels[entry.state]||"Execução registada";
+      return entry.state==="served_changed"&&entry.served_description?
+        current+" · "+entry.served_description:current;
+    }
+    if(entry.action==="dish_proposal")return "Prato sugerido: "+(entry.new_value||"");
+    if(entry.action==="plan_deleted")return "Menu removido";
+    if(entry.new_value)return entry.new_value;
+    return "Sem menu";
+  }
+  function addActivityField(parent,label,value){
+    const item=node("div","tm-chef-activity-field");
+    item.append(node("span","tm-chef-activity-field-label",label));
+    item.append(node("span","tm-chef-activity-field-value",value));
+    parent.append(item);
+  }
+  function activityRow(entry){
+    const card=node("details","tm-chef-activity-card");
+    card.dataset.eventType=entry.event_type;
+    card.dataset.pending=String(pendingActivity(entry));
+    const summary=node("summary","tm-chef-activity-row");
+    const date=node("span","tm-chef-activity-date");
+    date.append(node("strong","",activityDate(new Date(Number(entry.created_at)*1000).toISOString().slice(0,10))));
+    date.append(node("small","",activityClock(entry.created_at)));
+    const body=node("span","tm-chef-activity-main");
+    body.append(node("strong","tm-chef-activity-title",activityTitle(entry)));
+    const meal=entry.meal==="lunch"?"Almoço":"Jantar";
+    body.append(node("span","tm-chef-activity-subtitle",
+      meal+" · "+activityDate(entry.menu_date)+" · "+activityDescription(entry)));
+    const status=activityStatus(entry);
+    const pill=node("span","tm-chef-activity-status",status.label);
+    pill.dataset.tone=status.tone;
+    const arrow=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    arrow.setAttribute("viewBox","0 0 24 24");
+    arrow.setAttribute("aria-hidden","true");
+    arrow.setAttribute("class","tm-chef-activity-chevron");
+    const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d","m6 9 6 6 6-6");
+    path.setAttribute("fill","none");path.setAttribute("stroke","currentColor");
+    path.setAttribute("stroke-width","1.8");path.setAttribute("stroke-linecap","round");
+    path.setAttribute("stroke-linejoin","round");arrow.append(path);
+    summary.append(date,body,pill,arrow);
+    const detail=node("div","tm-chef-activity-detail");
+    detail.append(node("p","tm-chef-activity-by",
+      "Por "+(entry.actor_name||"utilizador não identificado")+" · "+localDate(entry.created_at)));
+    const fields=node("div","tm-chef-activity-values");
+    if(entry.event_type==="execution"){
+      addActivityField(fields,"Estado da execução",stateLabels[entry.state]||entry.state||"Registado");
+      addActivityField(fields,"Menu planeado na altura do registo",entry.planned_value||"Sem menu definido");
+      if(entry.served_description)addActivityField(fields,"Efetivamente servido",entry.served_description);
+    }else{
+      addActivityField(fields,"Menu anterior",entry.previous_value||"Sem menu");
+      addActivityField(fields,
+        entry.action==="dish_proposal"?"Prato proposto":"Menu novo",
+        entry.action==="plan_deleted"?"Sem menu":entry.new_value||"Sem menu");
+      if(entry.status==="pending_review"){
+        detail.append(node("p","tm-chef-activity-notice",
+          "Alteração já registada no planeamento; assinalar como analisada não equivale a aprová-la."));
+      }
+      if(entry.status==="pending_validation"){
+        detail.append(node("p","tm-chef-activity-notice",
+          "A proposta não aparece no menu do jogador antes da validação."));
+      }
+    }
+    if(entry.note)addActivityField(fields,"Observações",entry.note);
+    detail.append(fields);
+    if(entry.status==="pending_review"&&entry.event_type==="menu"){
+      const actions=node("div","tm-chef-activity-actions");
+      actions.append(button("Assinalar como analisado",async()=>{
+        try{
+          await api("/api/v2/admin/chef-reviews",{method:"POST",body:JSON.stringify({id:entry.id,decision:"reviewed"})});
+          feedback.textContent="Alteração analisada.";await loadActivity();
+        }catch(error){feedback.textContent=noteMessage(error);}
+      },"tm-action-secondary"));
+      detail.append(actions);
+    }
+    if(entry.status==="pending_validation"&&entry.event_type==="menu"){
+      const proposal=node("div","tm-chef-activity-proposal");
+      detail.append(proposal);
+      const actions=node("div","tm-chef-activity-actions");
+      actions.append(button("Rejeitar proposta",async()=>{
+        try{
+          await api("/api/v2/admin/chef-reviews",{method:"POST",body:JSON.stringify({id:entry.id,decision:"rejected"})});
+          feedback.textContent="Proposta rejeitada; planeamento preservado.";await loadActivity();
+        }catch(error){feedback.textContent=noteMessage(error);}
+      },"tm-action-secondary"));
+      detail.append(actions);
+      let pickerLoaded=false;
+      card.addEventListener("toggle",()=>{
+        if(!card.open||pickerLoaded)return;
+        pickerLoaded=true;
+        pickerForProposal(entry,proposal).catch(error=>{
+          feedback.textContent=noteMessage(error);
+          pickerLoaded=false;
+        });
+      });
+    }
+    card.append(summary,detail);
+    return card;
+  }
+  function applyActivityFilter(){
+    for(const button of activityFilters){
+      button.setAttribute("aria-pressed",String(button.dataset.chefActivityFilter===activityFilter));
+    }
+    let visible=0;
+    for(const card of activityHost.querySelectorAll(".tm-chef-activity-card")){
+      const show=activityFilter==="all"||
+        (activityFilter==="menu"&&card.dataset.eventType==="menu")||
+        (activityFilter==="execution"&&card.dataset.eventType==="execution")||
+        (activityFilter==="pending"&&card.dataset.pending==="true");
+      card.hidden=!show;
+      if(show)visible++;
+    }
+    const empty=activityHost.querySelector(".tm-chef-activity-filter-empty");
+    if(empty)empty.hidden=visible!==0;
+  }
+  for(const filter of activityFilters)filter.addEventListener("click",()=>{
+    activityFilter=filter.dataset.chefActivityFilter;
+    applyActivityFilter();
+  });
   async function loadActivity(){
-    // Use the player already selected at the top of Planeamento; no second picker.
     const athleteId=$("athlete")?.value||"";
     const revision=++activityRevision;
-    const host=$("tm-chef-activity");
     if(!athleteId){
-      host.replaceChildren(node("p","tm-chef-muted","Seleciona um jogador no topo do Planeamento."));
-      $("tm-chef-pending").hidden=true;
+      activityHost.replaceChildren(node("p","tm-chef-muted","Seleciona um jogador no topo do Planeamento."));
+      activityPending.hidden=true;
       return;
     }
-    const path="/api/v2/admin/chef-activity?athlete_id="+encodeURIComponent(athleteId);
-    const data=await api(path);
+    activityHost.replaceChildren(node("p","tm-chef-muted","A carregar registos…"));
+    const data=await api("/api/v2/admin/chef-activity?athlete_id="+encodeURIComponent(athleteId));
     if(revision!==activityRevision||$("athlete")?.value!==athleteId)return;
     const all=data.activity||[];
-    host.replaceChildren();
-    const pending=all.filter(a=>a.event_type==="menu"&&["pending_review","pending_validation"].includes(a.status)).length;
-    $("tm-chef-pending").hidden=pending===0;
-    $("tm-chef-pending").textContent=pending+" pendentes";
-    if(!all.length){host.append(node("p","tm-chef-muted","Ainda não existem alterações de chefs ou registos de execução."));return;}
-    for(const e of all){
-      const card=node("article","tm-chef-activity-card");
-      const head=node("div","tm-chef-event-head");
-      const meal=e.meal==="lunch"?"Almoço":"Jantar";
-      head.append(node("strong","",e.athlete_name+" · "+meal+" · "+e.menu_date));
-      head.append(node("small","",localDate(e.created_at)));
-      card.append(head);
-      card.append(node("p","tm-chef-event-actor","Por "+e.actor_name));
-      if(e.event_type==="execution"){
-        card.append(node("p","",stateLabels[e.state]||e.state));
-        if(e.planned_value)card.append(node("p","tm-chef-muted","Planeado: "+e.planned_value));
-        if(e.served_description)card.append(node("p","","Servido: "+e.served_description));
-      }else{
-        card.append(node("p","tm-chef-muted","Anterior: "+(e.previous_value||"Sem menu")));
-        card.append(node("p","",e.action==="dish_proposal"?"Prato proposto: "+e.new_value:
-          e.action==="plan_deleted"?"Menu removido":"Novo: "+(e.new_value||"Sem menu")));
-        if(e.status==="pending_review")card.append(button("Assinalar como analisado",async()=>{
-          try{
-            await api("/api/v2/admin/chef-reviews",{method:"POST",body:JSON.stringify({id:e.id,decision:"reviewed"})});
-            feedback.textContent="Alteração analisada.";await loadActivity();
-          }catch(error){feedback.textContent=noteMessage(error);}
-        }));
-        if(e.status==="pending_validation"){
-          card.append(node("span","tm-chef-pending-note","Pendente de validação nutricional"));
-          await pickerForProposal(e,card);
-          card.append(button("Rejeitar proposta",async()=>{
-            try{
-              await api("/api/v2/admin/chef-reviews",{method:"POST",body:JSON.stringify({id:e.id,decision:"rejected"})});
-              feedback.textContent="Proposta rejeitada; planeamento preservado.";await loadActivity();
-            }catch(error){feedback.textContent=noteMessage(error);}
-          }));
-        }
-        if(e.status==="reviewed"||e.status==="approved"||e.status==="rejected")
-          card.append(node("span","tm-chef-muted","Estado: "+e.status));
-      }
-      if(e.note)card.append(node("p","tm-chef-muted","Observações: "+e.note));
-      host.append(card);
+    const pending=all.filter(pendingActivity).length;
+    activityPending.hidden=pending===0;
+    activityPending.textContent=pending+" por analisar";
+    activityHost.replaceChildren();
+    if(!all.length){
+      activityHost.append(node("p","tm-chef-muted","Ainda não existem alterações de menu ou registos de execução."));
+      return;
     }
+    for(const entry of all)activityHost.append(activityRow(entry));
+    const empty=node("p","tm-chef-muted tm-chef-activity-filter-empty",
+      "Não existem registos desta categoria.");
+    empty.hidden=true;activityHost.append(empty);
+    applyActivityFilter();
   }
   section.addEventListener("toggle",async()=>{
     if(!section.open)return;

@@ -25,20 +25,11 @@
 #tm-clients-create-choice [data-new-client-type] strong{font-size:15px;font-weight:600}
 #tm-clients-create-choice [data-new-client-type] span{font-size:12px;line-height:1.5;color:#7b7e87}
 #tm-chef-management #tm-chef-account-feedback{font-size:12px;color:#68717e;min-height:16px}
-#tm-chef-menu-review .tm-chef-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#tm-chef-menu-review .tm-chef-activity-card{border:1px solid rgba(110,119,133,.15);border-radius:13px;padding:13px;min-width:0}
-#tm-chef-menu-review .tm-chef-event-head{display:flex;flex-direction:column;gap:4px}
-#tm-chef-menu-review .tm-chef-event-head strong{font-size:13px}
-#tm-chef-menu-review .tm-chef-event-head small,#tm-chef-menu-review .tm-chef-muted,#tm-chef-menu-review .tm-chef-event-actor{font-size:12px;color:#75808b}
-#tm-chef-menu-review .tm-chef-activity-card p{font-size:12px;line-height:1.5}
-#tm-chef-menu-review .tm-chef-approve{display:flex;flex-direction:column;gap:8px;margin:12px 0}
-#tm-chef-menu-review .tm-chef-approve input,#tm-chef-menu-review .tm-chef-approve select{width:100%;min-height:40px;border-radius:10px;font-size:16px;border:1px solid rgba(100,109,124,.2);padding:8px;background:var(--tm-light-surface,#fff);color:inherit}
 @media(min-width:831px){#tm-clients-create-shortcut{display:none!important}}
 @media(max-width:830px){
  #tm-clients-types{width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:16px}
  #tm-clients-types [role=tab]{font-size:11px;padding:10px 5px;min-height:39px}
  #tm-clients-create-choice .tm-clients-choice-inner{padding:22px}
- #tm-chef-menu-review .tm-chef-activity{grid-template-columns:1fr}
 }
 
 /* Clientes unified list · 18/11/2026 · official Guide Visual */

@@ -49,7 +49,7 @@ test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
   assert.match(html,/\/admin-clients\.js\?v=6/);
-  assert.match(html,/\/admin-clients\.css\?v=8/);
+  assert.match(html,/\/admin-clients\.css\?v=9/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -99,7 +99,7 @@ test("Chef creation always uses a native modal on desktop and mobile, never an i
   assert.doesNotMatch(css,/@media\(max-width:830px\)\{\s*#tm-players-page #tm-clients-chefs-panel/);
   assert.match(css,/#tm-clients-chef-create-dialog #tm-chef-create/);
   assert.match(html,/admin-clients\.js\?v=6/);
-  assert.match(html,/admin-clients\.css\?v=8/);
+  assert.match(html,/admin-clients\.css\?v=9/);
 });
 
 
@@ -129,9 +129,9 @@ test("Chef account access stays in profile; server tickets are admin-only and sc
   assert.match(adminApp,/role='chef' AND active=1/);
   assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
   assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
-  assert.match(html,/admin-chefs\.js\?v=7/);
+  assert.match(html,/admin-chefs\.js\?v=8/);
   assert.match(html,/admin-clients\.js\?v=6/);
-  assert.match(html,/admin-clients\.css\?v=8/);
+  assert.match(html,/admin-clients\.css\?v=9/);
 });
 
 
@@ -148,8 +148,8 @@ test("Chef detail reuses the single Player profile back control and hides accoun
  assert.match(clients,/event\.stopImmediatePropagation\(\)/);
  assert.match(css,/#tm-players-filter-panel\[hidden\]\{\s*display:none!important/);
  assert.match(html,/admin-clients\.js\?v=6/);
- assert.match(html,/admin-chefs\.js\?v=7/);
- assert.match(html,/admin-clients\.css\?v=8/);
+ assert.match(html,/admin-chefs\.js\?v=8/);
+ assert.match(html,/admin-clients\.css\?v=9/);
 });
 
 test("Chef activity uses the approved menu accordion and the unfiltered audit feed",()=>{
@@ -167,8 +167,36 @@ test("Chef activity uses the approved menu accordion and the unfiltered audit fe
   assert.match(chefs,/\/api\/v2\/admin\/chef-activity\?athlete_id=/);
   assert.match(chefs,/\$\("athlete"\)\?\.addEventListener\("change"/);
   assert.doesNotMatch(chefs,/tm-chef-filter-player/);
-  assert.match(html,/admin-chefs\.js\?v=7/);
-  assert.match(html,/admin-chefs\.css\?v=3/);
-  assert.match(html,/admin-clients\.css\?v=8/);
+  assert.match(html,/admin-chefs\.js\?v=8/);
+  assert.match(html,/admin-chefs\.css\?v=4/);
+  assert.match(html,/admin-clients\.css\?v=9/);
   assert.match(html,/admin-surface-palette\.css\?v=205/);
+});
+
+test("Chef audit uses soft expandable records and player-scoped filters without changing API semantics",()=>{
+ const css=fs.readFileSync("static/admin-chefs.css","utf8");
+ const clientsCss=fs.readFileSync("static/admin-clients.css","utf8");
+ assert.match(chefs,/data-chef-activity-filter="all"/);
+ assert.match(chefs,/data-chef-activity-filter="menu"/);
+ assert.match(chefs,/data-chef-activity-filter="execution"/);
+ assert.match(chefs,/data-chef-activity-filter="pending"/);
+ assert.match(chefs,/activityFilters=.*review\.querySelectorAll/);
+ assert.match(chefs,/const card=node\("details","tm-chef-activity-card"\)/);
+ assert.match(chefs,/const summary=node\("summary","tm-chef-activity-row"\)/);
+ assert.match(chefs,/card\.append\(summary,detail\)/);
+ assert.match(chefs,/\$\("athlete"\)\?\.addEventListener\("change"/);
+ assert.doesNotMatch(chefs,/e\.athlete_name\+" · "/);
+ assert.match(chefs,/pending_review:\["Por analisar","attention"\]/);
+ assert.match(chefs,/reviewed:\["Analisado","neutral"\]/);
+ assert.match(chefs,/event_type==="execution"/);
+ assert.match(chefs,/decision:"reviewed"/);
+ assert.match(chefs,/decision:"rejected"/);
+ assert.match(chefs,/pickerForProposal\(entry,proposal\)/);
+ assert.match(css,/#tm-chef-menu-review \.tm-chef-activity-card\{/);
+ assert.match(css,/background:var\(--tm-ui-subcard\);border:0/);
+ assert.match(css,/font:400 11px\/1\.2 "Inter Tight"/);
+ assert.doesNotMatch(clientsCss,/#tm-chef-menu-review \.tm-chef-activity-card/);
+ assert.match(html,/admin-chefs\.js\?v=8/);
+ assert.match(html,/admin-chefs\.css\?v=4/);
+ assert.match(html,/admin-clients\.css\?v=9/);
 });
