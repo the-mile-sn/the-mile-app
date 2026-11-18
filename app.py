@@ -2808,11 +2808,16 @@ def application(env, start_response):
                     raise Problem(400,'invalid_menu_batch')
                 if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
                 for date,meal,kind,value,dish_id in validated:
+                    prior_row=c.execute("""SELECT kind,value,dish_id FROM v2_weekly_menus
+                        WHERE athlete_id=? AND menu_date=? AND meal=?""",(aid,date,meal)).fetchone()
+                    previous=dict(prior_row) if prior_row else None
                     c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
                       VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
                       kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
                       (aid,date,meal,kind,value,dish_id))
                     microcycles_v2.record_menu_history(c,aid,date,meal,kind,value,dish_id)
+                    chef_collaboration_v2.record_admin_menu(c,aid,user['id'],date,meal,
+                        previous,{'kind':kind,'value':value,'dish_id':dish_id})
                 c.commit()
                 return respond(200,{'saved':len(validated)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/history') and method == 'GET':
@@ -2858,7 +2863,7 @@ def application(env, start_response):
                 if method == 'PUT':
                     body = read_json(env)
                     try:
-                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'), body.get('dish_id'))
+                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'), body.get('dish_id'), actor_id=user['id'])
                     except ValueError:
                         raise Problem(400, 'invalid_menu')
                     if item is None:
@@ -2867,7 +2872,7 @@ def application(env, start_response):
                 if method == 'DELETE':
                     body = read_json(env)
                     try:
-                        microcycles_v2.delete_menu(c, aid, body.get('menu_date'), body.get('meal'))
+                        microcycles_v2.delete_menu(c, aid, body.get('menu_date'), body.get('meal'), actor_id=user['id'])
                     except ValueError:
                         raise Problem(400, 'invalid_menu')
                     return respond(200, {'ok': True})
