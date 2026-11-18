@@ -733,11 +733,14 @@ def application(env, start_response):
                     (digest(ticket),now)).fetchone()
                 if not consumed:
                     raise Problem(404,'expired_preview')
+                # Preserve player previews; allow active Chefs with a valid player link.
                 target=c.execute(
-                    "SELECT id FROM users WHERE id=? AND role='player' AND active=1",
+                    "SELECT id,role FROM users WHERE id=? AND role IN ('player','chef') AND active=1",
                     (consumed['player_id'],)).fetchone()
                 if not target:
-                    raise Problem(404,'player_unavailable')
+                    raise Problem(404,'preview_account_unavailable')
+                if target['role']=='chef' and not chef_accounts_v2.assigned_athlete(c,target['id']):
+                    raise Problem(404,'chef_not_linked')
                 preview_token=secrets.token_urlsafe(32)
                 csrf_preview=secrets.token_urlsafe(24)
                 expires=now+3600
@@ -749,7 +752,7 @@ def application(env, start_response):
                 headers.append(('Set-Cookie',
                     f'mile_session={preview_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600'
                     + ('; Secure' if SECURE else '')))
-                headers.append(('Location','/'))
+                headers.append(('Location','/chef' if target['role']=='chef' else '/'))
                 headers.append(('Cache-Control','no-store'))
                 return respond(303,b'', 'text/plain; charset=utf-8')
 

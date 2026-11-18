@@ -46,6 +46,7 @@ const mealNames = {
 };
 let csrf = "", sessionUser = null, chef = null, player = null;
 let lang = "pt", selectedDay = new Date(), activeTab = "home";
+let previewReadOnly = false;
 let menus = [], days = [], colors = {}, prescriptions = {}, executions = [];
 const txt = () => labels[lang];
 
@@ -68,6 +69,7 @@ function node(tag,cls,value){
 }
 function asText(value){return typeof value==="string"?value:String(value??"");}
 async function request(path,method="GET",body=null){
+  if(previewReadOnly&&method!=="GET"&&path!=="/api/logout")throw new Error("admin_preview_read_only");
   const res=await fetch(path,{method,credentials:"same-origin",cache:"no-store",
     headers:{"Content-Type":"application/json",...(method!=="GET"?{"X-CSRF-Token":csrf}:{})},
     ...(body===null?{}:{body:JSON.stringify(body)})});
@@ -88,6 +90,7 @@ async function init(){
     const response=await request("/api/me");
     csrf=response.csrf||"";
     sessionUser=response.user;
+    previewReadOnly=!!response.admin_preview;
     if(!sessionUser || sessionUser.role!=="chef"){location.replace("/");return;}
     const me=await request("/api/v2/chef/me");
     chef=me.chef;player=me.player;
@@ -169,7 +172,7 @@ const chefExecutionConfirmIcon=[
 function executionForm(date,meal,card){
   // Two distinct actions: confirm the planned dish directly, or edit exceptions.
   // Execution remains limited to lunch/dinner; the backend keeps an immutable history.
-  if(meal!=="lunch"&&meal!=="dinner")return;
+  if(previewReadOnly||(meal!=="lunch"&&meal!=="dinner"))return;
   const now=executions.find(e=>e.menu_date===date&&e.meal===meal);
   const pt=lang==="pt";
   const names=pt
@@ -690,7 +693,7 @@ function renderChefMenuDay(root,key){
   const slot=node("article","chef-menu-entry tone-"+color);
   slot.append(node("div","chef-menu-meal-label",mealNames[lang][meal]));
   appendChefMenuDish(slot,item,txt().pending);
-  if(key>=dateKey(new Date())){
+  if(!previewReadOnly&&key>=dateKey(new Date())){
    const edit=miniButton(lang==="pt"?"Editar menu":"Edit menu",()=>{
     const existing=slot.querySelector(".chef-menu-editor");
     if(existing){existing.remove();return;}
@@ -756,7 +759,9 @@ function renderProfile(root){
   const segment=node("div","segment");
   for(const code of ["pt","en"]){
     const button=node("button",lang===code?"active":"",code.toUpperCase());
-    button.type="button";button.onclick=async()=>{
+    button.type="button";button.disabled=previewReadOnly;
+    button.onclick=async()=>{
+      if(previewReadOnly)return;
       button.disabled=true;
       try{
         await request("/api/v2/chef/preferences","PUT",{language:code});
@@ -808,7 +813,9 @@ function render(){
   el("top-logout").textContent=txt().logout;
   el("player-label").textContent=txt().player.toUpperCase();
   el("player-name").textContent=player.name;
-  el("page-context").textContent=txt().readOnly;
+  el("page-context").textContent=previewReadOnly
+    ?(lang==="pt"?"Visualização administrativa · apenas leitura":"Admin preview · read-only")
+    :txt().readOnly;
   const start=monday(selectedDay),end=shift(start,6);
   el("week-range").textContent=format(start,{day:"numeric",month:"short"})+" – "+
     format(end,{day:"numeric",month:"short",year:"numeric"});
