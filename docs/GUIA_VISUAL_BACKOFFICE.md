@@ -304,3 +304,9 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 - **Performance:** miniaturas otimizadas quando disponíveis, lazy loading, cache e sem descarregar fotografias originais para avatares. Não criar URLs de imagens artificiais nem expor identificadores privados.
 - **Implementação progressiva:** o select nativo continua a ser a fonte de verdade, e eventos input/change devem chegar aos handlers existentes; seletores já personalizados (Planeamento, Avaliações, Formulários, pesquisa de Jogadores) mantêm os handlers e precisam de verificação funcional antes de acrescentar avatar/username condicional. Não converter os selects ocultos usados como suporte desses componentes.
 - **QA obrigatória:** verificar abertura, seleção, teclado, Escape, clique fora, scroll, filtros dependentes, criação/edição, temas e viewport; nenhuma alteração visual equivale a validação funcional concluída.
+
+### Decisões de listas confirmadas (18/11/2026)
+- Até 10 opções: abrir diretamente, sem pesquisa interna. Mais de 10: pesquisa interna com campo destacado, separação das opções e scroll.
+- Seleção de pessoas: apenas uma barra de pesquisa com sugestões; nunca duplicar pesquisas.
+- Manter a pesquisa geral ao lado do filtro Categoria nas bibliotecas, pois pesquisa o nome do alimento/prato/receita e não a categoria.
+- Opção selecionada: destaque neutro de fundo, sem visto. Campos fechados preservam as duas linhas, cor e chevron originais. Não substituir o invólucro visual aprovado por um botão adicional.
