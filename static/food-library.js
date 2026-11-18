@@ -183,7 +183,7 @@ else activate().catch(()=>load());
  * Never touch hidden native backing selects used by custom person pickers.
  */
 (()=>{'use strict';
-const IDS=['tm-players-access','category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
+const IDS=['category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
 const instances=new Map();
 function setup(select){
  if(select.id==='dish-category-filter'&&select.closest('#dish-filter-parking'))return;
@@ -199,6 +199,7 @@ function setup(select){
  panel.append(list);
  const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.classList.add('tm-select-legacy-converted');legacy.parentNode.insertBefore(shell,legacy);shell.append(select,trigger,panel);legacy.remove()}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
  select.classList.add('tm-select-native');
+ if(['library-player-filter','library-type-filter'].includes(select.id)){shell.classList.add('tm-select-plan-filter');trigger.setAttribute('data-caption',select.id==='library-player-filter'?'Jogador':'Tipo de plano')}
  const state={select,shell,trigger,label,panel,list,search:null};
  instances.set(select,state);
  trigger.setAttribute('aria-label',select.getAttribute('aria-label')||select.labels?.[0]?.textContent?.trim()||'Selecionar opção');
@@ -214,7 +215,7 @@ function setup(select){
    const item=document.createElement('button');item.type='button';item.className='tm-select-option';
    item.setAttribute('role','option');item.setAttribute('aria-selected',String(opt.selected));
    item.disabled=opt.disabled;item.textContent=opt.textContent;
-   if(opt.selected){const check=document.createElement('span');check.className='tm-select-check';check.textContent='✓';check.setAttribute('aria-hidden','true');item.append(check)}
+   
    item.addEventListener('click',()=>{select.selectedIndex=index;select.dispatchEvent(new Event('input',{bubbles:true}));select.dispatchEvent(new Event('change',{bubbles:true}));close();render();trigger.focus()});
    list.append(item);
   });
@@ -223,7 +224,7 @@ function setup(select){
  const open=()=>{
   instances.forEach((other)=>{if(other!==state){other.panel.hidden=true;other.trigger.setAttribute('aria-expanded','false');other.shell.classList.remove('tm-select-open')}});
   panel.hidden=false;trigger.setAttribute('aria-expanded','true');shell.classList.add('tm-select-open');
-  if(select.options.length>9&&!state.search){
+  if(select.options.length>10&&!state.search&& !['library-player-filter','plan-player'].includes(select.id)){
    const input=document.createElement('input');input.className='tm-select-search';input.type='search';input.placeholder='Pesquisar...';input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
   }
   if(state.search)state.search.value='';
