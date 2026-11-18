@@ -161,96 +161,164 @@ function makeInput(tag,placeholder,maxLength){
   if(maxLength)field.maxLength=maxLength;
   return field;
 }
+
+const chefExecutionConfirmIcon=[
+  ["path", { d: "M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z", stroke: "currentColor", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M8 12.5L10.5 15L16 9", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }]
+];
 function executionForm(date,meal,card){
-  // Chef execution uses the player's compact Editar consumo interaction pattern.
-  // The workflow and API remain exclusive to lunch and dinner.
+  // Two distinct actions: confirm the planned dish directly, or edit exceptions.
+  // Execution remains limited to lunch/dinner; the backend keeps an immutable history.
   if(meal!=="lunch"&&meal!=="dinner")return;
   const now=executions.find(e=>e.menu_date===date&&e.meal===meal);
-  const translations={
-    pt:{served_planned:"Servido conforme planeado",served_changed:"Servido com alterações",ate_out:"Jogador comeu fora",chef_off:"Chef de folga"},
-    en:{served_planned:"Served as planned",served_changed:"Served with changes",ate_out:"Player ate out",chef_off:"Chef off duty"}
-  };
+  const pt=lang==="pt";
+  const names=pt
+    ?{served_planned:"Servido conforme planeado",served_changed:"Servido com alterações",ate_out:"Jogador comeu fora",chef_off:"Chef de folga"}
+    :{served_planned:"Served as planned",served_changed:"Served with changes",ate_out:"Player ate out",chef_off:"Chef off duty"};
   if(now){
-    const text=translations[lang][now.state]||now.state;
-    card.append(node("p","chef-exec-current",text+(now.served_description?" · "+now.served_description:"")));
+    const status=node("p","chef-exec-current",(names[now.state]||now.state)+(now.served_description?" · "+now.served_description:""));
+    card.append(status);
   }
-  const details=node("details","chef-inline-edit chef-execution");
-  const trigger=node("summary","chef-execution-trigger",lang==="pt"?"Registar execução":"Record execution");
-  details.append(trigger);
+  const root=node("div","chef-execution");
+  const actions=node("div","chef-execution-quick-actions");
+  const edit=node("button","chef-execution-quick-edit",pt?"Editar":"Edit");
+  edit.type="button";
+  edit.setAttribute("aria-expanded","false");
+  const confirm=node("button","chef-execution-quick-confirm");
+  confirm.type="button";
+  const icon=node("span","chef-execution-check");
+  icon.setAttribute("aria-hidden","true");
+  icon.append(iconToSvg(chefExecutionConfirmIcon));
+  confirm.append(icon,node("span","",pt?"Confirmar":"Confirm"));
+  confirm.setAttribute("aria-label",pt?"Confirmar que o menu foi servido conforme planeado":"Confirm the planned meal was served");
+  confirm.setAttribute("aria-pressed",String(now?.state==="served_planned"));
+  actions.append(edit,confirm);
+  root.append(actions);
+  const feedback=node("p","chef-execution-feedback");
+  feedback.setAttribute("role","status");
+  feedback.setAttribute("aria-live","polite");
+  root.append(feedback);
   const form=node("form","chef-editor chef-execution-form");
-  const header=node("div","chef-execution-form-head");
-  header.append(node("strong","",lang==="pt"?"Registar execução":"Record execution"));
+  form.hidden=true;
+  const head=node("div","chef-execution-form-head");
+  head.append(node("strong","",pt?"Editar execução":"Edit execution"));
   const close=node("button","chef-execution-close","×");
   close.type="button";
-  close.setAttribute("aria-label",lang==="pt"?"Fechar registo":"Close execution form");
-  close.onclick=()=>{details.open=false;};
-  header.append(close);
-  form.append(header);
-  const states=[
-    ["served_planned",translations[lang].served_planned],
-    ["served_changed",translations[lang].served_changed],
-    ["ate_out",translations[lang].ate_out],
-    ["chef_off",translations[lang].chef_off]
-  ];
-  const fieldset=node("fieldset","chef-execution-choice");
-  fieldset.append(node("legend","",lang==="pt"?"O que aconteceu?":"What happened?"));
-  const choices=node("div","chef-execution-states");
-  const radios=[];
-  for(const [value,label] of states){
-    const choice=node("label","chef-execution-state");
-    const input=node("input","");
-    input.type="radio";input.name="execution-state-"+date+"-"+meal;input.value=value;input.required=true;
-    input.checked=now?.state===value;
-    const caption=node("span","",label);
-    choice.append(input,caption);
-    choices.append(choice);
-    radios.push(input);
-  }
-  fieldset.append(choices);form.append(fieldset);
-  const servedLabel=node("label","chef-execution-field");
-  servedLabel.append(node("span","",lang==="pt"?"O que foi servido?":"What was served?"));
-  const served=makeInput("textarea",lang==="pt"?"Descrever as alterações ao menu":"Describe menu changes",500);
-  served.value=now?.state==="served_changed"?(now.served_description||""):"";
-  servedLabel.append(served);
-  form.append(servedLabel);
-  const updateServed=()=>{
-    const selected=radios.find(input=>input.checked)?.value;
-    servedLabel.hidden=selected!=="served_changed";
-    served.required=selected==="served_changed";
+  close.setAttribute("aria-label",pt?"Fechar edição":"Close editing");
+  const toggleEditor=expanded=>{
+    form.hidden=!expanded;
+    edit.setAttribute("aria-expanded",String(expanded));
+    if(!expanded)feedback.textContent="";
   };
-  radios.forEach(input=>input.addEventListener("change",updateServed));
-  updateServed();
-  const notesLabel=node("label","chef-execution-field");
-  notesLabel.append(node("span","",lang==="pt"?"Observações (opcional)":"Notes (optional)"));
-  const notes=makeInput("textarea",lang==="pt"?"Adicionar observações":"Add notes",500);
+  close.onclick=()=>toggleEditor(false);
+  head.append(close);
+  form.append(head);
+  const changeField=node("label","chef-execution-field");
+  changeField.append(node("span","",pt?"Alterações ao menu servido":"Changes to the served menu"));
+  const description=makeInput("textarea",pt?"Descreve o que foi servido de diferente":"Describe what was served differently",500);
+  description.value=now?.state==="served_changed"?(now.served_description||""):"";
+  changeField.append(description);
+  form.append(changeField);
+  const reasonGroup=node("fieldset","chef-execution-choice");
+  reasonGroup.append(node("legend","",pt?"Ou assinala uma situação":"Or select a situation"));
+  const reasons=node("div","chef-execution-states");
+  const reasonButtons=[];
+  let selectedReason=now?.state==="ate_out"||now?.state==="chef_off"?now.state:null;
+  for(const key of ["ate_out","chef_off"]){
+    const b=node("button","chef-execution-state",names[key]);
+    b.type="button";
+    b.setAttribute("aria-pressed",String(key===selectedReason));
+    b.onclick=()=>{
+      selectedReason=selectedReason===key?null:key;
+      syncReason();
+    };
+    reasonButtons.push({key,button:b});
+    reasons.append(b);
+  }
+  reasonGroup.append(reasons);
+  form.append(reasonGroup);
+  const syncReason=()=>{
+    for(const {key,button} of reasonButtons)button.setAttribute("aria-pressed",String(key===selectedReason));
+    changeField.hidden=!!selectedReason;
+    description.disabled=!!selectedReason;
+  };
+  syncReason();
+  description.addEventListener("input",()=>{
+    if(selectedReason){selectedReason=null;syncReason();}
+  });
+  const notesField=node("label","chef-execution-field");
+  notesField.append(node("span","",pt?"Observações (opcional)":"Notes (optional)"));
+  const notes=makeInput("textarea",pt?"Adicionar observações":"Add notes",500);
   notes.value=now?.note||"";
-  notesLabel.append(notes);form.append(notesLabel);
-  const actions=node("div","chef-execution-actions");
-  const cancel=node("button","chef-execution-cancel",lang==="pt"?"Cancelar":"Cancel");
-  cancel.type="button";cancel.onclick=()=>{details.open=false;};
-  const save=node("button","primary chef-save",lang==="pt"?"Guardar registo":"Save record");
-  save.type="submit";actions.append(cancel,save);form.append(actions);
-  const feedback=node("p","chef-feedback");feedback.setAttribute("role","status");feedback.setAttribute("aria-live","polite");
-  form.append(feedback);
+  notesField.append(notes);
+  form.append(notesField);
+  const footer=node("div","chef-execution-actions");
+  const cancel=node("button","chef-execution-cancel",pt?"Cancelar":"Cancel");
+  cancel.type="button";cancel.onclick=()=>toggleEditor(false);
+  const save=node("button","primary chef-save",pt?"Guardar":"Save");
+  save.type="submit";
+  footer.append(cancel,save);
+  form.append(footer);
+  const formFeedback=node("p","chef-feedback");
+  formFeedback.setAttribute("role","status");
+  formFeedback.setAttribute("aria-live","polite");
+  form.append(formFeedback);
+  edit.onclick=()=>{
+    const next=form.hidden;
+    toggleEditor(next);
+    if(next)description.focus({preventScroll:true});
+  };
   form.onsubmit=async event=>{
     event.preventDefault();
-    const state=radios.find(input=>input.checked)?.value;
-    if(!state)return;
-    save.disabled=true;feedback.textContent="";
+    const text=description.value.trim();
+    const state=selectedReason||"served_changed";
+    if(!selectedReason&&text.length<2){
+      formFeedback.textContent=pt?"Descreve as alterações ou seleciona um dos motivos.":"Describe changes or select a reason.";
+      description.focus();
+      return;
+    }
+    save.disabled=true;edit.disabled=true;confirm.disabled=true;
+    formFeedback.textContent="";
     try{
       await request("/api/v2/chef/menu-executions","POST",{
         menu_date:date,meal,state,
-        served_description:state==="served_changed"?served.value:"",
-        note:notes.value
+        served_description:state==="served_changed"?text:"",
+        note:notes.value.trim()
+      });
+      await loadWeek();
+    }catch(err){
+      formFeedback.textContent=txt().fail;
+    }finally{
+      save.disabled=false;edit.disabled=false;confirm.disabled=false;
+    }
+  };
+  confirm.onclick=async()=>{
+    if(now?.state==="served_planned"){
+      feedback.textContent=pt?"Esta refeição já está confirmada.":"This meal is already confirmed.";
+      return;
+    }
+    if(!plannedMenu(date,meal)){
+      feedback.textContent=pt?"Não existe um menu planeado para confirmar.":"There is no planned menu to confirm.";
+      return;
+    }
+    if(now&&!window.confirm(pt
+      ?"Já existe um registo para esta refeição. Queres confirmar que foi servido conforme planeado?"
+      :"An execution record already exists. Confirm it was served as planned?"))return;
+    confirm.disabled=true;edit.disabled=true;
+    feedback.textContent=pt?"A guardar…":"Saving…";
+    try{
+      await request("/api/v2/chef/menu-executions","POST",{
+        menu_date:date,meal,state:"served_planned",served_description:"",note:""
       });
       await loadWeek();
     }catch(err){
       feedback.textContent=txt().fail;
     }finally{
-      save.disabled=false;
+      confirm.disabled=false;edit.disabled=false;
     }
   };
-  details.append(form);card.append(details);
+  root.append(form);
+  card.append(root);
 }
 function editMenuForm(date,meal,item,slot){
   if(date<dateKey(new Date()))return;

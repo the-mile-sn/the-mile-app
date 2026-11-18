@@ -411,43 +411,79 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 #screen .chef-single-option .chef-option-food{
  padding:6px 0;color:inherit;font-size:14px;line-height:1.45;font-weight:400;
 }
-/* Player "Editar consumo" reference: quiet half-width pill, no strong border. */
-#screen.chef-screen-home .chef-meal-body .chef-execution{
- display:block;border:0;padding:0;
- margin:15px 0 3px;
+
+/* Chef lunch/dinner: player-consumption quick actions, matched geometry and palette. */
+#screen.chef-screen-home .chef-execution{
+ margin:15px 0 4px;
+ padding:0;
+ color:var(--chef-tone-ink);
+ border:0;
+}
+#screen.chef-screen-home .chef-execution-quick-actions{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ align-items:stretch;
+ gap:10px;
+ width:100%;
+}
+#screen.chef-screen-home .chef-execution-quick-actions>button{
+ box-sizing:border-box;
+ display:inline-flex;
+ justify-content:center;
+ align-items:center;
+ gap:10px;
+ width:100%;
+ min-width:0;
+ min-height:46px;
+ height:46px;
+ padding:8px 10px;
+ border:0;
+ border-radius:999px;
+ box-shadow:none;
+ font:500 14px/1.2 "Inter Tight",-apple-system,sans-serif;
+ transition:background .2s ease,transform .2s ease,filter .2s ease;
+}
+#screen.chef-screen-home .chef-execution-quick-edit{
+ background:rgba(255,255,255,.11);
  color:var(--chef-tone-ink);
 }
-#screen.chef-screen-home .chef-execution>.chef-execution-trigger{
- display:inline-flex!important;align-items:center;justify-content:center;
- box-sizing:border-box;
- width:calc(50% - 5px);min-width:0;max-width:100%;
- height:46px;min-height:46px;max-height:46px;
- padding:0 8px;margin:0;
- border:0!important;border-radius:999px;
- background:rgba(255,255,255,.11)!important;
- color:inherit;box-shadow:none!important;
- font:500 14px/1.2 "Inter Tight",sans-serif;
- list-style:none;cursor:pointer;text-align:center;
- transition:background .2s ease,transform .2s ease;
+#screen.chef-screen-home .chef-execution-quick-edit:hover{background:rgba(255,255,255,.17)}
+#screen.chef-screen-home .chef-execution-quick-confirm{
+ background:#f8f8f9;
+ color:#151518;
 }
-#screen.chef-screen-home .chef-execution>.chef-execution-trigger::-webkit-details-marker{display:none}
-#screen.chef-screen-home .chef-execution>.chef-execution-trigger::marker{content:""}
-#screen.chef-screen-home .chef-execution>.chef-execution-trigger:hover{
- background:rgba(255,255,255,.17)!important;
+#screen.chef-screen-home .chef-execution-check{
+ display:inline-flex;flex:none;
+ align-items:center;justify-content:center;
+ width:19px;height:19px;
 }
-#screen.chef-screen-home .chef-execution>.chef-execution-trigger:active{transform:scale(.98)}
-#screen.chef-screen-home .chef-execution[open]>.chef-execution-trigger{
- background:rgba(255,255,255,.16)!important;
+#screen.chef-screen-home .chef-execution-check svg{display:block;width:100%;height:100%}
+#screen.chef-screen-home .chef-execution-quick-actions>button:active{transform:scale(.985)}
+#screen.chef-screen-home .chef-execution-quick-actions>button:disabled{opacity:.6;cursor:default}
+#screen.chef-screen-home .chef-execution-feedback{
+ margin:7px 0 0;
+ font-size:12px;
+ color:var(--chef-tone-ink);
 }
-/* Inline editor shares the meal's approved tonal background, never a black overlay. */
+#screen.chef-screen-home .chef-execution-feedback:empty{display:none}
+/* Approved player meal colours: green #174631/#24543e, blue #193f60/#284d6c.
+   The editor sits a shade darker than the outer card, never charcoal/black. */
 #screen.chef-screen-home .chef-meal-body .chef-execution-form{
- display:flex;flex-direction:column;gap:15px;
- width:100%;margin:16px 0 0;padding:17px 15px;
- border:0!important;border-radius:16px;
- background:var(--chef-inner)!important;
- color:var(--chef-tone-ink)!important;
+ box-sizing:border-box;
+ display:flex;
+ flex-direction:column;
+ gap:15px;
+ width:100%;
+ margin:16px 0 0;
+ padding:17px 15px;
+ border:0!important;
+ border-radius:17px;
+ background:color-mix(in srgb,var(--chef-tone) 82%,#0e1b1c 18%)!important;
+ color:color-mix(in srgb,var(--chef-tone-ink) 66%,white 34%)!important;
  box-shadow:none!important;
+ font:400 14px/1.4 "Inter Tight",-apple-system,sans-serif;
 }
+#screen.chef-screen-home .chef-execution-form[hidden]{display:none!important}
 #screen.chef-screen-home .chef-execution-form-head{
  display:flex;align-items:center;justify-content:space-between;gap:12px;
 }
@@ -457,8 +493,11 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 #screen.chef-screen-home .chef-execution-close{
  display:grid;place-items:center;
  flex:0 0 30px;width:30px;height:30px;min-height:30px;
- padding:0;border:1px solid rgba(255,255,255,.16);
- border-radius:50%;background:transparent;color:inherit;
+ padding:0;
+ border:1px solid rgba(255,255,255,.15);
+ border-radius:50%;
+ background:transparent;
+ color:inherit;
  font-size:18px;font-weight:400;
 }
 #screen.chef-screen-home .chef-execution-choice{
@@ -466,91 +505,89 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 }
 #screen.chef-screen-home .chef-execution-choice legend,
 #screen.chef-screen-home .chef-execution-field>span{
- display:block;margin:0 0 9px;padding:0;
- color:inherit;opacity:.86;
- font-size:12px;font-weight:400;letter-spacing:0;
+ display:block;margin:0 0 8px;padding:0;
+ color:inherit;opacity:.88;
+ font-size:12px;font-weight:400;
+ letter-spacing:0;
 }
 #screen.chef-screen-home .chef-execution-states{
- display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
 }
 #screen.chef-screen-home .chef-execution-state{
- position:relative;display:flex;align-items:center;justify-content:center;
- min-width:0;min-height:47px;
- padding:10px 9px;
- border:1px solid rgba(255,255,255,.14);
+ display:flex;align-items:center;justify-content:center;
+ min-width:0;min-height:43px;padding:8px 10px;
+ border:1px solid color-mix(in srgb,var(--chef-tone-ink) 26%,transparent);
  border-radius:999px;
- background:rgba(255,255,255,.065);
+ background:rgba(255,255,255,.07);
  color:inherit;
- font-size:12px;font-weight:450;line-height:1.25;text-align:center;
- transition:background .18s ease,border-color .18s ease,transform .18s ease;
+ font:500 12px/1.25 "Inter Tight",-apple-system,sans-serif;
+ text-align:center;
+ transition:background .18s ease,transform .18s ease;
+}
+#screen.chef-screen-home .chef-execution-state[aria-pressed="true"]{
+ border-color:var(--chef-tone-ink);
+ background:var(--chef-tone-ink);
+ color:var(--chef-tone);
 }
 #screen.chef-screen-home .chef-execution-state:active{transform:scale(.98)}
-#screen.chef-screen-home .chef-execution-state input{
- position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;
-}
-#screen.chef-screen-home .chef-execution-state:has(input:checked){
- background:var(--chef-tone-ink);border-color:var(--chef-tone-ink);
- color:var(--chef-tone);font-weight:600;
-}
-#screen.chef-screen-home .chef-execution-state:focus-within{
- outline:2px solid var(--chef-tone-ink);outline-offset:2px;
-}
 #screen.chef-screen-home .chef-execution-field{
  display:flex;flex-direction:column;
+ min-width:0;
  color:inherit;
 }
 #screen.chef-screen-home .chef-execution-field[hidden]{display:none!important}
 #screen.chef-screen-home .chef-execution-field>.chef-input{
  box-sizing:border-box;
- width:100%;min-height:85px;margin:0;padding:12px 13px;
- border:1px solid rgba(255,255,255,.15)!important;border-radius:14px;
- background:rgba(0,0,0,.11)!important;
- color:var(--chef-tone-ink)!important;
- -webkit-text-fill-color:var(--chef-tone-ink);
+ display:block;
+ width:100%;min-height:83px;
+ margin:0;padding:11px 12px;
+ border:0!important;
+ border-radius:13px;
+ background:color-mix(in srgb,var(--chef-inner) 78%,#11261f 22%)!important;
+ color:inherit!important;
+ -webkit-text-fill-color:currentColor;
  box-shadow:none!important;
- font:400 14px/1.4 "Inter Tight",sans-serif;
+ font:400 14px/1.4 "Inter Tight",-apple-system,sans-serif;
  resize:vertical;
 }
 #screen.chef-screen-home .chef-execution-field>.chef-input::placeholder{
- color:var(--chef-tone-ink);opacity:.63;
- -webkit-text-fill-color:var(--chef-tone-ink);
-}
-#screen.chef-screen-home .chef-execution-field>.chef-input:focus{
- outline:2px solid var(--chef-tone-ink);outline-offset:2px;
+ color:inherit;opacity:.62;
+ -webkit-text-fill-color:currentColor;
 }
 #screen.chef-screen-home .chef-execution-actions{
- display:flex;align-items:center;gap:10px;margin:1px 0 0;
+ display:flex;align-items:center;gap:10px;margin:2px 0 0;
 }
-#screen.chef-screen-home .chef-execution-actions>.chef-execution-cancel,
-#screen.chef-screen-home .chef-execution-actions>.chef-save{
- flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;
- box-sizing:border-box;width:0;min-width:0;
+#screen.chef-screen-home .chef-execution-actions>button{
+ flex:1 1 0;
+ display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;
+ width:0;min-width:0;
  height:46px;min-height:46px;max-height:46px;
- margin:0;padding:0 10px;border-radius:999px;
- font:500 14px/1.2 "Inter Tight",sans-serif;
+ margin:0;padding:8px 10px;
+ border:0;border-radius:999px;
+ font:500 14px/1.2 "Inter Tight",-apple-system,sans-serif;
 }
 #screen.chef-screen-home .chef-execution-actions>.chef-execution-cancel{
- border:0;background:rgba(255,255,255,.10);
- color:var(--chef-tone-ink);
+ background:rgba(255,255,255,.105);
+ color:inherit;
 }
 #screen.chef-screen-home .chef-execution-actions>.chef-save{
- border:0;background:#f7f7f8;color:#161619;
+ background:#f8f8f9;
+ color:#151518;
  font-weight:600;
 }
-#screen.chef-screen-home .chef-execution-actions>.chef-save:disabled{opacity:.5}
+#screen.chef-screen-home .chef-execution-actions>.chef-save:disabled{opacity:.55}
 #screen.chef-screen-home .chef-execution .chef-feedback{
- min-height:0;margin:0;color:#ffe6cf;font-size:12px;
+ margin:0;font-size:12px;
+ color:inherit;min-height:0;
 }
 #screen.chef-screen-home .chef-execution .chef-feedback:empty{display:none}
-@media(max-width:390px){
- #screen.chef-screen-home .chef-meal-body .chef-execution-form{padding:14px 12px}
- #screen.chef-screen-home .chef-execution-state{font-size:11px;padding:10px 6px}
- #screen.chef-screen-home .chef-execution>.chef-execution-trigger{font-size:13px}
-}
-@media(hover:hover){
- #screen.chef-screen-home .chef-execution-state:hover{background:rgba(255,255,255,.12)}
+@media(max-width:380px){
+ #screen.chef-screen-home .chef-meal-body .chef-execution-form{padding:14px 11px}
+ #screen.chef-screen-home .chef-execution-state{font-size:11px;padding:8px 4px}
+ #screen.chef-screen-home .chef-execution-quick-actions>button{font-size:13px}
 }
 @media(prefers-reduced-motion:reduce){
- #screen.chef-screen-home .chef-execution-trigger,
+ #screen.chef-screen-home .chef-execution-quick-actions>button,
  #screen.chef-screen-home .chef-execution-state{transition:none}
 }
