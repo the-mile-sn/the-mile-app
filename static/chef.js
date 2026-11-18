@@ -162,46 +162,93 @@ function makeInput(tag,placeholder,maxLength){
   return field;
 }
 function executionForm(date,meal,card){
+  // Chef execution uses the player's compact Editar consumo interaction pattern.
+  // The workflow and API remain exclusive to lunch and dinner.
+  if(meal!=="lunch"&&meal!=="dinner")return;
   const now=executions.find(e=>e.menu_date===date&&e.meal===meal);
+  const translations={
+    pt:{served_planned:"Servido conforme planeado",served_changed:"Servido com alterações",ate_out:"Jogador comeu fora",chef_off:"Chef de folga"},
+    en:{served_planned:"Served as planned",served_changed:"Served with changes",ate_out:"Player ate out",chef_off:"Chef off duty"}
+  };
   if(now){
-    const translation={pt:{served_planned:"Servido conforme planeado",served_changed:"Servido com alterações",ate_out:"Jogador comeu fora",chef_off:"Chef de folga"},
-      en:{served_planned:"Served as planned",served_changed:"Served with changes",ate_out:"Player ate out",chef_off:"Chef off duty"}};
-    card.append(node("p","chef-exec-current",translation[lang][now.state]+(now.served_description?" · "+now.served_description:"")));
+    const text=translations[lang][now.state]||now.state;
+    card.append(node("p","chef-exec-current",text+(now.served_description?" · "+now.served_description:"")));
   }
-  const details=node("details","chef-inline-edit");
-  const summary=node("summary","",lang==="pt"?"Registar execução":"Record meal execution");details.append(summary);
-  const form=node("form","chef-editor");
-  const select=node("select","chef-input");
-  select.append(node("option","",lang==="pt"?"Selecionar o que aconteceu":"Choose what happened"));
-  select.options[0].value="";
-  const states=[["served_planned",lang==="pt"?"Servido conforme planeado":"Served as planned"],
-    ["served_changed",lang==="pt"?"Servido com alterações":"Served with changes"],
-    ["ate_out",lang==="pt"?"Jogador comeu fora":"Player ate out"],
-    ["chef_off",lang==="pt"?"Chef de folga":"Chef off duty"]];
+  const details=node("details","chef-inline-edit chef-execution");
+  const trigger=node("summary","chef-execution-trigger",lang==="pt"?"Registar execução":"Record execution");
+  details.append(trigger);
+  const form=node("form","chef-editor chef-execution-form");
+  const header=node("div","chef-execution-form-head");
+  header.append(node("strong","",lang==="pt"?"Registar execução":"Record execution"));
+  const close=node("button","chef-execution-close","×");
+  close.type="button";
+  close.setAttribute("aria-label",lang==="pt"?"Fechar registo":"Close execution form");
+  close.onclick=()=>{details.open=false;};
+  header.append(close);
+  form.append(header);
+  const states=[
+    ["served_planned",translations[lang].served_planned],
+    ["served_changed",translations[lang].served_changed],
+    ["ate_out",translations[lang].ate_out],
+    ["chef_off",translations[lang].chef_off]
+  ];
+  const fieldset=node("fieldset","chef-execution-choice");
+  fieldset.append(node("legend","",lang==="pt"?"O que aconteceu?":"What happened?"));
+  const choices=node("div","chef-execution-states");
+  const radios=[];
   for(const [value,label] of states){
-    const option=node("option","",label);option.value=value;select.append(option);
+    const choice=node("label","chef-execution-state");
+    const input=node("input","");
+    input.type="radio";input.name="execution-state-"+date+"-"+meal;input.value=value;input.required=true;
+    input.checked=now?.state===value;
+    const caption=node("span","",label);
+    choice.append(input,caption);
+    choices.append(choice);
+    radios.push(input);
   }
-  select.required=true;form.append(select);
-  const served=makeInput("textarea",lang==="pt"?"O que foi servido?":"What was served?",500);
-  served.hidden=true;select.onchange=()=>{served.hidden=select.value!=="served_changed";};
-  form.append(served);
-  const notes=makeInput("textarea",lang==="pt"?"Observações (opcional)":"Notes (optional)",500);
-  form.append(notes);
+  fieldset.append(choices);form.append(fieldset);
+  const servedLabel=node("label","chef-execution-field");
+  servedLabel.append(node("span","",lang==="pt"?"O que foi servido?":"What was served?"));
+  const served=makeInput("textarea",lang==="pt"?"Descrever as alterações ao menu":"Describe menu changes",500);
+  served.value=now?.state==="served_changed"?(now.served_description||""):"";
+  servedLabel.append(served);
+  form.append(servedLabel);
+  const updateServed=()=>{
+    const selected=radios.find(input=>input.checked)?.value;
+    servedLabel.hidden=selected!=="served_changed";
+    served.required=selected==="served_changed";
+  };
+  radios.forEach(input=>input.addEventListener("change",updateServed));
+  updateServed();
+  const notesLabel=node("label","chef-execution-field");
+  notesLabel.append(node("span","",lang==="pt"?"Observações (opcional)":"Notes (optional)"));
+  const notes=makeInput("textarea",lang==="pt"?"Adicionar observações":"Add notes",500);
+  notes.value=now?.note||"";
+  notesLabel.append(notes);form.append(notesLabel);
+  const actions=node("div","chef-execution-actions");
+  const cancel=node("button","chef-execution-cancel",lang==="pt"?"Cancelar":"Cancel");
+  cancel.type="button";cancel.onclick=()=>{details.open=false;};
   const save=node("button","primary chef-save",lang==="pt"?"Guardar registo":"Save record");
-  save.type="submit";form.append(save);
-  const feedback=node("p","chef-feedback");form.append(feedback);
-  form.onsubmit=async e=>{
-    e.preventDefault();if(!select.value)return;
+  save.type="submit";actions.append(cancel,save);form.append(actions);
+  const feedback=node("p","chef-feedback");feedback.setAttribute("role","status");feedback.setAttribute("aria-live","polite");
+  form.append(feedback);
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    const state=radios.find(input=>input.checked)?.value;
+    if(!state)return;
     save.disabled=true;feedback.textContent="";
     try{
       await request("/api/v2/chef/menu-executions","POST",{
-        menu_date:date,meal,state:select.value,
-        served_description:select.value==="served_changed"?served.value:"",
+        menu_date:date,meal,state,
+        served_description:state==="served_changed"?served.value:"",
         note:notes.value
       });
       await loadWeek();
-    }catch(err){feedback.textContent=txt().fail;}
-    finally{save.disabled=false;}
+    }catch(err){
+      feedback.textContent=txt().fail;
+    }finally{
+      save.disabled=false;
+    }
   };
   details.append(form);card.append(details);
 }
@@ -386,6 +433,18 @@ function chefOptionCards(date,meal){
  const list=node("div","chef-option-list");
  if(!options.length){
   if(color)list.append(node("p","chef-option-empty",txt().noPlan));
+  return list;
+ }
+ if(options.length===1){
+  // As in the player daily view: one prescription appears directly in the meal,
+  // without another expandable option card or a redundant "Opção 1" label.
+  const option=options[0];
+  const inline=node("div","chef-single-option");
+  if(option.title)inline.append(node("strong","chef-single-title",asText(option.title)));
+  const nutrition=chefNutrition(option.totals);
+  if(nutrition)inline.append(nutrition);
+  appendChefFoodItems(inline,option.items);
+  list.append(inline);
   return list;
  }
  options.forEach((option,index)=>{
