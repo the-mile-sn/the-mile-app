@@ -180,10 +180,57 @@ planningSearch.addEventListener("blur",()=>{closePlanningResults();});
 const playerCreateDialog=$("tm-players-create-form"),playerCreateForm=$("tm-player-create-fields"),playerCreateFeedback=$("tm-players-create-feedback");
 const playerCreateInputIds=["new-name","new-weight","new-sex","new-username","new-password"];
 let playerCreateSubmitting=false;
+const playerCreateMessages={
+ "new-name":"Introduz o nome do jogador.",
+ "new-weight":"Introduz um peso entre 20 e 250 kg.",
+ "new-sex":"Seleciona o sexo.",
+ "new-username":"O utilizador deve conter entre 4 e 40 letras minúsculas.",
+ "new-password":"A palavra-passe deve ter pelo menos 12 caracteres."
+};
+const playerCreateErrors={};
+for(const id of playerCreateInputIds){
+ const field=$(id);
+ const message=document.createElement("small");
+ message.id=id+"-error";
+ message.setAttribute("role","alert");
+ message.style.cssText="display:none;color:#e9a0ac;font-size:12px;font-weight:400;line-height:1.45;margin-top:6px;";
+ field.insertAdjacentElement("afterend",message);
+ field.setAttribute("aria-describedby",message.id);
+ playerCreateErrors[id]=message;
+ const clear=()=>{
+  message.textContent="";message.style.display="none";
+  field.removeAttribute("aria-invalid");
+ };
+ field.addEventListener(id==="new-sex"?"change":"input",clear);
+}
+function clearPlayerCreateErrors(){
+ for(const id of playerCreateInputIds){
+  playerCreateErrors[id].textContent="";
+  playerCreateErrors[id].style.display="none";
+  $(id).removeAttribute("aria-invalid");
+ }
+}
+function validatePlayerCreate(values){
+ const invalid={
+  "new-name":!values.name,
+  "new-weight":values.weightRaw===""||!Number.isFinite(values.weight)||values.weight<20||values.weight>250,
+  "new-sex":!values.sex,
+  "new-username":!/^[a-z]{4,40}$/.test(values.username),
+  "new-password":values.password.length<12
+ };
+ for(const id of playerCreateInputIds){
+  const bad=invalid[id];
+  playerCreateErrors[id].textContent=bad?playerCreateMessages[id]:"";
+  playerCreateErrors[id].style.display=bad?"block":"none";
+  if(bad)$(id).setAttribute("aria-invalid","true");
+  else $(id).removeAttribute("aria-invalid");
+ }
+ return playerCreateInputIds.find(id=>invalid[id])||null;
+}
 function closePlayerCreate(confirmDraft=true){
  if(playerCreateSubmitting)return;
  if(confirmDraft&&playerCreateInputIds.some(id=>$(id).value.trim())&&!window.confirm("Descartar os dados introduzidos para o novo jogador?"))return;
- playerCreateDialog.close();playerCreateForm.reset();playerCreateFeedback.textContent="";
+ playerCreateDialog.close();playerCreateForm.reset();playerCreateFeedback.textContent="";clearPlayerCreateErrors();
 }
 $("tm-planning-cancel-create").addEventListener("click",()=>closePlayerCreate());
 playerCreateDialog.addEventListener("cancel",event=>{event.preventDefault();closePlayerCreate();});
@@ -194,7 +241,7 @@ playerCreateDialog.addEventListener("click",event=>{
 });
 window.tmOpenPlayerCreate=()=>{
  if(playerCreateDialog.open)return;
- playerCreateForm.reset();playerCreateFeedback.textContent="";
+ playerCreateForm.reset();playerCreateFeedback.textContent="";clearPlayerCreateErrors();
  playerCreateDialog.showModal();$("new-name").focus();
 };
 let recipeAccessToken=0;
@@ -1752,16 +1799,16 @@ playerCreateForm.addEventListener("submit",async event=>{
  event.preventDefault();
  if(playerCreateSubmitting)return;
  const name=$("new-name").value.trim(),sex=$("new-sex").value,weightRaw=$("new-weight").value.trim(),weight=Number(weightRaw.replace(",",".")),username=$("new-username").value.trim().toLowerCase(),password=$("new-password").value;
- if(!name||!sex||weightRaw===""||!Number.isFinite(weight)||weight<20||weight>250||!/^[a-z]{4,40}$/.test(username)||password.length<12){
-  playerCreateFeedback.textContent="Preenche o nome, peso inicial (20–250 kg), sexo, utilizador (4–40 letras) e palavra-passe (mínimo 12 caracteres).";
-  const invalid=!name?"new-name":weightRaw===""||!Number.isFinite(weight)||weight<20||weight>250?"new-weight":!sex?"new-sex":!/^[a-z]{4,40}$/.test(username)?"new-username":"new-password";
+ const invalid=validatePlayerCreate({name,sex,weightRaw,weight,username,password});
+ if(invalid){
+  playerCreateFeedback.textContent="";
   $(invalid).focus();return;
  }
  playerCreateSubmitting=true;$("create").disabled=true;$("tm-planning-cancel-create").disabled=true;
  playerCreateFeedback.textContent="A criar jogador…";
  try{
   const r=await request("/api/v2/athletes",{method:"POST",body:JSON.stringify({name,sex,weight_kg:weight,username,password})});
-  playerCreateDialog.close();playerCreateForm.reset();playerCreateFeedback.textContent="";
+  playerCreateDialog.close();playerCreateForm.reset();playerCreateFeedback.textContent="";clearPlayerCreateErrors();
   await loadAthletes(r.athlete.id);
   if(typeof window.tmRefreshPlayersList==="function")await window.tmRefreshPlayersList();
   status("Jogador e acesso criados.","success");
