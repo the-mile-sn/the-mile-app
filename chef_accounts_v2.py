@@ -19,14 +19,23 @@ def enable_role(c):
             "FROM pg_constraint WHERE conrelid='users'::regclass AND contype='c'"
         ).fetchall()
         checks = [row for row in rows if "role" in row["definition"].lower()]
-        if len(checks) != 1 or checks[0]["conname"] != "users_role_check":
-            raise RuntimeError("Unexpected users role constraint; refusing chef migration")
-        if "'chef'" not in checks[0]["definition"].lower():
-            c.execute("ALTER TABLE users DROP CONSTRAINT users_role_check")
-            c.execute(
-                "ALTER TABLE users ADD CONSTRAINT users_role_check "
-                "CHECK (role IN ('admin','player','chef'))"
-            )
+        if not checks:
+            # A legacy database without a role constraint may be upgraded
+            # without touching existing rows.
+            c.execute("ALTER TABLE users ADD CONSTRAINT users_role_check "
+                      "CHECK (role IN ('admin','player','chef'))")
+            return
+        if len(checks) != 1:
+            raise RuntimeError("Unexpected users role constraints; refusing migration")
+        definition=checks[0]["definition"].lower()
+        if "'chef'" in definition:
+            return
+        if "'admin'" not in definition or "'player'" not in definition:
+            raise RuntimeError("Unexpected users role values; refusing migration")
+        name=checks[0]["conname"].replace('"','""')
+        c.execute('ALTER TABLE users DROP CONSTRAINT "'+name+'"')
+        c.execute('ALTER TABLE users ADD CONSTRAINT "'+name+'" '
+                  "CHECK (role IN ('admin','player','chef'))")
         return
 
     row = c.execute(
