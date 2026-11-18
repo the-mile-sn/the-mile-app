@@ -49,7 +49,7 @@ test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
   assert.match(html,/\/admin-clients\.js\?v=2/);
-  assert.match(html,/\/admin-clients\.css\?v=2/);
+  assert.match(html,/\/admin-clients\.css\?v=3/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -65,4 +65,12 @@ test("account types appear as a shared filter and a labelled card category",()=>
   assert.match(chefs,/tm-client-type-chef/);
   assert.match(dashboard,/tm-client-type-pill-mobile/);
   assert.match(html,/option value="consulta">Consultas<\/option>/);
+});
+
+test("desktop client type precedes identity, nav asset cache is refreshed",()=>{
+ const css=fs.readFileSync("static/admin-clients.css","utf8");
+ assert.match(css,/\.tm-player-card \.tm-client-type-cell\{order:-1/);
+ assert.match(css,/#tm-chef-accounts \.tm-client-type-cell\{order:-1/);
+ assert.match(css,/grid-template-columns:minmax\(160px,220px\)/);
+ assert.match(html,/admin-nav-shell\.js\?v=13/);
 });

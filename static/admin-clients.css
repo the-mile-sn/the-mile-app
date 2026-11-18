@@ -296,3 +296,26 @@ html[data-admin-theme] #tm-players-page #tm-chef-accounts :is(.tm-p-empty,.tm-ch
 @media(prefers-reduced-motion:reduce){
  #tm-players-page #tm-clients-create-choice [data-new-client-type]{transition:none!important;transform:none!important}
 }
+
+/* Clientes: on desktop the first account column aligns with Tipo de conta,
+   and the client identity aligns with the search field. Mobile stays unchanged. */
+@media(min-width:831px){
+ html[data-admin-theme] #tm-players-page #tm-clients-account-list .tm-players-card-list .tm-player-card{
+  grid-template-columns:minmax(160px,220px) minmax(220px,1fr) minmax(80px,100px) minmax(105px,130px) 36px!important;
+  padding-left:16px!important;padding-right:16px!important;gap:12px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-clients-account-list .tm-player-card .tm-client-type-cell{order:-1}
+ html[data-admin-theme] #tm-players-page #tm-clients-account-list #tm-chef-accounts .tm-chef-account{
+  grid-template-columns:minmax(160px,220px) minmax(220px,1fr) minmax(80px,100px) auto!important;
+  padding-left:16px!important;padding-right:16px!important;gap:12px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-clients-account-list #tm-chef-accounts .tm-client-type-cell{order:-1}
+}
+@media(min-width:831px) and (max-width:1120px){
+ html[data-admin-theme] #tm-players-page #tm-clients-account-list .tm-players-card-list .tm-player-card{
+  grid-template-columns:minmax(140px,190px) minmax(155px,1fr) minmax(65px,80px) minmax(90px,106px) 36px!important;gap:9px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-clients-account-list #tm-chef-accounts .tm-chef-account{
+  grid-template-columns:minmax(140px,190px) minmax(155px,1fr) minmax(65px,80px) auto!important;gap:9px!important;
+ }
+}
