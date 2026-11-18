@@ -186,12 +186,13 @@ else activate().catch(()=>load());
 const IDS=['tm-players-access','category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
 const instances=new Map();
 function setup(select){
+ if(select.id==='dish-category-filter'&&select.closest('#dish-filter-parking'))return;
  if(instances.has(select)||select.classList.contains('tm-select-native')||select.hidden||select.getAttribute('aria-hidden')==='true'||select.tabIndex===-1||select.closest('.tm-select-shell'))return;
  const shell=document.createElement('span');shell.className='tm-select-shell';
  const trigger=document.createElement('button');trigger.type='button';trigger.className='tm-select-trigger';
  trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');
  const label=document.createElement('span');label.className='tm-select-value';
- const arrow=document.createElement('span');arrow.className='tm-select-chevron';arrow.setAttribute('aria-hidden','true');arrow.textContent='⌄';
+ const arrow=document.createElement('span');arrow.className='tm-select-chevron';arrow.setAttribute('aria-hidden','true');arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
  trigger.append(label,arrow);
  const panel=document.createElement('div');panel.className='tm-select-panel';panel.hidden=true;
  const list=document.createElement('div');list.className='tm-select-options';list.setAttribute('role','listbox');
