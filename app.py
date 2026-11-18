@@ -17,6 +17,7 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import chef_accounts_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
@@ -233,7 +234,7 @@ def initialize():
         c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_sessions (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
         if DATABASE_URL:
             c.executescript('''
-            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player','chef')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
             CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size BIGINT NOT NULL, updated BIGINT NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BYTEA NOT NULL);
@@ -261,7 +262,7 @@ def initialize():
             ''')
         else:
             c.executescript('''
-            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player','chef')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
             CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size INTEGER NOT NULL, updated INTEGER NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BLOB NOT NULL);
@@ -293,8 +294,10 @@ def initialize():
                 if column not in existing:
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
+        chef_accounts_v2.enable_role(c)
         consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
+        chef_accounts_v2.initialize(c)
         appointments_catalog_v2.initialize(c)
         appointments_availability_v2.initialize(c)
         appointments_bookings_v2.initialize(c)
@@ -885,7 +888,7 @@ def application(env, start_response):
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
 
-            if SITE_ROLE != 'both' and user and user['role'] != SITE_ROLE:
+            if user and not (SITE_ROLE == 'both' or user['role'] == SITE_ROLE or (SITE_ROLE == 'player' and user['role'] == 'chef')):
                 user = None
 
             if method != 'GET':
@@ -2915,6 +2918,64 @@ def application(env, start_response):
                 admin(user)
                 today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
                 return respond(200,admin_players_v2.overview(c,today,access_valid))
+            # Chef accounts: admin-only, bound to a single existing athlete.
+            if path == '/api/v2/admin/chefs':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200, {'chefs': chef_accounts_v2.list_accounts(c)})
+                if method == 'POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_chef')
+                    name=body.get('name')
+                    username=body.get('username')
+                    password=body.get('password')
+                    athlete_id=body.get('athlete_id')
+                    language=body.get('language','pt')
+                    if (not isinstance(name,str) or not 2<=len(name.strip())<=120
+                        or not isinstance(username,str) or not re.fullmatch(r'[a-z]{4,40}',username)
+                        or not isinstance(password,str) or not 12<=len(password)<=256
+                        or language not in ('pt','en') or not isinstance(athlete_id,str)):
+                        raise Problem(400,'invalid_chef')
+                    athlete=c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL",(athlete_id,)).fetchone()
+                    if not athlete: raise Problem(404,'athlete_not_found')
+                    if c.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone():
+                        raise Problem(409,'username_exists')
+                    uid=secrets.token_hex(16)
+                    try:
+                        c.execute("""INSERT INTO users(id,name,email,username,role,password,active)
+                                     VALUES(?,?,?,?,?,?,1)""",
+                                  (uid,name.strip(),'chef-'+uid+'@accounts.internal.invalid',
+                                   username,'chef',password_hash(password)))
+                        c.execute("""INSERT INTO v2_chef_links(user_id,athlete_id,language,linked_at,created_by)
+                                     VALUES(?,?,?,?,?)""",(uid,athlete_id,language,int(time.time()),user['id']))
+                        c.commit()
+                    except Exception:
+                        c.rollback()
+                        raise
+                    return respond(201,{'chef':{'id':uid,'name':name.strip(),'username':username,
+                                               'athlete_id':athlete_id,'language':language,'active':1}})
+                raise Problem(404,'not_found')
+            if path.startswith('/api/v2/admin/chefs/'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5: raise Problem(404,'not_found')
+                chef_id=parts[4]
+                target=c.execute("""SELECT u.id,u.username FROM users u
+                    JOIN v2_chef_links l ON l.user_id=u.id
+                    WHERE u.id=? AND u.role='chef'""",(chef_id,)).fetchone()
+                if not target: raise Problem(404,'chef_not_found')
+                if method=='PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict) or set(body) != {'active'} or type(body['active']) is not bool:
+                        raise Problem(400,'invalid_status')
+                    active=int(body['active'])
+                    c.execute("UPDATE users SET active=? WHERE id=? AND role='chef'",(active,chef_id))
+                    if not active: c.execute("DELETE FROM sessions WHERE user_id=?",(chef_id,))
+                    c.commit()
+                    return respond(200,{'chef':{'id':chef_id,'active':active}})
+                raise Problem(404,'not_found')
             if path == '/api/v2/admin/dashboard' and method == 'GET':
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
@@ -3164,6 +3225,29 @@ def application(env, start_response):
                 c.execute("DELETE FROM v2_body_assessments WHERE id=? AND athlete_id=?",(record_id,athlete_id))
                 c.commit()
                 return respond(200,{'deleted':True})
+            # Chef API: the athlete scope always comes from the authenticated session.
+            if path.startswith('/api/v2/chef/'):
+                if SITE_ROLE == 'admin': raise Problem(404,'not_found')
+                if not user: raise Problem(401,'unauthorized')
+                if user['role'] != 'chef': raise Problem(403,'forbidden')
+                athlete=chef_accounts_v2.assigned_athlete(c,user['id'])
+                if not athlete: raise Problem(403,'chef_unlinked')
+                aid=athlete['id']
+                if method != 'GET': raise Problem(403,'forbidden')
+                if path == '/api/v2/chef/me':
+                    return respond(200,{'chef':{'id':user['id'],'name':user['name'],
+                         'username':user['username'],'language':athlete['language']},
+                         'player':{'id':aid,'name':athlete['name']}})
+                if path == '/api/v2/chef/menus':
+                    query=parse_qs(env.get('QUERY_STRING',''))
+                    try:
+                        items=microcycles_v2.list_menus(c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0])
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_menu_range')
+                    return respond(200,{'menus':items})
+                if path == '/api/v2/chef/plans':
+                    return respond(200,{'options_by_color':plan_import_v2.published_meal_options(c,aid)})
+                raise Problem(404,'not_found')
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
@@ -3287,8 +3371,8 @@ def application(env, start_response):
                     raise Problem(400, 'password')
                 if path == '/api/login':
                     identifier = str(body.get('identifier', body.get('email', ''))).strip().lower()
-                    u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
-                    if SITE_ROLE != 'both' and u and u['role'] != SITE_ROLE:
+                    u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role IN ('player','chef') AND username=?))", (identifier, identifier)).fetchone()
+                    if u and not (SITE_ROLE == 'both' or u['role'] == SITE_ROLE or (SITE_ROLE == 'player' and u['role'] == 'chef')):
                         u = None
                     if not password_valid(password, u['password'] if u else None):
                         raise Problem(401, 'credentials')
@@ -3321,8 +3405,8 @@ def application(env, start_response):
                 new = body.get('new_password', '')
                 if not isinstance(current, str) or not isinstance(new, str) or len(new) < 8 or len(new) > 256:
                     raise Problem(400, 'password_change')
-                target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
-                if SITE_ROLE != 'both' and target and target['role'] != SITE_ROLE:
+                target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role IN ('player','chef') AND username=?))", (identifier, identifier)).fetchone()
+                if target and not (SITE_ROLE == 'both' or target['role'] == SITE_ROLE or (SITE_ROLE == 'player' and target['role'] == 'chef')):
                     target = None
                 if not target or not password_valid(current, target['password']):
                     raise Problem(400, 'password_change')
