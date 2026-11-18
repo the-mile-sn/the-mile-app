@@ -6890,7 +6890,7 @@ html[data-admin-theme] #menus-panel .tm-menu-accordion-chevron{
  width:18px;height:18px;flex:none;transition:transform .16s ease;
  color:var(--tm-ui-muted)!important;
 }
-html[data-admin-theme] #menus-panel :is(#menu-history,#profile-recipe-access)[open] .tm-menu-accordion-chevron{
+html[data-admin-theme] #menus-panel :is(#menu-history,#profile-recipe-access,#tm-chef-menu-review)[open] .tm-menu-accordion-chevron{
  transform:rotate(180deg);
 }
 html[data-admin-theme] #menus-panel :is(.tm-menu-history-summary,.tm-recipe-access-summary):focus-visible{

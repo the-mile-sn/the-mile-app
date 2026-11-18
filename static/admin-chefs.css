@@ -37,3 +37,7 @@
 #tm-chef-management .tm-chef-approve button{align-self:start}
 #tm-chef-management #tm-chef-feedback{font-size:12px;color:#64748b;min-height:16px}
 @media(max-width:740px){#tm-chef-management .tm-chef-content{padding:0 14px 18px}#tm-chef-management .tm-chef-summary{padding:15px}#tm-chef-management .tm-chef-form{grid-template-columns:1fr}#tm-chef-management .tm-chef-activity{grid-template-columns:1fr}#tm-chef-management .tm-chef-account{align-items:start;flex-direction:column}#tm-chef-management .tm-chef-account-actions{width:100%}}
+
+/* Pending count in the existing shared Menus accordion heading. */
+#tm-chef-menu-review .tm-chef-count{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--tm-ui-subcard);color:var(--tm-ui-muted);font:500 11px/1.2 "Inter Tight",sans-serif;white-space:nowrap}
+#tm-chef-menu-review .tm-chef-count[hidden]{display:none!important}

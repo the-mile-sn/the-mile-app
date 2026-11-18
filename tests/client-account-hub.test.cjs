@@ -49,7 +49,7 @@ test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
   assert.match(html,/\/admin-clients\.js\?v=6/);
-  assert.match(html,/\/admin-clients\.css\?v=7/);
+  assert.match(html,/\/admin-clients\.css\?v=8/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -99,7 +99,7 @@ test("Chef creation always uses a native modal on desktop and mobile, never an i
   assert.doesNotMatch(css,/@media\(max-width:830px\)\{\s*#tm-players-page #tm-clients-chefs-panel/);
   assert.match(css,/#tm-clients-chef-create-dialog #tm-chef-create/);
   assert.match(html,/admin-clients\.js\?v=6/);
-  assert.match(html,/admin-clients\.css\?v=7/);
+  assert.match(html,/admin-clients\.css\?v=8/);
 });
 
 
@@ -129,9 +129,9 @@ test("Chef account access stays in profile; server tickets are admin-only and sc
   assert.match(adminApp,/role='chef' AND active=1/);
   assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
   assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
-  assert.match(html,/admin-chefs\.js\?v=5/);
+  assert.match(html,/admin-chefs\.js\?v=6/);
   assert.match(html,/admin-clients\.js\?v=6/);
-  assert.match(html,/admin-clients\.css\?v=7/);
+  assert.match(html,/admin-clients\.css\?v=8/);
 });
 
 
@@ -148,6 +148,24 @@ test("Chef detail reuses the single Player profile back control and hides accoun
  assert.match(clients,/event\.stopImmediatePropagation\(\)/);
  assert.match(css,/#tm-players-filter-panel\[hidden\]\{\s*display:none!important/);
  assert.match(html,/admin-clients\.js\?v=6/);
- assert.match(html,/admin-chefs\.js\?v=5/);
- assert.match(html,/admin-clients\.css\?v=7/);
+ assert.match(html,/admin-chefs\.js\?v=6/);
+ assert.match(html,/admin-clients\.css\?v=8/);
+});
+
+test("Chef activity uses the approved menu accordion and the unfiltered audit feed",()=>{
+  const palette=fs.readFileSync("static/admin-surface-palette.css","utf8");
+  const css=fs.readFileSync("static/admin-clients.css","utf8");
+  assert.match(chefs,/review\.id="tm-chef-menu-review"/);
+  assert.match(chefs,/<summary class="tm-menu-history-summary">/);
+  assert.match(chefs,/class="tm-menu-accordion-title"/);
+  assert.match(chefs,/class="tm-menu-accordion-chevron"/);
+  assert.match(chefs,/tm-chef-content tm-menu-history-inner/);
+  assert.match(palette,/:is\(#menu-history,#profile-recipe-access,#tm-chef-menu-review\)\[open\]/);
+  assert.doesNotMatch(chefs,/tm-chef-filter-player|Histórico e validações|Consulta quem alterou o planeamento/);
+  assert.doesNotMatch(css,/#tm-chef-menu-review \.tm-chef-summary/);
+  assert.match(chefs,/api\("\/api\/v2\/admin\/chef-activity"\)/);
+  assert.match(html,/admin-chefs\.js\?v=6/);
+  assert.match(html,/admin-chefs\.css\?v=3/);
+  assert.match(html,/admin-clients\.css\?v=8/);
+  assert.match(html,/admin-surface-palette\.css\?v=205/);
 });

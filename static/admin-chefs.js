@@ -25,10 +25,15 @@
   const review=document.createElement("details");
   review.id="tm-chef-menu-review";review.className="tm-chef-management tm-menu-history-card";
   review.innerHTML=`
-    <summary class="tm-chef-summary">Alterações e execução <span id="tm-chef-pending" class="tm-chef-count" hidden></span></summary>
-    <div class="tm-chef-content">
-      <div class="tm-chef-head"><h3>Histórico e validações</h3><p>Consulta quem alterou o planeamento e o que foi servido. Os registos de execução não apagam os menus planeados.</p></div>
-      <label class="tm-chef-filter">Jogador<select id="tm-chef-filter-player"><option value="">Todos os jogadores</option></select></label>
+    <summary class="tm-menu-history-summary">
+      <span class="tm-menu-accordion-title">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.7 9.1A8.7 8.7 0 1 1 3.3 13"/><path d="M3 4.4v5.2h5.2M12 6.8V12l3.1 2.1"/></svg>
+        Alterações e execução
+        <span id="tm-chef-pending" class="tm-chef-count" hidden></span>
+      </span>
+      <svg class="tm-menu-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </summary>
+    <div class="tm-chef-content tm-menu-history-inner">
       <div id="tm-chef-activity" class="tm-chef-activity"></div>
       <p id="tm-chef-feedback" role="status"></p>
     </div>`;
@@ -73,7 +78,6 @@
     const data=await api("/api/v2/athletes");
     knownPlayers=data.athletes||[];
     fillSelect(form.elements.athlete_id,knownPlayers,"Selecionar jogador");
-    fillSelect($("tm-chef-filter-player"),knownPlayers,"Todos os jogadores");
   }
   // The chef card opens a profile subpage, like a player card. Account actions
   // live only in that profile; the phone control opens a read-only admin preview.
@@ -297,9 +301,9 @@
     await load();
   }
   async function loadActivity(){
-    const athlete_id=$("tm-chef-filter-player").value;
-    const path="/api/v2/admin/chef-activity"+(athlete_id?"?athlete_id="+encodeURIComponent(athlete_id):"");
-    const data=await api(path);
+    // The main planning page already supplies the player context. The audit feed
+    // is an unfiltered record of all Chef changes and execution events.
+    const data=await api("/api/v2/admin/chef-activity");
     const all=data.activity||[],host=$("tm-chef-activity");
     host.replaceChildren();
     const pending=all.filter(a=>a.event_type==="menu"&&["pending_review","pending_validation"].includes(a.status)).length;
@@ -354,10 +358,9 @@
   review.addEventListener("toggle",async()=>{
     if(!review.open)return;
     feedback.textContent="";
-    try{await loadPlayers();await loadActivity();}
+    try{await loadActivity();}
     catch(e){feedback.textContent=noteMessage(e);}
   });
-  $("tm-chef-filter-player").onchange=()=>loadActivity().catch(e=>feedback.textContent=noteMessage(e));
   form.onsubmit=async event=>{
     event.preventDefault();
     const err=$("tm-chef-create-feedback");err.textContent="";

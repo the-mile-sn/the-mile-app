@@ -25,16 +25,6 @@
 #tm-clients-create-choice [data-new-client-type] strong{font-size:15px;font-weight:600}
 #tm-clients-create-choice [data-new-client-type] span{font-size:12px;line-height:1.5;color:#7b7e87}
 #tm-chef-management #tm-chef-account-feedback{font-size:12px;color:#68717e;min-height:16px}
-#tm-chef-menu-review{margin-top:16px;background:var(--tm-light-surface,#fff);border:1px solid rgba(100,109,124,.14);border-radius:17px;overflow:hidden}
-#tm-chef-menu-review .tm-chef-summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 21px;font-size:16px;font-weight:600}
-#tm-chef-menu-review .tm-chef-summary::-webkit-details-marker{display:none}
-#tm-chef-menu-review .tm-chef-summary:after{content:"⌄";color:#747982;font-size:18px}
-#tm-chef-menu-review[open] .tm-chef-summary:after{transform:rotate(180deg)}
-#tm-chef-menu-review .tm-chef-content{padding:2px 21px 23px}
-#tm-chef-menu-review .tm-chef-head h3{font-size:17px;margin:13px 0 5px}
-#tm-chef-menu-review .tm-chef-head p{font-size:13px;color:#77818b;line-height:1.5}
-#tm-chef-menu-review .tm-chef-filter{display:flex;flex-direction:column;gap:5px;max-width:320px;font-size:12px;margin:13px 0}
-#tm-chef-menu-review .tm-chef-filter select{min-height:40px;border-radius:10px;font-size:16px;padding:8px;background:var(--tm-light-surface,#fff);color:inherit;border:1px solid rgba(110,119,133,.25)}
 #tm-chef-menu-review .tm-chef-activity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 #tm-chef-menu-review .tm-chef-activity-card{border:1px solid rgba(110,119,133,.15);border-radius:13px;padding:13px;min-width:0}
 #tm-chef-menu-review .tm-chef-event-head{display:flex;flex-direction:column;gap:4px}
@@ -48,7 +38,6 @@
  #tm-clients-types{width:100%;max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-bottom:16px}
  #tm-clients-types [role=tab]{font-size:11px;padding:10px 5px;min-height:39px}
  #tm-clients-create-choice .tm-clients-choice-inner{padding:22px}
- #tm-chef-menu-review .tm-chef-content{padding:0 14px 18px}
  #tm-chef-menu-review .tm-chef-activity{grid-template-columns:1fr}
 }
 
