@@ -7,7 +7,6 @@ import secrets
 import time
 from datetime import date
 from calendar_v2 import parse_day
-import microcycles_v2
 
 MEALS = ("lunch", "dinner")
 STATES = ("served_planned", "served_changed", "ate_out", "chef_off")
@@ -16,6 +15,19 @@ CATEGORIES = ("Carne branca", "Carne vermelha", "Peixe magro", "Peixe gordo",
 
 
 def initialize(c):
+    c.execute("""CREATE TABLE IF NOT EXISTS v2_menu_history (
+        athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
+        menu_date TEXT NOT NULL,
+        meal TEXT NOT NULL CHECK(meal IN ('lunch','dinner')),
+        kind TEXT NOT NULL,value TEXT NOT NULL,dish_id TEXT,
+        saved_at BIGINT NOT NULL,
+        PRIMARY KEY(athlete_id,menu_date,meal)
+    )""")
+    c.execute("""INSERT INTO v2_menu_history
+        (athlete_id,menu_date,meal,kind,value,dish_id,saved_at)
+        SELECT athlete_id,menu_date,meal,kind,value,dish_id,?
+        FROM v2_weekly_menus WHERE 1=1
+        ON CONFLICT(athlete_id,menu_date,meal) DO NOTHING""",(int(time.time()),))
     c.execute("""CREATE TABLE IF NOT EXISTS v2_chef_menu_audit (
         id TEXT PRIMARY KEY,
         athlete_id TEXT NOT NULL REFERENCES v2_athletes(id),
@@ -94,6 +106,36 @@ def _audit(c, athlete_id, day, meal, actor_id, action, before, after,
          status,note,int(time.time())))
 
 
+def _resolve_menu_dish(c, kind, value, dish_id=None):
+    if not isinstance(value,str) or not 1<=len(value.strip())<=200:
+        raise ValueError("invalid_menu")
+    value=value.strip()
+    if kind!="dish":
+        if dish_id is not None: raise ValueError("invalid_menu_dish")
+        return value,None
+    if dish_id is not None:
+        if not isinstance(dish_id,str) or not 1<=len(dish_id)<=100:
+            raise ValueError("invalid_menu_dish")
+        row=c.execute("SELECT id,name_pt FROM v2_dish_library WHERE id=?",
+                      (dish_id,)).fetchone()
+        if not row: raise ValueError("invalid_menu_dish")
+        return row["name_pt"],row["id"]
+    rows=c.execute("SELECT id FROM v2_dish_library WHERE name_pt=? LIMIT 2",
+                   (value,)).fetchall()
+    return value,rows[0]["id"] if len(rows)==1 else None
+
+
+def _record_menu_history(c, athlete_id, day, meal, kind, value, dish_id):
+    today=date.today().isoformat()
+    c.execute("""INSERT INTO v2_menu_history
+      (athlete_id,menu_date,meal,kind,value,dish_id,saved_at)
+      VALUES(?,?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
+      DO UPDATE SET kind=excluded.kind,value=excluded.value,
+        dish_id=excluded.dish_id,saved_at=excluded.saved_at
+      WHERE excluded.menu_date>=?""",
+      (athlete_id,day,meal,kind,value,dish_id,int(time.time()),today))
+
+
 def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=None):
     """Chef can plan approved library dishes/categories only.
 
@@ -103,7 +145,7 @@ def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=Non
     day = _validate_day(menu_date,meal)
     if kind not in ("dish","category"):
         raise ValueError("chef_requires_approved_dish")
-    canonical, resolved_id = microcycles_v2.resolve_menu_dish(c,kind,value,dish_id)
+    canonical, resolved_id = _resolve_menu_dish(c,kind,value,dish_id)
     if kind=="category" and canonical not in CATEGORIES:
         raise ValueError("invalid_menu_category")
     if kind=="dish":
@@ -123,7 +165,7 @@ def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=Non
         ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
         kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
         (athlete_id,day,meal,kind,canonical,resolved_id))
-    microcycles_v2.record_menu_history(c,athlete_id,day,meal,kind,canonical,resolved_id)
+    _record_menu_history(c,athlete_id,day,meal,kind,canonical,resolved_id)
     _audit(c,athlete_id,day,meal,actor_id,"plan_updated",previous,updated,"pending_review")
     c.commit()
     return {"menu_date":day,"meal":meal,**updated,"changed":True}
@@ -257,8 +299,8 @@ def review(c, audit_id, admin_id, decision, approved_dish_id=None):
                 kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
                 (event["athlete_id"],event["menu_date"],event["meal"],
                  "dish",dish["name_pt"],dish["id"]))
-            microcycles_v2.record_menu_history(c,event["athlete_id"],event["menu_date"],
-                                              event["meal"],"dish",dish["name_pt"],dish["id"])
+            _record_menu_history(c,event["athlete_id"],event["menu_date"],
+                         event["meal"],"dish",dish["name_pt"],dish["id"])
             _audit(c,event["athlete_id"],event["menu_date"],event["meal"],
                    admin_id,"proposal_approved",current,after,"recorded")
     c.execute("""UPDATE v2_chef_menu_audit SET status=?,resolved_by=?,resolved_at=?
