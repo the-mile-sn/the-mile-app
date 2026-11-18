@@ -231,26 +231,17 @@ function setup(select){
    input.type=category?'text':'search';
    input.placeholder='Pesquisar...';input.setAttribute('aria-label','Pesquisar opções');input.autocomplete='off';
    if(category){
-    input.inputMode='search';const host=document.createElement('span');host.className='tm-category-search-host';
-    const shadow=host.attachShadow({mode:'open'});const style=document.createElement('style');
-    style.textContent=`
-      :host{display:block;box-sizing:border-box;width:100%;margin:0 0 22px}
-      input{display:block;box-sizing:border-box;width:100%;height:44px;margin:0;
-       padding:0 12px;border:none;border-radius:0;
-       outline:0;box-shadow:none;background:transparent;appearance:none;
-       -webkit-appearance:none;color:var(--tm-ui-text,#222);caret-color:currentColor;
-       font:400 17px/1.3 "Inter Tight",Arial,sans-serif;-webkit-text-size-adjust:100%}
-      input::placeholder{color:var(--tm-ui-muted,#82858d);opacity:1}
-      input:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px}
-    `;
-    shadow.append(style,input);panel.insertBefore(host,list);
+    // CSP blocks dynamically injected style elements. Use the served stylesheet.
+    input.inputMode='search';
+    input.classList.add('tm-select-category-search');
+    panel.insertBefore(input,list);
    }else{
     panel.insertBefore(input,list);
     for(const [property,value] of Object.entries({
-      display:'block','box-sizing':'border-box',width:'calc(100% - 16px)',
-      height:'44px','min-height':'44px',padding:'0 14px',margin:'8px 8px 14px',
-      background:'var(--tm-ui-search, #f0f2f5)',border:'1px solid #dbe0e6',
-      'border-radius':'11px',font:'400 14px/44px "Inter Tight", Arial, sans-serif'
+     display:'block','box-sizing':'border-box',width:'calc(100% - 16px)',
+     height:'44px','min-height':'44px',padding:'0 14px',margin:'8px 8px 14px',
+     background:'var(--tm-ui-search, #f0f2f5)',border:'1px solid #dbe0e6',
+     'border-radius':'11px',font:'400 14px/44px "Inter Tight", Arial, sans-serif'
     }))input.style.setProperty(property,value,'important');
    }
    input.addEventListener('input',render);state.search=input;
