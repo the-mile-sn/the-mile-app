@@ -2,6 +2,7 @@
 import sqlite3
 import unittest
 from unittest.mock import patch
+from datetime import date, timedelta
 
 import chef_accounts_v2
 import test_app
@@ -86,6 +87,112 @@ class ChefAccountApiTests(unittest.TestCase):
         self.assertEqual(chef.request("/api/v2/chef/preferences", "PUT", {"language": "en"})["status"], 200)
         self.assertEqual(chef.request("/api/v2/chef/preferences", "PUT", {"language": "es"})["status"], 400)
         self.assertEqual(chef.request("/api/v2/chef/me")["body"]["chef"]["language"], "en")
+
+    def test_menu_edit_is_audited_and_cannot_change_another_player(self):
+        chef, chef_id = self._chef()
+        day=(date.today()+timedelta(days=5)).isoformat()
+        # Admin schedules an initial approved category.
+        prior=self.admin.request("/api/v2/athletes/"+self.first+"/menus","PUT",{
+            "menu_date":day,"meal":"lunch","kind":"category","value":"Carne branca"})
+        self.assertEqual(prior["status"],200,prior)
+        with app.connect() as c:
+            c.execute("""INSERT INTO v2_dish_library(id,category,name_pt,name_en,image_filename,active)
+                         VALUES(?,?,?,?,?,1)""",
+                ("dish-1111","Carne branca","Frango grelhado","Grilled chicken","x.webp"))
+        update=chef.request("/api/v2/chef/menus","PUT",{
+            "athlete_id":self.second,"menu_date":day,"meal":"lunch",
+            "kind":"dish","value":"Frango grelhado","dish_id":"dish-1111"})
+        self.assertEqual(update["status"],200,update)
+        self.assertTrue(update["body"]["menu"]["changed"])
+        with app.connect() as c:
+            own=c.execute("""SELECT value,dish_id FROM v2_weekly_menus
+                WHERE athlete_id=? AND menu_date=? AND meal='lunch'""",(self.first,day)).fetchone()
+            other=c.execute("""SELECT id FROM v2_weekly_menus
+                WHERE athlete_id=?""",(self.second,)).fetchone() if False else c.execute(
+                    "SELECT COUNT(*) AS count FROM v2_weekly_menus WHERE athlete_id=?",(self.second,)).fetchone()
+            log=c.execute("""SELECT previous_value,new_value,status,actor_id
+                FROM v2_chef_menu_audit WHERE athlete_id=? AND actor_id=?
+                ORDER BY created_at DESC,id DESC""",(self.first,chef_id)).fetchone()
+        self.assertEqual(own["value"],"Frango grelhado")
+        self.assertEqual(other["count"],0)
+        self.assertEqual(log["previous_value"],"Carne branca")
+        self.assertEqual(log["new_value"],"Frango grelhado")
+        self.assertEqual(log["status"],"pending_review")
+        self.assertEqual(chef.request("/api/v2/chef/menus?start="+day+"&end="+day)["body"]["menus"][0]["value"],"Frango grelhado")
+        self.assertEqual(chef.request("/api/v2/chef/menus","PUT",{
+            "menu_date":day,"meal":"dinner","kind":"text","value":"Não aprovado"})["status"],400)
+
+    def test_proposal_requires_admin_validation_and_keeps_planned_menu(self):
+        chef,_=self._chef()
+        day=(date.today()+timedelta(days=4)).isoformat()
+        original=self.admin.request("/api/v2/athletes/"+self.first+"/menus","PUT",{
+            "menu_date":day,"meal":"dinner","kind":"category","value":"Peixe magro"})
+        self.assertEqual(original["status"],200)
+        proposal=chef.request("/api/v2/chef/menu-proposals","POST",{
+            "menu_date":day,"meal":"dinner","name":"Peixe especial do Chef","note":"Sugestão"})
+        self.assertEqual(proposal["status"],201,proposal)
+        before=chef.request("/api/v2/chef/menus?start="+day+"&end="+day)["body"]["menus"]
+        self.assertEqual(before[0]["value"],"Peixe magro")
+        log=self.admin.request("/api/v2/admin/chef-activity")["body"]["activity"]
+        waiting=next(e for e in log if e["action"]=="dish_proposal")
+        self.assertEqual(waiting["status"],"pending_validation")
+        self.assertEqual(self.admin.request("/api/v2/admin/chef-reviews","POST",{
+            "id":waiting["id"],"decision":"approved","dish_id":"missing"})["status"],400)
+        with app.connect() as c:
+            c.execute("""INSERT INTO v2_dish_library(id,category,name_pt,name_en,image_filename,active)
+                         VALUES(?,?,?,?,?,1)""",
+                ("dish-2222","Peixe magro","Pescada no forno","Baked hake","y.webp"))
+        approved=self.admin.request("/api/v2/admin/chef-reviews","POST",{
+            "id":waiting["id"],"decision":"approved","dish_id":"dish-2222"})
+        self.assertEqual(approved["status"],200,approved)
+        after=chef.request("/api/v2/chef/menus?start="+day+"&end="+day)["body"]["menus"]
+        self.assertEqual(after[0]["value"],"Pescada no forno")
+        self.assertEqual(self.admin.request("/api/v2/admin/chef-reviews","POST",{
+            "id":waiting["id"],"decision":"approved","dish_id":"dish-2222"})["status"],400)
+
+    def test_execution_preserves_planning_and_is_not_consumption(self):
+        chef,_=self._chef()
+        day=(date.today()+timedelta(days=3)).isoformat()
+        self.admin.request("/api/v2/athletes/"+self.first+"/menus","PUT",{
+            "menu_date":day,"meal":"lunch","kind":"category","value":"Carne branca"})
+        self.assertEqual(chef.request("/api/v2/chef/menu-executions","POST",{
+            "menu_date":day,"meal":"lunch","state":"served_changed",
+            "served_description":"","note":""})["status"],400)
+        result=chef.request("/api/v2/chef/menu-executions","POST",{
+            "menu_date":day,"meal":"lunch","state":"served_changed",
+            "served_description":"Peixe com batata","note":"Alteração ao almoço"})
+        self.assertEqual(result["status"],201,result)
+        now=chef.request("/api/v2/chef/menu-executions?start="+day+"&end="+day)
+        self.assertEqual(now["status"],200)
+        self.assertEqual(now["body"]["executions"][0]["state"],"served_changed")
+        self.assertEqual(now["body"]["executions"][0]["planned_value"],"Carne branca")
+        planned=chef.request("/api/v2/chef/menus?start="+day+"&end="+day)["body"]["menus"]
+        self.assertEqual(planned[0]["value"],"Carne branca")
+        # A later 'chef off' report retains the scheduled meal.
+        self.assertEqual(chef.request("/api/v2/chef/menu-executions","POST",{
+            "menu_date":day,"meal":"lunch","state":"chef_off","note":"Folga"})["status"],201)
+        self.assertEqual(chef.request("/api/v2/chef/menus?start="+day+"&end="+day)["body"]["menus"][0]["value"],"Carne branca")
+        history=self.admin.request("/api/v2/admin/chef-activity")["body"]["activity"]
+        self.assertEqual(len([x for x in history if x["event_type"]=="execution"]),2)
+
+    def test_admin_audit_review_and_chef_password_reset(self):
+        chef,chef_id=self._chef()
+        day=(date.today()+timedelta(days=6)).isoformat()
+        self.assertEqual(self.admin.request("/api/v2/athletes/"+self.first+"/menus","PUT",{
+            "menu_date":day,"meal":"dinner","kind":"category","value":"Peixe magro"})["status"],200)
+        with app.connect() as c:
+            event=c.execute("""SELECT actor_id,status FROM v2_chef_menu_audit
+                WHERE athlete_id=? AND menu_date=? AND meal='dinner'""",
+                (self.first,day)).fetchone()
+            self.assertEqual(event["status"],"recorded")
+        self.assertEqual(self.admin.request("/api/v2/admin/chefs/"+chef_id+"/password-reset","POST",{
+            "password":"new-chef-password-123"})["status"],200)
+        self.assertEqual(chef.request("/api/v2/chef/me")["status"],401)
+        signed=Client()
+        self.assertEqual(signed.request("/api/login","POST",{
+            "identifier":"chefteste","password":"new-chef-password-123"})["status"],200)
+        signed.request("/api/me")
+        self.assertEqual(signed.request("/api/v2/chef/me")["status"],200)
 
     def test_validation_and_duplicate_credentials(self):
         self._chef()
