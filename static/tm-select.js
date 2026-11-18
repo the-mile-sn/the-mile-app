@@ -6,7 +6,7 @@
 const IDS=['tm-players-access','category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
 const instances=new Map();
 function setup(select){
- if(instances.has(select)||select.closest('[hidden]')?.tagName==='SELECT')return;
+ if(instances.has(select)||select.classList.contains('tm-select-native')||select.hidden||select.getAttribute('aria-hidden')==='true'||select.tabIndex===-1||select.closest('.tm-select-shell'))return;
  const shell=document.createElement('span');shell.className='tm-select-shell';
  const trigger=document.createElement('button');trigger.type='button';trigger.className='tm-select-trigger';
  trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');
@@ -16,7 +16,7 @@ function setup(select){
  const panel=document.createElement('div');panel.className='tm-select-panel';panel.hidden=true;
  const list=document.createElement('div');list.className='tm-select-options';list.setAttribute('role','listbox');
  panel.append(list);
- select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel);
+ const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.classList.add('tm-select-legacy-converted');legacy.parentNode.insertBefore(shell,legacy);shell.append(select,trigger,panel);legacy.remove()}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
  select.classList.add('tm-select-native');
  const state={select,shell,trigger,label,panel,list,search:null};
  instances.set(select,state);
@@ -58,6 +58,6 @@ function setup(select){
 }
 function init(){IDS.forEach(id=>{const s=document.getElementById(id);if(s&&s.tagName==='SELECT')setup(s)})}
 document.addEventListener('pointerdown',e=>{instances.forEach(v=>{if(!v.shell.contains(e.target)){v.panel.hidden=true;v.trigger.setAttribute('aria-expanded','false');v.shell.classList.remove('tm-select-open')}})});
-document.addEventListener('DOMContentLoaded',init);
+document.addEventListener('DOMContentLoaded',()=>{init();const root=document.getElementById('admin-workspace')||document.body;let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;init()})}).observe(root,{childList:true,subtree:true})});
 if(document.readyState!=='loading')init();
 })();
