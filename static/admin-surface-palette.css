@@ -12599,17 +12599,17 @@ html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel >
  display:block!important;position:relative!important;box-sizing:border-box!important;
  width:100%!important;height:44px!important;min-height:44px!important;
  max-height:44px!important;margin:0 0 10px!important;padding:0 14px!important;
- background:color-mix(in srgb,var(--tm-ui-text) 6%,var(--tm-ui-card))!important;background-image:none!important;
+ background:transparent!important;background-color:transparent!important;background-image:none!important;
  color:var(--tm-ui-text)!important;
- border:1px solid color-mix(in srgb,var(--tm-ui-text) 8%,transparent)!important;
- border-radius:11px!important;box-shadow:none!important;
- font:400 16px/1.3 "Inter Tight",Arial,sans-serif!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ font:400 17px/1.3 "Inter Tight",Arial,sans-serif!important;
+ font-size:17px!important;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-panel > input.tm-select-search::placeholder {
  color:var(--tm-ui-muted)!important;opacity:1;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-panel > input.tm-select-search:focus {
- outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:0!important;
+ outline:none!important;box-shadow:none!important;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-shell > .tm-select-trigger:focus-visible,
 html[data-admin-theme] body #admin-workspace .tm-select-option:focus-visible {
