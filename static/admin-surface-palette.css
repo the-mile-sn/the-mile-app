@@ -12688,3 +12688,19 @@ html[data-admin-theme] body #admin-workspace .tm-select-panel > .tm-select-optio
   margin:0!important;
   padding:0!important;
 }
+
+/* Library dropdown search is an immediate child of the white menu card.
+   Explicit theme values protect this component from any legacy token overrides.
+   The selected option and the search field share second-depth surface styling. */
+html[data-admin-theme="light"] body #admin-workspace
+.tm-select-shell .tm-select-panel > input.tm-select-search {
+  background:#f0f2f6!important;
+  background-color:#f0f2f6!important;
+  background-image:none!important;
+}
+html[data-admin-theme="dark"] body #admin-workspace
+.tm-select-shell .tm-select-panel > input.tm-select-search {
+  background:#1e2025!important;
+  background-color:#1e2025!important;
+  background-image:none!important;
+}
