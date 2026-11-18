@@ -11710,9 +11710,9 @@ html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-
 /* Culinary pills: explicit light/dark palette; no currentColor fallback for category identity. */
 html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge{
 box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-width:max-content!important;max-width:100%!important;min-height:26px!important;padding:5px 9px!important;
-border:1px solid!important;border-radius:999px!important;
-font:500 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
+width:max-content!important;max-width:100%!important;height:26px!important;min-height:26px!important;padding:0 9px!important;
+border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;border-radius:999px!important;
+font:400 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
 white-space:normal!important;box-shadow:none!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill.dish-category-rose,
@@ -12076,12 +12076,13 @@ html[data-admin-theme="light"] body #admin-workspace #tm-food-library-page .tm-f
 
 
 /* Specificity guard against legacy per-tone rules; only outline, never colour/fill. */
-html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .recipe-table .recipe-category-cell .recipe-category-badge[class*="recipe-category-"],
+html[data-admin-theme] body #admin-workspace #tm-recipe-library-page table.recipe-table tbody tr td.recipe-category-cell span.recipe-category-badge[class*="recipe-category-"],
 html[data-admin-theme] body #admin-workspace #tm-recipe-library-page .tm-recipe-mobile-badges .recipe-category-badge[class*="recipe-category-"],
 html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-mobile-tags .dish-category-pill[class*="dish-category-"],
 html[data-admin-theme] body #admin-workspace #tm-menu-recipes-page .dish-library-table .dish-table-category .dish-category-pill[class*="dish-category-"]{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
  height:26px!important;min-height:26px!important;max-height:26px!important;
- padding:0 9px!important;
+ padding:0 9px!important;margin:0!important;
  font:400 11px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif!important;
  border:1px solid color-mix(in srgb,currentColor 12%,transparent)!important;
  border-radius:999px!important;
