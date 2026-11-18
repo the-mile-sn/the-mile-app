@@ -12610,7 +12610,7 @@ html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel >
  caret-color:var(--tm-ui-text)!important;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel > input.tm-select-category-search {
- margin-bottom:22px!important;
+ margin-bottom:32px!important;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-panel > input.tm-select-search::placeholder {
  color:var(--tm-ui-muted)!important;opacity:1;
