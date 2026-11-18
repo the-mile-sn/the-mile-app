@@ -64,7 +64,14 @@ function setup(select){
 input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
   }
   if(state.search)state.search.value='';
-  render();(state.search||list.querySelector('[aria-selected="true"]')||list.querySelector('button'))?.focus();
+  render();
+  // On touch devices, opening a category list should not focus its search
+  // or summon the iOS keyboard. The user can tap Search explicitly.
+  if(window.matchMedia('(hover:none) and (pointer:coarse)').matches){
+   trigger.focus({preventScroll:true});
+  }else{
+   (state.search||list.querySelector('[aria-selected="true"]')||list.querySelector('button'))?.focus();
+  }
  };
  trigger.addEventListener('click',()=>panel.hidden?open():close());
  trigger.addEventListener('keydown',e=>{if(['ArrowDown','Enter',' '].includes(e.key)){e.preventDefault();open()}});
