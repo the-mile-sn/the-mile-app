@@ -340,11 +340,9 @@ html[data-admin-theme] #tm-players-page #tm-clients-account-list #tm-players-bod
 html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-actions button{
  transition:background-color 140ms ease;
 }
-/* Mobile Chef form: the same existing account form, moved into a native modal.
-   Layout and colors use the approved card/subcard tokens in both themes. */
-@media(max-width:830px){
- #tm-players-page #tm-clients-chefs-panel{display:none!important}
-}
+/* Chef account creation uses the same modal on desktop and mobile.
+   Keep the source form mounted but never show it as an inline page. */
+#tm-players-page #tm-clients-chefs-panel{display:none!important}
 #tm-players-page #tm-clients-chef-create-dialog{
  box-sizing:border-box;
  width:calc(100% - 28px);

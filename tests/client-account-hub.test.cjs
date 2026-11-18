@@ -48,8 +48,8 @@ test("Consultations do not masquerade as an active authentication flow",()=>{
 test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
-  assert.match(html,/\/admin-clients\.js\?v=5/);
-  assert.match(html,/\/admin-clients\.css\?v=6/);
+  assert.match(html,/\/admin-clients\.js\?v=6/);
+  assert.match(html,/\/admin-clients\.css\?v=7/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -83,7 +83,7 @@ test("client and Chef cards remain separated, with Guide Visual hover on real co
   assert.match(css,/\.tm-chef-account-actions button:hover/);
 });
 
-test("mobile Chef creation uses a dialog while desktop retains its existing form",()=>{
+test("Chef creation always uses a native modal on desktop and mobile, never an inline page",()=>{
   const css=fs.readFileSync("static/admin-clients.css","utf8");
   assert.match(html,/<dialog id="tm-clients-chef-create-dialog"/);
   assert.match(html,/id="tm-clients-chef-modal-slot"/);
@@ -91,11 +91,15 @@ test("mobile Chef creation uses a dialog while desktop retains its existing form
   assert.match(clients,/chefSlot\.appendChild\(details\)/);
   assert.match(clients,/chefModal\.showModal\(\)/);
   assert.match(clients,/chefModal\?\.addEventListener\("close"/);
-  assert.match(clients,/if\(mobileCreate\.matches\)/);
-  assert.match(clients,/details\.scrollIntoView\(\{behavior:"smooth",block:"nearest"\}\)/);
+  assert.match(clients,/function openChefDialog\(details\)/);
+  assert.match(clients,/if\(details\)openChefDialog\(details\)/);
+  assert.doesNotMatch(clients,/mobileCreate|matchMedia\("\(max-width: 830px\)"\)/);
+  assert.doesNotMatch(clients,/details\.scrollIntoView/);
+  assert.match(css,/#tm-players-page #tm-clients-chefs-panel\{display:none!important\}/);
+  assert.doesNotMatch(css,/@media\(max-width:830px\)\{\s*#tm-players-page #tm-clients-chefs-panel/);
   assert.match(css,/#tm-clients-chef-create-dialog #tm-chef-create/);
-  assert.match(html,/admin-clients\.js\?v=5/);
-  assert.match(html,/admin-clients\.css\?v=6/);
+  assert.match(html,/admin-clients\.js\?v=6/);
+  assert.match(html,/admin-clients\.css\?v=7/);
 });
 
 
@@ -126,8 +130,8 @@ test("Chef account access stays in profile; server tickets are admin-only and sc
   assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
   assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
   assert.match(html,/admin-chefs\.js\?v=5/);
-  assert.match(html,/admin-clients\.js\?v=5/);
-  assert.match(html,/admin-clients\.css\?v=6/);
+  assert.match(html,/admin-clients\.js\?v=6/);
+  assert.match(html,/admin-clients\.css\?v=7/);
 });
 
 
@@ -143,7 +147,7 @@ test("Chef detail reuses the single Player profile back control and hides accoun
  assert.match(clients,/sharedBackButton\.addEventListener\("click",event=>/);
  assert.match(clients,/event\.stopImmediatePropagation\(\)/);
  assert.match(css,/#tm-players-filter-panel\[hidden\]\{\s*display:none!important/);
- assert.match(html,/admin-clients\.js\?v=5/);
+ assert.match(html,/admin-clients\.js\?v=6/);
  assert.match(html,/admin-chefs\.js\?v=5/);
- assert.match(html,/admin-clients\.css\?v=6/);
+ assert.match(html,/admin-clients\.css\?v=7/);
 });

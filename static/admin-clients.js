@@ -31,13 +31,12 @@
   window.tmClientsCurrentType=()=>selected;
   const filterChefs=()=>window.tmFilterChefAccounts?.();
 
-  // Mobile Chef creation uses the existing form inside a native modal, not an inline dropdown.
-  // Move the DOM node rather than clone it: all API handlers and validation remain attached.
-  const mobileCreate=window.matchMedia("(max-width: 830px)");
+  // Chef creation shares one native modal on desktop and mobile.
+  // Move the real form rather than clone it to retain validation and API handlers.
   const chefModal=document.getElementById("tm-clients-chef-create-dialog");
   const chefSlot=document.getElementById("tm-clients-chef-modal-slot");
   function closeChefModal(){if(chefModal?.open)chefModal.close();}
-  function openChefMobileDialog(details){
+  function openChefDialog(details){
     if(!chefModal||!chefSlot)return false;
     details.open=true;
     chefSlot.appendChild(details);
@@ -58,7 +57,6 @@
     const rect=chefModal.getBoundingClientRect();
     if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeChefModal();
   });
-  mobileCreate.addEventListener("change",()=>{if(!mobileCreate.matches)closeChefModal();});
 
 
   function selectType(type){
@@ -109,14 +107,7 @@
         if(typeof window.tmOpenPlayerCreate==="function")window.tmOpenPlayerCreate();
       }else if(type==="chef"){
         const details=document.getElementById("tm-chef-management");
-        if(details){
-          if(mobileCreate.matches){
-            openChefMobileDialog(details);
-          }else{
-            details.open=true;
-            details.scrollIntoView({behavior:"smooth",block:"nearest"});
-          }
-        }
+        if(details)openChefDialog(details);
       }else if(type==="consulta"){
         consultations.scrollIntoView({behavior:"smooth",block:"nearest"});
       }
