@@ -12595,27 +12595,31 @@ html[data-admin-theme] body #admin-workspace .tm-select-check{display:none!impor
 html[data-admin-theme] body #admin-workspace .tm-select-empty {
  display:block;padding:12px;color:var(--tm-ui-muted);font-size:12px;
 }
+/* Search inputs are styled by this served CSS file, not injected Shadow DOM
+   styles (which the admin Content-Security-Policy intentionally blocks). */
 html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel > input.tm-select-search {
- /* One authoritative search style: reset native and inherited input boxes
-    before applying the plain-text search field. */
  all:unset!important;
  -webkit-appearance:none!important;appearance:none!important;
  display:block!important;position:relative!important;box-sizing:border-box!important;
  width:100%!important;height:44px!important;min-height:44px!important;
- max-height:44px!important;margin:0 0 10px!important;padding:0 14px!important;
+ max-height:44px!important;margin:0 0 10px!important;padding:0 12px!important;
  background:transparent!important;background-color:transparent!important;background-image:none!important;
  color:var(--tm-ui-text)!important;
  border:0!important;border-radius:0!important;box-shadow:none!important;
  font:400 17px/1.3 "Inter Tight",Arial,sans-serif!important;
- font-size:17px!important;
  caret-color:var(--tm-ui-text)!important;
+}
+html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel > input.tm-select-category-search {
+ margin-bottom:22px!important;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-panel > input.tm-select-search::placeholder {
  color:var(--tm-ui-muted)!important;opacity:1;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-panel > input.tm-select-search:focus {
- outline:none!important;
- box-shadow:inset 0 -2px var(--tm-shell-focus,#82a8c9)!important;
+ outline:none!important;box-shadow:none!important;
+}
+html[data-admin-theme] body #admin-workspace .tm-select-panel > input.tm-select-search:focus-visible {
+ box-shadow:inset 0 -1px var(--tm-shell-focus,#82a8c9)!important;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-shell > .tm-select-trigger:focus-visible,
 html[data-admin-theme] body #admin-workspace .tm-select-option:focus-visible {
