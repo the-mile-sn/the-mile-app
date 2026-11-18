@@ -129,7 +129,7 @@ test("Chef account access stays in profile; server tickets are admin-only and sc
   assert.match(adminApp,/role='chef' AND active=1/);
   assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
   assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
-  assert.match(html,/admin-chefs\.js\?v=6/);
+  assert.match(html,/admin-chefs\.js\?v=7/);
   assert.match(html,/admin-clients\.js\?v=6/);
   assert.match(html,/admin-clients\.css\?v=8/);
 });
@@ -148,7 +148,7 @@ test("Chef detail reuses the single Player profile back control and hides accoun
  assert.match(clients,/event\.stopImmediatePropagation\(\)/);
  assert.match(css,/#tm-players-filter-panel\[hidden\]\{\s*display:none!important/);
  assert.match(html,/admin-clients\.js\?v=6/);
- assert.match(html,/admin-chefs\.js\?v=6/);
+ assert.match(html,/admin-chefs\.js\?v=7/);
  assert.match(html,/admin-clients\.css\?v=8/);
 });
 
@@ -163,8 +163,11 @@ test("Chef activity uses the approved menu accordion and the unfiltered audit fe
   assert.match(palette,/:is\(#menu-history,#profile-recipe-access,#tm-chef-menu-review\)\[open\]/);
   assert.doesNotMatch(chefs,/tm-chef-filter-player|Histórico e validações|Consulta quem alterou o planeamento/);
   assert.doesNotMatch(css,/#tm-chef-menu-review \.tm-chef-summary/);
-  assert.match(chefs,/api\("\/api\/v2\/admin\/chef-activity"\)/);
-  assert.match(html,/admin-chefs\.js\?v=6/);
+  assert.match(chefs,/\$\("athlete"\)\?\.value/);
+  assert.match(chefs,/\/api\/v2\/admin\/chef-activity\?athlete_id=/);
+  assert.match(chefs,/\$\("athlete"\)\?\.addEventListener\("change"/);
+  assert.doesNotMatch(chefs,/tm-chef-filter-player/);
+  assert.match(html,/admin-chefs\.js\?v=7/);
   assert.match(html,/admin-chefs\.css\?v=3/);
   assert.match(html,/admin-clients\.css\?v=8/);
   assert.match(html,/admin-surface-palette\.css\?v=205/);

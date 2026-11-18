@@ -300,11 +300,21 @@
     q.oninput=()=>{clearTimeout(t);t=setTimeout(load,240);};
     await load();
   }
+  let activityRevision=0;
   async function loadActivity(){
-    // The main planning page already supplies the player context. The audit feed
-    // is an unfiltered record of all Chef changes and execution events.
-    const data=await api("/api/v2/admin/chef-activity");
-    const all=data.activity||[],host=$("tm-chef-activity");
+    // Use the player already selected at the top of Planeamento; no second picker.
+    const athleteId=$("athlete")?.value||"";
+    const revision=++activityRevision;
+    const host=$("tm-chef-activity");
+    if(!athleteId){
+      host.replaceChildren(node("p","tm-chef-muted","Seleciona um jogador no topo do Planeamento."));
+      $("tm-chef-pending").hidden=true;
+      return;
+    }
+    const path="/api/v2/admin/chef-activity?athlete_id="+encodeURIComponent(athleteId);
+    const data=await api(path);
+    if(revision!==activityRevision||$("athlete")?.value!==athleteId)return;
+    const all=data.activity||[];
     host.replaceChildren();
     const pending=all.filter(a=>a.event_type==="menu"&&["pending_review","pending_validation"].includes(a.status)).length;
     $("tm-chef-pending").hidden=pending===0;
@@ -360,6 +370,11 @@
     feedback.textContent="";
     try{await loadActivity();}
     catch(e){feedback.textContent=noteMessage(e);}
+  });
+  $("athlete")?.addEventListener("change",()=>{
+    if(!review.open)return;
+    feedback.textContent="";
+    loadActivity().catch(e=>feedback.textContent=noteMessage(e));
   });
   form.onsubmit=async event=>{
     event.preventDefault();
