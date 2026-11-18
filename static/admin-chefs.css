@@ -63,6 +63,8 @@
 #tm-chef-menu-review .tm-chef-activity-card[hidden],
 #tm-chef-menu-review .tm-chef-activity-filter-empty[hidden],
 #tm-chef-menu-review .tm-chef-count[hidden]{display:none!important}
+/* Preserve native details semantics with the author-level grid rules below. */
+#tm-chef-menu-review .tm-chef-activity-card:not([open])>.tm-chef-activity-detail{display:none!important}
 #tm-chef-menu-review .tm-chef-activity-row{
  display:grid;grid-template-columns:74px minmax(0,1fr) auto 18px;
  align-items:center;gap:15px;min-height:72px;padding:13px 16px;

@@ -168,7 +168,7 @@ test("Chef activity uses the approved menu accordion and the unfiltered audit fe
   assert.match(chefs,/\$\("athlete"\)\?\.addEventListener\("change"/);
   assert.doesNotMatch(chefs,/tm-chef-filter-player/);
   assert.match(html,/admin-chefs\.js\?v=9/);
-  assert.match(html,/admin-chefs\.css\?v=4/);
+  assert.match(html,/admin-chefs\.css\?v=5/);
   assert.match(html,/admin-clients\.css\?v=9/);
   assert.match(html,/admin-surface-palette\.css\?v=205/);
 });
@@ -195,10 +195,11 @@ test("Chef audit uses soft expandable records and player-scoped filters without 
  assert.match(chefs,/activityCreatedDate\(entry\.created_at\)/);
  assert.match(chefs,/function activityDate\(iso\)/);
  assert.match(css,/#tm-chef-menu-review \.tm-chef-activity-card\{/);
+ assert.match(css,/#tm-chef-menu-review \.tm-chef-activity-card:not\(\[open\]\)>\.tm-chef-activity-detail\{display:none!important\}/);
  assert.match(css,/background:var\(--tm-ui-subcard\);border:0/);
  assert.match(css,/font:400 11px\/1\.2 "Inter Tight"/);
  assert.doesNotMatch(clientsCss,/#tm-chef-menu-review \.tm-chef-activity-card/);
  assert.match(html,/admin-chefs\.js\?v=9/);
- assert.match(html,/admin-chefs\.css\?v=4/);
+ assert.match(html,/admin-chefs\.css\?v=5/);
  assert.match(html,/admin-clients\.css\?v=9/);
 });
