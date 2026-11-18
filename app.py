@@ -1396,7 +1396,7 @@ def application(env, start_response):
                               (body['language'],user['id']))
                     c.commit()
                     return respond(200,{'language':body['language']})
-                if path == '/api/v2/chef/me':
+                if path == '/api/v2/chef/me' and method == 'GET':
                     return respond(200,{'chef':{'id':user['id'],'name':user['name'],
                          'username':user['username'],'language':athlete['language']},
                          'player':{'id':aid,'name':athlete['name']}})
@@ -1448,7 +1448,7 @@ def application(env, start_response):
                         AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
                         ('%'+search+'%',)).fetchall()
                     return respond(200,{'dishes':[dict(row) for row in rows]})
-                if path == '/api/v2/chef/menus':
+                if path == '/api/v2/chef/menus' and method == 'GET':
                     query=parse_qs(env.get('QUERY_STRING',''))
                     try:
                         items=chef_collaboration_v2.list_menus(c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0])
