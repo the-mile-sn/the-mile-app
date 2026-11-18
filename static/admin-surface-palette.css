@@ -12558,3 +12558,11 @@ html[data-admin-theme] body #admin-workspace .tm-select-trigger:focus-visible,ht
 /* Existing searchable person pickers: harmonise dropdown surface without changing selection handlers. */
 html[data-admin-theme] body #admin-workspace :is(.tm-clinical-results,.tm-planning-results){border:1px solid color-mix(in srgb,var(--tm-ui-text) 10%,transparent)!important;border-radius:14px!important;box-shadow:0 12px 32px rgba(0,0,0,.13)!important;padding:5px!important;background:var(--tm-ui-card,var(--tm-ui-search))!important}
 html[data-admin-theme] body #admin-workspace :is(.tm-clinical-option,.tm-planning-result){min-height:44px!important;border-radius:9px!important}
+
+/* Root fix: legacy field-specific native-select rules must not paint above the shared control. */
+#admin-workspace .tm-select-shell > select.tm-select-native{display:none!important;appearance:none!important}
+#admin-workspace .tm-select-shell{display:block!important;position:relative!important;min-width:0}
+#admin-workspace .tm-select-shell > .tm-select-trigger{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+#admin-workspace .tm-select-shell > .tm-select-panel:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+#admin-workspace .tm-select-shell > .tm-select-panel[hidden]{display:none!important}
+#admin-workspace .tm-select-shell .tm-select-chevron{display:inline-block!important;flex:none!important}
