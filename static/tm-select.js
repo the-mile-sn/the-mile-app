@@ -13,12 +13,26 @@ function setup(select){
  const trigger=document.createElement('button');trigger.type='button';trigger.className='tm-select-trigger';
  trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');
  const label=document.createElement('span');label.className='tm-select-value';
- const arrow=document.createElement('span');arrow.className='tm-select-chevron';arrow.setAttribute('aria-hidden','true');arrow.textContent='⌄';
+ const arrow=document.createElement('span');arrow.className='tm-select-chevron';arrow.setAttribute('aria-hidden','true');arrow.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
  trigger.append(label,arrow);
  const panel=document.createElement('div');panel.className='tm-select-panel';panel.hidden=true;
  const list=document.createElement('div');list.className='tm-select-options';list.setAttribute('role','listbox');
  panel.append(list);
- const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.parentNode.insertBefore(shell,legacy);shell.append(select,trigger,panel);legacy.remove()}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
+ const legacy=select.closest('.tm-two-line-select');
+ const preservePlayer=select.id==='tm-players-access'&&legacy;
+ if(preservePlayer){
+  legacy.classList.add('tm-select-legacy-preserved');
+  shell.classList.add('tm-select-preserve-field');
+  legacy.append(shell);
+  shell.append(select,trigger,panel);
+ }else if(legacy){
+  legacy.parentNode.insertBefore(shell,legacy);
+  shell.append(select,trigger,panel);
+  legacy.remove();
+ }else{
+  select.parentNode.insertBefore(shell,select);
+  shell.append(select,trigger,panel);
+ }
  select.classList.add('tm-select-native');
  const state={select,shell,trigger,label,panel,list,search:null};
  instances.set(select,state);
@@ -26,6 +40,7 @@ function setup(select){
  const close=()=>{panel.hidden=true;trigger.setAttribute('aria-expanded','false');shell.classList.remove('tm-select-open')};
  const render=()=>{
   label.textContent=select.selectedOptions[0]?.textContent?.trim()||'Selecionar';
+  if(preservePlayer){const visible=legacy.querySelector(':scope > .tm-select-value');if(visible)visible.textContent=label.textContent;}
   trigger.disabled=select.disabled;
   if(panel.hidden)return;
   const current=state.search?.value?.toLocaleLowerCase('pt-PT')||'';
