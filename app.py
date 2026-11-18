@@ -778,7 +778,7 @@ def application(env, start_response):
                     or path.startswith('/api/v2/admin/appointments/')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
-            if (path in ('/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
+            if (path in ('/chef', '/chef.js', '/chef.css', '/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
                     or path.startswith('/api/v2/player/')
                     or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
@@ -791,6 +791,7 @@ def application(env, start_response):
             '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
+            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
@@ -3245,6 +3246,31 @@ def application(env, start_response):
                     except (ValueError,TypeError):
                         raise Problem(400,'invalid_menu_range')
                     return respond(200,{'menus':items})
+                if path == '/api/v2/chef/calendar':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    first=(q.get('start') or [''])[0]
+                    last=(q.get('end') or [''])[0]
+                    try:
+                        matches=microcycles_v2.list_matches(c,aid)
+                        days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(
+                            first,last,[m['match_date'] for m in matches]))
+                        model_data=microcycles_v2.get_model(c,aid)
+                        colors=calendar_v2.effective_colors(c,aid,days,model_data)
+                    except ValueError:
+                        raise Problem(400,'invalid_calendar_range')
+                    return respond(200,{'days':days,'effective_colors':colors})
+                if path.startswith('/api/v2/chef/dish-photo/'):
+                    identifier=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier):
+                        raise Problem(404,'not_found')
+                    linked=c.execute("""SELECT d.image_filename FROM v2_dish_library d
+                        JOIN v2_weekly_menus m ON m.kind='dish' AND m.dish_id=d.id
+                        WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",
+                        (aid,identifier)).fetchone()
+                    if not linked: raise Problem(404,'not_found')
+                    image=read_dish_image(c,linked['image_filename'])
+                    if image is None: raise Problem(404,'not_found')
+                    return respond(200,image,'image/webp')
                 if path == '/api/v2/chef/plans':
                     return respond(200,{'options_by_color':plan_import_v2.published_meal_options(c,aid)})
                 raise Problem(404,'not_found')
