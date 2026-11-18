@@ -237,8 +237,12 @@ function renderProfile(root){
   for(const code of ["pt","en"]){
     const button=node("button",lang===code?"active":"",code.toUpperCase());
     button.type="button";button.onclick=async()=>{
-      // Local preference until server-side updating is enabled.
-      lang=code;render();
+      button.disabled=true;
+      try{
+        await request("/api/v2/chef/preferences","PUT",{language:code});
+        lang=code;chef.language=code;render();
+      }catch(err){showError(txt().fail);}
+      finally{button.disabled=false;}
     };
     segment.append(button);
   }
