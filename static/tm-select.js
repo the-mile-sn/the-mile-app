@@ -51,24 +51,10 @@ function setup(select){
    input.setAttribute('aria-label','Pesquisar opções');
    input.autocomplete='off';
    if(category){
+    // CSP blocks dynamically injected style elements. Use the served stylesheet.
     input.inputMode='search';
-    const host=document.createElement('span');
-    host.className='tm-category-search-host';
-    const shadow=host.attachShadow({mode:'open'});
-    const style=document.createElement('style');
-    style.textContent=`
-     :host{display:block;box-sizing:border-box;width:100%;margin:0 0 10px}
-     input{display:block;box-sizing:border-box;width:100%;height:44px;
-      margin:0;padding:0 12px;border:0;border-bottom:2px solid transparent;
-      border-radius:0;outline:0;box-shadow:none;background:transparent;
-      appearance:none;-webkit-appearance:none;color:var(--tm-ui-text,#222);
-      caret-color:currentColor;font:400 17px/1.3 "Inter Tight",Arial,sans-serif;
-      -webkit-text-size-adjust:100%}
-     input::placeholder{color:var(--tm-ui-muted,#82858d);opacity:1}
-     input:focus-visible{border-bottom-color:var(--tm-shell-focus,#82a8c9)}
-    `;
-    shadow.append(style,input);
-    panel.insertBefore(host,list);
+    input.classList.add('tm-select-category-search');
+    panel.insertBefore(input,list);
    }else{
     panel.insertBefore(input,list);
     for(const [property,value] of Object.entries({
