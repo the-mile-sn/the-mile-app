@@ -46,12 +46,8 @@ function setup(select){
   panel.hidden=false;trigger.setAttribute('aria-expanded','true');shell.classList.add('tm-select-open');
   if(select.options.length>9&&!state.search){
    const input=document.createElement('input');input.className='tm-select-search';input.type='search';input.placeholder='Pesquisar...';
-   // This control is nested in a white dropdown card, so it uses depth two.
-   // Set the semantic token on the created control to prevent inherited legacy
-   // input rules (some marked !important) from applying the third-depth blue.
-   input.style.setProperty('background','var(--tm-ui-subcard)','important');
-   input.style.setProperty('background-color','var(--tm-ui-subcard)','important');
-   input.style.setProperty('background-image','none','important');input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
+   // The surface is owned by the theme CSS, not an inline !important value.
+   // Keep theme switching correct and avoid inheriting a deeper surface token.input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('input',render);panel.insertBefore(input,list);state.search=input;
   }
   if(state.search)state.search.value='';
   render();(state.search||list.querySelector('[aria-selected="true"]')||list.querySelector('button'))?.focus();
