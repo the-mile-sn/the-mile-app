@@ -8,6 +8,8 @@ const instances=new Map();
 function setup(select){
  if(instances.has(select)||select.classList.contains('tm-select-native')||select.hidden||select.getAttribute('aria-hidden')==='true'||select.tabIndex===-1||select.closest('.tm-select-shell'))return;
  const shell=document.createElement('span');shell.className='tm-select-shell';
+ const isPlanFilter=select.id==='library-player-filter'||select.id==='library-type-filter';
+ if(isPlanFilter){shell.classList.add('tm-select-plan-filter');shell.dataset.caption=select.id==='library-player-filter'?'Jogador':'Tipo de plano';}
  const trigger=document.createElement('button');trigger.type='button';trigger.className='tm-select-trigger';
  trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');
  const label=document.createElement('span');label.className='tm-select-value';
@@ -16,7 +18,7 @@ function setup(select){
  const panel=document.createElement('div');panel.className='tm-select-panel';panel.hidden=true;
  const list=document.createElement('div');list.className='tm-select-options';list.setAttribute('role','listbox');
  panel.append(list);
- const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.classList.add('tm-select-legacy-converted');legacy.parentNode.insertBefore(shell,legacy);shell.append(select,trigger,panel);legacy.remove()}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
+ const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.parentNode.insertBefore(shell,legacy);shell.append(select,trigger,panel);legacy.remove()}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
  select.classList.add('tm-select-native');
  const state={select,shell,trigger,label,panel,list,search:null};
  instances.set(select,state);
