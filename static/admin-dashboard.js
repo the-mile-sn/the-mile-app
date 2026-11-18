@@ -892,7 +892,7 @@ function ensurePlanningOnlyView(){
   positionPlayerSuggestions();
  }
  function openPlayerSuggestions(){
-  if(playersPage.hidden||!profilePanel.hidden)return;
+  if(playersPage.hidden||!profilePanel.hidden||["chef","consulta"].includes(window.tmClientsCurrentType?.()))return;
   playerSearchOpen=true;playerSearchOptions.hidden=false;
   playerSearchInput.setAttribute("aria-expanded","true");
   renderPlayerSuggestions();
@@ -974,7 +974,10 @@ function ensurePlanningOnlyView(){
     const img=el("img");img.src="/api/players/"+encodeURIComponent(p.user_id)+"/photo?thumb=1";img.alt="";img.loading="lazy";img.addEventListener("error",()=>img.remove());avatar.append(img);
    }
    const person=el("span","tm-p-identity");person.append(el("strong","",p.name),el("small","",p.username?"@"+p.username:"Conta ainda não criada"));
+   person.append(el("span","tm-client-type-pill tm-client-type-pill-mobile","Acompanhamento"));
    link.append(avatar,person);link.addEventListener("click",()=>openPlayerProfile(p.id));identity.append(link);
+   const clientType=el("div","tm-client-type-cell");
+   clientType.append(el("span","tm-client-type-pill tm-client-type-acompanhamento","Acompanhamento"));
    const status=el("div","tm-player-card-status");
    status.append(el("span","tm-p-status tm-p-"+p.access_status,playerStatus[p.access_status]||"—"));
    const renewal=el("div","tm-player-card-renewal");
@@ -991,11 +994,12 @@ function ensurePlanningOnlyView(){
    app.title=app.disabled?"Jogador sem acesso ativo":"Entrar na app";
    app.addEventListener("click",()=>enterPlayerApp(p.user_id,app,$("tm-players-error")));
    actions.append(app);action.append(actions);
-   card.append(identity,status,renewal,action);
+   card.append(identity,clientType,status,renewal,action);
    // A semantic button stretches over the card; the App action remains independent.
    body.append(card);
   }
-  if(!items.length)body.append(el("p","tm-p-empty","Nenhum jogador corresponde aos filtros."));
+  if(!items.length&&window.tmClientsCurrentType?.()!=="all")
+    body.append(el("p","tm-p-empty","Nenhum acompanhamento corresponde aos filtros."));
  }
  async function loadPlayers(){
   const data=await request("/api/v2/admin/players-overview");
@@ -1006,6 +1010,7 @@ function ensurePlanningOnlyView(){
   renderPlayers();renderPlayerSuggestions();
  }
  window.tmRefreshPlayersList=()=>loadPlayers();
+ window.tmRefreshPlayerCards=()=>renderPlayers();
  function openPlayersList(){closeClinical();
   if($("admin-workspace").hidden)return;
   section.hidden=true;legacy.hidden=true;playersPage.hidden=false;navActive(playersBtn);

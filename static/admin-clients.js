@@ -1,78 +1,67 @@
 "use strict";
-/* Clientes is the single account-management entry. Underlying athlete and
-   Chef security models remain separate: never relabel database roles. */
+/* Clientes is a shared account list. Filter the existing underlying account types;
+   do not change database roles or create consultation credentials. */
 (() => {
   const page=document.getElementById("tm-players-page");
-  const tabs=document.getElementById("tm-clients-types");
+  const selector=document.getElementById("tm-clients-type-filter");
+  const value=document.getElementById("tm-clients-type-value");
   const chooser=document.getElementById("tm-clients-create-choice");
   const newButton=document.getElementById("tm-players-new");
-  const inlineButton=document.getElementById("tm-clients-new-inline");
-  const inlineWrap=document.getElementById("tm-clients-create-shortcut");
-  const athleteList=page?.querySelector(".tm-players-list-surface");
+  const panel=document.getElementById("tm-players-filter-panel");
+  const list=document.getElementById("tm-clients-account-list");
+  const players=document.getElementById("tm-players-body");
+  const chefsList=document.getElementById("tm-chef-accounts");
   const archive=document.getElementById("tm-players-archived-panel");
   const profile=document.getElementById("tm-players-profile");
-  const profileNav=document.getElementById("tm-players-profile-nav");
   const consultations=document.getElementById("tm-clients-consultations-panel");
-  const chefs=document.getElementById("tm-clients-chefs-panel");
-  if(!page||!tabs||!chooser||!newButton||!athleteList||!archive||!profile||!consultations||!chefs)return;
+  const chefsPanel=document.getElementById("tm-clients-chefs-panel");
+  const search=document.getElementById("tm-players-filter");
+  const status=document.getElementById("tm-players-access");
+  if(!page||!selector||!value||!chooser||!newButton||!panel||!list||!players||!chefsList||!archive||!profile||!consultations||!chefsPanel||!search||!status)return;
 
-  const validTypes=new Set(["acompanhamento","consulta","chef"]);
-  let selected="acompanhamento";
+  const validTypes=new Set(["all","acompanhamento","consulta","chef"]);
+  let selected="all";
   const detailVisible=()=>!profile.hidden;
-  const typeButtons=[...tabs.querySelectorAll("[data-client-type]")];
+  window.tmClientsCurrentType=()=>selected;
+  const filterChefs=()=>window.tmFilterChefAccounts?.();
 
-  function selectType(type,focus=false){
+  function selectType(type){
     if(!validTypes.has(type))return;
     selected=type;
+    selector.value=type;
+    value.textContent=selector.options[selector.selectedIndex]?.textContent||"Todos";
     const isProfile=detailVisible();
-    tabs.hidden=isProfile;
-    for(const button of typeButtons){
-      const active=button.dataset.clientType===type;
-      button.setAttribute("aria-selected",String(active));
-      button.tabIndex=active?0:-1;
-      if(active&&focus)button.focus();
-    }
-    athleteList.hidden=isProfile||type!=="acompanhamento";
-    archive.hidden=isProfile||type!=="acompanhamento";
+    panel.hidden=isProfile;
+    list.hidden=isProfile||type==="consulta";
+    players.hidden=isProfile||(type!=="all"&&type!=="acompanhamento");
+    chefsList.hidden=isProfile||(type!=="all"&&type!=="chef");
+    archive.hidden=isProfile||(type!=="all"&&type!=="acompanhamento");
     consultations.hidden=isProfile||type!=="consulta";
-    chefs.hidden=isProfile||type!=="chef";
-    inlineWrap.hidden=isProfile||type==="acompanhamento";
-    if(type==="chef"&&!isProfile){
-      // Opening this existing native <details> loads the authorized linked
-      // accounts, without moving the menus review panel away from Planning.
-      const details=document.getElementById("tm-chef-management");
-      if(details)details.open=true;
+    chefsPanel.hidden=isProfile||type!=="chef";
+    // Actual Chef accounts appear within the same list of cards; management stays in Clientes.
+    if(!isProfile&&!page.hidden&&(type==="all"||type==="chef")) {
+      Promise.resolve(window.tmRefreshChefAccounts?.()).catch(error=>{
+        const feedback=document.getElementById("tm-chef-account-feedback");
+        if(feedback)feedback.textContent="Não foi possível carregar as contas Chef: "+error.message;
+      });
     }
+    window.tmRefreshPlayerCards?.();
+    filterChefs();
   }
-  for(const button of typeButtons){
-    button.addEventListener("click",()=>selectType(button.dataset.clientType));
-    button.addEventListener("keydown",event=>{
-      if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
-      event.preventDefault();
-      const index=typeButtons.indexOf(button);
-      const next=event.key==="Home"?0:event.key==="End"?typeButtons.length-1:
-        (index+(event.key==="ArrowRight"?1:-1)+typeButtons.length)%typeButtons.length;
-      selectType(typeButtons[next].dataset.clientType,true);
-    });
-  }
-  function closeChoice(){
-    if(chooser.open)chooser.close();
-  }
-  function openChoice(){
-    if(!chooser.open)chooser.showModal();
-  }
-  // The existing athlete-create handler lives in admin-dashboard.js.
-  // Intercept only the top-level account chooser and preserve the real
-  // athlete dialog and its per-field validations.
+  selector.addEventListener("change",()=>selectType(selector.value));
+  search.addEventListener("input",filterChefs);
+  status.addEventListener("change",filterChefs);
+  function closeChoice(){if(chooser.open)chooser.close();}
+  function openChoice(){if(!chooser.open)chooser.showModal();}
+  // Preserve the real athlete creation form and all its field validations.
   newButton.addEventListener("click",event=>{
     event.preventDefault();event.stopImmediatePropagation();openChoice();
   },true);
-  inlineButton.addEventListener("click",openChoice);
-  document.getElementById("tm-clients-choice-close").addEventListener("click",closeChoice);
+  document.getElementById("tm-clients-choice-close")?.addEventListener("click",closeChoice);
   chooser.addEventListener("click",event=>{
     if(event.target!==chooser)return;
-    const r=chooser.getBoundingClientRect();
-    if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeChoice();
+    const rect=chooser.getBoundingClientRect();
+    if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeChoice();
   });
   for(const button of chooser.querySelectorAll("[data-new-client-type]")){
     button.addEventListener("click",()=>{
@@ -85,35 +74,28 @@
         const details=document.getElementById("tm-chef-management");
         if(details){
           details.open=true;
-          details.scrollIntoView({behavior:"smooth",block:"start"});
-          const first=details.querySelector("input[name=name]");
-          if(first)first.focus({preventScroll:true});
+          details.scrollIntoView({behavior:"smooth",block:"nearest"});
+          // No autofocus: do not force the iPhone keyboard open.
         }
       }else if(type==="consulta"){
         consultations.scrollIntoView({behavior:"smooth",block:"nearest"});
       }
     });
   }
-  // A player profile is a subpage of Acompanhamentos. Hide the account-type
-  // tabs while inside that existing screen, then restore on return.
-  const observer=new MutationObserver(()=>{
+  new MutationObserver(()=>{
     if(detailVisible()){
-      selected="acompanhamento";
-      tabs.hidden=true;
-      chefs.hidden=true;
-      consultations.hidden=true;
-      inlineWrap.hidden=true;
+      panel.hidden=true;list.hidden=true;archive.hidden=true;
+      chefsPanel.hidden=true;consultations.hidden=true;
     }else{
-      selectType(selected);
+      selectType(selected==="consulta"?"all":selected);
     }
-  });
-  observer.observe(profile,{attributes:true,attributeFilter:["hidden"]});
-  if(profileNav)observer.observe(profileNav,{attributes:true,attributeFilter:["hidden"]});
-  // Re-entering Clientes from the main navigation always shows its default
-  // list, just as the previous Jogadores navigation did.
+  }).observe(profile,{attributes:true,attributeFilter:["hidden"]});
+  // Re-entering Clientes shows the full client list, not a separate account tab.
   document.getElementById("tm-admin-nav-players")?.addEventListener("click",
-    ()=>selectType("acompanhamento"),true);
-  // Optional internal entry point for future workspace navigation.
+    ()=>selectType("all"),true);
+  new MutationObserver(()=>{
+    if(!page.hidden&&!detailVisible())selectType(selected);
+  }).observe(page,{attributes:true,attributeFilter:["hidden"]});
   window.tmSelectClientType=selectType;
-  selectType(selected);
+  selectType("all");
 })();

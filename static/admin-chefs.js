@@ -20,8 +20,6 @@
         <div class="tm-chef-create-actions"><button class="tm-action-primary" type="submit">Criar conta Chef</button></div>
         <p class="tm-chef-error" id="tm-chef-create-feedback" role="alert"></p>
       </form>
-      <div id="tm-chef-accounts" class="tm-chef-accounts"></div>
-      <p id="tm-chef-account-feedback" role="status"></p>
     </div>`;
   clientsPanel.append(section);
   const review=document.createElement("details");
@@ -81,13 +79,24 @@
     const data=await api("/api/v2/admin/chefs");
     admins=data.chefs||[];
     const host=$("tm-chef-accounts");host.replaceChildren();
-    if(!admins.length){host.append(node("p","tm-chef-muted","Ainda não existem contas Chef."));return;}
+    if(!admins.length){
+      host.append(node("p","tm-p-empty tm-chef-empty","Ainda não existem contas Chef."));
+      window.tmFilterChefAccounts?.();
+      return;
+    }
     for(const chef of admins){
-      const row=node("div","tm-chef-account");
+      const row=node("article","tm-chef-account tm-client-account-row");
+      row.setAttribute("role","listitem");
+      row.dataset.search=[chef.name,chef.username,chef.athlete_name].join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      row.dataset.access=chef.active?"active":"inactive";
       const info=node("div","tm-chef-account-info");
       info.append(node("strong","",chef.name),node("small","",chef.username+" · "+chef.athlete_name+" · "+chef.language.toUpperCase()));
+      info.append(node("span","tm-client-type-pill tm-client-type-pill-mobile tm-client-type-chef","Chef"));
+      const typeCell=node("div","tm-client-type-cell");
+      typeCell.append(node("span","tm-client-type-pill tm-client-type-chef","Chef"));
+      const state=node("div","tm-chef-account-status");
+      state.append(node("span","tm-p-status tm-p-"+(chef.active?"active":"inactive"),chef.active?"Ativo":"Inativo"));
       const controls=node("div","tm-chef-account-actions");
-      controls.append(node("span","tm-chef-state"+(chef.active?"":" is-off"),chef.active?"Ativo":"Inativo"));
       controls.append(button(chef.active?"Bloquear":"Ativar",async()=>{
         const active=!chef.active;
         if(!window.confirm((active?"Ativar":"Bloquear")+" a conta de "+chef.name+"?"))return;
@@ -109,9 +118,32 @@
           accountFeedback.textContent="Palavra-passe alterada e sessões anteriores terminadas.";
         }catch(e){accountFeedback.textContent=noteMessage(e);}
       }));
-      row.append(info,controls);host.append(row);
+      row.append(info,typeCell,state,controls);host.append(row);
     }
+    window.tmFilterChefAccounts?.();
   }
+  function filterChefAccounts(){
+    const host=$("tm-chef-accounts");
+    const query=String($("tm-players-filter")?.value||"").normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+    const status=$("tm-players-access")?.value||"all";
+    const type=$("tm-clients-type-filter")?.value||"all";
+    let shown=0;
+    for(const row of host.querySelectorAll(".tm-chef-account")){
+      const matches=(type==="all"||type==="chef")&&(status==="all"||row.dataset.access===status)&&
+        query.split(/\s+/).every(term=>!term||row.dataset.search.includes(term));
+      row.hidden=!matches;
+      if(matches)shown++;
+    }
+    host.querySelector(".tm-chef-empty")?.toggleAttribute("hidden",type!=="chef");
+    let empty=host.querySelector(".tm-chef-filter-empty");
+    if(!shown&&admins.length&&type==="chef"){
+      if(!empty){empty=node("p","tm-p-empty tm-chef-filter-empty","Nenhuma conta Chef corresponde aos filtros.");host.append(empty);}
+      empty.hidden=false;
+    }else if(empty){empty.hidden=true;}
+  }
+  window.tmFilterChefAccounts=filterChefAccounts;
+  window.tmRefreshChefAccounts=loadAccounts;
   function localDate(utc){
     const d=new Date(Number(utc)*1000);
     return Number.isFinite(d.getTime())?

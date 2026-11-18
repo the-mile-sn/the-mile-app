@@ -51,3 +51,248 @@
  #tm-chef-menu-review .tm-chef-content{padding:0 14px 18px}
  #tm-chef-menu-review .tm-chef-activity{grid-template-columns:1fr}
 }
+
+/* Clientes unified list · 18/11/2026 · official Guide Visual */
+#tm-players-page :is(#tm-players-filter-panel,#tm-clients-account-list,#tm-players-body,#tm-chef-accounts,#tm-clients-chefs-panel,#tm-clients-consultations-panel,#tm-players-archived-panel)[hidden],
+#tm-players-page .tm-chef-account[hidden],#tm-players-page :is(.tm-chef-empty,.tm-chef-filter-empty)[hidden]{display:none!important}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel{
+ display:grid!important;grid-template-columns:minmax(160px,220px) minmax(210px,1fr) minmax(145px,210px)!important;
+ align-items:center!important;gap:12px!important;box-sizing:border-box;width:100%;
+ margin:0 0 14px!important;padding:14px 16px!important;
+ background:var(--tm-ui-card)!important;border:0!important;border-radius:16px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-clients-type-control{
+ grid-column:1;grid-row:1;display:block!important;width:100%!important;max-width:none!important;min-width:0!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-search-label{
+ grid-column:2;grid-row:1;width:100%;min-width:0;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-header-select:not(.tm-clients-type-control){
+ grid-column:3;grid-row:1;width:100%!important;max-width:none!important;min-width:0!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-two-line-select{
+ background:var(--tm-ui-subcard)!important;height:55px!important;min-height:55px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-select-caption{
+ color:var(--tm-ui-muted)!important;font:400 11px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-select-value{
+ color:var(--tm-ui-text)!important;font:500 13px/1.3 "Inter Tight",sans-serif!important;
+}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-two-line-select>select{font-size:16px!important}
+html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-search-label input{
+ background:var(--tm-ui-subcard)!important;
+}
+:root,html[data-admin-theme="dark"]{
+ --tm-client-acomp-ink:#a4c9fc;--tm-client-chef-ink:#cfb2f3;--tm-client-consulta-ink:#aab4c2;
+}
+html[data-admin-theme="light"]{
+ --tm-client-acomp-ink:#265c9d;--tm-client-chef-ink:#75409c;--tm-client-consulta-ink:#607082;
+}
+/* Standard informational pill: 26px, Regular 400/11px, 7% fill and 12% outline. */
+html[data-admin-theme] #tm-players-page .tm-client-type-pill{
+ --tm-type-ink:var(--tm-client-consulta-ink);
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;flex:none;
+ min-width:0;max-width:100%;height:26px;min-height:26px;max-height:26px;padding:0 9px;
+ background:color-mix(in srgb,var(--tm-type-ink) 7%,transparent);
+ border:1px solid color-mix(in srgb,var(--tm-type-ink) 12%,transparent);
+ border-radius:999px;box-shadow:none;color:var(--tm-type-ink);
+ font:400 11px/1.15 "Inter Tight",sans-serif;white-space:nowrap;
+}
+html[data-admin-theme] #tm-players-page :is(.tm-client-type-acompanhamento,.tm-p-identity .tm-client-type-pill-mobile){--tm-type-ink:var(--tm-client-acomp-ink)}
+html[data-admin-theme] #tm-players-page .tm-client-type-chef{--tm-type-ink:var(--tm-client-chef-ink)}
+html[data-admin-theme] #tm-players-page .tm-client-type-cell{display:flex;align-items:center;min-width:0}
+html[data-admin-theme] #tm-players-page .tm-client-type-pill-mobile{display:none}
+html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+ grid-template-columns:minmax(170px,2fr) minmax(105px,.8fr) minmax(83px,.65fr) minmax(110px,.9fr) auto!important;
+ gap:12px!important;
+}
+html[data-admin-theme] #tm-players-page #tm-clients-account-list{
+ min-width:0;margin:0 0 14px;box-sizing:border-box;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts{
+ display:flex!important;flex-direction:column;gap:10px;margin:0;padding:0;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts[hidden]{display:none!important}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account{
+ display:grid!important;box-sizing:border-box;align-items:center;gap:12px;
+ grid-template-columns:minmax(170px,2fr) minmax(105px,.8fr) minmax(83px,.65fr) minmax(110px,.9fr) auto;
+ width:100%;min-width:0;min-height:94px;margin:0;padding:19px 22px;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text);
+ border:0!important;border-radius:16px!important;box-shadow:none!important;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-info{
+ display:flex;flex-direction:column;gap:4px;min-width:0;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-info strong{
+ font-size:13px;font-weight:600;line-height:1.3;color:var(--tm-ui-text);overflow-wrap:anywhere;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-info small{
+ font-size:11px;line-height:1.4;color:var(--tm-ui-muted);overflow-wrap:anywhere;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-status{justify-self:start;min-width:0}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-status .tm-p-status{
+ --status-ink:#aab4c2;display:inline-flex;align-items:center;
+ height:26px;min-height:26px;box-sizing:border-box;padding:0 9px;
+ background:color-mix(in srgb,var(--status-ink) 7%,transparent);
+ border:1px solid color-mix(in srgb,var(--status-ink) 12%,transparent);
+ border-radius:999px;color:var(--status-ink);font:400 11px "Inter Tight",sans-serif;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-p-active{--status-ink:#8ed0ab}
+html[data-admin-theme="light"] #tm-players-page #tm-chef-accounts .tm-p-active{--status-ink:#317154}
+html[data-admin-theme="light"] #tm-players-page #tm-chef-accounts .tm-p-inactive{--status-ink:#607082}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-actions{
+ display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;min-width:0;
+}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-actions button{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ min-height:36px;padding:8px 11px;border:0;border-radius:10px;
+ background:var(--tm-ui-subcard);color:var(--tm-ui-text);
+ box-shadow:none;font:500 12px/1.2 "Inter Tight",sans-serif;white-space:nowrap;
+}
+#tm-players-page #tm-chef-account-feedback{margin:8px 0;color:var(--tm-ui-muted);font-size:12px}
+#tm-players-page #tm-chef-account-feedback:empty{display:none}
+html[data-admin-theme] #tm-players-page #tm-chef-accounts :is(.tm-p-empty,.tm-chef-muted){color:var(--tm-ui-muted);font-size:13px}
+#tm-players-page #tm-clients-consultations-panel{
+ width:100%;max-width:none;box-sizing:border-box;margin:0 0 14px;padding:24px;
+ background:var(--tm-ui-card);color:var(--tm-ui-text);border:0;border-radius:16px;box-shadow:none;
+}
+#tm-players-page #tm-clients-consultations-panel h2{margin:0 0 10px;font-size:18px;font-weight:600}
+#tm-players-page #tm-clients-consultations-panel p{color:var(--tm-ui-muted);font-size:13px;line-height:1.55}
+#tm-players-page #tm-clients-consultations-panel .tm-client-appointments-link{
+ margin-top:10px;min-height:40px;padding:9px 13px;border:0;border-radius:12px;
+ background:var(--tm-ui-subcard);color:var(--tm-ui-text);font:500 13px "Inter Tight",sans-serif;
+}
+/* Creation dialog uses the same modal and label/value surface hierarchy as other admin editors. */
+#tm-players-page #tm-clients-create-choice{
+ box-sizing:border-box;width:calc(100% - 32px);max-width:500px;max-height:calc(100dvh - 40px);
+ margin:auto;padding:0;overflow:auto;
+ background:var(--tm-ui-card)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:18px!important;box-shadow:none!important;
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+#tm-players-page #tm-clients-create-choice::backdrop{
+ background:rgba(0,0,0,.76)!important;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+#tm-players-page #tm-clients-create-choice .tm-clients-choice-inner{box-sizing:border-box;padding:25px 26px 26px;position:relative}
+#tm-players-page #tm-clients-create-choice h2{margin:0 37px 5px 0;font-size:21px;font-weight:600;letter-spacing:-.025em;color:var(--tm-ui-text)}
+#tm-players-page #tm-clients-create-choice p{margin:0 26px 19px 0;font-size:13px;line-height:1.45;color:var(--tm-ui-muted)}
+#tm-players-page #tm-clients-create-choice .tm-clients-choice-close{
+ position:absolute;right:18px;top:15px;display:grid;place-items:center;
+ box-sizing:border-box;width:32px;height:32px;padding:0;border:0!important;border-radius:10px;
+ background:transparent!important;color:var(--tm-ui-text)!important;box-shadow:none!important;
+ font:400 20px/1 "Inter Tight",sans-serif;
+}
+#tm-players-page #tm-clients-create-choice .tm-clients-choice-options{display:grid;grid-template-columns:1fr;gap:9px}
+#tm-players-page #tm-clients-create-choice [data-new-client-type]{
+ display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;
+ width:100%;min-height:75px;gap:4px;padding:13px 16px;text-align:left;
+ background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;cursor:pointer;
+ transition:background-color .16s ease,transform .16s ease;
+}
+#tm-players-page #tm-clients-create-choice [data-new-client-type] strong{
+ font:500 14px/1.3 "Inter Tight",sans-serif;color:var(--tm-ui-text)!important;
+}
+#tm-players-page #tm-clients-create-choice [data-new-client-type] span{
+ font:400 12px/1.4 "Inter Tight",sans-serif;color:var(--tm-ui-muted)!important;
+}
+#tm-players-page #tm-clients-create-choice :is([data-new-client-type],.tm-clients-choice-close):focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px;
+}
+#tm-players-page #tm-clients-create-choice [data-new-client-type]:active{transform:scale(.992)}
+/* Chef create form: same two-line subcards, keep all original validation and endpoints. */
+#tm-players-page #tm-clients-chefs-panel{width:100%;margin:0 0 14px;min-width:0}
+#tm-players-page #tm-clients-chefs-panel #tm-chef-management{
+ margin:0;padding:0;border:0;border-radius:16px;
+ background:var(--tm-ui-card);color:var(--tm-ui-text);box-shadow:none;
+}
+#tm-players-page #tm-chef-management>.tm-chef-summary{padding:18px 22px;font-size:15px;font-weight:500}
+#tm-players-page #tm-chef-management .tm-chef-content{padding:0 22px 22px}
+#tm-players-page #tm-chef-management .tm-chef-head h3{display:none}
+#tm-players-page #tm-chef-management .tm-chef-head p{font-size:12px;line-height:1.45;color:var(--tm-ui-muted)}
+#tm-players-page #tm-chef-management .tm-chef-form{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0 0;
+}
+#tm-players-page #tm-chef-management .tm-chef-form>label{
+ display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;
+ min-width:0;min-height:73px;gap:4px;padding:10px 13px;
+ background:var(--tm-ui-subcard);border:0;border-radius:12px;
+ color:var(--tm-ui-muted);font:400 11px/1.3 "Inter Tight",sans-serif;
+}
+#tm-players-page #tm-chef-management .tm-chef-form>label :is(input,select){
+ width:100%;min-height:30px;box-sizing:border-box;margin:0;padding:0;
+ background:transparent!important;color:var(--tm-ui-text)!important;
+ border:0!important;border-radius:0;box-shadow:none!important;
+ font:500 16px/1.3 "Inter Tight",sans-serif;
+}
+#tm-players-page #tm-chef-management .tm-chef-form>label:focus-within{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px}
+#tm-players-page #tm-chef-management .tm-chef-form :is(input,select):focus-visible{outline:none!important}
+#tm-players-page #tm-chef-management .tm-chef-create-actions{grid-column:1/-1;display:flex;justify-content:flex-end}
+#tm-players-page #tm-chef-management .tm-chef-create-actions button{
+ min-height:42px;padding:10px 16px;border:0;border-radius:12px;font:500 13px "Inter Tight",sans-serif;
+}
+@media(min-width:831px) and (max-width:1180px){
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card,
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account{
+  grid-template-columns:minmax(130px,1.6fr) minmax(100px,.8fr) minmax(70px,.6fr) minmax(90px,.7fr) auto!important;
+  gap:9px!important;padding:16px 17px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel{
+  grid-template-columns:minmax(150px,190px) minmax(150px,1fr) minmax(125px,180px)!important;
+ }
+}
+@media(max-width:830px){
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel{
+  grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;
+  gap:10px 9px!important;padding:13px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-search-label{grid-column:1!important;grid-row:1!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel #tm-players-new{grid-column:2!important;grid-row:1!important;justify-self:end!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-clients-type-control{grid-column:1!important;grid-row:2!important;max-width:none!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-header-select:not(.tm-clients-type-control){grid-column:2!important;grid-row:2!important;max-width:none!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-two-line-select{min-height:52px!important;height:52px!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel #tm-players-filter{font-size:16px!important}
+ html[data-admin-theme] #tm-players-page .tm-players-card-list .tm-player-card{
+  grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;gap:13px 12px!important;
+ }
+ html[data-admin-theme] #tm-players-page .tm-player-card .tm-client-type-cell{display:none!important}
+ html[data-admin-theme] #tm-players-page .tm-p-identity .tm-client-type-pill-mobile{display:inline-flex!important;margin-top:6px!important}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account{
+  grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;
+  gap:12px!important;min-height:0!important;padding:15px 14px!important;
+ }
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account .tm-client-type-cell{display:none!important}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-info .tm-client-type-pill-mobile{display:inline-flex!important;align-self:flex-start;margin-top:5px!important}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-info{grid-column:1;grid-row:1}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-status{grid-column:1;grid-row:2}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-actions{
+  grid-column:2;grid-row:1/-1;align-self:center;flex-direction:column;align-items:stretch;
+  justify-content:center;max-width:126px;gap:7px;
+ }
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-actions button{min-height:34px;font-size:11px;padding:8px 9px}
+ #tm-players-page #tm-clients-create-choice .tm-clients-choice-inner{padding:23px 18px 20px}
+ #tm-players-page #tm-chef-management .tm-chef-form{grid-template-columns:1fr}
+ #tm-players-page #tm-chef-management .tm-chef-content{padding:0 15px 17px}
+}
+@media(max-width:360px){
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel{grid-template-columns:1fr!important;grid-template-rows:auto auto auto auto!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-search-label{grid-column:1!important;grid-row:1!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel #tm-players-new{grid-column:1!important;grid-row:2!important;justify-self:start!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-clients-type-control{grid-column:1!important;grid-row:3!important}
+ html[data-admin-theme] #tm-players-page #tm-players-filter-panel .tm-players-header-select:not(.tm-clients-type-control){grid-column:1!important;grid-row:4!important}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account{grid-template-columns:1fr!important;grid-template-rows:auto auto auto!important}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-info{grid-column:1;grid-row:1}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-status{grid-column:1;grid-row:2}
+ html[data-admin-theme] #tm-players-page #tm-chef-accounts .tm-chef-account-actions{grid-column:1;grid-row:3;flex-direction:row;justify-content:flex-start;max-width:none;flex-wrap:wrap}
+}
+@media(hover:hover) and (pointer:fine){
+ #tm-players-page #tm-chef-accounts .tm-chef-account-actions button:hover,
+ #tm-players-page #tm-clients-create-choice [data-new-client-type]:hover,
+ #tm-players-page #tm-clients-create-choice .tm-clients-choice-close:hover{background:var(--tm-ui-hover)!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #tm-players-page #tm-clients-create-choice [data-new-client-type]{transition:none!important;transform:none!important}
+}

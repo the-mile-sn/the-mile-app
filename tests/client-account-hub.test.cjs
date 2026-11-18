@@ -48,7 +48,21 @@ test("Consultations do not masquerade as an active authentication flow",()=>{
 test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
-  assert.match(html,/\/admin-clients\.js\?v=1/);
-  assert.match(html,/\/admin-clients\.css\?v=1/);
+  assert.match(html,/\/admin-clients\.js\?v=2/);
+  assert.match(html,/\/admin-clients\.css\?v=2/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
+});
+
+test("account types appear as a shared filter and a labelled card category",()=>{
+  assert.doesNotMatch(html,/id="tm-clients-types"/);
+  assert.match(html,/id="tm-clients-type-filter"/);
+  assert.match(html,/id="tm-clients-type-value"/);
+  assert.match(html,/id="tm-clients-account-list"/);
+  assert.match(html,/id="tm-chef-accounts"/);
+  assert.match(clients,/window\.tmClientsCurrentType/);
+  assert.match(clients,/window\.tmRefreshChefAccounts/);
+  assert.match(chefs,/window\.tmFilterChefAccounts/);
+  assert.match(chefs,/tm-client-type-chef/);
+  assert.match(dashboard,/tm-client-type-pill-mobile/);
+  assert.match(html,/option value="consulta">Consultas<\/option>/);
 });
