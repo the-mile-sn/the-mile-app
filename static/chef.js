@@ -763,7 +763,7 @@ function render(){
   el("day-controls").hidden=activeTab==="home"||activeTab==="menus"||activeTab==="profile";
   picker.hidden=activeTab==="home"||activeTab==="menus"||activeTab==="profile";
   for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
-  const screen=el("screen");screen.replaceChildren();
+  const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
   if(activeTab==="menus")renderMenus(screen);

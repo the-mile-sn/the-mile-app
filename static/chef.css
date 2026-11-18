@@ -375,229 +375,182 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  .mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::after{animation:none!important}
 }
 
-/* Chef daily meal: player-style single option and consumption editing, scoped only to Chef. */
+
+/* Chef home: align the summary and meal cards to the same outer and inner grid. */
+#screen.chef-screen-home>.chef-daily-summary,
+#screen.chef-screen-home>.chef-meal-card{
+ width:100%;
+ max-width:760px;
+ box-sizing:border-box;
+ margin-left:auto!important;
+ margin-right:auto!important;
+}
+#screen.chef-screen-home>.chef-daily-summary{
+ padding-left:14px!important;
+ padding-right:14px!important;
+}
+#screen.chef-screen-home>.chef-meal-card>.chef-meal-head{
+ padding-left:14px!important;
+ padding-right:14px!important;
+}
+#screen.chef-screen-home>.chef-meal-card>.chef-meal-body{
+ padding-left:14px!important;
+ padding-right:14px!important;
+}
+/* A single prescribed option is part of the meal itself, not a second card. */
 #screen .chef-option-list>.chef-single-option{
- padding:9px 4px 12px;
- margin:0;
- background:transparent;
- border:0;
- border-radius:0;
+ padding:9px 4px 12px;margin:0;
+ background:transparent;border:0;border-radius:0;
  color:var(--chef-tone-ink);
 }
 #screen .chef-single-option>.chef-single-title{
- display:block;
- margin:0 0 12px;
- color:inherit;
- font-size:15px;
- font-weight:500;
- line-height:1.4;
+ display:block;margin:0 0 12px;
+ color:inherit;font-size:15px;font-weight:500;line-height:1.4;
 }
-#screen .chef-single-option .chef-option-nutrition{
- margin:0 0 15px;
- padding:0;
-}
+#screen .chef-single-option .chef-option-nutrition{margin:0 0 15px;padding:0}
 #screen .chef-single-option .chef-option-food{
- padding:6px 0;
- color:inherit;
- font-size:14px;
- line-height:1.45;
- font-weight:400;
+ padding:6px 0;color:inherit;font-size:14px;line-height:1.45;font-weight:400;
 }
-/* The small Editar consumo pill from the player is the interaction reference. */
-#screen .chef-meal-body .chef-execution{
- display:block;
- border:0;
- padding:0;
- margin:14px 0 0;
+/* Player "Editar consumo" reference: quiet half-width pill, no strong border. */
+#screen.chef-screen-home .chef-meal-body .chef-execution{
+ display:block;border:0;padding:0;
+ margin:15px 0 3px;
  color:var(--chef-tone-ink);
 }
-#screen .chef-meal-body .chef-execution>.chef-execution-trigger{
- display:inline-flex;
- align-items:center;
- justify-content:center;
+#screen.chef-screen-home .chef-execution>.chef-execution-trigger{
+ display:inline-flex!important;align-items:center;justify-content:center;
  box-sizing:border-box;
- width:auto;min-width:0;max-width:100%;
- min-height:42px;padding:9px 17px;
- border:1px solid rgba(200,225,240,.23);
- background:rgba(255,255,255,.10);
- border-radius:999px;
- color:inherit;
- box-shadow:none;
- font:500 13px/1.25 "Inter Tight",sans-serif;
- list-style:none;
- cursor:pointer;
- transition:background .22s ease,border-color .22s ease,transform .22s ease;
+ width:calc(50% - 5px);min-width:0;max-width:100%;
+ height:46px;min-height:46px;max-height:46px;
+ padding:0 8px;margin:0;
+ border:0!important;border-radius:999px;
+ background:rgba(255,255,255,.11)!important;
+ color:inherit;box-shadow:none!important;
+ font:500 14px/1.2 "Inter Tight",sans-serif;
+ list-style:none;cursor:pointer;text-align:center;
+ transition:background .2s ease,transform .2s ease;
 }
-#screen .chef-execution>.chef-execution-trigger::-webkit-details-marker{display:none}
-#screen .chef-execution>.chef-execution-trigger::marker{content:""}
-#screen .chef-execution>.chef-execution-trigger:hover{background:rgba(255,255,255,.16)}
-#screen .chef-execution>.chef-execution-trigger:active{transform:scale(.98)}
-#screen .chef-execution[open]>.chef-execution-trigger{
- background:rgba(255,255,255,.16);
- border-color:rgba(225,240,250,.35);
+#screen.chef-screen-home .chef-execution>.chef-execution-trigger::-webkit-details-marker{display:none}
+#screen.chef-screen-home .chef-execution>.chef-execution-trigger::marker{content:""}
+#screen.chef-screen-home .chef-execution>.chef-execution-trigger:hover{
+ background:rgba(255,255,255,.17)!important;
 }
-/* Embedded editor follows the player's consumption-editor surface and field hierarchy. */
-#screen .chef-meal-body .chef-execution-form{
- position:relative;
- display:flex;
- flex-direction:column;
- gap:13px;
- margin:12px 0 0;
- padding:16px;
- width:100%;
- border:1px solid rgba(170,190,177,.23);
- border-radius:20px;
- background:#1c2421;
- color:#e9eee9;
- box-shadow:0 12px 28px rgba(0,0,0,.12);
+#screen.chef-screen-home .chef-execution>.chef-execution-trigger:active{transform:scale(.98)}
+#screen.chef-screen-home .chef-execution[open]>.chef-execution-trigger{
+ background:rgba(255,255,255,.16)!important;
 }
-#screen .chef-execution-form-head{
- display:flex;
- align-items:center;
- justify-content:space-between;
- gap:12px;
+/* Inline editor shares the meal's approved tonal background, never a black overlay. */
+#screen.chef-screen-home .chef-meal-body .chef-execution-form{
+ display:flex;flex-direction:column;gap:15px;
+ width:100%;margin:16px 0 0;padding:17px 15px;
+ border:0!important;border-radius:16px;
+ background:var(--chef-inner)!important;
+ color:var(--chef-tone-ink)!important;
+ box-shadow:none!important;
 }
-#screen .chef-execution-form-head strong{
- font-size:15px;
- font-weight:500;
+#screen.chef-screen-home .chef-execution-form-head{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
 }
-#screen .chef-execution-close{
- width:32px;height:32px;min-height:32px;
- flex:none;
+#screen.chef-screen-home .chef-execution-form-head strong{
+ font-size:15px;font-weight:500;color:inherit;
+}
+#screen.chef-screen-home .chef-execution-close{
  display:grid;place-items:center;
- border:1px solid rgba(210,225,212,.22);
- border-radius:50%;
- padding:0;
- background:transparent;
- color:#e8eee9;
- font-size:19px;
- font-weight:400;
+ flex:0 0 30px;width:30px;height:30px;min-height:30px;
+ padding:0;border:1px solid rgba(255,255,255,.16);
+ border-radius:50%;background:transparent;color:inherit;
+ font-size:18px;font-weight:400;
 }
-#screen .chef-execution-choice{
- min-width:0;
- margin:0;padding:0;
- border:0;
+#screen.chef-screen-home .chef-execution-choice{
+ min-width:0;margin:0;padding:0;border:0;
 }
-#screen .chef-execution-choice legend,
-#screen .chef-execution-field>span{
- display:block;
- margin:0 0 8px;
- padding:0;
- color:#a9b9ad;
- font-size:12px;
- font-weight:400;
- letter-spacing:.02em;
+#screen.chef-screen-home .chef-execution-choice legend,
+#screen.chef-screen-home .chef-execution-field>span{
+ display:block;margin:0 0 9px;padding:0;
+ color:inherit;opacity:.86;
+ font-size:12px;font-weight:400;letter-spacing:0;
 }
-#screen .chef-execution-states{
- display:grid;
- grid-template-columns:repeat(2,minmax(0,1fr));
- gap:7px;
+#screen.chef-screen-home .chef-execution-states{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
 }
-#screen .chef-execution-state{
- position:relative;
- display:flex;
- align-items:center;
- justify-content:center;
- text-align:center;
- min-height:46px;
- min-width:0;
- padding:8px 7px;
- border:1px solid #4a5a50;
- border-radius:11px;
- background:#28332d;
- color:#d4dfd6;
- font-size:12px;
- font-weight:400;
- line-height:1.3;
- cursor:pointer;
- transition:background .18s ease,border-color .18s ease,color .18s ease;
+#screen.chef-screen-home .chef-execution-state{
+ position:relative;display:flex;align-items:center;justify-content:center;
+ min-width:0;min-height:47px;
+ padding:10px 9px;
+ border:1px solid rgba(255,255,255,.14);
+ border-radius:999px;
+ background:rgba(255,255,255,.065);
+ color:inherit;
+ font-size:12px;font-weight:450;line-height:1.25;text-align:center;
+ transition:background .18s ease,border-color .18s ease,transform .18s ease;
 }
-#screen .chef-execution-state input{
- position:absolute;
- width:1px;height:1px;
- opacity:0;
- pointer-events:none;
+#screen.chef-screen-home .chef-execution-state:active{transform:scale(.98)}
+#screen.chef-screen-home .chef-execution-state input{
+ position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;
 }
-#screen .chef-execution-state:has(input:checked){
- background:#dcebdc;
- border-color:#dcebdc;
- color:#18251c;
- font-weight:600;
+#screen.chef-screen-home .chef-execution-state:has(input:checked){
+ background:var(--chef-tone-ink);border-color:var(--chef-tone-ink);
+ color:var(--chef-tone);font-weight:600;
 }
-#screen .chef-execution-state:focus-within{
- outline:2px solid #c8e0ce;
- outline-offset:2px;
+#screen.chef-screen-home .chef-execution-state:focus-within{
+ outline:2px solid var(--chef-tone-ink);outline-offset:2px;
 }
-#screen .chef-execution-field{
- display:flex;
- flex-direction:column;
- gap:0;
- color:#a9b9ad;
+#screen.chef-screen-home .chef-execution-field{
+ display:flex;flex-direction:column;
+ color:inherit;
 }
-#screen .chef-execution-field[hidden]{display:none!important}
-#screen .chef-execution-field>.chef-input{
- display:block;
+#screen.chef-screen-home .chef-execution-field[hidden]{display:none!important}
+#screen.chef-screen-home .chef-execution-field>.chef-input{
  box-sizing:border-box;
- width:100%;
- min-height:76px;
- margin:0;
- padding:11px 12px;
- border:1px solid #4a5a50;
- border-radius:11px;
- background:#28332d!important;
- color:#f0f5f0!important;
- -webkit-text-fill-color:#f0f5f0;
- box-shadow:none;
+ width:100%;min-height:85px;margin:0;padding:12px 13px;
+ border:1px solid rgba(255,255,255,.15)!important;border-radius:14px;
+ background:rgba(0,0,0,.11)!important;
+ color:var(--chef-tone-ink)!important;
+ -webkit-text-fill-color:var(--chef-tone-ink);
+ box-shadow:none!important;
  font:400 14px/1.4 "Inter Tight",sans-serif;
  resize:vertical;
 }
-#screen .chef-execution-field>.chef-input::placeholder{
- color:#9faea4;
- -webkit-text-fill-color:#9faea4;
- opacity:1;
+#screen.chef-screen-home .chef-execution-field>.chef-input::placeholder{
+ color:var(--chef-tone-ink);opacity:.63;
+ -webkit-text-fill-color:var(--chef-tone-ink);
 }
-#screen .chef-execution-actions{
- display:flex;
- gap:9px;
- align-items:center;
- margin-top:2px;
+#screen.chef-screen-home .chef-execution-field>.chef-input:focus{
+ outline:2px solid var(--chef-tone-ink);outline-offset:2px;
 }
-#screen .chef-execution-actions>.chef-execution-cancel{
- flex:0 0 auto;
- min-height:46px;
- padding:0 14px;
- border:1px solid #4a5a50;
- border-radius:11px;
- background:transparent;
- color:#d2ded5;
- font-size:13px;
- font-weight:400;
+#screen.chef-screen-home .chef-execution-actions{
+ display:flex;align-items:center;gap:10px;margin:1px 0 0;
 }
-#screen .chef-execution-actions>.chef-save{
- flex:1 1 auto;
- width:auto;
- min-height:46px;
- margin:0;
- padding:0 12px;
- border:0;
- border-radius:12px;
- background:#dcebdc;
- color:#18251c;
- font-size:14px;
+#screen.chef-screen-home .chef-execution-actions>.chef-execution-cancel,
+#screen.chef-screen-home .chef-execution-actions>.chef-save{
+ flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;width:0;min-width:0;
+ height:46px;min-height:46px;max-height:46px;
+ margin:0;padding:0 10px;border-radius:999px;
+ font:500 14px/1.2 "Inter Tight",sans-serif;
+}
+#screen.chef-screen-home .chef-execution-actions>.chef-execution-cancel{
+ border:0;background:rgba(255,255,255,.10);
+ color:var(--chef-tone-ink);
+}
+#screen.chef-screen-home .chef-execution-actions>.chef-save{
+ border:0;background:#f7f7f8;color:#161619;
  font-weight:600;
 }
-#screen .chef-execution .chef-feedback{
- min-height:0;
- margin:0;
- font-size:12px;
- color:#e7b9b0;
+#screen.chef-screen-home .chef-execution-actions>.chef-save:disabled{opacity:.5}
+#screen.chef-screen-home .chef-execution .chef-feedback{
+ min-height:0;margin:0;color:#ffe6cf;font-size:12px;
 }
-#screen .chef-execution .chef-feedback:empty{display:none}
+#screen.chef-screen-home .chef-execution .chef-feedback:empty{display:none}
 @media(max-width:390px){
- #screen .chef-meal-body .chef-execution-form{padding:13px}
- #screen .chef-execution-state{font-size:11px}
+ #screen.chef-screen-home .chef-meal-body .chef-execution-form{padding:14px 12px}
+ #screen.chef-screen-home .chef-execution-state{font-size:11px;padding:10px 6px}
+ #screen.chef-screen-home .chef-execution>.chef-execution-trigger{font-size:13px}
+}
+@media(hover:hover){
+ #screen.chef-screen-home .chef-execution-state:hover{background:rgba(255,255,255,.12)}
 }
 @media(prefers-reduced-motion:reduce){
- #screen .chef-execution>.chef-execution-trigger,
- #screen .chef-execution-state{transition:none}
+ #screen.chef-screen-home .chef-execution-trigger,
+ #screen.chef-screen-home .chef-execution-state{transition:none}
 }
