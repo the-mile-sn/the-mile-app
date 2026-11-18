@@ -294,3 +294,13 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 5. **Guia vs CSS:** esta consolidação **não modifica nem audita exaustivamente a cascata CSS**. Corrigir divergências no código só mediante pedido explícito.
 
 **Nota de edição:** esta versão retira do manual operativo cronologias e tentativas substituídas; elas permanecem no arquivo integral e nos commits GitHub. Nenhum comportamento do produto foi alterado pela edição deste documento.
+
+
+## The Mile Select — listas e pesquisa de pessoas (18/11/2026)
+**Decisão aprovada:** uma família visual de listas para Jogadores, Biblioteca (Alimentos, Porções Visuais, Pratos e Receitas), Planos, Planeamento, Avaliações e Formulários; desktop/mobile, temas claro/escuro.
+- **Seleção simples:** campo com seta ChevronDown, superfície e borda suaves, painel com raio 14 px, opções com mínimo 44 px, selecionada com fundo neutro suave e visto; hover apenas em dispositivos com rato, foco visível, Escape para fechar. Listas longas (mais de 9 opções) têm pesquisa no painel; máximo 300–320 px com scroll.
+- **Pesquisa + sugestões:** manter a barra de pesquisa *e* a lista suspensa dependente do texto; não substituir por um select simples. A lista usa a mesma superfície e linhas da seleção simples. O filtro e a seleção continuam associados ao ID interno da pessoa.
+- **Pessoas:** avatar circular de 40 px com fotografia real quando existir; caso contrário, iniciais num círculo neutro; se não houver nome, ícone User03Icon. Nome completo sem username por defeito. Apenas quando existirem nomes iguais mostrar username como segunda linha, tanto nos resultados como no valor selecionado onde haja risco de ambiguidade. Não proibir nomes iguais; todas as operações usam o ID único do cliente, nunca o nome.
+- **Performance:** miniaturas otimizadas quando disponíveis, lazy loading, cache e sem descarregar fotografias originais para avatares. Não criar URLs de imagens artificiais nem expor identificadores privados.
+- **Implementação progressiva:** o select nativo continua a ser a fonte de verdade, e eventos input/change devem chegar aos handlers existentes; seletores já personalizados (Planeamento, Avaliações, Formulários, pesquisa de Jogadores) mantêm os handlers e precisam de verificação funcional antes de acrescentar avatar/username condicional. Não converter os selects ocultos usados como suporte desses componentes.
+- **QA obrigatória:** verificar abertura, seleção, teclado, Escape, clique fora, scroll, filtros dependentes, criação/edição, temas e viewport; nenhuma alteração visual equivale a validação funcional concluída.
