@@ -78,6 +78,15 @@ class ChefAccountApiTests(unittest.TestCase):
         player.request("/api/me")
         self.assertEqual(player.request("/api/v2/chef/me")["status"], 403)
 
+    def test_chef_is_denied_all_legacy_document_access(self):
+        chef, _ = self._chef()
+        self.assertEqual(chef.request("/api/documents")["status"], 403)
+        self.assertEqual(chef.request("/api/notifications")["status"], 403)
+        self.assertEqual(chef.request("/api/v2/player/plans")["status"], 403)
+        self.assertEqual(chef.request("/api/v2/chef/preferences", "PUT", {"language": "en"})["status"], 200)
+        self.assertEqual(chef.request("/api/v2/chef/preferences", "PUT", {"language": "es"})["status"], 400)
+        self.assertEqual(chef.request("/api/v2/chef/me")["body"]["chef"]["language"], "en")
+
     def test_validation_and_duplicate_credentials(self):
         self._chef()
         invalid = self.admin.request("/api/v2/admin/chefs", "POST", {
@@ -111,7 +120,7 @@ class ChefAccountApiTests(unittest.TestCase):
         chef, _ = self._chef()
         with patch.object(app, "SITE_ROLE", "player"):
             self.assertEqual(chef.request("/api/v2/chef/me")["status"], 200)
-            self.assertEqual(chef.request("/api/v2/admin/chefs")["status"], 404)
+            self.assertEqual(chef.request("/api/v2/admin/chefs")["status"], 403)
         with patch.object(app, "SITE_ROLE", "admin"):
             self.assertEqual(chef.request("/api/v2/chef/me")["status"], 404)
 
