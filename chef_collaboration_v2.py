@@ -222,6 +222,20 @@ def record_execution(c, athlete_id, actor_id, menu_date, meal, state,
     return {"menu_date":day,"meal":meal,"state":state}
 
 
+def list_menus(c, athlete_id, start, end):
+    first,last=parse_day(start).isoformat(),parse_day(end).isoformat()
+    if last<first or (parse_day(last)-parse_day(first)).days>62:
+        raise ValueError("invalid_menu_range")
+    return [dict(row) for row in c.execute("""SELECT m.menu_date,m.meal,m.kind,
+        CASE WHEN m.kind='dish' AND d.id IS NOT NULL
+             THEN d.name_pt ELSE m.value END AS value,
+        CASE WHEN m.kind='dish' THEN m.dish_id ELSE NULL END AS dish_id
+        FROM v2_weekly_menus m
+        LEFT JOIN v2_dish_library d ON m.kind='dish' AND d.id=m.dish_id
+        WHERE m.athlete_id=? AND m.menu_date BETWEEN ? AND ?
+        ORDER BY m.menu_date,m.meal""",(athlete_id,first,last)).fetchall()]
+
+
 def executions(c, athlete_id, start, end):
     first,last=parse_day(start).isoformat(),parse_day(end).isoformat()
     if last<first or (parse_day(last)-parse_day(first)).days>62:
