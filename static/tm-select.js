@@ -65,13 +65,9 @@ input.setAttribute('aria-label','Pesquisar opções');input.addEventListener('in
   }
   if(state.search)state.search.value='';
   render();
-  // On touch devices, opening a category list should not focus its search
-  // or summon the iOS keyboard. The user can tap Search explicitly.
-  if(window.matchMedia('(hover:none) and (pointer:coarse)').matches){
-   trigger.focus({preventScroll:true});
-  }else{
-   (state.search||list.querySelector('[aria-selected="true"]')||list.querySelector('button'))?.focus();
-  }
+  // Opening a menu must never automatically focus its search input.
+  // The user focuses Search explicitly; keyboard navigation still starts
+  // from the trigger via ArrowDown, Enter or Space. No Safari zoom-on-open.
  };
  trigger.addEventListener('click',()=>panel.hidden?open():close());
  trigger.addEventListener('keydown',e=>{if(['ArrowDown','Enter',' '].includes(e.key)){e.preventDefault();open()}});
