@@ -316,9 +316,14 @@
   const pendingActivity=e=>e.event_type==="menu"&&
     (e.status==="pending_review"||e.status==="pending_validation");
   function activityDate(iso){
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(iso||"")))return String(iso||"");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(iso||"")))return String(iso||"");
     const d=new Date(iso+"T12:00:00");
     return new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short"}).format(d);
+  }
+  function activityCreatedDate(stamp){
+    const date=new Date(Number(stamp)*1000);
+    return Number.isFinite(date.getTime())?
+      new Intl.DateTimeFormat("pt-PT",{day:"numeric",month:"short"}).format(date):"";
   }
   function activityClock(stamp){
     const date=new Date(Number(stamp)*1000);
@@ -369,7 +374,7 @@
     card.dataset.pending=String(pendingActivity(entry));
     const summary=node("summary","tm-chef-activity-row");
     const date=node("span","tm-chef-activity-date");
-    date.append(node("strong","",activityDate(new Date(Number(entry.created_at)*1000).toISOString().slice(0,10))));
+    date.append(node("strong","",activityCreatedDate(entry.created_at)));
     date.append(node("small","",activityClock(entry.created_at)));
     const body=node("span","tm-chef-activity-main");
     body.append(node("strong","tm-chef-activity-title",activityTitle(entry)));
