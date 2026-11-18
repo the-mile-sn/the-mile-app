@@ -121,7 +121,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 .chef-summary-header{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:15px;margin:0 0 19px}
 .chef-summary-header strong{font-weight:550}.chef-microcycle{padding:5px 10px;border-radius:999px;background:#29292e;color:#d8d8df;font-size:12px}
 .chef-day-colors{display:flex;gap:10px;align-items:stretch;justify-content:space-around}
-.chef-day-color{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:6px;color:var(--chef-tone-ink);font-size:12px}
+.chef-day-color{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:8px;color:var(--chef-tone-ink);font-size:12px}
 .chef-day-color .mile-icon{width:23px;height:23px}.chef-day-bar{display:block;width:100%;height:7px;background:var(--chef-tone);border-radius:999px;margin-top:3px}
 .chef-meal-card{margin:10px 0;border:0;border-radius:14px;overflow:hidden;background:var(--chef-tone);color:var(--chef-tone-ink);box-shadow:none}
 .chef-meal-head{list-style:none;display:flex;align-items:center;min-height:65px;padding:11px 15px;gap:12px;cursor:pointer}
@@ -484,22 +484,6 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  font:400 14px/1.4 "Inter Tight",-apple-system,sans-serif;
 }
 #screen.chef-screen-home .chef-execution-form[hidden]{display:none!important}
-#screen.chef-screen-home .chef-execution-form-head{
- display:flex;align-items:center;justify-content:space-between;gap:12px;
-}
-#screen.chef-screen-home .chef-execution-form-head strong{
- font-size:15px;font-weight:500;color:inherit;
-}
-#screen.chef-screen-home .chef-execution-close{
- display:grid;place-items:center;
- flex:0 0 30px;width:30px;height:30px;min-height:30px;
- padding:0;
- border:1px solid rgba(255,255,255,.15);
- border-radius:50%;
- background:transparent;
- color:inherit;
- font-size:18px;font-weight:400;
-}
 #screen.chef-screen-home .chef-execution-choice{
  min-width:0;margin:0;padding:0;border:0;
 }

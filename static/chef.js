@@ -200,21 +200,14 @@ function executionForm(date,meal,card){
   root.append(feedback);
   const form=node("form","chef-editor chef-execution-form");
   form.hidden=true;
-  const head=node("div","chef-execution-form-head");
-  head.append(node("strong","",pt?"Editar execução":"Edit execution"));
-  const close=node("button","chef-execution-close","×");
-  close.type="button";
-  close.setAttribute("aria-label",pt?"Fechar edição":"Close editing");
+  // No duplicate title or close icon: the existing Cancelar button closes the form.
   const toggleEditor=expanded=>{
     form.hidden=!expanded;
     edit.setAttribute("aria-expanded",String(expanded));
     if(!expanded)feedback.textContent="";
   };
-  close.onclick=()=>toggleEditor(false);
-  head.append(close);
-  form.append(head);
   const changeField=node("label","chef-execution-field");
-  changeField.append(node("span","",pt?"Alterações ao menu servido":"Changes to the served menu"));
+  changeField.append(node("span","",pt?"Registar alterações":"Record changes"));
   const description=makeInput("textarea",pt?"Descreve o que foi servido de diferente":"Describe what was served differently",500);
   description.value=now?.state==="served_changed"?(now.served_description||""):"";
   changeField.append(description);
@@ -247,8 +240,9 @@ function executionForm(date,meal,card){
     if(selectedReason){selectedReason=null;syncReason();}
   });
   const notesField=node("label","chef-execution-field");
-  notesField.append(node("span","",pt?"Observações (opcional)":"Notes (optional)"));
+  // Keep only the placeholder in the optional notes field, with an accessible label.
   const notes=makeInput("textarea",pt?"Adicionar observações":"Add notes",500);
+  notes.setAttribute("aria-label",pt?"Adicionar observações (opcional)":"Add notes (optional)");
   notes.value=now?.note||"";
   notesField.append(notes);
   form.append(notesField);
@@ -263,11 +257,8 @@ function executionForm(date,meal,card){
   formFeedback.setAttribute("role","status");
   formFeedback.setAttribute("aria-live","polite");
   form.append(formFeedback);
-  edit.onclick=()=>{
-    const next=form.hidden;
-    toggleEditor(next);
-    if(next)description.focus({preventScroll:true});
-  };
+  // Do not focus the textarea on opening: iPhone must not raise the keyboard.
+  edit.onclick=()=>toggleEditor(form.hidden);
   form.onsubmit=async event=>{
     event.preventDefault();
     const text=description.value.trim();
@@ -598,7 +589,8 @@ function renderChefDaily(root){
  for(const meal of mealOrder){
   if(!mealAvailable(date,meal))continue;
   const cell=node("div","chef-day-color tone-"+mealTone(date,meal));
-  cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]),node("span","chef-day-bar"));
+  cell.setAttribute("aria-label",mealNames[lang][meal]);
+  cell.append(iconForMeal(meal),node("span","chef-day-bar"));
   strip.append(cell);
  }
  summary.append(strip);root.append(summary);
