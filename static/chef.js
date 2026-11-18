@@ -349,6 +349,11 @@ function mealTone(day,meal){const color=colorFor(day,meal);return validColors.in
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
  return format(value,options).replace(/^./,letter=>letter.toLocaleUpperCase(locale(lang)));
 }
+function chefCompactDate(date){
+ // The home card follows the compact date used by the player Menus page.
+ return format(date,{weekday:"long",day:"numeric",month:"long"})
+   .replace(/-feira/gi,"").replace(/\s+de\s+/gi," ").replace(/\s+/g," ").trim();
+}
 function classificationFor(key){return days.find(item=>item.date===key)?.classification||"";}
 function mealAvailable(date,meal){return !!colorFor(date,meal)||!!plannedMenu(date,meal);}
 function chefNutrition(totals){
@@ -385,7 +390,8 @@ function chefOptionCards(date,meal){
  }
  options.forEach((option,index)=>{
   const card=node("details","chef-option-card player-meal-option-subcard");
-  card.open=index===0;
+  // Match player interaction: options stay collapsed until explicitly selected.
+  card.open=false;
   const head=node("summary","chef-option-head");
   const label=node("span","chef-option-label");
   label.append(node("small","",txt().option+" "+(option.number||index+1)));
@@ -423,8 +429,8 @@ function chefMenuPhoto(item){
   close.onclick=dismiss;overlay.onclick=event=>{if(event.target===overlay)dismiss();};
   overlay.append(close,large);document.body.append(overlay);document.addEventListener("keydown",onKey);close.focus();
  };
- frame.onclick=open;
- frame.onkeydown=event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();open();}};
+ frame.onclick=event=>{event.preventDefault();event.stopPropagation();open();};
+ frame.onkeydown=event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();event.stopPropagation();open();}};
  return frame;
 }
 function appendChefMenuDish(host,item,emptyLabel){
@@ -437,22 +443,28 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
  const card=node("details","chef-meal-card tone-"+mealTone(date,meal));
  card.open=expanded;
  const head=node("summary","chef-meal-head");
+ const heading=node("span","chef-meal-heading");
  const symbol=node("span","chef-meal-icon");symbol.append(iconForMeal(meal));
- head.append(symbol,node("strong","",mealNames[lang][meal]));
- head.append(node("span","chef-chevron","⌄"));card.append(head);
- const body=node("div","chef-meal-body");
+ heading.append(symbol,node("strong","",mealNames[lang][meal]));
+ heading.append(node("span","chef-chevron"));head.append(heading);
+ // A Chef must see the planned dish and its photo even when the meal is closed.
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
-  appendChefMenuDish(body,plannedMenu(date,meal),txt().pending);
+  const preview=node("div","chef-meal-preview");
+  appendChefMenuDish(preview,plannedMenu(date,meal),txt().pending);
+  head.append(preview);
  }
+ card.append(head);
+ const body=node("div","chef-meal-body");
  body.append(chefOptionCards(date,meal));
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
- card.append(body);return card;
+ card.append(body);
+ return card;
 }
 function renderChefDaily(root){
  const date=dateKey(selectedDay),classification=classificationFor(date);
  const summary=node("section","chef-daily-summary");
  const header=node("div","chef-summary-header");
- header.append(node("strong","",dateDescription(selectedDay)));
+ header.append(node("strong","",chefCompactDate(selectedDay)));
  if(classification)header.append(node("span","chef-microcycle",classification));
  summary.append(header);
  const strip=node("div","chef-day-colors");
@@ -464,7 +476,7 @@ function renderChefDaily(root){
  }
  summary.append(strip);root.append(summary);
  for(const meal of mealOrder){
-  if(mealAvailable(date,meal))root.append(renderChefMeal(date,meal,meal==="lunch"||meal==="dinner"));
+  if(mealAvailable(date,meal))root.append(renderChefMeal(date,meal,false));
  }
 }
 function renderChefWeekly(root){
@@ -626,6 +638,39 @@ function renderProfile(root){
   row.append(segment);panel.append(row);
   root.append(panel);
 }
+
+// Single reusable selection highlight, aligned with the player's segmented controls.
+function syncChefSelection(nav){
+ if(!nav||nav.hidden)return;
+ const selected=nav.classList.contains("bottom-nav")
+  ?nav.querySelector('[data-tab][aria-current="page"]')
+  :nav.querySelector('[data-view][aria-pressed="true"]');
+ if(!selected)return;
+ let indicator=nav.querySelector(":scope > .mile-segment-indicator");
+ if(!indicator){
+  indicator=node("span","mile-segment-indicator");
+  indicator.setAttribute("aria-hidden","true");
+  nav.prepend(indicator);
+ }
+ nav.classList.add("mile-segment-animated");
+ requestAnimationFrame(()=>{
+  if(!nav.isConnected||nav.hidden||!selected.isConnected)return;
+  const bar=nav.getBoundingClientRect(),box=selected.getBoundingClientRect();
+  if(!box.width||!bar.width)return;
+  indicator.style.width=box.width+"px";
+  indicator.style.height=box.height+"px";
+  indicator.style.transform="translate3d("+(box.left-bar.left)+"px,"+(box.top-bar.top)+"px,0)";
+  indicator.classList.add("mile-segment-ready");
+ });
+}
+function bounceChefSelection(nav){
+ const indicator=nav?.querySelector(":scope > .mile-segment-indicator");
+ if(!indicator||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ indicator.classList.remove("mile-segment-bounce");
+ void indicator.offsetWidth;
+ indicator.classList.add("mile-segment-bounce");
+ indicator.addEventListener("animationend",()=>indicator.classList.remove("mile-segment-bounce"),{once:true});
+}
 function render(){
   document.documentElement.lang=lang==="pt"?"pt-PT":"en";
   el("top-name").textContent=chef.name;
@@ -666,12 +711,14 @@ function render(){
   if(activeTab==="profile")renderProfile(screen);
   el("top-logout").hidden=activeTab!=="profile";
   paintChefIcons();
+  syncChefSelection(el("chef-view-mode"));
+  syncChefSelection(nav);
 }
-el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();};});
+el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();bounceChefSelection(el("chef-view-mode"));};});
 el("prev-week").onclick=async()=>{selectedDay=shift(selectedDay,-7);try{await loadWeek();}catch(err){showError(txt().fail);}};
 el("next-week").onclick=async()=>{selectedDay=shift(selectedDay,7);try{await loadWeek();}catch(err){showError(txt().fail);}};
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
-  button.onclick=()=>{activeTab=button.dataset.tab;render();};
+  button.onclick=()=>{activeTab=button.dataset.tab;render();bounceChefSelection(el("chef-nav"));};
 });
 
 /* Match the player's horizontal day/week navigation while respecting native scrolling. */
