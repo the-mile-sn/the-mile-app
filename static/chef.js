@@ -410,6 +410,7 @@ function chefMenuPhoto(item){
  zoom.setAttribute("aria-hidden","true");
  zoom.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg>';
  frame.append(zoom);
+ photo.onerror=()=>frame.remove();
  frame.setAttribute("role","button");frame.tabIndex=0;
  frame.setAttribute("aria-label","Ampliar fotografia do prato");
  const open=()=>{
@@ -672,6 +673,32 @@ el("next-week").onclick=async()=>{selectedDay=shift(selectedDay,7);try{await loa
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
   button.onclick=()=>{activeTab=button.dataset.tab;render();};
 });
+
+/* Match the player's horizontal day/week navigation while respecting native scrolling. */
+let chefGestureStart=null;
+el("screen").addEventListener("touchstart",event=>{
+ chefGestureStart=null;
+ if(event.touches.length!==1||!["home","menus"].includes(activeTab))return;
+ const target=event.target;
+ if(target.closest?.("input,textarea,select,[contenteditable],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
+ if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-strip"))return;
+ if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
+ const t=event.touches[0];
+ if(t.clientX<22||t.clientX>window.innerWidth-22)return;
+ chefGestureStart={x:t.clientX,y:t.clientY};
+},{passive:true});
+el("screen").addEventListener("touchend",event=>{
+ const start=chefGestureStart;chefGestureStart=null;
+ if(!start||event.changedTouches.length!==1)return;
+ const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+ if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4)return;
+ const delta=dx<0?1:-1,previous=monday(selectedDay);
+ const step=activeTab==="menus"||(activeTab==="home"&&chefViewMode==="week")?7:1;
+ selectedDay=shift(selectedDay,delta*step);
+ chefWeekSelection=null;
+ if(dateKey(previous)===dateKey(monday(selectedDay)))render();
+ else loadWeek().catch(()=>showError(txt().fail));
+},{passive:true});
 el("top-logout").onclick=async()=>{
   try{await request("/api/logout","POST",{});}catch(e){}
   csrf="";sessionUser=null;chef=null;player=null;location.replace("/chef");
