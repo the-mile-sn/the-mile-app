@@ -10306,12 +10306,13 @@ html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-p
  gap:10px!important;margin-top:18px!important;
 }
 html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-actions button{
- padding:10px 13px!important;border:0!important;border-radius:12px!important;
- background:var(--tm-ui-subcard)!important;color:var(--tm-ui-text)!important;
- font:500 13px/1.3 "Inter Tight",Arial,sans-serif!important;
+ height:44px!important;min-height:44px!important;padding:0 18px!important;
+ border:0!important;border-radius:12px!important;box-shadow:none!important;
+ background:transparent!important;color:var(--tm-action-secondary-fg)!important;
+ font:500 13px/1.25 "Inter Tight",Arial,sans-serif!important;
 }
 html[data-admin-theme] body #admin-workspace #tm-food-library-page .tm-portion-photo-editor .tm-portion-photo-actions .tm-action-primary{
- background:var(--tm-action-primary-bg,#2d3440)!important;color:var(--tm-action-primary-fg,#f2f3f5)!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
 }
 
 
@@ -12305,21 +12306,17 @@ html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog 
 html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save{
  min-height:44px!important;min-width:130px!important;padding:10px 18px!important;
  border:0!important;border-radius:12px!important;box-shadow:none!important;
- background:#f6f7f8!important;color:#161719!important;
- font:600 14px/1.25 "Inter Tight",sans-serif!important;
+ background:var(--tm-action-main-bg)!important;color:var(--tm-action-main-fg)!important;
+ font:500 13px/1.25 "Inter Tight",sans-serif!important;
  cursor:pointer!important;
-}
-html[data-admin-theme="light"] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm,
-html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save{
- background:#1b1d23!important;color:#fff!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm:hover:not(:disabled),
 html[data-admin-theme="dark"] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save:hover:not(:disabled){
- background:#e4e7eb!important;
+ background:var(--tm-action-main-hover)!important;
 }
 html[data-admin-theme="light"] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm:hover:not(:disabled),
 html[data-admin-theme="light"] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save:hover:not(:disabled){
- background:#353943!important;
+ background:var(--tm-action-main-hover)!important;
 }
 html[data-admin-theme] body #admin-workspace #tm-plan-page #tm-pdf-meals-dialog #tm-pdf-meal-confirm:disabled,
 html[data-admin-theme] body #admin-workspace #tm-supplement-library-page .tm-supp-library-dialog .tm-supp-library-editor-actions #supp-lib-save:disabled{
