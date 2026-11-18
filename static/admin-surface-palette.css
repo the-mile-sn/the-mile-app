@@ -5932,6 +5932,33 @@ html[data-admin-theme] #supplements-panel #supp-base-list .supp-item-action:hove
  html[data-admin-theme] #supplements-panel #supp-base-list .supp-associated-protocol{font-size:12.5px!important}
 }
 
+/* Planning supplementation: single content inset, with no duplicate title.
+   Keep list rows and action footer aligned on desktop and mobile. */
+html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card{
+ gap:0!important;
+ padding-top:18px!important;
+}
+html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card > #supp-base-list{
+ box-sizing:border-box!important;
+ padding:0 20px!important;
+}
+html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card > #supp-base-list .supp-associated-row{
+ padding-left:0!important;padding-right:0!important;
+}
+html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card > #supp-feedback:not(:empty){
+ box-sizing:border-box!important;margin:8px 20px!important;
+}
+@media(max-width:680px){
+ html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card{
+  padding-top:14px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card > #supp-base-list{
+  padding:0 16px!important;
+ }
+ html[data-admin-theme] body #admin-workspace #supplements-panel .supp-associated-card > #supp-feedback:not(:empty){
+  margin-left:16px!important;margin-right:16px!important;
+ }
+}
 /* Suplementação: simple list rows (no individual coloured cards).
    Preserve the primary card and accessible edit/delete controls. */
 html[data-admin-theme] #supplements-panel #supp-base-list{
