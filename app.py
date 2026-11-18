@@ -3234,6 +3234,14 @@ def application(env, start_response):
                 athlete=chef_accounts_v2.assigned_athlete(c,user['id'])
                 if not athlete: raise Problem(403,'chef_unlinked')
                 aid=athlete['id']
+                if path == '/api/v2/chef/preferences' and method == 'PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict) or set(body) != {'language'} or body['language'] not in ('pt','en'):
+                        raise Problem(400,'invalid_language')
+                    c.execute("UPDATE v2_chef_links SET language=? WHERE user_id=?",
+                              (body['language'],user['id']))
+                    c.commit()
+                    return respond(200,{'language':body['language']})
                 if method != 'GET': raise Problem(403,'forbidden')
                 if path == '/api/v2/chef/me':
                     return respond(200,{'chef':{'id':user['id'],'name':user['name'],
