@@ -48,8 +48,8 @@ test("Consultations do not masquerade as an active authentication flow",()=>{
 test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
-  assert.match(html,/\/admin-clients\.js\?v=2/);
-  assert.match(html,/\/admin-clients\.css\?v=3/);
+  assert.match(html,/\/admin-clients\.js\?v=3/);
+  assert.match(html,/\/admin-clients\.css\?v=4/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -73,4 +73,27 @@ test("desktop client type precedes identity, nav asset cache is refreshed",()=>{
  assert.match(css,/#tm-chef-accounts \.tm-client-type-cell\{order:-1/);
  assert.match(css,/grid-template-columns:minmax\(160px,220px\)/);
  assert.match(html,/admin-nav-shell\.js\?v=13/);
+});
+
+
+test("client and Chef cards remain separated, with Guide Visual hover on real controls",()=>{
+  const css=fs.readFileSync("static/admin-clients.css","utf8");
+  assert.match(css,/#tm-players-body:not\(\[hidden\]\):not\(:empty\) \+ #tm-chef-accounts:not\(\[hidden\]\)/);
+  assert.match(css,/\.tm-player-card:hover:not\(:has\(\.tm-player-card-actions:hover\)\)/);
+  assert.match(css,/\.tm-chef-account-actions button:hover/);
+});
+
+test("mobile Chef creation uses a dialog while desktop retains its existing form",()=>{
+  const css=fs.readFileSync("static/admin-clients.css","utf8");
+  assert.match(html,/<dialog id="tm-clients-chef-create-dialog"/);
+  assert.match(html,/id="tm-clients-chef-modal-slot"/);
+  assert.match(html,/<dialog id="tm-players-create-form"/);
+  assert.match(clients,/chefSlot\.appendChild\(details\)/);
+  assert.match(clients,/chefModal\.showModal\(\)/);
+  assert.match(clients,/chefModal\?\.addEventListener\("close"/);
+  assert.match(clients,/if\(mobileCreate\.matches\)/);
+  assert.match(clients,/details\.scrollIntoView\(\{behavior:"smooth",block:"nearest"\}\)/);
+  assert.match(css,/#tm-clients-chef-create-dialog #tm-chef-create/);
+  assert.match(html,/admin-clients\.js\?v=3/);
+  assert.match(html,/admin-clients\.css\?v=4/);
 });

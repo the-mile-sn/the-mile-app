@@ -25,6 +25,36 @@
   window.tmClientsCurrentType=()=>selected;
   const filterChefs=()=>window.tmFilterChefAccounts?.();
 
+  // Mobile Chef creation uses the existing form inside a native modal, not an inline dropdown.
+  // Move the DOM node rather than clone it: all API handlers and validation remain attached.
+  const mobileCreate=window.matchMedia("(max-width: 830px)");
+  const chefModal=document.getElementById("tm-clients-chef-create-dialog");
+  const chefSlot=document.getElementById("tm-clients-chef-modal-slot");
+  function closeChefModal(){if(chefModal?.open)chefModal.close();}
+  function openChefMobileDialog(details){
+    if(!chefModal||!chefSlot)return false;
+    details.open=true;
+    chefSlot.appendChild(details);
+    chefModal.showModal();
+    return true;
+  }
+  chefModal?.addEventListener("close",()=>{
+    const details=chefSlot.querySelector("#tm-chef-management");
+    if(details){
+      details.open=false;
+      chefsPanel.appendChild(details);
+    }
+  });
+  document.getElementById("tm-clients-chef-close")?.addEventListener("click",closeChefModal);
+  document.getElementById("tm-clients-chef-cancel")?.addEventListener("click",closeChefModal);
+  chefModal?.addEventListener("click",event=>{
+    if(event.target!==chefModal)return;
+    const rect=chefModal.getBoundingClientRect();
+    if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeChefModal();
+  });
+  mobileCreate.addEventListener("change",()=>{if(!mobileCreate.matches)closeChefModal();});
+
+
   function selectType(type){
     if(!validTypes.has(type))return;
     selected=type;
@@ -73,9 +103,12 @@
       }else if(type==="chef"){
         const details=document.getElementById("tm-chef-management");
         if(details){
-          details.open=true;
-          details.scrollIntoView({behavior:"smooth",block:"nearest"});
-          // No autofocus: do not force the iPhone keyboard open.
+          if(mobileCreate.matches){
+            openChefMobileDialog(details);
+          }else{
+            details.open=true;
+            details.scrollIntoView({behavior:"smooth",block:"nearest"});
+          }
         }
       }else if(type==="consulta"){
         consultations.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -94,6 +127,7 @@
   document.getElementById("tm-admin-nav-players")?.addEventListener("click",
     ()=>selectType("all"),true);
   new MutationObserver(()=>{
+    if(page.hidden)closeChefModal();
     if(!page.hidden&&!detailVisible())selectType(selected);
   }).observe(page,{attributes:true,attributeFilter:["hidden"]});
   window.tmSelectClientType=selectType;
