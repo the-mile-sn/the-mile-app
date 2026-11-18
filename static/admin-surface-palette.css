@@ -12689,18 +12689,59 @@ html[data-admin-theme] body #admin-workspace .tm-select-panel > .tm-select-optio
   padding:0!important;
 }
 
-/* Library dropdown search is an immediate child of the white menu card.
-   Explicit theme values protect this component from any legacy token overrides.
-   The selected option and the search field share second-depth surface styling. */
+/* Unified mobile dropdown and iOS input behavior — 18 Nov 2026.
+   Search is one neutral second-depth surface, visually matching selected
+   options. Do not use the blue third-depth input background here. */
 html[data-admin-theme="light"] body #admin-workspace
 .tm-select-shell .tm-select-panel > input.tm-select-search {
-  background:#f0f2f6!important;
-  background-color:#f0f2f6!important;
-  background-image:none!important;
+ background:#f1f1f2!important;
+ background-color:#f1f1f2!important;
+ background-image:none!important;
+ border:1px solid rgba(28,38,51,.07)!important;
 }
 html[data-admin-theme="dark"] body #admin-workspace
 .tm-select-shell .tm-select-panel > input.tm-select-search {
-  background:#1e2025!important;
-  background-color:#1e2025!important;
-  background-image:none!important;
+ background:#222326!important;
+ background-color:#222326!important;
+ background-image:none!important;
+ border:1px solid rgba(242,243,245,.08)!important;
+}
+/* A dropdown is above its NEXT grid sibling when opened.
+   The second Planos filter must never paint over the first one's options. */
+html[data-admin-theme] body #admin-workspace #tm-plan-page
+#plan-entry .plan-library-filters {
+ overflow:visible!important;
+ isolation:isolate;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page
+#plan-entry .plan-library-filters > label:has(.tm-select-open) {
+ position:relative!important;
+ z-index:80!important;
+ overflow:visible!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page
+#plan-entry .tm-select-plan-filter.tm-select-open {
+ z-index:81!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-plan-page
+#plan-entry .tm-select-plan-filter.tm-select-open > .tm-select-panel {
+ z-index:82!important;
+}
+@media(max-width:830px) {
+ /* iOS Safari zooms the viewport when an editable control is below 16px.
+    Scope this safeguard to the Admin; do not disable pinch-zoom. */
+ html[data-admin-theme] body #admin-workspace input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
+ html[data-admin-theme] body #admin-workspace textarea,
+ html[data-admin-theme] body #admin-workspace select,
+ html[data-admin-theme] body #admin-workspace [contenteditable="true"] {
+  font-size:16px!important;
+ }
+ html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel > input.tm-select-search {
+  font-size:16px!important;
+  line-height:normal!important;
+ }
+ html[data-admin-theme] body #admin-workspace .tm-select-shell.tm-select-open .tm-select-options {
+  max-height:min(46dvh,290px)!important;
+  overflow-y:auto!important;
+ }
 }
