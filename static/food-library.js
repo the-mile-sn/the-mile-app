@@ -183,7 +183,7 @@ else activate().catch(()=>load());
  * Never touch hidden native backing selects used by custom person pickers.
  */
 (()=>{'use strict';
-const IDS=['category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
+const IDS=['tm-players-access','category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
 const instances=new Map();
 function setup(select){
  if(select.id==='dish-category-filter'&&select.closest('#dish-filter-parking'))return;
@@ -197,7 +197,7 @@ function setup(select){
  const panel=document.createElement('div');panel.className='tm-select-panel';panel.hidden=true;
  const list=document.createElement('div');list.className='tm-select-options';list.setAttribute('role','listbox');
  panel.append(list);
- const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.classList.add('tm-select-legacy-converted');legacy.parentNode.insertBefore(shell,legacy);shell.append(select,trigger,panel);legacy.remove()}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
+ const legacy=select.closest('.tm-two-line-select');if(legacy){legacy.classList.add('tm-select-legacy-preserved');legacy.append(shell);shell.append(select,trigger,panel);shell.classList.add('tm-select-preserve-field');}else{select.parentNode.insertBefore(shell,select);shell.append(select,trigger,panel)}
  select.classList.add('tm-select-native');
  if(['library-player-filter','library-type-filter'].includes(select.id)){shell.classList.add('tm-select-plan-filter');trigger.setAttribute('data-caption',select.id==='library-player-filter'?'Jogador':'Tipo de plano')}
  const state={select,shell,trigger,label,panel,list,search:null};
@@ -206,6 +206,7 @@ function setup(select){
  const close=()=>{panel.hidden=true;trigger.setAttribute('aria-expanded','false');shell.classList.remove('tm-select-open')};
  const render=()=>{
   label.textContent=select.selectedOptions[0]?.textContent?.trim()||'Selecionar';
+  if(legacy){const existing=legacy.querySelector('#'+select.id+'-value');if(existing)existing.textContent=label.textContent;}
   trigger.disabled=select.disabled;
   if(panel.hidden)return;
   const current=state.search?.value?.toLocaleLowerCase('pt-PT')||'';
