@@ -2971,6 +2971,34 @@ def application(env, start_response):
                     return respond(201,{'chef':{'id':uid,'name':name.strip(),'username':username,
                                                'athlete_id':athlete_id,'language':language,'active':1}})
                 raise Problem(404,'not_found')
+            if path == '/api/v2/admin/chef-dishes' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                q=parse_qs(env.get('QUERY_STRING',''))
+                search=(q.get('q') or [''])[0]
+                if not isinstance(search,str) or len(search)>90: raise Problem(400,'invalid_search')
+                rows=c.execute("""SELECT id,name_pt,category FROM v2_dish_library
+                    WHERE active=1 AND LOWER(name_pt) LIKE LOWER(?)
+                    ORDER BY name_pt LIMIT 100""",('%'+search+'%',)).fetchall()
+                return respond(200,{'dishes':[dict(row) for row in rows]})
+            if path.startswith('/api/v2/admin/chefs/') and path.endswith('/password-reset'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=6 or method!='POST': raise Problem(404,'not_found')
+                target_id=parts[4]
+                found=c.execute("""SELECT u.id FROM users u
+                    JOIN v2_chef_links l ON l.user_id=u.id
+                    WHERE u.id=? AND u.role='chef'""",(target_id,)).fetchone()
+                if not found: raise Problem(404,'chef_not_found')
+                new=read_json(env).get('password')
+                if not isinstance(new,str) or not 12<=len(new)<=256:
+                    raise Problem(400,'password_length')
+                c.execute("UPDATE users SET password=? WHERE id=? AND role='chef'",
+                          (password_hash(new),target_id))
+                c.execute("DELETE FROM sessions WHERE user_id=?",(target_id,))
+                c.commit()
+                return respond(200,{'ok':True,'sessions_revoked':True})
             if path.startswith('/api/v2/admin/chefs/'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
