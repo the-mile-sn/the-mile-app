@@ -12564,6 +12564,10 @@ html[data-admin-theme] body #admin-workspace .tm-select-chevron {
  color:var(--tm-ui-muted);transition:transform .15s ease;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-open .tm-select-chevron{transform:rotate(180deg)}
+html[data-admin-theme] body #admin-workspace .tm-select-chevron > svg {
+ display:block!important;width:18px!important;height:18px!important;
+ stroke:currentColor!important;flex:none;
+}
 html[data-admin-theme] body #admin-workspace .tm-select-shell > .tm-select-panel {
  position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:1200;
  box-sizing:border-box;width:auto;min-width:100%;max-width:min(400px,90vw);
@@ -12704,6 +12708,16 @@ html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-tri
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-trigger .tm-select-chevron{display:none!important}
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-trigger:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important}
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-panel{top:calc(100% + 6px)!important;left:0!important;right:0!important;min-width:100%!important}
+html[data-admin-theme] body #admin-workspace #tm-players-page .tm-players-header-select,
+html[data-admin-theme] body #admin-workspace #tm-players-page .tm-two-line-select.tm-select-legacy-preserved,
+html[data-admin-theme] body #admin-workspace #tm-players-page .tm-select-preserve-field {
+ overflow:visible!important;
+}
+html[data-admin-theme] body #admin-workspace #tm-players-page .tm-select-preserve-field > .tm-select-panel:not([hidden]) {
+ display:block!important;position:absolute!important;top:calc(100% + 8px)!important;
+ left:0!important;right:auto!important;width:100%!important;
+ min-width:240px!important;max-width:none!important;z-index:9999!important;
+}
 html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-select-caption{font-weight:400!important}
 html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-select>.tm-select-value{font-weight:400!important}
 html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-select{padding-top:0!important;padding-bottom:0!important}
