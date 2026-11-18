@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f6f6f7">
+  <meta name="theme-color" content="#0d0d10">
   <meta name="description" content="The Mile — área profissional Chef">
   <title>The Mile · Chef</title>
   <link rel="icon" href="/icon-192.png" sizes="192x192">
@@ -11,12 +11,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="/chef.css?v=1" rel="stylesheet">
-  <script src="/chef.js?v=1" defer></script>
+  <link href="/chef.css?v=2" rel="stylesheet">
+  <script src="/chef.js?v=2" defer></script>
 </head>
 <body>
   <header class="top">
-    <div class="brand" aria-label="The Mile">THE MILE<span class="brand-sub">CHEF</span></div>
+    <div class="brand" aria-label="The Mile">The Mile</div>
     <div class="top-details">
       <span id="top-name"></span>
       <button id="top-logout" class="quiet-button" type="button" hidden>Terminar sessão</button>
@@ -39,12 +39,12 @@
       </section>
     </div>
     <div id="chef-view" hidden>
-      <div class="page-intro">
+      <div class="page-intro" hidden>
         <p id="player-label" class="overline">JOGADOR ASSOCIADO</p>
         <h1 id="player-name"></h1>
         <p id="page-context" class="muted"></p>
       </div>
-      <div id="day-controls" class="day-controls">
+      <nav id="chef-view-mode" class="chef-view-mode" aria-label="Vista de planeamento"><button type="button" data-view="day" aria-pressed="true">Dia</button><button type="button" data-view="week" aria-pressed="false">Semana</button></nav><div id="day-controls" class="day-controls">
         <button type="button" id="prev-week" class="date-step" aria-label="Semana anterior">‹</button>
         <div class="week-details"><strong id="week-range"></strong><span id="week-caption"></span></div>
         <button type="button" id="next-week" class="date-step" aria-label="Semana seguinte">›</button>
@@ -55,10 +55,10 @@
     <div id="loading-view" class="loading" role="status">A carregar…</div>
   </main>
   <nav id="chef-nav" class="bottom-nav" aria-label="Navegação Chef" hidden>
-    <button type="button" data-tab="home" aria-current="page"><span>Início</span></button>
-    <button type="button" data-tab="plans"><span>Plano alimentar</span></button>
-    <button type="button" data-tab="menus"><span>Menus</span></button>
-    <button type="button" data-tab="profile"><span>Perfil</span></button>
+    <button type="button" data-tab="home" aria-current="page"><i class="mile-icon icon-home-09" aria-hidden="true"></i><span>Início</span></button>
+    <button type="button" data-tab="plans"><i class="mile-icon icon-files-01" aria-hidden="true"></i><span>Planos</span></button>
+    <button type="button" data-tab="menus"><i class="mile-icon icon-menu-restaurant" aria-hidden="true"></i><span>Menus</span></button>
+    <button type="button" data-tab="profile"><i class="mile-icon icon-user-03" aria-hidden="true"></i><span>Perfil</span></button>
   </nav>
 </body>
 </html>

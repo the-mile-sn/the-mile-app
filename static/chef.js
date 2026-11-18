@@ -272,34 +272,121 @@ function editMenuForm(date,meal,item,slot){
   };
   slot.append(holder);
 }
-function renderMenuCard(date,meal){
-  const item=plannedMenu(date,meal),color=colorFor(date,meal);
-  const card=node("article","meal-card");
-  card.style.setProperty("--tone",tone[color]||"#dedee1");
-  const top=node("div","meal-top");
-  top.append(node("strong","",mealNames[lang][meal]),colorChip(color));
-  card.append(top,node("p",item?"meal-name":"placeholder-text",
-    item?asText(item.value):txt().pending));
-  const photo=mealPhoto(item);if(photo)card.append(photo);
-  executionForm(date,meal,card);
-  return card;
+
+const chefIcons={breakfast:"coffee-03",lunch:"restaurant-02",snack:"vegetarian-food",dinner:"restaurant-02",supper:"moon-02"};
+const mealAbbrev={breakfast:"PA",lunch:"AL",snack:"LA",dinner:"JA",supper:"CE"};
+let chefViewMode="day",chefWeekSelection=null;
+const validColors=["orange","yellow","blue","green","vp"];
+function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
+function iconForMeal(meal){const icon=node("i","mile-icon icon-"+chefIcons[meal]);icon.setAttribute("aria-hidden","true");return icon;}
+function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){return format(value,options).replace(/^./,c=>c.toLocaleUpperCase(locale(lang)));}
+function classificationFor(key){const found=days.find(x=>x.date===key);return found?.classification||"";}
+function mealAvailable(date,meal){return !!colorFor(date,meal)||!!plannedMenu(date,meal);}
+function prescriptionDetails(date,meal){
+ const color=colorFor(date,meal);if(!color)return null;
+ const options=prescriptions[color]?.[meal]||[];
+ const details=node("details","chef-prescription");
+ const sum=node("summary","chef-prescription-summary",lang==="pt"?"Prescrição":"Prescription");details.append(sum);
+ if(!options.length){details.append(node("p","chef-no-prescription",txt().noPlan));return details;}
+ options.forEach((option,index)=>{
+   const group=node("div","chef-prescription-option");
+   group.append(node("strong","",(option.title?asText(option.title)+" · ":"")+txt().option+" "+(option.number||index+1)));
+   for(const food of option.items||[]){
+     const line=[food.quantity,food.name||food.text].filter(Boolean).join(" ");
+     if(line)group.append(node("div","chef-prescription-food",line));
+   }
+   details.append(group);
+ });
+ return details;
+}
+function appendMenuDetails(host,date,meal){
+ const item=plannedMenu(date,meal);
+ if(meal==="lunch"||meal==="dinner"){
+   const dish=node("div","chef-meal-dish");
+   const description=node("div",item?"chef-dish-name":"chef-dish-pending",item?asText(item.value):txt().pending);
+   dish.append(description);
+   const photo=mealPhoto(item);if(photo){photo.classList.add("chef-dish-photo");dish.append(photo);}
+   host.append(dish);
+ }
+ const prescription=prescriptionDetails(date,meal);if(prescription)host.append(prescription);
+ if(meal==="lunch"||meal==="dinner")executionForm(date,meal,host);
+}
+function renderChefMeal(date,meal,expanded=false){
+ const color=mealTone(date,meal);
+ const card=node("details","chef-meal-card tone-"+color);
+ if(expanded)card.open=true;
+ const head=node("summary","chef-meal-head");
+ const symbol=node("span","chef-meal-icon");symbol.append(iconForMeal(meal));
+ head.append(symbol,node("strong","",mealNames[lang][meal]));
+ const arrow=node("span","chef-chevron","⌄");arrow.setAttribute("aria-hidden","true");head.append(arrow);
+ card.append(head);
+ const body=node("div","chef-meal-body");appendMenuDetails(body,date,meal);card.append(body);
+ return card;
+}
+function renderChefDaily(root){
+ const date=dateKey(selectedDay),classification=classificationFor(date);
+ const summary=node("section","chef-daily-summary");
+ const header=node("div","chef-summary-header");
+ header.append(node("strong","",dateDescription(selectedDay)));
+ if(classification)header.append(node("span","chef-microcycle",classification));
+ summary.append(header);
+ const strip=node("div","chef-day-colors");
+ for(const meal of mealOrder){
+   if(!mealAvailable(date,meal))continue;
+   const cell=node("div","chef-day-color tone-"+mealTone(date,meal));
+   cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]));
+   cell.append(node("span","chef-day-bar"));
+   strip.append(cell);
+ }
+ summary.append(strip);root.append(summary);
+ for(const meal of mealOrder){
+   if(!mealAvailable(date,meal))continue;
+   root.append(renderChefMeal(date,meal,meal==="lunch"||meal==="dinner"));
+ }
+}
+function renderChefWeekly(root){
+ const start=monday(selectedDay),keys=Array.from({length:7},(_,i)=>dateKey(shift(start,i)));
+ const grid=node("div","chef-week-grid");
+ for(let i=0;i<7;i++){
+   const date=shift(start,i),key=keys[i],dayHead=node("button","chef-week-day"+(dateKey(selectedDay)===key?" selected":""));
+   dayHead.type="button";dayHead.setAttribute("aria-label",dateDescription(date));dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
+   const dayName=format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase());
+   dayHead.append(node("small","",dayName),node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
+   dayHead.onclick=async()=>{selectedDay=date;chefWeekSelection=null;render();};
+   grid.append(dayHead);
+ }
+ const visible=mealOrder.filter(meal=>keys.some(key=>mealAvailable(key,meal)));
+ for(const meal of visible){
+   for(const key of keys){
+     const color=mealTone(key,meal),available=mealAvailable(key,meal);
+     const cell=node("button","chef-week-cell tone-"+color+(available?"":" unavailable")+(chefWeekSelection?.date===key&&chefWeekSelection?.meal===meal?" selected":""));
+     cell.type="button";cell.disabled=!available;
+     cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]));
+     cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
+     if(available)cell.onclick=()=>{
+       const same=chefWeekSelection?.date===key&&chefWeekSelection?.meal===meal;
+       chefWeekSelection=same?null:{date:key,meal};
+       render();
+     };
+     grid.append(cell);
+   }
+ }
+ root.append(grid);
+ if(chefWeekSelection){
+   const {date,meal}=chefWeekSelection,dt=new Date(date+"T12:00:00");
+   const panel=node("section","chef-week-detail");
+   const top=node("div","chef-week-detail-head");
+   top.append(node("strong","",mealNames[lang][meal]+" · "+dateDescription(dt)));
+   const close=node("button","chef-week-close","×");close.type="button";close.setAttribute("aria-label","Fechar detalhes");
+   close.onclick=()=>{chefWeekSelection=null;render();};top.append(close);panel.append(top);
+   const mealCard=renderChefMeal(date,meal,true);panel.append(mealCard);root.append(panel);
+ }
 }
 function sectionTitle(title,extra){
-  const head=node("div","section-head");
-  head.append(node("h2","",title));
-  if(extra)head.append(node("span","",extra));
-  return head;
+ const head=node("div","section-head");head.append(node("h2","",title));
+ if(extra)head.append(node("span","",extra));return head;
 }
-function renderHome(root){
-  const day=dateKey(selectedDay);
-  const detail=days.find(d=>d.date===day);
-  const dated=format(selectedDay,{weekday:"long",day:"numeric",month:"long"});
-  root.append(sectionTitle(txt().day,dated));
-  if(detail?.classification)root.append(node("p","muted",detail.classification));
-  const grid=node("div","grid-meals");
-  grid.append(renderMenuCard(day,"lunch"),renderMenuCard(day,"dinner"));
-  root.append(grid,node("p","info-note",txt().readOnly));
-}
+function renderHome(root){if(chefViewMode==="week")renderChefWeekly(root);else renderChefDaily(root);}
 function renderPlan(root){
   const date=dateKey(selectedDay);
   root.append(sectionTitle(txt().plans,format(selectedDay,{weekday:"long",day:"numeric",month:"long"})));
@@ -408,14 +495,17 @@ function render(){
     button.querySelector("span").textContent=caption;
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
-  el("day-controls").hidden=activeTab==="profile";
-  picker.hidden=activeTab==="profile";
+  el("chef-view-mode").hidden=activeTab!=="home";
+  el("day-controls").hidden=activeTab==="home"||activeTab==="profile";
+  picker.hidden=activeTab==="home"||activeTab==="profile";
+  for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
   const screen=el("screen");screen.replaceChildren();
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
   if(activeTab==="menus")renderMenus(screen);
   if(activeTab==="profile")renderProfile(screen);
 }
+el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();};});
 el("prev-week").onclick=async()=>{selectedDay=shift(selectedDay,-7);try{await loadWeek();}catch(err){showError(txt().fail);}};
 el("next-week").onclick=async()=>{selectedDay=shift(selectedDay,7);try{await loadWeek();}catch(err){showError(txt().fail);}};
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
