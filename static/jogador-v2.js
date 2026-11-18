@@ -455,6 +455,10 @@ async function session(){
   $("logout").hidden=true;
   return;
  }
+ if(sessionData.user.role==="chef"){
+  window.location.replace("/chef");
+  return;
+ }
  if(sessionData.user.role!=="player"){
   playerSessionReady();
   $("login-panel").hidden=false;
