@@ -12589,7 +12589,7 @@ html[data-admin-theme] body #admin-workspace .tm-select-option {
  font:400 13px/1.3 "Inter Tight",Arial,sans-serif;
 }
 html[data-admin-theme] body #admin-workspace .tm-select-option[aria-selected="true"] {
- background:var(--tm-ui-subcard);
+ background:color-mix(in srgb,var(--tm-ui-text) 6%,var(--tm-ui-card));
 }
 html[data-admin-theme] body #admin-workspace .tm-select-check{display:none!important}
 html[data-admin-theme] body #admin-workspace .tm-select-empty {
@@ -12599,7 +12599,7 @@ html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel >
  display:block!important;position:relative!important;box-sizing:border-box!important;
  width:100%!important;height:44px!important;min-height:44px!important;
  max-height:44px!important;margin:0 0 10px!important;padding:0 14px!important;
- background:var(--tm-ui-subcard)!important;background-image:none!important;
+ background:color-mix(in srgb,var(--tm-ui-text) 6%,var(--tm-ui-card))!important;background-image:none!important;
  color:var(--tm-ui-text)!important;
  border:1px solid color-mix(in srgb,var(--tm-ui-text) 8%,transparent)!important;
  border-radius:11px!important;box-shadow:none!important;
@@ -12703,7 +12703,7 @@ html[data-admin-theme] body #admin-workspace #tm-plan-page
 /* Jogadores: preserve the approved status field and its accessible overlay. */
 html[data-admin-theme] #tm-players-page .tm-two-line-select.tm-select-legacy-preserved{position:relative!important}
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:5}
-html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-trigger{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:inherit!important}
+html[data-admin-theme] body #admin-workspace #tm-players-page .tm-select-preserve-field>.tm-select-trigger{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;background:transparent!important;background-color:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:inherit!important}
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-trigger .tm-select-value,
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-trigger .tm-select-chevron{display:none!important}
 html[data-admin-theme] #tm-players-page .tm-select-preserve-field>.tm-select-trigger:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9)!important;outline-offset:2px!important}
@@ -12735,7 +12735,7 @@ html[data-admin-theme] #tm-players-page .tm-players-header-select .tm-two-line-s
  :is(#tm-food-library-page,#tm-supplement-library-page,#tm-visual-portions-page,#tm-menu-recipes-page,#tm-recipe-library-page)
  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),textarea,select,[contenteditable="true"]):focus,
  html[data-admin-theme] body #admin-workspace .tm-select-shell .tm-select-panel > input.tm-select-search {
-  font-size:16px!important;
+  font-size:17px!important;
   -webkit-text-size-adjust:100%;
  }
  html[data-admin-theme] body #admin-workspace .tm-select-options {
