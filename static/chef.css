@@ -575,3 +575,41 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  #screen.chef-screen-home .chef-execution-quick-actions>button,
  #screen.chef-screen-home .chef-execution-state{transition:none}
 }
+
+/* Player-matched registration badge: only visible on collapsed meal cards.
+   A single neutral "Registado" works for served, changed, eaten out and Chef-off states. */
+#screen .chef-meal-heading>strong .chef-meal-registered{
+ display:none;
+ align-items:center;
+ vertical-align:middle;
+ margin-left:10px;
+ padding:4px 9px;
+ border-radius:999px;
+ background:rgba(154,224,191,.20);
+ color:#b9eed2;
+ font-size:11px;
+ font-weight:500;
+ line-height:1.3;
+ letter-spacing:0;
+ white-space:nowrap;
+}
+#screen .chef-meal-card:not([open])>.chef-meal-head .chef-meal-registered{
+ display:inline-flex;
+}
+#screen .chef-meal-registered-icon{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ width:14px;height:14px;
+ flex:0 0 14px;
+ margin-right:5px;
+ line-height:0;
+}
+#screen .chef-meal-registered-icon svg{
+ display:block;width:100%;height:100%;fill:none;overflow:visible;
+}
+@media(max-width:380px){
+ #screen .chef-meal-heading>strong .chef-meal-registered{
+  margin-left:7px;padding:3px 7px;font-size:10px;
+ }
+}

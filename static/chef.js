@@ -175,10 +175,6 @@ function executionForm(date,meal,card){
   const names=pt
     ?{served_planned:"Servido conforme planeado",served_changed:"Servido com alterações",ate_out:"Jogador comeu fora",chef_off:"Chef de folga"}
     :{served_planned:"Served as planned",served_changed:"Served with changes",ate_out:"Player ate out",chef_off:"Chef off duty"};
-  if(now){
-    const status=node("p","chef-exec-current",(names[now.state]||now.state)+(now.served_description?" · "+now.served_description:""));
-    card.append(status);
-  }
   const root=node("div","chef-execution");
   const actions=node("div","chef-execution-quick-actions");
   const edit=node("button","chef-execution-quick-edit",pt?"Editar":"Edit");
@@ -563,7 +559,23 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
  const head=node("summary","chef-meal-head");
  const heading=node("span","chef-meal-heading");
  const symbol=node("span","chef-meal-icon");symbol.append(iconForMeal(meal));
- heading.append(symbol,node("strong","",mealNames[lang][meal]));
+
+ const title=node("strong","",mealNames[lang][meal]);
+ if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
+  const latest=executions.find(item=>item.menu_date===date&&item.meal===meal);
+  if(latest){
+   // Neutral registration indicator for all execution states, including meals not served.
+   // Match the player's closed-meal badge without claiming every meal was served.
+   const label=node("span","chef-meal-registered");
+   label.setAttribute("aria-label",lang==="pt"?"Execução registada":"Execution recorded");
+   const icon=node("span","chef-meal-registered-icon");
+   icon.setAttribute("aria-hidden","true");
+   icon.append(iconToSvg(chefExecutionConfirmIcon));
+   label.append(icon,node("span","",lang==="pt"?"Registado":"Recorded"));
+   title.append(label);
+  }
+ }
+ heading.append(symbol,title);
  heading.append(node("span","chef-chevron"));head.append(heading);
  // A Chef must see the planned dish and its photo even when the meal is closed.
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
