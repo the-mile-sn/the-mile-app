@@ -273,55 +273,130 @@ function editMenuForm(date,meal,item,slot){
   slot.append(holder);
 }
 
+
 const chefIcons={breakfast:"coffee-03",lunch:"restaurant-02",snack:"vegetarian-food",dinner:"restaurant-02",supper:"moon-02"};
 const mealAbbrev={breakfast:"PA",lunch:"AL",snack:"LA",dinner:"JA",supper:"CE"};
-let chefViewMode="day",chefWeekSelection=null;
+const chefSvgPaths={"coffee-03":"<path d=\"M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Zm12 1h1a3 3 0 0 1 0 6h-2M4 22h16M8 3v3m4-3v3m4-3v3\"/>","vegetarian-food":"<path d=\"M4 12c2-4 6-4 8 0 2-4 6-4 8 0l-2 7H6l-2-7ZM12 10V4M8 7 5 5m11 2 3-2M6 22h12\"/>","restaurant-02":"<path d=\"M4 3v8m3-8v8M4 7h3M5.5 11v10M13 3v18M13 12c7 0 8-8 3-9v9M20 3v18\"/>","moon-02":"<path d=\"M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z\"/>","football":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 7 4 3-1.5 5h-5L8 10l4-3Zm-4 3-4-1m12 1 4-1m-5.5 6 2 5m-7-5-2 5M12 7V3\"/>","football-pitch":"<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1\"/><path d=\"M12 4v16m0-12a4 4 0 0 0 0 8M2.5 9h4v6h-4m19-6h-4v6h4\"/>","soft-drink-01":"<path d=\"M5 5h14l-2 16H7L5 5ZM4 3h16M12 5l4-4M8 11h8m-6 4h4\"/>","home-09":"<path d=\"m3 11 9-8 9 8v9H3v-9Zm6 9v-7h6v7\"/>","files-01":"<path d=\"M7 3h10l4 4v14H7V3Zm10 0v5h4M3 7v14h14\"/>","add-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10m-5-5h10\"/>","menu-restaurant":"<path d=\"M4 4v7m3-7v7M4 7h3m-1.5 4v9M13 4v16m0-8c7 0 8-7 3-8v8M3 22h18\"/>","user-03":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>"};;
+const svgMarkup=name=>'<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+(chefSvgPaths[name]||"")+"</svg>";
+function paintChefIcons(){
+ document.querySelectorAll(".mile-icon").forEach(item=>{
+  if(item.dataset.chefSvg)return;
+  const name=Array.from(item.classList).find(cls=>cls.startsWith("icon-"))?.slice(5);
+  if(!name||!chefSvgPaths[name])return;
+  item.innerHTML=svgMarkup(name);
+  item.dataset.chefSvg="true";
+ });
+}
+function iconForMeal(meal){
+ const icon=node("span","mile-icon icon-"+chefIcons[meal]);
+ icon.setAttribute("aria-hidden","true");
+ icon.innerHTML=svgMarkup(chefIcons[meal]);
+ icon.dataset.chefSvg="true";
+ return icon;
+}
+let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus";
 const validColors=["orange","yellow","blue","green","vp"];
 function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
-function iconForMeal(meal){const icon=node("i","mile-icon icon-"+chefIcons[meal]);icon.setAttribute("aria-hidden","true");return icon;}
-function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){return format(value,options).replace(/^./,c=>c.toLocaleUpperCase(locale(lang)));}
-function classificationFor(key){const found=days.find(x=>x.date===key);return found?.classification||"";}
+function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
+ return format(value,options).replace(/^./,letter=>letter.toLocaleUpperCase(locale(lang)));
+}
+function classificationFor(key){return days.find(item=>item.date===key)?.classification||"";}
 function mealAvailable(date,meal){return !!colorFor(date,meal)||!!plannedMenu(date,meal);}
-function prescriptionDetails(date,meal){
- const color=colorFor(date,meal);if(!color)return null;
- const options=prescriptions[color]?.[meal]||[];
- const details=node("details","chef-prescription");
- const sum=node("summary","chef-prescription-summary",lang==="pt"?"Prescrição":"Prescription");details.append(sum);
- if(!options.length){details.append(node("p","chef-no-prescription",txt().noPlan));return details;}
- options.forEach((option,index)=>{
-   const group=node("div","chef-prescription-option");
-   group.append(node("strong","",(option.title?asText(option.title)+" · ":"")+txt().option+" "+(option.number||index+1)));
-   for(const food of option.items||[]){
-     const line=[food.quantity,food.name||food.text].filter(Boolean).join(" ");
-     if(line)group.append(node("div","chef-prescription-food",line));
-   }
-   details.append(group);
+function chefNutrition(totals){
+ if(!totals||typeof totals!=="object")return null;
+ const keys=[["kcal","kcal",""],["protein_g","protein","g"],["carbs_g","carbs","g"],["fat_g","fat","g"]];
+ if(!keys.every(([key])=>Number.isFinite(Number(totals[key]))))return null;
+ const line=node("div","chef-option-nutrition");
+ keys.forEach(([key,cls,unit])=>{
+  const value=Math.round(Number(totals[key]));
+  line.append(node("span",cls,(unit?value+" "+unit:value+" kcal")));
  });
- return details;
+ return line;
 }
-function appendMenuDetails(host,date,meal){
- const item=plannedMenu(date,meal);
- if(meal==="lunch"||meal==="dinner"){
-   const dish=node("div","chef-meal-dish");
-   const description=node("div",item?"chef-dish-name":"chef-dish-pending",item?asText(item.value):txt().pending);
-   dish.append(description);
-   const photo=mealPhoto(item);if(photo){photo.classList.add("chef-dish-photo");dish.append(photo);}
-   host.append(dish);
+function appendChefFoodItems(host,items){
+ for(const food of items||[]){
+  if(food.kind==="collapsible_note"){
+   const note=node("details","chef-option-note");
+   note.append(node("summary","",food.title||"Observações"),node("p","",asText(food.text||"")));
+   host.append(note);
+   continue;
+  }
+  const text=food.kind==="food"
+   ?[food.quantity,food.name].filter(Boolean).join(" · ")
+   :[food.quantity,food.name||food.text].filter(Boolean).join(" · ");
+  if(text)host.append(node("div","chef-option-food",text));
  }
- const prescription=prescriptionDetails(date,meal);if(prescription)host.append(prescription);
- if(meal==="lunch"||meal==="dinner")executionForm(date,meal,host);
 }
-function renderChefMeal(date,meal,expanded=false){
- const color=mealTone(date,meal);
- const card=node("details","chef-meal-card tone-"+color);
- if(expanded)card.open=true;
+function chefOptionCards(date,meal){
+ const color=colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
+ const list=node("div","chef-option-list");
+ if(!options.length){
+  if(color)list.append(node("p","chef-option-empty",txt().noPlan));
+  return list;
+ }
+ options.forEach((option,index)=>{
+  const card=node("details","chef-option-card player-meal-option-subcard");
+  card.open=index===0;
+  const head=node("summary","chef-option-head");
+  const label=node("span","chef-option-label");
+  label.append(node("small","",txt().option+" "+(option.number||index+1)));
+  if(option.title)label.append(node("strong","",asText(option.title)));
+  head.append(label,node("span","chef-option-arrow","⌄"));
+  card.append(head);
+  const body=node("div","chef-option-body");
+  const nutrition=chefNutrition(option.totals);
+  if(nutrition)body.append(nutrition);
+  appendChefFoodItems(body,option.items);
+  card.append(body);list.append(card);
+ });
+ return list;
+}
+function chefMenuPhoto(item){
+ const photo=mealPhoto(item);
+ if(!photo)return null;
+ const frame=node("span","chef-dish-photo-frame");
+ photo.className="chef-dish-photo";
+ frame.append(photo);
+ const zoom=node("span","chef-photo-zoom");
+ zoom.setAttribute("aria-hidden","true");
+ zoom.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg>';
+ frame.append(zoom);
+ frame.setAttribute("role","button");frame.tabIndex=0;
+ frame.setAttribute("aria-label","Ampliar fotografia do prato");
+ const open=()=>{
+  const overlay=node("div","chef-photo-overlay");
+  const close=node("button","chef-photo-close","×");close.type="button";
+  close.setAttribute("aria-label","Fechar fotografia");
+  const large=node("img","chef-photo-large");large.src=photo.src;large.alt=photo.alt;
+  const dismiss=()=>{document.removeEventListener("keydown",onKey);overlay.remove();};
+  const onKey=event=>{if(event.key==="Escape")dismiss();};
+  close.onclick=dismiss;overlay.onclick=event=>{if(event.target===overlay)dismiss();};
+  overlay.append(close,large);document.body.append(overlay);document.addEventListener("keydown",onKey);close.focus();
+ };
+ frame.onclick=open;
+ frame.onkeydown=event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();open();}};
+ return frame;
+}
+function appendChefMenuDish(host,item,emptyLabel){
+ const wrap=node("div","chef-meal-dish");
+ wrap.append(node("div",item?"chef-dish-name":"chef-dish-pending",item?asText(item.value):emptyLabel));
+ const photo=chefMenuPhoto(item);if(photo)wrap.append(photo);
+ host.append(wrap);
+}
+function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
+ const card=node("details","chef-meal-card tone-"+mealTone(date,meal));
+ card.open=expanded;
  const head=node("summary","chef-meal-head");
  const symbol=node("span","chef-meal-icon");symbol.append(iconForMeal(meal));
  head.append(symbol,node("strong","",mealNames[lang][meal]));
- const arrow=node("span","chef-chevron","⌄");arrow.setAttribute("aria-hidden","true");head.append(arrow);
- card.append(head);
- const body=node("div","chef-meal-body");appendMenuDetails(body,date,meal);card.append(body);
- return card;
+ head.append(node("span","chef-chevron","⌄"));card.append(head);
+ const body=node("div","chef-meal-body");
+ if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
+  appendChefMenuDish(body,plannedMenu(date,meal),txt().pending);
+ }
+ body.append(chefOptionCards(date,meal));
+ if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
+ card.append(body);return card;
 }
 function renderChefDaily(root){
  const date=dateKey(selectedDay),classification=classificationFor(date);
@@ -332,54 +407,51 @@ function renderChefDaily(root){
  summary.append(header);
  const strip=node("div","chef-day-colors");
  for(const meal of mealOrder){
-   if(!mealAvailable(date,meal))continue;
-   const cell=node("div","chef-day-color tone-"+mealTone(date,meal));
-   cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]));
-   cell.append(node("span","chef-day-bar"));
-   strip.append(cell);
+  if(!mealAvailable(date,meal))continue;
+  const cell=node("div","chef-day-color tone-"+mealTone(date,meal));
+  cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]),node("span","chef-day-bar"));
+  strip.append(cell);
  }
  summary.append(strip);root.append(summary);
  for(const meal of mealOrder){
-   if(!mealAvailable(date,meal))continue;
-   root.append(renderChefMeal(date,meal,meal==="lunch"||meal==="dinner"));
+  if(mealAvailable(date,meal))root.append(renderChefMeal(date,meal,meal==="lunch"||meal==="dinner"));
  }
 }
 function renderChefWeekly(root){
  const start=monday(selectedDay),keys=Array.from({length:7},(_,i)=>dateKey(shift(start,i)));
  const grid=node("div","chef-week-grid");
  for(let i=0;i<7;i++){
-   const date=shift(start,i),key=keys[i],dayHead=node("button","chef-week-day"+(dateKey(selectedDay)===key?" selected":""));
-   dayHead.type="button";dayHead.setAttribute("aria-label",dateDescription(date));dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
-   const dayName=format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase());
-   dayHead.append(node("small","",dayName),node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
-   dayHead.onclick=async()=>{selectedDay=date;chefWeekSelection=null;render();};
-   grid.append(dayHead);
+  const date=shift(start,i),key=keys[i];
+  const dayHead=node("button","chef-week-day"+(dateKey(selectedDay)===key?" selected":""));
+  dayHead.type="button";dayHead.setAttribute("aria-label",dateDescription(date));
+  dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
+  dayHead.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
+    node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
+  dayHead.onclick=()=>{selectedDay=date;chefWeekSelection=null;render();};
+  grid.append(dayHead);
  }
  const visible=mealOrder.filter(meal=>keys.some(key=>mealAvailable(key,meal)));
  for(const meal of visible){
-   for(const key of keys){
-     const color=mealTone(key,meal),available=mealAvailable(key,meal);
-     const cell=node("button","chef-week-cell tone-"+color+(available?"":" unavailable")+(chefWeekSelection?.date===key&&chefWeekSelection?.meal===meal?" selected":""));
-     cell.type="button";cell.disabled=!available;
-     cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]));
-     cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
-     if(available)cell.onclick=()=>{
-       const same=chefWeekSelection?.date===key&&chefWeekSelection?.meal===meal;
-       chefWeekSelection=same?null:{date:key,meal};
-       render();
-     };
-     grid.append(cell);
-   }
+  for(const key of keys){
+   const color=mealTone(key,meal),available=mealAvailable(key,meal);
+   const active=chefWeekSelection?.date===key&&chefWeekSelection?.meal===meal;
+   const cell=node("button","chef-week-cell tone-"+color+(available?"":" unavailable")+(active?" selected":""));
+   cell.type="button";cell.disabled=!available;
+   cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]));
+   cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
+   if(available)cell.onclick=()=>{chefWeekSelection=active?null:{date:key,meal};render();};
+   grid.append(cell);
+  }
  }
  root.append(grid);
  if(chefWeekSelection){
-   const {date,meal}=chefWeekSelection,dt=new Date(date+"T12:00:00");
-   const panel=node("section","chef-week-detail");
-   const top=node("div","chef-week-detail-head");
-   top.append(node("strong","",mealNames[lang][meal]+" · "+dateDescription(dt)));
-   const close=node("button","chef-week-close","×");close.type="button";close.setAttribute("aria-label","Fechar detalhes");
-   close.onclick=()=>{chefWeekSelection=null;render();};top.append(close);panel.append(top);
-   const mealCard=renderChefMeal(date,meal,true);panel.append(mealCard);root.append(panel);
+  const {date,meal}=chefWeekSelection,dt=new Date(date+"T12:00:00");
+  const panel=node("section","chef-week-detail");
+  const top=node("div","chef-week-detail-head");
+  top.append(node("strong","",mealNames[lang][meal]+" · "+dateDescription(dt)));
+  const close=node("button","chef-week-close","×");close.type="button";close.setAttribute("aria-label","Fechar detalhes");
+  close.onclick=()=>{chefWeekSelection=null;render();};top.append(close);panel.append(top);
+  panel.append(renderChefMeal(date,meal,true));root.append(panel);
  }
 }
 function sectionTitle(title,extra){
@@ -388,57 +460,95 @@ function sectionTitle(title,extra){
 }
 function renderHome(root){if(chefViewMode==="week")renderChefWeekly(root);else renderChefDaily(root);}
 function renderPlan(root){
-  const date=dateKey(selectedDay);
-  root.append(sectionTitle(txt().plans,format(selectedDay,{weekday:"long",day:"numeric",month:"long"})));
-  for(const meal of mealOrder){
-    const color=colorFor(date,meal);
-    if(!color)continue;
-    const panel=node("section","panel");
-    const head=node("div","meal-top");
-    head.append(node("strong","",mealNames[lang][meal]),colorChip(color));
-    panel.append(head);
-    const options=prescriptions[color]?.[meal]||[];
-    if(!options.length){panel.append(node("p","muted",txt().noPlan));}
-    else for(const [index,option] of options.entries()){
-      const block=node("div","plan-option");
-      block.append(node("strong","",(option.title?asText(option.title)+" · ":"")+txt().option+" "+(option.number||index+1)));
-      for(const food of option.items||[]){
-        const line=[food.quantity,food.name||food.text].filter(Boolean).join(" ");
-        if(line)block.append(node("span","food-line",line));
-      }
-      panel.append(block);
-    }
-    root.append(panel);
+ const date=dateKey(selectedDay);
+ root.append(sectionTitle(txt().plans,dateDescription(selectedDay,{weekday:"long",day:"numeric",month:"long"})));
+ for(const meal of mealOrder){
+  if(!colorFor(date,meal))continue;
+  root.append(renderChefMeal(date,meal,false,true));
+ }
+ if(!root.querySelector(".chef-meal-card"))root.append(node("p","muted",txt().noData));
+}
+
+function renderChefMenuDateStrip(root){
+ const wrap=node("nav","chef-menu-week-strip");wrap.setAttribute("aria-label","Semana do menu");
+ const start=monday(selectedDay);
+ for(let offset=0;offset<7;offset++){
+  const date=shift(start,offset),key=dateKey(date);
+  const cell=node("button","chef-menu-week-day"+(key===dateKey(selectedDay)?" selected":""));
+  cell.type="button";
+  cell.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
+    node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
+  cell.setAttribute("aria-label",dateDescription(date));
+  cell.setAttribute("aria-pressed",String(key===dateKey(selectedDay)));
+  cell.onclick=()=>{selectedDay=date;loadWeek().catch(err=>showError(txt().fail));};
+  wrap.append(cell);
+ }
+ root.append(wrap);
+}
+function renderChefMenuDay(root,key){
+ const date=new Date(key+"T12:00:00");
+ const card=node("section","chef-menu-day");
+ const head=node("div","chef-menu-day-header");
+ head.append(node("strong","",dateDescription(date)));
+ const micro=classificationFor(key);if(micro)head.append(node("span","",micro));
+ card.append(head);
+ for(const meal of ["lunch","dinner"]){
+  const item=plannedMenu(key,meal),color=mealTone(key,meal);
+  const slot=node("article","chef-menu-entry tone-"+color);
+  slot.append(node("div","chef-menu-meal-label",mealNames[lang][meal]));
+  appendChefMenuDish(slot,item,txt().pending);
+  if(key>=dateKey(new Date())){
+   const edit=miniButton(lang==="pt"?"Editar menu":"Edit menu",()=>{
+    const existing=slot.querySelector(".chef-menu-editor");
+    if(existing){existing.remove();return;}
+    editMenuForm(key,meal,item,slot);
+   });
+   edit.classList.add("chef-menu-edit-button");
+   slot.append(edit);
   }
-  if(!root.querySelector(".panel"))root.append(node("p","muted",txt().noData));
+  card.append(slot);
+ }
+ root.append(card);
+}
+function renderChefRecipes(root){
+ const description=node("p","chef-recipes-caption",
+  lang==="pt"?"Consulta dos pratos aprovados disponíveis para os menus.":"Approved dishes available for menus.");
+ const search=node("input","chef-recipes-search");
+ search.type="search";search.placeholder=lang==="pt"?"Pesquisar pratos aprovados":"Search approved dishes";
+ search.setAttribute("aria-label",search.placeholder);
+ const list=node("div","chef-recipes-list");
+ root.append(description,search,list);
+ let requestNumber=0;
+ const find=async()=>{
+  const seq=++requestNumber;list.replaceChildren(node("p","chef-recipes-status",lang==="pt"?"A pesquisar…":"Searching…"));
+  try{
+   const result=await request("/api/v2/chef/dishes?q="+encodeURIComponent(search.value.trim()));
+   if(seq!==requestNumber||!list.isConnected)return;
+   list.replaceChildren();
+   for(const dish of result.dishes||[]){
+    const item=node("article","chef-recipe-row");
+    item.append(node("strong","",dish.name_pt));
+    item.append(node("span","",dish.category||""));
+    list.append(item);
+   }
+   if(!list.childElementCount)list.append(node("p","chef-recipes-status",txt().noData));
+  }catch(err){if(seq===requestNumber&&list.isConnected)list.replaceChildren(node("p","error",txt().fail));}
+ };
+ let debounce;search.oninput=()=>{clearTimeout(debounce);debounce=setTimeout(find,220);};
+ find();
 }
 function renderMenus(root){
-  root.append(sectionTitle(txt().weekMenu,txt().readOnly));
-  const list=node("div","menu-list");
-  const begin=monday(selectedDay);
-  for(let offset=0;offset<7;offset++){
-    const date=shift(begin,offset),key=dateKey(date);
-    const card=node("section","menu-day");
-    card.append(node("h3","menu-day-name",
-      format(date,{weekday:"long",day:"numeric",month:"short"})));
-    for(const meal of ["lunch","dinner"]){
-      const item=plannedMenu(key,meal),color=colorFor(key,meal);
-      const slot=node("div","menu-slot"),head=node("div","menu-slot-head");
-      head.append(node("span","",mealNames[lang][meal]),colorChip(color));
-      slot.append(head,node("div","menu-slot-name",item?asText(item.value):txt().pending));
-      if(key>=dateKey(new Date())){
-        const edit=miniButton(lang==="pt"?"Editar planeamento":"Edit planning",()=>{
-          const existing=slot.querySelector(".chef-menu-editor");
-          if(existing){existing.remove();return;}
-          editMenuForm(key,meal,item,slot);
-        });
-        slot.append(edit);
-      }
-      card.append(slot);
-    }
-    list.append(card);
-  }
-  root.append(list,node("p","info-note",lang==='pt'?'Os novos pratos precisam de validação da The Mile.':'New dishes must be validated by The Mile.'));
+ const switcher=node("nav","chef-menu-switch");switcher.setAttribute("aria-label","Menus e receitas");
+ for(const [key,caption] of [["menus",txt().menus],["recipes",lang==="pt"?"Receitas":"Recipes"]]){
+  const button=node("button","",caption);button.type="button";button.dataset.mode=key;
+  button.setAttribute("aria-pressed",String(chefMenuMode===key));
+  button.onclick=()=>{chefMenuMode=key;render();};switcher.append(button);
+ }
+ root.append(switcher);
+ if(chefMenuMode==="recipes"){renderChefRecipes(root);return;}
+ renderChefMenuDateStrip(root);
+ const start=monday(selectedDay);
+ for(let offset=0;offset<7;offset++)renderChefMenuDay(root,dateKey(shift(start,offset)));
 }
 function renderProfile(root){
   root.append(sectionTitle(txt().profile));
@@ -496,14 +606,16 @@ function render(){
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
-  el("day-controls").hidden=activeTab==="home"||activeTab==="profile";
-  picker.hidden=activeTab==="home"||activeTab==="profile";
+  el("day-controls").hidden=activeTab==="home"||activeTab==="menus"||activeTab==="profile";
+  picker.hidden=activeTab==="home"||activeTab==="menus"||activeTab==="profile";
   for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
   const screen=el("screen");screen.replaceChildren();
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
   if(activeTab==="menus")renderMenus(screen);
   if(activeTab==="profile")renderProfile(screen);
+  el("top-logout").hidden=activeTab!=="profile";
+  paintChefIcons();
 }
 el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();};});
 el("prev-week").onclick=async()=>{selectedDay=shift(selectedDay,-7);try{await loadWeek();}catch(err){showError(txt().fail);}};

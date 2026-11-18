@@ -90,61 +90,77 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-exec-current{font-size:12px;color:#5b5b62;line-height:1.5}
 .chef-feedback{color:#666;min-height:16px;font-size:12px;margin:4px 0}
 
-/* Chef visual parity, taken from the current player palette and navigation */
+
+/* The Mile shared player palette and exact inline icon path rendering. */
 :root{color-scheme:dark;--meal-orange:#78482e;--meal-yellow:#746028;--meal-blue:#285771;--meal-green:#296447;--meal-vp:#10251a;--chef-neutral:#303035;--chef-ink:#f5f5f7}
 html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-family:"Inter Tight",-apple-system,BlinkMacSystemFont,"SF Pro",Arial,sans-serif}
-.top{height:66px;background:#0d0d10;border:0;padding:10px 18px;justify-content:center;position:relative}
-.brand{font-size:24px;font-weight:500;letter-spacing:.015em;color:#f6f6f8}
-.top-details{position:absolute;right:16px;top:17px}.top-details #top-name{display:none}.quiet-button{color:#e8e8ec}
-.page{width:min(calc(100% - 28px),960px);padding:8px 0 124px}
-.page-intro{display:none}.day-controls{background:#202024;border:0;color:#fff}.day-controls button{color:#eee}.week-details span{color:#aaa}
-.day-picker button{background:#1b1b20;color:#eee;border:0}.day-picker button.active{background:#f5f5f7;color:#2073b8}
-.chef-view-mode{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:#202024;border-radius:999px;padding:4px;margin:2px 0 26px}
-.chef-view-mode button{min-height:46px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:16px;font-weight:500}
-.chef-view-mode button[aria-pressed=true]{background:#55555b}
+.top{height:52px;min-height:52px;background:#0d0d10;border:0;padding:0 18px;display:flex;justify-content:center;align-items:center;position:relative}
+.brand{font-size:21px;font-weight:500;letter-spacing:.015em;color:#f6f6f8}
+.top-details{position:absolute;right:16px;top:8px}
+.top-details #top-name{display:none}.quiet-button{color:#e8e8ec;font-size:12px}
+.page{width:min(calc(100% - 28px),960px);padding:2px 0 130px}
+.page-intro{display:none}.day-controls{background:#202024;border:0;color:#fff}.day-controls button{color:#eee}
+.week-details span{color:#aaa}
+.day-picker button{background:#1b1b20;color:#eee;border:0}
+.day-picker button.active{background:#f5f5f7;color:#2073b8}
+.chef-view-mode,.chef-menu-switch{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:#202024;border-radius:999px;padding:4px;margin:0 0 20px}
+.chef-view-mode button,.chef-menu-switch button{min-height:44px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:15px;font-weight:500;padding:8px 4px}
+.chef-view-mode button[aria-pressed=true],.chef-menu-switch button[aria-pressed=true]{background:#55555b}
 .bottom-nav{left:12px;right:12px;bottom:calc(9px + env(safe-area-inset-bottom,0px));border-radius:999px;border:.5px solid rgba(234,236,244,.18);background:rgba(33,34,40,.94);box-shadow:0 14px 40px rgba(0,0,0,.3),inset 0 .5px 0 rgba(255,255,255,.2);padding:5px;grid-template-columns:repeat(4,minmax(0,1fr));max-width:640px;margin:0 auto;backdrop-filter:blur(18px)}
-.bottom-nav button{min-height:63px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 2px;border-radius:999px;color:#f3f3f6;font-size:11px;font-weight:500}
+.bottom-nav button{min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 2px;border-radius:999px;color:#f3f3f6;font-size:11px;font-weight:500}
 .bottom-nav button[aria-current=page]{background:#55555b;color:#fff;font-weight:500;box-shadow:inset 0 .5px 0 #ffffff55}
-.mile-icon{display:inline-block;width:23px;height:23px;flex:none;background:currentColor;-webkit-mask:var(--icon-url) center/contain no-repeat;mask:var(--icon-url) center/contain no-repeat}
-.icon-coffee-03{--icon-url:url("https://api.iconify.design/hugeicons/coffee-03.svg")}
-.icon-vegetarian-food{--icon-url:url("https://api.iconify.design/hugeicons/vegetarian-food.svg")}
-.icon-restaurant-02{--icon-url:url("https://api.iconify.design/hugeicons/restaurant-02.svg")}
-.icon-moon-02{--icon-url:url("https://api.iconify.design/hugeicons/moon-02.svg")}
-.icon-home-09{--icon-url:url("https://api.iconify.design/hugeicons/home-09.svg")}
-.icon-files-01{--icon-url:url("https://api.iconify.design/hugeicons/files-01.svg")}
-.icon-menu-restaurant{--icon-url:url("https://api.iconify.design/hugeicons/menu-restaurant.svg")}
-.icon-user-03{--icon-url:url("https://api.iconify.design/hugeicons/user-03.svg")}
+.mile-icon{display:inline-flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;background:transparent!important;-webkit-mask:none!important;mask:none!important}
+.mile-icon svg{display:block;width:100%;height:100%;flex:none}
 .tone-orange{--chef-tone:var(--meal-orange);--chef-tone-ink:#ffca9e}
 .tone-yellow{--chef-tone:var(--meal-yellow);--chef-tone-ink:#ffe08a}
 .tone-blue{--chef-tone:var(--meal-blue);--chef-tone-ink:#9cd0ff}
 .tone-green{--chef-tone:var(--meal-green);--chef-tone-ink:#82e6ae}
 .tone-vp{--chef-tone:var(--meal-vp);--chef-tone-ink:#85d4a6}
 .tone-neutral{--chef-tone:var(--chef-neutral);--chef-tone-ink:#f0f0f4}
-.chef-daily-summary{margin:12px 0 23px;padding:15px 13px 12px;background:#17171a;border-radius:17px}
-.chef-summary-header{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px;margin:1px 0 19px}
-.chef-summary-header strong{font-weight:600}.chef-microcycle{padding:6px 11px;border-radius:999px;background:#29292e;color:#d8d8df;font-size:13px}
-.chef-day-colors{display:flex;gap:12px;align-items:stretch;justify-content:space-around}
+.chef-daily-summary{margin:12px 0 19px;padding:13px 13px 14px;background:#17171a;border-radius:17px}
+.chef-summary-header{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:15px;margin:0 0 19px}
+.chef-summary-header strong{font-weight:550}.chef-microcycle{padding:5px 10px;border-radius:999px;background:#29292e;color:#d8d8df;font-size:12px}
+.chef-day-colors{display:flex;gap:10px;align-items:stretch;justify-content:space-around}
 .chef-day-color{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:6px;color:var(--chef-tone-ink);font-size:12px}
-.chef-day-color .mile-icon{width:22px;height:22px}.chef-day-bar{display:block;width:100%;height:7px;background:var(--chef-tone);border-radius:999px;margin-top:3px}
-.chef-meal-card{margin:11px 0;border:0;border-radius:18px;overflow:hidden;background:var(--chef-tone);color:var(--chef-tone-ink);box-shadow:0 1px 1px #0002}
-.chef-meal-head{list-style:none;display:flex;align-items:center;min-height:70px;padding:11px 15px;gap:14px;cursor:pointer}
-.chef-meal-head::-webkit-details-marker{display:none}.chef-meal-head strong{flex:1;font-weight:600;font-size:19px}
-.chef-meal-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;background:rgba(0,0,0,.14)}
-.chef-chevron{font-size:25px;line-height:1;transition:transform .2s ease;display:inline-block}
-.chef-meal-card[open] .chef-chevron{transform:rotate(180deg)}
-.chef-meal-body{padding:0 15px 15px}
-.chef-meal-dish{display:flex;align-items:center;gap:12px;min-height:42px;padding:1px 0 12px}
-.chef-dish-name{font-size:15px;font-weight:500;line-height:1.4;flex:1;min-width:0;overflow-wrap:anywhere}
+.chef-day-color .mile-icon{width:23px;height:23px}.chef-day-bar{display:block;width:100%;height:7px;background:var(--chef-tone);border-radius:999px;margin-top:3px}
+.chef-meal-card{margin:10px 0;border:0;border-radius:14px;overflow:hidden;background:var(--chef-tone);color:var(--chef-tone-ink);box-shadow:none}
+.chef-meal-head{list-style:none;display:flex;align-items:center;min-height:65px;padding:11px 15px;gap:12px;cursor:pointer}
+.chef-meal-head::-webkit-details-marker{display:none}.chef-meal-head strong{flex:1;font-weight:550;font-size:17px}
+.chef-meal-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:rgba(0,0,0,.15)}
+.chef-meal-icon .mile-icon{width:25px;height:25px}
+.chef-chevron{font-size:24px;line-height:1;transition:transform .2s ease;display:inline-block;color:inherit}
+.chef-meal-card[open]>.chef-meal-head .chef-chevron{transform:rotate(180deg)}
+.chef-meal-body{padding:0 12px 13px}
+.chef-meal-dish{display:flex;align-items:center;gap:11px;min-height:40px;padding:0 3px 12px}
+.chef-dish-name{font-size:14px;font-weight:500;line-height:1.4;flex:1;min-width:0;overflow-wrap:anywhere}
 .chef-dish-pending{color:inherit;opacity:.72;font-size:13px}
-.chef-dish-photo{width:92px;height:92px;flex:none;object-fit:contain;max-height:none;max-width:none;margin:0;border-radius:50%;background:transparent}
-.chef-meal-body .chef-prescription{margin:5px 0 9px;border-top:1px solid #ffffff35;padding-top:10px}
-.chef-prescription-summary{cursor:pointer;list-style:none;font-size:13px;font-weight:600;padding:5px 0}
-.chef-prescription-summary::after{content:"⌄";float:right}.chef-prescription[open] .chef-prescription-summary::after{content:"⌃"}
-.chef-prescription-option{border-top:1px solid #ffffff25;padding:12px 0;font-size:13px}
-.chef-prescription-option strong{display:block;margin-bottom:8px}.chef-prescription-food{margin:5px 0;line-height:1.4}
-.chef-no-prescription{font-size:13px;opacity:.8}
-.chef-meal-body .chef-inline-edit{margin:8px 0 0;border-top:1px solid #ffffff35;padding:11px 0 0}
-.chef-meal-body .chef-inline-edit>summary{display:block;text-align:center;border-radius:999px;background:#ffffff18;border:1px solid #ffffff2c;padding:12px;color:inherit;font-size:14px;font-weight:600}
+.chef-dish-photo-frame{position:relative;display:inline-grid;place-items:center;flex:none;width:91px;height:91px;border-radius:50%;cursor:zoom-in;outline-offset:4px}
+.chef-dish-photo{width:100%;height:100%;object-fit:contain;border-radius:50%;background:transparent;display:block}
+.chef-photo-zoom{position:absolute;right:0;bottom:0;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#0005;color:#f6f6f8}
+.chef-photo-overlay{position:fixed;inset:0;background:#000d;z-index:100;display:flex;align-items:center;justify-content:center;padding:35px}
+.chef-photo-large{max-width:95%;max-height:75dvh;object-fit:contain}
+.chef-photo-close{position:absolute;top:36px;right:20px;border:0;background:#2b2b33;color:#fff;border-radius:50%;width:43px;height:43px;font-size:27px}
+.chef-option-list{display:flex;flex-direction:column;gap:9px}
+.chef-option-card{display:block;border:0;border-radius:13px;background:color-mix(in srgb,var(--chef-tone) 82%,white 18%);color:inherit;margin:0;padding:11px 12px;overflow:hidden}
+.chef-option-head{list-style:none;display:flex;align-items:center;gap:9px;min-height:47px;cursor:pointer}
+.chef-option-head::-webkit-details-marker{display:none}
+.chef-option-label{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center;line-height:1.3}
+.chef-option-label small{font-size:12px;font-weight:400;color:inherit}
+.chef-option-label strong{font-size:14px;font-weight:550;color:inherit}
+.chef-option-arrow{font-size:23px;line-height:1;color:inherit;transition:transform .2s ease}
+.chef-option-card[open]>.chef-option-head .chef-option-arrow{transform:rotate(180deg)}
+.chef-option-body{padding:9px 0 5px}
+.chef-option-nutrition{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:0 0 14px;color:inherit;font-size:12px}
+.chef-option-nutrition span{padding-right:9px;border-right:1px solid currentColor}
+.chef-option-nutrition span:last-child{border-right:0;padding-right:0}
+.chef-option-nutrition .kcal{color:#a4dbb5}.chef-option-nutrition .protein{color:#90c9ec}.chef-option-nutrition .carbs{color:#e2afa0}.chef-option-nutrition .fat{color:#eed18c}
+.chef-option-food{padding:6px 0;line-height:1.45;font-size:14px;font-weight:450;color:inherit}
+.chef-option-note{border-top:1px solid #ffffff30;margin-top:8px;padding:8px 0;font-size:13px}
+.chef-option-note p{font-size:13px}
+.chef-option-empty{font-size:13px;opacity:.8;padding:2px 5px}
+.chef-meal-body .chef-inline-edit{margin:10px 0 0;border-top:0;padding-top:3px}
+.chef-meal-body .chef-inline-edit>summary{display:block;text-align:center;border-radius:999px;background:#ffffff20;border:1px solid #ffffff3c;padding:12px;color:inherit;font-size:14px;font-weight:600;list-style:none}
+.chef-meal-body .chef-inline-edit>summary::-webkit-details-marker{display:none}
 .chef-meal-body .chef-exec-current{color:inherit;font-size:12px}
 .chef-meal-body .chef-input{background:#1b1b21;color:#f6f6f8;border-color:#55555b}
 .chef-meal-body .chef-editor{background:#ffffff09;border-radius:13px;padding:12px}
@@ -158,17 +174,45 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 .chef-week-cell .mile-icon{width:19px;height:19px}
 .chef-week-cell.unavailable{opacity:0;background:transparent;pointer-events:none}
 .chef-week-cell.selected{outline:2px solid #f5f5f7;outline-offset:2px}
-.chef-week-detail{padding:15px;background:#19191e;border-radius:17px;margin:20px 0}
+.chef-week-detail{padding:13px;background:#19191e;border-radius:16px;margin:20px 0}
 .chef-week-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .chef-week-detail-head strong{font-size:15px;font-weight:600}
 .chef-week-close{background:transparent;color:#f5f5f7;border:0;font-size:27px;padding:2px 6px}
 .chef-week-detail .chef-meal-card{margin:0}
+.chef-menu-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 23px}
+.chef-menu-week-day{border:0;border-radius:12px;background:transparent;color:#f5f5f7;padding:9px 0 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.chef-menu-week-day small{font-size:11px;color:#a0a0aa}.chef-menu-week-day strong{font-size:21px;width:32px;height:32px;display:grid;place-items:center}
+.chef-menu-week-day.selected strong{background:#f5f5f7;color:#2070bb;border-radius:50%}
+.chef-menu-week-day>span{font-size:10px;color:#a5a5ac}
+.chef-menu-day{border-radius:15px;padding:15px;background:#19191c;margin:12px 0}
+.chef-menu-day-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+.chef-menu-day-header strong{font-weight:550;font-size:15px}
+.chef-menu-day-header span{font-size:14px;color:#a9a9b4}
+.chef-menu-entry{background:var(--chef-tone);border-radius:13px;padding:13px 12px;color:var(--chef-tone-ink);margin:10px 0}
+.chef-menu-meal-label{font-size:16px;font-weight:550;margin-bottom:4px}
+.chef-menu-entry .chef-meal-dish{padding:0;align-items:center}
+.chef-menu-entry .chef-dish-name{font-size:14px;line-height:1.4}
+.chef-menu-edit-button{display:inline-flex;border:0;border-radius:999px;padding:8px 12px;margin:12px 0 0;color:inherit;background:#0002;font-size:12px}
+.chef-menu-entry .chef-menu-editor{background:#202025;border-color:#45454d;margin-top:11px;padding:12px}
+.chef-menu-entry .chef-input{background:#25252b;color:#f4f4f7;border-color:#55555b}
+.chef-menu-entry .chef-edit-actions .primary{background:#f7f7f8;color:#17171b}
+.chef-recipes-caption{font-size:13px;color:#a9a9b4}
+.chef-recipes-search{width:100%;min-height:45px;border-radius:13px;border:1px solid #383840;background:#25252a;color:#f5f5f7;padding:11px 13px;font-size:16px}
+.chef-recipes-list{display:grid;gap:9px;margin-top:17px}
+.chef-recipe-row{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#232328;border-radius:13px;padding:13px}
+.chef-recipe-row strong{font-size:14px;font-weight:550}.chef-recipe-row span{font-size:12px;color:#aaa}
+.chef-recipes-status{font-size:13px;color:#aaa}
 .panel,.menu-day,.meal-card{background:#19191d;color:#f4f4f7;border:1px solid #35353d}
 .section-head h2{color:#f4f4f7}.section-head span,.muted,.info-note,.profile-row span{color:#a9a9b4}
-.menu-slot-name,.food-line{color:#d5d5da}.chef-secondary{background:#292930;border-color:#45454d;color:#f3f3f6}
-.chef-menu-editor{background:#202025;border-color:#45454d}.segment{background:#303037}.segment button{color:#f5f5f7}.segment button.active{background:#55555b;color:#fff}
-.login-shell{margin-top:clamp(42px,10vh,110px)}.login-card{background:#19191d;border:1px solid #37373f;color:#f4f4f7}.login-card p{color:#aaa}.login-card input{background:#25252b;border-color:#4b4b54;color:#f4f4f7}.login-card label{color:#f5f5f7}.login-card .primary{background:#f4f4f7;color:#17171a}
+.menu-slot-name,.food-line{color:#d5d5da}
+.chef-secondary{background:#292930;border-color:#45454d;color:#f3f3f6}
+.chef-menu-editor{background:#202025;border-color:#45454d}
+.segment{background:#303037}.segment button{color:#f5f5f7}.segment button.active{background:#55555b;color:#fff}
+.login-shell{margin-top:clamp(42px,10vh,110px)}
+.login-card{background:#19191d;border:1px solid #37373f;color:#f4f4f7}
+.login-card p{color:#aaa}.login-card input{background:#25252b;border-color:#4b4b54;color:#f4f4f7}.login-card label{color:#f5f5f7}
+.login-card .primary{background:#f4f4f7;color:#17171a}
 @media(min-width:680px){.chef-week-grid{max-width:760px;margin-left:auto;margin-right:auto}.chef-daily-summary,.chef-meal-card{max-width:760px;margin-left:auto;margin-right:auto}}
-@media(max-width:370px){.chef-week-grid{column-gap:3px}.chef-week-cell{min-height:64px}.chef-week-day strong{font-size:19px}.chef-week-day>span{font-size:9px}.chef-meal-head strong{font-size:17px}}
-@media(hover:hover){.chef-meal-head:hover,.chef-week-cell:not(.unavailable):hover,.bottom-nav button:hover{filter:brightness(1.12)}}
-@media(prefers-reduced-motion:reduce){.chef-chevron{transition:none}}
+@media(max-width:370px){.chef-week-grid{column-gap:3px}.chef-week-cell{min-height:64px}.chef-week-day strong{font-size:19px}.chef-week-day>span{font-size:9px}.chef-meal-head strong{font-size:16px}}
+@media(hover:hover){.chef-meal-head:hover,.chef-week-cell:not(.unavailable):hover,.bottom-nav button:hover{filter:brightness(1.1)}}
+@media(prefers-reduced-motion:reduce){.chef-chevron,.chef-option-arrow{transition:none}}
