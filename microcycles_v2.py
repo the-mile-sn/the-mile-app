@@ -475,7 +475,7 @@ def last_menu_dish_use(c, athlete_id, dish_id, before):
     return row["last_used"] if row else None
 
 
-def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None):
+def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None, actor_id=None):
     from calendar_v2 import parse_day
     day = parse_day(menu_date).isoformat()
     if meal not in ("lunch","dinner") or kind not in ("category","dish","text"):
@@ -485,21 +485,39 @@ def save_menu(c, athlete_id, menu_date, meal, kind, value, dish_id=None):
         raise ValueError("invalid_menu_category")
     if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?", (athlete_id,)).fetchone():
         return None
+    previous=None
+    if actor_id:
+        import chef_collaboration_v2
+        row=c.execute("""SELECT kind,value,dish_id FROM v2_weekly_menus
+           WHERE athlete_id=? AND menu_date=? AND meal=?""",(athlete_id,day,meal)).fetchone()
+        previous=dict(row) if row else None
     c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
                  VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal)
                  DO UPDATE SET kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
               (athlete_id,day,meal,kind,value,dish_id))
     record_menu_history(c, athlete_id, day, meal, kind, value, dish_id)
+    if actor_id:
+        chef_collaboration_v2.record_admin_menu(c,athlete_id,actor_id,day,meal,
+            previous,{"kind":kind,"value":value,"dish_id":dish_id})
     c.commit()
     return {"menu_date":day,"meal":meal,"kind":kind,"value":value,"dish_id":dish_id}
 
 
-def delete_menu(c, athlete_id, menu_date, meal):
+def delete_menu(c, athlete_id, menu_date, meal, actor_id=None):
     from calendar_v2 import parse_day
     day=parse_day(menu_date).isoformat()
     if meal not in ("lunch","dinner"):
         raise ValueError("invalid_menu")
+    previous=None
+    if actor_id:
+        import chef_collaboration_v2
+        row=c.execute("""SELECT kind,value,dish_id FROM v2_weekly_menus
+           WHERE athlete_id=? AND menu_date=? AND meal=?""",(athlete_id,day,meal)).fetchone()
+        previous=dict(row) if row else None
     result=c.execute("DELETE FROM v2_weekly_menus WHERE athlete_id=? AND menu_date=? AND meal=?",(athlete_id,day,meal))
+    if actor_id and previous:
+        chef_collaboration_v2.record_admin_menu(c,athlete_id,actor_id,day,meal,
+                                               previous,None,action="plan_deleted")
     c.commit()
     return result.rowcount > 0
 
