@@ -17,6 +17,8 @@ import re
 import secrets
 import sqlite3
 import microcycles_v2
+import chef_accounts_v2
+import chef_collaboration_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
@@ -233,7 +235,7 @@ def initialize():
         c.execute("CREATE TABLE IF NOT EXISTS v2_admin_preview_sessions (token TEXT PRIMARY KEY, admin_id TEXT NOT NULL, player_id TEXT NOT NULL, expires BIGINT NOT NULL)")
         if DATABASE_URL:
             c.executescript('''
-            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player','chef')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
             CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires BIGINT NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size BIGINT NOT NULL, updated BIGINT NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BYTEA NOT NULL);
@@ -261,7 +263,7 @@ def initialize():
             ''')
         else:
             c.executescript('''
-            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','player','chef')), password TEXT, active INTEGER NOT NULL DEFAULT 1);
             CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS activations(token TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), folder TEXT NOT NULL, title TEXT NOT NULL, size INTEGER NOT NULL, updated INTEGER NOT NULL, uploaded_by TEXT NOT NULL REFERENCES users(id), data BLOB NOT NULL);
@@ -293,8 +295,11 @@ def initialize():
                 if column not in existing:
                     c.execute(f'ALTER TABLE users ADD COLUMN {column} {spec}')
             c.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username) WHERE username IS NOT NULL')
+        chef_accounts_v2.enable_role(c)
         consumption_records_v2.initialize(c)
         microcycles_v2.initialize(c)
+        chef_accounts_v2.initialize(c)
+        chef_collaboration_v2.initialize(c)
         appointments_catalog_v2.initialize(c)
         appointments_availability_v2.initialize(c)
         appointments_bookings_v2.initialize(c)
@@ -759,7 +764,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -775,7 +780,7 @@ def application(env, start_response):
                     or path.startswith('/api/v2/admin/appointments/')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
-            if (path in ('/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
+            if (path in ('/chef', '/chef.js', '/chef.css', '/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
                     or path.startswith('/api/v2/player/')
                     or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
@@ -786,8 +791,9 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
             '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css',
-            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/tm-design-system.css': 'tm-design-system.css',
+            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
+            '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
         }
         if method == 'GET' and path == '/ios-launch-1320x2868.png':
@@ -885,7 +891,7 @@ def application(env, start_response):
             now = int(time.time())
             user = c.execute('SELECT u.*,s.csrf FROM sessions s JOIN users u ON s.user_id=u.id WHERE s.token=? AND s.expires>? AND u.active=1', (digest(token), now)).fetchone()
 
-            if SITE_ROLE != 'both' and user and user['role'] != SITE_ROLE:
+            if user and not (SITE_ROLE == 'both' or user['role'] == SITE_ROLE or (SITE_ROLE == 'player' and user['role'] == 'chef')):
                 user = None
 
             if method != 'GET':
@@ -898,6 +904,13 @@ def application(env, start_response):
                         raise Problem(403, 'origin')
                 if user and not hmac.compare_digest(env.get('HTTP_X_CSRF_TOKEN', ''), user['csrf']):
                     raise Problem(403, 'csrf')
+
+            # Chef must never inherit player/admin document or clinical endpoints.
+            # Each permitted Chef endpoint verifies the athlete from this session.
+            if user and user['role'] == 'chef' and path.startswith('/api/'):
+                if (path not in ('/api/me','/api/login','/api/logout','/api/change-password')
+                        and not path.startswith('/api/v2/chef/')):
+                    raise Problem(403, 'forbidden')
 
             # Shopify UNPUBLISHED theme preview only: anonymous, read-only,
             # allowlisted public metadata. Never expose internal admin records,
@@ -2795,11 +2808,16 @@ def application(env, start_response):
                     raise Problem(400,'invalid_menu_batch')
                 if not c.execute("SELECT 1 FROM v2_athletes WHERE id=?",(aid,)).fetchone(): raise Problem(404,'not_found')
                 for date,meal,kind,value,dish_id in validated:
+                    prior_row=c.execute("""SELECT kind,value,dish_id FROM v2_weekly_menus
+                        WHERE athlete_id=? AND menu_date=? AND meal=?""",(aid,date,meal)).fetchone()
+                    previous=dict(prior_row) if prior_row else None
                     c.execute("""INSERT INTO v2_weekly_menus(athlete_id,menu_date,meal,kind,value,dish_id)
                       VALUES(?,?,?,?,?,?) ON CONFLICT(athlete_id,menu_date,meal) DO UPDATE SET
                       kind=excluded.kind,value=excluded.value,dish_id=excluded.dish_id""",
                       (aid,date,meal,kind,value,dish_id))
                     microcycles_v2.record_menu_history(c,aid,date,meal,kind,value,dish_id)
+                    chef_collaboration_v2.record_admin_menu(c,aid,user['id'],date,meal,
+                        previous,{'kind':kind,'value':value,'dish_id':dish_id})
                 c.commit()
                 return respond(200,{'saved':len(validated)})
             if path.startswith('/api/v2/athletes/') and path.endswith('/menus/history') and method == 'GET':
@@ -2845,7 +2863,7 @@ def application(env, start_response):
                 if method == 'PUT':
                     body = read_json(env)
                     try:
-                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'), body.get('dish_id'))
+                        item = microcycles_v2.save_menu(c, aid, body.get('menu_date'), body.get('meal'), body.get('kind'), body.get('value'), body.get('dish_id'), actor_id=user['id'])
                     except ValueError:
                         raise Problem(400, 'invalid_menu')
                     if item is None:
@@ -2854,7 +2872,7 @@ def application(env, start_response):
                 if method == 'DELETE':
                     body = read_json(env)
                     try:
-                        microcycles_v2.delete_menu(c, aid, body.get('menu_date'), body.get('meal'))
+                        microcycles_v2.delete_menu(c, aid, body.get('menu_date'), body.get('meal'), actor_id=user['id'])
                     except ValueError:
                         raise Problem(400, 'invalid_menu')
                     return respond(200, {'ok': True})
@@ -2915,6 +2933,112 @@ def application(env, start_response):
                 admin(user)
                 today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
                 return respond(200,admin_players_v2.overview(c,today,access_valid))
+            # Chef accounts: admin-only, bound to a single existing athlete.
+            if path == '/api/v2/admin/chefs':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                if method == 'GET':
+                    return respond(200, {'chefs': chef_accounts_v2.list_accounts(c)})
+                if method == 'POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_chef')
+                    name=body.get('name')
+                    username=body.get('username')
+                    password=body.get('password')
+                    athlete_id=body.get('athlete_id')
+                    language=body.get('language','pt')
+                    if (not isinstance(name,str) or not 2<=len(name.strip())<=120
+                        or not isinstance(username,str) or not re.fullmatch(r'[a-z]{4,40}',username)
+                        or not isinstance(password,str) or not 12<=len(password)<=256
+                        or language not in ('pt','en') or not isinstance(athlete_id,str)):
+                        raise Problem(400,'invalid_chef')
+                    athlete=c.execute("SELECT id FROM v2_athletes WHERE id=? AND archived_at IS NULL",(athlete_id,)).fetchone()
+                    if not athlete: raise Problem(404,'athlete_not_found')
+                    if c.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone():
+                        raise Problem(409,'username_exists')
+                    uid=secrets.token_hex(16)
+                    try:
+                        c.execute("""INSERT INTO users(id,name,email,username,role,password,active)
+                                     VALUES(?,?,?,?,?,?,1)""",
+                                  (uid,name.strip(),'chef-'+uid+'@accounts.internal.invalid',
+                                   username,'chef',password_hash(password)))
+                        c.execute("""INSERT INTO v2_chef_links(user_id,athlete_id,language,linked_at,created_by)
+                                     VALUES(?,?,?,?,?)""",(uid,athlete_id,language,int(time.time()),user['id']))
+                        c.commit()
+                    except Exception:
+                        c.rollback()
+                        raise
+                    return respond(201,{'chef':{'id':uid,'name':name.strip(),'username':username,
+                                               'athlete_id':athlete_id,'language':language,'active':1}})
+                raise Problem(404,'not_found')
+            if path == '/api/v2/admin/chef-dishes' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                q=parse_qs(env.get('QUERY_STRING',''))
+                search=(q.get('q') or [''])[0]
+                if not isinstance(search,str) or len(search)>90: raise Problem(400,'invalid_search')
+                rows=c.execute("""SELECT id,name_pt,category FROM v2_dish_library
+                    WHERE active=1 AND LOWER(name_pt) LIKE LOWER(?)
+                    ORDER BY name_pt LIMIT 100""",('%'+search+'%',)).fetchall()
+                return respond(200,{'dishes':[dict(row) for row in rows]})
+            if path.startswith('/api/v2/admin/chefs/') and path.endswith('/password-reset'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=6 or method!='POST': raise Problem(404,'not_found')
+                target_id=parts[4]
+                found=c.execute("""SELECT u.id FROM users u
+                    JOIN v2_chef_links l ON l.user_id=u.id
+                    WHERE u.id=? AND u.role='chef'""",(target_id,)).fetchone()
+                if not found: raise Problem(404,'chef_not_found')
+                new=read_json(env).get('password')
+                if not isinstance(new,str) or not 12<=len(new)<=256:
+                    raise Problem(400,'password_length')
+                c.execute("UPDATE users SET password=? WHERE id=? AND role='chef'",
+                          (password_hash(new),target_id))
+                c.execute("DELETE FROM sessions WHERE user_id=?",(target_id,))
+                c.commit()
+                return respond(200,{'ok':True,'sessions_revoked':True})
+            if path.startswith('/api/v2/admin/chefs/'):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=5: raise Problem(404,'not_found')
+                chef_id=parts[4]
+                target=c.execute("""SELECT u.id,u.username FROM users u
+                    JOIN v2_chef_links l ON l.user_id=u.id
+                    WHERE u.id=? AND u.role='chef'""",(chef_id,)).fetchone()
+                if not target: raise Problem(404,'chef_not_found')
+                if method=='PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict) or set(body) != {'active'} or type(body['active']) is not bool:
+                        raise Problem(400,'invalid_status')
+                    active=int(body['active'])
+                    c.execute("UPDATE users SET active=? WHERE id=? AND role='chef'",(active,chef_id))
+                    if not active: c.execute("DELETE FROM sessions WHERE user_id=?",(chef_id,))
+                    c.commit()
+                    return respond(200,{'chef':{'id':chef_id,'active':active}})
+                raise Problem(404,'not_found')
+            if path == '/api/v2/admin/chef-activity' and method == 'GET':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                q=parse_qs(env.get('QUERY_STRING',''))
+                aid=(q.get('athlete_id') or [None])[0]
+                if aid is not None and not c.execute(
+                    "SELECT id FROM v2_athletes WHERE id=?",(aid,)).fetchone():
+                    raise Problem(404,'athlete_not_found')
+                return respond(200,{'activity':chef_collaboration_v2.activity(c,aid,100)})
+            if path == '/api/v2/admin/chef-reviews' and method == 'POST':
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if not isinstance(body,dict): raise Problem(400,'invalid_review')
+                try:
+                    result=chef_collaboration_v2.review(
+                        c,body.get('id'),user['id'],body.get('decision'),body.get('dish_id'))
+                except LookupError: raise Problem(404,'audit_not_found')
+                except (ValueError,TypeError): raise Problem(400,'invalid_review')
+                return respond(200,result)
             if path == '/api/v2/admin/dashboard' and method == 'GET':
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
@@ -3164,6 +3288,110 @@ def application(env, start_response):
                 c.execute("DELETE FROM v2_body_assessments WHERE id=? AND athlete_id=?",(record_id,athlete_id))
                 c.commit()
                 return respond(200,{'deleted':True})
+            # Chef API: the athlete scope always comes from the authenticated session.
+            if path.startswith('/api/v2/chef/'):
+                if SITE_ROLE == 'admin': raise Problem(404,'not_found')
+                if not user: raise Problem(401,'unauthorized')
+                if user['role'] != 'chef': raise Problem(403,'forbidden')
+                athlete=chef_accounts_v2.assigned_athlete(c,user['id'])
+                if not athlete: raise Problem(403,'chef_unlinked')
+                aid=athlete['id']
+                if path == '/api/v2/chef/preferences' and method == 'PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict) or set(body) != {'language'} or body['language'] not in ('pt','en'):
+                        raise Problem(400,'invalid_language')
+                    c.execute("UPDATE v2_chef_links SET language=? WHERE user_id=?",
+                              (body['language'],user['id']))
+                    c.commit()
+                    return respond(200,{'language':body['language']})
+                if path == '/api/v2/chef/me' and method == 'GET':
+                    return respond(200,{'chef':{'id':user['id'],'name':user['name'],
+                         'username':user['username'],'language':athlete['language']},
+                         'player':{'id':aid,'name':athlete['name']}})
+                if path == '/api/v2/chef/menu-executions' and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    try:
+                        items=chef_collaboration_v2.executions(
+                            c,aid,(q.get('start') or [''])[0],(q.get('end') or [''])[0])
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_execution_range')
+                    return respond(200,{'executions':items})
+                if path == '/api/v2/chef/menu-executions' and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_execution')
+                    try:
+                        result=chef_collaboration_v2.record_execution(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),body.get('state'),
+                            body.get('served_description',''),body.get('note',''))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_execution')
+                    return respond(201,{'execution':result})
+                if path == '/api/v2/chef/menu-proposals' and method=='POST':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_proposal')
+                    try:
+                        result=chef_collaboration_v2.propose_dish(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),
+                            body.get('name'),body.get('note',''))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_proposal')
+                    return respond(201,{'proposal':result})
+                if path == '/api/v2/chef/menus' and method=='PUT':
+                    body=read_json(env)
+                    if not isinstance(body,dict): raise Problem(400,'invalid_menu')
+                    try:
+                        result=chef_collaboration_v2.save_menu(c,aid,user['id'],
+                            body.get('menu_date'),body.get('meal'),
+                            body.get('kind'),body.get('value'),body.get('dish_id'))
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_menu')
+                    return respond(200,{'menu':result})
+                if path == '/api/v2/chef/dishes' and method=='GET':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    search=(q.get('q') or [''])[0]
+                    if not isinstance(search,str) or len(search)>90:
+                        raise Problem(400,'invalid_search')
+                    rows=c.execute("""SELECT id,name_pt,category
+                      FROM v2_dish_library WHERE active=1
+                        AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
+                        ('%'+search+'%',)).fetchall()
+                    return respond(200,{'dishes':[dict(row) for row in rows]})
+                if path == '/api/v2/chef/menus' and method == 'GET':
+                    query=parse_qs(env.get('QUERY_STRING',''))
+                    try:
+                        items=microcycles_v2.list_menus(c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0])
+                    except (ValueError,TypeError):
+                        raise Problem(400,'invalid_menu_range')
+                    return respond(200,{'menus':items})
+                if method != 'GET': raise Problem(403,'forbidden')
+                if path == '/api/v2/chef/calendar':
+                    q=parse_qs(env.get('QUERY_STRING',''))
+                    first=(q.get('start') or [''])[0]
+                    last=(q.get('end') or [''])[0]
+                    try:
+                        matches=microcycles_v2.list_matches(c,aid)
+                        days=calendar_v2.effective_days(c,aid,calendar_v2.classify_range(
+                            first,last,[m['match_date'] for m in matches]))
+                        model_data=microcycles_v2.get_model(c,aid)
+                        colors=calendar_v2.effective_colors(c,aid,days,model_data)
+                    except ValueError:
+                        raise Problem(400,'invalid_calendar_range')
+                    return respond(200,{'days':days,'effective_colors':colors})
+                if path.startswith('/api/v2/chef/dish-photo/'):
+                    identifier=path.rsplit('/',1)[-1]
+                    if not re.fullmatch(r'[a-z0-9-]{4,60}',identifier):
+                        raise Problem(404,'not_found')
+                    linked=c.execute("""SELECT d.image_filename FROM v2_dish_library d
+                        JOIN v2_weekly_menus m ON m.kind='dish' AND m.dish_id=d.id
+                        WHERE m.athlete_id=? AND d.id=? AND d.active=1 LIMIT 1""",
+                        (aid,identifier)).fetchone()
+                    if not linked: raise Problem(404,'not_found')
+                    image=read_dish_image(c,linked['image_filename'])
+                    if image is None: raise Problem(404,'not_found')
+                    return respond(200,image,'image/webp')
+                if path == '/api/v2/chef/plans':
+                    return respond(200,{'options_by_color':plan_import_v2.published_meal_options(c,aid)})
+                raise Problem(404,'not_found')
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
@@ -3274,6 +3502,9 @@ def application(env, start_response):
                     data = player_dict(user)
                     data['weight_form_url'] = WEIGHT_FORM_M if user['sex'] == 'M' else WEIGHT_FORM_F if user['sex'] == 'F' else ''
                     data['game_form_url'] = GAME_FORM
+                elif user['role'] == 'chef':
+                    data = {'id': user['id'], 'name': user['name'],
+                            'username': user['username'], 'role': 'chef'}
                 else:
                     data = {'id': user['id'], 'name': user['name'], 'email': user['email'], 'role': user['role'], 'has_photo': bool(user['photo'])}
                 return respond(200, {'user': data, 'csrf': user['csrf']})
@@ -3287,8 +3518,8 @@ def application(env, start_response):
                     raise Problem(400, 'password')
                 if path == '/api/login':
                     identifier = str(body.get('identifier', body.get('email', ''))).strip().lower()
-                    u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
-                    if SITE_ROLE != 'both' and u and u['role'] != SITE_ROLE:
+                    u = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role IN ('player','chef') AND username=?))", (identifier, identifier)).fetchone()
+                    if u and not (SITE_ROLE == 'both' or u['role'] == SITE_ROLE or (SITE_ROLE == 'player' and u['role'] == 'chef')):
                         u = None
                     if not password_valid(password, u['password'] if u else None):
                         raise Problem(401, 'credentials')
@@ -3321,8 +3552,8 @@ def application(env, start_response):
                 new = body.get('new_password', '')
                 if not isinstance(current, str) or not isinstance(new, str) or len(new) < 8 or len(new) > 256:
                     raise Problem(400, 'password_change')
-                target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role='player' AND username=?))", (identifier, identifier)).fetchone()
-                if SITE_ROLE != 'both' and target and target['role'] != SITE_ROLE:
+                target = c.execute("SELECT * FROM users WHERE active=1 AND ((role='admin' AND lower(email)=?) OR (role IN ('player','chef') AND username=?))", (identifier, identifier)).fetchone()
+                if target and not (SITE_ROLE == 'both' or target['role'] == SITE_ROLE or (SITE_ROLE == 'player' and target['role'] == 'chef')):
                     target = None
                 if not target or not password_valid(current, target['password']):
                     raise Problem(400, 'password_change')

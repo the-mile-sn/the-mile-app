@@ -309,6 +309,7 @@ function fileToDataURL(file){
 
 async function refresh(){
   const session=await api('/me'); user=session.user; csrf=session.csrf;
+  if(user&&user.role==='chef'){window.location.replace('/chef');return;}
   const pushDestination=new URLSearchParams(location.search).get('view')==='notifications';
   if(pushDestination){
     history.replaceState(null,'',location.pathname);
