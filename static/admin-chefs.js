@@ -27,7 +27,7 @@
   review.innerHTML=`
     <summary class="tm-menu-history-summary">
       <span class="tm-menu-accordion-title">
-        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.7 9.1A8.7 8.7 0 1 1 3.3 13"/><path d="M3 4.4v5.2h5.2M12 6.8V12l3.1 2.1"/></svg>
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-hugeicons="ChefHatIcon"><path d="M18 13a4 4 0 1 0-2.225-7.325M6 13a4 4 0 1 1 2.225-7.325m7.55 0a4.002 4.002 0 0 0-7.55 0m7.55 0A4 4 0 0 1 15.874 8m-6.41-1a4 4 0 0 0-1.24-1.325"/><path d="M6 17.5c1.599-.622 3.7-1 6-1s4.401.378 6 1M5 21c1.866-.622 4.316-1 7-1s5.134.378 7 1m-1-9v8M6 12v8"/></svg>
         Alterações e execução
         <span id="tm-chef-pending" class="tm-chef-count" hidden></span>
       </span>

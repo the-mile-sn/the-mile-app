@@ -129,7 +129,7 @@ test("Chef account access stays in profile; server tickets are admin-only and sc
   assert.match(adminApp,/role='chef' AND active=1/);
   assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
   assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
-  assert.match(html,/admin-chefs\.js\?v=9/);
+  assert.match(html,/admin-chefs\.js\?v=10/);
   assert.match(html,/admin-clients\.js\?v=6/);
   assert.match(html,/admin-clients\.css\?v=9/);
 });
@@ -148,7 +148,7 @@ test("Chef detail reuses the single Player profile back control and hides accoun
  assert.match(clients,/event\.stopImmediatePropagation\(\)/);
  assert.match(css,/#tm-players-filter-panel\[hidden\]\{\s*display:none!important/);
  assert.match(html,/admin-clients\.js\?v=6/);
- assert.match(html,/admin-chefs\.js\?v=9/);
+ assert.match(html,/admin-chefs\.js\?v=10/);
  assert.match(html,/admin-clients\.css\?v=9/);
 });
 
@@ -167,7 +167,7 @@ test("Chef activity uses the approved menu accordion and the unfiltered audit fe
   assert.match(chefs,/\/api\/v2\/admin\/chef-activity\?athlete_id=/);
   assert.match(chefs,/\$\("athlete"\)\?\.addEventListener\("change"/);
   assert.doesNotMatch(chefs,/tm-chef-filter-player/);
-  assert.match(html,/admin-chefs\.js\?v=9/);
+  assert.match(html,/admin-chefs\.js\?v=10/);
   assert.match(html,/admin-chefs\.css\?v=5/);
   assert.match(html,/admin-clients\.css\?v=9/);
   assert.match(html,/admin-surface-palette\.css\?v=205/);
@@ -199,7 +199,16 @@ test("Chef audit uses soft expandable records and player-scoped filters without 
  assert.match(css,/background:var\(--tm-ui-subcard\);border:0/);
  assert.match(css,/font:400 11px\/1\.2 "Inter Tight"/);
  assert.doesNotMatch(clientsCss,/#tm-chef-menu-review \.tm-chef-activity-card/);
- assert.match(html,/admin-chefs\.js\?v=9/);
+ assert.match(html,/admin-chefs\.js\?v=10/);
  assert.match(html,/admin-chefs\.css\?v=5/);
  assert.match(html,/admin-clients\.css\?v=9/);
+});
+
+test("Chef activity heading uses official Hugeicons ChefHatIcon, not history glyph",()=>{
+  assert.match(chefs,/data-hugeicons="ChefHatIcon"/);
+  assert.match(chefs,/<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1\.5"/);
+  assert.doesNotMatch(chefs,/M3\.7 9\.1A8\.7 8\.7/);
+  assert.match(html,/id="menu-history"/);
+  assert.match(html,/M3\.7 9\.1A8\.7 8\.7/);
+  assert.match(html,/admin-chefs\.js\?v=10/);
 });

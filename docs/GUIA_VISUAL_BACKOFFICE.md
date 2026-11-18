@@ -137,6 +137,7 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 | Editar | `PencilEdit01Icon` |
 | Biblioteca | `LibraryBigIcon` |
 | Criar planos | `ClipboardPlusIcon` |
+| Alterações e execução (Chef) | `ChefHatIcon` |
 
 **Nota:** esta lista documenta decisões aprovadas para duas interfaces diferentes. **Não autoriza alterações à app dos jogadores nem ao Backoffice.** A branch do Admin continua `production/the-mile-admin` e a da app `main`. O uso do `FootballIcon` em «Ajustes pós-jogo» no Admin mantém-se conforme a secção Modelo.
 
