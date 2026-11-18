@@ -75,50 +75,175 @@
     fillSelect(form.elements.athlete_id,knownPlayers,"Selecionar jogador");
     fillSelect($("tm-chef-filter-player"),knownPlayers,"Todos os jogadores");
   }
+  // The chef card opens a profile subpage, like a player card. Account actions
+  // live only in that profile; the phone control opens a read-only admin preview.
+  let selectedChef=null;
+  const chefProfile=$("tm-clients-chef-profile");
+  const profileFeedback=$("tm-chef-profile-feedback");
+  const passwordForm=$("tm-chef-profile-password-form");
+  const passwordOpen=$("tm-chef-profile-password-open");
+  const passwordInput=$("tm-chef-profile-new-password");
+  function resetChefPasswordEditor(){
+    passwordForm.reset();
+    passwordForm.hidden=true;
+    passwordOpen.setAttribute("aria-expanded","false");
+  }
+  function paintChefProfile(){
+    if(!selectedChef)return;
+    const item=selectedChef;
+    $("tm-chef-profile-name").textContent=item.name;
+    $("tm-chef-profile-subtitle").textContent="@"+item.username;
+    $("tm-chef-profile-avatar").textContent=item.name.split(/\s+/).slice(0,2)
+      .map(part=>(part[0]||"").toLocaleUpperCase("pt-PT")).join("");
+    $("tm-chef-profile-fullname").textContent=item.name;
+    $("tm-chef-profile-username").textContent="@"+item.username;
+    $("tm-chef-profile-player").textContent=item.athlete_name;
+    $("tm-chef-profile-language").textContent=item.language==="en"?"Inglês":"Português";
+    const state=$("tm-chef-profile-status");
+    state.textContent=item.active?"Ativo":"Inativo";
+    state.className="tm-p-status tm-p-"+(item.active?"active":"inactive");
+    $("tm-chef-profile-toggle").textContent=item.active?"Bloquear conta":"Ativar conta";
+  }
+  function openChefProfile(item){
+    selectedChef=item;
+    profileFeedback.textContent="";
+    resetChefPasswordEditor();
+    paintChefProfile();
+    chefProfile.hidden=false;
+    window.tmClientsShowChefProfile?.();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function dismissChefProfile(){
+    selectedChef=null;
+    resetChefPasswordEditor();
+    profileFeedback.textContent="";
+    chefProfile.hidden=true;
+  }
+  window.tmDismissChefProfile=dismissChefProfile;
+  $("tm-clients-chef-profile-back")?.addEventListener("click",()=>{
+    dismissChefProfile();
+    window.tmClientsCloseChefProfile?.();
+  });
+  $("tm-chef-profile-toggle")?.addEventListener("click",async event=>{
+    const item=selectedChef;
+    if(!item)return;
+    const active=!item.active;
+    if(!window.confirm((active?"Ativar":"Bloquear")+" a conta de "+item.name+"?"))return;
+    const btn=event.currentTarget;
+    btn.disabled=true;
+    profileFeedback.textContent="";
+    try{
+      await api("/api/v2/admin/chefs/"+encodeURIComponent(item.id),{
+        method:"PUT",body:JSON.stringify({active})
+      });
+      item.active=active;
+      paintChefProfile();
+      profileFeedback.textContent="Estado da conta atualizado.";
+      await loadAccounts();
+    }catch(error){
+      profileFeedback.textContent=noteMessage(error);
+    }finally{btn.disabled=false;}
+  });
+  passwordOpen?.addEventListener("click",()=>{
+    passwordForm.hidden=!passwordForm.hidden;
+    passwordOpen.setAttribute("aria-expanded",String(!passwordForm.hidden));
+  });
+  $("tm-chef-profile-password-cancel")?.addEventListener("click",resetChefPasswordEditor);
+  passwordForm?.addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!selectedChef)return;
+    const password=passwordInput.value;
+    if(password.length<12||password.length>256){
+      profileFeedback.textContent="A palavra-passe deve ter entre 12 e 256 caracteres.";
+      return;
+    }
+    const button=passwordForm.querySelector('button[type="submit"]');
+    button.disabled=true;
+    profileFeedback.textContent="";
+    try{
+      await api("/api/v2/admin/chefs/"+encodeURIComponent(selectedChef.id)+"/password-reset",{
+        method:"POST",body:JSON.stringify({password})
+      });
+      resetChefPasswordEditor();
+      profileFeedback.textContent="Palavra-passe alterada e sessões anteriores terminadas.";
+    }catch(error){profileFeedback.textContent=noteMessage(error);}
+    finally{button.disabled=false;}
+  });
+  async function enterChefApp(item,button){
+    const tab=window.open("about:blank","_blank");
+    if(!tab){
+      accountFeedback.textContent="Permite pop-ups deste site para abrir a app Chef.";
+      return;
+    }
+    tab.document.title="The Mile · Visualização Chef";
+    tab.document.body.textContent="A preparar visualização Chef…";
+    button.disabled=true;
+    accountFeedback.textContent="";
+    try{
+      const response=await api("/api/admin/chef-preview",{
+        method:"POST",body:JSON.stringify({user_id:item.id})
+      });
+      const url=new URL(response.url);
+      if(url.origin!=="https://app.themile.pt"||url.pathname!=="/preview-entry"||
+         !url.searchParams.has("token"))throw new Error("Destino de visualização inesperado.");
+      tab.location.replace(url.href);
+    }catch(error){
+      tab.close();
+      accountFeedback.textContent="Não foi possível abrir a app Chef: "+noteMessage(error);
+    }finally{button.disabled=false;}
+  }
   async function loadAccounts(){
     const data=await api("/api/v2/admin/chefs");
     admins=data.chefs||[];
-    const host=$("tm-chef-accounts");host.replaceChildren();
+    const host=$("tm-chef-accounts");
+    host.replaceChildren();
     if(!admins.length){
       host.append(node("p","tm-p-empty tm-chef-empty","Ainda não existem contas Chef."));
       window.tmFilterChefAccounts?.();
       return;
     }
-    for(const chef of admins){
+    for(const item of admins){
       const row=node("article","tm-chef-account tm-client-account-row");
       row.setAttribute("role","listitem");
-      row.dataset.search=[chef.name,chef.username,chef.athlete_name].join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-      row.dataset.access=chef.active?"active":"inactive";
+      row.dataset.search=[item.name,item.username,item.athlete_name].join(" ")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      row.dataset.access=item.active?"active":"inactive";
       const info=node("div","tm-chef-account-info");
-      info.append(node("strong","",chef.name),node("small","",chef.username+" · "+chef.athlete_name+" · "+chef.language.toUpperCase()));
+      info.append(node("strong","",item.name),
+        node("small","","@"+item.username+" · "+item.athlete_name+" · "+item.language.toUpperCase()));
       info.append(node("span","tm-client-type-pill tm-client-type-pill-mobile tm-client-type-chef","Chef"));
       const typeCell=node("div","tm-client-type-cell");
       typeCell.append(node("span","tm-client-type-pill tm-client-type-chef","Chef"));
       const state=node("div","tm-chef-account-status");
-      state.append(node("span","tm-p-status tm-p-"+(chef.active?"active":"inactive"),chef.active?"Ativo":"Inativo"));
-      const controls=node("div","tm-chef-account-actions");
-      controls.append(button(chef.active?"Bloquear":"Ativar",async()=>{
-        const active=!chef.active;
-        if(!window.confirm((active?"Ativar":"Bloquear")+" a conta de "+chef.name+"?"))return;
-        try{
-          await api("/api/v2/admin/chefs/"+encodeURIComponent(chef.id),{
-            method:"PUT",body:JSON.stringify({active})
-          });
-          accountFeedback.textContent="Estado da conta atualizado.";await loadAccounts();
-        }catch(e){accountFeedback.textContent=noteMessage(e);}
-      }));
-      controls.append(button("Alterar passe",async()=>{
-        const password=window.prompt("Nova palavra-passe (mínimo 12 caracteres) para "+chef.name+":");
-        if(password===null)return;
-        if(password.length<12){accountFeedback.textContent="A palavra-passe deve ter 12 ou mais caracteres.";return;}
-        try{
-          await api("/api/v2/admin/chefs/"+encodeURIComponent(chef.id)+"/password-reset",{
-            method:"POST",body:JSON.stringify({password})
-          });
-          accountFeedback.textContent="Palavra-passe alterada e sessões anteriores terminadas.";
-        }catch(e){accountFeedback.textContent=noteMessage(e);}
-      }));
-      row.append(info,typeCell,state,controls);host.append(row);
+      state.append(node("span","tm-p-status tm-p-"+(item.active?"active":"inactive"),
+        item.active?"Ativo":"Inativo"));
+      const action=node("div","tm-player-card-actions tm-chef-app-actions");
+      const phone=node("button","tm-p-icon-action tm-p-app-action");
+      phone.type="button";
+      phone.title=item.active?"Entrar na app Chef (visualização)":"Conta Chef inativa";
+      phone.setAttribute("aria-label","Entrar na app Chef de "+item.name+" em modo de visualização");
+      phone.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>';
+      phone.disabled=!item.active;
+      phone.addEventListener("click",event=>{
+        event.stopPropagation();
+        enterChefApp(item,phone);
+      });
+      action.append(phone);
+      // Full-card link is a genuine semantic button; phone remains independent.
+      const open=node("button","tm-chef-card-open");
+      open.type="button";
+      open.setAttribute("aria-label","Abrir perfil Chef de "+item.name);
+      open.addEventListener("click",()=>openChefProfile(item));
+      row.append(info,typeCell,state,action,open);
+      row.addEventListener("pointerdown",event=>{
+        if(event.pointerType==="mouse"&&event.button!==0)return;
+        if(event.target.closest(".tm-chef-app-actions"))return;
+        row.classList.add("is-pressing");
+      });
+      for(const type of ["pointerup","pointercancel","pointerleave"]){
+        row.addEventListener(type,()=>row.classList.remove("is-pressing"));
+      }
+      host.append(row);
     }
     window.tmFilterChefAccounts?.();
   }

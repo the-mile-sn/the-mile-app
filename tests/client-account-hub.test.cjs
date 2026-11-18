@@ -48,8 +48,8 @@ test("Consultations do not masquerade as an active authentication flow",()=>{
 test("new assets remain admin-only and preserve underlying player route",()=>{
   assert.match(adminApp,/\/admin-clients\.js/);
   assert.match(adminApp,/\/admin-clients\.css/);
-  assert.match(html,/\/admin-clients\.js\?v=3/);
-  assert.match(html,/\/admin-clients\.css\?v=4/);
+  assert.match(html,/\/admin-clients\.js\?v=4/);
+  assert.match(html,/\/admin-clients\.css\?v=5/);
   assert.match(adminApp,/if SITE_ROLE == 'player'/);
 });
 
@@ -94,6 +94,38 @@ test("mobile Chef creation uses a dialog while desktop retains its existing form
   assert.match(clients,/if\(mobileCreate\.matches\)/);
   assert.match(clients,/details\.scrollIntoView\(\{behavior:"smooth",block:"nearest"\}\)/);
   assert.match(css,/#tm-clients-chef-create-dialog #tm-chef-create/);
-  assert.match(html,/admin-clients\.js\?v=3/);
-  assert.match(html,/admin-clients\.css\?v=4/);
+  assert.match(html,/admin-clients\.js\?v=4/);
+  assert.match(html,/admin-clients\.css\?v=5/);
+});
+
+
+test("Chef card opens a profile and reserves the phone for read-only app preview",()=>{
+  const css=fs.readFileSync("static/admin-clients.css","utf8");
+  assert.match(html,/id="tm-clients-chef-profile"[^>]*hidden/);
+  assert.match(html,/id="tm-clients-chef-profile-back"/);
+  assert.match(html,/id="tm-chef-profile-password-form"/);
+  assert.match(chefs,/open\.addEventListener\("click",\(\)=>openChefProfile\(item\)\)/);
+  assert.match(chefs,/className|tm-chef-card-open/);
+  assert.match(chefs,/tm-p-icon-action tm-p-app-action/);
+  assert.match(chefs,/api\("\/api\/admin\/chef-preview"/);
+  assert.doesNotMatch(chefs,/controls\.append\(button\("Alterar passe"/);
+  assert.match(css,/\.tm-chef-account:hover:not\(:has\(\.tm-chef-app-actions:hover\)\)/);
+  assert.match(css,/\.tm-chef-account\.is-pressing/);
+  assert.match(clients,/!profile\.hidden\|\|!chefProfile\.hidden/);
+});
+
+test("Chef account access stays in profile; server tickets are admin-only and scoped",()=>{
+  assert.match(html,/<summary>Arquivados<\/summary>/);
+  assert.match(html,/aria-label="Gestão de clientes arquivados"/);
+  assert.match(chefs,/tm-chef-profile-toggle/);
+  assert.match(chefs,/tm-chef-profile-password-open/);
+  assert.match(chefs,/\/password-reset/);
+  assert.match(adminApp,/if path == '\/api\/admin\/chef-preview' and method == 'POST'/);
+  assert.match(adminApp,/admin\(user\)/);
+  assert.match(adminApp,/role='chef' AND active=1/);
+  assert.match(adminApp,/chef_accounts_v2\.assigned_athlete\(c,requested\)/);
+  assert.match(adminApp,/v2_admin_preview_tickets\(token,admin_id,player_id,expires\)/);
+  assert.match(html,/admin-chefs\.js\?v=4/);
+  assert.match(html,/admin-clients\.js\?v=4/);
+  assert.match(html,/admin-clients\.css\?v=5/);
 });

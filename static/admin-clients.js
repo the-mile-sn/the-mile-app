@@ -13,15 +13,17 @@
   const chefsList=document.getElementById("tm-chef-accounts");
   const archive=document.getElementById("tm-players-archived-panel");
   const profile=document.getElementById("tm-players-profile");
+  const chefProfile=document.getElementById("tm-clients-chef-profile");
+  const heading=page?.querySelector(".tm-players-heading");
   const consultations=document.getElementById("tm-clients-consultations-panel");
   const chefsPanel=document.getElementById("tm-clients-chefs-panel");
   const search=document.getElementById("tm-players-filter");
   const status=document.getElementById("tm-players-access");
-  if(!page||!selector||!value||!chooser||!newButton||!panel||!list||!players||!chefsList||!archive||!profile||!consultations||!chefsPanel||!search||!status)return;
+  if(!page||!selector||!value||!chooser||!newButton||!panel||!list||!players||!chefsList||!archive||!profile||!chefProfile||!consultations||!chefsPanel||!search||!status)return;
 
   const validTypes=new Set(["all","acompanhamento","consulta","chef"]);
   let selected="all";
-  const detailVisible=()=>!profile.hidden;
+  const detailVisible=()=>!profile.hidden||!chefProfile.hidden;
   window.tmClientsCurrentType=()=>selected;
   const filterChefs=()=>window.tmFilterChefAccounts?.();
 
@@ -61,6 +63,7 @@
     selector.value=type;
     value.textContent=selector.options[selector.selectedIndex]?.textContent||"Todos";
     const isProfile=detailVisible();
+    if(heading)heading.hidden=isProfile;
     panel.hidden=isProfile;
     list.hidden=isProfile||type==="consulta";
     players.hidden=isProfile||(type!=="all"&&type!=="acompanhamento");
@@ -115,19 +118,37 @@
       }
     });
   }
-  new MutationObserver(()=>{
+  function syncProfileVisibility(){
     if(detailVisible()){
       panel.hidden=true;list.hidden=true;archive.hidden=true;
       chefsPanel.hidden=true;consultations.hidden=true;
+      if(heading)heading.hidden=true;
     }else{
       selectType(selected==="consulta"?"all":selected);
     }
-  }).observe(profile,{attributes:true,attributeFilter:["hidden"]});
+  }
+  new MutationObserver(syncProfileVisibility).observe(profile,{attributes:true,attributeFilter:["hidden"]});
+  new MutationObserver(syncProfileVisibility).observe(chefProfile,{attributes:true,attributeFilter:["hidden"]});
+  window.tmClientsShowChefProfile=()=>{
+    chefProfile.hidden=false;
+    selectType(selected);
+  };
+  window.tmClientsCloseChefProfile=()=>{
+    chefProfile.hidden=true;
+    selectType(selected);
+  };
   // Re-entering Clientes shows the full client list, not a separate account tab.
-  document.getElementById("tm-admin-nav-players")?.addEventListener("click",
-    ()=>selectType("all"),true);
+  document.getElementById("tm-admin-nav-players")?.addEventListener("click",()=>{
+    window.tmDismissChefProfile?.();
+    chefProfile.hidden=true;
+    selectType("all");
+  },true);
   new MutationObserver(()=>{
-    if(page.hidden)closeChefModal();
+    if(page.hidden){
+      closeChefModal();
+      window.tmDismissChefProfile?.();
+      chefProfile.hidden=true;
+    }
     if(!page.hidden&&!detailVisible())selectType(selected);
   }).observe(page,{attributes:true,attributeFilter:["hidden"]});
   window.tmSelectClientType=selectType;

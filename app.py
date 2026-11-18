@@ -3476,6 +3476,27 @@ def application(env, start_response):
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
                 return respond(200, {'options_by_color': plan_import_v2.published_meal_options(c, link['athlete_id']), 'peri_plans': peri_v2.current(c, link['athlete_id'])})
+            if path == '/api/admin/chef-preview' and method == 'POST':
+                # The same one-use, 60-second read-only preview as for players.
+                # Ticket redemption and write blocking are enforced by the app service.
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                body=read_json(env)
+                if not isinstance(body,dict) or set(body)!={'user_id'} or not isinstance(body['user_id'],str):
+                    raise Problem(400,'invalid_preview_target')
+                requested=body['user_id']
+                target=c.execute(
+                    "SELECT id FROM users WHERE id=? AND role='chef' AND active=1",
+                    (requested,)).fetchone()
+                if not target or not chef_accounts_v2.assigned_athlete(c,requested):
+                    raise Problem(404,'chef_unavailable')
+                ticket=secrets.token_urlsafe(32)
+                expires=now+60
+                c.execute("DELETE FROM v2_admin_preview_tickets WHERE expires<=?",(now,))
+                c.execute("INSERT INTO v2_admin_preview_tickets(token,admin_id,player_id,expires) VALUES(?,?,?,?)",
+                          (digest(ticket),user['id'],requested,expires))
+                c.commit()
+                return respond(200,{'url':'https://app.themile.pt/preview-entry?token='+quote(ticket)})
             if path == '/api/admin/player-preview' and method == 'POST':
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
