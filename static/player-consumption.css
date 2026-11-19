@@ -243,14 +243,13 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet-confirm{color:#b9e2cf;font-size:25px}.consumption-food-sheet-confirm:disabled{opacity:.35}
 .consumption-food-sheet h2{font-size:27px;font-weight:700;letter-spacing:-.5px;margin:0 0 20px}
 .consumption-food-sheet .consumption-add-row{display:block!important}
-.consumption-food-sheet .consumption-search-wrap{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr) 48px;grid-template-rows:48px;height:48px!important;width:100%!important;align-items:stretch!important}
+.consumption-food-sheet .consumption-search-wrap{display:block!important;position:relative;width:100%!important;height:48px!important}
 /* Neutral universal search field and independent food-result card surfaces. */
-.consumption-food-sheet{--food-field-surface:rgba(255,255,255,.075);--food-card-surface:rgba(255,255,255,.055);--food-card-active:rgba(255,255,255,.10)}
- .consumption-food-sheet .consumption-search-wrap input{grid-column:1/-1;grid-row:1;box-sizing:border-box!important;appearance:none!important;-webkit-appearance:none!important;height:48px!important;min-height:48px!important;width:100%!important;border:0!important;outline:0!important;border-radius:13px!important;background:var(--food-field-surface)!important;color:#f3f0e9!important;font-size:16px!important;font-weight:400!important;padding:12px 48px 12px 16px!important;box-shadow:inset 0 0 0 1px transparent!important}
+.consumption-food-sheet{--food-field-surface:rgba(255,255,255,.035);--food-card-surface:rgba(255,255,255,.055);--food-card-active:rgba(255,255,255,.10)}
+.consumption-food-sheet .consumption-search-wrap input{box-sizing:border-box!important;appearance:none!important;-webkit-appearance:none!important;height:48px!important;min-height:48px!important;width:100%!important;border:0!important;outline:0!important;border-radius:13px!important;background-color:var(--food-field-surface)!important;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23a9a8a6%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2210.8%22%20cy%3D%2210.8%22%20r%3D%226.8%22%2F%3E%3Cpath%20d%3D%22m16%2016%205%205%22%2F%3E%3C%2Fsvg%3E")!important;background-position:right 14px center!important;background-size:20px 20px!important;background-repeat:no-repeat!important;color:#f3f0e9!important;font-size:16px!important;font-weight:400!important;padding:12px 48px 12px 16px!important;box-shadow:inset 0 0 0 1px transparent!important}
 .consumption-food-sheet .consumption-search-wrap input:is(:focus,:focus-visible){outline:0!important;border:0!important;box-shadow:inset 0 0 0 1.5px rgba(239,239,241,.42)!important}
-/* Fill the field's 48px height; flex-center the actual SVG, without offset transforms. */
-.consumption-food-sheet .consumption-search-icon{grid-column:2;grid-row:1;position:relative;inset:auto;display:grid;place-items:center;align-self:stretch;justify-self:stretch;width:48px;height:100%;min-height:0;margin:0;padding:0;line-height:0;transform:none;opacity:.7;pointer-events:none}
-.consumption-food-sheet .consumption-search-icon svg{display:block;width:20px;height:20px;margin:0;align-self:center;justify-self:center}
+/* Search icon is part of the input background itself: native 'center' placement,
+   no positioned overlay or inherited SVG layout to drift on iOS. */
 /* Independent soft cards, without a group frame or row dividers. */
 .consumption-food-sheet .consumption-suggestions{position:static!important;display:flex;flex-direction:column;gap:8px;max-height:38dvh;overflow-y:auto;overflow-x:hidden;margin-top:12px;padding:0;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 .consumption-food-sheet .consumption-suggestions[hidden]{display:none!important}
