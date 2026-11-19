@@ -5504,14 +5504,20 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .consumption-color-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 #overview .consumption-color-header p{margin:0}
 #overview .consumption-color-close{border:0;background:transparent;color:inherit;font-size:27px;line-height:1;min-width:36px;min-height:36px;border-radius:50%;cursor:pointer}
-#overview .consumption-editor .consumption-color-option{width:100%;border:0!important;border-radius:12px!important;font-weight:600!important;min-height:46px!important;color:#18231d!important}
-#overview .consumption-editor .consumption-color-green{background:#a8dfc1!important}
-#overview .consumption-editor .consumption-color-yellow{background:#e5c66b!important}
-#overview .consumption-editor .consumption-color-orange{background:#e6ad7d!important}
-#overview .consumption-editor .consumption-color-blue{background:#a4c9e9!important}
-#overview .consumption-editor .consumption-color-red{background:#e9a6a3!important}
-/* Preparation green inherits the single approved forest palette, not the normal green chip. */
-#overview .consumption-editor .consumption-color-vp{background:var(--meal-vp)!important;color:var(--meal-vp-text)!important}
+/* Alterar cor: one label rule; each button supplies its accessible hue-matched ink.
+   Keep the approved light button backgrounds and the existing forest-green variant.
+   Do not copy the pale card text tokens onto pastel backgrounds: they lack contrast. */
+#overview .consumption-editor .consumption-color-option{
+ width:100%;border:0!important;border-radius:12px!important;
+ font-weight:600!important;min-height:46px!important;
+ color:var(--consumption-option-ink,#18231d)!important;
+}
+#overview .consumption-editor .consumption-color-green{background:#a8dfc1!important;--consumption-option-ink:#175E39}
+#overview .consumption-editor .consumption-color-yellow{background:#e5c66b!important;--consumption-option-ink:#614800}
+#overview .consumption-editor .consumption-color-orange{background:#e6ad7d!important;--consumption-option-ink:#763500}
+#overview .consumption-editor .consumption-color-blue{background:#a4c9e9!important;--consumption-option-ink:#174F7B}
+#overview .consumption-editor .consumption-color-red{background:#e9a6a3!important;--consumption-option-ink:#78242A}
+#overview .consumption-editor .consumption-color-vp{background:var(--meal-vp)!important;--consumption-option-ink:var(--meal-vp-text)}
 #overview .consumption-editor .consumption-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;align-items:stretch!important}
 #overview .consumption-editor .consumption-actions>button{width:100%!important;min-width:0!important;margin:0!important;padding:9px 5px!important;min-height:42px!important;font-size:clamp(11px,2.8vw,14px)!important}
 #overview #day-details .meal-consumption-tags-bottom .meal-registered-badge{margin-left:0!important}

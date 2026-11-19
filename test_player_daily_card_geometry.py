@@ -80,17 +80,26 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
 
-    def test_preparation_green_color_picker_uses_the_approved_forest_palette(self):
-        normal = declarations("#overview .consumption-editor .consumption-color-green")
-        preparation = declarations("#overview .consumption-editor .consumption-color-vp")
-        self.assertEqual([len(normal), len(preparation)], [1, 1])
-        self.assertIn("background:#a8dfc1!important", normal[0])
-        self.assertIn("background:var(--meal-vp)!important", preparation[0])
-        self.assertIn("color:var(--meal-vp-text)!important", preparation[0])
-        self.assertNotIn("background:#a8dfc1", preparation[0])
+    def test_change_color_buttons_use_shared_hue_matched_text(self):
+        base = declarations("#overview .consumption-editor .consumption-color-option")
+        self.assertEqual(len(base), 1)
+        self.assertIn("color:var(--consumption-option-ink,#18231d)!important", base[0])
+        for key, background, ink in (
+            ("orange", "#e6ad7d", "#763500"),
+            ("yellow", "#e5c66b", "#614800"),
+            ("blue", "#a4c9e9", "#174F7B"),
+            ("green", "#a8dfc1", "#175E39"),
+            ("red", "#e9a6a3", "#78242A"),
+            ("vp", "var(--meal-vp)", "var(--meal-vp-text)"),
+        ):
+            with self.subTest(color=key):
+                rules = declarations("#overview .consumption-editor .consumption-color-" + key)
+                self.assertEqual(len(rules), 1)
+                self.assertIn("background:" + background + "!important", rules[0])
+                self.assertIn("--consumption-option-ink:" + ink, rules[0])
         self.assertIn("--meal-vp:#10251A", CSS)
         self.assertIn("--meal-vp-text:#4E996B", CSS)
-        self.assertIn("Verde preparação", GUIDE)
+        self.assertIn("Alterar cor", GUIDE)
         self.assertIn("#A8DFC1", GUIDE)
 
     def test_visual_guide_matches_active_geometry(self):
