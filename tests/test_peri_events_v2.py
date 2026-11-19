@@ -74,6 +74,24 @@ class EventAndPeriTest(unittest.TestCase):
         self.assertEqual(updated["pre_override"],"off")
         self.assertEqual(updated["title"],"Treino")
 
+    def test_player_training_reschedule_persists_and_updates_peri_session(self):
+        event=events_v2.create_event(self.c,"player",{"event_date":self.day,
+                         "kind":"training","session":"afternoon","title":"Treino"},"admin")
+        self.publish_fixture(280)
+        before=events_v2.list_events(self.c,"player",self.day,self.day)
+        self.assertEqual(before[0]["session"],"afternoon")
+        update=events_v2.update_event(self.c,"player",event["id"],
+                          {"event_date":self.day,"session":"morning"},
+                          "player",False)
+        self.assertEqual(update["session"],"morning")
+        self.c.commit()
+        after=events_v2.list_events(self.c,"player",self.day,self.day)
+        self.assertEqual(len(after),1)
+        self.assertEqual(after[0]["id"],event["id"])
+        self.assertEqual(after[0]["session"],"morning")
+        self.assertTrue(all(row["session"]=="morning" for row in
+                            peri_v2.list_event_meals(self.c,"player",self.day,self.day)))
+
     def test_match_overrides(self):
         self.c.execute("INSERT INTO v2_match_events(id,athlete_id,match_date,match_time) VALUES('match1','player',?,'17:30')",
                        (self.day,))

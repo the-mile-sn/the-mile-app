@@ -944,6 +944,7 @@ function eventCard(event,compact=false){
        await api("/api/v2/player/events/"+encodeURIComponent(event.id),{method:"PUT",
          headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
          body:JSON.stringify({event_date:date.value,session:session.value})});
+       invalidatePlayerEventCalendarCache();
        await overview();
      }catch(e){warning.textContent=e.message;save.disabled=false;}
    };
@@ -959,6 +960,7 @@ function eventCard(event,compact=false){
      try{
        await api("/api/v2/player/events/"+encodeURIComponent(event.id),{method:"DELETE",
          headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf}});
+       invalidatePlayerEventCalendarCache();
        await overview();
      }catch(e){warning.textContent=e.message;editor.hidden=false;remove.disabled=false;}
    };
@@ -1398,6 +1400,16 @@ function setOverviewLoading(loading,mon=null,dateKey=null){
   }
  }else indicator.hidden=true;
  $("overview").toggleAttribute("aria-busy",loading);
+}
+function invalidatePlayerEventCalendarCache(){
+ // Event mutations affect both the event's slot and the associated peri-meals.
+ // Keep unrelated menu/weight reads cached, but refetch the calendar on success.
+ overviewSnapshot=null;
+ for(const path of overviewReadCache.keys()){
+  if(path.startsWith("/api/v2/player/calendar?")||
+     path.startsWith("/api/v2/player/effective-nutrition-preview?"))
+   overviewReadCache.delete(path);
+ }
 }
 function cachedOverviewRead(path){
  const now=Date.now(),old=overviewReadCache.get(path);
