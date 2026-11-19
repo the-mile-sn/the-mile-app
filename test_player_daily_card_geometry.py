@@ -82,7 +82,7 @@ class DailyCardGeometryTests(unittest.TestCase):
 
     def test_day_right_edge_alignment_contract(self):
         self.assertEqual(CSS.count("--day-chevron-size:9px"), 1)
-        self.assertEqual(CSS.count("--day-event-extra-inset:7px"), 1)
+        self.assertEqual(CSS.count("--post-match-edit-inset:7px"), 1)
         self.assertIn("width:var(--day-chevron-size,9px)!important;height:var(--day-chevron-size,9px)!important", CSS)
         base = declarations(".daily-weight-header .daily-weight-action")
         self.assertEqual(len(base), 1)
@@ -98,12 +98,12 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertNotIn("#overview .daily-weight-header .daily-weight-chevron-action{", CSS)
         event = declarations("#overview #day-details .daily-event-card")
         self.assertEqual(len(event), 1)
-        self.assertIn("padding-right:calc(15px + var(--day-event-extra-inset))", event[0])
+        self.assertNotIn("padding-right:", event[0])
         postmatch = declarations("#overview #day-details .post-match-edit")
         self.assertEqual(len(postmatch), 1)
-        self.assertIn("margin:0 calc(10px + var(--day-event-extra-inset)) 0 3px", postmatch[0])
+        self.assertIn("margin:0 calc(10px + var(--post-match-edit-inset)) 0 3px", postmatch[0])
         self.assertIn("Alinhamento direito", GUIDE)
-        self.assertIn("7 px para a esquerda", GUIDE)
+        self.assertIn("7 px para a direita", GUIDE)
 
     def test_change_color_buttons_use_shared_hue_matched_text(self):
         base = declarations("#overview .consumption-editor .consumption-color-option")

@@ -1484,7 +1484,7 @@ header{padding:10px 0 24px}
 #overview #day-details{
  --day-icon-box:37px;--day-icon-glyph:24px;--day-icon-radius:11px;
  --day-header-inset:17px;--day-header-gap:8px;--day-icon-space:10px;
- --day-chevron-size:9px;--day-event-extra-inset:7px;
+ --day-chevron-size:9px;--post-match-edit-inset:7px;
  --day-title-size:16px;--day-title-weight:500;--day-kcal-size:11px;--day-kcal-weight:500;
  --consumption-status-bg:rgba(154,224,191,.20);--consumption-status-ink:#b9eed2;
  --consumption-secondary-bg:rgba(255,255,255,.09);
@@ -2691,7 +2691,6 @@ body.profile-active .player-top{display:none!important}
 
 #overview #day-details .daily-event-card{
  padding-left:var(--day-header-inset)!important;
- padding-right:calc(15px + var(--day-event-extra-inset))!important;
  box-sizing:border-box!important;
 }
 
@@ -2748,7 +2747,7 @@ body.profile-active .player-top{display:none!important}
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  box-sizing:border-box!important;flex:0 0 44px!important;
  width:44px!important;height:44px!important;
- margin:0 calc(10px + var(--day-event-extra-inset)) 0 3px!important;padding:0!important;
+ margin:0 calc(10px + var(--post-match-edit-inset)) 0 3px!important;padding:0!important;
  border:0!important;border-radius:50%;box-shadow:none!important;
  background:transparent!important;color:inherit!important;cursor:pointer;
 }
