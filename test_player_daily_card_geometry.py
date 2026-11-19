@@ -14,7 +14,7 @@ GUIDE = (ROOT / "docs" / "GUIA_VISUAL_APP_JOGADORES.md").read_text(encoding="utf
 
 def declarations(selector):
     escaped = re.escape(selector)
-    return re.findall(escaped + r"\s*\{([^{}]*)\}", CSS)
+    return re.findall(r"(?m)^" + escaped + r"\s*\{([^{}]*)\}", CSS)
 
 
 class DailyCardGeometryTests(unittest.TestCase):
