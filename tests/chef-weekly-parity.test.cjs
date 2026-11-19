@@ -15,9 +15,9 @@ test("selected date uses one visual full-height lane without changing the meal t
  assert.match(chef,/chef-week-selected-column/);
  assert.match(chef,/highlight\.setAttribute\("aria-hidden","true"\)/);
  assert.match(css,/\.chef-week-selected-column\{/);
- assert.match(css,/top:0;bottom:0;left:var\(--chef-week-left\)/);
+ assert.match(css,/top:0;bottom:0;left:calc\(var\(--chef-week-left\) - 2px\)/);
  assert.match(css,/\.chef-week-day\.selected\{background:transparent\}/);
- assert.match(css,/left:var\(--chef-week-left-small\)/);
+ assert.match(css,/left:calc\(var\(--chef-week-left-small\) - 2px\)/);
  assert.match(chef,/selectedDay=new Date\(key\+"T12:00:00"\)/);
  assert.match(chef,/const color=mealTone\(key,meal\)/);
 });
@@ -44,6 +44,6 @@ test("weekly compact date uses localized weekday and MD classification",()=>{
  assert.equal(label(new Date("2026-11-19T12:00:00")),"Qui, 19/11 · MD-2");
 });
 test("assets are cache-busted for the Chef view only",()=>{
- assert.match(html,/\/chef\.css\?v=10/);
+ assert.match(html,/\/chef\.css\?v=11/);
  assert.match(html,/\/chef\.js\?v=15/);
 });
