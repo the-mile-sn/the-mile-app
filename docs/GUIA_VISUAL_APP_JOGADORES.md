@@ -1,5 +1,5 @@
 # THE MILE — Guia Visual Normativo da App de Jogadores
-**Versão:** 19/11/2026 · **Estado:** normas refinadas com editor neutro e todos os consumos peri-evento; validação no iPhone ainda em curso.
+**Versão:** 19/11/2026 · **Estado:** normas refinadas com editor neutro, consumos peri-evento e geometria dos cards fechados/questionário pós-jogo; validação no iPhone ainda em curso.
 **Finalidade:** fonte de verdade para a App de Jogadores e base de identidade visual da futura App de Chefs. NÃO é o Guia Visual do backoffice.
 
 > **Regra de precedência:** decisão expressa mais recente da utilizadora > medições e capturas do Safari/iPhone > continuidade P3 > registos FASE B e FASE A > código como evidência de implementação. Uma regra CSS antiga não revoga uma decisão aprovada. Propostas antigas do assistente não são norma.
@@ -20,6 +20,8 @@
 | Título | 16 px / 500 | 16 px / 500 |
 
 Fechado, o cabeçalho da refeição mostra kcal, sem macronutrientes abaixo. Aberto, mantém kcal e apresenta macronutrientes imediatamente abaixo. **Não transformar os conteúdos de outras famílias na composição nutricional da vista Dia.** Um card informativo sem expansão continua sem expansão; a geometria aplica-se conforme couber sem inventar comportamento.
+
+**Coluna do título na Página Inicial → Dia:** as refeições de referência usam 17 px de recuo exterior, ícone 37 × 37 px, margem após ícone 10 px e gap 8 px, produzindo **72 px da esquerda do card até ao título**. Peso em jejum mantém o ícone especial de 40 px, com gap compensado de 15 px, sem deslocar o título. Treino, Jogo, Pré/Pós-treino, Suplementação e Questionário pós-jogo seguem a mesma coordenada horizontal; não confundir alinhamento da arte dentro do ícone com o alinhamento da caixa. Títulos fechados centralizados verticalmente. **Verificação final em Safari/iPhone pendente.**
 
 **Aplicar, com adaptações funcionais já aprovadas:**
 - **Página Inicial:** refeições normais (incluindo lanches/ceia); treino; jogo/intra-jogo; peri e pós-treino/jogo; peso em jejum; questionário pós-jogo; suplementação e outros cards unitários.
@@ -92,6 +94,7 @@ Verde preparação deve ser distinguível de verde normal também no seletor «A
 - **Hover e toque:** manter os estados efetivos aprovados, documentar início/fim, duração, easing, direção, condições e `prefers-reduced-motion` sempre que medidos. Não inventar animações.
 
 ## 6. Formulários e consumos
+- **Questionário pós-jogo — card universal:** fechado com altura 61 px, raio 13 px, fundo neutro #303135 da família de Treino, título 16/500 na coluna de 72 px e ícone de 37 × 37 px (FootballPitchIcon aprovado). O estado «Por preencher» mantém acento âmbar discreto e «Preenchido» mantém verde suave; editar só no lápis, sem chevron nem clique artificial no card. Ao editar, cabeçalho 55 px, raio exterior 18 px; não alterar perguntas, validação, respostas ou controlo de três etapas. Esta norma substitui as várias declarações antigas conflitantes de 36/40/42 px, padding 14/16/17 px e raio 10 px. Validação visual no iPhone pendente.
 - **Pós-jogo:** três etapas; minutos obrigatórios; «Não joguei»; guardar mostra «Preenchido» em vez de «Por preencher»; editar preservado. Erro «Seleciona os minutos jogados.» apenas quando se tenta avançar sem responder; não persistir após selecionar «Não joguei». Título 16/500; perguntas 15/600; respostas 14/400; controlos de escrita 16/400. Retrocesso neutro; check de confirmação da família visual de «Cumpri», mantendo a ação distinta.
 - **Peso:** título 16/500, peso 16/600 e variação 12/400; preservar formulário, histórico, gráfico e marcadores de menstruação quando aplicáveis; controlo de guardar circular próprio.
 - **Peso — toque e expansão:** eliminar a alteração de fundo `:active` inventada; utilizar apenas a mesma linguagem de interação já aprovada para os cards, nomeadamente a rotação do chevron existente (~0,16 s) e expansão nativa. Não adicionar efeitos isolados. Manter a estabilidade do cabeçalho de 61/55 px e o gráfico.

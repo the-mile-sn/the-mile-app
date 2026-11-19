@@ -1030,8 +1030,8 @@ function injectPostMatchCard(){
  for(const game of games){
   const card=document.createElement("div");card.className="post-match-inline";card.dataset.matchId=game.id;
   const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger";
-  const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.innerHTML='<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6M9 9h6M9 13h6M9 17h3"/></svg>';
-  const title=document.createElement("span");title.textContent="Questionário pós-jogo";
+  const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.append(mealIcon("football-pitch"));
+  const title=document.createElement("span");title.className="post-match-inline-title";title.textContent="Questionário pós-jogo";
   const status=document.createElement("span");status.className="post-match-inline-status";
   status.textContent=game.answered?"✓ Preenchido":"Por preencher";
   button.append(icon,title,status);

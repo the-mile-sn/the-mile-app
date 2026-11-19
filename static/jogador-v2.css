@@ -2763,13 +2763,75 @@ body.profile-active .player-top{display:none!important}
  transform:none!important;
 }
 
+/* Post-match daily card: one closed/open geometry, based on the approved meal headers.
+   17px left inset + 37px icon + 10px icon margin + 8px gap = 72px title column.
+   Keep pencil-only access and existing questionnaire logic/form fields unchanged. */
+#overview #day-details .post-match-inline{
+ display:flex;align-items:center;flex-wrap:wrap;
+ box-sizing:border-box;width:100%;min-height:61px;
+ overflow:hidden;background:#303135!important;color:#f4f4f6;
+ border:0;border-radius:13px;box-shadow:none;
+}
+#overview #day-details .post-match-inline:has(.post-match-inline-form:not([hidden])){
+ border-radius:18px;
+}
+#overview #day-details .post-match-inline-trigger{
+ appearance:none!important;display:flex!important;align-items:center!important;
+ flex:1 1 0!important;min-width:0!important;width:auto!important;
+ height:61px;min-height:61px!important;margin:0!important;
+ padding:12px 0 12px 17px!important;gap:8px!important;
+ border:0!important;border-radius:0;background:transparent!important;
+ color:inherit!important;box-shadow:none!important;
+ text-align:left!important;font:500 16px/1.25 system-ui,-apple-system,sans-serif!important;
+ cursor:default;
+}
+#overview #day-details .post-match-inline:has(.post-match-inline-form:not([hidden])) .post-match-inline-trigger{
+ height:55px;min-height:55px!important;padding-top:12px!important;padding-bottom:6px!important;
+}
+#overview #day-details .post-match-inline-trigger:disabled{opacity:1!important;color:inherit!important}
+#overview #day-details .post-match-inline-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:0 0 37px!important;
+ width:37px!important;height:37px!important;min-width:37px!important;
+ padding:0!important;margin:0 10px 0 0!important;
+ background:rgba(0,0,0,.16);color:inherit!important;
+ border-radius:11px!important;
+}
+#overview #day-details .post-match-inline-icon .mile-icon{
+ display:block;width:24px;height:24px;flex:0 0 24px;
+}
+#overview #day-details .post-match-inline-title{
+ display:block;flex:1 1 auto;min-width:0;margin:0;
+ font-size:16px;font-weight:500;line-height:1.25;
+ white-space:normal;
+}
+#overview #day-details .post-match-inline-status{
+ flex:0 0 auto;margin-left:auto;color:#dfc477;
+ font-size:12px;font-weight:400;line-height:1.3;white-space:nowrap;
+}
+#overview #day-details .post-match-inline.answered .post-match-inline-status{color:#8fd6b2}
+#overview #day-details .post-match-edit{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:0 0 44px!important;
+ width:44px!important;height:44px!important;
+ margin:0 10px 0 3px!important;padding:0!important;
+ border:0!important;border-radius:50%;box-shadow:none!important;
+ background:transparent!important;color:inherit!important;cursor:pointer;
+}
+#overview #day-details .post-match-edit svg{display:block;width:21px;height:21px}
+#overview #day-details .post-match-edit:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+/* Expanded content retains its own question and control patterns. */
+#overview #day-details .post-match-inline-form{
+ width:100%;flex:0 0 100%;box-sizing:border-box;
+}
+
 /* Post-match: discreet chronological card, subordinate to meal cards */
-.post-match-inline{border-radius:10px;background:#15211d;overflow:hidden}
-.post-match-inline-trigger{appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:13px 16px;border:0;background:transparent;color:#f0f2ef;text-align:left;font:inherit;font-weight:500;cursor:pointer}
-.post-match-inline-icon{flex:none;color:#4fd29c;font-size:19px}
-.post-match-inline-status{margin-left:auto;color:#b9c3bd;font-size:13px;font-weight:400;white-space:nowrap}
-.post-match-inline.answered .post-match-inline-status{color:#4fd29c}
-.post-match-inline-trigger:disabled{cursor:default;opacity:1}
+
+
+
+
+
+
 .post-match-inline-form{padding:0 16px 16px;color:#d3d8d4}
 .post-match-inline-form[hidden]{display:none}
 .post-match-inline-form p{font-size:13px;color:#b9c3bd;margin:0 0 12px}
@@ -2777,11 +2839,11 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form select{max-width:150px;padding:9px;border-radius:8px;background:#292c2c;color:#fff;border:1px solid #454947}
 .post-match-inline-form button{border:0;border-radius:9px;padding:10px 14px;background:#31483e;color:#fff;font:inherit}
 
-/* Compact post-match card aligned with daily meal typography */
-.post-match-inline{border-radius:10px}
-.post-match-inline-trigger{min-height:46px;padding:8px 13px;gap:11px;font-size:16px;font-weight:500}
-.post-match-inline-icon{display:grid;place-items:center;flex:none;width:39px;height:39px;border-radius:9px;background:rgba(0,0,0,.16);color:#53d6a2}
-.post-match-inline-status{font-size:12px}
+
+
+
+
+
 
 .post-match-questionnaire{display:grid;gap:15px}
 .post-match-progress{font-size:15px;font-weight:600}
@@ -2801,12 +2863,12 @@ body.profile-active .player-top{display:none!important}
 .post-match-navigation{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .post-match-inline-form .post-match-navigation button:last-child{margin-left:auto;background:#e8eaec;color:#17191b}
 
-/* Compact, readable post-match forms */
-.post-match-inline:not(.answered){background:#242528}
-.post-match-inline:not(.answered) .post-match-inline-icon{color:#d0d2d5}
-.post-match-inline-trigger{font-size:16px;gap:9px}
-.post-match-inline-status{margin-left:auto;font-size:12px;color:#b5b7bd}
-.post-match-pencil{display:grid;place-items:center;margin-left:4px;color:#e0e3e4}
+
+
+
+
+
+
 .post-match-questionnaire{gap:12px}
 .post-match-questions{gap:9px}
 .post-match-question{background:rgba(0,0,0,.10);border-radius:9px;padding:12px;gap:9px}
@@ -2824,17 +2886,17 @@ body.profile-active .player-top{display:none!important}
 .post-match-success{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 0;border-radius:9px;background:#17382b;color:#79dfb1;font-size:14px}
 .post-match-success button{margin-left:auto;border:0;border-radius:7px;background:#28493c;color:#dcefe5;padding:6px 9px}
 
-/* Unified questionnaire card: neutral surface, meal-aligned icon, pencil-only editing */
-.post-match-inline,.post-match-inline.answered{background:#2d2f34!important;border-radius:10px}
-.post-match-inline-trigger{font-family:inherit!important;font-size:inherit;font-weight:500;display:flex;min-width:0;flex:1;min-height:56px;padding:10px 0 10px 16px;cursor:default}
-.post-match-inline-trigger:disabled{opacity:1;color:#f0f2ef}
-.post-match-inline-icon{width:42px;height:42px;border-radius:10px;background:rgba(0,0,0,.18);color:#f0f2ef!important;flex-shrink:0}
-.post-match-inline-status{color:#55d4a0!important;font-size:13px;white-space:nowrap}
-.post-match-inline:not(.answered) .post-match-inline-status{color:#bfc1c7!important}
-.post-match-inline{display:flex;flex-wrap:wrap;align-items:center}
+
+
+
+
+
+
+
+
 .post-match-inline-form{width:100%;flex-basis:100%;box-sizing:border-box}
-.post-match-edit{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;margin-right:10px;border:0;border-radius:24px;background:transparent;color:#eee;cursor:pointer}
-.post-match-edit:focus-visible{outline:2px solid #c6d3e2}
+
+
 .post-match-inline-confirm{font-size:12px;color:#55d4a0;margin-left:auto}
 .post-match-inline-form .post-match-options input[type="radio"],.post-match-inline-form .post-match-options input[type="checkbox"]{width:15px;height:15px;flex:0 0 15px}
 .post-match-inline-form .post-match-options label{min-height:27px;gap:9px}
@@ -2843,14 +2905,14 @@ body.profile-active .player-top{display:none!important}
 
 .post-match-inline-confirm-close{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:9px;color:#dce7e1;font-size:19px;cursor:pointer}
 
-/* Final neutral, compact post-match form treatment */
-.post-match-inline,.post-match-inline.answered{background:#222328!important;border-radius:10px}
-.post-match-inline-trigger{min-height:0;padding:7px 0 7px 14px;gap:12px;font-family:inherit!important;font-size:inherit!important;font-weight:inherit!important;line-height:1.25}
-.post-match-inline-trigger>span:nth-child(2){font-size:inherit!important;font-weight:500;white-space:nowrap;letter-spacing:normal}
-.post-match-inline-icon{width:36px;height:36px;border-radius:8px;background:#1b1c20}
-.post-match-inline-icon svg{width:20px;height:20px}
-.post-match-edit{height:38px;width:38px;flex-basis:38px;margin-right:8px}
-.post-match-inline-status{font-size:12px}
+
+
+
+
+
+
+
+
 .post-match-inline-form{background:#25262b;color:#e4e5e9}
 .post-match-questionnaire,.post-match-question,.post-match-questions,.post-match-progress{background:transparent!important;color:inherit}
 .post-match-question{background:#202126!important;border-radius:9px}
@@ -2869,35 +2931,18 @@ body.profile-active .player-top{display:none!important}
 }
 .post-match-inline-form .post-match-options label{gap:10px;min-height:30px}
 
-/* Pending questionnaire: subtle amber status only */
-.post-match-inline:not(.answered) .post-match-inline-status{color:#dfc477!important}
 
-/* Post-match final alignment: match the existing meal/event header grid */
-.post-match-inline{align-items:center;box-sizing:border-box}
-.post-match-inline-trigger{
- display:flex!important;align-items:center!important;flex:1 1 0!important;
- width:auto!important;min-width:0!important;margin:0!important;
- padding:8px 0 8px 16px!important;gap:12px!important;
- font-family:inherit!important;font-size:inherit!important;
- line-height:1.25!important;text-align:left!important;
-}
-.post-match-inline-icon{
- display:flex!important;align-items:center!important;justify-content:center!important;
- width:36px!important;height:36px!important;flex:0 0 36px!important;
- margin:0!important;padding:0!important;box-sizing:border-box!important;
-}
-.post-match-inline-icon svg{width:19px!important;height:19px!important;display:block!important}
-.post-match-inline-trigger>span:nth-child(2){
- display:block!important;min-width:0!important;flex:1 1 auto!important;
- font-size:16px!important;font-weight:500!important;line-height:1.25!important;
- white-space:normal!important;margin:0!important;
-}
-.post-match-inline-status{flex:0 0 auto!important;margin-left:auto!important}
-.post-match-edit{display:flex!important;align-items:center!important;justify-content:center!important;
- flex:0 0 44px!important;width:44px!important;height:44px!important;
- margin:0 10px 0 3px!important;padding:0!important;align-self:center!important;
-}
-.post-match-edit svg{display:block!important;width:21px!important;height:21px!important}
+
+
+
+
+
+
+
+
+
+
+
 .post-match-inline-form{background:#25262b!important}
 .post-match-inline-form .post-match-question{background:#202126!important}
 .post-match-inline-form select,
@@ -2934,10 +2979,10 @@ body.profile-active .player-top{display:none!important}
 }
 .post-match-inline-form .post-match-options label{min-height:29px!important;gap:10px!important}
 
-/* Final optical alignment with meal cards and balanced iOS choice controls */
-.post-match-inline-trigger{padding-left:16px!important;gap:14px!important}
-.post-match-inline-icon{width:40px!important;height:40px!important;flex-basis:40px!important}
-.post-match-inline-trigger>span:nth-child(2){font-size:16px!important;line-height:1.25!important}
+
+
+
+
 .post-match-inline-form .post-match-options input[type="radio"],
 .post-match-inline-form .post-match-options input[type="checkbox"]{
  width:14px!important;height:14px!important;min-width:14px!important;min-height:14px!important;
@@ -2963,7 +3008,7 @@ body.profile-active .player-top{display:none!important}
 
 /* Fasting weight card: matches daily nutrition and meal card surfaces */
 .daily-weight-card{background:#25262b;color:#f1f1f4;border-radius:13px;overflow:hidden;font:inherit}
-.daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 13px;gap:13px;cursor:pointer}
+.daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 17px;gap:15px;cursor:pointer}
 /* Weight panel is shown/hidden by JS rather than details[open].
    Its expanded header follows universal card geometry without limiting the panel. */
 #overview #day-details .daily-weight-card:has(.daily-weight-panel:not([hidden])){border-radius:18px}
@@ -4212,22 +4257,9 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 @media(prefers-reduced-motion:reduce){#player-session-loading,#player-session-loading .player-loading-photo{transition:none!important;transform:none!important}}
 
 
-/* Game + post-match forms: match the existing 37px/11px daily meal icon grid.
-   Scope to the daily player overview; keep SVG artwork and card colors intact. */
+/* Jogo and its in-card consumption retain the standard 17px left header inset. */
 #overview #day-details .daily-event-card.match-intra-card > summary.daily-meal-head{
  padding-left:17px!important;
-}
-#overview #day-details .post-match-inline-trigger{
- padding-left:17px!important;
-}
-#overview #day-details .post-match-inline-icon{
- width:37px!important;
- height:37px!important;
- min-width:37px!important;
- max-width:37px!important;
- flex:0 0 37px!important;
- border-radius:11px!important;
- box-sizing:border-box!important;
 }
 
 
