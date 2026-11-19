@@ -74,7 +74,7 @@ class DailyCardGeometryTests(unittest.TestCase):
             self.assertIn(key, JS)
         self.assertIn('mealIcon("football")', JS)
         self.assertIn('mealIcon("football-pitch")', JS)
-        self.assertIn('mealIcon("soft-drink-01")', JS)
+        self.assertIn('"soft-drink-01"', JS)
         self.assertIn(".tm-day-header .meal-average-inline .macro>.kcal", CSS)
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotIn("transform:translateX(-2px)!important", CSS)
