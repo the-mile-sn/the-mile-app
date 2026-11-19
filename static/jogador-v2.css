@@ -4544,7 +4544,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge{
  background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
 }
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){
  background:rgba(255,255,255,.09)!important;
 }
 
@@ -5570,15 +5570,15 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .consumption-change-color .consumption-link-chevron{display:block!important;width:14px!important;height:14px!important;flex:0 0 14px!important;}
 /* Identical measured height of registered and edit pills, including button borders. */
 #overview #day-details .meal-consumption-tags-bottom .meal-registered-badge,
-#overview #day-details .meal-consumption-tags-bottom .meal-edit-consumption-tag,
+#overview #day-details .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag),
 #overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge,
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
+#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){
  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
  height:25px!important;min-height:25px!important;max-height:25px!important;
  padding:0 10px!important;margin:0!important;border-radius:999px!important;
  line-height:1!important;font-size:11px!important;flex:0 0 auto!important;
 }
-#overview #day-details .meal-consumption-tags-bottom .meal-edit-consumption-tag{border:1px solid rgba(200,225,240,.22)!important;}
+#overview #day-details .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){border:1px solid rgba(200,225,240,.22)!important;}
 
 /* Align the meal-level colour action with the inset of option-level portion links.
    Colour is a direct child of .daily-meal, whereas Ver porções lives inside
@@ -5637,8 +5637,11 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  justify-content:flex-start!important;gap:7px!important;
  margin:0 0 15px!important;padding:0!important;width:100%!important;
 }
+#overview #day-details .meal-consumption-tags-bottom .meal-consumption-color-note{
+ font-size:11px;font-weight:400;line-height:1.35;opacity:.75;align-self:center;
+}
 #overview #day-details .single-meal-option > .meal-consumption-tags-bottom > .meal-registered-badge,
-#overview #day-details .single-meal-option > .meal-consumption-tags-bottom > .meal-edit-consumption-tag{
+#overview #day-details .single-meal-option > .meal-consumption-tags-bottom > :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){
  box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
  justify-content:center!important;height:24px!important;min-height:24px!important;max-height:24px!important;
  padding:0 9px!important;margin:0!important;line-height:1!important;
