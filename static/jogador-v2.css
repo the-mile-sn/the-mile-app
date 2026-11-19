@@ -1480,6 +1480,30 @@ header{padding:10px 0 24px}
 .icon-user-03{--icon-url:url("https://api.iconify.design/hugeicons/user-03.svg")}
 .meal-leading-icon{width:37px;height:37px;display:inline-flex;align-items:center;justify-content:center;flex:none;border-radius:11px;background:rgba(0,0,0,.16);margin-right:10px}
 .meal-leading-icon .mile-icon{width:24px;height:24px}
+/* PAGE INITIAL / DAY — shared geometry for meal, weight, training, peri, match, supplements, post-match form. */
+#overview #day-details{
+ --day-icon-box:37px;--day-icon-glyph:24px;--day-icon-radius:11px;
+ --day-header-inset:17px;--day-header-gap:8px;--day-icon-space:10px;
+ --day-title-size:16px;--day-title-weight:500;--day-kcal-size:11px;--day-kcal-weight:500;
+}
+#overview #day-details .tm-day-header{align-items:center!important;column-gap:var(--day-header-gap)!important;padding-left:var(--day-header-inset)!important}
+#overview #day-details .tm-day-icon{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:0 0 var(--day-icon-box)!important;
+ width:var(--day-icon-box)!important;min-width:var(--day-icon-box)!important;max-width:var(--day-icon-box)!important;
+ height:var(--day-icon-box)!important;min-height:var(--day-icon-box)!important;max-height:var(--day-icon-box)!important;
+ margin:0 var(--day-icon-space) 0 0!important;padding:0!important;
+ border-radius:var(--day-icon-radius)!important;background:rgba(0,0,0,.16)!important;
+ order:-1!important;align-self:center!important;transform:none!important;
+}
+#overview #day-details .tm-day-icon > :is(.mile-icon,svg){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 var(--day-icon-glyph)!important;width:var(--day-icon-glyph)!important;height:var(--day-icon-glyph)!important;
+ margin:0!important;padding:0!important;transform:none!important;
+}
+#overview #day-details .tm-day-icon .mile-icon > svg{display:block!important;width:100%!important;height:100%!important;transform:none!important}
+#overview #day-details .tm-day-title{font-family:inherit!important;font-size:var(--day-title-size)!important;font-weight:var(--day-title-weight)!important;line-height:1.3!important;letter-spacing:normal!important}
+#overview #day-details .tm-day-header .meal-average-inline .macro>.kcal{font-family:inherit!important;font-size:var(--day-kcal-size)!important;font-weight:var(--day-kcal-weight)!important;line-height:1.12!important}
 #overview .daily-meal-head{display:flex;align-items:center!important}
 #overview .daily-meal-head>.meal-leading-icon{order:-1}
 #overview .daily-event-card .meal-leading-icon{order:-1}

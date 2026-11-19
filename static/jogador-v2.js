@@ -333,7 +333,11 @@ function decorateLabel(el,key){
  if(!el||el.querySelector(".meal-leading-icon"))return;
  const iconName=mealIconMap[key]||(/p[oó]s/i.test(key)||/pr[eé][- ]treino/i.test(key)?"soft-drink-01":/jogo/i.test(key)?"football":/treino/i.test(key)?"football-pitch":null);
  if(!iconName)return;
- const item=document.createElement("span");item.className="meal-leading-icon";item.append(mealIcon(iconName));el.prepend(item);updateOfficialIcons();
+ const item=document.createElement("span");item.className="meal-leading-icon tm-day-icon";item.append(mealIcon(iconName));el.prepend(item);
+ if(el.classList.contains("daily-meal-head"))el.classList.add("tm-day-header");
+ const title=el.querySelector(":scope > strong, :scope > span:not(.meal-leading-icon)");
+ if(title)title.classList.add("tm-day-title");
+ updateOfficialIcons();
 }
 
 let profileUsername="";
@@ -890,7 +894,7 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
   if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmt(avg.kcal,0);section.append(kcal);}
   return section;
  }
- const head=document.createElement("summary");head.className="daily-meal-head";
+ const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
  const title=document.createElement("strong");title.textContent=item.title;head.append(title);decorateLabel(head,item.title);
  if(avg){const nutritionSummary=document.createElement("span");nutritionSummary.className="meal-average meal-average-inline";nutritionSummary.append(nutrition(avg));head.append(nutritionSummary);}
  section.append(head);
@@ -900,8 +904,8 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
  return section;
 }
 function eventCard(event,compact=false){
- const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card";
- const label=document.createElement("span");label.textContent=event.title;section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);
+ const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card tm-day-header";
+ const label=document.createElement("span");label.className=compact?"":"tm-day-title";label.textContent=event.title;section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);
  if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
    const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label","Editar "+event.title);toggle.title="Editar "+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
@@ -945,8 +949,8 @@ function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecor
  const opts=item.options||[],avg=average(opts);
  const section=document.createElement("details");
  section.className="daily-event-card match-intra-card";
- const head=document.createElement("summary");head.className="daily-meal-head";
- const matchIconBox=document.createElement("span");matchIconBox.className="meal-leading-icon";matchIconBox.append(mealIcon("football"));head.append(matchIconBox);const label=document.createElement("strong");label.textContent=event.title;head.append(label);
+ const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
+ const matchIconBox=document.createElement("span");matchIconBox.className="meal-leading-icon tm-day-icon";matchIconBox.append(mealIcon("football"));head.append(matchIconBox);const label=document.createElement("strong");label.className="tm-day-title";label.textContent=event.title;head.append(label);
  if(avg){
   const totals=document.createElement("span");totals.className="meal-average meal-average-inline";
   totals.append(nutrition(avg));head.append(totals);
@@ -961,7 +965,7 @@ function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecor
 let supplementsByDay={};
 function supplementsCard(items){
  const box=document.createElement("details");box.className="daily-supplements";
- const title=document.createElement("summary");box.append(title);const iconBox=document.createElement("span");iconBox.className="meal-leading-icon supplement-leading-icon";iconBox.append(mealIcon("pill"));const heading=document.createElement("strong");heading.textContent="Suplementação";title.append(iconBox,heading);
+ const title=document.createElement("summary");title.className="tm-day-header";box.append(title);const iconBox=document.createElement("span");iconBox.className="meal-leading-icon supplement-leading-icon tm-day-icon";iconBox.append(mealIcon("pill"));const heading=document.createElement("strong");heading.className="tm-day-title";heading.textContent="Suplementação";title.append(iconBox,heading);
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
@@ -1029,9 +1033,9 @@ function injectPostMatchCard(){
  let anchor=matchCards[matchCards.length-1]||null;
  for(const game of games){
   const card=document.createElement("div");card.className="post-match-inline";card.dataset.matchId=game.id;
-  const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger";
-  const icon=document.createElement("span");icon.className="post-match-inline-icon";icon.append(mealIcon("football-pitch"));
-  const title=document.createElement("span");title.className="post-match-inline-title";title.textContent="Questionário pós-jogo";
+  const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger tm-day-header";
+  const icon=document.createElement("span");icon.className="post-match-inline-icon tm-day-icon";icon.append(mealIcon("football-pitch"));
+  const title=document.createElement("span");title.className="post-match-inline-title tm-day-title";title.textContent="Questionário pós-jogo";
   const status=document.createElement("span");status.className="post-match-inline-status";
   status.textContent=game.answered?"✓ Preenchido":"Por preencher";
   button.append(icon,title,status);
@@ -1140,9 +1144,9 @@ async function loadPlayerPostMatch(){
 }
 async function renderWeightCard(root,date){
  const card=document.createElement("section");card.className="daily-weight-card";
- const header=document.createElement("div");header.className="daily-weight-header";
- const glyph=document.createElement("span");glyph.className="daily-weight-icon";glyph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
- const label=document.createElement("span");label.className="daily-weight-label";label.textContent="Peso em jejum";
+ const header=document.createElement("div");header.className="daily-weight-header tm-day-header";
+ const glyph=document.createElement("span");glyph.className="daily-weight-icon tm-day-icon";glyph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
+ const label=document.createElement("span");label.className="daily-weight-label tm-day-title";label.textContent="Peso em jejum";
  const value=document.createElement("span");value.className="daily-weight-value";
  const action=document.createElement("button");action.type="button";action.className="daily-weight-action";
  header.append(glyph,label,value,action);card.append(header);
@@ -2080,7 +2084,7 @@ async function overview(){
   const color=assignedColor(d,meal,entry?.classification),menu=(meal==="lunch"||meal==="dinner")?(weekMenus.menus||[]).find(x=>x.menu_date===d&&x.meal===meal):null;
   if(!color&&!menu)continue;
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
-  const head=document.createElement("summary");head.className="daily-meal-head";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
+  const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";const title=document.createElement("strong");title.textContent=names[meal];head.append(title);decorateLabel(head,meal);
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
    const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';
