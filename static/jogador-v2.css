@@ -269,7 +269,10 @@ header{padding:10px 0 24px}
 .daily-nutrition-card small{margin-bottom:3px!important}
 .daily-nutrition-card strong{font-size:clamp(17px,2.5vw,23px)!important;line-height:1.13!important}
 .daily-nutrition-card .per-kg{margin-top:2px!important}
+/* Canonical daily unit: 61px closed; open header retains 55px minimum. */
 .daily-meal>.daily-meal-head{min-height:55px!important;padding:12px 17px!important}
+#overview #day-details .daily-meal:not([open]){height:61px!important;min-height:61px!important;box-sizing:border-box!important}
+#overview #day-details .daily-meal:not([open])>.daily-meal-head{height:61px!important;min-height:61px!important;box-sizing:border-box!important}
 .daily-meal>.daily-meal-head strong{font-size:17px!important;font-weight:590!important}
 .daily-meal>.daily-meal-head:before{content:none!important;display:none!important}
 #overview .daily-meal>details summary .option.day-option{padding-left:0!important;padding-right:32px!important}
@@ -497,7 +500,7 @@ header{padding:10px 0 24px}
 
 /* Match day: intra-match nutrition expands directly inside the Jogo card. */
 #overview .match-intra-card{display:block;padding:0;overflow:hidden;background:#303135;border:0;border-radius:18px}
-#overview .match-intra-card>.daily-meal-head{display:flex;align-items:center;gap:8px;min-height:64px;padding:17px 16px;list-style:none;cursor:pointer}
+#overview .match-intra-card>.daily-meal-head{display:flex;align-items:center;gap:8px;min-height:55px;padding:12px 17px 3px;list-style:none;cursor:pointer}
 #overview .match-intra-card>.daily-meal-head::-webkit-details-marker{display:none}
 #overview .match-intra-card>.daily-meal-head strong{font-size:18px;font-weight:700;flex:1;min-width:0}
 #overview .match-intra-card>.daily-meal-head .meal-average-inline{margin-left:auto;flex:0 0 auto}
@@ -1993,14 +1996,14 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-change{font-size:10px!important}
 
 
-/* Final mobile geometry: all collapsed daily event/meal cards share 65px. */
+/* Match with intra-game content: closed unit 61px; expanded body stays flexible. */
 #overview .match-intra-card:not([open]){
- min-height:65px!important;height:65px!important;padding:0!important;
+ min-height:61px!important;height:61px!important;padding:0!important;
  box-sizing:border-box!important;display:flex!important;align-items:stretch!important;
 }
 #overview .match-intra-card:not([open]) > summary.daily-meal-head{
- height:65px!important;min-height:65px!important;max-height:65px!important;
- margin:0!important;padding:0 16px!important;
+ height:61px!important;min-height:61px!important;max-height:61px!important;
+ margin:0!important;padding:0 17px!important;
  box-sizing:border-box!important;
 }
 #overview .match-intra-card:not([open]) > summary.daily-meal-head > .meal-leading-icon{
@@ -2635,8 +2638,8 @@ body.profile-active .player-top{display:none!important}
 #plans #plans-assessments .assessment-tabs{margin-top:0!important}
 
 
-/* Align peri-training and supplementation with the same daily meal icon grid. */
-#overview .peri-meal > .daily-meal-head,
+/* Supplementation is a distinct 65px section; peri-training inherits
+   the 61px closed / 55px open daily meal header geometry. */
 #overview .daily-supplements > summary{
  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
  min-height:65px!important;box-sizing:border-box!important;
