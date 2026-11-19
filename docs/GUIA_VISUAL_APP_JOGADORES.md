@@ -81,7 +81,7 @@ Cinco planos, com fundo / texto de destaque:
 - Azul `#193F60` / `#8DD0FF`;
 - Verde `#174631` / `#77E3A4`;
 - Verde preparação `#10251A` / `#4E996B`.
-Verde preparação deve ser distinguível de verde normal também no seletor «Alterar cor», sem afetar as outras cores.
+Verde preparação deve ser distinguível de Verde normal também no seletor «Alterar cor»: o botão «Verde» conserva o fundo menta `#A8DFC1` e o botão «Verde preparação» usa **o mesmo par de tokens da identidade forest-green** (`background:var(--meal-vp)` = `#10251A`, `color:var(--meal-vp-text)` = `#4E996B`). Não criar uma cor paralela nem sobrepor CSS de correção no fim; a diferença deve nascer da regra original da opção, mantendo as restantes cores e o comportamento da seleção inalterados. Contraste do texto ≈ 4,68:1. Confirmação visual no iPhone pendente.
 
 Ícones aprovados: Pequeno-almoço Coffee03Icon; snack VegetarianFoodIcon; almoço/jantar Restaurant02Icon; ceia Moon02Icon; jogo FootballIcon; treino e formulário jogo FootballPitchIcon; **pré-treino, pós-treino e pós-jogo SoftDrink01Icon**; Início Home09Icon; Planos Files01Icon; Inserir AddCircleIcon; Menus MenuRestaurantIcon; Perfil User03Icon; formulário peso WeightScaleIcon. Não substituir por arte genérica.
 

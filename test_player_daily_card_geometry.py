@@ -80,6 +80,19 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
 
+    def test_preparation_green_color_picker_uses_the_approved_forest_palette(self):
+        normal = declarations("#overview .consumption-editor .consumption-color-green")
+        preparation = declarations("#overview .consumption-editor .consumption-color-vp")
+        self.assertEqual([len(normal), len(preparation)], [1, 1])
+        self.assertIn("background:#a8dfc1!important", normal[0])
+        self.assertIn("background:var(--meal-vp)!important", preparation[0])
+        self.assertIn("color:var(--meal-vp-text)!important", preparation[0])
+        self.assertNotIn("background:#a8dfc1", preparation[0])
+        self.assertIn("--meal-vp:#10251A", CSS)
+        self.assertIn("--meal-vp-text:#4E996B", CSS)
+        self.assertIn("Verde preparação", GUIDE)
+        self.assertIn("#A8DFC1", GUIDE)
+
     def test_visual_guide_matches_active_geometry(self):
         self.assertIn("72 px", GUIDE)
         self.assertIn("Questionário pós-jogo — card universal", GUIDE)
