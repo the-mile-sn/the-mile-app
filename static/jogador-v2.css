@@ -1484,6 +1484,7 @@ header{padding:10px 0 24px}
 #overview #day-details{
  --day-icon-box:37px;--day-icon-glyph:24px;--day-icon-radius:11px;
  --day-header-inset:17px;--day-header-gap:8px;--day-icon-space:10px;
+ --day-chevron-size:9px;--day-event-extra-inset:7px;
  --day-title-size:16px;--day-title-weight:500;--day-kcal-size:11px;--day-kcal-weight:500;
  --consumption-status-bg:rgba(154,224,191,.20);--consumption-status-ink:#b9eed2;
  --consumption-secondary-bg:rgba(255,255,255,.09);
@@ -2353,7 +2354,7 @@ body.profile-active .player-top{display:none!important}
 #overview .meal-collapsible-note > summary::after{
  content:""!important;display:block!important;
  box-sizing:border-box!important;
- width:9px!important;height:9px!important;
+ width:var(--day-chevron-size,9px)!important;height:var(--day-chevron-size,9px)!important;
  border:solid currentColor!important;border-width:0 2px 2px 0!important;
  background:none!important;clip-path:none!important;border-radius:0!important;
  color:#c9c9cf!important;font-size:0!important;
@@ -2689,7 +2690,8 @@ body.profile-active .player-top{display:none!important}
 }
 
 #overview #day-details .daily-event-card{
- padding-left:17px!important;
+ padding-left:var(--day-header-inset)!important;
+ padding-right:calc(15px + var(--day-event-extra-inset))!important;
  box-sizing:border-box!important;
 }
 
@@ -2746,7 +2748,7 @@ body.profile-active .player-top{display:none!important}
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  box-sizing:border-box!important;flex:0 0 44px!important;
  width:44px!important;height:44px!important;
- margin:0 10px 0 3px!important;padding:0!important;
+ margin:0 calc(10px + var(--day-event-extra-inset)) 0 3px!important;padding:0!important;
  border:0!important;border-radius:50%;box-shadow:none!important;
  background:transparent!important;color:inherit!important;cursor:pointer;
 }
@@ -2949,8 +2951,27 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-value{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
 .daily-weight-value strong{font-size:16px;font-weight:600}
 .daily-weight-value small{font-size:12px;color:#aaaeb8;font-weight:400}
-.daily-weight-action{width:41px;height:41px;flex:0 0 41px;border:none;border-radius:50%;background:#3a3c43;color:#f3f3f4;display:grid;place-items:center;font:inherit;font-size:26px;cursor:pointer}
-.daily-weight-action svg{width:20px;height:20px}
+/* Weight + and chevron have the same centre as the meals' 9px glyph:
+   17px right inset + 9px/2 = 17px + 32px/2 - 11.5px.
+   The button retains a usable 32px control and focus ring. */
+.daily-weight-header .daily-weight-action{
+ box-sizing:border-box;width:32px;height:32px;min-width:32px;flex:0 0 32px;
+ margin:0 -11.5px 0 0;padding:0;border:0;border-radius:0;
+ box-shadow:none;background:transparent;color:#d6d7de;
+ display:flex;align-items:center;justify-content:center;
+ font:inherit;line-height:1;cursor:pointer;
+}
+.daily-weight-header .daily-weight-action svg{display:block;width:22px;height:22px;flex:none;stroke-width:2.2}
+.daily-weight-header .daily-weight-chevron-action svg{display:none}
+.daily-weight-header .daily-weight-chevron-action::after{
+ content:"";display:block;box-sizing:border-box;
+ width:var(--day-chevron-size,9px);height:var(--day-chevron-size,9px);
+ border:solid currentColor;border-width:0 2px 2px 0;
+ background:none;border-radius:0;color:#c9c9cf;
+ transform:rotate(45deg);transition:transform .16s ease;flex-shrink:0;
+}
+.daily-weight-header .daily-weight-chevron-action[aria-expanded="true"]::after{transform:rotate(225deg)}
+.daily-weight-header .daily-weight-action:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .daily-weight-panel{padding:16px 17px 20px;border-top:1px solid #33353b}
 .daily-weight-panel[hidden]{display:none}
 .daily-weight-chart-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;font-size:13px}
@@ -2976,7 +2997,6 @@ body.profile-active .player-top{display:none!important}
 
 /* Weight and form card typography aligned to daily meal headings */
 
-.daily-weight-action{width:31px;height:31px;flex:0 0 31px;font-size:22px}
 .daily-weight-form-actions{justify-content:flex-end}
 .daily-weight-form-actions button:last-child{min-width:42px;min-height:36px;padding:5px 14px;background:#e9e9ec;color:#222;border-radius:22px}
 
@@ -2985,8 +3005,6 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-picker-column select{width:100%;min-height:48px;text-align:center;text-align-last:center;font-size:21px;font-weight:500;border-radius:12px;background:#292b30!important;color:#f1f2f4;border:1px solid #45474c}
 
 /* Weight controls: compact centered icons */
-.daily-weight-action{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;line-height:1!important}
-.daily-weight-action svg{display:block;width:19px;height:19px;flex:none}
 .daily-weight-picker-column select{font-size:17px!important;font-weight:500!important}
 .daily-weight-form-actions .daily-weight-save{display:flex!important;align-items:center!important;justify-content:center!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important;background:#e9e9ec!important;color:#202227!important;font-size:25px!important;line-height:1!important;font-weight:500!important}
 
@@ -4863,40 +4881,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .daily-weight-chart-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px 3px}
 #overview .daily-weight-chart-period{font-size:11px;font-weight:400;color:#939397}
 #overview .daily-weight-chart-footer .daily-weight-chart-average{margin:0;text-align:right}
-
-/* Match the fasting-weight expand control to the meal-card chevrons. */
-#overview .daily-weight-action[aria-controls]{
- width:24px!important;height:32px!important;flex:0 0 24px!important;
- border:0!important;border-radius:0!important;background:transparent!important;
- box-shadow:none!important;padding:0!important;color:#d6d7de!important;
- display:flex!important;align-items:center!important;justify-content:center!important;
-}
-#overview .daily-weight-action[aria-controls] svg{
- width:22px!important;height:22px!important;display:block!important;
- stroke-width:2.2!important;
-}
-
-/* Use exactly the same CSS-drawn disclosure chevron as the meal cards.
-   Keep the existing button hit area and right-edge placement. */
-#overview .daily-weight-header .daily-weight-chevron-action{
- width:19px!important;min-width:19px!important;flex:0 0 19px!important;
- height:32px!important;margin-right:-1px!important;
- background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;
- padding:0!important;position:relative!important;
-}
-#overview .daily-weight-header .daily-weight-chevron-action svg{display:none!important}
-#overview .daily-weight-header .daily-weight-chevron-action::after{
- content:""!important;display:block!important;box-sizing:border-box!important;
- width:9px!important;height:9px!important;
- border:solid currentColor!important;border-width:0 2px 2px 0!important;
- background:none!important;border-radius:0!important;
- color:#c9c9cf!important;transform:rotate(45deg)!important;
- transition:transform .16s ease!important;flex-shrink:0!important;
-}
-#overview .daily-weight-header .daily-weight-chevron-action[aria-expanded="true"]::after{
- transform:rotate(225deg)!important;
-}
-
 
 /* Jorge consumption pilot — single authoritative layout (no competing media overrides). */
 #overview #day-details .nutrition-comparison.consumption-concentric{
