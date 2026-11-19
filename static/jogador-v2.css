@@ -3045,7 +3045,7 @@ body.profile-active .player-top{display:none!important}
 .daily-weight-form-actions button:last-child{background:#e4e7ea;color:#202227}
 
 /* Weight and form card typography aligned to daily meal headings */
-.daily-weight-label,.post-match-inline-trigger>span:nth-child(2){
+.daily-weight-label{
  font-family:inherit!important;font-size:16px!important;font-weight:500!important;letter-spacing:normal!important;
 }
 .daily-weight-action{width:31px;height:31px;flex:0 0 31px;font-size:22px}

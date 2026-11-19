@@ -1,0 +1,30 @@
+name: Player daily-card geometry contract
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'static/jogador-v2.css'
+      - 'static/jogador-v2.js'
+      - 'static/jogador-v2.html'
+      - 'docs/GUIA_VISUAL_APP_JOGADORES.md'
+      - 'test_player_daily_card_geometry.py'
+      - '.github/workflows/validate-player-daily-cards.yml'
+  workflow_dispatch:
+
+jobs:
+  header-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check player JavaScript syntax
+        run: node --check static/jogador-v2.js
+      - name: Verify universal day-card geometry and visual-guide parity
+        run: python -m unittest -v test_player_daily_card_geometry
