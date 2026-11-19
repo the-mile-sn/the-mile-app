@@ -175,8 +175,8 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  position:absolute;z-index:0;pointer-events:none;
  top:0;bottom:0;left:calc(var(--chef-week-left) - 2px);
  width:calc((100% - 30px)/7 + 4px);box-sizing:border-box;
- background:rgba(245,245,247,.055);
- border:1.5px solid #f5f5f7;border-radius:15px;
+ background:rgba(245,245,247,.065);
+ border:0;border-radius:15px;
 }
 .chef-week-day,.chef-week-cell{position:relative;z-index:1}
 .chef-week-day{
@@ -197,7 +197,13 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 }
 .chef-week-cell .mile-icon{width:23px;height:23px}
 .chef-week-cell.unavailable{opacity:0;background:transparent;pointer-events:none}
-.chef-week-cell.selected{outline:2px solid #f5f5f7;outline-offset:2px}
+.chef-week-cell.selected{
+ background:color-mix(in srgb,var(--chef-tone) 84%,white 16%);
+}
+/* Pointer selection uses only a soft lift in colour. Keyboard focus remains accessible. */
+.chef-week-cell:focus-visible,.chef-week-day:focus-visible{
+ outline:2px solid #f5f5f7;outline-offset:2px;
+}
 /* Like the player's meal detail: compact date/microcycle followed by the meal title.
    No black framing card; the existing inner Chef meal contents are untouched. */
 #screen.chef-screen-home .chef-week-detail{
@@ -218,7 +224,28 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  font:400 28px/1 "Inter Tight",sans-serif;cursor:pointer;
 }
 .chef-week-close:focus-visible{outline:2px solid #f5f5f7;outline-offset:2px}
-.chef-week-detail .chef-meal-card{margin:0}
+/* Weekly content sits directly within the selected meal colour, without a
+   duplicated meal card or heading. Only the menu/photo gets a gentle sub-surface. */
+#screen.chef-screen-home .chef-week-detail>.chef-week-meal-body{
+ padding:0;margin:0;background:transparent;color:var(--chef-tone-ink);
+}
+#screen.chef-screen-home .chef-week-detail>.chef-week-menu-highlight{
+ display:block;margin:0 0 16px;padding:14px;
+ border:0;border-radius:14px;background:var(--chef-inner);
+}
+#screen.chef-screen-home .chef-week-detail>.chef-week-menu-highlight .chef-meal-dish{
+ display:flex;align-items:center;gap:13px;padding:0;
+}
+#screen.chef-screen-home .chef-week-menu-highlight .chef-dish-name{
+ font:450 15px/1.4 "Inter Tight",sans-serif;color:#f5f5f7;
+}
+#screen.chef-screen-home .chef-week-menu-highlight .chef-dish-photo-frame{
+ width:88px;height:88px;
+}
+@media(max-width:370px){
+ #screen.chef-screen-home .chef-week-menu-highlight .chef-dish-photo-frame{width:74px;height:74px}
+ #screen.chef-screen-home .chef-week-detail>.chef-week-menu-highlight{padding:12px}
+}
 .chef-menu-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 23px}
 .chef-menu-week-day{border:0;border-radius:12px;background:transparent;color:#f5f5f7;padding:9px 0 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .chef-menu-week-day small{font-size:11px;color:#a0a0aa}.chef-menu-week-day strong{font-size:21px;width:32px;height:32px;display:grid;place-items:center}
@@ -354,7 +381,8 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 #screen .chef-meal-card>.chef-meal-body{padding:0 12px 13px}
 #screen .chef-meal-card:not([open])>.chef-meal-body{display:none}
 #screen .chef-option-list{gap:10px}
-#screen .chef-meal-card .chef-option-card{
+#screen .chef-meal-card .chef-option-card,
+#screen .chef-week-detail .chef-option-card{
  background:var(--chef-inner)!important;color:var(--chef-tone-ink)!important;
  border:0!important;border-radius:13px!important;margin:0!important;padding:14px 14px!important;
  box-shadow:none!important;

@@ -587,10 +587,15 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
  }
  card.append(head);
  const body=node("div","chef-meal-body");
- body.append(chefOptionCards(date,meal));
- if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
+ appendChefMealContents(body,date,meal,onlyPrescription);
  card.append(body);
  return card;
+}
+// A single content path powers the daily expandable card and the weekly inline
+// detail; editing, execution and prescription rendering stay identical.
+function appendChefMealContents(body,date,meal,onlyPrescription=false){
+ body.append(chefOptionCards(date,meal));
+ if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
 }
 function renderChefDaily(root){
  const date=dateKey(selectedDay),classification=classificationFor(date);
@@ -667,8 +672,8 @@ function renderChefWeekly(root){
  root.append(grid);
  if(chefWeekSelection){
   const {date,meal}=chefWeekSelection,dt=new Date(date+"T12:00:00");
-  // The player-inspired heading lives on the coloured outer card.
-  // Keep the existing Chef meal card and all its menu, nutrition and editing intact.
+  // One heading only, matching the player: date/microcycle and meal name.
+  // Unlike the daily view, the weekly detail needs no nested meal/card header.
   const panel=node("section","chef-week-detail tone-"+mealTone(date,meal));
   const top=node("div","chef-week-detail-head");
   const title=node("div","chef-week-detail-identity");
@@ -679,7 +684,17 @@ function renderChefWeekly(root){
   close.setAttribute("aria-label",lang==="pt"?"Fechar detalhes":"Close details");
   close.onclick=()=>{chefWeekSelection=null;render();};
   top.append(close);panel.append(top);
-  panel.append(renderChefMeal(date,meal,true));root.append(panel);
+  // For lunch/dinner, highlight only the planned dish and photo.
+  // The nutritional prescription and Chef execution actions remain underneath.
+  if(meal==="lunch"||meal==="dinner"){
+   const menu=node("div","chef-meal-preview chef-week-menu-highlight");
+   appendChefMenuDish(menu,plannedMenu(date,meal),txt().pending);
+   panel.append(menu);
+  }
+  const body=node("div","chef-meal-body chef-week-meal-body");
+  appendChefMealContents(body,date,meal);
+  panel.append(body);
+  root.append(panel);
  }
 }
 function sectionTitle(title,extra){

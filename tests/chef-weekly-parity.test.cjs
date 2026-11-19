@@ -17,17 +17,26 @@ test("selected date uses one visual full-height lane without changing the meal t
  assert.match(css,/\.chef-week-selected-column\{/);
  assert.match(css,/top:0;bottom:0;left:calc\(var\(--chef-week-left\) - 2px\)/);
  assert.match(css,/\.chef-week-day\.selected\{background:transparent\}/);
+ assert.match(css,/background:rgba\(245,245,247,\.065\)/);
+ assert.match(css,/\.chef-week-cell\.selected\{[\s\S]*?background:color-mix\(in srgb,var\(--chef-tone\) 84%,white 16%\)/);
+ assert.doesNotMatch(css,/\.chef-week-cell\.selected\{outline:/);
+ assert.doesNotMatch(css,/border:1\.5px solid #f5f5f7;border-radius:15px/);
  assert.match(css,/left:calc\(var\(--chef-week-left-small\) - 2px\)/);
  assert.match(chef,/selectedDay=new Date\(key\+"T12:00:00"\)/);
  assert.match(chef,/const color=mealTone\(key,meal\)/);
 });
-test("weekly detail adopts player's date and meal heading, reuses untouched Chef meal",()=>{
+test("weekly detail uses a single meal header and shared meal content",()=>{
  assert.match(chef,/function chefWeekDetailLabel\(date\)/);
  assert.match(chef,/microcycle\?" · "\+microcycle/);
  assert.match(chef,/chef-week-detail-identity/);
  assert.match(chef,/chef-week-detail-date/);
  assert.match(chef,/chef-week-detail-meal/);
- assert.match(chef,/panel\.append\(renderChefMeal\(date,meal,true\)\)/);
+ assert.doesNotMatch(chef,/panel\.append\(renderChefMeal\(date,meal,true\)\)/);
+ assert.match(chef,/appendChefMenuDish\(menu,plannedMenu\(date,meal\),txt\(\)\.pending\)/);
+ assert.match(chef,/const body=node\("div","chef-meal-body chef-week-meal-body"\)/);
+ assert.match(chef,/appendChefMealContents\(body,date,meal\)/);
+ assert.match(chef,/appendChefMealContents\(body,date,meal,onlyPrescription\)/);
+ assert.match(css,/#screen\.chef-screen-home \.chef-week-detail>\.chef-week-menu-highlight\{/);
  assert.match(css,/#screen\.chef-screen-home \.chef-week-detail\{/);
  assert.doesNotMatch(css,/\.chef-week-detail\{padding:13px;background:#19191e/);
  assert.match(chef,/body\.append\(chefOptionCards\(date,meal\)\)/);
@@ -44,6 +53,25 @@ test("weekly compact date uses localized weekday and MD classification",()=>{
  assert.equal(label(new Date("2026-11-19T12:00:00")),"Qui, 19/11 · MD-2");
 });
 test("assets are cache-busted for the Chef view only",()=>{
- assert.match(html,/\/chef\.css\?v=11/);
- assert.match(html,/\/chef\.js\?v=15/);
+ assert.match(html,/\/chef\.css\?v=12/);
+ assert.match(html,/\/chef\.js\?v=16/);
+});
+
+test("weekly breakfast shows no duplicate card or heading",()=>{
+ const from=chef.indexOf("function chefWeekDetailLabel(date){");
+ const to=chef.indexOf("function sectionTitle(title,extra){",from);
+ const source=chef.slice(from,to);
+ assert.match(source,/title\.append\(node\("h2","chef-week-detail-meal",mealNames\[lang\]\[meal\]\)\)/);
+ assert.doesNotMatch(source,/node\("summary","chef-meal-head"\)/);
+ assert.match(source,/if\(meal==="lunch"\|\|meal==="dinner"\)\{/);
+ assert.match(source,/panel\.append\(body\)/);
+ assert.match(css,/#screen \.chef-week-detail \.chef-option-card\{/);
+});
+test("existing daily Chef card, image and actions remain in place",()=>{
+ assert.match(chef,/function renderChefMeal\(date,meal,expanded=false,onlyPrescription=false\)/);
+ assert.match(chef,/card\.append\(head\)/);
+ assert.match(chef,/card\.append\(body\)/);
+ assert.match(chef,/appendChefMealContents\(body,date,meal,onlyPrescription\)/);
+ assert.match(chef,/executionForm\(date,meal,body\)/);
+ assert.match(chef,/function chefMenuPhoto\(item\)/);
 });
