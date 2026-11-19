@@ -17,8 +17,8 @@ test("selected date uses one visual full-height lane without changing the meal t
  assert.match(css,/\.chef-week-selected-column\{/);
  assert.match(css,/top:0;bottom:0;left:calc\(var\(--chef-week-left\) - 2px\)/);
  assert.match(css,/\.chef-week-day\.selected\{background:transparent\}/);
- assert.match(css,/background:rgba\(245,245,247,\.065\)/);
- assert.match(css,/\.chef-week-cell\.selected\{[\s\S]*?background:color-mix\(in srgb,var\(--chef-tone\) 84%,white 16%\)/);
+ assert.match(css,/background:rgba\(245,245,247,\.035\)/);
+ assert.match(css,/\.chef-week-cell\.selected\{[\s\S]*?background:color-mix\(in srgb,var\(--chef-tone\) 95%,white 5%\)/);
  assert.doesNotMatch(css,/\.chef-week-cell\.selected\{outline:/);
  assert.doesNotMatch(css,/border:1\.5px solid #f5f5f7;border-radius:15px/);
  assert.match(css,/left:calc\(var\(--chef-week-left-small\) - 2px\)/);
@@ -53,7 +53,7 @@ test("weekly compact date uses localized weekday and MD classification",()=>{
  assert.equal(label(new Date("2026-11-19T12:00:00")),"Qui, 19/11 · MD-2");
 });
 test("assets are cache-busted for the Chef view only",()=>{
- assert.match(html,/\/chef\.css\?v=12/);
+ assert.match(html,/\/chef\.css\?v=13/);
  assert.match(html,/\/chef\.js\?v=16/);
 });
 
@@ -74,4 +74,19 @@ test("existing daily Chef card, image and actions remain in place",()=>{
  assert.match(chef,/appendChefMealContents\(body,date,meal,onlyPrescription\)/);
  assert.match(chef,/executionForm\(date,meal,body\)/);
  assert.match(chef,/function chefMenuPhoto\(item\)/);
+});
+
+test("weekly calendar typography matches the smaller player-scale design",()=>{
+ assert.match(css,/\.chef-week-day small\{font-size:10px;font-weight:400/);
+ assert.match(css,/\.chef-week-day strong\{font-size:18px;font-weight:600/);
+ assert.match(css,/\.chef-week-day\{[\s\S]*?flex-direction:column;gap:6px/);
+ assert.match(css,/@media\(max-width:370px\)[^\n]*\.chef-week-day strong\{font-size:17px\}/);
+});
+test("weekly open meal title and foods use approved player typography and colour",()=>{
+ assert.match(css,/\.chef-week-detail-meal\{margin:0;color:#f5f5f7;font:500 21px\/1\.25 "Inter Tight"/);
+ assert.match(css,/--chef-option-body:color-mix\(in srgb,var\(--chef-tone-ink\) 58%,white 42%\)/);
+ assert.match(css,/#screen\.chef-screen-home \.chef-week-detail \.chef-week-meal-body \.chef-option-food\{\s*color:var\(--chef-option-body\)/);
+ assert.match(css,/#screen \.chef-option-food\{font-size:14px;font-weight:400;line-height:1\.45/);
+ assert.match(css,/#screen\.chef-screen-home \.chef-week-menu-highlight \.chef-dish-name\{/);
+ assert.doesNotMatch(css,/#screen\.chef-screen-home \.chef-daily-summary \.chef-option-food\{/);
 });
