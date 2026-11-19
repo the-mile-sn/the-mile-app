@@ -74,7 +74,13 @@ def update_event(c,athlete_id,event_id,payload,actor,allow_nutrition_changes):
     from time import time
     row=c.execute("SELECT * FROM v2_calendar_events WHERE id=? AND athlete_id=?",(event_id,athlete_id)).fetchone()
     if not row: return None
-    values=validate_event(payload.get("event_date",row["event_date"]),payload.get("kind",row["kind"]),payload.get("session",row["session"]),payload.get("title",row["title"]))
+    # Player-level updates can reschedule only the date and session.
+    # Kind, title and manual nutrition overrides remain managed by professionals.
+    values=validate_event(
+        payload.get("event_date",row["event_date"]),
+        payload.get("kind",row["kind"]) if allow_nutrition_changes else row["kind"],
+        payload.get("session",row["session"]),
+        payload.get("title",row["title"]) if allow_nutrition_changes else row["title"])
     if values[1] == "off":
         if c.execute("SELECT 1 FROM v2_match_events WHERE athlete_id=? AND match_date=?", (athlete_id, values[0])).fetchone():
             raise ValueError("off_conflicts_with_match")
