@@ -2687,6 +2687,28 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details .peri-meal[open] > :is(.single-meal-option,details,.option-expanded-macros):last-child{
  margin-bottom:18px!important;
 }
+/* Reuse the established meal-consumption controls; no separate peri button style.
+   The additional bottom margin belongs to the content, not to the header. */
+#overview #day-details .peri-meal[open] > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
+ margin:12px 17px 18px!important;
+}
+#overview #day-details .peri-meal[open] > .meal-consumption-tags-bottom,
+#overview #day-details .peri-meal[open] > details > .meal-consumption-tags-bottom{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important;
+}
+#overview #day-details .peri-meal[open] > details > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
+ margin:12px 0 18px!important;
+}
+#overview #day-details .peri-meal[open] .meal-consumption-tags-bottom .meal-undo-consumption-tag{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ height:25px!important;min-height:25px!important;padding:0 10px!important;margin:0!important;
+ border:0!important;border-radius:999px!important;background:rgba(255,255,255,.09)!important;
+ color:inherit!important;font:400 11px/1 system-ui,-apple-system,sans-serif!important;cursor:pointer;
+}
+#overview #day-details .peri-meal[open] > .consumption-quick-feedback:not(:empty){
+ margin:5px 17px 18px!important;
+}
+
 #overview #day-details .daily-event-card{
  padding-left:17px!important;
  box-sizing:border-box!important;
