@@ -287,7 +287,7 @@ header{padding:10px 0 24px}
 .daily-nutrition-card small:not(.per-kg){font-size:11px!important;margin-bottom:8px!important}
 .daily-nutrition-card strong{line-height:1.14!important}
 .daily-nutrition-card .per-kg{margin-top:2px!important}
-.daily-meal[open]>.daily-meal-head{padding-bottom:3px!important}
+.daily-meal[open]>.daily-meal-head{height:55px!important;min-height:55px!important;box-sizing:border-box!important;padding:12px 17px 6px!important}
 .daily-meal[open]>.meal-average{margin-top:0!important;margin-bottom:8px!important}
 .daily-meal .meal-average .macro{font-weight:650}
 .daily-meal .meal-average .macro .protein{color:#adcde0}
@@ -499,7 +499,7 @@ header{padding:10px 0 24px}
 
 /* Match day: intra-match nutrition expands directly inside the Jogo card. */
 #overview .match-intra-card{display:block;padding:0;overflow:hidden;background:#303135;border:0;border-radius:18px}
-#overview .match-intra-card>.daily-meal-head{display:flex;align-items:center;gap:8px;min-height:55px;padding:12px 17px 3px;list-style:none;cursor:pointer}
+#overview .match-intra-card>.daily-meal-head{display:flex;align-items:center;gap:8px;min-height:55px;padding:12px 17px 6px;list-style:none;cursor:pointer}
 #overview .match-intra-card>.daily-meal-head::-webkit-details-marker{display:none}
 #overview .match-intra-card>.daily-meal-head strong{font-size:18px;font-weight:700;flex:1;min-width:0}
 #overview .match-intra-card>.daily-meal-head .meal-average-inline{margin-left:auto;flex:0 0 auto}
@@ -538,8 +538,10 @@ header{padding:10px 0 24px}
 }
 
 /* Daily cards: calories always visible; macros appear only when expanded. */
+/* Reserve the macro grid row in both states; hide only its ink when closed.
+   This keeps the heading, kcal and disclosure icon in fixed positions on toggle. */
 #overview .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal),
-#overview .match-intra-card:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal){display:none!important}
+#overview .match-intra-card:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal){visibility:hidden!important}
 
 /* Supplementation uses neutral styling and never inherits the meal plan colour. */
 .daily-supplements{background:#303135;color:#f4f4f6;border:0;border-radius:13px;padding:0;overflow:hidden}
@@ -2633,7 +2635,7 @@ body.profile-active .player-top{display:none!important}
 }
 #overview .daily-supplements[open] > summary{
  height:55px!important;min-height:55px!important;
- padding-bottom:3px!important;
+ padding:12px 17px 6px!important;
 }
 #overview .peri-meal > .daily-meal-head > .meal-leading-icon,
 #overview .daily-supplements > summary > .supplement-leading-icon{
@@ -2927,10 +2929,7 @@ body.profile-active .player-top{display:none!important}
 
 /* Fasting weight card: matches daily nutrition and meal card surfaces */
 .daily-weight-card{background:#25262b;color:#f1f1f4;border-radius:13px;overflow:hidden;font:inherit}
-.daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 13px;gap:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .16s ease}
-/* Give enabled weight-card headers the same subtle acknowledgement as tappable cards. */
-#overview .daily-weight-header:has(.daily-weight-action:not(:disabled)):active{background-color:rgba(255,255,255,.075)}
-@media(prefers-reduced-motion:reduce){.daily-weight-header{transition:none}}
+.daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 13px;gap:13px;cursor:pointer}
 /* Weight panel is shown/hidden by JS rather than details[open].
    Its expanded header follows universal card geometry without limiting the panel. */
 #overview #day-details .daily-weight-card:has(.daily-weight-panel:not([hidden])){border-radius:18px}
