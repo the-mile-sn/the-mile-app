@@ -314,6 +314,18 @@ hugeiconsOfficial["CheckmarkCircle02Icon"]=[
 ];
 function consumptionActionIcon(name){const span=document.createElement('span');span.className='consumption-action-icon';span.setAttribute('aria-hidden','true');span.append(iconToSvg(hugeiconsOfficial[name]));return span;}
 function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionActionIcon(name),document.createTextNode(label));}
+/* One recorded-action component for meals, alternative colours and peri-events. */
+function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo'}){
+ const tags=document.createElement('div');tags.className='meal-consumption-tags meal-consumption-tags-bottom';
+ const badge=document.createElement('span');badge.className='meal-registered-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Registado: '+description);
+ const edit=document.createElement('button');edit.type='button';edit.className='meal-edit-consumption-tag';consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar '+description);edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor);
+ const undo=document.createElement('button');undo.type='button';undo.className='meal-undo-consumption-tag';consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular '+description);
+ undo.onclick=async(event)=>{event.preventDefault();event.stopPropagation();if(undo.disabled)return;undo.disabled=true;edit.disabled=true;undo.textContent='A anular…';try{await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId})});await overview();}catch(e){undo.disabled=false;edit.disabled=false;consumptionActionLabel(undo,'UndoIcon',' Anular');error(e);}};
+ tags.append(badge,edit,undo);
+ if(consumedColor){const names={green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'};const note=document.createElement('span');note.className='meal-consumption-color-note';note.textContent='Consumido: '+(names[consumedColor]||consumedColor);tags.append(note);}
+ return tags;
+}
+
 function showConsumptionSuccess(button){
  button.classList.add('consumption-confirm-success');
  button.replaceChildren(consumptionActionIcon('CheckmarkCircle02Icon'));
@@ -836,22 +848,7 @@ function appendPeriConsumption(card,item,records){
  const selected=options.findIndex(option=>option.option_ref===previous?.option_ref);
  const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
  hosts.forEach((host,index)=>{
-  if(previous&&index===selected){
-   const tags=document.createElement('div');tags.className='meal-consumption-tags meal-consumption-tags-bottom';
-   const badge=document.createElement('span');badge.className='meal-registered-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');
-   const edit=document.createElement('button');edit.type='button';edit.className='meal-edit-consumption-tag';consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar consumo de '+item.title);
-   edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,index);
-   const undo=document.createElement('button');undo.type='button';undo.className='meal-undo-consumption-tag';consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular consumo de '+item.title);
-   undo.onclick=async(event)=>{
-    event.preventDefault();event.stopPropagation();if(undo.disabled)return;
-    undo.disabled=true;edit.disabled=true;undo.textContent='A anular…';
-    try{
-     await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId})});
-     await overview();
-    }catch(err){undo.disabled=false;edit.disabled=false;consumptionActionLabel(undo,'UndoIcon',' Anular');error(err);}
-   };
-   tags.append(badge,edit,undo);host.append(tags);return;
-  }
+  if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:'consumo de '+item.title}));return;}
   const actions=document.createElement('div');actions.className='consumption-quick-actions';
   const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
   const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
@@ -877,6 +874,7 @@ function appendPeriConsumption(card,item,records){
   };
   actions.append(edit,quick);host.append(actions,feedback);
  });
+ if(previous&&selected<0)card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:'consumo de '+item.title}));
 }
 function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRecords=[]){
  const opts=item.options||[],avg=average(opts);
@@ -2134,35 +2132,21 @@ async function overview(){
     section.append(card);
    });
   }
-  if(consumptionEnabled&&color&&options.length){
+  if(consumptionEnabled&&color){
    const previous=consumptionRecords.find(x=>x.meal_key===meal&&x.meal_date===d&&!x.event_id);
    const cards=options.length===1?[section.querySelector('.single-meal-option')]:Array.from(section.querySelectorAll('.player-meal-option-subcard'));
-   if(previous&&previous.prescription?.color&&previous.prescription.color!==color){
-    const note=document.createElement('div');note.className='meal-consumption-tags meal-consumption-tags-bottom';
-    const label=document.createElement('span');label.className='meal-registered-badge';
-    label.textContent='✓ Consumido: '+(({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[previous.prescription.color]||previous.prescription.color);
-    const editAlternative=document.createElement('button');editAlternative.type='button';
-    editAlternative.className='meal-edit-consumption-tag';editAlternative.textContent='✎ Editar consumo';
-    editAlternative.onclick=()=>openConsumptionEditor(section,d,meal,'',null,previous.prescription.color);
-    note.append(label,editAlternative);section.append(note);
-   }
    if(previous){
-    const optionIndex=options.findIndex(option=>option.option_ref===previous.option_ref);
-    if(optionIndex>=0){
-     const optionCard=cards[optionIndex];
-     const label=optionCard?.querySelector('.plan-option-label small');
-     if(label){
-      const badge=document.createElement('span');badge.className='meal-registered-badge';
-      consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';consumptionActionLabel(editTag,'Edit02Icon',' Editar');editTag.setAttribute('aria-label','Editar consumo desta opção');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);const tagRow=document.createElement('div');tagRow.className='meal-consumption-tags meal-consumption-tags-bottom';const undoTag=document.createElement('button');undoTag.type='button';undoTag.className='meal-undo-consumption-tag';consumptionActionLabel(undoTag,'UndoIcon',' Anular');undoTag.setAttribute('aria-label','Anular registo de consumo desta opção');undoTag.onclick=async(event)=>{event.preventDefault();event.stopPropagation();if(undoTag.disabled)return;undoTag.disabled=true;editTag.disabled=true;undoTag.textContent='A anular…';try{await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:''})});await overview();}catch(e){undoTag.disabled=false;editTag.disabled=false;consumptionActionLabel(undoTag,'UndoIcon',' Anular');error(e);}};tagRow.append(badge,editTag,undoTag);const target=optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard;target.append(tagRow);if(optionCard.tagName==='DETAILS'){const summaryLabel=optionCard.querySelector('summary .plan-option-label');if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',' Registado');closedBadge.setAttribute('aria-label','Opção registada');summaryLabel.append(closedBadge);}}
-     }else if(optionCard){
-      const badge=document.createElement('span');badge.className='meal-registered-badge';
-      consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Opção registada');
-      const editTag=document.createElement('button');editTag.type='button';editTag.className='meal-edit-consumption-tag';consumptionActionLabel(editTag,'Edit02Icon',' Editar consumo');editTag.onclick=()=>openConsumptionEditor(optionCard.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):optionCard,d,meal,'',optionIndex);const tagRow=document.createElement('div');tagRow.className='meal-consumption-tags meal-consumption-tags-bottom';tagRow.append(badge,editTag);optionCard.prepend(tagRow);
-     }
+    const otherColor=!!(previous.prescription?.color&&previous.prescription.color!==color);
+    const optionIndex=otherColor?-1:options.findIndex(option=>option.option_ref===previous.option_ref);
+    const optionCard=optionIndex>=0?cards[optionIndex]:null;
+    const target=optionCard?.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):(optionCard||section);
+    const tags=makeRecordedConsumptionTags({host:target,date:d,meal,eventId:'',optionIndex:optionIndex>=0?optionIndex:null,consumedColor:otherColor?previous.prescription.color:null,description:'consumo de '+names[meal]});
+    if(optionCard&&options.length===1)target.prepend(tags);else target.append(tags);
+    if(optionCard?.tagName==='DETAILS'){
+     const summaryLabel=optionCard.querySelector('summary .plan-option-label');
+     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',' Registado');closedBadge.setAttribute('aria-label','Opção registada');summaryLabel.append(closedBadge);}
     }
    }
-
    cards.forEach((card,i)=>{
     if(!card)return;
     const target=card.tagName==='DETAILS'?(card.querySelector('.option-body')||card):card;
