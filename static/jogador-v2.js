@@ -763,7 +763,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   detail.append(section);
  }
  if(weeklySelection?.periEventId&&dates.includes(weeklySelection.date)){
-   const item=periMeals.find(x=>x.event_id===weeklySelection.periEventId&&x.phase===weeklySelection.phase&&x.event_date===weeklySelection.date);
+   const item=periMeals.find(x=>x.event_id===weeklySelection.periEventId&&x.selection_phase===weeklySelection.selectionPhase&&x.event_date===weeklySelection.date);
    if(item){
     const section=document.createElement("section");section.className="weekly-detail peri-weekly-detail";
     const top=document.createElement("div");top.className="weekly-detail-heading";
@@ -819,11 +819,11 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
 
 /* Post-training uses the same event-scoped consumption endpoints and controls as meals.
    Only attach after a published peri option is visible in the calendar. */
-function appendPostTrainingConsumption(card,item,records){
- if(item.selection_phase!=='post_training'||!item.event_id)return;
+function appendPeriConsumption(card,item,records){
+ if(!['pre_training','post_training','pre_match','intra_match','post_match'].includes(item.selection_phase)||!item.event_id)return;
  const options=item.options||[];
  if(!options.length)return;
- const date=item.event_date,meal='post_training',eventId=item.event_id;
+ const date=item.event_date,meal=item.selection_phase,eventId=item.event_id;
  const previous=(records||[]).find(row=>row.meal_date===date&&row.meal_key===meal&&row.event_id===eventId);
  if(previous){
   const title=card.querySelector('.daily-meal-head > strong');
@@ -835,9 +835,9 @@ function appendPostTrainingConsumption(card,item,records){
   if(previous&&index===selected){
    const tags=document.createElement('div');tags.className='meal-consumption-tags meal-consumption-tags-bottom';
    const badge=document.createElement('span');badge.className='meal-registered-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');
-   const edit=document.createElement('button');edit.type='button';edit.className='meal-edit-consumption-tag';consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar consumo do Pós-treino');
+   const edit=document.createElement('button');edit.type='button';edit.className='meal-edit-consumption-tag';consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar consumo de '+item.title);
    edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,index);
-   const undo=document.createElement('button');undo.type='button';undo.className='meal-undo-consumption-tag';consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular consumo do Pós-treino');
+   const undo=document.createElement('button');undo.type='button';undo.className='meal-undo-consumption-tag';consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular consumo de '+item.title);
    undo.onclick=async(event)=>{
     event.preventDefault();event.stopPropagation();if(undo.disabled)return;
     undo.disabled=true;edit.disabled=true;undo.textContent='A anular…';
@@ -854,7 +854,7 @@ function appendPostTrainingConsumption(card,item,records){
   const feedback=document.createElement('p');feedback.className='consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
-   if(previous&&!window.confirm('Já existe um registo deste Pós-treino. Substituir pela opção selecionada?'))return;
+   if(previous&&!window.confirm('Já existe um registo para '+item.title+'. Substituir pela opção selecionada?'))return;
    quick.disabled=true;edit.disabled=true;quick.textContent='A guardar…';feedback.textContent='';
    try{
     const qs=new URLSearchParams({date,meal,event_id:eventId});
@@ -879,10 +879,10 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
  const section=document.createElement(compact?"button":"details");section.className=compact?"weekly-peri-card":"meal daily-meal peri-meal";
  if(compact){
   section.type="button";
-  const active=weeklySelection?.periEventId===item.event_id&&weeklySelection?.phase===item.phase&&weeklySelection?.date===item.event_date;
+  const active=weeklySelection?.periEventId===item.event_id&&weeklySelection?.selectionPhase===item.selection_phase&&weeklySelection?.date===item.event_date;
   section.setAttribute("aria-pressed",String(active));
   section.onclick=()=>{
-    weeklySelection=active?null:{date:item.event_date,periEventId:item.event_id,phase:item.phase};
+    weeklySelection=active?null:{date:item.event_date,periEventId:item.event_id,phase:item.phase,selectionPhase:item.selection_phase};
     if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);
   };
   const title=document.createElement("span");title.textContent=item.title;
@@ -896,7 +896,7 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
  section.append(head);
  if(opts.length===1){for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);section.append(p);}}
  else opts.forEach((option,index)=>section.append(optionEl(option,index)));
- if(consumptionEnabled)appendPostTrainingConsumption(section,item,consumptionRecords);
+ if(consumptionEnabled)appendPeriConsumption(section,item,consumptionRecords);
  return section;
 }
 function eventCard(event,compact=false){
@@ -941,7 +941,7 @@ function eventCard(event,compact=false){
  }
  return section;
 }
-function matchWithIntraCard(event,item){
+function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecords=[]){
  const opts=item.options||[],avg=average(opts);
  const section=document.createElement("details");
  section.className="daily-event-card match-intra-card";
@@ -954,6 +954,7 @@ function matchWithIntraCard(event,item){
  section.append(head);
  if(opts.length===1)appendGroupedPeriItems(section,opts[0].items,opts[0].timing_groups);
  else opts.forEach((option,index)=>section.append(optionEl(option,index,false,true)));
+ if(consumptionEnabled)appendPeriConsumption(section,item,consumptionRecords);
  return section;
 }
 
@@ -979,13 +980,12 @@ function attachSupplements(card,items){
 function appendDailyEvents(host,date,session,consumptionEnabled=false,consumptionRecords=[]){
  for(const event of calendarEvents.filter(e=>e.kind!=="off"&&e.event_date===date&&e.session===session)){
   const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
-  const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
-  if(event.kind==="match"&&intra)host.append(matchWithIntraCard(event,intra));
-  else{
-   for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item,false,consumptionEnabled,consumptionRecords));
-   host.append(eventCard(event));
-  }
-  const eventCardElement=Array.from(host.children).at(-1);
+  // Pre-match is a standalone meal; intra-match belongs inside the match card.
+  const intra=event.kind==="match"?associated.find(p=>p.selection_phase==="intra_match"):null;
+  for(const item of associated.filter(p=>p.phase==="pre"&&p.selection_phase!=="intra_match"))
+   host.append(makePeriCard(item,false,consumptionEnabled,consumptionRecords));
+  const eventCardElement=intra?matchWithIntraCard(event,intra,consumptionEnabled,consumptionRecords):eventCard(event);
+  host.append(eventCardElement);
   if(eventCardElement&&event.kind&&eventCardElement.tagName==="DETAILS")attachSupplements(eventCardElement,(supplementsByDay[date]||[]).filter(x=>x.moment===event.kind));
   for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item,false,consumptionEnabled,consumptionRecords));
  }
@@ -996,22 +996,20 @@ function appendWeeklyEvents(host,dates,session){
   const slot=document.createElement("div");slot.className="weekly-event-slot";if(weeklySelection?.date===date)slot.classList.add("weekly-selected-column");
   for(const event of calendarEvents.filter(e=>e.kind!=="off"&&e.event_date===date&&e.session===session)){
    const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
-   const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
+   const intra=event.kind==="match"?associated.find(p=>p.selection_phase==="intra_match"):null;
+   for(const item of associated.filter(p=>p.phase==="pre"&&p.selection_phase!=="intra_match"))slot.append(makePeriCard(item,true));
    if(intra){
     const button=eventCard(event,true),avg=average(intra.options||[]);
     button.classList.add("weekly-meal");
     button.classList.add("weekly-match-with-intra");
     button.setAttribute("role","button");button.tabIndex=0;
-    const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.phase==="pre"&&weeklySelection?.date===date;
+    const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.selectionPhase==="intra_match"&&weeklySelection?.date===date;
     button.setAttribute("aria-pressed",String(active));
     if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0);button.append(kcal);}
-    const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);};
+    const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre",selectionPhase:"intra_match"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);};
     button.onclick=select;button.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}};
     slot.append(button);
-   }else{
-    for(const item of associated.filter(p=>p.phase==="pre"))slot.append(makePeriCard(item,true));
-    slot.append(eventCard(event,true));
-   }
+   }else slot.append(eventCard(event,true));
    for(const item of associated.filter(p=>p.phase==="post"))slot.append(makePeriCard(item,true));
   }
   host.append(slot);

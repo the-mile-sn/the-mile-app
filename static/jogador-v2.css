@@ -2689,14 +2689,20 @@ body.profile-active .player-top{display:none!important}
 }
 /* Reuse the established meal-consumption controls; no separate peri button style.
    The additional bottom margin belongs to the content, not to the header. */
-#overview #day-details .peri-meal[open] > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > .consumption-editor{
+ margin:16px 17px 18px!important;
+}
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > .consumption-editor{
+ margin:16px 0 18px!important;
+}
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
  margin:12px 17px 18px!important;
 }
-#overview #day-details .peri-meal[open] > .meal-consumption-tags-bottom,
-#overview #day-details .peri-meal[open] > details > .meal-consumption-tags-bottom{
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > .meal-consumption-tags-bottom,
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > .meal-consumption-tags-bottom{
  display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important;
 }
-#overview #day-details .peri-meal[open] > details > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
  margin:12px 0 18px!important;
 }
 #overview #day-details .peri-meal[open] .meal-consumption-tags-bottom .meal-undo-consumption-tag{
@@ -4323,7 +4329,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 }
 
 /* Pilot consumption controls */
-.consumption-editor{display:grid;gap:12px;margin:14px 12px;padding:16px;border:1px solid var(--border,rgba(120,130,145,.22));border-radius:16px;background:rgba(125,135,150,.07)}
+
 #overview .consumption-editor select,#overview .consumption-editor input:not([type=checkbox]){box-sizing:border-box;min-height:42px;width:100%;max-width:100%;border:1px solid rgba(130,140,155,.32);border-radius:11px;padding:8px 11px;background:var(--surface,#fff);color:inherit}
 #overview .consumption-editor .consumption-food-group{display:grid;gap:8px;margin:6px 0;padding:10px 0;border-bottom:1px solid rgba(130,140,155,.16)}
 #overview .consumption-food-line{display:grid;grid-template-columns:20px minmax(0,1fr) 86px auto;align-items:center;gap:9px;font-size:.92rem}
@@ -4334,14 +4340,14 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .consumption-day-summary progress{width:100%;height:10px;accent-color:#718c82}
 #overview .consumption-macro-comparison{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.88rem}
 #overview .consumption-open{margin:10px 12px 14px;padding:9px 16px;border-radius:999px;background:rgba(130,140,155,.10);border:1px solid rgba(130,140,155,.25);color:inherit}
-@media(max-width:620px){#overview .consumption-editor{margin:12px 8px;padding:12px}#overview .consumption-food-line{grid-template-columns:18px minmax(0,1fr) 68px auto;gap:6px;font-size:.84rem}}
+@media(max-width:620px){#overview .consumption-food-line{grid-template-columns:18px minmax(0,1fr) 68px auto;gap:6px;font-size:.84rem}}
 
 
 /* Jorge pilot: polished, theme-independent consumption editor */
-#overview .consumption-editor{position:relative;display:flex;flex-direction:column;gap:13px;margin:16px 10px;padding:18px;border:1px solid rgba(170,190,177,.23);border-radius:20px;background:#1c2421;color:#e9eee9;box-shadow:0 12px 28px rgba(0,0,0,.12);font-size:14px}
+#overview .consumption-editor{position:relative;display:flex;flex-direction:column;gap:13px;margin:16px 10px;padding:14px;border:0;border-radius:20px;background:rgba(18,24,30,.14);color:inherit;box-shadow:none;font-size:14px}
 #overview .consumption-editor .consumption-close{align-self:flex-end;display:grid;place-items:center;width:32px;height:32px;min-height:32px;padding:0;border:1px solid rgba(210,225,212,.22);border-radius:50%;background:transparent;color:#e8eee9;font-size:17px;line-height:1}
 #overview .consumption-editor .consumption-label{display:flex;flex-direction:column;gap:7px;color:#a9b9ad;font-size:12px;letter-spacing:.02em}
-#overview .consumption-editor select,#overview .consumption-editor input:not([type=checkbox]){min-height:42px;width:100%;border:1px solid #4a5a50;border-radius:11px;padding:9px 12px;background:#28332d!important;color:#f0f5f0!important;-webkit-text-fill-color:#f0f5f0;box-shadow:none;font-size:14px}
+#overview .consumption-editor select,#overview .consumption-editor input:not([type=checkbox]){min-height:42px;width:100%;border:0;border-radius:11px;padding:9px 12px;background:rgba(128,128,128,.18)!important;color:inherit!important;-webkit-text-fill-color:currentColor;box-shadow:none;font-size:16px}
 #overview .consumption-editor select option{background:#28332d;color:#f0f5f0}
 #overview .consumption-editor .consumption-native-mode{display:none}
 #overview .consumption-editor .consumption-status-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
@@ -4349,15 +4355,15 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .consumption-editor .consumption-status-button.active{background:#dcebdc;border-color:#dcebdc;color:#18251c;font-weight:700}
 #overview .consumption-editor .consumption-foods-root{display:grid;gap:9px}
 #overview .consumption-editor .consumption-food-group{margin:0;padding:4px 0 9px;border-bottom:1px solid rgba(215,231,218,.14)}
-#overview .consumption-editor .consumption-food-line{display:grid;grid-template-columns:19px minmax(0,1fr) 68px 12px;gap:8px;align-items:center;min-height:48px;color:#e6eee6;font-size:13px}
+#overview .consumption-editor .consumption-food-line{display:grid;grid-template-columns:19px minmax(0,1fr) 68px 12px;gap:8px;align-items:center;min-height:48px;color:inherit;font-size:14px}
 #overview .consumption-editor .consumption-food-line input[type=checkbox]{width:18px;height:18px;accent-color:#c8e0ce}
 #overview .consumption-editor .consumption-food-line input[type=number]{min-height:37px;padding:7px 5px;text-align:right;font-size:13px}
 #overview .consumption-editor input:disabled{opacity:.5}
-#overview .consumption-editor .consumption-save{min-height:46px;border:0;border-radius:12px;background:#dcebdc;color:#18251c;font-weight:700;font-size:14px}
-#overview .consumption-editor .consumption-cancel{min-height:38px;border:1px solid #4a5a50;border-radius:11px;background:transparent;color:#d2ded5;font-size:13px}
+#overview .consumption-editor .consumption-save{min-height:46px;border:0;border-radius:999px;background:#fff;color:#171717;font-weight:700;font-size:14px}
+#overview .consumption-editor .consumption-cancel{min-height:46px;border:0;border-radius:999px;background:rgba(128,128,128,.18);color:inherit;font-size:14px}
 #overview .consumption-editor .consumption-delete{min-height:38px;border:1px solid #805b57;border-radius:11px;background:transparent;color:#e8c9c4;font-size:13px}
 #overview .consumption-editor button{max-width:100%;box-shadow:none}
-@media(max-width:620px){#overview .consumption-editor{margin:12px 4px;padding:14px;gap:11px}#overview .consumption-editor .consumption-food-line{grid-template-columns:18px minmax(0,1fr) 62px 10px;gap:6px}}
+@media(max-width:620px){#overview .consumption-editor .consumption-food-line{grid-template-columns:18px minmax(0,1fr) 62px 10px;gap:6px}}
 
 /* Consumed energy ring — preserve the original ring and macro columns underneath. */
 #overview #day-details .nutrition-donut-summary .nutrition-comparison.has-consumption-ring{

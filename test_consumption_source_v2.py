@@ -38,7 +38,7 @@ class SourceContractTests(unittest.TestCase):
             self.assertIsNone(source.current_source(None,"athlete","2026-11-11","breakfast"))
 
 class PeriConsumptionSourceContractTests(unittest.TestCase):
-    """The post-training source must match only the current published event."""
+    """Every peri source must match only the current published event and phase."""
 
     def setUp(self):
         self.day = "2026-11-19"
@@ -51,7 +51,7 @@ class PeriConsumptionSourceContractTests(unittest.TestCase):
                          "options":[{"option_ref":source.choices.option_ref(self.raw),
                                      "source_draft_id":"pub1"}]}]
 
-    def _resolve(self, visible=None, plans=None, **kwargs):
+    def _resolve(self, visible=None, plans=None, meal_key="post_training", event_id="event1", **kwargs):
         with patch.object(source.plans,"player_peri_days",
                           return_value=self.visible if visible is None else visible), \
              patch.object(source.plans,"_approved",
@@ -61,7 +61,7 @@ class PeriConsumptionSourceContractTests(unittest.TestCase):
              patch.object(source.plans,"_option_totals",return_value={}), \
              patch.object(source.plans,"_option_items",return_value=[]):
             return source.current_source(None,"athlete1",self.day,
-                                         "post_training","event1",**kwargs)
+                                         meal_key,event_id,**kwargs)
 
     def test_published_post_training_option_uses_immutable_raw_foods(self):
         result=self._resolve()
@@ -90,13 +90,53 @@ class PeriConsumptionSourceContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"invalid_consumed_color"):
             self._resolve(consumed_color="green")
 
-    def test_other_peri_phases_remain_disabled(self):
-        with patch.object(source.plans,"player_peri_days",
-                          side_effect=AssertionError("unapproved event phase was resolved")):
-            self.assertIsNone(source.current_source(
-                None,"athlete1",self.day,"pre_training","event1"))
-            self.assertIsNone(source.current_source(
-                None,"athlete1",self.day,"post_match","event1"))
+    def test_all_peri_phases_resolve_only_their_visible_publication(self):
+        for meal_key, kind, plan_type, label in (
+            ("pre_training", "training", "Plano Peri-treino", "Pré-treino"),
+            ("post_training", "training", "Plano Peri-treino", "Pós-treino"),
+            ("pre_match", "match", "Plano Peri-jogo", "Pré-jogo"),
+            ("intra_match", "match", "Plano Peri-jogo", "Intra-jogo"),
+            ("post_match", "match", "Plano Peri-jogo", "Pós-jogo"),
+        ):
+            with self.subTest(meal_key=meal_key):
+                publication={"draft_id":"pub1","content":{"meals":[
+                    {"name":label,"options":[self.raw]}]}}
+                event=dict(self.visible[0],kind=kind,selection_phase=meal_key)
+                result=self._resolve(visible=[event],plans={plan_type:publication},
+                                     meal_key=meal_key)
+                self.assertEqual(result["draft_id"],"pub1")
+                self.assertEqual(result["options"][0]["foods"][0]["grams"],25)
+                self.assertIsNone(self._resolve(visible=[event],plans={},
+                                                meal_key=meal_key))
+                self.assertIsNone(self._resolve(visible=[dict(event,event_id="other")],
+                                                plans={plan_type:publication},meal_key=meal_key))
+                self.assertIsNone(self._resolve(visible=[dict(event,event_date="2026-11-18")],
+                                                plans={plan_type:publication},meal_key=meal_key))
+                self.assertIsNone(self._resolve(visible=[dict(event,selection_phase="post_training")],
+                                                plans={plan_type:publication},meal_key=meal_key)
+                                  if meal_key!="post_training" else
+                                  self._resolve(visible=[dict(event,selection_phase="pre_training")],
+                                                plans={plan_type:publication},meal_key=meal_key))
+
+    def test_pre_and_intra_match_do_not_overwrite_one_another(self):
+        first={"title":"Pré","foods":[{"id":"food1","grams":30,"kind":"food"}]}
+        second={"title":"Durante","foods":[{"id":"food1","grams":45,"kind":"food"}]}
+        publication={"draft_id":"pub2","content":{"meals":[
+            {"name":"Pré-jogo","options":[first]},
+            {"name":"Intra-jogo","options":[second]}]}}
+        visible=[{"event_id":"game1","event_date":self.day,"kind":"match",
+                  "selection_phase":key,"options":[{"option_ref":source.choices.option_ref(opt),
+                  "source_draft_id":"pub2"}]}
+                 for key,opt in (("pre_match",first),("intra_match",second))]
+        for key,grams in (("pre_match",30),("intra_match",45)):
+            with self.subTest(phase=key):
+                result=self._resolve(visible=visible,
+                                     plans={"Plano Peri-jogo":publication},
+                                     meal_key=key,event_id="game1")
+                self.assertEqual(result["options"][0]["foods"][0]["grams"],grams)
+        self.assertIsNone(self._resolve(visible=visible,
+                                       plans={"Plano Peri-jogo":publication},
+                                       meal_key="intra_match",event_id="game2"))
 
     def test_no_alternative_colors_for_peri_events(self):
         with patch.object(source.plans,"_approved",
