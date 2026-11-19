@@ -314,6 +314,16 @@ hugeiconsOfficial["CheckmarkCircle02Icon"]=[
 ];
 function consumptionActionIcon(name){const span=document.createElement('span');span.className='consumption-action-icon';span.setAttribute('aria-hidden','true');span.append(iconToSvg(hugeiconsOfficial[name]));return span;}
 function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionActionIcon(name),document.createTextNode(label));}
+function showConsumptionSuccess(button){
+ button.classList.add('consumption-confirm-success');
+ button.replaceChildren(consumptionActionIcon('CheckmarkCircle02Icon'));
+ button.setAttribute('aria-label','Consumo registado');
+ if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const burst=document.createElement('span');burst.className='consumption-confetti-burst';burst.setAttribute('aria-hidden','true');
+  for(let j=0;j<12;j++){const particle=document.createElement('i');particle.style.setProperty('--angle',(j*30)+'deg');particle.style.setProperty('--distance',(35+(j%3)*9)+'px');particle.style.setProperty('--delay',(j%3)*35+'ms');burst.append(particle);}
+  button.append(burst);
+ }
+}
 function updateOfficialIcons(){
  if(!hugeiconsOfficial)return;
  for(const icon of document.querySelectorAll(".mile-icon")){const name=[...icon.classList].find(x=>x.startsWith("icon-"))?.slice(5);const raw=hugeiconsOfficial[hugeiconsNames[name]];if(raw&&Array.isArray(raw)){icon.replaceChildren(iconToSvg(raw));icon.dataset.official="true";}}
@@ -807,7 +817,64 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
 }
 
 
-function makePeriCard(item,compact=false){
+/* Post-training uses the same event-scoped consumption endpoints and controls as meals.
+   Only attach after a published peri option is visible in the calendar. */
+function appendPostTrainingConsumption(card,item,records){
+ if(item.selection_phase!=='post_training'||!item.event_id)return;
+ const options=item.options||[];
+ if(!options.length)return;
+ const date=item.event_date,meal='post_training',eventId=item.event_id;
+ const previous=(records||[]).find(row=>row.meal_date===date&&row.meal_key===meal&&row.event_id===eventId);
+ if(previous){
+  const title=card.querySelector('.daily-meal-head > strong');
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+ }
+ const selected=options.findIndex(option=>option.option_ref===previous?.option_ref);
+ const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
+ hosts.forEach((host,index)=>{
+  if(previous&&index===selected){
+   const tags=document.createElement('div');tags.className='meal-consumption-tags meal-consumption-tags-bottom';
+   const badge=document.createElement('span');badge.className='meal-registered-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');
+   const edit=document.createElement('button');edit.type='button';edit.className='meal-edit-consumption-tag';consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar consumo do Pós-treino');
+   edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,index);
+   const undo=document.createElement('button');undo.type='button';undo.className='meal-undo-consumption-tag';consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular consumo do Pós-treino');
+   undo.onclick=async(event)=>{
+    event.preventDefault();event.stopPropagation();if(undo.disabled)return;
+    undo.disabled=true;edit.disabled=true;undo.textContent='A anular…';
+    try{
+     await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId})});
+     await overview();
+    }catch(err){undo.disabled=false;edit.disabled=false;consumptionActionLabel(undo,'UndoIcon',' Anular');error(err);}
+   };
+   tags.append(badge,edit,undo);host.append(tags);return;
+  }
+  const actions=document.createElement('div');actions.className='consumption-quick-actions';
+  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
+  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
+  const feedback=document.createElement('p');feedback.className='consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+  edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
+  quick.onclick=async()=>{
+   if(previous&&!window.confirm('Já existe um registo deste Pós-treino. Substituir pela opção selecionada?'))return;
+   quick.disabled=true;edit.disabled=true;quick.textContent='A guardar…';feedback.textContent='';
+   try{
+    const qs=new URLSearchParams({date,meal,event_id:eventId});
+    const source=await api('/api/v2/player/consumption-options?'+qs);
+    const option=source.options?.find(row=>row.option_ref===options[index].option_ref);
+    if(!option)throw new Error('Opção publicada indisponível ou alterada');
+    await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,option_ref:option.option_ref,status:'all'})});
+    showConsumptionSuccess(quick);feedback.textContent='Consumo registado.';
+    await new Promise(resolve=>setTimeout(resolve,900));
+    if(host.tagName==='DETAILS')host.open=false;
+    await overview();
+   }catch(err){
+    feedback.textContent='Não foi possível registar. Tenta novamente.';
+    quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);
+   }
+  };
+  actions.append(edit,quick);host.append(actions,feedback);
+ });
+}
+function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRecords=[]){
  const opts=item.options||[],avg=average(opts);
  const section=document.createElement(compact?"button":"details");section.className=compact?"weekly-peri-card":"meal daily-meal peri-meal";
  if(compact){
@@ -829,6 +896,7 @@ function makePeriCard(item,compact=false){
  section.append(head);
  if(opts.length===1){for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);section.append(p);}}
  else opts.forEach((option,index)=>section.append(optionEl(option,index)));
+ if(consumptionEnabled)appendPostTrainingConsumption(section,item,consumptionRecords);
  return section;
 }
 function eventCard(event,compact=false){
@@ -908,18 +976,18 @@ function attachSupplements(card,items){
  for(const x of items){const line=document.createElement("div");line.textContent=x.name+" · "+x.dose;area.append(line);}
  card.append(area);
 }
-function appendDailyEvents(host,date,session){
+function appendDailyEvents(host,date,session,consumptionEnabled=false,consumptionRecords=[]){
  for(const event of calendarEvents.filter(e=>e.kind!=="off"&&e.event_date===date&&e.session===session)){
   const associated=periMeals.filter(p=>p.event_id===event.id&&p.event_date===date);
   const intra=event.kind==="match"?associated.find(p=>p.phase==="pre"):null;
   if(event.kind==="match"&&intra)host.append(matchWithIntraCard(event,intra));
   else{
-   for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item));
+   for(const item of associated.filter(p=>p.phase==="pre"))host.append(makePeriCard(item,false,consumptionEnabled,consumptionRecords));
    host.append(eventCard(event));
   }
   const eventCardElement=Array.from(host.children).at(-1);
   if(eventCardElement&&event.kind&&eventCardElement.tagName==="DETAILS")attachSupplements(eventCardElement,(supplementsByDay[date]||[]).filter(x=>x.moment===event.kind));
-  for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item));
+  for(const item of associated.filter(p=>p.phase==="post"))host.append(makePeriCard(item,false,consumptionEnabled,consumptionRecords));
  }
 }
 function appendWeeklyEvents(host,dates,session){
@@ -2009,8 +2077,8 @@ async function overview(){
  renderWeightCard(root,d).catch(()=>{});
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
  for(const meal of meals){
-  if(meal==="lunch")appendDailyEvents(root,d,"morning");
-  if(meal==="dinner")appendDailyEvents(root,d,"afternoon");
+  if(meal==="lunch")appendDailyEvents(root,d,"morning",consumptionEnabled,consumptionRecords);
+  if(meal==="dinner")appendDailyEvents(root,d,"afternoon",consumptionEnabled,consumptionRecords);
   const color=assignedColor(d,meal,entry?.classification),menu=(meal==="lunch"||meal==="dinner")?(weekMenus.menus||[]).find(x=>x.menu_date===d&&x.meal===meal):null;
   if(!color&&!menu)continue;
   const section=document.createElement("details");section.className="meal daily-meal"+(color?" tone-"+color:"");
@@ -2112,7 +2180,7 @@ async function overview(){
       const selected=source.options?.[i];
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
-      quick.classList.add('consumption-confirm-success');quick.replaceChildren(consumptionActionIcon('CheckmarkCircle02Icon'));quick.setAttribute('aria-label','Consumo registado');if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){const burst=document.createElement('span');burst.className='consumption-confetti-burst';burst.setAttribute('aria-hidden','true');for(let j=0;j<12;j++){const p=document.createElement('i');p.style.setProperty('--angle',(j*30)+'deg');p.style.setProperty('--distance',(35+(j%3)*9)+'px');p.style.setProperty('--delay',(j%3)*35+'ms');burst.append(p);}quick.append(burst);}feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
+      showConsumptionSuccess(quick);feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
