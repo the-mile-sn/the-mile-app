@@ -33,5 +33,7 @@ jobs:
         run: python -m unittest -v test_player_daily_card_geometry
       - name: Verify player event edits, cache invalidation and morning/afternoon positioning
         run: node --test tests/player-event-reschedule.test.cjs
+      - name: Install runtime dependencies
+        run: python -m pip install -r requirements.txt
       - name: Verify persisted event schedules and peri-meal sessions
         run: python -m unittest discover -s tests -p 'test_peri_events_v2.py' -v
