@@ -258,17 +258,18 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet h2{font-size:27px;font-weight:700;letter-spacing:-.5px;margin:0 0 20px}
 .consumption-food-sheet .consumption-add-row{display:block!important}
 .consumption-food-sheet .consumption-search-wrap{position:relative;display:flex!important;height:48px!important;width:100%!important;align-items:center}
-/* One neutral input and one grouped universal card for suggestions. */
-.consumption-food-sheet{--food-field-surface:rgba(255,255,255,.075);--food-list-surface:rgba(255,255,255,.05);--food-divider:rgba(255,255,255,.085)}
+/* Neutral universal search field and independent food-result card surfaces. */
+.consumption-food-sheet{--food-field-surface:rgba(255,255,255,.075);--food-card-surface:rgba(255,255,255,.055);--food-card-active:rgba(255,255,255,.10)}
 .consumption-food-sheet .consumption-search-wrap input{box-sizing:border-box!important;appearance:none!important;-webkit-appearance:none!important;height:48px!important;min-height:48px!important;width:100%!important;border:0!important;outline:0!important;border-radius:13px!important;background:var(--food-field-surface)!important;color:#f3f0e9!important;font-size:16px!important;font-weight:400!important;padding:12px 48px 12px 16px!important;box-shadow:inset 0 0 0 1px transparent!important}
 .consumption-food-sheet .consumption-search-wrap input:is(:focus,:focus-visible){outline:0!important;border:0!important;box-shadow:inset 0 0 0 1.5px rgba(239,239,241,.42)!important}
-.consumption-food-sheet .consumption-search-icon{position:absolute;right:14px;top:0;bottom:0;margin:auto;transform:none;display:grid;place-items:center;width:22px;height:22px;opacity:.7;pointer-events:none}
-.consumption-food-sheet .consumption-search-icon svg{display:block;width:20px;height:20px}
-.consumption-food-sheet .consumption-suggestions{position:static!important;display:flex;flex-direction:column;max-height:38dvh;overflow-y:auto;margin-top:12px;background:var(--food-list-surface)!important;border:1px solid var(--food-divider)!important;border-radius:13px!important;box-shadow:none!important;overflow-x:hidden}
+/* Fill the field's 48px height; flex-center the actual SVG, without offset transforms. */
+.consumption-food-sheet .consumption-search-icon{position:absolute;inset-block:0;right:0;display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin:0;line-height:0;transform:none;opacity:.7;pointer-events:none}
+.consumption-food-sheet .consumption-search-icon svg{display:block;flex:0 0 20px;width:20px;height:20px;margin:0}
+/* Independent soft cards, without a group frame or row dividers. */
+.consumption-food-sheet .consumption-suggestions{position:static!important;display:flex;flex-direction:column;gap:8px;max-height:38dvh;overflow-y:auto;overflow-x:hidden;margin-top:12px;padding:0;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 .consumption-food-sheet .consumption-suggestions[hidden]{display:none!important}
-.consumption-food-sheet .consumption-suggestions button{display:block;width:100%;padding:13px 16px;text-align:left;border:0;border-bottom:1px solid var(--food-divider);border-radius:0!important;background:transparent;color:#f3f0e9;font-family:inherit;font-size:14px;font-weight:400;line-height:1.4;min-height:48px;overflow-wrap:anywhere}
-.consumption-food-sheet .consumption-suggestions button:last-child{border-bottom:0}
-.consumption-food-sheet .consumption-suggestions button:is(:active,:focus-visible){background:rgba(255,255,255,.09);outline:0;box-shadow:inset 0 0 0 1px rgba(239,239,241,.30)}
+.consumption-food-sheet .consumption-suggestions button{box-sizing:border-box;display:flex;align-items:center;width:100%;min-height:48px;padding:13px 16px;text-align:left;border:0!important;border-radius:13px!important;background:var(--food-card-surface)!important;box-shadow:none!important;color:#f3f0e9;font-family:inherit;font-size:14px;font-weight:400;line-height:1.4;overflow-wrap:anywhere;cursor:pointer}
+.consumption-food-sheet .consumption-suggestions button:is(:active,:focus-visible){background:var(--food-card-active)!important;outline:2px solid rgba(239,239,241,.33);outline-offset:-2px}
 .consumption-food-sheet-portion[hidden]{display:none!important}
 .consumption-food-sheet-portion{display:flex;align-items:end;gap:10px;margin-top:22px;background:rgba(255,255,255,.055);border-radius:16px;padding:14px}
 .consumption-food-sheet-portion label{flex:1;min-width:0;color:#c9c5bd;font-size:14px}

@@ -130,9 +130,15 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn("sem borda", GUIDE)
         self.assertIn(".consumption-search-wrap input:is(:focus,:focus-visible)", sheet)
         self.assertIn("box-shadow:inset 0 0 0 1.5px rgba(239,239,241,.42)!important", sheet)
-        self.assertIn(".consumption-food-sheet .consumption-search-icon{position:absolute;right:14px;top:0;bottom:0;margin:auto;transform:none", sheet)
-        self.assertIn("background:var(--food-list-surface)!important", sheet)
-        self.assertIn("num único agrupamento neutro", GUIDE)
+        self.assertIn(".consumption-food-sheet .consumption-search-icon{position:absolute;inset-block:0;right:0;display:flex;align-items:center;justify-content:center;width:48px;height:48px", sheet)
+        self.assertIn(".consumption-food-sheet .consumption-search-icon svg{display:block;flex:0 0 20px;width:20px;height:20px", sheet)
+        self.assertIn("gap:8px;max-height:38dvh", sheet)
+        self.assertIn("background:transparent!important;border:0!important;border-radius:0!important", sheet)
+        self.assertIn("background:var(--food-card-surface)!important", sheet)
+        self.assertIn("border-radius:13px!important", sheet)
+        self.assertNotIn("background:var(--food-list-surface)!important", sheet)
+        self.assertNotIn(".consumption-food-sheet .consumption-suggestions button:last-child{border-bottom:0}", sheet)
+        self.assertIn("Resultados em cards individuais", GUIDE)
 
     def test_visual_guide_matches_active_geometry(self):
         self.assertIn("72 px", GUIDE)
