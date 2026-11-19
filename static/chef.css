@@ -165,19 +165,59 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 .chef-meal-body .chef-input{background:#1b1b21;color:#f6f6f8;border-color:#55555b}
 .chef-meal-body .chef-editor{background:#ffffff09;border-radius:13px;padding:12px}
 .chef-meal-body .primary{color:#161619;background:#f5f5f7}
-.chef-week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:5px;row-gap:12px;align-items:stretch;margin:0 0 22px;position:relative}
-.chef-week-day{display:flex;flex-direction:column;gap:9px;align-items:center;justify-content:flex-start;border:0;background:transparent;color:#f2f2f5;padding:10px 1px 15px;min-width:0;border-radius:12px}
-.chef-week-day small{font-size:12px;color:#a3a3ac}.chef-week-day strong{font-size:22px;line-height:1;width:34px;height:34px;display:grid;place-items:center}
-.chef-week-day.selected{background:#1b1b20}.chef-week-day.selected strong{border-radius:50%;color:#237abf;background:#f5f5f7}
+/* Week selector: the white date highlight runs through the full day column. */
+.chef-week-grid{
+ display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+ column-gap:5px;row-gap:12px;align-items:stretch;
+ margin:0 0 22px;position:relative;isolation:isolate;
+}
+.chef-week-selected-column{
+ position:absolute;z-index:0;pointer-events:none;
+ top:0;bottom:0;left:var(--chef-week-left);
+ width:calc((100% - 30px)/7);box-sizing:border-box;
+ background:rgba(245,245,247,.055);
+ border:1.5px solid #f5f5f7;border-radius:15px;
+}
+.chef-week-day,.chef-week-cell{position:relative;z-index:1}
+.chef-week-day{
+ display:flex;flex-direction:column;gap:9px;align-items:center;
+ justify-content:flex-start;border:0;background:transparent;color:#f2f2f5;
+ padding:10px 1px 15px;min-width:0;border-radius:12px;
+}
+.chef-week-day small{font-size:12px;color:#a3a3ac}
+.chef-week-day strong{font-size:22px;line-height:1;width:34px;height:34px;display:grid;place-items:center}
+.chef-week-day.selected{background:transparent}
+.chef-week-day.selected strong{border-radius:50%;color:#237abf;background:#f5f5f7}
 .chef-week-day>span{font-size:10px;color:#9c9ca5;white-space:nowrap;overflow:hidden;max-width:100%}
-.chef-week-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;min-width:0;padding:5px 1px;background:var(--chef-tone);color:var(--chef-tone-ink);border:1px solid transparent;border-radius:11px;font-size:10px;font-weight:600;cursor:pointer}
-.chef-week-cell .mile-icon{width:19px;height:19px}
+.chef-week-cell{
+ display:flex;align-items:center;justify-content:center;
+ min-height:76px;min-width:0;padding:5px 1px;
+ background:var(--chef-tone);color:var(--chef-tone-ink);
+ border:1px solid transparent;border-radius:11px;cursor:pointer;
+}
+.chef-week-cell .mile-icon{width:23px;height:23px}
 .chef-week-cell.unavailable{opacity:0;background:transparent;pointer-events:none}
 .chef-week-cell.selected{outline:2px solid #f5f5f7;outline-offset:2px}
-.chef-week-detail{padding:13px;background:#19191e;border-radius:16px;margin:20px 0}
-.chef-week-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.chef-week-detail-head strong{font-size:15px;font-weight:600}
-.chef-week-close{background:transparent;color:#f5f5f7;border:0;font-size:27px;padding:2px 6px}
+/* Like the player's meal detail: compact date/microcycle followed by the meal title.
+   No black framing card; the existing inner Chef meal contents are untouched. */
+#screen.chef-screen-home .chef-week-detail{
+ margin:20px 0;padding:19px 15px 15px;border:0;border-radius:17px;
+ background:color-mix(in srgb,var(--chef-tone) 88%,#0d0d10 12%);
+ color:#f5f5f7;
+}
+.chef-week-detail-head{
+ display:flex;align-items:flex-start;justify-content:space-between;
+ gap:12px;margin-bottom:15px;
+}
+.chef-week-detail-identity{display:flex;flex-direction:column;gap:6px;min-width:0}
+.chef-week-detail-date{font:400 13px/1.4 "Inter Tight",sans-serif;color:rgba(245,245,247,.76)}
+.chef-week-detail-meal{margin:0;color:#f5f5f7;font:600 23px/1.25 "Inter Tight",sans-serif;letter-spacing:-.02em}
+.chef-week-close{
+ flex:none;display:grid;place-items:center;width:36px;height:36px;min-width:36px;
+ padding:0;border:0;border-radius:10px;background:transparent;color:#f5f5f7;
+ font:400 28px/1 "Inter Tight",sans-serif;cursor:pointer;
+}
+.chef-week-close:focus-visible{outline:2px solid #f5f5f7;outline-offset:2px}
 .chef-week-detail .chef-meal-card{margin:0}
 .chef-menu-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 23px}
 .chef-menu-week-day{border:0;border-radius:12px;background:transparent;color:#f5f5f7;padding:9px 0 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -213,7 +253,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 .login-card p{color:#aaa}.login-card input{background:#25252b;border-color:#4b4b54;color:#f4f4f7}.login-card label{color:#f5f5f7}
 .login-card .primary{background:#f4f4f7;color:#17171a}
 @media(min-width:680px){.chef-week-grid{max-width:760px;margin-left:auto;margin-right:auto}.chef-daily-summary,.chef-meal-card{max-width:760px;margin-left:auto;margin-right:auto}}
-@media(max-width:370px){.chef-week-grid{column-gap:3px}.chef-week-cell{min-height:64px}.chef-week-day strong{font-size:19px}.chef-week-day>span{font-size:9px}.chef-meal-head strong{font-size:16px}}
+@media(max-width:370px){.chef-week-grid{column-gap:3px}.chef-week-selected-column{left:var(--chef-week-left-small);width:calc((100% - 18px)/7)}.chef-week-cell{min-height:64px}.chef-week-day strong{font-size:19px}.chef-week-day>span{font-size:9px}.chef-meal-head strong{font-size:16px}}
 @media(hover:hover){.chef-meal-head:hover,.chef-week-cell:not(.unavailable):hover,.bottom-nav button:hover{filter:brightness(1.1)}}
 @media(prefers-reduced-motion:reduce){.chef-chevron,.chef-option-arrow{transition:none}}
 

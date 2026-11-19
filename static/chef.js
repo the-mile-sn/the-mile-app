@@ -380,7 +380,6 @@ function editMenuForm(date,meal,item,slot){
 
 
 const chefIcons={breakfast:"coffee-03",lunch:"restaurant-02",snack:"vegetarian-food",dinner:"restaurant-02",supper:"moon-02"};
-const mealAbbrev={breakfast:"PA",lunch:"AL",snack:"LA",dinner:"JA",supper:"CE"};
 const chefSvgPaths={"coffee-03":"<path d=\"M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Zm12 1h1a3 3 0 0 1 0 6h-2M4 22h16M8 3v3m4-3v3m4-3v3\"/>","vegetarian-food":"<path d=\"M4 12c2-4 6-4 8 0 2-4 6-4 8 0l-2 7H6l-2-7ZM12 10V4M8 7 5 5m11 2 3-2M6 22h12\"/>","restaurant-02":"<path d=\"M4 3v8m3-8v8M4 7h3M5.5 11v10M13 3v18M13 12c7 0 8-8 3-9v9M20 3v18\"/>","moon-02":"<path d=\"M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z\"/>","football":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 7 4 3-1.5 5h-5L8 10l4-3Zm-4 3-4-1m12 1 4-1m-5.5 6 2 5m-7-5-2 5M12 7V3\"/>","football-pitch":"<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1\"/><path d=\"M12 4v16m0-12a4 4 0 0 0 0 8M2.5 9h4v6h-4m19-6h-4v6h4\"/>","soft-drink-01":"<path d=\"M5 5h14l-2 16H7L5 5ZM4 3h16M12 5l4-4M8 11h8m-6 4h4\"/>","home-09":"<path d=\"m3 11 9-8 9 8v9H3v-9Zm6 9v-7h6v7\"/>","files-01":"<path d=\"M7 3h10l4 4v14H7V3Zm10 0v5h4M3 7v14h14\"/>","add-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10m-5-5h10\"/>","menu-restaurant":"<path d=\"M4 4v7m3-7v7M4 7h3m-1.5 4v9M13 4v16m0-8c7 0 8-7 3-8v8M3 22h18\"/>","user-03":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>"};;
 
 /* The same official Hugeicons geometry used in jogador-v2.js. */
@@ -613,9 +612,30 @@ function renderChefDaily(root){
   if(mealAvailable(date,meal))root.append(renderChefMeal(date,meal,false));
  }
 }
+function chefWeekDetailLabel(date){
+ const weekday=format(date,{weekday:"short"}).replace(/\\./g,"")
+   .replace(/^./,letter=>letter.toLocaleUpperCase(locale(lang)));
+ const d=String(date.getDate()).padStart(2,"0");
+ const m=String(date.getMonth()+1).padStart(2,"0");
+ const datePart=lang==="pt"?d+"/"+m:m+"/"+d;
+ const microcycle=classificationFor(dateKey(date));
+ return weekday+", "+datePart+(microcycle?" · "+microcycle:"");
+}
 function renderChefWeekly(root){
  const start=monday(selectedDay),keys=Array.from({length:7},(_,i)=>dateKey(shift(start,i)));
  const grid=node("div","chef-week-grid");
+ // A single white lane follows the selected date through every meal row.
+ // It is decorative and does not change meal colours, availability or layout.
+ const selectedIndex=keys.indexOf(dateKey(selectedDay));
+ if(selectedIndex>=0){
+  const highlight=node("span","chef-week-selected-column");
+  highlight.setAttribute("aria-hidden","true");
+  highlight.style.setProperty("--chef-week-left",
+    "calc("+(100*selectedIndex/7).toFixed(6)+"% + "+(5*selectedIndex/7).toFixed(6)+"px)");
+  highlight.style.setProperty("--chef-week-left-small",
+    "calc("+(100*selectedIndex/7).toFixed(6)+"% + "+(3*selectedIndex/7).toFixed(6)+"px)");
+  grid.append(highlight);
+ }
  for(let i=0;i<7;i++){
   const date=shift(start,i),key=keys[i];
   const dayHead=node("button","chef-week-day"+(dateKey(selectedDay)===key?" selected":""));
@@ -633,20 +653,31 @@ function renderChefWeekly(root){
    const active=chefWeekSelection?.date===key&&chefWeekSelection?.meal===meal;
    const cell=node("button","chef-week-cell tone-"+color+(available?"":" unavailable")+(active?" selected":""));
    cell.type="button";cell.disabled=!available;
-   cell.append(iconForMeal(meal),node("span","",mealAbbrev[meal]));
+   cell.append(iconForMeal(meal));
    cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
-   if(available)cell.onclick=()=>{chefWeekSelection=active?null:{date:key,meal};render();};
+   if(available)cell.onclick=()=>{
+    chefWeekSelection=active?null:{date:key,meal};
+    selectedDay=new Date(key+"T12:00:00");
+    render();
+   };
    grid.append(cell);
   }
  }
  root.append(grid);
  if(chefWeekSelection){
   const {date,meal}=chefWeekSelection,dt=new Date(date+"T12:00:00");
-  const panel=node("section","chef-week-detail");
+  // The player-inspired heading lives on the coloured outer card.
+  // Keep the existing Chef meal card and all its menu, nutrition and editing intact.
+  const panel=node("section","chef-week-detail tone-"+mealTone(date,meal));
   const top=node("div","chef-week-detail-head");
-  top.append(node("strong","",mealNames[lang][meal]+" · "+dateDescription(dt)));
-  const close=node("button","chef-week-close","×");close.type="button";close.setAttribute("aria-label","Fechar detalhes");
-  close.onclick=()=>{chefWeekSelection=null;render();};top.append(close);panel.append(top);
+  const title=node("div","chef-week-detail-identity");
+  title.append(node("span","chef-week-detail-date",chefWeekDetailLabel(dt)));
+  title.append(node("h2","chef-week-detail-meal",mealNames[lang][meal]));
+  top.append(title);
+  const close=node("button","chef-week-close","×");close.type="button";
+  close.setAttribute("aria-label",lang==="pt"?"Fechar detalhes":"Close details");
+  close.onclick=()=>{chefWeekSelection=null;render();};
+  top.append(close);panel.append(top);
   panel.append(renderChefMeal(date,meal,true));root.append(panel);
  }
 }
