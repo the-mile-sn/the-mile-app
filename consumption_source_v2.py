@@ -64,6 +64,10 @@ def _published_peri_source(c, athlete_id, meal_date, meal_key, event_id):
 def current_source(c, athlete_id, meal_date, meal_key, event_id="", consumed_color=None):
     choices.valid_key(meal_date, meal_key, event_id)
     if meal_key in choices.PERI:
+        # Activate the already approved post-training flow first.
+        # Pre-training and match phases require their own UI/clinical validation.
+        if meal_key != "post_training":
+            return None
         if consumed_color is not None:  # No plan color switching for peri events.
             raise ValueError("invalid_consumed_color")
         return _published_peri_source(c, athlete_id, meal_date, meal_key, event_id)
