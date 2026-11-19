@@ -538,10 +538,10 @@ header{padding:10px 0 24px}
 }
 
 /* Daily cards: calories always visible; macros appear only when expanded. */
-/* Reserve the macro grid row in both states; hide only its ink when closed.
-   This keeps the heading, kcal and disclosure icon in fixed positions on toggle. */
+/* The closed reference shows kcal only. Keep its approved vertical centering.
+   Header geometry stays stable through explicit 61px/55px sizes and padding. */
 #overview .daily-meal:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal),
-#overview .match-intra-card:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal){visibility:hidden!important}
+#overview .match-intra-card:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal){display:none!important}
 
 /* Supplementation uses neutral styling and never inherits the meal plan colour. */
 .daily-supplements{background:#303135;color:#f4f4f6;border:0;border-radius:13px;padding:0;overflow:hidden}
