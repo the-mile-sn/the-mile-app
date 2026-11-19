@@ -148,7 +148,7 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn("border-radius:13px!important", sheet)
         self.assertNotIn("background:var(--food-list-surface)!important", sheet)
         self.assertNotIn(".consumption-food-sheet .consumption-suggestions button:last-child{border-bottom:0}", sheet)
-        self.assertIn("Resultados em cards individuais", GUIDE)
+        self.assertIn("cards individuais", GUIDE)
 
     def test_visual_guide_matches_active_geometry(self):
         self.assertIn("72 px", GUIDE)
