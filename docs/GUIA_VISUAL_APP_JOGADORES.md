@@ -49,6 +49,10 @@ Referência de Receitas: **86 px**, **raio 18 px**, fundo cinzento subtil, títu
 | Login | Campos 56 px / raio 20 px e botão Entrar 54 px / pill 999 px; **não são cards universais**. Splash, autenticação, mensagens e fluxos inalterados |
 | Formulários, gráficos e campos internos | Podem usar layouts e alturas variáveis; preservar dados, validações, acessibilidade e funções |
 
+**Ritmo vertical da Página Inicial → Dia:** **10 px entre cards unitários consecutivos** (refeições, peri/pós-treino, treino/jogo, peso, suplementação e formulário pós-jogo), independentemente da classe técnica. Não uniformizar deste modo o painel nutricional inicial, os subcards internos nem a grelha semanal. Confirmar na captura do iPhone.
+
+**Peso em jejum aberto:** apesar de o cabeçalho passar de 61 px para 55 px, os centros óticos do ícone, título, valor e seta devem permanecer na mesma coordenada relativa ao topo do card; o conteúdo expandido não se desloca artificialmente. Solução CSS atual: compensação com padding de cabeçalho aberto 12 px no topo e 6 px no fundo, mantendo a altura de 55 px; validar visualmente no iPhone.
+
 **Não inventar novas exceções.** A suplementação **não** foi aprovada como exceção ao card universal apenas por ter CSS legado de 65 px; os conteúdos próprios continuam protegidos.
 
 ## 3. Tipografia oficial e categorias semânticas
