@@ -58,6 +58,56 @@ class ConsumptionPersistenceTests(unittest.TestCase):
         self.save('athlete-a','all')
         self.assertEqual(records.read_range(self.db,'athlete-b','2026-11-11','2026-11-11'),[])
 
+    def test_peri_phases_and_multiple_events_remain_independent(self):
+        """All five peri phases and two events on one day have independent keys."""
+        calculated = nutrition.calculate(OPTION, LIB, "all")
+        phases = (
+            ("pre_training", "training-1"),
+            ("post_training", "training-1"),
+            ("pre_match", "match-1"),
+            ("intra_match", "match-1"),
+            ("post_match", "match-1"),
+            ("pre_training", "training-2"),
+        )
+        original_prescription = {"option": OPTION}
+        for phase, event_id in phases:
+            records.save_record(
+                self.db, athlete_id="athlete-a", meal_date="2026-11-11",
+                meal_key=phase, event_id=event_id, status="all",
+                option_ref="published-ref", source_draft_id="published-draft",
+                prescription=original_prescription,
+                consumed_foods=calculated["foods"], nutrition=calculated["nutrition"])
+        rows = records.read_range(self.db, "athlete-a", "2026-11-11", "2026-11-11")
+        self.assertEqual({(r["meal_key"], r["event_id"]) for r in rows}, set(phases))
+        self.assertEqual(len(rows), 6)
+        self.assertEqual(len(original_prescription["option"]["foods"]), 2)
+
+        # Editing intra-match does not affect pre-match from the same game.
+        partial = nutrition.calculate(OPTION, LIB, "partial", [
+            {"index": 0, "consumed": True, "grams": 60},
+            {"index": 1, "consumed": False, "grams": 0},
+        ])
+        records.save_record(
+            self.db, athlete_id="athlete-a", meal_date="2026-11-11",
+            meal_key="intra_match", event_id="match-1", status="partial",
+            option_ref="published-ref", source_draft_id="published-draft",
+            prescription=original_prescription,
+            consumed_foods=partial["foods"], nutrition=partial["nutrition"])
+        rows = records.read_range(self.db, "athlete-a", "2026-11-11", "2026-11-11")
+        by_key = {(r["meal_key"], r["event_id"]): r for r in rows}
+        self.assertEqual(by_key[("pre_match", "match-1")]["status"], "all")
+        self.assertEqual(by_key[("intra_match", "match-1")]["status"], "partial")
+
+        # Annulling the first training never erases the second training.
+        self.assertTrue(records.delete_record(
+            self.db, athlete_id="athlete-a", meal_date="2026-11-11",
+            meal_key="pre_training", event_id="training-1"))
+        rows = records.read_range(self.db, "athlete-a", "2026-11-11", "2026-11-11")
+        self.assertEqual(len(rows), 5)
+        self.assertIn(("pre_training", "training-2"),
+                      {(r["meal_key"], r["event_id"]) for r in rows})
+        self.assertEqual(len(original_prescription["option"]["foods"]), 2)
+
     def test_invalid_date_range(self):
         with self.assertRaises(ValueError):
             records.read_range(self.db,'athlete-a','2026-11-12','2026-11-11')
