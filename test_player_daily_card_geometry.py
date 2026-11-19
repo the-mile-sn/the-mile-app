@@ -76,6 +76,7 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn('mealIcon("football-pitch")', JS)
         self.assertIn('"soft-drink-01"', JS)
         self.assertIn(".tm-day-header .meal-average-inline .macro>.kcal", CSS)
+        self.assertNotIn("#overview #day-details .daily-meal>.daily-meal-head>strong,", CSS)
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
 
