@@ -462,8 +462,8 @@ header{padding:10px 0 24px}
 #weekly-view .weekly-option-card .foods{padding:10px 0!important}
 
 /* Scheduled activities and independently published peri-meals. */
-.daily-event-card{background:#303135;color:#f3f3f5;border:1px solid #43454a;border-radius:13px;padding:13px 15px;margin:8px 0;font-size:14px;font-weight:500}
-.peri-meal{background:#282a2f;border:1px solid #46474e;color:#f3f3f5;margin:8px 0;border-radius:13px}
+.daily-event-card{background:#303135;color:#f3f3f5;border:1px solid #43454a;border-radius:13px;padding:13px 15px;font-size:14px;font-weight:500}
+.peri-meal{background:#282a2f;border:1px solid #46474e;color:#f3f3f5;border-radius:13px}
 .peri-meal .daily-meal-head{color:#f3f3f5}
 .weekly-event-slot{display:flex;flex-direction:column;gap:4px;min-width:0}
 .weekly-event-card,.weekly-peri-card{border-radius:8px;background:#35363b;color:#fff;padding:8px 5px;font-size:11px;line-height:1.3;text-align:center;overflow-wrap:anywhere}
@@ -543,7 +543,7 @@ header{padding:10px 0 24px}
 #overview .match-intra-card:not([open])>.daily-meal-head .meal-average-inline .macro>span:not(.kcal){display:none!important}
 
 /* Supplementation uses neutral styling and never inherits the meal plan colour. */
-.daily-supplements{margin:25px 0 12px;background:#303135;color:#f4f4f6;border:0;border-radius:13px;padding:0;overflow:hidden}
+.daily-supplements{background:#303135;color:#f4f4f6;border:0;border-radius:13px;padding:0;overflow:hidden}
 .daily-supplements>summary{list-style:none;padding:18px 16px;cursor:pointer;font-size:16px;font-weight:650;display:flex;align-items:center;justify-content:space-between}
 .daily-supplements>summary::-webkit-details-marker{display:none}
 .daily-supplements>summary:after{content:"›";font-size:24px;color:#bebec7;transition:transform .16s}
@@ -2659,7 +2659,7 @@ body.profile-active .player-top{display:none!important}
  margin:0!important;align-self:center!important;
 }
 #overview .daily-supplements{
- margin:8px 0!important;border-radius:13px!important;
+ border-radius:13px!important;
  background:#303135!important;border:0!important;
 }
 #overview .daily-supplements[open]{border-radius:18px!important;}
@@ -2724,7 +2724,7 @@ body.profile-active .player-top{display:none!important}
 }
 
 /* Post-match: discreet chronological card, subordinate to meal cards */
-.post-match-inline{margin:8px 0 12px;border-radius:10px;background:#15211d;overflow:hidden}
+.post-match-inline{border-radius:10px;background:#15211d;overflow:hidden}
 .post-match-inline-trigger{appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:13px 16px;border:0;background:transparent;color:#f0f2ef;text-align:left;font:inherit;font-weight:500;cursor:pointer}
 .post-match-inline-icon{flex:none;color:#4fd29c;font-size:19px}
 .post-match-inline-status{margin-left:auto;color:#b9c3bd;font-size:13px;font-weight:400;white-space:nowrap}
@@ -2738,7 +2738,7 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form button{border:0;border-radius:9px;padding:10px 14px;background:#31483e;color:#fff;font:inherit}
 
 /* Compact post-match card aligned with daily meal typography */
-.post-match-inline{margin:6px 0 9px;border-radius:10px}
+.post-match-inline{border-radius:10px}
 .post-match-inline-trigger{min-height:46px;padding:8px 13px;gap:11px;font-size:16px;font-weight:500}
 .post-match-inline-icon{display:grid;place-items:center;flex:none;width:39px;height:39px;border-radius:9px;background:rgba(0,0,0,.16);color:#53d6a2}
 .post-match-inline-status{font-size:12px}
@@ -2914,13 +2914,20 @@ body.profile-active .player-top{display:none!important}
 .post-match-inline-form .post-match-options input[type="radio"]:checked:after{inset:4px!important}
 .post-match-inline-form .post-match-options input[type="checkbox"]:checked:after{left:5px!important;top:2px!important;width:4px!important;height:8px!important}
 
+/* Single daily card rhythm: 10px between adjacent unit cards.
+   The nutrition panel is an exception and keeps its own spacing.
+   Direct-child scope avoids changing option subcards, weekly grids or forms. */
+#overview #day-details > :is(.daily-meal,.daily-event-card,.daily-supplements,.daily-weight-card,.post-match-inline){
+ margin:0 0 10px!important;
+}
+
 /* Fasting weight card: matches daily nutrition and meal card surfaces */
-.daily-weight-card{background:#25262b;color:#f1f1f4;border-radius:13px;margin:8px 0 12px;overflow:hidden;font:inherit}
+.daily-weight-card{background:#25262b;color:#f1f1f4;border-radius:13px;overflow:hidden;font:inherit}
 .daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 13px;gap:13px}
 /* Weight panel is shown/hidden by JS rather than details[open].
    Its expanded header follows universal card geometry without limiting the panel. */
 #overview #day-details .daily-weight-card:has(.daily-weight-panel:not([hidden])){border-radius:18px}
-#overview #day-details .daily-weight-card:has(.daily-weight-panel:not([hidden])) > .daily-weight-header{height:55px;min-height:55px}
+#overview #day-details .daily-weight-card:has(.daily-weight-panel:not([hidden])) > .daily-weight-header{height:55px;min-height:55px;padding-top:12px;padding-bottom:6px}
 .daily-weight-icon{width:40px;height:40px;flex:0 0 40px;border-radius:10px;background:#1e2025;display:grid;place-items:center}
 .daily-weight-icon svg{width:25px;height:25px}
 .daily-weight-label{font-size:16px;font-weight:500;flex:1;min-width:0}
