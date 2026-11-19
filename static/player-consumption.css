@@ -180,9 +180,6 @@ body[data-theme="light"] #overview .consumption-quick-actions .consumption-quick
 #overview .consumption-editor .consumption-extra{width:100%;margin:12px 0 16px}
 #overview .consumption-editor .consumption-add-fields{display:flex!important;flex-direction:column;gap:12px;padding-top:0!important}
 #overview .consumption-editor .consumption-add-row{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:10px;align-items:center}
-#overview .consumption-editor .consumption-search-wrap{position:relative;min-width:0}
-#overview .consumption-editor .consumption-search-wrap input{width:100%;padding-right:42px}
-#overview .consumption-editor .consumption-search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.7;pointer-events:none;font-size:19px}
 #overview .consumption-editor .consumption-add-row>input[type=number]{width:100%;min-width:0;text-align:center}
 #overview .consumption-editor .consumption-add-fields>button{align-self:center;width:auto;min-height:36px;padding:7px 18px;border:0!important;border-radius:999px;background:rgba(128,128,128,.18)!important;color:inherit!important;font-size:13px;font-weight:500;box-shadow:none!important}
 #overview .consumption-editor .consumption-secondary-actions{margin-bottom:8px}
@@ -203,23 +200,18 @@ body[data-theme="light"] #overview .consumption-editor .consumption-secondary-ac
 
 
 /* v14: quieter food search and portion fields */
-#overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
 #overview .consumption-editor .consumption-add-row>input[type=number]{font-size:14px!important;font-weight:400!important;color:var(--text-muted,#b7b3a9)!important}
-#overview .consumption-editor .consumption-add-row .consumption-search-wrap input::placeholder,
 #overview .consumption-editor .consumption-add-row>input[type=number]::placeholder{color:var(--text-muted,#b7b3a9)!important;opacity:.65!important}
-#overview .consumption-editor .consumption-add-row .consumption-search-icon{opacity:.48!important}
 
 
 /* v15: iOS Safari requires at least 16px computed font size on focused inputs to prevent viewport auto-zoom. */
 @supports (-webkit-touch-callout:none){
- #overview .consumption-editor .consumption-add-row .consumption-search-wrap input:focus,
  #overview .consumption-editor .consumption-add-row>input[type=number]:focus{font-size:16px!important}
 }
 
 
 /* v16: apply 16px before focus, including numeric portion input, to avoid iOS focus zoom. */
 @supports (-webkit-touch-callout:none){
- #overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
  #overview .consumption-editor .consumption-add-row>input[type=number],
  #overview .consumption-editor .consumption-add-row input[aria-label="Inserir porção em gramas"]{
   font-size:16px!important;
@@ -229,20 +221,14 @@ body[data-theme="light"] #overview .consumption-editor .consumption-secondary-ac
 
 /* v17: stable input dimensions and vertically centered confirmation on iOS */
 #overview .consumption-editor .consumption-add-row{display:flex!important;align-items:center!important;gap:8px!important}
-#overview .consumption-editor .consumption-add-row .consumption-search-wrap{align-self:center!important}
-#overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
 #overview .consumption-editor .consumption-add-row>input[type=number]{font-size:16px!important;line-height:20px!important;box-sizing:border-box!important}
 #overview .consumption-editor .consumption-add-row .consumption-add-confirm{display:inline-flex!important;align-items:center!important;justify-content:center!important;align-self:center!important;vertical-align:middle!important;position:relative!important;top:0!important;transform:none!important;margin:0!important;width:38px!important;height:38px!important;min-height:38px!important;max-height:38px!important;padding:0!important;line-height:1!important;flex:0 0 38px!important}
 
 
-/* v18: equal-height entry controls and properly centered search icon */
+/* Inline number inputs retain 44px targets; the sheet owns the search layout. */
 #overview .consumption-editor .consumption-add-row{align-items:center!important}
-#overview .consumption-editor .consumption-add-row .consumption-search-wrap{height:44px!important;display:flex!important;align-items:center!important}
-#overview .consumption-editor .consumption-add-row .consumption-search-wrap input,
 #overview .consumption-editor .consumption-add-row>input[type=number]{height:44px!important;min-height:44px!important;max-height:44px!important;box-sizing:border-box!important}
 #overview .consumption-editor .consumption-add-row .consumption-add-confirm{height:44px!important;width:44px!important;min-height:44px!important;max-height:44px!important;min-width:44px!important;max-width:44px!important;flex:0 0 44px!important;align-self:center!important;transform:none!important;top:auto!important;bottom:auto!important;margin:0!important}
-#overview .consumption-editor .consumption-search-icon{display:flex!important;align-items:center!important;justify-content:center!important;right:12px!important;top:50%!important;transform:translateY(-50%)!important;width:22px!important;height:22px!important;font-size:20px!important;opacity:.7!important}
-#overview .consumption-editor .consumption-search-icon svg{display:block;width:20px;height:20px}
 
 
 /* v19 - native-feeling add-food sheet */
@@ -257,14 +243,14 @@ body.consumption-food-sheet-open{overflow:hidden!important}
 .consumption-food-sheet-confirm{color:#b9e2cf;font-size:25px}.consumption-food-sheet-confirm:disabled{opacity:.35}
 .consumption-food-sheet h2{font-size:27px;font-weight:700;letter-spacing:-.5px;margin:0 0 20px}
 .consumption-food-sheet .consumption-add-row{display:block!important}
-.consumption-food-sheet .consumption-search-wrap{position:relative;display:flex!important;height:48px!important;width:100%!important;align-items:center}
+.consumption-food-sheet .consumption-search-wrap{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr) 48px;grid-template-rows:48px;height:48px!important;width:100%!important;align-items:stretch!important}
 /* Neutral universal search field and independent food-result card surfaces. */
 .consumption-food-sheet{--food-field-surface:rgba(255,255,255,.075);--food-card-surface:rgba(255,255,255,.055);--food-card-active:rgba(255,255,255,.10)}
-.consumption-food-sheet .consumption-search-wrap input{box-sizing:border-box!important;appearance:none!important;-webkit-appearance:none!important;height:48px!important;min-height:48px!important;width:100%!important;border:0!important;outline:0!important;border-radius:13px!important;background:var(--food-field-surface)!important;color:#f3f0e9!important;font-size:16px!important;font-weight:400!important;padding:12px 48px 12px 16px!important;box-shadow:inset 0 0 0 1px transparent!important}
+ .consumption-food-sheet .consumption-search-wrap input{grid-column:1/-1;grid-row:1;box-sizing:border-box!important;appearance:none!important;-webkit-appearance:none!important;height:48px!important;min-height:48px!important;width:100%!important;border:0!important;outline:0!important;border-radius:13px!important;background:var(--food-field-surface)!important;color:#f3f0e9!important;font-size:16px!important;font-weight:400!important;padding:12px 48px 12px 16px!important;box-shadow:inset 0 0 0 1px transparent!important}
 .consumption-food-sheet .consumption-search-wrap input:is(:focus,:focus-visible){outline:0!important;border:0!important;box-shadow:inset 0 0 0 1.5px rgba(239,239,241,.42)!important}
 /* Fill the field's 48px height; flex-center the actual SVG, without offset transforms. */
-.consumption-food-sheet .consumption-search-icon{position:absolute;inset-block:0;right:0;display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin:0;line-height:0;transform:none;opacity:.7;pointer-events:none}
-.consumption-food-sheet .consumption-search-icon svg{display:block;flex:0 0 20px;width:20px;height:20px;margin:0}
+.consumption-food-sheet .consumption-search-icon{grid-column:2;grid-row:1;position:relative;inset:auto;display:grid;place-items:center;align-self:stretch;justify-self:stretch;width:48px;height:100%;min-height:0;margin:0;padding:0;line-height:0;transform:none;opacity:.7;pointer-events:none}
+.consumption-food-sheet .consumption-search-icon svg{display:block;width:20px;height:20px;margin:0;align-self:center;justify-self:center}
 /* Independent soft cards, without a group frame or row dividers. */
 .consumption-food-sheet .consumption-suggestions{position:static!important;display:flex;flex-direction:column;gap:8px;max-height:38dvh;overflow-y:auto;overflow-x:hidden;margin-top:12px;padding:0;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 .consumption-food-sheet .consumption-suggestions[hidden]{display:none!important}
