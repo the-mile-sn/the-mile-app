@@ -496,7 +496,6 @@ header{padding:10px 0 24px}
 @media(max-width:620px){.daily-event-card>span{font-size:17px}}
 
 /* Align expanded peri-training food descriptions with the card heading. */
-#overview .peri-meal > .foods{margin-left:16px;margin-right:16px}
 
 /* Match day: intra-match nutrition expands directly inside the Jogo card. */
 #overview .match-intra-card{display:block;padding:0;overflow:hidden;background:#303135;border:0;border-radius:18px}
@@ -1427,15 +1426,6 @@ header{padding:10px 0 24px}
  #menus .menu-day-subtitle{font-size:17px!important}
 }
 
-
-/* Peri-training: breathing space after the last expanded food line. */
-#overview details.peri-meal[open] > .foods:last-child,
-#overview details.peri-meal[open] > .single-meal-option:last-child,
-#overview details.peri-meal[open] > details:last-child,
-#overview details.peri-meal[open] > .option-expanded-macros:last-child{
- margin-bottom:18px!important;
-}
-#overview details.peri-meal[open]{padding-bottom:18px!important}
 
 /* Menu photos: display only a circular crop, removing the square backing.
    Original assets are unchanged. */
@@ -2681,6 +2671,20 @@ body.profile-active .player-top{display:none!important}
  padding:0!important;
  box-sizing:border-box!important;
 }
+/* Peri-session body: match the shared 17px inset; restore the approved
+   space below the last food line, including one- and multi-option cards. */
+#overview #day-details .peri-meal[open] > .foods{
+ margin:0 17px!important;
+ padding:5px 0!important;
+ line-height:1.45!important;
+ border:0!important;
+}
+#overview #day-details .peri-meal[open] > .foods:last-child{
+ padding-bottom:18px!important;
+}
+#overview #day-details .peri-meal[open] > :is(.single-meal-option,details,.option-expanded-macros):last-child{
+ margin-bottom:18px!important;
+}
 #overview #day-details .daily-event-card{
  padding-left:17px!important;
  box-sizing:border-box!important;
@@ -2923,7 +2927,10 @@ body.profile-active .player-top{display:none!important}
 
 /* Fasting weight card: matches daily nutrition and meal card surfaces */
 .daily-weight-card{background:#25262b;color:#f1f1f4;border-radius:13px;overflow:hidden;font:inherit}
-.daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 13px;gap:13px}
+.daily-weight-header{display:flex;align-items:center;height:61px;min-height:61px;padding:9px 13px;gap:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .16s ease}
+/* Give enabled weight-card headers the same subtle acknowledgement as tappable cards. */
+#overview .daily-weight-header:has(.daily-weight-action:not(:disabled)):active{background-color:rgba(255,255,255,.075)}
+@media(prefers-reduced-motion:reduce){.daily-weight-header{transition:none}}
 /* Weight panel is shown/hidden by JS rather than details[open].
    Its expanded header follows universal card geometry without limiting the panel. */
 #overview #day-details .daily-weight-card:has(.daily-weight-panel:not([hidden])){border-radius:18px}
@@ -3884,12 +3891,12 @@ body.profile-active .player-top{display:none!important}
 #plans #plan-detail .meal-collapsible-note>.meal-note-body,
 #weekly-view .meal-collapsible-note>.meal-note-body{line-height:1.75!important}
 
-/* Final daily meal override: all options, including single-option meals, regardless
-   of where the tone class is attached. Keep game/training protocols untouched. */
-#overview #day-details .daily-meal .foods,
-#overview #day-details .daily-meal details .foods,
-#overview #day-details .daily-meal .single-meal-option .foods,
-#overview #day-details .daily-meal .player-meal-option-subcard .foods{
+/* Compact ingredient rows for meals, excluding peri-session protocols.
+   The former catch-all selectors cancelled the approved peri-training insets. */
+#overview #day-details .daily-meal:not(.peri-meal) .foods,
+#overview #day-details .daily-meal:not(.peri-meal) details .foods,
+#overview #day-details .daily-meal:not(.peri-meal) .single-meal-option .foods,
+#overview #day-details .daily-meal:not(.peri-meal) .player-meal-option-subcard .foods{
  border:0!important;
  border-top:0!important;
  border-bottom:0!important;
