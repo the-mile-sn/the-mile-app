@@ -45,5 +45,5 @@ test("weekly compact date uses localized weekday and MD classification",()=>{
 });
 test("assets are cache-busted for the Chef view only",()=>{
  assert.match(html,/\/chef\.css\?v=10/);
- assert.match(html,/\/chef\.js\?v=14/);
+ assert.match(html,/\/chef\.js\?v=15/);
 });

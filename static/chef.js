@@ -613,7 +613,8 @@ function renderChefDaily(root){
  }
 }
 function chefWeekDetailLabel(date){
- const weekday=format(date,{weekday:"short"}).replace(/\\./g,"")
+ // The player uses three-letter weekday labels (e.g. Qui, 19/11).
+ const weekday=format(date,{weekday:"long"}).slice(0,3)
    .replace(/^./,letter=>letter.toLocaleUpperCase(locale(lang)));
  const d=String(date.getDate()).padStart(2,"0");
  const m=String(date.getMonth()+1).padStart(2,"0");
