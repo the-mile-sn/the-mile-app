@@ -331,7 +331,7 @@ function updateOfficialIcons(){
 function loadOfficialHugeicons(){updateOfficialIcons();}
 function decorateLabel(el,key){
  if(!el||el.querySelector(".meal-leading-icon"))return;
- const iconName=mealIconMap[key]||(/p[oó]s/i.test(key)? "soft-drink-01":/jogo/i.test(key)?"football":/treino/i.test(key)?"football-pitch":null);
+ const iconName=mealIconMap[key]||(/p[oó]s/i.test(key)||/pr[eé][- ]treino/i.test(key)?"soft-drink-01":/jogo/i.test(key)?"football":/treino/i.test(key)?"football-pitch":null);
  if(!iconName)return;
  const item=document.createElement("span");item.className="meal-leading-icon";item.append(mealIcon(iconName));el.prepend(item);updateOfficialIcons();
 }
@@ -768,7 +768,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
     const section=document.createElement("section");section.className="weekly-detail peri-weekly-detail";
     const top=document.createElement("div");top.className="weekly-detail-heading";
     const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"});
-    const title=document.createElement("strong");title.textContent=item.phase==="pre"&&calendarEvents.some(e=>e.id===item.event_id&&e.kind==="match")?"Jogo":item.title;
+    const title=document.createElement("strong");title.textContent=item.selection_phase==="intra_match"?"Jogo":item.title;
     const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
     const group=document.createElement("div");group.className="weekly-detail-titles";group.append(caption,title);top.append(group,close);section.append(top);
     const opts=item.options||[],avg=average(opts);
@@ -817,8 +817,8 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
 }
 
 
-/* Post-training uses the same event-scoped consumption endpoints and controls as meals.
-   Only attach after a published peri option is visible in the calendar. */
+/* All five published peri phases reuse the existing event-scoped meal-consumption flow.
+   Only attach after an option is visible in the calendar; never mutate Planos. */
 function appendPeriConsumption(card,item,records){
  if(!['pre_training','post_training','pre_match','intra_match','post_match'].includes(item.selection_phase)||!item.event_id)return;
  const options=item.options||[];
