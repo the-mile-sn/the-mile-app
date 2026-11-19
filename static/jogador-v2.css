@@ -1485,6 +1485,8 @@ header{padding:10px 0 24px}
  --day-icon-box:37px;--day-icon-glyph:24px;--day-icon-radius:11px;
  --day-header-inset:17px;--day-header-gap:8px;--day-icon-space:10px;
  --day-title-size:16px;--day-title-weight:500;--day-kcal-size:11px;--day-kcal-weight:500;
+ --consumption-status-bg:rgba(154,224,191,.20);--consumption-status-ink:#b9eed2;
+ --consumption-secondary-bg:rgba(255,255,255,.09);
 }
 #overview #day-details .tm-day-header{align-items:center!important;column-gap:var(--day-header-gap)!important;padding-left:var(--day-header-inset)!important}
 #overview #day-details .tm-day-icon{
@@ -2676,21 +2678,11 @@ body.profile-active .player-top{display:none!important}
 #overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > .consumption-editor{
  margin:16px 0 18px!important;
 }
-#overview #day-details :is(.peri-meal,.match-intra-card)[open] > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > .consumption-quick-actions{
  margin:12px 17px 18px!important;
 }
-#overview #day-details :is(.peri-meal,.match-intra-card)[open] > .meal-consumption-tags-bottom,
-#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > .meal-consumption-tags-bottom{
- display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important;
-}
-#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > :is(.consumption-quick-actions,.meal-consumption-tags-bottom){
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > .consumption-quick-actions{
  margin:12px 0 18px!important;
-}
-#overview #day-details .peri-meal[open] .meal-consumption-tags-bottom .meal-undo-consumption-tag{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- height:25px!important;min-height:25px!important;padding:0 10px!important;margin:0!important;
- border:0!important;border-radius:999px!important;background:rgba(255,255,255,.09)!important;
- color:inherit!important;font:400 11px/1 system-ui,-apple-system,sans-serif!important;cursor:pointer;
 }
 #overview #day-details .peri-meal[open] > .consumption-quick-feedback:not(:empty){
  margin:5px 17px 18px!important;
@@ -2706,6 +2698,9 @@ body.profile-active .player-top{display:none!important}
    Prevent event padding from stacking with the 16px summary inset. */
 #overview #day-details .daily-event-card.match-intra-card{
  padding:0!important;
+ --consumption-status-bg:rgba(154,224,191,.45);
+ --consumption-status-ink:#176044;
+ --consumption-secondary-bg:rgba(28,29,35,.075);
 }
 #overview #day-details .daily-event-card.match-intra-card > summary.daily-meal-head{
  padding-left:16px!important;
@@ -4393,7 +4388,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .daily-meal-head>strong .meal-registered-badge{
  display:inline-flex!important;align-items:center!important;vertical-align:middle!important;
  margin-left:10px!important;padding:4px 9px!important;border-radius:999px!important;
- background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
+ background:var(--consumption-status-bg,rgba(154,224,191,.20))!important;color:var(--consumption-status-ink,#b9eed2)!important;
  font-size:11px!important;font-weight:500!important;line-height:1.3!important;
  white-space:nowrap!important;letter-spacing:0!important;
 }
@@ -4411,41 +4406,8 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .daily-meal:not([open]) .meal-registered-meal-badge{display:inline-flex!important}
 #overview #day-details .daily-meal[open] .meal-registered-meal-badge{display:none!important}
 #overview #day-details .daily-meal:not([open]) .player-meal-option-subcard .meal-registered-badge{display:none!important}
-#overview #day-details .daily-meal-head>strong .meal-registered-meal-badge{
- align-items:center!important;vertical-align:middle!important;margin-left:10px!important;
- padding:4px 9px!important;border-radius:999px!important;
- background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
- font-size:11px!important;font-weight:500!important;line-height:1.3!important;white-space:nowrap!important;
-}
 
-/* Compact consumption editing next to registered option. */
-#overview #day-details .meal-edit-consumption-tag{
- display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
- margin-left:8px;padding:4px 10px;border-radius:999px;
- border:1px solid rgba(200,225,240,.22);background:rgba(255,255,255,.07);
- color:inherit;font:inherit;font-size:11px;font-weight:400;line-height:1.3;white-space:nowrap;
- cursor:pointer;
-}
-#overview #day-details .daily-meal:not([open]) .meal-edit-consumption-tag{display:none!important}
 #overview #day-details .player-meal-option-subcard .plan-option-label small{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
-#overview #day-details .player-meal-option-subcard .plan-option-label small .meal-registered-badge,
-#overview #day-details .player-meal-option-subcard .plan-option-label small .meal-edit-consumption-tag{margin-left:0!important}
-
-/* Compact, readable option registration actions on their own row. */
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags{
- display:flex!important;align-items:center!important;flex-wrap:wrap!important;
- gap:7px!important;margin-top:7px!important;margin-bottom:0!important;
-}
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-registered-badge,
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- margin:0!important;padding:3px 9px!important;border-radius:999px!important;
- font-size:11px!important;font-weight:400!important;line-height:1.35!important;
- white-space:nowrap!important;min-height:0!important;width:auto!important;
-}
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
- background:rgba(255,255,255,.07)!important;border:1px solid rgba(200,225,240,.22)!important;
-}
 
 /* Energy consumption ring: understated neutral percentage. */
 #overview #day-details .nutrition-consumed-center small{
@@ -4456,23 +4418,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .player-meal-option-subcard .plan-option-label small{
  display:block!important;
 }
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags{
- display:flex!important;flex-wrap:wrap!important;align-items:center!important;
- gap:7px!important;margin:7px 0 0!important;
- position:relative!important;z-index:1!important;
-}
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-registered-badge,
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- box-sizing:border-box!important;height:25px!important;min-height:25px!important;
- padding:0 10px!important;margin:0!important;border:0!important;
- border-radius:999px!important;font-size:11px!important;line-height:1!important;
- font-weight:400!important;white-space:nowrap!important;
-}
-#overview #day-details .player-meal-option-subcard .meal-consumption-tags .meal-edit-consumption-tag{
- background:rgba(255,255,255,.09)!important;
- box-shadow:none!important;outline:0!important;
-}
 
 /* Registration pills belong on the option heading line, near the chevron. */
 #overview #day-details .player-meal-option-subcard .meal-option-heading-row{
@@ -4482,21 +4427,12 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .player-meal-option-subcard .meal-option-heading-row>small{
  flex:0 0 auto!important;display:inline-block!important;
 }
-#overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags{
- display:flex!important;flex:0 1 auto!important;justify-content:flex-end!important;
- flex-wrap:wrap!important;gap:6px!important;margin:0 8px 0 auto!important;
-}
 #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-registered-badge{
  background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
  border:0!important;box-shadow:none!important;
 }
-#overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-edit-consumption-tag{
- background:rgba(255,255,255,.09)!important;border:0!important;box-shadow:none!important;
-}
 @media(max-width:380px){
  #overview #day-details .player-meal-option-subcard .meal-option-heading-row{gap:7px!important}
- #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags{gap:4px!important;margin-right:4px!important}
- #overview #day-details .player-meal-option-subcard .meal-option-heading-row .meal-consumption-tags>*{padding-inline:7px!important;font-size:10px!important}
 }
 
 /* Keep option number and both pills in one non-overlapping first row. */
@@ -4513,11 +4449,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  display:inline-block!important;flex:0 0 auto!important;order:0!important;
  margin:0!important;padding:0!important;white-space:nowrap!important;
 }
-#overview #day-details details.player-meal-option-subcard .plan-option-label>.meal-option-heading-row>.meal-consumption-tags{
- display:flex!important;flex:0 1 auto!important;flex-direction:row!important;
- flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;
- order:1!important;margin:0 0 0 auto!important;gap:6px!important;min-width:0!important;
-}
 #overview #day-details details.player-meal-option-subcard .plan-option-label>strong{
  order:1!important;display:block!important;width:100%!important;
 }
@@ -4526,27 +4457,38 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .daily-meal-menu-name.menu-free-text-value,
 #menus .menu-entry-body .value.menu-free-text-value{white-space:pre-wrap!important;overflow-wrap:anywhere;}
 
-/* Registered option actions appear after the final food, not in the heading. */
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom{
- display:flex!important;flex-direction:row!important;align-items:center!important;
- justify-content:flex-start!important;flex-wrap:wrap!important;
- gap:7px!important;margin:18px 0 0!important;padding:0!important;
- width:100%!important;
+/* Canonical recorded-consumption pills: same geometry and no borders on edit/undo. */
+#overview #day-details .consumption-actions--recorded{
+ box-sizing:border-box;display:flex;flex-flow:row wrap;align-items:center;justify-content:flex-start;
+ position:relative;gap:7px;width:100%;min-width:0;margin:18px 0 0;padding:0;
 }
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge,
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-edit-consumption-tag{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- box-sizing:border-box!important;height:25px!important;min-height:25px!important;
- padding:0 10px!important;margin:0!important;border:0!important;border-radius:999px!important;
- font-size:11px!important;line-height:1!important;font-weight:400!important;white-space:nowrap!important;
- box-shadow:none!important;
+#overview #day-details .consumption-actions--recorded > .action-pill{
+ box-sizing:border-box;appearance:none;display:inline-flex!important;align-items:center;justify-content:center;
+ flex:0 0 auto;width:auto;min-width:0;height:25px;min-height:25px;max-height:25px;
+ margin:0;padding:0 10px;border:0!important;border-radius:999px;box-shadow:none!important;
+ color:inherit;background:transparent;font-family:inherit;font-size:11px;font-weight:400;line-height:1;white-space:nowrap;
 }
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge{
- background:rgba(154,224,191,.20)!important;color:#b9eed2!important;
+#overview #day-details .consumption-actions--recorded > .action-pill--registered{
+ background:var(--consumption-status-bg)!important;color:var(--consumption-status-ink)!important;
 }
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){
- background:rgba(255,255,255,.09)!important;
+#overview #day-details .consumption-actions--recorded > .action-pill--secondary{
+ background:var(--consumption-secondary-bg)!important;border:0!important;color:inherit!important;cursor:pointer;
 }
+#overview #day-details .consumption-actions--recorded > .action-pill--secondary:focus-visible{
+ outline:2px solid currentColor!important;outline-offset:2px;
+}
+#overview #day-details .consumption-actions--recorded > .action-pill--secondary:disabled{opacity:.55;cursor:default}
+#overview #day-details .consumption-actions--recorded .action-pill--registered .consumption-action-icon{width:14px;height:14px;flex-basis:14px}
+#overview #day-details .consumption-actions--recorded .consumption-color-note{flex:0 0 100%;font-size:11px;line-height:1.35;opacity:.75}
+#overview #day-details .single-meal-option > .consumption-actions--recorded{margin:0 0 15px}
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > .consumption-actions--recorded{margin:12px 17px 18px;width:calc(100% - 34px)}
+#overview #day-details :is(.peri-meal,.match-intra-card)[open] > details > .consumption-actions--recorded{margin:12px 0 18px;width:100%}
+/* Feedback is laid out under the pills. The success check doesn't create floating copy. */
+#overview #day-details .consumption-feedback{
+ position:static!important;flex:0 0 100%;min-width:0;margin:5px 0 0!important;
+ font-size:12px;font-weight:400;line-height:1.4;text-align:left!important;transform:none!important;
+}
+#overview #day-details .consumption-feedback:empty{display:none!important}
 
 /* Display registered state on collapsed option; expanded option keeps actions below foods. */
 #overview #day-details details.player-meal-option-subcard summary .meal-registered-badge-closed{
@@ -4567,10 +4509,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .consumption-quick-actions .consumption-quick-confirm,
 #overview #day-details .consumption-quick-actions .consumption-quick-edit{font-size:calc(1em - 2px)!important;min-height:42px!important;transition:background .22s ease,border-radius .3s ease,width .3s ease,transform .3s ease!important;}
 #overview #day-details .consumption-quick-actions .consumption-quick-confirm.consumption-confirm-success{background:#b9e6ce!important;color:#176044!important;border-radius:999px!important;width:46px!important;max-width:46px!important;min-width:46px!important;flex:0 0 46px!important;margin-inline:auto!important;font-size:24px!important;}
-
-/* Registered option: compact edit and undo pills beside the status. */
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important;}
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-undo-consumption-tag{display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;height:25px!important;min-height:25px!important;padding:0 10px!important;margin:0!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.09)!important;color:inherit!important;font-size:11px!important;line-height:1!important;font-weight:400!important;white-space:nowrap!important;box-shadow:none!important;cursor:pointer!important;}
 
 /* Meal completion reward: truly circular check and restrained confetti. */
 #overview #day-details .consumption-quick-actions .consumption-quick-confirm.consumption-confirm-success{
@@ -5520,7 +5458,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview .consumption-editor .consumption-color-vp{background:var(--meal-vp)!important;--consumption-option-ink:var(--meal-vp-text)}
 #overview .consumption-editor .consumption-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;align-items:stretch!important}
 #overview .consumption-editor .consumption-actions>button{width:100%!important;min-width:0!important;margin:0!important;padding:9px 5px!important;min-height:42px!important;font-size:clamp(11px,2.8vw,14px)!important}
-#overview #day-details .meal-consumption-tags-bottom .meal-registered-badge{margin-left:0!important}
 
 #overview .consumption-editor .consumption-actions.consumption-actions-two{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 
@@ -5550,9 +5487,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .consumption-change-color::after{content:"";display:block;width:14px;height:14px;flex:0 0 14px;
  background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 18 6-6-6-6' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;}
 #overview #day-details .consumption-change-color:hover{opacity:.8!important}
-/* Equal registered/edit heights, including mobile. */
-#overview #day-details .meal-consumption-tags .meal-registered-badge,
-#overview #day-details .meal-consumption-tags .meal-edit-consumption-tag{box-sizing:border-box!important;height:25px!important;min-height:25px!important;max-height:25px!important;padding-top:0!important;padding-bottom:0!important;line-height:1!important;vertical-align:middle!important;}
 
 /* Final meal action alignment: override older centered and spaced rules. */
 #overview #day-details .meal.daily-meal > .consumption-change-color,
@@ -5568,17 +5502,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 }
 #overview #day-details .consumption-change-color::after{content:none!important;display:none!important}
 #overview #day-details .consumption-change-color .consumption-link-chevron{display:block!important;width:14px!important;height:14px!important;flex:0 0 14px!important;}
-/* Identical measured height of registered and edit pills, including button borders. */
-#overview #day-details .meal-consumption-tags-bottom .meal-registered-badge,
-#overview #day-details .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag),
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom .meal-registered-badge,
-#overview #day-details details.player-meal-option-subcard .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){
- box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
- height:25px!important;min-height:25px!important;max-height:25px!important;
- padding:0 10px!important;margin:0!important;border-radius:999px!important;
- line-height:1!important;font-size:11px!important;flex:0 0 auto!important;
-}
-#overview #day-details .meal-consumption-tags-bottom :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){border:1px solid rgba(200,225,240,.22)!important;}
 
 /* Align the meal-level colour action with the inset of option-level portion links.
    Colour is a direct child of .daily-meal, whereas Ver porções lives inside
@@ -5610,42 +5533,6 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 }
 #overview #day-details .meal.daily-meal > button.consumption-change-color svg{
  color:inherit!important;stroke:currentColor!important;
-}
-
-/* Consumption badges: fix button intrinsic min-height and align optical height. */
-#overview #day-details .daily-meal .meal-consumption-tags .meal-registered-badge,
-#overview #day-details .daily-meal .meal-consumption-tags .meal-edit-consumption-tag,
-#overview #day-details .daily-meal .meal-consumption-tags-bottom .meal-registered-badge,
-#overview #day-details .daily-meal .meal-consumption-tags-bottom .meal-edit-consumption-tag{
- box-sizing:border-box!important;height:24px!important;min-height:24px!important;max-height:24px!important;
- padding:0 10px!important;margin-top:0!important;margin-bottom:0!important;
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- line-height:1!important;vertical-align:middle!important;appearance:none!important;
-}
-#overview #day-details .daily-meal .meal-consumption-tags .meal-edit-consumption-tag{
- border:1px solid rgba(200,225,240,.22)!important;
-}
-/* Separate registration actions from the first food line on lunch/dinner. */
-#overview #day-details .daily-meal .meal-consumption-tags:has(.meal-edit-consumption-tag):not(.meal-consumption-tags-bottom){margin-bottom:13px!important;}
-#overview #day-details .daily-meal .meal-consumption-tags-bottom:has(+ .foods){margin-bottom:13px!important;}
-
-/* Single-option recorded consumption: badges are now siblings in a flex row,
-   not independent prepend elements. Override old badge margins and create
-   a reliable gap before the food list. */
-#overview #day-details .single-meal-option > .meal-consumption-tags-bottom{
- display:flex!important;flex-flow:row wrap!important;align-items:center!important;
- justify-content:flex-start!important;gap:7px!important;
- margin:0 0 15px!important;padding:0!important;width:100%!important;
-}
-#overview #day-details .meal-consumption-tags-bottom .meal-consumption-color-note{
- font-size:11px;font-weight:400;line-height:1.35;opacity:.75;align-self:center;
-}
-#overview #day-details .single-meal-option > .meal-consumption-tags-bottom > .meal-registered-badge,
-#overview #day-details .single-meal-option > .meal-consumption-tags-bottom > :is(.meal-edit-consumption-tag,.meal-undo-consumption-tag){
- box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
- justify-content:center!important;height:24px!important;min-height:24px!important;max-height:24px!important;
- padding:0 9px!important;margin:0!important;line-height:1!important;
- font-size:11px!important;flex:0 0 auto!important;
 }
 
 /* Alternative consumption pickers belong to the CURRENT meal, not the

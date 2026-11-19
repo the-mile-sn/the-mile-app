@@ -315,15 +315,38 @@ hugeiconsOfficial["CheckmarkCircle02Icon"]=[
 function consumptionActionIcon(name){const span=document.createElement('span');span.className='consumption-action-icon';span.setAttribute('aria-hidden','true');span.append(iconToSvg(hugeiconsOfficial[name]));return span;}
 function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionActionIcon(name),document.createTextNode(label));}
 /* One recorded-action component for meals, alternative colours and peri-events. */
+/* Universal registered-consumption action family for meals and peri-events.
+   Surface differences are inherited as colour tokens, never separate markup. */
 function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo'}){
- const tags=document.createElement('div');tags.className='meal-consumption-tags meal-consumption-tags-bottom';
- const badge=document.createElement('span');badge.className='meal-registered-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Registado: '+description);
- const edit=document.createElement('button');edit.type='button';edit.className='meal-edit-consumption-tag';consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar '+description);edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor);
- const undo=document.createElement('button');undo.type='button';undo.className='meal-undo-consumption-tag';consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular '+description);
- undo.onclick=async(event)=>{event.preventDefault();event.stopPropagation();if(undo.disabled)return;undo.disabled=true;edit.disabled=true;undo.textContent='A anular…';try{await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId})});await overview();}catch(e){undo.disabled=false;edit.disabled=false;consumptionActionLabel(undo,'UndoIcon',' Anular');error(e);}};
- tags.append(badge,edit,undo);
- if(consumedColor){const names={green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'};const note=document.createElement('span');note.className='meal-consumption-color-note';note.textContent='Consumido: '+(names[consumedColor]||consumedColor);tags.append(note);}
- return tags;
+ const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--recorded';
+ const registered=document.createElement('span');registered.className='action-pill action-pill--registered';
+ consumptionActionLabel(registered,'CheckmarkCircle02Icon',' Registado');registered.setAttribute('aria-label','Registado: '+description);
+ const edit=document.createElement('button');edit.type='button';edit.className='action-pill action-pill--secondary';
+ consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar '+description);
+ edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor);
+ const undo=document.createElement('button');undo.type='button';undo.className='action-pill action-pill--secondary';
+ consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular '+description);
+ const feedback=document.createElement('p');feedback.className='consumption-feedback';
+ feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+ undo.onclick=async(event)=>{
+  event.preventDefault();event.stopPropagation();if(undo.disabled)return;
+  undo.disabled=true;edit.disabled=true;undo.setAttribute('aria-busy','true');
+  try{
+   await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId})});
+   await overview();
+  }catch(err){
+   undo.disabled=false;edit.disabled=false;undo.removeAttribute('aria-busy');
+   feedback.textContent='Não foi possível anular. Tenta novamente.';error(err);
+  }
+ };
+ actions.append(registered,edit,undo);
+ if(consumedColor){
+  const names={green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'};
+  const note=document.createElement('span');note.className='consumption-color-note';
+  note.textContent='Consumido: '+(names[consumedColor]||consumedColor);actions.append(note);
+ }
+ actions.append(feedback);
+ return actions;
 }
 
 function showConsumptionSuccess(button){
@@ -849,10 +872,10 @@ function appendPeriConsumption(card,item,records){
  const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
  hosts.forEach((host,index)=>{
   if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:'consumo de '+item.title}));return;}
-  const actions=document.createElement('div');actions.className='consumption-quick-actions';
+  const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
   const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
   const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
-  const feedback=document.createElement('p');feedback.className='consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+  const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
    if(previous&&!window.confirm('Já existe um registo para '+item.title+'. Substituir pela opção selecionada?'))return;
@@ -863,7 +886,7 @@ function appendPeriConsumption(card,item,records){
     const option=source.options?.find(row=>row.option_ref===options[index].option_ref);
     if(!option)throw new Error('Opção publicada indisponível ou alterada');
     await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,option_ref:option.option_ref,status:'all'})});
-    showConsumptionSuccess(quick);feedback.textContent='Consumo registado.';
+    showConsumptionSuccess(quick);feedback.textContent='';
     await new Promise(resolve=>setTimeout(resolve,900));
     if(host.tagName==='DETAILS')host.open=false;
     await overview();
@@ -2151,11 +2174,11 @@ async function overview(){
     if(!card)return;
     const target=card.tagName==='DETAILS'?(card.querySelector('.option-body')||card):card;
     const isRecordedOption=!!previous&&previous.prescription?.color===color&&previous.option_ref===options[i]?.option_ref;
-    const actions=document.createElement('div');actions.className='consumption-quick-actions';
+    const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
     consumptionActionLabel(quick,'CheckmarkCircle02Icon',isRecordedOption&&previous.status==='all'?' Consumido':' Cumpri');quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
     const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
-    const feedback=document.createElement('p');feedback.className='consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+    const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     quick.onclick=async()=>{
      if(isRecordedOption&&previous.status==='all')return;
      if(previous&&!isRecordedOption&&!window.confirm('Já existe um registo para esta refeição. Substituir pela opção selecionada?'))return;
@@ -2166,7 +2189,7 @@ async function overview(){
       const selected=source.options?.[i];
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
-      showConsumptionSuccess(quick);feedback.textContent='Consumo registado.';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
+      showConsumptionSuccess(quick);feedback.textContent='';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
      }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
