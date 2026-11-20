@@ -2938,7 +2938,8 @@ def application(env, start_response):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
                 if method == 'GET':
-                    return respond(200, {'chefs': chef_accounts_v2.list_accounts(c)})
+                    return respond(200, {'chefs': chef_accounts_v2.list_accounts(c),
+                                         'archived_chefs': chef_accounts_v2.list_archived(c)})
                 if method == 'POST':
                     body=read_json(env)
                     if not isinstance(body,dict): raise Problem(400,'invalid_chef')
@@ -2981,6 +2982,37 @@ def application(env, start_response):
                     WHERE active=1 AND LOWER(name_pt) LIKE LOWER(?)
                     ORDER BY name_pt LIMIT 100""",('%'+search+'%',)).fetchall()
                 return respond(200,{'dishes':[dict(row) for row in rows]})
+            if path.startswith('/api/v2/admin/chefs/') and (path.endswith('/archive') or path.endswith('/restore')):
+                if not user: raise Problem(401,'unauthorized')
+                admin(user)
+                parts=path.strip('/').split('/')
+                if len(parts)!=6 or method!='POST': raise Problem(404,'not_found')
+                chef_id=parts[4]
+                action=parts[5]
+                target=c.execute("""SELECT l.archived_at FROM users u
+                    JOIN v2_chef_links l ON l.user_id=u.id
+                    WHERE u.id=? AND u.role='chef'""",(chef_id,)).fetchone()
+                if not target: raise Problem(404,'chef_not_found')
+                if action=='archive':
+                    body=read_json(env)
+                    if not isinstance(body,dict) or body.get('confirmation')!='ARQUIVAR':
+                        raise Problem(400,'invalid_confirmation')
+                    if target['archived_at'] is not None: raise Problem(409,'already_archived')
+                    c.execute("UPDATE v2_chef_links SET archived_at=?, archived_by=? WHERE user_id=? AND archived_at IS NULL",
+                              (int(time.time()), user['id'], chef_id))
+                    c.execute("UPDATE users SET active=0 WHERE id=? AND role='chef'",(chef_id,))
+                    c.execute("DELETE FROM sessions WHERE user_id=?",(chef_id,))
+                    c.execute("DELETE FROM activations WHERE user_id=?",(chef_id,))
+                    c.commit()
+                    return respond(200,{'ok':True,'archived':True})
+                if action=='restore':
+                    if target['archived_at'] is None: raise Problem(409,'not_archived')
+                    c.execute("UPDATE v2_chef_links SET archived_at=NULL, archived_by=NULL WHERE user_id=?",
+                              (chef_id,))
+                    # As with players, restoration must never reactivate access automatically.
+                    c.commit()
+                    return respond(200,{'ok':True,'archived':False,'active':False})
+                raise Problem(404,'not_found')
             if path.startswith('/api/v2/admin/chefs/') and path.endswith('/password-reset'):
                 if not user: raise Problem(401,'unauthorized')
                 admin(user)
@@ -3007,7 +3039,7 @@ def application(env, start_response):
                 chef_id=parts[4]
                 target=c.execute("""SELECT u.id,u.username FROM users u
                     JOIN v2_chef_links l ON l.user_id=u.id
-                    WHERE u.id=? AND u.role='chef'""",(chef_id,)).fetchone()
+                    WHERE u.id=? AND u.role='chef' AND l.archived_at IS NULL""",(chef_id,)).fetchone()
                 if not target: raise Problem(404,'chef_not_found')
                 if method=='PUT':
                     body=read_json(env)
