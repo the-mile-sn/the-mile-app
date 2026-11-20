@@ -49,3 +49,22 @@ test("change of cached day conceals stale cards while waiting for consumption",(
  assert.match(js,/\$\("overview"\)\.toggleAttribute\("aria-busy",loading\)/);
  assert.match(guide,/Carregamento na transição de dias/);
 });
+
+test("the real Day calendar is a single, stable element before the loading skeleton",()=>{
+ const overview=html.slice(html.indexOf('<section id="overview">'),html.indexOf('<section id="plans" hidden>'));
+ const positions=[
+  overview.indexOf('id="overview-mode"'),
+  overview.indexOf('id="week-strip"'),
+  overview.indexOf('id="date-title"'),
+  overview.indexOf('id="overview-loading"'),
+  overview.indexOf('id="day-details"')
+ ];
+ assert.ok(positions.every(n=>n>=0),"all Day layout landmarks must exist");
+ assert.ok(positions.every((n,i)=>i===0||positions[i-1]<n),"calendar must precede skeleton and content");
+ assert.equal((overview.match(/id="week-strip"/g)||[]).length,1);
+ assert.equal((overview.match(/id="overview-loading"/g)||[]).length,1);
+ assert.match(js,/if\(overviewMode==="day"&&mon\)\{[\s\S]*renderPendingCalendar\(mon,dateKey\)/);
+ assert.match(js,/\$\("week-strip"\)\.hidden=true;\$\("date-title"\)\.hidden=true/);
+ assert.match(css,/\[hidden\]\{display:none!important\}/);
+ assert.match(guide,/Ordem obrigatória de composição/);
+});
