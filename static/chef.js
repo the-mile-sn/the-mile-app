@@ -715,21 +715,28 @@ function renderPlan(root){
  if(!root.querySelector(".chef-meal-card"))root.append(node("p","muted",txt().noData));
 }
 
-function renderChefMenuDateStrip(root){
- const wrap=node("nav","chef-menu-week-strip");wrap.setAttribute("aria-label","Semana do menu");
- const start=monday(selectedDay);
- for(let offset=0;offset<7;offset++){
-  const date=shift(start,offset),key=dateKey(date);
-  const cell=node("button","chef-menu-week-day"+(key===dateKey(selectedDay)?" selected":""));
-  cell.type="button";
-  cell.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
-    node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
-  cell.setAttribute("aria-label",dateDescription(date));
-  cell.setAttribute("aria-pressed",String(key===dateKey(selectedDay)));
-  cell.onclick=()=>{selectedDay=date;loadWeek().catch(err=>showError(txt().fail));};
-  wrap.append(cell);
- }
- root.append(wrap);
+function renderChefMenuWeekNavigation(root){
+ const start=monday(selectedDay),end=shift(start,6);
+ const nav=node("nav","chef-menu-week-navigation");
+ nav.setAttribute("aria-label",lang==="pt"?"Navegar entre semanas dos menus":"Navigate menu weeks");
+ const prev=node("button","chef-menu-week-arrow","‹");
+ prev.type="button";
+ prev.setAttribute("aria-label",lang==="pt"?"Semana anterior":"Previous week");
+ const next=node("button","chef-menu-week-arrow","›");
+ next.type="button";
+ next.setAttribute("aria-label",lang==="pt"?"Semana seguinte":"Next week");
+ const period=node("strong","chef-menu-week-range",
+   format(start,{day:"numeric",month:"short"})+" – "+
+   format(end,{day:"numeric",month:"short",year:"numeric"}));
+ const change=async delta=>{
+   prev.disabled=next.disabled=true;
+   selectedDay=shift(selectedDay,delta*7);
+   try{await loadWeek();}
+   catch(err){selectedDay=shift(selectedDay,-delta*7);showError(txt().fail);}
+   finally{prev.disabled=next.disabled=false;}
+ };
+ prev.onclick=()=>change(-1);next.onclick=()=>change(1);
+ nav.append(prev,period,next);root.append(nav);
 }
 function renderChefMenuDay(root,key){
  const date=new Date(key+"T12:00:00");
@@ -792,7 +799,7 @@ function renderMenus(root){
  }
  root.append(switcher);
  if(chefMenuMode==="recipes"){renderChefRecipes(root);return;}
- renderChefMenuDateStrip(root);
+ renderChefMenuWeekNavigation(root);
  const start=monday(selectedDay);
  for(let offset=0;offset<7;offset++)renderChefMenuDay(root,dateKey(shift(start,offset)));
 }
@@ -916,7 +923,7 @@ el("screen").addEventListener("touchstart",event=>{
  if(event.touches.length!==1||!["home","menus"].includes(activeTab))return;
  const target=event.target;
  if(target.closest?.("input,textarea,select,[contenteditable],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
- if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-strip"))return;
+ if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-navigation"))return;
  if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
  const t=event.touches[0];
  if(t.clientX<22||t.clientX>window.innerWidth-22)return;
