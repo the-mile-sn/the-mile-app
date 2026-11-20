@@ -94,13 +94,14 @@ test("the final ingredient does not have a divider",()=>{
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.09\)/);
 });
 
-test("section headings have quiet grayscale icon tiles and medium weight",()=>{
+test("section headings have grayscale icon tiles and universal 16px/400 type",()=>{
  assert.match(js,/const tile=node\("span","recipe-icon-tile"\)/);
  assert.match(js,/tile\.append\(sectionIcon\(kind\)\)/);
  assert.match(css,/#menus \.recipe-section-title > \.recipe-icon-tile\{/);
  assert.match(css,/background:#222228;/);
  assert.match(css,/color:#b8b8c0;/);
- assert.match(css,/font-weight:var\(--mile-type-medium,500\);/);
+ assert.match(css,/#menus \.recipe-content-section \.recipe-section-title\{\s*display:flex;\s*align-items:center;\s*gap:11px;\s*margin:0 0 10px;\s*font-size:16px;\s*font-weight:var\(--mile-type-card-title,400\);/);
+ assert.equal((css.match(/#menus \.recipe-content-section \.recipe-section-title\{/g)||[]).length,1);
 });
 test("library photo aligns to the top of recipe name; menu-linked details remain photoless",()=>{
  assert.match(css,/#menus \.recipe-identity\{\s*align-items:flex-start;/);
@@ -111,8 +112,8 @@ test("library photo aligns to the top of recipe name; menu-linked details remain
 
 test("final heading hierarchy is smaller in every recipe detail",()=>{
  const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
- assert.match(css.slice(css.lastIndexOf("/* Menus: photo enlargement")),/#menus \.recipe-content-section \.recipe-section-title\{\s*font-size:14px;/);
- assert.match(finalRules,/font-weight:var\(--mile-type-medium,500\)/);
+ assert.match(css,/#menus \.recipe-content-section \.recipe-section-title\{[^}]*font-size:16px;[^}]*font-weight:var\(--mile-type-card-title,400\);/s);
+ assert.match(css,/#menus \.recipe-identity h2\{[^}]*font-size:clamp\(21px,5\.3vw,23px\);[^}]*font-weight:var\(--mile-type-semibold,600\);/s);
  assert.doesNotMatch(finalRules,/#tabs[\s.{>]/);
 });
 

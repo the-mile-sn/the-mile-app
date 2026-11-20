@@ -44,6 +44,8 @@ Referência normativa de Receitas: **86 px**, **raio 18 px**, fundo cinzento sub
 
 **Receitas individuais — decisão 20/11:** a lista interna de pratos de cada categoria utiliza o mesmo componente geométrico `.recipe-item` (mínimo 86 px, raio 18 px, foto 64 × 64 px, espaçamento 9 px e seta à direita), mas os nomes dos pratos seguem a tipografia dos **cards universais: família de sistema, 16 px / 400**. Os títulos de categoria mantêm **16 px / 500**. A diferença é controlada na própria regra do título por `--recipe-list-title-weight` e pela classe semântica `.recipe-item--category`, sem overrides de `font-weight` posteriores; títulos longos crescem em altura sem truncar. Também se aplica às listas de receitas associadas a pratos dos Menus; não alterar a tipografia no detalhe da receita, as fotos, as ações ou a navegação.
 
+**Receita aberta — decisão 20/11:** nome da receita segue «Título página/detalhe» (21–23 px / 600). «Ingredientes», «Preparação» e «Dicas úteis» usam 16 px / 400, como títulos de cards universais, preservando o conteúdo 14 px / 400. A regra original `.recipe-content-section .recipe-section-title` foi consolidada, retirando declarações posteriores contraditórias. Na Biblioteca, a fotografia pequena continua junto ao nome; receitas abertas a partir de Menus não repetem a fotografia. Uma fotografia maior como cabeçalho será apenas simulação, não mudança publicada.
+
 **NÃO** classificar como «card de categoria» um mero cabeçalho que aparece quando um card universal é aberto.
 
 ## 2. Exceções expressas e limites
@@ -73,11 +75,12 @@ Referência normativa de Receitas: **86 px**, **raio 18 px**, fundo cinzento sub
 
 | Categoria | Regra | Nota |
 |---|---|---|
-| Título página/detalhe | 21–23 px / 600 | tamanho exato ainda não fechado por componente; não inventar |
+| Título página/detalhe | 21–23 px / 600 | Inclui o nome da receita aberta; manter a hierarquia de página/detalhe |
 | Título de categoria — Planos → Todos e Receitas | **16 px / 500** | Agrupamentos cinzentos de Planos sem foto; Receitas mantém fotografias e contadores |
 | Título de receita individual — listas de Receitas | **16 px / 400** | Mesma tipografia dos cards universais; altura adapta-se a nomes longos |
 | Título de card universal | **16 px / 400** | todas as zonas equivalentes; só o peso muda a 20/11 |
-| Título de secção interna / pergunta | **15 px / 600** | Ingredientes, Preparação, Dicas úteis, perguntas pós-jogo |
+| Título de secção interna / pergunta | **15 px / 600** | Perguntas pós-jogo e restantes secções internas, exceto detalhe de Receitas |
+| Título de secção — detalhe de Receitas | **16 px / 400** | Ingredientes, Preparação e Dicas úteis, igual aos títulos de cards universais; conteúdo mantém 14/400 |
 | Texto principal | **14 px / 400** | descrições, alimentos, respostas |
 | Texto secundário | **12–13 px / 400** | notas, estados e legendas contextuais |
 | Legenda pequena | **10–11 px / 400** | quando necessário |
