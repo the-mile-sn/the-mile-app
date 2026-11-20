@@ -39,7 +39,7 @@ test("canonical compact card measures preserve Chef lunch/dinner preview and inl
  assert.match(css,/\.chef-meal-head\{[^}]*min-height:var\(--mile-card-header\)/);
  assert.match(css,/\.chef-meal-heading>strong\{[^}]*font-size:16px;[^}]*font-weight:var\(--mile-type-regular\)/);
  assert.match(css,/\.chef-meal-icon\{[^}]*width:var\(--mile-card-icon\);height:var\(--mile-card-icon\)/);
- assert.match(css,/\.chef-week-cell\{[^}]*min-height:48px/s);
+ assert.match(css,/\.chef-week-cell\{[^}]*min-height:76px/s);
  assert.match(css,/\.chef-option-food\{[^}]*font-weight:400/);
  assert.match(js,/if\(!onlyPrescription&&\(meal==="lunch"\|\|meal==="dinner"\)\)\{/);
  assert.match(js,/appendChefMenuDish\(preview,plannedMenu\(date,meal\),txt\(\)\.pending\)/);
