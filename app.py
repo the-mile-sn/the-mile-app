@@ -280,7 +280,6 @@ def initialize():
         chef_collaboration_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         consumption_records_v2.initialize(c)
-        consumption_timing_v2.initialize(c)
         player_recipes_v2.initialize(c)
         plan_import_v2.initialize(c)
         events_v2.initialize(c)
