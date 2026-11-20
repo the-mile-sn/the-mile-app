@@ -48,6 +48,8 @@ let csrf = "", sessionUser = null, chef = null, player = null;
 let lang = "pt", selectedDay = new Date(), activeTab = "home";
 let previewReadOnly = false;
 let menus = [], days = [], colors = {}, prescriptions = {}, executions = [];
+let chefWeekRequestId=0,chefSkeletonTimer=null,chefSkeletonVisible=false;
+let chefSwipeEntryDirection=0,chefSwipeEntryAnimation=null;
 const txt = () => labels[lang];
 
 function dateKey(date){
@@ -124,18 +126,89 @@ function renderLogin(){
     finally{button.disabled=false;}
   };
 }
+/* Chef skeletons follow the real home structure; loading is deferred 240ms
+   like Player Dia, never forced for a quick request or a same-week day tap. */
+function chefSkeletonShape(extra=""){return node("span","chef-skeleton-shape"+(extra?" "+extra:""));}
+function renderChefHomeSkeleton(){
+ if(activeTab!=="home"||el("chef-view").hidden)return;
+ const root=el("screen");
+ root.replaceChildren();
+ root.className="chef-screen-home chef-screen-loading";
+ root.setAttribute("aria-busy","true");
+ const accessible=node("span","chef-skeleton-a11y",lang==="pt"
+   ?"A carregar o planeamento":"Loading the meal plan");
+ root.append(accessible);
+ if(chefViewMode==="week"){
+  const grid=node("div","chef-skeleton-week-grid");
+  for(let i=0;i<7;i++){
+   const header=node("div","chef-skeleton-week-heading");
+   header.append(chefSkeletonShape("chef-skeleton-week-label"),
+     chefSkeletonShape("chef-skeleton-week-date"),
+     chefSkeletonShape("chef-skeleton-week-label"));
+   grid.append(header);
+  }
+  // Neutral cells only: no invented meal names, nutritional colours or data.
+  for(let row=0;row<4;row++)
+   for(let day=0;day<7;day++)
+    grid.append(chefSkeletonShape("chef-skeleton-week-cell"));
+  root.append(grid);
+ }else{
+  const summary=node("div","chef-skeleton-summary");
+  const heading=node("div","chef-skeleton-heading");
+  heading.append(chefSkeletonShape("chef-skeleton-date"),
+    chefSkeletonShape("chef-skeleton-class"));
+  summary.append(heading);
+  const strip=node("div","chef-skeleton-colors");
+  for(let i=0;i<4;i++){
+   const cell=node("div","chef-skeleton-color");
+   cell.append(chefSkeletonShape("chef-skeleton-symbol"),
+     chefSkeletonShape("chef-skeleton-bar"));
+   strip.append(cell);
+  }
+  summary.append(strip);root.append(summary);
+  for(let i=0;i<4;i++){
+   const card=node("div","chef-skeleton-meal");
+   card.append(chefSkeletonShape("chef-skeleton-meal-icon"),
+     chefSkeletonShape("chef-skeleton-meal-title"),
+     chefSkeletonShape("chef-skeleton-meal-arrow"));
+   root.append(card);
+  }
+ }
+ chefSkeletonVisible=true;
+}
+function clearChefSkeleton(){
+ clearTimeout(chefSkeletonTimer);chefSkeletonTimer=null;chefSkeletonVisible=false;
+ el("screen").removeAttribute("aria-busy");
+}
 async function loadWeek(){
-  const start=monday(selectedDay);
-  const end=shift(start,6);
-  const q="?start="+dateKey(start)+"&end="+dateKey(end);
-  const [calendar, menuResponse, executionResponse]=await Promise.all([
-    request("/api/v2/chef/calendar"+q),
-    request("/api/v2/chef/menus"+q),
-    request("/api/v2/chef/menu-executions"+q)
+ const id=++chefWeekRequestId;
+ clearTimeout(chefSkeletonTimer);
+ chefSkeletonVisible=false;
+ const start=monday(selectedDay),end=shift(start,6);
+ const weekKey=dateKey(start);
+ const q="?start="+weekKey+"&end="+dateKey(end);
+ if(activeTab==="home"&&!el("chef-view").hidden){
+  chefSkeletonTimer=setTimeout(()=>{
+   if(id===chefWeekRequestId&&dateKey(monday(selectedDay))===weekKey)
+    renderChefHomeSkeleton();
+  },240);
+ }
+ try{
+  const [calendar,menuResponse,executionResponse]=await Promise.all([
+   request("/api/v2/chef/calendar"+q),
+   request("/api/v2/chef/menus"+q),
+   request("/api/v2/chef/menu-executions"+q)
   ]);
+  if(id!==chefWeekRequestId||dateKey(monday(selectedDay))!==weekKey)return;
   days=calendar.days||[];colors=calendar.effective_colors||{};
   menus=menuResponse.menus||[];executions=executionResponse.executions||[];
+  clearChefSkeleton();
   render();
+ }catch(err){
+  if(id!==chefWeekRequestId)return;
+  clearChefSkeleton();
+  throw err;
+ }
 }
 function colorFor(day,meal){
   const c=colors[day]?.[meal]?.color;
