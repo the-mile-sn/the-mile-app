@@ -176,6 +176,63 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-dish-pending{color:inherit;opacity:.72;font-size:13px}
 .chef-dish-photo-frame{position:relative;display:inline-grid;place-items:center;flex:none;width:91px;height:91px;border-radius:50%;cursor:zoom-in;outline-offset:4px}
 .chef-dish-photo{width:100%;height:100%;object-fit:contain;border-radius:50%;background:transparent;display:block}
+/* The home loading state is structural rather than a stale nutrition-card
+   placeholder. Same neutral shimmer as the real circular dish-photo skeleton. */
+.chef-skeleton-a11y{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#screen.chef-screen-loading .chef-skeleton-shape{
+ position:relative;display:block;overflow:hidden;border-radius:6px;background:#29292e;
+}
+#screen.chef-screen-loading .chef-skeleton-shape::after{
+ content:"";position:absolute;inset:0;
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);
+ transform:translateX(-100%);animation:chef-photo-shimmer 1.5s ease-in-out infinite;
+}
+#screen.chef-screen-loading .chef-skeleton-summary{
+ background:#17171a;border-radius:17px;margin:11px 0 18px;padding:13px 14px 12px;
+}
+#screen.chef-screen-loading .chef-skeleton-heading{
+ display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 0 18px;min-height:27px;
+}
+#screen.chef-screen-loading .chef-skeleton-date{width:43%;max-width:220px;height:17px}
+#screen.chef-screen-loading .chef-skeleton-class{width:55px;height:27px;border-radius:999px}
+#screen.chef-screen-loading .chef-skeleton-colors{
+ display:flex;justify-content:space-around;align-items:stretch;gap:10px;
+}
+#screen.chef-screen-loading .chef-skeleton-color{
+ display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:8px;
+}
+#screen.chef-screen-loading .chef-skeleton-symbol{width:23px;height:23px;border-radius:7px}
+#screen.chef-screen-loading .chef-skeleton-bar{height:7px;width:100%;border-radius:999px;margin-top:3px}
+#screen.chef-screen-loading .chef-skeleton-meal{
+ display:flex;align-items:center;gap:10px;min-height:61px;
+ padding:12px 17px;margin:10px 0;border-radius:13px;background:#242429;
+}
+#screen.chef-screen-loading .chef-skeleton-meal-icon{
+ width:37px;height:37px;flex:0 0 37px;border-radius:11px;
+}
+#screen.chef-screen-loading .chef-skeleton-meal-title{height:14px;max-width:225px;width:45%}
+#screen.chef-screen-loading .chef-skeleton-meal-arrow{
+ margin-left:auto;width:9px;height:9px;flex:0 0 9px;border-radius:3px;
+}
+#screen.chef-screen-loading .chef-skeleton-week-grid{
+ display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+ align-items:stretch;column-gap:5px;row-gap:12px;margin:0 0 22px;
+}
+#screen.chef-screen-loading .chef-skeleton-week-heading{
+ display:flex;flex-direction:column;align-items:center;gap:6px;
+ padding:9px 1px 11px;min-width:0;
+}
+#screen.chef-screen-loading .chef-skeleton-week-label{width:58%;height:8px;border-radius:4px}
+#screen.chef-screen-loading .chef-skeleton-week-date{width:30px;height:30px;border-radius:50%}
+#screen.chef-screen-loading .chef-skeleton-week-cell{height:76px;border-radius:10px}
+@media(max-width:370px){
+ #screen.chef-screen-loading .chef-skeleton-week-grid{column-gap:3px}
+ #screen.chef-screen-loading .chef-skeleton-week-cell{height:64px}
+}
+@media(prefers-reduced-motion:reduce){
+ #screen.chef-screen-loading .chef-skeleton-shape::after{animation:none}
+}
+
 /* Only an unresolved actual photo receives a circular, neutral skeleton. */
 .chef-dish-photo-frame.chef-photo-pending::before,
 .chef-dish-photo-frame.chef-photo-pending::after{
@@ -451,6 +508,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
  backdrop-filter:blur(30px) saturate(165%) brightness(1.08)!important;
  box-shadow:0 14px 40px rgba(0,0,0,.30),inset 0 .5px 0 rgba(255,255,255,.20),inset 0 -.5px 0 rgba(255,255,255,.035)!important;
  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ transition:padding .25s ease,left .25s ease,right .25s ease!important;
 }
 #chef-nav.bottom-nav>button{
  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
@@ -459,6 +517,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
  padding:6px 2px!important;gap:3px!important;
  font-size:10px!important;font-weight:400!important;line-height:1.2!important;
  color:#f4f4f6!important;
+ transition:height .25s ease,min-height .25s ease,padding .25s ease,gap .25s ease!important;
 }
 #chef-nav.bottom-nav>button[aria-current="page"]{background:#55555b!important}
 #chef-nav.bottom-nav.mile-segment-animated>button[aria-current="page"]{background:transparent!important}
@@ -482,6 +541,25 @@ textarea.chef-input{min-height:68px;resize:vertical}
  .mile-segment-animated>.mile-segment-indicator.mile-segment-bounce::after{animation:none!important}
 }
 
+
+/* Player scroll-compaction family: 28px hysteresis in Chef JS.
+   Only geometry changes; the current glass surface and selected indicator stay. */
+#chef-nav.bottom-nav.chef-nav-compact{
+ left:24px!important;right:24px!important;padding:3px!important;
+}
+#chef-nav.bottom-nav.chef-nav-compact>button{
+ min-height:44px!important;height:44px!important;padding:5px 2px!important;gap:2px!important;
+}
+#chef-nav.bottom-nav .mile-icon{transition:transform .25s ease}
+#chef-nav.bottom-nav>button>span:last-child{transition:font-size .25s ease}
+#chef-nav.bottom-nav.chef-nav-compact .mile-icon{transform:scale(.87)}
+#chef-nav.bottom-nav.chef-nav-compact>button>span:last-child{font-size:8px!important}
+@media(prefers-reduced-motion:reduce){
+ #chef-nav.bottom-nav,#chef-nav.bottom-nav>button,
+ #chef-nav.bottom-nav .mile-icon,#chef-nav.bottom-nav>button>span:last-child{
+  transition:none!important
+ }
+}
 
 /* Chef home: align the summary and meal cards to the same outer and inner grid. */
 #screen.chef-screen-home>.chef-daily-summary,
