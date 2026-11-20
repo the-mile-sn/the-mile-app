@@ -311,3 +311,13 @@ A pill usa a variante de texto legível do tema da classificação, com fundo 7%
 - Seleção de pessoas: apenas uma barra de pesquisa com sugestões; nunca duplicar pesquisas.
 - Manter a pesquisa geral ao lado do filtro Categoria nas bibliotecas, pois pesquisa o nome do alimento/prato/receita e não a categoria.
 - Opção selecionada: destaque neutro de fundo, sem visto. Campos fechados preservam as duas linhas, cor e chevron originais. Não substituir o invólucro visual aprovado por um botão adicional.
+
+
+## Registos de consumo — integração com a app (20/11/2026)
+
+- A app de jogadores e o backoffice administrativo são publicados em **branches e serviços separados**. Os registos de Intra-jogo gravados por timing são disponibilizados numa tabela independente, `v2_consumption_timing_records`.
+- A consulta de registos do backoffice é **exclusivamente de leitura**. Os registos antigos de `v2_consumption_records` têm precedência quando coexistem com um agregado de timing do mesmo atleta, dia e evento; não duplicar energia nem criar/migrar registos no serviço administrativo.
+- Dentro de um único card **Jogo**, mostrar os momentos registados (Pré-aquecimento, Pós-aquecimento, Intervalo, etc.), cada um com estado, valores consumidos e lista dos alimentos. O resumo do dia soma cada parcela exatamente uma vez e os indicadores de alterações distinguem registos editados de confirmações completas.
+- Os identificadores internos são traduzidos apenas na interface, mantendo os valores originais da API: `pre_training` → **Pré-treino**, `post_training` → **Pós-treino**, `pre_match` → **Pré-jogo**, `intra_match` → **Jogo**, `post_match` → **Pós-jogo**.
+- Ao consultar um dia sem registos, apresentar «Sem registos» como atualmente. O seletor de data permanece independente: **20/11 e 21/11 não são intercambiáveis**. Se a tabela de timings ainda não existir num ambiente de teste, manter a leitura de registos legados, sem erro nem alterações à base de dados.
+- O layout dos timings reutiliza a família de cards da área Registos e os tokens existentes. Não modificar o card universal da app nem a prescrição.
