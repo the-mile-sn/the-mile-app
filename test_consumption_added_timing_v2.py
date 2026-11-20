@@ -91,7 +91,7 @@ class AddedTimingTests(unittest.TestCase):
         block=JS.split("const choices=Object.entries(periTimingLabels)",1)[1].split("return true;",1)[0]
         self.assertIn("intra-add-moment-group",block)
         self.assertIn("addButton.textContent='⊕ Adicionar'",block)
-        self.assertIn("picker.append(label,editorHost)",block)
+        self.assertIn("picker.append(label,selector,editorHost)",block)
         self.assertIn("trigger.setAttribute('aria-haspopup','listbox')",block)
         self.assertIn("menu.setAttribute('role','listbox')",block)
         self.assertIn("trigger.setAttribute('aria-expanded','false')",block)
