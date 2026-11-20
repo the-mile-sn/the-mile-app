@@ -447,7 +447,7 @@ function iconForMeal(meal){
  icon.dataset.chefSvg="true";
  return icon;
 }
-let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus";
+let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus",chefPlanSelectedColor=null;
 const validColors=["orange","yellow","blue","green","vp"];
 function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
@@ -485,8 +485,8 @@ function appendChefFoodItems(host,items){
   if(text)host.append(node("div","chef-option-food",text));
  }
 }
-function chefOptionCards(date,meal){
- const color=colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
+function chefOptionCards(date,meal,colorOverride=null){
+ const color=colorOverride||colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
  const list=node("div","chef-option-list");
  if(!options.length){
   if(color)list.append(node("p","chef-option-empty",txt().noPlan));
@@ -558,8 +558,9 @@ function appendChefMenuDish(host,item,emptyLabel){
  const photo=chefMenuPhoto(item);if(photo)wrap.append(photo);
  host.append(wrap);
 }
-function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
- const card=node("details","chef-meal-card tone-"+mealTone(date,meal));
+function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOverride=null){
+ const effectiveTone=validColors.includes(colorOverride)?colorOverride:mealTone(date,meal);
+ const card=node("details","chef-meal-card tone-"+effectiveTone);
  card.open=expanded;
  const head=node("summary","chef-meal-head");
  const heading=node("span","chef-meal-heading");
@@ -590,14 +591,14 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
  }
  card.append(head);
  const body=node("div","chef-meal-body");
- appendChefMealContents(body,date,meal,onlyPrescription);
+ appendChefMealContents(body,date,meal,onlyPrescription,colorOverride);
  card.append(body);
  return card;
 }
 // A single content path powers the daily expandable card and the weekly inline
 // detail; editing, execution and prescription rendering stay identical.
-function appendChefMealContents(body,date,meal,onlyPrescription=false){
- body.append(chefOptionCards(date,meal));
+function appendChefMealContents(body,date,meal,onlyPrescription=false,colorOverride=null){
+ body.append(chefOptionCards(date,meal,colorOverride));
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
 }
 function renderChefDaily(root){
@@ -705,16 +706,57 @@ function sectionTitle(title,extra){
  if(extra)head.append(node("span","",extra));return head;
 }
 function renderHome(root){if(chefViewMode==="week")renderChefWeekly(root);else renderChefDaily(root);}
-function renderPlan(root){
- const date=dateKey(selectedDay);
- root.append(sectionTitle(txt().plans,dateDescription(selectedDay,{weekday:"long",day:"numeric",month:"long"})));
- for(const meal of mealOrder){
-  if(!colorFor(date,meal))continue;
-  root.append(renderChefMeal(date,meal,false,true));
- }
- if(!root.querySelector(".chef-meal-card"))root.append(node("p","muted",txt().noData));
+/* Prescriptions are published by nutritional colour, not by selected weekday.
+   Chef continues in consultation-only mode: no consumption or Plan editing. */
+function publishedChefColors(){
+ return validColors.filter(color=>mealOrder.some(meal=>
+   Array.isArray(prescriptions[color]?.[meal])&&prescriptions[color][meal].length>0));
 }
-
+function renderPlan(root){
+ const available=publishedChefColors();
+ root.append(sectionTitle(txt().plans));
+ if(!available.length){
+  root.append(node("p","muted",lang==="pt"
+   ?"Ainda não existem planos alimentares publicados."
+   :"No meal plans have been published yet."));
+  return;
+ }
+ if(!available.includes(chefPlanSelectedColor))chefPlanSelectedColor=null;
+ if(!chefPlanSelectedColor){
+  root.append(node("p","chef-plan-intro",lang==="pt"
+   ?"Consulta as prescrições publicadas por cor nutricional."
+   :"View published prescriptions by nutritional colour."));
+  const categories=node("div","chef-plan-categories");
+  for(const color of available){
+   const category=node("button","chef-plan-category");
+   category.type="button";
+   category.setAttribute("aria-label",lang==="pt"
+     ?"Abrir plano "+(colorText[lang][color]||color)
+     :"Open "+(colorText[lang][color]||color)+" plan");
+   const mark=node("span","chef-plan-category-mark tone-"+color);
+   mark.append(node("span","chef-plan-category-symbol"));
+   const caption=node("span","chef-plan-category-name",colorText[lang][color]||color);
+   category.append(mark,caption,node("span","chef-plan-category-arrow"));
+   category.onclick=()=>{chefPlanSelectedColor=color;render();};
+   categories.append(category);
+  }
+  root.append(categories);return;
+ }
+ const bar=node("div","chef-plan-back-bar");
+ const back=node("button","chef-plan-back");
+ back.type="button";
+ back.append(node("span","chef-plan-back-arrow","‹"),
+   node("span","",lang==="pt"?"Planos":"Plans"));
+ back.onclick=()=>{chefPlanSelectedColor=null;render();};
+ const colorLabel=node("span","chef-plan-active-label tone-"+chefPlanSelectedColor,
+   colorText[lang][chefPlanSelectedColor]||chefPlanSelectedColor);
+ bar.append(back,colorLabel);root.append(bar);
+ const date=dateKey(selectedDay);
+ for(const meal of mealOrder){
+  if(!(prescriptions[chefPlanSelectedColor]?.[meal]||[]).length)continue;
+  root.append(renderChefMeal(date,meal,false,true,chefPlanSelectedColor));
+ }
+}
 function renderChefMenuWeekNavigation(root){
  const start=monday(selectedDay),end=shift(start,6);
  const nav=node("nav","chef-menu-week-navigation");
