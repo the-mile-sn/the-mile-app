@@ -1905,7 +1905,7 @@ def application(env, start_response):
                             if meal_key != 'intra_match': raise ValueError('invalid_timing')
                             option=consumption_timing_v2.timing_option(option,timing)
                             if not option: raise Problem(409,'published_timing_unavailable')
-                    elif meal_key == 'intra_match' and consumption_timing_v2.has_timings(
+                    if timing is None and meal_key == 'intra_match' and consumption_timing_v2.has_timings(
                             c,link['athlete_id'],meal_date,event_id):
                         raise Problem(409,'timing_consumption_exists')
                     library=consumption_nutrition_v2.active_library(c)
