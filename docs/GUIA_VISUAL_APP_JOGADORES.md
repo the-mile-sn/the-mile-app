@@ -149,6 +149,8 @@ A app carrega `static/jogador-v2.css`, `static/player-recipes.css`, `static/play
 **Estado técnico conhecido a 19/11/2026:** commits anteriores introduziram geometrias de refeições/jogo e Avaliações; validação visual ainda pendente. Há valores não conformes remanescentes no CSS (por exemplo, 65 px em suplementação, 65 px em grupos Planos, pesos/alturas 56 px, 58 px e raios 12/17 px no Perfil e formulário de peso). Estes números **não se tornam exceções** pela simples existência no código. Verificar estrutura real antes de os alterar. Os cards ricos de menus, os cards de categoria e o painel nutricional requerem tratamento separado da família base.
 
 ## 9. Aplicação à App de Chefs
+O Guia Visual específico da App de Chefs encontra-se em [`docs/GUIA_VISUAL_APP_CHEFS.md`](GUIA_VISUAL_APP_CHEFS.md). Aplicar as famílias comuns pela sua função, sem transportar funcionalidades ou permissões do Jogador. A validação visual Chef permanece pendente.
+
 A App de Chefs deve reutilizar a **identidade visual** dos jogadores nos componentes equivalentes: login, tipografia, bottom navigation, cards, cores, botões, estados, transições. Não copiar automaticamente lógica nutricional/funcional do jogador. Chef pode trabalhar com pequeno-almoço e lanches, além de almoço/jantar; Página Inicial apresenta as refeições e plano colapsado, sem gráficos de consumo do jogador. As correspondências de pratos e responsabilidades de alteração de menus são assuntos funcionais próprios; não reinventar estilos.
 
 ---

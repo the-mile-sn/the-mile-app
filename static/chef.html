@@ -14,11 +14,8 @@
   <title>The Mile · Chef</title>
   <link rel="icon" href="/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="/chef.css?v=13" rel="stylesheet">
-  <script src="/chef.js?v=16" defer></script>
+  <link href="/chef.css?v=15" rel="stylesheet">
+  <script src="/chef.js?v=18" defer></script>
 </head>
 <body>
   <header class="top">
@@ -35,10 +32,14 @@
         <h1 id="login-heading">Área Chef</h1>
         <p id="login-description">Acede ao planeamento do jogador associado.</p>
         <form id="login-form">
-          <label for="username">Username</label>
-          <input id="username" name="identifier" autocomplete="username" required>
-          <label for="password" id="password-label">Palavra-passe</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <label class="mile-floating-field" for="username">
+            <input class="mile-floating-input" id="username" name="identifier" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder=" " required>
+            <span class="mile-floating-label">Username</span>
+          </label>
+          <label class="mile-floating-field" for="password">
+            <input class="mile-floating-input" id="password" name="password" type="password" autocomplete="current-password" placeholder=" " required>
+            <span class="mile-floating-label" id="password-label">Palavra-passe</span>
+          </label>
           <button type="submit" id="login-button" class="primary">Entrar</button>
         </form>
         <p id="login-error" class="error" role="alert"></p>

@@ -311,73 +311,155 @@ function executionForm(date,meal,card){
   card.append(root);
 }
 function editMenuForm(date,meal,item,slot){
-  if(date<dateKey(new Date()))return;
-  const holder=node("div","chef-menu-editor");
-  const type=node("select","chef-input");
-  const options=[
-    ["dish",lang==="pt"?"Prato aprovado":"Approved dish"],
-    ["category",lang==="pt"?"Categoria":"Category"],
-    ["proposal",lang==="pt"?"Propor prato novo":"Suggest new dish"]
-  ];
-  for(const [val,label] of options){const opt=node("option","",label);opt.value=val;type.append(opt);}
-  type.value=item?.kind==="category"?"category":"dish";
-  holder.append(type);
-  const search=makeInput("input",lang==="pt"?"Pesquisar prato aprovado":"Search approved dish",90);
-  const dishSelect=node("select","chef-input");
-  const category=node("select","chef-input");
-  for(const c of ["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"]){
-    const opt=node("option","",c);opt.value=c;category.append(opt);
-  }
-  if(item?.kind==="category")category.value=item.value;
-  const proposal=makeInput("input",lang==="pt"?"Nome do prato sugerido":"Suggested dish name",200);
-  const note=makeInput("textarea",lang==="pt"?"Nota para a equipa (opcional)":"Note for the team (optional)",500);
-  holder.append(search,dishSelect,category,proposal,note);
-  const feedback=node("p","chef-feedback"),actions=node("div","chef-edit-actions");
-  const save=miniButton(lang==="pt"?"Guardar":"Save",()=>{});save.classList.add("primary");
-  const cancel=miniButton(lang==="pt"?"Cancelar":"Cancel",()=>holder.remove());
-  actions.append(save,cancel);holder.append(actions,feedback);
-  async function findDishes(){
-    try{
-      const data=await request("/api/v2/chef/dishes?q="+encodeURIComponent(search.value.trim()));
-      dishSelect.replaceChildren();
-      for(const dish of data.dishes||[]){
-        const option=node("option","",dish.name_pt);option.value=dish.id;dishSelect.append(option);
-      }
-      if(item?.dish_id&&Array.from(dishSelect.options).some(o=>o.value===item.dish_id))dishSelect.value=item.dish_id;
-    }catch(err){feedback.textContent=txt().fail;}
-  }
-  let debounce;
-  search.oninput=()=>{clearTimeout(debounce);debounce=setTimeout(findDishes,220);};
-  function showType(){
-    search.hidden=dishSelect.hidden=type.value!=="dish";
-    category.hidden=type.value!=="category";
-    proposal.hidden=note.hidden=type.value!=="proposal";
-  }
-  type.onchange=showType;showType();findDishes();
-  save.onclick=async()=>{
-    save.disabled=true;feedback.textContent="";
-    try{
-      if(type.value==="proposal"){
-        await request("/api/v2/chef/menu-proposals","POST",{
-          menu_date:date,meal,name:proposal.value,note:note.value
-        });
-        feedback.textContent=lang==="pt"?"Proposta enviada para validação.":"Suggestion submitted for review.";
-        return;
-      }
-      const selected=dishSelect.selectedOptions[0];
-      if(type.value==="dish"&&!selected)throw Error("no_dish");
-      await request("/api/v2/chef/menus","PUT",{
-        menu_date:date,meal,kind:type.value,
-        value:type.value==="dish"?selected.textContent:category.value,
-        dish_id:type.value==="dish"?dishSelect.value:null
-      });
-      await loadWeek();
-    }catch(err){feedback.textContent=txt().fail+" "+(err.message||"");}
-    finally{save.disabled=false;}
+ if(previewReadOnly||date<dateKey(new Date()))return;
+ const pt=lang==="pt";
+ const holder=node("div","chef-menu-editor");
+ const heading=node("h3","chef-menu-editor-title",pt
+   ?(item?"Alterar prato":"Definir prato")
+   :(item?"Change dish":"Set dish"));
+ holder.append(heading);
+ holder.append(node("p","chef-menu-form-label",pt?"Como queres definir o menu?":"How would you like to set the menu?"));
+ const modes=node("div","chef-menu-mode-choices");
+ const modesList=[
+  ["dish",pt?"Prato aprovado":"Approved dish"],
+  ["category",pt?"Categoria":"Category"],
+  ["proposal",pt?"Sugerir prato":"Suggest dish"]
+ ];
+ let mode=item?.kind==="category"?"category":"dish";
+ let selectedDish=item?.kind==="dish"&&item.dish_id
+   ?{id:item.dish_id,name:asText(item.value)}:null;
+ let selectedCategory=item?.kind==="category"?item.value:"Carne branca";
+ const categories=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"];
+ if(!categories.includes(selectedCategory))selectedCategory=categories[0];
+ const modeButtons=new Map();
+ const dishArea=node("div","chef-menu-form-section");
+ const dishField=node("label","chef-menu-form-field");
+ dishField.append(node("span","",pt?"Pesquisar prato aprovado":"Search approved dish"));
+ const search=makeInput("input",pt?"Escreve o nome de um prato":"Enter a dish name",90);
+ search.type="search";search.autocomplete="off";
+ dishField.append(search);
+ const selected=node("p","chef-menu-selected-dish");
+ selected.setAttribute("role","status");
+ const results=node("div","chef-menu-dish-results");
+ results.hidden=true;results.setAttribute("aria-label",pt?"Pratos aprovados":"Approved dishes");
+ dishArea.append(dishField,selected,results);
+ const categoryArea=node("div","chef-menu-form-section");
+ categoryArea.append(node("p","chef-menu-form-label",pt?"Selecionar categoria":"Select category"));
+ const categoryTrigger=node("button","chef-menu-category-trigger");
+ categoryTrigger.type="button";categoryTrigger.setAttribute("aria-expanded","false");
+ const categoryOptions=node("div","chef-menu-category-options");categoryOptions.hidden=true;
+ categoryOptions.setAttribute("aria-label",pt?"Categorias disponíveis":"Available categories");
+ const syncCategory=()=>{categoryTrigger.textContent=selectedCategory;};
+ for(const value of categories){
+  const option=node("button","chef-menu-category-option",value);option.type="button";
+  option.onclick=()=>{
+   selectedCategory=value;syncCategory();categoryOptions.hidden=true;
+   categoryTrigger.setAttribute("aria-expanded","false");
   };
-  slot.append(holder);
+  categoryOptions.append(option);
+ }
+ categoryTrigger.onclick=()=>{
+  categoryOptions.hidden=!categoryOptions.hidden;
+  categoryTrigger.setAttribute("aria-expanded",String(!categoryOptions.hidden));
+ };
+ syncCategory();categoryArea.append(categoryTrigger,categoryOptions);
+ const proposalArea=node("div","chef-menu-form-section");
+ const proposalLabel=node("label","chef-menu-form-field");
+ proposalLabel.append(node("span","",pt?"Nome do prato a propor":"Dish name to suggest"));
+ const proposal=makeInput("input",pt?"Escreve o nome do prato":"Enter dish name",200);
+ proposalLabel.append(proposal);
+ const noteLabel=node("label","chef-menu-form-field");
+ noteLabel.append(node("span","",pt?"Observações (opcional)":"Notes (optional)"));
+ const note=makeInput("textarea",pt?"Informação para a equipa":"Information for the team",500);
+ noteLabel.append(note);
+ proposalArea.append(proposalLabel,noteLabel,node("p","chef-menu-proposal-hint",
+  pt?"A sugestão é enviada para validação e não altera o menu planeado."
+    :"Suggestions are sent for review and do not change the planned menu."));
+ holder.append(modes,dishArea,categoryArea,proposalArea);
+ const feedback=node("p","chef-feedback");feedback.setAttribute("role","status");
+ feedback.setAttribute("aria-live","polite");
+ const actions=node("div","chef-edit-actions");
+ const cancel=node("button","chef-menu-cancel",pt?"Cancelar":"Cancel");cancel.type="button";
+ cancel.onclick=()=>holder.remove();
+ const save=node("button","chef-menu-save",pt?"Guardar":"Save");save.type="button";
+ actions.append(cancel,save);holder.append(actions,feedback);
+ const showSelected=()=>{
+  selected.textContent=selectedDish?(pt?"Selecionado: ":"Selected: ")+selectedDish.name:"";
+  selected.hidden=!selectedDish;
+ };
+ const showMode=()=>{
+  for(const [key,button]of modeButtons)button.setAttribute("aria-pressed",String(mode===key));
+  dishArea.hidden=mode!=="dish";categoryArea.hidden=mode!=="category";proposalArea.hidden=mode!=="proposal";
+  results.hidden=true;categoryOptions.hidden=true;categoryTrigger.setAttribute("aria-expanded","false");
+  feedback.textContent="";
+ };
+ for(const [key,caption] of modesList){
+  const button=node("button","chef-menu-mode-choice",caption);button.type="button";
+  button.onclick=()=>{mode=key;showMode();};
+  modeButtons.set(key,button);modes.append(button);
+ }
+ showSelected();showMode();
+ let debounce,requestSeq=0;
+ const findDishes=async()=>{
+  const seq=++requestSeq;results.hidden=false;
+  results.replaceChildren(node("p","chef-menu-dish-status",pt?"A pesquisar…":"Searching…"));
+  try{
+   const data=await request("/api/v2/chef/dishes?q="+encodeURIComponent(search.value.trim()));
+   if(seq!==requestSeq||!holder.isConnected||mode!=="dish")return;
+   results.replaceChildren();
+   for(const dish of data.dishes||[]){
+    const button=node("button","chef-menu-dish-result");button.type="button";
+    button.append(node("span","",dish.name_pt));
+    if(dish.category)button.append(node("small","",dish.category));
+    button.onclick=()=>{
+     selectedDish={id:dish.id,name:dish.name_pt};
+     search.value=dish.name_pt;showSelected();results.hidden=true;
+     feedback.textContent="";
+    };
+    results.append(button);
+   }
+   if(!results.childElementCount)results.append(node("p","chef-menu-dish-status",
+     pt?"Nenhum prato encontrado. Podes sugerir um novo.":"No dishes found. You can suggest a new one."));
+  }catch(err){
+   if(seq===requestSeq&&holder.isConnected)results.replaceChildren(
+    node("p","chef-menu-dish-status",txt().fail));
+  }
+ };
+ search.addEventListener("focus",()=>{if(mode==="dish"&&results.hidden)findDishes();});
+ search.addEventListener("input",()=>{
+  selectedDish=null;showSelected();feedback.textContent="";
+  clearTimeout(debounce);debounce=setTimeout(findDishes,220);
+ });
+ search.addEventListener("keydown",event=>{if(event.key==="Escape")results.hidden=true;});
+ save.onclick=async()=>{
+  if(mode==="dish"&&!selectedDish){
+   feedback.textContent=pt?"Seleciona um prato aprovado na lista.":"Choose an approved dish from the list.";
+   return;
+  }
+  if(mode==="proposal"&&proposal.value.trim().length<2){
+   feedback.textContent=pt?"Indica o nome do prato que pretendes sugerir.":"Enter the name of the dish to suggest.";
+   return;
+  }
+  save.disabled=cancel.disabled=true;feedback.textContent="";
+  try{
+   if(mode==="proposal"){
+    await request("/api/v2/chef/menu-proposals","POST",{
+     menu_date:date,meal,name:proposal.value.trim(),note:note.value.trim()
+    });
+    feedback.textContent=pt?"Proposta enviada para validação. O menu atual mantém-se.":"Suggestion sent for review. The current menu is unchanged.";
+    return;
+   }
+   await request("/api/v2/chef/menus","PUT",{
+    menu_date:date,meal,kind:mode,
+    value:mode==="dish"?selectedDish.name:selectedCategory,
+    dish_id:mode==="dish"?selectedDish.id:null
+   });
+   await loadWeek();
+  }catch(err){feedback.textContent=txt().fail;}
+  finally{save.disabled=cancel.disabled=false;}
+ };
+ slot.append(holder);
 }
-
 
 const chefIcons={breakfast:"coffee-03",lunch:"restaurant-02",snack:"vegetarian-food",dinner:"restaurant-02",supper:"moon-02"};
 const chefSvgPaths={"coffee-03":"<path d=\"M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Zm12 1h1a3 3 0 0 1 0 6h-2M4 22h16M8 3v3m4-3v3m4-3v3\"/>","vegetarian-food":"<path d=\"M4 12c2-4 6-4 8 0 2-4 6-4 8 0l-2 7H6l-2-7ZM12 10V4M8 7 5 5m11 2 3-2M6 22h12\"/>","restaurant-02":"<path d=\"M4 3v8m3-8v8M4 7h3M5.5 11v10M13 3v18M13 12c7 0 8-8 3-9v9M20 3v18\"/>","moon-02":"<path d=\"M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z\"/>","football":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 7 4 3-1.5 5h-5L8 10l4-3Zm-4 3-4-1m12 1 4-1m-5.5 6 2 5m-7-5-2 5M12 7V3\"/>","football-pitch":"<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1\"/><path d=\"M12 4v16m0-12a4 4 0 0 0 0 8M2.5 9h4v6h-4m19-6h-4v6h4\"/>","soft-drink-01":"<path d=\"M5 5h14l-2 16H7L5 5ZM4 3h16M12 5l4-4M8 11h8m-6 4h4\"/>","home-09":"<path d=\"m3 11 9-8 9 8v9H3v-9Zm6 9v-7h6v7\"/>","files-01":"<path d=\"M7 3h10l4 4v14H7V3Zm10 0v5h4M3 7v14h14\"/>","add-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10m-5-5h10\"/>","menu-restaurant":"<path d=\"M4 4v7m3-7v7M4 7h3m-1.5 4v9M13 4v16m0-8c7 0 8-7 3-8v8M3 22h18\"/>","user-03":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>"};;
@@ -447,7 +529,7 @@ function iconForMeal(meal){
  icon.dataset.chefSvg="true";
  return icon;
 }
-let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus";
+let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus",chefPlanSelectedColor=null;
 const validColors=["orange","yellow","blue","green","vp"];
 function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
@@ -485,8 +567,8 @@ function appendChefFoodItems(host,items){
   if(text)host.append(node("div","chef-option-food",text));
  }
 }
-function chefOptionCards(date,meal){
- const color=colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
+function chefOptionCards(date,meal,colorOverride=null){
+ const color=colorOverride||colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
  const list=node("div","chef-option-list");
  if(!options.length){
   if(color)list.append(node("p","chef-option-empty",txt().noPlan));
@@ -525,9 +607,12 @@ function chefOptionCards(date,meal){
 function chefMenuPhoto(item){
  const photo=mealPhoto(item);
  if(!photo)return null;
- const frame=node("span","chef-dish-photo-frame");
+ const frame=node("span","chef-dish-photo-frame chef-photo-pending");
  photo.className="chef-dish-photo";
+ // Match Player recipe-image loading only while the actual photo is pending.
+ photo.addEventListener("load",()=>frame.classList.remove("chef-photo-pending"),{once:true});
  frame.append(photo);
+ if(photo.complete&&photo.naturalWidth>0)frame.classList.remove("chef-photo-pending");
  const zoom=node("span","chef-photo-zoom");
  zoom.setAttribute("aria-hidden","true");
  zoom.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg>';
@@ -555,8 +640,9 @@ function appendChefMenuDish(host,item,emptyLabel){
  const photo=chefMenuPhoto(item);if(photo)wrap.append(photo);
  host.append(wrap);
 }
-function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
- const card=node("details","chef-meal-card tone-"+mealTone(date,meal));
+function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOverride=null){
+ const effectiveTone=validColors.includes(colorOverride)?colorOverride:mealTone(date,meal);
+ const card=node("details","chef-meal-card tone-"+effectiveTone);
  card.open=expanded;
  const head=node("summary","chef-meal-head");
  const heading=node("span","chef-meal-heading");
@@ -587,14 +673,14 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false){
  }
  card.append(head);
  const body=node("div","chef-meal-body");
- appendChefMealContents(body,date,meal,onlyPrescription);
+ appendChefMealContents(body,date,meal,onlyPrescription,colorOverride);
  card.append(body);
  return card;
 }
 // A single content path powers the daily expandable card and the weekly inline
 // detail; editing, execution and prescription rendering stay identical.
-function appendChefMealContents(body,date,meal,onlyPrescription=false){
- body.append(chefOptionCards(date,meal));
+function appendChefMealContents(body,date,meal,onlyPrescription=false,colorOverride=null){
+ body.append(chefOptionCards(date,meal,colorOverride));
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
 }
 function renderChefDaily(root){
@@ -702,31 +788,79 @@ function sectionTitle(title,extra){
  if(extra)head.append(node("span","",extra));return head;
 }
 function renderHome(root){if(chefViewMode==="week")renderChefWeekly(root);else renderChefDaily(root);}
-function renderPlan(root){
- const date=dateKey(selectedDay);
- root.append(sectionTitle(txt().plans,dateDescription(selectedDay,{weekday:"long",day:"numeric",month:"long"})));
- for(const meal of mealOrder){
-  if(!colorFor(date,meal))continue;
-  root.append(renderChefMeal(date,meal,false,true));
- }
- if(!root.querySelector(".chef-meal-card"))root.append(node("p","muted",txt().noData));
+/* Prescriptions are published by nutritional colour, not by selected weekday.
+   Chef continues in consultation-only mode: no consumption or Plan editing. */
+function publishedChefColors(){
+ return validColors.filter(color=>mealOrder.some(meal=>
+   Array.isArray(prescriptions[color]?.[meal])&&prescriptions[color][meal].length>0));
 }
-
-function renderChefMenuDateStrip(root){
- const wrap=node("nav","chef-menu-week-strip");wrap.setAttribute("aria-label","Semana do menu");
- const start=monday(selectedDay);
- for(let offset=0;offset<7;offset++){
-  const date=shift(start,offset),key=dateKey(date);
-  const cell=node("button","chef-menu-week-day"+(key===dateKey(selectedDay)?" selected":""));
-  cell.type="button";
-  cell.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
-    node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
-  cell.setAttribute("aria-label",dateDescription(date));
-  cell.setAttribute("aria-pressed",String(key===dateKey(selectedDay)));
-  cell.onclick=()=>{selectedDay=date;loadWeek().catch(err=>showError(txt().fail));};
-  wrap.append(cell);
+function renderPlan(root){
+ const available=publishedChefColors();
+ root.append(sectionTitle(txt().plans));
+ if(!available.length){
+  root.append(node("p","muted",lang==="pt"
+   ?"Ainda não existem planos alimentares publicados."
+   :"No meal plans have been published yet."));
+  return;
  }
- root.append(wrap);
+ if(!available.includes(chefPlanSelectedColor))chefPlanSelectedColor=null;
+ if(!chefPlanSelectedColor){
+  root.append(node("p","chef-plan-intro",lang==="pt"
+   ?"Consulta as prescrições publicadas por cor nutricional."
+   :"View published prescriptions by nutritional colour."));
+  const categories=node("div","chef-plan-categories");
+  for(const color of available){
+   const category=node("button","chef-plan-category");
+   category.type="button";
+   category.setAttribute("aria-label",lang==="pt"
+     ?"Abrir plano "+(colorText[lang][color]||color)
+     :"Open "+(colorText[lang][color]||color)+" plan");
+   const mark=node("span","chef-plan-category-mark tone-"+color);
+   mark.append(node("span","chef-plan-category-symbol"));
+   const caption=node("span","chef-plan-category-name",colorText[lang][color]||color);
+   category.append(mark,caption,node("span","chef-plan-category-arrow"));
+   category.onclick=()=>{chefPlanSelectedColor=color;render();};
+   categories.append(category);
+  }
+  root.append(categories);return;
+ }
+ const bar=node("div","chef-plan-back-bar");
+ const back=node("button","chef-plan-back");
+ back.type="button";
+ back.append(node("span","chef-plan-back-arrow","‹"),
+   node("span","",lang==="pt"?"Planos":"Plans"));
+ back.onclick=()=>{chefPlanSelectedColor=null;render();};
+ const colorLabel=node("span","chef-plan-active-label tone-"+chefPlanSelectedColor,
+   colorText[lang][chefPlanSelectedColor]||chefPlanSelectedColor);
+ bar.append(back,colorLabel);root.append(bar);
+ const date=dateKey(selectedDay);
+ for(const meal of mealOrder){
+  if(!(prescriptions[chefPlanSelectedColor]?.[meal]||[]).length)continue;
+  root.append(renderChefMeal(date,meal,false,true,chefPlanSelectedColor));
+ }
+}
+function renderChefMenuWeekNavigation(root){
+ const start=monday(selectedDay),end=shift(start,6);
+ const nav=node("nav","chef-menu-week-navigation");
+ nav.setAttribute("aria-label",lang==="pt"?"Navegar entre semanas dos menus":"Navigate menu weeks");
+ const prev=node("button","chef-menu-week-arrow","‹");
+ prev.type="button";
+ prev.setAttribute("aria-label",lang==="pt"?"Semana anterior":"Previous week");
+ const next=node("button","chef-menu-week-arrow","›");
+ next.type="button";
+ next.setAttribute("aria-label",lang==="pt"?"Semana seguinte":"Next week");
+ const period=node("strong","chef-menu-week-range",
+   format(start,{day:"numeric",month:"short"})+" – "+
+   format(end,{day:"numeric",month:"short",year:"numeric"}));
+ const change=async delta=>{
+   prev.disabled=next.disabled=true;
+   selectedDay=shift(selectedDay,delta*7);
+   try{await loadWeek();}
+   catch(err){selectedDay=shift(selectedDay,-delta*7);showError(txt().fail);}
+   finally{prev.disabled=next.disabled=false;}
+ };
+ prev.onclick=()=>change(-1);next.onclick=()=>change(1);
+ nav.append(prev,period,next);root.append(nav);
 }
 function renderChefMenuDay(root,key){
  const date=new Date(key+"T12:00:00");
@@ -741,7 +875,7 @@ function renderChefMenuDay(root,key){
   slot.append(node("div","chef-menu-meal-label",mealNames[lang][meal]));
   appendChefMenuDish(slot,item,txt().pending);
   if(!previewReadOnly&&key>=dateKey(new Date())){
-   const edit=miniButton(lang==="pt"?"Editar menu":"Edit menu",()=>{
+   const edit=miniButton(lang==="pt"?(item?"Alterar prato":"Definir prato"):(item?"Change dish":"Set dish"),()=>{
     const existing=slot.querySelector(".chef-menu-editor");
     if(existing){existing.remove();return;}
     editMenuForm(key,meal,item,slot);
@@ -789,7 +923,7 @@ function renderMenus(root){
  }
  root.append(switcher);
  if(chefMenuMode==="recipes"){renderChefRecipes(root);return;}
- renderChefMenuDateStrip(root);
+ renderChefMenuWeekNavigation(root);
  const start=monday(selectedDay);
  for(let offset=0;offset<7;offset++)renderChefMenuDay(root,dateKey(shift(start,offset)));
 }
@@ -913,7 +1047,7 @@ el("screen").addEventListener("touchstart",event=>{
  if(event.touches.length!==1||!["home","menus"].includes(activeTab))return;
  const target=event.target;
  if(target.closest?.("input,textarea,select,[contenteditable],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
- if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-strip"))return;
+ if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-navigation"))return;
  if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
  const t=event.touches[0];
  if(t.clientX<22||t.clientX>window.innerWidth-22)return;
