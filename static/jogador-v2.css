@@ -1911,7 +1911,7 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-change{font-size:11px;color:#abaeb8;white-space:nowrap;font-weight:400}
 #plans .assessment-expander{font-size:21px;font-weight:400;color:#bbbcc5;transition:transform .18s;line-height:20px;margin-left:3px}
 #plans details[open]>summary .assessment-expander{transform:rotate(180deg)}
-#plans .assessment-trend{margin:0 10px 10px;background:#1b1b20;border-radius:13px;padding:16px 12px 14px}
+#plans .assessment-trend{margin:8px 17px 12px;background:#1b1b20;border-radius:14px;padding:10px 8px 9px}
 #plans .assessment-trend>p:first-child{margin:0 0 9px;font-size:13px;font-weight:550}
 #plans .assessment-trend svg{width:100%;height:135px;display:block;overflow:visible}
 #plans .assessment-chart-grid{fill:none;stroke:#3b3c43;stroke-width:1;stroke-dasharray:3 5}
@@ -2299,8 +2299,7 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-chart-point{fill:#a2ddc0;fill-opacity:.7;stroke:#a2ddc0;stroke-width:1;vector-effect:non-scaling-stroke;transition:fill-opacity .12s,stroke-width .12s}
 #plans .assessment-chart-point.is-selected{fill:#bff6d7;fill-opacity:1;stroke:#e5ffef;stroke-width:2.5;filter:drop-shadow(0 0 2px rgba(162,221,192,.5))}
 
-/* Assessment refinements: maximise chart width and keep points visually above line. */
-#plans .assessment-trend{margin:0 5px 10px;padding:13px 8px 14px}
+/* Assessment chart markers: keep points visually above the line. Graph surface spacing is defined once alongside the base assessment styles. */
 #plans .assessment-trend>svg{width:100%;max-height:none;display:block}
 #plans .assessment-chart-point{fill:#1b1b20;fill-opacity:1;stroke:#a2ddc0;stroke-width:2;vector-effect:non-scaling-stroke;filter:none}
 #plans .assessment-chart-point.is-selected{fill:#fff;fill-opacity:1;stroke:#fff;stroke-width:1.5;filter:none}
