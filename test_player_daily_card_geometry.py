@@ -80,6 +80,24 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
 
+    def test_plans_all_groups_are_recipe_style_category_cards(self):
+        base = declarations("#plans #plan-detail .plans-all-group")
+        header = declarations("#plans #plan-detail .plans-all-group > summary")
+        body = declarations("#plans #plan-detail .plans-all-body")
+        self.assertEqual([len(base),len(header),len(body)], [1,1,1])
+        self.assertIn("background:rgba(255,255,255,.055)!important", base[0])
+        self.assertIn("border-radius:18px!important", base[0])
+        self.assertIn("margin:0 0 9px!important", base[0])
+        self.assertIn("min-height:86px", header[0])
+        self.assertIn("font-size:17px;font-weight:600", header[0])
+        self.assertIn("padding:11px 17px", header[0])
+        self.assertIn("padding:0 17px 8px", body[0])
+        self.assertIn('group.className="plans-all-group"', JS)
+        self.assertIn('group.addEventListener("toggle"', JS)
+        self.assertIn('renderPlanContent(key,content)', JS)
+        self.assertIn("sem fotografia nem espaço reservado para fotografia", GUIDE)
+        self.assertIn("Implementação Planos → Todos (20/11)", GUIDE)
+
     def test_assessment_graph_matches_daily_weight_graph_surface(self):
         graph = declarations("#plans .assessment-trend")
         self.assertEqual(len(graph), 1, "Assessment graph margins must have one CSS source")
