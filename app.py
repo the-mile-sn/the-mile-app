@@ -3071,6 +3071,15 @@ def application(env, start_response):
                 except LookupError: raise Problem(404,'audit_not_found')
                 except (ValueError,TypeError): raise Problem(400,'invalid_review')
                 return respond(200,result)
+            if path == '/api/v2/admin/dashboard/activity' and method == 'GET':
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                selected=(parse_qs(env.get('QUERY_STRING','')).get('date') or [''])[0]
+                try:
+                    result=dashboard_v2.day_activity(c,selected)
+                except ValueError:
+                    raise Problem(400,'invalid_dashboard_date')
+                return respond(200,result)
             if path == '/api/v2/admin/dashboard' and method == 'GET':
                 if not user:raise Problem(401,'unauthorized')
                 admin(user)
