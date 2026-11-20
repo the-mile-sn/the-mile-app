@@ -1132,30 +1132,71 @@ el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
  button.onclick=()=>changeChefTab(button.dataset.tab);
 });
 
-/* Match the player's horizontal day/week navigation while respecting native scrolling. */
-let chefGestureStart=null;
-el("screen").addEventListener("touchstart",event=>{
- chefGestureStart=null;
- if(event.touches.length!==1||!["home","menus"].includes(activeTab))return;
+/* Player-matched Início → Dia: interactive horizontal drag and 210ms
+   exit / 320ms entry. Weekly grid and Menus preserve their week gestures.
+   Native vertical scrolling and editable controls are never hijacked. */
+let chefTouchStart=null,chefTouchActive=false,chefTouchScreen=null,chefTouchTimeout=null;
+function clearChefGesture(){
+ if(chefTouchTimeout!==null){clearTimeout(chefTouchTimeout);chefTouchTimeout=null;}
+ if(chefTouchScreen){
+  chefTouchScreen.style.transform="";chefTouchScreen.style.transition="";
+  chefTouchScreen.style.willChange="";
+ }
+ chefTouchStart=null;chefTouchActive=false;chefTouchScreen=null;
+}
+function finishChefGesture(dx,done){
+ if(!chefTouchScreen||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches){
+  clearChefGesture();done?.();return;
+ }
+ chefTouchScreen.style.transition="transform 210ms cubic-bezier(.2,.8,.2,1)";
+ chefTouchScreen.style.transform="translate3d("+dx+"px,0,0)";
+ chefTouchTimeout=setTimeout(()=>{clearChefGesture();done?.();},215);
+}
+const chefSwipeArea=el("screen");
+chefSwipeArea.addEventListener("touchstart",event=>{
+ clearChefGesture();
+ if(event.touches.length!==1||!["home","menus"].includes(activeTab)||chefSkeletonVisible)return;
  const target=event.target;
- if(target.closest?.("input,textarea,select,[contenteditable],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
+ if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay,.chef-dish-photo-frame"))return;
  if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-navigation"))return;
  if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
- const t=event.touches[0];
- if(t.clientX<22||t.clientX>window.innerWidth-22)return;
- chefGestureStart={x:t.clientX,y:t.clientY};
+ for(let current=target;current&&current!==chefSwipeArea;current=current.parentElement){
+  if(current.scrollWidth>current.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(current).overflowX))return;
+ }
+ const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
+ chefTouchScreen=activeTab==="home"&&chefViewMode==="day"?chefSwipeArea:null;
+ chefTouchStart={x:t.clientX,y:t.clientY,at:performance.now(),width:chefSwipeArea.getBoundingClientRect().width};
 },{passive:true});
-el("screen").addEventListener("touchend",event=>{
- const start=chefGestureStart;chefGestureStart=null;
- if(!start||event.changedTouches.length!==1)return;
- const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
- if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4)return;
- const delta=dx<0?1:-1,previous=monday(selectedDay);
+chefSwipeArea.addEventListener("touchmove",event=>{
+ if(!chefTouchStart||event.touches.length!==1)return;
+ const t=event.touches[0],dx=t.clientX-chefTouchStart.x,dy=t.clientY-chefTouchStart.y;
+ if(!chefTouchActive){
+  if(Math.abs(dy)>18&&Math.abs(dy)>Math.abs(dx)*1.35){clearChefGesture();return;}
+  if(Math.abs(dx)<8||Math.abs(dx)<Math.abs(dy)*.8)return;
+  chefTouchActive=true;
+ }
+ if(event.cancelable)event.preventDefault();
+ if(chefTouchScreen&&!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches){
+  chefTouchScreen.style.transition="none";chefTouchScreen.style.willChange="transform";
+  chefTouchScreen.style.transform="translate3d("+Math.max(-chefTouchStart.width,Math.min(chefTouchStart.width,dx))+"px,0,0)";
+ }
+},{passive:false});
+chefSwipeArea.addEventListener("touchend",event=>{
+ if(!chefTouchStart||!chefTouchActive||event.changedTouches.length!==1){clearChefGesture();return;}
+ const dx=event.changedTouches[0].clientX-chefTouchStart.x;
+ const dy=event.changedTouches[0].clientY-chefTouchStart.y;
+ const direction=dx<0?1:-1;
+ if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4){finishChefGesture(0);return;}
+ const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
+ const commit=activeTab==="home"&&chefViewMode==="day"
+  ?Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55):true;
  const step=activeTab==="menus"||(activeTab==="home"&&chefViewMode==="week")?7:1;
- selectedDay=shift(selectedDay,delta*step);
- chefWeekSelection=null;
- if(dateKey(previous)===dateKey(monday(selectedDay)))render();
- else loadWeek().catch(()=>showError(txt().fail));
+ const navigate=()=>{if(commit)chefShiftDay(direction,step);};
+ if(chefTouchScreen)finishChefGesture(commit?-direction*chefTouchStart.width:0,navigate);
+ else{clearChefGesture();navigate();}
+},{passive:true});
+chefSwipeArea.addEventListener("touchcancel",()=>{
+ if(chefTouchActive)finishChefGesture(0);else clearChefGesture();
 },{passive:true});
 el("top-logout").onclick=async()=>{
   try{await request("/api/logout","POST",{});}catch(e){}
