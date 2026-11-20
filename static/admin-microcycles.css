@@ -866,9 +866,11 @@ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-
  #tm-dashboard .tm-db-today-recent #tm-db-recent{max-height:350px}
 }
 @media(max-width:650px){
+ /* Stacked Dashboard subcards: 12px then 10px, with no extra margins. */
+ #tm-dashboard .tm-db-today-columns{row-gap:12px}
  #tm-dashboard .tm-db-today-main,
  #tm-dashboard .tm-db-today-recent,
- #tm-dashboard .tm-db-today-chat{padding:14px}
+ #tm-dashboard .tm-db-today-chat{padding:14px;margin:0}
  #tm-dashboard .tm-db-today-side{gap:10px}
  /* Content-height diary, with no empty minimum or nested scrolling. */
  #tm-dashboard .tm-db-today-main{min-height:0}
