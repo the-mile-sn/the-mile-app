@@ -43,6 +43,20 @@ class PortalTest(unittest.TestCase):
         app.initialize()
         self.admin=Client()
         with app.connect() as c:
+            # Integration fixtures mirror the admin-owned published Planos tables.
+            # These tables exist in the shared production database, but the
+            # standalone player SQLite setup cannot create them itself.
+            # Keep these mock tables strictly in the disposable test database.
+            c.execute("""CREATE TABLE IF NOT EXISTS v2_food_plan_editor_publications (
+                draft_id TEXT PRIMARY KEY, athlete_id TEXT NOT NULL,
+                plan_type TEXT NOT NULL, snapshot_json TEXT NOT NULL,
+                published_at INTEGER NOT NULL, state TEXT NOT NULL)""")
+            c.execute("""CREATE TABLE IF NOT EXISTS v2_food_library (
+                id TEXT PRIMARY KEY, display_name TEXT NOT NULL,
+                variant TEXT NOT NULL, edible_fraction REAL NOT NULL,
+                kcal REAL NOT NULL, protein_g REAL NOT NULL,
+                carbs_g REAL NOT NULL, fat_g REAL NOT NULL,
+                active INTEGER NOT NULL)""")
             uid=c.execute('SELECT id FROM users WHERE email=?',('filipesousa@themile.pt',)).fetchone()['id']
             self.link=app.activation(c,uid)
         self.assertEqual(self.admin.activate(self.link)['status'],200)
