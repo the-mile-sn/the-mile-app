@@ -6,6 +6,55 @@ import calendar_v2
 import dashboard_v2
 
 
+
+class DashboardSelectedDayTests(unittest.TestCase):
+    def setUp(self):
+        self.c = sqlite3.connect(":memory:")
+        self.c.row_factory = sqlite3.Row
+        self.c.executescript("""
+          CREATE TABLE v2_athletes(id TEXT PRIMARY KEY,name TEXT,archived_at BIGINT);
+          CREATE TABLE v2_match_events(id TEXT,athlete_id TEXT,match_date TEXT,match_time TEXT);
+          CREATE TABLE v2_calendar_events(
+            id TEXT,athlete_id TEXT,event_date TEXT,kind TEXT,title TEXT,session TEXT);
+          CREATE TABLE v2_player_links(athlete_id TEXT,user_id TEXT);
+          CREATE TABLE users(id TEXT,role TEXT,active INTEGER,birth_date TEXT);
+          INSERT INTO v2_athletes VALUES('p1','Atleta Ativo',NULL);
+          INSERT INTO v2_athletes VALUES('p2','Atleta Arquivado',123);
+          INSERT INTO v2_match_events VALUES('m1','p1','2026-11-21','19:25');
+          INSERT INTO v2_match_events VALUES('m2','p2','2026-11-21','18:00');
+          INSERT INTO v2_match_events VALUES('m3','p1','2026-11-20','16:00');
+          INSERT INTO v2_calendar_events VALUES('e1','p1','2026-11-21','travel','Viagem','morning');
+          INSERT INTO v2_calendar_events VALUES('e2','p1','2026-11-21','other','Reunião','afternoon');
+          INSERT INTO v2_calendar_events VALUES('e3','p1','2026-11-21','training','Treino','morning');
+          INSERT INTO v2_calendar_events VALUES('e4','p2','2026-11-21','travel','Viagem','morning');
+          INSERT INTO users VALUES('u1','player',1,'2000-11-21');
+          INSERT INTO users VALUES('u2','player',1,'2000-11-21');
+          INSERT INTO v2_player_links VALUES('p1','u1');
+          INSERT INTO v2_player_links VALUES('p2','u2');
+        """)
+
+    def tearDown(self):
+        self.c.close()
+
+    def test_selected_day_includes_only_active_relevant_activities(self):
+        data=dashboard_v2.day_activity(self.c,"2026-11-21")
+        self.assertEqual(data["date"],"2026-11-21")
+        self.assertEqual([g["match_id"] for g in data["games"]],["m1"])
+        self.assertEqual([e["kind"] for e in data["events"]],["travel","other"])
+        self.assertEqual([b["name"] for b in data["birthdays"]],["Atleta Ativo"])
+        self.assertTrue(data["read_only"])
+        other=dashboard_v2.day_activity(self.c,"2026-11-20")
+        self.assertEqual([g["match_id"] for g in other["games"]],["m3"])
+        self.assertFalse(other["events"])
+        self.assertFalse(other["birthdays"])
+
+    def test_selected_day_rejects_invalid_dates(self):
+        for day in ("2026-02-30","20/11/2026","",None):
+            with self.assertRaises(ValueError):
+                dashboard_v2.day_activity(self.c,day)
+
+
+
 class DashboardEffectiveDayTests(unittest.TestCase):
     def setUp(self):
         self.c=sqlite3.connect(":memory:")
