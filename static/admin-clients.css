@@ -624,7 +624,7 @@ html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profil
    and semantic colours as player access: green, neutral, red, amber.
    Do not override their background, border or text with Chef-only rules. */
 html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-actions .tm-players-control svg{
- display:block;width:18px;height:18px;flex:0 0 18px;
+ width:18px;height:18px;flex:0 0 18px;
  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
 }
 html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-password-actions button{
