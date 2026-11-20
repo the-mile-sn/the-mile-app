@@ -31,6 +31,10 @@ def initialize(connection):
         CREATE INDEX IF NOT EXISTS idx_v2_consumption_athlete_date
             ON v2_consumption_records(athlete_id, meal_date);
     """)
+    # The timing table is part of the same consumption-store contract.
+    # Every service/test that initializes the original store gets both tables.
+    import consumption_timing_v2
+    consumption_timing_v2.initialize(connection)
 
 
 def _date(value):
