@@ -1592,11 +1592,40 @@ function renderPendingCalendar(mon,dateKey){
  animateCalendarSelection(strip,dateKey);
  $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
 }
+/* Neutral placeholder for the existing seven-column weekly calendar.
+   Meal count follows the loaded player's meal configuration when available;
+   event rows depend on the requested week and are intentionally not guessed. */
+function renderPendingWeeklySkeleton(){
+ const host=$("overview-week-skeleton");
+ const shape=(name)=>{
+  const node=document.createElement("span");
+  node.className="overview-week-skeleton-shape "+name;
+  return node;
+ };
+ const grid=document.createElement("div");grid.className="overview-week-skeleton-grid";
+ for(let i=0;i<7;i++){
+  const header=document.createElement("div");header.className="overview-week-skeleton-header";
+  header.append(shape("overview-week-skeleton-weekday"),shape("overview-week-skeleton-date"),shape("overview-week-skeleton-classification"));
+  grid.append(header);
+ }
+ const mealRows=Array.isArray(meals)&&meals.length?meals.length:5;
+ for(let row=0;row<mealRows;row++)
+  for(let dayIndex=0;dayIndex<7;dayIndex++)grid.append(shape("overview-week-skeleton-meal"));
+ for(let i=0;i<7;i++)grid.append(shape("overview-week-skeleton-total"));
+ const summary=document.createElement("div");summary.className="overview-week-skeleton-summary";
+ for(let i=0;i<4;i++){
+  const metric=document.createElement("div");metric.className="overview-week-skeleton-metric";
+  metric.append(shape("overview-week-skeleton-metric-label"),shape("overview-week-skeleton-metric-value"));
+  summary.append(metric);
+ }
+ host.replaceChildren(grid,shape("overview-week-skeleton-summary-label"),summary);
+}
 function setOverviewLoading(loading,mon=null,dateKey=null){
  const indicator=$("overview-loading");
  const sameView=lastOverviewPresentation&&mon&&lastOverviewPresentation.weekKey===iso(mon)
   &&lastOverviewPresentation.dateKey===dateKey&&lastOverviewPresentation.mode===overviewMode;
  if(loading&&!sameView){
+  if(overviewMode==="week")renderPendingWeeklySkeleton();
   indicator.hidden=false;
   indicator.classList.toggle("week-pending",overviewMode==="week");
   $("day-details").hidden=true;$("weekly-view").hidden=true;
