@@ -37,4 +37,4 @@ jobs:
       - name: Check player JavaScript syntax
         run: node --check static/jogador-v2.js
       - name: Test published peri phases, nutrition and isolated event records
-        run: python -m unittest -v test_consumption_source_v2 test_consumption_persistence_v2 test_consumption_nutrition_v2 test_consumption_service_flow_v2 test_consumption_integration_gate test_consumption_timing_v2
+        run: python -m unittest -v test_consumption_source_v2 test_consumption_persistence_v2 test_consumption_nutrition_v2 test_consumption_service_flow_v2 test_consumption_integration_gate test_consumption_timing_v2 test_consumption_timing_ui_contract
