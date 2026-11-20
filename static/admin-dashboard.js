@@ -1327,6 +1327,38 @@ function ensurePlanningOnlyView(){
    [item.time,item.title,item.person,item.professional,item.label].filter(Boolean).join(" · "));
   return target;
  }
+ // Cap only a long list, at the measured height of complete event cards.
+ // Show three full cards on mobile or four on desktop, with no wasted space.
+ let activityMeasureQueued=false;
+ const activityObserver=typeof ResizeObserver==="function"
+  ?new ResizeObserver(()=>scheduleActivityMeasure()):null;
+ function scheduleActivityMeasure(){
+  if(activityMeasureQueued)return;
+  activityMeasureQueued=true;
+  requestAnimationFrame(()=>{activityMeasureQueued=false;measureActivityHeight();});
+ }
+ function measureActivityHeight(){
+  const host=$("tm-db-miniagenda-bookings");
+  if(!host||!host.offsetWidth)return;
+  const items=Array.from(host.children).filter(node=>node.classList.contains("tm-db-activity-row"));
+  const count=window.matchMedia("(max-width:650px)").matches?3:4;
+  host.classList.remove("is-scrollable");
+  host.style.removeProperty("--tm-db-activity-max-height");
+  host.removeAttribute("tabindex");
+  host.removeAttribute("aria-label");
+  if(items.length<=count)return;
+  const heights=items.slice(0,count).map(node=>node.getBoundingClientRect().height);
+  if(heights.some(height=>height<=0))return;
+  const gap=Number.parseFloat(getComputedStyle(host).rowGap)||0;
+  // Rounded-up fractional text geometry keeps the bottom border fully visible.
+  const max=Math.ceil(heights.reduce((total,height)=>total+height,0)+(count-1)*gap+1);
+  host.style.setProperty("--tm-db-activity-max-height",max+"px");
+  host.classList.add("is-scrollable");
+  host.setAttribute("tabindex","0");
+  host.setAttribute("aria-label","Acontecimentos do dia; desliza para consultar os restantes");
+ }
+ window.addEventListener("resize",scheduleActivityMeasure,{passive:true});
+ document.fonts?.ready.then(scheduleActivityMeasure);
  function paint(){
   const headerParts=Object.fromEntries(titleFmt.formatToParts(toDate(day)).map(part=>[part.type,part.value]));
   $("tm-db-miniagenda-selected-date").textContent=day===today()?"Hoje":headerParts.day+" "+headerParts.month+" "+headerParts.year;
@@ -1334,7 +1366,14 @@ function ensurePlanningOnlyView(){
   $("tm-db-miniagenda-next").setAttribute("aria-label","Dia seguinte a "+fullDate(day));
   $("tm-db-miniagenda-new").href=bookingsLink(day,true);
   $("tm-db-miniagenda-open").href=bookingsLink(day);
-  const holder=$("tm-db-miniagenda-bookings");holder.replaceChildren();
+  const holder=$("tm-db-miniagenda-bookings");
+  activityObserver?.disconnect();
+  holder.classList.remove("is-scrollable");
+  holder.style.removeProperty("--tm-db-activity-max-height");
+  holder.removeAttribute("tabindex");
+  holder.removeAttribute("aria-label");
+  holder.replaceChildren();
+  holder.scrollTop=0;
   holder.setAttribute("aria-busy",String(loading));
   if(loading){
    holder.append(el("p","tm-db-activity-message","A consultar acontecimentos…"));
@@ -1349,6 +1388,12 @@ function ensurePlanningOnlyView(){
   }else{
    for(const item of rows)holder.append(row(item));
   }
+  if(activityObserver){
+   for(const item of holder.children){
+    if(item.classList.contains("tm-db-activity-row"))activityObserver.observe(item);
+   }
+  }
+  scheduleActivityMeasure();
  }
  async function load(){
   const current=day,id=++sequence;loading=true;rows=[];failures=[];paint();
