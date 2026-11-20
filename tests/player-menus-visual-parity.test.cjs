@@ -35,9 +35,16 @@ test("Unassigned menus render without manufactured data; assigned categories, di
 
 test("Recipes category geometry and title follow the approved visual guide",()=>{
  assert.match(recipeCss,/#menus \.recipe-item\{[^}]*min-height:86px/s);
- assert.match(recipeCss,/#menus \.recipe-item-body strong\{font-size:16px;line-height:1\.35;font-weight:500;/);
+ assert.match(recipeCss,/#menus \.recipe-item\{[^}]*--recipe-list-title-weight:var\(--mile-type-card-title,400\)/s);
+ assert.match(recipeCss,/#menus \.recipe-item--category\{--recipe-list-title-weight:var\(--mile-type-medium,500\);\}/);
+ assert.match(recipeCss,/#menus \.recipe-item-body strong\{font-size:16px;line-height:1\.35;font-weight:var\(--recipe-list-title-weight\);\}/);
+ const recipeJS=fs.readFileSync("static/player-recipes.js","utf8");
+ assert.match(recipeJS,/if\(small\)button\.classList\.add\("recipe-item--category"\)/);
+ assert.match(recipeJS,/list\.append\(card\(r\.name,"",r\.has_photo\?r\.id:null/);
  assert.match(html,/jogador-v2\.css\?v=266/);
- assert.match(html,/player-recipes\.css\?v=19/);
+ assert.match(html,/player-recipes\.css\?v=20/);
+ assert.match(html,/player-recipes\.js\?v=13/);
  assert.match(guide,/Menu por atribuir/);
  assert.match(guide,/listas de Receitas partilham agora/);
+ assert.match(guide,/Receitas individuais — decisão 20\/11/);
 });
