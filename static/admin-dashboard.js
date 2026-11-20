@@ -1293,9 +1293,9 @@ function ensurePlanningOnlyView(){
   if(create)query.set("new","1");
   return "/admin-appointments?"+query.toString()+"#agenda";
  }
- const iconNames={appointment:"calendar03",assessment:"chartEvaluation",game:"football",travel:"airplane01",other:"calendar03",birthday:"cake"};
+ const iconNames={appointment:"calendar03",assessment:"chartEvaluation",game:"football",travel:"airplane01",other:"calendar03",birthday:"cake",meeting:"calendar03",training:"chartEvaluation","internal-other":"calendar03"};
  let day=today(),loading=false,sequence=0,rows=[],failures=[];
- function merge(bookings,activity){
+ function merge(bookings,activity,internalEvents=[]){
   const merged=[];
   for(const b of bookings){
    if(b.status!=="scheduled"||b.date!==day)continue;
@@ -1326,6 +1326,17 @@ function ensurePlanningOnlyView(){
    merged.push({type:"birthday",title:"Aniversário",
     person:person.name,athleteId:person.athlete_id,time:"",label:""});
   }
+  const eventKinds={meeting:"Reunião",training:"Formação",travel:"Deslocação",other:"Evento"};
+  for(const event of internalEvents){
+   merged.push({
+    type:event.kind==="other"?"internal-other":event.kind,
+    title:event.title,
+    context:[eventKinds[event.kind]||"Evento",event.participants].filter(Boolean).join(" · "),
+    time:event.starts_at||"",end:event.ends_at||"",
+    label:"",
+    href:"/admin-appointments?"+new URLSearchParams({date:day,view:"day"})+"#agenda"
+   });
+  }
   merged.sort((a,b)=>{
    const at=/^[0-9]{2}:[0-9]{2}$/.test(a.time||"")?a.time:"99:99";
    const bt=/^[0-9]{2}:[0-9]{2}$/.test(b.time||"")?b.time:"99:99";
@@ -1352,6 +1363,7 @@ function ensurePlanningOnlyView(){
   const details=el("span","tm-db-activity-copy");
   details.append(el("strong","tm-db-activity-name",item.person||item.title));
   if(hasPerson&&item.title)details.append(el("span","tm-db-activity-service",item.title));
+  if(!hasPerson&&item.context)details.append(el("span","tm-db-activity-service",item.context));
   if(item.professional)details.append(el("small","tm-db-activity-professional",item.professional));
 
   // Time/moment is secondary information, not a fixed-width left column.
@@ -1373,7 +1385,7 @@ function ensurePlanningOnlyView(){
    target.append(meta);
   }
   target.setAttribute("aria-label",
-   [item.person||item.title,hasPerson?item.title:"",item.professional,whenText,
+   [item.person||item.title,hasPerson?item.title:item.context||"",item.professional,whenText,
     isBooking?item.label:""].filter(Boolean).join(" · "));
   return target;
  }
@@ -1414,7 +1426,8 @@ function ensurePlanningOnlyView(){
   $("tm-db-miniagenda-selected-date").textContent=day===today()?"Hoje":headerParts.day+" "+headerParts.month+" "+headerParts.year;
   $("tm-db-miniagenda-prev").setAttribute("aria-label","Dia anterior a "+fullDate(day));
   $("tm-db-miniagenda-next").setAttribute("aria-label","Dia seguinte a "+fullDate(day));
-  $("tm-db-miniagenda-new").href=bookingsLink(day,true);
+  $("tm-db-miniagenda-new").dataset.bookingHref=bookingsLink(day,true);
+  $("tm-db-miniagenda-new").dataset.date=day;
   $("tm-db-miniagenda-open").href=bookingsLink(day);
   const holder=$("tm-db-miniagenda-bookings");
   activityObserver?.disconnect();
@@ -1454,7 +1467,10 @@ function ensurePlanningOnlyView(){
    }).then(async res=>{if(!res.ok)throw Error("bookings");return res.json();}),
    fetch("/api/v2/admin/dashboard/activity?date="+encodeURIComponent(current),{
     credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}
-   }).then(async res=>{if(!res.ok)throw Error("activity");return res.json();})
+   }).then(async res=>{if(!res.ok)throw Error("activity");return res.json();}),
+   fetch("/api/v2/admin/work/events?"+new URLSearchParams({from:current,to:current}),{
+    credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}
+   }).then(async res=>{if(!res.ok)throw Error("internalEvents");return res.json();})
   ]);
   if(id!==sequence||day!==current)return;
   let bookings=[],activity={games:[],events:[],birthdays:[]};
@@ -1464,7 +1480,11 @@ function ensurePlanningOnlyView(){
   if(responses[1].status==="fulfilled"&&Array.isArray(responses[1].value?.games)){
    activity=responses[1].value;
   }else failures.push("Planeamento");
-  rows=merge(bookings,activity);loading=false;paint();
+  const internalEvents=responses[2].status==="fulfilled"&&Array.isArray(responses[2].value?.events)?
+   responses[2].value.events:[];
+  if(responses[2].status!=="fulfilled")failures.push("Eventos internos");
+  rows=merge(bookings,activity,internalEvents);loading=false;paint();
+  window.tmDashboardWorkRefresh?.();
  }
  $("tm-db-miniagenda-prev").addEventListener("click",()=>{
   day=shift(day,-1);load().catch(()=>{loading=false;failures=["a agenda"];paint();});
