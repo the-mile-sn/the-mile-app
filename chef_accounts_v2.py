@@ -98,17 +98,34 @@ def initialize(c):
             created_by TEXT NOT NULL REFERENCES users(id)
         )
     """)
+    # Non-destructive archive metadata, compatible with existing SQLite and PostgreSQL.
+    if hasattr(c, "conn"):
+        c.execute("ALTER TABLE v2_chef_links ADD COLUMN IF NOT EXISTS archived_at BIGINT")
+        c.execute("ALTER TABLE v2_chef_links ADD COLUMN IF NOT EXISTS archived_by TEXT")
+    else:
+        columns = {row["name"] for row in c.execute("PRAGMA table_info(v2_chef_links)").fetchall()}
+        if "archived_at" not in columns:
+            c.execute("ALTER TABLE v2_chef_links ADD COLUMN archived_at BIGINT")
+        if "archived_by" not in columns:
+            c.execute("ALTER TABLE v2_chef_links ADD COLUMN archived_by TEXT")
     c.execute("CREATE INDEX IF NOT EXISTS v2_chef_links_athlete ON v2_chef_links(athlete_id)")
 
 
-def list_accounts(c):
-    return [dict(row) for row in c.execute("""
+def list_accounts(c, archived=False):
+    """Keep archived Chef accounts out of active lists without deleting account history."""
+    predicate = "IS NOT NULL" if archived else "IS NULL"
+    return [dict(row) for row in c.execute(f"""
         SELECT u.id, u.name, u.username, u.active, l.language, l.athlete_id,
-               a.name AS athlete_name
+               a.name AS athlete_name, l.archived_at
         FROM v2_chef_links l JOIN users u ON u.id=l.user_id AND u.role='chef'
         JOIN v2_athletes a ON a.id=l.athlete_id
+        WHERE l.archived_at {predicate}
         ORDER BY u.name,u.id
     """).fetchall()]
+
+
+def list_archived(c):
+    return list_accounts(c, archived=True)
 
 
 def assigned_athlete(c, chef_id):
@@ -118,5 +135,5 @@ def assigned_athlete(c, chef_id):
         FROM v2_chef_links l JOIN users u ON u.id=l.user_id
         JOIN v2_athletes a ON a.id=l.athlete_id
         WHERE l.user_id=? AND u.role='chef' AND u.active=1
-          AND a.archived_at IS NULL
+          AND l.archived_at IS NULL AND a.archived_at IS NULL
     """, (chef_id,)).fetchone()
