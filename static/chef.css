@@ -90,7 +90,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
 }
 .chef-menu-editor-title{margin:0;font-size:15px;font-weight:600;line-height:1.3;color:inherit}
 .chef-menu-form-label{margin:0 0 8px;font-size:12px;font-weight:400;line-height:1.3;color:inherit;opacity:.9}
-.chef-menu-mode-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.chef-menu-mode-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .chef-menu-mode-choice{
  display:flex;align-items:center;justify-content:center;
  min-width:0;min-height:45px;padding:8px 5px;border-radius:999px;
@@ -102,7 +102,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
  border-color:var(--chef-tone-ink);background:var(--chef-tone-ink);color:var(--chef-tone)
 }
 .chef-menu-form-section{display:flex;flex-direction:column;gap:9px;min-width:0}
-.chef-menu-form-section[hidden],.chef-menu-dish-results[hidden],.chef-menu-category-options[hidden],.chef-menu-selected-dish[hidden]{display:none!important}
+.chef-menu-form-section[hidden],.chef-menu-dish-results[hidden],.chef-menu-selected-dish[hidden]{display:none!important}
 .chef-menu-form-field{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:12px;color:inherit}
 .chef-menu-form-field>.chef-input{
  width:100%;min-height:46px;padding:11px 12px;
@@ -124,26 +124,6 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-menu-dish-result:active,.chef-menu-dish-result:hover{background:rgba(255,255,255,.08)}
 .chef-menu-dish-result small{font-size:11px;color:rgba(245,245,247,.68);text-align:right}
 .chef-menu-dish-status{padding:9px;margin:0;font-size:12px;color:inherit}
-.chef-menu-category-trigger{
- display:flex;align-items:center;justify-content:space-between;
- width:100%;min-height:46px;padding:10px 13px;border:0;border-radius:13px;
- background:color-mix(in srgb,var(--chef-inner) 78%,#11261f 22%);
- color:#f5f5f7;font-size:14px;font-weight:400;text-align:left
-}
-.chef-menu-category-trigger::after{
- content:"";flex:0 0 9px;width:9px;height:9px;margin-left:8px;
- border:solid #c9c9cf;border-width:0 2px 2px 0;transform:rotate(45deg)
-}
-.chef-menu-category-trigger[aria-expanded=true]::after{transform:rotate(225deg)}
-.chef-menu-category-options{
- display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;
- padding:7px;border-radius:13px;background:color-mix(in srgb,var(--chef-inner) 86%,#0e1b1c 14%)
-}
-.chef-menu-category-option{
- min-height:40px;padding:9px;border:0;border-radius:9px;
- background:rgba(255,255,255,.07);color:#f5f5f7;text-align:left;
- font-size:12px;line-height:1.3
-}
 .chef-menu-proposal-hint{margin:2px 0 0;color:inherit;opacity:.84;font-size:12px;line-height:1.45}
 .chef-menu-editor .chef-edit-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:2px 0 0}
 .chef-menu-editor .chef-edit-actions>button{
@@ -221,7 +201,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-photo-large{max-width:95%;max-height:75dvh;object-fit:contain}
 .chef-photo-close{position:absolute;top:36px;right:20px;border:0;background:#2b2b33;color:#fff;border-radius:50%;width:43px;height:43px;font-size:27px}
 .chef-option-list{display:flex;flex-direction:column;gap:10px}
-.chef-option-card{display:block;border:0;border-radius:13px;background:var(--chef-inner);color:var(--chef-tone-ink);margin:0;padding:14px;overflow:hidden;box-shadow:none}
+.chef-option-card{display:block;border:0;border-radius:18px;background:color-mix(in srgb,var(--chef-tone) 82%,white 18%);color:var(--chef-tone-ink);margin:0;padding:16px 17px;overflow:hidden;box-shadow:none}
 .chef-option-head{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;cursor:pointer}
 .chef-option-head::-webkit-details-marker{display:none}
 .chef-option-label{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center;line-height:1.3}
@@ -331,32 +311,68 @@ textarea.chef-input{min-height:68px;resize:vertical}
  #screen.chef-screen-home .chef-week-menu-highlight .chef-dish-photo-frame{width:74px;height:74px}
  #screen.chef-screen-home .chef-week-detail>.chef-week-menu-highlight{padding:12px}
 }
-/* Player Planos-derived category flow, scoped to published Chef prescriptions. */
-.chef-plan-intro{margin:4px 2px 17px;color:var(--muted);font-size:13px;line-height:1.5}
-.chef-plan-categories{display:flex;flex-direction:column;gap:9px}
-.chef-plan-category{
- display:flex;align-items:center;gap:12px;width:100%;min-height:61px;
- border:0;border-radius:13px;padding:10px 16px;
- background:#242429;color:#f5f5f7;text-align:left;
+/* Player Planos > Todos / Cores: reuse the approved category and filter
+   geometry, not an invented colour-dot universal card family. */
+#screen.chef-screen-plans .plans-filters{
+ display:flex;flex-wrap:nowrap;align-items:center;gap:9px;
+ width:100%;overflow-x:auto;overscroll-behavior-x:contain;
+ -webkit-overflow-scrolling:touch;scrollbar-width:none;
+ padding:2px 1px 9px;margin:0 0 14px
 }
-.chef-plan-category-mark{
- display:grid;place-items:center;flex:none;width:37px;height:37px;
- border-radius:11px;background:var(--chef-tone);
+#screen.chef-screen-plans .plans-filters::-webkit-scrollbar{display:none}
+#screen.chef-screen-plans .plans-filter{
+ flex:0 0 auto;min-width:0;min-height:42px;border:0;border-radius:999px;
+ padding:10px 17px;background:#252529;color:#e7e7ea;
+ font-size:14px;font-weight:550;white-space:nowrap;line-height:1.2
 }
-.chef-plan-category-symbol{width:15px;height:15px;border-radius:50%;background:var(--chef-tone-ink)}
-.chef-plan-category-name{flex:1;min-width:0;font-size:16px;font-weight:400}
-.chef-plan-category-arrow{
- width:9px;height:9px;margin:0 4px 0 auto;
- border:solid #c9c9cf;border-width:0 2px 2px 0;
- transform:rotate(-45deg)
+#screen.chef-screen-plans .plans-filter.selected{background:#f0f0f2;color:#16161a}
+#screen.chef-screen-plans .plans-subfilters{
+ display:flex;flex-wrap:wrap;gap:8px;margin:0 0 19px
 }
-.chef-plan-back-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 16px}
-.chef-plan-back{display:flex;align-items:center;gap:6px;min-height:40px;padding:6px 12px 6px 5px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:14px}
-.chef-plan-back-arrow{font-size:28px;line-height:.8}
-.chef-plan-active-label{padding:8px 12px;border-radius:999px;background:var(--chef-tone);color:var(--chef-tone-ink);font-size:12px;font-weight:500}
-#screen.chef-screen-plans>.chef-meal-card{width:100%;max-width:760px;margin:9px auto}
-@media(hover:hover){.chef-plan-category:hover{background:#29292e}}
-
+#screen.chef-screen-plans .plans-subfilters:empty{display:none}
+#screen.chef-screen-plans .plans-subfilter{
+ border:0;border-radius:999px;background:#29292e;color:#dddde3;
+ min-height:35px;padding:8px 13px;font-size:13px;font-weight:500
+}
+#screen.chef-screen-plans .plans-subfilter.selected{background:#44444b;color:#fff}
+#screen.chef-screen-plans .plans-all-group{
+ display:block;box-sizing:border-box;width:100%;min-width:0;
+ border:0;background:rgba(255,255,255,.055);border-radius:18px;
+ margin:0 0 9px;padding:0;overflow:hidden;box-shadow:none
+}
+#screen.chef-screen-plans .plans-all-group>summary{
+ display:flex;align-items:center;justify-content:space-between;gap:14px;
+ box-sizing:border-box;width:100%;min-height:86px;padding:11px 17px;
+ list-style:none;cursor:pointer;background:transparent;
+ font:500 16px/1.3 var(--mile-app-font);color:#f3f3f5
+}
+#screen.chef-screen-plans .plans-all-group>summary::-webkit-details-marker{display:none}
+#screen.chef-screen-plans .plans-all-group>summary::marker{content:""}
+#screen.chef-screen-plans .plans-all-group>summary::after{
+ content:"";display:block;box-sizing:border-box;width:9px;height:9px;flex:0 0 9px;
+ border:solid #bfc0c9;border-width:0 2px 2px 0;border-radius:1px;
+ transform:rotate(45deg);transition:transform .18s ease;margin:0 4px 4px
+}
+#screen.chef-screen-plans .plans-all-group[open]>summary::after{transform:rotate(225deg);margin-top:4px;margin-bottom:0}
+#screen.chef-screen-plans .plans-all-body{padding:0 17px 8px}
+#screen.chef-screen-plans .plans-all-body>.chef-meal-card{margin:9px 0}
+#screen.chef-screen-plans .chef-plan-detail>.chef-meal-card{margin:9px 0}
+#screen.chef-screen-plans .chef-meal-heading{display:flex;flex-wrap:wrap}
+#screen.chef-screen-plans .chef-meal-heading>strong{flex:1}
+#screen.chef-screen-plans .chef-plan-header-kcal{
+ margin-left:auto;flex:none;font-size:11px;font-weight:500;line-height:1.2;color:var(--chef-tone-ink)
+}
+#screen.chef-screen-plans .chef-plan-header-macros{
+ display:none;align-items:center;flex-wrap:wrap;gap:10px;margin:3px 0 7px 47px;
+ font-size:12px;font-weight:400
+}
+#screen.chef-screen-plans .chef-meal-card[open] .chef-plan-header-macros{display:flex}
+#screen.chef-screen-plans .chef-plan-header-macros .protein{color:#90c9ec}
+#screen.chef-screen-plans .chef-plan-header-macros .carbs{color:#e2afa0}
+#screen.chef-screen-plans .chef-plan-header-macros .fat{color:#eed18c}
+@media(prefers-reduced-motion:reduce){
+ #screen.chef-screen-plans .plans-all-group>summary::after{transition:none}
+}
 /* The seven menu cards already carry dates; navigation changes whole weeks. */
 .chef-menu-week-navigation{
  display:grid;grid-template-columns:40px minmax(0,1fr) 40px;
@@ -379,7 +395,10 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-menu-entry{background:var(--chef-tone);border-radius:13px;padding:13px 12px;color:var(--chef-tone-ink);margin:10px 0}
 .chef-menu-meal-label{font-size:16px;font-weight:400;margin-bottom:4px}
 .chef-menu-entry .chef-meal-dish{padding:0;align-items:center}
-.chef-menu-entry .chef-dish-name{font-size:14px;line-height:1.4}
+.chef-menu-entry .chef-dish-name{font-size:14px;font-weight:400;line-height:1.4}
+.chef-menu-entry.chef-menu-unassigned{background:#303135;color:#f2f2f4}
+.chef-menu-entry.chef-menu-unassigned .chef-menu-meal-label{color:#f2f2f4}
+.chef-menu-entry.chef-menu-unassigned .chef-dish-pending{color:#a4a4ad;font-size:12px;font-weight:400;opacity:1}
 .chef-menu-edit-button{display:inline-flex;border:0;border-radius:999px;padding:8px 12px;margin:12px 0 0;color:inherit;background:#0002;font-size:12px}
 .chef-recipes-caption{font-size:13px;color:#a9a9b4}
 .chef-recipes-search{width:100%;min-height:46px;border-radius:13px;border:0;background:#242429;color:#f5f5f7;padding:11px 13px;font-size:16px}
