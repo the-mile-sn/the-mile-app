@@ -92,9 +92,10 @@ textarea.chef-input{min-height:68px;resize:vertical}
 /* Exact official Hugeicons are rendered inline by chef.js. */
 .mile-icon{display:inline-flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;background:transparent;-webkit-mask:none;mask:none}
 .mile-icon svg{display:block;width:100%;height:100%;flex:none}
-.chef-daily-summary{margin:12px 0 19px;padding:13px 13px 14px;background:#17171a;border-radius:17px}
-.chef-summary-header{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:15px;margin:0 0 19px}
-.chef-summary-header strong{font-weight:550}.chef-microcycle{padding:5px 10px;border-radius:999px;background:#29292e;color:#d8d8df;font-size:12px}
+.chef-daily-summary{margin:11px 0 18px;padding:13px 14px 12px;background:#17171a;border-radius:17px}
+.chef-summary-header{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:14px;line-height:1.3;margin:0 0 18px}
+.chef-summary-header strong{font-weight:500}
+.chef-microcycle{padding:5px 9px;border-radius:999px;background:#29292e;color:#d8d8df;font-size:12px;font-weight:400}
 .chef-day-colors{display:flex;gap:10px;align-items:stretch;justify-content:space-around}
 .chef-day-color{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:8px;color:var(--chef-tone-ink);font-size:12px}
 .chef-day-color .mile-icon{width:23px;height:23px}.chef-day-bar{display:block;width:100%;height:7px;background:var(--chef-tone);border-radius:999px;margin-top:3px}
@@ -335,11 +336,6 @@ textarea.chef-input{min-height:68px;resize:vertical}
  65%{opacity:.75;transform:translateY(-1px) scale(1.015,1.06)}
  100%{opacity:0;transform:translateY(0) scale(1)}
 }
-/* Daily compact summary in the same visual rhythm as Menus. */
-.chef-daily-summary{margin:11px 0 18px;padding:13px 13px 12px;border-radius:17px}
-.chef-summary-header{font-size:14px;gap:6px;margin:0 0 18px;line-height:1.3}
-.chef-summary-header strong{font-weight:500}
-.chef-microcycle{font-size:12px;font-weight:400;padding:5px 9px}
 /* Floating liquid-glass navigation: same material, outline, motion and geometry as players. */
 #chef-nav.bottom-nav{
  position:fixed!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
@@ -392,10 +388,6 @@ textarea.chef-input{min-height:68px;resize:vertical}
  box-sizing:border-box;
  margin-left:auto!important;
  margin-right:auto!important;
-}
-#screen.chef-screen-home>.chef-daily-summary{
- padding-left:14px!important;
- padding-right:14px!important;
 }
 /* A single prescribed option is part of the meal itself, not a second card. */
 #screen .chef-option-list>.chef-single-option{
