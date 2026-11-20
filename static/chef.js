@@ -10,7 +10,7 @@ const labels = {
     password:"Palavra-passe", enter:"Entrar", player:"Jogador associado",
     home:"Início", plans:"Plano alimentar", menus:"Menus", profile:"Perfil",
     logout:"Terminar sessão", mealLunch:"Almoço", mealDinner:"Jantar",
-    pending:"A aguardar menu", readOnly:"Consulta do planeamento nutricional",
+    pending:"Menu por atribuir", readOnly:"Consulta do planeamento nutricional",
     week:"Semana de planeamento", weekMenu:"Planeamento da semana",
     day:"Resumo do dia", selectColor:"Cor nutricional", noColor:"Sem cor atribuída",
     noPlan:"Não existe uma prescrição publicada para esta refeição e cor.",
@@ -24,7 +24,7 @@ const labels = {
     password:"Password", enter:"Sign in", player:"Assigned player",
     home:"Home", plans:"Meal plan", menus:"Menus", profile:"Profile",
     logout:"Sign out", mealLunch:"Lunch", mealDinner:"Dinner",
-    pending:"Awaiting menu", readOnly:"Nutrition planning overview",
+    pending:"Menu not assigned", readOnly:"Nutrition planning overview",
     week:"Planning week", weekMenu:"Weekly meal planning",
     day:"Day overview", selectColor:"Nutrition colour", noColor:"No colour assigned",
     noPlan:"No published prescription is available for this meal and colour.",
@@ -322,15 +322,11 @@ function editMenuForm(date,meal,item,slot){
  const modes=node("div","chef-menu-mode-choices");
  const modesList=[
   ["dish",pt?"Prato aprovado":"Approved dish"],
-  ["category",pt?"Categoria":"Category"],
   ["proposal",pt?"Sugerir prato":"Suggest dish"]
  ];
- let mode=item?.kind==="category"?"category":"dish";
+ let mode="dish";
  let selectedDish=item?.kind==="dish"&&item.dish_id
    ?{id:item.dish_id,name:asText(item.value)}:null;
- let selectedCategory=item?.kind==="category"?item.value:"Carne branca";
- const categories=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"];
- if(!categories.includes(selectedCategory))selectedCategory=categories[0];
  const modeButtons=new Map();
  const dishArea=node("div","chef-menu-form-section");
  const dishField=node("label","chef-menu-form-field");
@@ -343,26 +339,6 @@ function editMenuForm(date,meal,item,slot){
  const results=node("div","chef-menu-dish-results");
  results.hidden=true;results.setAttribute("aria-label",pt?"Pratos aprovados":"Approved dishes");
  dishArea.append(dishField,selected,results);
- const categoryArea=node("div","chef-menu-form-section");
- categoryArea.append(node("p","chef-menu-form-label",pt?"Selecionar categoria":"Select category"));
- const categoryTrigger=node("button","chef-menu-category-trigger");
- categoryTrigger.type="button";categoryTrigger.setAttribute("aria-expanded","false");
- const categoryOptions=node("div","chef-menu-category-options");categoryOptions.hidden=true;
- categoryOptions.setAttribute("aria-label",pt?"Categorias disponíveis":"Available categories");
- const syncCategory=()=>{categoryTrigger.textContent=selectedCategory;};
- for(const value of categories){
-  const option=node("button","chef-menu-category-option",value);option.type="button";
-  option.onclick=()=>{
-   selectedCategory=value;syncCategory();categoryOptions.hidden=true;
-   categoryTrigger.setAttribute("aria-expanded","false");
-  };
-  categoryOptions.append(option);
- }
- categoryTrigger.onclick=()=>{
-  categoryOptions.hidden=!categoryOptions.hidden;
-  categoryTrigger.setAttribute("aria-expanded",String(!categoryOptions.hidden));
- };
- syncCategory();categoryArea.append(categoryTrigger,categoryOptions);
  const proposalArea=node("div","chef-menu-form-section");
  const proposalLabel=node("label","chef-menu-form-field");
  proposalLabel.append(node("span","",pt?"Nome do prato a propor":"Dish name to suggest"));
@@ -375,7 +351,7 @@ function editMenuForm(date,meal,item,slot){
  proposalArea.append(proposalLabel,noteLabel,node("p","chef-menu-proposal-hint",
   pt?"A sugestão é enviada para validação e não altera o menu planeado."
     :"Suggestions are sent for review and do not change the planned menu."));
- holder.append(modes,dishArea,categoryArea,proposalArea);
+ holder.append(modes,dishArea,proposalArea);
  const feedback=node("p","chef-feedback");feedback.setAttribute("role","status");
  feedback.setAttribute("aria-live","polite");
  const actions=node("div","chef-edit-actions");
@@ -389,8 +365,8 @@ function editMenuForm(date,meal,item,slot){
  };
  const showMode=()=>{
   for(const [key,button]of modeButtons)button.setAttribute("aria-pressed",String(mode===key));
-  dishArea.hidden=mode!=="dish";categoryArea.hidden=mode!=="category";proposalArea.hidden=mode!=="proposal";
-  results.hidden=true;categoryOptions.hidden=true;categoryTrigger.setAttribute("aria-expanded","false");
+  dishArea.hidden=mode!=="dish";proposalArea.hidden=mode!=="proposal";
+  results.hidden=true;
   feedback.textContent="";
  };
  for(const [key,caption] of modesList){
@@ -450,9 +426,9 @@ function editMenuForm(date,meal,item,slot){
     return;
    }
    await request("/api/v2/chef/menus","PUT",{
-    menu_date:date,meal,kind:mode,
-    value:mode==="dish"?selectedDish.name:selectedCategory,
-    dish_id:mode==="dish"?selectedDish.id:null
+    menu_date:date,meal,kind:"dish",
+    value:selectedDish.name,
+    dish_id:selectedDish.id
    });
    await loadWeek();
   }catch(err){feedback.textContent=txt().fail;}
@@ -529,7 +505,7 @@ function iconForMeal(meal){
  icon.dataset.chefSvg="true";
  return icon;
 }
-let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus",chefPlanSelectedColor=null;
+let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus",chefPlanCategory="todos",chefPlanSelectedColor=null;
 const validColors=["orange","yellow","blue","green","vp"];
 function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
@@ -567,7 +543,7 @@ function appendChefFoodItems(host,items){
   if(text)host.append(node("div","chef-option-food",text));
  }
 }
-function chefOptionCards(date,meal,colorOverride=null){
+function chefOptionCards(date,meal,colorOverride=null,inPlan=false){
  const color=colorOverride||colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
  const list=node("div","chef-option-list");
  if(!options.length){
@@ -581,7 +557,7 @@ function chefOptionCards(date,meal,colorOverride=null){
   const inline=node("div","chef-single-option");
   if(option.title)inline.append(node("strong","chef-single-title",asText(option.title)));
   const nutrition=chefNutrition(option.totals);
-  if(nutrition)inline.append(nutrition);
+  if(nutrition&&!inPlan)inline.append(nutrition);
   appendChefFoodItems(inline,option.items);
   list.append(inline);
   return list;
@@ -664,7 +640,22 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOve
   }
  }
  heading.append(symbol,title);
- heading.append(node("span","chef-chevron"));head.append(heading);
+ if(onlyPrescription){
+  // Average is computed only from the already published Chef option totals.
+  const options=prescriptions[effectiveTone]?.[meal]||[];
+  const totals=options.map(o=>o.totals).filter(t=>t&&
+   ["kcal","protein_g","carbs_g","fat_g"].every(k=>Number.isFinite(Number(t[k]))));
+  if(totals.length){
+   const avg=key=>Math.round(totals.reduce((sum,t)=>sum+Number(t[key]),0)/totals.length);
+   heading.append(node("span","chef-plan-header-kcal",avg("kcal")+" kcal"));
+   const macros=node("div","chef-plan-header-macros");
+   for(const [key,cls] of [["protein_g","protein"],["carbs_g","carbs"],["fat_g","fat"]])
+    macros.append(node("span",cls,avg(key)+" g"));
+   head.append(heading);
+   head.append(macros);
+  }else head.append(heading);
+ }else head.append(heading);
+ heading.append(node("span","chef-chevron"));
  // A Chef must see the planned dish and its photo even when the meal is closed.
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
   const preview=node("div","chef-meal-preview");
@@ -680,7 +671,7 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOve
 // A single content path powers the daily expandable card and the weekly inline
 // detail; editing, execution and prescription rendering stay identical.
 function appendChefMealContents(body,date,meal,onlyPrescription=false,colorOverride=null){
- body.append(chefOptionCards(date,meal,colorOverride));
+ body.append(chefOptionCards(date,meal,colorOverride,onlyPrescription));
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
 }
 function renderChefDaily(root){
@@ -794,49 +785,55 @@ function publishedChefColors(){
  return validColors.filter(color=>mealOrder.some(meal=>
    Array.isArray(prescriptions[color]?.[meal])&&prescriptions[color][meal].length>0));
 }
+/* Player Planos' Todos/Cores navigation, adapted only to actual Chef
+   published prescription data. No new nutritional entities are synthesized. */
 function renderPlan(root){
  const available=publishedChefColors();
- root.append(sectionTitle(txt().plans));
+ const filters=node("nav","plans-filters");
+ filters.setAttribute("aria-label",lang==="pt"?"Categorias de planos":"Plan categories");
+ for(const [key,label] of [["todos",lang==="pt"?"Todos":"All"],["cores",lang==="pt"?"Cores":"Colours"]]){
+  const button=node("button","plans-filter"+(chefPlanCategory===key?" selected":""),label);
+  button.type="button";button.setAttribute("aria-pressed",String(chefPlanCategory===key));
+  button.onclick=()=>{if(chefPlanCategory!==key){chefPlanCategory=key;chefPlanSelectedColor=null;render();}};
+  filters.append(button);
+ }
+ root.append(filters);
+ const sub=node("nav","plans-subfilters");
+ sub.setAttribute("aria-label",lang==="pt"?"Selecionar plano":"Select plan");
+ const detail=node("div","chef-plan-detail");
+ root.append(sub,detail);
  if(!available.length){
-  root.append(node("p","muted",lang==="pt"
-   ?"Ainda não existem planos alimentares publicados."
-   :"No meal plans have been published yet."));
+  detail.append(node("p","muted",lang==="pt"?"Ainda não existem planos alimentares publicados.":"No meal plans have been published yet."));
   return;
  }
- if(!available.includes(chefPlanSelectedColor))chefPlanSelectedColor=null;
- if(!chefPlanSelectedColor){
-  root.append(node("p","chef-plan-intro",lang==="pt"
-   ?"Consulta as prescrições publicadas por cor nutricional."
-   :"View published prescriptions by nutritional colour."));
-  const categories=node("div","chef-plan-categories");
-  for(const color of available){
-   const category=node("button","chef-plan-category");
-   category.type="button";
-   category.setAttribute("aria-label",lang==="pt"
-     ?"Abrir plano "+(colorText[lang][color]||color)
-     :"Open "+(colorText[lang][color]||color)+" plan");
-   const mark=node("span","chef-plan-category-mark tone-"+color);
-   mark.append(node("span","chef-plan-category-symbol"));
-   const caption=node("span","chef-plan-category-name",colorText[lang][color]||color);
-   category.append(mark,caption,node("span","chef-plan-category-arrow"));
-   category.onclick=()=>{chefPlanSelectedColor=color;render();};
-   categories.append(category);
+ const renderColor=(color,target)=>{
+  for(const meal of mealOrder){
+   if(!(prescriptions[color]?.[meal]||[]).length)continue;
+   target.append(renderChefMeal(dateKey(selectedDay),meal,false,true,color));
   }
-  root.append(categories);return;
+ };
+ if(chefPlanCategory==="cores"){
+  if(!available.includes(chefPlanSelectedColor))chefPlanSelectedColor=available[0];
+  for(const color of available){
+   const button=node("button","plans-subfilter"+(chefPlanSelectedColor===color?" selected":""),
+     colorText[lang][color]||color);
+   button.type="button";button.setAttribute("aria-pressed",String(chefPlanSelectedColor===color));
+   button.onclick=()=>{chefPlanSelectedColor=color;render();};
+   sub.append(button);
+  }
+  renderColor(chefPlanSelectedColor,detail);return;
  }
- const bar=node("div","chef-plan-back-bar");
- const back=node("button","chef-plan-back");
- back.type="button";
- back.append(node("span","chef-plan-back-arrow","‹"),
-   node("span","",lang==="pt"?"Planos":"Plans"));
- back.onclick=()=>{chefPlanSelectedColor=null;render();};
- const colorLabel=node("span","chef-plan-active-label tone-"+chefPlanSelectedColor,
-   colorText[lang][chefPlanSelectedColor]||chefPlanSelectedColor);
- bar.append(back,colorLabel);root.append(bar);
- const date=dateKey(selectedDay);
- for(const meal of mealOrder){
-  if(!(prescriptions[chefPlanSelectedColor]?.[meal]||[]).length)continue;
-  root.append(renderChefMeal(date,meal,false,true,chefPlanSelectedColor));
+ for(const color of available){
+  const group=node("details","plans-all-group");
+  const heading=node("summary","",colorText[lang][color]||color);
+  const body=node("div","plans-all-body");
+  group.append(heading,body);
+  group.addEventListener("toggle",()=>{
+   if(group.open&&!body.dataset.loaded){
+    body.dataset.loaded="true";renderColor(color,body);paintChefIcons();
+   }
+  });
+  detail.append(group);
  }
 }
 function renderChefMenuWeekNavigation(root){
@@ -871,7 +868,7 @@ function renderChefMenuDay(root,key){
  card.append(head);
  for(const meal of ["lunch","dinner"]){
   const item=plannedMenu(key,meal),color=mealTone(key,meal);
-  const slot=node("article","chef-menu-entry tone-"+color);
+  const slot=node("article","chef-menu-entry "+(item?"tone-"+color:"tone-neutral chef-menu-unassigned"));
   slot.append(node("div","chef-menu-meal-label",mealNames[lang][meal]));
   appendChefMenuDish(slot,item,txt().pending);
   if(!previewReadOnly&&key>=dateKey(new Date())){
@@ -997,20 +994,6 @@ function render(){
   el("page-context").textContent=previewReadOnly
     ?(lang==="pt"?"Visualização administrativa · apenas leitura":"Admin preview · read-only")
     :txt().readOnly;
-  const start=monday(selectedDay),end=shift(start,6);
-  el("week-range").textContent=format(start,{day:"numeric",month:"short"})+" – "+
-    format(end,{day:"numeric",month:"short",year:"numeric"});
-  el("week-caption").textContent=txt().week;
-  const picker=el("day-picker");picker.replaceChildren();
-  for(let i=0;i<7;i++){
-    const date=shift(start,i);
-    const button=node("button",dateKey(date)===dateKey(selectedDay)?"active":"");
-    button.type="button";
-    button.append(node("small","",format(date,{weekday:"short"})),node("span","",String(date.getDate())));
-    button.setAttribute("aria-pressed",dateKey(date)===dateKey(selectedDay)?"true":"false");
-    button.onclick=()=>{selectedDay=date;render();};
-    picker.append(button);
-  }
   const nav=el("chef-nav");
   for(const [tab,caption] of Object.entries({
     home:txt().home,plans:txt().plans,menus:txt().menus,profile:txt().profile
@@ -1020,8 +1003,6 @@ function render(){
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
-  el("day-controls").hidden=activeTab==="home"||activeTab==="menus"||activeTab==="profile";
-  picker.hidden=activeTab==="home"||activeTab==="menus"||activeTab==="profile";
   for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
   const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();
   if(activeTab==="home")renderHome(screen);
@@ -1034,8 +1015,6 @@ function render(){
   syncChefSelection(nav);
 }
 el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();bounceChefSelection(el("chef-view-mode"));};});
-el("prev-week").onclick=async()=>{selectedDay=shift(selectedDay,-7);try{await loadWeek();}catch(err){showError(txt().fail);}};
-el("next-week").onclick=async()=>{selectedDay=shift(selectedDay,7);try{await loadWeek();}catch(err){showError(txt().fail);}};
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
   button.onclick=()=>{activeTab=button.dataset.tab;render();bounceChefSelection(el("chef-nav"));};
 });
