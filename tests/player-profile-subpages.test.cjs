@@ -34,13 +34,24 @@ test('original assessment navigation and CSS continue unchanged',()=>{
  assert.equal(css.split('{').length,css.split('}').length);
 });
 
-test('password inputs have accessible inline placeholders and hide hints on focus',()=>{
+test('password cards have visible floating labels without internal dividers or extra instructions',()=>{
+ assert.doesNotMatch(html,/profile-password-intro/);
+ assert.doesNotMatch(html,/Introduz a palavra-passe atual/);
  for(const label of ['Palavra-passe atual','Nova palavra-passe','Confirmar nova palavra-passe']){
-  assert.ok(html.includes('placeholder="'+label+'"'));
-  assert.ok(html.includes('<span class="profile-password-visually-hidden">'+label+'</span>'));
+  assert.ok(html.includes('<span class="profile-password-floating-label">'+label+'</span>'),label);
  }
- assert.match(css,/label\.profile-password-field input:focus::placeholder/);
- assert.match(css,/color:transparent!important/);
+ assert.equal((html.match(/placeholder=" "/g)||[]).length,3);
+ assert.equal((html.match(/class="profile-password-field"/g)||[]).length,3);
+ assert.match(css,/label\.profile-password-field:focus-within \.profile-password-floating-label/);
+ assert.match(css,/input:not\(:placeholder-shown\)\+\.profile-password-floating-label/);
+ assert.match(css,/top:12px;transform:translateY\(0\);font-size:12px/);
+ assert.match(css,/top:50%;max-width:calc\(100% - 36px\)/);
+ assert.match(css,/transform:translateY\(-50%\);pointer-events:none/);
+ assert.match(css,/transition:top 180ms ease,transform 180ms ease,font-size 180ms ease/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.doesNotMatch(css,/#profile \.profile-password-intro\{/);
+ assert.doesNotMatch(css,/profile-password-visually-hidden/);
+ assert.doesNotMatch(css,/#profile \.profile-password-page-form label\.profile-password-field input:focus::placeholder/);
  assert.match(html,/autocomplete="current-password"/);
  assert.match(html,/autocomplete="new-password"/);
 });
@@ -132,7 +143,7 @@ test('profile root uses the approved universal type and original read-only plan 
  assert.match(css,/#profile button\.profile-notifications-card\{[^}]*min-height:61px!important;[^}]*border-radius:13px!important;[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
  assert.match(css,/#profile \.profile-action\{[^}]*min-height:61px!important;[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
  assert.match(css,/#profile \.profile-actions-card\{[^}]*border-radius:17px/s);
- assert.match(html,/jogador-v2\.css\?v=268/);
+ assert.match(html,/jogador-v2\.css\?v=\d+/);
 });
 
 test('profile subpages share the recipe back button geometry and page title hierarchy',()=>{
@@ -146,9 +157,9 @@ test('profile subpages share the recipe back button geometry and page title hier
 });
 
 test('profile password form keeps accessible semantics and cleans conflicting styles',()=>{
- assert.match(css,/#profile \.profile-password-intro\{[^}]*font-size:14px;[^}]*font-weight:var\(--mile-type-regular,400\)/s);
+ assert.doesNotMatch(css,/#profile \.profile-password-intro\{/);
  assert.match(css,/#profile \.profile-password-page-form\{\s*background:transparent!important;/);
- assert.match(css,/#profile \.profile-password-page-form label\.profile-password-field input\{[^}]*height:54px!important;min-height:54px!important;border:0!important;[^}]*border-radius:20px!important;[^}]*font-size:16px!important;[^}]*font-weight:var\(--mile-type-regular,400\)!important/s);
+ assert.match(css,/#profile \.profile-password-page-form label\.profile-password-field input\{[^}]*height:76px!important;min-height:76px!important;border:0!important;[^}]*border-radius:13px!important;[^}]*font-size:16px!important;[^}]*font-weight:var\(--mile-type-regular,400\)!important/s);
  assert.match(css,/#profile \.profile-password-page-form button\.profile-password-save\{[^}]*font-size:14px!important;[^}]*font-weight:var\(--mile-type-medium,500\)!important/s);
  assert.match(html,/autocomplete="current-password"/);
  assert.match(html,/autocomplete="new-password"/);
