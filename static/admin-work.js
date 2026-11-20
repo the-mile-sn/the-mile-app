@@ -160,7 +160,7 @@
   const actions=make("div","tm-work-line-actions");
   const status=make("span","tm-work-task-state "+(item.status==="done"?"is-done":"is-open"),item.status==="done"?"Concluída":"Por fazer");
   actions.append(status);
-  const toggle=make("button","tm-work-line-action",item.status==="done"?"Reabrir":"Concluir");
+  const toggle=make("button","tm-work-line-action "+(item.status==="done"?"is-secondary":"is-primary"),item.status==="done"?"Reabrir":"Concluir");
   toggle.type="button";
   toggle.addEventListener("click",async()=>{
    toggle.disabled=true;
@@ -170,7 +170,7 @@
    }catch(error){$("tm-work-task-list").prepend(make("p","tm-work-empty",error.message));}
    finally{toggle.disabled=false;}
   });
-  const edit=make("button","tm-work-line-action","Editar");edit.type="button";
+  const edit=make("button","tm-work-line-action is-secondary","Editar");edit.type="button";
   edit.addEventListener("click",()=>openTask(item));
   actions.append(toggle,edit);
   row.append(copy,actions);return row;
@@ -209,7 +209,7 @@
  async function refreshTasks(){
   if(!dashboard)return;
   const token=++taskRequest;
-  const filter=$("tm-work-task-filter")?.value||"open";
+  const filter=$("tm-work-task-filter")?.value||"all";
   const list=$("tm-work-task-list");
   list.replaceChildren(make("p","tm-work-empty","A consultar tarefas…"));
   try{
@@ -224,41 +224,56 @@
    if(token===taskRequest)list.replaceChildren(make("p","tm-work-empty",error.message));
   }
  }
+ // The Dashboard shows an empty checkbox until a task is completed.
+ // Completed tasks remain visible and can be reopened without navigation.
  async function refreshDashboardTasks(){
   if(!dashboard||dashboard.hidden)return;
   const token=++dashRequest,list=$("tm-db-tasks-list");
   if(!list)return;
   list.replaceChildren(make("p","tm-db-task-empty","A consultar tarefas…"));
   try{
-   // Include pending tasks without a date. A deadline is optional, not a reservation.
-   const data=await api("/tasks?status=open");
+   const data=await api("/tasks?status=all");
    if(token!==dashRequest)return;
-   const pending=data.tasks||[];
+   const all=data.tasks||[];
+   const pending=all.filter(item=>item.status==="open");
+   const completed=all.filter(item=>item.status==="done");
+   const visible=completed.length?pending.slice(0,2).concat(completed.slice(0,1)):
+    pending.slice(0,3);
+   if(!pending.length&&completed.length)visible.splice(0,visible.length,...completed.slice(0,3));
    list.replaceChildren();
-   if(!pending.length){list.append(make("p","tm-db-task-empty","Sem tarefas por fazer."));return;}
-   for(const item of pending.slice(0,3)){
-    const row=make("div","tm-db-task-row");
-    const done=make("button","tm-db-task-check");
-    done.type="button";done.setAttribute("aria-label","Concluir tarefa: "+item.title);
-    done.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>';
-    done.addEventListener("click",async()=>{
-     done.disabled=true;
+   if(!all.length){list.append(make("p","tm-db-task-empty","Ainda não há tarefas."));return;}
+   for(const item of visible){
+    const isDone=item.status==="done";
+    const row=make("div","tm-db-task-row"+(isDone?" is-done":""));
+    const toggle=make("button","tm-db-task-check"+(isDone?" is-done":""));
+    toggle.type="button";
+    toggle.setAttribute("aria-pressed",String(isDone));
+    toggle.setAttribute("aria-label",(isDone?"Reabrir tarefa: ":"Concluir tarefa: ")+item.title);
+    if(isDone)toggle.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>';
+    toggle.addEventListener("click",async()=>{
+     toggle.disabled=true;
      try{
-      await api("/tasks/"+encodeURIComponent(item.id),"PUT",taskBody(item,"done"));
+      await api("/tasks/"+encodeURIComponent(item.id),"PUT",taskBody(item,isDone?"open":"done"));
       await Promise.all([refreshDashboardTasks(),refreshTasks()]);
-     }catch(error){list.prepend(make("p","tm-db-task-empty",error.message));done.disabled=false;}
+     }catch(error){
+      list.prepend(make("p","tm-db-task-empty",error.message));
+      toggle.disabled=false;
+     }
     });
     const copy=make("div","tm-db-task-copy");
     const edit=make("button","tm-db-task-title tm-db-task-edit",item.title);
     edit.type="button";edit.setAttribute("aria-label","Editar tarefa: "+item.title);
     edit.addEventListener("click",()=>openTask(item));
     copy.append(edit);
-    const due=item.due_date?(item.due_date<today()?"Em atraso":item.due_date===today()?"Hoje":readable(item.due_date)):"Sem prazo";
-    copy.append(make("span","tm-db-task-meta",due+" · "+(item.responsible_name||"Equipa")));
-    row.append(done,copy);list.append(row);
+    const due=item.due_date?(item.due_date<today()?"Em atraso":
+     item.due_date===today()?"Hoje":readable(item.due_date)):"Sem prazo";
+    copy.append(make("span","tm-db-task-meta",(isDone?"Concluída · ":"")+due+" · "+
+     (item.responsible_name||"Equipa")));
+    row.append(toggle,copy);list.append(row);
    }
-   if(pending.length>3||data.truncated){
-    const more=make("button","tm-db-task-more",data.truncated?"Ver todas as tarefas":"Ver todas ("+pending.length+")");
+   if(all.length>visible.length||data.truncated){
+    const more=make("button","tm-db-task-more",
+     data.truncated?"Ver todas as tarefas":"Ver todas ("+all.length+")");
     more.type="button";more.addEventListener("click",openTasksManager);list.append(more);
    }
   }catch(error){
