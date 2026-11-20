@@ -86,6 +86,27 @@ class AddedTimingTests(unittest.TestCase):
         self.assertFalse(timing.has_legacy(self.connection,"athlete","2026-11-21","game-1"))
         self.assertIsNone(timing.existing_timing(self.connection,"different","2026-11-21","game-1","second_half"))
 
+    def test_one_step_inline_jogo_form_and_empty_preview(self):
+        css=(ROOT/"static/jogador-v2.css").read_text(encoding="utf-8")
+        block=JS.split("const choices=Object.entries(periTimingLabels)",1)[1].split("return true;",1)[0]
+        self.assertIn("intra-add-moment-group",block)
+        self.assertIn("addButton.textContent='⊕ Adicionar'",block)
+        self.assertIn("picker.append(label,editorHost)",block)
+        self.assertIn("select.addEventListener('change'",block)
+        self.assertIn("showEditor().catch(error)",block)
+        self.assertNotIn("Escolher alimentos",block)
+        self.assertNotIn("intra-add-moment-start",block)
+        self.assertIn("onCancel=null",JS)
+        self.assertIn("if(typeof onCancel==='function')onCancel()",JS)
+        self.assertIn("if(extraTiming)removeAll.hidden=!checks.length",JS)
+        self.assertIn("if(!extraFoods.length)return",JS)
+        self.assertIn("progress.hidden=!extraFoods.length",JS)
+        self.assertIn("if(extraTiming)save.disabled=true",JS)
+        self.assertIn("extraTiming?Math.round(actual)+' kcal'",JS)
+        self.assertIn(".intra-add-moment-trigger[hidden]",css)
+        self.assertIn(".intra-add-moment-editor-host>.consumption-editor",css)
+        self.assertIn("sem etapa «Escolher alimentos»",GUIDE)
+
     def test_player_contract_reuses_editor_and_restores_only_game(self):
         self.assertIn("let pendingIntraMatchExpansion=null;",JS)
         self.assertIn("match?.open)pendingIntraMatchExpansion",JS)
