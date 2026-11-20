@@ -102,8 +102,10 @@ def read_range(connection, athlete_id, start, end):
         WHERE athlete_id=? AND meal_date BETWEEN ? AND ?
         ORDER BY meal_date,meal_key,event_id
     """, (athlete_id, start, end)).fetchall()
-    return [{**dict(row),
-             "prescription": json.loads(row["prescription_json"]),
-             "consumed_foods": json.loads(row["consumed_foods_json"]),
-             "nutrition": json.loads(row["nutrition_json"])}
-            for row in rows]
+    legacy = [{**dict(row),
+               "prescription": json.loads(row["prescription_json"]),
+               "consumed_foods": json.loads(row["consumed_foods_json"]),
+               "nutrition": json.loads(row["nutrition_json"])}
+              for row in rows]
+    import consumption_timing_v2
+    return consumption_timing_v2.merge_range(connection, athlete_id, start, end, legacy)
