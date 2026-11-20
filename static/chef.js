@@ -784,8 +784,8 @@ let chefWeekMovingCircle=null;
 function selectChefWeekDay(date,selection=null){
  const before=dateKey(selectedDay),after=dateKey(date);
  const from=el("screen").querySelector(".chef-week-day.selected strong")?.getBoundingClientRect();
- const offset=Math.round((date-monday(selectedDay))/86400000);
- const previousOffset=Math.round((selectedDay-monday(selectedDay))/86400000);
+ const offset=(date.getDay()+6)%7;
+ const previousOffset=(selectedDay.getDay()+6)%7;
  selectedDay=date;chefWeekSelection=selection;render();
  chefWeekMovingCircle?.remove();chefWeekMovingCircle=null;
  if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||
