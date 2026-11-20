@@ -994,20 +994,6 @@ function render(){
   el("page-context").textContent=previewReadOnly
     ?(lang==="pt"?"Visualização administrativa · apenas leitura":"Admin preview · read-only")
     :txt().readOnly;
-  const start=monday(selectedDay),end=shift(start,6);
-  el("week-range").textContent=format(start,{day:"numeric",month:"short"})+" – "+
-    format(end,{day:"numeric",month:"short",year:"numeric"});
-  el("week-caption").textContent=txt().week;
-  const picker=el("day-picker");picker.replaceChildren();
-  for(let i=0;i<7;i++){
-    const date=shift(start,i);
-    const button=node("button",dateKey(date)===dateKey(selectedDay)?"active":"");
-    button.type="button";
-    button.append(node("small","",format(date,{weekday:"short"})),node("span","",String(date.getDate())));
-    button.setAttribute("aria-pressed",dateKey(date)===dateKey(selectedDay)?"true":"false");
-    button.onclick=()=>{selectedDay=date;render();};
-    picker.append(button);
-  }
   const nav=el("chef-nav");
   for(const [tab,caption] of Object.entries({
     home:txt().home,plans:txt().plans,menus:txt().menus,profile:txt().profile
@@ -1017,8 +1003,6 @@ function render(){
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
-  el("day-controls").hidden=true;
-  picker.hidden=true;
   for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
   const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();
   if(activeTab==="home")renderHome(screen);
@@ -1031,8 +1015,6 @@ function render(){
   syncChefSelection(nav);
 }
 el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();bounceChefSelection(el("chef-view-mode"));};});
-el("prev-week").onclick=async()=>{selectedDay=shift(selectedDay,-7);try{await loadWeek();}catch(err){showError(txt().fail);}};
-el("next-week").onclick=async()=>{selectedDay=shift(selectedDay,7);try{await loadWeek();}catch(err){showError(txt().fail);}};
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
   button.onclick=()=>{activeTab=button.dataset.tab;render();bounceChefSelection(el("chef-nav"));};
 });
