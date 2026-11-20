@@ -45,9 +45,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .primary{margin-top:8px;border:0;border-radius:999px;background:#f5f5f7;color:#17171b;min-height:46px;padding:12px 18px;font-size:14px;font-weight:600}
 .error{color:#f1a6a6!important;min-height:1em}
 .loading{text-align:center;color:var(--muted);padding:80px 0}
-.chef-view-mode,.chef-menu-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#202024;border-radius:999px;border:0;box-sizing:border-box;padding:3px;margin:0 0 19px;height:38px;min-height:38px}
-.chef-view-mode button,.chef-menu-switch button{height:32px;min-height:32px;min-width:0;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:13px;font-weight:500;padding:4px 8px}
-.chef-view-mode button[aria-pressed=true],.chef-menu-switch button[aria-pressed=true]{background:#55555b}
+.chef-view-mode{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#202024;border-radius:999px;border:0;box-sizing:border-box;padding:3px;margin:0 0 19px;height:38px;min-height:38px}
+.chef-view-mode button{height:32px;min-height:32px;min-width:0;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:13px;font-weight:500;padding:4px 8px}
+.chef-view-mode button[aria-pressed=true]{background:#55555b}
 @media(max-width:640px){.page{width:calc(100% - 28px);padding:2px 0 130px}.top-details{right:12px}}
 /* Same approved 64px/20px floating field geometry as the Player Login. */
 label.mile-floating-field{position:relative;display:block;height:64px;min-height:64px;margin:0}
@@ -193,20 +193,20 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-photo-overlay{position:fixed;inset:0;background:#000d;z-index:100;display:flex;align-items:center;justify-content:center;padding:35px}
 .chef-photo-large{max-width:95%;max-height:75dvh;object-fit:contain}
 .chef-photo-close{position:absolute;top:36px;right:20px;border:0;background:#2b2b33;color:#fff;border-radius:50%;width:43px;height:43px;font-size:27px}
-.chef-option-list{display:flex;flex-direction:column;gap:10px}
-.chef-option-card{display:block;border:0;border-radius:18px;background:color-mix(in srgb,var(--chef-tone) 82%,white 18%);color:var(--chef-tone-ink);margin:0;padding:16px 17px;overflow:hidden;box-shadow:none}
-.chef-option-head{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;cursor:pointer}
+.chef-option-list{display:flex;flex-direction:column;gap:0}
+.chef-option-card{display:block;box-sizing:border-box;border:0;border-radius:13px;background:var(--chef-inner);color:var(--chef-option-body);margin:9px 0;padding:12px 14px;overflow:hidden;box-shadow:none}
+.chef-option-head{list-style:none;display:flex;align-items:center;gap:8px;min-height:0;cursor:pointer}
 .chef-option-head::-webkit-details-marker{display:none}
 .chef-option-label{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center;line-height:1.3}
-.chef-option-label small{font-size:12px;font-weight:400;color:inherit}
-.chef-option-label strong{font-size:15px;font-weight:500;line-height:1.35;color:inherit}
-.chef-option-arrow{border-color:#c9c9cf}
-.chef-option-body{padding:11px 0 5px}
+.chef-option-label small{font-size:12px;font-weight:400;color:var(--chef-option-label)}
+.chef-option-label strong{font-size:15px;font-weight:500;line-height:1.35;color:var(--chef-option-label)}
+.chef-option-arrow{border-color:#bfc0c9}
+.chef-option-body{padding:6px 0 5px}
 .chef-option-nutrition{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:0 0 14px;color:inherit;font-size:12px}
 .chef-option-nutrition span{padding-right:9px;border-right:1px solid currentColor}
 .chef-option-nutrition span:last-child{border-right:0;padding-right:0}
 .chef-option-nutrition .kcal{color:#a4dbb5}.chef-option-nutrition .protein{color:#90c9ec}.chef-option-nutrition .carbs{color:#e2afa0}.chef-option-nutrition .fat{color:#eed18c}
-.chef-option-food{padding:6px 0;line-height:1.45;font-size:14px;font-weight:400;color:inherit}
+.chef-option-food{padding:5px 0;line-height:1.45;font-size:14px;font-weight:400;color:var(--chef-option-body)}
 .chef-option-note{border-top:1px solid #ffffff30;margin-top:8px;padding:8px 0;font-size:13px}
 .chef-option-note p{font-size:13px}
 .chef-option-empty{font-size:13px;opacity:.8;padding:2px 5px}
@@ -349,6 +349,9 @@ textarea.chef-input{min-height:68px;resize:vertical}
 #screen.chef-screen-plans .plans-all-group[open]>summary::after{transform:rotate(225deg);margin-top:4px;margin-bottom:0}
 #screen.chef-screen-plans .plans-all-body{padding:0 17px 8px}
 #screen.chef-screen-plans .plans-all-body>.chef-meal-card{margin:9px 0}
+#screen.chef-screen-plans .chef-meal-body{padding:0 0 13px}
+#screen.chef-screen-plans .chef-option-card{margin:9px 12px}
+#screen.chef-screen-plans .chef-option-list>.chef-single-option{padding:9px 16px 12px}
 #screen.chef-screen-plans .chef-plan-detail>.chef-meal-card{margin:9px 0}
 #screen.chef-screen-plans .chef-meal-heading{display:flex;flex-wrap:wrap}
 #screen.chef-screen-plans .chef-meal-heading>strong{flex:1}
@@ -393,25 +396,25 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-menu-entry.chef-menu-unassigned .chef-menu-meal-label{color:#f2f2f4}
 .chef-menu-entry.chef-menu-unassigned .chef-dish-pending{color:#a4a4ad;font-size:12px;font-weight:400;opacity:1}
 .chef-menu-edit-button{display:inline-flex;border:0;border-radius:999px;padding:8px 12px;margin:12px 0 0;color:inherit;background:#0002;font-size:12px}
-.chef-recipes-caption{font-size:13px;color:#a9a9b4}
-.chef-recipes-search{width:100%;min-height:46px;border-radius:13px;border:0;background:#242429;color:#f5f5f7;padding:11px 13px;font-size:16px}
-.chef-recipes-list{display:grid;gap:9px;margin-top:17px}
-.chef-recipe-row{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#232328;border-radius:13px;padding:13px}
-.chef-recipe-row strong{font-size:14px;font-weight:400}.chef-recipe-row span{font-size:12px;color:#aaa}
-.chef-recipes-status{font-size:13px;color:#aaa}
 @media(min-width:680px){.chef-week-grid{max-width:760px;margin-left:auto;margin-right:auto}.chef-daily-summary,.chef-meal-card{max-width:760px;margin-left:auto;margin-right:auto}}
 @media(max-width:370px){.chef-week-grid{column-gap:3px}.chef-week-selected-column{left:calc(var(--chef-week-left-small) - 2px);width:calc((100% - 18px)/7 + 4px)}.chef-week-cell{min-height:64px}.chef-week-day strong{font-size:17px}.chef-week-day>span{font-size:9px}.chef-meal-head strong{font-size:16px}}
 @media(hover:hover){.chef-meal-head:hover,.chef-week-cell:not(.unavailable):hover,.bottom-nav button:hover{filter:brightness(1.1)}}
 @media(prefers-reduced-motion:reduce){.chef-chevron,.chef-option-arrow{transition:none}}
 
-/* The Mile Chef home parity — sourced from the current player UI, not PDFs. */
-/* Approved opaque palette B in jogador-v2.css, with matching light option surfaces. */
+/* Player Planos/Dia palette B: identical deep inner tones and text hierarchy. */
 .tone-orange{--chef-tone:var(--meal-orange);--chef-tone-ink:var(--meal-orange-text);--chef-inner:#623324}
 .tone-yellow{--chef-tone:var(--meal-yellow);--chef-tone-ink:var(--meal-yellow-text);--chef-inner:#57451E}
 .tone-green{--chef-tone:var(--meal-green);--chef-tone-ink:var(--meal-green-text);--chef-inner:#24543E}
 .tone-blue{--chef-tone:var(--meal-blue);--chef-tone-ink:var(--meal-blue-text);--chef-inner:#284D6C}
 .tone-vp{--chef-tone:var(--meal-vp);--chef-tone-ink:var(--meal-vp-text);--chef-inner:var(--meal-vp-inner)}
 .tone-neutral{--chef-tone:#303035;--chef-tone-ink:#f2f2f5;--chef-inner:#45454b}
+/* Exactly Player's semantic ink hierarchy, shared by every Chef meal context. */
+.tone-orange,.tone-yellow,.tone-blue,.tone-green,.tone-vp,.tone-neutral{
+ --chef-option-label:color-mix(in srgb,var(--chef-tone-ink) 75%,white);
+ --chef-option-body:color-mix(in srgb,var(--chef-tone-ink) 58%,white)
+}
+.tone-vp{--chef-option-label:color-mix(in srgb,var(--chef-tone-ink) 68%,white)}
+
 /* Exact player wordmark SVG. */
 .top .player-header-brand{position:static!important;transform:none!important;display:block!important;width:88px!important;height:auto!important;max-width:88px!important;margin:0 auto!important;color:#f4f4f7;letter-spacing:normal!important;pointer-events:none}
 .top .player-header-brand .player-header-wordmark{display:block;width:100%;height:auto;fill:currentColor}
@@ -497,15 +500,15 @@ textarea.chef-input{min-height:68px;resize:vertical}
 #screen .chef-option-list>.chef-single-option{
  padding:9px 4px 12px;margin:0;
  background:transparent;border:0;border-radius:0;
- color:var(--chef-tone-ink);
+ color:var(--chef-option-body);
 }
 #screen .chef-single-option>.chef-single-title{
  display:block;margin:0 0 12px;
- color:inherit;font-size:15px;font-weight:500;line-height:1.4;
+ color:var(--chef-option-label);font-size:15px;font-weight:500;line-height:1.4;
 }
 #screen .chef-single-option .chef-option-nutrition{margin:0 0 15px;padding:0}
 #screen .chef-single-option .chef-option-food{
- padding:6px 0;color:inherit;font-size:14px;line-height:1.45;font-weight:400;
+ padding:5px 0;color:var(--chef-option-body);font-size:14px;line-height:1.45;font-weight:400;
 }
 
 /* Chef lunch/dinner: player-consumption quick actions, matched geometry and palette. */

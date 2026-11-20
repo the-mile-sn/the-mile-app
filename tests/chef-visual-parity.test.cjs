@@ -16,7 +16,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=16/);
+ assert.match(html,/chef\.css\?v=17/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -95,17 +95,41 @@ test("Chef Planos reuses the Player Todos/Cores category family, without calenda
  assert.match(guide,/Planos — paridade com Jogadores/);
 });
 
-test("Menus uses a compact 38px switch and real week navigation without a duplicated day strip",()=>{
- assert.match(css,/\.chef-view-mode,\.chef-menu-switch\{[^}]*height:38px;min-height:38px/);
- assert.match(css,/\.chef-view-mode button,\.chef-menu-switch button\{[^}]*height:32px;min-height:32px/);
+test("Menus has only the week navigation; Recipes tab/list are disabled in Chef frontend",()=>{
+ assert.match(css,/\.chef-view-mode\{[^}]*height:38px;min-height:38px/);
+ assert.match(css,/\.chef-view-mode button\{[^}]*height:32px;min-height:32px/);
  assert.match(js,/function renderChefMenuWeekNavigation\(root\)/);
  assert.match(js,/renderChefMenuWeekNavigation\(root\)/);
+ assert.match(js,/function renderMenus\(root\)\{\s*renderChefMenuWeekNavigation\(root\)/);
  assert.match(js,/selectedDay=shift\(selectedDay,delta\*7\)/);
  assert.match(js,/if\(activeTab==="menus"&&!target\.closest\?\.\("\.chef-menu-week-navigation"\)\)return/);
- assert.doesNotMatch(js,/renderChefMenuDateStrip|chef-menu-week-strip|chef-menu-week-day/);
- assert.doesNotMatch(css,/\.chef-menu-week-strip\{|\.chef-menu-week-day\{/);
- assert.match(css,/\.chef-menu-week-navigation\{/);
- assert.match(guide,/não repetir o calendário de sete colunas/);
+ assert.doesNotMatch(js,/chefMenuMode|renderChefRecipes|chef-menu-switch|chef-recipes-list/);
+ assert.doesNotMatch(css,/\.chef-menu-switch|\.chef-recipes-caption|\.chef-recipes-search|\.chef-recipe-row/);
+ assert.match(js,/request\("\/api\/v2\/chef\/dishes\?q="\+encodeURIComponent\(search\.value\.trim\(\)\)\)/);
+ assert.match(guide,/Receitas — desativada na App de Chefs/);
+ assert.match(guide,/possível ferramenta futura de equivalências/);
+});
+test("Chef option palette and inner spacing match current Player Planos and Dia",()=>{
+ const player=fs.readFileSync("static/jogador-v2.css","utf8");
+ for(const token of ["#623324","#57451E","#284D6C","#24543E","#1B392A"])
+   assert.ok(css.includes(token),token+" inner surface is required");
+ assert.match(css,/\.chef-option-card\{[^}]*border-radius:13px;background:var\(--chef-inner\)/);
+ assert.match(css,/\.chef-option-card\{[^}]*margin:9px 0;padding:12px 14px/);
+ assert.match(css,/\.chef-option-head\{[^}]*min-height:0/);
+ assert.match(css,/\.chef-option-list\{[^}]*gap:0/);
+ assert.match(css,/\.chef-option-label strong\{[^}]*font-size:15px;font-weight:500/);
+ assert.match(css,/\.chef-option-label small\{[^}]*font-size:12px;font-weight:400/);
+ assert.match(css,/\.chef-option-food\{[^}]*font-size:14px;font-weight:400;color:var\(--chef-option-body\)/);
+ assert.match(css,/--chef-option-label:color-mix\(in srgb,var\(--chef-tone-ink\) 75%,white\)/);
+ assert.match(css,/--chef-option-body:color-mix\(in srgb,var\(--chef-tone-ink\) 58%,white\)/);
+ assert.match(css,/\.tone-vp\{--chef-option-label:color-mix\(in srgb,var\(--chef-tone-ink\) 68%,white\)/);
+ assert.match(css,/#screen\.chef-screen-plans \.chef-option-card\{margin:9px 12px\}/);
+ assert.match(css,/#screen\.chef-screen-plans \.chef-option-list>\.chef-single-option\{padding:9px 16px 12px\}/);
+ assert.match(player,/\.tone-orange\{--meal-ink:var\(--meal-orange-text\);--meal-inner:#623324\}/);
+ assert.match(player,/--option-label:color-mix\(in srgb,var\(--meal-ink\) 75%,white\)/);
+ assert.match(player,/--option-body:color-mix\(in srgb,var\(--meal-ink\) 58%,white\)/);
+ assert.doesNotMatch(css,/color-mix\(in srgb,var\(--chef-tone\) 82%,white 18%\)/);
+ assert.match(guide,/nunca a antiga mistura/);
 });
 test("Menus offers Approved dish / Suggestion but preserves historical category data",()=>{
  assert.match(js,/item\?"Alterar prato":"Definir prato"/);

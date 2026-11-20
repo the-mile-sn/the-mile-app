@@ -505,7 +505,7 @@ function iconForMeal(meal){
  icon.dataset.chefSvg="true";
  return icon;
 }
-let chefViewMode="day",chefWeekSelection=null,chefMenuMode="menus",chefPlanCategory="todos",chefPlanSelectedColor=null;
+let chefViewMode="day",chefWeekSelection=null,chefPlanCategory="todos",chefPlanSelectedColor=null;
 const validColors=["orange","yellow","blue","green","vp"];
 function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
@@ -884,42 +884,9 @@ function renderChefMenuDay(root,key){
  }
  root.append(card);
 }
-function renderChefRecipes(root){
- const description=node("p","chef-recipes-caption",
-  lang==="pt"?"Consulta dos pratos aprovados disponíveis para os menus.":"Approved dishes available for menus.");
- const search=node("input","chef-recipes-search");
- search.type="search";search.placeholder=lang==="pt"?"Pesquisar pratos aprovados":"Search approved dishes";
- search.setAttribute("aria-label",search.placeholder);
- const list=node("div","chef-recipes-list");
- root.append(description,search,list);
- let requestNumber=0;
- const find=async()=>{
-  const seq=++requestNumber;list.replaceChildren(node("p","chef-recipes-status",lang==="pt"?"A pesquisar…":"Searching…"));
-  try{
-   const result=await request("/api/v2/chef/dishes?q="+encodeURIComponent(search.value.trim()));
-   if(seq!==requestNumber||!list.isConnected)return;
-   list.replaceChildren();
-   for(const dish of result.dishes||[]){
-    const item=node("article","chef-recipe-row");
-    item.append(node("strong","",dish.name_pt));
-    item.append(node("span","",dish.category||""));
-    list.append(item);
-   }
-   if(!list.childElementCount)list.append(node("p","chef-recipes-status",txt().noData));
-  }catch(err){if(seq===requestNumber&&list.isConnected)list.replaceChildren(node("p","error",txt().fail));}
- };
- let debounce;search.oninput=()=>{clearTimeout(debounce);debounce=setTimeout(find,220);};
- find();
-}
+/* Menus is the only published Chef view. The dish catalogue is still used
+   by the approved-dish search inside editMenuForm, never as a separate tab. */
 function renderMenus(root){
- const switcher=node("nav","chef-menu-switch");switcher.setAttribute("aria-label","Menus e receitas");
- for(const [key,caption] of [["menus",txt().menus],["recipes",lang==="pt"?"Receitas":"Recipes"]]){
-  const button=node("button","",caption);button.type="button";button.dataset.mode=key;
-  button.setAttribute("aria-pressed",String(chefMenuMode===key));
-  button.onclick=()=>{chefMenuMode=key;render();};switcher.append(button);
- }
- root.append(switcher);
- if(chefMenuMode==="recipes"){renderChefRecipes(root);return;}
  renderChefMenuWeekNavigation(root);
  const start=monday(selectedDay);
  for(let offset=0;offset<7;offset++)renderChefMenuDay(root,dateKey(shift(start,offset)));
