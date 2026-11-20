@@ -686,130 +686,153 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 .tm-db-table tr[hidden]{display:none}
 @media(max-width:800px){.tm-db-title{align-items:flex-start}.tm-db-panel{padding:14px}.tm-db-week-heading{gap:20px}.tm-db-events{grid-template-columns:1fr}.tm-db-readonly{display:none}}
 
-/* Dashboard: events on left, incoming responses on right */
-#tm-dashboard .tm-db-today-columns{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(250px,1fr);gap:17px;align-items:start}
-#tm-dashboard .tm-db-today-main,#tm-dashboard .tm-db-today-recent{background:#1e2025;border-radius:12px;padding:17px 16px;min-width:0;min-height:130px}
-#tm-dashboard .tm-db-today-columns h3{font-size:13px;color:#e1e2e7;margin:0 0 14px;font-weight:650}
-#tm-dashboard .tm-db-today-columns .tm-db-events{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:5px;align-items:start}
-#tm-dashboard .tm-db-today-recent #tm-db-recent{display:flex;flex-direction:column;gap:3px;max-height:265px;overflow-y:auto}
-#tm-dashboard .tm-db-birthday{background:#343026!important;border-left:3px solid #e4c85d!important}
-#tm-dashboard .tm-db-birthday span{color:#f0dd9a}
-#tm-dashboard .tm-db-none{margin:12px 8px;color:#a5a6ae;font-size:12px}
-/* Dashboard miniagenda — dedicated component, uses existing admin theme tokens.
-   Does not change the standalone Agendamentos calendar or the event cards. */
-#tm-dashboard .tm-db-miniagenda-layout{
- display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr);
+/* Dashboard Hoje: one two-column overview, not a second booking calendar.
+   The day header uses the same right-aligned ‹ Hoje › control pattern. */
+#tm-dashboard .tm-db-today-columns{
+ display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);
  gap:16px;align-items:stretch
 }
-#tm-dashboard .tm-db-miniagenda-calendar,
-#tm-dashboard .tm-db-miniagenda-detail{
- box-sizing:border-box;min-width:0;padding:17px;
- border-radius:12px;background:var(--tm-ui-subcard);color:var(--tm-ui-text)
+#tm-dashboard .tm-db-today-main,
+#tm-dashboard .tm-db-today-recent,
+#tm-dashboard .tm-db-today-chat{
+ box-sizing:border-box;min-width:0;
+ background:var(--tm-ui-subcard);border-radius:12px;
+ padding:19px 17px;color:var(--tm-ui-text)
 }
-#tm-dashboard .tm-db-miniagenda-toolbar,
-#tm-dashboard .tm-db-miniagenda-day-heading{
- display:flex;justify-content:space-between;align-items:center;
- gap:10px;flex-wrap:wrap;margin-bottom:15px
+#tm-dashboard .tm-db-today-main{
+ display:flex;flex-direction:column;min-height:360px
 }
-#tm-dashboard .tm-db-miniagenda-toolbar strong{
- font:600 14px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
- text-transform:capitalize;color:var(--tm-ui-text)
+#tm-dashboard .tm-db-today-side{
+ display:flex;flex-direction:column;gap:15px;min-width:0
 }
-#tm-dashboard .tm-db-miniagenda-controls{display:flex;align-items:center;gap:5px}
-#tm-dashboard .tm-db-miniagenda-controls button{
- display:inline-flex;align-items:center;justify-content:center;
- min-width:33px;height:33px;padding:0 9px;border:0;border-radius:9px;
- font:500 12px/1 "Inter Tight","SF Pro Text",Arial,sans-serif;
- background:var(--tm-ui-search);color:var(--tm-ui-text);cursor:pointer
+#tm-dashboard .tm-db-today-columns h3{
+ margin:0;color:var(--tm-ui-text);
+ font:600 16px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif
 }
-#tm-dashboard .tm-db-miniagenda-controls svg{
- display:block;width:17px;height:17px;fill:none;
- stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round
+#tm-dashboard .tm-db-today-recent #tm-db-recent{
+ display:flex;flex-direction:column;gap:3px;
+ max-height:300px;overflow-y:auto;scrollbar-width:thin;
+ margin-top:14px
 }
-#tm-dashboard .tm-db-miniagenda-weekdays,
-#tm-dashboard .tm-db-miniagenda-days{
- display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px
-}
-#tm-dashboard .tm-db-miniagenda-weekdays span{
- padding:4px 0 8px;text-align:center;
- font:500 10px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:var(--tm-ui-muted)
-}
-#tm-dashboard .tm-db-miniagenda-days button{
- box-sizing:border-box;position:relative;display:flex;flex-direction:column;
- align-items:center;justify-content:center;gap:2px;
- min-width:0;min-height:39px;padding:5px 2px;
- border:1px solid transparent;border-radius:9px;background:transparent;
- color:var(--tm-ui-text);font:500 12px/1 "Inter Tight","SF Pro Text",Arial,sans-serif;
- cursor:pointer
-}
-#tm-dashboard .tm-db-miniagenda-days button.is-current{
- border-color:var(--tm-ui-divider)
-}
-#tm-dashboard .tm-db-miniagenda-days button[aria-pressed="true"]{
- background:var(--tm-ui-search);border-color:var(--tm-ui-text);font-weight:650
-}
-#tm-dashboard .tm-db-miniagenda-days button .tm-db-miniagenda-dot{
- display:block;width:5px;height:5px;border-radius:50%;
- background:#6bac85;flex:none
-}
-#tm-dashboard .tm-db-miniagenda-days button:not(:has(.tm-db-miniagenda-dot))::after{
- content:"";width:5px;height:5px
-}
-#tm-dashboard .tm-db-miniagenda-day-heading h3{
- font:600 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:var(--tm-ui-text);margin:0
-}
-#tm-dashboard .tm-db-miniagenda-day-heading span{
- font:400 11px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:var(--tm-ui-muted)
-}
-#tm-dashboard .tm-db-miniagenda-detail{
- display:flex;flex-direction:column;gap:0
-}
-#tm-dashboard .tm-db-miniagenda-bookings{
- display:flex;flex-direction:column;gap:7px;
- min-height:155px;max-height:240px;overflow-y:auto;scrollbar-width:thin
-}
-#tm-dashboard .tm-db-miniagenda-bookings>p{
- margin:5px 0;color:var(--tm-ui-muted);
+#tm-dashboard .tm-db-today-chat{flex:1}
+#tm-dashboard .tm-db-chat-placeholder{
+ display:flex;align-items:center;gap:12px;margin-top:15px;
+ min-height:62px;padding:12px;border-radius:10px;
+ background:var(--tm-ui-search);color:var(--tm-ui-muted);
  font:400 12px/1.5 "Inter Tight","SF Pro Text",Arial,sans-serif
 }
-#tm-dashboard .tm-db-miniagenda-booking{
- display:flex;align-items:center;gap:12px;width:100%;
- box-sizing:border-box;padding:10px 12px;border:0;border-radius:10px;
+#tm-dashboard .tm-db-chat-placeholder svg{
+ flex:none;width:20px;height:20px;color:var(--tm-ui-muted)
+}
+#tm-dashboard .tm-db-none{margin:12px 8px;color:var(--tm-ui-muted);font-size:12px}
+#tm-dashboard .tm-db-miniagenda-toolbar{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:14px;flex-wrap:wrap;margin-bottom:18px
+}
+#tm-dashboard .tm-db-miniagenda-toolbar h3{
+ margin:0;font:600 18px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ color:var(--tm-ui-text);text-transform:none
+}
+#tm-dashboard .tm-db-miniagenda-controls{display:flex;align-items:center;gap:7px}
+#tm-dashboard .tm-db-miniagenda-controls button{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ min-width:35px;height:35px;padding:0 10px;border:0;border-radius:10px;
  background:var(--tm-ui-search);color:var(--tm-ui-text);
- text-decoration:none;text-align:left
+ font:500 12px/1 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ cursor:pointer
 }
-#tm-dashboard .tm-db-miniagenda-booking-time{
- flex:0 0 80px;font:600 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
- white-space:nowrap
+#tm-dashboard .tm-db-miniagenda-controls svg{
+ display:block;width:18px;height:18px;fill:none;
+ stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round
 }
-#tm-dashboard .tm-db-miniagenda-booking-body{
- display:flex;flex-direction:column;gap:3px;min-width:0
+#tm-dashboard .tm-db-activity-list{
+ display:flex;flex-direction:column;gap:9px;
+ min-height:160px;max-height:390px;overflow-y:auto;scrollbar-width:thin;
 }
-#tm-dashboard .tm-db-miniagenda-booking-body strong{
- font:600 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:var(--tm-ui-text);overflow-wrap:anywhere
+#tm-dashboard .tm-db-activity-message{
+ margin:10px 0;color:var(--tm-ui-muted);
+ font:400 12px/1.5 "Inter Tight","SF Pro Text",Arial,sans-serif
 }
-#tm-dashboard .tm-db-miniagenda-booking-body small{
- font:400 11px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
+#tm-dashboard .tm-db-activity-row{
+ box-sizing:border-box;display:flex;align-items:center;
+ gap:13px;width:100%;min-width:0;min-height:65px;padding:10px 13px;
+ border:0;border-radius:11px;
+ background:var(--tm-ui-search);color:var(--tm-ui-text);
+ text-align:left;text-decoration:none;cursor:pointer;
+ font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ transition:background-color .15s ease
+}
+#tm-dashboard .tm-db-activity-row::before{
+ content:"";align-self:stretch;flex:0 0 3px;border-radius:4px;
+ background:var(--tm-ui-divider)
+}
+#tm-dashboard .tm-db-activity-row.is-appointment::before{background:#6ea6cf}
+#tm-dashboard .tm-db-activity-row.is-assessment::before{background:#9d87cc}
+#tm-dashboard .tm-db-activity-row.is-game::before{background:#57b580}
+#tm-dashboard .tm-db-activity-icon{
+ flex:0 0 29px;display:grid;place-items:center;
+ width:29px;height:29px;border-radius:9px;
+ color:var(--tm-ui-muted);background:var(--tm-ui-subcard)
+}
+#tm-dashboard .tm-db-activity-icon svg{
+ display:block;width:21px;height:21px;fill:none;
+ stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round
+}
+#tm-dashboard .tm-db-activity-copy{
+ display:flex;flex-direction:column;gap:4px;flex:1;min-width:0
+}
+#tm-dashboard .tm-db-activity-copy strong{
+ font:600 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ overflow-wrap:anywhere;color:inherit
+}
+#tm-dashboard .tm-db-activity-copy small{
+ font:400 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
  color:var(--tm-ui-muted);overflow-wrap:anywhere
 }
+#tm-dashboard .tm-db-activity-time{
+ flex:none;min-width:80px;
+ font:600 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ color:inherit;white-space:nowrap
+}
+#tm-dashboard .tm-db-activity-status{
+ flex:none;align-self:center;margin-left:auto;
+ padding:5px 9px;border-radius:999px;
+ background:color-mix(in srgb,#4ca977 15%,transparent);
+ color:#62bc8d;font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-status{color:#2e784f}
+#tm-dashboard .tm-db-activity-row.is-game{
+ background:#193126;color:#dcf3e4;border:1px solid #78d4a0
+}
+#tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-icon{
+ background:rgba(115,196,141,.16);color:#b2e5c2
+}
+#tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-copy small{color:#abd5b9}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game{
+ background:#e5f3e9;color:#24563a;border-color:#70c18f
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-icon{
+ background:rgba(83,166,112,.12);color:#30764e
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-copy small{color:#3c8057}
+#tm-dashboard .tm-db-activity-row.is-birthday{
+ border-left:3px solid #e4c85d;background:color-mix(in srgb,#c99f41 13%,var(--tm-ui-search))
+}
 #tm-dashboard .tm-db-miniagenda-actions{
- display:flex;align-items:center;gap:8px;flex-wrap:wrap;
- margin-top:auto;padding-top:18px
+ display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+ margin-top:auto;padding-top:21px
 }
 #tm-dashboard .tm-db-miniagenda-action{
- display:inline-flex;align-items:center;justify-content:center;gap:8px;
- min-height:38px;box-sizing:border-box;
- border-radius:10px;padding:9px 13px;
+ box-sizing:border-box;display:inline-flex;align-items:center;
+ justify-content:center;gap:9px;min-height:39px;
+ border-radius:11px;padding:10px 14px;
  font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
  text-decoration:none;transition:background-color .15s ease
 }
 #tm-dashboard .tm-db-miniagenda-action svg{
- width:16px;height:16px;fill:none;stroke:currentColor;
- stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round
+ display:block;width:17px;height:17px;
+ fill:none;stroke:currentColor;stroke-width:1.8;
+ stroke-linecap:round;stroke-linejoin:round
 }
 #tm-dashboard .tm-db-miniagenda-action-primary{
  background:var(--tm-ui-text);color:var(--tm-ui-card)
@@ -817,35 +840,30 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-dashboard .tm-db-miniagenda-action-secondary{
  background:var(--tm-ui-search);color:var(--tm-ui-text)
 }
-#tm-dashboard .tm-db-miniagenda-footnote{
- margin:12px 2px 0;font:400 11px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:var(--tm-ui-muted)
-}
-#tm-dashboard .tm-db-miniagenda-controls button:focus-visible,
-#tm-dashboard .tm-db-miniagenda-days button:focus-visible,
-#tm-dashboard .tm-db-miniagenda-action:focus-visible,
-#tm-dashboard .tm-db-miniagenda-booking:focus-visible{
+#tm-dashboard :is(.tm-db-miniagenda-controls button,.tm-db-miniagenda-action,.tm-db-activity-row):focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px
 }
 @media(hover:hover) and (pointer:fine){
  #tm-dashboard .tm-db-miniagenda-controls button:hover,
- #tm-dashboard .tm-db-miniagenda-days button:hover:not([aria-pressed="true"]),
  #tm-dashboard .tm-db-miniagenda-action-secondary:hover,
- #tm-dashboard .tm-db-miniagenda-booking:hover{
-  background:var(--tm-ui-hover)
- }
+ #tm-dashboard .tm-db-activity-row:not(.is-game):hover{background:var(--tm-ui-hover)}
+ #tm-dashboard .tm-db-activity-row.is-game:hover{filter:brightness(1.07)}
  #tm-dashboard .tm-db-miniagenda-action-primary:hover{opacity:.87}
 }
-@media(max-width:1080px){
- #tm-dashboard .tm-db-miniagenda-layout{grid-template-columns:1fr}
- #tm-dashboard .tm-db-miniagenda-bookings{min-height:60px}
+@media(max-width:1120px){
+ #tm-dashboard .tm-db-today-columns{grid-template-columns:minmax(0,1fr)}
+ #tm-dashboard .tm-db-today-main{min-height:300px}
+ #tm-dashboard .tm-db-today-recent #tm-db-recent{max-height:350px}
 }
-@media(max-width:600px){
- #tm-dashboard .tm-db-miniagenda-calendar,
- #tm-dashboard .tm-db-miniagenda-detail{padding:13px}
- #tm-dashboard .tm-db-miniagenda-controls button{min-width:30px;height:30px}
- #tm-dashboard .tm-db-miniagenda-days button{min-height:37px}
- #tm-dashboard .tm-db-miniagenda-actions{align-items:stretch}
+@media(max-width:650px){
+ #tm-dashboard .tm-db-today-main,
+ #tm-dashboard .tm-db-today-recent,
+ #tm-dashboard .tm-db-today-chat{padding:14px}
+ #tm-dashboard .tm-db-miniagenda-toolbar h3{font-size:16px}
+ #tm-dashboard .tm-db-miniagenda-controls button{min-width:32px;height:32px}
+ #tm-dashboard .tm-db-activity-row{gap:9px;padding:10px}
+ #tm-dashboard .tm-db-activity-time{min-width:auto}
+ #tm-dashboard .tm-db-activity-status{display:none}
  #tm-dashboard .tm-db-miniagenda-action{flex:1}
 }
 
