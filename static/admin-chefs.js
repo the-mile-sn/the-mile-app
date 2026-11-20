@@ -112,7 +112,12 @@
     const state=$("tm-chef-profile-status");
     state.textContent=item.active?"Ativo":"Inativo";
     state.className="tm-p-status tm-p-"+(item.active?"active":"inactive");
-    $("tm-chef-profile-toggle").querySelector("span").textContent=item.active?"Bloquear conta":"Ativar conta";
+    const accessToggle=$("tm-chef-profile-toggle");
+    accessToggle.querySelector("span").textContent=item.active?"Bloquear acesso":"Ativar acesso";
+    accessToggle.classList.toggle("is-unblocking",!item.active);
+    const enter=$("tm-chef-profile-enter-app");
+    enter.disabled=!item.active;
+    enter.title=item.active?"Entrar na app Chef em modo de visualização":"Conta Chef inativa";
   }
   function openChefProfile(item){
     selectedChef=item;
@@ -150,6 +155,30 @@
       profileFeedback.textContent=noteMessage(error);
     }finally{btn.disabled=false;}
   });
+  $("tm-chef-profile-enter-app")?.addEventListener("click",event=>{
+    if(!selectedChef||!selectedChef.active)return;
+    enterChefApp(selectedChef,event.currentTarget,profileFeedback);
+  });
+  $("tm-chef-profile-archive")?.addEventListener("click",async event=>{
+    const chef=selectedChef;
+    if(!chef)return;
+    if(!window.confirm("Arquivar "+chef.name+"? Vai desaparecer das listas e perder acesso à App. Os dados serão preservados."))return;
+    if(window.prompt("Para confirmar, escreve ARQUIVAR:")!=="ARQUIVAR")return;
+    const btn=event.currentTarget;
+    btn.disabled=true;
+    profileFeedback.textContent="";
+    try{
+      await api("/api/v2/admin/chefs/"+encodeURIComponent(chef.id)+"/archive",{
+        method:"POST",body:JSON.stringify({confirmation:"ARQUIVAR"})
+      });
+      dismissChefProfile();
+      window.tmClientsCloseChefProfile?.();
+      await loadAccounts();
+      accountFeedback.textContent="Conta Chef arquivada. Os dados foram preservados e o acesso revogado.";
+    }catch(error){
+      profileFeedback.textContent="Não foi possível arquivar a conta Chef: "+noteMessage(error);
+    }finally{btn.disabled=false;}
+  });
   passwordOpen?.addEventListener("click",()=>{
     passwordForm.hidden=!passwordForm.hidden;
     passwordOpen.setAttribute("aria-expanded",String(!passwordForm.hidden));
@@ -175,16 +204,16 @@
     }catch(error){profileFeedback.textContent=noteMessage(error);}
     finally{button.disabled=false;}
   });
-  async function enterChefApp(item,button){
+  async function enterChefApp(item,button,targetFeedback=accountFeedback){
     const tab=window.open("about:blank","_blank");
     if(!tab){
-      accountFeedback.textContent="Permite pop-ups deste site para abrir a app Chef.";
+      targetFeedback.textContent="Permite pop-ups deste site para abrir a app Chef.";
       return;
     }
     tab.document.title="The Mile · Visualização Chef";
     tab.document.body.textContent="A preparar visualização Chef…";
     button.disabled=true;
-    accountFeedback.textContent="";
+    targetFeedback.textContent="";
     try{
       const response=await api("/api/admin/chef-preview",{
         method:"POST",body:JSON.stringify({user_id:item.id})
@@ -195,12 +224,51 @@
       tab.location.replace(url.href);
     }catch(error){
       tab.close();
-      accountFeedback.textContent="Não foi possível abrir a app Chef: "+noteMessage(error);
+      targetFeedback.textContent="Não foi possível abrir a app Chef: "+noteMessage(error);
     }finally{button.disabled=false;}
   }
+  function renderArchivedChefs(archived){
+    const list=$("tm-chefs-archived-list");
+    if(!list)return;
+    list.replaceChildren();
+    if(archived.length){
+      list.append(node("h4","tm-chefs-archived-heading","Contas Chef"));
+      for(const chef of archived){
+        const row=node("div","tm-archived-row");
+        const restore=button("Restaurar",async()=>{
+          if(!window.confirm("Restaurar "+chef.name+"? O acesso continuará bloqueado até ser reativado."))return;
+          restore.disabled=true;
+          try{
+            await api("/api/v2/admin/chefs/"+encodeURIComponent(chef.id)+"/restore",{
+              method:"POST",body:"{}"
+            });
+            await loadAccounts();
+            $("tm-chefs-archived-feedback").textContent="Conta Chef restaurada. O acesso continua bloqueado.";
+          }catch(error){
+            $("tm-chefs-archived-feedback").textContent="Não foi possível restaurar a conta Chef: "+noteMessage(error);
+          }finally{restore.disabled=false;}
+        },"tm-players-control");
+        row.append(node("span","",chef.name+" (@"+chef.username+")"),restore);
+        list.append(row);
+      }
+    }else{
+      list.append(node("p","hint","Sem contas Chef arquivadas."));
+    }
+    syncArchivedChefVisibility(archived.length);
+  }
+  let archivedChefCount=0;
+  function syncArchivedChefVisibility(count=archivedChefCount){
+    archivedChefCount=count;
+    const list=$("tm-chefs-archived-list");
+    if(!list)return;
+    const selected=$("tm-clients-type-filter")?.value||"all";
+    list.hidden=selected==="acompanhamento"||selected==="consulta"||(selected==="all"&&count===0);
+  }
+  window.tmSyncArchivedChefVisibility=syncArchivedChefVisibility;
   async function loadAccounts(){
     const data=await api("/api/v2/admin/chefs");
     admins=data.chefs||[];
+    renderArchivedChefs(data.archived_chefs||[]);
     const host=$("tm-chef-accounts");
     host.replaceChildren();
     if(!admins.length){
