@@ -63,4 +63,6 @@ test("approved expanded nutrition typography uses one rule for each role",()=>{
  assert.match(guide,/Painel nutricional aberto — etiquetas de macros/);
  assert.match(js,/weeklyCharts\.append\(buildBars\("Calorias da semana"/);
  assert.match(js,/macroTitle\.textContent="Macros da semana"/);
+ assert.doesNotMatch(js,/n\.style\.color=color;n\.style\.color=color/);
+ assert.doesNotMatch(js,/footer\.append\(footerLabel,footerActions\);footer\.addEventListener/);
 });
