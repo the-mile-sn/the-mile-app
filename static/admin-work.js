@@ -8,6 +8,7 @@
  const API="/api/v2/admin/work";
  let me=null,admins=null,events=[],tasks=[],editingEvent=null,editingTask=null;
  let eventRequest=0,taskRequest=0,dashRequest=0;
+ let taskFilter="all", taskExpiryTimer=null;
  const labels={meeting:"Reunião",training:"Formação",travel:"Deslocação",other:"Evento"};
  const dateFormat=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric"});
  const todayFormatter=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",year:"numeric",month:"2-digit",day:"2-digit"});
@@ -209,7 +210,7 @@
  async function refreshTasks(){
   if(!dashboard)return;
   const token=++taskRequest;
-  const filter=$("tm-work-task-filter")?.value||"all";
+  const filter=taskFilter;
   const list=$("tm-work-task-list");
   list.replaceChildren(make("p","tm-work-empty","A consultar tarefas…"));
   try{
@@ -225,23 +226,37 @@
   }
  }
  // The Dashboard shows an empty checkbox until a task is completed.
- // Completed tasks remain visible and can be reopened without navigation.
+ // Completed tasks remain visible for 24 hours and can be reopened.
  async function refreshDashboardTasks(){
   if(!dashboard||dashboard.hidden)return;
   const token=++dashRequest,list=$("tm-db-tasks-list");
   if(!list)return;
+  if(taskExpiryTimer!==null){clearTimeout(taskExpiryTimer);taskExpiryTimer=null;}
   list.replaceChildren(make("p","tm-db-task-empty","A consultar tarefas…"));
   try{
    const data=await api("/tasks?status=all");
    if(token!==dashRequest)return;
    const all=data.tasks||[];
    const pending=all.filter(item=>item.status==="open");
-   const completed=all.filter(item=>item.status==="done");
+   const nowSeconds=Date.now()/1000;
+   const completed=all.filter(item=>item.status==="done" &&
+    Number(item.completed_at)>0 &&
+    Number(item.completed_at)<=nowSeconds &&
+    nowSeconds-Number(item.completed_at)<24*60*60
+   ).sort((a,b)=>Number(b.completed_at)-Number(a.completed_at));
+   // Up to three lines; keep at most one recently completed task visible.
    const visible=completed.length?pending.slice(0,2).concat(completed.slice(0,1)):
     pending.slice(0,3);
-   if(!pending.length&&completed.length)visible.splice(0,visible.length,...completed.slice(0,3));
    list.replaceChildren();
-   if(!all.length){list.append(make("p","tm-db-task-empty","Ainda não há tarefas."));return;}
+   if(!visible.length){
+    list.append(make("p","tm-db-task-empty",all.length?"Sem tarefas pendentes.":"Ainda não há tarefas."));
+    return;
+   }
+   if(completed.length){
+    // Refresh at the expiry boundary so completed rows do not linger.
+    const nextExpiry=Math.min(...completed.map(item=>Number(item.completed_at)*1000+24*60*60*1000));
+    taskExpiryTimer=setTimeout(refreshDashboardTasks,Math.max(100,nextExpiry-Date.now()+100));
+   }
    for(const item of visible){
     const isDone=item.status==="done";
     const row=make("div","tm-db-task-row"+(isDone?" is-done":""));
@@ -271,19 +286,24 @@
      (item.responsible_name||"Equipa")));
     row.append(toggle,copy);list.append(row);
    }
-   if(all.length>visible.length||data.truncated){
-    const more=make("button","tm-db-task-more",
-     data.truncated?"Ver todas as tarefas":"Ver todas ("+all.length+")");
-    more.type="button";more.addEventListener("click",openTasksManager);list.append(more);
-   }
   }catch(error){
    if(token===dashRequest)list.replaceChildren(make("p","tm-db-task-empty",error.message));
   }
  }
+ function setTaskFilter(value){
+  taskFilter=value;
+  document.querySelectorAll("#tm-work-tasks-dialog [data-tm-task-filter]").forEach(button=>{
+   const active=button.dataset.tmTaskFilter===value;
+   button.classList.toggle("is-selected",active);
+   button.setAttribute("aria-pressed",String(active));
+  });
+  refreshTasks();
+ }
  function openTasksManager(){
   const dialog=$("tm-work-tasks-dialog");
   if(!dialog||dialog.open)return;
-  dialog.showModal();refreshTasks();
+  dialog.showModal();
+  setTaskFilter("all");
  }
  window.tmDashboardWorkRefresh=refreshDashboardTasks;
  if(dashboard){
@@ -301,25 +321,20 @@
     updateMenuLinks();
     menu.hidden=!menu.hidden;
     add.setAttribute("aria-expanded",String(!menu.hidden));
-    if(!menu.hidden)menu.querySelector("a,button")?.focus();
+    if(!menu.hidden)menu.querySelector("a")?.focus();
    });
    document.addEventListener("click",e=>{if(!menu.contains(e.target)&&!add.contains(e.target))closeMenu();});
    document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menu.hidden){closeMenu();add.focus();}});
    menu.addEventListener("keydown",e=>{
     if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key))return;
     e.preventDefault();
-    const links=[...menu.querySelectorAll("a,button")];
+    const links=[...menu.querySelectorAll("a")];
     const current=links.indexOf(document.activeElement);
     const next=e.key==="Home"?0:e.key==="End"?links.length-1:
      (current+(e.key==="ArrowDown"?1:-1)+links.length)%links.length;
     links[next]?.focus();
    });
    menu.querySelectorAll("a").forEach(link=>link.addEventListener("click",closeMenu));
-   menu.querySelector('[data-work-quick="task"]').addEventListener("click",()=>{
-    const selectedDate=add.dataset.date||today();
-    closeMenu();
-    openTask(null,selectedDate);
-   });
   }
   const dashObserver=new MutationObserver(()=>{
    if(!dashboard.hidden)refreshDashboardTasks();
@@ -329,8 +344,10 @@
  }
  if(dashboard){
   $("tm-db-tasks-open").addEventListener("click",openTasksManager);
-  $("tm-work-new-task").addEventListener("click",()=>openTask());
-  $("tm-work-task-filter").addEventListener("change",refreshTasks);
+  $("tm-db-tasks-add").addEventListener("click",()=>openTask());
+  document.querySelectorAll("#tm-work-tasks-dialog [data-tm-task-filter]").forEach(button=>{
+   button.addEventListener("click",()=>setTaskFilter(button.dataset.tmTaskFilter));
+  });
   $("tm-work-task-form").addEventListener("submit",async e=>{
    e.preventDefault();showError("tm-work-task-error","");
    const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;

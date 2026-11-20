@@ -41,7 +41,7 @@ test("tasks are managed exclusively in Dashboard and opened in native dialogs",(
  assert.match(dashboard,/id="tm-work-task-list"/);
  assert.match(dashboard,/id="tm-work-task-form"/);
  assert.match(dashboard,/id="tm-work-task-delete"/);
- assert.match(dashboard,/id="tm-work-task-filter"/);
+ assert.match(dashboard,/data-tm-task-filter="all"/);
  assert.match(dashboard,/id="tm-work-task-responsible"/);
  assert.match(work,/function openTasksManager\(\)/);
  assert.match(work,/\$\("tm-work-task-dialog"\)\.showModal\(\)/);
@@ -50,9 +50,9 @@ test("tasks are managed exclusively in Dashboard and opened in native dialogs",(
 });
 
 test("quick-create task opens local popup without navigation or mandatory times",()=>{
- assert.match(dashboard,/<button[^>]*data-work-quick="task"[^>]*>Nova tarefa<\/button>/);
- assert.match(work,/menu\.querySelector\('\[data-work-quick="task"\]'\)\.addEventListener\("click"/);
- assert.match(work,/openTask\(null,selectedDate\)/);
+ assert.match(dashboard,/id="tm-db-tasks-add"/);
+ assert.match(work,/\$\("tm-db-tasks-add"\)\.addEventListener\("click",\(\)=>openTask\(\)\)/);
+ assert.doesNotMatch(dashboard,/data-work-quick="task"/);
  assert.doesNotMatch(work,/new:"task"|admin-appointments#tarefas/);
  assert.match(dashboard,/id="tm-work-task-date"/);
  assert.doesNotMatch(dashboard,/tm-work-task-start|tm-work-task-end/);
