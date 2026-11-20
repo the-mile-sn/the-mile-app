@@ -2601,7 +2601,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
  svg.setAttribute("role","img");
  svg.setAttribute("aria-label","Evolução de todas as "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
- svg.style.width=width+"px";
+ svg.style.width=width>344?width+"px":"min(100%, 344px)";
  // Reserve space for the last numeric label so it never clips at the right edge.
  const left=27,right=width-40,top=22,bottom=148;
  const y=v=>bottom-(v-low)/(high-low)*(bottom-top),x=i=>left+(right-left)*i/(visible.length-1);
