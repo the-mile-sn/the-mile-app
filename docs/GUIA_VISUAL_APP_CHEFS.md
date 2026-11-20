@@ -44,10 +44,23 @@ A App de Chefs tem fonte própria `chef.css` apenas para os componentes que lhe 
 
 **Navegação:** wordmark, barra inferior de quatro entradas e seletor Dia/Semana mantêm ícones, posições e comportamento aprovados na identidade da App. Não alterar a árvore de navegação ou os endpoints de sessão.
 
-## 4. Critérios de regressão obrigatórios
+## 4. Evidência visual de referência — iPhone, 20/11/2026 (versão publicada, antes da PR #297)
+
+**Esta secção documenta o estado observado nos cinco prints fornecidos, não certifica o resultado da refatoração.** Evitar reconstrução ou substituição indiscriminada de componentes que já trabalham corretamente.
+
+- **Início → Dia, cards fechados:** a barra Dia/Semana surge sob o wordmark; um resumo único apresenta data, classificação MD-1 e quatro refeições disponíveis representadas por ícones e faixas coloridas. No exemplo, Pequeno-almoço é amarelo; Almoço, Jantar e Ceia são verdes. Não gerar ícones ou refeições para períodos sem programação.
+- **Alturas intencionalmente diferentes:** Pequeno-almoço e Ceia são compactos. Almoço apresenta mesmo fechado a designação longa do prato e fotografia circular ampliável; Jantar apresenta texto livre («Estágio») sem fotografia. Não impor 61 px aos cards que contêm pratos, fotos ou texto livre real, nem truncar esse conteúdo.
+- **Almoço aberto:** mantém fotografia e prato; abaixo aparecem os valores nutricionais publicados (kcal, proteína, hidratos, gordura), alimentos e quantidades, seguidos das ações «Editar» e «Confirmar». Não duplicar informações nutricionais no cabeçalho nem alterar o planeamento ou a origem dos valores.
+- **Editor de alterações:** após «Editar» surge o formulário numa subsuperfície mais escura, com descrição do que foi servido, estados «Jogador comeu fora» / «Chef de folga», observações e ações «Cancelar» / «Guardar». Preservar a separação entre alteração de prato, motivo de não execução e observações; não remover os estados nem mudar os seus efeitos no registo.
+- **Início → Semana:** sete colunas, datas, classificações e células coloridas por refeição; a coluna do dia selecionado recebe destaque subtil e o número do dia surge num círculo claro. Abrir uma célula apresenta um detalhe único com data/microciclo, título da refeição, botão fechar, prato/foto, prescrição e ações, sem segundo card exterior de refeição. O menu inferior mantém quatro opções.
+- **Percurso de scroll no iPhone:** a barra inferior fixa utiliza transparência; validar que os últimos controlos e a base do editor são alcançáveis e não ficam cobertos. Capturas durante scroll mostram conteúdo sob a região superior do sistema: distinguir comportamento normal de scroll de uma eventual sobreposição indevida antes de alterar safe areas.
+
+**Diferenças a validar visualmente após a PR #297:** fontes de sistema em vez de Inter Tight, títulos de cards 16/400, dimensões de cabeçalho/ícones, versão compacta das células semanais, dimensões do título do detalhe, campos do Login e fotografia em carregamento. Os cinco prints são referência da versão anterior; não devem ser apresentados como aprovação do novo código. Exigir validação dos ecrãs de Planos, Menus/Receitas, Perfil e Login e de pelo menos um estado de erro antes de publicar.
+
+## 5. Critérios de regressão obrigatórios
 
 Antes de integrar/publicar: testes Python do contrato Chef (isolamento do jogador, leitura de prescrições, alterações de menus, auditoria, execução, acesso read-only de administrador); migração PostgreSQL; sintaxe de `chef.js`; testes estáticos da estrutura visual; regressão da App de Jogadores; CI completo. Validar manualmente iPhone Safari/PWA e desktop em Dia, Semana, Planos, Menus/Receitas e Perfil, nos estados vazio/com dados, com Almoço/Jantar e fotografia, com execução e edição abertas, e em PT/EN. Sem validação manual, não declarar paridade visual concluída.
 
-## 5. Limites do lote
+## 6. Limites do lote
 
 Este lote altera apenas apresentação, pequenas classes de carregamento de imagens e testes/documentação. Funcionalidades existentes não são redesenhadas. Pendências funcionais (responsabilidade por alterações de menu, eventual confirmação pelo nutricionista, outras atribuições de profissionais) continuam em planeamento separado.
