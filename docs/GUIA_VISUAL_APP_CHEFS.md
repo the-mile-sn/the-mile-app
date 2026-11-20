@@ -34,7 +34,7 @@ A App de Chefs tem fonte própria `chef.css` apenas para os componentes que lhe 
 
 **Início → Dia:** resumo de data/microciclo e refeições disponíveis, incluindo Pequeno-almoço, Lanche e Ceia. O chef não recebe gráficos de consumo. Refeições fechadas de referência 61 px, com título 16/400, glifo 24 px em caixa 37 px e seta de 9 px. **Almoço/Jantar são exceção de altura**: o prato e eventual fotografia têm de aparecer mesmo com o card fechado. Uma opção nutricional única surge diretamente dentro do card aberto; várias opções permanecem recolhidas. Guardar/editar registos de execução mantém ações próprias e estados existentes, sem alterar dados do jogador.
 
-**Início → Semana:** sete colunas, datas e células compactas à imagem da vista semanal de Jogadores. A célula abre o detalhe existente sem card de refeição duplicado. A seleção e os gestos de deslizar continuam funcionais e independentes da vista Dia.
+**Início → Semana:** sete colunas, datas e células de refeição com **76 px de altura mínima (64 px no mobile mais estreito)**, preservando a proporção já existente na App de Chefs e partilhando a linguagem de cores e tipografia com a vista semanal de Jogadores. A célula abre o detalhe existente sem card de refeição duplicado. A seleção e os gestos de deslizar continuam funcionais e independentes da vista Dia.
 
 **Planos:** reutilizar card universal colorido para prescrições publicadas de cada refeição, preservando opções, alimentos, notas, kcal e macros publicados. Nenhuma ação de consumo do jogador.
 
