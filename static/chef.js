@@ -1165,6 +1165,9 @@ function finishChefGesture(dx,done){
 const chefSwipeArea=el("screen");
 chefSwipeArea.addEventListener("touchstart",event=>{
  clearChefGesture();
+ if(activeTab==="home"&&chefViewMode==="day"){
+  chefSwipeEntryAnimation?.cancel();chefSwipeEntryAnimation=null;
+ }
  if(event.touches.length!==1||!["home","menus"].includes(activeTab)||chefSkeletonVisible)return;
  const target=event.target;
  if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay,.chef-dish-photo-frame"))return;
