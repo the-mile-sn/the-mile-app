@@ -12,12 +12,13 @@ test("overview has separate day and week skeleton hosts",()=>{
  assert.match(html,/<div id="overview-week-skeleton" class="overview-skeleton-week"><\/div>/);
  assert.match(html,/id="overview-loading"[^>]*role="status"[^>]*aria-live="polite"/);
  assert.doesNotMatch(html,/overview-skeleton-week-label/);
- assert.match(html,/jogador-v2\.css\?v=271/);
+ assert.match(html,/jogador-v2\.css\?v=272/);
  assert.match(html,/week-skeleton-v1/);
 });
 
 test("loading logic respects view, request epochs and cache",()=>{
  assert.match(js,/function renderPendingWeeklySkeleton\(\)/);
+ assert.match(js,/node\.className="overview-skeleton-shape overview-week-skeleton-shape "\+name/);
  assert.match(js,/for\(let i=0;i<7;i\+\+\)/);
  assert.match(js,/const mealRows=Array\.isArray\(meals\)&&meals\.length\?meals\.length:5/);
  assert.match(js,/if\(overviewMode==="week"\)renderPendingWeeklySkeleton\(\)/);
@@ -34,9 +35,9 @@ test("weekly placeholders match seven-day layout and recipe shimmer",()=>{
  assert.match(css,/#overview \.overview-loading\.week-pending \.overview-skeleton-week\{display:block/);
  assert.match(css,/#overview \.overview-week-skeleton-grid\{[^}]*grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/s);
  assert.match(css,/#overview \.overview-week-skeleton-summary\{[^}]*grid-template-columns:1\.45fr repeat\(3,minmax\(0,1fr\)\)/s);
- assert.match(css,/#overview \.overview-week-skeleton-shape\{[^}]*background:#29292e/s);
- assert.match(css,/animation:overview-week-skeleton-shimmer 1\.5s ease-in-out infinite/);
- assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*#overview \.overview-week-skeleton-shape::after\{animation:none\}/);
+ assert.match(css,/#overview \.overview-skeleton-shape\{[^}]*background:#29292e/s);
+ assert.match(css,/animation:overview-skeleton-shimmer 1\.5s ease-in-out infinite/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*#overview \.overview-skeleton-shape::after\{animation:none\}/);
  assert.doesNotMatch(css,/overview-skeleton-macros::after/);
  assert.match(guide,/Carregamento na transição de semanas/);
 });
