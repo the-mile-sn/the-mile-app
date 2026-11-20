@@ -24,6 +24,19 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn(".daily-meal[open]>.daily-meal-head{height:55px", CSS)
         self.assertIn("padding:12px 17px 6px", CSS)
 
+    def test_supplements_in_light_match_are_readable_without_dark_card_regression(self):
+        supplement = declarations(".supplement-in-meal")
+        self.assertEqual(len(supplement), 1)
+        self.assertIn("color:var(--supplement-ink,#eeeef1)", supplement[0])
+        self.assertIn("border-top:1px solid var(--supplement-divider,rgba(255,255,255,.15))", supplement[0])
+        match = declarations("#overview #day-details .daily-event-card.match-intra-card")
+        self.assertTrue(any("--supplement-ink:#22232A" in block
+                            and "--supplement-divider:rgba(34,35,42,.14)" in block
+                            for block in match))
+        self.assertIn("--consumption-editor-surface:#E1E1E5", CSS)
+        self.assertIn("Suplementação integrada no Jogo branco — contraste (20/11)", GUIDE)
+        self.assertIn("registar consumo de Intra-jogo por timing", GUIDE)
+
     def test_peri_plans_single_option_is_directly_visible(self):
         # Only the Planos peri branch changes; no second collapsible Opção 1.
         self.assertIn('if(key.startsWith("peri-"))', JS)
