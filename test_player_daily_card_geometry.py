@@ -24,6 +24,19 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn(".daily-meal[open]>.daily-meal-head{height:55px", CSS)
         self.assertIn("padding:12px 17px 6px", CSS)
 
+    def test_peri_plans_single_option_is_directly_visible(self):
+        # Only the Planos peri branch changes; no second collapsible Opção 1.
+        self.assertIn('if(key.startsWith("peri-"))', JS)
+        self.assertIn('if(opts.length===1)appendMealItems(section,opts[0].items);', JS)
+        self.assertIn('else opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});', JS)
+        self.assertIn('const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);', JS)
+        self.assertIn('const content=document.createElement("div");content.className="plans-all-body"', JS)
+        self.assertIn('renderPlanContent(key,content)', JS)
+        self.assertIn('renderPlanContent("peri-"+kind,detail)', JS)
+        self.assertIn('if(opts.length===1){', JS)
+        self.assertIn('appendGroupedPeriItems(section,opts[0].items,opts[0].timing_groups)', JS)
+        self.assertIn('Planos → Treino/Jogo — opção única (20/11)', GUIDE)
+
     def test_peri_training_title_and_match_color_contract(self):
         self.assertIn('--day-title-size:16px;--day-title-weight:var(--mile-type-card-title)', CSS)
         self.assertEqual(CSS.count('--mile-type-card-title:400'), 1)
