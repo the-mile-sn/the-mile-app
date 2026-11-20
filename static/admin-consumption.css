@@ -179,6 +179,7 @@ html[data-admin-theme] #admin-workspace #tm-admin-legacy #consumption-panel .tm-
 #consumption-panel .tm-record-timing-block:last-child{border-bottom:0;padding-bottom:0}
 #consumption-panel .tm-record-timing-heading{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-bottom:9px}
 #consumption-panel .tm-record-timing-heading>strong{font-size:14px;font-weight:500;color:var(--rec-text)}
+#consumption-panel .tm-record-origin{font-size:11px;font-weight:400;padding:5px 9px;border-radius:999px;background:var(--rec-sub);color:var(--rec-muted)}
 #consumption-panel .tm-record-timing-heading>.tm-record-mini{margin-left:auto}
 #consumption-panel .tm-record-timing-body>.tm-record-meal-metrics{margin-bottom:4px}
 #consumption-panel .tm-record-food-heading{
