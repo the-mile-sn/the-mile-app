@@ -15,6 +15,7 @@ Os eventos de jogadores e os eventos nutricionais de Planeamento continuam separ
 ## Navegação e criação
 
 No Dashboard, o atalho redondo Adicionar (+) apresenta Nova marcação, Novo evento e Nova tarefa. A opção Nova tarefa abre imediatamente um pop-up no próprio Dashboard, com título, responsável, prazo opcional (apenas data), estado e notas. O card Tarefas apresenta até três pendências, incluindo as sem prazo, com conclusão e edição. «Ver todas» abre outro pop-up com os filtros Por fazer/Todas/Concluídas, reabertura e eliminação. Tarefas não têm horário de início/fim nem ocupam vagas da Agenda.
+A checklist apresenta caixa vazia para tarefa por fazer e visto para concluída. A conclusão é reversível e não faz a tarefa desaparecer da Página Inicial; a listagem completa começa no filtro Todas, mantendo os estados visíveis. A interface de criação segue os campos de duas linhas de «Novo alimento», com input interno transparente (sem branco extra), botões de ação aprovados e Eliminar apenas em edição.
 
 Na página Agendamentos, os separadores mantêm-se Agenda, Reservas, Disponibilidades e Configuração. A Agenda mantém mês/semana/dia e as marcações originais; os eventos internos aparecem nas datas respetivas e numa lista diária com edição e eliminação. Não há separador Tarefas em Agendamentos.
 
