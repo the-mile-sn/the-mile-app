@@ -1485,7 +1485,7 @@ header{padding:10px 0 24px}
  --day-icon-box:37px;--day-icon-glyph:24px;--day-icon-radius:11px;
  --day-header-inset:17px;--day-header-gap:8px;--day-icon-space:10px;
  --day-chevron-size:9px;--post-match-edit-inset:7px;
- --day-title-size:16px;--day-title-weight:500;--day-kcal-size:11px;--day-kcal-weight:500;
+ --day-title-size:16px;--day-title-weight:var(--mile-type-card-title);--day-kcal-size:11px;--day-kcal-weight:500;
  --consumption-status-bg:rgba(154,224,191,.20);--consumption-status-ink:#b9eed2;
  --consumption-secondary-bg:rgba(255,255,255,.09);
 }
@@ -1683,11 +1683,11 @@ header{padding:10px 0 24px}
 #overview .macro-chart-switch button{cursor:pointer!important}
 
 
-/* Agreed player typography: headings/events 500, option description 450, navigation 400. */
+/* Role-specific fallbacks; universal card titles use the shared title token. */
 #overview .daily-meal > .daily-meal-head > strong,
 #plans #plan-detail .plan-overview-meal > .daily-meal-head > strong,
 #overview .peri-meal > .daily-meal-head > strong{
- font-weight:500!important;
+ font-weight:var(--mile-type-card-title)!important;
 }
 #overview .daily-meal .plan-option-label > strong,
 #plans #plan-detail .plan-option-card .plan-option-label > strong,
@@ -1696,7 +1696,9 @@ header{padding:10px 0 24px}
 }
 #overview .daily-event-card > span:not(.meal-leading-icon),
 #overview .peri-meal > .daily-meal-head > strong,
-#overview .match-intra-card > .daily-meal-head > strong,
+#overview .match-intra-card > .daily-meal-head > strong{
+ font-weight:var(--mile-type-card-title)!important;
+}
 #weekly-view .weekly-event-card > span:first-child,
 #weekly-view .weekly-peri-card > span:first-child{
  font-weight:500!important;
@@ -1903,7 +1905,7 @@ body.profile-active .player-top{display:none!important}
 #plans .assessment-measure-card{background:#242429;border-radius:13px;margin:5px 0;overflow:hidden;border:0}
 #plans .assessment-measure-card>summary{display:flex;align-items:center;gap:10px;padding:14px 13px 14px 16px;min-height:64px;list-style:none;cursor:pointer}
 #plans .assessment-measure-card>summary::-webkit-details-marker{display:none}
-#plans .assessment-metric-name{flex:1;min-width:0;color:#f1f1f4;font-size:15px;font-weight:450;line-height:1.3}
+#plans .assessment-metric-name{flex:1;min-width:0;color:#f1f1f4;font-size:15px;font-weight:var(--mile-type-card-title);line-height:1.3}
 #plans .assessment-metric-right{flex:none;text-align:right;display:flex;flex-direction:column;gap:3px;max-width:48%;align-items:flex-end}
 #plans .assessment-metric-right strong{font-size:15px;font-weight:550;color:#f5f5f6;white-space:nowrap}
 #plans .assessment-change{font-size:11px;color:#abaeb8;white-space:nowrap;font-weight:400}
@@ -2020,7 +2022,7 @@ body.profile-active .player-top{display:none!important}
 }
 #plans #plans-assessments .assessment-metric-right{gap:6px!important}
 #plans #plans-assessments .assessment-metric-name{
- font-size:16px!important;font-weight:500!important;
+ font-size:16px!important;font-weight:var(--mile-type-card-title)!important;
 }
 #plans #plans-assessments .assessment-metric-right strong{
  font-size:16px!important;font-weight:600!important;
@@ -2637,7 +2639,7 @@ body.profile-active .player-top{display:none!important}
  font-size:16px!important;font-weight:500!important;justify-content:flex-start!important;
 }
 #overview .daily-supplements > summary > strong{
- font-size:16px!important;font-weight:500!important;line-height:1.3!important;
+ font-size:16px!important;font-weight:var(--mile-type-card-title)!important;line-height:1.3!important;
  flex:1 1 auto!important;min-width:0!important;
 }
 #overview .daily-supplements > summary::after{
@@ -3225,7 +3227,7 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .weekly-color-meal-head>.meal-leading-icon .mile-icon{width:24px;height:24px}
 #weekly-view .weekly-color-meal-head>strong{
  font-size:clamp(14px,3.5vw,18px)!important;
- font-weight:500!important;
+ font-weight:var(--mile-type-card-title)!important;
  line-height:1.2!important;
  min-width:0;
  flex:1 1 auto;
@@ -3810,11 +3812,11 @@ body.profile-active .player-top{display:none!important}
 }
 
 /* The Mile typography tokens — apply selectively to component roles. */
-:root{--mile-type-regular:400;--mile-type-medium:500;--mile-type-semibold:600;--mile-type-bold:700}
+:root{--mile-type-regular:400;--mile-type-card-title:400;--mile-type-medium:500;--mile-type-semibold:600;--mile-type-bold:700}
 /* Daily and Plans: identical meal, kcal and option hierarchy. */
 #overview .daily-meal>.daily-meal-head>strong,
 #plans #plan-detail .plan-overview-meal>.daily-meal-head>strong,
-#weekly-view .weekly-color-meal-head>strong,
+#weekly-view .weekly-color-meal-head>strong{font-weight:var(--mile-type-card-title)!important}
 #weekly-view .weekly-meal-name{font-weight:var(--mile-type-medium)!important}
 #plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline .macro>.kcal,
 #plans #plan-detail .plan-overview-meal>.daily-meal-head .meal-average-inline .macro>.kcal *,
@@ -3829,7 +3831,7 @@ body.profile-active .player-top{display:none!important}
 #weekly-view .weekly-color-detail .foods{font-weight:var(--mile-type-regular)!important}
 #overview .daily-event-card>span:not(.meal-leading-icon),
 #overview .peri-meal>.daily-meal-head>strong,
-#overview .match-intra-card>.daily-meal-head>strong,
+#overview .match-intra-card>.daily-meal-head>strong{font-weight:var(--mile-type-card-title)!important}
 #weekly-view .weekly-event-card>span:first-child,
 #weekly-view .weekly-peri-card>span:first-child{font-weight:var(--mile-type-medium)!important}
 #weekly-view .weekly-day-total .weekly-total-kcal,
@@ -3844,7 +3846,7 @@ body.profile-active .player-top{display:none!important}
 
 /* Shared type hierarchy: Assessments, Menus, Profile and bottom navigation.
    Restrict changes to weights: preserve sizing, chart geometry and interaction. */
-#plans #plans-assessments .assessment-metric-name,
+#plans #plans-assessments .assessment-metric-name{font-weight:var(--mile-type-card-title)!important}
 #plans .assessment-tabs button,
 #plans .assessment-history-card>summary{font-weight:var(--mile-type-medium)!important}
 #plans #plans-assessments .assessment-metric-right>strong,
@@ -4011,12 +4013,12 @@ body.profile-active .player-top{display:none!important}
  display:block;overflow:visible;touch-action:pan-x;user-select:none;
 }
 
-/* Plans and weekly headings retain their separate typography; the Dia headers
-   inherit only --day-title-* through the shared .tm-day-title contract. */
+/* Universal plan and expanded-weekly-detail titles use the shared title token;
+   compact weekly grid cells retain their medium-weight hierarchy. */
 #plans #plan-detail .plan-overview-meal>.daily-meal-head>strong,
 #plans #plan-detail .plan-overview-meal>summary.daily-meal-head>strong,
 #weekly-view .weekly-color-detail .weekly-color-meal-head>strong{
- font-size:16px!important;font-weight:500!important;
+ font-size:16px!important;font-weight:var(--mile-type-card-title)!important;
 }
 #overview #day-details .daily-meal .plan-option-label>strong,
 #plans #plan-detail :is(.plan-meal,.plan-overview-meal) .plan-option-label>strong,
