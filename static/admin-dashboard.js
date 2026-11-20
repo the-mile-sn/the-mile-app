@@ -189,7 +189,7 @@
  }
  window.tmOpenAdminAssessments=aid=>openClinical("assessments",aid);
  window.tmOpenAdminForms=aid=>openClinical("forms",aid);
- function openDashboard(){closeClinical();if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.scrollTo({top:0,behavior:"smooth"});}
+ function openDashboard(){closeClinical();if($("admin-workspace").hidden)return;legacy.hidden=true;playersPage.hidden=true;section.hidden=false;navActive(dash);load().catch(err=>showError(err));window.tmDashboardAgendaRefresh?.();window.scrollTo({top:0,behavior:"smooth"});}
  window.tmOpenAdminDashboard=openDashboard;
  dashboardReturnButton.addEventListener("click",()=>{
   if(planDetailVisible()){
@@ -1231,6 +1231,124 @@ function ensurePlanningOnlyView(){
  $("tm-db-prev").addEventListener("click",()=>{weekMonday=shifted(weekMonday,-7);load().catch(showError);});
  $("tm-db-next").addEventListener("click",()=>{weekMonday=shifted(weekMonday,7);load().catch(showError);});
  $("tm-db-go-today").addEventListener("click",()=>{weekMonday=monday(dateParts(new Date()));load().catch(showError);});
+})();
+
+/* Dashboard miniagenda — live read-only view of the existing bookings source.
+   Writing, availability and conflict validation stay inside Agendamentos. */
+(()=>{
+ const $=id=>document.getElementById(id);
+ if(!$("tm-db-miniagenda"))return;
+ const localDate=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",year:"numeric",month:"2-digit",day:"2-digit"});
+ const monthFmt=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",month:"long",year:"numeric"});
+ const longFmt=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"long",day:"numeric",month:"long",year:"numeric"});
+ function today(){
+  const part=Object.fromEntries(localDate.formatToParts(new Date()).map(p=>[p.type,p.value]));
+  return part.year+"-"+part.month+"-"+part.day;
+ }
+ function dateObject(iso){return new Date(iso+"T12:00:00Z");}
+ function validDate(iso){
+  if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(iso))return false;
+  const date=dateObject(iso);
+  return !Number.isNaN(date.getTime())&&date.toISOString().slice(0,10)===iso;
+ }
+ function monthShift(month,diff){
+  const [year,n]=month.split("-").map(Number);
+  return new Date(Date.UTC(year,n-1+diff,1,12)).toISOString().slice(0,7);
+ }
+ function lastDay(month){
+  const [year,n]=month.split("-").map(Number);
+  return new Date(Date.UTC(year,n,0,12)).getUTCDate();
+ }
+ function dateLabel(iso){
+  const p=Object.fromEntries(longFmt.formatToParts(dateObject(iso)).map(part=>[part.type,part.value]));
+  return p.weekday.charAt(0).toUpperCase()+p.weekday.slice(1)+", "+p.day+" "+p.month+" "+p.year;
+ }
+ function el(tag,cls,text){
+  const element=document.createElement(tag);
+  if(cls)element.className=cls;
+  if(text!==undefined)element.textContent=String(text);
+  return element;
+ }
+ function appointmentLink(day,create=false){
+  const params=new URLSearchParams({date:day,view:"day"});
+  if(create)params.set("new","1");
+  return "/admin-appointments?"+params.toString()+"#agenda";
+ }
+ let chosen=today(),month=chosen.slice(0,7),list=[],loaded="",token=0,loading=false,error="";
+ function bookingsOn(day){
+  return list.filter(item=>item.date===day&&item.status==="scheduled")
+   .sort((x,y)=>String(x.start||"").localeCompare(String(y.start||"")));
+ }
+ function paint(){
+  $("tm-db-miniagenda-month").textContent=monthFmt.format(dateObject(month+"-01"));
+  $("tm-db-miniagenda-selected-date").textContent=dateLabel(chosen);
+  $("tm-db-miniagenda-new").href=appointmentLink(chosen,true);
+  $("tm-db-miniagenda-open").href=appointmentLink(chosen);
+  const grid=$("tm-db-miniagenda-days");grid.replaceChildren();
+  const firstDay=(dateObject(month+"-01").getUTCDay()+6)%7;
+  for(let i=0;i<firstDay;i++){
+   const blank=el("span","tm-db-miniagenda-empty");
+   blank.setAttribute("aria-hidden","true");grid.append(blank);
+  }
+  const byDate=new Map();
+  for(const booking of list)if(booking.status==="scheduled")byDate.set(booking.date,(byDate.get(booking.date)||0)+1);
+  for(let i=1;i<=lastDay(month);i++){
+   const day=month+"-"+String(i).padStart(2,"0");
+   const count=byDate.get(day)||0;
+   const button=el("button","",String(i));button.type="button";
+   button.dataset.date=day;
+   if(day===today())button.classList.add("is-current");
+   button.setAttribute("aria-pressed",String(day===chosen));
+   button.setAttribute("aria-label",dateLabel(day)+(count?" · "+count+" marcações":""));
+   if(count)button.append(el("span","tm-db-miniagenda-dot"));
+   button.addEventListener("click",()=>{chosen=day;paint();});
+   grid.append(button);
+  }
+  const host=$("tm-db-miniagenda-bookings");host.replaceChildren();
+  host.setAttribute("aria-busy",String(loading));
+  const daily=bookingsOn(chosen);
+  $("tm-db-miniagenda-count").textContent=loading?"A carregar…":daily.length+" marcaç"+(daily.length===1?"ão":"ões");
+  if(error)host.append(el("p","",error));
+  else if(loading&&loaded!==month)host.append(el("p","","A consultar marcações…"));
+  else if(!daily.length)host.append(el("p","","Sem marcações agendadas para este dia."));
+  else for(const item of daily){
+   const anchor=el("a","tm-db-miniagenda-booking");
+   anchor.href=appointmentLink(chosen);
+   const time=el("span","tm-db-miniagenda-booking-time",String(item.start||"")+(item.end?"–"+item.end:""));
+   const info=el("span","tm-db-miniagenda-booking-body");
+   info.append(el("strong","",item.customer_name||"Cliente"));
+   info.append(el("small","",[item.service_name,item.professional_name].filter(Boolean).join(" · ")));
+   anchor.append(time,info);
+   anchor.setAttribute("aria-label",String(item.start||"")+" · "+(item.customer_name||"Cliente")+" · Abrir Agendamentos");
+   host.append(anchor);
+  }
+ }
+ async function refresh(force=false){
+  if(!force&&loaded===month){paint();return;}
+  const current=month,requestId=++token;
+  loading=true;error="";if(loaded!==current)list=[];paint();
+  const params=new URLSearchParams({from:current+"-01",to:current+"-"+String(lastDay(current)).padStart(2,"0"),status:"scheduled"});
+  try{
+   const res=await fetch("/api/v2/admin/appointments/bookings?"+params,{credentials:"same-origin",cache:"no-store",headers:{Accept:"application/json"}});
+   if(!res.ok)throw Error("Não foi possível consultar os Agendamentos.");
+   const payload=await res.json();
+   if(!Array.isArray(payload.bookings))throw Error("Resposta inesperada dos Agendamentos.");
+   if(requestId!==token||month!==current)return;
+   list=payload.bookings.filter(x=>validDate(x.date)&&x.status==="scheduled");
+   loaded=current;
+  }catch(e){
+   if(requestId!==token||month!==current)return;
+   error=e.message||"Não foi possível carregar marcações.";
+   loaded="";
+  }finally{
+   if(requestId===token&&month===current){loading=false;paint();}
+  }
+ }
+ $("tm-db-miniagenda-prev").addEventListener("click",()=>{month=monthShift(month,-1);chosen=month+"-01";refresh();});
+ $("tm-db-miniagenda-next").addEventListener("click",()=>{month=monthShift(month,1);chosen=month+"-01";refresh();});
+ $("tm-db-miniagenda-today").addEventListener("click",()=>{chosen=today();month=chosen.slice(0,7);refresh();});
+ window.tmDashboardAgendaRefresh=()=>refresh(true);
+ paint();
 })();
 
 /* Navigate from standalone nutrition pages to the corresponding Backoffice section. */
