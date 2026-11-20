@@ -1484,7 +1484,10 @@ def application(env, start_response):
                     if not linked: raise Problem(404,'not_found')
                     image=read_dish_image(c,linked['image_filename'])
                     if image is None: raise Problem(404,'not_found')
-                    return respond(200,image,'image/webp')
+                    # Same edge-connected near-black matte removal as Player Menus.
+                    # Transform only the response: the canonical stored image and
+                    # Chef's existing athlete/assigned-dish access gates are unchanged.
+                    return respond(200,player_menu_photo(image),'image/webp')
                 if path == '/api/v2/chef/plans':
                     return respond(200,{'options_by_color':food_plan_player_v2.player_plans(c,aid)['options_by_color']})
                 raise Problem(404,'not_found')
