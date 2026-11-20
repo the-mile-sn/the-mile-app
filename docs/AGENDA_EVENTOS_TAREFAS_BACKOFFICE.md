@@ -8,15 +8,15 @@
 
 **Eventos internos:** reuniões, formações, deslocações e outros compromissos da equipa. Campos: título, tipo, data, hora de início e fim, responsável, participantes opcionais e notas. Aparecem na Agenda e no painel Hoje, sem pill de confirmação. Não criam reservas, pagamentos, bloqueios Google nem registos nutricionais.
 
-**Tarefas:** título, responsável, prazo opcional, notas e estado Por fazer/Concluída. Não ocupam horário de agenda. Têm separador próprio e um resumo no Dashboard para tarefas com prazo hoje ou vencido.
+**Tarefas:** título, responsável, prazo opcional, notas e estado Por fazer/Concluída. Não ocupam horário de agenda. São geridas exclusivamente no Dashboard: card de tarefas e pop-ups para criar, editar, concluir, reabrir e consultar todas, incluindo as que não têm prazo.
 
 Os eventos de jogadores e os eventos nutricionais de Planeamento continuam separados destes registos administrativos.
 
 ## Navegação e criação
 
-No Dashboard, o atalho redondo Adicionar (+) apresenta Nova marcação, Novo evento e Nova tarefa. O segundo atalho continua a abrir a Agenda. Os links transportam a data escolhida em Hoje. Um card próprio de Tarefas mostra até três pendências do dia/vencidas e permite concluí-las.
+No Dashboard, o atalho redondo Adicionar (+) apresenta Nova marcação, Novo evento e Nova tarefa. A opção Nova tarefa abre imediatamente um pop-up no próprio Dashboard, com título, responsável, prazo opcional (apenas data), estado e notas. O card Tarefas apresenta até três pendências, incluindo as sem prazo, com conclusão e edição. «Ver todas» abre outro pop-up com os filtros Por fazer/Todas/Concluídas, reabertura e eliminação. Tarefas não têm horário de início/fim nem ocupam vagas da Agenda.
 
-Na página Agendamentos, os separadores são Agenda, Tarefas, Reservas, Disponibilidades e Configuração. A Agenda mantém mês/semana/dia e as marcações originais; os eventos internos aparecem nas datas respetivas e numa secção diária com edição e eliminação. Tarefas têm filtros Por fazer/Todas/Concluídas, edição, conclusão, reabertura e eliminação.
+Na página Agendamentos, os separadores mantêm-se Agenda, Reservas, Disponibilidades e Configuração. A Agenda mantém mês/semana/dia e as marcações originais; os eventos internos aparecem nas datas respetivas e numa lista diária com edição e eliminação. Não há separador Tarefas em Agendamentos.
 
 ## Segurança e persistência
 
