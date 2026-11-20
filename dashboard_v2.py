@@ -40,6 +40,63 @@ def resolved_week_days(c, athlete_id, start_iso, end_iso, matches, model,
     return resolved
 
 
+
+def day_activity(c, day):
+    """Read-only game, calendar and birthday events for one selected Dashboard day.
+
+    The booking source remains Agendamentos; this endpoint only supplies
+    athlete-related events which are not appointment records.
+    """
+    if not isinstance(day, str):
+        raise ValueError("invalid_dashboard_date")
+    try:
+        selected = date.fromisoformat(day)
+    except ValueError:
+        raise ValueError("invalid_dashboard_date")
+    if selected.isoformat() != day:
+        raise ValueError("invalid_dashboard_date")
+
+    games = [
+        {"athlete_id": r["athlete_id"], "name": r["name"],
+         "match_id": r["id"], "time": r["match_time"]}
+        for r in c.execute(
+            """SELECT m.id,m.athlete_id,a.name,m.match_time
+               FROM v2_match_events m
+               JOIN v2_athletes a ON a.id=m.athlete_id
+               WHERE m.match_date=? AND a.archived_at IS NULL
+               ORDER BY CASE WHEN m.match_time IS NULL THEN 1 ELSE 0 END,
+                        m.match_time,a.name""", (day,)).fetchall()
+    ]
+    events = [
+        {"athlete_id": r["athlete_id"], "name": r["name"],
+         "event_id": r["id"], "kind": r["kind"],
+         "title": r["title"], "session": r["session"]}
+        for r in c.execute(
+            """SELECT e.id,e.athlete_id,a.name,e.kind,e.title,e.session
+               FROM v2_calendar_events e
+               JOIN v2_athletes a ON a.id=e.athlete_id
+               WHERE e.event_date=? AND e.kind IN ('travel','other')
+                 AND a.archived_at IS NULL
+               ORDER BY CASE WHEN e.session='morning' THEN 0 ELSE 1 END,a.name""",
+            (day,)).fetchall()
+    ]
+    birthdays = [
+        {"athlete_id": r["id"], "name": r["name"]}
+        for r in c.execute(
+            """SELECT a.id,a.name,u.birth_date
+               FROM v2_athletes a
+               JOIN v2_player_links l ON l.athlete_id=a.id
+               JOIN users u ON u.id=l.user_id
+               WHERE a.archived_at IS NULL AND u.role='player'
+                 AND u.active=1 AND u.birth_date IS NOT NULL
+               ORDER BY a.name"""
+        ).fetchall()
+        if str(r["birth_date"])[5:10] == day[5:10]
+    ]
+    return {"date": day, "games": games, "events": events,
+            "birthdays": birthdays, "read_only": True}
+
+
 def snapshot(c, week, today):
     first = calendar_v2.parse_day(week)
     current = calendar_v2.parse_day(today)
