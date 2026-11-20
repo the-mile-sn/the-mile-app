@@ -72,9 +72,15 @@ class AddedTimingTests(unittest.TestCase):
             consumed_foods=totals["foods"],nutrition=totals["nutrition"])
         selected=timing.validate_added_timing(self.connection,"athlete","2026-11-21","game-1","second_half",self.published)
         self.assertEqual(selected["option_ref"],option["option_ref"])
+        # A saved prescribed record cannot be overwritten as player-added.
+        timing.save_timing(self.connection,athlete_id="athlete",meal_date="2026-11-21",
+            event_id="game-1",timing="first_half",status="all",
+            option_ref="published-1",source_draft_id="draft",
+            prescription={"option":{"foods":[]}},
+            consumed_foods=[],nutrition={"kcal":0,"protein_g":0,"carbs_g":0,"fat_g":0})
         with self.assertRaisesRegex(ValueError,"timing_already_registered"):
-            timing.validate_added_timing(self.connection,"athlete","2026-11-21","game-1","warmup",
-                                         [{"option_ref":"x","foods":[{"id":"gel","grams":40,"timing":"second_half"}]}])
+            timing.validate_added_timing(self.connection,"athlete","2026-11-21","game-1",
+                                         "first_half",self.published)
 
     def test_legacy_protection_and_no_other_athlete_leak(self):
         self.assertFalse(timing.has_legacy(self.connection,"athlete","2026-11-21","game-1"))
