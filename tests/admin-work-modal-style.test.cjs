@@ -22,6 +22,6 @@ test("closing and error handling match modal standard",()=>{
  assert.doesNotMatch(dashboard,/data-tm-work-close aria-label="Fechar">×/);
  assert.match(dashboard,/aria-label="Fechar"><svg/);
  assert.match(appointments,/aria-label="Fechar"><svg/);
- assert.match(dashboard,/admin-work\.css\?v=4/);
- assert.match(appointments,/admin-work\.js\?v=5/);
+ assert.match(dashboard,/admin-work\.css\?v=5/);
+ assert.match(appointments,/admin-work\.js\?v=6/);
 });
