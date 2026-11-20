@@ -91,5 +91,68 @@ class ChefPlayerReleaseTests(unittest.TestCase):
             self.assertEqual(row["status"],"pending_validation")
 
 
+    def test_chef_reads_the_same_published_quantities_as_linked_player(self):
+        """Published Planos are shared for consultation, never client-selectable or editable by Chef."""
+        import json
+        def plan(aid, owner, grams):
+            option={"foods":[{"id":"bread","grams":grams,
+                              "display_quantity":"2 fatias de pão"}],
+                    "notes":["Preparação conforme plano"]}
+            return {"plan_type":"Plano amarelo","athlete_id":aid,
+                    "player_id":owner,"meals":[
+                        {"name":"Pequeno almoço / lanche","options":[option]},
+                        {"name":"Almoço / jantar","options":[option]}]}
+        with app.connect() as c:
+            for uid, username, athlete in (
+                    ("linked-player-a","chefplayera",self.a),
+                    ("linked-player-b","chefplayerb",self.b)):
+                c.execute("""INSERT INTO users
+                    (id,name,email,username,role,password,active)
+                    VALUES(?,?,?,?,?,?,1)""",
+                    (uid,username,username+"@accounts.internal.invalid",username,
+                     "player",app.password_hash("player-secret-pass-123")))
+                c.execute("INSERT INTO v2_player_links (user_id,athlete_id) VALUES(?,?)",
+                          (uid,athlete))
+            c.execute("""INSERT INTO v2_food_library
+                (id,display_name,variant,edible_fraction,kcal,protein_g,
+                 carbs_g,fat_g,active) VALUES(?,?,?,?,?,?,?,?,?)""",
+                ("bread","Pão","plain",1,250,10,50,2,1))
+            for draft_id,aid,owner,grams,state in (
+                    ("published-a",self.a,"linked-player-a",80,"published"),
+                    ("draft-a",self.a,"linked-player-a",500,"draft"),
+                    ("published-b",self.b,"linked-player-b",120,"published")):
+                content=plan(aid,owner,grams)
+                c.execute("""INSERT INTO v2_food_plan_editor_publications
+                    (draft_id,athlete_id,plan_type,snapshot_json,published_at,state)
+                    VALUES(?,?,?,?,?,?)""",
+                    (draft_id,aid,"Plano amarelo",json.dumps(content),123456,state))
+        player=Client()
+        with patch.object(app,"SITE_ROLE","player"):
+            login=player.request("/api/login","POST",
+                {"identifier":"chefplayera","password":"player-secret-pass-123"})
+            self.assertEqual(login["status"],200,login)
+            player.request("/api/me")
+            from_player=player.request("/api/v2/player/plans")
+            from_chef=self.chef.request("/api/v2/chef/plans?athlete_id="+self.b)
+            self.assertEqual(from_player["status"],200,from_player)
+            self.assertEqual(from_chef["status"],200,from_chef)
+            self.assertEqual(from_chef["body"]["options_by_color"],
+                             from_player["body"]["options_by_color"])
+            by_slot=from_chef["body"]["options_by_color"]["yellow"]
+            for slot in ("breakfast","snack","lunch","dinner"):
+                self.assertEqual(len(by_slot[slot]),1,slot)
+                self.assertEqual(by_slot[slot][0]["items"][0]["quantity"],
+                                 "2 fatias de pão")
+                self.assertEqual(by_slot[slot][0]["totals"]["kcal"],200)
+                self.assertEqual(by_slot[slot][0]["source_draft_id"],"published-a")
+            self.assertEqual(self.chef.request("/api/v2/player/plans")["status"],403)
+            self.assertEqual(self.chef.request("/api/v2/chef/plans","PUT",
+                                               {"athlete_id":self.b})["status"],403)
+        with app.connect() as c:
+            self.assertEqual(c.execute(
+                "SELECT state FROM v2_food_plan_editor_publications "
+                "WHERE draft_id='published-a'").fetchone()["state"],"published")
+
+
 if __name__=="__main__":
     unittest.main()
