@@ -24,6 +24,19 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn(".daily-meal[open]>.daily-meal-head{height:55px", CSS)
         self.assertIn("padding:12px 17px 6px", CSS)
 
+    def test_peri_training_title_and_match_color_contract(self):
+        self.assertIn('--day-title-size:16px;--day-title-weight:var(--mile-type-card-title)', CSS)
+        self.assertEqual(CSS.count('--mile-type-card-title:400'), 1)
+        self.assertIn('const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";', JS)
+        self.assertIn('const title=document.createElement("strong");title.textContent=item.title;head.append(title);decorateLabel(head,item.title);', JS)
+        self.assertIn('font-weight:var(--mile-type-card-title)!important', CSS)
+        self.assertIn('section.className=compact?"weekly-event-card":"daily-event-card tm-day-header"+(event.kind==="match"?" daily-match-card":"")', JS)
+        light = declarations('#overview #day-details .daily-event-card:is(.daily-match-card,.match-intra-card),\n#weekly-view .weekly-event-card.weekly-match-with-intra')
+        self.assertEqual(len(light), 1, 'Shared light match surface, not a late override')
+        self.assertIn('background:#F2F2F4!important;color:#22232A!important', light[0])
+        self.assertIn('const eventCardElement=intra?matchWithIntraCard(event,intra,consumptionEnabled,consumptionRecords):eventCard(event)', JS)
+        self.assertIn('Jogo — superfície branca em todos os casos (20/11)', GUIDE)
+
     def test_weight_title_matches_the_meal_title_column(self):
         rules = declarations(".daily-weight-header")
         self.assertEqual(len(rules), 1)
