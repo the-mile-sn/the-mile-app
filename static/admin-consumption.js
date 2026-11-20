@@ -277,11 +277,15 @@
   const details=timings.map(entry=>{
    const diff=changes(entry),state=displayStatus(entry,diff);
    const label=timingLabels[entry.timing]||entry.timing;
-   const badge={all:"Consumido",partial:"Parcial",none:"Não consumido"}[state]||"Registado";
+   const playerAdded=entry.prescription?.origin==='player_added';
+   const badge=playerAdded&&entry.consumed_foods?.length?'Consumido':
+    ({all:"Consumido",partial:"Parcial",none:"Não consumido"}[state]||"Registado");
+   const displayState=playerAdded&&entry.consumed_foods?.length?'all':state;
    const valuesTaken=values(entry.nutrition);
    return '<section class="tm-record-timing-block">'+
     '<div class="tm-record-timing-heading"><strong>'+esc(label)+'</strong>'+
-    '<span class="tm-consumption-status" data-state="'+esc(state)+'">'+badge+'</span>'+
+    (playerAdded?'<span class="tm-record-origin">Adicionado pelo jogador</span>':'')+
+    '<span class="tm-consumption-status" data-state="'+esc(displayState)+'">'+badge+'</span>'+
     '<span class="tm-record-mini">'+(valuesTaken?kcal(valuesTaken.kcal)+' kcal':'—')+'</span></div>'+
     foodDetails(entry)+'</section>';
   }).join("");
