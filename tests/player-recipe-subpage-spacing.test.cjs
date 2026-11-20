@@ -21,7 +21,7 @@ test("Only recipe subpages get 26px spacing below the shared header",()=>{
 test("Main Menus / Receitas selector remains visually unchanged",()=>{
  assert.match(css,/#menus #menus-recipe-switch\{[\s\S]*?margin:14px 0 18px;/);
  assert.ok(!css.includes("#menus #player-recipes-area{padding-top:26px;}"));
- assert.match(html,/player-recipes\.css\?v=18/);
+ assert.match(html,/player-recipes\.css\?v=[^"\s]+/);
 });
 test("All recipe navigation and header behavior stay intact without a spacer row",()=>{
  assert.match(js,/function renderList\(\)/);

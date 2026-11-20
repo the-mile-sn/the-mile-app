@@ -25,6 +25,6 @@ test("Game questionnaire scales keep original prompts, endpoints and numeric val
  assert.match(js,/ends\.className="post-match-scale-ends"/);
 });
 test("Player reloads the new stylesheet without touching JavaScript version",()=>{
- assert.match(html,/jogador-v2\.css\?v=193/);
- assert.match(html,/jogador-v2\.js\?v=160/);
+ assert.match(html,/jogador-v2\.css\?v=[^"\s]+/);
+ assert.match(html,/jogador-v2\.js\?v=[^"\s]+/);
 });

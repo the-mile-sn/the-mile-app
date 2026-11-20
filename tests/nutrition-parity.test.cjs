@@ -25,9 +25,9 @@ function contexts(){
  const meals=["breakfast","lunch","snack","dinner","supper"];
  const modelRows=[{name:"Geral",meals:{breakfast:"yellow",lunch:"blue",snack:null,dinner:"yellow",supper:null}},{name:"MD-1",meals:{breakfast:"green",lunch:"blue",snack:null,dinner:"green",supper:null}}];
  const plans={yellow:{breakfast:opts(500,25,60,12),dinner:opts(700,35,90,18)},blue:{lunch:opts(800,40,100,20)},green:{breakfast:opts(650,33,75,15),dinner:opts(900,45,110,25)}};
- const base={meals,model:modelRows,plans,periMeals:[],dayColorOverrides:{},effectiveScenarioColorsByDay:{},POST_MATCH_DISPLAY_ENABLED:false};
+ const base={meals,model:modelRows,plans,periMeals:[],dayColorOverrides:{},effectiveScenarioColorsByDay:{},canonicalMealColorsByDay:{},publishedMealChoices:{},POST_MATCH_DISPLAY_ENABLED:false};
  const p=vm.createContext({...base});
- vm.runInContext(["average","assignedColor","dayNutritionTotal","weeklyDayTotal"].map(n=>extract(player,n)).join("\n"),p);
+ vm.runInContext(["average","assignedColor","datedPlanOptions","dayNutritionTotal","weeklyDayTotal"].map(n=>extract(player,n)).join("\n"),p);
  const a=vm.createContext({model:{meals,classifications:modelRows},mealOptionsByColor:plans,periByDay:{},dayColorOverrides:{},effectiveAdminColorsByDay:{},names:{breakfast:"Breakfast",lunch:"Lunch",snack:"Snack",dinner:"Dinner",supper:"Supper"},colors:{yellow:"Yellow",blue:"Blue",green:"Green"}});
  vm.runInContext(["colorForDay","mealColorsForDay","averageMealNutrition","plannedDayTotals"].map(n=>extract(admin,n)).join("\n"),a);
  return {p,a};

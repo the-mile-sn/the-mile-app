@@ -85,8 +85,9 @@ test("Ver porções is appended after foods and notes in each expandable option"
  assert.equal(card.children[0],summary);
  assert.equal(card.children[2],notes);
  assert.equal(button.children.find(x=>x.tagName==="SPAN")?.textContent,"Ver porções");
- assert.equal(button.children.filter(x=>x.tagName==="SVG").length,2);
- assert.ok(button.children[0]._classes.has("tm-portion-action-icon"));
+ assert.equal(button.children.filter(x=>x.tagName==="SVG").length,1);
+ assert.equal(button.children[0].tagName,"SPAN");
+ assert.ok(button.children[1]._classes.has("tm-portion-arrow-icon"));
  assert.match(css,/color:#fff!important;background:rgba\(255,255,255,\.06\)!important/);
  assert.match(css,/border:1px solid rgba\(255,255,255,\.11\)!important/);
  assert.match(css,/font:400 12px\/1\.3/);

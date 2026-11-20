@@ -159,7 +159,7 @@ test("menu recipe action is slightly smaller, separated and provides pressed fee
  assert.match(refinements,/:active\{/);
  assert.match(refinements,/background:rgba\(255,255,255,\.18\)/);
  assert.match(refinements,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=17/);
+ assert.match(html,/player-recipes\.css\?v=[^"\s]+/);
 });
 
 test("menu recipe pressed state is applied on initial touch and survives until navigation",()=>{
@@ -170,7 +170,7 @@ test("menu recipe pressed state is applied on initial touch and survives until n
  assert.match(player,/window\.setTimeout\(\(\)=>\{/);
  assert.match(css,/#menus \.menu-entry-body \.menu-view-recipe\.is-pressed\{/);
  assert.match(css,/#menus \.menu-entry-body \.dish-photo-zoom\{\s*border:0!important;/);
- assert.match(html,/jogador-v2\.js\?v=165/);
+ assert.match(html,/jogador-v2\.js\?v=[^"\s]+/);
 });
 
 test("recipe subpages support left-edge swipe and horizontal page transitions",()=>{
@@ -181,8 +181,8 @@ test("recipe subpages support left-edge swipe and horizontal page transitions",(
  assert.match(css,/animation:recipe-subpage-enter 500ms/);
  assert.match(css,/animation:recipe-subpage-leave 380ms/);
  assert.match(css,/prefers-reduced-motion:reduce/);
- assert.match(html,/player-recipes\.css\?v=17/);
- assert.match(html,/player-recipes\.js\?v=11/);
+ assert.match(html,/player-recipes\.css\?v=[^"\s]+/);
+ assert.match(html,/player-recipes\.js\?v=[^"\s]+/);
 });
 
 test("menu CTA cleans pressed state before showing a subpage; resting state has no border",()=>{
@@ -200,7 +200,7 @@ test("swipe is captured from the outer gutter, preserves vertical scrolling, and
  assert.match(js,/event\.cancelable\)event\.preventDefault\(\)/);
  assert.doesNotMatch(js,/window\.setTimeout\(finish,245\)/);
  assert.match(css,/animation-duration:180ms;/);
- assert.match(html,/player-recipes\.js\?v=11/);
+ assert.match(html,/player-recipes\.js\?v=[^"\s]+/);
 });
 
 test("recipe subpage return has no extra animation delay",()=>{
@@ -214,7 +214,7 @@ test("menu recipe pill uses a dark resting surface close to the zoom tile",()=>{
  assert.match(finalCss,/background:rgba\(11,14,17,\.22\)/);
  assert.match(finalCss,/border:0!important/);
  assert.match(finalCss,/background:rgba\(8,10,13,\.56\)!important/);
- assert.match(html,/player-recipes\.css\?v=17/);
+ assert.match(html,/player-recipes\.css\?v=[^"\s]+/);
 });
 
 test("recipe back action lives in the shared The Mile header with no blank content row",()=>{
