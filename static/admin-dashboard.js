@@ -1207,7 +1207,7 @@ function ensurePlanningOnlyView(){
  };
  setupDashboardPlayerPicker(search,data.players||[],applyPlayerFilter);
  applyPlayerFilter();
- $("tm-db-week-title").textContent=dateLabel(days[0])+" – "+dateLabel(days[6]);$("tm-db-today-date").textContent=new Intl.DateTimeFormat("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(today+"T12:00:00Z"));
+ $("tm-db-week-title").textContent=dateLabel(days[0])+" – "+dateLabel(days[6]);
  }
  async function load(){const id=++seq;if(!weekMonday)weekMonday=monday(dateParts(new Date()));$("tm-db-error").textContent="";$("tm-db-recent").textContent="A consultar…";const res=await request("/api/v2/admin/dashboard?week="+encodeURIComponent(weekMonday));if(id!==seq)return;cache=res;renderTable(res);paintEvents(res);}
  $("tm-db-prev").addEventListener("click",()=>{weekMonday=shifted(weekMonday,-7);load().catch(showError);});
@@ -1313,7 +1313,7 @@ function ensurePlanningOnlyView(){
  }
  function paint(){
   const headerParts=Object.fromEntries(titleFmt.formatToParts(toDate(day)).map(part=>[part.type,part.value]));
-  $("tm-db-miniagenda-selected-date").textContent=headerParts.day+" "+headerParts.month+" "+headerParts.year;
+  $("tm-db-miniagenda-selected-date").textContent=day===today()?"Hoje":headerParts.day+" "+headerParts.month+" "+headerParts.year;
   $("tm-db-miniagenda-prev").setAttribute("aria-label","Dia anterior a "+fullDate(day));
   $("tm-db-miniagenda-next").setAttribute("aria-label","Dia seguinte a "+fullDate(day));
   $("tm-db-miniagenda-new").href=bookingsLink(day,true);
