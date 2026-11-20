@@ -3164,15 +3164,63 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #overview .overview-loading[hidden],#menus .menu-skeleton[hidden]{display:none!important}
 .loading-accessible-label{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 #overview .overview-skeleton-inner{display:flex;flex-direction:column;gap:9px;margin-top:8px}
-#overview .overview-skeleton-day{display:flex;flex-direction:column;gap:9px}
-#overview .overview-skeleton-macros{display:grid;grid-template-columns:1.2fr repeat(3,minmax(0,1fr));gap:5px}
-#overview .overview-skeleton-macros span{min-height:69px;border-radius:10px}
-#overview .overview-skeleton-weight{height:62px;border-radius:12px;margin-top:1px}
-#overview .overview-skeleton-meal{height:56px;border-radius:10px;margin-top:2px}
-#overview .overview-skeleton-macros span,
-#overview .overview-skeleton-weight,
-#overview .overview-skeleton-meal,
-#menus .menu-skeleton-card{background:#25262b;opacity:.68}
+/* One neutral shimmer is shared by Day and Week placeholders. */
+#overview .overview-skeleton-shape{
+ position:relative;display:block;min-width:0;overflow:hidden;background:#29292e;
+}
+#overview .overview-skeleton-shape::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);
+ transform:translateX(-100%);animation:overview-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes overview-skeleton-shimmer{to{transform:translateX(100%)}}
+/* Início > Dia: match today's nutritional strip rather than four large tiles. */
+#overview .overview-skeleton-day{display:flex;flex-direction:column;gap:0}
+#overview .overview-day-skeleton-nutrition{
+ display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,2.95fr);
+ align-items:center;gap:0;box-sizing:border-box;width:100%;min-height:88px;
+ padding:15px 43px 15px 12px;margin:0 0 19px;
+ border-radius:16px;background:rgba(255,255,255,.045);
+}
+#overview .overview-day-skeleton-energy{
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ min-width:0;gap:5px;padding-right:12px;
+}
+#overview .overview-day-skeleton-macros{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-width:0;
+}
+#overview .overview-day-skeleton-metric{
+ display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ min-width:0;gap:7px;padding:0 7px;border-left:1px solid rgba(255,255,255,.14);
+}
+#overview .overview-day-skeleton-label{width:66%;height:9px;border-radius:4px}
+#overview .overview-day-skeleton-energy-value{width:85%;height:23px;border-radius:6px}
+#overview .overview-day-skeleton-value{width:94%;height:16px;border-radius:5px}
+#overview .overview-day-skeleton-perkg{width:73%;height:8px;border-radius:4px}
+#overview .overview-day-skeleton-cards{display:flex;flex-direction:column;gap:8px}
+#overview .overview-day-skeleton-card{
+ display:flex;align-items:center;box-sizing:border-box;gap:10px;
+ width:100%;min-width:0;height:61px;padding:0 17px;
+ border-radius:13px;background:rgba(255,255,255,.055);
+}
+#overview .overview-day-skeleton-icon{
+ flex:0 0 37px;width:37px;height:37px;border-radius:11px;
+}
+#overview .overview-day-skeleton-card-title{
+ flex:0 1 31%;width:31%;height:13px;border-radius:5px;
+}
+#overview .overview-day-skeleton-card-value{
+ width:35px;height:9px;border-radius:4px;flex:none;margin-left:auto;
+}
+#overview .overview-day-skeleton-chevron{
+ width:9px;height:9px;flex:none;border-radius:3px;margin-left:0;
+}
+@media(max-width:380px){
+ #overview .overview-day-skeleton-nutrition{padding:13px 43px 13px 10px}
+ #overview .overview-day-skeleton-energy{padding-right:6px}
+ #overview .overview-day-skeleton-metric{padding:0 4px;gap:6px}
+ #overview .overview-day-skeleton-card{gap:8px}
+}
 
 /* Match Início > Semana: seven day headers, meal rows, day totals and
    the four-column daily-average summary. No old large cards or fake week title. */
@@ -3186,9 +3234,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #overview .overview-week-skeleton-header{
  display:flex;flex-direction:column;justify-content:center;align-items:center;
  gap:6px;min-width:0;padding:7px 0 11px;
-}
-#overview .overview-week-skeleton-shape{
- position:relative;display:block;overflow:hidden;min-width:0;background:#29292e;
 }
 #overview .overview-week-skeleton-weekday{width:47%;height:8px;border-radius:4px}
 #overview .overview-week-skeleton-date{width:42%;height:20px;border-radius:9px}
@@ -3209,19 +3254,13 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #overview .overview-week-skeleton-metric+.overview-week-skeleton-metric{border-left:1px solid rgba(255,255,255,.12)}
 #overview .overview-week-skeleton-metric-label{width:70%;height:9px;border-radius:4px}
 #overview .overview-week-skeleton-metric-value{width:90%;height:15px;border-radius:5px}
-#overview .overview-week-skeleton-shape::after{
- content:"";position:absolute;inset:0;pointer-events:none;
- background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);
- transform:translateX(-100%);animation:overview-week-skeleton-shimmer 1.5s ease-in-out infinite;
-}
-@keyframes overview-week-skeleton-shimmer{to{transform:translateX(100%)}}
 @media(max-width:620px){
  #overview .overview-week-skeleton-meal{height:44px}
  #overview .overview-week-skeleton-metric{padding:0 5px}
  #overview .overview-week-skeleton-summary{padding:13px 6px;grid-template-columns:1.4fr repeat(3,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){
- #overview .overview-week-skeleton-shape::after{animation:none}
+ #overview .overview-skeleton-shape::after{animation:none}
 }
 #menus .menu-skeleton{margin:8px 0 18px}
 #menus .menu-skeleton-range{display:block;text-align:center;color:#a5a5b0;font-size:13px;margin:8px 0 15px}
