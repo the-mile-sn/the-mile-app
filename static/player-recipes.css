@@ -137,7 +137,7 @@
 }
 #menus .recipe-identity h2{
  margin:0 0 10px;
- font-size:clamp(20px,5.3vw,23px);
+ font-size:clamp(21px,5.3vw,23px);
  font-weight:var(--mile-type-semibold,600);
  line-height:1.24;
  overflow-wrap:break-word;
@@ -167,12 +167,12 @@
 #menus .recipe-content-section .recipe-section-title{
  display:flex;
  align-items:center;
- gap:10px;
- margin:0 0 13px;
- font-size:18px;
- font-weight:var(--mile-type-semibold,600);
- line-height:1.3;
- color:#f4f4f7;
+ gap:11px;
+ margin:0 0 10px;
+ font-size:16px;
+ font-weight:var(--mile-type-card-title,400);
+ line-height:1.35;
+ color:#e6e6eb;
 }
 #menus .recipe-section-title .mile-icon,
 #menus .recipe-section-title .recipe-section-icon{
@@ -289,9 +289,6 @@
  padding:15px 15px 16px;
  margin:0 0 12px;
 }
-#menus .recipe-content-section .recipe-section-title{
- margin:0 0 10px;
-}
 #menus .recipe-content-section .recipe-ingredient{
  padding:7px 0;
  min-height:0;
@@ -338,11 +335,6 @@
 
 /* Quiet icon tiles in the same grayscale family as the app's meal icon tiles.
    No tinted green and no new icons or decorative borders. */
-#menus .recipe-content-section .recipe-section-title{
- font-weight:var(--mile-type-medium,500);
- color:#e6e6eb;
- gap:11px;
-}
 #menus .recipe-section-title > .recipe-icon-tile{
  display:inline-flex;
  align-items:center;
@@ -380,12 +372,6 @@
 }
 
 /* Recipe-only visual finish: typography and the library's optical image alignment. */
-#menus .recipe-content-section .recipe-section-title{
- font-size:16px;
- font-weight:var(--mile-type-medium,500);
- line-height:1.35;
- color:#e6e6eb;
-}
 /* Align the image with the visible top of the letters, not only the line box. */
 #menus .recipe-detail-standalone .recipe-identity .recipe-detail-photo{
  margin-top:7px;
@@ -428,10 +414,6 @@
 #menus .menu-entry-body .dish-photo-zoom svg{width:14px;height:14px;}
 @media(max-width:620px){
  #menus .menu-entry-body .dish-photo-frame{width:82px;height:82px;}
-}
-/* The section title needs to be visibly quieter than the recipe text. */
-#menus .recipe-content-section .recipe-section-title{
- font-size:14px;font-weight:var(--mile-type-medium,500);line-height:1.35;
 }
 /* Slightly deeper than the assessment inset, to overcome the overly bright photographed view. */
 #menus details.recipe-accordion .recipe-content-section{
