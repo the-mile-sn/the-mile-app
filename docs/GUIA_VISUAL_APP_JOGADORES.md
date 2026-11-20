@@ -61,6 +61,8 @@ Referência normativa de Receitas: **86 px**, **raio 18 px**, fundo cinzento sub
 | Login | Campos 56 px / raio 20 px e botão Entrar 54 px / pill 999 px; **não são cards universais**. Splash, autenticação, mensagens e fluxos inalterados |
 | Formulários, gráficos e campos internos | Podem usar layouts e alturas variáveis; preservar dados, validações, acessibilidade e funções |
 
+**Consolidação técnica do painel nutricional (20/11):** hierarquia dos gráficos semanais consolidada na origem (títulos 16/600; etiquetas 12/400). Foram eliminadas declarações substituídas por outras do mesmo seletor, prioridade e contexto CSS, sem alterar a cascata efetiva. Preservar os modos desktop/mobile, as diferenças entre aberto/fechado, os dois anéis de consumo, controlos, cores, valores e unidades g/g/kg. Não introduzir novos overrides para corrigir a estética.
+
 **Ritmo vertical da Página Inicial → Dia:** **10 px entre cards unitários consecutivos** (refeições, peri/pós-treino, treino/jogo, peso, suplementação e formulário pós-jogo), independentemente da classe técnica. Não uniformizar deste modo o painel nutricional inicial, os subcards internos nem a grelha semanal. Confirmar na captura do iPhone.
 
 **Gráficos de Avaliações — referência Peso em jejum (20/11):** os subcards `.assessment-trend` em Resumo, Pregas e Perímetros partilham com a superfície `.daily-weight-chart-surface` o fundo `#1b1b20`, raio **14 px**, padding interno **10 px 8 px 9 px** e afastamento horizontal **17 px** das bordas do card principal. A distância ao cabeçalho aberto é **8 px** e a margem inferior é **12 px**, como no painel do Peso. Manter num único seletor de origem, sem um override posterior de 5 px. Em ecrãs estreitos, o SVG com até dez avaliações adapta-se à largura disponível; séries mais longas conservam a deslocação horizontal e abertura nos pontos recentes. Não alterar valores, cores, rótulos, gestos ou cálculos. Confirmar no iPhone em card aberto e nas três vistas.
@@ -81,6 +83,8 @@ Referência normativa de Receitas: **86 px**, **raio 18 px**, fundo cinzento sub
 | Título de card universal | **16 px / 400** | todas as zonas equivalentes; só o peso muda a 20/11 |
 | Título de secção interna / pergunta | **15 px / 600** | Perguntas pós-jogo e restantes secções internas, exceto detalhe de Receitas |
 | Título de secção — detalhe de Receitas | **16 px / 400** | Ingredientes, Preparação e Dicas úteis, igual aos títulos de cards universais; conteúdo mantém 14/400 |
+| Painel nutricional aberto — títulos semanais | **16 px / 600** | «Calorias da semana» e «Macros da semana» |
+| Painel nutricional aberto — etiquetas de macros | **12 px / 400** | «Proteína», «Hidratos» e «Gordura»; cores e escalas próprias |
 | Texto principal | **14 px / 400** | descrições, alimentos, respostas |
 | Texto secundário | **12–13 px / 400** | notas, estados e legendas contextuais |
 | Legenda pequena | **10–11 px / 400** | quando necessário |
