@@ -289,6 +289,7 @@ def _public_booking(row):
         "service_id": row["service_id"],
         "professional_name": row["professional_name"],
         "service_name": row["service_name"],
+        "service_category": row["service_category"],
         "mode": row["mode"],
         "date": row["day"],
         "start": availability.display_time(row["start_minute"]),
@@ -314,6 +315,7 @@ def _paid_shopify_booking(row):
         "service_id": row["service_id"],
         "professional_name": row["professional_name"],
         "service_name": row["service_name"],
+        "service_category": row["service_category"],
         "mode": row["mode"],
         "date": row["day"],
         "start": availability.display_time(row["start_minute"]),
@@ -340,7 +342,7 @@ def list_bookings(c, from_day, to_day, professional_id="", service_id="", status
     for value in (professional_id, service_id):
         if not isinstance(value, str) or len(value)>70:
             raise ValueError("invalid_filter")
-    sql = """SELECT b.*,p.name AS professional_name,s.name AS service_name
+    sql = """SELECT b.*,p.name AS professional_name,s.name AS service_name,s.category AS service_category
         FROM appt_bookings b
         JOIN appt_professionals p ON p.id=b.professional_id AND p.org_id=b.org_id
         JOIN appt_services s ON s.id=b.service_id AND s.org_id=b.org_id
@@ -361,7 +363,7 @@ def list_bookings(c, from_day, to_day, professional_id="", service_id="", status
     paid = []
     if status in ("all", "scheduled"):
         sql_paid = """SELECT h.*,p.name AS professional_name,
-            s.name AS service_name,paid.customer_name,paid.customer_email,
+            s.name AS service_name,s.category AS service_category,paid.customer_name,paid.customer_email,
             paid.customer_phone,paid.shopify_order_id
             FROM appt_checkout_holds h
             JOIN appt_shopify_confirmations paid
