@@ -974,20 +974,41 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
    selectedLabel.textContent=choices[selectedIndex][1];
    options.forEach((option,i)=>option.setAttribute('aria-selected',String(i===selectedIndex)));
   };
+  // A touch scroll begins with pointerdown; closing there made swiping the
+  // page dismiss this list before the player could reach Adicionar alimento.
+  // Actual taps still close the menu, while scrolling remains uninterrupted.
   const outsideClick=event=>{
    if(!selector.contains(event.target))closeOptions(false);
   };
   const closeOptions=(returnFocus=true)=>{
    menu.hidden=true;trigger.setAttribute('aria-expanded','false');
-   document.removeEventListener('pointerdown',outsideClick);
+   document.removeEventListener('click',outsideClick);
    if(returnFocus&&trigger.isConnected)trigger.focus({preventScroll:true});
+  };
+  const editorHost=document.createElement('div');editorHost.className='intra-add-moment-editor-host';
+  const revealTimingAndFood=()=>{
+   if(menu.hidden||!selector.isConnected)return;
+   const nav=document.getElementById('tabs');
+   const viewport=window.visualViewport;
+   const visualBottom=(viewport?.offsetTop||0)+(viewport?.height||window.innerHeight);
+   const navTop=nav&&!nav.hidden?nav.getBoundingClientRect().top:visualBottom;
+   const visibleBottom=Math.min(visualBottom,navTop)-16;
+   // Reveal the bottom of the available choices and, if already rendered,
+   // the normal food-add trigger. Do not scroll the field under the status bar.
+   const foodTrigger=editorHost.querySelector('.consumption-add-trigger');
+   const contentBottom=(foodTrigger||menu).getBoundingClientRect().bottom;
+   const labelTop=label.getBoundingClientRect().top;
+   const safeTop=(viewport?.offsetTop||0)+76;
+   const room=Math.max(0,labelTop-safeTop);
+   const move=Math.min(room,Math.max(0,contentBottom-visibleBottom));
+   if(move>8)window.scrollBy({top:Math.ceil(move),behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth'});
   };
   const openOptions=()=>{
    menu.hidden=false;trigger.setAttribute('aria-expanded','true');
-   document.addEventListener('pointerdown',outsideClick);
+   document.addEventListener('click',outsideClick);
    options[selectedIndex]?.focus({preventScroll:true});
+   window.requestAnimationFrame(revealTimingAndFood);
   };
-  const editorHost=document.createElement('div');editorHost.className='intra-add-moment-editor-host';
   const dismiss=()=>{
    closeOptions(false);
    picker.hidden=true;addButton.hidden=false;addButton.setAttribute('aria-expanded','false');
