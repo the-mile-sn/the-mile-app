@@ -20,11 +20,19 @@
  const current=()=>window.playerSessionEpoch===undefined?playerSessionEpoch:window.playerSessionEpoch;
  const request=path=>api(path);
  function message(text){area.replaceChildren(node("p","recipe-message",text));}
+ // Keep an inert skeleton while the protected recipe image is loading.
+ // Safari otherwise paints empty <img> elements as thin broken-image lines.
+ // An unavailable thumbnail stays a neutral tile; an unavailable hero collapses.
  function thumb(id,large=false){
-  const placeholder=node("span","recipe-thumb-placeholder","•");
+  const placeholder=node("span","recipe-thumb-placeholder");
+  placeholder.setAttribute("aria-hidden","true");
   if(!id)return placeholder;
-  const img=node("img",large?"recipe-detail-photo":"recipe-thumb");
-  img.alt="";img.loading="lazy";img.decoding="async";
+  const frame=node("span",large?"recipe-detail-photo":"recipe-thumb");
+  frame.classList.add("recipe-photo-frame","is-loading");
+  frame.setAttribute("aria-hidden","true");
+  const img=node("img","recipe-photo-img");
+  img.alt="";img.loading=large?"eager":"lazy";img.decoding="async";
+  frame.append(img);
   const epoch=current();
   const key=String(id);
   if(!photos.has(key)){
@@ -34,13 +42,28 @@
     .then(blob=>URL.createObjectURL(blob)).catch(()=>null);
    photos.set(key,pending);
   }
+  const available=()=>epoch===current()&&frame.isConnected;
+  const failed=()=>{
+   if(!available())return;
+   frame.classList.remove("is-loading");
+   img.remove();
+   if(large){
+    frame.parentElement?.classList.remove("recipe-detail--hero");
+    frame.remove();
+   }else frame.classList.add("is-unavailable");
+  };
   photos.get(key).then(src=>{
-   if(epoch!==current()||!img.isConnected)return;
-   if(src){img.src=src;img.onerror=()=>large?img.remove():img.replaceWith(placeholder);}
-   else if(large)img.remove();
-   else img.replaceWith(placeholder);
+   if(!available())return;
+   if(!src){failed();return;}
+   img.onload=()=>{
+    if(!available())return;
+    frame.classList.remove("is-loading");
+    frame.classList.add("is-loaded");
+   };
+   img.onerror=failed;
+   img.src=src;
   });
-  return img;
+  return frame;
  }
  function showRecipePage(root){
   root.classList.add("recipe-page-enter");
@@ -193,7 +216,6 @@
    root.classList.add("recipe-detail--hero");
    const hero=thumb(recipe.id,true);
    hero.classList.add("recipe-hero");
-   hero.loading="eager";
    root.append(hero);
   }
   if(includeTitle||includeServings||(includePhoto&&recipe.has_photo&&!showHero)){

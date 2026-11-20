@@ -63,16 +63,17 @@ test("library recipe displays a 170-190px hero above the full-width page title",
  assert.match(js,/const showHero=standalone&&includePhoto&&includeTitle&&recipe\.has_photo/);
  assert.match(js,/const hero=thumb\(recipe\.id,true\)/);
  assert.match(js,/hero\.classList\.add\("recipe-hero"\)/);
- assert.match(js,/hero\.loading="eager"/);
+ assert.match(js,/img\.loading=large\?"eager":"lazy"/);
  const code=js.slice(js.indexOf("function detail("),js.indexOf("async function loadDetail("));
  assert.ok(code.indexOf("root.append(hero)")<code.indexOf('const identity=node("div","recipe-identity")'));
- assert.match(css,/#menus \.recipe-detail-standalone > \.recipe-hero\{[^}]*width:100%;[^}]*height:clamp\(170px,46vw,190px\);[^}]*object-fit:cover;[^}]*border-radius:18px;/s);
+ assert.match(css,/#menus \.recipe-detail-standalone > \.recipe-hero\{[^}]*width:100%;[^}]*height:clamp\(170px,46vw,190px\);[^}]*border-radius:18px;/s);
+  assert.match(css,/#menus \.recipe-photo-frame > \.recipe-photo-img\{[^}]*object-fit:cover;opacity:0;/s);
  assert.match(js,/root\.classList\.add\("recipe-detail--hero"\)/);
  assert.match(css,/#menus \.recipe-detail-standalone\.recipe-detail--hero \.recipe-identity\{[^}]*min-height:0;/s);
  assert.doesNotMatch(css,/#menus \.recipe-detail-standalone \.recipe-identity\{[^}]*min-height:0;/s);
  assert.match(css,/#menus \.recipe-identity h2\{[^}]*font-size:clamp\(21px,5\.3vw,23px\);[^}]*font-weight:var\(--mile-type-semibold,600\)/s);
- assert.match(html,/player-recipes\.css\?v=22/);
- assert.match(html,/player-recipes\.js\?v=14/);
+ assert.match(html,/player-recipes\.css\?v=\d+/);
+ assert.match(html,/player-recipes\.js\?v=\d+/);
 });
 test("recipe sections have subtle cards and separated ingredients",()=>{
  assert.match(js,/sectionTitle\("Ingredientes","ingredients"\)/);
@@ -244,4 +245,28 @@ test("recipe back action lives in the shared The Mile header with no blank conte
  assert.match(js,/headerBack\.hidden=!\(subpage&&!document\.getElementById\("menus"\)\.hidden/);
  assert.match(js,/if\(!secondary\)headerBack\.onclick=null/);
  assert.match(js,/syncHeaderBack\};/);
+});
+
+
+test("recipe images show a subtle skeleton until successful onload",()=>{
+ assert.match(js,/const frame=node\("span",large\?"recipe-detail-photo":"recipe-thumb"\)/);
+ assert.match(js,/frame\.classList\.add\("recipe-photo-frame","is-loading"\)/);
+ assert.match(js,/const img=node\("img","recipe-photo-img"\)/);
+ assert.match(js,/img\.loading=large\?"eager":"lazy"/);
+ assert.match(js,/img\.alt=""/);
+ assert.match(js,/const available=\(\)=>epoch===current\(\)&&frame\.isConnected/);
+ assert.match(js,/img\.onload=\(\)=>\{[\s\S]*?frame\.classList\.remove\("is-loading"\);[\s\S]*?frame\.classList\.add\("is-loaded"\)/);
+ assert.match(js,/img\.onerror=failed/);
+ assert.match(js,/if\(!src\)\{failed\(\);return;\}/);
+ assert.match(js,/if\(large\)\{[\s\S]*?frame\.parentElement\?\.classList\.remove\("recipe-detail--hero"\);[\s\S]*?frame\.remove\(\)/);
+ assert.match(js,/else frame\.classList\.add\("is-unavailable"\)/);
+ assert.match(css,/#menus \.recipe-photo-frame\{[^}]*background:#29292e/);
+ assert.match(css,/#menus \.recipe-photo-frame > \.recipe-photo-img\{[^}]*opacity:0/);
+ assert.match(css,/#menus \.recipe-photo-frame\.is-loaded > \.recipe-photo-img\{opacity:1\}/);
+ assert.match(css,/#menus \.recipe-photo-frame\.is-loading::after\{[^}]*rgba\(255,255,255,\.055\)/s);
+ assert.match(css,/@keyframes recipe-photo-shimmer/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{[^}]*recipe-photo-frame\.is-loading::after\{animation:none\}/s);
+ assert.doesNotMatch(js,/recipe-thumb-placeholder","•"/);
+ assert.match(html,/player-recipes\.css\?v=23/);
+ assert.match(html,/player-recipes\.js\?v=15/);
 });
