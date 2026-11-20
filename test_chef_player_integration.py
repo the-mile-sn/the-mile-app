@@ -111,8 +111,8 @@ class ChefPlayerReleaseTests(unittest.TestCase):
                     VALUES(?,?,?,?,?,?,1)""",
                     (uid,username,username+"@accounts.internal.invalid",username,
                      "player",app.password_hash("player-secret-pass-123")))
-                c.execute("INSERT INTO v2_player_links (user_id,athlete_id) VALUES(?,?)",
-                          (uid,athlete))
+                c.execute("INSERT INTO v2_player_links (user_id,athlete_id,linked_at) VALUES(?,?,?)",
+                          (uid,athlete,123456))
             c.execute("""INSERT INTO v2_food_library
                 (id,display_name,variant,edible_fraction,kcal,protein_g,
                  carbs_g,fat_g,active) VALUES(?,?,?,?,?,?,?,?,?)""",
