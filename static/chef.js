@@ -311,73 +311,155 @@ function executionForm(date,meal,card){
   card.append(root);
 }
 function editMenuForm(date,meal,item,slot){
-  if(date<dateKey(new Date()))return;
-  const holder=node("div","chef-menu-editor");
-  const type=node("select","chef-input");
-  const options=[
-    ["dish",lang==="pt"?"Prato aprovado":"Approved dish"],
-    ["category",lang==="pt"?"Categoria":"Category"],
-    ["proposal",lang==="pt"?"Propor prato novo":"Suggest new dish"]
-  ];
-  for(const [val,label] of options){const opt=node("option","",label);opt.value=val;type.append(opt);}
-  type.value=item?.kind==="category"?"category":"dish";
-  holder.append(type);
-  const search=makeInput("input",lang==="pt"?"Pesquisar prato aprovado":"Search approved dish",90);
-  const dishSelect=node("select","chef-input");
-  const category=node("select","chef-input");
-  for(const c of ["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"]){
-    const opt=node("option","",c);opt.value=c;category.append(opt);
-  }
-  if(item?.kind==="category")category.value=item.value;
-  const proposal=makeInput("input",lang==="pt"?"Nome do prato sugerido":"Suggested dish name",200);
-  const note=makeInput("textarea",lang==="pt"?"Nota para a equipa (opcional)":"Note for the team (optional)",500);
-  holder.append(search,dishSelect,category,proposal,note);
-  const feedback=node("p","chef-feedback"),actions=node("div","chef-edit-actions");
-  const save=miniButton(lang==="pt"?"Guardar":"Save",()=>{});save.classList.add("primary");
-  const cancel=miniButton(lang==="pt"?"Cancelar":"Cancel",()=>holder.remove());
-  actions.append(save,cancel);holder.append(actions,feedback);
-  async function findDishes(){
-    try{
-      const data=await request("/api/v2/chef/dishes?q="+encodeURIComponent(search.value.trim()));
-      dishSelect.replaceChildren();
-      for(const dish of data.dishes||[]){
-        const option=node("option","",dish.name_pt);option.value=dish.id;dishSelect.append(option);
-      }
-      if(item?.dish_id&&Array.from(dishSelect.options).some(o=>o.value===item.dish_id))dishSelect.value=item.dish_id;
-    }catch(err){feedback.textContent=txt().fail;}
-  }
-  let debounce;
-  search.oninput=()=>{clearTimeout(debounce);debounce=setTimeout(findDishes,220);};
-  function showType(){
-    search.hidden=dishSelect.hidden=type.value!=="dish";
-    category.hidden=type.value!=="category";
-    proposal.hidden=note.hidden=type.value!=="proposal";
-  }
-  type.onchange=showType;showType();findDishes();
-  save.onclick=async()=>{
-    save.disabled=true;feedback.textContent="";
-    try{
-      if(type.value==="proposal"){
-        await request("/api/v2/chef/menu-proposals","POST",{
-          menu_date:date,meal,name:proposal.value,note:note.value
-        });
-        feedback.textContent=lang==="pt"?"Proposta enviada para validação.":"Suggestion submitted for review.";
-        return;
-      }
-      const selected=dishSelect.selectedOptions[0];
-      if(type.value==="dish"&&!selected)throw Error("no_dish");
-      await request("/api/v2/chef/menus","PUT",{
-        menu_date:date,meal,kind:type.value,
-        value:type.value==="dish"?selected.textContent:category.value,
-        dish_id:type.value==="dish"?dishSelect.value:null
-      });
-      await loadWeek();
-    }catch(err){feedback.textContent=txt().fail+" "+(err.message||"");}
-    finally{save.disabled=false;}
+ if(previewReadOnly||date<dateKey(new Date()))return;
+ const pt=lang==="pt";
+ const holder=node("div","chef-menu-editor");
+ const heading=node("h3","chef-menu-editor-title",pt
+   ?(item?"Alterar prato":"Definir prato")
+   :(item?"Change dish":"Set dish"));
+ holder.append(heading);
+ holder.append(node("p","chef-menu-form-label",pt?"Como queres definir o menu?":"How would you like to set the menu?"));
+ const modes=node("div","chef-menu-mode-choices");
+ const modesList=[
+  ["dish",pt?"Prato aprovado":"Approved dish"],
+  ["category",pt?"Categoria":"Category"],
+  ["proposal",pt?"Sugerir prato":"Suggest dish"]
+ ];
+ let mode=item?.kind==="category"?"category":"dish";
+ let selectedDish=item?.kind==="dish"&&item.dish_id
+   ?{id:item.dish_id,name:asText(item.value)}:null;
+ let selectedCategory=item?.kind==="category"?item.value:"Carne branca";
+ const categories=["Carne branca","Carne vermelha","Peixe magro","Peixe gordo","Livre","Pós-jogo","Mix","CT","Estágio"];
+ if(!categories.includes(selectedCategory))selectedCategory=categories[0];
+ const modeButtons=new Map();
+ const dishArea=node("div","chef-menu-form-section");
+ const dishField=node("label","chef-menu-form-field");
+ dishField.append(node("span","",pt?"Pesquisar prato aprovado":"Search approved dish"));
+ const search=makeInput("input",pt?"Escreve o nome de um prato":"Enter a dish name",90);
+ search.type="search";search.autocomplete="off";
+ dishField.append(search);
+ const selected=node("p","chef-menu-selected-dish");
+ selected.setAttribute("role","status");
+ const results=node("div","chef-menu-dish-results");
+ results.hidden=true;results.setAttribute("aria-label",pt?"Pratos aprovados":"Approved dishes");
+ dishArea.append(dishField,selected,results);
+ const categoryArea=node("div","chef-menu-form-section");
+ categoryArea.append(node("p","chef-menu-form-label",pt?"Selecionar categoria":"Select category"));
+ const categoryTrigger=node("button","chef-menu-category-trigger");
+ categoryTrigger.type="button";categoryTrigger.setAttribute("aria-expanded","false");
+ const categoryOptions=node("div","chef-menu-category-options");categoryOptions.hidden=true;
+ categoryOptions.setAttribute("aria-label",pt?"Categorias disponíveis":"Available categories");
+ const syncCategory=()=>{categoryTrigger.textContent=selectedCategory;};
+ for(const value of categories){
+  const option=node("button","chef-menu-category-option",value);option.type="button";
+  option.onclick=()=>{
+   selectedCategory=value;syncCategory();categoryOptions.hidden=true;
+   categoryTrigger.setAttribute("aria-expanded","false");
   };
-  slot.append(holder);
+  categoryOptions.append(option);
+ }
+ categoryTrigger.onclick=()=>{
+  categoryOptions.hidden=!categoryOptions.hidden;
+  categoryTrigger.setAttribute("aria-expanded",String(!categoryOptions.hidden));
+ };
+ syncCategory();categoryArea.append(categoryTrigger,categoryOptions);
+ const proposalArea=node("div","chef-menu-form-section");
+ const proposalLabel=node("label","chef-menu-form-field");
+ proposalLabel.append(node("span","",pt?"Nome do prato a propor":"Dish name to suggest"));
+ const proposal=makeInput("input",pt?"Escreve o nome do prato":"Enter dish name",200);
+ proposalLabel.append(proposal);
+ const noteLabel=node("label","chef-menu-form-field");
+ noteLabel.append(node("span","",pt?"Observações (opcional)":"Notes (optional)"));
+ const note=makeInput("textarea",pt?"Informação para a equipa":"Information for the team",500);
+ noteLabel.append(note);
+ proposalArea.append(proposalLabel,noteLabel,node("p","chef-menu-proposal-hint",
+  pt?"A sugestão é enviada para validação e não altera o menu planeado."
+    :"Suggestions are sent for review and do not change the planned menu."));
+ holder.append(modes,dishArea,categoryArea,proposalArea);
+ const feedback=node("p","chef-feedback");feedback.setAttribute("role","status");
+ feedback.setAttribute("aria-live","polite");
+ const actions=node("div","chef-edit-actions");
+ const cancel=node("button","chef-menu-cancel",pt?"Cancelar":"Cancel");cancel.type="button";
+ cancel.onclick=()=>holder.remove();
+ const save=node("button","chef-menu-save",pt?"Guardar":"Save");save.type="button";
+ actions.append(cancel,save);holder.append(actions,feedback);
+ const showSelected=()=>{
+  selected.textContent=selectedDish?(pt?"Selecionado: ":"Selected: ")+selectedDish.name:"";
+  selected.hidden=!selectedDish;
+ };
+ const showMode=()=>{
+  for(const [key,button]of modeButtons)button.setAttribute("aria-pressed",String(mode===key));
+  dishArea.hidden=mode!=="dish";categoryArea.hidden=mode!=="category";proposalArea.hidden=mode!=="proposal";
+  results.hidden=true;categoryOptions.hidden=true;categoryTrigger.setAttribute("aria-expanded","false");
+  feedback.textContent="";
+ };
+ for(const [key,caption] of modesList){
+  const button=node("button","chef-menu-mode-choice",caption);button.type="button";
+  button.onclick=()=>{mode=key;showMode();};
+  modeButtons.set(key,button);modes.append(button);
+ }
+ showSelected();showMode();
+ let debounce,requestSeq=0;
+ const findDishes=async()=>{
+  const seq=++requestSeq;results.hidden=false;
+  results.replaceChildren(node("p","chef-menu-dish-status",pt?"A pesquisar…":"Searching…"));
+  try{
+   const data=await request("/api/v2/chef/dishes?q="+encodeURIComponent(search.value.trim()));
+   if(seq!==requestSeq||!holder.isConnected||mode!=="dish")return;
+   results.replaceChildren();
+   for(const dish of data.dishes||[]){
+    const button=node("button","chef-menu-dish-result");button.type="button";
+    button.append(node("span","",dish.name_pt));
+    if(dish.category)button.append(node("small","",dish.category));
+    button.onclick=()=>{
+     selectedDish={id:dish.id,name:dish.name_pt};
+     search.value=dish.name_pt;showSelected();results.hidden=true;
+     feedback.textContent="";
+    };
+    results.append(button);
+   }
+   if(!results.childElementCount)results.append(node("p","chef-menu-dish-status",
+     pt?"Nenhum prato encontrado. Podes sugerir um novo.":"No dishes found. You can suggest a new one."));
+  }catch(err){
+   if(seq===requestSeq&&holder.isConnected)results.replaceChildren(
+    node("p","chef-menu-dish-status",txt().fail));
+  }
+ };
+ search.addEventListener("focus",()=>{if(mode==="dish"&&results.hidden)findDishes();});
+ search.addEventListener("input",()=>{
+  selectedDish=null;showSelected();feedback.textContent="";
+  clearTimeout(debounce);debounce=setTimeout(findDishes,220);
+ });
+ search.addEventListener("keydown",event=>{if(event.key==="Escape")results.hidden=true;});
+ save.onclick=async()=>{
+  if(mode==="dish"&&!selectedDish){
+   feedback.textContent=pt?"Seleciona um prato aprovado na lista.":"Choose an approved dish from the list.";
+   return;
+  }
+  if(mode==="proposal"&&proposal.value.trim().length<2){
+   feedback.textContent=pt?"Indica o nome do prato que pretendes sugerir.":"Enter the name of the dish to suggest.";
+   return;
+  }
+  save.disabled=cancel.disabled=true;feedback.textContent="";
+  try{
+   if(mode==="proposal"){
+    await request("/api/v2/chef/menu-proposals","POST",{
+     menu_date:date,meal,name:proposal.value.trim(),note:note.value.trim()
+    });
+    feedback.textContent=pt?"Proposta enviada para validação. O menu atual mantém-se.":"Suggestion sent for review. The current menu is unchanged.";
+    return;
+   }
+   await request("/api/v2/chef/menus","PUT",{
+    menu_date:date,meal,kind:mode,
+    value:mode==="dish"?selectedDish.name:selectedCategory,
+    dish_id:mode==="dish"?selectedDish.id:null
+   });
+   await loadWeek();
+  }catch(err){feedback.textContent=txt().fail;}
+  finally{save.disabled=cancel.disabled=false;}
+ };
+ slot.append(holder);
 }
-
 
 const chefIcons={breakfast:"coffee-03",lunch:"restaurant-02",snack:"vegetarian-food",dinner:"restaurant-02",supper:"moon-02"};
 const chefSvgPaths={"coffee-03":"<path d=\"M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Zm12 1h1a3 3 0 0 1 0 6h-2M4 22h16M8 3v3m4-3v3m4-3v3\"/>","vegetarian-food":"<path d=\"M4 12c2-4 6-4 8 0 2-4 6-4 8 0l-2 7H6l-2-7ZM12 10V4M8 7 5 5m11 2 3-2M6 22h12\"/>","restaurant-02":"<path d=\"M4 3v8m3-8v8M4 7h3M5.5 11v10M13 3v18M13 12c7 0 8-8 3-9v9M20 3v18\"/>","moon-02":"<path d=\"M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z\"/>","football":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 7 4 3-1.5 5h-5L8 10l4-3Zm-4 3-4-1m12 1 4-1m-5.5 6 2 5m-7-5-2 5M12 7V3\"/>","football-pitch":"<rect x=\"2.5\" y=\"4\" width=\"19\" height=\"16\" rx=\"1\"/><path d=\"M12 4v16m0-12a4 4 0 0 0 0 8M2.5 9h4v6h-4m19-6h-4v6h4\"/>","soft-drink-01":"<path d=\"M5 5h14l-2 16H7L5 5ZM4 3h16M12 5l4-4M8 11h8m-6 4h4\"/>","home-09":"<path d=\"m3 11 9-8 9 8v9H3v-9Zm6 9v-7h6v7\"/>","files-01":"<path d=\"M7 3h10l4 4v14H7V3Zm10 0v5h4M3 7v14h14\"/>","add-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10m-5-5h10\"/>","menu-restaurant":"<path d=\"M4 4v7m3-7v7M4 7h3m-1.5 4v9M13 4v16m0-8c7 0 8-7 3-8v8M3 22h18\"/>","user-03":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>"};;
@@ -793,7 +875,7 @@ function renderChefMenuDay(root,key){
   slot.append(node("div","chef-menu-meal-label",mealNames[lang][meal]));
   appendChefMenuDish(slot,item,txt().pending);
   if(!previewReadOnly&&key>=dateKey(new Date())){
-   const edit=miniButton(lang==="pt"?"Editar menu":"Edit menu",()=>{
+   const edit=miniButton(lang==="pt"?(item?"Alterar prato":"Definir prato"):(item?"Change dish":"Set dish"),()=>{
     const existing=slot.querySelector(".chef-menu-editor");
     if(existing){existing.remove();return;}
     editMenuForm(key,meal,item,slot);
