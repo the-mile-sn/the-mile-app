@@ -13,6 +13,7 @@
  <link rel="stylesheet" href="/nutrition-nav.css?v=17">
  <link rel="stylesheet" href="/admin-surface-palette.css?v=171">
  <link rel="stylesheet" href="/admin-appointments.css?v=15">
+ <link rel="stylesheet" href="/admin-work.css?v=1">
 </head>
 <body class="tm-appointments-body">
  <div id="tm-appointments-auth" class="tm-appointments-auth" role="status" aria-live="polite">A validar acesso ao backoffice…</div>
@@ -33,6 +34,7 @@
    </div>
    <div class="tm-appointments-tabs" role="tablist" aria-label="Áreas de agendamentos">
     <button id="tm-appointments-tab-agenda" role="tab" type="button" aria-selected="true" aria-controls="tm-appointments-panel-agenda" class="is-active" data-appointments-tab="agenda">Agenda</button>
+    <button id="tm-appointments-tab-tarefas" role="tab" type="button" aria-selected="false" aria-controls="tm-appointments-panel-tarefas" tabindex="-1" data-appointments-tab="tarefas">Tarefas</button>
     <button id="tm-appointments-tab-reservas" role="tab" type="button" aria-selected="false" aria-controls="tm-appointments-panel-reservas" tabindex="-1" data-appointments-tab="reservas">Reservas</button>
     <button id="tm-appointments-tab-disponibilidades" role="tab" type="button" aria-selected="false" aria-controls="tm-appointments-panel-disponibilidades" tabindex="-1" data-appointments-tab="disponibilidades">Disponibilidades</button>
     <button id="tm-appointments-tab-configuracao" role="tab" type="button" aria-selected="false" aria-controls="tm-appointments-panel-configuracao" tabindex="-1" data-appointments-tab="configuracao">Configuração</button>
@@ -57,12 +59,26 @@
      </div>
      <div id="tm-appointments-weekdays" class="tm-appointments-weekdays" aria-hidden="true" hidden><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
       <div id="tm-appointments-days" class="tm-appointments-week" aria-label="Dias da agenda"></div>
-      <div class="tm-appointments-calendar-footer"><button type="button" class="tm-appt-create" id="tm-appt-new-booking">+ Adicionar marcação</button></div>
+      <div class="tm-appointments-calendar-footer tm-work-create-actions"><button type="button" class="tm-appt-create" id="tm-appt-new-booking">+ Adicionar marcação</button><button type="button" class="tm-work-subtle-button" id="tm-work-new-event">+ Novo evento</button></div>
      <div class="tm-appt-agenda-feed">
       <h4>Marcações internas</h4>
       <div id="tm-appt-agenda-list" aria-live="polite"><p class="tm-appt-placeholder">A carregar marcações internas…</p></div>
       <p class="tm-appt-form-hint">Não inclui reservas do Sesami nem compromissos Google Calendar.</p>
+      <div class="tm-work-section-divider"></div>
+      <div class="tm-work-list-header"><h4>Eventos internos</h4><span class="tm-work-small-note">Reuniões, formações e deslocações</span></div>
+      <div id="tm-work-agenda-list" class="tm-work-agenda-list" aria-live="polite"></div>
+      <p class="tm-work-small-note">Os eventos internos não bloqueiam automaticamente as vagas das consultas.</p>
      </div>
+    </div>
+   </section>
+   <section id="tm-appointments-panel-tarefas" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-tarefas" tabindex="0" hidden>
+    <div class="tm-appointments-panel-heading tm-work-tasks-heading">
+     <div><h2>Tarefas</h2><p>Trabalho da equipa, separado dos compromissos com horário.</p></div>
+     <button type="button" id="tm-work-new-task" class="tm-appt-create">+ Nova tarefa</button>
+    </div>
+    <div class="tm-work-tasks-surface">
+     <div class="tm-work-tasks-filter-row"><label for="tm-work-task-filter">Mostrar</label><select id="tm-work-task-filter"><option value="open">Por fazer</option><option value="all">Todas</option><option value="done">Concluídas</option></select></div>
+     <div id="tm-work-task-list" class="tm-work-task-list" aria-live="polite"></div>
     </div>
    </section>
    <section id="tm-appointments-panel-reservas" class="tm-appointments-panel" role="tabpanel" aria-labelledby="tm-appointments-tab-reservas" tabindex="0" hidden>
@@ -309,6 +325,38 @@
       <div class="tm-appt-dialog-actions"><button class="tm-appt-cancel" type="button" data-close-booking-dialog>Cancelar</button><button class="tm-appt-save" type="submit" id="tm-appt-booking-save">Guardar marcação</button></div>
      </form>
     </dialog>
+    <dialog id="tm-work-event-dialog" class="tm-work-dialog" aria-labelledby="tm-work-event-heading">
+     <form id="tm-work-event-form">
+      <div class="tm-work-dialog-title"><h2 id="tm-work-event-heading">Novo evento</h2><button type="button" data-tm-work-close aria-label="Fechar">×</button></div>
+      <div class="tm-work-dialog-fields">
+       <label class="tm-work-field tm-work-wide"><span>Título</span><input id="tm-work-event-title" maxlength="120" required placeholder="Ex.: Reunião de equipa"></label>
+       <label class="tm-work-field"><span>Tipo</span><select id="tm-work-event-kind"><option value="meeting">Reunião</option><option value="training">Formação</option><option value="travel">Deslocação</option><option value="other">Outro evento</option></select></label>
+       <label class="tm-work-field"><span>Data</span><input type="date" id="tm-work-event-date" required></label>
+       <label class="tm-work-field"><span>Início</span><input type="time" id="tm-work-event-start" required value="09:00"></label>
+       <label class="tm-work-field"><span>Fim</span><input type="time" id="tm-work-event-end" required value="10:00"></label>
+       <label class="tm-work-field tm-work-wide"><span>Responsável</span><select id="tm-work-event-responsible" required></select></label>
+       <label class="tm-work-field tm-work-wide"><span>Participantes (opcional)</span><input id="tm-work-event-participants" maxlength="240" placeholder="Nomes da equipa ou convidados"></label>
+       <label class="tm-work-field tm-work-wide"><span>Notas (opcional)</span><textarea id="tm-work-event-description" maxlength="1000" rows="3"></textarea></label>
+      </div>
+      <p class="tm-work-small-note">Compromisso interno; não cria marcações, pagamentos ou bloqueios automáticos de disponibilidade.</p>
+      <p id="tm-work-event-error" class="tm-work-error" role="alert"></p>
+      <div class="tm-work-dialog-actions"><button type="button" id="tm-work-event-delete" class="tm-work-delete" hidden>Eliminar</button><button type="button" data-tm-work-close class="tm-work-cancel">Cancelar</button><button type="submit" class="tm-work-save">Guardar evento</button></div>
+     </form>
+    </dialog>
+    <dialog id="tm-work-task-dialog" class="tm-work-dialog" aria-labelledby="tm-work-task-heading">
+     <form id="tm-work-task-form">
+      <div class="tm-work-dialog-title"><h2 id="tm-work-task-heading">Nova tarefa</h2><button type="button" data-tm-work-close aria-label="Fechar">×</button></div>
+      <div class="tm-work-dialog-fields">
+       <label class="tm-work-field tm-work-wide"><span>Tarefa</span><input id="tm-work-task-title" maxlength="120" required placeholder="Ex.: Rever plano alimentar"></label>
+       <label class="tm-work-field"><span>Prazo (opcional)</span><input type="date" id="tm-work-task-date"></label>
+       <label class="tm-work-field"><span>Estado</span><select id="tm-work-task-status"><option value="open">Por fazer</option><option value="done">Concluída</option></select></label>
+       <label class="tm-work-field tm-work-wide"><span>Responsável</span><select id="tm-work-task-responsible" required></select></label>
+       <label class="tm-work-field tm-work-wide"><span>Notas (opcional)</span><textarea id="tm-work-task-description" maxlength="1000" rows="3"></textarea></label>
+      </div>
+      <p id="tm-work-task-error" class="tm-work-error" role="alert"></p>
+      <div class="tm-work-dialog-actions"><button type="button" id="tm-work-task-delete" class="tm-work-delete" hidden>Eliminar</button><button type="button" data-tm-work-close class="tm-work-cancel">Cancelar</button><button type="submit" class="tm-work-save">Guardar tarefa</button></div>
+     </form>
+    </dialog>
   </main>
  </div>
  <script src="/admin-nav-shell.js?v=13" defer></script>
@@ -316,6 +364,7 @@
  <script src="/admin-appointments-schedule.js?v=2" defer></script>
  <script src="/admin-appointments-bookings.js?v=18" defer></script>
  <script src="/admin-appointments-google.js?v=1" defer></script>
+ <script src="/admin-work.js?v=1" defer></script>
  <script src="/admin-mobile-nav.js?v=14" defer></script>
 </body>
 </html>
