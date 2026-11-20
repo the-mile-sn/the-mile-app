@@ -52,8 +52,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .primary{margin-top:8px;border:0;border-radius:999px;background:#f5f5f7;color:#17171b;min-height:46px;padding:12px 18px;font-size:14px;font-weight:600}
 .error{color:#f1a6a6!important;min-height:1em}
 .loading{text-align:center;color:var(--muted);padding:80px 0}
-.chef-view-mode,.chef-menu-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#202024;border-radius:999px;padding:4px;margin:0 0 20px}
-.chef-view-mode button,.chef-menu-switch button{min-height:44px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:15px;font-weight:500;padding:8px 4px}
+.chef-view-mode,.chef-menu-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#202024;border-radius:999px;border:0;box-sizing:border-box;padding:3px;margin:0 0 19px;height:38px;min-height:38px}
+.chef-view-mode button,.chef-menu-switch button{height:32px;min-height:32px;min-width:0;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:13px;font-weight:500;padding:4px 8px}
 .chef-view-mode button[aria-pressed=true],.chef-menu-switch button[aria-pressed=true]{background:#55555b}
 @media(max-width:640px){.page{width:calc(100% - 28px);padding:2px 0 130px}.top-details{right:12px}}
 /* Same approved 64px/20px floating field geometry as the Player Login. */
@@ -256,11 +256,21 @@ textarea.chef-input{min-height:68px;resize:vertical}
  #screen.chef-screen-home .chef-week-menu-highlight .chef-dish-photo-frame{width:74px;height:74px}
  #screen.chef-screen-home .chef-week-detail>.chef-week-menu-highlight{padding:12px}
 }
-.chef-menu-week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 23px}
-.chef-menu-week-day{border:0;border-radius:12px;background:transparent;color:#f5f5f7;padding:9px 0 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
-.chef-menu-week-day small{font-size:11px;color:#a0a0aa}.chef-menu-week-day strong{font-size:21px;width:32px;height:32px;display:grid;place-items:center}
-.chef-menu-week-day.selected strong{background:#f5f5f7;color:#2070bb;border-radius:50%}
-.chef-menu-week-day>span{font-size:10px;color:#a5a5ac}
+/* The seven menu cards already carry dates; navigation changes whole weeks. */
+.chef-menu-week-navigation{
+ display:grid;grid-template-columns:40px minmax(0,1fr) 40px;
+ align-items:center;gap:6px;margin:0 0 18px;
+ min-height:42px;color:#f5f5f7;
+}
+.chef-menu-week-range{
+ min-width:0;text-align:center;font-size:14px;font-weight:500;line-height:1.3;
+}
+.chef-menu-week-arrow{
+ display:grid;place-items:center;width:40px;height:40px;padding:0;
+ border:0;border-radius:50%;background:transparent;color:#e1e1e7;
+ font-size:27px;font-weight:400;line-height:1;
+}
+.chef-menu-week-arrow:active{background:#29292e}
 .chef-menu-day{border-radius:17px;padding:15px;background:#242429;margin:12px 0}
 .chef-menu-day-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
 .chef-menu-day-header strong{font-weight:400;font-size:16px}
@@ -295,22 +305,6 @@ textarea.chef-input{min-height:68px;resize:vertical}
 /* Exact player wordmark SVG. */
 .top .player-header-brand{position:static!important;transform:none!important;display:block!important;width:88px!important;height:auto!important;max-width:88px!important;margin:0 auto!important;color:#f4f4f7;letter-spacing:normal!important;pointer-events:none}
 .top .player-header-brand .player-header-wordmark{display:block;width:100%;height:auto;fill:currentColor}
-/* Day/week compact segmented selector: 38 outer, 32 inner, 3 padding, 3 gap. */
-#chef-view-mode.chef-view-mode{
- height:38px!important;min-height:38px!important;max-height:38px!important;
- gap:3px!important;padding:3px!important;margin:0 0 19px!important;
- background:#202024!important;border:0!important;border-radius:999px!important;
- overflow:visible!important;box-sizing:border-box!important;
-}
-#chef-view-mode.chef-view-mode>button{
- width:100%!important;min-width:0!important;box-sizing:border-box!important;
- height:32px!important;min-height:32px!important;max-height:32px!important;
- padding:4px 8px!important;margin:0!important;background:transparent!important;
- border:0!important;border-radius:999px!important;box-shadow:none!important;
- color:#f2f2f5!important;font-size:13px!important;font-weight:500!important;line-height:1.1!important;
-}
-#chef-view-mode.chef-view-mode>button[aria-pressed="true"]{background:#55555b!important}
-#chef-view-mode.mile-segment-animated>button[aria-pressed="true"]{background:transparent!important}
 .mile-segment-animated{position:relative;isolation:isolate}
 .mile-segment-animated>.mile-segment-indicator{
  position:absolute;left:0;top:0;z-index:0;pointer-events:none;
