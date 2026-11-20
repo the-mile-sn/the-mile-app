@@ -2581,7 +2581,7 @@ body.profile-active .player-top{display:none!important}
  display:block;width:100%;min-width:0;box-sizing:border-box;
  border:0!important;background:rgba(255,255,255,.055)!important;
  border-radius:18px!important;margin:0 0 9px!important;
- overflow:hidden!important;box-shadow:none!important;
+ padding:0!important;overflow:hidden!important;box-shadow:none!important;
 }
 #plans #plan-detail .plans-all-group > summary{
  display:flex;align-items:center;justify-content:space-between;gap:14px;
