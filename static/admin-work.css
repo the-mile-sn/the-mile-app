@@ -103,6 +103,7 @@
 @media(max-width:550px){
  .tm-work-dialog{width:calc(100vw - 22px);padding:18px;max-height:92dvh}
  .tm-work-dialog-fields{column-gap:9px}
+ .tm-work-field :is(input,select,textarea){font-size:16px}
  .tm-work-line{align-items:flex-start;flex-wrap:wrap}
  .tm-work-line-actions{width:100%;justify-content:flex-end}
  .tm-work-tasks-surface{padding:12px}
@@ -118,8 +119,8 @@
 #tm-dashboard .tm-db-tasks-header h3{margin:0;font:600 16px/1.3 "Inter Tight",system-ui,sans-serif}
 #tm-dashboard .tm-db-tasks-open{
  display:grid;place-items:center;flex:none;width:32px;height:32px;
- border-radius:10px;background:var(--tm-ui-search);color:var(--tm-ui-text);
- text-decoration:none
+ border:0;border-radius:10px;background:var(--tm-ui-search);color:var(--tm-ui-text);
+ cursor:pointer
 }
 #tm-dashboard .tm-db-tasks-open svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #tm-dashboard .tm-db-tasks-list{display:flex;flex-direction:column;gap:6px;margin-top:11px}
@@ -132,6 +133,14 @@
 #tm-dashboard .tm-db-task-check svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #tm-dashboard .tm-db-task-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
 #tm-dashboard .tm-db-task-title{font:500 12px/1.35 "Inter Tight",system-ui,sans-serif;overflow-wrap:anywhere}
+#tm-dashboard .tm-db-task-edit{border:0;background:transparent;color:var(--tm-ui-text);cursor:pointer;padding:0;text-align:left}
+#tm-dashboard .tm-db-task-edit:hover{text-decoration:underline}
+#tm-dashboard .tm-db-task-more{align-self:flex-start;margin-top:5px;padding:6px 0;border:0;background:transparent;color:var(--tm-ui-muted);font:400 11px/1.35 "Inter Tight",system-ui,sans-serif;cursor:pointer}
+#tm-dashboard .tm-db-task-more:hover{color:var(--tm-ui-text)}
+.tm-work-tasks-dialog{width:min(94vw,590px)}
+.tm-work-tasks-dialog .tm-work-dialog-title{margin-bottom:12px}
+.tm-work-tasks-dialog .tm-work-task-list{max-height:min(52dvh,470px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.tm-work-tasks-dialog .tm-work-dialog-actions{margin-top:15px}
 #tm-dashboard .tm-db-task-meta{font:400 11px/1.35 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted)}
 #tm-dashboard .tm-db-task-empty{font:400 12px/1.4 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted);margin:0;padding:5px 0}
 #tm-dashboard .tm-db-miniagenda-actions{position:relative}
@@ -142,11 +151,13 @@
  border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.13)
 }
 #tm-dashboard .tm-db-add-menu[hidden]{display:none!important}
-#tm-dashboard .tm-db-add-menu a{
- display:block;padding:10px 11px;border-radius:9px;text-decoration:none;
- color:var(--tm-ui-text);font:500 12px/1.3 "Inter Tight",system-ui,sans-serif
+#tm-dashboard .tm-db-add-menu :is(a,button){
+ box-sizing:border-box;display:block;width:100%;padding:10px 11px;
+ border:0;border-radius:9px;text-align:left;text-decoration:none;
+ background:transparent;color:var(--tm-ui-text);
+ font:500 12px/1.3 "Inter Tight",system-ui,sans-serif;cursor:pointer
 }
-#tm-dashboard .tm-db-add-menu a:hover,#tm-dashboard .tm-db-add-menu a:focus-visible{
+#tm-dashboard .tm-db-add-menu :is(a,button):is(:hover,:focus-visible){
  background:var(--tm-ui-hover)
 }
 @media(max-width:650px){
