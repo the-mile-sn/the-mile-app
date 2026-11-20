@@ -127,6 +127,19 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-dish-pending{color:inherit;opacity:.72;font-size:13px}
 .chef-dish-photo-frame{position:relative;display:inline-grid;place-items:center;flex:none;width:91px;height:91px;border-radius:50%;cursor:zoom-in;outline-offset:4px}
 .chef-dish-photo{width:100%;height:100%;object-fit:contain;border-radius:50%;background:transparent;display:block}
+/* Only an unresolved actual photo receives a circular, neutral skeleton. */
+.chef-dish-photo-frame.chef-photo-pending::before,
+.chef-dish-photo-frame.chef-photo-pending::after{
+ content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;overflow:hidden
+}
+.chef-dish-photo-frame.chef-photo-pending::before{background:#29292e}
+.chef-dish-photo-frame.chef-photo-pending::after{
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);
+ transform:translateX(-100%);animation:chef-photo-shimmer 1.5s ease-in-out infinite
+}
+.chef-photo-pending .chef-dish-photo,.chef-photo-pending .chef-photo-zoom{opacity:0}
+@keyframes chef-photo-shimmer{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.chef-dish-photo-frame.chef-photo-pending::after{animation:none}}
 .chef-photo-zoom{position:absolute;right:0;bottom:0;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#0005;color:#f6f6f8}
 .chef-photo-overlay{position:fixed;inset:0;background:#000d;z-index:100;display:flex;align-items:center;justify-content:center;padding:35px}
 .chef-photo-large{max-width:95%;max-height:75dvh;object-fit:contain}
