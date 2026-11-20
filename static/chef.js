@@ -640,22 +640,23 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOve
   }
  }
  heading.append(symbol,title);
- if(onlyPrescription){
-  // Average is computed only from the already published Chef option totals.
-  const options=prescriptions[effectiveTone]?.[meal]||[];
-  const totals=options.map(o=>o.totals).filter(t=>t&&
-   ["kcal","protein_g","carbs_g","fat_g"].every(k=>Number.isFinite(Number(t[k]))));
-  if(totals.length){
-   const avg=key=>Math.round(totals.reduce((sum,t)=>sum+Number(t[key]),0)/totals.length);
-   heading.append(node("span","chef-plan-header-kcal",avg("kcal")+" kcal"));
-   const macros=node("div","chef-plan-header-macros");
-   for(const [key,cls] of [["protein_g","protein"],["carbs_g","carbs"],["fat_g","fat"]])
-    macros.append(node("span",cls,avg(key)+" g"));
-   head.append(heading);
-   head.append(macros);
-  }else head.append(heading);
- }else head.append(heading);
+ // The existing published plan supplies precisely the same averaged kcal/macros
+ // as Player Dia and Planos; never add values when this meal has no published totals.
+ const options=prescriptions[effectiveTone]?.[meal]||[];
+ const totals=options.map(o=>o.totals).filter(t=>t&&
+  ["kcal","protein_g","carbs_g","fat_g"].every(k=>Number.isFinite(Number(t[k]))));
+ if(totals.length){
+  const avg=key=>Math.round(totals.reduce((sum,t)=>sum+Number(t[key]),0)/totals.length);
+  const metrics=node("span","chef-meal-metrics");
+  metrics.append(node("span","chef-plan-header-kcal",avg("kcal")+" kcal"));
+  const macros=node("span","chef-plan-header-macros");
+  for(const [key,cls] of [["protein_g","protein"],["carbs_g","carbs"],["fat_g","fat"]])
+   macros.append(node("span",cls,avg(key)+" g"));
+  metrics.append(macros);
+  heading.append(metrics);
+ }
  heading.append(node("span","chef-chevron"));
+ head.append(heading);
  // A Chef must see the planned dish and its photo even when the meal is closed.
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
   const preview=node("div","chef-meal-preview");

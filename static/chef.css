@@ -148,12 +148,12 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-day-color{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;gap:8px;color:var(--chef-tone-ink);font-size:12px}
 .chef-day-color .mile-icon{width:23px;height:23px}.chef-day-bar{display:block;width:100%;height:7px;background:var(--chef-tone);border-radius:999px;margin-top:3px}
 /* Universal Chef meal card; meal previews keep their functional variable height. */
-.chef-meal-card{margin:8px 0;border:0;border-radius:var(--mile-radius-card);overflow:hidden;background:var(--chef-tone);color:var(--chef-tone-ink);box-shadow:none}
+.chef-meal-card{margin:10px 0;border:0;border-radius:var(--mile-radius-card);overflow:hidden;background:var(--chef-tone);color:var(--chef-tone-ink);box-shadow:none}
 .chef-meal-card[open]{border-radius:var(--mile-radius-open)}
 .chef-meal-head{list-style:none;display:block;position:relative;min-height:var(--mile-card-header);padding:12px 17px;cursor:pointer;color:inherit}
 .chef-meal-head::-webkit-details-marker,.chef-meal-head::marker{display:none;content:""}
 .chef-meal-card[open]>.chef-meal-head{min-height:55px;padding-bottom:3px}
-.chef-meal-heading{display:flex;align-items:center;width:100%;gap:10px;min-height:37px}
+.chef-meal-heading{display:flex;flex-wrap:nowrap;align-items:center;width:100%;min-width:0;gap:10px;min-height:37px}
 .chef-meal-heading>strong{flex:1;min-width:0;font-size:16px;line-height:1.3;font-weight:var(--mile-type-regular)}
 .chef-meal-icon{display:grid;place-items:center;flex:0 0 var(--mile-card-icon);width:var(--mile-card-icon);height:var(--mile-card-icon);border-radius:11px;background:rgba(0,0,0,.15)}
 .chef-meal-icon>.mile-icon{width:24px;height:24px}
@@ -164,7 +164,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
 }
 .chef-meal-card[open]>.chef-meal-head .chef-chevron,
 .chef-option-card[open]>.chef-option-head .chef-option-arrow{transform:rotate(225deg)}
-.chef-meal-body{padding:0 14px 13px}
+.chef-meal-body{padding:0 12px 13px}
 .chef-meal-card:not([open])>.chef-meal-body{display:none}
 .chef-meal-preview{padding:9px 0 0;margin-left:0}
 .chef-meal-preview .chef-meal-dish{display:flex;align-items:center;gap:12px;padding:0 0 2px}
@@ -193,7 +193,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-photo-overlay{position:fixed;inset:0;background:#000d;z-index:100;display:flex;align-items:center;justify-content:center;padding:35px}
 .chef-photo-large{max-width:95%;max-height:75dvh;object-fit:contain}
 .chef-photo-close{position:absolute;top:36px;right:20px;border:0;background:#2b2b33;color:#fff;border-radius:50%;width:43px;height:43px;font-size:27px}
-.chef-option-list{display:flex;flex-direction:column;gap:0}
+.chef-option-list{display:flow-root}
 .chef-option-card{display:block;box-sizing:border-box;border:0;border-radius:13px;background:var(--chef-inner);color:var(--chef-option-body);margin:9px 0;padding:12px 14px;overflow:hidden;box-shadow:none}
 .chef-option-head{list-style:none;display:flex;align-items:center;gap:8px;min-height:0;cursor:pointer}
 .chef-option-head::-webkit-details-marker{display:none}
@@ -353,19 +353,15 @@ textarea.chef-input{min-height:68px;resize:vertical}
 #screen.chef-screen-plans .chef-option-card{margin:9px 12px}
 #screen.chef-screen-plans .chef-option-list>.chef-single-option{padding:9px 16px 12px}
 #screen.chef-screen-plans .chef-plan-detail>.chef-meal-card{margin:9px 0}
-#screen.chef-screen-plans .chef-meal-heading{display:flex;flex-wrap:wrap}
-#screen.chef-screen-plans .chef-meal-heading>strong{flex:1}
-#screen.chef-screen-plans .chef-plan-header-kcal{
- margin-left:auto;flex:none;font-size:11px;font-weight:500;line-height:1.2;color:var(--chef-tone-ink)
-}
-#screen.chef-screen-plans .chef-plan-header-macros{
- display:none;align-items:center;flex-wrap:wrap;gap:10px;margin:3px 0 7px 47px;
- font-size:12px;font-weight:400
-}
-#screen.chef-screen-plans .chef-meal-card[open] .chef-plan-header-macros{display:flex}
-#screen.chef-screen-plans .chef-plan-header-macros .protein{color:#90c9ec}
-#screen.chef-screen-plans .chef-plan-header-macros .carbs{color:#e2afa0}
-#screen.chef-screen-plans .chef-plan-header-macros .fat{color:#eed18c}
+/* Same header composition in Dia and Planos: kcal above macros, all at right.
+   Do not create a second block below the 55px expanded card header. */
+.chef-meal-metrics{display:flex;flex:0 0 auto;flex-direction:column;align-items:flex-end;justify-content:center;gap:5px;margin-left:auto;margin-right:7px;line-height:1.12;white-space:nowrap}
+.chef-plan-header-kcal{font-size:11px;font-weight:500;line-height:1.12;color:var(--chef-tone-ink)}
+.chef-plan-header-macros{display:none;align-items:center;justify-content:flex-end;gap:7px;margin:0;padding:0;font-size:10px;font-weight:400;line-height:1.12}
+.chef-meal-card[open] .chef-plan-header-macros{display:flex}
+.chef-plan-header-macros .protein{color:#90c9ec}
+.chef-plan-header-macros .carbs{color:#e2afa0}
+.chef-plan-header-macros .fat{color:#eed18c}
 @media(prefers-reduced-motion:reduce){
  #screen.chef-screen-plans .plans-all-group>summary::after{transition:none}
 }
@@ -391,7 +387,7 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-menu-entry{background:var(--chef-tone);border-radius:13px;padding:13px 12px;color:var(--chef-tone-ink);margin:10px 0}
 .chef-menu-meal-label{font-size:16px;font-weight:400;margin-bottom:4px}
 .chef-menu-entry .chef-meal-dish{padding:0;align-items:center}
-.chef-menu-entry .chef-dish-name{font-size:14px;font-weight:400;line-height:1.4}
+.chef-menu-entry .chef-dish-name{font-size:14px;font-weight:400;line-height:1.4;color:#fff}
 .chef-menu-entry.chef-menu-unassigned{background:#303135;color:#f2f2f4}
 .chef-menu-entry.chef-menu-unassigned .chef-menu-meal-label{color:#f2f2f4}
 .chef-menu-entry.chef-menu-unassigned .chef-dish-pending{color:#a4a4ad;font-size:12px;font-weight:400;opacity:1}

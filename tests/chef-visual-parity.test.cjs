@@ -16,7 +16,8 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=17/);
+ assert.match(html,/chef\.css\?v=18/);
+ assert.match(html,/chef\.js\?v=21/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -116,7 +117,7 @@ test("Chef option palette and inner spacing match current Player Planos and Dia"
  assert.match(css,/\.chef-option-card\{[^}]*border-radius:13px;background:var\(--chef-inner\)/);
  assert.match(css,/\.chef-option-card\{[^}]*margin:9px 0;padding:12px 14px/);
  assert.match(css,/\.chef-option-head\{[^}]*min-height:0/);
- assert.match(css,/\.chef-option-list\{[^}]*gap:0/);
+ assert.match(css,/\.chef-option-list\{display:flow-root\}/);
  assert.match(css,/\.chef-option-label strong\{[^}]*font-size:15px;font-weight:500/);
  assert.match(css,/\.chef-option-label small\{[^}]*font-size:12px;font-weight:400/);
  assert.match(css,/\.chef-option-food\{[^}]*font-size:14px;font-weight:400;color:var\(--chef-option-body\)/);
@@ -131,6 +132,33 @@ test("Chef option palette and inner spacing match current Player Planos and Dia"
  assert.doesNotMatch(css,/color-mix\(in srgb,var\(--chef-tone\) 82%,white 18%\)/);
  assert.match(guide,/nunca a antiga mistura/);
 });
+test("published Chef and Player universal card rhythm is the same in open/closed states",()=>{
+ const player=fs.readFileSync("static/jogador-v2.css","utf8");
+ assert.match(css,/--mile-radius-card:13px;--mile-radius-open:18px;--mile-card-header:61px;--mile-card-icon:37px/);
+ assert.match(css,/\.chef-meal-card\{margin:10px 0;[^}]*border-radius:var\(--mile-radius-card\)/);
+ assert.match(css,/\.chef-meal-card\[open\]>.chef-meal-head\{min-height:55px;padding-bottom:3px\}/);
+ assert.match(css,/\.chef-meal-body\{padding:0 12px 13px\}/);
+ assert.match(css,/\.chef-meal-heading\{[^}]*flex-wrap:nowrap/);
+ assert.match(css,/\.chef-option-list\{display:flow-root\}/);
+ assert.match(css,/\.chef-option-card\{[^}]*margin:9px 0;padding:12px 14px/);
+ assert.match(css,/\.chef-meal-metrics\{[^}]*align-items:flex-end/);
+ assert.match(css,/\.chef-plan-header-kcal\{font-size:11px;font-weight:500/);
+ assert.match(css,/\.chef-plan-header-macros\{display:none;[^}]*font-size:10px/);
+ assert.match(css,/\.chef-meal-card\[open\] \.chef-plan-header-macros\{display:flex\}/);
+ assert.match(js,/const metrics=node\("span","chef-meal-metrics"\)/);
+ assert.match(js,/heading\.append\(metrics\)/);
+ assert.doesNotMatch(js,/head\.append\(macros\)/);
+ assert.match(js,/head\.append\(heading\);\n \/\/ A Chef must see the planned dish/);
+ assert.match(player,/#plans #plan-detail \.plan-overview-meal>\.daily-meal-head \.meal-average-inline/);
+ assert.match(guide,/margens colapsadas num contentor `display:flow-root`/);
+});
+test("Menus dish body text is white with all other menu colours left untouched",()=>{
+ assert.match(css,/\.chef-menu-entry \.chef-dish-name\{font-size:14px;font-weight:400;line-height:1\.4;color:#fff\}/);
+ assert.match(css,/\.chef-menu-meal-label\{font-size:16px;font-weight:400;margin-bottom:4px\}/);
+ assert.match(css,/\.chef-menu-entry\{background:var\(--chef-tone\);border-radius:13px;padding:13px 12px;color:var\(--chef-tone-ink\);margin:10px 0\}/);
+ assert.match(guide,/nome\/descrição do prato a branco/);
+});
+
 test("Menus offers Approved dish / Suggestion but preserves historical category data",()=>{
  assert.match(js,/item\?"Alterar prato":"Definir prato"/);
  assert.match(js,/\["dish",pt\?"Prato aprovado"/);
