@@ -3721,14 +3721,21 @@ body.profile-active .player-top{display:none!important}
 /* Jogo only: extra ingestion moments reuse the original timing & consumption family. */
 #overview .match-intra-card .intra-added-timing{border-top:1px solid rgba(34,35,42,.12);padding:18px 0}
 #overview .match-intra-card .intra-added-origin{display:inline-block;font-size:12px;font-weight:400;color:#666971;margin-left:10px}
-#overview .match-intra-card .intra-add-moment-trigger{display:block;width:100%;min-height:42px;border:0;border-top:1px solid rgba(34,35,42,.12);background:transparent;color:inherit;text-align:left;font-size:14px;font-weight:400;padding:16px 0;cursor:pointer}
-#overview .match-intra-card .intra-add-moment-panel{padding:14px;border:0;border-radius:18px;background:var(--consumption-editor-surface,#e1e1e5);color:inherit;margin:12px 0}
+/* Reuse the same timing-group margins and the previous group's divider.
+   The add action is a text row, not a standalone card or bordered button. */
+#overview .match-intra-card > .intra-add-moment-group{border-bottom:0!important;padding:10px 0 18px!important}
+#overview .match-intra-card .intra-add-moment-trigger{display:flex!important;align-items:center;justify-content:flex-start;width:auto!important;min-height:44px;max-width:100%;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:inherit!important;text-align:left;font-size:14px;font-weight:400;line-height:1.4;cursor:pointer}
+#overview .match-intra-card .intra-add-moment-trigger[hidden]{display:none!important}
+#overview .match-intra-card .intra-add-moment-panel{margin:0;padding:6px 0 0;border:0;border-radius:0;background:transparent;color:inherit}
 #overview .match-intra-card .intra-add-moment-panel[hidden]{display:none!important}
-#overview .match-intra-card .intra-add-moment-panel>label{display:flex;flex-direction:column;gap:9px;font-size:14px}
-#overview .match-intra-card .intra-add-moment-panel>label>select{width:100%;min-height:43px;border:0;border-radius:12px;padding:0 12px;background:#F2F2F4;color:#22232A;font-size:16px}
-#overview .match-intra-card .intra-add-moment-start,#overview .match-intra-card .intra-add-moment-cancel{min-height:42px;border:0;border-radius:999px;padding:9px 16px;margin:13px 8px 0 0;font-size:14px}
-#overview .match-intra-card .intra-add-moment-start{background:#22232A;color:#F2F2F4}
-#overview .match-intra-card .intra-add-moment-cancel{background:rgba(34,35,42,.1);color:#22232A}
+#overview .match-intra-card .intra-add-moment-panel>label{display:flex;flex-direction:column;gap:9px;margin:0;font-size:15px;font-weight:600;line-height:1.4;color:inherit}
+#overview .match-intra-card .intra-add-moment-panel>label>select{box-sizing:border-box;width:100%;min-height:44px;padding:10px 13px;border:0;border-radius:13px;background:var(--consumption-editor-surface,#E1E1E5);color:#22232A;font-family:inherit;font-size:16px;font-weight:400}
+#overview .match-intra-card .intra-add-moment-panel>label>select:focus-visible{outline:2px solid #8287A0;outline-offset:2px}
+#overview .match-intra-card .intra-add-moment-editor-host>.consumption-editor{background:transparent!important;border:0!important;margin:8px 0 0!important;padding:0!important;box-shadow:none!important}
+#overview .match-intra-card .intra-add-moment-editor-host .consumption-secondary-actions{margin-top:0!important}
+#overview .match-intra-card .intra-add-moment-editor-host .consumption-remove-all[hidden],
+#overview .match-intra-card .intra-add-moment-editor-host .consumption-energy-progress[hidden]{display:none!important}
+#overview .match-intra-card .intra-add-moment-editor-host .consumption-energy-track{display:none!important}
 #overview .match-intra-card .peri-timing-group > :is(.consumption-quick-actions,.consumption-actions--recorded){margin:16px 0 0!important}
 #overview .match-intra-card .peri-timing-group > .consumption-editor{margin:16px 0 0!important}
 #overview .match-intra-card .peri-timing-group > .consumption-quick-feedback:not(:empty){margin:5px 0 0!important}
