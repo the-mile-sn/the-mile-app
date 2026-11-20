@@ -1045,7 +1045,7 @@ function render(){
   }
   el("chef-view-mode").hidden=activeTab!=="home";
   for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
-  const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();
+  const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();screen.removeAttribute("aria-busy");
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
   if(activeTab==="menus")renderMenus(screen);
@@ -1054,10 +1054,82 @@ function render(){
   paintChefIcons();
   syncChefSelection(el("chef-view-mode"));
   syncChefSelection(nav);
+  animateChefSwipeEntry();
 }
-el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();bounceChefSelection(el("chef-view-mode"));};});
+/* The Player's 500ms directional page entry, not an unapproved
+   horizontal tab gesture. */
+const chefTabOrder=["home","plans","menus","profile"];
+let chefLastScrollY=0,chefScrollAccum=0,chefScrollDirection=0,chefScrollFrame=0;
+function changeChefTab(next){
+ if(!chefTabOrder.includes(next)||next===activeTab)return;
+ const direction=chefTabOrder.indexOf(activeTab)<chefTabOrder.indexOf(next)?1:-1;
+ chefSwipeEntryDirection=0;chefSwipeEntryAnimation?.cancel();chefSwipeEntryAnimation=null;
+ const screen=el("screen");screen.getAnimations?.().forEach(animation=>animation.cancel());
+ screen.style.transform="";screen.style.transition="";screen.style.willChange="";
+ const nav=el("chef-nav");nav.classList.remove("chef-nav-compact");
+ chefScrollAccum=0;chefLastScrollY=Math.max(0,window.scrollY||0);
+ activeTab=next;render();
+ if(!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches&&typeof screen.animate==="function")
+  screen.animate([
+   {transform:"translateX("+(direction*24)+"px)",opacity:.55},
+   {transform:"translateX(0)",opacity:1}
+  ],{duration:500,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+ bounceChefSelection(nav);
+}
+/* Same 28px directional scroll hysteresis as Player's bottom navigation. */
+function updateChefAdaptiveNav(){
+ chefScrollFrame=0;
+ const nav=el("chef-nav");
+ if(!nav||nav.hidden)return;
+ const y=Math.max(0,window.scrollY||document.documentElement.scrollTop||0);
+ const delta=y-chefLastScrollY;chefLastScrollY=y;
+ if(y<32){
+  if(nav.classList.contains("chef-nav-compact")){
+   nav.classList.remove("chef-nav-compact");syncChefSelection(nav);
+  }
+  chefScrollAccum=0;return;
+ }
+ if(Math.abs(delta)<1)return;
+ const direction=Math.sign(delta);
+ if(direction!==chefScrollDirection){chefScrollDirection=direction;chefScrollAccum=0;}
+ chefScrollAccum+=Math.abs(delta);
+ if(chefScrollAccum>=28){
+  nav.classList.toggle("chef-nav-compact",direction>0);
+  chefScrollAccum=0;syncChefSelection(nav);
+ }
+}
+window.addEventListener("scroll",()=>{
+ if(!chefScrollFrame)chefScrollFrame=window.requestAnimationFrame(updateChefAdaptiveNav);
+},{passive:true});
+function animateChefSwipeEntry(){
+ const direction=chefSwipeEntryDirection;chefSwipeEntryDirection=0;
+ if(!direction||activeTab!=="home"||chefViewMode!=="day")return;
+ const screen=el("screen");
+ if(typeof screen.animate!=="function"||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ chefSwipeEntryAnimation?.cancel();
+ // Calendar/mode and bottom navigation never move or fade with the day.
+ chefSwipeEntryAnimation=screen.animate([
+  {transform:"translateX("+(direction>0?60:-60)+"px)"},
+  {transform:"translateX(0)"}
+ ],{duration:320,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+}
+async function chefShiftDay(direction,step){
+ const previous=new Date(selectedDay),next=shift(previous,direction*step);
+ selectedDay=next;chefWeekSelection=null;
+ chefSwipeEntryDirection=activeTab==="home"&&chefViewMode==="day"?direction:0;
+ if(dateKey(monday(previous))===dateKey(monday(next))){render();return;}
+ try{await loadWeek();}
+ catch(err){selectedDay=previous;chefSwipeEntryDirection=0;showError(txt().fail);}
+}
+el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{
+ button.onclick=()=>{
+  if(chefViewMode===button.dataset.view)return;
+  chefViewMode=button.dataset.view;chefWeekSelection=null;
+  chefSwipeEntryDirection=0;render();bounceChefSelection(el("chef-view-mode"));
+ };
+});
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
-  button.onclick=()=>{activeTab=button.dataset.tab;render();bounceChefSelection(el("chef-nav"));};
+ button.onclick=()=>changeChefTab(button.dataset.tab);
 });
 
 /* Match the player's horizontal day/week navigation while respecting native scrolling. */
