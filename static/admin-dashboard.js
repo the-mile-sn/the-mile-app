@@ -1482,6 +1482,45 @@ function ensurePlanningOnlyView(){
  paint();
 })();
 
+/* One scroll-aware affordance shared by the daily agenda and recent forms.
+   The existing complete-row max-height measurements remain the only source
+   of scroll limits; this helper only indicates and advances hidden content. */
+(()=>{
+ const pairs=[
+  ["tm-db-miniagenda-bookings","tm-db-miniagenda-more"],
+  ["tm-db-recent","tm-db-recent-more"]
+ ];
+ for(const [listId,hintId] of pairs){
+  const list=document.getElementById(listId);
+  const hint=document.getElementById(hintId);
+  if(!list||!hint)continue;
+  let queued=false;
+  function syncHint(){
+   queued=false;
+   hint.hidden=!(list.offsetWidth&&list.classList.contains("is-scrollable")&&
+    list.scrollHeight-list.clientHeight-list.scrollTop>3);
+  }
+  function scheduleHint(){
+   if(queued)return;
+   queued=true;
+   requestAnimationFrame(syncHint);
+  }
+  list.addEventListener("scroll",scheduleHint,{passive:true});
+  hint.addEventListener("click",()=>{
+   list.scrollBy({
+    top:Math.max(1,list.clientHeight-12),
+    behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"
+   });
+  });
+  new MutationObserver(scheduleHint).observe(list,{
+   attributes:true,attributeFilter:["class","style"]
+  });
+  window.addEventListener("resize",scheduleHint,{passive:true});
+  document.fonts?.ready.then(scheduleHint);
+  scheduleHint();
+ }
+})();
+
 /* Navigate from standalone nutrition pages to the corresponding Backoffice section. */
 (()=>{
  const target=new URLSearchParams(window.location.search).get("nav");
