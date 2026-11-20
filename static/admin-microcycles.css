@@ -847,7 +847,13 @@ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-
  #tm-dashboard .tm-db-miniagenda-controls button:hover,
  #tm-dashboard .tm-db-miniagenda-action-secondary:hover,
  #tm-dashboard .tm-db-activity-row:not(.is-game):hover{background:var(--tm-ui-hover)}
- #tm-dashboard .tm-db-activity-row.is-game:hover{filter:brightness(1.07)}
+ /* Darken match-card hover as with the approved weekly MD cells, without filtering the text/icon. */
+ #tm-dashboard .tm-db-activity-row.is-game:hover{
+  background:#11281e;border-color:#63c287
+ }
+ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game:hover{
+  background:#dcebe1;border-color:#5eb27e
+ }
  #tm-dashboard .tm-db-miniagenda-action-primary:hover{opacity:.87}
 }
 @media(max-width:1120px){
