@@ -5,7 +5,7 @@ const html=fs.readFileSync("static/admin-microcycles.html","utf8");
 const css=fs.readFileSync("static/admin-microcycles.css","utf8");
 const js=fs.readFileSync("static/admin-dashboard.js","utf8");
 
-test("subtle circular calendar links retain existing booking destinations and labels",()=>{
+test("subtle calendar shortcuts retain booking navigation and accessible names",()=>{
  for(const id of ["tm-db-miniagenda-new","tm-db-miniagenda-open"]){
   assert.match(html,new RegExp('id="'+id+'"[^>]*aria-label="'));
  }
@@ -31,5 +31,5 @@ test("game identity survives with restrained dark and light outlines",()=>{
  assert.match(css,/color-mix\(in srgb,#70c18f 25%,transparent\)/);
  assert.doesNotMatch(css,/color:#dcf3e4;border:1px solid #78d4a0/);
  assert.match(html,/admin-microcycles\.css\?v=212/);
- assert.match(html,/admin-dashboard\.js\?v=91/);
+ assert.match(html,/admin-dashboard\.js\?v=92/);
 });
