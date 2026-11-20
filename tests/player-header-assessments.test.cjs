@@ -90,7 +90,8 @@ test("Assessments, Menus, Profile and bottom navigation share approved typograph
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
  assert.match(css,/#plans #plans-assessments \.assessment-metric-name/);
  assert.match(css,/#menus \.day-menu \.menu-entry-heading strong/);
- assert.match(css,/#profile \.profile-action,#profile \.profile-password-save/);
+ assert.match(css,/#profile \.profile-action\{[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
+ assert.match(css,/#profile \.profile-password-page-form button\.profile-password-save\{[^}]*font-size:14px!important;[^}]*font-weight:var\(--mile-type-medium,500\)!important/s);
  assert.match(css,/#tabs button,#tabs button>span:not\(\.profile-tab-avatar\)/);
  assert.match(css,/font-weight:var\(--mile-type-medium\)!important/);
  assert.match(css,/font-weight:var\(--mile-type-semibold\)!important/);
