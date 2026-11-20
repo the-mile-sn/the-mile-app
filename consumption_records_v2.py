@@ -102,8 +102,74 @@ def read_range(connection, athlete_id, start, end):
         WHERE athlete_id=? AND meal_date BETWEEN ? AND ?
         ORDER BY meal_date,meal_key,event_id
     """, (athlete_id, start, end)).fetchall()
-    return [{**dict(row),
-             "prescription": json.loads(row["prescription_json"]),
-             "consumed_foods": json.loads(row["consumed_foods_json"]),
-             "nutrition": json.loads(row["nutrition_json"])}
-            for row in rows]
+    legacy = [{**dict(row),
+               "prescription": json.loads(row["prescription_json"]),
+               "consumed_foods": json.loads(row["consumed_foods_json"]),
+               "nutrition": json.loads(row["nutrition_json"])}
+              for row in rows]
+    return _merge_timing_consumption(connection, athlete_id, start, end, legacy)
+
+
+def _merge_timing_consumption(connection, athlete_id, start, end, legacy):
+    """Read-only compatibility with player-app records saved by ingestion moment.
+
+    The admin service is deployed independently and must never create or alter
+    player timing tables. Legacy records take precedence, preventing duplicates.
+    """
+    # Some test/legacy environments have not created the timing table.
+    if hasattr(connection, "conn"):  # Production PgConnection adapter
+        table = connection.execute(
+            "SELECT to_regclass('public.v2_consumption_timing_records') AS table_ref"
+        ).fetchone()
+        exists = bool(table and table["table_ref"])
+    else:
+        exists = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            ("v2_consumption_timing_records",)
+        ).fetchone() is not None
+    if not exists:
+        return legacy
+
+    rows = connection.execute("""
+        SELECT athlete_id,meal_date,meal_key,event_id,timing,status,option_ref,
+               source_draft_id,prescription_json,consumed_foods_json,nutrition_json,updated_at
+        FROM v2_consumption_timing_records
+        WHERE athlete_id=? AND meal_date BETWEEN ? AND ?
+        ORDER BY meal_date,meal_key,event_id,timing
+    """, (athlete_id, start, end)).fetchall()
+
+    existing = {(r["meal_date"], r["meal_key"], r["event_id"]) for r in legacy}
+    groups = {}
+    for row in rows:
+        key = (row["meal_date"], row["meal_key"], row["event_id"])
+        if key in existing:
+            continue
+        group = groups.get(key)
+        if group is None:
+            group = {
+                "athlete_id": athlete_id, "meal_date": row["meal_date"],
+                "meal_key": row["meal_key"], "event_id": row["event_id"],
+                "status": "partial", "option_ref": None,
+                "source_draft_id": row["source_draft_id"],
+                "prescription": {"timing_mode": True},
+                "consumed_foods": [],
+                "nutrition": {k: 0.0 for k in NUTRIENTS},
+                "timing_records": [], "updated_at": row["updated_at"],
+            }
+            groups[key] = group
+        foods = json.loads(row["consumed_foods_json"])
+        nutrients = json.loads(row["nutrition_json"])
+        timing = {
+            "timing": row["timing"], "status": row["status"],
+            "option_ref": row["option_ref"], "source_draft_id": row["source_draft_id"],
+            "prescription": json.loads(row["prescription_json"]),
+            "consumed_foods": foods, "nutrition": nutrients,
+            "updated_at": row["updated_at"],
+        }
+        group["timing_records"].append(timing)
+        group["consumed_foods"].extend({**food, "timing": row["timing"]} for food in foods)
+        for nutrient in NUTRIENTS:
+            group["nutrition"][nutrient] += float(nutrients[nutrient])
+        group["updated_at"] = max(group["updated_at"], row["updated_at"])
+    return sorted(legacy + list(groups.values()),
+                  key=lambda r: (r["meal_date"], r["meal_key"], r["event_id"]))

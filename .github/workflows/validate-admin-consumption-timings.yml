@@ -1,0 +1,29 @@
+name: Validate admin consumption timing compatibility
+on:
+  pull_request:
+    branches:
+      - production/the-mile-admin
+    paths:
+      - 'consumption_records_v2.py'
+      - 'static/admin-consumption.js'
+      - 'static/admin-consumption.css'
+      - 'test_admin_consumption_timings_v2.py'
+      - '.github/workflows/validate-admin-consumption-timings.yml'
+  workflow_dispatch:
+jobs:
+  read-only-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile read-only consumption module
+        run: python -m py_compile consumption_records_v2.py test_admin_consumption_timings_v2.py
+      - name: Validate admin JavaScript syntax
+        run: node --check static/admin-consumption.js
+      - name: Verify timing aggregation and legacy compatibility
+        run: python -m unittest -v test_admin_consumption_timings_v2

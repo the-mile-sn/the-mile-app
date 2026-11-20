@@ -1,6 +1,7 @@
 "use strict";
 (function(){
- const names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia",game:"Jogo"};
+ const names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia",game:"Jogo",pre_training:"Pré-treino",post_training:"Pós-treino",pre_match:"Pré-jogo",intra_match:"Jogo",post_match:"Pós-jogo"};
+ const timingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
  const order=["breakfast","lunch","snack","dinner","supper","game"];
  const keys=[["kcal","Energia","kcal"],["protein_g","Proteína","g"],["carbs_g","Hidratos","g"],["fat_g","Gordura","g"]];
  const panel=document.getElementById("consumption-panel");
@@ -194,7 +195,10 @@
   }
   // Preserve the existing Microciclos goal and its option-average policy unchanged.
   const planned=microcycle?.state==="complete"?values(microcycle.nutrition):null;
-  const changed=records.filter(r=>{const diff=changes(r);return displayStatus(r,diff)==="partial"||(diff?.length>0);}).length;
+  const changed=records.filter(r=>{
+   const entries=Array.isArray(r.timing_records)?r.timing_records:[r];
+   return entries.some(entry=>{const diff=changes(entry);return displayStatus(entry,diff)==="partial"||(diff?.length>0);});
+  }).length;
   const rings='<svg viewBox="0 0 188 188" role="img" aria-label="Progresso de energia, proteína, hidratos e gordura" class="tm-record-four-rings">'+
    keys.map(([key],i)=>progressCircle(key,consumed,planned,i)).join("")+'</svg>';
   const kcalTotal=planned?kcal(planned.kcal):"—";
@@ -265,7 +269,32 @@
   if(!rows.length)return '<p class="tm-record-detail-note">Não existem alimentos detalhados neste registo.</p>';
   return '<div class="tm-record-food-heading">Alimentos consumidos e alterações</div><ul class="tm-record-food-list">'+rows.join("")+'</ul>';
  }
+ function timingCard(r){
+  const taken=values(r.nutrition);
+  const timings=r.timing_records||[];
+  const heading='<div class="tm-record-meal-title"><strong>'+esc(names[r.meal_key]||"Jogo")+'</strong><span>'+timings.length+' '+(timings.length===1?'momento registado':'momentos registados')+'</span></div>';
+  const macroLabel=taken?kcal(taken.kcal)+' kcal':'—';
+  const details=timings.map(entry=>{
+   const diff=changes(entry),state=displayStatus(entry,diff);
+   const label=timingLabels[entry.timing]||entry.timing;
+   const badge={all:"Consumido",partial:"Parcial",none:"Não consumido"}[state]||"Registado";
+   const valuesTaken=values(entry.nutrition);
+   return '<section class="tm-record-timing-block">'+
+    '<div class="tm-record-timing-heading"><strong>'+esc(label)+'</strong>'+
+    '<span class="tm-consumption-status" data-state="'+esc(state)+'">'+badge+'</span>'+
+    '<span class="tm-record-mini">'+(valuesTaken?kcal(valuesTaken.kcal)+' kcal':'—')+'</span></div>'+
+    foodDetails(entry)+'</section>';
+  }).join("");
+  return '<details class="tm-consumption-card tm-record-expandable">'+
+   '<summary class="tm-record-card-summary">'+heading+
+   '<div class="tm-record-head-right"><span class="tm-record-mini">'+macroLabel+'</span>'+
+   '<span class="tm-record-chevron" aria-hidden="true">⌄</span></div></summary>'+
+   '<div class="tm-record-card-body tm-record-timing-body">'+
+   '<div class="tm-record-meal-metrics">'+keys.map(([k,label,unit])=>'<div><small>'+label+'</small><strong>'+metric(k,taken)+' '+unit+'</strong></div>').join("")+'</div>'+
+   details+'</div></details>';
+ }
  function card(r,microcycle){
+  if(Array.isArray(r.timing_records)&&r.timing_records.length)return timingCard(r);
   const diff=changes(r),shownStatus=displayStatus(r,diff);
   const status={all:"Consumido",partial:"Parcial",none:"Não consumido"}[shownStatus]||"Registado";
   const changed=diff&&diff.length>0;
