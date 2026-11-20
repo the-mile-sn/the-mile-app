@@ -241,7 +241,7 @@ test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll a
  assert.match(js,/Math\.abs\(dx\)>chefTouchStart\.width\*\.38/);
  assert.match(js,/Math\.abs\(speed\)>\.55/);
  assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-22\)return/);
- assert.match(js,/if\(Math\.abs\(dy\)>18&&Math\.abs\(dy\)>Math\.abs\(dx\)\*1\.35\)/);
+ assert.match(js,/if\(vertical>=18&&vertical>horizontal\*1\.5\)return "vertical"/);
  assert.match(js,/chefViewMode==="week"&&!target\.closest\?\.\("\.chef-week-grid"\)/);
  assert.match(js,/activeTab==="menus"&&!target\.closest\?\.\("\.chef-menu-week-navigation"\)/);
  assert.match(js,/requestAnimationFrame\(updateChefAdaptiveNav\)/);
