@@ -6,7 +6,7 @@
  const byId=id=>document.getElementById(id);
  const root=byId("tm-appointments-root"),auth=byId("tm-appointments-auth");
  if(!root||!auth)return;
- const tabNames=["agenda","reservas","disponibilidades","configuracao"];
+ const tabNames=["agenda","tarefas","reservas","disponibilidades","configuracao"];
  const range=byId("tm-appointments-range"),days=byId("tm-appointments-days");
  const longRange=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",day:"numeric",month:"long",year:"numeric"});
  const monthFormat=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",month:"long",year:"numeric"});
