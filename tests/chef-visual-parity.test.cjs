@@ -82,7 +82,7 @@ test("Planos follows published nutritional colours, not only the selected day's 
  assert.match(js,/chefPlanSelectedColor=null;render\(\)/);
  assert.doesNotMatch(js,/function renderPlan\(root\)\{\s*const date=dateKey\(selectedDay\);/);
  assert.match(css,/\.chef-plan-category\{[^}]*min-height:61px/);
- assert.match(guide,/**Planos \(estrutura corrigida\):**/);
+ assert.match(guide,/Planos \(estrutura corrigida\)/);
 });
 
 test("Menus uses a compact 38px switch and real week navigation without a duplicated day strip",()=>{
