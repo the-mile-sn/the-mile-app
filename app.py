@@ -1911,6 +1911,13 @@ def application(env, start_response):
                     library=consumption_nutrition_v2.active_library(c)
                     calculated=consumption_nutrition_v2.calculate(
                         option, library, body.get('status'), body.get('edits'), body.get('additional'))
+                    if extra_timing:
+                        # Persist trusted library labels for the app and backoffice.
+                        # Never use a player-supplied food name or macro value.
+                        for consumed in calculated['foods']:
+                            catalog=library[consumed['id']]
+                            consumed['display_name']=(catalog.get('display_name')
+                                or catalog.get('name_pt') or catalog.get('name') or 'Alimento')
                     prescription={'option': option, 'color': source.get('color'),
                                   'planned_color': source.get('planned_color'),
                                   'draft_id': source.get('draft_id')}
