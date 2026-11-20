@@ -1595,11 +1595,29 @@ function renderPendingCalendar(mon,dateKey){
 /* Neutral placeholder for the existing seven-column weekly calendar.
    Meal count follows the loaded player's meal configuration when available;
    event rows depend on the requested week and are intentionally not guessed. */
+/* Day placeholders mirror the nutritional strip and approved 61px card family.
+   They do not assert which prescriptions or events exist in the requested day. */
+function renderPendingDaySkeleton(){
+ const host=$("overview-day-skeleton-cards");
+ const shape=name=>{
+  const node=document.createElement("span");
+  node.className="overview-skeleton-shape "+name;
+  return node;
+ };
+ const card=()=>{
+  const shell=document.createElement("div");shell.className="overview-day-skeleton-card";
+  shell.append(shape("overview-day-skeleton-icon"),shape("overview-day-skeleton-card-title"),shape("overview-day-skeleton-card-value"),shape("overview-day-skeleton-chevron"));
+  return shell;
+ };
+ const mealCount=Array.isArray(meals)&&meals.length?meals.length:5;
+ const count=1+Math.min(7,Math.max(3,mealCount)); // Peso + neutral meal placeholders.
+ host.replaceChildren(...Array.from({length:count},card));
+}
 function renderPendingWeeklySkeleton(){
  const host=$("overview-week-skeleton");
  const shape=(name)=>{
   const node=document.createElement("span");
-  node.className="overview-week-skeleton-shape "+name;
+  node.className="overview-skeleton-shape overview-week-skeleton-shape "+name;
   return node;
  };
  const grid=document.createElement("div");grid.className="overview-week-skeleton-grid";
@@ -1626,6 +1644,7 @@ function setOverviewLoading(loading,mon=null,dateKey=null){
   &&lastOverviewPresentation.dateKey===dateKey&&lastOverviewPresentation.mode===overviewMode;
  if(loading&&!sameView){
   if(overviewMode==="week")renderPendingWeeklySkeleton();
+  else renderPendingDaySkeleton();
   indicator.hidden=false;
   indicator.classList.toggle("week-pending",overviewMode==="week");
   $("day-details").hidden=true;$("weekly-view").hidden=true;
@@ -2014,6 +2033,13 @@ async function overview(){
  let r,weekMenus,weekWeights;
  if(snapshot){
   ({r,weekMenus,weekWeights}=snapshot);
+  // Cached weekly data still requires the newly selected day's consumption read.
+  // Keep a different date's card content out of sight until that read finishes.
+  if(overviewMode==="day"&&(!lastOverviewPresentation||
+      lastOverviewPresentation.weekKey!==weekKey||
+      lastOverviewPresentation.dateKey!==d||
+      lastOverviewPresentation.mode!=="day"))
+   setOverviewLoading(true,mon,d);
  }else{
   setOverviewLoading(true,mon,d);
   for(const button of document.querySelectorAll("#overview-mode button"))
@@ -2038,7 +2064,9 @@ async function overview(){
   overviewSnapshot={weekKey,time:Date.now(),r,weekMenus,weekWeights};
  }
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
- setOverviewLoading(false);
+ // Day loading remains active while consumption records are fetched.
+ // Week has no corresponding wait.
+ if(overviewMode==="week")setOverviewLoading(false);
  loadPlayerPostMatch().catch(()=>{});
  if(!snapshot){
  // Avoid reusing a previous week\u0027s scenario if the preview is unavailable.
@@ -2071,7 +2099,8 @@ async function overview(){
  const isWeek=overviewMode==="week";
  lastOverviewPresentation={weekKey,dateKey:d,mode:overviewMode};
  for(const b of document.querySelectorAll("#overview-mode button"))b.setAttribute("aria-pressed",String(b.dataset.view===overviewMode));
- $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;$("day-details").hidden=isWeek;$("weekly-view").hidden=!isWeek;
+ $("week-strip").hidden=isWeek;$("date-title").hidden=isWeek;
+ $("day-details").hidden=isWeek||!$("overview-loading").hidden;$("weekly-view").hidden=!isWeek;
  if(isWeek){pendingDailySwipeDirection=0;renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}
  const dailyReferenceRaw=weekWeights.weights_by_date?.[d]?.weight_kg;
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
@@ -2117,7 +2146,8 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
   renderWeightCard(root,d).catch(()=>{});
-  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);animateDailySwipeEntry();return;
+  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);
+  root.hidden=false;setOverviewLoading(false);animateDailySwipeEntry();return;
  }
 
  const dailyTotal=dayNutritionTotal(entry||{date:d,classification:null});
@@ -2478,6 +2508,8 @@ async function overview(){
   root.append(section);
  }
  if((supplementsByDay[d]||[]).length)root.append(supplementsCard(supplementsByDay[d]));
+ // Reveal a complete day's content only after consumption state is resolved.
+ root.hidden=false;setOverviewLoading(false);
  injectPostMatchCard();
  animateDailySwipeEntry();
 }
