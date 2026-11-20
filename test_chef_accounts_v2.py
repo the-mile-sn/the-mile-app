@@ -54,6 +54,33 @@ class ChefAccountApiTests(unittest.TestCase):
         self.assertEqual(result["body"]["player"]["id"], self.first)
         self.assertEqual(result["body"]["chef"]["language"], "en")
 
+    def test_archive_chef_is_reversible_and_does_not_grant_access_on_restore(self):
+        chef, chef_id = self._chef()
+        path = "/api/v2/admin/chefs/" + chef_id
+        self.assertEqual(self.admin.request(path + "/archive", "POST", {})["status"], 400)
+        self.assertEqual(chef.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})["status"], 401)
+        result = self.admin.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})
+        self.assertEqual(result["status"], 200, result)
+        self.assertEqual(self.admin.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})["status"], 409)
+        listed = self.admin.request("/api/v2/admin/chefs")["body"]
+        self.assertFalse(any(item["id"] == chef_id for item in listed["chefs"]))
+        self.assertTrue(any(item["id"] == chef_id for item in listed["archived_chefs"]))
+        self.assertEqual(chef.request("/api/v2/chef/me")["status"], 401)
+        self.assertEqual(self.admin.request(path, "PUT", {"active": True})["status"], 404)
+        with app.connect() as db:
+            self.assertIsNotNone(db.execute(
+                "SELECT archived_at FROM v2_chef_links WHERE user_id=?", (chef_id,)
+            ).fetchone()["archived_at"])
+        self.assertEqual(self.admin.request(path + "/restore", "POST", {})["status"], 200)
+        self.assertEqual(self.admin.request(path + "/restore", "POST", {})["status"], 409)
+        restored = self.admin.request("/api/v2/admin/chefs")["body"]
+        account = next(item for item in restored["chefs"] if item["id"] == chef_id)
+        self.assertEqual(account["active"], 0)
+        self.assertFalse(any(item["id"] == chef_id for item in restored["archived_chefs"]))
+        self.assertEqual(Client().request("/api/login", "POST", {
+            "identifier": "chefteste", "password": "chef-password-123"
+        })["status"], 403)
+
     def test_cross_player_and_admin_boundaries(self):
         chef, _ = self._chef()
         self.assertEqual(chef.request("/api/v2/chef/menus?start=2026-11-16&end=2026-11-22")["status"], 200)
