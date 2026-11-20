@@ -12,7 +12,7 @@ test("subtle circular calendar links retain existing booking destinations and la
  assert.match(css,/width:40px;height:40px;min-height:40px/);
  assert.match(css,/border:0;border-radius:50%/);
  assert.match(css,/width:42px;height:42px;min-height:42px/);
- assert.match(js,/\$\("tm-db-miniagenda-new"\)\.href=bookingsLink\(day,true\)/);
+ assert.match(js,/\$\("tm-db-miniagenda-new"\)\.dataset\.bookingHref=bookingsLink\(day,true\)/);
  assert.match(js,/\$\("tm-db-miniagenda-open"\)\.href=bookingsLink\(day\)/);
 });
 
