@@ -2301,7 +2301,7 @@ async function overview(){
     for(const item of weekDays){
      const column=document.createElement("div");column.className="nutrition-chart-column";
      if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
-     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";n.style.color=color;n.style.color=color;
+     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";n.style.color=color;
      const track=document.createElement("div");track.className="nutrition-chart-track";
      const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
      const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
@@ -2333,7 +2333,7 @@ async function overview(){
     const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
     const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
     if(unitControl){footerActions.append(unitControl);unitControl.style.setProperty("display","none","important");}
-    footerActions.append(expand);footer.append(footerLabel,footerActions);footer.addEventListener("click",event=>{if(event.target.closest("button"))return;expand.click();});footer.append(footerLabel,footerActions);visual.append(footer);
+    footerActions.append(expand);footer.addEventListener("click",event=>{if(event.target.closest("button"))return;expand.click();});footer.append(footerLabel,footerActions);visual.append(footer);
    }else visual.append(expand);
    summary.append(weeklyCharts);
   }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
