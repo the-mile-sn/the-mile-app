@@ -62,7 +62,7 @@ class DailyCardGeometryTests(unittest.TestCase):
         for prop in ("--day-icon-box:37px", "--day-icon-glyph:24px",
                      "--day-icon-radius:11px", "--day-header-inset:17px",
                      "--day-header-gap:8px", "--day-icon-space:10px",
-                     "--day-title-size:16px", "--day-title-weight:500",
+                     "--day-title-size:16px", "--day-title-weight:var(--mile-type-card-title)",
                      "--day-kcal-size:11px", "--day-kcal-weight:500"):
             self.assertEqual(CSS.count(prop), 1, prop)
         for cls in ("tm-day-header", "tm-day-icon", "tm-day-title"):
@@ -79,6 +79,18 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertNotIn("#overview #day-details .daily-meal>.daily-meal-head>strong,", CSS)
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
+
+    def test_universal_card_title_weight_400_preserves_other_roles(self):
+        self.assertEqual(CSS.count("--mile-type-card-title:400"), 1)
+        for selector in ("#plans #plans-assessments .assessment-metric-name",
+                         "#overview .daily-supplements > summary > strong"):
+            self.assertTrue(any("font-weight:var(--mile-type-card-title)!important" in body
+                                for body in declarations(selector)), selector)
+        self.assertIn("#weekly-view .weekly-meal-name{font-weight:var(--mile-type-medium)!important}", CSS)
+        self.assertIn("--day-kcal-weight:500", CSS)
+        self.assertIn("font-size:16px!important;font-weight:600!important", CSS)
+        self.assertIn("**16 px / 400**", GUIDE)
+        self.assertNotIn("16/500", GUIDE)
 
     def test_day_right_edge_alignment_contract(self):
         self.assertEqual(CSS.count("--day-chevron-size:9px"), 1)
