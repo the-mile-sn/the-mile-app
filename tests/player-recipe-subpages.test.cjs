@@ -67,7 +67,9 @@ test("library recipe displays a 170-190px hero above the full-width page title",
  const code=js.slice(js.indexOf("function detail("),js.indexOf("async function loadDetail("));
  assert.ok(code.indexOf("root.append(hero)")<code.indexOf('const identity=node("div","recipe-identity")'));
  assert.match(css,/#menus \.recipe-detail-standalone > \.recipe-hero\{[^}]*width:100%;[^}]*height:clamp\(170px,46vw,190px\);[^}]*object-fit:cover;[^}]*border-radius:18px;/s);
- assert.match(css,/#menus \.recipe-detail-standalone \.recipe-identity\{[^}]*min-height:0;/s);
+ assert.match(js,/root\.classList\.add\("recipe-detail--hero"\)/);
+ assert.match(css,/#menus \.recipe-detail-standalone\.recipe-detail--hero \.recipe-identity\{[^}]*min-height:0;/s);
+ assert.doesNotMatch(css,/#menus \.recipe-detail-standalone \.recipe-identity\{[^}]*min-height:0;/s);
  assert.match(css,/#menus \.recipe-identity h2\{[^}]*font-size:clamp\(21px,5\.3vw,23px\);[^}]*font-weight:var\(--mile-type-semibold,600\)/s);
  assert.match(html,/player-recipes\.css\?v=22/);
  assert.match(html,/player-recipes\.js\?v=14/);
