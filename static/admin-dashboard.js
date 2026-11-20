@@ -1055,13 +1055,29 @@ function ensurePlanningOnlyView(){
  // submissions always describe the last seven days, regardless of day navigation.
  window.tmDashboardActivityIcon=kind=>hugeIcon(kind,"tm-db-activity-svg");
  window.tmDashboardOpenActivity=(athleteId,day)=>openPlayers(athleteId,day);
+ // Mobile-only expansion uses the same real form links; no duplicate list.
+ const recentExpand=$("tm-db-recent-expand");
+ const recentPanel=recentExpand?.closest(".tm-db-today-recent");
+ recentExpand?.addEventListener("click",()=>{
+  const expanded=!recentPanel.classList.contains("is-expanded");
+  recentPanel.classList.toggle("is-expanded",expanded);
+  recentExpand.setAttribute("aria-expanded",String(expanded));
+  recentExpand.querySelector("span").textContent=expanded?"Ver menos":"Ver mais respostas";
+ });
  function paintEvents(data){
   const recentHost=$("tm-db-recent");recentHost.replaceChildren();
   const t=data.today_events||{};
   const recent=t.recent_responses||[];
+  if(recentPanel)recentPanel.classList.remove("is-expanded");
+  if(recentExpand){
+   recentExpand.hidden=recent.length<=2;
+   recentExpand.setAttribute("aria-expanded","false");
+   recentExpand.querySelector("span").textContent="Ver mais respostas"+(recent.length>2?" ("+(recent.length-2)+")":"");
+  }
   if(!recent.length)recentHost.append(el("p","tm-db-none","Sem respostas recentes."));
-  else for(const item of recent){
+  else for(const [index,item] of recent.entries()){
    const btn=el("button","tm-db-event tm-db-form-answer");btn.type="button";
+   if(index>=2)btn.classList.add("tm-db-form-extra");
    const kind=item.kind==="post_match"?"pitch":"scale";
    const iconSlot=el("span","tm-db-form-icon");iconSlot.append(hugeIcon(kind));
    const details=el("span","tm-db-form-details");
