@@ -35,7 +35,9 @@ Fechado, o cabeçalho da refeição mostra kcal, sem macronutrientes abaixo. Abe
 ### B. Card de categoria (NÃO card universal)
 **Exclusivamente:** (1) cards de categoria em **Receitas** e (2) **agrupamentos cinzentos em Planos → Todos** (Laranja, Amarelo, Azul, Verde, Verde preparação, Treino, Jogo, Suplementação, etc.).
 
-Referência de Receitas: **86 px**, **raio 18 px**, fundo cinzento subtil, título à esquerda e seta à direita. Na vista «Todos», **sem fotografia nem espaço reservado para fotografia**. Preservar os subcards coloridos no interior do grupo; estes continuam a pertencer à família universal.
+Referência normativa de Receitas: **86 px**, **raio 18 px**, fundo cinzento subtil, título à esquerda e seta à direita. Na vista «Todos», **sem fotografia nem espaço reservado para fotografia**. Preservar os subcards coloridos no interior do grupo; estes continuam a pertencer à família universal.
+
+**Implementação Planos → Todos (20/11):** `.plans-all-group` usa `min-height:86px` no cabeçalho, `border-radius:18px`, fundo `rgba(255,255,255,.055)`, intervalo vertical `9px`, título `17px/600` e seta fina à direita que roda ao expandir; não introduzir `img`, `placeholder` ou espaço reservado para imagem. O conteúdo `.plans-all-body` mantém os cards de plano coloridos, recuados **17 px lateralmente**, com a sua expansão e lógica inalteradas. Consolidar as definições originais, sem overrides aditivos. **Nota de auditoria:** o CSS atual da lista de Receitas ainda apresenta medidas próprias (mínimo de 83 px e título 15/500); não alterar Receitas automaticamente neste lote, para preservar a secção aprovada. A geometria normativa de categoria é 86/18 e a tipografia 17/600, cuja harmonização integral em Receitas requer validação visual específica.
 
 **NÃO** classificar como «card de categoria» um mero cabeçalho que aparece quando um card universal é aberto.
 
