@@ -525,9 +525,12 @@ function chefOptionCards(date,meal){
 function chefMenuPhoto(item){
  const photo=mealPhoto(item);
  if(!photo)return null;
- const frame=node("span","chef-dish-photo-frame");
+ const frame=node("span","chef-dish-photo-frame chef-photo-pending");
  photo.className="chef-dish-photo";
+ // Match Player recipe-image loading only while the actual photo is pending.
+ photo.addEventListener("load",()=>frame.classList.remove("chef-photo-pending"),{once:true});
  frame.append(photo);
+ if(photo.complete&&photo.naturalWidth>0)frame.classList.remove("chef-photo-pending");
  const zoom=node("span","chef-photo-zoom");
  zoom.setAttribute("aria-hidden","true");
  zoom.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg>';
