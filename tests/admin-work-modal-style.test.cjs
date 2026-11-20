@@ -8,11 +8,11 @@ const appointments=fs.readFileSync("static/admin-appointments.html","utf8");
 test("work modals use two-line subcard fields and approved tokens",()=>{
  assert.match(css,/\.tm-work-field\{[\s\S]*?min-height:76px/);
  assert.match(css,/\.tm-work-field\{[\s\S]*?background:var\(--tm-ui-subcard\)/);
- assert.match(css,/\.tm-work-field :is\(input,select,textarea\)\{[\s\S]*?background:transparent/);
+ assert.match(css,/dialog\.tm-work-dialog \.tm-work-field > :is\(input,select,textarea\)\{[\s\S]*?background:transparent!important/);
  assert.match(css,/\.tm-work-field:focus-within\{outline:2px/);
- assert.match(css,/\.tm-work-save\{background:var\(--tm-action-main-bg/);
- assert.match(css,/\.tm-work-cancel\{background:transparent/);
- assert.match(css,/\.tm-work-delete\{margin-right:auto;background:var\(--tm-action-danger-bg/);
+ assert.match(css,/button\.tm-work-save\{[\s\S]*?background:var\(--tm-action-main-bg\)!important/);
+ assert.match(css,/button\.tm-work-cancel\{[\s\S]*?background:var\(--tm-action-secondary-bg\)!important/);
+ assert.match(css,/button\.tm-work-delete\{[\s\S]*?background:var\(--tm-action-danger-bg\)!important/);
  assert.match(css,/font-size:16px/);
 });
 test("closing and error handling match modal standard",()=>{
