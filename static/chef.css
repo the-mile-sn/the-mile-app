@@ -256,6 +256,32 @@ textarea.chef-input{min-height:68px;resize:vertical}
  #screen.chef-screen-home .chef-week-menu-highlight .chef-dish-photo-frame{width:74px;height:74px}
  #screen.chef-screen-home .chef-week-detail>.chef-week-menu-highlight{padding:12px}
 }
+/* Player Planos-derived category flow, scoped to published Chef prescriptions. */
+.chef-plan-intro{margin:4px 2px 17px;color:var(--muted);font-size:13px;line-height:1.5}
+.chef-plan-categories{display:flex;flex-direction:column;gap:9px}
+.chef-plan-category{
+ display:flex;align-items:center;gap:12px;width:100%;min-height:61px;
+ border:0;border-radius:13px;padding:10px 16px;
+ background:#242429;color:#f5f5f7;text-align:left;
+}
+.chef-plan-category-mark{
+ display:grid;place-items:center;flex:none;width:37px;height:37px;
+ border-radius:11px;background:var(--chef-tone);
+}
+.chef-plan-category-symbol{width:15px;height:15px;border-radius:50%;background:var(--chef-tone-ink)}
+.chef-plan-category-name{flex:1;min-width:0;font-size:16px;font-weight:400}
+.chef-plan-category-arrow{
+ width:9px;height:9px;margin:0 4px 0 auto;
+ border:solid #c9c9cf;border-width:0 2px 2px 0;
+ transform:rotate(-45deg)
+}
+.chef-plan-back-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 16px}
+.chef-plan-back{display:flex;align-items:center;gap:6px;min-height:40px;padding:6px 12px 6px 5px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:14px}
+.chef-plan-back-arrow{font-size:28px;line-height:.8}
+.chef-plan-active-label{padding:8px 12px;border-radius:999px;background:var(--chef-tone);color:var(--chef-tone-ink);font-size:12px;font-weight:500}
+#screen.chef-screen-plans>.chef-meal-card{width:100%;max-width:760px;margin:9px auto}
+@media(hover:hover){.chef-plan-category:hover{background:#29292e}}
+
 /* The seven menu cards already carry dates; navigation changes whole weeks. */
 .chef-menu-week-navigation{
  display:grid;grid-template-columns:40px minmax(0,1fr) 40px;
