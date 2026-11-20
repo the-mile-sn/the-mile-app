@@ -22,6 +22,7 @@ import chef_collaboration_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
+import admin_work_v2
 import appointments_google_v2
 import appointments_checkout_v2
 import appointments_rules_v2
@@ -303,6 +304,8 @@ def initialize():
         appointments_catalog_v2.initialize(c)
         appointments_availability_v2.initialize(c)
         appointments_bookings_v2.initialize(c)
+        if SITE_ROLE != 'player':
+            admin_work_v2.initialize(c)
         appointments_google_v2.initialize(c)
         appointments_checkout_v2.initialize(c)
         appointments_rules_v2.initialize(c)
@@ -764,7 +767,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -777,7 +780,8 @@ def application(env, start_response):
                     or path.startswith('/api/v2/recipes')
                     or path.startswith('/api/players')
                     or path.startswith('/api/admins')
-                    or path.startswith('/api/v2/admin/appointments/')):
+                    or path.startswith('/api/v2/admin/appointments/')
+                    or path.startswith('/api/v2/admin/work/')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
             if (path in ('/chef', '/chef.js', '/chef.css', '/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
@@ -790,7 +794,7 @@ def application(env, start_response):
             '/icon-512.png': 'icon-512.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/pdf-open.html': 'pdf-open.html',
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
-            '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css',
+            '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css', '/admin-work.js': 'admin-work.js', '/admin-work.css': 'admin-work.css',
             '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
@@ -1020,6 +1024,49 @@ def application(env, start_response):
                 except ValueError:raise Problem(400,'invalid_event')
                 if changed is None:raise Problem(404,'not_found')
                 return respond(200,{'event':changed})
+
+            # Private internal admin work: not customer bookings, player events,
+            # Google calendar writes, availability blocks or Shopify orders.
+            if path.startswith('/api/v2/admin/work/'):
+                if not user: raise Problem(401, 'unauthorized')
+                admin(user)
+                query = parse_qs(env.get('QUERY_STRING', ''))
+                try:
+                    if path == '/api/v2/admin/work/admins' and method == 'GET':
+                        return respond(200, admin_work_v2.professionals(c))
+                    if path == '/api/v2/admin/work/events' and method == 'GET':
+                        return respond(200, admin_work_v2.list_events(
+                            c, (query.get('from') or [''])[0],
+                            (query.get('to') or [''])[0]))
+                    if path == '/api/v2/admin/work/events' and method == 'POST':
+                        return respond(201, {'event': admin_work_v2.create_event(
+                            c, read_json(env), user['id'])})
+                    if path.startswith('/api/v2/admin/work/events/') and method in ('PUT','DELETE'):
+                        identifier = path.rsplit('/',1)[-1]
+                        payload = read_json(env)
+                        if method == 'PUT':
+                            return respond(200, {'event': admin_work_v2.update_event(
+                                c, identifier, payload, user['id'])})
+                        return respond(200, admin_work_v2.delete_event(c, identifier, payload))
+                    if path == '/api/v2/admin/work/tasks' and method == 'GET':
+                        return respond(200, admin_work_v2.list_tasks(
+                            c, (query.get('status') or ['all'])[0],
+                            (query.get('until') or [''])[0] or None))
+                    if path == '/api/v2/admin/work/tasks' and method == 'POST':
+                        return respond(201, {'task': admin_work_v2.create_task(
+                            c, read_json(env), user['id'])})
+                    if path.startswith('/api/v2/admin/work/tasks/') and method in ('PUT','DELETE'):
+                        identifier = path.rsplit('/',1)[-1]
+                        payload = read_json(env)
+                        if method == 'PUT':
+                            return respond(200, {'task': admin_work_v2.update_task(
+                                c, identifier, payload, user['id'])})
+                        return respond(200, admin_work_v2.delete_task(c, identifier, payload))
+                except LookupError as exc:
+                    raise Problem(404, str(exc))
+                except ValueError as exc:
+                    raise Problem(409 if str(exc) == 'stale_record' else 400, str(exc))
+                raise Problem(404, 'not_found')
 
             # Booking catalogue, separate from nutrition and players. No Shopify writes.
             # Per-professional Google OAuth. The callback requires the original
