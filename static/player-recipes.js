@@ -62,6 +62,7 @@
  }
  function card(name,small,photoId,callback){
   const button=node("button","recipe-item");button.type="button";button.onclick=callback;
+  if(small)button.classList.add("recipe-item--category");
   button.append(thumb(photoId));
   const info=node("div","recipe-item-body");
   info.append(node("strong","",name));

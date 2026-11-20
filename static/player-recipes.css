@@ -27,14 +27,17 @@
  display:flex;align-items:center;gap:14px;width:100%;min-height:86px;
  background:rgba(255,255,255,.055);border:0;border-radius:18px;
  padding:11px 13px;color:inherit;font:inherit;text-align:left;cursor:pointer;
+ --recipe-list-title-weight:var(--mile-type-card-title,400);
 }
+/* Category headers retain medium weight; individual recipe names follow universal cards. */
+#menus .recipe-item--category{--recipe-list-title-weight:var(--mile-type-medium,500);}
 #menus .recipe-thumb{height:64px;width:64px;border-radius:15px;object-fit:cover;flex:none;}
 #menus .recipe-thumb-placeholder{
  width:64px;height:64px;border-radius:15px;flex:none;
  display:grid;place-items:center;background:rgba(255,255,255,.055);color:#a9a9b2;
 }
 #menus .recipe-item-body{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;}
-#menus .recipe-item-body strong{font-size:16px;line-height:1.35;font-weight:500;}
+#menus .recipe-item-body strong{font-size:16px;line-height:1.35;font-weight:var(--recipe-list-title-weight);}
 #menus .recipe-item-body small{color:#a9a9b2;font-size:12px;}
 #menus .recipe-chevron{color:#a9a9b2;font-size:28px;font-weight:300;padding:0 3px;}
 #menus .recipe-detail{background:rgba(255,255,255,.055);border-radius:20px;padding:18px;margin:0 0 16px;}
