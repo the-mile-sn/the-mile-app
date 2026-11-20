@@ -16,8 +16,8 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=18/);
- assert.match(html,/chef\.js\?v=21/);
+ assert.match(html,/chef\.css\?v=19/);
+ assert.match(html,/chef\.js\?v=22/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -183,3 +183,68 @@ test("Menus offers Approved dish / Suggestion but preserves historical category 
  assert.match(guide,/registos históricos de categoria continuam válidos/);
 });
 
+
+test("Chef photos already have the approved image-only 1.5s skeleton and release it after load/error",()=>{
+ assert.match(js,/const frame=node\("span","chef-dish-photo-frame chef-photo-pending"\)/);
+ assert.match(js,/photo\.addEventListener\("load",\(\)=>frame\.classList\.remove\("chef-photo-pending"\)/);
+ assert.match(js,/photo\.onerror=\(\)=>frame\.remove\(\)/);
+ assert.match(css,/\.chef-dish-photo-frame\.chef-photo-pending::before/);
+ assert.match(css,/\.chef-photo-pending \.chef-dish-photo/);
+ assert.match(css,/@keyframes chef-photo-shimmer/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+});
+test("Chef initial home skeleton matches the real Dia/Semana geometry and never blocks fast loads",()=>{
+ assert.match(js,/function renderChefHomeSkeleton\(\)/);
+ assert.match(js,/function chefSkeletonShape\(extra=""\)/);
+ assert.match(js,/node\("div","chef-skeleton-summary"\)/);
+ assert.match(js,/node\("div","chef-skeleton-week-grid"\)/);
+ assert.match(js,/node\("div","chef-skeleton-meal"\)/);
+ assert.match(js,/const id=\+\+chefWeekRequestId/);
+ assert.match(js,/chefSkeletonTimer=setTimeout\(\(\)=>\{/);
+ assert.match(js,/renderChefHomeSkeleton\(\);\s*\},240\)/);
+ assert.match(js,/if\(id!==chefWeekRequestId\|\|dateKey\(monday\(selectedDay\)\)!==weekKey\)return/);
+ assert.match(js,/clearChefSkeleton\(\);\s*render\(\)/);
+ assert.match(js,/clearTimeout\(chefSkeletonTimer\)/);
+ assert.match(js,/root\.setAttribute\("aria-busy","true"\)/);
+ assert.match(css,/\.chef-skeleton-meal\{[^}]*min-height:61px/);
+ assert.match(css,/\.chef-skeleton-week-grid\{[^}]*grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
+ assert.match(css,/\.chef-skeleton-week-cell\{height:76px;border-radius:10px\}/);
+ assert.match(css,/background:#29292e/);
+ assert.match(css,/animation:chef-photo-shimmer 1\.5s ease-in-out infinite/);
+ assert.match(css,/#screen\.chef-screen-loading \.chef-skeleton-shape::after\{animation:none\}/);
+ assert.match(guide,/apenas \*\*após 240 ms\*\*/);
+ assert.doesNotMatch(js,/await new Promise\(resolve=>setTimeout\(resolve,240\)\)/);
+});
+test("Chef follows Player tab animation and adaptive floating bar, without inventing tab-swipe",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/duration:500,easing:"cubic-bezier\(0\.2,0\.7,0\.2,1\)"/);
+ assert.match(js,/const chefTabOrder=\["home","plans","menus","profile"\]/);
+ assert.match(js,/function changeChefTab\(next\)/);
+ assert.match(js,/duration:500,easing:"cubic-bezier\(0\.2,0\.7,0\.2,1\)"/);
+ assert.match(js,/\{transform:"translateX\("\+\(direction\*24\)\+"px\)",opacity:\.55\}/);
+ assert.match(js,/function updateChefAdaptiveNav\(\)/);
+ assert.match(js,/if\(y<32\)/);
+ assert.match(js,/if\(chefScrollAccum>=28\)/);
+ assert.match(css,/#chef-nav\.bottom-nav\.chef-nav-compact\{[^}]*left:24px!important;right:24px!important;padding:3px!important/);
+ assert.match(css,/#chef-nav\.bottom-nav\.chef-nav-compact>button\{[^}]*height:44px!important/);
+ assert.match(css,/\.chef-nav-compact \.mile-icon\{transform:scale\(\.87\)\}/);
+ assert.match(css,/\.chef-nav-compact>button>span:last-child\{font-size:8px!important\}/);
+ assert.match(guide,/não transformar o toque em swipe horizontal entre separadores/);
+});
+test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll and reduced-motion guard",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/duration:320,easing:"cubic-bezier\(0\.2,0\.7,0\.2,1\)"/);
+ assert.match(js,/function finishChefGesture\(dx,done\)/);
+ assert.match(js,/transform 210ms cubic-bezier\(\.2,\.8,\.2,1\)/);
+ assert.match(js,/duration:320,easing:"cubic-bezier\(0\.2,0\.7,0\.2,1\)"/);
+ assert.match(js,/const minSwipe=activeTab==="home"&&chefViewMode==="day"\?35:55/);
+ assert.match(js,/Math\.abs\(dx\)>chefTouchStart\.width\*\.38/);
+ assert.match(js,/Math\.abs\(speed\)>\.55/);
+ assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-22\)return/);
+ assert.match(js,/if\(Math\.abs\(dy\)>18&&Math\.abs\(dy\)>Math\.abs\(dx\)\*1\.35\)/);
+ assert.match(js,/chefViewMode==="week"&&!target\.closest\?\.\("\.chef-week-grid"\)/);
+ assert.match(js,/activeTab==="menus"&&!target\.closest\?\.\("\.chef-menu-week-navigation"\)/);
+ assert.match(js,/requestAnimationFrame\(updateChefAdaptiveNav\)/);
+ assert.match(js,/prefers-reduced-motion: reduce/);
+ assert.match(guide,/A mudança de dia dentro da semana já carregada é imediata/);
+});
