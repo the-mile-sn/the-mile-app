@@ -1638,7 +1638,27 @@ function renderPendingWeeklySkeleton(){
  }
  host.replaceChildren(grid,shape("overview-week-skeleton-summary-label"),summary);
 }
+/* Loading placeholders are a fallback for a genuinely slow Day request.
+   Fast same-week navigation keeps its existing direct transition. */
+const OVERVIEW_DAY_SKELETON_DELAY_MS=240;
+let overviewDaySkeletonTimer=null;
+function cancelOverviewDaySkeletonTimer(){
+ if(overviewDaySkeletonTimer!==null){
+  clearTimeout(overviewDaySkeletonTimer);
+  overviewDaySkeletonTimer=null;
+ }
+}
+function scheduleOverviewDaySkeleton(requestId,epoch,mon,dateKey){
+ cancelOverviewDaySkeletonTimer();
+ overviewDaySkeletonTimer=setTimeout(()=>{
+  overviewDaySkeletonTimer=null;
+  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch||
+     tab!=="overview"||overviewMode!=="day"||iso(day)!==dateKey)return;
+  setOverviewLoading(true,mon,dateKey);
+ },OVERVIEW_DAY_SKELETON_DELAY_MS);
+}
 function setOverviewLoading(loading,mon=null,dateKey=null){
+ if(!loading)cancelOverviewDaySkeletonTimer();
  const indicator=$("overview-loading");
  const sameView=lastOverviewPresentation&&mon&&lastOverviewPresentation.weekKey===iso(mon)
   &&lastOverviewPresentation.dateKey===dateKey&&lastOverviewPresentation.mode===overviewMode;
@@ -2024,6 +2044,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
 
 let consumptionPilotAllowed=null;
 async function overview(){
+ cancelOverviewDaySkeletonTimer();
  const requestId=++overviewRequestId,epoch=playerSessionEpoch;
  const d=iso(day),mon=monday(day),end=new Date(mon);end.setDate(mon.getDate()+6);
  const weekKey=iso(mon),snapshot=reusableOverviewSnapshot(weekKey);
@@ -2033,15 +2054,13 @@ async function overview(){
  let r,weekMenus,weekWeights;
  if(snapshot){
   ({r,weekMenus,weekWeights}=snapshot);
-  // Cached weekly data still requires the newly selected day's consumption read.
-  // Keep a different date's card content out of sight until that read finishes.
-  if(overviewMode==="day"&&(!lastOverviewPresentation||
-      lastOverviewPresentation.weekKey!==weekKey||
-      lastOverviewPresentation.dateKey!==d||
-      lastOverviewPresentation.mode!=="day"))
-   setOverviewLoading(true,mon,d);
+  // Reuse the week without forcing a loader on every day tap or swipe.
+  // The new day is painted as soon as its consumption read completes.
+  setOverviewLoading(false);
  }else{
-  setOverviewLoading(true,mon,d);
+  // Do not flash skeletons for requests completed within a normal tap.
+  if(overviewMode==="day")scheduleOverviewDaySkeleton(requestId,epoch,mon,d);
+  else setOverviewLoading(true,mon,d);
   for(const button of document.querySelectorAll("#overview-mode button"))
    button.setAttribute("aria-pressed",String(button.dataset.view===overviewMode));
   try{
@@ -2061,6 +2080,7 @@ async function overview(){
    throw err;
   }
   if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;
+  cancelOverviewDaySkeletonTimer();
   overviewSnapshot={weekKey,time:Date.now(),r,weekMenus,weekWeights};
  }
  if(requestId!==overviewRequestId||epoch!==playerSessionEpoch)return;

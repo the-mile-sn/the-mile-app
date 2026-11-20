@@ -32,12 +32,19 @@ test("Day and Week skeletons share one subtle animated shape and reduced-motion 
  assert.match(css,/#overview \.overview-loading\.week-pending \.overview-skeleton-week\{display:block/);
 });
 
-test("change of cached day conceals stale cards while waiting for consumption",()=>{
+test("fast same-week navigation avoids forced skeleton while keeping session guards",()=>{
  assert.match(js,/function renderPendingDaySkeleton\(\)/);
  assert.match(js,/if\(overviewMode==="week"\)renderPendingWeeklySkeleton\(\);\s*else renderPendingDaySkeleton\(\)/);
  assert.match(js,/const count=1\+Math\.min\(7,Math\.max\(3,mealCount\)\)/);
- assert.match(js,/lastOverviewPresentation\.dateKey!==d/);
- assert.match(js,/lastOverviewPresentation\.mode!=="day"/);
+ const snapshotStart=js.indexOf(" if(snapshot){",js.indexOf("async function overview(){"));
+ const snapshotBranch=js.slice(snapshotStart,js.indexOf(" }else{",snapshotStart));
+ assert.match(snapshotBranch,/setOverviewLoading\(false\)/);
+ assert.doesNotMatch(snapshotBranch,/setOverviewLoading\(true/);
+ assert.doesNotMatch(snapshotBranch,/scheduleOverviewDaySkeleton/);
+ assert.match(js,/const OVERVIEW_DAY_SKELETON_DELAY_MS=240/);
+ assert.match(js,/if\(overviewMode==="day"\)scheduleOverviewDaySkeleton\(requestId,epoch,mon,d\)/);
+ assert.match(js,/if\(requestId!==overviewRequestId\|\|epoch!==playerSessionEpoch\|\|[\s\S]*tab!=="overview"/);
+ assert.match(js,/cancelOverviewDaySkeletonTimer\(\);\s*overviewSnapshot=\{weekKey,time:Date\.now\(\),r,weekMenus,weekWeights\}/);
  const overview=js.slice(js.indexOf("async function overview(){"),js.indexOf("\nfunction openPlansSection(",js.indexOf("async function overview(){")));
  assert.ok(overview.includes("api('/api/v2/player/consumption-records?start='+d+'&end='+d)"));
  assert.match(overview,/\$\("day-details"\)\.hidden=isWeek\|\|!\$\("overview-loading"\)\.hidden/);
