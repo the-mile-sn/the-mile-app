@@ -1174,6 +1174,14 @@ el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
 /* Player-matched Início → Dia: interactive horizontal drag and 210ms
    exit / 320ms entry. Weekly grid and Menus preserve their week gestures.
    Native vertical scrolling and editable controls are never hijacked. */
+/* Slight diagonal drift should not hand a lateral swipe to page scrolling.
+   Intent locks only after movement; purely vertical swipes stay native. */
+function chefSwipeIntent(dx,dy){
+ const horizontal=Math.abs(dx),vertical=Math.abs(dy);
+ if(horizontal>=10&&horizontal>=vertical*.8)return "horizontal";
+ if(vertical>=18&&vertical>horizontal*1.5)return "vertical";
+ return "pending";
+}
 let chefTouchStart=null,chefTouchActive=false,chefTouchScreen=null,chefTouchTimeout=null;
 function clearChefGesture(){
  if(chefTouchTimeout!==null){clearTimeout(chefTouchTimeout);chefTouchTimeout=null;}
@@ -1213,8 +1221,9 @@ chefSwipeArea.addEventListener("touchmove",event=>{
  if(!chefTouchStart||event.touches.length!==1)return;
  const t=event.touches[0],dx=t.clientX-chefTouchStart.x,dy=t.clientY-chefTouchStart.y;
  if(!chefTouchActive){
-  if(Math.abs(dy)>18&&Math.abs(dy)>Math.abs(dx)*1.35){clearChefGesture();return;}
-  if(Math.abs(dx)<8||Math.abs(dx)<Math.abs(dy)*.8)return;
+  const intent=chefSwipeIntent(dx,dy);
+  if(intent==="vertical"){clearChefGesture();return;}
+  if(intent!=="horizontal")return;
   chefTouchActive=true;
  }
  if(event.cancelable)event.preventDefault();
@@ -1229,7 +1238,7 @@ chefSwipeArea.addEventListener("touchend",event=>{
  const dy=event.changedTouches[0].clientY-chefTouchStart.y;
  const direction=dx<0?1:-1;
  const minSwipe=activeTab==="home"&&chefViewMode==="day"?35:55;
- if(Math.abs(dx)<minSwipe||Math.abs(dx)<Math.abs(dy)*1.4){finishChefGesture(0);return;}
+ if(Math.abs(dx)<minSwipe||chefSwipeIntent(dx,dy)!=="horizontal"){finishChefGesture(0);return;}
  const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
  const commit=activeTab==="home"&&chefViewMode==="day"
   ?Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55):true;
