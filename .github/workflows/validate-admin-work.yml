@@ -1,0 +1,32 @@
+name: Validate private admin events and tasks
+on:
+  push:
+    branches: [production/the-mile-admin]
+  pull_request:
+    branches: [production/the-mile-admin]
+jobs:
+  admin-work-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install backend requirements
+        run: python -m pip install -r requirements.txt
+      - name: Validate Python and JavaScript syntax
+        run: |
+          python -m py_compile app.py admin_work_v2.py test_admin_work_v2.py
+          node --check static/admin-work.js
+          node --check static/admin-dashboard.js
+          node --check static/admin-appointments.js
+      - name: Validate event/task CRUD and permissions
+        run: python -m unittest -v test_admin_work_v2
+      - name: Validate dashboard and quick-create regressions
+        run: node --test tests/admin-dashboard-activity-card-layout.test.cjs tests/admin-dashboard-recent-scroll.test.cjs tests/admin-dashboard-compact-navigation.test.cjs tests/admin-dashboard-player-ui-polish.test.cjs tests/admin-work-v1.test.cjs
