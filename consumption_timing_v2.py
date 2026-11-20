@@ -97,6 +97,42 @@ def timing_option(option, timing):
     return {**option, "foods": result} if result else None
 
 
+def additional_timing_option(options, timing):
+    """A library-only consumption option for a timing absent from the plan.
+
+    This is not published prescription: the marker may only be used with
+    validated additional library foods. Never reuse a prescribed timing.
+    """
+    if timing not in TIMINGS:
+        raise ValueError("invalid_timing")
+    if not isinstance(options, list) or not options:
+        raise ValueError("published_meal_unavailable")
+    if any(timing_option(option, timing) is not None for option in options):
+        raise ValueError("timing_is_prescribed")
+    return {
+        "option_ref": "player-added:" + timing,
+        "title": "Adicionado pelo jogador",
+        "foods": [],
+    }
+
+
+def existing_timing(connection, athlete_id, meal_date, event_id, timing):
+    return connection.execute("""
+        SELECT option_ref,prescription_json FROM v2_consumption_timing_records
+        WHERE athlete_id=? AND meal_date=? AND meal_key='intra_match'
+          AND event_id=? AND timing=?
+    """, (athlete_id, meal_date, event_id, timing)).fetchone()
+
+
+def validate_added_timing(connection, athlete_id, meal_date, event_id, timing, options):
+    """Do not overwrite a prescribed timing or replace another timing's data."""
+    option = additional_timing_option(options, timing)
+    previous = existing_timing(connection, athlete_id, meal_date, event_id, timing)
+    if previous and previous["option_ref"] != option["option_ref"]:
+        raise ValueError("timing_already_registered")
+    return option
+
+
 def has_legacy(connection, athlete_id, meal_date, event_id):
     row = connection.execute("""
         SELECT 1 FROM v2_consumption_records
@@ -197,6 +233,7 @@ def merge_range(connection, athlete_id, start, end, legacy_records):
             "timing": row["timing"], "status": row["status"],
             "option_ref": row["option_ref"], "nutrition": nutrition,
             "consumed_foods": foods,
+            "prescription": json.loads(row["prescription_json"]),
         })
         parent["consumed_foods"].extend({**food, "timing": row["timing"]} for food in foods)
         for nutrient in NUTRIENTS:

@@ -3718,6 +3718,17 @@ body.profile-active .player-top{display:none!important}
 #overview .match-intra-card .peri-timing-heading{font-weight:600;color:inherit;margin-bottom:9px;line-height:1.35}
 #overview .match-intra-card .peri-timing-lines{display:flex;flex-direction:column;gap:9px}
 #overview .match-intra-card .peri-timing-line{color:inherit;opacity:.82;line-height:1.45;overflow-wrap:anywhere}
+/* Jogo only: extra ingestion moments reuse the original timing & consumption family. */
+#overview .match-intra-card .intra-added-timing{border-top:1px solid rgba(34,35,42,.12);padding:18px 0}
+#overview .match-intra-card .intra-added-origin{display:inline-block;font-size:12px;font-weight:400;color:#666971;margin-left:10px}
+#overview .match-intra-card .intra-add-moment-trigger{display:block;width:100%;min-height:42px;border:0;border-top:1px solid rgba(34,35,42,.12);background:transparent;color:inherit;text-align:left;font-size:14px;font-weight:400;padding:16px 0;cursor:pointer}
+#overview .match-intra-card .intra-add-moment-panel{padding:14px;border:0;border-radius:18px;background:var(--consumption-editor-surface,#e1e1e5);color:inherit;margin:12px 0}
+#overview .match-intra-card .intra-add-moment-panel[hidden]{display:none!important}
+#overview .match-intra-card .intra-add-moment-panel>label{display:flex;flex-direction:column;gap:9px;font-size:14px}
+#overview .match-intra-card .intra-add-moment-panel>label>select{width:100%;min-height:43px;border:0;border-radius:12px;padding:0 12px;background:#F2F2F4;color:#22232A;font-size:16px}
+#overview .match-intra-card .intra-add-moment-start,#overview .match-intra-card .intra-add-moment-cancel{min-height:42px;border:0;border-radius:999px;padding:9px 16px;margin:13px 8px 0 0;font-size:14px}
+#overview .match-intra-card .intra-add-moment-start{background:#22232A;color:#F2F2F4}
+#overview .match-intra-card .intra-add-moment-cancel{background:rgba(34,35,42,.1);color:#22232A}
 #overview .match-intra-card .peri-timing-group > :is(.consumption-quick-actions,.consumption-actions--recorded){margin:16px 0 0!important}
 #overview .match-intra-card .peri-timing-group > .consumption-editor{margin:16px 0 0!important}
 #overview .match-intra-card .peri-timing-group > .consumption-quick-feedback:not(:empty){margin:5px 0 0!important}

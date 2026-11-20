@@ -2,6 +2,7 @@
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
 let playerSessionEpoch=0;
 let visualPortionsByColor={};
+let pendingIntraMatchExpansion=null;
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
 const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 function monday(d){const x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x;}
@@ -317,13 +318,22 @@ function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionAct
 /* One recorded-action component for meals, alternative colours and peri-events. */
 /* Universal registered-consumption action family for meals and peri-events.
    Surface differences are inherited as colour tokens, never separate markup. */
-function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo',timing=null,optionRef=null}){
+/* Jogo alone remembers its open state when a timing action refreshes Dia.
+   All other cards retain their existing collapse/refresh contract. */
+async function refreshAfterConsumption(host,meal,eventId){
+ if(meal==='intra_match'){
+  const match=host.closest('.match-intra-card');
+  if(match?.open)pendingIntraMatchExpansion={date:match.dataset.matchDate,eventId};
+ }
+ await overview();
+}
+function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo',timing=null,optionRef=null,extraTiming=false}){
  const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--recorded';
  const registered=document.createElement('span');registered.className='action-pill action-pill--registered';
  consumptionActionLabel(registered,'CheckmarkCircle02Icon',' Registado');registered.setAttribute('aria-label','Registado: '+description);
  const edit=document.createElement('button');edit.type='button';edit.className='action-pill action-pill--secondary';
  consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar '+description);
- edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor,timing,optionRef);
+ edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor,timing,optionRef,extraTiming);
  const undo=document.createElement('button');undo.type='button';undo.className='action-pill action-pill--secondary';
  consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular '+description);
  const feedback=document.createElement('p');feedback.className='consumption-feedback';
@@ -333,7 +343,7 @@ function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null
   undo.disabled=true;edit.disabled=true;undo.setAttribute('aria-busy','true');
   try{
    await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,...(timing?{timing}:{})})});
-   await overview();
+   await refreshAfterConsumption(host,meal,eventId);
   }catch(err){
    undo.disabled=false;edit.disabled=false;undo.removeAttribute('aria-busy');
    feedback.textContent='Não foi possível anular. Tenta novamente.';error(err);
@@ -900,10 +910,60 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
     if(!option)throw new Error('Opção ou timing publicado indisponível');
     await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,timing,option_ref:option.option_ref,status:'all'})});
     showConsumptionSuccess(quick);feedback.textContent='';
-    await new Promise(resolve=>setTimeout(resolve,900));await overview();
+    await new Promise(resolve=>setTimeout(resolve,900));await refreshAfterConsumption(group,meal,eventId);
    }catch(err){feedback.textContent='Não foi possível registar este momento.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);}
   };
   actions.append(edit,quick);group.append(actions,feedback);
+ }
+ // A new ingestion moment is only a consumption record, never a prescription.
+ const extras=current.filter(record=>record.prescription?.origin==='player_added');
+ for(const saved of extras){
+  if(available.has(saved.timing))continue;
+  const group=document.createElement('div');group.className='peri-timing-group intra-added-timing';
+  group.dataset.timing=saved.timing;
+  const heading=document.createElement('div');heading.className='peri-timing-heading';
+  heading.textContent=periTimingLabels[saved.timing]||saved.timing;
+  const origin=document.createElement('small');origin.className='intra-added-origin';origin.textContent='Adicionado pelo jogador';
+  heading.append(origin);group.append(heading);
+  for(const food of saved.consumed_foods||[]){
+   const line=document.createElement('div');line.className='peri-timing-line';
+   const grams=Number(food.grams);const quantity=Number.isFinite(grams)?String(Math.round(grams*10)/10)+' g ':'';
+   line.textContent=quantity+(food.display_name||food.library_name||food.name||'Alimento da biblioteca');
+   group.append(line);
+  }
+  group.append(makeRecordedConsumptionTags({host:group,date,meal,eventId,timing:saved.timing,
+   optionRef:saved.option_ref,extraTiming:true,description:'consumo adicional de '+(periTimingLabels[saved.timing]||saved.timing)}));
+  card.append(group);
+ }
+ const reserved=new Set();
+ for(const option of options){
+  for(const food of option.items||[]){
+   if(food.timing)reserved.add(food.timing);
+   for(const part of food.timing_splits||[])if(part.timing)reserved.add(part.timing);
+  }
+  for(const timing of option.timing_groups||[])reserved.add(timing);
+ }
+ for(const record of current)reserved.add(record.timing);
+ const choices=Object.entries(periTimingLabels).filter(([timing])=>!reserved.has(timing));
+ if(choices.length){
+  const addButton=document.createElement('button');addButton.type='button';
+  addButton.className='intra-add-moment-trigger';addButton.textContent='⊕ Adicionar momento';
+  const picker=document.createElement('div');picker.className='intra-add-moment-panel';picker.hidden=true;
+  const label=document.createElement('label');label.textContent='Momento do consumo';
+  const select=document.createElement('select');select.setAttribute('aria-label','Selecionar momento do consumo');
+  for(const [value,title] of choices){const option=document.createElement('option');option.value=value;option.textContent=title;select.append(option);}
+  label.append(select);
+  const start=document.createElement('button');start.type='button';start.className='intra-add-moment-start';start.textContent='Escolher alimentos';
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='intra-add-moment-cancel';cancel.textContent='Cancelar';
+  start.onclick=()=>{
+   select.disabled=true;start.disabled=true;
+   openConsumptionEditor(picker,date,meal,eventId,null,null,select.value,'player-added:'+select.value,true)
+    .finally(()=>{select.disabled=false;start.disabled=false;});
+  };
+  cancel.onclick=()=>{picker.hidden=true;addButton.hidden=false;};
+  picker.append(label,start,cancel);
+  addButton.onclick=()=>{picker.hidden=false;addButton.hidden=true;};
+  card.append(addButton,picker);
  }
  return true;
 }
@@ -1021,7 +1081,10 @@ function eventCard(event,compact=false){
 function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecords=[]){
  const opts=item.options||[],avg=average(opts);
  const section=document.createElement("details");
- section.className="daily-event-card match-intra-card";
+ section.className="daily-event-card match-intra-card";section.dataset.eventId=event.id;section.dataset.matchDate=event.event_date;
+ if(pendingIntraMatchExpansion?.date===event.event_date&&pendingIntraMatchExpansion?.eventId===event.id){
+  section.open=true;pendingIntraMatchExpansion=null;
+ }
  const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
  const matchIconBox=document.createElement("span");matchIconBox.className="meal-leading-icon tm-day-icon";matchIconBox.append(mealIcon("football"));head.append(matchIconBox);const label=document.createElement("strong");label.className="tm-day-title";label.textContent=event.title;head.append(label);
  if(avg){
@@ -1538,7 +1601,7 @@ async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
  }catch(e){if(panel.isConnected)status.textContent='Não foi possível carregar as opções.';error(e);}
 }
 
-async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null){
+async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null, extraTiming=false){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
  const message=document.createElement('p');message.className='hint';message.textContent='A carregar opções publicadas…';
@@ -1547,6 +1610,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
   if(consumedColor)qs.set('consumed_color',consumedColor);
   if(timing)qs.set('timing',timing);
+  if(extraTiming)qs.set('extra_timing','1');
   const data=await api('/api/v2/player/consumption-options?'+qs);
   const existing=await api('/api/v2/player/consumption-records?start='+mealDate+'&end='+mealDate);
   const parent=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
@@ -1756,6 +1820,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(consumedColor)body.consumed_color=consumedColor;
    if(timing)body.timing=timing;
+   if(extraTiming)body.extra_timing=true;
    if(body.status==='partial'){
     body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
     body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
@@ -1793,9 +1858,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(consumedColor)body.consumed_color=consumedColor;
    if(timing)body.timing=timing;
+   if(extraTiming)body.extra_timing=true;
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
-   try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
+   if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent='Adiciona pelo menos um alimento da biblioteca.';return;}
+   try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   save.className='consumption-save';
   const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>panel.remove();const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
