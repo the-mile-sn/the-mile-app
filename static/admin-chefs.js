@@ -172,8 +172,8 @@
         method:"POST",body:JSON.stringify({confirmation:"ARQUIVAR"})
       });
       dismissChefProfile();
+      // Closing the profile refreshes the Chef list through the existing Clientes flow.
       window.tmClientsCloseChefProfile?.();
-      await loadAccounts();
       accountFeedback.textContent="Conta Chef arquivada. Os dados foram preservados e o acesso revogado.";
     }catch(error){
       profileFeedback.textContent="Não foi possível arquivar a conta Chef: "+noteMessage(error);
