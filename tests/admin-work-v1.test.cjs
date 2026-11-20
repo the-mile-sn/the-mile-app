@@ -62,7 +62,7 @@ test("quick-create task opens local popup without navigation or mandatory times"
  assert.match(css,/\.tm-db-task-edit/);
  assert.match(css,/\.tm-work-tasks-dialog/);
  assert.match(dashboard,/admin-work\.js\?v=6/);
- assert.match(dashboard,/admin-work\.css\?v=6/);
+ assert.match(dashboard,/admin-work\.css\?v=7/);
 });
 
 test("new internal events remain without appointment confirmation pills",()=>{

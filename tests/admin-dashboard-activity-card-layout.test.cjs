@@ -27,6 +27,6 @@ test("time is normal text and labels are universal pills only for bookings",()=>
  assert.match(js,/status\.dataset\.state=item\.label==="Por confirmar"\?"pending"/);
 });
 test("cache keys are refreshed only for admin dashboard assets",()=>{
- assert.match(html,/admin-microcycles\.css\?v=212/);
+ assert.match(html,/admin-microcycles\.css\?v=213/);
  assert.match(html,/admin-dashboard\.js\?v=92/);
 });

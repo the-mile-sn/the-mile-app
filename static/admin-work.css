@@ -206,7 +206,7 @@ html[data-admin-theme] body dialog.tm-work-dialog button[hidden]{display:none!im
  background:var(--tm-ui-subcard);color:var(--tm-ui-text)
 }
 #tm-dashboard .tm-db-tasks-header{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
-#tm-dashboard .tm-db-tasks-header h3{margin:0;font:600 16px/1.3 "Inter Tight",system-ui,sans-serif}
+#tm-dashboard .tm-db-tasks-header h3{margin:0;align-self:flex-start;font:600 16px/1.3 "Inter Tight",system-ui,sans-serif}
 #tm-dashboard .tm-db-tasks-add{
  appearance:none;display:grid;place-items:center;flex:none;
  width:32px;height:32px;padding:0;border:0;border-radius:10px;

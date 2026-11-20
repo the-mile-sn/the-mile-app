@@ -36,7 +36,19 @@ test("no duplicate IDs, no altered functionality, no forced card height",()=>{
   const matches=[...html.matchAll(new RegExp('id="'+id+'"','g'))];
   assert.equal(matches.length,1,id+" must appear once");
  }
- assert.match(html,/admin-work\.css\?v=6/);
+ assert.match(html,/admin-work\.css\?v=7/);
  assert.match(html,/admin-work\.js\?v=6/);
  assert.doesNotMatch(css,/#tm-dashboard \.tm-db-today-tasks\{[^}]*min-height/);
+});
+
+
+test("all four Today subcards retain matching inner padding and aligned title tops",()=>{
+ assert.match(layout,/#tm-dashboard \.tm-db-today-main,\s*#tm-dashboard \.tm-db-today-recent,\s*#tm-dashboard \.tm-db-today-chat\{[\s\S]*?padding:19px 17px/);
+ assert.match(css,/#tm-dashboard \.tm-db-today-tasks\{[\s\S]*?padding:19px 17px/);
+ assert.match(layout,/#tm-dashboard \.tm-db-today-chat\{padding:14px;margin:0\}/);
+ assert.match(css,/#tm-dashboard \.tm-db-today-tasks\{padding:14px\}/);
+ assert.match(layout,/#tm-dashboard \.tm-db-miniagenda-toolbar h3\{\s*margin:0;align-self:flex-start/);
+ assert.match(css,/#tm-dashboard \.tm-db-tasks-header h3\{margin:0;align-self:flex-start/);
+ assert.match(html,/admin-microcycles\.css\?v=213/);
+ assert.match(html,/admin-work\.css\?v=7/);
 });

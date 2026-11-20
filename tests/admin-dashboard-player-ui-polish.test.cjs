@@ -29,5 +29,5 @@ test("Profile permissions match Gerir acesso without altering switches",()=>{
  assert.match(css,/border:0!important;box-shadow:none!important/);
  assert.match(js,/profilePanel/);
  assert.match(html,/admin-dashboard\.js\?v=92/);
- assert.match(html,/admin-microcycles\.css\?v=212/);
+ assert.match(html,/admin-microcycles\.css\?v=213/);
 });
