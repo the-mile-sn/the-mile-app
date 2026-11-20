@@ -17,7 +17,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
  assert.match(html,/chef\.css\?v=19/);
- assert.match(html,/chef\.js\?v=22/);
+ assert.match(html,/chef\.js\?v=23/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -241,7 +241,7 @@ test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll a
  assert.match(js,/Math\.abs\(dx\)>chefTouchStart\.width\*\.38/);
  assert.match(js,/Math\.abs\(speed\)>\.55/);
  assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-22\)return/);
- assert.match(js,/if\(Math\.abs\(dy\)>18&&Math\.abs\(dy\)>Math\.abs\(dx\)\*1\.35\)/);
+ assert.match(js,/if\(vertical>=18&&vertical>horizontal\*1\.5\)return "vertical"/);
  assert.match(js,/chefViewMode==="week"&&!target\.closest\?\.\("\.chef-week-grid"\)/);
  assert.match(js,/activeTab==="menus"&&!target\.closest\?\.\("\.chef-menu-week-navigation"\)/);
  assert.match(js,/requestAnimationFrame\(updateChefAdaptiveNav\)/);
@@ -260,4 +260,27 @@ test("Chef weekly adjacent-day selection shares Player 460ms moving-circle anima
  assert.match(css,/\.chef-week-moving-circle\{[^}]*border-radius:50%;background:#f3f3f5/);
  assert.match(css,/\.chef-week-day\.selected strong\.chef-week-circle-arriving\{[^}]*background:transparent/);
  assert.match(guide,/círculo móvel do calendário dos Jogadores/);
+});
+
+test("Chef recognises diagonal horizontal gestures without stealing genuine vertical scroll",()=>{
+ const vm=require("node:vm");
+ const source=js.match(/function chefSwipeIntent\(dx,dy\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(source,"single source of gesture direction thresholds");
+ const intent=vm.runInNewContext(source+";chefSwipeIntent");
+ for(const [dx,dy] of [[48,40],[40,45],[-40,-45],[12,15],[35,38]]){
+  assert.equal(intent(dx,dy),"horizontal","diagonal should lock lateral: "+dx+","+dy);
+ }
+ for(const [dx,dy] of [[0,25],[5,38],[14,23],[-6,-39]]){
+  assert.equal(intent(dx,dy),"vertical","mostly vertical should scroll: "+dx+","+dy);
+ }
+ assert.equal(intent(4,7),"pending","tiny movement must not steal scroll");
+ assert.match(js,/const intent=chefSwipeIntent\(dx,dy\)/);
+ assert.match(js,/if\(intent==="vertical"\)\{clearChefGesture\(\);return;\}/);
+ assert.match(js,/if\(intent!=="horizontal"\)return/);
+ assert.match(js,/if\(event\.cancelable\)event\.preventDefault\(\)/);
+ assert.match(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
+ assert.doesNotMatch(js,/Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
+ assert.match(js,/target\.closest\?\.\("input,textarea,select/);
+ assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-22\)return/);
+ assert.match(guide,/Critério de gesto diagonal — Chef/);
 });
