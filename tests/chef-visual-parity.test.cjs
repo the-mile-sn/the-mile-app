@@ -16,7 +16,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=14/);
+ assert.match(html,/chef\.css\?v=15/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -45,7 +45,7 @@ test("canonical compact card measures preserve Chef lunch/dinner preview and inl
  assert.match(js,/appendChefMenuDish\(preview,plannedMenu\(date,meal\),txt\(\)\.pending\)/);
  assert.match(js,/if\(options\.length===1\)\{/);
  assert.match(js,/const inline=node\("div","chef-single-option"\)/);
- assert.match(js,/chefOptionCards\(date,meal\)/);
+ assert.match(js,/chefOptionCards\(date,meal,colorOverride\)/);
 });
 
 test("image skeleton is conditional and does not change Chef photo zoom/error policy",()=>{
@@ -68,4 +68,53 @@ test("visual changes keep role-scoped Chef endpoints, four tabs and edit rules i
  for(const tab of ["home","plans","menus","profile"])assert.match(html,new RegExp('data-tab="'+tab+'"'));
  assert.match(js,/el\("chef-nav"\)\.querySelectorAll\("\[data-tab\]"\)/);
  assert.match(guide,/validação visual em iPhone e desktop \*\*pendente\*\*/);
+});
+
+test("Planos follows published nutritional colours, not only the selected day's colour",()=>{
+ assert.match(js,/function publishedChefColors\(\)/);
+ assert.match(js,/validColors\.filter\(color=>mealOrder\.some/);
+ assert.match(js,/prescriptions\[color\]\?\.\[meal\]/);
+ assert.match(js,/chefPlanSelectedColor=null/);
+ assert.match(js,/node\("button","chef-plan-category"\)/);
+ assert.match(js,/renderChefMeal\(date,meal,false,true,chefPlanSelectedColor\)/);
+ assert.match(js,/function chefOptionCards\(date,meal,colorOverride=null\)/);
+ assert.match(js,/function renderChefMeal\(date,meal,expanded=false,onlyPrescription=false,colorOverride=null\)/);
+ assert.match(js,/chefPlanSelectedColor=null;render\(\)/);
+ assert.doesNotMatch(js,/function renderPlan\(root\)\{\s*const date=dateKey\(selectedDay\);/);
+ assert.match(css,/\.chef-plan-category\{[^}]*min-height:61px/);
+ assert.match(guide,/**Planos \(estrutura corrigida\):**/);
+});
+
+test("Menus uses a compact 38px switch and real week navigation without a duplicated day strip",()=>{
+ assert.match(css,/\.chef-view-mode,\.chef-menu-switch\{[^}]*height:38px;min-height:38px/);
+ assert.match(css,/\.chef-view-mode button,\.chef-menu-switch button\{[^}]*height:32px;min-height:32px/);
+ assert.match(js,/function renderChefMenuWeekNavigation\(root\)/);
+ assert.match(js,/renderChefMenuWeekNavigation\(root\)/);
+ assert.match(js,/selectedDay=shift\(selectedDay,delta\*7\)/);
+ assert.match(js,/if\(activeTab==="menus"&&!target\.closest\?\.\("\.chef-menu-week-navigation"\)\)return/);
+ assert.doesNotMatch(js,/renderChefMenuDateStrip|chef-menu-week-strip|chef-menu-week-day/);
+ assert.doesNotMatch(css,/\.chef-menu-week-strip\{|\.chef-menu-week-day\{/);
+ assert.match(css,/\.chef-menu-week-navigation\{/);
+ assert.match(guide,/não repetir o calendário de sete colunas/);
+});
+test("defining, changing and suggesting dishes preserves existing Chef API shapes",()=>{
+ assert.match(js,/item\?"Alterar prato":"Definir prato"/);
+ assert.match(js,/\["dish",pt\?"Prato aprovado"/);
+ assert.match(js,/\["category",pt\?"Categoria"/);
+ assert.match(js,/\["proposal",pt\?"Sugerir prato"/);
+ assert.match(js,/node\("button","chef-menu-mode-choice"/);
+ assert.match(js,/node\("div","chef-menu-dish-results"\)/);
+ assert.match(js,/button\.onclick=\(\)=>\{\s*selectedDish=\{id:dish\.id,name:dish\.name_pt\}/);
+ assert.match(js,/results\.hidden=true/);
+ assert.match(js,/node\("button","chef-menu-category-trigger"\)/);
+ assert.match(js,/categoryOptions\.hidden=true/);
+ assert.match(js,/request\("\/api\/v2\/chef\/menu-proposals","POST"/);
+ assert.match(js,/request\("\/api\/v2\/chef\/menus","PUT"/);
+ assert.match(js,/menu_date:date,meal,kind:mode/);
+ assert.match(js,/dish_id:mode==="dish"\?selectedDish\.id:null/);
+ assert.match(js,/if\(previewReadOnly\|\|date<dateKey\(new Date\(\)\)\)return/);
+ assert.match(css,/\.chef-menu-editor\{[^}]*border-radius:17px/s);
+ assert.match(css,/\.chef-menu-mode-choice\[aria-pressed="true"\]/);
+ assert.match(css,/\.chef-menu-editor \.chef-edit-actions\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(guide,/Não adicionar campos, payloads, migrações/);
 });
