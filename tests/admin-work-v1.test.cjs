@@ -30,7 +30,7 @@ test("appointments use one agenda, separate task list and native edit dialogs",(
  assert.match(html,/id="tm-work-task-dialog"/);
  assert.match(html,/id="tm-work-event-responsible"/);
  assert.match(html,/id="tm-work-task-responsible"/);
- assert.match(html,/admin-work\.js\?v=1/);
+ assert.match(html,/admin-work\.js\?v=2/);
  assert.match(html,/admin-work\.css\?v=1/);
  assert.match(frontend,/tm:appointments-range/);
  assert.match(frontend,/status==="done"\?"Reabrir":"Concluir"/);
@@ -45,7 +45,7 @@ test("dashboard quick add supports booking event task and keeps booking action",
  assert.match(dashboard,/data-work-quick="task"/);
  assert.match(dashboard,/id="tm-db-tasks-list"/);
  assert.match(dashboard,/admin-work\.css\?v=1/);
- assert.match(dashboard,/admin-work\.js\?v=1/);
+ assert.match(dashboard,/admin-work\.js\?v=2/);
  assert.match(dashboardJs,/dataset\.bookingHref=bookingsLink\(day,true\)/);
  assert.match(dashboardJs,/api\/v2\/admin\/work\/events/);
  assert.match(dashboardJs,/merge\(bookings,activity,internalEvents\)/);
