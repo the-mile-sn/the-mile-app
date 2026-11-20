@@ -1538,7 +1538,7 @@ async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
  }catch(e){if(panel.isConnected)status.textContent='Não foi possível carregar as opções.';error(e);}
 }
 
-async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null){
+async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
  const message=document.createElement('p');message.className='hint';message.textContent='A carregar opções publicadas…';
@@ -1546,9 +1546,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
   if(consumedColor)qs.set('consumed_color',consumedColor);
+  if(timing)qs.set('timing',timing);
   const data=await api('/api/v2/player/consumption-options?'+qs);
   const existing=await api('/api/v2/player/consumption-records?start='+mealDate+'&end='+mealDate);
-  const previous=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
+  const parent=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
+  const previous=timing?parent?.timing_records?.find(x=>x.timing===timing):parent;
   if(!panel.isConnected)return;
   if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
   panel.replaceChildren();
@@ -1557,6 +1559,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||'Opção '+(i+1);select.append(item);});
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
   if(Number.isInteger(preferredOptionIndex)&&data.options[preferredOptionIndex])select.value=data.options[preferredOptionIndex].option_ref;
+  if(preferredOptionRef&&data.options.some(x=>x.option_ref===preferredOptionRef))select.value=preferredOptionRef;
   select.className='consumption-option-select';panel.append(select);
   // The editor derives the saved status from food selections, not a separate mode selector.
   const mode={value:'partial'};
@@ -1752,6 +1755,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    if(!option)return;
    const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(consumedColor)body.consumed_color=consumedColor;
+   if(timing)body.timing=timing;
    if(body.status==='partial'){
     body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
     body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
@@ -1788,6 +1792,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(consumedColor)body.consumed_color=consumedColor;
+   if(timing)body.timing=timing;
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
    try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await overview();}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
