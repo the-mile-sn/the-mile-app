@@ -751,7 +751,18 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 }
 #tm-dashboard .tm-db-activity-list{
  display:flex;flex-direction:column;gap:9px;
- min-height:160px;max-height:390px;overflow-y:auto;scrollbar-width:thin;
+ min-height:0;max-height:none;overflow:visible;scrollbar-width:thin
+}
+/* The exact maximum is measured from whole rows, so no appointment is cut
+   halfway through and short days keep their natural content height. */
+#tm-dashboard .tm-db-activity-list.is-scrollable{
+ max-height:var(--tm-db-activity-max-height);
+ overflow-x:hidden;overflow-y:auto;
+ overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch;
+ scroll-snap-type:y proximity
+}
+#tm-dashboard .tm-db-activity-list.is-scrollable:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px
 }
 #tm-dashboard .tm-db-activity-message{
  margin:10px 0;color:var(--tm-ui-muted);
@@ -760,7 +771,7 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 #tm-dashboard .tm-db-activity-row{
  box-sizing:border-box;display:flex;align-items:center;
  gap:13px;width:100%;min-width:0;min-height:65px;padding:10px 13px;
- border:0;border-radius:11px;
+ border:0;border-radius:11px;flex-shrink:0;scroll-snap-align:start;
  background:var(--tm-ui-search);color:var(--tm-ui-text);
  text-align:left;text-decoration:none;cursor:pointer;
  font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
@@ -872,9 +883,8 @@ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-
  #tm-dashboard .tm-db-today-recent,
  #tm-dashboard .tm-db-today-chat{padding:14px;margin:0}
  #tm-dashboard .tm-db-today-side{gap:10px}
- /* Content-height diary, with no empty minimum or nested scrolling. */
+ /* Content-height diary: only its long event list scrolls, not the whole card. */
  #tm-dashboard .tm-db-today-main{min-height:0}
- #tm-dashboard .tm-db-activity-list{min-height:0;max-height:none;overflow:visible}
  #tm-dashboard .tm-db-miniagenda-actions{padding-top:14px}
  #tm-dashboard .tm-db-miniagenda-toolbar h3{font-size:16px}
  #tm-dashboard .tm-db-miniagenda-controls button{min-width:32px;height:32px}
