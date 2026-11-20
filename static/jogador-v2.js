@@ -169,7 +169,7 @@ function groupPeriItemsByTiming(items,order=[]){
 }
 function appendGroupedPeriItems(host,items,order=[]){
  for(const {timing,foods} of groupPeriItemsByTiming(items,order)){
-  const group=document.createElement("div");group.className="peri-timing-group";
+  const group=document.createElement("div");group.className="peri-timing-group";group.dataset.timing=timing;
   const label=periTimingLabels[timing];
   if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=label;group.append(heading);}
   const lines=document.createElement("div");lines.className="peri-timing-lines";
@@ -317,13 +317,13 @@ function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionAct
 /* One recorded-action component for meals, alternative colours and peri-events. */
 /* Universal registered-consumption action family for meals and peri-events.
    Surface differences are inherited as colour tokens, never separate markup. */
-function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo'}){
+function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo',timing=null,optionRef=null}){
  const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--recorded';
  const registered=document.createElement('span');registered.className='action-pill action-pill--registered';
  consumptionActionLabel(registered,'CheckmarkCircle02Icon',' Registado');registered.setAttribute('aria-label','Registado: '+description);
  const edit=document.createElement('button');edit.type='button';edit.className='action-pill action-pill--secondary';
  consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar '+description);
- edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor);
+ edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor,timing,optionRef);
  const undo=document.createElement('button');undo.type='button';undo.className='action-pill action-pill--secondary';
  consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular '+description);
  const feedback=document.createElement('p');feedback.className='consumption-feedback';
@@ -332,7 +332,7 @@ function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null
   event.preventDefault();event.stopPropagation();if(undo.disabled)return;
   undo.disabled=true;edit.disabled=true;undo.setAttribute('aria-busy','true');
   try{
-   await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId})});
+   await api('/api/v2/player/consumption-records',{method:'DELETE',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,...(timing?{timing}:{})})});
    await overview();
   }catch(err){
    undo.disabled=false;edit.disabled=false;undo.removeAttribute('aria-busy');
@@ -858,12 +858,62 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
 
 /* All five published peri phases reuse the existing event-scoped meal-consumption flow.
    Only attach after an option is visible in the calendar; never mutate Planos. */
+function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
+ const options=item.options||[];
+ const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
+ const entries=hosts.flatMap((host,index)=>[...host.querySelectorAll(':scope > .peri-timing-group')]
+  .map(group=>({group,index,timing:group.dataset.timing||''})));
+ if(!entries.length||entries.some(x=>!x.timing))return false;
+ // Preserve historical whole-match entries. They must be annulled explicitly
+ // before independent timing entries can be created, never silently migrated.
+ if(previous&&!previous.timing_records?.length){
+  const title=card.querySelector('.daily-meal-head > strong');
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:'consumo anterior de Jogo'}));
+  return true;
+ }
+ const current=previous?.timing_records||[];
+ const available=new Set(entries.map(x=>x.timing));
+ if(current.length&&[...available].every(t=>current.some(row=>row.timing===t))){
+  const title=card.querySelector('.daily-meal-head > strong');
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+ }
+ for(const {group,index,timing} of entries){
+  const optionRef=options[index].option_ref;
+  const saved=current.find(row=>row.timing===timing&&row.option_ref===optionRef);
+  if(saved){
+   group.append(makeRecordedConsumptionTags({host:group,date,meal,eventId,optionIndex:index,optionRef,timing,description:'consumo de '+(periTimingLabels[timing]||timing)}));
+   continue;
+  }
+  const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
+  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
+  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
+  const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+  edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(group,date,meal,eventId,index,null,timing,optionRef).finally(()=>{edit.disabled=false;});};
+  quick.onclick=async()=>{
+   if(current.some(row=>row.timing===timing)&&!window.confirm('Já existe um registo neste momento. Substituir?'))return;
+   quick.disabled=true;edit.disabled=true;quick.textContent='A guardar…';feedback.textContent='';
+   try{
+    const qs=new URLSearchParams({date,meal,event_id:eventId,timing});
+    const source=await api('/api/v2/player/consumption-options?'+qs);
+    const option=source.options?.find(row=>row.option_ref===optionRef);
+    if(!option)throw new Error('Opção ou timing publicado indisponível');
+    await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,timing,option_ref:option.option_ref,status:'all'})});
+    showConsumptionSuccess(quick);feedback.textContent='';
+    await new Promise(resolve=>setTimeout(resolve,900));await overview();
+   }catch(err){feedback.textContent='Não foi possível registar este momento.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);}
+  };
+  actions.append(edit,quick);group.append(actions,feedback);
+ }
+ return true;
+}
 function appendPeriConsumption(card,item,records){
  if(!['pre_training','post_training','pre_match','intra_match','post_match'].includes(item.selection_phase)||!item.event_id)return;
  const options=item.options||[];
  if(!options.length)return;
  const date=item.event_date,meal=item.selection_phase,eventId=item.event_id;
  const previous=(records||[]).find(row=>row.meal_date===date&&row.meal_key===meal&&row.event_id===eventId);
+ if(item.selection_phase==='intra_match'&&appendIntraTimingConsumption(card,item,previous,date,meal,eventId))return;
  if(previous){
   const title=card.querySelector('.daily-meal-head > strong');
   if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
