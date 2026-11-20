@@ -87,6 +87,8 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertEqual([len(base),len(header),len(body)], [1,1,1])
         self.assertIn("background:rgba(255,255,255,.055)!important", base[0])
         self.assertIn("border-radius:18px!important", base[0])
+        self.assertIn("padding:0!important", base[0], "Do not inherit global details padding:12px 0")
+        self.assertIn("details{border-top:1px solid #38383f;padding:12px 0}", CSS)
         self.assertIn("margin:0 0 9px!important", base[0])
         self.assertIn("min-height:86px", header[0])
         self.assertIn("font-size:17px;font-weight:600", header[0])
