@@ -109,14 +109,14 @@
   $("tm-work-event-dialog").showModal();
   $("tm-work-event-title").focus();
  }
- async function openTask(item=null){
+ async function openTask(item=null,defaultDueDate=""){
   showError("tm-work-task-error","");
   try{await loadAdmins();}catch(error){showError("tm-work-task-error",error);return;}
   editingTask=item;
   $("tm-work-task-heading").textContent=item?"Editar tarefa":"Nova tarefa";
   $("tm-work-task-title").value=item?.title||"";
   $("tm-work-task-description").value=item?.description||"";
-  $("tm-work-task-date").value=item?.due_date||"";
+  $("tm-work-task-date").value=item?.due_date||defaultDueDate;
   $("tm-work-task-status").value=item?.status||"open";
   fillResponsible($("tm-work-task-responsible"),item?.responsible_id);
   $("tm-work-task-delete").hidden=!item;
@@ -282,6 +282,15 @@
    });
    document.addEventListener("click",e=>{if(!menu.contains(e.target)&&!add.contains(e.target))closeMenu();});
    document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menu.hidden){closeMenu();add.focus();}});
+   menu.addEventListener("keydown",e=>{
+    if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key))return;
+    e.preventDefault();
+    const links=[...menu.querySelectorAll("a")];
+    const current=links.indexOf(document.activeElement);
+    const next=e.key==="Home"?0:e.key==="End"?links.length-1:
+     (current+(e.key==="ArrowDown"?1:-1)+links.length)%links.length;
+    links[next]?.focus();
+   });
    menu.querySelectorAll("a").forEach(link=>link.addEventListener("click",closeMenu));
   }
   const dashObserver=new MutationObserver(()=>{
@@ -352,7 +361,7 @@
    params.delete("new");
    history.replaceState(null,"",location.pathname+(params.toString()?"?"+params:"")+location.hash);
    if(create==="event")openEvent();
-   else openTask();
+   else openTask(null,dateInPage());
   }
  }
  new MutationObserver(initializePage).observe(page,{attributes:true,attributeFilter:["hidden"]});
