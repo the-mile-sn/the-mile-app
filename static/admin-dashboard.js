@@ -1051,31 +1051,13 @@ function ensurePlanningOnlyView(){
   if(typeof window.tmOpenPlayerCreate==="function")window.tmOpenPlayerCreate();
  });
  function showError(err){$("tm-db-error").textContent="Não foi possível consultar o Dashboard: "+err.message;}
+ // The daily list is loaded independently for the selected date. Recent
+ // submissions always describe the last seven days, regardless of day navigation.
+ window.tmDashboardActivityIcon=kind=>hugeIcon(kind,"tm-db-activity-svg");
+ window.tmDashboardOpenActivity=(athleteId,day)=>openPlayers(athleteId,day);
  function paintEvents(data){
-  const host=$("tm-db-events"),recentHost=$("tm-db-recent");host.replaceChildren();recentHost.replaceChildren();
+  const recentHost=$("tm-db-recent");recentHost.replaceChildren();
   const t=data.today_events||{};
-  const dashboardIcons={football:"FootballIcon",cake:"CakeIcon",chartEvaluation:"ChartEvaluationIcon",airplane01:"Airplane01Icon",calendar03:"Calendar03Icon"};
-  const makeItem=(item,label,day,highlight=false,target="planning",iconKind="calendar03")=>{
-   const isGame=Boolean(item.match_id);
-   const btn=el("button","tm-db-event tm-db-has-icon"+(highlight?" tm-db-birthday":"")+(isGame?" tm-db-game":""));btn.type="button";
-   const icon=el("span","tm-db-event-icon");
-   const chosen=isGame?"football":iconKind;
-   const svg=hugeIcon(chosen,"tm-db-event-svg");
-   svg.setAttribute("data-hugeicons",dashboardIcons[chosen]);
-   icon.append(svg);
-   const copy=el("span","tm-db-event-copy");
-   copy.append(el("span","tm-db-event-name",item.name),el("small","tm-db-event-label",label));
-   btn.append(icon,copy);
-   btn.addEventListener("click",()=>target==="assessments"?openClinical("assessments",item.athlete_id):openPlayers(item.athlete_id,day||data.today));return btn;
-  };
-  const events=[
-   ...(t.games||[]).map(item=>({item,label:item.time?"Jogo · "+item.time:"Jogo agendado",day:data.today,icon:"football"})),
-   ...(t.events||[]).map(item=>({item,label:item.title||"Evento",day:data.today,icon:item.kind==="travel"?"airplane01":"calendar03"})),
-   ...(t.assessments_today||[]).map(item=>({item,label:"Avaliação registada hoje",day:item.date,target:"assessments",icon:"chartEvaluation"})),
-   ...(t.birthdays||[]).map(item=>({item,label:"Aniversário",day:data.today,birthday:true,icon:"cake"}))
-  ];
-  if(!events.length)host.append(el("p","tm-db-none","Sem nada hoje."));
-  else for(const entry of events)host.append(makeItem(entry.item,entry.label,entry.day,entry.birthday,entry.target,entry.icon));
   const recent=t.recent_responses||[];
   if(!recent.length)recentHost.append(el("p","tm-db-none","Sem respostas recentes."));
   else for(const item of recent){
