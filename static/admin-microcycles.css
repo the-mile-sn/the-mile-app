@@ -778,25 +778,24 @@ body:has(#admin-workspace:not([hidden])){padding:0}
  margin:10px 0;color:var(--tm-ui-muted);
  font:400 12px/1.5 "Inter Tight","SF Pro Text",Arial,sans-serif
 }
+/* Uniform daily-event row: icon | person/service | time/booking state.
+   No decorative left rail and no fixed-width time column. */
 #tm-dashboard .tm-db-activity-row{
- box-sizing:border-box;display:flex;align-items:center;
- gap:13px;width:100%;min-width:0;min-height:65px;padding:10px 13px;
+ box-sizing:border-box;display:grid;
+ grid-template-columns:29px minmax(0,1fr);
+ align-items:center;column-gap:13px;
+ width:100%;min-width:0;min-height:65px;padding:12px 13px;
  border:0;border-radius:11px;flex-shrink:0;scroll-snap-align:start;
  background:var(--tm-ui-search);color:var(--tm-ui-text);
  text-align:left;text-decoration:none;cursor:pointer;
  font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
  transition:background-color .15s ease
 }
-#tm-dashboard .tm-db-activity-row::before{
- content:"";align-self:stretch;flex:0 0 3px;border-radius:4px;
- background:var(--tm-ui-divider)
+#tm-dashboard .tm-db-activity-row.has-meta{
+ grid-template-columns:29px minmax(0,1fr) max-content
 }
-#tm-dashboard .tm-db-activity-row.is-appointment::before{background:#6ea6cf}
-#tm-dashboard .tm-db-activity-row.is-assessment::before{background:#9d87cc}
-#tm-dashboard .tm-db-activity-row.is-game::before{background:#57b580}
 #tm-dashboard .tm-db-activity-icon{
- flex:0 0 29px;display:grid;place-items:center;
- width:29px;height:29px;border-radius:9px;
+ display:grid;place-items:center;width:29px;height:29px;border-radius:9px;
  color:var(--tm-ui-muted);background:var(--tm-ui-subcard)
 }
 #tm-dashboard .tm-db-activity-icon svg{
@@ -804,44 +803,69 @@ body:has(#admin-workspace:not([hidden])){padding:0}
  stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round
 }
 #tm-dashboard .tm-db-activity-copy{
- display:flex;flex-direction:column;gap:4px;flex:1;min-width:0
+ display:flex;flex-direction:column;gap:4px;min-width:0
 }
-#tm-dashboard .tm-db-activity-copy strong{
- font:600 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
+#tm-dashboard .tm-db-activity-name{
+ font:600 14px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
  overflow-wrap:anywhere;color:inherit
 }
-#tm-dashboard .tm-db-activity-copy small{
+#tm-dashboard .tm-db-activity-service{
  font:400 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
  color:var(--tm-ui-muted);overflow-wrap:anywhere
 }
+#tm-dashboard .tm-db-activity-professional{
+ font:400 11px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ color:var(--tm-ui-muted);overflow-wrap:anywhere
+}
+#tm-dashboard .tm-db-activity-meta{
+ display:flex;flex-direction:column;align-items:flex-end;
+ align-self:start;gap:7px;min-width:0
+}
 #tm-dashboard .tm-db-activity-time{
- flex:none;min-width:80px;
- font:600 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
- color:inherit;white-space:nowrap
+ font:400 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ color:var(--tm-ui-muted);white-space:nowrap;font-variant-numeric:tabular-nums
 }
+/* The approved universal 26/11/400 status pill, never a button.
+   Semantic ink is shared across themes; the booking does not gain a new state. */
 #tm-dashboard .tm-db-activity-status{
- flex:none;align-self:center;margin-left:auto;
- padding:5px 9px;border-radius:999px;
- background:color-mix(in srgb,#4ca977 15%,transparent);
- color:#62bc8d;font:500 11px/1.2 "Inter Tight","SF Pro Text",Arial,sans-serif
+ --tm-db-state-ink:var(--tm-state-neutral-fg);
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ flex:none;height:26px;padding:0 9px;border-radius:999px;
+ border:1px solid color-mix(in srgb,var(--tm-db-state-ink) 12%,transparent);
+ background:color-mix(in srgb,var(--tm-db-state-ink) 7%,transparent);
+ color:var(--tm-db-state-ink);
+ font:400 11px/1 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ white-space:nowrap;box-shadow:none
 }
-html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-status{color:#2e784f}
+#tm-dashboard .tm-db-activity-status[data-state="positive"]{
+ --tm-db-state-ink:var(--tm-state-success-fg)
+}
+#tm-dashboard .tm-db-activity-status[data-state="pending"]{
+ --tm-db-state-ink:var(--tm-state-pending-fg)
+}
 #tm-dashboard .tm-db-activity-row.is-game{
  background:#193126;color:#dcf3e4;border:1px solid #78d4a0
 }
 #tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-icon{
  background:rgba(115,196,141,.16);color:#b2e5c2
 }
-#tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-copy small{color:#abd5b9}
+#tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-service{color:#abd5b9}
+#tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-time{color:#abd5b9}
 html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game{
  background:#e5f3e9;color:#24563a;border-color:#70c18f
 }
 html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-icon{
  background:rgba(83,166,112,.12);color:#30764e
 }
-html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-activity-copy small{color:#3c8057}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game :is(.tm-db-activity-service,.tm-db-activity-time){color:#3c8057}
 #tm-dashboard .tm-db-activity-row.is-birthday{
- border-left:3px solid #e4c85d;background:color-mix(in srgb,#c99f41 13%,var(--tm-ui-search))
+ background:color-mix(in srgb,#c99f41 13%,var(--tm-ui-search))
+}
+#tm-dashboard .tm-db-activity-row.is-birthday .tm-db-activity-icon{
+ color:#e2c17e;background:color-mix(in srgb,#c99f41 10%,var(--tm-ui-subcard))
+}
+html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-birthday .tm-db-activity-icon{
+ color:#8a6327
 }
 #tm-dashboard .tm-db-miniagenda-actions{
  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
@@ -897,9 +921,8 @@ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-
  #tm-dashboard .tm-db-miniagenda-actions{padding-top:14px}
  #tm-dashboard .tm-db-miniagenda-toolbar h3{font-size:16px}
  #tm-dashboard .tm-db-miniagenda-controls button{min-width:32px;height:32px}
- #tm-dashboard .tm-db-activity-row{gap:9px;padding:10px}
- #tm-dashboard .tm-db-activity-time{min-width:auto}
- #tm-dashboard .tm-db-activity-status{display:none}
+ #tm-dashboard .tm-db-activity-row{column-gap:9px;padding:10px}
+ #tm-dashboard .tm-db-activity-name{font-size:13px}
  #tm-dashboard .tm-db-miniagenda-action{flex:1}
  /* Keep the approved compact rows; the list itself scrolls after two. */
  #tm-dashboard .tm-db-today-recent #tm-db-recent{

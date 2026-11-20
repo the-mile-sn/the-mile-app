@@ -1344,16 +1344,37 @@ function ensurePlanningOnlyView(){
   const icon=el("span","tm-db-activity-icon");
   const svg=window.tmDashboardActivityIcon?.(iconNames[item.type]);
   if(svg)icon.append(svg);
-  const when=el("span","tm-db-activity-time",
-   item.time+(item.end?"–"+item.end:"")||item.moment||"");
-  if(!when.textContent)when.setAttribute("aria-hidden","true");
+
+  // One hierarchy for every event: person first, then service/type and
+  // (only when available) the responsible professional. When an event has
+  // no associated person, keep its real title instead of inventing one.
+  const hasPerson=Boolean(item.person);
   const details=el("span","tm-db-activity-copy");
-  details.append(el("strong","",item.title),el("small","",
-    [item.person,item.professional].filter(Boolean).join(" · ")));
-  target.append(icon,when,details);
-  if(item.label)target.append(el("span","tm-db-activity-status",item.label));
+  details.append(el("strong","tm-db-activity-name",item.person||item.title));
+  if(hasPerson&&item.title)details.append(el("span","tm-db-activity-service",item.title));
+  if(item.professional)details.append(el("small","tm-db-activity-professional",item.professional));
+
+  // Time/moment is secondary information, not a fixed-width left column.
+  // Informational status pills belong exclusively to bookings (including
+  // scheduled assessments), never to games, birthdays or other events.
+  const meta=el("span","tm-db-activity-meta");
+  const whenText=item.time+(item.end?"–"+item.end:"")||item.moment||"";
+  if(whenText)meta.append(el("span","tm-db-activity-time",whenText));
+  const isBooking=item.type==="appointment"||item.type==="assessment";
+  if(isBooking&&item.label){
+   const status=el("span","tm-db-activity-status",item.label);
+   status.dataset.state=item.label==="Por confirmar"?"pending":
+    item.label==="Agendada"||item.label==="Confirmada"?"positive":"neutral";
+   meta.append(status);
+  }
+  target.append(icon,details);
+  if(meta.childNodes.length){
+   target.classList.add("has-meta");
+   target.append(meta);
+  }
   target.setAttribute("aria-label",
-   [item.time,item.title,item.person,item.professional,item.label].filter(Boolean).join(" · "));
+   [item.person||item.title,hasPerson?item.title:"",item.professional,whenText,
+    isBooking?item.label:""].filter(Boolean).join(" · "));
   return target;
  }
  // Cap only a long list, at the measured height of complete event cards.
