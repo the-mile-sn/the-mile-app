@@ -38,6 +38,43 @@ class ChefPlayerReleaseTests(unittest.TestCase):
         self.assertEqual(self.chef.request("/api/me")["body"]["user"]["role"],"chef")
         self.chef.request("/api/me")
 
+    def test_dish_photo_matches_player_matte_removal_without_mutating_original(self):
+        """Chef sees the Player Menus cutout, with original storage and access intact."""
+        import io
+        from PIL import Image
+
+        opaque=Image.new("RGB",(24,24),(9,9,11))
+        for x in range(5,19):
+            for y in range(5,19):
+                opaque.putpixel((x,y),(240,100,75))
+        raw=io.BytesIO()
+        opaque.save(raw,format="WEBP",lossless=True)
+        source=raw.getvalue()
+
+        with app.connect() as c:
+            c.execute("""INSERT INTO v2_dish_library
+                (id,category,name_pt,name_en,image_filename,active)
+                VALUES('mattephoto01','Carne branca','Prato teste','','mattephoto01.webp',1)""")
+            c.execute("""INSERT INTO v2_weekly_menus
+                (athlete_id,menu_date,meal,kind,value,dish_id)
+                VALUES(?,'2026-11-20','lunch','dish','Prato teste','mattephoto01')""",(self.a,))
+            app.store_dish_image(c,"mattephoto01.webp",source)
+
+        with patch.object(app,"SITE_ROLE","player"):
+            photo=self.chef.request("/api/v2/chef/dish-photo/mattephoto01")
+            self.assertEqual(photo["status"],200,photo)
+            self.assertEqual(photo["headers"]["Content-Type"],"image/webp")
+            self.assertEqual(photo["body"],app.player_menu_photo(source))
+            self.assertEqual(self.chef.request("/api/v2/chef/dish-photo/notassigned01")["status"],404)
+            self.assertEqual(Client().request("/api/v2/chef/dish-photo/mattephoto01")["status"],401)
+
+        with Image.open(io.BytesIO(photo["body"])) as processed:
+            rgba=processed.convert("RGBA")
+            self.assertEqual(rgba.getpixel((0,0))[3],0)
+            self.assertEqual(rgba.getpixel((12,12))[3],255)
+        with app.connect() as c:
+            self.assertEqual(app.read_dish_image(c,"mattephoto01.webp"),source)
+
     def test_role_scoping_is_enforced_in_player_service(self):
         with patch.object(app,"SITE_ROLE","player"):
             me=self.chef.request("/api/v2/chef/me")
