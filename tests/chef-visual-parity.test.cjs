@@ -64,7 +64,7 @@ test("visual changes keep role-scoped Chef endpoints, four tabs and edit rules i
  }
  assert.match(js,/previewReadOnly&&method!=="GET"/);
  assert.match(js,/if\(!previewReadOnly&&key>=dateKey\(new Date\(\)\)\)/);
- assert.match(js,/chefViewMode==="week"\?renderChefWeekly\(root\):renderChefDaily\(root\)/);
+ assert.match(js,/if\(chefViewMode==="week"\)renderChefWeekly\(root\);else renderChefDaily\(root\)/);
  for(const tab of ["home","plans","menus","profile"])assert.match(html,new RegExp('data-tab="'+tab+'"'));
  assert.match(js,/el\("chef-nav"\)\.querySelectorAll\("\[data-tab\]"\)/);
  assert.match(guide,/validação visual em iPhone e desktop \*\*pendente\*\*/);
