@@ -6,6 +6,8 @@
  const $=id=>document.getElementById(id);
  const endpoint="/api/v2/admin/appointments";
  let rulesVersion=0;
+ // The Dashboard can request this existing modal, never a parallel booking flow.
+ let quickAddPending=new URLSearchParams(window.location.search).get("new")==="1";
  const state={catalog:{services:[],professionals:[]},bookings:[],editing:null,csrf:null,rangeSequence:0,agendaSequence:0,slotSequence:0,monthSequence:0,month:"",monthDays:new Map(),selectedDate:"",selectedStart:"",visibleSlots:[]};
  const lisbon=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Lisbon",day:"2-digit",month:"2-digit",year:"numeric"});
  const dayFmt=new Intl.DateTimeFormat("pt-PT",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short",year:"numeric"});
@@ -92,6 +94,16 @@
   populate(p,data.professionals.map(x=>[x.id,x.name]),"Todos",p.value);
   populate(s,data.services.map(x=>[x.id,x.name]),"Todos",s.value);
   refreshBookings().catch(error=>feedback(error.message,true));
+  if(quickAddPending&&state.catalog.professionals.length&&state.catalog.services.length){
+   quickAddPending=false;
+   openForm();
+   if($("tm-appt-booking-dialog").open){
+    // Consume the navigation instruction so refreshing does not reopen the modal.
+    const url=new URL(window.location.href);
+    url.searchParams.delete("new");
+    window.history.replaceState(null,"",url.pathname+url.search+url.hash);
+   }
+  }
  }
  document.addEventListener("tm:appointments-catalog",event=>catalogChanged(event.detail));
  function professionalColorClass(name){
