@@ -952,25 +952,90 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   addButton.className='intra-add-moment-trigger';addButton.textContent='⊕ Adicionar';
   addButton.setAttribute('aria-expanded','false');
   const picker=document.createElement('div');picker.className='intra-add-moment-panel';picker.hidden=true;
-  const label=document.createElement('label');label.textContent='Momento do consumo';
-  const select=document.createElement('select');select.setAttribute('aria-label','Selecionar momento do consumo');
-  for(const [value,title] of choices){const option=document.createElement('option');option.value=value;option.textContent=title;select.append(option);}
-  label.append(select);
+  // Match the approved food-search option cards, not an iOS-native select.
+  const label=document.createElement('div');label.className='intra-timing-select-label';
+  label.textContent='Momento do consumo';
+  const selector=document.createElement('div');selector.className='intra-timing-select';
+  const trigger=document.createElement('button');trigger.type='button';
+  trigger.className='intra-timing-select-trigger';
+  trigger.setAttribute('aria-label','Selecionar momento do consumo');
+  trigger.setAttribute('aria-haspopup','listbox');
+  trigger.setAttribute('aria-expanded','false');
+  const selectedLabel=document.createElement('span');selectedLabel.className='intra-timing-selected-label';
+  const arrow=document.createElement('span');arrow.className='intra-timing-select-chevron';
+  arrow.setAttribute('aria-hidden','true');
+  trigger.append(selectedLabel,arrow);
+  const menu=document.createElement('div');menu.className='intra-timing-option-list';
+  menu.setAttribute('role','listbox');menu.setAttribute('aria-label','Momentos de consumo disponíveis');
+  menu.hidden=true;
+  const options=[];
+  let selectedTiming=choices[0][0],selectedIndex=0;
+  const refreshSelection=()=>{
+   selectedLabel.textContent=choices[selectedIndex][1];
+   options.forEach((option,i)=>option.setAttribute('aria-selected',String(i===selectedIndex)));
+  };
+  const outsideClick=event=>{
+   if(!selector.contains(event.target))closeOptions(false);
+  };
+  const closeOptions=(returnFocus=true)=>{
+   menu.hidden=true;trigger.setAttribute('aria-expanded','false');
+   document.removeEventListener('pointerdown',outsideClick);
+   if(returnFocus&&trigger.isConnected)trigger.focus({preventScroll:true});
+  };
+  const openOptions=()=>{
+   menu.hidden=false;trigger.setAttribute('aria-expanded','true');
+   document.addEventListener('pointerdown',outsideClick);
+   options[selectedIndex]?.focus({preventScroll:true});
+  };
   const editorHost=document.createElement('div');editorHost.className='intra-add-moment-editor-host';
   const dismiss=()=>{
+   closeOptions(false);
    picker.hidden=true;addButton.hidden=false;addButton.setAttribute('aria-expanded','false');
    editorHost.replaceChildren();
    document.querySelectorAll('.consumption-food-sheet,.consumption-food-sheet-backdrop').forEach(sheet=>sheet.remove());
    document.body.classList.remove('consumption-food-sheet-open');
   };
   const showEditor=()=>openConsumptionEditor(editorHost,date,meal,eventId,null,null,
-   select.value,'player-added:'+select.value,true,dismiss);
-  select.addEventListener('change',()=>{showEditor().catch(error);});
+   selectedTiming,'player-added:'+selectedTiming,true,dismiss);
+  choices.forEach(([value,title],i)=>{
+   const option=document.createElement('button');option.type='button';
+   option.className='intra-timing-option';option.setAttribute('role','option');
+   option.setAttribute('aria-selected',String(i===selectedIndex));
+   const text=document.createElement('span');text.textContent=title;
+   const mark=document.createElement('span');mark.className='intra-timing-option-check';
+   mark.textContent='✓';mark.setAttribute('aria-hidden','true');
+   option.append(text,mark);
+   option.onclick=()=>{
+    const changed=value!==selectedTiming;
+    selectedTiming=value;selectedIndex=i;refreshSelection();closeOptions();
+    if(changed)showEditor().catch(error);
+   };
+   options.push(option);menu.append(option);
+  });
+  trigger.onclick=()=>menu.hidden?openOptions():closeOptions();
+  selector.onkeydown=event=>{
+   if(menu.hidden){
+    if(event.target===trigger&&['ArrowDown','ArrowUp'].includes(event.key)){
+     event.preventDefault();openOptions();
+    }
+    return;
+   }
+   if(event.key==='Escape'){event.preventDefault();closeOptions();return;}
+   const current=options.indexOf(document.activeElement);
+   let next=current;
+   if(event.key==='ArrowDown')next=Math.min(options.length-1,current+1);
+   else if(event.key==='ArrowUp')next=Math.max(0,current-1);
+   else if(event.key==='Home')next=0;
+   else if(event.key==='End')next=options.length-1;
+   else return;
+   event.preventDefault();options[next]?.focus({preventScroll:true});
+  };
+  refreshSelection();selector.append(trigger,menu);
   addButton.onclick=()=>{
    picker.hidden=false;addButton.hidden=true;addButton.setAttribute('aria-expanded','true');
    showEditor().catch(error);
   };
-  picker.append(label,editorHost);group.append(addButton,picker);card.append(group);
+  picker.append(label,selector,editorHost);group.append(addButton,picker);card.append(group);
  }
  return true;
 }
