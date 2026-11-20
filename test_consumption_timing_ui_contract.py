@@ -32,7 +32,7 @@ class TimingConsumptionUiContract(unittest.TestCase):
         self.assertIn("consumption_timing_v2.save_timing(",APP)
         self.assertIn("consumption_timing_v2.delete_timing(",APP)
         self.assertIn("if(previous&&!previous.timing_records?.length){",JS)
-        self.assertIn("registo anterior de Jogo",JS)
+        self.assertIn("consumo anterior de Jogo",JS)
 
     def test_existing_light_card_theme_and_controls_preserved(self):
         self.assertIn("background:#F2F2F4!important;color:#22232A!important",CSS)
