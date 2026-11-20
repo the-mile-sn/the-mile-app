@@ -194,7 +194,6 @@ html[data-admin-theme] body dialog.tm-work-dialog button[hidden]{display:none!im
  .tm-work-dialog-actions button{min-height:44px}
  .tm-work-task-segments{gap:4px}
  .tm-work-task-segments button{min-height:36px;padding:8px 10px}
- #tm-dashboard .tm-db-tasks-actions{gap:6px}
  #tm-dashboard .tm-db-tasks-add{width:36px;height:36px}
  .tm-work-line{align-items:flex-start;flex-wrap:wrap}
  .tm-work-line-actions{width:100%;justify-content:flex-end}
@@ -208,9 +207,6 @@ html[data-admin-theme] body dialog.tm-work-dialog button[hidden]{display:none!im
 }
 #tm-dashboard .tm-db-tasks-header{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
 #tm-dashboard .tm-db-tasks-header h3{margin:0;font:600 16px/1.3 "Inter Tight",system-ui,sans-serif}
-#tm-dashboard .tm-db-tasks-actions{
- display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:none
-}
 #tm-dashboard .tm-db-tasks-add{
  appearance:none;display:grid;place-items:center;flex:none;
  width:32px;height:32px;padding:0;border:0;border-radius:10px;
@@ -220,16 +216,20 @@ html[data-admin-theme] body dialog.tm-work-dialog button[hidden]{display:none!im
  width:17px;height:17px;fill:none;stroke:currentColor;
  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round
 }
+#tm-dashboard .tm-db-tasks-footer{
+ display:flex;align-items:center;justify-content:flex-end;
+ margin-top:10px;min-width:0
+}
 #tm-dashboard .tm-db-tasks-open{
  appearance:none;display:inline-flex;align-items:center;justify-content:center;
- min-height:32px;padding:0 4px;border:0;border-radius:8px;
+ min-height:28px;padding:4px;border:0;border-radius:8px;
  background:transparent;color:var(--tm-ui-muted);
  font:500 12px/1.3 "Inter Tight",system-ui,sans-serif;cursor:pointer
 }
-#tm-dashboard .tm-db-tasks-actions button:hover{
+#tm-dashboard :is(.tm-db-tasks-add,.tm-db-tasks-open):hover{
  background:var(--tm-ui-hover);color:var(--tm-ui-text)
 }
-#tm-dashboard .tm-db-tasks-actions button:focus-visible{
+#tm-dashboard :is(.tm-db-tasks-add,.tm-db-tasks-open):focus-visible{
  outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px
 }
 #tm-dashboard .tm-db-tasks-list{display:flex;flex-direction:column;gap:6px;margin-top:11px}
