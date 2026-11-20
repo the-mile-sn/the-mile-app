@@ -58,7 +58,7 @@ class ChefAccountApiTests(unittest.TestCase):
         chef, chef_id = self._chef()
         path = "/api/v2/admin/chefs/" + chef_id
         self.assertEqual(self.admin.request(path + "/archive", "POST", {})["status"], 400)
-        self.assertEqual(chef.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})["status"], 401)
+        self.assertEqual(chef.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})["status"], 403)
         result = self.admin.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})
         self.assertEqual(result["status"], 200, result)
         self.assertEqual(self.admin.request(path + "/archive", "POST", {"confirmation": "ARQUIVAR"})["status"], 409)
@@ -79,7 +79,7 @@ class ChefAccountApiTests(unittest.TestCase):
         self.assertFalse(any(item["id"] == chef_id for item in restored["archived_chefs"]))
         self.assertEqual(Client().request("/api/login", "POST", {
             "identifier": "chefteste", "password": "chef-password-123"
-        })["status"], 403)
+        })["status"], 401)
 
     def test_cross_player_and_admin_boundaries(self):
         chef, _ = self._chef()
