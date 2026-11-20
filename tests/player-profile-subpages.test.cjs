@@ -160,7 +160,6 @@ test('profile password form keeps accessible semantics and cleans conflicting st
 test('each Profile component has one effective source rule, without later overrides',()=>{
  for(const selector of [
   '#player-panel #profile',
-  '#profile .profile-plan-card',
   '#profile .profile-subpage-header h2',
   '#profile button.profile-page-back',
   '#profile .profile-password-page-form',
@@ -169,6 +168,9 @@ test('each Profile component has one effective source rule, without later overri
   const count=css.split(selector+'{').length-1;
   assert.equal(count,1,selector);
  }
+ // The one additional rule for this card is an intentional narrow-screen exception.
+ assert.equal(css.split('#profile .profile-plan-card{').length-1,2);
+ assert.match(css,/@media\(max-width:360px\)\{\s*#profile \.profile-plan-card\{gap:8px;padding:16px 15px\}/);
  assert.doesNotMatch(css,/#profile>h2/);
  assert.doesNotMatch(css,/#profile \.profile-plan-card>span/);
  assert.doesNotMatch(css,/#profile \.profile-password-form input/);
