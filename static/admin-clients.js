@@ -70,7 +70,12 @@
     list.hidden=isProfile||type==="consulta";
     players.hidden=isProfile||(type!=="all"&&type!=="acompanhamento");
     chefsList.hidden=isProfile||(type!=="all"&&type!=="chef");
-    archive.hidden=isProfile||(type!=="all"&&type!=="acompanhamento");
+    archive.hidden=isProfile||(type!=="all"&&type!=="acompanhamento"&&type!=="chef");
+    const archivedPlayers=document.getElementById("tm-players-archived-list");
+    const archivedPlayersFeedback=document.getElementById("tm-players-archived-feedback");
+    if(archivedPlayers)archivedPlayers.hidden=type==="chef";
+    if(archivedPlayersFeedback)archivedPlayersFeedback.hidden=type==="chef";
+    window.tmSyncArchivedChefVisibility?.();
     consultations.hidden=isProfile||type!=="consulta";
     chefsPanel.hidden=isProfile||type!=="chef";
     // Actual Chef accounts appear within the same list of cards; management stays in Clientes.
