@@ -122,3 +122,56 @@ test('adaptive bottom navigation responds to scroll and resets on tab change',()
  assert.match(css,/min-height:44px!important/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 });
+
+
+test('profile root uses the approved universal type and original read-only plan layout',()=>{
+ assert.match(css,/#player-panel #profile\{padding:19px 0 100px!important;margin:0!important\}/);
+ assert.match(css,/#profile \.profile-plan-card\{[^}]*display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\);[^}]*border-radius:13px/s);
+ assert.match(css,/#profile \.profile-plan-detail>span\{[^}]*font-size:12px;[^}]*font-weight:var\(--mile-type-regular,400\)/s);
+ assert.match(css,/#profile \.profile-plan-detail>strong\{[^}]*font-size:15px;font-weight:var\(--mile-type-semibold,600\)/s);
+ assert.match(css,/#profile button\.profile-notifications-card\{[^}]*min-height:61px!important;[^}]*border-radius:13px!important;[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
+ assert.match(css,/#profile \.profile-action\{[^}]*min-height:61px!important;[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
+ assert.match(css,/#profile \.profile-actions-card\{[^}]*border-radius:17px/s);
+ assert.match(html,/jogador-v2\.css\?v=268/);
+});
+
+test('profile subpages share the recipe back button geometry and page title hierarchy',()=>{
+ const recipeCss=fs.readFileSync('static/player-recipes.css','utf8');
+ assert.match(recipeCss,/\.player-top > #recipe-header-back\{[^}]*width:40px;[^}]*height:40px;[^}]*border:0;[^}]*background:rgba\(255,255,255,\.06\)/s);
+ assert.match(css,/#profile button\.profile-page-back\{[^}]*width:40px!important;height:40px!important;[^}]*border:0!important;[^}]*background:rgba\(255,255,255,\.06\)!important/s);
+ assert.match(css,/#profile \.profile-subpage-header h2\{[^}]*font-size:clamp\(21px,5\.3vw,23px\);[^}]*font-weight:var\(--mile-type-semibold,600\)/s);
+ assert.match(css,/#profile button\.profile-page-back:focus-visible\{outline:2px solid currentColor;outline-offset:3px\}/);
+ assert.match(js,/\$\("profile-notifications-back"\)\.onclick=resetProfileSubpage/);
+ assert.match(js,/\$\("profile-password-back"\)\.onclick=resetProfileSubpage/);
+});
+
+test('profile password form keeps accessible semantics and cleans conflicting styles',()=>{
+ assert.match(css,/#profile \.profile-password-intro\{[^}]*font-size:14px;[^}]*font-weight:var\(--mile-type-regular,400\)/s);
+ assert.match(css,/#profile \.profile-password-page-form\{\s*background:transparent!important;/);
+ assert.match(css,/#profile \.profile-password-page-form label\.profile-password-field input\{[^}]*height:54px!important;min-height:54px!important;border:0!important;[^}]*border-radius:20px!important;[^}]*font-size:16px!important;[^}]*font-weight:var\(--mile-type-regular,400\)!important/s);
+ assert.match(css,/#profile \.profile-password-page-form button\.profile-password-save\{[^}]*font-size:14px!important;[^}]*font-weight:var\(--mile-type-medium,500\)!important/s);
+ assert.match(html,/autocomplete="current-password"/);
+ assert.match(html,/autocomplete="new-password"/);
+ assert.match(js,/if\(next!==confirm\)/);
+ assert.match(js,/if\(next.length<8\)/);
+ assert.match(js,/await api\("\/api\/change-password"/);
+});
+
+test('each Profile component has one effective source rule, without later overrides',()=>{
+ for(const selector of [
+  '#player-panel #profile',
+  '#profile .profile-plan-card',
+  '#profile .profile-subpage-header h2',
+  '#profile button.profile-page-back',
+  '#profile .profile-password-page-form',
+  '#profile .profile-password-page-form label.profile-password-field input'
+ ]){
+  const count=css.split(selector+'{').length-1;
+  assert.equal(count,1,selector);
+ }
+ assert.doesNotMatch(css,/#profile>h2/);
+ assert.doesNotMatch(css,/#profile \.profile-plan-card>span/);
+ assert.doesNotMatch(css,/#profile \.profile-password-form input/);
+ assert.doesNotMatch(css,/#profile-logout\{border-radius:999px/);
+ assert.match(css,/@media\(max-width:360px\)\{\s*#profile \.profile-plan-card\{/);
+});
