@@ -43,7 +43,7 @@
       <div id="tm-chef-activity" class="tm-chef-activity"></div>
       <p id="tm-chef-feedback" role="status"></p>
     </div>`;
-  history.insertAdjacentElement("afterend",review);
+  history.insertAdjacentElement("beforebegin",review);
   const $=id=>document.getElementById(id);
   const form=$("tm-chef-create"),feedback=$("tm-chef-feedback"),accountFeedback=$("tm-chef-account-feedback");
   let admins=[],knownPlayers=[],csrf="";
