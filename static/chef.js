@@ -543,7 +543,7 @@ function appendChefFoodItems(host,items){
   if(text)host.append(node("div","chef-option-food",text));
  }
 }
-function chefOptionCards(date,meal,colorOverride=null){
+function chefOptionCards(date,meal,colorOverride=null,inPlan=false){
  const color=colorOverride||colorFor(date,meal),options=color?prescriptions[color]?.[meal]||[]:[];
  const list=node("div","chef-option-list");
  if(!options.length){
@@ -557,7 +557,7 @@ function chefOptionCards(date,meal,colorOverride=null){
   const inline=node("div","chef-single-option");
   if(option.title)inline.append(node("strong","chef-single-title",asText(option.title)));
   const nutrition=chefNutrition(option.totals);
-  if(nutrition)inline.append(nutrition);
+  if(nutrition&&!inPlan)inline.append(nutrition);
   appendChefFoodItems(inline,option.items);
   list.append(inline);
   return list;
@@ -640,7 +640,22 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOve
   }
  }
  heading.append(symbol,title);
- heading.append(node("span","chef-chevron"));head.append(heading);
+ if(onlyPrescription){
+  // Average is computed only from the already published Chef option totals.
+  const options=prescriptions[effectiveTone]?.[meal]||[];
+  const totals=options.map(o=>o.totals).filter(t=>t&&
+   ["kcal","protein_g","carbs_g","fat_g"].every(k=>Number.isFinite(Number(t[k]))));
+  if(totals.length){
+   const avg=key=>Math.round(totals.reduce((sum,t)=>sum+Number(t[key]),0)/totals.length);
+   heading.append(node("span","chef-plan-header-kcal",avg("kcal")+" kcal"));
+   const macros=node("div","chef-plan-header-macros");
+   for(const [key,cls] of [["protein_g","protein"],["carbs_g","carbs"],["fat_g","fat"]])
+    macros.append(node("span",cls,avg(key)+" g"));
+   head.append(heading);
+   head.append(macros);
+  }else head.append(heading);
+ }else head.append(heading);
+ heading.append(node("span","chef-chevron"));
  // A Chef must see the planned dish and its photo even when the meal is closed.
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner")){
   const preview=node("div","chef-meal-preview");
@@ -656,7 +671,7 @@ function renderChefMeal(date,meal,expanded=false,onlyPrescription=false,colorOve
 // A single content path powers the daily expandable card and the weekly inline
 // detail; editing, execution and prescription rendering stay identical.
 function appendChefMealContents(body,date,meal,onlyPrescription=false,colorOverride=null){
- body.append(chefOptionCards(date,meal,colorOverride));
+ body.append(chefOptionCards(date,meal,colorOverride,onlyPrescription));
  if(!onlyPrescription&&(meal==="lunch"||meal==="dinner"))executionForm(date,meal,body);
 }
 function renderChefDaily(root){
@@ -853,7 +868,7 @@ function renderChefMenuDay(root,key){
  card.append(head);
  for(const meal of ["lunch","dinner"]){
   const item=plannedMenu(key,meal),color=mealTone(key,meal);
-  const slot=node("article","chef-menu-entry tone-"+color);
+  const slot=node("article","chef-menu-entry "+(item?"tone-"+color:"tone-neutral chef-menu-unassigned"));
   slot.append(node("div","chef-menu-meal-label",mealNames[lang][meal]));
   appendChefMenuDish(slot,item,txt().pending);
   if(!previewReadOnly&&key>=dateKey(new Date())){
