@@ -190,6 +190,7 @@
   if(standalone)root.classList.add("recipe-detail-standalone");
   const showHero=standalone&&includePhoto&&includeTitle&&recipe.has_photo;
   if(showHero){
+   root.classList.add("recipe-detail--hero");
    const hero=thumb(recipe.id,true);
    hero.classList.add("recipe-hero");
    hero.loading="eager";
