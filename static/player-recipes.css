@@ -41,7 +41,6 @@
 #menus .recipe-item-body small{color:#a9a9b2;font-size:12px;}
 #menus .recipe-chevron{color:#a9a9b2;font-size:28px;font-weight:300;padding:0 3px;}
 #menus .recipe-detail{background:rgba(255,255,255,.055);border-radius:20px;padding:18px;margin:0 0 16px;}
-#menus .recipe-hero{display:block;width:100%;max-height:290px;object-fit:cover;border-radius:20px;margin-bottom:14px;}
 #menus .recipe-detail>h2{font-size:23px;line-height:1.2;font-weight:600;margin:0 0 14px;}
 #menus .recipe-servings{display:flex;gap:8px;align-items:center;color:#dddde0;font-size:13px;margin:0 0 20px;}
 #menus .recipe-detail h3{font-size:18px;line-height:1.25;font-weight:600;margin:25px 0 12px;}
@@ -80,12 +79,6 @@
  padding:0;
  border-radius:0;
  margin-bottom:18px;
-}
-#menus .recipe-detail .recipe-hero{
- height:clamp(160px,46vw,195px);
- max-height:none;
- object-fit:cover;
- margin-bottom:13px;
 }
 #menus .recipe-detail-standalone>h2{margin-bottom:9px;}
 #menus .recipe-detail-standalone .recipe-servings{margin-bottom:16px;}
@@ -155,6 +148,20 @@
  object-fit:cover;
  border-radius:15px;
  display:block;
+}
+/* Library-only photo hero: reuse the published, session-authorized recipe image. */
+#menus .recipe-detail-standalone > .recipe-hero{
+ display:block;
+ width:100%;
+ height:clamp(170px,46vw,190px);
+ object-fit:cover;
+ object-position:center;
+ border-radius:18px;
+ margin:0 0 18px;
+}
+#menus .recipe-detail-standalone.recipe-detail--hero .recipe-identity{
+ min-height:0;
+ margin:0 0 23px;
 }
 #menus .recipe-content-section{
  margin:0 0 27px;
@@ -371,11 +378,7 @@
  border-bottom:0;
 }
 
-/* Recipe-only visual finish: typography and the library's optical image alignment. */
-/* Align the image with the visible top of the letters, not only the line box. */
-#menus .recipe-detail-standalone .recipe-identity .recipe-detail-photo{
- margin-top:7px;
-}
+/* Recipe titles now follow the full-width library photo or a photo-free Menus detail. */
 /* Use the very same darker inset surface as the expanded Avaliações chart
    (#plans .assessment-trend). Keep outer cards at their existing #242429. */
 #menus details.recipe-accordion .recipe-content-section{

@@ -183,19 +183,26 @@
   h.append(tile,node("span","",label));
   return h;
  }
- // A recipe from the independent library has one small photo alongside its name.
- // Menus do not repeat the dish photo, and multi-recipe cards use their summary
- // for the recipe name and portion count.
+ // Library details show one full-width photo above the page/detail title.
+ // Menus always use includePhoto:false to avoid repeating a dish photograph.
  function detail(recipe,{includePhoto=true,includeTitle=true,includeServings=true,standalone=true}={}){
   const root=node("div","recipe-detail");
   if(standalone)root.classList.add("recipe-detail-standalone");
-  if(includeTitle||includeServings||(includePhoto&&recipe.has_photo)){
+  const showHero=standalone&&includePhoto&&includeTitle&&recipe.has_photo;
+  if(showHero){
+   root.classList.add("recipe-detail--hero");
+   const hero=thumb(recipe.id,true);
+   hero.classList.add("recipe-hero");
+   hero.loading="eager";
+   root.append(hero);
+  }
+  if(includeTitle||includeServings||(includePhoto&&recipe.has_photo&&!showHero)){
    const identity=node("div","recipe-identity");
    const copy=node("div","recipe-identity-copy");
    if(includeTitle)copy.append(node("h2","",recipe.name||""));
    if(includeServings)copy.append(node("div","recipe-servings",portions(recipe.servings)));
    identity.append(copy);
-   if(includePhoto&&recipe.has_photo)identity.append(thumb(recipe.id,true));
+   if(includePhoto&&recipe.has_photo&&!showHero)identity.append(thumb(recipe.id,true));
    root.append(identity);
   }
   const ingredients=node("section","recipe-content-section");
