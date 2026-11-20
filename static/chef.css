@@ -1,80 +1,78 @@
-:root{font-family:"Inter Tight",-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;font-weight:500;color:#171719;background:#f6f6f7;font-synthesis:none;--surface:#fff;--muted:#73737a;--line:#e8e8eb;--soft:#f4f4f6;--radius:18px}
-*{box-sizing:border-box}
+/* THE MILE / Chef — canonical dark App foundation, adapted from the Player guide. */
+:root{
+ --mile-app-font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Arial,sans-serif;
+ font-family:var(--mile-app-font);font-weight:400;font-synthesis:none;color-scheme:dark;
+ --mile-type-regular:400;--mile-type-medium:500;--mile-type-semibold:600;
+ --mile-radius-card:13px;--mile-radius-open:18px;--mile-card-header:61px;--mile-card-icon:37px;
+ --surface:#242429;--muted:#a9a9b4;--line:#38383f;--soft:#29292e;--chef-ink:#f5f5f7;--chef-neutral:#303035;
+ --meal-orange:#54281B;--meal-yellow:#493713;--meal-green:#174631;--meal-blue:#193F60;--meal-vp:#10251A;
+ --meal-orange-text:#FFA078;--meal-yellow-text:#FFD76F;--meal-green-text:#77E3A4;--meal-blue-text:#8DD0FF;--meal-vp-text:#4E996B;
+ --meal-vp-inner:#1B392A
+}
+*,*::before,*::after{box-sizing:border-box}
 html{min-height:100%;font-size:16px}
-body{margin:0;min-height:100vh;min-height:100dvh;background:#f6f6f7}
-button,input{font:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.45;cursor:default}
-button:focus-visible,input:focus-visible{outline:2px solid #707078;outline-offset:3px}
-.top{height:73px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 max(24px,calc((100vw - 1050px)/2))}
-.brand{font-weight:700;letter-spacing:-.06em;font-size:25px;white-space:nowrap}
-.brand-sub{font-size:10px;letter-spacing:.08em;margin-left:12px;font-weight:600;color:var(--muted);vertical-align:middle}
-.top-details{display:flex;align-items:center;gap:16px;color:var(--muted);font-size:13px}
-.quiet-button{border:0;background:transparent;color:#333;padding:8px 0}
-.page{width:min(100% - 48px,1050px);margin:0 auto;padding:34px 0 120px}
-.page-intro{margin-bottom:27px}
-.page-intro h1{font-weight:600;letter-spacing:-.04em;font-size:clamp(28px,4vw,37px);margin:5px 0 4px}
-.overline{color:var(--muted);font-size:11px;letter-spacing:.12em;font-weight:600;margin:0}
-.muted{font-size:13px;color:var(--muted);line-height:1.55}
-.day-controls{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:var(--radius);padding:11px 15px;background:var(--surface);margin-bottom:12px}
-.date-step{border:0;background:var(--soft);border-radius:12px;height:36px;width:36px;font-size:28px;line-height:1}
-.week-details{text-align:center;display:flex;flex-direction:column;gap:2px;font-size:14px}
-.week-details span{color:var(--muted);font-size:11px}
-.day-picker{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:30px}
-.day-picker button{background:#fff;border:1px solid var(--line);border-radius:13px;min-height:65px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:6px;font-size:17px;font-weight:600}
-.day-picker button small{color:var(--muted);font-size:10px;font-weight:500;text-transform:uppercase}
-.day-picker button.active{background:#18181b;color:#fff;border-color:#18181b}
-.day-picker button.active small{color:#d6d6dc}
+body{margin:0;min-height:100vh;min-height:100dvh;background:#0d0d10;color:var(--chef-ink);font-family:var(--mile-app-font)}
+button,input,textarea,select{font-family:inherit}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #aeb0ba;outline-offset:3px}
+[hidden]{display:none!important}
+.top{height:51px;min-height:51px;background:#0d0d10;border:0;display:flex;align-items:center;justify-content:center;position:relative;padding:0 18px}
+.brand{color:#f6f6f8;font-weight:500;font-size:21px;letter-spacing:.015em;white-space:nowrap}
+.top-details{position:absolute;right:16px;top:8px;display:flex;align-items:center;gap:8px;font-size:12px}
+.top-details #top-name{display:none}
+.quiet-button{border:0;background:transparent;color:#e8e8ec;font-size:12px;padding:8px}
+.page{width:min(calc(100% - 28px),960px);margin:0 auto;padding:2px 0 130px}
+.page-intro{display:none}.overline{color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.1em;margin:0}
+.muted{font-size:13px;color:var(--muted);line-height:1.5}
+.day-controls{display:flex;align-items:center;justify-content:space-between;border:0;border-radius:17px;padding:11px 15px;background:#202024;color:#f5f5f7;margin-bottom:12px}
+.date-step{border:0;background:var(--soft);color:#eee;border-radius:12px;height:36px;width:36px;font-size:28px;line-height:1}
+.week-details{text-align:center;display:flex;flex-direction:column;gap:2px;font-size:14px}.week-details span{color:var(--muted);font-size:11px}
+.day-picker{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:25px}
+.day-picker button{background:transparent;border:0;border-radius:11px;min-height:58px;min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:6px 1px;color:#eee;font-size:16px;font-weight:600}
+.day-picker button small{color:var(--muted);font-size:10px;font-weight:400;text-transform:uppercase}
+.day-picker button.active{background:#f5f5f7;color:#2073b8}.day-picker button.active small{color:#55555b}
 .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 15px}
-.section-head h2{font-size:19px;font-weight:600;letter-spacing:-.025em;margin:0}
+.section-head h2{font-size:21px;font-weight:600;letter-spacing:-.025em;margin:0}
 .section-head span{font-size:12px;color:var(--muted)}
-.grid-meals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.meal-card,.panel,.menu-day{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;min-width:0}
-.meal-card{border-left:4px solid var(--tone,#e1e1e6)}
-.meal-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
-.meal-top strong{font-size:17px;font-weight:600}
-.chip{display:inline-block;padding:5px 9px;border-radius:999px;background:#f2f2f4;color:#595961;font-size:11px;font-weight:600;white-space:nowrap}
-.chip.orange{background:#fff1e6;color:#ba6808}.chip.yellow{background:#fff9d7;color:#947500}.chip.blue{background:#e8f1ff;color:#426fac}.chip.green{background:#e7f6ec;color:#298253}.chip.vp{background:#d8efe2;color:#157447}
-.meal-name{font-size:16px;font-weight:600;line-height:1.4;margin:0 0 8px;overflow-wrap:anywhere}
-.meal-photo{display:block;max-height:170px;max-width:100%;object-fit:contain;object-position:center;margin:12px auto}
-.placeholder-text{color:var(--muted);font-size:14px;font-weight:500;margin:0}
-.panel{margin-bottom:14px}
-.panel h3{font-size:16px;font-weight:600;letter-spacing:-.02em;margin:0 0 10px}
-.plan-option{border-top:1px solid var(--line);padding:12px 0}
-.plan-option:last-child{padding-bottom:0}
-.plan-option strong{display:block;font-size:13px;margin-bottom:8px}
-.food-line{display:block;color:#4e4e55;font-size:13px;line-height:1.6;margin:3px 0}
-.menu-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.menu-day .menu-day-name{font-weight:600;font-size:15px;margin:0 0 14px}
-.menu-slot{border-top:1px solid var(--line);padding:10px 0}
-.menu-slot:last-child{padding-bottom:0}
-.menu-slot-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
-.menu-slot-head span:first-child{font-weight:600;font-size:12px}
-.menu-slot-name{font-size:13px;color:#4f4f54;line-height:1.4}
-.info-note{color:var(--muted);font-size:12px;margin-top:16px;line-height:1.6}
+.panel{background:var(--surface);border:0;border-radius:var(--mile-radius-card);padding:17px;min-width:0;margin-bottom:14px;color:var(--chef-ink)}
+.panel h3{font-size:16px;font-weight:400;letter-spacing:0;margin:0 0 10px}
 .profile-row{display:flex;align-items:center;justify-content:space-between;gap:15px;border-top:1px solid var(--line);padding:17px 0;font-size:14px}
-.profile-row:last-child{padding-bottom:0}
-.profile-row span{color:var(--muted)}
-.segment{display:flex;background:var(--soft);border-radius:12px;padding:3px}
-.segment button{background:transparent;border:0;padding:8px 14px;border-radius:9px;font-size:12px}
-.segment button.active{background:#fff;box-shadow:0 1px 3px #0000001c}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:4;border-top:1px solid var(--line);background:#ffffffed;backdrop-filter:blur(16px);display:grid;grid-template-columns:repeat(4,1fr);padding:11px max(20px,calc((100vw - 1050px)/2)) calc(11px + env(safe-area-inset-bottom,0px))}
-.bottom-nav[hidden],*[hidden]{display:none!important}
-.bottom-nav button{background:transparent;border:0;border-radius:11px;color:var(--muted);padding:11px 2px;font-size:13px}
-.bottom-nav button[aria-current="page"]{background:#f0f0f3;color:#171719;font-weight:700}
-.login-shell{max-width:390px;margin:clamp(45px,12vh,130px) auto 0}
-.login-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:33px}
-.login-card h1{font-size:28px;letter-spacing:-.04em;margin:9px 0 5px}
+.profile-row:last-child{padding-bottom:0}.profile-row span{color:var(--muted)}
+.segment{display:flex;background:var(--soft);border-radius:999px;padding:3px}
+.segment button{background:transparent;border:0;border-radius:999px;padding:8px 14px;color:#f5f5f7;font-size:12px}
+.segment button.active{background:#55555b;color:#fff}
+.bottom-nav{position:fixed;z-index:4;left:12px;right:12px;bottom:calc(9px + env(safe-area-inset-bottom,0px));max-width:640px;margin:0 auto;padding:5px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-radius:999px}
+.bottom-nav button{background:transparent;border:0;border-radius:999px;color:#f3f3f6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px}
+.bottom-nav button[aria-current="page"]{background:#55555b;color:#fff}
+.login-shell{max-width:390px;margin:clamp(42px,10vh,110px) auto 0}
+.login-card{background:transparent;border:0;border-radius:0;padding:12px 0;color:var(--chef-ink)}
+.login-card h1{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:9px 0 5px}
 .login-card p{color:var(--muted);font-size:14px;line-height:1.5}
-.login-card .overline{font-size:10px}
-.login-card form{display:flex;flex-direction:column;margin-top:24px;gap:8px}
-.login-card label{font-size:12px;font-weight:600;margin-top:10px}
-.login-card input{padding:12px 13px;border:1px solid #d8d8dc;border-radius:11px;min-height:45px;background:#fff;font-size:16px}
-.primary{margin-top:14px;border:0;border-radius:11px;background:#151517;color:#fff;padding:14px;font-weight:600}
-.error{color:#a32424!important;min-height:1em}
+.login-card form{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+.primary{margin-top:8px;border:0;border-radius:999px;background:#f5f5f7;color:#17171b;min-height:46px;padding:12px 18px;font-size:14px;font-weight:600}
+.error{color:#f1a6a6!important;min-height:1em}
 .loading{text-align:center;color:var(--muted);padding:80px 0}
-@media(max-width:640px){.top{height:64px;padding:0 18px}.page{width:calc(100% - 32px);padding:23px 0 116px}.grid-meals,.menu-list{grid-template-columns:1fr}.day-picker{gap:5px}.day-picker button{min-height:58px;border-radius:11px;font-size:16px}.day-picker button small{font-size:9px}.meal-card,.panel,.menu-day{padding:17px}.bottom-nav{padding:7px 9px calc(7px + env(safe-area-inset-bottom,0px))}.bottom-nav button{font-size:11px;padding:13px 3px}.top-details{gap:7px;font-size:12px}.top-details #top-name{max-width:125px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-
+.chef-view-mode,.chef-menu-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#202024;border-radius:999px;padding:4px;margin:0 0 20px}
+.chef-view-mode button,.chef-menu-switch button{min-height:44px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:15px;font-weight:500;padding:8px 4px}
+.chef-view-mode button[aria-pressed=true],.chef-menu-switch button[aria-pressed=true]{background:#55555b}
+@media(max-width:640px){.page{width:calc(100% - 28px);padding:2px 0 130px}.top-details{right:12px}}
+/* Same approved 64px/20px floating field geometry as the Player Login. */
+label.mile-floating-field{position:relative;display:block;height:64px;min-height:64px;margin:0}
+label.mile-floating-field>.mile-floating-input{
+ display:block;width:100%;height:64px;min-height:64px;margin:0;padding:20px 18px 0;
+ border:0;border-radius:20px;background:#242429;color:#f6f6f8;font-size:16px;font-weight:400;
+ outline:none;box-shadow:none;transition:box-shadow 150ms ease
+}
+label.mile-floating-field>.mile-floating-input:focus{box-shadow:0 0 0 2px #aeb0ba}
+label.mile-floating-field>.mile-floating-input::placeholder{color:transparent}
+label.mile-floating-field>.mile-floating-label{
+ position:absolute;top:50%;left:18px;max-width:calc(100% - 36px);
+ transform:translateY(-50%);pointer-events:none;color:#aeb0ba;font-size:16px;font-weight:400;line-height:1.3;
+ transition:top 180ms ease,transform 180ms ease,font-size 180ms ease
+}
+label.mile-floating-field:focus-within>.mile-floating-label,
+label.mile-floating-field>.mile-floating-input:not(:placeholder-shown)+.mile-floating-label{top:9px;transform:translateY(0);font-size:12px}
+@media(prefers-reduced-motion:reduce){label.mile-floating-field>.mile-floating-input,label.mile-floating-field>.mile-floating-label{transition:none}}
 
 /* Chef collaboration: compact editors remain visually subordinate to the menu. */
 .chef-inline-edit{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
@@ -91,32 +89,9 @@ textarea.chef-input{min-height:68px;resize:vertical}
 .chef-feedback{color:#666;min-height:16px;font-size:12px;margin:4px 0}
 
 
-/* The Mile shared player palette and exact inline icon path rendering. */
-:root{color-scheme:dark;--meal-orange:#78482e;--meal-yellow:#746028;--meal-blue:#285771;--meal-green:#296447;--meal-vp:#10251a;--chef-neutral:#303035;--chef-ink:#f5f5f7}
-html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-family:"Inter Tight",-apple-system,BlinkMacSystemFont,"SF Pro",Arial,sans-serif}
-.top{height:52px;min-height:52px;background:#0d0d10;border:0;padding:0 18px;display:flex;justify-content:center;align-items:center;position:relative}
-.brand{font-size:21px;font-weight:500;letter-spacing:.015em;color:#f6f6f8}
-.top-details{position:absolute;right:16px;top:8px}
-.top-details #top-name{display:none}.quiet-button{color:#e8e8ec;font-size:12px}
-.page{width:min(calc(100% - 28px),960px);padding:2px 0 130px}
-.page-intro{display:none}.day-controls{background:#202024;border:0;color:#fff}.day-controls button{color:#eee}
-.week-details span{color:#aaa}
-.day-picker button{background:#1b1b20;color:#eee;border:0}
-.day-picker button.active{background:#f5f5f7;color:#2073b8}
-.chef-view-mode,.chef-menu-switch{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:#202024;border-radius:999px;padding:4px;margin:0 0 20px}
-.chef-view-mode button,.chef-menu-switch button{min-height:44px;border:0;border-radius:999px;background:transparent;color:#f5f5f7;font-size:15px;font-weight:500;padding:8px 4px}
-.chef-view-mode button[aria-pressed=true],.chef-menu-switch button[aria-pressed=true]{background:#55555b}
-.bottom-nav{left:12px;right:12px;bottom:calc(9px + env(safe-area-inset-bottom,0px));border-radius:999px;border:.5px solid rgba(234,236,244,.18);background:rgba(33,34,40,.94);box-shadow:0 14px 40px rgba(0,0,0,.3),inset 0 .5px 0 rgba(255,255,255,.2);padding:5px;grid-template-columns:repeat(4,minmax(0,1fr));max-width:640px;margin:0 auto;backdrop-filter:blur(18px)}
-.bottom-nav button{min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 2px;border-radius:999px;color:#f3f3f6;font-size:11px;font-weight:500}
-.bottom-nav button[aria-current=page]{background:#55555b;color:#fff;font-weight:500;box-shadow:inset 0 .5px 0 #ffffff55}
-.mile-icon{display:inline-flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;background:transparent!important;-webkit-mask:none!important;mask:none!important}
+/* Exact official Hugeicons are rendered inline by chef.js. */
+.mile-icon{display:inline-flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;background:transparent;-webkit-mask:none;mask:none}
 .mile-icon svg{display:block;width:100%;height:100%;flex:none}
-.tone-orange{--chef-tone:var(--meal-orange);--chef-tone-ink:#ffca9e}
-.tone-yellow{--chef-tone:var(--meal-yellow);--chef-tone-ink:#ffe08a}
-.tone-blue{--chef-tone:var(--meal-blue);--chef-tone-ink:#9cd0ff}
-.tone-green{--chef-tone:var(--meal-green);--chef-tone-ink:#82e6ae}
-.tone-vp{--chef-tone:var(--meal-vp);--chef-tone-ink:#85d4a6}
-.tone-neutral{--chef-tone:var(--chef-neutral);--chef-tone-ink:#f0f0f4}
 .chef-daily-summary{margin:12px 0 19px;padding:13px 13px 14px;background:#17171a;border-radius:17px}
 .chef-summary-header{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:15px;margin:0 0 19px}
 .chef-summary-header strong{font-weight:550}.chef-microcycle{padding:5px 10px;border-radius:999px;background:#29292e;color:#d8d8df;font-size:12px}
@@ -216,12 +191,12 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  gap:12px;margin-bottom:15px;
 }
 .chef-week-detail-identity{display:flex;flex-direction:column;gap:6px;min-width:0}
-.chef-week-detail-date{font:400 13px/1.4 "Inter Tight",sans-serif;color:rgba(245,245,247,.76)}
-.chef-week-detail-meal{margin:0;color:#f5f5f7;font:500 21px/1.25 "Inter Tight",sans-serif;letter-spacing:-.02em}
+.chef-week-detail-date{font:400 13px/1.4 var(--mile-app-font);color:rgba(245,245,247,.76)}
+.chef-week-detail-meal{margin:0;color:#f5f5f7;font:500 21px/1.25 var(--mile-app-font);letter-spacing:-.02em}
 .chef-week-close{
  flex:none;display:grid;place-items:center;width:36px;height:36px;min-width:36px;
  padding:0;border:0;border-radius:10px;background:transparent;color:#f5f5f7;
- font:400 28px/1 "Inter Tight",sans-serif;cursor:pointer;
+ font:400 28px/1 var(--mile-app-font);cursor:pointer;
 }
 .chef-week-close:focus-visible{outline:2px solid #f5f5f7;outline-offset:2px}
 /* Weekly content sits directly within the selected meal colour, without a
@@ -243,7 +218,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  display:flex;align-items:center;gap:13px;padding:0;
 }
 #screen.chef-screen-home .chef-week-menu-highlight .chef-dish-name{
- font:450 15px/1.4 "Inter Tight",sans-serif;color:#f5f5f7;
+ font:450 15px/1.4 var(--mile-app-font);color:#f5f5f7;
 }
 #screen.chef-screen-home .chef-week-menu-highlight .chef-dish-photo-frame{
  width:88px;height:88px;
@@ -275,16 +250,6 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 .chef-recipe-row{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#232328;border-radius:13px;padding:13px}
 .chef-recipe-row strong{font-size:14px;font-weight:550}.chef-recipe-row span{font-size:12px;color:#aaa}
 .chef-recipes-status{font-size:13px;color:#aaa}
-.panel,.menu-day,.meal-card{background:#19191d;color:#f4f4f7;border:1px solid #35353d}
-.section-head h2{color:#f4f4f7}.section-head span,.muted,.info-note,.profile-row span{color:#a9a9b4}
-.menu-slot-name,.food-line{color:#d5d5da}
-.chef-secondary{background:#292930;border-color:#45454d;color:#f3f3f6}
-.chef-menu-editor{background:#202025;border-color:#45454d}
-.segment{background:#303037}.segment button{color:#f5f5f7}.segment button.active{background:#55555b;color:#fff}
-.login-shell{margin-top:clamp(42px,10vh,110px)}
-.login-card{background:#19191d;border:1px solid #37373f;color:#f4f4f7}
-.login-card p{color:#aaa}.login-card input{background:#25252b;border-color:#4b4b54;color:#f4f4f7}.login-card label{color:#f5f5f7}
-.login-card .primary{background:#f4f4f7;color:#17171a}
 @media(min-width:680px){.chef-week-grid{max-width:760px;margin-left:auto;margin-right:auto}.chef-daily-summary,.chef-meal-card{max-width:760px;margin-left:auto;margin-right:auto}}
 @media(max-width:370px){.chef-week-grid{column-gap:3px}.chef-week-selected-column{left:calc(var(--chef-week-left-small) - 2px);width:calc((100% - 18px)/7 + 4px)}.chef-week-cell{min-height:64px}.chef-week-day strong{font-size:17px}.chef-week-day>span{font-size:9px}.chef-meal-head strong{font-size:16px}}
 @media(hover:hover){.chef-meal-head:hover,.chef-week-cell:not(.unavailable):hover,.bottom-nav button:hover{filter:brightness(1.1)}}
@@ -292,12 +257,6 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 
 /* The Mile Chef home parity — sourced from the current player UI, not PDFs. */
 /* Approved opaque palette B in jogador-v2.css, with matching light option surfaces. */
-:root{
- --meal-orange:#54281B;--meal-yellow:#493713;--meal-green:#174631;--meal-blue:#193F60;
- --meal-orange-text:#FFA078;--meal-yellow-text:#FFD76F;
- --meal-green-text:#77E3A4;--meal-blue-text:#8DD0FF;
- --meal-vp-text:#4E996B;--meal-vp-inner:#1B392A;
-}
 .tone-orange{--chef-tone:var(--meal-orange);--chef-tone-ink:var(--meal-orange-text);--chef-inner:#623324}
 .tone-yellow{--chef-tone:var(--meal-yellow);--chef-tone-ink:var(--meal-yellow-text);--chef-inner:#57451E}
 .tone-green{--chef-tone:var(--meal-green);--chef-tone-ink:var(--meal-green-text);--chef-inner:#24543E}
@@ -305,7 +264,6 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
 .tone-vp{--chef-tone:var(--meal-vp);--chef-tone-ink:var(--meal-vp-text);--chef-inner:var(--meal-vp-inner)}
 .tone-neutral{--chef-tone:#303035;--chef-tone-ink:#f2f2f5;--chef-inner:#45454b}
 /* Exact player wordmark SVG. */
-.top{height:51px!important;min-height:51px!important;padding-top:0!important;padding-bottom:0!important}
 .top .player-header-brand{position:static!important;transform:none!important;display:block!important;width:88px!important;height:auto!important;max-width:88px!important;margin:0 auto!important;color:#f4f4f7;letter-spacing:normal!important;pointer-events:none}
 .top .player-header-brand .player-header-wordmark{display:block;width:100%;height:auto;fill:currentColor}
 /* Day/week compact segmented selector: 38 outer, 32 inner, 3 padding, 3 gap. */
@@ -514,7 +472,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  border:0;
  border-radius:999px;
  box-shadow:none;
- font:500 14px/1.2 "Inter Tight",-apple-system,sans-serif;
+ font:500 14px/1.2 var(--mile-app-font);
  transition:background .2s ease,transform .2s ease,filter .2s ease;
 }
 #screen.chef-screen-home .chef-execution-quick-edit{
@@ -555,7 +513,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  background:color-mix(in srgb,var(--chef-tone) 82%,#0e1b1c 18%)!important;
  color:color-mix(in srgb,var(--chef-tone-ink) 66%,white 34%)!important;
  box-shadow:none!important;
- font:400 14px/1.4 "Inter Tight",-apple-system,sans-serif;
+ font:400 14px/1.4 var(--mile-app-font);
 }
 #screen.chef-screen-home .chef-execution-form[hidden]{display:none!important}
 #screen.chef-screen-home .chef-execution-choice{
@@ -578,7 +536,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  border-radius:999px;
  background:rgba(255,255,255,.07);
  color:inherit;
- font:500 12px/1.25 "Inter Tight",-apple-system,sans-serif;
+ font:500 12px/1.25 var(--mile-app-font);
  text-align:center;
  transition:background .18s ease,transform .18s ease;
 }
@@ -605,7 +563,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  color:inherit!important;
  -webkit-text-fill-color:currentColor;
  box-shadow:none!important;
- font:400 14px/1.4 "Inter Tight",-apple-system,sans-serif;
+ font:400 14px/1.4 var(--mile-app-font);
  resize:vertical;
 }
 #screen.chef-screen-home .chef-execution-field>.chef-input::placeholder{
@@ -623,7 +581,7 @@ html,body{background:#0d0d10!important;color:var(--chef-ink)!important;font-fami
  height:46px;min-height:46px;max-height:46px;
  margin:0;padding:8px 10px;
  border:0;border-radius:999px;
- font:500 14px/1.2 "Inter Tight",-apple-system,sans-serif;
+ font:500 14px/1.2 var(--mile-app-font);
 }
 #screen.chef-screen-home .chef-execution-actions>.chef-execution-cancel{
  background:rgba(255,255,255,.105);
