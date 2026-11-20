@@ -711,12 +711,22 @@ body:has(#admin-workspace:not([hidden])){padding:0}
 }
 #tm-dashboard .tm-db-today-recent #tm-db-recent{
  display:flex;flex-direction:column;gap:3px;
- max-height:300px;overflow-y:auto;scrollbar-width:thin;
- margin-top:14px
+ min-height:0;max-height:none;overflow:visible;
+ scrollbar-width:thin;margin-top:14px
 }
-/* Recent-form disclosure belongs only to the mobile summary, not desktop. */
-#tm-dashboard .tm-db-recent-expand{display:none}
-#tm-dashboard .tm-db-recent-expand[hidden]{display:none!important}
+/* Only long lists scroll; the cap is measured from complete response rows. */
+#tm-dashboard .tm-db-today-recent #tm-db-recent.is-scrollable{
+ max-height:var(--tm-db-recent-max-height);
+ overflow-x:hidden;overflow-y:auto;
+ overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch;
+ scroll-snap-type:y proximity
+}
+#tm-dashboard .tm-db-today-recent #tm-db-recent.is-scrollable:focus-visible{
+ outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px
+}
+#tm-dashboard .tm-db-today-recent #tm-db-recent button.tm-db-form-answer{
+ margin:0;flex-shrink:0;scroll-snap-align:start
+}
 #tm-dashboard .tm-db-chat-mobile-note{display:none}
 #tm-dashboard .tm-db-today-chat{flex:1}
 #tm-dashboard .tm-db-chat-placeholder{
@@ -874,7 +884,6 @@ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-
 @media(max-width:1120px){
  #tm-dashboard .tm-db-today-columns{grid-template-columns:minmax(0,1fr)}
  #tm-dashboard .tm-db-today-main{min-height:300px}
- #tm-dashboard .tm-db-today-recent #tm-db-recent{max-height:350px}
 }
 @media(max-width:650px){
  /* Stacked Dashboard subcards: 12px then 10px, with no extra margins. */
@@ -892,29 +901,12 @@ html[data-admin-theme="light"] #tm-dashboard .tm-db-activity-row.is-game .tm-db-
  #tm-dashboard .tm-db-activity-time{min-width:auto}
  #tm-dashboard .tm-db-activity-status{display:none}
  #tm-dashboard .tm-db-miniagenda-action{flex:1}
- /* Display two recent submissions by default, without compressing their text.
-    Existing links and all entries remain in the DOM for disclosure. */
+ /* Keep the approved compact rows; the list itself scrolls after two. */
  #tm-dashboard .tm-db-today-recent #tm-db-recent{
-  max-height:none;overflow:visible;margin-top:10px;gap:2px
+  margin-top:10px;gap:2px
  }
- #tm-dashboard .tm-db-today-recent:not(.is-expanded) #tm-db-recent .tm-db-form-answer.tm-db-form-extra{display:none!important}
  #tm-dashboard .tm-db-today-recent #tm-db-recent .tm-db-form-answer{
   padding:7px 2px!important;min-height:45px
- }
- #tm-dashboard .tm-db-recent-expand:not([hidden]){
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;min-height:36px;padding:8px 10px;margin-top:8px;
-  border:0;border-top:1px solid var(--tm-ui-divider);
-  border-radius:0;background:transparent;color:var(--tm-ui-muted);
-  font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
-  cursor:pointer
- }
- #tm-dashboard .tm-db-recent-expand svg{
-  width:15px;height:15px;flex:none;transition:transform .15s ease
- }
- #tm-dashboard .tm-db-today-recent.is-expanded .tm-db-recent-expand svg{transform:rotate(180deg)}
- #tm-dashboard .tm-db-recent-expand:focus-visible{
-  outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px
  }
  /* Future chat: a small informational note rather than a tall empty panel. */
  #tm-dashboard .tm-db-today-chat{flex:initial}

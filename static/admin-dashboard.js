@@ -1055,29 +1055,52 @@ function ensurePlanningOnlyView(){
  // submissions always describe the last seven days, regardless of day navigation.
  window.tmDashboardActivityIcon=kind=>hugeIcon(kind,"tm-db-activity-svg");
  window.tmDashboardOpenActivity=(athleteId,day)=>openPlayers(athleteId,day);
- // Mobile-only expansion uses the same real form links; no duplicate list.
- const recentExpand=$("tm-db-recent-expand");
- const recentPanel=recentExpand?.closest(".tm-db-today-recent");
- recentExpand?.addEventListener("click",()=>{
-  const expanded=!recentPanel.classList.contains("is-expanded");
-  recentPanel.classList.toggle("is-expanded",expanded);
-  recentExpand.setAttribute("aria-expanded",String(expanded));
-  recentExpand.querySelector("span").textContent=expanded?"Ver menos":"Ver mais respostas";
- });
+ // Like the daily events, recent forms have a natural height on short lists.
+ // Long lists scroll after two whole responses on mobile or four on desktop.
+ const recentHost=$("tm-db-recent");
+ let recentMeasureQueued=false;
+ const recentObserver=typeof ResizeObserver==="function"
+  ?new ResizeObserver(()=>scheduleRecentMeasure()):null;
+ function resetRecentScroll(){
+  recentHost.classList.remove("is-scrollable");
+  recentHost.style.removeProperty("--tm-db-recent-max-height");
+  recentHost.removeAttribute("tabindex");
+  recentHost.removeAttribute("role");
+  recentHost.removeAttribute("aria-label");
+ }
+ function scheduleRecentMeasure(){
+  if(recentMeasureQueued)return;
+  recentMeasureQueued=true;
+  requestAnimationFrame(()=>{recentMeasureQueued=false;measureRecentHeight();});
+ }
+ function measureRecentHeight(){
+  if(!recentHost.offsetWidth)return;
+  const items=Array.from(recentHost.children).filter(node=>node.classList.contains("tm-db-form-answer"));
+  const visibleCount=window.matchMedia("(max-width:650px)").matches?2:4;
+  resetRecentScroll();
+  if(items.length<=visibleCount)return;
+  const heights=items.slice(0,visibleCount).map(node=>node.getBoundingClientRect().height);
+  if(heights.some(height=>height<=0))return;
+  const gap=Number.parseFloat(getComputedStyle(recentHost).rowGap)||0;
+  const max=Math.ceil(heights.reduce((sum,height)=>sum+height,0)+(visibleCount-1)*gap+1);
+  recentHost.style.setProperty("--tm-db-recent-max-height",max+"px");
+  recentHost.classList.add("is-scrollable");
+  recentHost.setAttribute("tabindex","0");
+  recentHost.setAttribute("role","region");
+  recentHost.setAttribute("aria-label","Formulários recentes; desliza para consultar os restantes");
+ }
+ window.addEventListener("resize",scheduleRecentMeasure,{passive:true});
+ document.fonts?.ready.then(scheduleRecentMeasure);
  function paintEvents(data){
-  const recentHost=$("tm-db-recent");recentHost.replaceChildren();
+  recentObserver?.disconnect();
+  resetRecentScroll();
+  recentHost.replaceChildren();
+  recentHost.scrollTop=0;
   const t=data.today_events||{};
   const recent=t.recent_responses||[];
-  if(recentPanel)recentPanel.classList.remove("is-expanded");
-  if(recentExpand){
-   recentExpand.hidden=recent.length<=2;
-   recentExpand.setAttribute("aria-expanded","false");
-   recentExpand.querySelector("span").textContent="Ver mais respostas"+(recent.length>2?" ("+(recent.length-2)+")":"");
-  }
   if(!recent.length)recentHost.append(el("p","tm-db-none","Sem respostas recentes."));
-  else for(const [index,item] of recent.entries()){
+  else for(const item of recent){
    const btn=el("button","tm-db-event tm-db-form-answer");btn.type="button";
-   if(index>=2)btn.classList.add("tm-db-form-extra");
    const kind=item.kind==="post_match"?"pitch":"scale";
    const iconSlot=el("span","tm-db-form-icon");iconSlot.append(hugeIcon(kind));
    const details=el("span","tm-db-form-details");
@@ -1091,6 +1114,12 @@ function ensurePlanningOnlyView(){
    btn.addEventListener("click",()=>openClinical("forms",item.athlete_id,kind==="pitch"?"game":"weight",kind==="pitch"?item.match_date:item.weigh_date));
    recentHost.append(btn);
   }
+  if(recentObserver){
+   for(const entry of recentHost.children){
+    if(entry.classList.contains("tm-db-form-answer"))recentObserver.observe(entry);
+   }
+  }
+  scheduleRecentMeasure();
  }
  const normalizeSearch=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-PT").trim();
  const matchesPlayer=(fullName,query)=>{
