@@ -24,7 +24,11 @@
   target.setUTCDate(Math.min(day,target.getUTCDate()));
   return target.toISOString().slice(0,10);
  }
- let selected=todayInLisbon(),view="month";
+ const incoming=new URLSearchParams(window.location.search);
+ const requestedDate=incoming.get("date");
+ const validRequestedDate=requestedDate&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(requestedDate)&&
+  !Number.isNaN(utcDay(requestedDate).getTime())&&utcDay(requestedDate).toISOString().slice(0,10)===requestedDate;
+ let selected=validRequestedDate?requestedDate:todayInLisbon(),view="month";
  function render(){
   const now=todayInLisbon();
   const first=view==="month"?selected.slice(0,7)+"-01":view==="week"?monday(selected):selected;
@@ -103,7 +107,7 @@
  byId("tm-appointments-next").addEventListener("click",()=>{selected=view==="month"?shiftMonth(selected,1):shift(selected,view==="week"?7:1);render();});
  window.addEventListener("hashchange",()=>switchTab(location.hash.slice(1)));
  switchTab(location.hash.slice(1));
- setView("month");
+ setView(["month","week","day"].includes(incoming.get("view"))?incoming.get("view"):"month");
 
  /* Service/professional catalogue (phase 2). Server is the authority. */
  let csrf="",catalog={services:[],professionals:[]};
