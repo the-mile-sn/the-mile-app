@@ -48,6 +48,8 @@ let csrf = "", sessionUser = null, chef = null, player = null;
 let lang = "pt", selectedDay = new Date(), activeTab = "home";
 let previewReadOnly = false;
 let menus = [], days = [], colors = {}, prescriptions = {}, executions = [];
+let chefWeekRequestId=0,chefSkeletonTimer=null,chefSkeletonVisible=false;
+let chefSwipeEntryDirection=0,chefSwipeEntryAnimation=null;
 const txt = () => labels[lang];
 
 function dateKey(date){
@@ -124,18 +126,89 @@ function renderLogin(){
     finally{button.disabled=false;}
   };
 }
+/* Chef skeletons follow the real home structure; loading is deferred 240ms
+   like Player Dia, never forced for a quick request or a same-week day tap. */
+function chefSkeletonShape(extra=""){return node("span","chef-skeleton-shape"+(extra?" "+extra:""));}
+function renderChefHomeSkeleton(){
+ if(activeTab!=="home"||el("chef-view").hidden)return;
+ const root=el("screen");
+ root.replaceChildren();
+ root.className="chef-screen-home chef-screen-loading";
+ root.setAttribute("aria-busy","true");
+ const accessible=node("span","chef-skeleton-a11y",lang==="pt"
+   ?"A carregar o planeamento":"Loading the meal plan");
+ root.append(accessible);
+ if(chefViewMode==="week"){
+  const grid=node("div","chef-skeleton-week-grid");
+  for(let i=0;i<7;i++){
+   const header=node("div","chef-skeleton-week-heading");
+   header.append(chefSkeletonShape("chef-skeleton-week-label"),
+     chefSkeletonShape("chef-skeleton-week-date"),
+     chefSkeletonShape("chef-skeleton-week-label"));
+   grid.append(header);
+  }
+  // Neutral cells only: no invented meal names, nutritional colours or data.
+  for(let row=0;row<4;row++)
+   for(let day=0;day<7;day++)
+    grid.append(chefSkeletonShape("chef-skeleton-week-cell"));
+  root.append(grid);
+ }else{
+  const summary=node("div","chef-skeleton-summary");
+  const heading=node("div","chef-skeleton-heading");
+  heading.append(chefSkeletonShape("chef-skeleton-date"),
+    chefSkeletonShape("chef-skeleton-class"));
+  summary.append(heading);
+  const strip=node("div","chef-skeleton-colors");
+  for(let i=0;i<4;i++){
+   const cell=node("div","chef-skeleton-color");
+   cell.append(chefSkeletonShape("chef-skeleton-symbol"),
+     chefSkeletonShape("chef-skeleton-bar"));
+   strip.append(cell);
+  }
+  summary.append(strip);root.append(summary);
+  for(let i=0;i<4;i++){
+   const card=node("div","chef-skeleton-meal");
+   card.append(chefSkeletonShape("chef-skeleton-meal-icon"),
+     chefSkeletonShape("chef-skeleton-meal-title"),
+     chefSkeletonShape("chef-skeleton-meal-arrow"));
+   root.append(card);
+  }
+ }
+ chefSkeletonVisible=true;
+}
+function clearChefSkeleton(){
+ clearTimeout(chefSkeletonTimer);chefSkeletonTimer=null;chefSkeletonVisible=false;
+ el("screen").removeAttribute("aria-busy");
+}
 async function loadWeek(){
-  const start=monday(selectedDay);
-  const end=shift(start,6);
-  const q="?start="+dateKey(start)+"&end="+dateKey(end);
-  const [calendar, menuResponse, executionResponse]=await Promise.all([
-    request("/api/v2/chef/calendar"+q),
-    request("/api/v2/chef/menus"+q),
-    request("/api/v2/chef/menu-executions"+q)
+ const id=++chefWeekRequestId;
+ clearTimeout(chefSkeletonTimer);
+ chefSkeletonVisible=false;
+ const start=monday(selectedDay),end=shift(start,6);
+ const weekKey=dateKey(start);
+ const q="?start="+weekKey+"&end="+dateKey(end);
+ if(activeTab==="home"&&!el("chef-view").hidden){
+  chefSkeletonTimer=setTimeout(()=>{
+   if(id===chefWeekRequestId&&dateKey(monday(selectedDay))===weekKey)
+    renderChefHomeSkeleton();
+  },240);
+ }
+ try{
+  const [calendar,menuResponse,executionResponse]=await Promise.all([
+   request("/api/v2/chef/calendar"+q),
+   request("/api/v2/chef/menus"+q),
+   request("/api/v2/chef/menu-executions"+q)
   ]);
+  if(id!==chefWeekRequestId||dateKey(monday(selectedDay))!==weekKey)return;
   days=calendar.days||[];colors=calendar.effective_colors||{};
   menus=menuResponse.menus||[];executions=executionResponse.executions||[];
+  clearChefSkeleton();
   render();
+ }catch(err){
+  if(id!==chefWeekRequestId)return;
+  clearChefSkeleton();
+  throw err;
+ }
 }
 function colorFor(day,meal){
   const c=colors[day]?.[meal]?.color;
@@ -705,6 +778,37 @@ function chefWeekDetailLabel(date){
  const microcycle=classificationFor(dateKey(date));
  return weekday+", "+datePart+(microcycle?" · "+microcycle:"");
 }
+/* Player's 460ms adjacent-date moving circle, adapted to Chef's
+   grid re-render. No animation for long jumps or reduced motion. */
+let chefWeekMovingCircle=null;
+function selectChefWeekDay(date,selection=null){
+ const before=dateKey(selectedDay),after=dateKey(date);
+ const from=el("screen").querySelector(".chef-week-day.selected strong")?.getBoundingClientRect();
+ const offset=(date.getDay()+6)%7;
+ const previousOffset=(selectedDay.getDay()+6)%7;
+ selectedDay=date;chefWeekSelection=selection;render();
+ chefWeekMovingCircle?.remove();chefWeekMovingCircle=null;
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||
+   before===after||Math.abs(offset-previousOffset)>1||!from)return;
+ const toNode=el("screen").querySelector(".chef-week-day.selected strong");
+ const to=toNode?.getBoundingClientRect();
+ if(!to?.width||!from.width||Math.abs(from.left-to.left)>innerWidth*1.5)return;
+ const ghost=node("span","chef-week-moving-circle");
+ ghost.style.width=to.width+"px";ghost.style.height=to.height+"px";
+ ghost.style.left=to.left+"px";ghost.style.top=to.top+"px";
+ document.body.append(ghost);chefWeekMovingCircle=ghost;
+ toNode.classList.add("chef-week-circle-arriving");
+ const dx=from.left-to.left,dy=from.top-to.top;
+ const animation=ghost.animate([
+  {transform:"translate3d("+dx+"px,"+dy+"px,0) scale(.97)",opacity:1},
+  {offset:.72,transform:"translate3d("+(-dx*.025)+"px,"+(-dy*.025)+"px,0) scale(1.045)",opacity:1},
+  {transform:"translate3d(0,0,0) scale(1)",opacity:1}
+ ],{duration:460,easing:"cubic-bezier(.25,.75,.3,1)"});
+ const finish=()=>{ghost.remove();toNode.classList.remove("chef-week-circle-arriving");
+  if(chefWeekMovingCircle===ghost)chefWeekMovingCircle=null;
+ };
+ animation.onfinish=finish;animation.oncancel=finish;setTimeout(finish,550);
+}
 function renderChefWeekly(root){
  const start=monday(selectedDay),keys=Array.from({length:7},(_,i)=>dateKey(shift(start,i)));
  const grid=node("div","chef-week-grid");
@@ -727,7 +831,7 @@ function renderChefWeekly(root){
   dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
   dayHead.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
     node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
-  dayHead.onclick=()=>{selectedDay=date;chefWeekSelection=null;render();};
+  dayHead.onclick=()=>selectChefWeekDay(date);
   grid.append(dayHead);
  }
  const visible=mealOrder.filter(meal=>keys.some(key=>mealAvailable(key,meal)));
@@ -740,9 +844,7 @@ function renderChefWeekly(root){
    cell.append(iconForMeal(meal));
    cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
    if(available)cell.onclick=()=>{
-    chefWeekSelection=active?null:{date:key,meal};
-    selectedDay=new Date(key+"T12:00:00");
-    render();
+    selectChefWeekDay(new Date(key+"T12:00:00"),active?null:{date:key,meal});
    };
    grid.append(cell);
   }
@@ -972,7 +1074,7 @@ function render(){
   }
   el("chef-view-mode").hidden=activeTab!=="home";
   for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
-  const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();
+  const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();screen.removeAttribute("aria-busy");
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
   if(activeTab==="menus")renderMenus(screen);
@@ -981,36 +1083,163 @@ function render(){
   paintChefIcons();
   syncChefSelection(el("chef-view-mode"));
   syncChefSelection(nav);
+  animateChefSwipeEntry();
 }
-el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{button.onclick=()=>{chefViewMode=button.dataset.view;chefWeekSelection=null;render();bounceChefSelection(el("chef-view-mode"));};});
+/* The Player's 500ms directional page entry, not an unapproved
+   horizontal tab gesture. */
+const chefTabOrder=["home","plans","menus","profile"];
+let chefLastScrollY=0,chefScrollAccum=0,chefScrollDirection=0,chefScrollFrame=0;
+function changeChefTab(next){
+ if(!chefTabOrder.includes(next)||next===activeTab)return;
+ const direction=chefTabOrder.indexOf(activeTab)<chefTabOrder.indexOf(next)?1:-1;
+ chefSwipeEntryDirection=0;chefSwipeEntryAnimation?.cancel();chefSwipeEntryAnimation=null;
+ clearChefGesture();
+ const screen=el("screen");screen.getAnimations?.().forEach(animation=>animation.cancel());
+ screen.style.transform="";screen.style.transition="";screen.style.willChange="";
+ const nav=el("chef-nav");nav.classList.remove("chef-nav-compact");
+ chefScrollAccum=0;chefLastScrollY=Math.max(0,window.scrollY||0);
+ activeTab=next;render();
+ if(!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches&&typeof screen.animate==="function")
+  screen.animate([
+   {transform:"translateX("+(direction*24)+"px)",opacity:.55},
+   {transform:"translateX(0)",opacity:1}
+  ],{duration:500,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+ bounceChefSelection(nav);
+}
+/* Same 28px directional scroll hysteresis as Player's bottom navigation. */
+function updateChefAdaptiveNav(){
+ chefScrollFrame=0;
+ const nav=el("chef-nav");
+ if(!nav||nav.hidden)return;
+ const y=Math.max(0,window.scrollY||document.documentElement.scrollTop||0);
+ const delta=y-chefLastScrollY;chefLastScrollY=y;
+ if(y<32){
+  if(nav.classList.contains("chef-nav-compact")){
+   nav.classList.remove("chef-nav-compact");syncChefSelection(nav);
+  }
+  chefScrollAccum=0;return;
+ }
+ if(Math.abs(delta)<1)return;
+ const direction=Math.sign(delta);
+ if(direction!==chefScrollDirection){chefScrollDirection=direction;chefScrollAccum=0;}
+ chefScrollAccum+=Math.abs(delta);
+ if(chefScrollAccum>=28){
+  nav.classList.toggle("chef-nav-compact",direction>0);
+  chefScrollAccum=0;syncChefSelection(nav);
+ }
+}
+window.addEventListener("scroll",()=>{
+ if(!chefScrollFrame)chefScrollFrame=window.requestAnimationFrame(updateChefAdaptiveNav);
+},{passive:true});
+/* Re-measure the glass selection after the compact nav finishes resizing. */
+el("chef-nav").addEventListener("transitionend",event=>{
+ if(event.target===el("chef-nav")&&["left","right","padding"].includes(event.propertyName))
+  syncChefSelection(el("chef-nav"));
+});
+window.addEventListener("resize",()=>{
+ if(!el("chef-nav").hidden)syncChefSelection(el("chef-nav"));
+},{passive:true});
+
+function animateChefSwipeEntry(){
+ const direction=chefSwipeEntryDirection;chefSwipeEntryDirection=0;
+ if(!direction||activeTab!=="home"||chefViewMode!=="day")return;
+ const screen=el("screen");
+ if(typeof screen.animate!=="function"||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ chefSwipeEntryAnimation?.cancel();
+ // Calendar/mode and bottom navigation never move or fade with the day.
+ chefSwipeEntryAnimation=screen.animate([
+  {transform:"translateX("+(direction>0?60:-60)+"px)"},
+  {transform:"translateX(0)"}
+ ],{duration:320,easing:"cubic-bezier(0.2,0.7,0.2,1)"});
+}
+async function chefShiftDay(direction,step){
+ const previous=new Date(selectedDay),next=shift(previous,direction*step);
+ selectedDay=next;chefWeekSelection=null;
+ chefSwipeEntryDirection=activeTab==="home"&&chefViewMode==="day"?direction:0;
+ if(dateKey(monday(previous))===dateKey(monday(next))){render();return;}
+ try{await loadWeek();}
+ catch(err){selectedDay=previous;chefSwipeEntryDirection=0;showError(txt().fail);}
+}
+el("chef-view-mode").querySelectorAll("[data-view]").forEach(button=>{
+ button.onclick=()=>{
+  if(chefViewMode===button.dataset.view)return;
+  chefViewMode=button.dataset.view;chefWeekSelection=null;
+  chefSwipeEntryDirection=0;render();bounceChefSelection(el("chef-view-mode"));
+ };
+});
 el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
-  button.onclick=()=>{activeTab=button.dataset.tab;render();bounceChefSelection(el("chef-nav"));};
+ button.onclick=()=>changeChefTab(button.dataset.tab);
 });
 
-/* Match the player's horizontal day/week navigation while respecting native scrolling. */
-let chefGestureStart=null;
-el("screen").addEventListener("touchstart",event=>{
- chefGestureStart=null;
- if(event.touches.length!==1||!["home","menus"].includes(activeTab))return;
+/* Player-matched Início → Dia: interactive horizontal drag and 210ms
+   exit / 320ms entry. Weekly grid and Menus preserve their week gestures.
+   Native vertical scrolling and editable controls are never hijacked. */
+let chefTouchStart=null,chefTouchActive=false,chefTouchScreen=null,chefTouchTimeout=null;
+function clearChefGesture(){
+ if(chefTouchTimeout!==null){clearTimeout(chefTouchTimeout);chefTouchTimeout=null;}
+ if(chefTouchScreen){
+  chefTouchScreen.style.transform="";chefTouchScreen.style.transition="";
+  chefTouchScreen.style.willChange="";
+ }
+ chefTouchStart=null;chefTouchActive=false;chefTouchScreen=null;
+}
+function finishChefGesture(dx,done){
+ if(!chefTouchScreen||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches){
+  clearChefGesture();done?.();return;
+ }
+ chefTouchScreen.style.transition="transform 210ms cubic-bezier(.2,.8,.2,1)";
+ chefTouchScreen.style.transform="translate3d("+dx+"px,0,0)";
+ chefTouchTimeout=setTimeout(()=>{clearChefGesture();done?.();},215);
+}
+const chefSwipeArea=el("screen");
+chefSwipeArea.addEventListener("touchstart",event=>{
+ clearChefGesture();
+ if(activeTab==="home"&&chefViewMode==="day"){
+  chefSwipeEntryAnimation?.cancel();chefSwipeEntryAnimation=null;
+ }
+ if(event.touches.length!==1||!["home","menus"].includes(activeTab)||chefSkeletonVisible)return;
  const target=event.target;
- if(target.closest?.("input,textarea,select,[contenteditable],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
+ if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay,.chef-dish-photo-frame"))return;
  if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-navigation"))return;
  if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
- const t=event.touches[0];
- if(t.clientX<22||t.clientX>window.innerWidth-22)return;
- chefGestureStart={x:t.clientX,y:t.clientY};
+ for(let current=target;current&&current!==chefSwipeArea;current=current.parentElement){
+  if(current.scrollWidth>current.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(current).overflowX))return;
+ }
+ const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
+ chefTouchScreen=activeTab==="home"&&chefViewMode==="day"?chefSwipeArea:null;
+ chefTouchStart={x:t.clientX,y:t.clientY,at:performance.now(),width:chefSwipeArea.getBoundingClientRect().width};
 },{passive:true});
-el("screen").addEventListener("touchend",event=>{
- const start=chefGestureStart;chefGestureStart=null;
- if(!start||event.changedTouches.length!==1)return;
- const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
- if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4)return;
- const delta=dx<0?1:-1,previous=monday(selectedDay);
+chefSwipeArea.addEventListener("touchmove",event=>{
+ if(!chefTouchStart||event.touches.length!==1)return;
+ const t=event.touches[0],dx=t.clientX-chefTouchStart.x,dy=t.clientY-chefTouchStart.y;
+ if(!chefTouchActive){
+  if(Math.abs(dy)>18&&Math.abs(dy)>Math.abs(dx)*1.35){clearChefGesture();return;}
+  if(Math.abs(dx)<8||Math.abs(dx)<Math.abs(dy)*.8)return;
+  chefTouchActive=true;
+ }
+ if(event.cancelable)event.preventDefault();
+ if(chefTouchScreen&&!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches){
+  chefTouchScreen.style.transition="none";chefTouchScreen.style.willChange="transform";
+  chefTouchScreen.style.transform="translate3d("+Math.max(-chefTouchStart.width,Math.min(chefTouchStart.width,dx))+"px,0,0)";
+ }
+},{passive:false});
+chefSwipeArea.addEventListener("touchend",event=>{
+ if(!chefTouchStart||!chefTouchActive||event.changedTouches.length!==1){clearChefGesture();return;}
+ const dx=event.changedTouches[0].clientX-chefTouchStart.x;
+ const dy=event.changedTouches[0].clientY-chefTouchStart.y;
+ const direction=dx<0?1:-1;
+ const minSwipe=activeTab==="home"&&chefViewMode==="day"?35:55;
+ if(Math.abs(dx)<minSwipe||Math.abs(dx)<Math.abs(dy)*1.4){finishChefGesture(0);return;}
+ const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
+ const commit=activeTab==="home"&&chefViewMode==="day"
+  ?Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55):true;
  const step=activeTab==="menus"||(activeTab==="home"&&chefViewMode==="week")?7:1;
- selectedDay=shift(selectedDay,delta*step);
- chefWeekSelection=null;
- if(dateKey(previous)===dateKey(monday(selectedDay)))render();
- else loadWeek().catch(()=>showError(txt().fail));
+ const navigate=()=>{if(commit)chefShiftDay(direction,step);};
+ if(chefTouchScreen)finishChefGesture(commit?-direction*chefTouchStart.width:0,navigate);
+ else{clearChefGesture();navigate();}
+},{passive:true});
+chefSwipeArea.addEventListener("touchcancel",()=>{
+ if(chefTouchActive)finishChefGesture(0);else clearChefGesture();
 },{passive:true});
 el("top-logout").onclick=async()=>{
   try{await request("/api/logout","POST",{});}catch(e){}
