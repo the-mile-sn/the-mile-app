@@ -36,8 +36,8 @@ test("fast same-week navigation avoids forced skeleton while keeping session gua
  assert.match(js,/function renderPendingDaySkeleton\(\)/);
  assert.match(js,/if\(overviewMode==="week"\)renderPendingWeeklySkeleton\(\);\s*else renderPendingDaySkeleton\(\)/);
  assert.match(js,/const count=1\+Math\.min\(7,Math\.max\(3,mealCount\)\)/);
- const snapshotBranch=js.slice(js.indexOf(" if(snapshot){",js.indexOf("async function overview(){")),
-  js.indexOf(" }else{",js.indexOf(" if(snapshot){",js.indexOf("async function overview(){")));
+ const snapshotStart=js.indexOf(" if(snapshot){",js.indexOf("async function overview(){"));
+ const snapshotBranch=js.slice(snapshotStart,js.indexOf(" }else{",snapshotStart));
  assert.match(snapshotBranch,/setOverviewLoading\(false\)/);
  assert.doesNotMatch(snapshotBranch,/setOverviewLoading\(true/);
  assert.doesNotMatch(snapshotBranch,/scheduleOverviewDaySkeleton/);
