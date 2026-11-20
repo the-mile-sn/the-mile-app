@@ -49,7 +49,7 @@ test("menu-linked recipe details omit duplicate photographs and titles",()=>{
  assert.match(js,/\{includePhoto:false\}/);
  assert.match(js,/\{includePhoto:false\}/);
  assert.doesNotMatch(js,/if\(dishPhotoUrl\)/);
- assert.match(js,/if\(includePhoto&&recipe\.has_photo\)identity\.append\(thumb\(recipe\.id,true\)\)/);
+ assert.match(js,/if\(includePhoto&&recipe\.has_photo&&!showHero\)identity\.append\(thumb\(recipe\.id,true\)\)/);
 });
 
 test("multi-recipe dish opens a separate list with library-style cards",()=>{
