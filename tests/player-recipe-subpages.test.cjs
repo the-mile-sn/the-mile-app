@@ -137,7 +137,7 @@ test("multi-recipe dish has explicit back navigation and preserves menu scroll",
 test("hero replaces the previous inline photo offset without altering recipe body",()=>{
  assert.equal((css.match(/#menus \.recipe-detail-standalone > \.recipe-hero\{/g)||[]).length,1);
  assert.doesNotMatch(css,/#menus \.recipe-detail-standalone \.recipe-identity \.recipe-detail-photo\{/);
- assert.match(js,/if\(showHero\)\{\s*const hero=thumb\(recipe\.id,true\)/);
+ assert.match(js,/if\(showHero\)\{\s*root\.classList\.add\("recipe-detail--hero"\);\s*const hero=thumb\(recipe\.id,true\)/);
  assert.match(js,/if\(includePhoto&&recipe\.has_photo&&!showHero\)identity\.append\(thumb\(recipe\.id,true\)\)/);
  assert.match(js,/ingredientList\(ingredients,recipe\.sections\)/);
  assert.match(js,/sectionTitle\("Preparação","preparation"\)/);
