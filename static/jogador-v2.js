@@ -131,6 +131,8 @@ function revokePlayerView(){
   const el=$(id);if(el)el.replaceChildren();
  }
  document.querySelectorAll("#menu-week-strip .week-day").forEach(el=>el.remove());
+  mileLastCalendarSelectionByStrip.delete($("week-strip"));
+  mileLastCalendarSelectionByStrip.delete($("menu-week-strip"));
  resetProfileSubpage();
  for(const id of ["profile-photo","header-player-photo"]){const image=$(id);image.hidden=true;image.removeAttribute("src");image.onload=null;image.onerror=null;}
  $("profile-photo-initials").hidden=false;$("avatar-initials").hidden=false;
@@ -1539,14 +1541,14 @@ function reusableOverviewSnapshot(weekKey,now=Date.now()){
  return snapshot&&snapshot.weekKey===weekKey&&now>=snapshot.time&&now-snapshot.time<OVERVIEW_CACHE_MS?snapshot:null;
 }
 let lastOverviewPresentation=null;
-let mileLastCalendarSelection=null;
+const mileLastCalendarSelectionByStrip=new WeakMap();
 function animateCalendarSelection(strip,dateKey){
  const selected=strip.querySelector('.week-day.selected .day-number');
  if(!selected)return;
  const selectedButton=selected.closest('.week-day');
- const previous=mileLastCalendarSelection;
+ const previous=mileLastCalendarSelectionByStrip.get(strip);
  const current={key:dateKey,label:selectedButton.getAttribute('aria-label'),rect:selected.getBoundingClientRect(),index:[...strip.querySelectorAll('.week-day')].indexOf(selectedButton)};
- mileLastCalendarSelection=current;
+ mileLastCalendarSelectionByStrip.set(strip,current);
  if(!previous||previous.key===dateKey||current.index<0)return;
  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
  if(reduce)return;
@@ -2666,20 +2668,21 @@ async function menusView(){
   for(const [cls,value] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",classification]]){
    const span=document.createElement("span");span.className=cls;span.textContent=value;button.append(span);
   }
-  button.onclick=()=>{selectMenuDay(key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
+  button.onclick=()=>{selectMenuDay(key);animateCalendarSelection(strip,key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
   strip.append(button);
  }
- const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"Geral";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);if(!menu)continue;const div=document.createElement("div");div.className="row menu-entry";div.dataset.meal=meal;
+ animateCalendarSelection(strip,menuSelectedDate);
+ const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"Geral";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);const isUnassigned=!menu;const div=document.createElement("div");div.className="row menu-entry"+(isUnassigned?" menu-entry--unassigned":"");div.dataset.meal=meal;
  const label=document.createElement("strong");label.textContent=names[meal];
- const rowClass=c.classifications.find(x=>x.name===(dayClass?.classification||"Geral"));const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal]);
+ const rowClass=c.classifications.find(x=>x.name===(dayClass?.classification||"Geral"));const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=menu?(Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal])):null;
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";
  if(color&&color!=="none"){const dot=document.createElement("span");dot.className="color-dot "+color;title.append(dot);}
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
- const name=document.createElement("span");name.className="value";name.textContent=menu.value;if(menu.kind==="text")name.classList.add("menu-free-text-value");
+ const name=document.createElement("span");name.className="value";name.textContent=menu?.value||"Menu por atribuir";if(menu?.kind==="text")name.classList.add("menu-free-text-value");
  const nameColumn=document.createElement("div");nameColumn.className="menu-dish-name-column";nameColumn.append(name);
  body.append(nameColumn);
- if(menu.kind==="dish"){
+ if(menu?.kind==="dish"){
   const dish=menu.dish_id?dishById.get(menu.dish_id):uniqueDishByName.get(menu.value);
   if(dish){
    const photo=document.createElement("img");
