@@ -1101,6 +1101,15 @@ function updateChefAdaptiveNav(){
 window.addEventListener("scroll",()=>{
  if(!chefScrollFrame)chefScrollFrame=window.requestAnimationFrame(updateChefAdaptiveNav);
 },{passive:true});
+/* Re-measure the glass selection after the compact nav finishes resizing. */
+el("chef-nav").addEventListener("transitionend",event=>{
+ if(event.target===el("chef-nav")&&["left","right","padding"].includes(event.propertyName))
+  syncChefSelection(el("chef-nav"));
+});
+window.addEventListener("resize",()=>{
+ if(!el("chef-nav").hidden)syncChefSelection(el("chef-nav"));
+},{passive:true});
+
 function animateChefSwipeEntry(){
  const direction=chefSwipeEntryDirection;chefSwipeEntryDirection=0;
  if(!direction||activeTab!=="home"||chefViewMode!=="day")return;
