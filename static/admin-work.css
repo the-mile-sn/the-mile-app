@@ -66,44 +66,70 @@
 .tm-work-task-state.is-done{--tm-work-state:var(--tm-state-success-fg)}
 .tm-work-task-state.is-open{--tm-work-state:var(--tm-state-pending-fg)}
 .tm-work-overdue{color:var(--tm-state-review-fg)}
+/* Shared Work modals: card / one subcard per two-line field / transparent input. */
 .tm-work-dialog{
- box-sizing:border-box;width:min(94vw,540px);max-height:min(91dvh,820px);
- margin:auto;padding:23px;border:0;border-radius:18px;
+ box-sizing:border-box;width:min(94vw,540px);max-height:calc(100dvh - 32px);
+ margin:auto;padding:24px;border:0;border-radius:18px;overflow-y:auto;
+ overscroll-behavior:contain;scrollbar-width:thin;box-shadow:none;
  background:var(--tm-ui-card);color:var(--tm-ui-text);
- box-shadow:0 18px 55px rgba(0,0,0,.18);
- font-family:"Inter Tight",system-ui,sans-serif
+ font-family:"Inter Tight","SF Pro Text",Arial,sans-serif
 }
+html[data-admin-theme="dark"] .tm-work-dialog{color-scheme:dark}
+html[data-admin-theme="light"] .tm-work-dialog{color-scheme:light}
 .tm-work-dialog::backdrop{background:rgba(0,0,0,.76)}
-.tm-work-dialog form{margin:0;display:flex;flex-direction:column;gap:14px}
-.tm-work-dialog-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.tm-work-dialog-title h2{font:600 18px/1.3 "Inter Tight",system-ui,sans-serif;margin:0}
-.tm-work-dialog-title>button{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:var(--tm-ui-search);color:var(--tm-ui-text);font-size:22px;cursor:pointer}
-.tm-work-dialog-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.tm-work-field{display:flex;flex-direction:column;gap:6px;min-width:0}
-.tm-work-wide{grid-column:1 / -1}
-.tm-work-field>span{font:500 12px/1.4 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted)}
+.tm-work-dialog form{margin:0;display:flex;flex-direction:column;gap:16px}
+.tm-work-dialog-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:3px}
+.tm-work-dialog-title h2{margin:0;color:var(--tm-ui-text);font:600 20px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif}
+.tm-work-dialog-title>button{
+ appearance:none;flex:none;display:grid;place-items:center;width:36px;height:36px;
+ padding:7px;border:0;border-radius:9px;background:transparent;color:var(--tm-ui-text);cursor:pointer
+}
+.tm-work-dialog-title>button:hover{background:var(--tm-ui-hover)}
+.tm-work-dialog-title>button svg{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tm-work-dialog-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;min-width:0}
+.tm-work-field{
+ box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:4px;
+ min-width:0;min-height:76px;margin:0;padding:12px 14px;border:0;border-radius:13px;
+ background:var(--tm-ui-subcard);color:var(--tm-ui-text);box-shadow:none
+}
+.tm-work-wide{grid-column:1/-1}
+.tm-work-field>span{display:block;color:var(--tm-ui-muted);font:500 12px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif}
 .tm-work-field :is(input,select,textarea){
- box-sizing:border-box;min-height:42px;width:100%;max-width:100%;
- padding:10px 12px;background:var(--tm-ui-search);
- border:1px solid var(--tm-ui-divider);border-radius:10px;
- color:var(--tm-ui-text);font:400 14px/1.4 "Inter Tight",system-ui,sans-serif
+ box-sizing:border-box;display:block;width:100%;max-width:100%;min-width:0;
+ min-height:30px;height:30px;margin:0;padding:2px 0;border:0;border-radius:0;
+ background:transparent;box-shadow:none;outline:none;color:var(--tm-ui-text);
+ font:500 15px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif
 }
-.tm-work-field textarea{resize:vertical;min-height:78px}
-.tm-work-field :is(input,select,textarea):focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:1px}
-.tm-work-dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.tm-work-field :is(input,select,textarea)::placeholder{color:var(--tm-ui-muted);opacity:.85}
+.tm-work-field select{appearance:auto;cursor:pointer;padding-right:6px}
+.tm-work-field select option{background:var(--tm-ui-card);color:var(--tm-ui-text)}
+.tm-work-field textarea{height:auto;min-height:68px;resize:vertical;padding-top:5px}
+.tm-work-field:has(textarea){justify-content:flex-start}
+.tm-work-field:focus-within{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px}
+.tm-work-dialog-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:2px}
 .tm-work-dialog-actions button{
- min-height:40px;padding:9px 15px;border:0;border-radius:11px;
- font:500 12px/1.2 "Inter Tight",system-ui,sans-serif;cursor:pointer
+ appearance:none;display:inline-flex;justify-content:center;align-items:center;
+ min-height:42px;padding:10px 17px;border:0;border-radius:12px;
+ font:500 13px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
+ cursor:pointer;box-shadow:none;transition:background-color .15s ease
 }
-.tm-work-cancel{background:var(--tm-ui-search);color:var(--tm-ui-text)}
-.tm-work-save{background:var(--tm-ui-text);color:var(--tm-ui-card)}
+.tm-work-dialog-actions button:disabled{opacity:.55;cursor:progress}
+.tm-work-cancel{background:transparent;color:var(--tm-ui-text)}
+.tm-work-cancel:hover{background:var(--tm-ui-hover)}
+.tm-work-save{background:var(--tm-action-main-bg,var(--tm-ui-search));color:var(--tm-action-main-fg,var(--tm-ui-text))}
+.tm-work-save:hover{background:var(--tm-action-main-hover,var(--tm-ui-hover))}
 .tm-work-delete{margin-right:auto;background:var(--tm-action-danger-bg);color:var(--tm-action-danger-fg)}
-.tm-work-error{font:400 12px/1.4 "Inter Tight",system-ui,sans-serif;color:var(--tm-state-error-fg);margin:0}
+.tm-work-delete:hover{background:var(--tm-action-danger-hover)}
+.tm-work-error{margin:0;color:var(--tm-state-error-fg,#bf6675);font:400 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif}
 .tm-work-error:empty{display:none}
+.tm-work-dialog button:focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.tm-work-dialog-actions button{transition:none}}
 @media(max-width:550px){
- .tm-work-dialog{width:calc(100vw - 22px);padding:18px;max-height:92dvh}
- .tm-work-dialog-fields{column-gap:9px}
+ .tm-work-dialog{width:calc(100vw - 22px);padding:18px;max-height:calc(100dvh - 22px)}
+ .tm-work-dialog-fields{column-gap:9px;row-gap:9px}
+ .tm-work-field{min-height:72px;padding:11px 12px}
  .tm-work-field :is(input,select,textarea){font-size:16px}
+ .tm-work-dialog-actions button{min-height:44px}
  .tm-work-line{align-items:flex-start;flex-wrap:wrap}
  .tm-work-line-actions{width:100%;justify-content:flex-end}
  .tm-work-tasks-surface{padding:12px}

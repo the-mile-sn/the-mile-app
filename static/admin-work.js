@@ -68,7 +68,11 @@
   }
   select.value=chosen&&admins.some(x=>x.id===chosen)?chosen:me.id;
  }
- function showError(id,error){const field=$(id);if(field)field.textContent=String(error?.message||error||"Erro desconhecido.");}
+ function showError(id,error){
+  const field=$(id);
+  if(!field)return;
+  field.textContent=(error==null||error==="")?"":String(error?.message||error||"Erro desconhecido.");
+ }
  function dateInPage(){
   return document.querySelector("#tm-appointments-days .tm-appointments-day.is-selected")?.dataset.date||
    new URLSearchParams(location.search).get("date")||today();
