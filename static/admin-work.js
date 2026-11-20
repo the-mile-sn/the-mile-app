@@ -203,7 +203,7 @@
   }
  }
  async function refreshTasks(){
-  if(!page)return;
+  if(!dashboard)return;
   const token=++taskRequest;
   const filter=$("tm-work-task-filter")?.value||"open";
   const list=$("tm-work-task-list");
@@ -226,15 +226,13 @@
   if(!list)return;
   list.replaceChildren(make("p","tm-db-task-empty","A consultar tarefas…"));
   try{
-   const data=await api("/tasks?"+new URLSearchParams({status:"open",until:today()}));
+   // Include pending tasks without a date. A deadline is optional, not a reservation.
+   const data=await api("/tasks?status=open");
    if(token!==dashRequest)return;
+   const pending=data.tasks||[];
    list.replaceChildren();
-   const due=data.tasks||[];
-   if(!due.length){
-    list.append(make("p","tm-db-task-empty","Sem tarefas pendentes para hoje."));
-    return;
-   }
-   for(const item of due.slice(0,3)){
+   if(!pending.length){list.append(make("p","tm-db-task-empty","Sem tarefas por fazer."));return;}
+   for(const item of pending.slice(0,3)){
     const row=make("div","tm-db-task-row");
     const done=make("button","tm-db-task-check");
     done.type="button";done.setAttribute("aria-label","Concluir tarefa: "+item.title);
@@ -243,22 +241,30 @@
      done.disabled=true;
      try{
       await api("/tasks/"+encodeURIComponent(item.id),"PUT",taskBody(item,"done"));
-      await refreshDashboardTasks();
+      await Promise.all([refreshDashboardTasks(),refreshTasks()]);
      }catch(error){list.prepend(make("p","tm-db-task-empty",error.message));done.disabled=false;}
     });
     const copy=make("div","tm-db-task-copy");
-    copy.append(make("span","tm-db-task-title",item.title));
-    copy.append(make("span","tm-db-task-meta",(item.due_date<today()?"Em atraso · ":"Hoje · ")+(item.responsible_name||"Equipa")));
+    const edit=make("button","tm-db-task-title tm-db-task-edit",item.title);
+    edit.type="button";edit.setAttribute("aria-label","Editar tarefa: "+item.title);
+    edit.addEventListener("click",()=>openTask(item));
+    copy.append(edit);
+    const due=item.due_date?(item.due_date<today()?"Em atraso":item.due_date===today()?"Hoje":readable(item.due_date)):"Sem prazo";
+    copy.append(make("span","tm-db-task-meta",due+" · "+(item.responsible_name||"Equipa")));
     row.append(done,copy);list.append(row);
    }
-   if(due.length>3){
-    const more=make("a","tm-db-task-meta","+"+(due.length-3)+" tarefa(s) · Ver todas");
-    more.href="/admin-appointments#tarefas";
-    list.append(more);
+   if(pending.length>3||data.truncated){
+    const more=make("button","tm-db-task-more",data.truncated?"Ver todas as tarefas":"Ver todas ("+pending.length+")");
+    more.type="button";more.addEventListener("click",openTasksManager);list.append(more);
    }
   }catch(error){
    if(token===dashRequest)list.replaceChildren(make("p","tm-db-task-empty",error.message));
   }
+ }
+ function openTasksManager(){
+  const dialog=$("tm-work-tasks-dialog");
+  if(!dialog||dialog.open)return;
+  dialog.showModal();refreshTasks();
  }
  window.tmDashboardWorkRefresh=refreshDashboardTasks;
  if(dashboard){
@@ -269,29 +275,32 @@
     const date=add.dataset.date||today();
     const booking=menu.querySelector('[data-work-quick="booking"]');
     const event=menu.querySelector('[data-work-quick="event"]');
-    const task=menu.querySelector('[data-work-quick="task"]');
     booking.href=add.dataset.bookingHref||"/admin-appointments?new=1#agenda";
     event.href="/admin-appointments?"+new URLSearchParams({date,new:"event",view:"day"})+"#agenda";
-    task.href="/admin-appointments?"+new URLSearchParams({date,new:"task"})+"#tarefas";
    }
    add.addEventListener("click",()=>{
     updateMenuLinks();
     menu.hidden=!menu.hidden;
     add.setAttribute("aria-expanded",String(!menu.hidden));
-    if(!menu.hidden)menu.querySelector("a")?.focus();
+    if(!menu.hidden)menu.querySelector("a,button")?.focus();
    });
    document.addEventListener("click",e=>{if(!menu.contains(e.target)&&!add.contains(e.target))closeMenu();});
    document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!menu.hidden){closeMenu();add.focus();}});
    menu.addEventListener("keydown",e=>{
     if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key))return;
     e.preventDefault();
-    const links=[...menu.querySelectorAll("a")];
+    const links=[...menu.querySelectorAll("a,button")];
     const current=links.indexOf(document.activeElement);
     const next=e.key==="Home"?0:e.key==="End"?links.length-1:
      (current+(e.key==="ArrowDown"?1:-1)+links.length)%links.length;
     links[next]?.focus();
    });
    menu.querySelectorAll("a").forEach(link=>link.addEventListener("click",closeMenu));
+   menu.querySelector('[data-work-quick="task"]').addEventListener("click",()=>{
+    const selectedDate=add.dataset.date||today();
+    closeMenu();
+    openTask(null,selectedDate);
+   });
   }
   const dashObserver=new MutationObserver(()=>{
    if(!dashboard.hidden)refreshDashboardTasks();
@@ -299,15 +308,42 @@
   dashObserver.observe(dashboard,{attributes:true,attributeFilter:["hidden"]});
   if(!dashboard.hidden)refreshDashboardTasks();
  }
+ if(dashboard){
+  $("tm-db-tasks-open").addEventListener("click",openTasksManager);
+  $("tm-work-new-task").addEventListener("click",()=>openTask());
+  $("tm-work-task-filter").addEventListener("change",refreshTasks);
+  $("tm-work-task-form").addEventListener("submit",async e=>{
+   e.preventDefault();showError("tm-work-task-error","");
+   const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
+   try{
+    const payload=formPayloadTask();
+    if(editingTask)payload.version=editingTask.version;
+    await api("/tasks"+(editingTask?"/"+encodeURIComponent(editingTask.id):""),
+     editingTask?"PUT":"POST",payload);
+    $("tm-work-task-dialog").close();
+    await Promise.all([refreshTasks(),refreshDashboardTasks()]);
+   }catch(error){showError("tm-work-task-error",error);}
+   finally{submit.disabled=false;}
+  });
+  $("tm-work-task-delete").addEventListener("click",async()=>{
+   if(!editingTask||!confirm("Eliminar esta tarefa?"))return;
+   try{
+    await api("/tasks/"+encodeURIComponent(editingTask.id),"DELETE",{version:editingTask.version});
+    $("tm-work-task-dialog").close();
+    await Promise.all([refreshTasks(),refreshDashboardTasks()]);
+   }catch(error){showError("tm-work-task-error",error);}
+  });
+  for(const dialogId of ["tm-work-task-dialog","tm-work-tasks-dialog"]){
+   const dialog=$(dialogId);
+   dialog.querySelectorAll("[data-tm-work-close]").forEach(btn=>btn.addEventListener("click",()=>dialog.close()));
+   dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
+  }
+ }
  if(!page)return;
  $("tm-work-new-event").addEventListener("click",()=>openEvent());
- $("tm-work-new-task").addEventListener("click",()=>openTask());
- $("tm-work-task-filter").addEventListener("change",refreshTasks);
- document.querySelectorAll("[data-tm-work-close]").forEach(btn=>btn.addEventListener("click",()=>btn.closest("dialog")?.close()));
- for(const id of ["tm-work-event-dialog","tm-work-task-dialog"]){
-  const dialog=$(id);
-  dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
- }
+ const eventDialog=$("tm-work-event-dialog");
+ eventDialog.querySelectorAll("[data-tm-work-close]").forEach(btn=>btn.addEventListener("click",()=>eventDialog.close()));
+ eventDialog.addEventListener("click",e=>{if(e.target===eventDialog)eventDialog.close();});
  $("tm-work-event-form").addEventListener("submit",async e=>{
   e.preventDefault();showError("tm-work-event-error","");
   const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
@@ -316,52 +352,28 @@
    if(editingEvent)payload.version=editingEvent.version;
    await api("/events"+(editingEvent?"/"+encodeURIComponent(editingEvent.id):""),
     editingEvent?"PUT":"POST",payload);
-   $("tm-work-event-dialog").close();
+   eventDialog.close();
    await refreshEvents();
   }catch(error){showError("tm-work-event-error",error);}
-  finally{submit.disabled=false;}
- });
- $("tm-work-task-form").addEventListener("submit",async e=>{
-  e.preventDefault();showError("tm-work-task-error","");
-  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
-  try{
-   const payload=formPayloadTask();
-   if(editingTask)payload.version=editingTask.version;
-   await api("/tasks"+(editingTask?"/"+encodeURIComponent(editingTask.id):""),
-    editingTask?"PUT":"POST",payload);
-   $("tm-work-task-dialog").close();
-   await Promise.all([refreshTasks(),refreshDashboardTasks()]);
-  }catch(error){showError("tm-work-task-error",error);}
   finally{submit.disabled=false;}
  });
  $("tm-work-event-delete").addEventListener("click",async()=>{
   if(!editingEvent||!confirm("Eliminar este evento interno?"))return;
   try{
    await api("/events/"+encodeURIComponent(editingEvent.id),"DELETE",{version:editingEvent.version});
-   $("tm-work-event-dialog").close();await refreshEvents();
+   eventDialog.close();await refreshEvents();
   }catch(error){showError("tm-work-event-error",error);}
  });
- $("tm-work-task-delete").addEventListener("click",async()=>{
-  if(!editingTask||!confirm("Eliminar esta tarefa?"))return;
-  try{
-   await api("/tasks/"+encodeURIComponent(editingTask.id),"DELETE",{version:editingTask.version});
-   $("tm-work-task-dialog").close();
-   await Promise.all([refreshTasks(),refreshDashboardTasks()]);
-  }catch(error){showError("tm-work-task-error",error);}
- });
- document.addEventListener("tm:appointments-range",()=>refreshEvents());
+ document.addEventListener("tm:appointments-range",refreshEvents);
  let initialized=false;
  function initializePage(){
   if(initialized||page.hidden)return;
-  initialized=true;refreshEvents();refreshTasks();
+  initialized=true;refreshEvents();
   const params=new URLSearchParams(location.search);
-  const create=params.get("new");
-  if(create==="event"||create==="task"){
-   // Consume the one-use deep link without affecting date or tab state.
+  if(params.get("new")==="event"){
    params.delete("new");
    history.replaceState(null,"",location.pathname+(params.toString()?"?"+params:"")+location.hash);
-   if(create==="event")openEvent();
-   else openTask(null,dateInPage());
+   openEvent();
   }
  }
  new MutationObserver(initializePage).observe(page,{attributes:true,attributeFilter:["hidden"]});
