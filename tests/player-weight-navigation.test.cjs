@@ -34,7 +34,8 @@ test("expanded weight action becomes close X for editor and chart, with accessib
 test("weekly macro chart typography does not affect the collapsed summary",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
  assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-heading\{/);
- assert.match(css,/font-size:16px!important;\s*font-weight:650!important/);
+ assert.match(css,/font-size:16px!important;\s*font-weight:var\(--mile-type-semibold,600\)!important/);
+ assert.match(css,/font-size:12px!important;\s*font-weight:var\(--mile-type-regular,400\)!important/);
  assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/);
 });
 

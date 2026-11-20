@@ -41,7 +41,7 @@ test("Recipes category geometry and title follow the approved visual guide",()=>
  const recipeJS=fs.readFileSync("static/player-recipes.js","utf8");
  assert.match(recipeJS,/if\(small\)button\.classList\.add\("recipe-item--category"\)/);
  assert.match(recipeJS,/list\.append\(card\(r\.name,"",r\.has_photo\?r\.id:null/);
- assert.match(html,/jogador-v2\.css\?v=266/);
+ assert.match(html,/jogador-v2\.css\?v=\d+/);
  assert.match(html,/player-recipes\.css\?v=\d+/);
  assert.match(html,/player-recipes\.js\?v=\d+/);
  assert.match(guide,/Menu por atribuir/);
