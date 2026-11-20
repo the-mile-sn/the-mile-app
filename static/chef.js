@@ -1064,6 +1064,7 @@ function changeChefTab(next){
  if(!chefTabOrder.includes(next)||next===activeTab)return;
  const direction=chefTabOrder.indexOf(activeTab)<chefTabOrder.indexOf(next)?1:-1;
  chefSwipeEntryDirection=0;chefSwipeEntryAnimation?.cancel();chefSwipeEntryAnimation=null;
+ clearChefGesture();
  const screen=el("screen");screen.getAnimations?.().forEach(animation=>animation.cancel());
  screen.style.transform="";screen.style.transition="";screen.style.willChange="";
  const nav=el("chef-nav");nav.classList.remove("chef-nav-compact");
@@ -1195,7 +1196,8 @@ chefSwipeArea.addEventListener("touchend",event=>{
  const dx=event.changedTouches[0].clientX-chefTouchStart.x;
  const dy=event.changedTouches[0].clientY-chefTouchStart.y;
  const direction=dx<0?1:-1;
- if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4){finishChefGesture(0);return;}
+ const minSwipe=activeTab==="home"&&chefViewMode==="day"?35:55;
+ if(Math.abs(dx)<minSwipe||Math.abs(dx)<Math.abs(dy)*1.4){finishChefGesture(0);return;}
  const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
  const commit=activeTab==="home"&&chefViewMode==="day"
   ?Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55):true;
