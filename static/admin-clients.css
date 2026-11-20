@@ -620,7 +620,13 @@ html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profil
 html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-actions{
  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
 }
-html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-actions button,
+/* Use the very same .tm-player-access-actions/.tm-players-control styles
+   and semantic colours as player access: green, neutral, red, amber.
+   Do not override their background, border or text with Chef-only rules. */
+html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-actions .tm-players-control svg{
+ display:block;width:18px;height:18px;flex:0 0 18px;
+ fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
 html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-password-actions button{
  display:inline-flex;align-items:center;justify-content:center;gap:9px;
  box-sizing:border-box;min-height:40px;padding:9px 14px;
@@ -628,9 +634,6 @@ html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profil
  background:var(--tm-ui-subcard);color:var(--tm-ui-text);
  font:500 13px/1.25 "Inter Tight","SF Pro Text",Arial,sans-serif;
  cursor:pointer;transition:background-color 140ms ease;
-}
-html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-actions button svg{
- display:block;width:17px;height:17px;flex:0 0 17px;stroke-width:1.8;
 }
 html[data-admin-theme] #tm-players-page #tm-clients-chef-profile :is(.tm-chef-profile-actions,.tm-chef-profile-password-actions) button:disabled{
  opacity:.55;cursor:not-allowed;
@@ -670,7 +673,6 @@ html[data-admin-theme] #tm-players-page #tm-clients-chef-profile #tm-chef-profil
 }
 html[data-admin-theme] #tm-players-page #tm-clients-chef-profile #tm-chef-profile-feedback:empty{display:none}
 @media(hover:hover) and (pointer:fine){
- html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-actions button:hover:not(:disabled),
  html[data-admin-theme] #tm-players-page #tm-clients-chef-profile .tm-chef-profile-password-actions button:hover:not(:disabled):not(.tm-action-primary){
   background:var(--tm-ui-hover);
  }
