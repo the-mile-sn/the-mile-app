@@ -39,8 +39,8 @@ test("change of cached day conceals stale cards while waiting for consumption",(
  assert.match(js,/lastOverviewPresentation\.dateKey!==d/);
  assert.match(js,/lastOverviewPresentation\.mode!=="day"/);
  const overview=js.slice(js.indexOf("async function overview(){"),js.indexOf("\nfunction openPlansSection(",js.indexOf("async function overview(){")));
- assert.ok(overview.includes('cachedOverviewRead("/api/v2/player/consumption-records?start="+d+"&end="+d)'));
- assert.match(overview,/\$\("day-details"\)\.hidden=true/);
+ assert.ok(overview.includes("api('/api/v2/player/consumption-records?start='+d+'&end='+d)"));
+ assert.match(overview,/\$\("day-details"\)\.hidden=isWeek\|\|!\$\("overview-loading"\)\.hidden/);
  const clear=overview.indexOf('root.hidden=false;setOverviewLoading(false);');
  const consumed=overview.indexOf('const consumption=await api(');
  assert.ok(clear>consumed,"Day is not revealed before the consumption request");
