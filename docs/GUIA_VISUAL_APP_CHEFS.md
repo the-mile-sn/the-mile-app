@@ -36,9 +36,13 @@ A App de Chefs tem fonte própria `chef.css` apenas para os componentes que lhe 
 
 **Início → Semana:** sete colunas, datas e células de refeição com **76 px de altura mínima (64 px no mobile mais estreito)**, preservando a proporção já existente na App de Chefs e partilhando a linguagem de cores e tipografia com a vista semanal de Jogadores. A célula abre o detalhe existente sem card de refeição duplicado. A seleção e os gestos de deslizar continuam funcionais e independentes da vista Dia.
 
-**Planos:** reutilizar card universal colorido para prescrições publicadas de cada refeição, preservando opções, alimentos, notas, kcal e macros publicados. Nenhuma ação de consumo do jogador.
+**Planos (estrutura corrigida):** deixar de depender da cor associada à data atual; a consulta apresenta as **cores nutricionais efetivamente publicadas** para o jogador associado, como categorias neutras de 61 px/raio 13 px, com abertura de um detalhe de cor. Nesse detalhe aparecem as refeições de cada cor com os cards universais e opções/quantidades/notas/valores publicados, reutilizando a mesma fonte funcional da App de Chefs. Um botão «Planos» regressa às categorias. A informação permanece exclusivamente de consulta: não inventar treino, peri-jogo, suplementação ou gráficos que a API Chef não disponibilize. Nenhuma ação de consumo do jogador.
 
-**Menus e Receitas:** calendário/menu semanal, dia e classificações de microciclo, pratos atribuídos, categorias, texto livre, fotografias circulares e zoom, pesquisa de pratos aprovados; estilo de categoria de Menus distinto do card universal. A edição de um menu pelo Chef mantém o fluxo de aprovação/auditoria e o modo de pré-visualização administrativa não o permite. Nunca apresentar fotografia ou expandir receita se não houver ficheiro/prato correspondente.
+**Menus e Receitas (navegação e editor corrigidos):** seletor `Menus / Receitas` com **38 px exteriores, botões de 32 px e fonte 13/500**; já existe uma lista dos sete dias, pelo que **não repetir o calendário de sete colunas** por cima. Usar apenas a faixa de **semana anterior ‹ / intervalo / semana seguinte ›**, com 40 px de área de toque nos controlos, preservando a carga da semana e os swipes sobre o controlo. Os sete cards mantêm data e classificação, pratos atribuídos, categorias, texto livre e fotografia circular com zoom, e a barra inferior mantém-se.
+
+Ao definir ou alterar um prato, mostrar um único **editor tonal** com o mesmo fundo ligeiramente mais escuro, raios e botões de duas colunas que o formulário Chef de registo de exceções: título «Definir prato» para menu vazio, «Alterar prato» para menu existente; escolha visível entre **Prato aprovado**, **Categoria** e **Sugerir prato novo** (estes são *modos de origem/atribuição do menu*, não os componentes da refeição). Prato aprovado: pesquisa com lista de resultados própria, seleção explícita e resumo do selecionado; Categoria: lista própria que recolhe após a escolha; Sugestão: nome e observações com aviso de que não altera o menu sem validação. Cancelar e Guardar continuam com as mesmas operações API, controlo de permissões, confirmação e auditoria. Pesquisas não devem abrir teclado automaticamente e os campos de pesquisa não devem provocar zoom do iPhone.
+
+**Receitas:** consulta de pratos aprovados e pesquisa mantida. Nenhuma função de criação de pratos diretamente na biblioteca é introduzida por este lote. Nunca apresentar fotografia ou expandir receita se não houver ficheiro/prato correspondente.
 
 **Perfil:** informação do Chef e do jogador associado, idioma PT/EN com preferência guardada, e terminar sessão. O perfil é intencionalmente mais simples que o do jogador; não inventar dados pessoais nem fotografias sem suporte.
 
@@ -57,10 +61,14 @@ A App de Chefs tem fonte própria `chef.css` apenas para os componentes que lhe 
 
 **Diferenças a validar visualmente após a PR #297:** fontes de sistema em vez de Inter Tight, títulos de cards 16/400, dimensões de cabeçalho/ícones, versão compacta das células semanais, dimensões do título do detalhe, campos do Login e fotografia em carregamento. Os cinco prints são referência da versão anterior; não devem ser apresentados como aprovação do novo código. Exigir validação dos ecrãs de Planos, Menus/Receitas, Perfil e Login e de pelo menos um estado de erro antes de publicar.
 
-## 5. Critérios de regressão obrigatórios
+## 5. Em estudo — componentes da refeição (ainda não autorizados)
+
+A futura organização de cada refeição em **sopa ou entrada / prato principal / sobremesa** deverá ser discutida com a equipa antes de qualquer alteração. Determinar se cada componente é opcional ou obrigatório, se admite escolha por biblioteca, texto livre e categoria, e como se refletem responsabilidades, aprovações, disponibilidade por dia, histórico, visualização do jogador e comportamento do Backoffice. **Não adicionar campos, payloads, migrações ou categorias de refeição neste lote.** Os três modos já existentes (Prato aprovado, Categoria, Sugerir prato) referem-se a formas alternativas de definir o menu atual, não a estes três componentes futuros.
+
+## 6. Critérios de regressão obrigatórios
 
 Antes de integrar/publicar: testes Python do contrato Chef (isolamento do jogador, leitura de prescrições, alterações de menus, auditoria, execução, acesso read-only de administrador); migração PostgreSQL; sintaxe de `chef.js`; testes estáticos da estrutura visual; regressão da App de Jogadores; CI completo. Validar manualmente iPhone Safari/PWA e desktop em Dia, Semana, Planos, Menus/Receitas e Perfil, nos estados vazio/com dados, com Almoço/Jantar e fotografia, com execução e edição abertas, e em PT/EN. Sem validação manual, não declarar paridade visual concluída.
 
-## 6. Limites do lote
+## 7. Limites do lote
 
 Este lote altera apenas apresentação, pequenas classes de carregamento de imagens e testes/documentação. Funcionalidades existentes não são redesenhadas. Pendências funcionais (responsabilidade por alterações de menu, eventual confirmação pelo nutricionista, outras atribuições de profissionais) continuam em planeamento separado.
