@@ -117,7 +117,8 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn("details{border-top:1px solid #38383f;padding:12px 0}", CSS)
         self.assertIn("margin:0 0 9px!important", base[0])
         self.assertIn("min-height:86px", header[0])
-        self.assertIn("font-size:17px;font-weight:600", header[0])
+        self.assertIn("font-size:16px;font-weight:500", header[0])
+        self.assertNotIn("font-size:17px;font-weight:600", header[0])
         self.assertIn("padding:11px 17px", header[0])
         self.assertIn("padding:0 17px 8px", body[0])
         self.assertIn('group.className="plans-all-group"', JS)
@@ -125,6 +126,8 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn('renderPlanContent(key,content)', JS)
         self.assertIn("sem fotografia nem espaço reservado para fotografia", GUIDE)
         self.assertIn("Implementação Planos → Todos (20/11)", GUIDE)
+        self.assertIn("| Título de categoria — Planos → Todos | **16 px / 500** |", GUIDE)
+        self.assertIn("Receitas mantém 15 px / 500", GUIDE)
 
     def test_assessment_graph_matches_daily_weight_graph_surface(self):
         graph = declarations("#plans .assessment-trend")
