@@ -1331,9 +1331,23 @@ html[data-admin-theme="light"] #import-review .option-editor .meal-line-order-co
 
 
 /* Today's actual games use the same MD-green meaning as weekly match cells. */
-#tm-dashboard button.tm-db-event.tm-db-game{background:#193126!important;border:1px solid #78d4a0!important;color:#dcf3e4!important;padding:12px 13px;min-height:60px}
+#tm-dashboard button.tm-db-event.tm-db-game{
+ display:flex;flex-direction:row;align-items:center;gap:12px;
+ background:#193126!important;border:1px solid #78d4a0!important;
+ color:#dcf3e4!important;padding:12px 13px;min-height:60px
+}
 #tm-dashboard button.tm-db-event.tm-db-game:hover{background:#254436!important}
-#tm-dashboard button.tm-db-event.tm-db-game span{font-weight:650;color:inherit}
+#tm-dashboard button.tm-db-event.tm-db-game .tm-db-game-icon{
+ display:flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;
+ color:inherit
+}
+#tm-dashboard button.tm-db-event.tm-db-game .tm-db-football-icon{
+ display:block;flex:none;width:24px;height:24px
+}
+#tm-dashboard button.tm-db-event.tm-db-game .tm-db-game-copy{
+ display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0
+}
+#tm-dashboard button.tm-db-event.tm-db-game .tm-db-game-name{font-weight:650;color:inherit}
 #tm-dashboard button.tm-db-event.tm-db-game small{color:#abd5b9}
 #tm-dashboard .tm-db-avatar{position:relative}
 #tm-dashboard .tm-db-avatar-photo{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
