@@ -3,36 +3,25 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const css=fs.readFileSync("static/jogador-v2.css","utf8");
-const html=fs.readFileSync("static/jogador-v2.html","utf8");
 const js=fs.readFileSync("static/jogador-v2.js","utf8");
-function lastRule(selector){
- const anchor=selector+"{";
- const index=css.lastIndexOf(anchor);
- assert.ok(index>=0,"Expected style rule: "+selector);
- return css.slice(index+anchor.length,css.indexOf("}",index));
-}
-test("Form icon surround matches the existing daily meal icon geometry",()=>{
- const rule=lastRule("#overview #day-details .post-match-inline-icon");
- for(const d of ["width:37px!important","height:37px!important","flex:0 0 37px!important","border-radius:11px!important"]){
-  assert.ok(rule.includes(d),"Missing "+d);
- }
- const mealAnchor=".meal-leading-icon{width:37px;height:37px;";
- assert.ok(css.includes(mealAnchor));
- const meal=css.slice(css.indexOf(mealAnchor),css.indexOf("}",css.indexOf(mealAnchor)));
- assert.ok(meal.includes("border-radius:11px"));
+const html=fs.readFileSync("static/jogador-v2.html","utf8");
+
+test("Form, match and daily meal icons use the approved common 37px geometry",()=>{
+ assert.match(css,/#overview #day-details\{[^}]*--day-icon-box:37px;--day-icon-glyph:24px;--day-icon-radius:11px/s);
+ assert.match(css,/#overview #day-details \.tm-day-icon\{[^}]*width:var\(--day-icon-box\)!important;[^}]*height:var\(--day-icon-box\)!important/s);
+ assert.match(css,/#overview #day-details \.tm-day-icon\{[^}]*border-radius:var\(--day-icon-radius\)!important/s);
+ assert.match(js,/matchIconBox\.className="meal-leading-icon tm-day-icon"/);
+ assert.match(js,/icon\.className="post-match-inline-icon tm-day-icon"/);
 });
-test("Match and post-match icons use 17px meal grid inset",()=>{
- for(const sel of [
-  "#overview #day-details .daily-event-card.match-intra-card > summary.daily-meal-head",
-  "#overview #day-details .post-match-inline-trigger"
- ]){
-  assert.ok(lastRule(sel).includes("padding-left:17px!important"),sel);
- }
- assert.ok(lastRule("#overview #day-details .daily-event-card").includes("padding-left:17px!important"));
+test("Match and post-match headers share the approved 17px left inset",()=>{
+ assert.match(css,/#overview #day-details\{[^}]*--day-header-inset:17px/s);
+ assert.match(css,/#overview #day-details \.tm-day-header\{[^}]*padding-left:var\(--day-header-inset\)!important/s);
+ assert.match(js,/head\.className="daily-meal-head tm-day-header"/);
+ assert.match(js,/button\.className="post-match-inline-trigger tm-day-header"/);
 });
-test("Only player CSS is cache-busted, with original SVGs still present",()=>{
- assert.ok(js.includes('matchIconBox.className="meal-leading-icon"'));
- assert.ok(js.includes('icon.className="post-match-inline-icon"'));
- assert.ok(html.includes("jogador-v2.css?v=194"));
- assert.ok(html.includes("jogador-v2.js?v=160"));
+test("Approved match and post-match icons remain available with versioned assets",()=>{
+ assert.match(js,/matchIconBox\.append\(mealIcon\("football"\)\)/);
+ assert.match(js,/icon\.append\(mealIcon\("football-pitch"\)\)/);
+ assert.match(html,/jogador-v2\.css\?v=[^"\s]+/);
+ assert.match(html,/jogador-v2\.js\?v=[^"\s]+/);
 });

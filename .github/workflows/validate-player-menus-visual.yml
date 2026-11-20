@@ -1,0 +1,23 @@
+name: Validate player Menus visual parity
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - static/jogador-v2.css
+      - static/player-recipes.css
+      - static/jogador-v2.js
+      - static/jogador-v2.html
+      - docs/GUIA_VISUAL_APP_JOGADORES.md
+      - tests/player-menus-visual-parity.test.cjs
+      - .github/workflows/validate-player-menus-visual.yml
+  workflow_dispatch:
+jobs:
+  menus-visual-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Menus/Receitas visual contracts and player JavaScript syntax
+        run: |
+          node --check static/jogador-v2.js
+          node --check static/player-recipes.js
+          node --test tests/player-menus-visual-parity.test.cjs

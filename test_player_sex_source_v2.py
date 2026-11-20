@@ -5,7 +5,7 @@ SOURCE=(pathlib.Path(__file__).parent/"app.py").read_text()
 
 class PlayerSexSourceTests(unittest.TestCase):
     def test_session_loads_linked_user_fields(self):
-        self.assertIn("SELECT u.*,s.csrf FROM sessions s JOIN users u",SOURCE)
+        self.assertIn("SELECT u.*,s.csrf,s.expires AS session_expires FROM sessions s JOIN users u",SOURCE)
 
     def test_player_profile_exposes_linked_user_sex(self):
         start=SOURCE.index("if path == '/api/v2/player/me' and method == 'GET':")

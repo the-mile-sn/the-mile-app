@@ -32,7 +32,12 @@ test('an anonymous /api/me response is a normal signed-out state, without an exp
  assert.match(body,/if\(!sessionData\.user\)\{/);
  assert.match(body,/playerSessionReady\(\);\s*\$\("status"\)\.textContent="";\s*\$\("login-panel"\)\.hidden=false/);
  assert.match(body,/if\(epoch!==playerSessionEpoch\)return/);
- assert.match(body,/playerSessionReady\(\);\s*\$\("login-panel"\)\.hidden=true;\s*\$\("player-panel"\)\.hidden=false;\s*\$\("logout"\)\.hidden=false;\s*\$\("status"\)\.textContent=""/);
+ // Chef is directed to the chef view, never shown the player's private UI.
+ assert.match(body,/if\(sessionData\.user\.role==="chef"\)\{/);
+ assert.match(body,/window\.location\.replace\("\/chef"\)/);
+ assert.match(body,/if\(sessionData\.user\.role!=="player"\)\{/);
+ assert.match(body,/\$\("login-panel"\)\.hidden=true;\s*\$\("player-panel"\)\.hidden=false;\s*\$\("logout"\)\.hidden=false;\s*\$\("status"\)\.textContent=""/);
+ assert.match(body,/if\(epoch===playerSessionEpoch\)await finishPlayerLoading\(epoch\)/);
 });
 test('only unauthorized responses revoke the player view, not forbidden actions',()=>{
  const start=source.indexOf('async function api(');

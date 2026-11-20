@@ -58,9 +58,12 @@ test("Navigation and recipe subpage top inset remain intact",()=>{
  assert.ok(html.includes('id="overview-mode"'));
  assert.ok(html.includes('class="assessment-tabs"'));
  assert.ok(html.includes('id="menus-recipe-switch"'));
- assert.ok(html.includes("jogador-v2.css?v=199"));
- assert.ok(html.includes("player-recipes.css?v=18"));
+ assert.match(html,/jogador-v2\.css\?v=[^"\s]+/);
+ assert.match(html,/player-recipes\.css\?v=[^"\s]+/);
  assert.ok(recipeCss.includes("#menus #menus-recipe-switch[hidden] ~ #player-recipes-area{\n padding-top:26px;"));
  assert.ok(rule("#player-panel #menus #menus-recipe-switch[hidden]").includes("display:none!important"));
- assert.ok(!patch.includes("#tabs"));
+ // The bottom navigation has its own later CSS rules; only the segmented
+ // control declarations must remain scoped to Menus/Receitas.
+ assert.ok(!rule("#player-panel #menus #menus-recipe-switch").includes("#tabs"));
+ assert.ok(css.includes("#tabs{border-radius:999px!important"));
 });

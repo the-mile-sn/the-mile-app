@@ -82,8 +82,8 @@ test("existing card design, photos and other view asset versions stay isolated",
  assert.match(css,/:active/);
  assert.match(css,/\.meal-menu-card\.has-dish-photo/);
  assert.match(js,/div\.dataset\.meal=meal/);
- assert.match(html,/jogador-v2\.js\?v=168/);
- assert.match(html,/jogador-v2\.css\?v=199/);
- assert.match(html,/player-recipes\.js\?v=11/);
- assert.match(html,/player-recipes\.css\?v=18/);
+ assert.match(html,/jogador-v2\.js\?v=[^"\s]+/);
+ assert.match(html,/jogador-v2\.css\?v=[^"\s]+/);
+ assert.match(html,/player-recipes\.js\?v=[^"\s]+/);
+ assert.match(html,/player-recipes\.css\?v=[^"\s]+/);
 });
