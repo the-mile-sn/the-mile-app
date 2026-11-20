@@ -34,29 +34,31 @@ test('original assessment navigation and CSS continue unchanged',()=>{
  assert.equal(css.split('{').length,css.split('}').length);
 });
 
-test('password cards have visible floating labels without internal dividers or extra instructions',()=>{
- assert.doesNotMatch(html,/profile-password-intro/);
- assert.doesNotMatch(html,/Introduz a palavra-passe atual/);
- for(const label of ['Palavra-passe atual','Nova palavra-passe','Confirmar nova palavra-passe']){
-  assert.ok(html.includes('<span class="profile-password-floating-label">'+label+'</span>'),label);
+test('Login and Profile share accessible 64px floating-label form cards',()=>{
+ assert.doesNotMatch(html,/profile-password-intro|Introduz a palavra-passe atual/);
+ for(const label of ['Username','Palavra-passe','Palavra-passe atual','Nova palavra-passe','Confirmar nova palavra-passe']){
+  assert.ok(html.includes('<span class="mile-floating-label">'+label+'</span>'),label);
  }
- assert.equal((html.match(/placeholder=" "/g)||[]).length,3);
- assert.equal((html.match(/class="profile-password-field"/g)||[]).length,3);
- assert.match(css,/label\.profile-password-field:focus-within \.profile-password-floating-label/);
- assert.match(css,/input:not\(:placeholder-shown\)\+\.profile-password-floating-label/);
- assert.match(css,/top:12px;transform:translateY\(0\);font-size:12px/);
+ assert.equal((html.match(/placeholder=" "/g)||[]).length,5);
+ assert.equal((html.match(/class="login-input mile-floating-field"/g)||[]).length,2);
+ assert.equal((html.match(/class="profile-password-field mile-floating-field"/g)||[]).length,3);
+ assert.equal((html.match(/class="mile-floating-input"/g)||[]).length,5);
+ assert.match(css,/label\.mile-floating-field\{[^}]*height:64px!important;min-height:64px!important/s);
+ assert.match(css,/label\.mile-floating-field > input\.mile-floating-input\{[^}]*height:64px!important;min-height:64px!important;[^}]*border-radius:20px!important;background:#242429!important;[^}]*font-size:16px!important/s);
+ assert.match(css,/label\.mile-floating-field:focus-within > \.mile-floating-label/);
+ assert.match(css,/input\.mile-floating-input:not\(:placeholder-shown\) \+ \.mile-floating-label/);
+ assert.match(css,/top:9px;transform:translateY\(0\);font-size:12px/);
  assert.match(css,/top:50%;max-width:calc\(100% - 36px\)/);
  assert.match(css,/transform:translateY\(-50%\);pointer-events:none/);
  assert.match(css,/transition:top 180ms ease,transform 180ms ease,font-size 180ms ease/);
+ assert.match(css,/input\.mile-floating-input:focus\{\s*box-shadow:0 0 0 2px #aeb0ba!important;/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.doesNotMatch(css,/#login-form \.login-input input\{|profile-password-floating-label|login-sr-label/);
  assert.doesNotMatch(css,/#profile \.profile-password-intro\{/);
- assert.doesNotMatch(css,/profile-password-visually-hidden/);
- assert.doesNotMatch(css,/#profile \.profile-password-page-form label\.profile-password-field input:focus::placeholder/);
+ assert.match(html,/autocomplete="username"/);
  assert.match(html,/autocomplete="current-password"/);
  assert.match(html,/autocomplete="new-password"/);
 });
-
-
 
 test('only selected assessment mode renders and password page has no outer grey card',()=>{
  assert.doesNotMatch(js,/svg\.hidden=all;fullScroll\.hidden=!all/);
@@ -95,7 +97,7 @@ test('login uses the approved minimal brand layout without changing credentials 
  assert.match(html,/id="login-form"/);
  assert.match(html,/id="login-error" class="error" role="alert"/);
  assert.match(css,/#login-panel\{background:transparent!important;border:0!important/);
- assert.match(css,/#login-form \.login-input input\{/);
+ assert.match(css,/label\.mile-floating-field > input\.mile-floating-input\{/);
 });
 
 test('login group is vertically centred without affecting authenticated player pages',()=>{
@@ -159,7 +161,7 @@ test('profile subpages share the recipe back button geometry and page title hier
 test('profile password form keeps accessible semantics and cleans conflicting styles',()=>{
  assert.doesNotMatch(css,/#profile \.profile-password-intro\{/);
  assert.match(css,/#profile \.profile-password-page-form\{\s*background:transparent!important;/);
- assert.match(css,/#profile \.profile-password-page-form label\.profile-password-field input\{[^}]*height:76px!important;min-height:76px!important;border:0!important;[^}]*border-radius:13px!important;[^}]*font-size:16px!important;[^}]*font-weight:var\(--mile-type-regular,400\)!important/s);
+ assert.match(css,/label\.mile-floating-field > input\.mile-floating-input\{[^}]*height:64px!important;min-height:64px!important;[^}]*border-radius:20px!important;[^}]*font-size:16px!important;[^}]*font-weight:var\(--mile-type-regular,400\)!important/s);
  assert.match(css,/#profile \.profile-password-page-form button\.profile-password-save\{[^}]*font-size:14px!important;[^}]*font-weight:var\(--mile-type-medium,500\)!important/s);
  assert.match(html,/autocomplete="current-password"/);
  assert.match(html,/autocomplete="new-password"/);
@@ -174,7 +176,6 @@ test('each Profile component has one effective source rule, without later overri
   '#profile .profile-subpage-header h2',
   '#profile button.profile-page-back',
   '#profile .profile-password-page-form',
-  '#profile .profile-password-page-form label.profile-password-field input'
  ]){
   const count=css.split(selector+'{').length-1;
   assert.equal(count,1,selector);
@@ -186,5 +187,7 @@ test('each Profile component has one effective source rule, without later overri
  assert.doesNotMatch(css,/#profile \.profile-plan-card>span/);
  assert.doesNotMatch(css,/#profile \.profile-password-form input/);
  assert.doesNotMatch(css,/#profile-logout\{border-radius:999px/);
+ assert.equal((css.match(/^label\.mile-floating-field > input\.mile-floating-input\{$/gm)||[]).length,1);
+ assert.doesNotMatch(css,/#login-form \.login-input input\{/);
  assert.match(css,/@media\(max-width:360px\)\{\s*#profile \.profile-plan-card\{/);
 });
