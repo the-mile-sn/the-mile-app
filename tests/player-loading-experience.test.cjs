@@ -29,3 +29,8 @@ test('navigation invalidates previous in-flight rendering, not prescriptions',()
  assert.match(js,/overviewReadCache\.clear\(\);overviewSnapshot=null/);
  assert.match(js,/POST_MATCH_DISPLAY_ENABLED=false/);
 });
+
+// Run the loading placeholders' geometry and Day/Week regression assertions
+// in the existing loading-experience CI workflow.
+require('./player-overview-day-skeleton.test.cjs');
+require('./player-overview-week-skeleton.test.cjs');
