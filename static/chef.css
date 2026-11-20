@@ -76,17 +76,17 @@ label.mile-floating-field>.mile-floating-input:not(:placeholder-shown)+.mile-flo
 
 /* Chef collaboration: compact editors remain visually subordinate to the menu. */
 .chef-inline-edit{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
-.chef-inline-edit summary{font-size:12px;color:#575762;cursor:pointer;user-select:none}
+.chef-inline-edit summary{font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
 .chef-editor,.chef-menu-editor{display:flex;flex-direction:column;gap:10px;margin-top:11px}
-.chef-input{width:100%;background:#fafafa;border:1px solid #dedee3;border-radius:10px;padding:10px 12px;min-height:41px;color:#222;font-size:16px}
+.chef-input{width:100%;background:#25252b;border:1px solid #45454d;border-radius:13px;padding:10px 12px;min-height:43px;color:#f6f6f8;font-size:16px}
 textarea.chef-input{min-height:68px;resize:vertical}
-.chef-menu-editor{border:1px solid var(--line);border-radius:13px;padding:13px;background:#fafafb}
-.chef-secondary{border:1px solid #dedee3;border-radius:10px;background:#fff;color:#35353a;padding:9px 12px;font-weight:500;font-size:12px;margin-top:12px}
+.chef-menu-editor{border:0;border-radius:13px;padding:13px;background:#202025}
+.chef-secondary{border:0;border-radius:999px;background:#292930;color:#f3f3f6;padding:9px 12px;font-weight:500;font-size:12px;margin-top:12px}
 .chef-edit-actions{display:flex;gap:8px;align-items:center}
 .chef-edit-actions .chef-secondary{margin:0}
 .chef-save{margin-top:0}
-.chef-exec-current{font-size:12px;color:#5b5b62;line-height:1.5}
-.chef-feedback{color:#666;min-height:16px;font-size:12px;margin:4px 0}
+.chef-exec-current{font-size:12px;color:var(--muted);line-height:1.5}
+.chef-feedback{color:var(--muted);min-height:16px;font-size:12px;margin:4px 0}
 
 
 /* Exact official Hugeicons are rendered inline by chef.js. */
@@ -381,14 +381,6 @@ textarea.chef-input{min-height:68px;resize:vertical}
  margin-right:auto!important;
 }
 #screen.chef-screen-home>.chef-daily-summary{
- padding-left:14px!important;
- padding-right:14px!important;
-}
-#screen.chef-screen-home>.chef-meal-card>.chef-meal-head{
- padding-left:14px!important;
- padding-right:14px!important;
-}
-#screen.chef-screen-home>.chef-meal-card>.chef-meal-body{
  padding-left:14px!important;
  padding-right:14px!important;
 }
