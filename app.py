@@ -1802,8 +1802,14 @@ def application(env, start_response):
                 if timing is not None:
                     if meal_key != 'intra_match': raise Problem(400, 'invalid_timing')
                     try:
-                        source['options']=[slice_ for option in source['options']
-                            if (slice_ := consumption_timing_v2.timing_option(option, timing)) is not None]
+                        if (query.get('extra_timing') or [''])[0]=='1':
+                            if consumption_timing_v2.has_legacy(c,link['athlete_id'],meal_date,event_id):
+                                raise Problem(409,'legacy_consumption_exists')
+                            source['options']=[consumption_timing_v2.validate_added_timing(
+                                c,link['athlete_id'],meal_date,event_id,timing,source['options'])]
+                        else:
+                            source['options']=[slice_ for option in source['options']
+                                if (slice_ := consumption_timing_v2.timing_option(option, timing)) is not None]
                     except ValueError as exc:
                         raise Problem(400, str(exc))
                     if not source['options']: raise Problem(404, 'published_timing_unavailable')
@@ -1825,20 +1831,32 @@ def application(env, start_response):
                         consumed_color=body.get('consumed_color'))
                     if not source: raise Problem(409,'published_meal_unavailable')
                     timing=body.get('timing')
+                    extra_timing=body.get('extra_timing') is True
                     if timing is not None:
                         if body.get('meal') != 'intra_match': raise ValueError('invalid_timing')
-                        source['options']=[piece for option in source['options']
-                            if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
+                        if extra_timing:
+                            source['options']=[consumption_timing_v2.validate_added_timing(
+                                c,link['athlete_id'],body.get('date'),body.get('event_id',''),timing,source['options'])]
+                        else:
+                            source['options']=[piece for option in source['options']
+                                if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
+                    elif extra_timing:
+                        raise ValueError('invalid_extra_timing')
                     option=next((o for o in source['options'] if o['option_ref']==body.get('option_ref')),None)
                     if not option: raise Problem(409,'option_stale')
+                    if extra_timing and body.get('status')!='partial':
+                        raise ValueError('additional_timing_requires_food')
                     library=consumption_nutrition_v2.active_library(c)
                     actual=consumption_nutrition_v2.calculate(option,library,body.get('status'),body.get('edits'),body.get('additional'))
                     planned_source=consumption_source_v2.current_source(
                         c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''))
                     if not planned_source: raise Problem(409,'published_meal_unavailable')
                     if timing is not None:
-                        planned_source['options']=[piece for option in planned_source['options']
-                            if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
+                        if extra_timing:
+                            planned_source['options']=[option]
+                        else:
+                            planned_source['options']=[piece for option in planned_source['options']
+                                if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
                     if not planned_source['options']: raise Problem(409,'published_timing_unavailable')
                     planned_option=next((o for o in planned_source['options']
                         if o['option_ref']==body.get('option_ref')),None)
@@ -1867,13 +1885,26 @@ def application(env, start_response):
                         consumed_color=body.get('consumed_color'))
                     if not source: raise Problem(409, 'published_meal_unavailable')
                     option_ref=body.get('option_ref')
-                    option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
-                    if not option: raise Problem(409, 'option_stale')
                     timing=body.get('timing')
-                    if timing is not None:
-                        if meal_key != 'intra_match': raise ValueError('invalid_timing')
-                        option=consumption_timing_v2.timing_option(option,timing)
-                        if not option: raise Problem(409,'published_timing_unavailable')
+                    extra_timing=body.get('extra_timing') is True
+                    if extra_timing:
+                        if meal_key != 'intra_match' or timing is None:
+                            raise ValueError('invalid_extra_timing')
+                        option=consumption_timing_v2.validate_added_timing(
+                            c,link['athlete_id'],meal_date,event_id,timing,source['options'])
+                        if option_ref!=option['option_ref']:
+                            raise Problem(409,'option_stale')
+                        if body.get('status')!='partial' or not isinstance(body.get('additional'),list) or not body['additional']:
+                            raise ValueError('additional_timing_requires_food')
+                        if body.get('edits') not in (None,[]):
+                            raise ValueError('additional_timing_has_no_prescribed_foods')
+                    else:
+                        option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
+                        if not option: raise Problem(409, 'option_stale')
+                        if timing is not None:
+                            if meal_key != 'intra_match': raise ValueError('invalid_timing')
+                            option=consumption_timing_v2.timing_option(option,timing)
+                            if not option: raise Problem(409,'published_timing_unavailable')
                     elif meal_key == 'intra_match' and consumption_timing_v2.has_timings(
                             c,link['athlete_id'],meal_date,event_id):
                         raise Problem(409,'timing_consumption_exists')
@@ -1883,6 +1914,9 @@ def application(env, start_response):
                     prescription={'option': option, 'color': source.get('color'),
                                   'planned_color': source.get('planned_color'),
                                   'draft_id': source.get('draft_id')}
+                    if extra_timing:
+                        prescription['origin']='player_added'
+                        prescription['timing']=timing
                     if timing is not None:
                         consumption_timing_v2.save_timing(
                             c, athlete_id=link['athlete_id'], meal_date=meal_date,
