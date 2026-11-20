@@ -1312,7 +1312,8 @@ function ensurePlanningOnlyView(){
   return target;
  }
  function paint(){
-  $("tm-db-miniagenda-selected-date").textContent=titleFmt.format(toDate(day));
+  const headerParts=Object.fromEntries(titleFmt.formatToParts(toDate(day)).map(part=>[part.type,part.value]));
+  $("tm-db-miniagenda-selected-date").textContent=headerParts.day+" "+headerParts.month+" "+headerParts.year;
   $("tm-db-miniagenda-prev").setAttribute("aria-label","Dia anterior a "+fullDate(day));
   $("tm-db-miniagenda-next").setAttribute("aria-label","Dia seguinte a "+fullDate(day));
   $("tm-db-miniagenda-new").href=bookingsLink(day,true);
