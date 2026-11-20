@@ -778,6 +778,37 @@ function chefWeekDetailLabel(date){
  const microcycle=classificationFor(dateKey(date));
  return weekday+", "+datePart+(microcycle?" · "+microcycle:"");
 }
+/* Player's 460ms adjacent-date moving circle, adapted to Chef's
+   grid re-render. No animation for long jumps or reduced motion. */
+let chefWeekMovingCircle=null;
+function selectChefWeekDay(date,selection=null){
+ const before=dateKey(selectedDay),after=dateKey(date);
+ const from=el("screen").querySelector(".chef-week-day.selected strong")?.getBoundingClientRect();
+ const offset=Math.round((date-monday(selectedDay))/86400000);
+ const previousOffset=Math.round((selectedDay-monday(selectedDay))/86400000);
+ selectedDay=date;chefWeekSelection=selection;render();
+ chefWeekMovingCircle?.remove();chefWeekMovingCircle=null;
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||
+   before===after||Math.abs(offset-previousOffset)>1||!from)return;
+ const toNode=el("screen").querySelector(".chef-week-day.selected strong");
+ const to=toNode?.getBoundingClientRect();
+ if(!to?.width||!from.width||Math.abs(from.left-to.left)>innerWidth*1.5)return;
+ const ghost=node("span","chef-week-moving-circle");
+ ghost.style.width=to.width+"px";ghost.style.height=to.height+"px";
+ ghost.style.left=to.left+"px";ghost.style.top=to.top+"px";
+ document.body.append(ghost);chefWeekMovingCircle=ghost;
+ toNode.classList.add("chef-week-circle-arriving");
+ const dx=from.left-to.left,dy=from.top-to.top;
+ const animation=ghost.animate([
+  {transform:"translate3d("+dx+"px,"+dy+"px,0) scale(.97)",opacity:1},
+  {offset:.72,transform:"translate3d("+(-dx*.025)+"px,"+(-dy*.025)+"px,0) scale(1.045)",opacity:1},
+  {transform:"translate3d(0,0,0) scale(1)",opacity:1}
+ ],{duration:460,easing:"cubic-bezier(.25,.75,.3,1)"});
+ const finish=()=>{ghost.remove();toNode.classList.remove("chef-week-circle-arriving");
+  if(chefWeekMovingCircle===ghost)chefWeekMovingCircle=null;
+ };
+ animation.onfinish=finish;animation.oncancel=finish;setTimeout(finish,550);
+}
 function renderChefWeekly(root){
  const start=monday(selectedDay),keys=Array.from({length:7},(_,i)=>dateKey(shift(start,i)));
  const grid=node("div","chef-week-grid");
@@ -800,7 +831,7 @@ function renderChefWeekly(root){
   dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
   dayHead.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
     node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
-  dayHead.onclick=()=>{selectedDay=date;chefWeekSelection=null;render();};
+  dayHead.onclick=()=>selectChefWeekDay(date);
   grid.append(dayHead);
  }
  const visible=mealOrder.filter(meal=>keys.some(key=>mealAvailable(key,meal)));
@@ -813,9 +844,7 @@ function renderChefWeekly(root){
    cell.append(iconForMeal(meal));
    cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
    if(available)cell.onclick=()=>{
-    chefWeekSelection=active?null:{date:key,meal};
-    selectedDay=new Date(key+"T12:00:00");
-    render();
+    selectChefWeekDay(new Date(key+"T12:00:00"),active?null:{date:key,meal});
    };
    grid.append(cell);
   }
