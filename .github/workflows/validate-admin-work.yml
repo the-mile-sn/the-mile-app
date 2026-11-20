@@ -29,4 +29,4 @@ jobs:
       - name: Validate event/task CRUD and permissions
         run: python -m unittest -v test_admin_work_v2
       - name: Validate dashboard and quick-create regressions
-        run: node --test tests/admin-dashboard-activity-card-layout.test.cjs tests/admin-dashboard-recent-scroll.test.cjs tests/admin-dashboard-compact-navigation.test.cjs tests/admin-dashboard-player-ui-polish.test.cjs tests/admin-work-v1.test.cjs
+        run: node --test tests/admin-dashboard-activity-card-layout.test.cjs tests/admin-dashboard-recent-scroll.test.cjs tests/admin-dashboard-compact-navigation.test.cjs tests/admin-dashboard-player-ui-polish.test.cjs tests/admin-work-v1.test.cjs tests/admin-work-modal-style.test.cjs
