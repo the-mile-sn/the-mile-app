@@ -3718,6 +3718,9 @@ body.profile-active .player-top{display:none!important}
 #overview .match-intra-card .peri-timing-heading{font-weight:600;color:inherit;margin-bottom:9px;line-height:1.35}
 #overview .match-intra-card .peri-timing-lines{display:flex;flex-direction:column;gap:9px}
 #overview .match-intra-card .peri-timing-line{color:inherit;opacity:.82;line-height:1.45;overflow-wrap:anywhere}
+#overview .match-intra-card .peri-timing-group > :is(.consumption-quick-actions,.consumption-actions--recorded){margin:16px 0 0!important}
+#overview .match-intra-card .peri-timing-group > .consumption-editor{margin:16px 0 0!important}
+#overview .match-intra-card .peri-timing-group > .consumption-quick-feedback:not(:empty){margin:5px 0 0!important}
 
 /* Approved palette B: opaque deep plan surfaces and matching brighter labels.
    One set of tokens is shared by Daily, Weekly and Plans. */

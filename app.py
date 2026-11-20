@@ -30,6 +30,7 @@ import food_plan_player_v2
 import player_visual_portions_v2
 import meal_option_selection_v2
 import consumption_records_v2
+import consumption_timing_v2
 import consumption_nutrition_v2
 import consumption_source_v2
 import nutrition_preview_v2
@@ -1797,6 +1798,15 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_meal_key')
                 if not source: raise Problem(404, 'published_meal_unavailable')
+                timing=(query.get('timing') or [None])[0]
+                if timing is not None:
+                    if meal_key != 'intra_match': raise Problem(400, 'invalid_timing')
+                    try:
+                        source['options']=[slice_ for option in source['options']
+                            if (slice_ := consumption_timing_v2.timing_option(option, timing)) is not None]
+                    except ValueError as exc:
+                        raise Problem(400, str(exc))
+                    if not source['options']: raise Problem(404, 'published_timing_unavailable')
                 return respond(200, {'date': meal_date, 'meal': meal_key,
                     'event_id': event_id, 'options': source['options'],
                     'color': source['color'], 'planned_color': source['planned_color'],
@@ -1814,6 +1824,11 @@ def application(env, start_response):
                     source=consumption_source_v2.current_source(c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''),
                         consumed_color=body.get('consumed_color'))
                     if not source: raise Problem(409,'published_meal_unavailable')
+                    timing=body.get('timing')
+                    if timing is not None:
+                        if body.get('meal') != 'intra_match': raise ValueError('invalid_timing')
+                        source['options']=[piece for option in source['options']
+                            if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
                     option=next((o for o in source['options'] if o['option_ref']==body.get('option_ref')),None)
                     if not option: raise Problem(409,'option_stale')
                     library=consumption_nutrition_v2.active_library(c)
@@ -1821,6 +1836,10 @@ def application(env, start_response):
                     planned_source=consumption_source_v2.current_source(
                         c,link['athlete_id'],body.get('date'),body.get('meal'),body.get('event_id',''))
                     if not planned_source: raise Problem(409,'published_meal_unavailable')
+                    if timing is not None:
+                        planned_source['options']=[piece for option in planned_source['options']
+                            if (piece := consumption_timing_v2.timing_option(option,timing)) is not None]
+                    if not planned_source['options']: raise Problem(409,'published_timing_unavailable')
                     planned_option=next((o for o in planned_source['options']
                         if o['option_ref']==body.get('option_ref')),None)
                     if not planned_option:
@@ -1850,17 +1869,34 @@ def application(env, start_response):
                     option_ref=body.get('option_ref')
                     option=next((o for o in source['options'] if o.get('option_ref') == option_ref), None)
                     if not option: raise Problem(409, 'option_stale')
+                    timing=body.get('timing')
+                    if timing is not None:
+                        if meal_key != 'intra_match': raise ValueError('invalid_timing')
+                        option=consumption_timing_v2.timing_option(option,timing)
+                        if not option: raise Problem(409,'published_timing_unavailable')
+                    elif meal_key == 'intra_match' and consumption_timing_v2.has_timings(
+                            c,link['athlete_id'],meal_date,event_id):
+                        raise Problem(409,'timing_consumption_exists')
                     library=consumption_nutrition_v2.active_library(c)
                     calculated=consumption_nutrition_v2.calculate(
                         option, library, body.get('status'), body.get('edits'), body.get('additional'))
-                    consumption_records_v2.save_record(
-                        c, athlete_id=link['athlete_id'], meal_date=meal_date,
-                        meal_key=meal_key, event_id=event_id, status=body['status'],
-                        option_ref=option_ref, source_draft_id=source.get('draft_id'),
-                        prescription={'option': option, 'color': source.get('color'),
-                                      'planned_color': source.get('planned_color'),
-                                      'draft_id': source.get('draft_id')},
-                        consumed_foods=calculated['foods'], nutrition=calculated['nutrition'])
+                    prescription={'option': option, 'color': source.get('color'),
+                                  'planned_color': source.get('planned_color'),
+                                  'draft_id': source.get('draft_id')}
+                    if timing is not None:
+                        consumption_timing_v2.save_timing(
+                            c, athlete_id=link['athlete_id'], meal_date=meal_date,
+                            event_id=event_id, timing=timing, status=body['status'],
+                            option_ref=option_ref, source_draft_id=source.get('draft_id'),
+                            prescription=prescription, consumed_foods=calculated['foods'],
+                            nutrition=calculated['nutrition'])
+                    else:
+                        consumption_records_v2.save_record(
+                            c, athlete_id=link['athlete_id'], meal_date=meal_date,
+                            meal_key=meal_key, event_id=event_id, status=body['status'],
+                            option_ref=option_ref, source_draft_id=source.get('draft_id'),
+                            prescription=prescription, consumed_foods=calculated['foods'],
+                            nutrition=calculated['nutrition'])
                 except ValueError as exc:
                     raise Problem(400, str(exc))
                 return respond(200, {'saved': True, 'nutrition': calculated['nutrition']})
@@ -1873,9 +1909,19 @@ def application(env, start_response):
                 body=read_json(env)
                 if not isinstance(body, dict): raise Problem(400, 'invalid_request')
                 try:
-                    deleted=consumption_records_v2.delete_record(
-                        c, athlete_id=link['athlete_id'], meal_date=body.get('date'),
-                        meal_key=body.get('meal'), event_id=body.get('event_id', ''))
+                    timing=body.get('timing')
+                    if timing is not None:
+                        if body.get('meal') != 'intra_match': raise ValueError('invalid_timing')
+                        deleted=consumption_timing_v2.delete_timing(
+                            c, athlete_id=link['athlete_id'], meal_date=body.get('date'),
+                            event_id=body.get('event_id',''), timing=timing)
+                    else:
+                        if body.get('meal') == 'intra_match' and consumption_timing_v2.has_timings(
+                                c,link['athlete_id'],body.get('date'),body.get('event_id','')):
+                            raise Problem(409,'timing_consumption_exists')
+                        deleted=consumption_records_v2.delete_record(
+                            c, athlete_id=link['athlete_id'], meal_date=body.get('date'),
+                            meal_key=body.get('meal'), event_id=body.get('event_id', ''))
                 except ValueError as exc:
                     raise Problem(400, str(exc))
                 return respond(200, {'deleted': deleted})
