@@ -31,7 +31,7 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertIn('const title=document.createElement("strong");title.textContent=item.title;head.append(title);decorateLabel(head,item.title);', JS)
         self.assertIn('font-weight:var(--mile-type-card-title)!important', CSS)
         self.assertIn('section.className=compact?"weekly-event-card":"daily-event-card tm-day-header"+(event.kind==="match"?" daily-match-card":"")', JS)
-        light = declarations('#overview #day-details .daily-event-card:is(.daily-match-card,.match-intra-card),\\n#weekly-view .weekly-event-card.weekly-match-with-intra')
+        light = declarations('#overview #day-details .daily-event-card:is(.daily-match-card,.match-intra-card),\n#weekly-view .weekly-event-card.weekly-match-with-intra')
         self.assertEqual(len(light), 1, 'Shared light match surface, not a late override')
         self.assertIn('background:#F2F2F4!important;color:#22232A!important', light[0])
         self.assertIn('const eventCardElement=intra?matchWithIntraCard(event,intra,consumptionEnabled,consumptionRecords):eventCard(event)', JS)
