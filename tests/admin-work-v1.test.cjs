@@ -17,8 +17,8 @@ test("admin-only event/task backend is separate from appointments and player eve
  assert.match(app,/admin_work_v2\.update_task/);
  assert.match(app,/admin_work_v2\.delete_event/);
  assert.match(app,/admin\(user\)/);
- assert.match(app,/\/'admin-work\.js': 'admin-work\.js'/);
- assert.match(app,/\/'admin-work\.css': 'admin-work\.css'/);
+ assert.match(app,/'\/admin-work\.js': 'admin-work\.js'/);
+ assert.match(app,/'\/admin-work\.css': 'admin-work\.css'/);
 });
 
 test("appointments use one agenda, separate task list and native edit dialogs",()=>{
