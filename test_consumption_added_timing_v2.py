@@ -126,6 +126,20 @@ class AddedTimingTests(unittest.TestCase):
         self.assertIn(".intra-add-moment-editor-host>.consumption-editor",css)
         self.assertIn("sem etapa «Escolher alimentos»",GUIDE)
 
+    def test_dropdown_reveals_add_food_and_ignores_scroll_gestures(self):
+        block=JS.split("const choices=Object.entries(periTimingLabels)",1)[1].split("return true;",1)[0]
+        self.assertIn("window.requestAnimationFrame(revealTimingAndFood)",block)
+        self.assertIn("editorHost.querySelector('.consumption-add-trigger')",block)
+        self.assertIn("nav.getBoundingClientRect().top",block)
+        self.assertIn("window.visualViewport",block)
+        self.assertIn("window.scrollBy({top:Math.ceil(move)",block)
+        self.assertIn("prefers-reduced-motion: reduce",block)
+        self.assertIn("document.addEventListener('click',outsideClick)",block)
+        self.assertIn("document.removeEventListener('click',outsideClick)",block)
+        self.assertNotIn("addEventListener('pointerdown',outsideClick)",block)
+        self.assertNotIn("removeEventListener('pointerdown',outsideClick)",block)
+        self.assertIn("if(!selector.contains(event.target))closeOptions(false)",block)
+
     def test_player_contract_reuses_editor_and_restores_only_game(self):
         self.assertIn("let pendingIntraMatchExpansion=null;",JS)
         self.assertIn("match?.open)pendingIntraMatchExpansion",JS)
