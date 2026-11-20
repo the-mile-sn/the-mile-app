@@ -946,24 +946,31 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  for(const record of current)reserved.add(record.timing);
  const choices=Object.entries(periTimingLabels).filter(([timing])=>!reserved.has(timing));
  if(choices.length){
+  // Keep moment selection and the existing food editor in one inline flow.
+  const group=document.createElement('div');group.className='peri-timing-group intra-add-moment-group';
   const addButton=document.createElement('button');addButton.type='button';
-  addButton.className='intra-add-moment-trigger';addButton.textContent='⊕ Adicionar momento';
+  addButton.className='intra-add-moment-trigger';addButton.textContent='⊕ Adicionar';
+  addButton.setAttribute('aria-expanded','false');
   const picker=document.createElement('div');picker.className='intra-add-moment-panel';picker.hidden=true;
   const label=document.createElement('label');label.textContent='Momento do consumo';
   const select=document.createElement('select');select.setAttribute('aria-label','Selecionar momento do consumo');
   for(const [value,title] of choices){const option=document.createElement('option');option.value=value;option.textContent=title;select.append(option);}
   label.append(select);
-  const start=document.createElement('button');start.type='button';start.className='intra-add-moment-start';start.textContent='Escolher alimentos';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='intra-add-moment-cancel';cancel.textContent='Cancelar';
-  start.onclick=()=>{
-   select.disabled=true;start.disabled=true;
-   openConsumptionEditor(picker,date,meal,eventId,null,null,select.value,'player-added:'+select.value,true)
-    .finally(()=>{select.disabled=false;start.disabled=false;});
+  const editorHost=document.createElement('div');editorHost.className='intra-add-moment-editor-host';
+  const dismiss=()=>{
+   picker.hidden=true;addButton.hidden=false;addButton.setAttribute('aria-expanded','false');
+   editorHost.replaceChildren();
+   document.querySelectorAll('.consumption-food-sheet,.consumption-food-sheet-backdrop').forEach(sheet=>sheet.remove());
+   document.body.classList.remove('consumption-food-sheet-open');
   };
-  cancel.onclick=()=>{picker.hidden=true;addButton.hidden=false;};
-  picker.append(label,start,cancel);
-  addButton.onclick=()=>{picker.hidden=false;addButton.hidden=true;};
-  card.append(addButton,picker);
+  const showEditor=()=>openConsumptionEditor(editorHost,date,meal,eventId,null,null,
+   select.value,'player-added:'+select.value,true,dismiss);
+  select.addEventListener('change',()=>{showEditor().catch(error);});
+  addButton.onclick=()=>{
+   picker.hidden=false;addButton.hidden=true;addButton.setAttribute('aria-expanded','true');
+   showEditor().catch(error);
+  };
+  picker.append(label,editorHost);group.append(addButton,picker);card.append(group);
  }
  return true;
 }
