@@ -184,12 +184,14 @@ def update_event(c, identifier, payload, actor):
     if record["version"] != _version(payload):
         raise ValueError("stale_record")
     data = _event_data(c, payload, actor)
-    c.execute("""
+    changed = c.execute("""
       UPDATE tm_internal_events SET
       event_date=?,starts_at=?,ends_at=?,kind=?,title=?,description=?,
       participants=?,responsible_id=?,updated_by=?,updated_at=?,
       version=version+1 WHERE id=? AND version=?""",
       (*data, actor, int(time.time()), identifier, record["version"]))
+    if changed.rowcount != 1:
+        raise ValueError("stale_record")
     return _event(c, identifier)
 
 
@@ -197,8 +199,10 @@ def delete_event(c, identifier, payload):
     record = _event(c, identifier)
     if record["version"] != _version(payload):
         raise ValueError("stale_record")
-    c.execute("DELETE FROM tm_internal_events WHERE id=? AND version=?",
-              (identifier, record["version"]))
+    removed = c.execute("DELETE FROM tm_internal_events WHERE id=? AND version=?",
+                        (identifier, record["version"]))
+    if removed.rowcount != 1:
+        raise ValueError("stale_record")
     return {"ok": True}
 
 
@@ -260,11 +264,13 @@ def update_task(c, identifier, payload, actor):
     data = _task_data(c, payload, actor)
     now = int(time.time())
     completed = (record["completed_at"] or now) if data[-1] == "done" else None
-    c.execute("""
+    changed = c.execute("""
       UPDATE tm_admin_tasks SET title=?,description=?,due_date=?,
       responsible_id=?,status=?,updated_by=?,updated_at=?,completed_at=?,
       version=version+1 WHERE id=? AND version=?""",
       (*data, actor, now, completed, identifier, record["version"]))
+    if changed.rowcount != 1:
+        raise ValueError("stale_record")
     return _task(c, identifier)
 
 
@@ -272,6 +278,8 @@ def delete_task(c, identifier, payload):
     record = _task(c, identifier)
     if record["version"] != _version(payload):
         raise ValueError("stale_record")
-    c.execute("DELETE FROM tm_admin_tasks WHERE id=? AND version=?",
-              (identifier, record["version"]))
+    removed = c.execute("DELETE FROM tm_admin_tasks WHERE id=? AND version=?",
+                        (identifier, record["version"]))
+    if removed.rowcount != 1:
+        raise ValueError("stale_record")
     return {"ok": True}
