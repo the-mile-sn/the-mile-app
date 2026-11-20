@@ -112,7 +112,7 @@
     const state=$("tm-chef-profile-status");
     state.textContent=item.active?"Ativo":"Inativo";
     state.className="tm-p-status tm-p-"+(item.active?"active":"inactive");
-    $("tm-chef-profile-toggle").textContent=item.active?"Bloquear conta":"Ativar conta";
+    $("tm-chef-profile-toggle").querySelector("span").textContent=item.active?"Bloquear conta":"Ativar conta";
   }
   function openChefProfile(item){
     selectedChef=item;
