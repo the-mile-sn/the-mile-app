@@ -712,3 +712,30 @@ html[data-admin-theme] #tm-players-page #tm-clients-chef-profile #tm-chef-profil
 html[data-admin-theme] #tm-players-page #tm-players-filter-panel[hidden]{
  display:none!important;
 }
+
+
+/* Archived Chef accounts share the existing Players' "Arquivados" accordion. */
+#tm-players-page #tm-chefs-archived-list[hidden],
+#tm-players-page #tm-players-archived-list[hidden],
+#tm-players-page #tm-players-archived-feedback[hidden]{display:none!important}
+#tm-players-page #tm-chefs-archived-list{
+ padding:8px 22px 14px;min-width:0;color:var(--tm-ui-text);
+}
+#tm-players-page #tm-chefs-archived-list .tm-chefs-archived-heading{
+ margin:9px 0 4px;font:600 13px/1.35 "Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+#tm-players-page #tm-chefs-archived-list .tm-archived-row{
+ border-color:var(--tm-ui-divider);
+}
+#tm-players-page #tm-chefs-archived-list .hint{
+ color:var(--tm-ui-muted);font:400 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+#tm-players-page #tm-chefs-archived-feedback{
+ margin:0 22px 12px;color:var(--tm-ui-muted);
+ font:400 12px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+#tm-players-page #tm-chefs-archived-feedback:empty{display:none}
+@media(max-width:830px){
+ #tm-players-page #tm-chefs-archived-list{padding:8px 14px 14px}
+ #tm-players-page #tm-chefs-archived-feedback{margin:0 14px 12px}
+}
