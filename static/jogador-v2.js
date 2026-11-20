@@ -323,7 +323,7 @@ function consumptionActionLabel(el,name,label){el.replaceChildren(consumptionAct
 async function refreshAfterConsumption(host,meal,eventId){
  if(meal==='intra_match'){
   const match=host.closest('.match-intra-card');
-  if(match?.open)pendingIntraMatchExpansion={date:iso(day),eventId};
+  if(match?.open)pendingIntraMatchExpansion={date:match.dataset.matchDate,eventId};
  }
  await overview();
 }
@@ -1081,7 +1081,7 @@ function eventCard(event,compact=false){
 function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecords=[]){
  const opts=item.options||[],avg=average(opts);
  const section=document.createElement("details");
- section.className="daily-event-card match-intra-card";section.dataset.eventId=event.id;
+ section.className="daily-event-card match-intra-card";section.dataset.eventId=event.id;section.dataset.matchDate=event.event_date;
  if(pendingIntraMatchExpansion?.date===event.event_date&&pendingIntraMatchExpansion?.eventId===event.id){
   section.open=true;pendingIntraMatchExpansion=null;
  }
