@@ -11,7 +11,10 @@ test('calendar stays navigable when fetching an uncached week',()=>{
  assert.match(js,/renderPendingCalendar\(mon,dateKey\)/);
  assert.match(js,/requestId!==overviewRequestId\|\|epoch!==playerSessionEpoch/);
  assert.match(html,/id="overview-loading"/);
- assert.match(html,/overview-skeleton-macros/);
+ assert.match(html,/overview-day-skeleton-nutrition/);
+ assert.match(html,/id="overview-day-skeleton-cards"/);
+ assert.match(js,/renderPendingDaySkeleton\(\)/);
+ assert.match(js,/renderPendingCalendar\(mon,dateKey\)/);
  assert.doesNotMatch(html,/A carregar planeamento…/);
 });
 test('menu reuses week data and prevents stale responses',()=>{
