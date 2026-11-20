@@ -16,7 +16,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=15/);
+ assert.match(html,/chef\.css\?v=16/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -45,7 +45,7 @@ test("canonical compact card measures preserve Chef lunch/dinner preview and inl
  assert.match(js,/appendChefMenuDish\(preview,plannedMenu\(date,meal\),txt\(\)\.pending\)/);
  assert.match(js,/if\(options\.length===1\)\{/);
  assert.match(js,/const inline=node\("div","chef-single-option"\)/);
- assert.match(js,/chefOptionCards\(date,meal,colorOverride\)/);
+ assert.match(js,/chefOptionCards\(date,meal,colorOverride,onlyPrescription\)/);
 });
 
 test("image skeleton is conditional and does not change Chef photo zoom/error policy",()=>{
@@ -70,19 +70,29 @@ test("visual changes keep role-scoped Chef endpoints, four tabs and edit rules i
  assert.match(guide,/validação visual em iPhone e desktop \*\*pendente\*\*/);
 });
 
-test("Planos follows published nutritional colours, not only the selected day's colour",()=>{
+test("Chef Planos reuses the Player Todos/Cores category family, without calendar",()=>{
  assert.match(js,/function publishedChefColors\(\)/);
  assert.match(js,/validColors\.filter\(color=>mealOrder\.some/);
  assert.match(js,/prescriptions\[color\]\?\.\[meal\]/);
- assert.match(js,/chefPlanSelectedColor=null/);
- assert.match(js,/node\("button","chef-plan-category"\)/);
- assert.match(js,/renderChefMeal\(date,meal,false,true,chefPlanSelectedColor\)/);
- assert.match(js,/function chefOptionCards\(date,meal,colorOverride=null\)/);
- assert.match(js,/function renderChefMeal\(date,meal,expanded=false,onlyPrescription=false,colorOverride=null\)/);
- assert.match(js,/chefPlanSelectedColor=null;render\(\)/);
- assert.doesNotMatch(js,/function renderPlan\(root\)\{\s*const date=dateKey\(selectedDay\);/);
- assert.match(css,/\.chef-plan-category\{[^}]*min-height:61px/);
- assert.match(guide,/Planos \(estrutura corrigida\)/);
+ assert.match(js,/chefPlanCategory="todos"/);
+ assert.match(js,/node\("nav","plans-filters"\)/);
+ assert.match(js,/\["todos",lang==="pt"\?"Todos":"All"\]/);
+ assert.match(js,/\["cores",lang==="pt"\?"Cores":"Colours"\]/);
+ assert.match(js,/node\("nav","plans-subfilters"\)/);
+ assert.match(js,/node\("details","plans-all-group"\)/);
+ assert.match(js,/node\("div","plans-all-body"\)/);
+ assert.match(js,/renderChefMeal\(dateKey\(selectedDay\),meal,false,true,color\)/);
+ assert.match(css,/\.plans-all-group>summary\{[^}]*min-height:86px/);
+ assert.match(css,/\.plans-all-group\{[^}]*border-radius:18px/);
+ assert.match(css,/\.plans-filter\{[^}]*min-height:42px/);
+ assert.match(css,/\.plans-subfilter\{[^}]*min-height:35px/);
+ assert.doesNotMatch(html,/id="day-controls"|id="day-picker"|id="prev-week"|id="next-week"/);
+ assert.doesNotMatch(js,/el\("day-picker"\)|el\("day-controls"\)|el\("week-range"\)/);
+ assert.doesNotMatch(css,/\.day-picker\{|\.day-controls\{/);
+ assert.doesNotMatch(css,/\.chef-plan-category\{|\.chef-plan-category-mark\{/);
+ assert.match(js,/const avg=key=>Math\.round\(/);
+ assert.match(js,/chef-plan-header-macros/);
+ assert.match(guide,/Planos — paridade com Jogadores/);
 });
 
 test("Menus uses a compact 38px switch and real week navigation without a duplicated day strip",()=>{
@@ -97,24 +107,27 @@ test("Menus uses a compact 38px switch and real week navigation without a duplic
  assert.match(css,/\.chef-menu-week-navigation\{/);
  assert.match(guide,/não repetir o calendário de sete colunas/);
 });
-test("defining, changing and suggesting dishes preserves existing Chef API shapes",()=>{
+test("Menus offers Approved dish / Suggestion but preserves historical category data",()=>{
  assert.match(js,/item\?"Alterar prato":"Definir prato"/);
  assert.match(js,/\["dish",pt\?"Prato aprovado"/);
- assert.match(js,/\["category",pt\?"Categoria"/);
  assert.match(js,/\["proposal",pt\?"Sugerir prato"/);
+ assert.doesNotMatch(js,/\["category",pt\?"Categoria"/);
+ assert.doesNotMatch(js,/const categoryArea=node/);
  assert.match(js,/node\("button","chef-menu-mode-choice"/);
  assert.match(js,/node\("div","chef-menu-dish-results"\)/);
  assert.match(js,/button\.onclick=\(\)=>\{\s*selectedDish=\{id:dish\.id,name:dish\.name_pt\}/);
- assert.match(js,/results\.hidden=true/);
- assert.match(js,/node\("button","chef-menu-category-trigger"\)/);
- assert.match(js,/categoryOptions\.hidden=true/);
  assert.match(js,/request\("\/api\/v2\/chef\/menu-proposals","POST"/);
  assert.match(js,/request\("\/api\/v2\/chef\/menus","PUT"/);
- assert.match(js,/menu_date:date,meal,kind:mode/);
- assert.match(js,/dish_id:mode==="dish"\?selectedDish\.id:null/);
+ assert.match(js,/menu_date:date,meal,kind:"dish"/);
+ assert.match(js,/dish_id:selectedDish\.id/);
  assert.match(js,/if\(previewReadOnly\|\|date<dateKey\(new Date\(\)\)\)return/);
+ assert.match(js,/pending:"Menu por atribuir"/);
+ assert.match(js,/item\?"tone-"\+color:"tone-neutral chef-menu-unassigned"/);
+ assert.match(css,/\.chef-menu-entry\.chef-menu-unassigned\{background:#303135;color:#f2f2f4\}/);
+ assert.match(css,/\.chef-menu-mode-choices\{[^}]*repeat\(2,minmax\(0,1fr\)\)/);
+ assert.doesNotMatch(css,/\.chef-menu-category-trigger\{|\.chef-menu-category-options\{/);
  assert.match(css,/\.chef-menu-editor\{[^}]*border-radius:17px/s);
- assert.match(css,/\.chef-menu-mode-choice\[aria-pressed="true"\]/);
  assert.match(css,/\.chef-menu-editor \.chef-edit-actions\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
- assert.match(guide,/Não adicionar campos, payloads, migrações/);
+ assert.match(guide,/registos históricos de categoria continuam válidos/);
 });
+
