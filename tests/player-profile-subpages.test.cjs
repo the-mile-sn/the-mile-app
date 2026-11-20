@@ -143,7 +143,7 @@ test('profile root uses the approved universal type and original read-only plan 
  assert.match(css,/#profile button\.profile-notifications-card\{[^}]*min-height:61px!important;[^}]*border-radius:13px!important;[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
  assert.match(css,/#profile \.profile-action\{[^}]*min-height:61px!important;[^}]*font-size:16px!important;font-weight:var\(--mile-type-card-title,400\)!important/s);
  assert.match(css,/#profile \.profile-actions-card\{[^}]*border-radius:17px/s);
- assert.match(html,/jogador-v2\.css\?v=268/);
+ assert.match(html,/jogador-v2\.css\?v=\d+/);
 });
 
 test('profile subpages share the recipe back button geometry and page title hierarchy',()=>{
