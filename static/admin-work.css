@@ -1,0 +1,155 @@
+/* The Mile backoffice — internal work agenda and tasks.
+   Isolated from bookings/Google/Shopify and from player planning.
+   Shared light/dark tokens, no global overrides or new pill geometry. */
+
+.tm-appointments-body .tm-work-create-actions{
+ display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap
+}
+.tm-work-subtle-button{
+ appearance:none;display:inline-flex;align-items:center;justify-content:center;
+ min-height:38px;padding:8px 14px;background:var(--tm-ui-search);
+ border:0;border-radius:10px;color:var(--tm-ui-text);
+ font:500 12px/1.3 "Inter Tight",system-ui,sans-serif;cursor:pointer
+}
+.tm-work-subtle-button:hover{background:var(--tm-ui-hover)}
+.tm-work-section-divider{height:1px;background:var(--tm-ui-divider);margin:19px 0 16px}
+.tm-work-list-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tm-work-list-header h4{font:600 14px/1.3 "Inter Tight",system-ui,sans-serif;margin:0}
+.tm-work-small-note{display:block;color:var(--tm-ui-muted);font:400 11px/1.5 "Inter Tight",system-ui,sans-serif}
+.tm-work-agenda-list,.tm-work-task-list{display:flex;flex-direction:column;gap:8px}
+.tm-work-line{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ background:var(--tm-ui-subcard);border:0;border-radius:12px;
+ padding:13px 14px;color:var(--tm-ui-text)
+}
+.tm-work-line-copy{display:flex;flex:1;flex-direction:column;min-width:0;gap:4px}
+.tm-work-line-title{font:600 13px/1.35 "Inter Tight",system-ui,sans-serif;overflow-wrap:anywhere}
+.tm-work-line-details{font:400 11px/1.5 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted);overflow-wrap:anywhere}
+.tm-work-line-actions{display:flex;align-items:center;justify-content:flex-end;flex:none;gap:7px}
+.tm-work-line-action{
+ appearance:none;display:inline-flex;align-items:center;justify-content:center;
+ padding:6px 10px;min-height:32px;border:0;border-radius:9px;
+ background:var(--tm-ui-search);color:var(--tm-ui-text);
+ font:500 11px/1.3 "Inter Tight",system-ui,sans-serif;cursor:pointer
+}
+.tm-work-line-action:hover{background:var(--tm-ui-hover)}
+.tm-work-line-action.is-done{opacity:.7}
+.tm-work-tasks-heading{flex-wrap:wrap}
+.tm-work-tasks-surface{
+ min-height:230px;padding:18px;background:var(--tm-ui-card);
+ border:1px solid var(--tm-ui-divider);border-radius:17px
+}
+.tm-work-tasks-filter-row{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:16px}
+.tm-work-tasks-filter-row label{color:var(--tm-ui-muted);font-size:12px}
+.tm-work-tasks-filter-row select{
+ min-height:36px;padding:7px 30px 7px 11px;background:var(--tm-ui-search);
+ border:1px solid var(--tm-ui-divider);border-radius:10px;
+ color:var(--tm-ui-text);font:400 12px/1.3 "Inter Tight",system-ui,sans-serif
+}
+.tm-work-empty{font:400 12px/1.5 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted);padding:12px 3px;margin:0}
+.tm-work-calendar-event{
+ display:block;margin-top:4px;padding:4px 6px;border-radius:6px;
+ color:var(--tm-ui-text);background:color-mix(in srgb,var(--tm-ui-muted) 13%,transparent);
+ font:400 10px/1.35 "Inter Tight",system-ui,sans-serif;
+ text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.tm-work-calendar-event:before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;margin:0 4px 2px 0;background:var(--tm-ui-muted)}
+/* Informational task status uses the existing official 26px/11px/400 pill. */
+.tm-work-task-state{
+ --tm-work-state:var(--tm-state-neutral-fg);
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ height:26px;flex:none;border:1px solid color-mix(in srgb,var(--tm-work-state) 12%,transparent);
+ border-radius:999px;padding:0 9px;
+ background:color-mix(in srgb,var(--tm-work-state) 7%,transparent);
+ color:var(--tm-work-state);font:400 11px/1 "Inter Tight",system-ui,sans-serif
+}
+.tm-work-task-state.is-done{--tm-work-state:var(--tm-state-success-fg)}
+.tm-work-task-state.is-open{--tm-work-state:var(--tm-state-pending-fg)}
+.tm-work-overdue{color:var(--tm-state-review-fg)}
+.tm-work-dialog{
+ box-sizing:border-box;width:min(94vw,540px);max-height:min(91dvh,820px);
+ margin:auto;padding:23px;border:0;border-radius:18px;
+ background:var(--tm-ui-card);color:var(--tm-ui-text);
+ box-shadow:0 18px 55px rgba(0,0,0,.18);
+ font-family:"Inter Tight",system-ui,sans-serif
+}
+.tm-work-dialog::backdrop{background:rgba(0,0,0,.76)}
+.tm-work-dialog form{margin:0;display:flex;flex-direction:column;gap:14px}
+.tm-work-dialog-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tm-work-dialog-title h2{font:600 18px/1.3 "Inter Tight",system-ui,sans-serif;margin:0}
+.tm-work-dialog-title>button{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:var(--tm-ui-search);color:var(--tm-ui-text);font-size:22px;cursor:pointer}
+.tm-work-dialog-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tm-work-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tm-work-wide{grid-column:1 / -1}
+.tm-work-field>span{font:500 12px/1.4 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted)}
+.tm-work-field :is(input,select,textarea){
+ box-sizing:border-box;min-height:42px;width:100%;max-width:100%;
+ padding:10px 12px;background:var(--tm-ui-search);
+ border:1px solid var(--tm-ui-divider);border-radius:10px;
+ color:var(--tm-ui-text);font:400 14px/1.4 "Inter Tight",system-ui,sans-serif
+}
+.tm-work-field textarea{resize:vertical;min-height:78px}
+.tm-work-field :is(input,select,textarea):focus-visible{outline:2px solid var(--tm-shell-focus,#82a8c9);outline-offset:1px}
+.tm-work-dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.tm-work-dialog-actions button{
+ min-height:40px;padding:9px 15px;border:0;border-radius:11px;
+ font:500 12px/1.2 "Inter Tight",system-ui,sans-serif;cursor:pointer
+}
+.tm-work-cancel{background:var(--tm-ui-search);color:var(--tm-ui-text)}
+.tm-work-save{background:var(--tm-ui-text);color:var(--tm-ui-card)}
+.tm-work-delete{margin-right:auto;background:var(--tm-action-danger-bg);color:var(--tm-action-danger-fg)}
+.tm-work-error{font:400 12px/1.4 "Inter Tight",system-ui,sans-serif;color:var(--tm-state-error-fg);margin:0}
+.tm-work-error:empty{display:none}
+@media(max-width:550px){
+ .tm-work-dialog{width:calc(100vw - 22px);padding:18px;max-height:92dvh}
+ .tm-work-dialog-fields{column-gap:9px}
+ .tm-work-line{align-items:flex-start;flex-wrap:wrap}
+ .tm-work-line-actions{width:100%;justify-content:flex-end}
+ .tm-work-tasks-surface{padding:12px}
+ .tm-work-calendar-event{font-size:9px;padding:2px 3px}
+}
+
+/* Dashboard: compact separate task card in the Today side column. */
+#tm-dashboard .tm-db-today-tasks{
+ box-sizing:border-box;min-width:0;padding:19px 17px;border-radius:12px;
+ background:var(--tm-ui-subcard);color:var(--tm-ui-text)
+}
+#tm-dashboard .tm-db-tasks-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#tm-dashboard .tm-db-tasks-header h3{margin:0;font:600 16px/1.3 "Inter Tight",system-ui,sans-serif}
+#tm-dashboard .tm-db-tasks-open{
+ display:grid;place-items:center;flex:none;width:32px;height:32px;
+ border-radius:10px;background:var(--tm-ui-search);color:var(--tm-ui-text);
+ text-decoration:none
+}
+#tm-dashboard .tm-db-tasks-open svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#tm-dashboard .tm-db-tasks-list{display:flex;flex-direction:column;gap:6px;margin-top:11px}
+#tm-dashboard .tm-db-task-row{display:flex;align-items:center;gap:9px;min-width:0;padding:7px 2px}
+#tm-dashboard .tm-db-task-check{
+ display:grid;place-items:center;flex:none;width:27px;height:27px;
+ border:1px solid var(--tm-ui-divider);border-radius:9px;
+ background:var(--tm-ui-search);color:var(--tm-ui-muted);cursor:pointer
+}
+#tm-dashboard .tm-db-task-check svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#tm-dashboard .tm-db-task-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+#tm-dashboard .tm-db-task-title{font:500 12px/1.35 "Inter Tight",system-ui,sans-serif;overflow-wrap:anywhere}
+#tm-dashboard .tm-db-task-meta{font:400 11px/1.35 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted)}
+#tm-dashboard .tm-db-task-empty{font:400 12px/1.4 "Inter Tight",system-ui,sans-serif;color:var(--tm-ui-muted);margin:0;padding:5px 0}
+#tm-dashboard .tm-db-miniagenda-actions{position:relative}
+#tm-dashboard .tm-db-add-menu{
+ box-sizing:border-box;position:absolute;right:48px;bottom:calc(100% + 7px);
+ z-index:30;display:flex;flex-direction:column;gap:3px;min-width:165px;
+ padding:6px;background:var(--tm-ui-card);border:1px solid var(--tm-ui-divider);
+ border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.13)
+}
+#tm-dashboard .tm-db-add-menu[hidden]{display:none!important}
+#tm-dashboard .tm-db-add-menu a{
+ display:block;padding:10px 11px;border-radius:9px;text-decoration:none;
+ color:var(--tm-ui-text);font:500 12px/1.3 "Inter Tight",system-ui,sans-serif
+}
+#tm-dashboard .tm-db-add-menu a:hover,#tm-dashboard .tm-db-add-menu a:focus-visible{
+ background:var(--tm-ui-hover)
+}
+@media(max-width:650px){
+ #tm-dashboard .tm-db-today-tasks{padding:14px}
+ #tm-dashboard .tm-db-add-menu{right:0;bottom:calc(100% + 8px)}
+}
