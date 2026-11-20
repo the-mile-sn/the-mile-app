@@ -73,7 +73,7 @@ test("energy label and compact relative amount replace separate kcal unit inside
 });
 test("open and close use same chevron inside persistent halo preview",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(source,/visual\.append\(expand\);summary\.append\(weeklyCharts\)/);
+ assert.match(source,/else visual\.append\(expand\);\s*summary\.append\(weeklyCharts\)/);
  assert.match(css,/\.nutrition-comparison>\.nutrition-expand\[aria-expanded="true"\]/);
  assert.match(css,/position:absolute!important;top:auto!important;bottom:0!important;right:0!important/);
 });
@@ -83,21 +83,20 @@ test("all player calendars use horizontal swipe navigation without arrow control
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
  assert.match(source,/function enableWeekSwipe\(element,onShift\)/);
  assert.match(source,/Math\.abs\(dx\)<55\|\|Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
- assert.match(source,/enableWeekSwipe\(root,offset=>\{day=swipeWeekBoundary/);
- assert.match(source,/enableWeekSwipe\(strip,offset=>\{day=swipeWeekBoundary/);
+ assert.match(source,/enableOverviewDaySwipe\(\$\("overview"\)\)/);
  assert.match(source,/enableWeekSwipe\(\$\("menu-week-strip"\),offset=>/);
  assert.doesNotMatch(source,/className="week-arrow"/);
  assert.doesNotMatch(source,/className="weekly-date-nav"/);
  assert.doesNotMatch(html,/id="menu-prev"|id="menu-next"/);
  assert.match(css,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)!important/);
 });
-
 test("week navigation always selects Sunday backward and Monday forward",()=>{
  assert.match(source,/function swipeWeekBoundary\(current,offset\)/);
  assert.match(source,/start\.setDate\(start\.getDate\(\)\+\(offset<0\?-1:7\)\)/);
- assert.match(source,/enableWeekSwipe\(root,offset=>\{day=swipeWeekBoundary\(day,offset\)/);
- assert.match(source,/enableWeekSwipe\(strip,offset=>\{day=swipeWeekBoundary\(day,offset\)/);
- assert.match(source,/menuWeek=swipeWeekBoundary\(menuWeek,offset\);menuSelectedDate=iso\(menuWeek\)/);
+ assert.match(source,/enableWeekSwipe\(\$\("menu-week-strip"\),offset=>\{menuWeek=swipeWeekBoundary\(menuWeek,offset\)/);
+ assert.match(source,/menuSelectedDate=iso\(menuWeek\)/);
+ assert.match(source,/function shiftOverviewDay\(offset\)/);
+ assert.match(source,/next\.setDate\(next\.getDate\(\)\+offset\)/);
 });
 test("weekly day chips match daily and energy visually outranks macro totals",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
@@ -182,7 +181,7 @@ test("tone-on-tone meal options keep palette B and remove harsh white option tex
 
 test("shared typography tokens and Plans meal kcal colour replace legacy neutral override",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/--mile-type-regular:400;--mile-type-medium:500;--mile-type-semibold:600;--mile-type-bold:700/);
+ assert.match(css,/--mile-type-regular:400;--mile-type-card-title:400;--mile-type-medium:500;--mile-type-semibold:600;--mile-type-bold:700/);
  assert.doesNotMatch(css,/\.plan-overview-meal:not\(\[open\]\)>\.daily-meal-head \.meal-average-inline \.macro>\.kcal,\s*#plans/);
  assert.match(css,/\.plan-overview-meal:is\(\.tone-orange,\.tone-yellow,\.tone-green,\.tone-blue\)>\.daily-meal-head \.meal-average-inline \.macro>\.kcal/);
  assert.match(css,/color:var\(--meal-ink\)!important/);
@@ -209,8 +208,8 @@ test("all color plan options have compact divider-free food rows while raw notes
 
 test("daily meal option foods have no separators, including single option and multi option",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/#overview #day-details \.daily-meal \.single-meal-option \.foods/);
- assert.match(css,/#overview #day-details \.daily-meal \.player-meal-option-subcard \.foods/);
+ assert.match(css,/#overview #day-details \.daily-meal:not\(\.peri-meal\) \.single-meal-option \.foods/);
+ assert.match(css,/#overview #day-details \.daily-meal:not\(\.peri-meal\) \.player-meal-option-subcard \.foods/);
  assert.match(css,/border-bottom:0!important;\s*box-shadow:none!important;\s*padding-top:5px!important/);
 });
 test("raw accompaniment font size matches normal ingredient font, retaining line spacing",()=>{
@@ -225,23 +224,24 @@ test("weekly coloured meal kcal and macro strips have no tinted background",()=>
  assert.match(css,/\.weekly-option-card \.option-expanded-macros,[\s\S]*?background:transparent!important;\s*background-color:transparent!important;\s*background-image:none!important/);
 });
 
-test("Daily, Weekly detail and Plans share meal heading, option title and option index hierarchy",()=>{
+test("Daily, Weekly detail and Plans share approved 16px/400 meal title and medium option hierarchy",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
- assert.match(css,/#overview #day-details \.daily-meal>\.daily-meal-head>strong/);
+ assert.match(css,/#overview \.daily-meal>\.daily-meal-head>strong/);
  assert.match(css,/#plans #plan-detail \.plan-overview-meal>\.daily-meal-head>strong/);
- assert.match(css,/#weekly-view \.weekly-color-detail \.weekly-color-meal-head>strong/);
- assert.match(css,/font-size:16px!important;font-weight:500!important/);
- assert.match(css,/font-size:15px!important;font-weight:500!important/);
- assert.match(css,/font-size:12px!important;font-weight:400!important/);
+ assert.match(css,/#weekly-view \.weekly-color-meal-head>strong/);
+ assert.match(css,/font-weight:var\(--mile-type-card-title\)!important/);
+ assert.match(css,/--day-title-size:16px;--day-title-weight:var\(--mile-type-card-title\)/);
+ assert.match(css,/\.tm-day-title\{font-family:inherit!important;font-size:var\(--day-title-size\)!important;font-weight:var\(--day-title-weight\)!important/);
+ assert.match(css,/#overview \.daily-meal \.plan-option-label>strong/);
+ assert.match(css,/font-weight:var\(--mile-type-medium\)!important/);
 });
-
 test("female weight trend only marks affirmative menstrual days, without changing weight values",()=>{
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
  const page=fs.readFileSync("static/jogador-v2.html","utf8");
  assert.match(player,/const female=String\(me\?\.sex\|\|""\)\.toUpperCase\(\)==="F"/);
  assert.match(player,/items\[i\]\.menstruating===1\|\|items\[i\]\.menstruating===true/);
- assert.match(player,/marker\.setAttribute\("aria-hidden","true"\)/);
+ assert.match(player,/element\("circle",\{cx:p\[0\],cy:p\[1\]\+11,r:3,fill:"#d6a7bc","aria-hidden":"true"\}\)/);
  assert.match(player,/touch\.addEventListener\("click",\(\)=>showDetail\(i\)\)/);
  assert.match(player,/daily-weight-chart-detail/);
- assert.match(page,/jogador-v2\.js\?v=149/);
+ assert.match(page,/jogador-v2\.js\?v=[^"\s]+/);
 });

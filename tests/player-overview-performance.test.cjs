@@ -45,7 +45,7 @@ test("intra-match groups all products by first-seen ingestion timing without los
  assert.deepEqual(Array.from(result[1].foods,x=>x.name),["Carb Shot","SIS Sports Drink"]);
  assert.equal(result.reduce((n,x)=>n+x.foods.length,0),items.length);
  assert.equal(group([]).length,0);
- assert.match(js,/if\(opts\.length===1\)appendGroupedPeriItems\(section,opts\[0\]\.items\)/);
+ assert.match(js,/if\(groupPeriTiming\)appendGroupedPeriItems\(details,o\.items,o\.timing_groups\)/);
  assert.match(js,/optionEl\(option,index,false,true\)/);
  assert.match(js,/if\(groupPeriTiming\)appendGroupedPeriItems\(details,o\.items\)/);
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
