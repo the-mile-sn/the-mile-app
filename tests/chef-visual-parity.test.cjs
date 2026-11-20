@@ -248,3 +248,16 @@ test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll a
  assert.match(js,/prefers-reduced-motion: reduce/);
  assert.match(guide,/A mudança de dia dentro da semana já carregada é imediata/);
 });
+
+test("Chef weekly adjacent-day selection shares Player 460ms moving-circle animation",()=>{
+ const player=fs.readFileSync("static/jogador-v2.js","utf8");
+ assert.match(player,/\{duration:460,easing:'cubic-bezier\(\.25,\.75,\.3,1\)'\}/);
+ assert.match(js,/function selectChefWeekDay\(date,selection=null\)/);
+ assert.match(js,/dayHead\.onclick=\(\)=>selectChefWeekDay\(date\)/);
+ assert.match(js,/selectChefWeekDay\(new Date\(key\+"T12:00:00"\),active\?null:\{date:key,meal\}\)/);
+ assert.match(js,/Math\.abs\(offset-previousOffset\)>1/);
+ assert.match(js,/\{duration:460,easing:"cubic-bezier\(\.25,\.75,\.3,1\)"\}/);
+ assert.match(css,/\.chef-week-moving-circle\{[^}]*border-radius:50%;background:#f3f3f5/);
+ assert.match(css,/\.chef-week-day\.selected strong\.chef-week-circle-arriving\{[^}]*background:transparent/);
+ assert.match(guide,/círculo móvel do calendário dos Jogadores/);
+});
