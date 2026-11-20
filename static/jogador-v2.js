@@ -2244,7 +2244,10 @@ function renderPlanContent(key,target){
    const header=document.createElement("div");header.className="option";
    const heading=document.createElement("h3");heading.textContent=label;header.append(heading);
    const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);
-   opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});
+   // A single published option is the meal itself, as in colour plans and Dia.
+   // Multiple options keep their independent expandable cards.
+   if(opts.length===1)appendMealItems(section,opts[0].items);
+   else opts.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("plan-option-card");section.append(item);});
    target.append(section);
   }
   return;
