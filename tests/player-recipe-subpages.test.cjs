@@ -59,12 +59,18 @@ test("multi-recipe dish opens a separate list with library-style cards",()=>{
  assert.doesNotMatch(js,/const section=node\("details","recipe-accordion"\)/);
 });
 
-test("library recipe header places a small photo next to name and portions",()=>{
- assert.match(js,/const identity=node\("div","recipe-identity"\)/);
- assert.match(js,/identity\.append\(copy\)/);
- assert.match(js,/identity\.append\(thumb\(recipe\.id,true\)\)/);
- assert.match(css,/#menus \.recipe-identity\{/);
- assert.match(css,/width:clamp\(76px,23vw,92px\)/);
+test("library recipe displays a 170-190px hero above the full-width page title",()=>{
+ assert.match(js,/const showHero=standalone&&includePhoto&&includeTitle&&recipe\.has_photo/);
+ assert.match(js,/const hero=thumb\(recipe\.id,true\)/);
+ assert.match(js,/hero\.classList\.add\("recipe-hero"\)/);
+ assert.match(js,/hero\.loading="eager"/);
+ const code=js.slice(js.indexOf("function detail("),js.indexOf("async function loadDetail("));
+ assert.ok(code.indexOf("root.append(hero)")<code.indexOf('const identity=node("div","recipe-identity")'));
+ assert.match(css,/#menus \.recipe-detail-standalone > \.recipe-hero\{[^}]*width:100%;[^}]*height:clamp\(170px,46vw,190px\);[^}]*object-fit:cover;[^}]*border-radius:18px;/s);
+ assert.match(css,/#menus \.recipe-detail-standalone \.recipe-identity\{[^}]*min-height:0;/s);
+ assert.match(css,/#menus \.recipe-identity h2\{[^}]*font-size:clamp\(21px,5\.3vw,23px\);[^}]*font-weight:var\(--mile-type-semibold,600\)/s);
+ assert.match(html,/player-recipes\.css\?v=22/);
+ assert.match(html,/player-recipes\.js\?v=14/);
 });
 test("recipe sections have subtle cards and separated ingredients",()=>{
  assert.match(js,/sectionTitle\("Ingredientes","ingredients"\)/);
@@ -103,13 +109,14 @@ test("section headings have grayscale icon tiles and universal 16px/400 type",()
  assert.match(css,/#menus \.recipe-content-section \.recipe-section-title\{\s*display:flex;\s*align-items:center;\s*gap:11px;\s*margin:0 0 10px;\s*font-size:16px;\s*font-weight:var\(--mile-type-card-title,400\);/);
  assert.equal((css.match(/#menus \.recipe-content-section \.recipe-section-title\{/g)||[]).length,1);
 });
-test("library photo aligns to the top of recipe name; menu-linked details remain photoless",()=>{
- assert.match(css,/#menus \.recipe-identity\{\s*align-items:flex-start;/);
- assert.match(js,/\{includePhoto:false\}/);
- assert.match(js,/renderDishDetail\(\)/);
+test("menu-linked recipes remain photo-free and preserve the existing return behavior",()=>{
+ assert.match(js,/loadDetail\(entries\[0\]\.id,detailRoot,[\s\S]*?\{includePhoto:false\}\)/);
+ assert.match(js,/loadDetail\(state\.recipeId,content,[\s\S]*?\{includePhoto:false\}\)/);
+ assert.match(js,/const showHero=standalone&&includePhoto&&includeTitle&&recipe\.has_photo/);
+ assert.match(js,/if\(includePhoto&&recipe\.has_photo&&!showHero\)identity\.append\(thumb\(recipe\.id,true\)\)/);
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.045\)/);
+ assert.match(js,/restoreScroll\(returnScroll\)/);
 });
-
 test("final heading hierarchy is smaller in every recipe detail",()=>{
  const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
  assert.match(css,/#menus \.recipe-content-section \.recipe-section-title\{[^}]*font-size:16px;[^}]*font-weight:var\(--mile-type-card-title,400\);/s);
@@ -125,13 +132,14 @@ test("multi-recipe dish has explicit back navigation and preserves menu scroll",
  assert.match(js,/\["list","detail","dish","dish-detail"\]\.includes\(screen\.kind\)/);
 });
 
-test("the library image gets optical top alignment only in standalone details",()=>{
- const finalRules=css.slice(css.lastIndexOf("/* Recipe-only visual finish:"));
- assert.match(finalRules,/#menus \.recipe-detail-standalone \.recipe-identity \.recipe-detail-photo\{\s*margin-top:7px;/);
- assert.doesNotMatch(finalRules,/#menus details\.recipe-accordion \.recipe-detail-photo/);
- assert.match(js,/if\(includePhoto&&recipe\.has_photo\)identity\.append\(thumb\(recipe\.id,true\)\)/);
+test("hero replaces the previous inline photo offset without altering recipe body",()=>{
+ assert.equal((css.match(/#menus \.recipe-detail-standalone > \.recipe-hero\{/g)||[]).length,1);
+ assert.doesNotMatch(css,/#menus \.recipe-detail-standalone \.recipe-identity \.recipe-detail-photo\{/);
+ assert.match(js,/if\(showHero\)\{\s*const hero=thumb\(recipe\.id,true\)/);
+ assert.match(js,/if\(includePhoto&&recipe\.has_photo&&!showHero\)identity\.append\(thumb\(recipe\.id,true\)\)/);
+ assert.match(js,/ingredientList\(ingredients,recipe\.sections\)/);
+ assert.match(js,/sectionTitle\("Preparação","preparation"\)/);
 });
-
 test("menu dish photos always open the same zoom, independent of recipes",()=>{
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
  assert.match(player,/const activate=\(\)=>openDishPhoto\(src,photo.alt\)/);
