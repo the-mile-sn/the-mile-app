@@ -77,7 +77,7 @@ label.mile-floating-field>.mile-floating-input:not(:placeholder-shown)+.mile-flo
 /* Chef collaboration: compact editors remain visually subordinate to the menu. */
 .chef-inline-edit{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
 .chef-inline-edit summary{font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
-.chef-editor,.chef-menu-editor{display:flex;flex-direction:column;gap:10px;margin-top:11px}
+.chef-editor{display:flex;flex-direction:column;gap:10px;margin-top:11px}
 .chef-input{width:100%;background:#25252b;border:1px solid #45454d;border-radius:13px;padding:10px 12px;min-height:43px;color:#f6f6f8;font-size:16px}
 textarea.chef-input{min-height:68px;resize:vertical}
 /* Chef menu selection shares the tonal panel family of the execution editor. */
