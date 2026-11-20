@@ -80,6 +80,23 @@ class DailyCardGeometryTests(unittest.TestCase):
         self.assertNotIn("font-weight:400!important;color:rgba(255,255,255,.85)", CSS)
         self.assertNotRegex(CSS, r"(?s)#overview #day-details \.peri-meal[^{}]*\{[^{}]*translateX")
 
+    def test_assessment_graph_matches_daily_weight_graph_surface(self):
+        graph = declarations("#plans .assessment-trend")
+        self.assertEqual(len(graph), 1, "Assessment graph margins must have one CSS source")
+        self.assertIn("margin:8px 17px 12px", graph[0])
+        weight = declarations(".daily-weight-chart-surface")
+        self.assertEqual(len(weight), 1)
+        for fragment in ("background:#1b1b20", "border-radius:14px",
+                         "padding:10px 8px 9px"):
+            self.assertIn(fragment, graph[0])
+            self.assertIn(fragment, weight[0])
+        weight_panel = declarations("#overview .daily-weight-panel")
+        self.assertEqual(len(weight_panel), 1)
+        self.assertIn("padding:8px 17px 12px!important", weight_panel[0])
+        self.assertIn('svg.style.width=width>344?width+"px":"min(100%, 344px)"', JS)
+        self.assertIn('if(width>344)requestAnimationFrame(', JS)
+        self.assertIn('Gráficos de Avaliações — referência Peso em jejum (20/11)', GUIDE)
+
     def test_universal_card_title_weight_400_preserves_other_roles(self):
         self.assertEqual(CSS.count("--mile-type-card-title:400"), 1)
         for selector in ("#plans #plans-assessments .assessment-metric-name",
