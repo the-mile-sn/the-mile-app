@@ -27,7 +27,7 @@ test("Chef Menus displays a full month week range and only weekday names",()=>{
  assert.ok(r&&d);
  const lang="pt",format=(date,options)=>new Intl.DateTimeFormat("pt-PT",options).format(date);
  const range=vm.runInNewContext(r+";chefMenuWeekRange",{format});
- const weekday=vm.runInNewContext(d+";chefMenuWeekday",{format,lang});
+ const weekday=vm.runInNewContext(d+";chefMenuWeekday",{format,lang,locale:code=>code==="en"?"en-GB":"pt-PT"});
  assert.equal(range(new Date(2026,10,16),new Date(2026,10,22)),"16–22 novembro 2026");
  assert.equal(range(new Date(2026,10,30),new Date(2026,11,6)),"30 novembro–6 dezembro 2026");
  assert.equal(range(new Date(2026,11,28),new Date(2027,0,3)),"28 dezembro 2026–3 janeiro 2027");
