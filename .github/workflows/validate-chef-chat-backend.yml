@@ -1,0 +1,52 @@
+name: Validate isolated Chef chat backend
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/chef-chat-backend-foundation-20261121]
+jobs:
+  chat-sqlite:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest -v test_chat_messaging_v2
+      - run: python -m py_compile chat_messaging_v2.py
+      - name: Confirm domain remains unregistered in production startup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          assert 'chat_messaging_v2' not in Path('app.py').read_text()
+          assert 'chat_messaging_v2' not in Path('wsgi.py').read_text()
+          print('No live migration or API activation')
+          PY
+  chat-postgres:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: chat_test
+          POSTGRES_PASSWORD: chat_test
+          POSTGRES_DB: chat_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U chat_test -d chat_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CHAT_PG_TEST_DATABASE_URL: postgresql://chat_test:chat_test@127.0.0.1:5432/chat_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install psycopg[binary]==3.2.10
+      - run: python -m unittest -v test_chat_postgres_v2
