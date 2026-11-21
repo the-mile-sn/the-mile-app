@@ -8,6 +8,9 @@ from test_chat_messaging_v2 import db
 class ChatAdminApiTests(unittest.TestCase):
     def setUp(self):
         self.c=db()
+        # Production users has a name; domain unit fixtures only need id/role.
+        self.c.execute("ALTER TABLE users ADD COLUMN name TEXT")
+        self.c.execute("UPDATE users SET name=id")
         self.cid=chat.get_or_create_chef_conversation(self.c,"chef-a")
 
     def tearDown(self):
@@ -49,6 +52,8 @@ class ChatAdminApiTests(unittest.TestCase):
                       {"conversation_id":self.cid,"body":"Unauthorized","client_key":"attempt"})
 
     def test_invalid_inputs(self):
+        self.call("/api/v2/admin/chat/assign","POST",
+                  {"conversation_id":self.cid,"staff_id":"admin-a"})
         with self.assertRaises(api.ChatApiError):
             self.call("/api/v2/admin/chat/messages",query="conversation_id=")
         with self.assertRaises(api.ChatApiError):
