@@ -5,6 +5,11 @@ A exportação lógica de 21/11/2026 às 15:56 está assinalada como concluída 
 
 Conforme a documentação oficial do Render (https://render.com/docs/postgresql-backups), o PITR cria uma NOVA base de dados para validação; não substitui imediatamente a original. Os exports .dir.tar.gz ficam disponíveis 7 dias após serem criados e podem ser descarregados e restaurados numa base vazia. A recuperação para uma nova instância pode gerar custos.
 
+## Estado do export — confirmação da equipa
+Em 21/11/2026, a equipa confirmou que **descarregou e guardou uma cópia do export fora do Render, em local privado**. Isto confirma a posse do ficheiro, mas **não confirma a sua integridade ou a possibilidade de restauro**. Não foi recebido nem solicitado o ficheiro, e nenhum serviço ou dado foi alterado.
+
+**Próxima verificação:** confirmar a integridade do ficheiro e ensaiar um restauro exclusivamente numa base temporária e isolada, após aprovação explícita de eventuais custos. Não criar automaticamente essa base e nunca restaurar sobre a instância de produção.
+
 ## O que é obrigatório antes de qualquer escrita em produção
 1. Ter uma cópia lógica descarregada em armazenamento privado apropriado, ou recuperação PITR confirmada como operacional. Não enviar credenciais ou ficheiros com dados clínicos por chat ou GitHub.
 2. Validar a integridade do export descarregado (e, idealmente, restaurá-lo numa base temporária vazia e isolada, com acesso restrito). **Não usar --clean sobre a base original.**
