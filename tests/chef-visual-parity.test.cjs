@@ -61,7 +61,7 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.send\)/);
  assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.realSend\)/);
  assert.doesNotMatch(demoJs,/send\.textContent|chef-chat-submit"\)\.textContent/);
- assert.match(demoJs,/appendMessage\("local",message\);input\.value="";\s*updateSendState\(\)/);
+ assert.match(demoJs,/appendMessage\("local",message\);input\.value="";\s*resizeComposer\(\);updateSendState\(\)/);
  assert.match(demoJs,/mode==="real"/);
  assert.match(demoJs,/await fetchReal\("\/api\/v2\/chef\/chat"\)/);
  assert.match(demoJs,/fetchReal\("\/api\/v2\/chef\/chat\/messages","POST"/);
