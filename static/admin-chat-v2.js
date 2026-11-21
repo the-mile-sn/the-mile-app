@@ -38,7 +38,7 @@
  dialog.append(header,thread,form,feedback);
  document.body.append(dialog);
  let actor=null,csrf="",selected=null,disabled=false,loading=false;
- let recent=[];
+ let recent=[],draftKey=null;
  const active=()=>!workspace.hidden && !document.hidden;
  async function json(path,method="GET",body){
   const response=await fetch(path,{method,credentials:"same-origin",
@@ -124,14 +124,14 @@
  }
  async function openThread(item){
   selected=item;title.textContent="Mensagens · "+(item.chef_name||"Chef");
-  textarea.value="";send.disabled=true;showError("");
+  textarea.value="";draftKey=null;send.disabled=true;showError("");
   dialog.showModal();
   try{await updateThread();}catch(_e){showError("Não foi possível carregar as mensagens.");}
  }
  close.addEventListener("click",()=>dialog.close());
  dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
- dialog.addEventListener("close",()=>{selected=null;thread.replaceChildren();textarea.value="";showError("");refresh();});
- textarea.addEventListener("input",()=>{send.disabled=!textarea.value.trim();});
+ dialog.addEventListener("close",()=>{selected=null;thread.replaceChildren();textarea.value="";draftKey=null;showError("");refresh();});
+ textarea.addEventListener("input",()=>{draftKey=null;send.disabled=!textarea.value.trim();});
  textarea.addEventListener("keydown",event=>{
   if(event.key==="Enter"&&!event.shiftKey&&!event.isComposing){
    event.preventDefault();if(!send.disabled)form.requestSubmit();
@@ -141,13 +141,16 @@
   event.preventDefault();
   if(!selected||!textarea.value.trim())return;
   const content=textarea.value.trim();
-  const key=typeof crypto!=="undefined"&&crypto.randomUUID?crypto.randomUUID():
-   "ui-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+  // Keep the idempotency key on transport failures, so retries cannot
+  // duplicate a message that was committed but whose response was lost.
+  const key=draftKey||(typeof crypto!=="undefined"&&crypto.randomUUID?crypto.randomUUID():
+   "ui-"+Date.now()+"-"+Math.random().toString(36).slice(2));
+  draftKey=key;
   send.disabled=true;showError("");
   try{
    await json("/api/v2/admin/chat/messages","POST",
     {conversation_id:selected.id,body:content,client_key:key});
-   textarea.value="";await updateThread();
+   textarea.value="";draftKey=null;await updateThread();
   }catch(_e){showError("Não foi possível enviar. A mensagem continua no campo.");}
   finally{send.disabled=!textarea.value.trim();}
  });
