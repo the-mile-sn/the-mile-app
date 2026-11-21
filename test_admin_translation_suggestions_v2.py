@@ -18,13 +18,17 @@ FLAG = {
     "MILE_APP_TRANSLATIONS_ENABLED": "0",
     "MILE_TRANSLATION_SUGGESTIONS_ENABLED": "1",
     "MILE_TRANSLATION_SUGGESTION_API_KEY": "test-only-not-real",
+    "MILE_TRANSLATION_SPEND_CONTROLS_CONFIRMED": "1",
+    "MILE_TRANSLATION_SUGGESTION_PROJECT_ID": "proj_test12345678",
 }
 
 
 class TranslationSuggestionTests(unittest.TestCase):
     def setUp(self):
         test_app.PortalTest.setUp(self)
-        suggestions._CALLS.clear()
+        original_role=app.SITE_ROLE
+        app.SITE_ROLE="admin"
+        self.addCleanup(setattr,app,"SITE_ROLE",original_role)
         with app.connect() as c:
             c.execute("""INSERT INTO v2_food_library
                 (id,source_key,base_name,display_name,category,notes,variant,
@@ -40,6 +44,7 @@ class TranslationSuggestionTests(unittest.TestCase):
                 VALUES ('supp-test','Creatina','5 g','lunch','daily','Tomar com água',
                         'Após o almoço','[{"dose":"5 g","note":"Atenção clínica"}]')""")
             translations.initialize(c)
+            suggestions.initialize_quota_schema(c)
             c.commit()
 
     def payload(self, kind="food", ident="food-test", field="display_name", source=None):
@@ -50,12 +55,15 @@ class TranslationSuggestionTests(unittest.TestCase):
         return {"entity_kind":kind,"entity_id":ident,"field_path":field,
                 "language":"en","expected_source_hash":source}
 
+    def suggest_request(self,path,method="POST",body=None,csrf=True,origin="https://admin.themile.pt"):
+        return self.admin.request(path,method,body,csrf=csrf,origin=origin)
+
     def test_feature_off_by_default_and_missing_credentials(self):
         with patch.dict(os.environ, {"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"1",
                                      "MILE_TRANSLATION_SUGGESTIONS_ENABLED":"0",
                                      "MILE_TRANSLATION_SUGGESTION_API_KEY":""}):
             self.assertFalse(self.admin.request("/api/v2/admin/i18n/overview")["body"]["suggestions_enabled"])
-            result=self.admin.request("/api/v2/admin/i18n/suggest","POST",
+            result=self.suggest_request("/api/v2/admin/i18n/suggest","POST",
                                       self.payload(source="placeholder"))
             self.assertEqual(result["status"],404)
         with patch.dict(os.environ, {"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"1",
@@ -67,14 +75,14 @@ class TranslationSuggestionTests(unittest.TestCase):
         with patch.dict(os.environ, FLAG):
             self.assertTrue(self.admin.request("/api/v2/admin/i18n/overview")["body"]["suggestions_enabled"])
             body=self.payload()
-            self.assertEqual(self.admin.request("/api/v2/admin/i18n/suggest","POST",
+            self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest","POST",
                                                 body,csrf=False)["status"],403)
-            self.assertEqual(self.admin.request("/api/v2/admin/i18n/suggest","POST",
+            self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest","POST",
                          body,origin="https://evil.example")["status"],403)
             self.assertEqual(test_app.Client().request(
                 "/api/v2/admin/i18n/suggest","POST",body)["status"],401)
             with patch.object(suggestions,"_generate",return_value="White rice") as model:
-                reply=self.admin.request("/api/v2/admin/i18n/suggest","POST",body)
+                reply=self.suggest_request("/api/v2/admin/i18n/suggest","POST",body)
                 self.assertEqual(reply["status"],200,reply)
                 self.assertEqual(reply["body"]["suggestion"],"White rice")
                 self.assertFalse(reply["body"]["saved"])
@@ -89,7 +97,7 @@ class TranslationSuggestionTests(unittest.TestCase):
         with patch.dict(os.environ, FLAG):
             body=self.payload("dish","dish-test","name_pt")
             with patch.object(suggestions,"_generate") as model:
-                response=self.admin.request("/api/v2/admin/i18n/suggest","POST",body)
+                response=self.suggest_request("/api/v2/admin/i18n/suggest","POST",body)
                 self.assertEqual(response["status"],200,response)
                 self.assertEqual(response["body"]["suggestion"],"Chicken and rice")
                 self.assertEqual(response["body"]["source"],"existing_english")
@@ -98,13 +106,13 @@ class TranslationSuggestionTests(unittest.TestCase):
     def test_stale_source_and_protected_notes_rejected(self):
         with patch.dict(os.environ, FLAG):
             wrong=self.payload(source=hashlib.sha256(b"wrong").hexdigest())
-            self.assertEqual(self.admin.request("/api/v2/admin/i18n/suggest","POST",wrong)["status"],409)
-            self.assertEqual(self.admin.request("/api/v2/admin/i18n/suggest","POST",
-                self.payload(field="notes",source="wrong"))["status"],400)
-            self.assertEqual(self.admin.request("/api/v2/admin/i18n/suggest","POST",
+            self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest","POST",wrong)["status"],409)
+            self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest","POST",
+                self.payload(field="notes",source="wrong"))["status"],422)
+            self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest","POST",
                 self.payload(kind="supplement",ident="supp-test",field="prescriptions/0/note",
                              source="wrong"))["status"],422)
-            self.assertEqual(self.admin.request("/api/v2/admin/i18n/suggest","POST",
+            self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest","POST",
                 self.payload(kind="supplement",ident="supp-test",field="timing_text",
                              source="wrong"))["status"],422)
 
@@ -114,7 +122,7 @@ class TranslationSuggestionTests(unittest.TestCase):
             approved=self.admin.request("/api/v2/admin/i18n/propose","POST",
                 {**body,"translated_text":"White rice"})
             self.assertEqual(approved["status"],201,approved)
-            blocked=self.admin.request("/api/v2/admin/i18n/suggest","POST",body)
+            blocked=self.suggest_request("/api/v2/admin/i18n/suggest","POST",body)
             self.assertEqual(blocked["status"],409,blocked)
             with app.connect() as c:
                 self.assertEqual(c.execute(
@@ -124,7 +132,7 @@ class TranslationSuggestionTests(unittest.TestCase):
         with patch.dict(os.environ, FLAG):
             with patch.object(suggestions,"_generate",
                               side_effect=suggestions.SuggestionError(503,"translation_suggestion_unavailable")):
-                response=self.admin.request("/api/v2/admin/i18n/suggest","POST",self.payload())
+                response=self.suggest_request("/api/v2/admin/i18n/suggest","POST",self.payload())
             self.assertEqual(response["status"],503)
 
     def test_external_provider_contract_no_persistence_and_numbers_unchanged(self):
@@ -133,15 +141,23 @@ class TranslationSuggestionTests(unittest.TestCase):
             def __exit__(self,*args):return None
             def read(self,n):return json.dumps({"status":"completed","output":[
                 {"type":"message","content":[{"type":"output_text","text":"100 g of rice"}]}]}).encode()
-        with patch.dict(os.environ, FLAG),patch.object(suggestions.urllib.request,"urlopen",return_value=FakeResponse()) as send:
+        class FakeOpener:
+            def open(self,request,timeout):
+                self.request=request;self.timeout=timeout
+                return FakeResponse()
+        fake=FakeOpener()
+        with patch.dict(os.environ, FLAG),patch.object(suggestions.urllib.request,"build_opener",return_value=fake) as build:
             self.assertEqual(suggestions._generate("100 g de arroz","food"),"100 g of rice")
-            request=send.call_args.args[0]
+            request=fake.request
             outbound=json.loads(request.data.decode("utf-8"))
             self.assertEqual(outbound["store"],False)
-            self.assertEqual(outbound["model"],"gpt-5.4-mini")
+            self.assertEqual(outbound["model"],suggestions.MODEL)
+            self.assertEqual(dict(request.header_items())["Openai-project"],"proj_test12345678")
+            self.assertTrue(any(isinstance(h,suggestions._DenyRedirect)
+                                for h in build.call_args.args))
             self.assertNotIn("Nota interna",str(outbound))
             self.assertEqual(outbound["max_output_tokens"],350)
-            self.assertEqual(send.call_args.kwargs["timeout"],15)
+            self.assertEqual(fake.timeout,suggestions.TIMEOUT_SECONDS)
 
 
 if __name__ == "__main__":
