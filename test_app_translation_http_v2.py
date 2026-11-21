@@ -204,7 +204,9 @@ class TranslationHTTPTests(unittest.TestCase):
 
     def test_new_routes_are_explicitly_off_in_real_app(self):
         source = pathlib.Path(__file__).with_name("app.py").read_text(encoding="utf-8")
-        self.assertIn("MILE_APP_TRANSLATIONS_ENABLED', '0'", source)
+        self.assertIn("MILE_APP_TRANSLATIONS_ENABLED", source)
+        self.assertIn("MILE_BACKOFFICE_TRANSLATIONS_ENABLED", source)
+        self.assertIn("os.environ.get(translation_flag, '0') != '1'", source)
         self.assertIn("if path in translation_pilot_routes:", source)
         self.assertIn("app_translation_http_v2.dispatch(", source)
         self.assertIn("user=dict(user)", source)
