@@ -42,7 +42,7 @@ test("Chef Menus displays a full month week range and only weekday names",()=>{
 test("Chef Profile copies Player identity, account actions and password workflow without legacy logout",()=>{
  const playerCss=fs.readFileSync("static/jogador-v2.css","utf8");
  const playerJs=fs.readFileSync("static/jogador-v2.js","utf8");
- for(const token of ["width:90px;height:90px","background:#414148","font-size:21px","background:#242429;border-radius:13px","min-height:61px","border-radius:17px","min-height:64px"]){
+ for(const token of ["width:90px;height:90px","background:#414148","font-size:21px","border-radius:13px;background:#242429","min-height:61px","border-radius:17px","min-height:64px"]){
   assert.ok(css.includes(token),"Chef style: "+token);
  }
  assert.match(playerCss,/#profile \.profile-identity/);
