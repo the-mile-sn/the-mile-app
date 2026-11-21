@@ -6,11 +6,11 @@
  const close=$("chef-chat-close"),thread=$("chef-chat-thread");
  const form=$("chef-chat-form"),input=$("chef-chat-input"),result=$("chef-chat-result");
  const send=$("chef-chat-submit");
- const kicker=$("chef-chat-kicker"),disclaimer=$("chef-chat-disclaimer");
+ const disclaimer=$("chef-chat-disclaimer");
  if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send)return;
  const copy={
   pt:{
-   open:"Abrir mensagens (simulação)",title:"Mensagens",demo:"SIMULAÇÃO",
+   open:"Abrir mensagens (simulação)",title:"Mensagens",
    close:"Fechar mensagens",
    disclaimer:"Pré-visualização: não introduzas dados pessoais. Nada é enviado ou guardado.",
    thread:"Mensagens de exemplo",team:"Equipa The Mile · exemplo",
@@ -18,19 +18,19 @@
    mine:"Chef · exemplo",caption:"Apenas ilustrativo",
    label:"Mensagem de exemplo",placeholder:"Escreve uma mensagem de exemplo…",
    send:"Simular envio (não enviado)",sendTitle:"Simular envio",notSent:"Mensagem apresentada apenas neste exemplo. Não foi enviada nem guardada.",
-   realKicker:"THE MILE",realDisclaimer:"Comunicação com a equipa The Mile. As conversas são conservadas enquanto necessário durante a relação profissional e, depois de arquivadas, são revistas ao fim de 12 meses, salvo obrigações legais ou pedidos relativos aos teus direitos.",
+   realDisclaimer:"Comunicação com a equipa The Mile. As conversas são conservadas enquanto necessário durante a relação profissional e, depois de arquivadas, são revistas ao fim de 12 meses, salvo obrigações legais ou pedidos relativos aos teus direitos.",
    realSend:"Enviar mensagem",realThread:"Conversa com a equipa The Mile",realPlaceholder:"Escreve uma mensagem…",realEmpty:"Ainda não há mensagens nesta conversa.",
    realError:"Não foi possível carregar a conversa. Tenta novamente.",realSendError:"Não foi possível enviar. A mensagem continua no campo.",realSent:"Mensagem enviada.",privacy:"Informações e privacidade"
   },
   en:{
-   open:"Open messages (demo)",title:"Messages",demo:"DEMO",close:"Close messages",
+   open:"Open messages (demo)",title:"Messages",close:"Close messages",
    disclaimer:"Preview only: do not enter personal information. Nothing is sent or saved.",
    thread:"Example messages",team:"The Mile team · example",
    sample:"Hi! Here you will be able to message The Mile team about menus and other requests.",
    mine:"Chef · example",caption:"Illustration only",label:"Example message",
    placeholder:"Write an example message…",send:"Simulate sending (not delivered)",sendTitle:"Simulate",
    notSent:"Message shown in this demo only. It was not sent or saved.",
-   realKicker:"THE MILE",realDisclaimer:"Messaging with The Mile team. Messages are kept as needed during the professional relationship. After the conversation is archived, retention is reviewed after 12 months, subject to legal duties and your data rights.",
+   realDisclaimer:"Messaging with The Mile team. Messages are kept as needed during the professional relationship. After the conversation is archived, retention is reviewed after 12 months, subject to legal duties and your data rights.",
    realSend:"Send message",realThread:"Conversation with The Mile team",realPlaceholder:"Write a message…",realEmpty:"No messages in this conversation yet.",
    realError:"Unable to load the conversation. Try again.",realSendError:"Couldn't send. Your message remains in the field.",realSent:"Message sent.",privacy:"Information and privacy"
   }
@@ -82,7 +82,6 @@
   thread.scrollTop=thread.scrollHeight;
  }
  function showLiveLabels(){
-  kicker.textContent=t().realKicker;
   disclaimer.textContent=t().realDisclaimer;
   thread.setAttribute("aria-label",t().realThread);
   input.placeholder=t().realPlaceholder;
@@ -146,7 +145,6 @@
   language=next;
   trigger.setAttribute("aria-label",t().open);
   $("chef-chat-title").textContent=t().title;
-  $("chef-chat-kicker").textContent=t().demo;
   close.setAttribute("aria-label",t().close);
   $("chef-chat-disclaimer").textContent=t().disclaimer;
   thread.setAttribute("aria-label",t().thread);

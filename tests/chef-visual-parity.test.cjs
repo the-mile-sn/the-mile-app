@@ -34,8 +34,8 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=6/);
- assert.match(html,/chef-chat-demo\.js\?v=6/);
+ assert.match(html,/chef-chat-demo\.css\?v=7/);
+ assert.match(html,/chef-chat-demo\.js\?v=7/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
  assert.match(demoJs,/if\(mode!=="real"\|\|!dialog\.open\|\|document\.hidden\)return/);
@@ -48,6 +48,10 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.doesNotMatch(html,/icon-message-01/);
  assert.match(html,/<dialog id="chef-chat-dialog"/);
  assert.match(html,/aria-labelledby="chef-chat-title"/);
+ assert.doesNotMatch(html,/id="chef-chat-kicker"/);
+ assert.doesNotMatch(demoJs,/realKicker|chef-chat-kicker/);
+ assert.doesNotMatch(demoCss,/\.chef-chat-kicker/);
+
  assert.match(html,/id="chef-chat-thread"[^>]*role="log"/);
  assert.match(html,/id="chef-chat-input"[^>]*maxlength="600"/);
  assert.match(html,/id="chef-chat-submit" class="chef-chat-send"[^>]*aria-label="Simular envio \(não enviado\)"[^>]*disabled/);
