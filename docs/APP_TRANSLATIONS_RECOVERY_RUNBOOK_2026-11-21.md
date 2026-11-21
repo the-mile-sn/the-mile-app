@@ -10,13 +10,16 @@ Em 21/11/2026, a equipa confirmou que **descarregou e guardou uma cópia do expo
 
 **Próxima verificação:** confirmar a integridade do ficheiro e ensaiar um restauro exclusivamente numa base temporária e isolada, após aprovação explícita de eventuais custos. Não criar automaticamente essa base e nunca restaurar sobre a instância de produção.
 
-## O que é obrigatório antes de qualquer escrita em produção
+## Atualização operacional após migração aditiva (21/11/2026)
+A equipa executou a migração de duas tabelas de traduções na base real, conforme captura do Shell. Estado reportado: **MIGRACAO CONCLUIDA**, 0 traduções, 0 eventos de histórico. Isto não equivale à ativação do backoffice, que continua desligado, nem altera o facto de o restauro do backup não ter sido testado.
+
+## Requisitos antes de outras alterações em produção
 1. Ter uma cópia lógica descarregada em armazenamento privado apropriado, ou recuperação PITR confirmada como operacional. Não enviar credenciais ou ficheiros com dados clínicos por chat ou GitHub.
 2. Validar a integridade do export descarregado (e, idealmente, restaurá-lo numa base temporária vazia e isolada, com acesso restrito). **Não usar --clean sobre a base original.**
 3. Confirmar explicitamente a capacidade de recuperação e o impacto operacional/custo da instância temporária antes de criar qualquer serviço Render.
 4. Confrontar o diagnóstico de esquema de 21/11 com os requisitos do SQL de migração. Não supor que as contagens se mantiveram.
 5. Planear o ponto de reversão: desligar MILE_BACKOFFICE_TRANSLATIONS_ENABLED se houver falha. Os dados novos permanecem nas tabelas para preservar o histórico; não fazer DROP por defeito.
-6. Só depois aprovar a execução manual e transacional do SQL aditivo; manter as apps desligadas.
+6. **Migração inicial já aplicada.** Não repetir a instalação; conservar as apps desligadas e verificar as duas tabelas por leitura antes de iniciar a central.
 
 ## O que já foi testado
 - Em PostgreSQL 18 efémero, a migração adiciona duas tabelas, é idempotente e não modifica bibliotecas.
@@ -24,4 +27,4 @@ Em 21/11/2026, a equipa confirmou que **descarregou e guardou uma cópia do expo
 - O script tools/i18n_preflight_readonly.py garante sessão somente de leitura, confirma colunas relevantes, permissões de esquema e contagens agregadas, e não mostra nomes de jogadores nem prescrições.
 
 ## Limitacões de acesso
-O conector Render não consegue aceder à base real devido à allowlist vazia. **Não modificar a allowlist.** Os instrumentos desta PR são entregues para execução apenas numa sessão interna autorizada, sem segredos em logs. Este documento não autoriza a migração real nem um restauro de produção.
+O conector Render não consegue aceder à base real devido à allowlist vazia. **Não modificar a allowlist.** Os instrumentos desta PR são entregues para execução apenas numa sessão interna autorizada, sem segredos em logs. O registo da migração efetiva não constitui autorização de restauro, deploy, alteração de flags ou futuras migrações.
