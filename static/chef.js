@@ -1190,6 +1190,18 @@ function chefSwipeIntent(dx,dy){
  }
  return "pending";
 }
+/* Pure decision shared by touchend and its regressions. The reverse gesture
+   deliberately retains its already-approved distance and velocity. */
+function chefSwipeShouldCommit(dx,elapsed,width,isDay){
+ const distance=Math.abs(dx),forwardDay=isDay&&dx<0;
+ const minSwipe=isDay?(forwardDay?30:35):55;
+ if(distance<minSwipe)return false;
+ if(!isDay)return true;
+ const speed=distance/Math.max(1,elapsed);
+ return forwardDay
+  ?distance>width*.30||(distance>30&&speed>.48)
+  :distance>width*.38||(distance>35&&speed>.55);
+}
 let chefTouchStart=null,chefTouchActive=false,chefTouchScreen=null,chefTouchTimeout=null;
 function clearChefGesture(){
  if(chefTouchTimeout!==null){clearTimeout(chefTouchTimeout);chefTouchTimeout=null;}
@@ -1252,16 +1264,10 @@ chefSwipeArea.addEventListener("touchend",event=>{
  const dx=event.changedTouches[0].clientX-chefTouchStart.x;
  const direction=dx<0?1:-1;
  const isDay=activeTab==="home"&&chefViewMode==="day";
- const forwardDay=isDay&&direction===1;
- const minSwipe=isDay?(forwardDay?30:35):55;
- // A direction is decided by touchmove, not reclassified when lifting the finger.
- if(Math.abs(dx)<minSwipe){finishChefGesture(0);return;}
- const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
- const commit=isDay
-  ?forwardDay
-   ?Math.abs(dx)>chefTouchStart.width*.30||(Math.abs(dx)>30&&Math.abs(speed)>.48)
-   :Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55)
-  :true;
+ // Do not reclassify the locked gesture's axis when the finger is released.
+ const commit=chefSwipeShouldCommit(
+  dx,performance.now()-chefTouchStart.at,chefTouchStart.width,isDay
+ );
  const step=activeTab==="menus"||(activeTab==="home"&&chefViewMode==="week")?7:1;
  const navigate=()=>{if(commit)chefShiftDay(direction,step);};
  if(chefTouchScreen)finishChefGesture(commit?-direction*chefTouchStart.width:0,navigate);
