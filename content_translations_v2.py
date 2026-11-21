@@ -91,7 +91,7 @@ def _history(c, key, source_hash, translated_text, action, actor_id, timestamp):
              translated_text, action, actor_id, created_at)
         VALUES (?,?,?,?,?,?,?,?,?,?)
     """, (secrets.token_hex(16), *key, source_hash,
-          translated_text, action, actor_id, timestamp))
+          translated_text, action, actor_id, time.time_ns()))
 
 
 def submit(c, *, entity_kind, entity_id, field_path, source_text,
