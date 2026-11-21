@@ -64,8 +64,9 @@
  trigger.addEventListener("click",()=>{
   if(trigger.hidden||dialog.open)return;
   reset();dialog.showModal();
-  // Avoid automatically opening the iPhone keyboard.
-  close.focus({preventScroll:true});
+  // Give the modal a stable initial focus without drawing a selection ring
+  // around the close button or opening the iPhone keyboard.
+  $("chef-chat-title").focus({preventScroll:true});
  });
  close.addEventListener("click",closeDemo);
  dialog.addEventListener("click",event=>{if(event.target===dialog)closeDemo();});
