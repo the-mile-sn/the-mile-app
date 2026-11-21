@@ -46,9 +46,14 @@
  const queryString=(data)=>new URLSearchParams(Object.entries(data)
    .filter(([key,val])=>val!==undefined&&val!==null&&val!=="")).toString();
  const badge=(status)=>create("span","i18n-status-pill",translations[status]||status);
+ const suggestibleField=(key)=>!!key&&
+   (key.entity_kind==="food"&&key.field_path==="display_name"||
+    key.entity_kind==="dish"&&key.field_path==="name_pt"||
+    key.entity_kind==="recipe_category"&&key.field_path==="name"||
+    key.entity_kind==="supplement"&&key.field_path==="name"||
+    key.entity_kind==="recipe"&&key.field_path!=="notes");
  const canSuggest=()=>state.suggestionsEnabled&&state.row&&!state.edited&&!state.row.candidate&&
-   !state.legacy&&!state.busy&&state.selected&&
-   (state.selected.entity_kind!=="supplement"||state.selected.field_path==="name");
+   !state.legacy&&!state.busy&&suggestibleField(state.selected);
  const updateSuggestionAction=()=>{
    const button=$("i18n-suggest");
    button.hidden=!canSuggest();
