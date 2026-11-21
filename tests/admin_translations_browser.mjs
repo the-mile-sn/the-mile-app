@@ -46,6 +46,8 @@ const catalog = (query) => ({
   items: query.get("entity_kind") === "dish" ?
     [{
       entity_kind: "dish", entity_id: "dish1", field_path: "name_pt",
+      fields: [{ field_path: "name_pt", field_label: "Nome do prato", state: snap.status,
+        source_text: snap.source, legacy_candidate: snap.status === "legacy_review" ? snap.english : "" }],
       source_text: snap.source, category: "Carne", state: snap.status,
       translation_text: snap.proposed?.text || "",
       legacy_candidate: snap.status === "legacy_review" ? snap.english : "",
@@ -131,6 +133,7 @@ try {
     assert.equal(await page.locator("#i18n-source-text").innerText(),
       snap.source);
     assert.equal(await page.locator("#i18n-approve").isDisabled(), true);
+    assert.equal(await page.locator("#i18n-fields option").count(), 1);
     await page.waitForFunction(
       () => document.querySelector("#i18n-target-text")?.value === "Chicken and rice",
     );
@@ -141,6 +144,7 @@ try {
     await page.locator("#i18n-approve").click();
     await page.getByText("Tradução aprovada.", { exact: true }).waitFor();
     assert.deepEqual(snap.writes, ["propose", "approve"]);
+    assert.equal(await page.locator("#i18n-results .i18n-status-pill").first().innerText(), "Aprovada");
     await page.screenshot({
       path: "/tmp/backoffice-translations-" + name + "-MOCK.png",
       fullPage: true,
