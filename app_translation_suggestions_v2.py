@@ -92,7 +92,7 @@ def _generate(source_text, kind):
             parsed = json.loads(response.read(100_000).decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, UnicodeError, ValueError, OSError):
         raise SuggestionError(503, "translation_suggestion_unavailable") from None
-    if parsed.get("status") != "completed":
+    if not isinstance(parsed, dict) or parsed.get("status") != "completed":
         raise SuggestionError(503, "translation_suggestion_unavailable")
     texts = [
         item.get("text")
