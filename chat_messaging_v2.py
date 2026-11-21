@@ -183,7 +183,13 @@ def send_message(c,conversation_id,actor_id,body,client_key):
         (conversation_id,actor_id,client_key)).fetchone()
     if existing:
         return dict(existing),False
-    now=_now()
+    # Allocate a strictly increasing ordering cursor in the conversation row.
+    # The UPDATE serializes writers on PostgreSQL; SQLite serializes its writer.
+    # A wall-clock millisecond timestamp alone can collide under rapid sends.
+    now=c.execute("""UPDATE v2_chat_conversations SET
+        updated_at=CASE WHEN updated_at>=? THEN updated_at+1 ELSE ? END
+        WHERE id=? RETURNING updated_at""",
+        (_now(),_now(),conversation_id)).fetchone()["updated_at"]
     message_id=secrets.token_hex(16)
     c.execute("""INSERT INTO v2_chat_messages
         (id,conversation_id,author_id,client_key,body,created_at)
@@ -193,9 +199,6 @@ def send_message(c,conversation_id,actor_id,body,client_key):
     row=c.execute("""SELECT id,conversation_id,author_id,body,created_at
         FROM v2_chat_messages WHERE conversation_id=? AND author_id=? AND client_key=?""",
         (conversation_id,actor_id,client_key)).fetchone()
-    c.execute("""UPDATE v2_chat_conversations SET updated_at=
-        CASE WHEN updated_at<? THEN ? ELSE updated_at END WHERE id=?""",
-        (row["created_at"],row["created_at"],conversation_id))
     return dict(row),row["id"]==message_id
 
 
