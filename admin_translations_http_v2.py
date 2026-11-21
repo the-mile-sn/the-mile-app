@@ -5,11 +5,12 @@ caller authenticates, checks origin/CSRF and SITE_ROLE before dispatch.
 """
 import app_translation_admin_v2 as review
 import app_translation_catalog_v2 as catalog
+import app_translation_suggestions_v2 as suggestions
 
 ROOT = "/api/v2/admin/i18n"
 PATHS = frozenset((
     ROOT, ROOT + "/propose", ROOT + "/approve", ROOT + "/history",
-    ROOT + "/overview", ROOT + "/catalog",
+    ROOT + "/overview", ROOT + "/catalog", ROOT + "/suggest",
 ))
 
 
@@ -62,7 +63,9 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
             if path == ROOT + "/overview":
                 if query:
                     raise APIError(400, "invalid_translation_query")
-                return 200, catalog.overview(c, user)
+                overview = catalog.overview(c, user)
+                overview["suggestions_enabled"] = suggestions.enabled()
+                return 200, overview
             if path == ROOT + "/catalog":
                 q = _query(query or {}, ("entity_kind", "status", "query",
                                          "page", "page_size"))
@@ -90,10 +93,14 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/suggest":
+                return 200, suggestions.suggest(c, user, body)
             if path == ROOT + "/propose":
                 return 201, review.propose(c, user, body)
             if path == ROOT + "/approve":
                 return 200, review.approve(c, user, body)
+    except suggestions.SuggestionError as e:
+        raise APIError(e.status, e.code) from None
     except (PermissionError, LookupError, ValueError) as e:
         raise _map_error(e) from None
     raise APIError(404, "not_found")
