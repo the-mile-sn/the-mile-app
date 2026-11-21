@@ -91,6 +91,46 @@ class ChefPlayerReleaseTests(unittest.TestCase):
             self.assertEqual(self.chef.request("/api/v2/chef/preferences","PUT",{"language":"pt"})["status"],200)
             self.assertEqual(self.chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"pt")
 
+    def test_chat_routes_are_off_until_migration_and_feature_gate(self):
+        """No chat API leaks or creates schema in default deployed configuration."""
+        import os
+        with patch.dict(os.environ,{"MILE_CHAT_API_ENABLED":"0"}):
+            with patch.object(app,"SITE_ROLE","player"):
+                self.assertEqual(self.chef.request("/api/v2/chef/chat")["status"],404)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages","POST",
+                    {"body":"Olá","client_key":"disabled"})["status"],404)
+                self.assertEqual(Client().request("/api/v2/chef/chat")["status"],401)
+        with app.connect() as c:
+            row=c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='v2_chat_messages'").fetchone()
+            self.assertIsNone(row)
+
+    def test_chat_http_flow_with_opt_in_disposable_test_schema(self):
+        """Real WSGI request tests, no Render schema or credentials."""
+        import os
+        import chat_messaging_v2 as domain
+        with app.connect() as c:
+            domain.initialize(c)
+        with patch.dict(os.environ,{"MILE_CHAT_API_ENABLED":"1"}):
+            with patch.object(app,"SITE_ROLE","player"):
+                empty=self.chef.request("/api/v2/chef/chat")
+                self.assertEqual(empty["status"],200,empty)
+                self.assertIsNone(empty["body"]["conversation"])
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages")["body"]["messages"],[])
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages","POST",
+                    {"body":"Mensagem","client_key":"csrf-a"},csrf=False)["status"],403)
+                first=self.chef.request("/api/v2/chef/chat/messages","POST",
+                    {"body":"Olá, The Mile","client_key":"chef-test-msg"})
+                self.assertEqual(first["status"],201,first)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages","POST",
+                    {"body":"Outra","client_key":"chef-test-msg"})["status"],200)
+                self.assertEqual(len(self.chef.request("/api/v2/chef/chat/messages")["body"]["messages"]),1)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/read","POST",
+                    {"message_id":"wrong"})["status"],400)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/read","POST",
+                    {"message_id":first["body"]["message"]["id"]})["status"],200)
+                self.assertEqual(self.chef.request("/api/v2/chef/chat/messages?limit=101")["status"],400)
+                self.assertEqual(Client().request("/api/v2/chef/chat")["status"],401)
+
     def test_chef_chat_prototype_assets_are_reachable_and_role_scoped(self):
         """The shipped Chef HTML must never reference a CSS/JS asset that returns 404.
 
