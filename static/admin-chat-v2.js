@@ -117,7 +117,9 @@
   }
   thread.scrollTop=thread.scrollHeight;
   const last=(result.messages||[]).at(-1);
-  if(last&&last.author_id!==actor.id){
+  // Read cursor follows the newest displayed message, including our own reply:
+  // earlier incoming messages must not remain falsely unread.
+  if(last){
    await json("/api/v2/admin/chat/read","POST",
     {conversation_id:selected.id,message_id:last.id});
   }
