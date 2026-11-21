@@ -15,9 +15,9 @@
   <link rel="icon" href="/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link href="/chef.css?v=23" rel="stylesheet">
-  <link href="/chef-chat-demo.css?v=6" rel="stylesheet">
+  <link href="/chef-chat-demo.css?v=7" rel="stylesheet">
   <script src="/chef.js?v=32" defer></script>
-  <script src="/chef-chat-demo.js?v=6" defer></script>
+  <script src="/chef-chat-demo.js?v=7" defer></script>
 </head>
 <body>
   <header class="top">
@@ -73,6 +73,11 @@
         <button id="chef-chat-close" class="chef-chat-close" type="button" aria-label="Fechar mensagens">×</button>
       </header>
       <p id="chef-chat-disclaimer" class="chef-chat-disclaimer">Pré-visualização. As mensagens não são enviadas nem guardadas.</p>
+      <details id="chef-chat-privacy" class="chef-chat-privacy" hidden>
+        <summary id="chef-chat-privacy-title">Informações e privacidade</summary>
+        <p id="chef-chat-privacy-copy"></p>
+        <a id="chef-chat-privacy-link" href="https://themile.pt/policies/privacy-policy" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
+      </details>
       <div id="chef-chat-thread" class="chef-chat-thread" role="log" aria-label="Mensagens de exemplo" aria-live="polite" aria-relevant="additions text"></div>
       <form id="chef-chat-form" class="chef-chat-form">
         <label id="chef-chat-input-label" for="chef-chat-input" class="chef-chat-visually-hidden">Mensagem de exemplo</label>
