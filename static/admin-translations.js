@@ -46,7 +46,7 @@
  const queryString=(data)=>new URLSearchParams(Object.entries(data)
    .filter(([key,val])=>val!==undefined&&val!==null&&val!=="")).toString();
  const badge=(status)=>create("span","i18n-status-pill",translations[status]||status);
- const canSuggest=()=>state.suggestionsEnabled&&state.row&&!state.row.candidate&&
+ const canSuggest=()=>state.suggestionsEnabled&&state.row&&!state.edited&&!state.row.candidate&&
    !state.legacy&&!state.busy&&state.selected&&
    (state.selected.entity_kind!=="supplement"||state.selected.field_path==="name");
  const updateSuggestionAction=()=>{
