@@ -35,6 +35,7 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(js,/window\.themileChefChatDemo\?\.setLanguage\(lang\)/);
  assert.match(js,/chefOfficialIconData\["Message01Icon"\]=\[/);
  assert.match(js,/"message-01":"Message01Icon"/);
+ assert.doesNotThrow(()=>new (require("node:vm").Script)(demoJs));
  assert.match(demoJs,/dialog\.showModal\(\)/);
  assert.match(demoJs,/dialog\.addEventListener\("close"/);
  assert.match(demoJs,/thread\.replaceChildren\(\)/);
