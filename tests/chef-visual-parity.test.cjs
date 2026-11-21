@@ -16,8 +16,8 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=21/);
- assert.match(html,/chef\.js\?v=27/);
+ assert.match(html,/chef\.css\?v=22/);
+ assert.match(html,/chef\.js\?v=28/);
 });
 
 test("Chef Menus displays a full month week range and only weekday names",()=>{
@@ -50,9 +50,15 @@ test("Chef Profile copies Player identity, account actions and password workflow
  assert.match(js,/function chefProfileInitials\(name\)/);
  assert.match(js,/node\("div","profile-photo-circle",chefProfileInitials\(chef\?\.name\)\)/);
  assert.match(js,/chef\?\.username\?"@"\+chef\.username:""/);
- assert.match(js,/const assigned=node\("div","profile-plan-detail"\)/);
- assert.match(js,/assigned\.append\(node\("span","",txt\(\)\.player\)/);
- assert.match(js,/node\("div","profile-plan-detail profile-renewal-detail"\)/);
+ assert.doesNotMatch(js,/node\("section","profile-plan-card"\)|const assigned=node/);
+ assert.doesNotMatch(css,/\.chef-profile \.profile-plan-card|\.chef-profile \.profile-plan-detail/);
+ assert.match(js,/const languageCard=node\("section","profile-language-card"\)/);
+ assert.match(js,/languageCard\.append\(node\("span","profile-language-label",txt\(\)\.language\),segment,languageFeedback\)/);
+ assert.match(js,/page\.append\(notifications\);[\s\S]*?page\.append\(languageCard\);[\s\S]*?page\.append\(actions\)/);
+ assert.match(css,/\.chef-profile \.profile-language-card\{[\s\S]*?min-height:61px;[\s\S]*?border-radius:13px;background:#242429/);
+ assert.match(js,/request\("\/api\/v2\/chef\/preferences","PUT",\{language:code\}\)/);
+ assert.match(guide,/Mensagens Chef ↔ Backoffice — decisão registada/);
+ assert.match(guide,/Não mostrar um botão que sugira envio/);
  assert.match(js,/const actions=node\("div","profile-actions-card"\)/);
  assert.match(js,/chefProfileAction\(txt\(\)\.logout,"door-01",chefLogout\)/);
  assert.match(js,/chefProfileAction\(txt\(\)\.changePassword,"key-01"/);

@@ -1128,13 +1128,6 @@ function renderProfile(root){
   node("span","",chef?.username?"@"+chef.username:""));
  page.append(identity);
 
- // The two-column reference is preserved: assigned player replaces the
- // player's subscription data; the existing language preference remains editable.
- const info=node("section","profile-plan-card");
- const assigned=node("div","profile-plan-detail");
- assigned.append(node("span","",txt().player),node("strong","",player?.name||txt().noData));
- const languageDetail=node("div","profile-plan-detail profile-renewal-detail");
- languageDetail.append(node("span","",txt().language));
  const segment=node("div","chef-language-selector");
  segment.setAttribute("role","group");segment.setAttribute("aria-label",txt().language);
  const languageFeedback=node("p","profile-language-feedback");
@@ -1153,10 +1146,6 @@ function renderProfile(root){
   };
   segment.append(button);
  }
- languageDetail.append(segment);
- info.append(assigned,languageDetail,languageFeedback);
- page.append(info);
-
  const notifications=node("button","profile-notifications-card");
  notifications.type="button";
  const bell=node("span","profile-notification-icon");
@@ -1166,6 +1155,12 @@ function renderProfile(root){
  notifications.append(bell,node("span","profile-notification-label",txt().notifications),arrow);
  notifications.onclick=()=>chefProfileOpenSubpage("notifications");
  page.append(notifications);
+
+ // Independent universal-height language card, placed under Notifications.
+ const languageCard=node("section","profile-language-card");
+ languageCard.setAttribute("aria-label",txt().language);
+ languageCard.append(node("span","profile-language-label",txt().language),segment,languageFeedback);
+ page.append(languageCard);
 
  const actions=node("div","profile-actions-card");
  const password=chefProfileAction(txt().changePassword,"key-01",()=>chefProfileOpenSubpage("password"),true);
