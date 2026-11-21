@@ -19,6 +19,7 @@ import sqlite3
 import microcycles_v2
 import chef_accounts_v2
 import chef_collaboration_v2
+import chat_admin_api_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
@@ -767,7 +768,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-chat-v2.js', '/admin-chat-v2.css', '/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -795,7 +796,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
             '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css', '/admin-work.js': 'admin-work.js', '/admin-work.css': 'admin-work.css',
-            '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/tm-design-system.css': 'tm-design-system.css',
+            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
@@ -2980,6 +2981,24 @@ def application(env, start_response):
                 admin(user)
                 today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
                 return respond(200,admin_players_v2.overview(c,today,access_valid))
+            # Chef chat is opt-in and NEVER initializes its schema on request.
+            # Permission gates, CSRF and Origin checks run before this route.
+            if path.startswith('/api/v2/admin/chat'):
+                if SITE_ROLE == 'player':
+                    raise Problem(404,'not_found')
+                if not user:
+                    raise Problem(401,'unauthorized')
+                admin(user)
+                if os.environ.get('MILE_CHAT_API_ENABLED')!='1':
+                    raise Problem(404,'not_found')
+                try:
+                    status,data=chat_admin_api_v2.handle(
+                        c,user['id'],path,method,env.get('QUERY_STRING',''),lambda:read_json(env))
+                except chat_admin_api_v2.ChatApiError as exc:
+                    raise Problem(exc.status,exc.code)
+                except chat_admin_api_v2.domain.ChatAccessError:
+                    raise Problem(403,'forbidden')
+                return respond(status,data)
             # Chef accounts: admin-only, bound to a single existing athlete.
             if path == '/api/v2/admin/chefs':
                 if not user: raise Problem(401,'unauthorized')
