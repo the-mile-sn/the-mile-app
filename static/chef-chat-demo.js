@@ -5,12 +5,12 @@
  const trigger=$("chef-chat-trigger"),dialog=$("chef-chat-dialog");
  const close=$("chef-chat-close"),thread=$("chef-chat-thread");
  const form=$("chef-chat-form"),input=$("chef-chat-input"),result=$("chef-chat-result");
- const send=$("chef-chat-submit");
+ const send=$("chef-chat-submit"),unreadBadge=$("chef-chat-unread");
  const disclaimer=$("chef-chat-disclaimer");
- if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send)return;
+ if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send||!unreadBadge)return;
  const copy={
   pt:{
-   open:"Abrir mensagens (simulação)",title:"Mensagens",
+   open:"Abrir mensagens (simulação)",title:"Mensagens",unread:"por ler",
    close:"Fechar mensagens",
    disclaimer:"Pré-visualização: não introduzas dados pessoais. Nada é enviado ou guardado.",
    thread:"Mensagens de exemplo",team:"Equipa The Mile · exemplo",
@@ -23,7 +23,7 @@
    realError:"Não foi possível carregar a conversa. Tenta novamente.",realSendError:"Não foi possível enviar. A mensagem continua no campo.",realSent:"Mensagem enviada.",privacy:"Informações e privacidade"
   },
   en:{
-   open:"Open messages (demo)",title:"Messages",close:"Close messages",
+   open:"Open messages (demo)",title:"Messages",unread:"unread",close:"Close messages",
    disclaimer:"Preview only: do not enter personal information. Nothing is sent or saved.",
    thread:"Example messages",team:"The Mile team · example",
    sample:"Hi! Here you will be able to message The Mile team about menus and other requests.",
@@ -37,7 +37,45 @@
  };
  let language="pt",mode="demo",csrf="",chefId="",pendingKey=null;
  let loading=false,openingToken=0,realMessages=[],pollTimer=null,refreshingToken=null;
+ let unreadCount=0,unreadEpoch=0,unreadBusy=false,apiUnavailable=false,liveAvailable=false;
  const t=()=>copy[language];
+ function updateTriggerLabel(){
+  const base=liveAvailable?t().title:t().open;
+  trigger.setAttribute("aria-label",unreadCount>0?base+" · "+unreadCount+" "+t().unread:base);
+ }
+ function setUnreadCount(count){
+  unreadCount=Number.isSafeInteger(count)&&count>0?count:0;
+  unreadBadge.hidden=unreadCount===0;
+  unreadBadge.textContent=unreadCount>9?"9+":String(unreadCount||"");
+  updateTriggerLabel();
+ }
+ // Chef identity is always derived from the authenticated session. No old
+ // notification service, push subscription or local unread counter is used.
+ async function refreshUnread(){
+  if(trigger.hidden||document.hidden||dialog.open||unreadBusy||apiUnavailable)return;
+  const epoch=unreadEpoch;
+  unreadBusy=true;
+  try{
+   const session=await fetchReal("/api/me");
+   if(epoch!==unreadEpoch||trigger.hidden||document.hidden||dialog.open)return;
+   if(session.user?.role!=="chef"||session.admin_preview){
+    liveAvailable=false;setUnreadCount(0);return;
+   }
+   const status=await fetchReal("/api/v2/chef/chat");
+   if(epoch!==unreadEpoch||trigger.hidden||document.hidden||dialog.open)return;
+   liveAvailable=true;setUnreadCount(status.unread_count);
+  }catch(error){
+   if(epoch!==unreadEpoch)return;
+   if(error.status===404)apiUnavailable=true;
+   if(error.status===401||error.status===403||error.status===404){
+    liveAvailable=false;setUnreadCount(0);
+   }
+  }finally{unreadBusy=false;}
+ }
+ function resizeComposer(){
+  input.style.height="46px";
+  input.style.height=Math.min(108,Math.max(46,input.scrollHeight))+"px";
+ }
  const make=(tag,cls,value)=>{
   const el=document.createElement(tag);el.className=cls;
   if(value!==undefined)el.textContent=value;
@@ -55,7 +93,7 @@
  }
  function reset(){
   thread.replaceChildren();input.value="";result.textContent="";
-  updateSendState();
+  resizeComposer();updateSendState();
   appendMessage("team",t().sample);
  }
  function closeDemo(){if(dialog.open)dialog.close();}
@@ -88,7 +126,7 @@
   input.maxLength=2000;
   send.setAttribute("aria-label",t().realSend);
   send.title=t().realSend;
-  trigger.setAttribute("aria-label",t().title);
+  updateTriggerLabel();
  }
  function stopRealPolling(){
   if(pollTimer!==null){window.clearInterval(pollTimer);pollTimer=null;}
@@ -113,10 +151,11 @@
    renderRealMessages();
    if(result.textContent===t().realError)result.textContent="";
    const last=realMessages.at(-1);
-   // Read cursor tracks the newest displayed message, including own replies.
+   // The authoritative read endpoint returns the exact remaining count.
    if(last){
-    await fetchReal("/api/v2/chef/chat/read","POST",{message_id:last.id});
-   }
+    const read=await fetchReal("/api/v2/chef/chat/read","POST",{message_id:last.id});
+    if(mode==="real"&&dialog.open&&token===openingToken)setUnreadCount(read.unread_count);
+   }else setUnreadCount(0);
   }finally{
    if(refreshingToken===token)refreshingToken=null;
   }
@@ -127,15 +166,16 @@
    const session=await fetchReal("/api/me");
    if(!dialog.open||token!==openingToken||session.user?.role!=="chef"||session.admin_preview)return;
    csrf=session.csrf||"";chefId=session.user.id;
-   await fetchReal("/api/v2/chef/chat");
+   const status=await fetchReal("/api/v2/chef/chat");
    if(!dialog.open||token!==openingToken)return;
+   liveAvailable=true;apiUnavailable=false;setUnreadCount(status.unread_count);
    mode="real";result.textContent="";realMessages=[];
    showLiveLabels();
    startRealPolling();
    await refreshReal();
   }catch(error){
    if(!dialog.open||token!==openingToken)return;
-   if(error.status===404)return; // No API rollout: retain local-only demonstration.
+   if(error.status===404){apiUnavailable=true;return;} // No API rollout: retain local-only demonstration.
    if(mode==="real")result.textContent=t().realError;
   }
  }
@@ -143,7 +183,7 @@
   const next=value==="en"?"en":"pt";
   const changed=next!==language;
   language=next;
-  trigger.setAttribute("aria-label",t().open);
+  updateTriggerLabel();
   $("chef-chat-title").textContent=t().title;
   close.setAttribute("aria-label",t().close);
   $("chef-chat-disclaimer").textContent=t().disclaimer;
@@ -176,7 +216,7 @@
   thread.replaceChildren();input.value="";result.textContent="";
   setLanguage(language);
   updateSendState();
-  if(!trigger.hidden)trigger.focus({preventScroll:true});
+  if(!trigger.hidden){trigger.focus({preventScroll:true});refreshUnread();}
  });
  form.addEventListener("submit",async event=>{
   event.preventDefault();
@@ -189,7 +229,7 @@
    pendingKey=key;loading=true;updateSendState();result.textContent="";
    try{
     await fetchReal("/api/v2/chef/chat/messages","POST",{body:message,client_key:key});
-    input.value="";pendingKey=null;
+    input.value="";pendingKey=null;resizeComposer();
     try{await refreshReal();result.textContent=t().realSent;}
     catch(_error){result.textContent=t().realError;}
    }catch(_error){result.textContent=t().realSendError;}
@@ -197,21 +237,34 @@
    return;
   }
   appendMessage("local",message);input.value="";
-  updateSendState();
+  resizeComposer();updateSendState();
   result.textContent=t().notSent;
  });
  document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden&&mode==="real"&&dialog.open){
+  if(document.hidden)return;
+  if(mode==="real"&&dialog.open){
    refreshReal().catch(()=>{if(mode==="real")result.textContent=t().realError;});
-  }
+  }else refreshUnread();
  });
- input.addEventListener("input",()=>{pendingKey=null;updateSendState();});
+ // A hidden Chef action indicates logout, login page or session transition.
+ // Revoke any old count before probing the newly authenticated Chef.
+ const triggerObserver=new MutationObserver(()=>{
+  unreadEpoch++;
+  if(trigger.hidden){liveAvailable=false;apiUnavailable=false;setUnreadCount(0);}
+  else refreshUnread();
+ });
+ triggerObserver.observe(trigger,{attributes:true,attributeFilter:["hidden"]});
+ window.setInterval(()=>{
+  if(!trigger.hidden&&!document.hidden&&!dialog.open)refreshUnread();
+ },30000);
+ if(!trigger.hidden)refreshUnread();
+ input.addEventListener("input",()=>{pendingKey=null;resizeComposer();updateSendState();});
  input.addEventListener("keydown",event=>{
   if(event.key==="Enter"&&!event.shiftKey&&!event.isComposing){
    event.preventDefault();form.requestSubmit();
   }
  });
- updateSendState();
+ resizeComposer();updateSendState();
  setLanguage(document.documentElement.lang==="en"?"en":"pt");
  window.themileChefChatDemo=Object.freeze({setLanguage,close:closeDemo});
 })();
