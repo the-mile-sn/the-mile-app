@@ -14,12 +14,15 @@ Security contract:
 * Read cursors are per member, move monotonically, and cannot cross conversations.
 * No notifications, media, clinical-plan mutation or automatic staff grants.
 """
+import calendar
+import datetime
 import secrets
 import time
 
 MAX_MESSAGE_CHARS=2000
 MAX_PAGE_SIZE=100
 MAX_CLIENT_KEY_CHARS=96
+RETENTION_MONTHS_AFTER_CLOSURE=12
 
 
 class ChatAccessError(PermissionError):
@@ -33,7 +36,8 @@ def initialize(c):
         chef_id TEXT NOT NULL UNIQUE REFERENCES users(id),
         created_at BIGINT NOT NULL,
         updated_at BIGINT NOT NULL,
-        closed_at BIGINT
+        closed_at BIGINT,
+        retention_review_at BIGINT
     )""")
     c.execute("""CREATE TABLE IF NOT EXISTS v2_chat_memberships(
         conversation_id TEXT NOT NULL REFERENCES v2_chat_conversations(id),
@@ -69,6 +73,45 @@ def initialize(c):
 
 def _now():
     return int(time.time()*1000)
+
+
+def retention_review_timestamp(closed_at_ms):
+    """UTC calendar-month anniversary, not 365 days or a rolling send timestamp.
+
+    This is a review/deletion-eligibility date, never an automatic purge.
+    """
+    if type(closed_at_ms) is not int or closed_at_ms<0:
+        raise ValueError("invalid_closed_at")
+    date=datetime.datetime.fromtimestamp(
+        closed_at_ms/1000,datetime.timezone.utc)
+    year=date.year+(date.month-1+RETENTION_MONTHS_AFTER_CLOSURE)//12
+    month=(date.month-1+RETENTION_MONTHS_AFTER_CLOSURE)%12+1
+    day=min(date.day,calendar.monthrange(year,month)[1])
+    anniversary=date.replace(year=year,month=month,day=day)
+    return int(anniversary.timestamp()*1000)
+
+
+def archive_conversation(c,conversation_id,staff_id,closed_at_ms=None):
+    """Close a Chef conversation after the professional relationship ends.
+
+    Only explicitly assigned, active staff may close. Retention is marked for
+    human/legal review after 12 calendar months, NOT automatic deletion.
+    Existing messages remain available under explicit membership.
+    """
+    _require_member(c,conversation_id,staff_id)
+    actor=_active_actor(c,staff_id)
+    if actor["role"]!="admin":
+        raise ChatAccessError("forbidden")
+    stamp=_now() if closed_at_ms is None else closed_at_ms
+    review_at=retention_review_timestamp(stamp)
+    c.execute("""UPDATE v2_chat_conversations
+        SET closed_at=?, retention_review_at=?
+        WHERE id=? AND closed_at IS NULL""",
+        (stamp,review_at,conversation_id))
+    row=c.execute("""SELECT closed_at,retention_review_at
+        FROM v2_chat_conversations WHERE id=?""",
+        (conversation_id,)).fetchone()
+    return dict(row)
 
 
 def _active_actor(c,user_id):

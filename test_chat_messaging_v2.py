@@ -107,6 +107,39 @@ class ChatDomainTests(unittest.TestCase):
         with self.assertRaises(chat.ChatAccessError):
             chat.get_or_create_chef_conversation(self.c,"chef-a")
 
+    def test_retention_uses_12_utc_calendar_months_and_no_purge(self):
+        from datetime import datetime, timezone
+        stamp=lambda y,m,d: int(datetime(y,m,d,tzinfo=timezone.utc).timestamp()*1000)
+        self.assertEqual(
+            chat.retention_review_timestamp(stamp(2026,11,21)),
+            stamp(2027,11,21))
+        self.assertEqual(
+            chat.retention_review_timestamp(stamp(2024,2,29)),
+            stamp(2025,2,28))
+        for invalid in (-1,True,"2026-11-21"):
+            with self.assertRaises(ValueError):
+                chat.retention_review_timestamp(invalid)
+
+        # An unassigned administrator cannot close a Chef's conversation.
+        with self.assertRaises(chat.ChatAccessError):
+            chat.archive_conversation(self.c,self.a,"admin-a",stamp(2026,11,21))
+        with self.assertRaises(chat.ChatAccessError):
+            chat.archive_conversation(self.c,self.a,"chef-a",stamp(2026,11,21))
+        chat.grant_staff_access(self.c,self.a,"admin-a","admin-a")
+        original,_=chat.send_message(self.c,self.a,"chef-a","Histórico","retention-1")
+        status=chat.archive_conversation(self.c,self.a,"admin-a",stamp(2026,11,21))
+        self.assertEqual(status["closed_at"],stamp(2026,11,21))
+        self.assertEqual(status["retention_review_at"],stamp(2027,11,21))
+        # Repeating an archival request must not silently extend retention.
+        repeated=chat.archive_conversation(self.c,self.a,"admin-a",stamp(2027,1,1))
+        self.assertEqual(repeated,status)
+        with self.assertRaises(chat.ChatAccessError):
+            chat.send_message(self.c,self.a,"chef-a","Novo","retention-2")
+        self.assertEqual(
+            chat.list_messages(self.c,self.a,"chef-a")[0]["id"],original["id"])
+        self.assertEqual(self.c.execute(
+            "SELECT COUNT(*) FROM v2_chat_messages").fetchone()[0],1)
+
     def test_no_implicit_admin_access_or_cross_staff_inbox(self):
         self.assertEqual(chat.list_staff_conversations(self.c,"admin-a"),[])
         chat.grant_staff_access(self.c,self.a,"admin-a","admin-a")
