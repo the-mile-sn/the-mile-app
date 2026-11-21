@@ -12,7 +12,10 @@
    pending:"Por rever",approved:"Aprovada",outdated:"Desatualizada",
    original:"Original português"
  };
- const displayKind={food:"Alimentos",dish:"Pratos"};
+ const displayKind={
+   food:"Alimentos",dish:"Pratos",recipe:"Receitas",
+   recipe_category:"Categorias",supplement:"Suplementação"
+ };
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
  let csrf="",state={kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
                      row:null,edited:false,busy:false,legacy:""};
@@ -71,9 +74,9 @@
        "Estrutura ainda não disponível":group.record_count+" registos"));
      if(group.integrated){
        button.append(create("small","",
-         group.field_count+" campos · "+
+         group.field_count+" textos visíveis · "+
          group.statuses.approved+" aprovados · "+
-         group.statuses.legacy_review+" nomes ingleses por rever"));
+         group.statuses.legacy_review+" traduções antigas por rever"));
      }else{
        button.append(create("small","","Inventário inicial · Tradução ainda não integrada"));
      }
@@ -93,7 +96,9 @@
        closeReview();loadCatalog();
      });tabs.append(b);
    }
-   $("i18n-library-link").href=state.kind==="food"?"/?nav=food-library":"/?nav=dishes";
+   $("i18n-library-link").href=state.kind==="food"?"/?nav=food-library":
+     state.kind==="dish"?"/?nav=dishes":
+     state.kind==="supplement"?"/?nav=supplements":"/?nav=recipes";
  };
  const loadCatalog=async()=>{
    buildTabs();msg("A carregar conteúdos…");$("i18n-work-panel").hidden=false;
@@ -104,17 +109,17 @@
      });
      const result=await send("/api/v2/admin/i18n/catalog?"+params);
      const list=$("i18n-results");list.replaceChildren();
-     $("i18n-results-count").textContent=result.total+" campos encontrados";
+     $("i18n-results-count").textContent=result.total+" registos encontrados";
      if(!result.items.length){
        list.append(create("p","i18n-results-count","Não existem conteúdos para estes filtros."));
      }
      for(const entry of result.items){
        const b=create("button","i18n-result");b.type="button";
        const main=create("span","");
+       const count=entry.fields?.length||1;
        main.append(create("strong","",entry.source_text),
-         create("small","",
-           entry.category+" · "+
-           (entry.field_path==="notes"?"Nota":entry.field_path==="name_pt"?"Nome do prato":"Nome do alimento")));
+         create("small","",entry.category+" · "+count+
+           (count===1?" texto visível":" textos visíveis")));
        b.append(main,badge(entry.state),create("span","i18n-result-arrow","›"));
        b.addEventListener("click",()=>openReview(entry));
        list.append(b);
@@ -132,18 +137,34 @@
  };
  const closeReview=()=>{
    state.selected=null;state.row=null;state.edited=false;state.legacy="";
+   $("i18n-fields").replaceChildren();
    $("i18n-review").hidden=true;
    $("i18n-history-panel").open=false;
  };
  const openReview=async(entry)=>{
-   state.selected=entry;state.legacy=entry.legacy_candidate||"";
-   state.edited=false;
+   const fields=Array.isArray(entry.fields)&&entry.fields.length?entry.fields:[entry];
+   const primary=fields.find(f=>state.status==="all"||f.state===state.status)||fields[0];
+   const chooseField=(field)=>{
+     if(!field)return;
+     state.selected={...entry,field_path:field.field_path};
+     state.legacy=field.legacy_candidate||"";
+     state.row=null;state.edited=false;
+     $("i18n-review-title").textContent=entry.source_text;
+     $("i18n-existing").hidden=!state.legacy;
+     msg("",false,"i18n-review-feedback");
+     refreshDetail();
+   };
+   const select=$("i18n-fields");select.replaceChildren();
+   for(const field of fields){
+     const option=document.createElement("option");
+     option.value=field.field_path;
+     option.textContent=field.field_label||field.field_path;
+     select.append(option);
+   }
+   select.value=primary.field_path;
+   select.onchange=()=>chooseField(fields.find(f=>f.field_path===select.value));
    $("i18n-review").hidden=false;
-   $("i18n-review-title").textContent=entry.field_path==="notes"?"Nota do alimento":
-     entry.entity_kind==="dish"?"Nome do prato":"Nome do alimento";
-   $("i18n-existing").hidden=!state.legacy;
-   msg("",false,"i18n-review-feedback");
-   await refreshDetail();
+   chooseField(primary);
    $("i18n-review").scrollIntoView({behavior:"smooth",block:"start"});
  };
  const refreshDetail=async()=>{
@@ -161,7 +182,8 @@
      state.row=detail;
      state.edited=false;
      $("i18n-source-text").textContent=detail.source_text;
-     $("i18n-target-text").value=detail.candidate?.text||"";
+     // Present legacy dish EN text immediately, without approving it.
+     $("i18n-target-text").value=detail.candidate?.text||state.legacy||"";
      const stateLabel=detail.candidate ?
        (translations[detail.candidate.status]||detail.candidate.status) :
        (state.legacy?"Inglês existente na biblioteca · por rever":"Ainda sem tradução");
@@ -230,10 +252,6 @@
    });
    $("i18n-prev").addEventListener("click",()=>{state.page--;loadCatalog();});
    $("i18n-next").addEventListener("click",()=>{state.page++;loadCatalog();});
-   $("i18n-use-existing").addEventListener("click",()=>{
-     $("i18n-target-text").value=state.legacy;state.edited=true;
-     $("i18n-approve").disabled=true;
-   });
    $("i18n-target-text").addEventListener("input",()=>{
      state.edited=true;$("i18n-approve").disabled=true;
    });

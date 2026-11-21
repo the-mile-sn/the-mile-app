@@ -131,7 +131,9 @@ try {
     assert.equal(await page.locator("#i18n-source-text").innerText(),
       snap.source);
     assert.equal(await page.locator("#i18n-approve").isDisabled(), true);
-    await page.locator("#i18n-use-existing").click();
+    await page.waitForFunction(
+      () => document.querySelector("#i18n-target-text")?.value === "Chicken and rice",
+    );
     assert.equal(await page.locator("#i18n-target-text").inputValue(),
       snap.english);
     await page.locator("#i18n-propose").click();

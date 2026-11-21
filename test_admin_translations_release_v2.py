@@ -210,5 +210,112 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
             self.assertIn(self.admin.request("/api/v2/player/language")["status"],(403,404))
 
 
+    def test_food_names_only_internal_notes_are_not_translatable(self):
+        self.init_store()
+        with patch.dict(os.environ, FLAG):
+            overview=self.admin.request("/api/v2/admin/i18n/overview")
+            self.assertEqual(overview["status"],200,overview)
+            food=next(x for x in overview["body"]["libraries"] if x["kind"]=="food")
+            self.assertEqual(food["record_count"],food["field_count"])
+            catalog=self.admin.request("/api/v2/admin/i18n/catalog?entity_kind=food")
+            record=next(x for x in catalog["body"]["items"] if x["entity_id"]=="food-test")
+            self.assertEqual([f["field_path"] for f in record["fields"]],["display_name"])
+            self.assertEqual(record["source_text"],"Arroz branco")
+            self.assertFalse(any(x["field_path"]=="notes" for x in record["fields"]))
+            self.assertEqual(self.admin.request(
+                "/api/v2/admin/i18n?entity_kind=food&entity_id=food-test&field_path=notes")["status"],400)
+
+    def test_recipe_category_and_supplement_are_revisable_without_changing_sources(self):
+        import json
+        self.init_store()
+        sectionid="a"*24
+        ingredientid="b"*24
+        recipeid="c"*24
+        catid="d"*24
+        supplementid="e"*24
+        sections=[{
+            "id":sectionid, "title":"Ingredientes principais",
+            "ingredients":[{"id":ingredientid,"name":"Arroz branco",
+                            "quantity":"100","unit":"g","recipe_ref_id":None}]
+        }]
+        with app.connect() as c:
+            c.execute("INSERT INTO v2_recipe_categories(id,name,created_at) VALUES (?,?,?)",
+                      (catid,"Refeições",1))
+            c.execute("""INSERT INTO v2_recipe_library
+                (id,category_id,name,recipe_type,status,servings,
+                 sections_json,steps_json,notes,created_at,updated_at)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (recipeid,catid,"Arroz cozido","standard","published",2,
+                 json.dumps(sections),json.dumps(["Cozer em água."],ensure_ascii=False),
+                 "Servir quente.",1,1))
+            c.execute("""INSERT INTO v2_supplement_library
+               (id,name,dose,moment,rule,note,timing_text,prescriptions_json)
+               VALUES(?,?,?,?,?,?,?,?)""",
+               (supplementid,"Creatina","5 g","lunch","daily",
+                "Misturar com água","Após o almoço",
+                json.dumps([{"dose":"5 g","timing_text":"Antes do treino",
+                             "note":"Tomar diariamente"}])))
+            c.commit()
+        with patch.dict(os.environ,FLAG):
+            for kind,ident,field,original,english in [
+                ("recipe",recipeid,"name","Arroz cozido","Cooked rice"),
+                ("recipe",recipeid,
+                 "sections/"+sectionid+"/ingredients/"+ingredientid+"/name",
+                 "Arroz branco","White rice"),
+                ("recipe",recipeid,"steps/0","Cozer em água.","Boil in water."),
+                ("recipe_category",catid,"name","Refeições","Meals"),
+                ("supplement",supplementid,"name","Creatina","Creatine"),
+                ("supplement",supplementid,"timing_text",
+                 "Após o almoço","After lunch"),
+                ("supplement",supplementid,"prescriptions/0/note",
+                 "Tomar diariamente","Take daily"),
+            ]:
+                with self.subTest(kind=kind,field=field):
+                    detail=self.admin.request(
+                        "/api/v2/admin/i18n?entity_kind="+kind+
+                        "&entity_id="+ident+"&field_path="+field)
+                    self.assertEqual(detail["status"],200,detail)
+                    self.assertEqual(detail["body"]["source_text"],original)
+                    body={
+                        "entity_kind":kind,"entity_id":ident,"field_path":field,
+                        "language":"en","expected_source_hash":detail["body"]["source_hash"],
+                        "translated_text":english
+                    }
+                    proposed=self.admin.request("/api/v2/admin/i18n/propose","POST",body)
+                    self.assertEqual(proposed["status"],201,proposed)
+                    approved=self.admin.request("/api/v2/admin/i18n/approve","POST",{
+                        "entity_kind":kind,"entity_id":ident,"field_path":field,
+                        "language":"en","expected_source_hash":detail["body"]["source_hash"],
+                        "expected_candidate_hash":
+                           self.admin.request(
+                           "/api/v2/admin/i18n?entity_kind="+kind+
+                           "&entity_id="+ident+"&field_path="+field)["body"]["candidate"]["candidate_hash"]
+                    })
+                    self.assertEqual(approved["status"],200,approved)
+            for kind,ident in [
+                ("recipe",recipeid),("recipe_category",catid),
+                ("supplement",supplementid)
+            ]:
+                result=self.admin.request("/api/v2/admin/i18n/catalog?entity_kind="+kind)
+                self.assertEqual(result["status"],200,result)
+                rec=next(x for x in result["body"]["items"] if x["entity_id"]==ident)
+                self.assertGreater(len(rec["fields"]),0)
+            with app.connect() as c:
+                recipe=c.execute("SELECT name,sections_json,steps_json,notes,servings "
+                                 "FROM v2_recipe_library WHERE id=?",(recipeid,)).fetchone()
+                self.assertEqual(recipe["name"],"Arroz cozido")
+                self.assertEqual(recipe["servings"],2)
+                self.assertEqual(json.loads(recipe["sections_json"]),sections)
+                self.assertEqual(json.loads(recipe["steps_json"]),["Cozer em água."])
+                supplement=c.execute("SELECT name,dose,moment,rule,note,timing_text,"
+                                    "prescriptions_json FROM v2_supplement_library WHERE id=?",
+                                     (supplementid,)).fetchone()
+                self.assertEqual(supplement["name"],"Creatina")
+                self.assertEqual(supplement["dose"],"5 g")
+                self.assertEqual(supplement["moment"],"lunch")
+                self.assertEqual(supplement["rule"],"daily")
+                self.assertEqual(json.loads(supplement["prescriptions_json"])[0]["dose"],"5 g")
+
+
 if __name__ == "__main__":
     unittest.main()
