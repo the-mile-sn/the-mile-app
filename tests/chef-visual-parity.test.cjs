@@ -35,7 +35,14 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
  assert.match(html,/chef-chat-demo\.css\?v=6/);
- assert.match(html,/chef-chat-demo\.js\?v=5/);
+ assert.match(html,/chef-chat-demo\\.js\\?v=6/);
+ assert.match(demoJs,/pollTimer=window\\.setInterval/);
+ assert.match(demoJs,/window\\.clearInterval\\(pollTimer\\)/);
+ assert.match(demoJs,/if\\(mode!=="real"\\|\\|!dialog\\.open\\|\\|document\\.hidden\\)return/);
+ assert.match(demoJs,/if\\(mode!=="real"\\|\\|!dialog\\.open\\|\\|token!==openingToken\\)return/);
+ assert.match(demoJs,/dialog\\.addEventListener\\("close",\\(\\)=>\\{/);
+ assert.match(demoJs,/stopRealPolling\\(\\)/);
+ assert.match(demoJs,/document\\.addEventListener\\("visibilitychange"/);
  assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
  assert.match(html,/class="mile-icon icon-mail-01"/);
  assert.doesNotMatch(html,/icon-message-01/);
