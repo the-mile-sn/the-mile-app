@@ -67,3 +67,5 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install psycopg[binary]==3.2.10
       - run: python -m unittest -v test_chat_postgres_v2
+      - run: python -m unittest -v test_chat_migration_v2
+      - run: python -m py_compile migrate_chat_schema_v2.py test_chat_migration_v2.py
