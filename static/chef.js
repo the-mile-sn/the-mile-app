@@ -17,7 +17,14 @@ const labels = {
     option:"Opção", planned:"Menu planeado", username:"Username",
     language:"Idioma", chef:"Conta Chef", noData:"Sem informação disponível",
     fail:"Não foi possível carregar a informação.", invalid:"Confirma as credenciais e tenta novamente.",
-    viewOnly:"O registo de execução e a edição de menus serão disponibilizados na próxima etapa."
+    viewOnly:"O registo de execução e a edição de menus serão disponibilizados na próxima etapa.",
+    notifications:"Notificações", notificationsEmpty:"As notificações para chefs ainda não estão disponíveis.",
+    changePassword:"Alterar palavra-passe", currentPassword:"Palavra-passe atual",
+    newPassword:"Nova palavra-passe", confirmPassword:"Confirmar nova palavra-passe",
+    savePassword:"Guardar nova palavra-passe", backProfile:"Voltar ao Perfil",
+    passwordMismatch:"As novas palavras-passe não coincidem.",
+    passwordShort:"Utiliza pelo menos 8 caracteres.",
+    passwordFailed:"Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente."
   },
   en: {
     login:"Chef area", loginHint:"Access your assigned player's meal planning.",
@@ -31,7 +38,14 @@ const labels = {
     option:"Option", planned:"Planned menu", username:"Username",
     language:"Language", chef:"Chef account", noData:"No information available",
     fail:"Unable to load information.", invalid:"Please check your credentials and try again.",
-    viewOnly:"Meal execution and menu editing will be available in the next stage."
+    viewOnly:"Meal execution and menu editing will be available in the next stage.",
+    notifications:"Notifications", notificationsEmpty:"Chef notifications are not yet available.",
+    changePassword:"Change password", currentPassword:"Current password",
+    newPassword:"New password", confirmPassword:"Confirm new password",
+    savePassword:"Save new password", backProfile:"Back to Profile",
+    passwordMismatch:"The new passwords do not match.",
+    passwordShort:"Use at least 8 characters.",
+    passwordFailed:"Could not change the password. Check your current password and try again."
   }
 };
 const tone = {orange:"#ea8a2b", yellow:"#dec34c", blue:"#6c9ad5", green:"#52ad78", vp:"#2d9768"};
@@ -50,6 +64,7 @@ let previewReadOnly = false;
 let menus = [], days = [], colors = {}, prescriptions = {}, executions = [];
 let chefWeekRequestId=0,chefSkeletonTimer=null,chefSkeletonVisible=false;
 let chefSwipeEntryDirection=0,chefSwipeEntryAnimation=null;
+let chefProfileSubpage=null;
 const txt = () => labels[lang];
 
 function dateKey(date){
@@ -84,7 +99,6 @@ function show(view){
   el("login-view").hidden=view!=="login";
   el("chef-view").hidden=view!=="chef";
   el("chef-nav").hidden=view!=="chef";
-  el("top-logout").hidden=view!=="chef";
 }
 function showError(message){const screen=el("screen");screen.replaceChildren(node("p","error",message));}
 async function init(){
@@ -554,7 +568,16 @@ const chefOfficialIconData={"Coffee03Icon":[
   ["path", { d: "M20 21C20 18.7328 20 17.5992 19.5929 16.7097C19.1649 15.7746 18.4287 15.0144 17.5071 14.5558C16.6305 14.1196 15.5 14 13.2263 14.0051L10.7728 14C8.49999 14 7.39496 14.1069 6.52924 14.528C5.57859 14.9904 4.82688 15.7651 4.39412 16.7284C4.00001 17.6057 4.00001 18.7371 4 21", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
   ["path", { d: "M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }]
 ]};
-const chefOfficialIconNames={"coffee-03":"Coffee03Icon","vegetarian-food":"VegetarianFoodIcon","restaurant-02":"Restaurant02Icon","moon-02":"Moon02Icon","home-09":"Home09Icon","files-01":"Files01Icon","menu-restaurant":"MenuRestaurantIcon","user-03":"User03Icon"};
+const chefOfficialIconNames={"coffee-03":"Coffee03Icon","vegetarian-food":"VegetarianFoodIcon","restaurant-02":"Restaurant02Icon","moon-02":"Moon02Icon","home-09":"Home09Icon","files-01":"Files01Icon","menu-restaurant":"MenuRestaurantIcon","user-03":"User03Icon","key-01":"Key01Icon","door-01":"Door01Icon"};
+chefOfficialIconData["Key01Icon"]=[
+  ["path", { d: "M15.5 14.5C18.8137 14.5 21.5 11.8137 21.5 8.5C21.5 5.18629 18.8137 2.5 15.5 2.5C12.1863 2.5 9.5 5.18629 9.5 8.5C9.5 9.38041 9.68962 10.2165 10.0303 10.9697L2.5 18.5V21.5H5.5V19.5H7.5V17.5H9.5L13.0303 13.9697C13.7835 14.3104 14.6196 14.5 15.5 14.5Z", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M17.5 6.5L16.5 7.5", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }]
+];
+chefOfficialIconData["Door01Icon"]=[
+  ["path", { d: "M18 20C19.1046 20 20 19.1046 20 18V6C20 4.89543 19.1046 4 18 4", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "0" }],
+  ["path", { d: "M4 6.84771V17.1523C4 18.7454 4 19.542 4.4645 20.0976C4.92899 20.6531 5.71415 20.7956 7.28446 21.0806L10.2845 21.6251C12.4701 22.0217 13.563 22.2201 14.2815 21.6215C15 21.023 15 19.9142 15 17.6968V6.30325C15 4.08578 15 2.97704 14.2815 2.37849C13.563 1.77994 12.4701 1.97827 10.2845 2.37495L7.28446 2.91941C5.71415 3.2044 4.92899 3.34689 4.4645 3.90244C4 4.45799 4 5.25457 4 6.84771Z", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", key: "1" }],
+  ["path", { d: "M11.625 12H11.5M11.75 12C11.75 12.1381 11.6381 12.25 11.5 12.25C11.3619 12.25 11.25 12.1381 11.25 12C11.25 11.8619 11.3619 11.75 11.5 11.75C11.6381 11.75 11.75 11.8619 11.75 12Z", stroke: "currentColor", strokeLinecap: "round", strokeWidth: "1.5", key: "2" }]
+];
 function iconToSvg(nodes){
  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");svg.setAttribute("stroke-width","1.5");svg.setAttribute("stroke-linecap","round");svg.setAttribute("stroke-linejoin","round");
  const append=(items,parent)=>{for(const node of items||[]){if(!Array.isArray(node))continue;const [tag,props,children]=node;if(typeof tag!=="string"||!["path","circle","rect","line","polyline","polygon","ellipse","g"].includes(tag))continue;const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(props||{})){if(k==="key"||k==="ref"||typeof v==="object")continue;el.setAttribute(k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase()),String(v));}parent.append(el);if(Array.isArray(children))append(children,el);}};
@@ -566,7 +589,7 @@ function paintChefIcons(){
  document.querySelectorAll(".mile-icon").forEach(item=>{
   if(item.dataset.chefSvg)return;
   const name=Array.from(item.classList).find(cls=>cls.startsWith("icon-"))?.slice(5);
-  if(!name||!chefSvgPaths[name])return;
+  if(!name||(!chefSvgPaths[name]&&!chefOfficialIconNames[name]))return;
   item.replaceChildren(createChefIconSvg(name));
   item.dataset.chefSvg="true";
  });
@@ -581,6 +604,20 @@ function iconForMeal(meal){
 let chefViewMode="day",chefWeekSelection=null,chefPlanCategory="todos",chefPlanSelectedColor=null;
 const validColors=["orange","yellow","blue","green","vp"];
 function mealTone(day,meal){const color=colorFor(day,meal);return validColors.includes(color)?color:"neutral";}
+/* Week range and day headers are one concise, localized Menus family. */
+function chefMenuWeekRange(start,end){
+ const startMonth=format(start,{month:"long"}),endMonth=format(end,{month:"long"});
+ const startYear=start.getFullYear(),endYear=end.getFullYear();
+ if(startYear===endYear&&start.getMonth()===end.getMonth())
+  return start.getDate()+"–"+end.getDate()+" "+endMonth+" "+endYear;
+ if(startYear===endYear)
+  return start.getDate()+" "+startMonth+"–"+end.getDate()+" "+endMonth+" "+endYear;
+ return start.getDate()+" "+startMonth+" "+startYear+"–"+end.getDate()+" "+endMonth+" "+endYear;
+}
+function chefMenuWeekday(date){
+ const weekday=format(date,{weekday:"long"});
+ return lang==="pt"?weekday.replace(/-feira$/i,""):weekday;
+}
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
  return format(value,options).replace(/^./,letter=>letter.toLocaleUpperCase(locale(lang)));
 }
@@ -954,9 +991,7 @@ function renderChefMenuWeekNavigation(root){
  const next=node("button","chef-menu-week-arrow","›");
  next.type="button";
  next.setAttribute("aria-label",lang==="pt"?"Semana seguinte":"Next week");
- const period=node("strong","chef-menu-week-range",
-   format(start,{day:"numeric",month:"short"})+" – "+
-   format(end,{day:"numeric",month:"short",year:"numeric"}));
+ const period=node("strong","chef-menu-week-range",chefMenuWeekRange(start,end));
  const change=async delta=>{
    prev.disabled=next.disabled=true;
    selectedDay=shift(selectedDay,delta*7);
@@ -971,7 +1006,9 @@ function renderChefMenuDay(root,key){
  const date=new Date(key+"T12:00:00");
  const card=node("section","chef-menu-day");
  const head=node("div","chef-menu-day-header");
- head.append(node("strong","",dateDescription(date)));
+ const weekday=node("strong","",chefMenuWeekday(date));
+ weekday.title=dateDescription(date);
+ head.append(weekday);
  const micro=classificationFor(key);if(micro)head.append(node("span","",micro));
  card.append(head);
  for(const meal of ["lunch","dinner"]){
@@ -999,33 +1036,162 @@ function renderMenus(root){
  const start=monday(selectedDay);
  for(let offset=0;offset<7;offset++)renderChefMenuDay(root,dateKey(shift(start,offset)));
 }
+/* Player Profile's approved composition, scoped to Chef identity and permissions. */
+function chefProfileInitials(name){
+ const words=String(name||"").trim().split(/\s+/).filter(Boolean);
+ const initials=words.length>1?words[0][0]+words[words.length-1][0]:(words[0]||"TM").slice(0,2);
+ return initials.toLocaleUpperCase(locale(lang));
+}
+function chefProfileAction(title,iconName,handler,withArrow=false){
+ const button=node("button","profile-action");
+ button.type="button";
+ const icon=node("span","mile-icon icon-"+iconName);
+ icon.setAttribute("aria-hidden","true");
+ button.append(icon,node("span","",title));
+ if(withArrow){
+  const arrow=node("span","profile-action-chevron","›");
+  arrow.setAttribute("aria-hidden","true");button.append(arrow);
+ }
+ button.onclick=()=>handler(button);
+ return button;
+}
+function chefProfileOpenSubpage(page){
+ chefProfileSubpage=page;render();
+ window.scrollTo?.(0,0);
+}
+function chefProfileHeader(page,title){
+ const heading=node("div","profile-subpage-header");
+ const back=node("button","profile-page-back");
+ back.type="button";back.setAttribute("aria-label",txt().backProfile);
+ back.append(node("span","","‹"));
+ back.onclick=()=>chefProfileOpenSubpage(null);
+ heading.append(back,node("h2","",title));
+ page.append(heading);
+}
+function renderChefNotifications(page){
+ const section=node("section","profile-subpage");
+ chefProfileHeader(section,txt().notifications);
+ const empty=node("div","profile-notifications-empty");
+ empty.append(node("p","",txt().notificationsEmpty));
+ section.append(empty);page.append(section);
+}
+function renderChefPassword(page){
+ const section=node("section","profile-subpage");
+ chefProfileHeader(section,txt().changePassword);
+ const form=node("form","profile-password-page-form");
+ const fields=[
+  ["current",txt().currentPassword,"current-password"],
+  ["new",txt().newPassword,"new-password"],
+  ["confirm",txt().confirmPassword,"new-password"]
+ ];
+ const inputs={};
+ for(const [key,caption,autocomplete] of fields){
+  const label=node("label","mile-floating-field");
+  const input=node("input","mile-floating-input");input.type="password";
+  input.autocomplete=autocomplete;input.placeholder=" ";input.required=true;
+  if(key!=="current")input.minLength=8;
+  label.append(input,node("span","mile-floating-label",caption));
+  form.append(label);inputs[key]=input;
+ }
+ const feedback=node("p","profile-password-feedback");
+ feedback.setAttribute("role","status");feedback.setAttribute("aria-live","polite");
+ const save=node("button","profile-password-save",txt().savePassword);
+ save.type="submit";save.disabled=previewReadOnly;
+ form.append(feedback,save);
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  if(previewReadOnly)return;
+  const current=inputs.current.value,next=inputs.new.value,confirm=inputs.confirm.value;
+  if(next!==confirm){feedback.textContent=txt().passwordMismatch;return;}
+  if(next.length<8){feedback.textContent=txt().passwordShort;return;}
+  save.disabled=true;feedback.textContent="";
+  try{
+   await request("/api/change-password","POST",{
+    identifier:chef.username,current_password:current,new_password:next
+   });
+   form.reset();
+   // Backend invalidates the Chef's sessions on password change.
+   location.replace("/");
+  }catch(error){feedback.textContent=txt().passwordFailed;}
+  finally{save.disabled=previewReadOnly;}
+ };
+ section.append(form);page.append(section);
+}
 function renderProfile(root){
-  root.append(sectionTitle(txt().profile));
-  const panel=node("section","panel");
-  panel.append(node("h3","",txt().chef));
-  for(const [label,value]of [[txt().username,chef?.username||""],
-    [txt().player,player?.name||""]]){
-    const row=node("div","profile-row");row.append(node("span","",label),node("strong","",value));panel.append(row);
+ const page=node("div","chef-profile");
+ if(chefProfileSubpage==="notifications"){renderChefNotifications(page);root.append(page);return;}
+ if(chefProfileSubpage==="password"){renderChefPassword(page);root.append(page);return;}
+ const identity=node("div","profile-identity");
+ const avatar=node("div","profile-photo-circle",chefProfileInitials(chef?.name));
+ avatar.setAttribute("aria-hidden","true");
+ identity.append(avatar,node("strong","",chef?.name||txt().chef),
+  node("span","",chef?.username?"@"+chef.username:""));
+ page.append(identity);
+
+ // The two-column reference is preserved: assigned player replaces the
+ // player's subscription data; the existing language preference remains editable.
+ const info=node("section","profile-plan-card");
+ const assigned=node("div","profile-plan-detail");
+ assigned.append(node("span","",txt().player),node("strong","",player?.name||txt().noData));
+ const languageDetail=node("div","profile-plan-detail profile-renewal-detail");
+ languageDetail.append(node("span","",txt().language));
+ const segment=node("div","chef-language-selector");
+ segment.setAttribute("role","group");segment.setAttribute("aria-label",txt().language);
+ const languageFeedback=node("p","profile-language-feedback");
+ languageFeedback.setAttribute("role","status");languageFeedback.setAttribute("aria-live","polite");
+ for(const code of ["pt","en"]){
+  const button=node("button",lang===code?"active":"",code.toUpperCase());
+  button.type="button";button.disabled=previewReadOnly;
+  button.setAttribute("aria-pressed",String(lang===code));
+  button.onclick=async()=>{
+   if(previewReadOnly||lang===code)return;
+   button.disabled=true;languageFeedback.textContent="";
+   try{
+    await request("/api/v2/chef/preferences","PUT",{language:code});
+    lang=code;chef.language=code;render();
+   }catch(error){button.disabled=false;languageFeedback.textContent=txt().fail;}
+  };
+  segment.append(button);
+ }
+ languageDetail.append(segment);
+ info.append(assigned,languageDetail,languageFeedback);
+ page.append(info);
+
+ const notifications=node("button","profile-notifications-card");
+ notifications.type="button";
+ const bell=node("span","profile-notification-icon");
+ bell.setAttribute("aria-hidden","true");
+ bell.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9ZM10 21h4"/></svg>';
+ const arrow=node("span","profile-action-chevron","›");arrow.setAttribute("aria-hidden","true");
+ notifications.append(bell,node("span","profile-notification-label",txt().notifications),arrow);
+ notifications.onclick=()=>chefProfileOpenSubpage("notifications");
+ page.append(notifications);
+
+ const actions=node("div","profile-actions-card");
+ const password=chefProfileAction(txt().changePassword,"key-01",()=>chefProfileOpenSubpage("password"),true);
+ password.disabled=previewReadOnly;
+ const logout=chefProfileAction(txt().logout,"door-01",chefLogout);
+ actions.append(password,logout);
+ page.append(actions);
+ root.append(page);
+}
+async function chefLogout(button){
+ if(button.disabled)return;
+ button.disabled=true;
+ try{
+  await request("/api/logout","POST",{});
+  csrf="";sessionUser=null;chef=null;player=null;
+  location.replace("/");
+ }catch(error){
+  button.disabled=false;
+  const container=button.closest(".profile-actions-card");
+  let feedback=container.querySelector(".profile-logout-feedback");
+  if(!feedback){
+   feedback=node("p","profile-logout-feedback");
+   feedback.setAttribute("role","alert");container.append(feedback);
   }
-  const row=node("div","profile-row");
-  row.append(node("span","",txt().language));
-  const segment=node("div","segment");
-  for(const code of ["pt","en"]){
-    const button=node("button",lang===code?"active":"",code.toUpperCase());
-    button.type="button";button.disabled=previewReadOnly;
-    button.onclick=async()=>{
-      if(previewReadOnly)return;
-      button.disabled=true;
-      try{
-        await request("/api/v2/chef/preferences","PUT",{language:code});
-        lang=code;chef.language=code;render();
-      }catch(err){showError(txt().fail);}
-      finally{button.disabled=false;}
-    };
-    segment.append(button);
-  }
-  row.append(segment);panel.append(row);
-  root.append(panel);
+  feedback.textContent=txt().fail;
+ }
 }
 
 // Single reusable selection highlight, aligned with the player's segmented controls.
@@ -1062,19 +1228,20 @@ function bounceChefSelection(nav){
 }
 function render(){
   document.documentElement.lang=lang==="pt"?"pt-PT":"en";
-  el("top-name").textContent=chef.name;
-  el("top-logout").textContent=txt().logout;
   el("player-label").textContent=txt().player.toUpperCase();
   el("player-name").textContent=player.name;
   el("page-context").textContent=previewReadOnly
     ?(lang==="pt"?"Visualização administrativa · apenas leitura":"Admin preview · read-only")
     :txt().readOnly;
+  document.body.classList.toggle("chef-profile-active",activeTab==="profile");
+  if(activeTab!=="profile")chefProfileSubpage=null;
+  el("chef-profile-tab-initials").textContent=chefProfileInitials(chef?.name);
   const nav=el("chef-nav");
   for(const [tab,caption] of Object.entries({
     home:txt().home,plans:txt().plans,menus:txt().menus,profile:txt().profile
   })){
     const button=nav.querySelector('[data-tab="'+tab+'"]');
-    button.querySelector("span").textContent=caption;
+    button.querySelector(":scope > span:last-child").textContent=caption;
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
@@ -1084,7 +1251,6 @@ function render(){
   if(activeTab==="plans")renderPlan(screen);
   if(activeTab==="menus")renderMenus(screen);
   if(activeTab==="profile")renderProfile(screen);
-  el("top-logout").hidden=activeTab!=="profile";
   paintChefIcons();
   syncChefSelection(el("chef-view-mode"));
   syncChefSelection(nav);
@@ -1285,10 +1451,6 @@ chefSwipeArea.addEventListener("touchend",event=>{
 chefSwipeArea.addEventListener("touchcancel",()=>{
  if(chefTouchActive)finishChefGesture(0);else clearChefGesture();
 },{passive:true});
-el("top-logout").onclick=async()=>{
-  try{await request("/api/logout","POST",{});}catch(e){}
-  csrf="";sessionUser=null;chef=null;player=null;location.replace("/");
-};
 init();
 
 // The Mile is one installable app; players and chefs use the same root-scope worker.
