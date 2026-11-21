@@ -17,9 +17,37 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
  assert.match(html,/chef\.css\?v=23/);
- assert.match(html,/chef\.js\?v=29/);
+ assert.match(html,/chef\.js\?v=30/);
 });
 
+test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
+ const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
+ const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
+ assert.match(html,/chef-chat-demo\.css\?v=1/);
+ assert.match(html,/chef-chat-demo\.js\?v=1/);
+ assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
+ assert.match(html,/class="mile-icon icon-message-01"/);
+ assert.match(html,/<dialog id="chef-chat-dialog"/);
+ assert.match(html,/aria-labelledby="chef-chat-title"/);
+ assert.match(html,/id="chef-chat-thread"[^>]*role="log"/);
+ assert.match(html,/id="chef-chat-input"[^>]*maxlength="600"/);
+ assert.match(js,/el\("chef-chat-trigger"\)\.hidden=view!=="chef"/);
+ assert.match(js,/window\.themileChefChatDemo\?\.setLanguage\(lang\)/);
+ assert.match(js,/chefOfficialIconData\["Message01Icon"\]=\[/);
+ assert.match(js,/"message-01":"Message01Icon"/);
+ assert.match(demoJs,/dialog\.showModal\(\)/);
+ assert.match(demoJs,/dialog\.addEventListener\("close"/);
+ assert.match(demoJs,/thread\.replaceChildren\(\)/);
+ assert.match(demoJs,/event\.preventDefault\(\)/);
+ assert.match(demoJs,/form\.addEventListener\("submit"/);
+ assert.match(demoJs,/window\.themileChefChatDemo=Object\.freeze/);
+ for(const forbidden of [/fetch\s*\(/,/\blocalStorage\b/,/\bsessionStorage\b/,/\bindexedDB\b/,/\bWebSocket\s*\(/,/\bnavigator\.sendBeacon\s*\(/])
+  assert.doesNotMatch(demoJs,forbidden);
+ assert.match(demoCss,/\.chef-chat-trigger\{[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 7px\)/);
+ assert.match(demoCss,/\.chef-chat-dialog::backdrop/);
+ assert.match(demoCss,/@media\(max-width:640px\)/);
+ assert.match(guide,/protótipo reside isolado/);
+});
 test("Chef Menus displays a full month week range and only weekday names",()=>{
  const vm=require("node:vm");
  const r=js.match(/function chefMenuWeekRange\(start,end\)\{[\s\S]*?\n\}/)?.[0];
@@ -57,8 +85,8 @@ test("Chef Profile copies Player identity, account actions and password workflow
  assert.match(js,/page\.append\(notifications\);[\s\S]*?page\.append\(languageCard\);[\s\S]*?page\.append\(actions\)/);
  assert.match(css,/\.chef-profile \.profile-language-card\{[\s\S]*?min-height:61px;[\s\S]*?border-radius:13px;background:#242429/);
  assert.match(js,/request\("\/api\/v2\/chef\/preferences","PUT",\{language:code\}\)/);
- assert.match(guide,/Mensagens Chef ↔ Backoffice — decisão registada/);
- assert.match(guide,/Não mostrar um botão que sugira envio/);
+ assert.match(guide,/Mensagens Chef ↔ Backoffice — simulação visual autorizada/);
+ assert.match(guide,/não executa chamadas de rede/);
  assert.match(js,/const actions=node\("div","profile-actions-card"\)/);
  assert.match(js,/chefProfileAction\(txt\(\)\.logout,"door-01",chefLogout\)/);
  assert.match(js,/chefProfileAction\(txt\(\)\.changePassword,"key-01"/);
