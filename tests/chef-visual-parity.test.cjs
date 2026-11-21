@@ -16,8 +16,8 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=22/);
- assert.match(html,/chef\.js\?v=28/);
+ assert.match(html,/chef\.css\?v=23/);
+ assert.match(html,/chef\.js\?v=29/);
 });
 
 test("Chef Menus displays a full month week range and only weekday names",()=>{
@@ -27,13 +27,13 @@ test("Chef Menus displays a full month week range and only weekday names",()=>{
  assert.ok(r&&d);
  const lang="pt",format=(date,options)=>new Intl.DateTimeFormat("pt-PT",options).format(date);
  const range=vm.runInNewContext(r+";chefMenuWeekRange",{format});
- const weekday=vm.runInNewContext(d+";chefMenuWeekday",{format,lang});
+ const weekday=vm.runInNewContext(d+";chefMenuWeekday",{format,lang,locale:code=>code==="en"?"en-GB":"pt-PT"});
  assert.equal(range(new Date(2026,10,16),new Date(2026,10,22)),"16–22 novembro 2026");
  assert.equal(range(new Date(2026,10,30),new Date(2026,11,6)),"30 novembro–6 dezembro 2026");
  assert.equal(range(new Date(2026,11,28),new Date(2027,0,3)),"28 dezembro 2026–3 janeiro 2027");
- assert.equal(weekday(new Date(2026,10,16)),"segunda");
- assert.equal(weekday(new Date(2026,10,17)),"terça");
- assert.equal(weekday(new Date(2026,10,21)),"sábado");
+ assert.equal(weekday(new Date(2026,10,16)),"Segunda");
+ assert.equal(weekday(new Date(2026,10,17)),"Terça");
+ assert.equal(weekday(new Date(2026,10,21)),"Sábado");
  assert.match(js,/const period=node\("strong","chef-menu-week-range",chefMenuWeekRange\(start,end\)\)/);
  assert.match(js,/const weekday=node\("strong","",chefMenuWeekday\(date\)\)/);
  assert.match(js,/weekday\.title=dateDescription\(date\)/);
@@ -110,8 +110,10 @@ test("image skeleton is conditional and does not change Chef photo zoom/error po
  assert.match(js,/photo\.onerror=\(\)=>frame\.remove\(\)/);
  assert.match(js,/frame\.onclick=event=>/);
  assert.match(css,/\.chef-dish-photo-frame\.chef-photo-pending::before/);
- assert.match(css,/animation:chef-photo-shimmer 1\.5s ease-in-out infinite/);
- assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.chef-dish-photo-frame\.chef-photo-pending::after\{animation:none\}\}/);
+ assert.match(css,/\.chef-dish-photo-frame\.chef-photo-pending::after\{[^}]*animation:chef-photo-pulse 1\.6s ease-in-out infinite/);
+ assert.match(css,/@keyframes chef-photo-pulse\{0%,100%\{opacity:\.12\}50%\{opacity:\.38\}\}/);
+ assert.doesNotMatch(css,/\.chef-dish-photo-frame\.chef-photo-pending::after\{[^}]*transform:/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.chef-dish-photo-frame\.chef-photo-pending::after\{animation:none;opacity:\.18\}\}/);
 });
 
 test("visual changes keep role-scoped Chef endpoints, four tabs and edit rules intact",()=>{
@@ -246,7 +248,9 @@ test("Chef photos already have the approved image-only 1.5s skeleton and release
  assert.match(js,/photo\.onerror=\(\)=>frame\.remove\(\)/);
  assert.match(css,/\.chef-dish-photo-frame\.chef-photo-pending::before/);
  assert.match(css,/\.chef-photo-pending \.chef-dish-photo/);
- assert.match(css,/@keyframes chef-photo-shimmer/);
+ assert.match(css,/@keyframes chef-photo-pulse/);
+ assert.match(css,/\.chef-dish-photo-frame\.chef-photo-pending::after\{[^}]*animation:chef-photo-pulse/);
+ assert.doesNotMatch(css,/\.chef-dish-photo-frame\.chef-photo-pending::after\{[^}]*translateX/);
  assert.match(css,/prefers-reduced-motion:reduce/);
 });
 test("Chef initial home skeleton matches the real Dia/Semana geometry and never blocks fast loads",()=>{
@@ -281,6 +285,12 @@ test("Chef follows Player tab animation and adaptive floating bar, without inven
  assert.match(js,/function updateChefAdaptiveNav\(\)/);
  assert.match(js,/if\(y<32\)/);
  assert.match(js,/if\(chefScrollAccum>=28\)/);
+ assert.match(js,/if\(nav\.classList\.contains\("chef-nav-compact"\)!==compact\)\{/);
+ assert.match(js,/if\(chefScrollFrame\)\{window\.cancelAnimationFrame\(chefScrollFrame\);chefScrollFrame=0;\}/);
+ assert.match(css,/#chef-nav\.bottom-nav\{[\s\S]*?position:fixed!important;z-index:30!important;/);
+ assert.match(css,/#chef-nav\.bottom-nav\{[\s\S]*?transform:translate3d\(0,0,0\)/);
+ assert.doesNotMatch(css,/\.bottom-nav\{position:fixed/);
+ assert.match(guide,/Correção da barra inferior em Menus/);
  assert.match(css,/#chef-nav\.bottom-nav\.chef-nav-compact\{[^}]*left:24px!important;right:24px!important;padding:3px!important/);
  assert.match(css,/#chef-nav\.bottom-nav\.chef-nav-compact>button\{[^}]*height:44px!important/);
  assert.match(css,/\.chef-nav-compact \.mile-icon\{transform:scale\(\.87\)\}/);

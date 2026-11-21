@@ -133,7 +133,7 @@ body.chef-profile-active .top{display:none}
  background:#45464c;color:#fff;overflow:hidden;font-size:10px;font-weight:600;line-height:1;
 }
 @media(prefers-reduced-motion:reduce){.chef-profile .profile-page-back{transition:none}}
-.bottom-nav{position:fixed;z-index:4;left:12px;right:12px;bottom:calc(9px + env(safe-area-inset-bottom,0px));max-width:640px;margin:0 auto;padding:5px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-radius:999px}
+.bottom-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-radius:999px}
 .bottom-nav button{background:transparent;border:0;border-radius:999px;color:#f3f3f6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px}
 .bottom-nav button[aria-current="page"]{background:#55555b;color:#fff}
 .login-shell{max-width:390px;margin:clamp(42px,10vh,110px) auto 0}
@@ -332,19 +332,24 @@ textarea.chef-input{min-height:68px;resize:vertical}
  #screen.chef-screen-loading .chef-skeleton-shape::after{animation:none}
 }
 
-/* Only an unresolved actual photo receives a circular, neutral skeleton. */
+/* Real dish photos: a stationary, subtle circular loading surface.
+   Never move the pseudo-element outside the image bounds: its own overflow
+   would not clip it, which previously caused wandering circles over menus. */
 .chef-dish-photo-frame.chef-photo-pending::before,
 .chef-dish-photo-frame.chef-photo-pending::after{
- content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;overflow:hidden
+ content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none
 }
 .chef-dish-photo-frame.chef-photo-pending::before{background:#29292e}
 .chef-dish-photo-frame.chef-photo-pending::after{
- background:linear-gradient(90deg,transparent,rgba(255,255,255,.055),transparent);
- transform:translateX(-100%);animation:chef-photo-shimmer 1.5s ease-in-out infinite
+ background:rgba(255,255,255,.065);opacity:.16;
+ animation:chef-photo-pulse 1.6s ease-in-out infinite
 }
 .chef-photo-pending .chef-dish-photo,.chef-photo-pending .chef-photo-zoom{opacity:0}
+@keyframes chef-photo-pulse{0%,100%{opacity:.12}50%{opacity:.38}}
+/* The structural Home skeleton keeps its separate moving shimmer, clipped
+   by .chef-skeleton-shape, but real dish images only pulse in place. */
 @keyframes chef-photo-shimmer{to{transform:translateX(100%)}}
-@media(prefers-reduced-motion:reduce){.chef-dish-photo-frame.chef-photo-pending::after{animation:none}}
+@media(prefers-reduced-motion:reduce){.chef-dish-photo-frame.chef-photo-pending::after{animation:none;opacity:.18}}
 .chef-photo-zoom{position:absolute;right:0;bottom:0;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#0005;color:#f6f6f8}
 .chef-photo-overlay{position:fixed;inset:0;background:#000d;z-index:100;display:flex;align-items:center;justify-content:center;padding:35px}
 .chef-photo-large{max-width:95%;max-height:75dvh;object-fit:contain}
@@ -606,8 +611,12 @@ textarea.chef-input{min-height:68px;resize:vertical}
 }
 /* Floating liquid-glass navigation: same material, outline, motion and geometry as players. */
 #chef-nav.bottom-nav{
- position:fixed!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
+ /* Single viewport-fixed anchoring rule: the scrolling Menus cards never
+    become the bar's positioning container. Promote the blur to its own layer. */
+ position:fixed!important;z-index:30!important;
+ bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
  left:12px!important;right:12px!important;
+ transform:translate3d(0,0,0);-webkit-backface-visibility:hidden;backface-visibility:hidden;
  width:auto!important;max-width:640px!important;box-sizing:border-box!important;
  margin:0 auto!important;padding:5px!important;gap:1px!important;
  border:.5px solid rgba(234,236,244,.18)!important;border-radius:999px!important;

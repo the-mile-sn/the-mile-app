@@ -616,7 +616,8 @@ function chefMenuWeekRange(start,end){
 }
 function chefMenuWeekday(date){
  const weekday=format(date,{weekday:"long"});
- return lang==="pt"?weekday.replace(/-feira$/i,""):weekday;
+ const concise=lang==="pt"?weekday.replace(/-feira$/i,""):weekday;
+ return concise.replace(/^./u,letter=>letter.toLocaleUpperCase(locale(lang)));
 }
 function dateDescription(value,options={weekday:"long",day:"numeric",month:"long",year:"numeric"}){
  return format(value,options).replace(/^./,letter=>letter.toLocaleUpperCase(locale(lang)));
@@ -1263,7 +1264,9 @@ function changeChefTab(next){
  const screen=el("screen");screen.getAnimations?.().forEach(animation=>animation.cancel());
  screen.style.transform="";screen.style.transition="";screen.style.willChange="";
  const nav=el("chef-nav");nav.classList.remove("chef-nav-compact");
- chefScrollAccum=0;chefLastScrollY=Math.max(0,window.scrollY||0);
+ // A pending scroll frame belongs to the old page and must not repaint this tab.
+ if(chefScrollFrame){window.cancelAnimationFrame(chefScrollFrame);chefScrollFrame=0;}
+ chefScrollAccum=0;chefScrollDirection=0;chefLastScrollY=Math.max(0,window.scrollY||0);
  activeTab=next;render();
  if(!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches&&typeof screen.animate==="function")
   screen.animate([
@@ -1290,8 +1293,14 @@ function updateChefAdaptiveNav(){
  if(direction!==chefScrollDirection){chefScrollDirection=direction;chefScrollAccum=0;}
  chefScrollAccum+=Math.abs(delta);
  if(chefScrollAccum>=28){
-  nav.classList.toggle("chef-nav-compact",direction>0);
-  chefScrollAccum=0;syncChefSelection(nav);
+  // Do not remeasure/repaint the glass indicator every 28px while already
+  // compact: Safari can otherwise leave its fixed layer visually behind.
+  const compact=direction>0;
+  if(nav.classList.contains("chef-nav-compact")!==compact){
+   nav.classList.toggle("chef-nav-compact",compact);
+   syncChefSelection(nav);
+  }
+  chefScrollAccum=0;
  }
 }
 window.addEventListener("scroll",()=>{
