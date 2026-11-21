@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt" data-admin-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Traduções · The Mile Backoffice</title>
+<link rel="stylesheet" href="/admin-surface-palette.css?v=205">
+<link rel="stylesheet" href="/admin-translations.css">
+<script defer src="/admin-translations.js"></script>
+</head>
+<body>
+<main class="i18n-shell" id="i18n-app">
+  <header class="i18n-topbar">
+    <a class="i18n-home" href="/" aria-label="Voltar ao início do Backoffice">‹ <span>Início</span></a>
+    <span class="i18n-product">The Mile <span aria-hidden="true">/</span> Backoffice</span>
+  </header>
+  <section class="i18n-intro" aria-labelledby="i18n-title">
+    <div class="i18n-eyebrow">Gestão de conteúdos · Português → Inglês</div>
+    <h1 id="i18n-title">Traduções</h1>
+    <p>Revisão centralizada das traduções utilizadas nas apps de jogadores e chefs. Os conteúdos originais e as prescrições mantêm-se em português.</p>
+  </section>
+  <p id="i18n-feedback" class="i18n-feedback" role="status" aria-live="polite">A carregar…</p>
+  <section class="i18n-stats" id="i18n-stats" aria-label="Resumo de traduções" hidden></section>
+  <section class="i18n-library-panel" aria-labelledby="i18n-lib-title" hidden id="i18n-library-panel">
+    <div class="i18n-section-heading"><h2 id="i18n-lib-title">Bibliotecas</h2><span>EN · Gestão central</span></div>
+    <div id="i18n-libraries" class="i18n-library-grid"></div>
+  </section>
+  <section class="i18n-work-panel" id="i18n-work-panel" aria-labelledby="i18n-work-title" hidden>
+    <div class="i18n-section-heading i18n-work-heading">
+      <div><h2 id="i18n-work-title">Revisão de conteúdos</h2><p>Seleciona um campo para comparar o original com a versão inglesa.</p></div>
+      <a id="i18n-library-link" href="/?nav=food-library" class="i18n-link">Abrir biblioteca</a>
+    </div>
+    <div class="i18n-toolbar">
+      <div id="i18n-tabs" role="group" aria-label="Biblioteca"></div>
+      <label>Estado
+        <select id="i18n-status">
+          <option value="all">Todos</option>
+          <option value="missing">Por traduzir</option>
+          <option value="legacy_review">Inglês existente · por rever</option>
+          <option value="pending">Por rever</option>
+          <option value="approved">Aprovados</option>
+          <option value="outdated">Desatualizados</option>
+        </select>
+      </label>
+      <label class="i18n-search">Pesquisar
+        <input type="search" id="i18n-search" maxlength="120" autocomplete="off" placeholder="Pesquisar conteúdos…">
+      </label>
+    </div>
+    <div id="i18n-results-count" class="i18n-results-count" aria-live="polite"></div>
+    <div id="i18n-results" class="i18n-results"></div>
+    <div class="i18n-pagination">
+      <button id="i18n-prev" type="button">Anterior</button>
+      <span id="i18n-page-indicator"></span>
+      <button id="i18n-next" type="button">Seguinte</button>
+    </div>
+  </section>
+  <section class="i18n-review" id="i18n-review" aria-labelledby="i18n-review-title" hidden>
+    <div class="i18n-review-heading">
+      <div><div class="i18n-eyebrow">Comparação e aprovação</div><h2 id="i18n-review-title">Rever tradução</h2></div>
+      <button type="button" id="i18n-close" class="i18n-quiet">Fechar</button>
+    </div>
+    <div class="i18n-compare">
+      <div class="i18n-source">
+        <h3>Português · original</h3><p id="i18n-source-text"></p>
+      </div>
+      <div class="i18n-target">
+        <label for="i18n-target-text">English · tradução proposta</label>
+        <textarea id="i18n-target-text" maxlength="10000" rows="4" spellcheck="true" aria-describedby="i18n-translation-state"></textarea>
+        <p id="i18n-translation-state"></p>
+      </div>
+    </div>
+    <div id="i18n-existing" class="i18n-existing" hidden>
+      <p>Foi encontrado um nome inglês na biblioteca de pratos. Ainda não está aprovado nesta central.</p>
+      <button type="button" id="i18n-use-existing" class="i18n-quiet">Usar como proposta</button>
+    </div>
+    <p id="i18n-review-feedback" role="status" aria-live="polite"></p>
+    <div class="i18n-actions">
+      <button type="button" id="i18n-propose" class="i18n-primary">Guardar proposta</button>
+      <button type="button" id="i18n-approve" class="i18n-secondary" disabled>Aprovar tradução revista</button>
+    </div>
+    <details id="i18n-history-panel">
+      <summary>Histórico de revisão</summary>
+      <div id="i18n-history"></div>
+    </details>
+  </section>
+  <footer>As traduções são representações adicionais. Não alteram dados alimentares, dosagens ou planos publicados.</footer>
+</main>
+</body>
+</html>
