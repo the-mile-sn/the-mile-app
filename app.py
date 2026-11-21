@@ -942,6 +942,7 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/history',
                 '/api/v2/admin/i18n/propose',
                 '/api/v2/admin/i18n/approve',
+                '/api/v2/admin/i18n/suggest',
             ):
                 if (SITE_ROLE == 'player' or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
