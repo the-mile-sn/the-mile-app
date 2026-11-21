@@ -1,0 +1,51 @@
+name: Validate isolated Backoffice translation center
+
+on:
+  push:
+    branches:
+      - "feature/app-translation-foundation-*"
+    paths:
+      - "app.py"
+      - "app_translation_catalog_v2.py"
+      - "app_translation_http_v2.py"
+      - "static/admin-translations.html"
+      - "static/admin-translations.css"
+      - "static/admin-translations.js"
+      - "test_app_translation_wsgi_v2.py"
+      - ".github/workflows/validate-admin-translations-center.yml"
+  pull_request:
+    paths:
+      - "app.py"
+      - "app_translation_catalog_v2.py"
+      - "app_translation_http_v2.py"
+      - "static/admin-translations.html"
+      - "static/admin-translations.css"
+      - "static/admin-translations.js"
+      - "test_app_translation_wsgi_v2.py"
+      - ".github/workflows/validate-admin-translations-center.yml"
+
+jobs:
+  admin-translations:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      MILE_BACKOFFICE_TRANSLATIONS_ENABLED: "0"
+      MILE_APP_TRANSLATIONS_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install application dependencies for WSGI integration
+        run: python -m pip install -r requirements.txt
+      - name: Validate Python and browser syntax
+        run: |
+          python -m py_compile app.py app_translation_catalog_v2.py app_translation_http_v2.py
+          node --check static/admin-translations.js
+          node --check static/admin-translations-shortcuts.js
+      - name: Run private Backoffice workflow with disposable data
+        run: python -m unittest -v test_app_translation_wsgi_v2

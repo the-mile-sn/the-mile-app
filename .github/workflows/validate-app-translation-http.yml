@@ -1,0 +1,38 @@
+name: Validate opt-in app language HTTP routes
+
+on:
+  push:
+    branches:
+      - "feature/app-translation-foundation-*"
+    paths:
+      - "app.py"
+      - "app_translation_http_v2.py"
+      - "test_app_translation_http_v2.py"
+      - "app_language_preferences_v2.py"
+      - "app_translation_admin_v2.py"
+      - "content_translations_v2.py"
+      - ".github/workflows/validate-app-translation-http.yml"
+  pull_request:
+    paths:
+      - "app.py"
+      - "app_translation_http_v2.py"
+      - "test_app_translation_http_v2.py"
+      - "app_language_preferences_v2.py"
+      - "app_translation_admin_v2.py"
+      - "content_translations_v2.py"
+      - ".github/workflows/validate-app-translation-http.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile changed route and adapters
+        run: |
+          python -m py_compile app.py app_translation_http_v2.py app_translation_admin_v2.py app_language_preferences_v2.py content_translations_v2.py
+      - name: Run all i18n SQLite contracts
+        run: |
+          python -m unittest -v test_content_translations_v2 test_app_content_presentation_v2 test_app_translation_contract_v2 test_app_translation_http_v2

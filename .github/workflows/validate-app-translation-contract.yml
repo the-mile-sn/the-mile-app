@@ -1,0 +1,68 @@
+name: Verify secure app translation contract
+
+on:
+  push:
+    branches:
+      - "feature/app-translation-foundation-*"
+    paths:
+      - "content_translations_v2.py"
+      - "app_translation_admin_v2.py"
+      - "app_language_preferences_v2.py"
+      - "test_app_translation_contract_v2.py"
+      - "test_app_translation_postgres_v2.py"
+      - "test_app_translation_migration_postgres_v2.py"
+      - "tools/i18n_preflight_readonly.py"
+      - "sql/i18n/**"
+      - ".github/workflows/validate-app-translation-contract.yml"
+  pull_request:
+    paths:
+      - "content_translations_v2.py"
+      - "app_translation_admin_v2.py"
+      - "app_language_preferences_v2.py"
+      - "test_app_translation_contract_v2.py"
+      - "test_app_translation_postgres_v2.py"
+      - "test_app_translation_migration_postgres_v2.py"
+      - "tools/i18n_preflight_readonly.py"
+      - "sql/i18n/**"
+      - ".github/workflows/validate-app-translation-contract.yml"
+
+jobs:
+  sqlite-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile and run isolated regression tests
+        run: |
+          python -m py_compile content_translations_v2.py app_content_presentation_v2.py app_translation_admin_v2.py app_language_preferences_v2.py
+          python -m unittest -v test_content_translations_v2 test_app_content_presentation_v2 test_app_translation_contract_v2
+
+  postgres-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: the_mile_i18n_ci
+          POSTGRES_USER: i18n_ci
+          POSTGRES_PASSWORD: ci_ephemeral_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U i18n_ci -d the_mile_i18n_ci"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TRANSLATION_TEST_DATABASE_URL: postgresql://i18n_ci:ci_ephemeral_only@127.0.0.1:5432/the_mile_i18n_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install isolated PostgreSQL driver
+        run: python -m pip install "psycopg[binary]==3.2.10"
+      - name: Test additive schema and approval round trip
+        run: python -m unittest -v test_app_translation_postgres_v2 test_app_translation_migration_postgres_v2

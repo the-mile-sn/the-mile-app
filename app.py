@@ -768,7 +768,7 @@ def application(env, start_response):
         # Deployment-level separation. The test environment defaults to both.
         # Role authorization remains mandatory on all protected API endpoints.
         if SITE_ROLE == 'player':
-            if (path in ('/admin-chat-v2.js', '/admin-chat-v2.css', '/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
+            if (path in ('/admin-chat-v2.js', '/admin-chat-v2.css', '/admin-translations-shortcuts.js', '/admin-translations-shortcuts.css', '/admin-appointments', '/admin-appointments.js', '/admin-appointments-schedule.js', '/admin-appointments-bookings.js', '/admin-appointments-google.js', '/admin-appointments.css', '/admin-work.js', '/admin-work.css', '/admin-microcycles', '/admin-microcycles.js', '/admin-microcycles.css', '/admin-surface-palette.css', '/admin-plans-native.css', '/admin-dashboard.js', '/admin-nav-shell.js', '/admin-mobile-nav.js', '/admin-light-theme.css', '/admin-recipes.js', '/admin-recipes.css', '/admin-chefs.js', '/admin-chefs.css', '/admin-clients.js', '/admin-clients.css', '/visual-portions.js', '/visual-portions.css')
                     or path == '/api/v2/athletes'
                     or path.startswith('/api/v2/athletes/')
                     or path.startswith('/api/v2/food-library')
@@ -789,6 +789,12 @@ def application(env, start_response):
                     or path.startswith('/api/v2/player/')
                     or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
+        # Backoffice translations are private, never served before authentication.
+        translation_admin_assets = {
+            '/admin-translations': ('admin-translations.html', 'text/html; charset=utf-8'),
+            '/admin-translations.js': ('admin-translations.js', 'text/javascript; charset=utf-8'),
+            '/admin-translations.css': ('admin-translations.css', 'text/css; charset=utf-8'),
+        }
         static_files = {
             '/': 'admin-microcycles.html' if SITE_ROLE == 'admin' and not env.get('QUERY_STRING','').startswith('activate=') else 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
             '/manifest.webmanifest': 'manifest.webmanifest', '/sw.js': 'sw.js', '/icon-192.png': 'icon-192.png',
@@ -796,7 +802,7 @@ def application(env, start_response):
             '/pdf-open.css': 'pdf-open.css', '/pdf-open.js': 'pdf-open.js',
             '/admin-consumption.js': 'admin-consumption.js', '/admin-consumption.css': 'admin-consumption.css', '/admin-microcycles': 'admin-microcycles.html', '/admin-microcycles.js': 'admin-microcycles.js', '/admin-microcycles.css': 'admin-microcycles.css', '/admin-surface-palette.css': 'admin-surface-palette.css', '/admin-plans-native.css': 'admin-plans-native.css',
             '/admin-appointments': 'admin-appointments.html', '/admin-appointments.js': 'admin-appointments.js', '/admin-appointments-schedule.js': 'admin-appointments-schedule.js', '/admin-appointments-bookings.js': 'admin-appointments-bookings.js', '/admin-appointments-google.js': 'admin-appointments-google.js', '/admin-appointments.css': 'admin-appointments.css', '/admin-work.js': 'admin-work.js', '/admin-work.css': 'admin-work.css',
-            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/tm-design-system.css': 'tm-design-system.css',
+            '/admin-chat-v2.js': 'admin-chat-v2.js', '/admin-chat-v2.css': 'admin-chat-v2.css', '/admin-translations-shortcuts.js': 'admin-translations-shortcuts.js', '/admin-translations-shortcuts.css': 'admin-translations-shortcuts.css', '/admin-dashboard.js': 'admin-dashboard.js', '/admin-nav-shell.js': 'admin-nav-shell.js', '/admin-mobile-nav.js': 'admin-mobile-nav.js', '/admin-light-theme.css': 'admin-light-theme.css', '/admin-recipes.js': 'admin-recipes.js', '/admin-recipes.css': 'admin-recipes.css', '/admin-chefs.js': 'admin-chefs.js', '/admin-chefs.css': 'admin-chefs.css', '/admin-clients.js': 'admin-clients.js', '/admin-clients.css': 'admin-clients.css', '/tm-design-system.css': 'tm-design-system.css',
             '/plan-draft-import.js': 'plan-draft-import.js', '/food-library': 'food-library.html', '/create-plan': 'create-plan.html', '/create-plan.js': 'create-plan.js', '/create-plan.css': 'create-plan.css', '/nutrition-nav.css': 'nutrition-nav.css', '/nutrition-theme.css': 'nutrition-theme.css', '/nutrition-theme.js': 'nutrition-theme.js', '/food-library.js': 'food-library.js', '/food-library.css': 'food-library.css', '/visual-portions.js': 'visual-portions.js', '/visual-portions.css': 'visual-portions.css',
             '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
@@ -815,7 +821,7 @@ def application(env, start_response):
                 headers[:] = [(k,v) for k,v in headers if k.lower() != 'cache-control']
                 headers.append(('Cache-Control','public, max-age=2592000, immutable'))
             return respond(200, file.read_bytes(), mime)
-        if not path.startswith('/api/'):
+        if not path.startswith('/api/') and path not in translation_admin_assets:
             raise Problem(404, 'not_found')
 
         # The Mile's FUTURE custom Shopify app — not the ChatGPT connector.
@@ -916,6 +922,54 @@ def application(env, start_response):
                 if (path not in ('/api/me','/api/login','/api/logout','/api/change-password')
                         and not path.startswith('/api/v2/chef/')):
                     raise Problem(403, 'forbidden')
+
+            # Session-protected admin workspace, activated independently from apps.
+            if path in translation_admin_assets:
+                if (SITE_ROLE == 'player' or method != 'GET'
+                        or os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED', '0') != '1'):
+                    raise Problem(404, 'not_found')
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                asset, mime = translation_admin_assets[path]
+                return respond(200, (ROOT / 'static' / asset).read_bytes(), mime)
+
+            # App translation pilot: new endpoints only, OFF by default.
+            # Existing Player/Chef/Admin routes remain untouched.
+            translation_pilot_routes = (
+                '/api/v2/player/language',
+                '/api/v2/chef/language',
+                '/api/v2/admin/i18n',
+                '/api/v2/admin/i18n/propose',
+                '/api/v2/admin/i18n/approve',
+                '/api/v2/admin/i18n/history',
+                '/api/v2/admin/i18n/overview',
+                '/api/v2/admin/i18n/catalog',
+            )
+            if path in translation_pilot_routes:
+                # Backoffice management can be tested without enabling
+                # player/chef language routes or changing their applications.
+                translation_flag = ('MILE_BACKOFFICE_TRANSLATIONS_ENABLED'
+                                    if path.startswith('/api/v2/admin/i18n')
+                                    else 'MILE_APP_TRANSLATIONS_ENABLED')
+                if os.environ.get(translation_flag, '0') != '1':
+                    raise Problem(404, 'not_found')
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                if method not in ('GET', 'PUT', 'POST'):
+                    raise Problem(404, 'not_found')
+                import app_translation_http_v2
+                try:
+                    status, payload = app_translation_http_v2.dispatch(
+                        c, site_role=SITE_ROLE, user=dict(user), path=path,
+                        method=method, query=parse_qs(env.get('QUERY_STRING', ''),
+                                                      keep_blank_values=True),
+                        body=read_json(env) if method in ('PUT', 'POST') else None)
+                except app_translation_http_v2.APIError as exc:
+                    raise Problem(exc.status, exc.code)
+                if method in ('PUT', 'POST'):
+                    c.commit()
+                return respond(status, payload)
 
             # Shopify UNPUBLISHED theme preview only: anonymous, read-only,
             # allowlisted public metadata. Never expose internal admin records,

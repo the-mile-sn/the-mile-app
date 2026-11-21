@@ -1,0 +1,20 @@
+/* Only elements added by the opt-in translation shortcut. */
+#tm-food-library-page .tm-i18n-library-link,
+#tm-menu-recipes-page .tm-i18n-library-link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:42px;padding:0 16px;border-radius:var(--tm-action-radius,12px);
+  background:var(--tm-ui-subcard,#1e2025);color:var(--tm-ui-text,#f2f3f5);
+  border:1px solid var(--tm-ui-divider,rgba(155,168,185,.085));
+  font-size:12px;font-weight:600;text-decoration:none;
+  white-space:nowrap;box-shadow:none;
+}
+#tm-food-library-page .tm-i18n-library-link:hover,
+#tm-menu-recipes-page .tm-i18n-library-link:hover{
+  background:var(--tm-ui-hover,#303239);
+}
+#tm-food-library-page .food-library-top:has(.tm-i18n-library-link){gap:10px}
+#tm-menu-recipes-page .dish-catalog-filters:has(.tm-i18n-library-link){gap:10px}
+@media(max-width:580px){
+  #tm-food-library-page .tm-i18n-library-link,
+  #tm-menu-recipes-page .tm-i18n-library-link{padding:0 12px;min-height:40px}
+}
