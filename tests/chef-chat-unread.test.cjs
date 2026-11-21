@@ -126,7 +126,7 @@ test("unavailable chat stays demo-only and does not poll repeatedly",async()=>{
  input.emit("input");
  h.get("chef-chat-form").emit("submit",{preventDefault(){}});
  await h.flush();
- assert.match(result.textContent,/não foi enviada nem guardada/);
+ assert.match(result.textContent,/[Nn]ão foi enviada nem guardada/);
 });
 
 test("composer grows from one line to max only when needed",async()=>{
