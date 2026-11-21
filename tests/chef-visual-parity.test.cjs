@@ -20,11 +20,22 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  assert.match(html,/chef\.js\?v=30/);
 });
 
+test("Chef message preview assets are explicitly served and never cached as 404s",()=>{
+ const backend=fs.readFileSync("app.py","utf8");
+ const sw=fs.readFileSync("static/sw.js","utf8");
+ assert.match(backend,/'\/chef-chat-demo\.js': 'chef-chat-demo\.js'/);
+ assert.match(backend,/'\/chef-chat-demo\.css': 'chef-chat-demo\.css'/);
+ assert.match(backend,/'\/chef', '\/chef\.js', '\/chef\.css', '\/chef-chat-demo\.js', '\/chef-chat-demo\.css'/);
+ assert.match(sw,/the-mile-shell-v124-shared-player-chef/);
+ assert.match(sw,/'\/chef-chat-demo\.js','\/chef-chat-demo\.css'/);
+ assert.match(sw,/if \(response\.ok\) \{/);
+ assert.doesNotMatch(html,/chef-chat-demo\.(css|js)\?v=1/);
+});
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=1/);
- assert.match(html,/chef-chat-demo\.js\?v=1/);
+ assert.match(html,/chef-chat-demo\.css\?v=2/);
+ assert.match(html,/chef-chat-demo\.js\?v=2/);
  assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
  assert.match(html,/class="mile-icon icon-message-01"/);
  assert.match(html,/<dialog id="chef-chat-dialog"/);
@@ -44,7 +55,7 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoJs,/window\.themileChefChatDemo=Object\.freeze/);
  for(const forbidden of [/fetch\s*\(/,/\blocalStorage\b/,/\bsessionStorage\b/,/\bindexedDB\b/,/\bWebSocket\s*\(/,/\bnavigator\.sendBeacon\s*\(/])
   assert.doesNotMatch(demoJs,forbidden);
- assert.match(demoCss,/\.chef-chat-trigger\{[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 7px\)/);
+ assert.match(demoCss,/\.chef-chat-trigger\{[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 13px\)/);
  assert.match(demoCss,/\.chef-chat-dialog::backdrop/);
  assert.match(demoCss,/@media\(max-width:640px\)/);
  assert.match(guide,/protótipo reside isolado/);
