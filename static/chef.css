@@ -11,7 +11,7 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html{min-height:100%;font-size:16px}
-body{margin:0;min-height:100vh;min-height:100dvh;background:#0d0d10;color:var(--chef-ink);font-family:var(--mile-app-font)}
+body{margin:0;min-height:100vh;min-height:100dvh;background:#0d0d10;color:var(--chef-ink);font-family:var(--mile-app-font);display:flex;flex-direction:column}
 button,input,textarea,select{font-family:inherit}
 button{cursor:pointer}button:disabled{opacity:.45;cursor:default}
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #aeb0ba;outline-offset:3px}
@@ -21,7 +21,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .top-details{position:absolute;right:16px;top:8px;display:flex;align-items:center;gap:8px;font-size:12px}
 .top-details #top-name{display:none}
 .quiet-button{border:0;background:transparent;color:#e8e8ec;font-size:12px;padding:8px}
-.page{width:min(calc(100% - 28px),960px);margin:0 auto;padding:2px 0 130px}
+.page{width:min(calc(100% - 28px),960px);margin:0 auto;padding:2px 0 130px;flex:1;display:flex;flex-direction:column}
+/* Full-height gesture surface for short Chef day views, with independent moving content. */
+#chef-view{display:flex;flex:1;flex-direction:column}
+#screen{flex:1}
+.chef-day-content{display:flow-root;width:100%}
 .page-intro{display:none}.overline{color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.1em;margin:0}
 .muted{font-size:13px;color:var(--muted);line-height:1.5}
 .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 15px}
@@ -579,8 +583,8 @@ textarea.chef-input{min-height:68px;resize:vertical}
 }
 
 /* Chef home: align the summary and meal cards to the same outer and inner grid. */
-#screen.chef-screen-home>.chef-daily-summary,
-#screen.chef-screen-home>.chef-meal-card{
+#screen.chef-screen-home>.chef-day-content>.chef-daily-summary,
+#screen.chef-screen-home>.chef-day-content>.chef-meal-card{
  width:100%;
  max-width:760px;
  box-sizing:border-box;

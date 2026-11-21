@@ -16,8 +16,8 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=19/);
- assert.match(html,/chef\.js\?v=25/);
+ assert.match(html,/chef\.css\?v=20/);
+ assert.match(html,/chef\.js\?v=26/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -65,7 +65,8 @@ test("visual changes keep role-scoped Chef endpoints, four tabs and edit rules i
  }
  assert.match(js,/previewReadOnly&&method!=="GET"/);
  assert.match(js,/if\(!previewReadOnly&&key>=dateKey\(new Date\(\)\)\)/);
- assert.match(js,/if\(chefViewMode==="week"\)renderChefWeekly\(root\);else renderChefDaily\(root\)/);
+ assert.match(js,/if\(chefViewMode==="week"\)\{renderChefWeekly\(root\);return;\}/);
+ assert.match(js,/renderChefDaily\(dayContent\)/);
  for(const tab of ["home","plans","menus","profile"])assert.match(html,new RegExp('data-tab="'+tab+'"'));
  assert.match(js,/el\("chef-nav"\)\.querySelectorAll\("\[data-tab\]"\)/);
  assert.match(guide,/validação visual em iPhone e desktop \*\*pendente\*\*/);
@@ -230,6 +231,26 @@ test("Chef follows Player tab animation and adaptive floating bar, without inven
  assert.match(css,/\.chef-nav-compact \.mile-icon\{transform:scale\(\.87\)\}/);
  assert.match(css,/\.chef-nav-compact>button>span:last-child\{font-size:8px!important\}/);
  assert.match(guide,/não transformar o toque em swipe horizontal entre separadores/);
+});
+test("Chef swipe covers empty daily viewport but animates only its content",()=>{
+ assert.match(css,/body\{[^}]*display:flex;flex-direction:column\}/);
+ assert.match(css,/\.page\{[^}]*flex:1;display:flex;flex-direction:column\}/);
+ assert.match(css,/#chef-view\{display:flex;flex:1;flex-direction:column\}/);
+ assert.match(css,/#screen\{flex:1\}/);
+ assert.match(css,/\.chef-day-content\{display:flow-root;width:100%\}/);
+ assert.match(js,/const dayContent=node\("div","chef-day-content"\)/);
+ assert.match(js,/root\.append\(dayContent\)/);
+ assert.match(js,/renderChefDaily\(dayContent\)/);
+ assert.match(css,/#screen\.chef-screen-home>\.chef-day-content>\.chef-daily-summary/);
+ assert.match(css,/#screen\.chef-screen-home>\.chef-day-content>\.chef-meal-card/);
+ assert.match(js,/const chefSwipeArea=el\("screen"\)/);
+ assert.match(js,/const content=homeDay\?chefSwipeArea\.querySelector\(":scope > \.chef-day-content"\):null/);
+ assert.match(js,/chefTouchContent=content/);
+ assert.match(js,/const content=el\("screen"\)\.querySelector\(":scope > \.chef-day-content"\)/);
+ assert.match(js,/chefSwipeEntryAnimation=content\.animate\(/);
+ assert.doesNotMatch(js,/chefSwipeEntryAnimation=screen\.animate\(/);
+ assert.match(guide,/espaço entre o último card e a barra inferior/);
+ assert.match(guide,/confirmação visual em iPhone ainda pendente/);
 });
 test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll and reduced-motion guard",()=>{
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
