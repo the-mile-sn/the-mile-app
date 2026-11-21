@@ -41,7 +41,12 @@ def _allowed(kind, path):
     # do not transfer them to a third-party language model in this pilot.
     if kind == "supplement":
         return path == "name"
-    return kind in ("food", "dish", "recipe", "recipe_category")
+    if kind == "recipe":
+        return (path == "name" or path.startswith("steps/") or
+                (path.startswith("sections/") and
+                 (path.endswith("/title") or path.endswith("/name") or
+                  path.endswith("/unit"))))
+    return kind in ("food", "dish", "recipe_category")
 
 
 def _limit(actor):
