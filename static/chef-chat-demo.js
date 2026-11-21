@@ -36,7 +36,7 @@
   }
  };
  let language="pt",mode="demo",csrf="",chefId="",pendingKey=null;
- let loading=false,openingToken=0,realMessages=[];
+ let loading=false,openingToken=0,realMessages=[],pollTimer=null,refreshingToken=null;
  const t=()=>copy[language];
  const make=(tag,cls,value)=>{
   const el=document.createElement(tag);el.className=cls;
@@ -91,17 +91,35 @@
   send.title=t().realSend;
   trigger.setAttribute("aria-label",t().title);
  }
+ function stopRealPolling(){
+  if(pollTimer!==null){window.clearInterval(pollTimer);pollTimer=null;}
+ }
+ function startRealPolling(){
+  stopRealPolling();
+  pollTimer=window.setInterval(()=>{
+   if(mode!=="real"||!dialog.open||document.hidden)return;
+   refreshReal().catch(()=>{
+    if(mode==="real"&&dialog.open)result.textContent=t().realError;
+   });
+  },30000);
+ }
  async function refreshReal(){
-  if(mode!=="real"||!dialog.open)return;
-  const data=await fetchReal("/api/v2/chef/chat/messages");
-  if(mode!=="real"||!dialog.open)return;
-  realMessages=data.messages||[];
-  renderRealMessages();
-  const last=realMessages.at(-1);
-  // A read cursor tracks the last displayed message, including our own.
-  // Otherwise a team message followed by our reply would remain falsely unread.
-  if(last){
-   await fetchReal("/api/v2/chef/chat/read","POST",{message_id:last.id});
+  const token=openingToken;
+  if(mode!=="real"||!dialog.open||refreshingToken===token)return;
+  refreshingToken=token;
+  try{
+   const data=await fetchReal("/api/v2/chef/chat/messages");
+   if(mode!=="real"||!dialog.open||token!==openingToken)return;
+   realMessages=data.messages||[];
+   renderRealMessages();
+   if(result.textContent===t().realError)result.textContent="";
+   const last=realMessages.at(-1);
+   // Read cursor tracks the newest displayed message, including own replies.
+   if(last){
+    await fetchReal("/api/v2/chef/chat/read","POST",{message_id:last.id});
+   }
+  }finally{
+   if(refreshingToken===token)refreshingToken=null;
   }
  }
  async function maybeOpenReal(){
@@ -114,6 +132,7 @@
    if(!dialog.open||token!==openingToken)return;
    mode="real";result.textContent="";realMessages=[];
    showLiveLabels();
+   startRealPolling();
    await refreshReal();
   }catch(error){
    if(!dialog.open||token!==openingToken)return;
@@ -153,6 +172,7 @@
  dialog.addEventListener("click",event=>{if(event.target===dialog)closeDemo();});
  dialog.addEventListener("close",()=>{
   openingToken++;
+  stopRealPolling();
   mode="demo";csrf="";chefId="";pendingKey=null;realMessages=[];
   input.maxLength=600;
   thread.replaceChildren();input.value="";result.textContent="";
@@ -172,8 +192,8 @@
    try{
     await fetchReal("/api/v2/chef/chat/messages","POST",{body:message,client_key:key});
     input.value="";pendingKey=null;
-    await refreshReal();
-    result.textContent=t().realSent;
+    try{await refreshReal();result.textContent=t().realSent;}
+    catch(_error){result.textContent=t().realError;}
    }catch(_error){result.textContent=t().realSendError;}
    finally{loading=false;updateSendState();}
    return;
@@ -181,6 +201,11 @@
   appendMessage("local",message);input.value="";
   updateSendState();
   result.textContent=t().notSent;
+ });
+ document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden&&mode==="real"&&dialog.open){
+   refreshReal().catch(()=>{if(mode==="real")result.textContent=t().realError;});
+  }
  });
  input.addEventListener("input",()=>{pendingKey=null;updateSendState();});
  input.addEventListener("keydown",event=>{
