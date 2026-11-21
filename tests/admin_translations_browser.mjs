@@ -125,6 +125,9 @@ try {
       name + " has horizontal overflow: " + scrollWidth + " > " + width);
     await page.locator("#i18n-results .i18n-result").first().click();
     await page.locator("#i18n-review:not([hidden])").waitFor();
+    await page.waitForFunction(
+      () => document.querySelector("#i18n-source-text")?.textContent === "Frango com arroz",
+    );
     assert.equal(await page.locator("#i18n-source-text").innerText(),
       snap.source);
     assert.equal(await page.locator("#i18n-approve").isDisabled(), true);
