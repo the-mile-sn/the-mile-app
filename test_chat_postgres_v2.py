@@ -41,6 +41,13 @@ class ChatPostgresTests(unittest.TestCase):
             self.assertEqual(chat.list_messages(c,convo,'staff')[0]['id'],row['id'])
             self.assertTrue(chat.mark_read(c,convo,'staff',row['id']))
             self.assertEqual(chat.unread_count(c,convo,'staff'),0)
+            archived=chat.archive_conversation(c,convo,'staff',1795219200000)
+            self.assertEqual(
+                archived['retention_review_at'],
+                chat.retention_review_timestamp(1795219200000))
+            with self.assertRaises(chat.ChatAccessError):
+                chat.send_message(c,convo,'chef','No','second')
+            self.assertEqual(len(chat.list_messages(c,convo,'staff')),1)
             raw.rollback()
 
 
