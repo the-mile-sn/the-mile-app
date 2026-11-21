@@ -16,6 +16,22 @@ jobs:
           python-version: "3.12"
       - run: python -m unittest -v test_chat_messaging_v2 test_chat_admin_api_v2
       - run: python -m py_compile chat_messaging_v2.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node --check static/admin-chat-v2.js
+      - name: Verify Admin inbox resources registered and feature remains off
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('static/admin-microcycles.html').read_text()
+          app=Path('app.py').read_text()
+          assert '/admin-chat-v2.js?v=1' in html
+          assert '/admin-chat-v2.css?v=1' in html
+          assert "'/admin-chat-v2.js': 'admin-chat-v2.js'" in app
+          assert "'/admin-chat-v2.css': 'admin-chat-v2.css'" in app
+          assert "os.environ.get('MILE_CHAT_API_ENABLED')!='1'" in app
+          PY
       - name: Refuse accidental live chat activation
         run: |
           python - <<'PY'
