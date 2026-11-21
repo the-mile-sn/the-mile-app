@@ -3,6 +3,7 @@
 Does not depend on the administrative user-management code. Both services
 access the same users, athlete and Chef collaboration database tables.
 """
+import re
 import unittest
 from unittest.mock import patch
 from datetime import date,timedelta
@@ -98,18 +99,22 @@ class ChefPlayerReleaseTests(unittest.TestCase):
         and a click that never opened the dialog.
         """
         with patch.object(app,"SITE_ROLE","player"):
-            for path,expected_mime,marker in (
-                ("/chef-chat-demo.css?v=2","text/css",b".chef-chat-trigger"),
-                ("/chef-chat-demo.js?v=2","javascript",b"dialog.showModal()"),
+            html=self.chef.request("/chef")
+            self.assertEqual(html["status"],200)
+            page=html["body"].decode("utf-8")
+            for stem,expected_mime,marker in (
+                ("/chef-chat-demo.css","text/css",b".chef-chat-trigger"),
+                ("/chef-chat-demo.js","javascript",b"dialog.showModal()"),
             ):
+                # Read the exact version shipped in the HTML: a CSS/JS cache
+                # bump must never break the HTTP route regression check.
+                references=re.findall(re.escape(stem)+r"\\?v=\\d+",page)
+                self.assertEqual(len(references),1,(stem,references))
+                path=references[0]
                 result=self.chef.request(path)
                 self.assertEqual(result["status"],200,(path,result["status"]))
                 self.assertIn(expected_mime,result["headers"]["Content-Type"])
                 self.assertIn(marker,result["body"])
-            html=self.chef.request("/chef")
-            self.assertEqual(html["status"],200)
-            self.assertIn(b"/chef-chat-demo.css?v=2",html["body"])
-            self.assertIn(b"/chef-chat-demo.js?v=2",html["body"])
         with patch.object(app,"SITE_ROLE","admin"):
             self.assertEqual(self.chef.request("/chef-chat-demo.css")["status"],404)
             self.assertEqual(self.chef.request("/chef-chat-demo.js")["status"],404)
