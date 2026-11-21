@@ -6,6 +6,14 @@
  display:grid;place-items:center;width:44px;height:44px;min-width:44px;
  padding:10px;border:0;border-radius:50%;background:transparent;color:#f3f3f6;
 }
+.chef-chat-unread{
+ position:absolute;top:1px;right:0;transform:translate(22%,-14%);
+ box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+ min-width:19px;height:19px;padding:0 4px;border-radius:11px;
+ background:#f3f3f6;color:#0d0d10;font-size:10px;font-weight:700;line-height:1;
+ white-space:nowrap;pointer-events:none;
+}
+.chef-chat-unread[hidden]{display:none}
 .chef-chat-trigger .mile-icon{display:flex;align-items:center;justify-content:center;width:24px;height:24px}
 .chef-chat-trigger svg{display:block;width:100%;height:100%}
 @media(hover:hover){.chef-chat-trigger:hover{background:rgba(255,255,255,.07)}}
@@ -50,24 +58,30 @@
 }
 .chef-chat-message-local .chef-chat-bubble{background:#414148;border-radius:18px 18px 5px 18px}
 .chef-chat-form{
- display:flex;align-items:center;gap:9px;padding:12px 14px 4px;
+ display:flex;align-items:center;gap:13px;padding:12px 14px 4px;
  border:0;
 }
 .chef-chat-form textarea{
- flex:1;min-width:0;min-height:48px;max-height:110px;resize:vertical;
+ box-sizing:border-box;flex:1;min-width:0;height:46px;min-height:46px;max-height:108px;
+ resize:none;overflow-y:auto;
  background:#242429;color:#f5f5f7;border:0;box-shadow:none;
- border-radius:18px;padding:12px 13px;font-size:16px;line-height:1.4;
+ border-radius:18px;padding:11px 13px;font-size:16px;line-height:1.4;
 }
 .chef-chat-form textarea::placeholder{color:#9f9fa7}
 .chef-chat-form .chef-chat-send{
- flex:0 0 46px;display:flex;align-items:center;justify-content:center;
- width:46px;height:46px;min-width:46px;min-height:46px;padding:0;
- border:0;border-radius:50%;background:#696970;color:#f5f5f7;
- cursor:pointer;transition:background-color .16s ease,opacity .16s ease;
+ position:relative;flex:0 0 44px;display:flex;align-items:center;justify-content:center;
+ width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+ border:0;border-radius:50%;background:transparent;color:#f5f5f7;
+ cursor:pointer;transition:opacity .16s ease;
 }
-.chef-chat-form .chef-chat-send svg{display:block;width:23px;height:23px}
-.chef-chat-form .chef-chat-send:disabled{background:#414148;color:#9f9fa7;opacity:.65;cursor:default}
-.chef-chat-form .chef-chat-send:not(:disabled):active{background:#818188}
+.chef-chat-form .chef-chat-send::before{
+ content:"";position:absolute;inset:3px;border-radius:50%;
+ background:#696970;transition:background-color .16s ease;
+}
+.chef-chat-form .chef-chat-send svg{position:relative;z-index:1;display:block;width:20px;height:20px}
+.chef-chat-form .chef-chat-send:disabled{background:transparent;color:#9f9fa7;opacity:.65;cursor:default}
+.chef-chat-form .chef-chat-send:disabled::before{background:#414148}
+.chef-chat-form .chef-chat-send:not(:disabled):active::before{background:#818188}
 .chef-chat-result{
  margin:0;min-height:35px;padding:7px 18px max(10px,env(safe-area-inset-bottom,0px));
  color:#aeb0b8;font-size:11px;line-height:1.4;
