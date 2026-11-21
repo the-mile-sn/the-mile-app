@@ -8,13 +8,10 @@ Never accept source_text, actor_id or canonical table names from the request.
 import hashlib
 
 import content_translations_v2 as translations
+import app_translation_sources_v2 as sources
 
 
-FIELDS = {
-    ("food", "display_name"): ("v2_food_library", "display_name"),
-    ("food", "notes"): ("v2_food_library", "notes"),
-    ("dish", "name_pt"): ("v2_dish_library", "name_pt"),
-}
+# Field access is restricted to the canonical, player/chef-visible source list.
 
 
 def _admin(c, session_user):
@@ -32,23 +29,8 @@ def _admin(c, session_user):
 
 
 def _source(c, entity_kind, entity_id, field_path):
-    """Lookup from strict SQL allowlist; source always comes from storage."""
-    pair = (entity_kind, field_path)
-    if pair not in FIELDS:
-        raise ValueError("invalid_translation_field")
-    if not isinstance(entity_id, str) or not 1 <= len(entity_id) <= 160:
-        raise ValueError("invalid_translation_id")
-    table, column = FIELDS[pair]
-    # Safe: table/column come only from the constant allowlist above.
-    row = c.execute(
-        "SELECT " + column + " AS source_text FROM " + table +
-        " WHERE id=? AND active=1", (entity_id,)).fetchone()
-    if row is None:
-        raise LookupError("content_not_found")
-    text = row["source_text"]
-    if not isinstance(text, str):
-        raise ValueError("invalid_translation_source")
-    return text
+    """Read an allowed visible source field from the canonical record."""
+    return sources.canonical_field(c, entity_kind, entity_id, field_path)
 
 
 def _fingerprint(value):

@@ -117,7 +117,7 @@ try {
     await page.locator("#i18n-work-panel:not([hidden])").waitFor();
     assert.equal(await page.locator("#i18n-stats .i18n-stat").count(), 5);
     assert.equal(await page.locator("#i18n-libraries .i18n-library").count(), 6);
-    assert.match(await page.locator("#i18n-results-count").innerText(), /1 campos/);
+    assert.match(await page.locator("#i18n-results-count").innerText(), /1 registos/);
     const scrollWidth = await page.evaluate(
       () => document.documentElement.scrollWidth
     );
@@ -131,7 +131,9 @@ try {
     assert.equal(await page.locator("#i18n-source-text").innerText(),
       snap.source);
     assert.equal(await page.locator("#i18n-approve").isDisabled(), true);
-    await page.locator("#i18n-use-existing").click();
+    await page.waitForFunction(
+      () => document.querySelector("#i18n-target-text")?.value === "Chicken and rice",
+    );
     assert.equal(await page.locator("#i18n-target-text").inputValue(),
       snap.english);
     await page.locator("#i18n-propose").click();

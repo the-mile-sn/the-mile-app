@@ -42,7 +42,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-link{font-size:12px;text-decoration:none;border-radius:8px;padding:10px 12px;background:var(--tm-ui-subcard);white-space:nowrap}
 .i18n-link:hover{background:var(--tm-ui-hover)}
 .i18n-toolbar{display:grid;grid-template-columns:auto 180px minmax(190px,1fr);gap:12px;align-items:end;margin-bottom:18px}
-#i18n-tabs{display:flex;gap:6px}
+#i18n-tabs{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
 #i18n-tabs button,.i18n-pagination button,.i18n-quiet,.i18n-secondary{border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);border-radius:9px;padding:11px 14px;font-size:12px;font-weight:600}
 #i18n-tabs button[aria-pressed="true"]{background:var(--tm-ui-hover);border-color:var(--tm-ui-muted)}
 .i18n-toolbar label{display:grid;gap:8px;font-size:11px;font-weight:600;color:var(--tm-ui-muted)}
@@ -80,3 +80,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-shell footer{font-size:12px;color:var(--tm-ui-muted);line-height:1.6;text-align:center;margin-top:25px}
 @media (max-width:900px){.i18n-stats{grid-template-columns:repeat(3,1fr)}.i18n-library-grid{grid-template-columns:repeat(2,1fr)}.i18n-toolbar{grid-template-columns:1fr 1fr}.i18n-toolbar #i18n-tabs{grid-column:1/-1}}
 @media (max-width:620px){.i18n-shell{padding:16px 14px 32px}.i18n-intro{margin-top:24px}.i18n-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.i18n-stat{padding:15px}.i18n-stat strong{font-size:24px}.i18n-library-panel,.i18n-work-panel,.i18n-review{padding:16px}.i18n-library-grid{grid-template-columns:1fr 1fr;gap:8px}.i18n-section-heading{align-items:flex-start}.i18n-toolbar{grid-template-columns:1fr}.i18n-toolbar #i18n-tabs{grid-column:auto}.i18n-result{grid-template-columns:minmax(0,1fr) auto;gap:8px}.i18n-result .i18n-status-pill{grid-column:1/-1;justify-self:start}.i18n-result-arrow{grid-row:1;grid-column:2}.i18n-compare{grid-template-columns:1fr}.i18n-work-heading{flex-direction:column}.i18n-pagination{justify-content:center}.i18n-product{font-size:11px}}
+
+/* Registo único com seleção dos respetivos textos apresentados nas apps. */
+.i18n-field-label{display:grid;gap:8px;margin:0 0 16px;font-size:12px;color:var(--tm-ui-muted);font-weight:600}
+.i18n-field-label select{display:block;width:100%;max-width:550px;min-height:42px;padding:10px 12px;border:1px solid var(--tm-ui-divider);border-radius:9px;background:var(--tm-ui-subcard);color:var(--tm-ui-text)}

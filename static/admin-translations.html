@@ -28,7 +28,7 @@
   </section>
   <section class="i18n-work-panel" id="i18n-work-panel" aria-labelledby="i18n-work-title" hidden>
     <div class="i18n-section-heading i18n-work-heading">
-      <div><h2 id="i18n-work-title">Revisão de conteúdos</h2><p>Seleciona um campo para comparar o original com a versão inglesa.</p></div>
+      <div><h2 id="i18n-work-title">Revisão de conteúdos</h2><p>Seleciona um registo e revê os textos que aparecem nas apps.</p></div>
       <a id="i18n-library-link" href="/?nav=food-library" class="i18n-link">Abrir biblioteca</a>
     </div>
     <div class="i18n-toolbar">
@@ -60,6 +60,9 @@
       <div><div class="i18n-eyebrow">Comparação e aprovação</div><h2 id="i18n-review-title">Rever tradução</h2></div>
       <button type="button" id="i18n-close" class="i18n-quiet">Fechar</button>
     </div>
+    <label class="i18n-field-label" for="i18n-fields">Texto apresentado nas apps
+      <select id="i18n-fields"></select>
+    </label>
     <div class="i18n-compare">
       <div class="i18n-source">
         <h3>Português · original</h3><p id="i18n-source-text"></p>
@@ -71,8 +74,7 @@
       </div>
     </div>
     <div id="i18n-existing" class="i18n-existing" hidden>
-      <p>Foi encontrado um nome inglês na biblioteca de pratos. Ainda não está aprovado nesta central.</p>
-      <button type="button" id="i18n-use-existing" class="i18n-quiet">Usar como proposta</button>
+      <p>O inglês que já existe está preenchido acima. Confirma-o e guarda a proposta antes de aprovar; nada é aprovado automaticamente.</p>
     </div>
     <p id="i18n-review-feedback" role="status" aria-live="polite"></p>
     <div class="i18n-actions">

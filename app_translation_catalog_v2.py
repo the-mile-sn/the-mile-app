@@ -1,173 +1,136 @@
-"""Backoffice PT/EN catalog: read-only inventory of canonical content.
+"""Read-only grouped PT/EN translation catalog for content shown in apps.
 
-Only food names/notes and dish names are editable/reviewable in phase 1.
-Other libraries appear as coverage *not yet integrated*, never as 0% translated.
-The caller supplies an authenticated server-side admin session.
+Every list item represents ONE food, dish, recipe, category or supplement.
+Secondary visible fields are reviewed inside that record, never listed as
+independent foods. Internal food notes are intentionally excluded.
 """
 import hashlib
 import app_translation_admin_v2 as review
+import app_translation_sources_v2 as sources
 
-MAX_SCAN = 25000
-CATEGORIES = (
-    ("food", "Alimentos", True),
-    ("dish", "Pratos", True),
-    ("recipe", "Receitas", False),
-    ("recipe_category", "Categorias de receitas", False),
-    ("supplement", "Suplementos", False),
-    ("plan", "Planos alimentares publicados", False),
+MAX_SCAN=25000
+MAX_RECORDS=10000
+STATUSES=frozenset(("missing","legacy_review","pending","approved","outdated"))
+GROUPS=(
+ ("food","Alimentos"),
+ ("dish","Pratos"),
+ ("recipe","Receitas"),
+ ("recipe_category","Categorias de receitas"),
+ ("supplement","Suplementação"),
 )
-STATUSES = frozenset(("missing", "legacy_review", "pending", "approved", "outdated"))
 
-# Only internal constants are interpolated into SQL, never user-provided strings.
-FIELDS_SQL = """
-  SELECT 'food' AS entity_kind, f.id AS entity_id,
-         'display_name' AS field_path, f.display_name AS source_text,
-         f.category AS category, '' AS legacy_en,
-         t.source_hash, t.translated_text, t.status
-    FROM v2_food_library f
-    LEFT JOIN v2_content_translations t
-      ON t.entity_kind='food' AND t.entity_id=f.id
-      AND t.field_path='display_name' AND t.language='en'
-   WHERE f.active=1
-  UNION ALL
-  SELECT 'food', f.id, 'notes', f.notes, f.category, '',
-         t.source_hash, t.translated_text, t.status
-    FROM v2_food_library f
-    LEFT JOIN v2_content_translations t
-      ON t.entity_kind='food' AND t.entity_id=f.id
-      AND t.field_path='notes' AND t.language='en'
-   WHERE f.active=1 AND LENGTH(TRIM(f.notes))>0
-  UNION ALL
-  SELECT 'dish', d.id, 'name_pt', d.name_pt, d.category,
-         COALESCE(d.name_en,''), t.source_hash, t.translated_text, t.status
-    FROM v2_dish_library d
-    LEFT JOIN v2_content_translations t
-      ON t.entity_kind='dish' AND t.entity_id=d.id
-      AND t.field_path='name_pt' AND t.language='en'
-   WHERE d.active=1
-"""
+def _hash(s):
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
-
-def _admin(c, actor):
-    return review._admin(c, actor)
-
-
-def _digest(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _status(row):
-    if row["source_hash"] is None:
-        return "legacy_review" if row["legacy_en"] and row["legacy_en"].strip() else "missing"
-    if row["source_hash"] != _digest(row["source_text"]):
+def _status(field,existing):
+    if existing is None:
+        return "legacy_review" if field["legacy_en"].strip() else "missing"
+    if existing["source_hash"]!=_hash(field["source_text"]):
         return "outdated"
-    return row["status"] if row["status"] in ("approved", "pending") else "missing"
+    return existing["status"] if existing["status"] in ("pending","approved") else "missing"
 
+def _table_exists(c,table):
+    if table not in ("v2_food_plan_editor_publications",):
+        raise ValueError("invalid_table_name")
+    if hasattr(c,"conn"):
+        return c.execute("""SELECT 1 FROM information_schema.tables
+           WHERE table_schema=current_schema() AND table_name=?""",(table,)).fetchone() is not None
+    return c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                     (table,)).fetchone() is not None
 
 def _entries(c):
-    # A single bounded read. Do not report incomplete counts as coverage.
-    data = c.execute("SELECT * FROM (" + FIELDS_SQL + ") catalog LIMIT ?",
-                     (MAX_SCAN + 1,)).fetchall()
-    if len(data) > MAX_SCAN:
-        raise ValueError("translation_catalog_scan_limit")
-    return data
-
-
-def _table_exists(c, table):
-    # Internal exact name only; never interpolate a client-provided identifier.
-    if hasattr(c, "conn"):
-        row = c.execute("""SELECT 1 AS found FROM information_schema.tables
-            WHERE table_schema=current_schema() AND table_name=?""",
-            (table,)).fetchone()
-    else:
-        row = c.execute(
-            "SELECT 1 AS found FROM sqlite_master WHERE type='table' AND name=?",
-            (table,)).fetchone()
-    return row is not None
-
-
-def _counts(c):
-    # Unintegrated libraries: show real record counts when a source exists;
-    # None = unavailable schema, NOT an invented zero.
-    sources = (
-        ("recipe", "v2_recipe_library", "SELECT COUNT(*) AS n FROM v2_recipe_library WHERE status='published'"),
-        ("recipe_category", "v2_recipe_categories", "SELECT COUNT(*) AS n FROM v2_recipe_categories"),
-        ("supplement", "v2_supplement_library", "SELECT COUNT(*) AS n FROM v2_supplement_library"),
-        ("plan", "v2_food_plan_editor_publications", "SELECT COUNT(*) AS n FROM v2_food_plan_editor_publications"),
-    )
-    return {kind: int(c.execute(sql).fetchone()["n"]) if _table_exists(c, table)
-            else None for kind, table, sql in sources}
-
-
-def overview(c, actor):
-    _admin(c, actor)
-    rows = _entries(c)
-    extra = _counts(c)
-    summaries = []
-    for kind, label, integrated in CATEGORIES:
-        counts = {name: 0 for name in sorted(STATUSES)}
-        if integrated:
-            selected = [row for row in rows if row["entity_kind"] == kind]
-            for row in selected:
-                counts[_status(row)] += 1
-            summaries.append({
-                "kind": kind, "label": label, "integrated": True,
-                "field_count": len(selected),
-                "record_count": len({row["entity_id"] for row in selected}),
-                "statuses": counts,
+    existing={}
+    for r in c.execute("""SELECT entity_kind,entity_id,field_path,language,
+                                  source_hash,translated_text,status
+                           FROM v2_content_translations WHERE language='en'""").fetchall():
+        existing[(r["entity_kind"],r["entity_id"],r["field_path"])]=r
+    entries=[]
+    field_count=0
+    for kind,label in GROUPS:
+        rows=c.execute(sources.SQL[kind]).fetchall()
+        if len(rows)>MAX_RECORDS:
+            raise ValueError("translation_catalog_record_limit")
+        for row in rows:
+            all_fields=[]
+            for f in sources.fields_for(kind,row):
+                old=existing.get((kind,row["id"],f["field_path"]))
+                state=_status(f,old)
+                all_fields.append({
+                    "field_path":f["field_path"],"field_label":f["field_label"],
+                    "source_text":f["source_text"],"state":state,
+                    "legacy_candidate":f["legacy_en"].strip() if state=="legacy_review" else "",
+                    "translation_text":old["translated_text"] if old is not None else "",
+                })
+            if not all_fields:continue
+            field_count+=len(all_fields)
+            if field_count>MAX_SCAN:raise ValueError("translation_catalog_scan_limit")
+            title=all_fields[0]["source_text"]
+            category=row["category"] if kind in ("food","dish") else label
+            entries.append({
+                "entity_kind":kind,"entity_id":row["id"],"field_path":all_fields[0]["field_path"],
+                "source_text":title,"category":category or label,
+                "fields":all_fields,
+                "state":all_fields[0]["state"],
+                "legacy_candidate":all_fields[0]["legacy_candidate"],
+                "translation_text":all_fields[0]["translation_text"]
             })
-        else:
-            summaries.append({
-                "kind": kind, "label": label, "integrated": False,
-                "record_count": extra[kind], "field_count": None,
-                "statuses": None,
-            })
-    statuses = {status: sum(g["statuses"][status] for g in summaries
-                            if g["integrated"]) for status in sorted(STATUSES)}
-    return {"language": "en", "libraries": summaries, "statuses": statuses,
-            "supported_fields": sum(x["field_count"] for x in summaries if x["integrated"]),
-            "scope": "current_active_texts_only",
-            "legacy_candidates_require_review": True}
+    return entries
 
-
-def list_fields(c, actor, *, entity_kind="food", status="all",
-                query="", page=1, page_size=25):
-    _admin(c, actor)
-    if entity_kind not in ("food", "dish"):
-        raise ValueError("invalid_catalog_library")
-    if status != "all" and status not in STATUSES:
-        raise ValueError("invalid_catalog_status")
-    if not isinstance(query, str) or len(query) > 120:
-        raise ValueError("invalid_catalog_query")
-    if type(page) is not int or page < 1 or page > 10000:
-        raise ValueError("invalid_catalog_page")
-    if type(page_size) is not int or page_size < 1 or page_size > 50:
-        raise ValueError("invalid_catalog_page_size")
-    q = query.strip().casefold()
-    entries = []
-    for r in _entries(c):
-        if r["entity_kind"] != entity_kind:
-            continue
-        source_text = r["source_text"]
-        if q and not any(q in str(r[x] or "").casefold()
-                         for x in ("source_text", "category", "legacy_en")):
-            continue
-        state = _status(r)
-        if status != "all" and state != status:
-            continue
-        # Every row is source-derived; no clinical values or published plans.
-        entries.append({
-            "entity_kind": r["entity_kind"], "entity_id": r["entity_id"],
-            "field_path": r["field_path"], "source_text": source_text,
-            "category": r["category"], "state": state,
-            "translation_text": r["translated_text"] or "",
-            "legacy_candidate": (r["legacy_en"] or "").strip()
-                               if state == "legacy_review" else "",
+def overview(c,actor):
+    review._admin(c,actor)
+    entries=_entries(c)
+    libraries=[]
+    status_total={name:0 for name in sorted(STATUSES)}
+    for kind,label in GROUPS:
+        records=[e for e in entries if e["entity_kind"]==kind]
+        statuses={name:0 for name in sorted(STATUSES)}
+        fields=[f for r in records for f in r["fields"]]
+        for field in fields:
+            statuses[field["state"]]+=1
+            status_total[field["state"]]+=1
+        libraries.append({
+            "kind":kind,"label":label,"integrated":True,
+            "record_count":len(records),"field_count":len(fields),
+            "statuses":statuses,
         })
-    entries.sort(key=lambda r: (r["source_text"].casefold(), r["entity_id"],
-                                r["field_path"]))
-    total = len(entries)
-    start = (page - 1) * page_size
-    return {"language": "en", "library": entity_kind,
-            "page": page, "page_size": page_size, "total": total,
-            "items": entries[start:start + page_size]}
+    plans=(int(c.execute("SELECT COUNT(*) AS n FROM v2_food_plan_editor_publications")
+               .fetchone()["n"]) if _table_exists(c,"v2_food_plan_editor_publications")
+           else None)
+    libraries.append({
+        "kind":"plan","label":"Planos alimentares publicados",
+        "integrated":False,"record_count":plans,
+        "field_count":None,"statuses":None
+    })
+    return {
+        "language":"en","libraries":libraries,"statuses":status_total,
+        "supported_fields":sum(r["field_count"] for r in libraries if r["integrated"]),
+        "scope":"only_visible_content_fields","legacy_candidates_require_review":True
+    }
+
+def list_fields(c,actor,*,entity_kind="food",status="all",query="",page=1,page_size=25):
+    review._admin(c,actor)
+    if entity_kind not in sources.KINDS:raise ValueError("invalid_catalog_library")
+    if status!="all" and status not in STATUSES:
+        raise ValueError("invalid_catalog_status")
+    if not isinstance(query,str) or len(query)>120:raise ValueError("invalid_catalog_query")
+    if type(page)!=int or not 1<=page<=10000:raise ValueError("invalid_catalog_page")
+    if type(page_size)!=int or not 1<=page_size<=50:
+        raise ValueError("invalid_catalog_page_size")
+    needle=query.strip().casefold()
+    items=[]
+    for item in _entries(c):
+        if item["entity_kind"]!=entity_kind:continue
+        eligible=[f for f in item["fields"] if status=="all" or f["state"]==status]
+        if not eligible:continue
+        if needle and not (
+          needle in item["category"].casefold() or
+          any(needle in (f["source_text"]+" "+f["legacy_candidate"]+
+                         " "+f["translation_text"]).casefold() for f in item["fields"])):
+            continue
+        items.append(item)
+    items.sort(key=lambda r:(r["source_text"].casefold(),r["entity_id"]))
+    total=len(items)
+    start=(page-1)*page_size
+    return {"language":"en","library":entity_kind,
+            "page":page,"page_size":page_size,"total":total,
+            "items":items[start:start+page_size]}
