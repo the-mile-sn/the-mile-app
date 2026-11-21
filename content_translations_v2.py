@@ -127,7 +127,7 @@ def submit(c, *, entity_kind, entity_id, field_path, source_text,
 
 
 def approve(c, *, entity_kind, entity_id, field_path, source_text,
-            reviewer_id, language="en"):
+            reviewer_id, language="en", expected_candidate_hash=None):
     """Approve only a proposal matching the current canonical Portuguese text."""
     key = _key(entity_kind, entity_id, field_path, language)
     current_hash = _source_hash(source_text)
@@ -141,6 +141,11 @@ def approve(c, *, entity_kind, entity_id, field_path, source_text,
         raise ValueError("translation_missing")
     if row["source_hash"] != current_hash:
         raise ValueError("translation_source_changed")
+    if expected_candidate_hash is not None:
+        if (not isinstance(expected_candidate_hash, str) or
+                hashlib.sha256(row["translated_text"].encode("utf-8")).hexdigest()
+                != expected_candidate_hash):
+            raise ValueError("translation_changed_during_review")
     if row["status"] == "approved":
         return {"status": "approved", "source_hash": current_hash}
     timestamp = int(time.time())
