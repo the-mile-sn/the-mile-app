@@ -34,8 +34,8 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=7/);
- assert.match(html,/chef-chat-demo\.js\?v=7/);
+ assert.match(html,/chef-chat-demo\.css\?v=8/);
+ assert.match(html,/chef-chat-demo\.js\?v=8/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
  assert.match(demoJs,/if\(mode!=="real"\|\|!dialog\.open\|\|document\.hidden\)return/);
@@ -53,11 +53,11 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.doesNotMatch(demoCss,/\.chef-chat-kicker/);
 
  assert.match(html,/id="chef-chat-thread"[^>]*role="log"/);
- assert.match(html,/id="chef-chat-input"[^>]*maxlength="600"/);
+ assert.match(html,/id="chef-chat-input"[^>]*rows="1"[^>]*maxlength="600"/);
  assert.match(html,/id="chef-chat-submit" class="chef-chat-send"[^>]*aria-label="Simular envio \(não enviado\)"[^>]*disabled/);
  assert.match(html,/M12 5\.5V19/);
  assert.match(demoJs,/send\.disabled=loading\|\|!input\.value\.trim\(\)/);
- assert.match(demoJs,/input\.addEventListener\("input",\(\)=>\{pendingKey=null;updateSendState\(\);\}\)/);
+ assert.match(demoJs,/input\.addEventListener\("input",\(\)=>\{pendingKey=null;resizeComposer\(\);updateSendState\(\);\}\)/);
  assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.send\)/);
  assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.realSend\)/);
  assert.doesNotMatch(demoJs,/send\.textContent|chef-chat-submit"\)\.textContent/);
@@ -70,11 +70,24 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoJs,/session\.admin_preview/);
  assert.match(demoJs,/input\.maxLength=2000/);
  assert.match(demoJs,/pendingKey=key/);
- assert.match(demoCss,/\.chef-chat-form \.chef-chat-send\{[^}]*width:46px;height:46px;[^}]*border:0;border-radius:50%/);
+ assert.match(demoCss,/\.chef-chat-form \.chef-chat-send\{[^}]*width:44px;height:44px;[^}]*border:0;border-radius:50%/);
+ assert.match(demoCss,/\.chef-chat-form \.chef-chat-send::before\{[^}]*inset:3px;border-radius:50%/);
+ assert.match(demoCss,/\.chef-chat-form textarea\{[^}]*height:46px;min-height:46px;max-height:108px/);
+ assert.match(demoJs,/function resizeComposer\(\)/);
  assert.match(demoCss,/\.chef-chat-form \.chef-chat-send:disabled\{/);
- assert.match(demoCss,/\.chef-chat-form\{\s*display:flex;align-items:center;gap:9px;/);
+ assert.match(demoCss,/\.chef-chat-form\{\s*display:flex;align-items:center;gap:13px;/);
  assert.doesNotMatch(demoCss,/\.chef-chat-form\{\s*display:flex;align-items:flex-end/);
- assert.doesNotMatch(html,/chef-chat-unread|unread-badge/);
+ assert.match(html,/<span id="chef-chat-unread" class="chef-chat-unread" aria-hidden="true" hidden><\/span>/);
+ assert.match(demoCss,/\.chef-chat-unread\[hidden\]\{display:none\}/);
+ assert.match(demoJs,/unreadBadge\.textContent=unreadCount>9\?"9\+":String\(unreadCount\|\|""\)/);
+ assert.match(demoJs,/const status=await fetchReal\("\/api\/v2\/chef\/chat"\)/);
+ assert.match(demoJs,/setUnreadCount\(status\.unread_count\)/);
+ assert.match(demoJs,/setUnreadCount\(read\.unread_count\)/);
+ assert.match(demoJs,/session\.admin_preview/);
+ assert.match(demoJs,/unreadEpoch\+\+/);
+ assert.match(demoJs,/new MutationObserver\(\(\)=>\{/);
+ assert.match(demoJs,/if\(trigger\.hidden\|\|document\.hidden\|\|dialog\.open\|\|unreadBusy\|\|apiUnavailable\)return/);
+ assert.doesNotMatch(demoJs,/localStorage|sessionStorage|indexedDB/);
  assert.doesNotMatch(demoCss,/\.chef-chat-form button\{/);
  assert.match(guide,/Compositor de mensagens — ajuste de interação/);
 
