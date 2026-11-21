@@ -15,9 +15,9 @@
   <link rel="icon" href="/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link href="/chef.css?v=23" rel="stylesheet">
-  <link href="/chef-chat-demo.css?v=7" rel="stylesheet">
+  <link href="/chef-chat-demo.css?v=8" rel="stylesheet">
   <script src="/chef.js?v=32" defer></script>
-  <script src="/chef-chat-demo.js?v=7" defer></script>
+  <script src="/chef-chat-demo.js?v=8" defer></script>
 </head>
 <body>
   <header class="top">
@@ -25,6 +25,7 @@
   </header>
   <button id="chef-chat-trigger" class="chef-chat-trigger" type="button" aria-label="Abrir mensagens (simulação)" hidden>
     <span class="mile-icon icon-mail-01" aria-hidden="true"></span>
+    <span id="chef-chat-unread" class="chef-chat-unread" aria-hidden="true" hidden></span>
   </button>
   <main class="page">
     <div id="login-view" class="login-shell" hidden>
@@ -75,7 +76,7 @@
       <div id="chef-chat-thread" class="chef-chat-thread" role="log" aria-label="Mensagens de exemplo" aria-live="polite" aria-relevant="additions text"></div>
       <form id="chef-chat-form" class="chef-chat-form">
         <label id="chef-chat-input-label" for="chef-chat-input" class="chef-chat-visually-hidden">Mensagem de exemplo</label>
-        <textarea id="chef-chat-input" name="message" rows="2" maxlength="600" placeholder="Escreve uma mensagem de exemplo…" autocomplete="off"></textarea>
+        <textarea id="chef-chat-input" name="message" rows="1" maxlength="600" placeholder="Escreve uma mensagem de exemplo…" autocomplete="off"></textarea>
         <button id="chef-chat-submit" class="chef-chat-send" type="submit" aria-label="Simular envio (não enviado)" title="Simular envio" disabled>
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 5.5V19"/>
