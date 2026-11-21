@@ -1207,14 +1207,21 @@ chefSwipeArea.addEventListener("touchstart",event=>{
  }
  if(event.touches.length!==1||!["home","menus"].includes(activeTab)||chefSkeletonVisible)return;
  const target=event.target;
- if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay,.chef-dish-photo-frame"))return;
+ const homeDay=activeTab==="home"&&chefViewMode==="day";
+ if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
+ // On the right of daily cards, a dish thumbnail is often the start of a
+ // leftward (next-day) swipe. Allow a drag there; a tap still opens the zoom.
+ if(!homeDay&&target.closest?.(".chef-dish-photo-frame"))return;
  if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-navigation"))return;
  if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
  for(let current=target;current&&current!==chefSwipeArea;current=current.parentElement){
   if(current.scrollWidth>current.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(current).overflowX))return;
  }
- const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
- chefTouchScreen=activeTab==="home"&&chefViewMode==="day"?chefSwipeArea:null;
+ const t=event.touches[0];
+ // Keep iOS' left-back edge protected. The right edge must not block
+ // next-day swipes beginning in the meal/photo column.
+ if(t.clientX<22||t.clientX>innerWidth-(homeDay?8:22))return;
+ chefTouchScreen=homeDay?chefSwipeArea:null;
  chefTouchStart={x:t.clientX,y:t.clientY,at:performance.now(),width:chefSwipeArea.getBoundingClientRect().width};
 },{passive:true});
 chefSwipeArea.addEventListener("touchmove",event=>{
