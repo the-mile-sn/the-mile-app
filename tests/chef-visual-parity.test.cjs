@@ -320,7 +320,7 @@ test("forward-only diagonal tolerance is earlier, reverse remains strict, pure v
  assert.equal(intent(-16,22),"horizontal");
  assert.equal(intent(16,22),"vertical");
  assert.equal(intent(-9,12),"horizontal");
- assert.equal(intent(9,12),"horizontal");
+ assert.equal(intent(9,12),"pending","reverse keeps its existing activation angle");
  for(const [dx,dy] of [[-3,40],[3,40],[-12,30],[12,30],[0,45]])
   assert.equal(intent(dx,dy),"vertical","vertical pan "+dx+","+dy);
  assert.equal(intent(-4,6),"pending","tiny diagonal is not captured");
