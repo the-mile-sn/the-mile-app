@@ -2,6 +2,10 @@
 /* Isolated, feature-gated Backoffice i18n review UI.
    Does not modify the existing library or plan components. */
 (()=>{
+ try{
+   document.documentElement.dataset.adminTheme =
+     localStorage.getItem("tm-admin-theme")==="light"?"light":"dark";
+ }catch(_){document.documentElement.dataset.adminTheme="dark";}
  const $=id=>document.getElementById(id);
  const translations={
    missing:"Por traduzir",legacy_review:"Inglês existente · por rever",

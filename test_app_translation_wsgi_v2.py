@@ -189,6 +189,7 @@ class I18NWSGITests(unittest.TestCase):
                 self.player.request("/admin-translations-shortcuts.js")["status"], 200)
             with patch.object(app, "SITE_ROLE", "player"):
                 self.assertEqual(self.admin.request("/admin-translations")["status"], 404)
+                self.assertEqual(self.admin.request("/admin-translations-shortcuts.js")["status"], 404)
 
     def test_existing_dish_english_is_visible_only_for_review(self):
         self.init_i18n()
