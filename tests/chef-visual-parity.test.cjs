@@ -63,6 +63,7 @@ test("Chef Profile copies Player identity, account actions and password workflow
  assert.match(js,/save\.disabled=previewReadOnly/);
  assert.match(js,/button\.disabled=previewReadOnly/);
  assert.match(html,/id="chef-profile-tab-initials"/);
+ assert.match(js,/button\.querySelector\(":scope > span:last-child"\)\.textContent=caption/);
  assert.doesNotMatch(html,/id="top-logout"|id="top-name"/);
  assert.doesNotMatch(js,/el\("top-logout"\)|el\("top-name"\)/);
  assert.doesNotMatch(css,/\.profile-row\{|\.top-details\{|\.quiet-button\{/);
