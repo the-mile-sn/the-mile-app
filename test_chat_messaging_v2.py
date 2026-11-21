@@ -79,6 +79,7 @@ class ChatDomainTests(unittest.TestCase):
         self.assertEqual(chat.unread_count(self.c,self.a,"admin-a"),1)
         self.assertEqual(chat.unread_count(self.c,self.a,"chef-a"),1)
         self.assertEqual(len(chat.list_messages(self.c,self.a,"chef-a")),2)
+        self.assertGreater(second["created_at"],first["created_at"])
         self.assertEqual(len(chat.list_messages(self.c,self.a,"chef-a",after_id=first["id"])),1)
         self.assertTrue(chat.mark_read(self.c,self.a,"chef-a",second["id"]))
         self.assertFalse(chat.mark_read(self.c,self.a,"chef-a",second["id"]))
