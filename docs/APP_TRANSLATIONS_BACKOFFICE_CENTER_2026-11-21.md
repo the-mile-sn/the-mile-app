@@ -12,6 +12,8 @@ Backoffice primeiro, apps depois. **Não** iniciar seletores PT/EN nas apps até
 - Resumo por estados, pesquisa e paginação limitadas, revisão PT/EN lado a lado, proposta, aprovação explícita e histórico.
 - Os nomes ingleses antigos de `v2_dish_library.name_en` são identificados como **candidatos de revisão**, nunca aprovados nem migrados automaticamente.
 - Novas APIs admin `GET /api/v2/admin/i18n/overview` e `GET /api/v2/admin/i18n/catalog` usam autorização admin.
+- Atalhos discretos "Traduções" nas ferramentas de Alimentos e Pratos foram adicionados num script separado, sem tocar nos event handlers existentes. Só aparecem se o Backoffice estiver autenticado **e** o endpoint de inventário estiver ativo. Caso contrário, a UI anterior permanece intacta.
+- O atalho abre a central já filtrada pela biblioteca correspondente.
 - Todos os campos originais, dados alimentares, `dish_id`, prescrições, menus e registos são preservados.
 
 ## Duas opções de ativação independentes
@@ -21,7 +23,7 @@ Backoffice primeiro, apps depois. **Não** iniciar seletores PT/EN nas apps até
 
 ## O que ainda falta
 - Confirmar conteúdo **real** no PostgreSQL de produção; a base de dados bloqueia ligações externas e não se alteram essas regras. Os totais nesta entrega só serão reais quando lidos em ambiente de teste/produção autorizado com migração validada.
-- Integração de botões nos formulários aprovados de Alimentos e Pratos: fazer após validar visualmente a nova central, para não introduzir regressões nas bibliotecas existentes.
+- Atalhos por campo/linha dentro dos editores de Alimentos e Pratos ainda não foram adicionados. O acesso por biblioteca está preparado; a interação de cada campo requer revisão visual separada antes de alterar editores aprovados.
 - Implementar tradução de Receitas, Categorias, Suplementos e campos de planos com revisão clínica e preservação de versões.
 - Gerar automaticamente propostas PT/EN é um trabalho separado: esta primeira entrega suporta edição e revisão manual; não efetua pedidos a serviços de IA, nem aprova automaticamente.
 - Validar esquema PostgreSQL real, preparar migração aditiva explícita e testar em ambiente descartável antes de qualquer ativação.

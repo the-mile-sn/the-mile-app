@@ -181,6 +181,12 @@ class I18NWSGITests(unittest.TestCase):
                 self.admin.request("/admin-translations.js")["status"], 200)
             self.assertEqual(
                 self.admin.request("/admin-translations.css")["status"], 200)
+            self.assertEqual(
+                self.admin.request("/admin-translations-shortcuts.js")["status"], 200)
+            self.assertEqual(
+                self.admin.request("/admin-translations-shortcuts.css")["status"], 200)
+            self.assertEqual(
+                self.player.request("/admin-translations-shortcuts.js")["status"], 200)
             with patch.object(app, "SITE_ROLE", "player"):
                 self.assertEqual(self.admin.request("/admin-translations")["status"], 404)
 

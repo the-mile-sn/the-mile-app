@@ -9,7 +9,8 @@
    original:"Original português"
  };
  const displayKind={food:"Alimentos",dish:"Pratos"};
- let csrf="",state={kind:"food",status:"all",query:"",page:1,pageSize:25,selected:null,
+ const startKind=new URLSearchParams(window.location.search).get("entity_kind");
+ let csrf="",state={kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
                      row:null,edited:false,busy:false,legacy:""};
  const create=(tag,className,txt)=>{
    const el=document.createElement(tag);

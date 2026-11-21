@@ -46,5 +46,6 @@ jobs:
         run: |
           python -m py_compile app.py app_translation_catalog_v2.py app_translation_http_v2.py
           node --check static/admin-translations.js
+          node --check static/admin-translations-shortcuts.js
       - name: Run private Backoffice workflow with disposable data
         run: python -m unittest -v test_app_translation_wsgi_v2
