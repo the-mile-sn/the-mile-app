@@ -1174,12 +1174,20 @@ el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
 /* Player-matched Início → Dia: interactive horizontal drag and 210ms
    exit / 320ms entry. Weekly grid and Menus preserve their week gestures.
    Native vertical scrolling and editable controls are never hijacked. */
-/* Restore the previously working early lateral lock on iPhone.
-   Direction is decided once while moving, never reclassified at touchend. */
+/* Only next-day gestures need more diagonal tolerance on iPhone.
+   Keep the approved previous-day thresholds and native vertical scroll.
+   Once lateral is recognised, the axis stays locked until touchend. */
 function chefSwipeIntent(dx,dy){
  const horizontal=Math.abs(dx),vertical=Math.abs(dy);
- if(vertical>18&&vertical>horizontal*1.35)return "vertical";
- if(horizontal>=8&&horizontal>=vertical*.8)return "horizontal";
+ if(dx<0){
+  // Moving left: lock sooner so Safari does not claim a moderate diagonal as scroll.
+  if(horizontal>=7&&horizontal>=vertical*.68)return "horizontal";
+  if(vertical>18&&vertical>horizontal*1.5)return "vertical";
+ }else{
+  // Previous day: preserve the existing, well-performing gesture.
+  if(vertical>18&&vertical>horizontal*1.35)return "vertical";
+  if(horizontal>=8&&horizontal>=vertical*.8)return "horizontal";
+ }
  return "pending";
 }
 let chefTouchStart=null,chefTouchActive=false,chefTouchScreen=null,chefTouchTimeout=null;
@@ -1243,13 +1251,17 @@ chefSwipeArea.addEventListener("touchend",event=>{
  if(!chefTouchStart||!chefTouchActive||event.changedTouches.length!==1){clearChefGesture();return;}
  const dx=event.changedTouches[0].clientX-chefTouchStart.x;
  const direction=dx<0?1:-1;
- const minSwipe=activeTab==="home"&&chefViewMode==="day"?35:55;
- // An already horizontal-locked gesture stays horizontal even if the finger
- // drifts diagonally just before release. Only distance/velocity decide.
+ const isDay=activeTab==="home"&&chefViewMode==="day";
+ const forwardDay=isDay&&direction===1;
+ const minSwipe=isDay?(forwardDay?30:35):55;
+ // A direction is decided by touchmove, not reclassified when lifting the finger.
  if(Math.abs(dx)<minSwipe){finishChefGesture(0);return;}
  const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
- const commit=activeTab==="home"&&chefViewMode==="day"
-  ?Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55):true;
+ const commit=isDay
+  ?forwardDay
+   ?Math.abs(dx)>chefTouchStart.width*.30||(Math.abs(dx)>30&&Math.abs(speed)>.48)
+   :Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55)
+  :true;
  const step=activeTab==="menus"||(activeTab==="home"&&chefViewMode==="week")?7:1;
  const navigate=()=>{if(commit)chefShiftDay(direction,step);};
  if(chefTouchScreen)finishChefGesture(commit?-direction*chefTouchStart.width:0,navigate);
