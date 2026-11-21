@@ -302,7 +302,7 @@
    $("i18n-prev").addEventListener("click",()=>{state.page--;loadCatalog();});
    $("i18n-next").addEventListener("click",()=>{state.page++;loadCatalog();});
    $("i18n-target-text").addEventListener("input",()=>{
-     state.edited=true;$("i18n-approve").disabled=true;
+     state.edited=true;$("i18n-approve").disabled=true;updateSuggestionAction();
    });
    $("i18n-suggest").addEventListener("click",suggest);
    $("i18n-propose").addEventListener("click",()=>write("propose"));
