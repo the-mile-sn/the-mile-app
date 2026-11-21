@@ -34,7 +34,7 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=8/);
+ assert.match(html,/chef-chat-demo\.css\?v=9/);
  assert.match(html,/chef-chat-demo\.js\?v=8/);
  assert.match(demoJs,/pollTimer=window\.setInterval/);
  assert.match(demoJs,/window\.clearInterval\(pollTimer\)/);
@@ -79,6 +79,9 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.doesNotMatch(demoCss,/\.chef-chat-form\{\s*display:flex;align-items:flex-end/);
  assert.match(html,/<span id="chef-chat-unread" class="chef-chat-unread" aria-hidden="true" hidden><\/span>/);
  assert.match(demoCss,/\.chef-chat-unread\[hidden\]\{display:none\}/);
+ assert.match(demoCss,/\.chef-chat-unread\{\s*position:absolute;top:-1px;right:2px;transform:translate\(12%,-15%\)/);
+ assert.match(demoCss,/min-width:17px;height:17px;padding:0 3px;border-radius:999px/);
+ assert.match(demoCss,/background:#ca4769;color:#fff;font-size:10px;font-weight:700/);
  assert.match(demoJs,/unreadBadge\.textContent=unreadCount>9\?"9\+":String\(unreadCount\|\|""\)/);
  assert.match(demoJs,/const status=await fetchReal\("\/api\/v2\/chef\/chat"\)/);
  assert.match(demoJs,/setUnreadCount\(status\.unread_count\)/);
