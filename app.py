@@ -789,6 +789,12 @@ def application(env, start_response):
                     or path.startswith('/api/v2/player/')
                     or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
+        # Backoffice translations are private, never served before authentication.
+        translation_admin_assets = {
+            '/admin-translations': ('admin-translations.html', 'text/html; charset=utf-8'),
+            '/admin-translations.js': ('admin-translations.js', 'text/javascript; charset=utf-8'),
+            '/admin-translations.css': ('admin-translations.css', 'text/css; charset=utf-8'),
+        }
         static_files = {
             '/': 'admin-microcycles.html' if SITE_ROLE == 'admin' and not env.get('QUERY_STRING','').startswith('activate=') else 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
             '/manifest.webmanifest': 'manifest.webmanifest', '/sw.js': 'sw.js', '/icon-192.png': 'icon-192.png',
@@ -815,7 +821,7 @@ def application(env, start_response):
                 headers[:] = [(k,v) for k,v in headers if k.lower() != 'cache-control']
                 headers.append(('Cache-Control','public, max-age=2592000, immutable'))
             return respond(200, file.read_bytes(), mime)
-        if not path.startswith('/api/'):
+        if not path.startswith('/api/') and path not in translation_admin_assets:
             raise Problem(404, 'not_found')
 
         # The Mile's FUTURE custom Shopify app — not the ChatGPT connector.
@@ -917,6 +923,17 @@ def application(env, start_response):
                         and not path.startswith('/api/v2/chef/')):
                     raise Problem(403, 'forbidden')
 
+            # Session-protected admin workspace, activated independently from apps.
+            if path in translation_admin_assets:
+                if (SITE_ROLE == 'player' or method != 'GET'
+                        or os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED', '0') != '1'):
+                    raise Problem(404, 'not_found')
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                admin(user)
+                asset, mime = translation_admin_assets[path]
+                return respond(200, (ROOT / 'static' / asset).read_bytes(), mime)
+
             # App translation pilot: new endpoints only, OFF by default.
             # Existing Player/Chef/Admin routes remain untouched.
             translation_pilot_routes = (
@@ -926,9 +943,16 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/propose',
                 '/api/v2/admin/i18n/approve',
                 '/api/v2/admin/i18n/history',
+                '/api/v2/admin/i18n/overview',
+                '/api/v2/admin/i18n/catalog',
             )
             if path in translation_pilot_routes:
-                if os.environ.get('MILE_APP_TRANSLATIONS_ENABLED', '0') != '1':
+                # Backoffice management can be tested without enabling
+                # player/chef language routes or changing their applications.
+                translation_flag = ('MILE_BACKOFFICE_TRANSLATIONS_ENABLED'
+                                    if path.startswith('/api/v2/admin/i18n')
+                                    else 'MILE_APP_TRANSLATIONS_ENABLED')
+                if os.environ.get(translation_flag, '0') != '1':
                     raise Problem(404, 'not_found')
                 if not user:
                     raise Problem(401, 'unauthorized')

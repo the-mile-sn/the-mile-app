@@ -1,0 +1,247 @@
+"use strict";
+/* Isolated, feature-gated Backoffice i18n review UI.
+   Does not modify the existing library or plan components. */
+(()=>{
+ const $=id=>document.getElementById(id);
+ const translations={
+   missing:"Por traduzir",legacy_review:"Inglês existente · por rever",
+   pending:"Por rever",approved:"Aprovada",outdated:"Desatualizada",
+   original:"Original português"
+ };
+ const displayKind={food:"Alimentos",dish:"Pratos"};
+ let csrf="",state={kind:"food",status:"all",query:"",page:1,pageSize:25,selected:null,
+                     row:null,edited:false,busy:false,legacy:""};
+ const create=(tag,className,txt)=>{
+   const el=document.createElement(tag);
+   if(className)el.className=className;
+   if(txt!==undefined)el.textContent=String(txt);
+   return el;
+ };
+ const msg=(message,error=false,target="i18n-feedback")=>{
+   $(target).textContent=message||"";
+   $(target).dataset.error=error?"1":"0";
+ };
+ const send=async(path,{method="GET",body}={})=>{
+   const options={method,credentials:"same-origin",headers:{"Accept":"application/json"}};
+   if(body!==undefined){
+     options.headers["Content-Type"]="application/json";
+     options.headers["X-CSRF-Token"]=csrf;
+     options.body=JSON.stringify(body);
+   }
+   const response=await fetch(path,options);
+   let data;
+   try{data=await response.json();}catch(_){data={};}
+   if(!response.ok)throw Error(data.error||"http_"+response.status);
+   return data;
+ };
+ const queryString=(data)=>new URLSearchParams(Object.entries(data)
+   .filter(([key,val])=>val!==undefined&&val!==null&&val!=="")).toString();
+ const badge=(status)=>create("span","i18n-status-pill",translations[status]||status);
+ const stats=(summary)=>{
+   const container=$("i18n-stats");container.replaceChildren();
+   for(const [key,label] of [
+     ["missing","Por traduzir"],["legacy_review","Inglês existente"],
+     ["pending","Por rever"],["approved","Aprovadas"],["outdated","Desatualizadas"]
+   ]){
+     const card=create("div","i18n-stat");
+     card.append(create("strong","",summary.statuses[key]||0),
+                 create("span","",label));
+     container.append(card);
+   }
+   container.hidden=false;
+   const lib=$("i18n-libraries");lib.replaceChildren();
+   for(const group of summary.libraries){
+     const button=create(group.integrated?"button":"div","i18n-library");
+     if(group.integrated){
+       button.type="button";
+       button.addEventListener("click",()=>{
+         state.kind=group.kind;state.status="all";state.query="";state.page=1;
+         $("i18n-status").value="all";$("i18n-search").value="";
+         loadCatalog();
+         $("i18n-work-panel").scrollIntoView({behavior:"smooth",block:"start"});
+       });
+     }
+     button.append(create("strong","",group.label));
+     button.append(create("span","",group.record_count+" registos"));
+     if(group.integrated){
+       button.append(create("small","",
+         group.field_count+" campos · "+
+         group.statuses.approved+" aprovados · "+
+         group.statuses.legacy_review+" nomes ingleses por rever"));
+     }else{
+       button.append(create("small","","Inventário inicial · Tradução ainda não integrada"));
+     }
+     lib.append(button);
+   }
+   $("i18n-library-panel").hidden=false;
+ };
+ const buildTabs=()=>{
+   const tabs=$("i18n-tabs");tabs.replaceChildren();
+   for(const [key,label] of Object.entries(displayKind)){
+     const b=create("button","",label);b.type="button";
+     b.setAttribute("aria-pressed",String(state.kind===key));
+     b.addEventListener("click",()=>{
+       if(state.kind===key)return;
+       state.kind=key;state.page=1;state.status="all";state.query="";
+       $("i18n-status").value="all";$("i18n-search").value="";
+       closeReview();loadCatalog();
+     });tabs.append(b);
+   }
+   $("i18n-library-link").href=state.kind==="food"?"/?nav=food-library":"/?nav=dishes";
+ };
+ const loadCatalog=async()=>{
+   buildTabs();msg("A carregar conteúdos…");$("i18n-work-panel").hidden=false;
+   try{
+     const params=queryString({
+       entity_kind:state.kind,status:state.status,query:state.query,
+       page:state.page,page_size:state.pageSize
+     });
+     const result=await send("/api/v2/admin/i18n/catalog?"+params);
+     const list=$("i18n-results");list.replaceChildren();
+     $("i18n-results-count").textContent=result.total+" campos encontrados";
+     if(!result.items.length){
+       list.append(create("p","i18n-results-count","Não existem conteúdos para estes filtros."));
+     }
+     for(const entry of result.items){
+       const b=create("button","i18n-result");b.type="button";
+       const main=create("span","");
+       main.append(create("strong","",entry.source_text),
+         create("small","",
+           entry.category+" · "+
+           (entry.field_path==="notes"?"Nota":entry.field_path==="name_pt"?"Nome do prato":"Nome do alimento")));
+       b.append(main,badge(entry.state),create("span","i18n-result-arrow","›"));
+       b.addEventListener("click",()=>openReview(entry));
+       list.append(b);
+     }
+     const pages=Math.max(1,Math.ceil(result.total/state.pageSize));
+     $("i18n-page-indicator").textContent="Página "+state.page+" / "+pages;
+     $("i18n-prev").disabled=state.page<=1;
+     $("i18n-next").disabled=state.page>=pages;
+     msg("");
+   }catch(error){msg("Não foi possível consultar o inventário: "+error.message,true);}
+ };
+ const loadOverview=async()=>{
+   const summary=await send("/api/v2/admin/i18n/overview");
+   stats(summary);
+ };
+ const closeReview=()=>{
+   state.selected=null;state.row=null;state.edited=false;state.legacy="";
+   $("i18n-review").hidden=true;
+   $("i18n-history-panel").open=false;
+ };
+ const openReview=async(entry)=>{
+   state.selected=entry;state.legacy=entry.legacy_candidate||"";
+   state.edited=false;
+   $("i18n-review").hidden=false;
+   $("i18n-review-title").textContent=entry.field_path==="notes"?"Nota do alimento":
+     entry.entity_kind==="dish"?"Nome do prato":"Nome do alimento";
+   $("i18n-existing").hidden=!state.legacy;
+   msg("",false,"i18n-review-feedback");
+   await refreshDetail();
+   $("i18n-review").scrollIntoView({behavior:"smooth",block:"start"});
+ };
+ const refreshDetail=async()=>{
+   if(!state.selected)return;
+   const key=state.selected;
+   try{
+     const q=queryString({
+       entity_kind:key.entity_kind,entity_id:key.entity_id,
+       field_path:key.field_path
+     });
+     const detail=await send("/api/v2/admin/i18n?"+q);
+     // Keep selection only if it still refers to the current record.
+     if(!state.selected || state.selected.entity_id!==key.entity_id ||
+       state.selected.field_path!==key.field_path)return;
+     state.row=detail;
+     state.edited=false;
+     $("i18n-source-text").textContent=detail.source_text;
+     $("i18n-target-text").value=detail.candidate?.text||"";
+     const stateLabel=detail.candidate ?
+       (translations[detail.candidate.status]||detail.candidate.status) :
+       (state.legacy?"Inglês existente na biblioteca · por rever":"Ainda sem tradução");
+     $("i18n-translation-state").textContent=stateLabel;
+     $("i18n-approve").disabled=!detail.candidate||
+       detail.candidate.status!=="pending";
+     $("i18n-propose").disabled=false;
+     const history=await send("/api/v2/admin/i18n/history?"+q+"&limit=25");
+     const panel=$("i18n-history");panel.replaceChildren();
+     if(!history.history.length)panel.append(create("p","","Sem revisões anteriores."));
+     for(const record of history.history){
+       const wrap=create("div","i18n-history-entry");
+       const timestamp=Number(record.created_at);
+       const moment=Number.isFinite(timestamp)?new Date(timestamp/1e6).toLocaleString("pt-PT"):"";
+       wrap.append(create("strong","",
+         (record.action==="approved"?"Aprovado":"Proposto")+" · "+moment),
+         create("p","",record.translated_text));
+       panel.append(wrap);
+     }
+   }catch(error){msg("Não foi possível abrir a tradução: "+error.message,true,"i18n-review-feedback");}
+ };
+ const updateAfterWrite=async()=>{
+   await Promise.all([loadOverview(),loadCatalog()]);
+   await refreshDetail();
+ };
+ const write=async(kind)=>{
+   if(state.busy||!state.row||!state.selected)return;
+   const current=state.row,key=state.selected;
+   let url,body;
+   if(kind==="propose"){
+     const text=$("i18n-target-text").value.trim();
+     if(!text){msg("Escreve a tradução inglesa antes de guardar.",true,"i18n-review-feedback");return;}
+     url="/api/v2/admin/i18n/propose";
+     body={entity_kind:key.entity_kind,entity_id:key.entity_id,
+       field_path:key.field_path,language:"en",
+       expected_source_hash:current.source_hash,translated_text:text};
+   }else{
+     if(state.edited){msg("Guarda primeiro o texto alterado para ser revisto.",true,"i18n-review-feedback");return;}
+     if(!current.candidate||current.candidate.status!=="pending")return;
+     url="/api/v2/admin/i18n/approve";
+     body={entity_kind:key.entity_kind,entity_id:key.entity_id,
+       field_path:key.field_path,language:"en",
+       expected_source_hash:current.source_hash,
+       expected_candidate_hash:current.candidate.candidate_hash};
+   }
+   state.busy=true;$("i18n-propose").disabled=true;$("i18n-approve").disabled=true;
+   try{
+     await send(url,{method:"POST",body});
+     msg(kind==="propose"?"Proposta guardada. Necessita de aprovação.":"Tradução aprovada.",
+         false,"i18n-review-feedback");
+     await updateAfterWrite();
+   }catch(error){
+     msg("A alteração não foi aplicada: "+error.message,true,"i18n-review-feedback");
+     await refreshDetail();
+   }finally{state.busy=false;$("i18n-propose").disabled=false;}
+ };
+ const init=async()=>{
+   $("i18n-close").addEventListener("click",closeReview);
+   $("i18n-status").addEventListener("change",event=>{
+     state.status=event.target.value;state.page=1;loadCatalog();
+   });
+   $("i18n-search").addEventListener("input",event=>{
+     state.query=event.target.value;state.page=1;
+     clearTimeout(init.searchTimer);
+     init.searchTimer=setTimeout(loadCatalog,220);
+   });
+   $("i18n-prev").addEventListener("click",()=>{state.page--;loadCatalog();});
+   $("i18n-next").addEventListener("click",()=>{state.page++;loadCatalog();});
+   $("i18n-use-existing").addEventListener("click",()=>{
+     $("i18n-target-text").value=state.legacy;state.edited=true;
+     $("i18n-approve").disabled=true;
+   });
+   $("i18n-target-text").addEventListener("input",()=>{
+     state.edited=true;$("i18n-approve").disabled=true;
+   });
+   $("i18n-propose").addEventListener("click",()=>write("propose"));
+   $("i18n-approve").addEventListener("click",()=>write("approve"));
+   try{
+     const session=await send("/api/me");
+     if(session?.user?.role!=="admin")throw Error("acesso_restrito");
+     csrf=session.csrf||"";
+     await loadOverview();await loadCatalog();
+   }catch(error){
+     msg("Não foi possível abrir a gestão de traduções: "+error.message+
+         ". Confirma a sessão de administrador e a ativação segura do módulo.",true);
+   }
+ };
+ init();
+})();

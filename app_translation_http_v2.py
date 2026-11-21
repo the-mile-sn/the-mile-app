@@ -6,6 +6,7 @@ No existing /api/v2/chef/preferences behavior is replaced.
 """
 import app_language_preferences_v2 as preferences
 import app_translation_admin_v2 as admin_api
+import app_translation_catalog_v2 as catalog
 
 
 ADMIN_ROOT = "/api/v2/admin/i18n"
@@ -13,7 +14,8 @@ PLAYER_LANGUAGE = "/api/v2/player/language"
 CHEF_LANGUAGE = "/api/v2/chef/language"
 ALLOWED = frozenset((
     ADMIN_ROOT, ADMIN_ROOT + "/propose", ADMIN_ROOT + "/approve",
-    ADMIN_ROOT + "/history", PLAYER_LANGUAGE, CHEF_LANGUAGE,
+    ADMIN_ROOT + "/history", ADMIN_ROOT + "/overview",
+    ADMIN_ROOT + "/catalog", PLAYER_LANGUAGE, CHEF_LANGUAGE,
 ))
 
 
@@ -85,6 +87,20 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
         _available(c, "v2_content_translations", "v2_content_translation_history")
         actor = user
         try:
+            if path == ADMIN_ROOT + "/overview" and method == "GET":
+                if query:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, catalog.overview(c, actor)
+            if path == ADMIN_ROOT + "/catalog" and method == "GET":
+                q = _query(query or {}, ("entity_kind", "status", "query",
+                                         "page", "page_size"))
+                for key in ("page", "page_size"):
+                    if key in q:
+                        try:
+                            q[key] = int(q[key])
+                        except ValueError:
+                            raise APIError(400, "invalid_catalog_pagination") from None
+                return 200, catalog.list_fields(c, actor, **q)
             if path == ADMIN_ROOT and method == "GET":
                 q = _query(query or {}, ("entity_kind", "entity_id",
                                          "field_path", "language"))
