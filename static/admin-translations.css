@@ -42,7 +42,7 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-link{font-size:12px;text-decoration:none;border-radius:8px;padding:10px 12px;background:var(--tm-ui-subcard);white-space:nowrap}
 .i18n-link:hover{background:var(--tm-ui-hover)}
 .i18n-toolbar{display:grid;grid-template-columns:auto 180px minmax(190px,1fr);gap:12px;align-items:end;margin-bottom:18px}
-#i18n-tabs{display:flex;gap:6px}
+#i18n-tabs{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
 #i18n-tabs button,.i18n-pagination button,.i18n-quiet,.i18n-secondary{border:1px solid var(--tm-ui-divider);background:var(--tm-ui-subcard);border-radius:9px;padding:11px 14px;font-size:12px;font-weight:600}
 #i18n-tabs button[aria-pressed="true"]{background:var(--tm-ui-hover);border-color:var(--tm-ui-muted)}
 .i18n-toolbar label{display:grid;gap:8px;font-size:11px;font-weight:600;color:var(--tm-ui-muted)}
