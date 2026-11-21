@@ -151,7 +151,65 @@ try {
     });
     await page.close();
   }
-  process.stdout.write("Desktop/mobile mock-browser flow passed\n");
+  // A grouped record can contain fields with different review states.
+  // Validate all newly integrated libraries without touching real content.
+  for (const [kind, label, original, secondary] of [
+    ["recipe", "Receitas", "Arroz cozido", "Cozer em água"],
+    ["recipe_category", "Categorias de receitas", "Refeições", "Categoria"],
+    ["supplement", "Suplementação", "Creatina", "Após o almoço"],
+  ]) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const fields = [
+      { field_path: "name", field_label: "Nome", source_text: original,
+        state: "approved", legacy_candidate: "", translation_text: "Reviewed" },
+      { field_path: "note", field_label: "Texto adicional", source_text: secondary,
+        state: "missing", legacy_candidate: "", translation_text: "" },
+    ];
+    const entry = {
+      entity_kind: kind, entity_id: "mock-record", field_path: "name",
+      source_text: original, category: label, fields, state: "approved",
+      translation_text: "Reviewed", legacy_candidate: "",
+    };
+    await page.route("**/api/**", async route => {
+      const url = new URL(route.request().url());
+      const selected = fields.find(f => f.field_path === url.searchParams.get("field_path")) || fields[0];
+      let body;
+      if (url.pathname === "/api/me") {
+        body = { user: { id: "test-admin", role: "admin" }, csrf: "test-csrf" };
+      } else if (url.pathname === "/api/v2/admin/i18n/overview") {
+        body = { ...stats, libraries: stats.libraries.map(item =>
+          item.kind === kind ? { ...item, integrated: true, record_count: 1,
+            field_count: 2, statuses: { missing: 1, legacy_review: 0,
+              pending: 0, approved: 1, outdated: 0 } } : item) };
+      } else if (url.pathname === "/api/v2/admin/i18n/catalog") {
+        body = { library: kind, page: 1, page_size: 25, total: 1, items: [entry] };
+      } else if (url.pathname === "/api/v2/admin/i18n/history") {
+        body = { history: [] };
+      } else if (url.pathname === "/api/v2/admin/i18n") {
+        body = { entity_kind: kind, entity_id: "mock-record", field_path: selected.field_path,
+          language: "en", source_text: selected.source_text, source_hash: "mock-source",
+          candidate: null, effective: { text: selected.source_text, language: "pt" } };
+      } else {
+        throw Error("Unexpected mock URL " + url.pathname);
+      }
+      await route.fulfill(fmt({ body }));
+    });
+    await page.goto(origin + "/admin-translations.html?entity_kind=" + kind,
+      { waitUntil: "domcontentloaded" });
+    await page.locator("#i18n-results .i18n-result").first().waitFor();
+    assert.equal(await page.locator("#i18n-results .i18n-status-pill").innerText(),
+      "Vários estados", kind);
+    await page.locator("#i18n-results .i18n-result").first().click();
+    await page.locator("#i18n-fields option").nth(1).waitFor();
+    assert.equal(await page.locator("#i18n-fields option").count(), 2, kind);
+    await page.locator("#i18n-fields").selectOption("note");
+    await page.waitForFunction(text =>
+      document.querySelector("#i18n-source-text")?.textContent === text, secondary);
+    assert.equal(await page.locator("#i18n-source-text").innerText(), secondary);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
+    await page.close();
+  }
+  process.stdout.write("Desktop/mobile dish and grouped library mock-browser flow passed\\n");
 } finally {
   await browser.close();
 }
