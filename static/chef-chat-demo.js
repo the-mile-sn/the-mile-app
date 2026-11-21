@@ -98,7 +98,9 @@
   realMessages=data.messages||[];
   renderRealMessages();
   const last=realMessages.at(-1);
-  if(last&&last.author_id!==chefId){
+  // A read cursor tracks the last displayed message, including our own.
+  // Otherwise a team message followed by our reply would remain falsely unread.
+  if(last){
    await fetchReal("/api/v2/chef/chat/read","POST",{message_id:last.id});
   }
  }
