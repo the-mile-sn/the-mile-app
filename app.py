@@ -676,7 +676,8 @@ def application(env, start_response):
                     or path.startswith('/api/admins')):
                 raise Problem(404, 'not_found')
         elif SITE_ROLE == 'admin':
-            if (path in ('/chef', '/chef.js', '/chef.css', '/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
+            if (path in ('/chef', '/chef.js', '/chef.css', '/chef-chat-demo.js', '/chef-chat-demo.css',
+                         '/jogador-v2', '/jogador-v2.js', '/jogador-v2.css')
                     or path.startswith('/api/v2/player/')
                     or path.startswith('/api/push/')):
                 raise Problem(404, 'not_found')
@@ -690,6 +691,7 @@ def application(env, start_response):
             '/consumption-preview.css': 'consumption-preview.css',
             '/consumption-preview.js': 'consumption-preview.js',
             '/chef': 'chef.html', '/chef.js': 'chef.js', '/chef.css': 'chef.css',
+            '/chef-chat-demo.js': 'chef-chat-demo.js', '/chef-chat-demo.css': 'chef-chat-demo.css',
             '/jogador-v2': 'jogador-v2.html', '/jogador-v2.js': 'jogador-v2.js', '/jogador-v2.css': 'jogador-v2.css',
             '/player-consumption.css': 'player-consumption.css',
             '/player-visual-portions.js': 'player-visual-portions.js', '/player-visual-portions.css': 'player-visual-portions.css',

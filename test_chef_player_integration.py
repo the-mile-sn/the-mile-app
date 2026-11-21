@@ -90,6 +90,30 @@ class ChefPlayerReleaseTests(unittest.TestCase):
             self.assertEqual(self.chef.request("/api/v2/chef/preferences","PUT",{"language":"pt"})["status"],200)
             self.assertEqual(self.chef.request("/api/v2/chef/me")["body"]["chef"]["language"],"pt")
 
+    def test_chef_chat_prototype_assets_are_reachable_and_role_scoped(self):
+        """The shipped Chef HTML must never reference a CSS/JS asset that returns 404.
+
+        Regression for 21/11: the prototype files existed but were omitted from
+        app.py's explicit static registry, causing a full-width unstyled button
+        and a click that never opened the dialog.
+        """
+        with patch.object(app,"SITE_ROLE","player"):
+            for path,expected_mime,marker in (
+                ("/chef-chat-demo.css?v=2","text/css",b".chef-chat-trigger"),
+                ("/chef-chat-demo.js?v=2","javascript",b"dialog.showModal()"),
+            ):
+                result=self.chef.request(path)
+                self.assertEqual(result["status"],200,(path,result["status"]))
+                self.assertIn(expected_mime,result["headers"]["Content-Type"])
+                self.assertIn(marker,result["body"])
+            html=self.chef.request("/chef")
+            self.assertEqual(html["status"],200)
+            self.assertIn(b"/chef-chat-demo.css?v=2",html["body"])
+            self.assertIn(b"/chef-chat-demo.js?v=2",html["body"])
+        with patch.object(app,"SITE_ROLE","admin"):
+            self.assertEqual(self.chef.request("/chef-chat-demo.css")["status"],404)
+            self.assertEqual(self.chef.request("/chef-chat-demo.js")["status"],404)
+
     def test_menu_changes_and_executions_share_canonical_schedule(self):
         day=(date.today()+timedelta(days=5)).isoformat()
         with patch.object(app,"SITE_ROLE","player"):
