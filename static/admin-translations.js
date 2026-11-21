@@ -62,7 +62,8 @@
        });
      }
      button.append(create("strong","",group.label));
-     button.append(create("span","",group.record_count+" registos"));
+     button.append(create("span","",group.record_count===null?
+       "Estrutura ainda não disponível":group.record_count+" registos"));
      if(group.integrated){
        button.append(create("small","",
          group.field_count+" campos · "+

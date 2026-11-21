@@ -201,6 +201,7 @@ class I18NWSGITests(unittest.TestCase):
             self.assertEqual(groups["dish"]["statuses"]["legacy_review"], 1)
             self.assertFalse(groups["recipe"]["integrated"])
             self.assertIsNone(groups["recipe"]["statuses"])
+            self.assertIsNone(groups["plan"]["record_count"])
             item = self.admin.request(
                 "/api/v2/admin/i18n/catalog?entity_kind=dish&status=legacy_review")
             self.assertEqual(item["status"], 200, item)

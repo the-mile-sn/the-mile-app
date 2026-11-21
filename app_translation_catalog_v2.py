@@ -73,15 +73,30 @@ def _entries(c):
     return data
 
 
+def _table_exists(c, table):
+    # Internal exact name only; never interpolate a client-provided identifier.
+    if hasattr(c, "conn"):
+        row = c.execute("""SELECT 1 AS found FROM information_schema.tables
+            WHERE table_schema=current_schema() AND table_name=?""",
+            (table,)).fetchone()
+    else:
+        row = c.execute(
+            "SELECT 1 AS found FROM sqlite_master WHERE type='table' AND name=?",
+            (table,)).fetchone()
+    return row is not None
+
+
 def _counts(c):
-    # These entities are only counted, NOT claimed to support translations yet.
+    # Unintegrated libraries: show real record counts when a source exists;
+    # None = unavailable schema, NOT an invented zero.
     sources = (
-        ("recipe", "SELECT COUNT(*) AS n FROM v2_recipe_library WHERE status='published'"),
-        ("recipe_category", "SELECT COUNT(*) AS n FROM v2_recipe_categories"),
-        ("supplement", "SELECT COUNT(*) AS n FROM v2_supplement_library"),
-        ("plan", "SELECT COUNT(*) AS n FROM v2_food_plan_editor_publications"),
+        ("recipe", "v2_recipe_library", "SELECT COUNT(*) AS n FROM v2_recipe_library WHERE status='published'"),
+        ("recipe_category", "v2_recipe_categories", "SELECT COUNT(*) AS n FROM v2_recipe_categories"),
+        ("supplement", "v2_supplement_library", "SELECT COUNT(*) AS n FROM v2_supplement_library"),
+        ("plan", "v2_food_plan_editor_publications", "SELECT COUNT(*) AS n FROM v2_food_plan_editor_publications"),
     )
-    return {kind: int(c.execute(sql).fetchone()["n"]) for kind, sql in sources}
+    return {kind: int(c.execute(sql).fetchone()["n"]) if _table_exists(c, table)
+            else None for kind, table, sql in sources}
 
 
 def overview(c, actor):
