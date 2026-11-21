@@ -283,7 +283,7 @@ test("Chef recognises diagonal horizontal gestures without stealing genuine vert
  assert.doesNotMatch(js,/Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
  assert.match(js,/target\.closest\?\.\("input,textarea,select/);
  assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-\(homeDay\?8:22\)\)return/);
- assert.match(guide,/Swipe lateral e scroll vertical — correção de regressão/);
+ assert.match(guide,/Swipe lateral e scroll vertical — ajuste direcional/);
 });
 
 test("leftward and rightward swipes map to next/previous day without shared-angle assumptions",()=>{
