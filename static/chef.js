@@ -1174,12 +1174,12 @@ el("chef-nav").querySelectorAll("[data-tab]").forEach(button=>{
 /* Player-matched Início → Dia: interactive horizontal drag and 210ms
    exit / 320ms entry. Weekly grid and Menus preserve their week gestures.
    Native vertical scrolling and editable controls are never hijacked. */
-/* Slight diagonal drift should not hand a lateral swipe to page scrolling.
-   Intent locks only after movement; purely vertical swipes stay native. */
+/* Restore the previously working early lateral lock on iPhone.
+   Direction is decided once while moving, never reclassified at touchend. */
 function chefSwipeIntent(dx,dy){
  const horizontal=Math.abs(dx),vertical=Math.abs(dy);
- if(horizontal>=10&&horizontal>=vertical*.8)return "horizontal";
- if(vertical>=18&&vertical>horizontal*1.5)return "vertical";
+ if(vertical>18&&vertical>horizontal*1.35)return "vertical";
+ if(horizontal>=8&&horizontal>=vertical*.8)return "horizontal";
  return "pending";
 }
 let chefTouchStart=null,chefTouchActive=false,chefTouchScreen=null,chefTouchTimeout=null;
@@ -1207,14 +1207,21 @@ chefSwipeArea.addEventListener("touchstart",event=>{
  }
  if(event.touches.length!==1||!["home","menus"].includes(activeTab)||chefSkeletonVisible)return;
  const target=event.target;
- if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay,.chef-dish-photo-frame"))return;
+ const homeDay=activeTab==="home"&&chefViewMode==="day";
+ if(target.closest?.("input,textarea,select,[contenteditable],[role='slider'],.chef-editor,.chef-menu-editor,.chef-photo-overlay"))return;
+ // On the right of daily cards, a dish thumbnail is often the start of a
+ // leftward (next-day) swipe. Allow a drag there; a tap still opens the zoom.
+ if(!homeDay&&target.closest?.(".chef-dish-photo-frame"))return;
  if(activeTab==="menus"&&!target.closest?.(".chef-menu-week-navigation"))return;
  if(activeTab==="home"&&chefViewMode==="week"&&!target.closest?.(".chef-week-grid"))return;
  for(let current=target;current&&current!==chefSwipeArea;current=current.parentElement){
   if(current.scrollWidth>current.clientWidth+6&&/^(auto|scroll)$/.test(getComputedStyle(current).overflowX))return;
  }
- const t=event.touches[0];if(t.clientX<22||t.clientX>innerWidth-22)return;
- chefTouchScreen=activeTab==="home"&&chefViewMode==="day"?chefSwipeArea:null;
+ const t=event.touches[0];
+ // Keep iOS' left-back edge protected. The right edge must not block
+ // next-day swipes beginning in the meal/photo column.
+ if(t.clientX<22||t.clientX>innerWidth-(homeDay?8:22))return;
+ chefTouchScreen=homeDay?chefSwipeArea:null;
  chefTouchStart={x:t.clientX,y:t.clientY,at:performance.now(),width:chefSwipeArea.getBoundingClientRect().width};
 },{passive:true});
 chefSwipeArea.addEventListener("touchmove",event=>{
@@ -1235,10 +1242,11 @@ chefSwipeArea.addEventListener("touchmove",event=>{
 chefSwipeArea.addEventListener("touchend",event=>{
  if(!chefTouchStart||!chefTouchActive||event.changedTouches.length!==1){clearChefGesture();return;}
  const dx=event.changedTouches[0].clientX-chefTouchStart.x;
- const dy=event.changedTouches[0].clientY-chefTouchStart.y;
  const direction=dx<0?1:-1;
  const minSwipe=activeTab==="home"&&chefViewMode==="day"?35:55;
- if(Math.abs(dx)<minSwipe||chefSwipeIntent(dx,dy)!=="horizontal"){finishChefGesture(0);return;}
+ // An already horizontal-locked gesture stays horizontal even if the finger
+ // drifts diagonally just before release. Only distance/velocity decide.
+ if(Math.abs(dx)<minSwipe){finishChefGesture(0);return;}
  const speed=dx/Math.max(1,performance.now()-chefTouchStart.at);
  const commit=activeTab==="home"&&chefViewMode==="day"
   ?Math.abs(dx)>chefTouchStart.width*.38||(Math.abs(dx)>35&&Math.abs(speed)>.55):true;

@@ -570,6 +570,14 @@ textarea.chef-input{min-height:68px;resize:vertical}
  }
 }
 
+/* On iOS, let the browser own genuine vertical panning, while the existing
+   touchmove listener handles horizontal day/week navigation (including slight
+   diagonals). Keep pinch zoom and avoid changing other Chef views. */
+#screen.chef-screen-home,
+#screen.chef-screen-menus .chef-menu-week-navigation{
+ touch-action:pan-y pinch-zoom;
+}
+
 /* Chef home: align the summary and meal cards to the same outer and inner grid. */
 #screen.chef-screen-home>.chef-daily-summary,
 #screen.chef-screen-home>.chef-meal-card{

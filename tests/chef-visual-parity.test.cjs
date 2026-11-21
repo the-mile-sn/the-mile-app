@@ -17,7 +17,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
  assert.match(html,/chef\.css\?v=19/);
- assert.match(html,/chef\.js\?v=23/);
+ assert.match(html,/chef\.js\?v=24/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -240,8 +240,8 @@ test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll a
  assert.match(js,/const minSwipe=activeTab==="home"&&chefViewMode==="day"\?35:55/);
  assert.match(js,/Math\.abs\(dx\)>chefTouchStart\.width\*\.38/);
  assert.match(js,/Math\.abs\(speed\)>\.55/);
- assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-22\)return/);
- assert.match(js,/if\(vertical>=18&&vertical>horizontal\*1\.5\)return "vertical"/);
+ assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-\(homeDay\?8:22\)\)return/);
+ assert.match(js,/if\(vertical>18&&vertical>horizontal\*1\.35\)return "vertical"/);
  assert.match(js,/chefViewMode==="week"&&!target\.closest\?\.\("\.chef-week-grid"\)/);
  assert.match(js,/activeTab==="menus"&&!target\.closest\?\.\("\.chef-menu-week-navigation"\)/);
  assert.match(js,/requestAnimationFrame\(updateChefAdaptiveNav\)/);
@@ -278,9 +278,30 @@ test("Chef recognises diagonal horizontal gestures without stealing genuine vert
  assert.match(js,/if\(intent==="vertical"\)\{clearChefGesture\(\);return;\}/);
  assert.match(js,/if\(intent!=="horizontal"\)return/);
  assert.match(js,/if\(event\.cancelable\)event\.preventDefault\(\)/);
- assert.match(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
+ assert.doesNotMatch(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
+ assert.match(js,/if\(Math\.abs\(dx\)<minSwipe\)\{finishChefGesture\(0\);return;\}/);
  assert.doesNotMatch(js,/Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
  assert.match(js,/target\.closest\?\.\("input,textarea,select/);
- assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-22\)return/);
- assert.match(guide,/Critério de gesto diagonal — Chef/);
+ assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-\(homeDay\?8:22\)\)return/);
+ assert.match(guide,/Swipe lateral e scroll vertical — correção de regressão/);
+});
+
+test("leftward next-day and rightward previous-day gestures are symmetric on Chef Dia",()=>{
+ const vm=require("node:vm");
+ const helper=js.match(/function chefSwipeIntent\(dx,dy\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(helper,"gesture intent helper exists");
+ const intent=vm.runInNewContext(helper+";chefSwipeIntent");
+ for(const [dx,dy] of [[-90,35],[-50,-25],[-40,35],[90,35],[50,-25],[40,35]])
+  assert.equal(intent(dx,dy),"horizontal","both lateral directions: "+dx+","+dy);
+ const direction=dx=>dx<0?1:-1;
+ assert.equal(direction(-90),1,"swipe left must advance one day");
+ assert.equal(direction(90),-1,"swipe right must return one day");
+ assert.match(js,/const direction=dx<0\?1:-1/);
+ assert.match(js,/const navigate=\(\)=>\{if\(commit\)chefShiftDay\(direction,step\);\}/);
+ assert.match(js,/const homeDay=activeTab==="home"&&chefViewMode==="day"/);
+ assert.match(js,/if\(!homeDay&&target\.closest\?\.\("\.chef-dish-photo-frame"\)\)return/);
+ assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-\(homeDay\?8:22\)\)return/);
+ assert.match(css,/#screen\.chef-screen-home,[\s\S]*?touch-action:pan-y pinch-zoom/);
+ assert.doesNotMatch(js,/Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
+ assert.doesNotMatch(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
 });
