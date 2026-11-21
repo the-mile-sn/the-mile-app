@@ -942,6 +942,7 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/history',
                 '/api/v2/admin/i18n/propose',
                 '/api/v2/admin/i18n/approve',
+                '/api/v2/admin/i18n/suggest',
             ):
                 if (SITE_ROLE == 'player' or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
@@ -951,6 +952,16 @@ def application(env, start_response):
                 admin(user)
                 if method not in ('GET','POST'):
                     raise Problem(404,'not_found')
+                if path == '/api/v2/admin/i18n/suggest':
+                    # A paid provider call is only permitted on the admin service,
+                    # and only from an explicitly trusted HTTPS browser origin.
+                    if SITE_ROLE != 'admin':
+                        raise Problem(404, 'not_found')
+                    if (env.get('HTTP_ORIGIN') or '').strip() not in (
+                        'https://admin.themile.pt',
+                        'https://the-mile-admin.onrender.com',
+                    ):
+                        raise Problem(403, 'origin')
                 import admin_translations_http_v2
                 try:
                     status, data = admin_translations_http_v2.dispatch(

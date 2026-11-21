@@ -18,7 +18,7 @@
  };
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
  let catalogRequestSeq=0;
- let csrf="",state={kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
+ let csrf="",state={suggestionsEnabled:false,kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
                      row:null,edited:false,busy:false,legacy:""};
  const create=(tag,className,txt)=>{
    const el=document.createElement(tag);
@@ -46,6 +46,19 @@
  const queryString=(data)=>new URLSearchParams(Object.entries(data)
    .filter(([key,val])=>val!==undefined&&val!==null&&val!=="")).toString();
  const badge=(status)=>create("span","i18n-status-pill",translations[status]||status);
+ const suggestibleField=(key)=>!!key&&
+   (key.entity_kind==="food"&&key.field_path==="display_name"||
+    key.entity_kind==="dish"&&key.field_path==="name_pt"||
+    key.entity_kind==="recipe_category"&&key.field_path==="name"||
+    key.entity_kind==="supplement"&&key.field_path==="name"||
+    key.entity_kind==="recipe"&&key.field_path!=="notes");
+ const canSuggest=()=>state.suggestionsEnabled&&state.row&&!state.edited&&!state.row.candidate&&
+   !state.legacy&&!state.busy&&suggestibleField(state.selected);
+ const updateSuggestionAction=()=>{
+   const button=$("i18n-suggest");
+   button.hidden=!canSuggest();
+   button.disabled=state.busy;
+ };
  const stats=(summary)=>{
    const container=$("i18n-stats");container.replaceChildren();
    for(const [key,label] of [
@@ -140,13 +153,16 @@
  };
  const loadOverview=async()=>{
    const summary=await send("/api/v2/admin/i18n/overview");
+   state.suggestionsEnabled=summary.suggestions_enabled===true;
    stats(summary);
+   updateSuggestionAction();
  };
  const closeReview=()=>{
    state.selected=null;state.row=null;state.edited=false;state.legacy="";
    $("i18n-fields").replaceChildren();
    $("i18n-review").hidden=true;
    $("i18n-history-panel").open=false;
+   updateSuggestionAction();
  };
  const openReview=async(entry)=>{
    const fields=Array.isArray(entry.fields)&&entry.fields.length?entry.fields:[entry];
@@ -156,6 +172,7 @@
      state.selected={...entry,field_path:field.field_path};
      state.legacy=field.legacy_candidate||"";
      state.row=null;state.edited=false;
+     updateSuggestionAction();
      $("i18n-review-title").textContent=entry.source_text;
      $("i18n-existing").hidden=!state.legacy;
      msg("",false,"i18n-review-feedback");
@@ -198,6 +215,7 @@
      $("i18n-approve").disabled=!detail.candidate||
        detail.candidate.status!=="pending";
      $("i18n-propose").disabled=false;
+     updateSuggestionAction();
      const history=await send("/api/v2/admin/i18n/history?"+q+"&limit=25");
      const panel=$("i18n-history");panel.replaceChildren();
      if(!history.history.length)panel.append(create("p","","Sem revisões anteriores."));
@@ -215,6 +233,35 @@
  const updateAfterWrite=async()=>{
    await Promise.all([loadOverview(),loadCatalog()]);
    await refreshDetail();
+ };
+ const suggest=async()=>{
+   if(!canSuggest())return;
+   const key={...state.selected},current=state.row;
+   state.busy=true;updateSuggestionAction();
+   msg("A gerar uma sugestão…",false,"i18n-review-feedback");
+   try{
+     const response=await send("/api/v2/admin/i18n/suggest",{
+       method:"POST",body:{
+         entity_kind:key.entity_kind,entity_id:key.entity_id,
+         field_path:key.field_path,language:"en",
+         expected_source_hash:current.source_hash
+       }
+     });
+     if(!state.selected||!state.row||
+        state.selected.entity_id!==key.entity_id||
+        state.selected.entity_kind!==key.entity_kind||
+        state.selected.field_path!==key.field_path||
+        state.row.source_hash!==current.source_hash)return;
+     $("i18n-target-text").value=response.suggestion||"";
+     state.edited=true;
+     $("i18n-approve").disabled=true;
+     msg("Sugestão inserida para revisão. Ainda não foi guardada nem aprovada.",
+         false,"i18n-review-feedback");
+   }catch(error){
+     if(state.selected&&state.selected.entity_id===key.entity_id&&
+        state.selected.field_path===key.field_path)
+       msg("Não foi possível gerar sugestão: "+error.message,true,"i18n-review-feedback");
+   }finally{state.busy=false;updateSuggestionAction();}
  };
  const write=async(kind)=>{
    if(state.busy||!state.row||!state.selected)return;
@@ -260,8 +307,9 @@
    $("i18n-prev").addEventListener("click",()=>{state.page--;loadCatalog();});
    $("i18n-next").addEventListener("click",()=>{state.page++;loadCatalog();});
    $("i18n-target-text").addEventListener("input",()=>{
-     state.edited=true;$("i18n-approve").disabled=true;
+     state.edited=true;$("i18n-approve").disabled=true;updateSuggestionAction();
    });
+   $("i18n-suggest").addEventListener("click",suggest);
    $("i18n-propose").addEventListener("click",()=>write("propose"));
    $("i18n-approve").addEventListener("click",()=>write("approve"));
    try{

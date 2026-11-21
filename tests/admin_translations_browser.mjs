@@ -209,6 +209,60 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
     await page.close();
   }
+  // Explicit model preview is unsaved until the admin clicks Guardar proposta.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const food = {
+      entity_kind: "food", entity_id: "mock-oats", field_path: "display_name",
+      source_text: "Aveia", category: "Cereais", state: "missing",
+      fields: [{ field_path: "display_name", field_label: "Nome do alimento",
+                 source_text: "Aveia", state: "missing", legacy_candidate: "" }],
+      legacy_candidate: "", translation_text: "",
+    };
+    const writes = [];
+    await page.route("**/api/**", async route => {
+      const request = route.request();
+      const url = new URL(request.url());
+      let body;
+      if (url.pathname === "/api/me") {
+        body = { user: { id: "admin", role: "admin" }, csrf: "test-csrf" };
+      } else if (url.pathname === "/api/v2/admin/i18n/overview") {
+        body = { ...stats, suggestions_enabled: true };
+      } else if (url.pathname === "/api/v2/admin/i18n/catalog") {
+        body = { library: "food", total: 1, page: 1, page_size: 25, items: [food] };
+      } else if (url.pathname === "/api/v2/admin/i18n") {
+        body = { entity_kind: "food", entity_id: "mock-oats", field_path: "display_name",
+          source_text: "Aveia", source_hash: "oats-hash", candidate: null };
+      } else if (url.pathname === "/api/v2/admin/i18n/history") {
+        body = { history: [] };
+      } else if (url.pathname === "/api/v2/admin/i18n/suggest") {
+        assert.equal(request.headers()["x-csrf-token"], "test-csrf");
+        const params = request.postDataJSON();
+        assert.equal(params.expected_source_hash, "oats-hash");
+        writes.push("suggest");
+        body = { suggestion: "Oats", source: "model", source_hash: "oats-hash",
+                 saved: false };
+      } else if (url.pathname === "/api/v2/admin/i18n/propose" ||
+                 url.pathname === "/api/v2/admin/i18n/approve") {
+        writes.push("unexpected-write");
+        throw Error("Suggestion preview must never submit/approve automatically");
+      } else {
+        throw Error("Unexpected mock URL: " + url.pathname);
+      }
+      await route.fulfill(fmt({ body }));
+    });
+    await page.goto(origin + "/admin-translations.html?entity_kind=food",
+      { waitUntil: "domcontentloaded" });
+    await page.locator("#i18n-results .i18n-result").first().click();
+    await page.locator("#i18n-suggest:not([hidden])").waitFor();
+    await page.locator("#i18n-suggest").click();
+    await page.waitForFunction(
+      () => document.querySelector("#i18n-target-text")?.value === "Oats");
+    assert.equal(await page.locator("#i18n-target-text").inputValue(),"Oats");
+    assert.deepEqual(writes, ["suggest"]);
+    assert.equal(await page.locator("#i18n-approve").isDisabled(), true);
+    await page.close();
+  }
   process.stdout.write("Desktop/mobile dish and grouped library mock-browser flow passed\\n");
 } finally {
   await browser.close();
