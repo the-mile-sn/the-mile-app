@@ -17,7 +17,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
  assert.match(html,/chef\.css\?v=23/);
- assert.match(html,/chef\.js\?v=30/);
+ assert.match(html,/chef\.js\?v=31/);
 });
 
 test("Chef message preview assets are explicitly served and never cached as 404s",()=>{
@@ -37,15 +37,19 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(html,/chef-chat-demo\.css\?v=4/);
  assert.match(html,/chef-chat-demo\.js\?v=3/);
  assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
- assert.match(html,/class="mile-icon icon-message-01"/);
+ assert.match(html,/class="mile-icon icon-bubble-chat"/);
+ assert.doesNotMatch(html,/icon-message-01/);
  assert.match(html,/<dialog id="chef-chat-dialog"/);
  assert.match(html,/aria-labelledby="chef-chat-title"/);
  assert.match(html,/id="chef-chat-thread"[^>]*role="log"/);
  assert.match(html,/id="chef-chat-input"[^>]*maxlength="600"/);
  assert.match(js,/el\("chef-chat-trigger"\)\.hidden=view!=="chef"/);
  assert.match(js,/window\.themileChefChatDemo\?\.setLanguage\(lang\)/);
- assert.match(js,/chefOfficialIconData\["Message01Icon"\]=\[/);
- assert.match(js,/"message-01":"Message01Icon"/);
+ assert.match(js,/chefOfficialIconData\["BubbleChatIcon"\]=\[/);
+ assert.match(js,/"bubble-chat":"BubbleChatIcon"/);
+ assert.match(js,/icons\/bubble-chat\.svg/);
+ assert.doesNotMatch(js,/chefOfficialIconData\["Message01Icon"\]/);
+ assert.doesNotMatch(js,/"message-01":"Message01Icon"/);
  assert.doesNotThrow(()=>new (require("node:vm").Script)(demoJs));
  assert.match(demoJs,/dialog\.showModal\(\)/);
  assert.match(demoJs,/dialog\.addEventListener\("close"/);
