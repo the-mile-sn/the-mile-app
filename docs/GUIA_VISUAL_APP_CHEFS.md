@@ -92,3 +92,8 @@ Antes de integrar/publicar: testes Python do contrato Chef (isolamento do jogado
 ## 7. Limites do lote
 
 Este lote altera apenas apresentação, pequenas classes de carregamento de imagens e testes/documentação. Funcionalidades existentes não são redesenhadas. Pendências funcionais (responsabilidade por alterações de menu, eventual confirmação pelo nutricionista, outras atribuições de profissionais) continuam em planeamento separado.
+
+
+## Chat Chef — atualização de mensagens após ativação (21/11/2026)
+
+Na demonstração, o conteúdo continua **local, efémero e não enviado**, sem pedidos periódicos ao backend. Apenas quando o endpoint autenticado do Chef responde 200 após a ativação formal, a janela passa para modo real e carrega mensagens. Em modo real, enquanto o diálogo está aberto e a página está visível, as mensagens são sincronizadas a cada 30 segundos; ao voltar de um separador inativo também se verifica o histórico. O temporizador é removido quando a janela fecha e respostas de pedidos antigos nunca devem atualizar uma janela reaberta. Falhas de atualização não criam mensagens fictícias nem ativam notificações. O chat continua desligado em produção até revisão de privacidade, permissões e teste Chef ↔ Backoffice.
