@@ -25,6 +25,10 @@
 }
 .chef-chat-kicker{display:block;margin-bottom:5px;color:#aeb0b8;font-size:10px;letter-spacing:.12em;font-weight:600}
 .chef-chat-panel-header h2{font-size:21px;font-weight:600;line-height:1.2;margin:0}
+/* Programmatic title focus announces the modal to assistive technology.
+   The title is not tabbable (tabindex=-1), so hide its Safari focus rectangle.
+   Interactive buttons and fields retain their visible keyboard focus. */
+#chef-chat-title:focus{outline:none}
 .chef-chat-close{
  border:0;border-radius:50%;background:#29292e;color:#f5f5f7;
  width:40px;height:40px;min-width:40px;padding:0 0 3px;font-size:28px;font-weight:400;line-height:1;

@@ -34,7 +34,7 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=3/);
+ assert.match(html,/chef-chat-demo\.css\?v=4/);
  assert.match(html,/chef-chat-demo\.js\?v=3/);
  assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
  assert.match(html,/class="mile-icon icon-message-01"/);
@@ -57,6 +57,10 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
   assert.doesNotMatch(demoJs,forbidden);
  assert.match(demoCss,/\.chef-chat-trigger\{[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 4px\)/);
  assert.match(demoCss,/\.chef-chat-dialog::backdrop/);
+ assert.match(demoCss,/#chef-chat-title:focus\{outline:none\}/);
+ assert.match(html,/<h2 id="chef-chat-title" tabindex="-1">/);
+ assert.match(demoJs,/\$\("chef-chat-title"\)\.focus\(\{preventScroll:true\}\)/);
+ assert.doesNotMatch(demoCss,/\.chef-chat-close:focus\{outline:none\}|\.chef-chat-form textarea:focus\{outline:none\}/);
  assert.match(demoCss,/border:0;border-radius:18px;/);
  assert.match(demoCss,/background:#0d0d10;color:#f5f5f7;box-shadow:none;overflow:hidden/);
  assert.match(demoCss,/\.chef-chat-panel-header\{[^}]*border:0;/);
