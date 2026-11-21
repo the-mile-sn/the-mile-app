@@ -211,11 +211,17 @@ def _generate(source_text, kind):
         raise SuggestionError(503, "translation_suggestion_unavailable") from None
     if not isinstance(parsed, dict) or parsed.get("status") != "completed":
         raise SuggestionError(503, "translation_suggestion_unavailable")
+    outputs = parsed.get("output")
+    if not isinstance(outputs, list):
+        raise SuggestionError(503, "translation_suggestion_unavailable")
     texts = []
-    for output in parsed.get("output", []):
+    for output in outputs:
         if not isinstance(output, dict) or output.get("type") != "message":
             continue
-        for part in output.get("content", []):
+        parts = output.get("content")
+        if not isinstance(parts, list):
+            continue
+        for part in parts:
             if isinstance(part, dict) and part.get("type") == "output_text":
                 texts.append(part.get("text"))
     if len(texts) != 1 or not isinstance(texts[0], str):
