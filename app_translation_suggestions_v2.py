@@ -74,6 +74,9 @@ def quota_schema_ready(c):
                   "FROM v2_translation_suggestion_quota LIMIT 0")
         return True
     except Exception:
+        # PostgreSQL marks a transaction aborted after a missing-table error.
+        # Reset it so the ordinary backoffice review remains usable.
+        c.rollback()
         return False
 
 
