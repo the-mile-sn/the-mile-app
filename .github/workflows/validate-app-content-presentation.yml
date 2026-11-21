@@ -1,0 +1,29 @@
+name: Verify isolated PT-EN presentation
+
+on:
+  push:
+    branches:
+      - "feature/app-translation-foundation-*"
+    paths:
+      - "app_content_presentation_v2.py"
+      - "test_app_content_presentation_v2.py"
+      - "content_translations_v2.py"
+      - ".github/workflows/validate-app-content-presentation.yml"
+  pull_request:
+    paths:
+      - "app_content_presentation_v2.py"
+      - "test_app_content_presentation_v2.py"
+      - "content_translations_v2.py"
+      - ".github/workflows/validate-app-content-presentation.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m py_compile content_translations_v2.py app_content_presentation_v2.py test_app_content_presentation_v2.py
+          python -m unittest -v test_content_translations_v2.py test_app_content_presentation_v2.py
