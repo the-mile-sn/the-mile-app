@@ -26,10 +26,16 @@ A auditoria foi comunicada por captura do Shell interno do Render; os resultados
 ## Condições para aplicação futura (NÃO aplicar nesta etapa)
 1. **Concluído:** diagnóstico read-only executado numa sessão interna autorizada ao serviço, sem abrir a BD à Internet.
 2. **Concluído para o conjunto mínimo:** existência das tabelas essenciais e colunas relevantes e contagens agregadas de Alimentos/Pratos. **Ainda por verificar:** índices, constraints e compatibilidade completa do esquema antes da aplicação.
-3. Validar cópia de segurança e recuperação, permissões e janela de aplicação.
+3. **Parcialmente verificado:** export lógico concluído em 21/11/2026 às 15h56, com indicação verde no ecrã Recovery do Render. A interface anuncia Point-in-Time Recovery de 3 dias, mas o botão de restauro aparece desativado na captura; a capacidade efetiva de restauro **não foi testada**. Antes de migrar, confirmar arquivo acessível e procedimento seguro de recuperação, permissões e janela de aplicação.
 4. Ensaiar a migração numa base de teste. Corrigir qualquer incompatibilidade antes de tocar na produção.
 5. Após aprovação, aplicar explicitamente a transação. O SQL usa tempos limite de lock e execução e aborta em esquemas inesperados.
 6. Validar os objetos e testar o backoffice sem ligar as apps. As flags permanecem desligadas até aprovação.
 7. Para desativar, voltar a desligar a flag do backoffice. Não eliminar automaticamente as tabelas: terão histórico de aprovação.
 
 A preferência do jogador está fora desta migração: a prioridade é a central do backoffice. Não houve escrita, migração, deploy nem alteração de configurações, credenciais ou permissões de produção.
+
+## Confirmação funcional das traduções existentes (21/11/2026)
+A equipa confirmou que os nomes ingleses pré-existentes estão **apenas na biblioteca de Pratos**. Alimentos, Receitas, Categorias, Suplementos e Planos não dispõem atualmente de um processo de traduções equivalente. Os 276 valores de `v2_dish_library.name_en` preenchidos deverão entrar como candidatos a revisão, sem pressupor correção clínica ou linguística, sem duplicar pratos e sem se tornarem aprovações automáticas.
+
+## Segurança do backup
+O export assinalado como concluído não constitui, por si só, um teste de restauro; não devemos executar um restauro destrutivo sobre a base de produção. A criação das novas tabelas continua bloqueada até à aprovação operacional da migração.
