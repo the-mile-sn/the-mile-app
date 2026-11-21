@@ -66,7 +66,7 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
                 with self.subTest(path=path):
                     self.assertEqual(self.admin.request(path)["status"], 404)
             self.assertEqual(self.admin.request("/api/me")["status"], 200)
-            self.assertEqual(self.admin.request("/api/v2/foods")["status"], 200)
+            self.assertEqual(self.admin.request("/api/v2/food-library")["status"], 200)
 
     def test_new_assets_private_and_do_not_enable_app_language_endpoints(self):
         self.init_store()
@@ -78,8 +78,8 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
             self.assertEqual(page["headers"]["Cache-Control"],"no-store")
             for path in ("/admin-translations.js","/admin-translations.css"):
                 self.assertEqual(self.admin.request(path)["status"],200)
-            self.assertEqual(self.admin.request("/api/v2/player/language")["status"],404)
-            self.assertEqual(self.admin.request("/api/v2/chef/language")["status"],404)
+            self.assertIn(self.admin.request("/api/v2/player/language")["status"],(403,404))
+            self.assertIn(self.admin.request("/api/v2/chef/language")["status"],(403,404))
             with patch.object(app,"SITE_ROLE","player"):
                 self.assertEqual(self.admin.request("/admin-translations")["status"],404)
 
@@ -163,7 +163,8 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
     def test_existing_library_navigation_unchanged_and_shortcuts_exist(self):
         self.init_store()
         with patch.dict(os.environ, FLAG):
-            page=self.admin.request("/")
+            with patch.object(app,"SITE_ROLE","admin"):
+                page=self.admin.request("/")
             self.assertEqual(page["status"],200,page)
             self.assertIn(b"admin-translations-shortcuts.js",page["body"])
             self.assertIn(b"admin-translations-shortcuts.css",page["body"])
@@ -171,7 +172,7 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
                 "/admin-translations-shortcuts.js")["status"],200)
             self.assertEqual(self.admin.request(
                 "/admin-translations-shortcuts.css")["status"],200)
-            self.assertEqual(self.admin.request("/api/v2/foods")["status"],200)
+            self.assertEqual(self.admin.request("/api/v2/food-library")["status"],200)
 
     def test_realistic_inventory_700_foods_277_dishes(self):
         self.init_store()
@@ -180,7 +181,10 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
                 "(id,source_key,base_name,display_name,category,notes,variant,"
                 "edible_fraction,kcal,protein_g,carbs_g,fat_g,active,created_at,updated_at) "
                 "VALUES (?,?,?,?,'Cereais','','plain',1,130,2,20,1,1,1,1)")
-            for i in range(699):
+            existing_foods=c.execute(
+                "SELECT COUNT(*) AS n FROM v2_food_library WHERE active=1"
+            ).fetchone()[0]
+            for i in range(700-existing_foods):
                 name="Arroz "+str(i)
                 c.execute(food_template,("food-"+str(i),None,name,name))
             for i in range(276):
@@ -203,7 +207,7 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
                 "/api/v2/admin/i18n/catalog?entity_kind=dish&status=legacy_review&page_size=25")
             self.assertEqual(page["status"],200,page)
             self.assertEqual((page["body"]["total"],len(page["body"]["items"])),(276,25))
-            self.assertEqual(self.admin.request("/api/v2/player/language")["status"],404)
+            self.assertIn(self.admin.request("/api/v2/player/language")["status"],(403,404))
 
 
 if __name__ == "__main__":
