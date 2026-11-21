@@ -29,6 +29,11 @@ class TranslationSuggestionTests(unittest.TestCase):
         original_role=app.SITE_ROLE
         app.SITE_ROLE="admin"
         self.addCleanup(setattr,app,"SITE_ROLE",original_role)
+        # Disposable SQLite tests exercise SQL semantics, while production
+        # strictly requires a shared PostgreSQL database for paid calls.
+        database_guard=patch.object(suggestions,"_postgres_configured",return_value=True)
+        database_guard.start()
+        self.addCleanup(database_guard.stop)
         with app.connect() as c:
             c.execute("""INSERT INTO v2_food_library
                 (id,source_key,base_name,display_name,category,notes,variant,
@@ -219,6 +224,14 @@ class TranslationSuggestionTests(unittest.TestCase):
             used=c.execute("SELECT request_count FROM v2_translation_suggestion_quota "
                 "WHERE scope_key LIKE 'global:month:%'").fetchone()[0]
             self.assertEqual(used,1)
+
+    def test_missing_shared_postgres_blocks_paid_mode(self):
+        with patch.dict(os.environ,FLAG),patch.object(
+                suggestions,"_postgres_configured",return_value=False):
+            overview=self.admin.request("/api/v2/admin/i18n/overview")
+            self.assertFalse(overview["body"]["suggestions_enabled"])
+            self.assertEqual(self.suggest_request(
+                "/api/v2/admin/i18n/suggest","POST",self.payload())["status"],404)
 
     def test_misconfiguration_disables_suggestions(self):
         for overrides in (
