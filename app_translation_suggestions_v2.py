@@ -44,11 +44,20 @@ class SuggestionError(Exception):
         super().__init__(code)
 
 
+def _postgres_configured():
+    # An ephemeral/local SQLite fallback cannot enforce global quotas across
+    # Render workers and must NEVER be used for paid requests.
+    return os.environ.get("DATABASE_URL", "").startswith(
+        ("postgresql://", "postgres://")
+    )
+
+
 def enabled():
     """Require independent operator attestation of OpenAI spend controls."""
     project_id = os.environ.get("MILE_TRANSLATION_SUGGESTION_PROJECT_ID", "")
     return (
-        os.environ.get("MILE_TRANSLATION_SUGGESTIONS_ENABLED", "0") == "1"
+        _postgres_configured()
+        and os.environ.get("MILE_TRANSLATION_SUGGESTIONS_ENABLED", "0") == "1"
         and os.environ.get("MILE_TRANSLATION_SPEND_CONTROLS_CONFIRMED", "0") == "1"
         and bool(os.environ.get("MILE_TRANSLATION_SUGGESTION_API_KEY", "").strip())
         and bool(PROJECT_ID.fullmatch(project_id))
