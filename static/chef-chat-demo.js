@@ -5,7 +5,8 @@
  const trigger=$("chef-chat-trigger"),dialog=$("chef-chat-dialog");
  const close=$("chef-chat-close"),thread=$("chef-chat-thread");
  const form=$("chef-chat-form"),input=$("chef-chat-input"),result=$("chef-chat-result");
- if(!trigger||!dialog||!close||!thread||!form||!input||!result)return;
+ const send=$("chef-chat-submit");
+ if(!trigger||!dialog||!close||!thread||!form||!input||!result||!send)return;
  const copy={
   pt:{
    open:"Abrir mensagens (simulação)",title:"Mensagens",demo:"SIMULAÇÃO",
@@ -15,7 +16,7 @@
    sample:"Olá! Aqui poderás conversar com a equipa The Mile sobre menus e outros pedidos.",
    mine:"Chef · exemplo",caption:"Apenas ilustrativo",
    label:"Mensagem de exemplo",placeholder:"Escreve uma mensagem de exemplo…",
-   send:"Simular",notSent:"Mensagem apresentada apenas neste exemplo. Não foi enviada nem guardada."
+   send:"Simular envio (não enviado)",sendTitle:"Simular envio",notSent:"Mensagem apresentada apenas neste exemplo. Não foi enviada nem guardada."
   },
   en:{
    open:"Open messages (demo)",title:"Messages",demo:"DEMO",close:"Close messages",
@@ -23,7 +24,7 @@
    thread:"Example messages",team:"The Mile team · example",
    sample:"Hi! Here you will be able to message The Mile team about menus and other requests.",
    mine:"Chef · example",caption:"Illustration only",label:"Example message",
-   placeholder:"Write an example message…",send:"Try it",
+   placeholder:"Write an example message…",send:"Simulate sending (not delivered)",sendTitle:"Simulate",
    notSent:"Message shown in this demo only. It was not sent or saved."
   }
  };
@@ -41,8 +42,12 @@
   item.append(make("small","chef-chat-message-caption",t().caption));
   thread.append(item);thread.scrollTop=thread.scrollHeight;
  }
+ function updateSendState(){
+  send.disabled=!input.value.trim();
+ }
  function reset(){
   thread.replaceChildren();input.value="";result.textContent="";
+  updateSendState();
   appendMessage("team",t().sample);
  }
  function closeDemo(){if(dialog.open)dialog.close();}
@@ -58,7 +63,8 @@
   thread.setAttribute("aria-label",t().thread);
   $("chef-chat-input-label").textContent=t().label;
   input.placeholder=t().placeholder;
-  $("chef-chat-submit").textContent=t().send;
+  send.setAttribute("aria-label",t().send);
+  send.title=t().sendTitle;
   if(dialog.open&&changed)reset();
  }
  trigger.addEventListener("click",()=>{
@@ -72,6 +78,7 @@
  dialog.addEventListener("click",event=>{if(event.target===dialog)closeDemo();});
  dialog.addEventListener("close",()=>{
   thread.replaceChildren();input.value="";result.textContent="";
+  updateSendState();
   if(!trigger.hidden)trigger.focus({preventScroll:true});
  });
  form.addEventListener("submit",event=>{
@@ -80,13 +87,16 @@
   const message=input.value.trim();
   if(!message)return;
   appendMessage("local",message);input.value="";
+  updateSendState();
   result.textContent=t().notSent;
  });
+ input.addEventListener("input",updateSendState);
  input.addEventListener("keydown",event=>{
   if(event.key==="Enter"&&!event.shiftKey&&!event.isComposing){
    event.preventDefault();form.requestSubmit();
   }
  });
+ updateSendState();
  setLanguage(document.documentElement.lang==="en"?"en":"pt");
  window.themileChefChatDemo=Object.freeze({setLanguage,close:closeDemo});
 })();

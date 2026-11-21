@@ -15,9 +15,9 @@
   <link rel="icon" href="/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link href="/chef.css?v=23" rel="stylesheet">
-  <link href="/chef-chat-demo.css?v=4" rel="stylesheet">
+  <link href="/chef-chat-demo.css?v=5" rel="stylesheet">
   <script src="/chef.js?v=31" defer></script>
-  <script src="/chef-chat-demo.js?v=3" defer></script>
+  <script src="/chef-chat-demo.js?v=4" defer></script>
 </head>
 <body>
   <header class="top">
@@ -77,7 +77,12 @@
       <form id="chef-chat-form" class="chef-chat-form">
         <label id="chef-chat-input-label" for="chef-chat-input" class="chef-chat-visually-hidden">Mensagem de exemplo</label>
         <textarea id="chef-chat-input" name="message" rows="2" maxlength="600" placeholder="Escreve uma mensagem de exemplo…" autocomplete="off"></textarea>
-        <button id="chef-chat-submit" type="submit">Simular</button>
+        <button id="chef-chat-submit" class="chef-chat-send" type="submit" aria-label="Simular envio (não enviado)" title="Simular envio" disabled>
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5.5V19"/>
+            <path d="M18 11C18 11 13.5811 5.00001 12 5C10.4188 4.99999 6 11 6 11"/>
+          </svg>
+        </button>
       </form>
       <p id="chef-chat-result" class="chef-chat-result" role="status" aria-live="polite"></p>
     </div>
