@@ -16,8 +16,8 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=21/);
- assert.match(html,/chef\.js\?v=27/);
+ assert.match(html,/chef\.css\?v=22/);
+ assert.match(html,/chef\.js\?v=28/);
 });
 
 test("Chef Menus displays a full month week range and only weekday names",()=>{
@@ -42,7 +42,7 @@ test("Chef Menus displays a full month week range and only weekday names",()=>{
 test("Chef Profile copies Player identity, account actions and password workflow without legacy logout",()=>{
  const playerCss=fs.readFileSync("static/jogador-v2.css","utf8");
  const playerJs=fs.readFileSync("static/jogador-v2.js","utf8");
- for(const token of ["width:90px;height:90px","background:#414148","font-size:21px","background:#242429;border-radius:13px","min-height:61px","border-radius:17px","min-height:64px"]){
+ for(const token of ["width:90px;height:90px","background:#414148","font-size:21px","border-radius:13px;background:#242429","min-height:61px","border-radius:17px","min-height:64px"]){
   assert.ok(css.includes(token),"Chef style: "+token);
  }
  assert.match(playerCss,/#profile \.profile-identity/);
@@ -50,9 +50,15 @@ test("Chef Profile copies Player identity, account actions and password workflow
  assert.match(js,/function chefProfileInitials\(name\)/);
  assert.match(js,/node\("div","profile-photo-circle",chefProfileInitials\(chef\?\.name\)\)/);
  assert.match(js,/chef\?\.username\?"@"\+chef\.username:""/);
- assert.match(js,/const assigned=node\("div","profile-plan-detail"\)/);
- assert.match(js,/assigned\.append\(node\("span","",txt\(\)\.player\)/);
- assert.match(js,/node\("div","profile-plan-detail profile-renewal-detail"\)/);
+ assert.doesNotMatch(js,/node\("section","profile-plan-card"\)|const assigned=node/);
+ assert.doesNotMatch(css,/\.chef-profile \.profile-plan-card|\.chef-profile \.profile-plan-detail/);
+ assert.match(js,/const languageCard=node\("section","profile-language-card"\)/);
+ assert.match(js,/languageCard\.append\(node\("span","profile-language-label",txt\(\)\.language\),segment,languageFeedback\)/);
+ assert.match(js,/page\.append\(notifications\);[\s\S]*?page\.append\(languageCard\);[\s\S]*?page\.append\(actions\)/);
+ assert.match(css,/\.chef-profile \.profile-language-card\{[\s\S]*?min-height:61px;[\s\S]*?border-radius:13px;background:#242429/);
+ assert.match(js,/request\("\/api\/v2\/chef\/preferences","PUT",\{language:code\}\)/);
+ assert.match(guide,/Mensagens Chef ↔ Backoffice — decisão registada/);
+ assert.match(guide,/Não mostrar um botão que sugira envio/);
  assert.match(js,/const actions=node\("div","profile-actions-card"\)/);
  assert.match(js,/chefProfileAction\(txt\(\)\.logout,"door-01",chefLogout\)/);
  assert.match(js,/chefProfileAction\(txt\(\)\.changePassword,"key-01"/);
@@ -67,7 +73,7 @@ test("Chef Profile copies Player identity, account actions and password workflow
  assert.doesNotMatch(html,/id="top-logout"|id="top-name"/);
  assert.doesNotMatch(js,/el\("top-logout"\)|el\("top-name"\)/);
  assert.doesNotMatch(css,/\.profile-row\{|\.top-details\{|\.quiet-button\{/);
- assert.match(guide,/Perfil — paridade aprovada com Jogadores/);
+ assert.match(guide,/Perfil — paridade com Jogadores, revisão aprovada/);
 });
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
  assert.match(html,/class="mile-floating-field" for="username"/);
