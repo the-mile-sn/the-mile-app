@@ -160,5 +160,102 @@ class TranslationSuggestionTests(unittest.TestCase):
             self.assertEqual(fake.timeout,suggestions.TIMEOUT_SECONDS)
 
 
+    def test_quota_missing_fails_closed_and_does_not_create_schema(self):
+        with app.connect() as c:
+            c.execute("DROP TABLE v2_translation_suggestion_quota")
+            c.commit()
+        with patch.dict(os.environ, FLAG):
+            overview=self.admin.request("/api/v2/admin/i18n/overview")
+            self.assertEqual(overview["status"],200,overview)
+            self.assertFalse(overview["body"]["suggestions_enabled"])
+            with patch.object(suggestions,"_generate") as model:
+                result=self.suggest_request("/api/v2/admin/i18n/suggest",
+                                            "POST",self.payload())
+                self.assertEqual(result["status"],503,result)
+                model.assert_not_called()
+        with app.connect() as c:
+            self.assertIsNone(c.execute("SELECT name FROM sqlite_master WHERE "
+                "name='v2_translation_suggestion_quota'").fetchone())
+
+    def test_untrusted_origin_and_wrong_site_role_are_rejected(self):
+        with patch.dict(os.environ, FLAG):
+            body=self.payload()
+            self.assertEqual(self.suggest_request(
+                "/api/v2/admin/i18n/suggest","POST",body,origin=None)["status"],403)
+            self.assertEqual(self.suggest_request(
+                "/api/v2/admin/i18n/suggest","POST",body,
+                origin="http://admin.themile.pt")["status"],403)
+            with patch.object(app,"SITE_ROLE","both"):
+                self.assertEqual(self.suggest_request(
+                    "/api/v2/admin/i18n/suggest","POST",body)["status"],404)
+            with patch.object(app,"SITE_ROLE","player"):
+                self.assertEqual(self.suggest_request(
+                    "/api/v2/admin/i18n/suggest","POST",body)["status"],404)
+
+    def test_atomic_database_quota_blocks_sixth_request_without_model_call(self):
+        with patch.dict(os.environ, FLAG):
+            with patch.object(suggestions,"_generate",return_value="White rice") as model:
+                for i in range(5):
+                    response=self.suggest_request(
+                        "/api/v2/admin/i18n/suggest","POST",self.payload())
+                    self.assertEqual(response["status"],200,(i,response))
+                blocked=self.suggest_request(
+                    "/api/v2/admin/i18n/suggest","POST",self.payload())
+                self.assertEqual(blocked["status"],429,blocked)
+                self.assertEqual(model.call_count,5)
+        with app.connect() as c:
+            counts=c.execute("SELECT request_count FROM "
+                 "v2_translation_suggestion_quota").fetchall()
+            self.assertEqual(len(counts),5)
+            self.assertEqual({row[0] for row in counts},{5})
+
+    def test_provider_failure_still_consumes_quota_to_prevent_free_retries(self):
+        with patch.dict(os.environ, FLAG):
+            with patch.object(suggestions,"_generate",side_effect=
+                suggestions.SuggestionError(503,"translation_suggestion_unavailable")):
+                self.assertEqual(self.suggest_request(
+                    "/api/v2/admin/i18n/suggest","POST",self.payload())["status"],503)
+        with app.connect() as c:
+            used=c.execute("SELECT request_count FROM v2_translation_suggestion_quota "
+                "WHERE scope_key LIKE 'global:month:%'").fetchone()[0]
+            self.assertEqual(used,1)
+
+    def test_misconfiguration_disables_suggestions(self):
+        for overrides in (
+            {"MILE_TRANSLATION_SPEND_CONTROLS_CONFIRMED":"0"},
+            {"MILE_TRANSLATION_SUGGESTION_PROJECT_ID":""},
+            {"MILE_TRANSLATION_SUGGESTION_PROJECT_ID":"wrong"},
+            {"MILE_TRANSLATION_SUGGESTION_MODEL":"gpt-6-astra"},
+        ):
+            with self.subTest(overrides=overrides),patch.dict(os.environ,{**FLAG,**overrides}):
+                self.assertFalse(self.admin.request(
+                    "/api/v2/admin/i18n/overview")["body"]["suggestions_enabled"])
+                self.assertEqual(self.suggest_request("/api/v2/admin/i18n/suggest",
+                    "POST",self.payload(source="dummy"))["status"],404)
+
+    def test_personal_data_pattern_blocks_external_request(self):
+        with app.connect() as c:
+            c.execute("UPDATE v2_food_library SET display_name='ana@example.pt' "
+                      "WHERE id='food-test'")
+            c.commit()
+        with patch.dict(os.environ, FLAG),patch.object(
+                suggestions,"_generate") as model:
+            result=self.suggest_request("/api/v2/admin/i18n/suggest",
+                                        "POST",self.payload())
+            self.assertEqual(result["status"],422,result)
+            model.assert_not_called()
+
+    def test_global_monthly_quota_reserves_before_model(self):
+        with patch.dict(os.environ, FLAG):
+            with patch.object(suggestions,"_quota_keys",
+                 return_value=(("global:month:test",1),)),patch.object(
+                 suggestions,"_generate",return_value="White rice") as model:
+                self.assertEqual(self.suggest_request(
+                    "/api/v2/admin/i18n/suggest","POST",self.payload())["status"],200)
+                self.assertEqual(self.suggest_request(
+                    "/api/v2/admin/i18n/suggest","POST",self.payload())["status"],429)
+                self.assertEqual(model.call_count,1)
+
+
 if __name__ == "__main__":
     unittest.main()
