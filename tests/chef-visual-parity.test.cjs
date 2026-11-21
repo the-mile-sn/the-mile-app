@@ -16,10 +16,58 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  }
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
- assert.match(html,/chef\.css\?v=20/);
- assert.match(html,/chef\.js\?v=26/);
+ assert.match(html,/chef\.css\?v=21/);
+ assert.match(html,/chef\.js\?v=27/);
 });
 
+test("Chef Menus displays a full month week range and only weekday names",()=>{
+ const vm=require("node:vm");
+ const r=js.match(/function chefMenuWeekRange\(start,end\)\{[\s\S]*?\n\}/)?.[0];
+ const d=js.match(/function chefMenuWeekday\(date\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(r&&d);
+ const lang="pt",format=(date,options)=>new Intl.DateTimeFormat("pt-PT",options).format(date);
+ const range=vm.runInNewContext(r+";chefMenuWeekRange",{format});
+ const weekday=vm.runInNewContext(d+";chefMenuWeekday",{format,lang});
+ assert.equal(range(new Date(2026,10,16),new Date(2026,10,22)),"16–22 novembro 2026");
+ assert.equal(range(new Date(2026,10,30),new Date(2026,11,6)),"30 novembro–6 dezembro 2026");
+ assert.equal(range(new Date(2026,11,28),new Date(2027,0,3)),"28 dezembro 2026–3 janeiro 2027");
+ assert.equal(weekday(new Date(2026,10,16)),"segunda");
+ assert.equal(weekday(new Date(2026,10,17)),"terça");
+ assert.equal(weekday(new Date(2026,10,21)),"sábado");
+ assert.match(js,/const period=node\("strong","chef-menu-week-range",chefMenuWeekRange\(start,end\)\)/);
+ assert.match(js,/const weekday=node\("strong","",chefMenuWeekday\(date\)\)/);
+ assert.match(js,/weekday\.title=dateDescription\(date\)/);
+ assert.match(guide,/16–22 novembro 2026/);
+});
+test("Chef Profile copies Player identity, account actions and password workflow without legacy logout",()=>{
+ const playerCss=fs.readFileSync("static/jogador-v2.css","utf8");
+ const playerJs=fs.readFileSync("static/jogador-v2.js","utf8");
+ for(const token of ["width:90px;height:90px","background:#414148","font-size:21px","background:#242429;border-radius:13px","min-height:61px","border-radius:17px","min-height:64px"]){
+  assert.ok(css.includes(token),"Chef style: "+token);
+ }
+ assert.match(playerCss,/#profile \.profile-identity/);
+ assert.match(playerCss,/#profile \.profile-actions-card/);
+ assert.match(js,/function chefProfileInitials\(name\)/);
+ assert.match(js,/node\("div","profile-photo-circle",chefProfileInitials\(chef\?\.name\)\)/);
+ assert.match(js,/chef\?\.username\?"@"\+chef\.username:""/);
+ assert.match(js,/const assigned=node\("div","profile-plan-detail"\)/);
+ assert.match(js,/assigned\.append\(node\("span","",txt\(\)\.player\)/);
+ assert.match(js,/node\("div","profile-plan-detail profile-renewal-detail"\)/);
+ assert.match(js,/const actions=node\("div","profile-actions-card"\)/);
+ assert.match(js,/chefProfileAction\(txt\(\)\.logout,"door-01",chefLogout\)/);
+ assert.match(js,/chefProfileAction\(txt\(\)\.changePassword,"key-01"/);
+ assert.match(js,/request\("\/api\/change-password","POST"/);
+ assert.match(playerJs,/\/api\/change-password/);
+ assert.match(js,/form\.reset\(\)/);
+ assert.match(js,/if\(next!==confirm\)/);
+ assert.match(js,/save\.disabled=previewReadOnly/);
+ assert.match(js,/button\.disabled=previewReadOnly/);
+ assert.match(html,/id="chef-profile-tab-initials"/);
+ assert.doesNotMatch(html,/id="top-logout"|id="top-name"/);
+ assert.doesNotMatch(js,/el\("top-logout"\)|el\("top-name"\)/);
+ assert.doesNotMatch(css,/\.profile-row\{|\.top-details\{|\.quiet-button\{/);
+ assert.match(guide,/Perfil — paridade aprovada com Jogadores/);
+});
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
  assert.match(html,/class="mile-floating-field" for="username"/);
  assert.match(html,/class="mile-floating-input" id="username" name="identifier"/);
