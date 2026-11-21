@@ -34,8 +34,8 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=2/);
- assert.match(html,/chef-chat-demo\.js\?v=2/);
+ assert.match(html,/chef-chat-demo\.css\?v=3/);
+ assert.match(html,/chef-chat-demo\.js\?v=3/);
  assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
  assert.match(html,/class="mile-icon icon-message-01"/);
  assert.match(html,/<dialog id="chef-chat-dialog"/);
@@ -55,8 +55,20 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoJs,/window\.themileChefChatDemo=Object\.freeze/);
  for(const forbidden of [/fetch\s*\(/,/\blocalStorage\b/,/\bsessionStorage\b/,/\bindexedDB\b/,/\bWebSocket\s*\(/,/\bnavigator\.sendBeacon\s*\(/])
   assert.doesNotMatch(demoJs,forbidden);
- assert.match(demoCss,/\.chef-chat-trigger\{[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 13px\)/);
+ assert.match(demoCss,/\.chef-chat-trigger\{[\s\S]*?top:calc\(env\(safe-area-inset-top,0px\) \+ 4px\)/);
  assert.match(demoCss,/\.chef-chat-dialog::backdrop/);
+ assert.match(demoCss,/border:0;border-radius:18px;/);
+ assert.match(demoCss,/background:#0d0d10;color:#f5f5f7;box-shadow:none;overflow:hidden/);
+ assert.match(demoCss,/\.chef-chat-panel-header\{[^}]*border:0;/);
+ assert.match(demoCss,/\.chef-chat-form\{[^}]*border:0;/);
+ assert.match(demoCss,/\.chef-chat-form textarea\{[^}]*border:0;box-shadow:none;/);
+ assert.match(demoCss,/\.chef-chat-disclaimer\{[^}]*border-radius:13px;background:#242429/);
+ assert.doesNotMatch(demoCss,/border:1px solid #38383f|border:1px solid #3e3e46|border-(bottom|top):1px solid/);
+ assert.match(html,/<h2 id="chef-chat-title" tabindex="-1">/);
+ assert.match(demoJs,/\$\("chef-chat-title"\)\.focus\(\{preventScroll:true\}\)/);
+ assert.doesNotMatch(demoJs,/close\.focus\(/);
+ assert.match(guide,/Uniformização estética aprovada para teste/);
+
  assert.match(demoCss,/@media\(max-width:640px\)/);
  assert.match(guide,/protótipo reside isolado/);
 });
