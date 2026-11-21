@@ -66,7 +66,7 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(demoJs,/await fetchReal\("\/api\/v2\/chef\/chat"\)/);
  assert.match(demoJs,/fetchReal\("\/api\/v2\/chef\/chat\/messages","POST"/);
  assert.match(demoJs,/fetchReal\("\/api\/v2\/chef\/chat\/read","POST"/);
- assert.match(demoJs,/if\(error\.status===404\)return/);
+ assert.match(demoJs,/if\(error\.status===404\)\{apiUnavailable=true;return;\}/);
  assert.match(demoJs,/session\.admin_preview/);
  assert.match(demoJs,/input\.maxLength=2000/);
  assert.match(demoJs,/pendingKey=key/);
