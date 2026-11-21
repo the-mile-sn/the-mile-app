@@ -34,8 +34,8 @@ test("Chef message preview assets are explicitly served and never cached as 404s
 test("Chef chat demo stays accessible, ephemeral and disconnected from production",()=>{
  const demoJs=fs.readFileSync("static/chef-chat-demo.js","utf8");
  const demoCss=fs.readFileSync("static/chef-chat-demo.css","utf8");
- assert.match(html,/chef-chat-demo\.css\?v=4/);
- assert.match(html,/chef-chat-demo\.js\?v=3/);
+ assert.match(html,/chef-chat-demo\.css\?v=5/);
+ assert.match(html,/chef-chat-demo\.js\?v=4/);
  assert.match(html,/id="chef-chat-trigger"[^>]*hidden/);
  assert.match(html,/class="mile-icon icon-bubble-chat"/);
  assert.doesNotMatch(html,/icon-message-01/);
@@ -43,6 +43,18 @@ test("Chef chat demo stays accessible, ephemeral and disconnected from productio
  assert.match(html,/aria-labelledby="chef-chat-title"/);
  assert.match(html,/id="chef-chat-thread"[^>]*role="log"/);
  assert.match(html,/id="chef-chat-input"[^>]*maxlength="600"/);
+ assert.match(html,/id="chef-chat-submit" class="chef-chat-send"[^>]*aria-label="Simular envio \(não enviado\)"[^>]*disabled/);
+ assert.match(html,/M12 5\.5V19/);
+ assert.match(demoJs,/send\.disabled=!input\.value\.trim\(\)/);
+ assert.match(demoJs,/input\.addEventListener\("input",updateSendState\)/);
+ assert.match(demoJs,/send\.setAttribute\("aria-label",t\(\)\.send\)/);
+ assert.doesNotMatch(demoJs,/send\.textContent|chef-chat-submit"\)\.textContent/);
+ assert.match(demoJs,/appendMessage\("local",message\);input\.value="";\s*updateSendState\(\)/);
+ assert.match(demoCss,/\.chef-chat-form \.chef-chat-send\{[^}]*width:46px;height:46px;[^}]*border:0;border-radius:50%/);
+ assert.match(demoCss,/\.chef-chat-form \.chef-chat-send:disabled\{/);
+ assert.doesNotMatch(demoCss,/\.chef-chat-form button\{/);
+ assert.match(guide,/Compositor de mensagens — ajuste de interação/);
+
  assert.match(js,/el\("chef-chat-trigger"\)\.hidden=view!=="chef"/);
  assert.match(js,/window\.themileChefChatDemo\?\.setLanguage\(lang\)/);
  assert.match(js,/chefOfficialIconData\["BubbleChatIcon"\]=\[/);
