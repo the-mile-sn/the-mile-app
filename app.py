@@ -917,6 +917,36 @@ def application(env, start_response):
                         and not path.startswith('/api/v2/chef/')):
                     raise Problem(403, 'forbidden')
 
+            # App translation pilot: new endpoints only, OFF by default.
+            # Existing Player/Chef/Admin routes remain untouched.
+            translation_pilot_routes = (
+                '/api/v2/player/language',
+                '/api/v2/chef/language',
+                '/api/v2/admin/i18n',
+                '/api/v2/admin/i18n/propose',
+                '/api/v2/admin/i18n/approve',
+                '/api/v2/admin/i18n/history',
+            )
+            if path in translation_pilot_routes:
+                if os.environ.get('MILE_APP_TRANSLATIONS_ENABLED', '0') != '1':
+                    raise Problem(404, 'not_found')
+                if not user:
+                    raise Problem(401, 'unauthorized')
+                if method not in ('GET', 'PUT', 'POST'):
+                    raise Problem(404, 'not_found')
+                import app_translation_http_v2
+                try:
+                    status, payload = app_translation_http_v2.dispatch(
+                        c, site_role=SITE_ROLE, user=dict(user), path=path,
+                        method=method, query=parse_qs(env.get('QUERY_STRING', ''),
+                                                      keep_blank_values=True),
+                        body=read_json(env) if method in ('PUT', 'POST') else None)
+                except app_translation_http_v2.APIError as exc:
+                    raise Problem(exc.status, exc.code)
+                if method in ('PUT', 'POST'):
+                    c.commit()
+                return respond(status, payload)
+
             # Shopify UNPUBLISHED theme preview only: anonymous, read-only,
             # allowlisted public metadata. Never expose internal admin records,
             # booking holds, payments, customer information or Google tokens.
