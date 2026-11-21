@@ -73,7 +73,7 @@ test("Chef Profile copies Player identity, account actions and password workflow
  assert.doesNotMatch(html,/id="top-logout"|id="top-name"/);
  assert.doesNotMatch(js,/el\("top-logout"\)|el\("top-name"\)/);
  assert.doesNotMatch(css,/\.profile-row\{|\.top-details\{|\.quiet-button\{/);
- assert.match(guide,/Perfil — paridade aprovada com Jogadores/);
+ assert.match(guide,/Perfil — paridade com Jogadores, revisão aprovada/);
 });
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
  assert.match(html,/class="mile-floating-field" for="username"/);
