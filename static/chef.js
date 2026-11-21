@@ -1241,7 +1241,7 @@ function render(){
     home:txt().home,plans:txt().plans,menus:txt().menus,profile:txt().profile
   })){
     const button=nav.querySelector('[data-tab="'+tab+'"]');
-    button.querySelector("span").textContent=caption;
+    button.querySelector(":scope > span:last-child").textContent=caption;
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
