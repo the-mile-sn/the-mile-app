@@ -17,6 +17,7 @@ except ImportError:
 import content_translations_v2 as translations
 import app_language_preferences_v2 as preferences
 import app_translation_admin_v2 as admin_api
+import app_translation_catalog_v2 as catalog
 
 
 class CompatConnection:
@@ -55,11 +56,12 @@ class PostgresCompatibilityTests(unittest.TestCase):
                 c.execute("INSERT INTO v2_chef_links VALUES ('chef','athlete','pt',NULL)")
                 c.execute("""CREATE TABLE v2_food_library (
                     id TEXT PRIMARY KEY, display_name TEXT,
-                    notes TEXT, active INTEGER)""")
-                c.execute("INSERT INTO v2_food_library VALUES ('f1','Arroz','',1)")
+                    notes TEXT, category TEXT, active INTEGER)""")
+                c.execute("INSERT INTO v2_food_library VALUES ('f1','Arroz','','Cereais',1)")
                 c.execute("""CREATE TABLE v2_dish_library (
-                    id TEXT PRIMARY KEY, name_pt TEXT,active INTEGER)""")
-                c.execute("INSERT INTO v2_dish_library VALUES ('d1','Peixe',1)")
+                    id TEXT PRIMARY KEY, name_pt TEXT, name_en TEXT,
+                    category TEXT, active INTEGER)""")
+                c.execute("INSERT INTO v2_dish_library VALUES ('d1','Peixe','Fish','Peixe',1)")
                 translations.initialize(c)
                 translations.initialize(c)
                 preferences.initialize(c)
@@ -84,6 +86,14 @@ class PostgresCompatibilityTests(unittest.TestCase):
                 live = admin_api.inspect(c, actor, entity_kind="food",
                                          entity_id="f1", field_path="display_name")
                 self.assertEqual(live["effective"]["text"], "Rice")
+                overview = catalog.overview(c, actor)
+                groups = {g["kind"]: g for g in overview["libraries"]}
+                self.assertEqual(groups["food"]["statuses"]["approved"], 1)
+                self.assertEqual(groups["dish"]["statuses"]["legacy_review"], 1)
+                self.assertIsNone(groups["recipe"]["record_count"])
+                legacy = catalog.list_fields(c, actor, entity_kind="dish", status="legacy_review")
+                self.assertEqual(legacy["total"], 1)
+                self.assertEqual(legacy["items"][0]["legacy_candidate"], "Fish")
                 self.assertEqual(c.execute(
                     "SELECT display_name FROM v2_food_library WHERE id='f1'"
                 ).fetchone()["display_name"], "Arroz")
