@@ -200,7 +200,7 @@ try {
     assert.equal(await page.locator("#i18n-results .i18n-status-pill").innerText(),
       "Vários estados", kind);
     await page.locator("#i18n-results .i18n-result").first().click();
-    await page.locator("#i18n-fields option").nth(1).waitFor();
+    await page.locator("#i18n-fields option").nth(1).waitFor({ state: "attached" });
     assert.equal(await page.locator("#i18n-fields option").count(), 2, kind);
     await page.locator("#i18n-fields").selectOption("note");
     await page.waitForFunction(text =>
