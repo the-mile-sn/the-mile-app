@@ -47,7 +47,9 @@
  }
  function closeDemo(){if(dialog.open)dialog.close();}
  function setLanguage(value){
-  language=value==="en"?"en":"pt";
+  const next=value==="en"?"en":"pt";
+  const changed=next!==language;
+  language=next;
   trigger.setAttribute("aria-label",t().open);
   $("chef-chat-title").textContent=t().title;
   $("chef-chat-kicker").textContent=t().demo;
@@ -57,7 +59,7 @@
   $("chef-chat-input-label").textContent=t().label;
   input.placeholder=t().placeholder;
   $("chef-chat-submit").textContent=t().send;
-  if(dialog.open)reset();
+  if(dialog.open&&changed)reset();
  }
  trigger.addEventListener("click",()=>{
   if(trigger.hidden||dialog.open)return;
