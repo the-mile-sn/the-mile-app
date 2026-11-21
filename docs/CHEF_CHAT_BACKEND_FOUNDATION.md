@@ -43,3 +43,9 @@ The module’s `archive_conversation()` checks explicit authorized active staff 
 - `list_staff_conversations`: only explicitly assigned conversations; never implicit global inbox.
 
 Application owners must commit a transaction after a send or read operation. This initial library has no scheduled tasks, push, WebSockets, notifications or external service fees.
+
+## HTTP integration prepared (feature-off default)
+
+`chat_api_v2.py` adds a **session-bound Chef API adapter**. The player service routes `/api/v2/chef/chat` and `/messages` and `/read` only when `MILE_CHAT_API_ENABLED=1`. The default is off, so production does not call uninitialized DB tables, create conversations, send messages or expose incomplete chat functions. Existing Chef session, linked-athlete, preview read-only and CSRF/origin guards remain mandatory. The send operation uses client idempotency and a 2,000-character text limit. HTTP regression tests enable it only against disposable SQLite tables; PostgreSQL domain tests remain disposable.
+
+**Do not turn on** until production database identity is verified in both services, add-only schema migration authorized, backoffice inbox and staff authorization flows tested, and privacy/retention notice checked. The Chef visual prototype remains local-only until that gate is met.

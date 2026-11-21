@@ -16,6 +16,7 @@ import sqlite3
 import microcycles_v2
 import chef_accounts_v2
 import chef_collaboration_v2
+import chat_api_v2
 import player_recipes_v2
 import calendar_v2
 import events_v2
@@ -1394,6 +1395,19 @@ def application(env, start_response):
                 athlete=chef_accounts_v2.assigned_athlete(c,user['id'])
                 if not athlete: raise Problem(403,'chef_unlinked')
                 aid=athlete['id']
+                if path.startswith('/api/v2/chef/chat'):
+                    # Deliberately disabled until shared DB and reviewed migration
+                    # are explicitly activated for both services.
+                    if os.environ.get('MILE_CHAT_API_ENABLED')!='1':
+                        raise Problem(404,'not_found')
+                    try:
+                        status,output=chat_api_v2.chef(
+                            c,user['id'],path,method,env.get('QUERY_STRING',''),lambda:read_json(env))
+                    except chat_api_v2.ChatApiError as exc:
+                        raise Problem(exc.status,exc.code)
+                    except chat_api_v2.domain.ChatAccessError:
+                        raise Problem(403,'forbidden')
+                    return respond(status,output)
                 if path == '/api/v2/chef/preferences' and method == 'PUT':
                     body=read_json(env)
                     if not isinstance(body,dict) or set(body) != {'language'} or body['language'] not in ('pt','en'):
