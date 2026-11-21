@@ -10,13 +10,14 @@
  const translations={
    missing:"Por traduzir",legacy_review:"Inglês existente · por rever",
    pending:"Por rever",approved:"Aprovada",outdated:"Desatualizada",
-   original:"Original português"
+   original:"Original português",mixed:"Vários estados"
  };
  const displayKind={
    food:"Alimentos",dish:"Pratos",recipe:"Receitas",
    recipe_category:"Categorias",supplement:"Suplementação"
  };
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
+ let catalogRequestSeq=0;
  let csrf="",state={kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
                      row:null,edited:false,busy:false,legacy:""};
  const create=(tag,className,txt)=>{
@@ -101,6 +102,7 @@
      state.kind==="supplement"?"/?nav=supplements":"/?nav=recipes";
  };
  const loadCatalog=async()=>{
+   const currentRequest=++catalogRequestSeq;
    buildTabs();msg("A carregar conteúdos…");$("i18n-work-panel").hidden=false;
    try{
      const params=queryString({
@@ -108,6 +110,7 @@
        page:state.page,page_size:state.pageSize
      });
      const result=await send("/api/v2/admin/i18n/catalog?"+params);
+     if(currentRequest!==catalogRequestSeq)return;
      const list=$("i18n-results");list.replaceChildren();
      $("i18n-results-count").textContent=result.total+" registos encontrados";
      if(!result.items.length){
@@ -120,7 +123,10 @@
        main.append(create("strong","",entry.source_text),
          create("small","",entry.category+" · "+count+
            (count===1?" texto visível":" textos visíveis")));
-       b.append(main,badge(entry.state),create("span","i18n-result-arrow","›"));
+       const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
+       const displayedState=state.status!=="all" ? state.status :
+         (fieldStates.size>1 ? "mixed" : entry.state);
+       b.append(main,badge(displayedState),create("span","i18n-result-arrow","›"));
        b.addEventListener("click",()=>openReview(entry));
        list.append(b);
      }
@@ -129,7 +135,8 @@
      $("i18n-prev").disabled=state.page<=1;
      $("i18n-next").disabled=state.page>=pages;
      msg("");
-   }catch(error){msg("Não foi possível consultar o inventário: "+error.message,true);}
+   }catch(error){if(currentRequest===catalogRequestSeq)
+     msg("Não foi possível consultar o inventário: "+error.message,true);}
  };
  const loadOverview=async()=>{
    const summary=await send("/api/v2/admin/i18n/overview");
