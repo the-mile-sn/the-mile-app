@@ -19,6 +19,7 @@ import sqlite3
 import microcycles_v2
 import chef_accounts_v2
 import chef_collaboration_v2
+import chat_admin_api_v2
 import appointments_catalog_v2
 import appointments_availability_v2
 import appointments_bookings_v2
@@ -2980,6 +2981,24 @@ def application(env, start_response):
                 admin(user)
                 today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
                 return respond(200,admin_players_v2.overview(c,today,access_valid))
+            # Chef chat is opt-in and NEVER initializes its schema on request.
+            # Permission gates, CSRF and Origin checks run before this route.
+            if path.startswith('/api/v2/admin/chat'):
+                if SITE_ROLE == 'player':
+                    raise Problem(404,'not_found')
+                if not user:
+                    raise Problem(401,'unauthorized')
+                admin(user)
+                if os.environ.get('MILE_CHAT_API_ENABLED')!='1':
+                    raise Problem(404,'not_found')
+                try:
+                    status,data=chat_admin_api_v2.handle(
+                        c,user['id'],path,method,env.get('QUERY_STRING',''),lambda:read_json(env))
+                except chat_admin_api_v2.ChatApiError as exc:
+                    raise Problem(exc.status,exc.code)
+                except chat_admin_api_v2.domain.ChatAccessError:
+                    raise Problem(403,'forbidden')
+                return respond(status,data)
             # Chef accounts: admin-only, bound to a single existing athlete.
             if path == '/api/v2/admin/chefs':
                 if not user: raise Problem(401,'unauthorized')

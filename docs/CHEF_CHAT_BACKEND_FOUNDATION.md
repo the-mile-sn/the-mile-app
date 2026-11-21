@@ -43,3 +43,7 @@ The module’s `archive_conversation()` checks explicit authorized active staff 
 - `list_staff_conversations`: only explicitly assigned conversations; never implicit global inbox.
 
 Application owners must commit a transaction after a send or read operation. This initial library has no scheduled tasks, push, WebSockets, notifications or external service fees.
+
+## Admin inbox API (prepared, off by default)
+
+The Admin service has dedicated `/api/v2/admin/chat` GET inbox and `/assign`, `/messages`, `/read` routes (staff-scoped). Only an active authenticated Admin may assign one conversation to one active Admin/staff account. An unassigned queue shows Chef name and metadata **not message contents**. Reading/sending requires an explicit non-revoked staff membership. A future nutritionist assignment model may refine authorization; no unrestricted automatic staff membership is introduced. `MILE_CHAT_API_ENABLED` must be explicitly set to `1` **after** shared DB identity and manual migration confirmation. The Admin app does not import/start the schema migration. No old notifications or push integration.
