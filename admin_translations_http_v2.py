@@ -64,7 +64,7 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                 if query:
                     raise APIError(400, "invalid_translation_query")
                 overview = catalog.overview(c, user)
-                overview["suggestions_enabled"] = suggestions.available(c)
+                overview["suggestions_enabled"] = (site_role == "admin" and suggestions.available(c))
                 return 200, overview
             if path == ROOT + "/catalog":
                 q = _query(query or {}, ("entity_kind", "status", "query",
