@@ -11,6 +11,7 @@ on:
       - "test_app_translation_contract_v2.py"
       - "test_app_translation_postgres_v2.py"
       - "test_app_translation_migration_postgres_v2.py"
+      - "tools/i18n_preflight_readonly.py"
       - "sql/i18n/**"
       - ".github/workflows/validate-app-translation-contract.yml"
   pull_request:
@@ -21,6 +22,7 @@ on:
       - "test_app_translation_contract_v2.py"
       - "test_app_translation_postgres_v2.py"
       - "test_app_translation_migration_postgres_v2.py"
+      - "tools/i18n_preflight_readonly.py"
       - "sql/i18n/**"
       - ".github/workflows/validate-app-translation-contract.yml"
 
