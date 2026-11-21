@@ -23,7 +23,7 @@ O `session_user` e obrigatoriamente o ator obtido de uma sessao ja autenticada n
 
 `app_language_preferences_v2.py` cria, quando invocado explicitamente, somente uma tabela de preferencias para utilizadores com role `player`: `v2_player_language_preferences`. Nao modifica a tabela `users` nem as suas contas.
 
-Para `chef`, reutiliza a mesma `v2_chef_links.language` que a app atual ja utiliza. As operacoes de leitura e escrita rejeitam contas inativas, chef arquivado, identidade errada e roles indevidos. **O endpoint atual `/api/v2/chef/preferences` nao foi modificado.**
+Para `chef`, reutiliza a mesma `v2_chef_links.language` que a app atual ja utiliza. A leitura rejeita contas inativas, chef arquivado, identidade errada e roles indevidos. O novo modulo NAO escreve em preferencias de chefs: devolve um erro explicito, deixando todas as escritas ao endpoint existente. **O endpoint atual `/api/v2/chef/preferences` nao foi modificado.**
 
 A API dos jogadores e o seu seletor de idioma ainda nao estao ligados. Permanecem integralmente em portugues ate ativacao explicita e testada.
 

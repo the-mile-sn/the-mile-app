@@ -93,10 +93,11 @@ class PostgresCompatibilityTests(unittest.TestCase):
                 self.assertEqual(preferences.read(c, player)["language"], "en")
                 chef = {"id": "chef", "role": "chef"}
                 self.assertEqual(preferences.read(c, chef)["language"], "pt")
-                preferences.save(c, chef, "en")
+                with self.assertRaisesRegex(ValueError, "use_existing_chef_preferences_endpoint"):
+                    preferences.save(c, chef, "en")
                 self.assertEqual(c.execute(
                     "SELECT language FROM v2_chef_links WHERE user_id='chef'"
-                ).fetchone()["language"], "en")
+                ).fetchone()["language"], "pt")
             finally:
                 conn.execute("SET search_path TO public")
                 conn.execute("DROP SCHEMA " + schema + " CASCADE")

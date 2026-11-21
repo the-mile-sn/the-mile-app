@@ -1,6 +1,7 @@
 """Opt-in per-user language preferences; not connected to app.py.
 
-Players use a new additive table. Chefs keep the existing v2_chef_links.language.
+Players use a new additive table. Chefs read existing v2_chef_links.language;
+chef writes remain exclusively with the existing /api/v2/chef/preferences.
 Neither plan snapshots nor application session data are modified.
 All callers must supply the user object from a *verified server session*.
 """
@@ -74,16 +75,13 @@ def save(c, session_user, language):
     user_id, role = _identity(c, session_user)
     if role == "chef":
         _chef_language(c, user_id)
-        result = c.execute(
-            "UPDATE v2_chef_links SET language=? WHERE user_id=? AND archived_at IS NULL",
-            (language, user_id))
-        if result.rowcount != 1:
-            raise PermissionError("chef_unlinked")
-    else:
-        c.execute("""
-            INSERT INTO v2_player_language_preferences(user_id,language,updated_at)
-            VALUES (?,?,?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                language=excluded.language, updated_at=excluded.updated_at
-        """, (user_id, language, int(time.time())))
+        # Existing /api/v2/chef/preferences owns all chef language writes.
+        # Refuse a second write path rather than risking divergence.
+        raise ValueError("use_existing_chef_preferences_endpoint")
+    c.execute("""
+        INSERT INTO v2_player_language_preferences(user_id,language,updated_at)
+        VALUES (?,?,?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            language=excluded.language, updated_at=excluded.updated_at
+    """, (user_id, language, int(time.time())))
     return {"language": language, "role": role}

@@ -171,9 +171,10 @@ class SecureOperationsTests(unittest.TestCase):
 
     def test_chef_keeps_existing_link_language(self):
         self.assertEqual(preferences.read(self.c, self.chef)["language"], "en")
-        preferences.save(self.c, self.chef, "pt")
+        with self.assertRaisesRegex(ValueError, "use_existing_chef_preferences_endpoint"):
+            preferences.save(self.c, self.chef, "pt")
         self.assertEqual(self.c.execute(
-            "SELECT language FROM v2_chef_links WHERE user_id='chef1'").fetchone()[0], "pt")
+            "SELECT language FROM v2_chef_links WHERE user_id='chef1'").fetchone()[0], "en")
         self.assertEqual(self.c.execute(
             "SELECT COUNT(*) FROM v2_player_language_preferences").fetchone()[0], 0)
 
