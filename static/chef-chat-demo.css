@@ -51,7 +51,7 @@
 }
 .chef-chat-message-local .chef-chat-bubble{background:#414148;border-radius:18px 18px 5px 18px}
 .chef-chat-form{
- display:flex;align-items:flex-end;gap:9px;padding:12px 14px 4px;
+ display:flex;align-items:center;gap:9px;padding:12px 14px 4px;
  border:0;
 }
 .chef-chat-form textarea{
