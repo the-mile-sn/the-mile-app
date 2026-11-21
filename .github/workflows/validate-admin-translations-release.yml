@@ -13,6 +13,7 @@ on:
       - "app_translation_catalog_v2.py"
       - "app_translation_sources_v2.py"
       - "app_translation_suggestions_v2.py"
+      - "migrate_translation_suggestion_quota_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
       - "test_admin_translations_release_v2.py"
@@ -28,6 +29,7 @@ on:
       - "app_translation_catalog_v2.py"
       - "app_translation_sources_v2.py"
       - "app_translation_suggestions_v2.py"
+      - "migrate_translation_suggestion_quota_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
       - "test_admin_translations_release_v2.py"
@@ -53,7 +55,7 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile backend and validate browser scripts
         run: |
-          python -m py_compile app.py admin_translations_http_v2.py content_translations_v2.py app_translation_admin_v2.py app_translation_catalog_v2.py app_translation_sources_v2.py app_translation_suggestions_v2.py
+          python -m py_compile app.py admin_translations_http_v2.py content_translations_v2.py app_translation_admin_v2.py app_translation_catalog_v2.py app_translation_sources_v2.py app_translation_suggestions_v2.py migrate_translation_suggestion_quota_v2.py
           node --check static/admin-translations.js
           node --check static/admin-translations-shortcuts.js
       - name: Run real WSGI tests (auth, CSRF, catalog, no app routes)
