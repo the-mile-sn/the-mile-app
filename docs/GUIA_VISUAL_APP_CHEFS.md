@@ -97,3 +97,11 @@ Este lote altera apenas apresentação, pequenas classes de carregamento de imag
 ## Chat Chef — atualização de mensagens após ativação (21/11/2026)
 
 Na demonstração, o conteúdo continua **local, efémero e não enviado**, sem pedidos periódicos ao backend. Apenas quando o endpoint autenticado do Chef responde 200 após a ativação formal, a janela passa para modo real e carrega mensagens. Em modo real, enquanto o diálogo está aberto e a página está visível, as mensagens são sincronizadas a cada 30 segundos; ao voltar de um separador inativo também se verifica o histórico. O temporizador é removido quando a janela fecha e respostas de pedidos antigos nunca devem atualizar uma janela reaberta. Falhas de atualização não criam mensagens fictícias nem ativam notificações. O chat continua desligado em produção até revisão de privacidade, permissões e teste Chef ↔ Backoffice.
+
+## Mensagens Chef — compositor e contagem por ler (21/11/2026)
+
+- A área de escrita começa com **46 px de altura**, numa única linha e `font-size:16px` para evitar zoom automático no iPhone. Quando o texto cresce, a altura adapta-se até um máximo de **108 px** e o conteúdo excedente passa a deslocar-se dentro do campo.
+- O botão de envio mantém uma área de toque de **44 × 44 px**; o círculo visual passa a **38 px**, com ícone de 20 px, e a separação horizontal relativamente ao campo passa a **13 px**. Preservam-se fundo e estados cromáticos já aprovados.
+- No ícone superior de mensagens há um **contador numérico real** de mensagens recebidas ainda por ler: 1, 2, 3… e apresentação compacta `9+` a partir de dez (valor integral mantido na descrição acessível). Nunca contar mensagens enviadas pelo Chef nem simular notificações.
+- O número vem exclusivamente de `GET /api/v2/chef/chat` e atualiza-se ao entrar na app, a cada 30 segundos com a página visível e ao regressar à app. A leitura efetiva da conversa utiliza `POST /api/v2/chef/chat/read` e o `unread_count` devolvido pelo servidor; o contador desaparece quando o total fica zero.
+- A contagem nunca se mostra na sessão de demonstração, no início de sessão ou na pré-visualização de administrador; termina a atualização de fundo quando a API está desativada. Não há alterações no Backoffice, notificações antigas, push ou política de privacidade neste lote.
