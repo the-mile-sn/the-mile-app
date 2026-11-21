@@ -108,7 +108,7 @@ class ChefPlayerReleaseTests(unittest.TestCase):
             ):
                 # Read the exact version shipped in the HTML: a CSS/JS cache
                 # bump must never break the HTTP route regression check.
-                references=re.findall(re.escape(stem)+r"\\?v=\\d+",page)
+                references=re.findall(re.escape(stem)+r"\?v=\d+",page)
                 self.assertEqual(len(references),1,(stem,references))
                 path=references[0]
                 result=self.chef.request(path)
