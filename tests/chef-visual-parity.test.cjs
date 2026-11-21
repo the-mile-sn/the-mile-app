@@ -17,7 +17,7 @@ test("Chef and Player share a system font, tokens and dark palette with no remot
  assert.equal((css.match(/\/\* THE MILE \/ Chef — canonical dark App foundation/g)||[]).length,1);
  assert.doesNotMatch(css,/background:#fafafa|background:#fafafb/);
  assert.match(html,/chef\.css\?v=19/);
- assert.match(html,/chef\.js\?v=24/);
+ assert.match(html,/chef\.js\?v=25/);
 });
 
 test("Chef login retains its identities, safe password fields and player floating labels",()=>{
@@ -237,9 +237,9 @@ test("Chef swipe reuses Player's 210/320ms directional gestures, native scroll a
  assert.match(js,/function finishChefGesture\(dx,done\)/);
  assert.match(js,/transform 210ms cubic-bezier\(\.2,\.8,\.2,1\)/);
  assert.match(js,/duration:320,easing:"cubic-bezier\(0\.2,0\.7,0\.2,1\)"/);
- assert.match(js,/const minSwipe=activeTab==="home"&&chefViewMode==="day"\?35:55/);
- assert.match(js,/Math\.abs\(dx\)>chefTouchStart\.width\*\.38/);
- assert.match(js,/Math\.abs\(speed\)>\.55/);
+ assert.match(js,/const minSwipe=isDay\?\(forwardDay\?30:35\):55/);
+ assert.match(js,/distance>width\*\.38/);
+ assert.match(js,/speed>\.55/);
  assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-\(homeDay\?8:22\)\)return/);
  assert.match(js,/if\(vertical>18&&vertical>horizontal\*1\.35\)return "vertical"/);
  assert.match(js,/chefViewMode==="week"&&!target\.closest\?\.\("\.chef-week-grid"\)/);
@@ -279,14 +279,14 @@ test("Chef recognises diagonal horizontal gestures without stealing genuine vert
  assert.match(js,/if\(intent!=="horizontal"\)return/);
  assert.match(js,/if\(event\.cancelable\)event\.preventDefault\(\)/);
  assert.doesNotMatch(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
- assert.match(js,/if\(Math\.abs\(dx\)<minSwipe\)\{finishChefGesture\(0\);return;\}/);
+ assert.match(js,/if\(distance<minSwipe\)return false/);
  assert.doesNotMatch(js,/Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
  assert.match(js,/target\.closest\?\.\("input,textarea,select/);
  assert.match(js,/if\(t\.clientX<22\|\|t\.clientX>innerWidth-\(homeDay\?8:22\)\)return/);
- assert.match(guide,/Swipe lateral e scroll vertical — correção de regressão/);
+ assert.match(guide,/Swipe lateral e scroll vertical — ajuste direcional/);
 });
 
-test("leftward next-day and rightward previous-day gestures are symmetric on Chef Dia",()=>{
+test("leftward and rightward swipes map to next/previous day without shared-angle assumptions",()=>{
  const vm=require("node:vm");
  const helper=js.match(/function chefSwipeIntent\(dx,dy\)\{[\s\S]*?\n\}/)?.[0];
  assert.ok(helper,"gesture intent helper exists");
@@ -304,4 +304,41 @@ test("leftward next-day and rightward previous-day gestures are symmetric on Che
  assert.match(css,/#screen\.chef-screen-home,[\s\S]*?touch-action:pan-y pinch-zoom/);
  assert.doesNotMatch(js,/Math\.abs\(dx\)<Math\.abs\(dy\)\*1\.4/);
  assert.doesNotMatch(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
+});
+
+test("forward-only diagonal tolerance is earlier, reverse remains strict, pure vertical stays native",()=>{
+ const vm=require("node:vm");
+ const extract=name=>{
+  const re=new RegExp("function "+name+"\\([^)]*\\)\\{[\\s\\S]*?\\n\\}");
+  const source=js.match(re)?.[0];
+  assert.ok(source,name+" is available as a pure helper");
+  return vm.runInNewContext(source+";"+name);
+ };
+ const intent=extract("chefSwipeIntent");
+ // Same moderate diagonal: forward takes lateral precedence, reverse uses
+ // the original vertical classifier because reverse already felt correct.
+ assert.equal(intent(-16,22),"horizontal");
+ assert.equal(intent(16,22),"vertical");
+ assert.equal(intent(-9,12),"horizontal");
+ assert.equal(intent(9,12),"pending","reverse keeps its existing activation angle");
+ for(const [dx,dy] of [[-3,40],[3,40],[-12,30],[12,30],[0,45]])
+  assert.equal(intent(dx,dy),"vertical","vertical pan "+dx+","+dy);
+ assert.equal(intent(-4,6),"pending","tiny diagonal is not captured");
+ assert.equal(intent(4,6),"pending","tiny reverse is not captured");
+ // Compare acceptance using exactly the function that touchend calls.
+ const commit=extract("chefSwipeShouldCommit");
+ assert.equal(commit(-120,450,360,true),true,"forward 30% threshold");
+ assert.equal(commit(120,450,360,true),false,"reverse retains 38% threshold");
+ assert.equal(commit(-70,140,360,true),true,"forward slightly slower flick");
+ assert.equal(commit(70,140,360,true),false,"reverse still uses 0.55px/ms");
+ assert.equal(commit(160,500,360,true),true,"reverse long swipe still works");
+ assert.equal(commit(-10,50,360,true),false,"short movement never flips day");
+ assert.equal(commit(-54,100,360,false),false,"week navigation keeps 55px minimum");
+ assert.equal(commit(-55,100,360,false),true,"week navigation keeps working");
+ assert.equal(commit(55,100,360,false),true,"week reverse unaffected");
+ assert.match(js,/if\(event\.cancelable\)event\.preventDefault\(\)/);
+ assert.match(js,/const commit=chefSwipeShouldCommit\(/);
+ assert.doesNotMatch(js,/chefSwipeIntent\(dx,dy\)!=="horizontal"/);
+ assert.match(guide,/retrocesso para o dia anterior.*mantém a deteção aprovada/);
+ assert.match(guide,/avançar ao dia seguinte/);
 });
