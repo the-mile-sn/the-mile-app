@@ -85,6 +85,29 @@ class PlanTranslationsTests(unittest.TestCase):
             "expected_candidate_hash":row["candidate_hash"]
         },**kw)
 
+    def test_approved_title_pattern_is_bound_for_postgres(self):
+        """PostgreSQL psycopg rejects bare % in raw SQL string literals."""
+        import app_translation_plans_v2 as plan_reviews
+
+        class Cursor:
+            def fetchall(self):
+                return []
+
+        class GuardConnection:
+            def execute(self, sql, params=()):
+                self_sql = sql.replace("?", "%s")
+                self_params = params
+                if "LIKE %s" not in self_sql:
+                    raise AssertionError("LIKE pattern must be parameterized")
+                if any(fragment in self_sql for fragment in
+                       ("meals/%/", "LIKE 'meals/", "%/options/%")):
+                    raise AssertionError("Literal SQL percent breaks psycopg")
+                return Cursor()
+
+        guarded = GuardConnection()
+        self.assertEqual(plan_reviews._approved_titles(guarded), {})
+        self.assertEqual(guarded.self_params, ("meals/%/options/%/title",))
+
     def test_only_authorized_admin_can_inspect_and_no_snapshot_is_exported(self):
         with patch.dict(os.environ,FLAG):
             item=self.index()
