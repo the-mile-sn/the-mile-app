@@ -4,6 +4,105 @@
 <nav id="tm-dashboard-return" class="tm-subpage-nav tm-dashboard-return" aria-label="Regresso ao início" hidden>
 <button type="button" id="tm-dashboard-return-button" class="tm-subpage-back tm-action-secondary" aria-label="Voltar ao início · Dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>Início</span></button>
 </nav>
+<section id="tm-admin-translations-page" class="tm-clinical-page tm-admin-translations-page" hidden aria-label="Central de Traduções"><div class="i18n-shell" id="i18n-app">
+
+  <section class="i18n-intro" aria-labelledby="i18n-title">
+    <div class="i18n-eyebrow">Gestão de conteúdos · Português → Inglês</div>
+    <h1 id="i18n-title">Traduções</h1>
+    <p>Revisão centralizada das traduções utilizadas nas apps de jogadores e chefs. Os conteúdos originais e as prescrições mantêm-se em português.</p>
+  </section>
+  <p id="i18n-feedback" class="i18n-feedback" role="status" aria-live="polite">A carregar…</p>
+  <section class="i18n-stats" id="i18n-stats" aria-label="Resumo de traduções" hidden></section>
+  <section class="i18n-library-panel" aria-labelledby="i18n-lib-title" hidden id="i18n-library-panel">
+    <div class="i18n-section-heading"><h2 id="i18n-lib-title">Bibliotecas</h2><span>EN · Gestão central</span></div>
+    <div id="i18n-libraries" class="i18n-library-grid"></div>
+  </section>
+  <section class="i18n-work-panel" id="i18n-work-panel" aria-labelledby="i18n-work-title" hidden>
+    <div class="i18n-section-heading i18n-work-heading">
+      <div><h2 id="i18n-work-title">Revisão manual</h2><p>Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.</p></div>
+      <button id="i18n-library-link" type="button" class="i18n-link">Abrir biblioteca</button>
+    </div>
+    <div class="i18n-toolbar">
+      <div id="i18n-tabs" role="group" aria-label="Biblioteca"></div>
+      <label>Estado
+        <select id="i18n-status">
+          <option value="all">Todos</option>
+          <option value="missing">Por traduzir</option>
+          <option value="legacy_review">Inglês existente · por rever</option>
+          <option value="pending">Por rever</option>
+          <option value="approved">Aprovados</option>
+          <option value="outdated">Desatualizados</option>
+        </select>
+      </label>
+      <label class="i18n-search">Pesquisar
+        <input type="search" id="i18n-search" maxlength="120" autocomplete="off" placeholder="Pesquisar conteúdos…">
+      </label>
+    </div>
+    <div id="i18n-results-count" class="i18n-results-count" aria-live="polite"></div>
+    <div id="i18n-results" class="i18n-results"></div>
+    <div class="i18n-pagination">
+      <button id="i18n-prev" type="button">Anterior</button>
+      <span id="i18n-page-indicator"></span>
+      <button id="i18n-next" type="button">Seguinte</button>
+    </div>
+  </section>
+  <section class="i18n-library-panel i18n-import-panel" aria-labelledby="i18n-import-title" id="i18n-import-panel">
+    <div class="i18n-section-heading">
+      <div><h2 id="i18n-import-title">Importar traduções</h2>
+        <p class="i18n-import-description">Sem API: descarrega um modelo da biblioteca selecionada, preenche apenas a coluna inglesa e importa propostas para revisão.</p>
+      </div>
+      <span>CSV · PT → EN</span>
+    </div>
+    <div class="i18n-import-controls">
+      <button type="button" id="i18n-export" class="i18n-secondary">Descarregar modelo CSV</button>
+      <label class="i18n-import-file" for="i18n-import-file">Escolher CSV
+        <input type="file" id="i18n-import-file" accept=".csv,text/csv">
+      </label>
+      <button type="button" id="i18n-import-check" class="i18n-secondary">Verificar importação</button>
+      <button type="button" id="i18n-import-commit" class="i18n-primary" disabled>Importar propostas</button>
+    </div>
+    <p id="i18n-import-feedback" class="i18n-feedback" role="status" aria-live="polite"></p>
+    <div id="i18n-import-preview" class="i18n-import-preview"></div>
+    <p class="i18n-import-disclaimer">Só são aceites textos que continuam iguais ao português original e ainda não têm uma tradução em revisão. A importação cria propostas pendentes: não substitui traduções anteriores nem aprova conteúdos.</p>
+  </section>
+  <section class="i18n-library-panel" aria-labelledby="i18n-auto-title">
+    <div class="i18n-section-heading"><h2 id="i18n-auto-title">Sugestões automáticas</h2>
+      <span>Não configuradas</span></div>
+    <p class="i18n-import-disclaimer">Esta opção será ligada à mesma revisão PT/EN quando existir uma API configurada e aprovada. Até lá, podes traduzir manualmente e importar CSV sem qualquer serviço externo ou custo de API.</p>
+  </section>
+  <section class="i18n-review" id="i18n-review" aria-labelledby="i18n-review-title" hidden>
+    <div class="i18n-review-heading">
+      <div><div class="i18n-eyebrow">Comparação e aprovação</div><h2 id="i18n-review-title">Rever tradução</h2></div>
+      <button type="button" id="i18n-close" class="i18n-quiet">Fechar</button>
+    </div>
+    <label class="i18n-field-label" for="i18n-fields">Texto apresentado nas apps
+      <select id="i18n-fields"></select>
+    </label>
+    <div class="i18n-compare">
+      <div class="i18n-source">
+        <h3>Português · original</h3><p id="i18n-source-text"></p>
+      </div>
+      <div class="i18n-target">
+        <label for="i18n-target-text">English · tradução proposta</label>
+        <textarea id="i18n-target-text" maxlength="10000" rows="4" spellcheck="true" aria-describedby="i18n-translation-state"></textarea>
+        <p id="i18n-translation-state"></p>
+      </div>
+    </div>
+    <div id="i18n-existing" class="i18n-existing" hidden>
+      <p>O inglês que já existe está preenchido acima. Confirma-o e guarda a proposta antes de aprovar; nada é aprovado automaticamente.</p>
+    </div>
+    <p id="i18n-review-feedback" role="status" aria-live="polite"></p>
+    <div class="i18n-actions">
+      <button type="button" id="i18n-propose" class="i18n-primary">Guardar proposta</button>
+      <button type="button" id="i18n-approve" class="i18n-secondary" disabled>Aprovar tradução revista</button>
+    </div>
+    <details id="i18n-history-panel">
+      <summary>Histórico de revisão</summary>
+      <div id="i18n-history"></div>
+    </details>
+  </section>
+  <footer>As traduções são representações adicionais. Não alteram dados alimentares, dosagens ou planos publicados.</footer>
+</div></section>
 <section id="tm-dashboard" class="tm-dashboard" hidden aria-label="Dashboard geral">
  <section class="tm-db-panel tm-db-daily-panel" aria-labelledby="tm-db-miniagenda-selected-date">
   <div class="tm-db-today-columns">
@@ -564,8 +663,8 @@
  <summary class="tm-recipe-access-summary"><span class="tm-menu-accordion-title"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.2c-2.8-2.1-6.2-2-9.5-.8v14.8c3.3-1.1 6.7-1.2 9.5.8m0-14.8c2.8-2.1 6.2-2 9.5-.8v14.8c-3.3-1.1-6.7-1.2-9.5.8m0-14.8v14.8"/></svg>Receitas</span><svg class="tm-menu-accordion-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
  <div class="tm-recipe-access-content"><div class="tm-recipe-picker"><div class="tm-recipe-search-wrap"><div class="tm-recipe-search-control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.2 4.2"/></svg><input id="profile-recipe-category-search" type="search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" placeholder="Pesquisar categoria…" autocomplete="off" aria-label="Pesquisar categorias de receitas" aria-controls="profile-recipe-category-results" aria-expanded="false"></div><div id="profile-recipe-category-results" class="tm-recipe-search-results" role="listbox" hidden></div></div><div id="profile-recipe-category-list" class="tm-recipe-selected-cards" aria-live="polite"></div></div><div class="tm-recipe-save-actions"><button type="button" id="profile-recipe-category-save">Guardar</button><span class="hint" id="profile-recipe-category-feedback" role="status"></span></div></div>
 </details>
-</section><div id="matrix" class="gridbox" hidden></div><details id="scenario-editor" class="calendar-panel" hidden><summary class="scenario-main-summary"><span class="scenario-main-title"><svg class="scenario-main-icon" viewBox="0 0 24 24" width="21" height="21" fill="none" aria-hidden="true" data-hugeicons="FootballIcon"><path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="1.5"/><path d="M11.7077 9.34893C11.882 9.21702 12.118 9.21702 12.2923 9.34893L14.545 11.054C14.7193 11.1859 14.7922 11.4197 14.7256 11.6332L13.8652 14.3921C13.7986 14.6055 13.6077 14.75 13.3923 14.75H10.6077C10.3923 14.75 10.2014 14.6055 10.1348 14.3921L9.27437 11.6332C9.20781 11.4197 9.28073 11.1859 9.45499 11.054L11.7077 9.34893Z" stroke="currentColor" stroke-width="1.5"/><path d="M12 9V5M15 11L19 9.5M14 15L16 18M10 14.5L8 17M9 11.5L5 10.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><path d="M9 2.5L12.0165 4.62241L15 2.5M2 12.7998L5.19655 10.4388L3.55548 6.72045M19.4703 18.8531L15.6158 18.1555L14.2655 22M20.0298 6.19586L18.8035 9.38978L22 11.7507M8.00992 21.4059L8.05142 17.1665L4.00331 17.21" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5"/></svg><span>Ajustes pós-jogo</span></span><svg class="scenario-main-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="scenario-diagnostics" hidden aria-hidden="true"><div class="scenario-preview"><h4>Pré-visualização de prescrição · Testes</h4><p class="hint">Consulta apenas de leitura. Não altera as prescrições nem a vista do jogador.</p><div class="scenario-preview-controls"><label>Data <input type="date" id="scenario-preview-date"></label><button type="button" id="scenario-preview-run">Consultar cores</button></div><p class="hint" id="scenario-preview-status" role="status"></p><div id="scenario-preview-output"></div><div class="scenario-week-preview"><h4>Comparação semanal · Testes</h4><p class="hint">Consulta de segunda a domingo, incluindo refeições peri. Compara também as cores dos Menus associados, sem os modificar.</p><button type="button" id="scenario-week-run">Consultar semana</button><p id="scenario-week-status" class="hint" role="status"></p><div id="scenario-week-output"></div><div class="scenario-week-preview"><h4>Auditoria nutricional · Planos validados vs publicados</h4><p class="hint">Diagnóstico apenas de leitura, sem alterar prescrições. Usa a data selecionada acima e apresenta os quatro nutrientes.</p><button type="button" id="scenario-parity-run">Comparar fontes nutricionais</button><p id="scenario-parity-status" class="hint" role="status"></p><div id="scenario-parity-output"></div></div></div></div></div><div id="scenario-cells" class="scenario-cells"></div><p id="scenario-feedback" class="hint" role="status"></p></details></div></div></main><script src="/admin-nav-shell.js?v=13" defer></script>
-<script src="/admin-microcycles.js?v=18341" defer></script><script src="/admin-dashboard.js?v=92" defer></script><script src="/admin-chat-v2.js?v=1" defer></script><script src="/admin-work.js?v=6" defer></script><script src="/admin-recipes.js?v=27" defer></script><script src="/admin-chefs.js?v=13" defer></script><script src="/admin-clients.js?v=7" defer></script>
+</section><div id="matrix" class="gridbox" hidden></div><details id="scenario-editor" class="calendar-panel" hidden><summary class="scenario-main-summary"><span class="scenario-main-title"><svg class="scenario-main-icon" viewBox="0 0 24 24" width="21" height="21" fill="none" aria-hidden="true" data-hugeicons="FootballIcon"><path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="1.5"/><path d="M11.7077 9.34893C11.882 9.21702 12.118 9.21702 12.2923 9.34893L14.545 11.054C14.7193 11.1859 14.7922 11.4197 14.7256 11.6332L13.8652 14.3921C13.7986 14.6055 13.6077 14.75 13.3923 14.75H10.6077C10.3923 14.75 10.2014 14.6055 10.1348 14.3921L9.27437 11.6332C9.20781 11.4197 9.28073 11.1859 9.45499 11.054L11.7077 9.34893Z" stroke="currentColor" stroke-width="1.5"/><path d="M12 9V5M15 11L19 9.5M14 15L16 18M10 14.5L8 17M9 11.5L5 10.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><path d="M9 2.5L12.0165 4.62241L15 2.5M2 12.7998L5.19655 10.4388L3.55548 6.72045M19.4703 18.8531L15.6158 18.1555L14.2655 22M20.0298 6.19586L18.8035 9.38978L22 11.7507M8.00992 21.4059L8.05142 17.1665L4.00331 17.21" stroke="currentColor" stroke-linejoin="round" stroke-width="1.5"/></svg><span>Ajustes pós-jogo</span></span><svg class="scenario-main-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="scenario-diagnostics" hidden aria-hidden="true"><div class="scenario-preview"><h4>Pré-visualização de prescrição · Testes</h4><p class="hint">Consulta apenas de leitura. Não altera as prescrições nem a vista do jogador.</p><div class="scenario-preview-controls"><label>Data <input type="date" id="scenario-preview-date"></label><button type="button" id="scenario-preview-run">Consultar cores</button></div><p class="hint" id="scenario-preview-status" role="status"></p><div id="scenario-preview-output"></div><div class="scenario-week-preview"><h4>Comparação semanal · Testes</h4><p class="hint">Consulta de segunda a domingo, incluindo refeições peri. Compara também as cores dos Menus associados, sem os modificar.</p><button type="button" id="scenario-week-run">Consultar semana</button><p id="scenario-week-status" class="hint" role="status"></p><div id="scenario-week-output"></div><div class="scenario-week-preview"><h4>Auditoria nutricional · Planos validados vs publicados</h4><p class="hint">Diagnóstico apenas de leitura, sem alterar prescrições. Usa a data selecionada acima e apresenta os quatro nutrientes.</p><button type="button" id="scenario-parity-run">Comparar fontes nutricionais</button><p id="scenario-parity-status" class="hint" role="status"></p><div id="scenario-parity-output"></div></div></div></div></div><div id="scenario-cells" class="scenario-cells"></div><p id="scenario-feedback" class="hint" role="status"></p></details></div></div></main><script src="/admin-nav-shell.js?v=14" defer></script>
+<script src="/admin-microcycles.js?v=18342" defer></script><script src="/admin-dashboard.js?v=93" defer></script><script src="/admin-chat-v2.js?v=1" defer></script><script src="/admin-work.js?v=6" defer></script><script src="/admin-recipes.js?v=27" defer></script><script src="/admin-chefs.js?v=13" defer></script><script src="/admin-clients.js?v=7" defer></script>
 <script src="/food-library.js?v=29" defer></script><script src="/visual-portions.js?v=12" defer></script>
 <script src="/create-plan.js?v=102" defer></script><script src="/tm-select.js?v=12" defer></script>
-<script src="/admin-mobile-nav.js?v=14" defer></script><script src="/admin-consumption.js?v=15" defer></script><script src="/admin-translations-shortcuts.js?v=1" defer></script></body></html>
+<script src="/admin-mobile-nav.js?v=14" defer></script><script src="/admin-consumption.js?v=15" defer></script><script src="/admin-translations-shortcuts.js?v=2" defer></script></body></html>
