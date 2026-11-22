@@ -112,6 +112,8 @@
  let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0;
  const updateBulkActions=()=>{
    const count=bulkSelected.size;
+   $("i18n-bulk-select-100").disabled=bulkBusy||
+     ![...$("i18n-bulk-items").children].some((row,i)=>!row.hidden&&!bulkSelected.has(i));
    $("i18n-bulk-select-all").checked=bulkRows.length>0&&count===bulkRows.length;
    $("i18n-bulk-select-all").indeterminate=count>0&&count<bulkRows.length;
    $("i18n-bulk-submit").textContent="Aprovar "+count+" selecionada"+(count===1?"":"s");
@@ -122,6 +124,7 @@
    bulkSeq++;
    if(bulkBusy)return;
    bulkRows=[];bulkSelected.clear();
+   $("i18n-bulk-select-100").disabled=true;
    $("i18n-bulk-review").hidden=true;
    $("i18n-bulk-items").replaceChildren();
    $("i18n-bulk-select-all").checked=false;
@@ -174,6 +177,7 @@
    if(chosen.some(item=>!item||item.field_path!=="display_name"))return;
    bulkBusy=true;
    $("i18n-bulk-submit").disabled=true;
+   $("i18n-bulk-select-100").disabled=true;
    $("i18n-bulk-open").disabled=true;
    $("i18n-bulk-close").disabled=true;
    let approved=0;
@@ -283,6 +287,8 @@
      msg("",false,"i18n-review-feedback");
      refreshDetail();
    };
+   // Records with one display field need no redundant dropdown.
+   $("i18n-field-picker").hidden=fields.length<=1;
    const select=$("i18n-fields");select.replaceChildren();
    for(const field of fields){
      const option=document.createElement("option");
@@ -399,6 +405,21 @@
    $("i18n-bulk-open").addEventListener("click",openBulk);
    $("i18n-bulk-close").addEventListener("click",resetBulk);
    $("i18n-bulk-submit").addEventListener("click",submitBulk);
+   $("i18n-bulk-select-100").addEventListener("click",()=>{
+     if(bulkBusy)return;
+     const rows=$("i18n-bulk-items").children;
+     let added=0;
+     for(let i=0;i<rows.length&&added<100;i++){
+       if(rows[i].hidden||bulkSelected.has(i))continue;
+       bulkSelected.add(i);
+       rows[i].querySelector('input[type="checkbox"]').checked=true;
+       added++;
+     }
+     if(added){
+       $("i18n-bulk-reviewed").checked=false;
+       updateBulkActions();
+     }
+   });
    $("i18n-bulk-select-all").addEventListener("change",event=>{
      if(bulkBusy)return;
      bulkSelected=event.target.checked?
@@ -417,6 +438,7 @@
        row.hidden=!!search&&!((entry.source_text+" "+entry.translated_text)
          .toLocaleLowerCase("pt-PT").includes(search));
      }
+     updateBulkActions();
    });
    $("i18n-close").addEventListener("click",closeReview);
    $("i18n-library-link").addEventListener("click",()=>{
