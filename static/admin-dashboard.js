@@ -334,9 +334,9 @@ function ensurePlanningOnlyView(){
   });
   translationsAssetLoad=(async()=>{
    const css=document.createElement("link");css.rel="stylesheet";
-   css.href="/admin-translations-embedded.css?v=1";
+   css.href="/admin-translations-embedded.css?v=2";
    await load(css);
-   for(const src of ["/admin-translations.js?v=3","/admin-translations-import.js?v=3"]){
+   for(const src of ["/admin-translations.js?v=4","/admin-translations-import.js?v=3"]){
     const script=document.createElement("script");script.src=src;script.async=false;
     await load(script);
    }
@@ -346,16 +346,14 @@ function ensurePlanningOnlyView(){
  async function openTranslations(kind){
   if($("admin-workspace").hidden||!translationsPage)return;
   closeClinical();section.hidden=true;playersPage.hidden=true;legacy.hidden=true;
-  navActive(foodLibraryBtn);
+  // Traduções is a first-level Admin destination, not a Biblioteca subsection.
+  // navActive alone clears any active library submenu and drives mobile selection.
+  navActive(translationsBtn);
   if(foodLibraryPage)foodLibraryPage.hidden=true;
   if(supplementLibraryPage)supplementLibraryPage.hidden=true;
   if(recipesPage)recipesPage.hidden=true;
   if(recipeLibraryPage)recipeLibraryPage.hidden=true;
-  for(const btn of [foodFoodsBtn,foodPortionsBtn,foodSupplementsBtn,dishesBtn,recipeLibraryBtn]){
-   if(!btn)continue;btn.classList.remove("is-active");btn.removeAttribute("aria-current");
-  }
   translationsPage.hidden=false;
-  if(translationsBtn){translationsBtn.classList.add("is-active");translationsBtn.setAttribute("aria-current","page");}
   window.scrollTo({top:0,behavior:"smooth"});
   try{
    await loadTranslationsAssets();
