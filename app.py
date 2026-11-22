@@ -793,6 +793,7 @@ def application(env, start_response):
         translation_admin_assets = {
             '/admin-translations': ('admin-translations.html','text/html; charset=utf-8'),
             '/admin-translations.js': ('admin-translations.js','text/javascript; charset=utf-8'),
+            '/admin-translations-import.js': ('admin-translations-import.js','text/javascript; charset=utf-8'),
             '/admin-translations.css': ('admin-translations.css','text/css; charset=utf-8'),
         }
         static_files = {
@@ -942,6 +943,8 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/history',
                 '/api/v2/admin/i18n/propose',
                 '/api/v2/admin/i18n/approve',
+                '/api/v2/admin/i18n/import/preview',
+                '/api/v2/admin/i18n/import/submit',
             ):
                 if (SITE_ROLE == 'player' or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
