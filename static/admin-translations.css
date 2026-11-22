@@ -169,3 +169,17 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-plan-suggestion p{font-size:13px;line-height:1.5;margin:7px 0 9px;overflow-wrap:anywhere}
 .i18n-plan-suggestion button{font-size:12px;min-height:36px}
 @media(max-width:720px){.i18n-plan-audit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Contextual Planos shared-text queue: compact and strictly within Admin. */
+.i18n-plan-common{margin:12px 0 18px;padding:14px;border-radius:12px;background:var(--tm-ui-card);min-width:0}
+.i18n-plan-common-search{display:block;width:100%;box-sizing:border-box;max-width:500px;padding:10px 12px;margin:8px 0 12px;border:0;border-radius:9px;background:var(--tm-ui-subcard);color:var(--tm-ui-text);font:inherit}
+.i18n-plan-common-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:330px;overflow-y:auto;overscroll-behavior:contain}
+.i18n-plan-common-item{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px;min-width:0;min-height:54px;padding:10px 12px;background:var(--tm-ui-subcard);border:0;border-radius:10px;color:var(--tm-ui-text);cursor:pointer;font:inherit}
+.i18n-plan-common-item strong{font-size:12px;line-height:1.4;font-weight:600;overflow-wrap:anywhere}
+.i18n-plan-common-item small{font-size:11px;line-height:1.4;color:var(--tm-ui-muted);overflow-wrap:anywhere}
+.i18n-plan-common-detail{margin-top:14px;padding:12px;border-radius:12px;background:var(--tm-ui-subcard);min-width:0}
+.i18n-plan-common-detail:empty{display:none}
+.i18n-plan-common-detail .i18n-bulk-attestation{font-size:12px;flex:1;display:flex;align-items:flex-start;gap:8px}
+.i18n-plan-common-detail .i18n-feedback{font-size:12px;margin:9px 0 0}
+@media(max-width:720px){.i18n-plan-common-list{grid-template-columns:1fr}.i18n-plan-common{padding:12px}}
