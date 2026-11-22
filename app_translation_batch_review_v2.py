@@ -63,7 +63,9 @@ def preview(c, actor, entity_kind="food"):
             if len(pairs)>MAX_PREVIEW:
                 raise BatchError(413,"translation_batch_too_large")
     pairs.sort(key=lambda item:(item["source_text"].casefold(),item["entity_id"]))
-    return {"entity_kind":entity_kind,"status":"awaiting_review","total":len(pairs),
+    return {"entity_kind":entity_kind,
+            "status":"pending" if entity_kind=="food" else "awaiting_review",
+            "total":len(pairs),
             "items":pairs,"approved":False}
 
 
