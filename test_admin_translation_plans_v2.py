@@ -115,6 +115,8 @@ class PlanTranslationsTests(unittest.TestCase):
             self.assertEqual(Client().request(ROOT+"/fields?publication_ref="+ref)["status"],401)
             with patch.object(app,"SITE_ROLE","player"):
                 self.assertEqual(self.call()["status"],404)
+            with patch.object(app,"SITE_ROLE","chef"):
+                self.assertEqual(self.call()["status"],404)
         with patch.dict(os.environ,{"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
             self.assertEqual(self.call()["status"],404)
 
