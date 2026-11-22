@@ -80,7 +80,7 @@
      button.append(create("strong","",group.label));
      button.append(create("span","",group.record_count===null?
        "Sem registos":group.record_count+" registos"+
-         (group.kind==="plan"?" · Em preparação":"")));
+         ""));
      lib.append(button);
    }
    $("i18n-library-panel").hidden=false;
@@ -280,6 +280,9 @@
    if(!["food","dish","recipe","supplement"].includes(state.kind)||
        (bulkKind!==null&&bulkKind!==state.kind))resetBulk();
    $("i18n-plan-stage").hidden=!isPlan;
+   $("i18n-results").hidden=isPlan;
+   $("i18n-results-count").hidden=isPlan;
+   $("i18n-prev").parentElement.hidden=isPlan;
    $("i18n-import-panel").hidden=isPlan;
    $("i18n-work-panel").hidden=false;
    $("i18n-work-panel").dataset.planMode=isPlan?"1":"0";
@@ -287,8 +290,12 @@
    if(isPlan){
      closeReview();
      msg("");
+     if(window.tmI18nPlans?.load){
+       await window.tmI18nPlans.load({csrfToken:csrf,status:state.status,query:state.query});
+     }else msg("Não foi possível carregar o módulo privado dos Planos.",true);
      return;
    }
+   window.tmI18nPlans?.hide?.();
    msg("A carregar conteúdos…");
    try{
      const params=queryString({
