@@ -929,7 +929,7 @@ def application(env, start_response):
             # Isolated, opt-in Backoffice translations. No change to
             # existing library APIs, plans or app-language preferences.
             if path in translation_admin_assets:
-                if (SITE_ROLE == 'player' or method != 'GET' or
+                if (SITE_ROLE != 'admin' or method != 'GET' or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
                     raise Problem(404,'not_found')
                 if not user:
@@ -966,7 +966,7 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/plans/propose',
                 '/api/v2/admin/i18n/plans/approve',
             ):
-                if (SITE_ROLE == 'player' or
+                if (SITE_ROLE != 'admin' or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
                     raise Problem(404,'not_found')
                 if not user:
