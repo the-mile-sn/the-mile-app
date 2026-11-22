@@ -104,7 +104,8 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
             self.assertEqual(summary["status"],200,summary)
             by_kind={entry["kind"]:entry for entry in summary["body"]["libraries"]}
             self.assertEqual(by_kind["dish"]["statuses"]["legacy_review"],1)
-            self.assertIsNone(by_kind["plan"]["record_count"])
+            self.assertEqual(by_kind["plan"]["record_count"],0)
+            self.assertTrue(by_kind["plan"]["integrated"])
             catalog=self.admin.request(
                 "/api/v2/admin/i18n/catalog?entity_kind=dish&status=legacy_review")
             self.assertEqual(catalog["status"],200,catalog)

@@ -10,7 +10,7 @@ const zero={missing:1,legacy_review:0,pending:0,approved:0,outdated:0};
 const libraries=["food","dish","recipe","recipe_category","supplement"].map((kind)=>({
   kind,label:kind,integrated:true,record_count:1,field_count:1,statuses:zero,
 }));
-const stats={language:"en",statuses:zero,libraries:[...libraries,{kind:"plan",label:"Planos alimentares publicados",integrated:false,record_count:9,field_count:null,statuses:null}]};
+const stats={language:"en",statuses:zero,libraries:[...libraries,{kind:"plan",label:"Planos alimentares publicados",integrated:true,record_count:1,field_count:1,statuses:{...zero}}]};
 const single=(kind)=>({
   entity_kind:kind,entity_id:"food1",field_path:"display_name",
   source_text:"Arroz branco",category:"Cereais",state:"missing",
@@ -23,6 +23,19 @@ try{
     const page=await browser.newPage({viewport:{width,height},acceptDownloads:true});
     let authenticated=false;
     const requests=[];
+    const publicRef="a".repeat(64);
+    let planApproved=false,planPending=false;
+    const makePlanField=()=>({field_path:"meals/0/options/0/title",
+      field_label:"Título da opção",group:"Pequeno almoço · Opção 1",
+      sensitive:false,source_text:"Opção 1",source_hash:"b".repeat(64),
+      translated_text:planPending?"Option 1":"",
+      candidate_hash:planPending?"c".repeat(64):null,
+      status:planApproved?"approved":planPending?"pending":"missing"});
+    const planPublication={publication_ref:publicRef,plan_type:"Plano azul",
+      player_label:"Atleta fictício",state:"published",published_at:100,
+      field_count:1,linked_food_count:1,
+      statuses:{missing:planPending?0:1,pending:planPending&&!planApproved?1:0,
+        approved:planApproved?1:0,outdated:0}};
     await page.route("**/api/**",async route=>{
       const url=new URL(route.request().url()),path=url.pathname;
       requests.push(path);
@@ -32,6 +45,26 @@ try{
            csrf:"test-csrf"}:{error:"unauthorized"},authenticated?200:401));
       }else if(path==="/api/v2/admin/i18n/overview"){
         await route.fulfill(fmt(stats));
+      }else if(path==="/api/v2/admin/i18n/plans"){
+        await route.fulfill(fmt({language:"en",items:[planPublication],total:1,
+          scope:"published_versions_only",csv_export:false}));
+      }else if(path==="/api/v2/admin/i18n/plans/fields"){
+        assert.equal(url.searchParams.get("publication_ref"),publicRef);
+        await route.fulfill(fmt({publication:planPublication,fields:[makePlanField()],
+          policy:"manual_private_review_no_csv_no_external_api"}));
+      }else if(path==="/api/v2/admin/i18n/plans/propose"){
+        const payload=route.request().postDataJSON();
+        assert.equal(payload.publication_ref,publicRef);
+        assert.equal(payload.translated_text,"Option 1");
+        assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
+        planPending=true;
+        await route.fulfill(fmt({status:"pending"},201));
+      }else if(path==="/api/v2/admin/i18n/plans/approve"){
+        const payload=route.request().postDataJSON();
+        assert.equal(payload.expected_candidate_hash,"c".repeat(64));
+        assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
+        planApproved=true;
+        await route.fulfill(fmt({status:"approved"}));
       }else if(path==="/api/v2/admin/i18n/catalog"){
         const kind=url.searchParams.get("entity_kind")||"food";
         await route.fulfill(fmt({library:kind,total:1,page:1,page_size:25,
@@ -123,7 +156,20 @@ try{
     assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Planos");
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
-    assert.equal(await page.locator("#i18n-plan-stage .i18n-status-pill").textContent(),"Em preparação");
+    await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
+    assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),1);
+    await page.locator("#i18n-plan-items .i18n-plan-item").click();
+    await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
+    assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
+    assert.equal(await page.locator("#i18n-plan-detail .i18n-primary").isDisabled(),true);
+    await page.locator("#i18n-plan-detail textarea").fill("Option 1");
+    await page.locator("#i18n-plan-detail .i18n-secondary").click();
+    await page.getByText("Proposta guardada. Falta aprovação.").waitFor();
+    assert.equal(planPending,true);
+    await page.locator("#i18n-plan-detail .i18n-plan-field-actions input").check();
+    await page.locator("#i18n-plan-detail .i18n-primary").click();
+    await page.getByText("Tradução aprovada.").waitFor();
+    assert.equal(planApproved,true);
     assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-stage-grid").count(),0);
     assert.equal(await page.locator("#i18n-library-link").textContent(),"Abrir Planos");
     assert.equal(requests.filter(p=>p.includes("/api/v2/admin/i18n/import/")).length,0);

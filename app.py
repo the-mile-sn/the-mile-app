@@ -794,6 +794,7 @@ def application(env, start_response):
             '/admin-translations': ('admin-translations.html','text/html; charset=utf-8'),
             '/admin-translations.js': ('admin-translations.js','text/javascript; charset=utf-8'),
             '/admin-translations-import.js': ('admin-translations-import.js','text/javascript; charset=utf-8'),
+            '/admin-translations-plans.js': ('admin-translations-plans.js','text/javascript; charset=utf-8'),
             '/admin-translations.css': ('admin-translations.css','text/css; charset=utf-8'),
             '/admin-translations-embedded.css': ('admin-translations-embedded.css','text/css; charset=utf-8'),
         }
@@ -928,7 +929,7 @@ def application(env, start_response):
             # Isolated, opt-in Backoffice translations. No change to
             # existing library APIs, plans or app-language preferences.
             if path in translation_admin_assets:
-                if (SITE_ROLE == 'player' or method != 'GET' or
+                if (SITE_ROLE not in ('admin','both') or method != 'GET' or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
                     raise Problem(404,'not_found')
                 if not user:
@@ -939,7 +940,7 @@ def application(env, start_response):
                     # inside the native admin workspace, never a second page.
                     params = parse_qs(env.get('QUERY_STRING',''),keep_blank_values=True)
                     kind = params.get('entity_kind',[''])[0]
-                    allowed = ('food','dish','recipe','recipe_category','supplement')
+                    allowed = ('food','dish','recipe','recipe_category','supplement','plan')
                     target = '/?nav=translations'
                     if kind in allowed:
                         target += '&entity_kind=' + kind
@@ -959,8 +960,13 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/batch/approve',
                 '/api/v2/admin/i18n/import/preview',
                 '/api/v2/admin/i18n/import/submit',
+                '/api/v2/admin/i18n/plans',
+                '/api/v2/admin/i18n/plans/fields',
+                '/api/v2/admin/i18n/plans/history',
+                '/api/v2/admin/i18n/plans/propose',
+                '/api/v2/admin/i18n/plans/approve',
             ):
-                if (SITE_ROLE == 'player' or
+                if (SITE_ROLE not in ('admin','both') or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):
                     raise Problem(404,'not_found')
                 if not user:
