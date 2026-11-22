@@ -113,8 +113,11 @@
    $("i18n-work-help").textContent=isPlan?
      "Gestão central das traduções dos Planos. A integração de textos próprios está em preparação.":
      "Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.";
-   closeReview();
-   if(isPlan){msg("");return;}
+   if(isPlan){
+     closeReview();
+     msg("");
+     return;
+   }
    msg("A carregar conteúdos…");
    try{
      const params=queryString({
