@@ -173,5 +173,135 @@ class FoodBatchReviewTests(unittest.TestCase):
             self.assertEqual(self.preview()["body"]["total"],0)
 
 
+
+class DishBatchReviewTests(unittest.TestCase):
+    """Legacy dish English can enter the approved translation store only on POST."""
+
+    def setUp(self):
+        test_app.PortalTest.setUp(self)
+        self.dishes=[
+            ("dish-bulk-1","Arroz com frango","Chicken and rice"),
+            ("dish-bulk-2","Sopa de legumes","Vegetable soup"),
+            ("dish-bulk-3","Peixe grelhado","Grilled fish"),
+        ]
+        with app.connect() as c:
+            translations.initialize(c)
+            for ident,pt,en in self.dishes:
+                c.execute("""INSERT INTO v2_dish_library
+                    (id,category,name_pt,name_en,image_filename,active)
+                    VALUES (?,'Refeições',?,?, 'placeholder',1)""",(ident,pt,en))
+            c.commit()
+
+    def preview(self):
+        return self.admin.request(ROOT+"/batch/preview?entity_kind=dish")
+
+    def post(self,rows,**kw):
+        return self.admin.request(ROOT+"/batch/approve","POST",
+            {"entity_kind":"dish","rows":rows},**kw)
+
+    @staticmethod
+    def rows(items):
+        return [{k:item[k] for k in ("entity_id","field_path",
+                     "expected_source_hash","expected_candidate_hash")}
+                for item in items]
+
+    def test_legacy_preview_is_read_only_without_extra_fields(self):
+        with patch.dict(os.environ,FLAG):
+            response=self.preview()
+            self.assertEqual(response["status"],200,response)
+            self.assertEqual(response["body"]["entity_kind"],"dish")
+            self.assertEqual(response["body"]["total"],3)
+            entries=response["body"]["items"]
+            self.assertTrue(all(e["review_state"]=="legacy_review" for e in entries))
+            self.assertTrue(all(e["field_path"]=="name_pt" for e in entries))
+            self.assertEqual(entries[0]["translated_text"],"Chicken and rice")
+            with app.connect() as c:
+                self.assertEqual(c.execute("SELECT COUNT(*) FROM v2_content_translations"
+                         ).fetchone()[0],0)
+            self.assertEqual(self.admin.request(
+                ROOT+"/batch/preview?entity_kind=recipe")["status"],400)
+            self.assertEqual(self.admin.request(
+                ROOT+"/batch/preview?entity_kind=dish&extra=1")["status"],400)
+
+    def test_explicitly_approved_legacy_and_pending_have_history(self):
+        with patch.dict(os.environ,FLAG):
+            # Dish 2 already has a pending proposal edited by the reviewer.
+            proposed=self.admin.request(ROOT+"/propose","POST",{
+                "entity_kind":"dish","entity_id":"dish-bulk-2",
+                "field_path":"name_pt","language":"en",
+                "expected_source_hash":self.digest("Sopa de legumes"),
+                "translated_text":"Mixed vegetable soup"})
+            self.assertEqual(proposed["status"],201,proposed)
+            entries=self.preview()["body"]["items"]
+            self.assertEqual(len(entries),3)
+            self.assertEqual([e["review_state"] for e in entries],
+                             ["legacy_review","legacy_review","pending"])
+            self.assertEqual(entries[2]["translated_text"],"Mixed vegetable soup")
+            selected=self.rows(entries[:1]+entries[2:])
+            answer=self.post(selected)
+            self.assertEqual(answer["status"],200,answer)
+            self.assertEqual(answer["body"]["approved"],2)
+            with app.connect() as c:
+                stored=c.execute("""SELECT entity_id, translated_text, status
+                    FROM v2_content_translations ORDER BY entity_id""").fetchall()
+                self.assertEqual([tuple(r) for r in stored],[
+                    ("dish-bulk-1","Chicken and rice","approved"),
+                    ("dish-bulk-2","Mixed vegetable soup","approved"),
+                ])
+                history=c.execute("""SELECT entity_id, action
+                    FROM v2_content_translation_history ORDER BY entity_id,action
+                    """).fetchall()
+                self.assertEqual([tuple(row) for row in history],[
+                    ("dish-bulk-1","approved"),("dish-bulk-1","submitted"),
+                    ("dish-bulk-2","approved"),("dish-bulk-2","submitted"),
+                ])
+                originals=c.execute("""SELECT name_pt,name_en FROM v2_dish_library
+                    WHERE id='dish-bulk-2'""").fetchone()
+                self.assertEqual(tuple(originals),
+                                 ("Sopa de legumes","Vegetable soup"))
+            # Approved records disappear from the next batch; the third remains.
+            self.assertEqual(self.preview()["body"]["total"],1)
+            self.assertEqual(self.post(selected)["status"],409)
+
+    def test_changed_legacy_candidate_rolls_back_whole_batch(self):
+        with patch.dict(os.environ,FLAG):
+            entries=self.preview()["body"]["items"]
+            chosen=self.rows(entries)
+            with app.connect() as c:
+                c.execute("UPDATE v2_dish_library SET name_en='Grilled sea fish' "
+                          "WHERE id='dish-bulk-3'")
+                c.commit()
+            self.assertEqual(self.post(chosen)["status"],409)
+            with app.connect() as c:
+                self.assertEqual(c.execute("SELECT COUNT(*) FROM v2_content_translations"
+                    ).fetchone()[0],0)
+                self.assertEqual(c.execute(
+                    "SELECT COUNT(*) FROM v2_content_translation_history"
+                    ).fetchone()[0],0)
+
+    def test_wrong_fields_duplicate_rows_and_permissions_fail_closed(self):
+        with patch.dict(os.environ,FLAG):
+            row=self.rows(self.preview()["body"]["items"])[0]
+            for rows in ([{**row,"field_path":"display_name"}],
+                         [{**row,"expected_candidate_hash":"0"*64}],
+                         [row,row],[row]*101):
+                with self.subTest(size=len(rows)):
+                    self.assertIn(self.post(rows)["status"],(400,409))
+            self.assertEqual(self.post([row],csrf=False)["status"],403)
+            self.assertEqual(self.post([row],origin="https://invalid.example")["status"],403)
+            self.assertEqual(test_app.Client().request(
+                ROOT+"/batch/preview?entity_kind=dish")["status"],401)
+            self.assertEqual(self.admin.request(ROOT+"/batch/approve","POST",
+                {"entity_kind":"recipe","rows":[row]})["status"],400)
+            with app.connect() as c:
+                self.assertEqual(c.execute("SELECT COUNT(*) FROM v2_content_translations"
+                    ).fetchone()[0],0)
+
+    @staticmethod
+    def digest(value):
+        return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+
 if __name__=="__main__":
     unittest.main()
