@@ -79,15 +79,8 @@
      }
      button.append(create("strong","",group.label));
      button.append(create("span","",group.record_count===null?
-       "Estrutura ainda não disponível":group.record_count+" registos"));
-     if(group.integrated){
-       button.append(create("small","",
-         group.field_count+" textos visíveis · "+
-         group.statuses.approved+" aprovados · "+
-         group.statuses.legacy_review+" traduções antigas por rever"));
-     }else{
-       button.append(create("small","","Tradução dos textos próprios do plano · em preparação"));
-     }
+       "Sem registos":group.record_count+" registos"+
+         (group.kind==="plan"?" · Em preparação":"")));
      lib.append(button);
    }
    $("i18n-library-panel").hidden=false;
@@ -124,10 +117,7 @@
    $("i18n-import-panel").hidden=isPlan;
    $("i18n-work-panel").hidden=false;
    $("i18n-work-panel").dataset.planMode=isPlan?"1":"0";
-   $("i18n-work-title").textContent=isPlan?"Planos · Traduções":"Revisão manual";
-   $("i18n-work-help").textContent=isPlan?
-     "Gestão central das traduções dos Planos. A integração de textos próprios está em preparação.":
-     "Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.";
+   $("i18n-work-title").textContent=isPlan?"Planos":"Revisão manual";
    if(isPlan){
      closeReview();
      msg("");
@@ -150,9 +140,8 @@
        const b=create("button","i18n-result");b.type="button";
        const main=create("span","");
        const count=entry.fields?.length||1;
-       main.append(create("strong","",entry.source_text),
-         create("small","",entry.category+" · "+count+
-           (count===1?" texto visível":" textos visíveis")));
+       main.append(create("strong","",entry.source_text));
+       if(entry.category)main.append(create("small","",entry.category));
        const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
        const displayedState=state.status!=="all" ? state.status :
          (fieldStates.size>1 ? "mixed" : entry.state);
@@ -309,7 +298,6 @@
      activate(event.detail?.kind);
    });
    $("i18n-close").addEventListener("click",closeReview);
-   $("i18n-plan-open-library").addEventListener("click",()=>window.tmOpenAdminPlans?.());
    $("i18n-library-link").addEventListener("click",()=>{
      if(!embedded)return;
      const library=$("i18n-library-link").dataset.libraryKind;
