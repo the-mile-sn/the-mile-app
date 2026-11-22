@@ -795,6 +795,7 @@ def application(env, start_response):
             '/admin-translations.js': ('admin-translations.js','text/javascript; charset=utf-8'),
             '/admin-translations-import.js': ('admin-translations-import.js','text/javascript; charset=utf-8'),
             '/admin-translations.css': ('admin-translations.css','text/css; charset=utf-8'),
+            '/admin-translations-embedded.css': ('admin-translations-embedded.css','text/css; charset=utf-8'),
         }
         static_files = {
             '/': 'admin-microcycles.html' if SITE_ROLE == 'admin' and not env.get('QUERY_STRING','').startswith('activate=') else 'index.html', '/app.js': 'app.js', '/style.css': 'style.css', '/logo.png': 'logo.png',
@@ -933,6 +934,17 @@ def application(env, start_response):
                 if not user:
                     raise Problem(401,'unauthorized')
                 admin(user)
+                if path == '/admin-translations':
+                    # Compatibility for saved links: always open the Central
+                    # inside the native admin workspace, never a second page.
+                    params = parse_qs(env.get('QUERY_STRING',''),keep_blank_values=True)
+                    kind = params.get('entity_kind',[''])[0]
+                    allowed = ('food','dish','recipe','recipe_category','supplement')
+                    target = '/?nav=translations'
+                    if kind in allowed:
+                        target += '&entity_kind=' + kind
+                    headers.extend([('Location',target),('Cache-Control','no-store')])
+                    return respond(303,b'','text/plain; charset=utf-8')
                 asset, mime = translation_admin_assets[path]
                 return respond(200, (ROOT / 'static' / asset).read_bytes(), mime)
 
