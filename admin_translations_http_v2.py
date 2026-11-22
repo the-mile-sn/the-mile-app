@@ -64,9 +64,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
         review._admin(c, user)
         if method == "GET":
             if path == ROOT + "/batch/preview":
-                if query:
-                    raise APIError(400,"invalid_translation_query")
-                return 200,batch.preview(c,user)
+                q=_query(query or {}, ("entity_kind",))
+                return 200,batch.preview(c,user,q.get("entity_kind","food"))
             if path == ROOT + "/overview":
                 if query:
                     raise APIError(400, "invalid_translation_query")
