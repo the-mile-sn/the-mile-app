@@ -7,6 +7,7 @@ The separate admin HTTP boundary enforces session, origin and CSRF.
 import hashlib
 import json
 import re
+from collections import Counter
 
 import app_translation_admin_v2 as admin
 import content_translations_v2 as store
@@ -17,6 +18,8 @@ _NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 _UNIT = re.compile(r"(?<![A-Za-z])(?:kg|mg|mcg|µg|g|ml|l|kcal)\b|%",re.I)
 MAX_PUBLICATIONS = 2000
 MAX_FIELDS = 4000
+# Only unambiguous unit-only display quantities qualify for a suggested rendering.
+_PIECE_QUANTITY = re.compile(r"^(\d+(?:[.,]\d+)?)\s*(?:un\.?|unid\.?|unidades?)\s*(?:/\s*(\d+(?:[.,]\d+)?)\s*(g|mg|ml|kg))?$", re.I)
 
 
 class PlanTranslationError(Exception):
@@ -69,11 +72,12 @@ def _fields(plan, food_names):
     linked = 0
     deferred = 0
 
-    def add(path, text, label, group, sensitive):
+    def add(path, text, label, group, sensitive, field_kind):
         if not isinstance(text, str) or not text.strip():
             return
         fields.append({"field_path":path, "source_text":text.strip(),
                        "field_label":label, "group":group,
+                       "field_kind":field_kind,
                        "sensitive":bool(sensitive)})
         if len(fields) > MAX_FIELDS:
             raise PlanTranslationError(413, "plan_translation_field_limit")
@@ -88,31 +92,40 @@ def _fields(plan, food_names):
             prefix = f"meals/{mi}/options/{oi}"
             group = f"{meal_label} · Opção {oi + 1}"
             add(prefix + "/title", option.get("title"),
-                "Título da opção", group, False)
+                "Título da opção", group, False, "option_title")
             for ni, note in enumerate(option.get("notes") or []):
                 add(prefix + f"/notes/{ni}", note,
-                    f"Nota clínica ou individual · {ni + 1}", group, True)
+                    f"Nota clínica ou individual · {ni + 1}", group, True,
+                    "individual_note")
             for fi, food in enumerate(option.get("foods") or []):
                 if not isinstance(food, dict):
                     continue
                 fpath = prefix + f"/foods/{fi}"
                 if food.get("kind", "food") == "supplement":
                     add(fpath + "/label", food.get("label"),
-                        f"Suplemento · texto {fi + 1}", group, True)
+                        f"Suplemento · texto {fi + 1}", group, True,
+                        "supplement_label")
                 else:
                     fid = str(food.get("id") or "")
                     text = food.get("display_name")
                     canon = food_names.get(fid)
-                    if canon is not None:
+                    if canon is not None and (
+                            not isinstance(text, str) or not text.strip() or
+                            text.strip() == canon.strip()):
                         linked += 1
                     if isinstance(text, str) and text.strip() and (
                             not canon or text.strip() != canon.strip()):
+                        alternative = food.get("alternative_to") is not None
                         add(fpath + "/display_name", text,
-                            f"Alimento personalizado · {fi + 1}", group, True)
+                            (f"Alternativa personalizada · {fi + 1}" if alternative
+                             else f"Apresentação personalizada · {fi + 1}"),
+                            group, True,
+                            "alternative_override" if alternative else "food_override")
                 qty = food.get("display_quantity")
                 if isinstance(qty, str) and qty.strip():
                     add(fpath + "/display_quantity", qty,
-                        f"Quantidade apresentada · {fi + 1}", group, True)
+                        f"Quantidade apresentada · {fi + 1}", group, True,
+                        "display_quantity")
     return fields, linked, deferred
 
 
