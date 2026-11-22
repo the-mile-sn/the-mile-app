@@ -7,6 +7,7 @@ The separate admin HTTP boundary enforces session, origin and CSRF.
 import hashlib
 import json
 import re
+from collections import Counter
 
 import app_translation_admin_v2 as admin
 import content_translations_v2 as store
@@ -17,6 +18,8 @@ _NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 _UNIT = re.compile(r"(?<![A-Za-z])(?:kg|mg|mcg|µg|g|ml|l|kcal)\b|%",re.I)
 MAX_PUBLICATIONS = 2000
 MAX_FIELDS = 4000
+# Only unambiguous unit-only display quantities qualify for a suggested rendering.
+_PIECE_QUANTITY = re.compile(r"^(\d+(?:[.,]\d+)?)\s*(?:un\.?|unid\.?|unidades?)\s*(?:/\s*(\d+(?:[.,]\d+)?)\s*(g|mg|ml|kg))?$", re.I)
 
 
 class PlanTranslationError(Exception):
@@ -69,11 +72,12 @@ def _fields(plan, food_names):
     linked = 0
     deferred = 0
 
-    def add(path, text, label, group, sensitive):
+    def add(path, text, label, group, sensitive, field_kind):
         if not isinstance(text, str) or not text.strip():
             return
         fields.append({"field_path":path, "source_text":text.strip(),
                        "field_label":label, "group":group,
+                       "field_kind":field_kind,
                        "sensitive":bool(sensitive)})
         if len(fields) > MAX_FIELDS:
             raise PlanTranslationError(413, "plan_translation_field_limit")
@@ -88,31 +92,40 @@ def _fields(plan, food_names):
             prefix = f"meals/{mi}/options/{oi}"
             group = f"{meal_label} · Opção {oi + 1}"
             add(prefix + "/title", option.get("title"),
-                "Título da opção", group, False)
+                "Título da opção", group, False, "option_title")
             for ni, note in enumerate(option.get("notes") or []):
                 add(prefix + f"/notes/{ni}", note,
-                    f"Nota clínica ou individual · {ni + 1}", group, True)
+                    f"Nota clínica ou individual · {ni + 1}", group, True,
+                    "individual_note")
             for fi, food in enumerate(option.get("foods") or []):
                 if not isinstance(food, dict):
                     continue
                 fpath = prefix + f"/foods/{fi}"
                 if food.get("kind", "food") == "supplement":
                     add(fpath + "/label", food.get("label"),
-                        f"Suplemento · texto {fi + 1}", group, True)
+                        f"Suplemento · texto {fi + 1}", group, True,
+                        "supplement_label")
                 else:
                     fid = str(food.get("id") or "")
                     text = food.get("display_name")
                     canon = food_names.get(fid)
-                    if canon is not None:
+                    if canon is not None and (
+                            not isinstance(text, str) or not text.strip() or
+                            text.strip() == canon.strip()):
                         linked += 1
                     if isinstance(text, str) and text.strip() and (
                             not canon or text.strip() != canon.strip()):
+                        alternative = food.get("alternative_to") is not None
                         add(fpath + "/display_name", text,
-                            f"Alimento personalizado · {fi + 1}", group, True)
+                            (f"Alternativa personalizada · {fi + 1}" if alternative
+                             else f"Apresentação personalizada · {fi + 1}"),
+                            group, True,
+                            "alternative_override" if alternative else "food_override")
                 qty = food.get("display_quantity")
                 if isinstance(qty, str) and qty.strip():
                     add(fpath + "/display_quantity", qty,
-                        f"Quantidade apresentada · {fi + 1}", group, True)
+                        f"Quantidade apresentada · {fi + 1}", group, True,
+                        "display_quantity")
     return fields, linked, deferred
 
 
@@ -122,6 +135,128 @@ def _existing(c, public_ref):
         FROM v2_content_translations
         WHERE entity_kind='plan' AND entity_id=? AND language='en'
     """, ("pub:" + public_ref,)).fetchall()}
+
+
+def _approved_titles(c):
+    """Exact approved plan titles only; conflicting English versions are unusable.
+
+    No notes, clinical text or custom food overrides enter this dictionary.
+    This is read-only and never republishes a candidate automatically.
+    """
+    found = {}
+    for row in c.execute("""
+        SELECT field_path, source_hash, translated_text
+        FROM v2_content_translations
+        WHERE entity_kind='plan' AND language='en' AND status='approved'
+          AND field_path LIKE 'meals/%/options/%/title'
+    """).fetchall():
+        if not _PATH.fullmatch(row["field_path"]) or not row["field_path"].endswith("/title"):
+            continue
+        found.setdefault(row["source_hash"], set()).add(row["translated_text"])
+    return {source_hash: next(iter(values)) for source_hash, values in found.items()
+            if len(values) == 1}
+
+
+def _quantity_hint(source):
+    """Suggest only a structurally simple unit label (not a dose or clinical note)."""
+    match = _PIECE_QUANTITY.fullmatch(source)
+    if match is None:
+        return None
+    number, weight, unit = match.groups()
+    suggestion = number + " units"
+    if weight:
+        suggestion += " / " + weight + " " + unit
+    return suggestion if suggestion != source else None
+
+
+def _safe_suggestion(field, approved_titles):
+    source = field["source_text"]
+    if field["field_kind"] == "option_title":
+        candidate = approved_titles.get(_hash(source))
+        origin = "approved_exact_title"
+    elif field["field_kind"] == "display_quantity":
+        candidate = _quantity_hint(source)
+        origin = "simple_unit_rule"
+    else:
+        return None
+    if (not candidate or _numbers(source) != _numbers(candidate)
+            or _units(source) != _units(candidate)):
+        return None
+    return {"text": candidate, "origin": origin, "requires_review": True}
+
+
+def _reuse_audit(c, items, published):
+    """Anonymous counts only; no patient names, source text or plan snapshots."""
+    titles = Counter()
+    kinds = Counter()
+    eligible_title_hints = 0
+    eligible_unit_hints = 0
+    approved_library = {}
+    for row in c.execute("""
+        SELECT entity_id,source_hash FROM v2_content_translations
+        WHERE entity_kind='food' AND field_path='display_name'
+          AND language='en' AND status='approved'
+    """).fetchall():
+        approved_library[str(row["entity_id"])] = row["source_hash"]
+    food_names = _name_map(c)
+    accepted_titles = _approved_titles(c)
+    approved_linked = 0
+    for row in published:
+        try:
+            snapshot = json.loads(row["snapshot_json"])
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(snapshot, dict):
+            continue
+        fields, _, _ = _fields(snapshot, food_names)
+        ref = _ref(row["draft_id"], row["snapshot_json"])
+        states = _existing(c, ref)
+        for field in fields:
+            kind = field["field_kind"]
+            kinds[kind] += 1
+            if kind == "option_title":
+                titles[field["source_text"]] += 1
+            if _status(field, states.get(field["field_path"])) != "missing":
+                continue
+            suggestion = _safe_suggestion(field, accepted_titles)
+            if suggestion and suggestion["origin"] == "approved_exact_title":
+                eligible_title_hints += 1
+            if suggestion and suggestion["origin"] == "simple_unit_rule":
+                eligible_unit_hints += 1
+        for meal in snapshot.get("meals") or []:
+            if not isinstance(meal, dict):
+                continue
+            for option in meal.get("options") or []:
+                if not isinstance(option, dict):
+                    continue
+                for food in option.get("foods") or []:
+                    if not isinstance(food, dict) or food.get("kind", "food") != "food":
+                        continue
+                    fid = str(food.get("id") or "")
+                    canonical = food_names.get(fid)
+                    override = food.get("display_name")
+                    if (canonical is not None
+                            and (not isinstance(override, str) or not override.strip()
+                                 or override.strip() == canonical.strip())
+                            and approved_library.get(fid) == _hash(canonical)):
+                        approved_linked += 1
+    return {
+        "published_versions": len(items),
+        "visible_text_fields": sum(item["field_count"] for item in items),
+        "linked_food_references": sum(item["linked_food_count"] for item in items),
+        "approved_library_food_references": approved_linked,
+        "option_title_occurrences": sum(titles.values()),
+        "distinct_option_titles": len(titles),
+        "repeated_option_title_occurrences": sum(count-1 for count in titles.values()),
+        "approved_title_suggestions": eligible_title_hints,
+        "simple_unit_suggestions": eligible_unit_hints,
+        "alternative_overrides": kinds["alternative_override"],
+        "other_food_overrides": kinds["food_override"],
+        "individual_notes": kinds["individual_note"],
+        "supplement_labels": kinds["supplement_label"],
+        "display_quantities": kinds["display_quantity"],
+        "policy": "counts_only_no_auto_match_no_auto_approval"
+    }
 
 
 def _status(field, row):
@@ -153,7 +288,8 @@ def list_publications(c, actor):
     admin._admin(c, actor)
     names = _name_map(c)
     items = []
-    for row in _rows(c):
+    rows = _rows(c)
+    for row in rows:
         try:
             value = json.loads(row["snapshot_json"])
             if not isinstance(value, dict):
@@ -162,6 +298,7 @@ def list_publications(c, actor):
         except (TypeError, ValueError):
             continue
     return {"language":"en", "items":items, "total":len(items),
+            "reuse_audit":_reuse_audit(c,items,rows),
             "scope":"published_versions_only", "csv_export":False}
 
 
@@ -170,6 +307,7 @@ def inspect(c, actor, public_ref):
     row, value = _load(c, public_ref)
     fields, linked, _ = _fields(value, _name_map(c))
     existing = _existing(c, public_ref)
+    approved_titles = _approved_titles(c)
     displayed = []
     for f in fields:
         candidate = existing.get(f["field_path"])
@@ -177,7 +315,9 @@ def inspect(c, actor, public_ref):
         displayed.append({**f, "status":state,
                           "source_hash":_hash(f["source_text"]),
                           "translated_text":candidate["translated_text"] if candidate else "",
-                          "candidate_hash":_hash(candidate["translated_text"]) if candidate else None})
+                          "candidate_hash":_hash(candidate["translated_text"]) if candidate else None,
+                          "suggestion":_safe_suggestion(f, approved_titles)
+                                       if state == "missing" else None})
     return {"publication":_summary(c,row,value,_name_map(c)),
             "fields":displayed,
             "policy":"manual_private_review_no_csv_no_external_api",

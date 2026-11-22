@@ -32,7 +32,8 @@ class PlanTranslationsTests(unittest.TestCase):
                     {"kind":"food","id":"food-plan-test","grams":100,
                      "display_name":"Arroz branco","display_quantity":"100 g"},
                     {"kind":"food","id":"food-plan-test","grams":50,
-                     "display_name":"Arroz branco cozido","display_quantity":"50 g"},
+                     "display_name":"Arroz branco cozido","alternative_to":0,
+                     "display_quantity":"50 g"},
                     {"kind":"supplement","id":"","grams":None,
                      "label":"Creatina 5 g","display_quantity":"5 g"}],
                 "order":[{"type":"note","index":0},
@@ -93,7 +94,15 @@ class PlanTranslationsTests(unittest.TestCase):
             self.assertNotIn("snapshot_json",str(item))
             self.assertNotIn("private-athlete-001",str(item))
             self.assertEqual(item["field_count"],7)
-            self.assertEqual(item["linked_food_count"],2)
+            self.assertEqual(item["linked_food_count"],1)
+            audit=self.call()["body"]["reuse_audit"]
+            self.assertEqual(audit["linked_food_references"],1)
+            self.assertEqual(audit["alternative_overrides"],1)
+            self.assertEqual(audit["individual_notes"],1)
+            self.assertEqual(audit["option_title_occurrences"],1)
+            self.assertEqual(audit["distinct_option_titles"],1)
+            self.assertNotIn("Atleta de teste",str(audit))
+            self.assertNotIn("Tomar 2 vezes",str(audit))
             answer=self.fields(ref)
             self.assertEqual(answer["status"],200,answer)
             fields=answer["body"]["fields"]
@@ -107,6 +116,9 @@ class PlanTranslationsTests(unittest.TestCase):
                 "meals/0/options/0/foods/2/display_quantity"
             ])
             self.assertTrue(fields[1]["sensitive"])
+            self.assertEqual(fields[3]["field_kind"],"alternative_override")
+            self.assertIn("Alternativa personalizada",fields[3]["field_label"])
+            self.assertIsNone(fields[3]["suggestion"])
             self.assertFalse(fields[0]["sensitive"])
             self.assertNotIn("NOTA INTERNA",str(answer))
             self.assertNotIn("private-athlete-001",str(answer))
@@ -163,6 +175,72 @@ class PlanTranslationsTests(unittest.TestCase):
                 "expected_source_hash":quantity["source_hash"],
                 "translated_text":"100 g","athlete_id":"forged"}
             self.assertEqual(self.call(ROOT+"/propose","POST",body)["status"],400)
+
+
+    def test_exact_approved_title_suggestion_never_creates_a_proposal(self):
+        with patch.dict(os.environ,FLAG):
+            ref=self.index()["publication_ref"]
+            title=self.fields(ref)["body"]["fields"][0]
+            self.assertEqual(self.propose(ref,title,"Option 1")["status"],201)
+            approved=self.fields(ref)["body"]["fields"][0]
+            self.assertEqual(self.approve(ref,approved)["status"],200)
+            second=json.loads(self.original)
+            second["id"]="plan-second"
+            second["player_name"]="Outro atleta"
+            with app.connect() as c:
+                c.execute("""INSERT INTO v2_food_plan_editor_publications
+                    (draft_id,athlete_id,plan_type,snapshot_json,published_at,state)
+                    VALUES(?,?,?,?,?,?)""",("plan-second","private-athlete-002",
+                    "Plano azul",json.dumps(second,ensure_ascii=False),101,"published"))
+                c.commit()
+            response=self.call()
+            self.assertEqual(response["status"],200,response)
+            audit=response["body"]["reuse_audit"]
+            self.assertEqual(audit["published_versions"],2)
+            self.assertEqual(audit["repeated_option_title_occurrences"],1)
+            self.assertEqual(audit["distinct_option_titles"],1)
+            self.assertEqual(audit["approved_title_suggestions"],1)
+            self.assertNotIn("Outro atleta",str(audit))
+            second_ref=next(p["publication_ref"] for p in response["body"]["items"]
+                if p["player_label"]=="Outro atleta")
+            fields=self.fields(second_ref)["body"]["fields"]
+            new_title=fields[0]
+            self.assertEqual(new_title["status"],"missing")
+            self.assertEqual(new_title["suggestion"],{
+                "text":"Option 1","origin":"approved_exact_title","requires_review":True})
+            self.assertIsNone(fields[1]["suggestion"])
+            self.assertIsNone(fields[3]["suggestion"])
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                     v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],1)
+            self.assertEqual(self.propose(second_ref,new_title,
+                new_title["suggestion"]["text"])["status"],201)
+            self.assertEqual(self.fields(second_ref)["body"]["fields"][0]["status"],
+                             "pending")
+
+    def test_conservative_unit_suggestion_preserves_numbers_and_is_not_saved(self):
+        with patch.dict(os.environ,FLAG):
+            modified=json.loads(self.original)
+            modified["meals"][0]["options"][0]["foods"][2][
+                "display_quantity"]="2 un / 120 g"
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(modified,ensure_ascii=False),self.draft_id))
+                c.commit()
+            ref=self.index()["publication_ref"]
+            audit=self.call()["body"]["reuse_audit"]
+            self.assertEqual(audit["simple_unit_suggestions"],1)
+            quantity=next(f for f in self.fields(ref)["body"]["fields"]
+                if f["field_path"]=="meals/0/options/0/foods/2/display_quantity")
+            self.assertEqual(quantity["suggestion"],{
+                "text":"2 units / 120 g","origin":"simple_unit_rule","requires_review":True})
+            self.assertEqual(quantity["status"],"missing")
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                   v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],0)
+            self.assertEqual(self.propose(ref,quantity,"2 units / 120 g")["status"],201)
+            self.assertEqual(self.propose(ref,quantity,"2 units / 120 mg")["status"],400)
 
     def test_republish_invalidates_old_version_without_affecting_audit(self):
         with patch.dict(os.environ,FLAG):
