@@ -24,13 +24,14 @@ try{
     let authenticated=false;
     const requests=[];
     const publicRef="a".repeat(64);
-    let planApproved=false,planPending=false;
+    let planApproved=false,planPending=false,planSaveRequests=0;
     const makePlanField=()=>({field_path:"meals/0/options/0/title",
       field_label:"Título da opção",group:"Pequeno almoço · Opção 1",
       sensitive:false,source_text:"Opção 1",source_hash:"b".repeat(64),
       translated_text:planPending?"Option 1":"",
       candidate_hash:planPending?"c".repeat(64):null,
-      status:planApproved?"approved":planPending?"pending":"missing"});
+      status:planApproved?"approved":planPending?"pending":"missing",
+      suggestion:planPending?null:{text:"Option 1",origin:"approved_exact_title",requires_review:true}});
     const planPublication={publication_ref:publicRef,plan_type:"Plano azul",
       player_label:"Atleta fictício",state:"published",published_at:100,
       field_count:1,linked_food_count:1,
@@ -47,6 +48,9 @@ try{
         await route.fulfill(fmt(stats));
       }else if(path==="/api/v2/admin/i18n/plans"){
         await route.fulfill(fmt({language:"en",items:[planPublication],total:1,
+          reuse_audit:{published_versions:1,visible_text_fields:7,
+            repeated_option_title_occurrences:2,approved_library_food_references:1,
+            alternative_overrides:1,individual_notes:1,simple_unit_suggestions:1},
           scope:"published_versions_only",csv_export:false}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
         assert.equal(url.searchParams.get("publication_ref"),publicRef);
@@ -58,6 +62,7 @@ try{
         assert.equal(payload.translated_text,"Option 1");
         assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
         planPending=true;
+        planSaveRequests++;
         await route.fulfill(fmt({status:"pending"},201));
       }else if(path==="/api/v2/admin/i18n/plans/approve"){
         const payload=route.request().postDataJSON();
@@ -162,8 +167,13 @@ try{
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
     assert.equal(await page.locator("#i18n-plan-detail .i18n-primary").isDisabled(),true);
-    await page.locator("#i18n-plan-detail textarea").fill("Option 1");
-    await page.locator("#i18n-plan-detail .i18n-secondary").click();
+    assert.match(await page.locator("#i18n-plan-audit").count().then(String),/^0$/);
+    assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-audit-stat").count(),6);
+    assert.match(await page.locator("#i18n-plan-stage .i18n-plan-audit").innerText(),/Alternativas personalizadas/);
+    await page.locator("#i18n-plan-detail .i18n-plan-suggestion button").click();
+    assert.equal(planSaveRequests,0,"A suggestion must never submit or approve automatically");
+    assert.equal(await page.locator("#i18n-plan-detail textarea").inputValue(),"Option 1");
+    await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-secondary").click();
     await page.getByText("Proposta guardada. Falta aprovação.").waitFor();
     assert.equal(planPending,true);
     await page.locator("#i18n-plan-detail .i18n-plan-field-actions input").check();
