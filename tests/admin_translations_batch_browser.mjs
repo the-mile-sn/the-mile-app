@@ -251,7 +251,6 @@ try{
     await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
     await page.locator("#i18n-bulk-open").click();
     await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
-    assert.equal(await page.locator("#i18n-bulk-recipe-group").count(),0);
     assert.equal(await page.locator(".i18n-bulk-recipe-group").count(),2);
     assert.equal(await page.locator(".i18n-bulk-row").count(),205);
     assert.equal(await page.locator("#i18n-bulk-select-100").isEnabled(),true);
@@ -259,7 +258,9 @@ try{
       .locator(".i18n-bulk-recipe-header button").click();
     assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),120);
     assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    await page.locator("#i18n-bulk-select-all").check();
     await page.locator("#i18n-bulk-select-all").uncheck();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),0);
     await page.locator("#i18n-bulk-filter").fill("Receita B");
     assert.equal(await page.locator(".i18n-bulk-recipe-group:not([hidden])").count(),1);
     await page.locator("#i18n-bulk-select-100").click();
