@@ -1,4 +1,4 @@
-"""Admin-reviewed batches for foods, dishes and visible recipe text.
+"""Admin-reviewed batches for foods, dishes, recipes and supplement text.
 
 GET previews canonical PT/EN pairs without writing. The POST accepts only
 identifiers and hashes, retains audit history and rolls back conflicted batches.
@@ -16,9 +16,11 @@ import content_translations_v2 as translations
 MAX_PREVIEW=1200
 MAX_BATCH=100
 HASH=re.compile(r"^[0-9a-f]{64}$")
-SCOPES={"food":"display_name","dish":"name_pt","recipe":None}
-MAX_RECIPE_PREVIEW=2500
+SCOPES={"food":"display_name","dish":"name_pt","recipe":None,"supplement":None}
+MAX_GROUPED_PREVIEW=2500
 RECIPE_PATH=re.compile(r"(?:name|notes|steps/[0-9]{1,4}|sections/[a-zA-Z0-9_-]{1,64}/(?:title|ingredients/[a-zA-Z0-9_-]{1,64}/(?:name|unit)))$")
+SUPPLEMENT_PATH=re.compile(r"(?:name|dose|note|timing_text|prescriptions/[0-9]{1,4}/(?:dose|timing_text|note))$")
+VISIBLE_PATHS={"recipe":RECIPE_PATH,"supplement":SUPPLEMENT_PATH}
 
 
 class BatchError(Exception):
@@ -62,14 +64,14 @@ def preview(c, actor, entity_kind="food"):
                 "expected_source_hash":_sha(portuguese),
                 "expected_candidate_hash":_sha(english),
             }
-            if entity_kind=="recipe":
+            if entity_kind in VISIBLE_PATHS:
                 pair["record_title"]=item["source_text"]
                 pair["field_label"]=field["field_label"]
                 pair["position"]=field_index
             pairs.append(pair)
-            if len(pairs)>(MAX_RECIPE_PREVIEW if entity_kind=="recipe" else MAX_PREVIEW):
+            if len(pairs)>(MAX_GROUPED_PREVIEW if entity_kind in VISIBLE_PATHS else MAX_PREVIEW):
                 raise BatchError(413,"translation_batch_too_large")
-    if entity_kind=="recipe":
+    if entity_kind in VISIBLE_PATHS:
         pairs.sort(key=lambda item:(item["record_title"].casefold(),
                                     item["entity_id"],item["position"]))
         for item in pairs:
@@ -130,7 +132,8 @@ def approve(c, actor, body):
             row["expected_source_hash"],row["expected_candidate_hash"])
         if (not isinstance(ident,str) or not 1<=len(ident)<=160
                 or not isinstance(field_path,str)
-                or (field_path!=path if path is not None else not RECIPE_PATH.fullmatch(field_path))
+                or (field_path!=path if path is not None else
+                    not VISIBLE_PATHS[entity_kind].fullmatch(field_path))
                 or not isinstance(source_hash,str) or not HASH.fullmatch(source_hash)
                 or not isinstance(candidate_hash,str) or not HASH.fullmatch(candidate_hash)
                 or (ident,field_path) in seen):
