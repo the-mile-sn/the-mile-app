@@ -84,6 +84,16 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 /* Grouped review actions share the existing neutral button family. */
 .i18n-bulk-selection{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
 
+/* Native recipe review reuses the same neutral card family. */
+.i18n-bulk-recipe-group{display:grid;gap:7px;margin:4px 0 14px;min-width:0}
+.i18n-bulk-recipe-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px;background:var(--tm-ui-subcard);border-radius:12px}
+.i18n-bulk-recipe-header strong{font-size:14px;overflow-wrap:anywhere}
+.i18n-bulk-entry{display:block;min-width:0;flex:1}
+.i18n-bulk-field{display:block;color:var(--tm-ui-muted);font-size:11px;margin-bottom:6px}
+.i18n-bulk-recipe-group .i18n-bulk-row{display:flex;align-items:center;gap:12px}
+.i18n-bulk-recipe-group .i18n-bulk-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+@media(max-width:620px){.i18n-bulk-recipe-group .i18n-bulk-pair{grid-template-columns:1fr}}
+
 /* Registo único com seleção dos respetivos textos apresentados nas apps. */
 .i18n-field-label{display:grid;gap:8px;margin:0 0 16px;font-size:12px;color:var(--tm-ui-muted);font-weight:600}
 .i18n-field-label select{display:block;width:100%;max-width:550px;min-height:42px;padding:10px 12px;border:1px solid var(--tm-ui-divider);border-radius:9px;background:var(--tm-ui-subcard);color:var(--tm-ui-text)}
