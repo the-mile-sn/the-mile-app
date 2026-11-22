@@ -282,6 +282,7 @@
      activate(event.detail?.kind);
    });
    $("i18n-close").addEventListener("click",closeReview);
+   $("i18n-plan-open-library").addEventListener("click",()=>window.tmOpenAdminPlans?.());
    $("i18n-library-link").addEventListener("click",()=>{
      if(!embedded)return;
      const library=$("i18n-library-link").dataset.libraryKind;
