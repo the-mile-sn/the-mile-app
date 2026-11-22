@@ -60,9 +60,10 @@ try{
     // Traduções must be a PRIMARY destination, never inside Biblioteca.
     assert.equal(await nav.evaluate(el=>!!el.closest("#tm-admin-food-subnav")),false);
     assert.equal(await nav.evaluate(el=>!!el.closest(".tm-admin-side-nav")),true);
-    assert.equal(await nav.evaluate(el=>
-      [...el.parentElement.querySelectorAll(":scope > .tm-admin-nav-link")].at(-1)?.id
-    ),"tm-admin-nav-translations","Traduções must be LAST in the main menu");
+    // Last of the principal work areas: on mobile, account actions are
+    // relocated after that section by the existing mobile navigation.
+    assert.equal(await nav.evaluate(el=>el.previousElementSibling?.id),
+      "tm-admin-nav-appointments","Traduções must follow Agendamentos");
     assert.ok(await page.locator("#tm-i18n-library-plan").count());
     assert.ok(await page.locator("#tm-i18n-library-plan-mobile").count());
     await nav.waitFor({state:"visible",timeout:15000});
