@@ -69,9 +69,10 @@
     </div>
     <div class="i18n-import-controls">
       <button type="button" id="i18n-export" class="i18n-secondary">Descarregar modelo CSV</button>
-      <label class="i18n-import-file" for="i18n-import-file">Escolher CSV
+      <label class="i18n-import-file" for="i18n-import-file"><span>Escolher CSV</span>
         <input type="file" id="i18n-import-file" accept=".csv,text/csv">
       </label>
+      <span id="i18n-import-filename" class="i18n-import-filename" aria-live="polite">Nenhum ficheiro selecionado</span>
       <button type="button" id="i18n-import-check" class="i18n-secondary">Verificar importação</button>
       <button type="button" id="i18n-import-commit" class="i18n-primary" disabled>Importar propostas</button>
     </div>
@@ -79,7 +80,7 @@
     <div id="i18n-import-preview" class="i18n-import-preview"></div>
     <p class="i18n-import-disclaimer">Só são aceites textos que continuam iguais ao português original e ainda não têm uma tradução em revisão. A importação cria propostas pendentes: não substitui traduções anteriores nem aprova conteúdos.</p>
   </section>
-  <section class="i18n-library-panel" aria-labelledby="i18n-auto-title">
+  <section class="i18n-library-panel i18n-auto-panel" aria-labelledby="i18n-auto-title">
     <div class="i18n-section-heading"><h2 id="i18n-auto-title">Sugestões automáticas</h2>
       <span>Não configuradas</span></div>
     <p class="i18n-import-disclaimer">Esta opção será ligada à mesma revisão PT/EN quando existir uma API configurada e aprovada. Até lá, podes traduzir manualmente e importar CSV sem qualquer serviço externo ou custo de API.</p>
