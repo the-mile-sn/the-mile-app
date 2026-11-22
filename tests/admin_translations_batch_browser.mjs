@@ -277,6 +277,84 @@ try{
     await page.close();
     process.stdout.write("Grouped recipe batch review "+device+" passed\n");
   }
+  // Supplement texts are grouped by product; approval remains an explicit action.
+  for(const [device,width,height] of [["desktop",1400,900],["mobile",390,844]]){
+    const page=await chromiumBrowser.newPage({viewport:{width,height}});
+    const entries=Array.from({length:218},(_,i)=>({
+      entity_id:i<110?"supplement-A":"supplement-B",
+      record_title:i<110?"Creatina":"Eletrólitos",
+      field_label:i%2===0?"Nota visível":"Prescrição · instrução de toma",
+      field_path:"prescriptions/"+(i<110?i:i-110)+"/note",
+      source_text:"Texto de toma "+i,translated_text:"Supplement text "+i,
+      review_state:"pending",expected_source_hash:"a".repeat(64),
+      expected_candidate_hash:"b".repeat(64)
+    }));
+    const posted=[];
+    await page.route("**/api/**",async route=>{
+      const req=route.request(),url=new URL(req.url()),path=url.pathname;
+      if(path==="/api/me")
+        return route.fulfill(respond({user:{id:"admin",role:"admin"},csrf:"mock-csrf"}));
+      if(path==="/api/v2/admin/i18n/overview")
+        return route.fulfill(respond({language:"en",statuses:{...libraryStatus,pending:218},libraries}));
+      if(path==="/api/v2/admin/i18n/catalog")
+        return route.fulfill(respond({language:"en",library:"supplement",total:0,
+          page:1,page_size:25,items:[]}));
+      if(path==="/api/v2/admin/i18n/batch/preview"){
+        assert.equal(req.method(),"GET");
+        assert.equal(url.searchParams.get("entity_kind"),"supplement");
+        return route.fulfill(respond({entity_kind:"supplement",
+          status:"awaiting_review",total:218,items:entries,approved:false}));
+      }
+      if(path==="/api/v2/admin/i18n/batch/approve"){
+        assert.equal(req.method(),"POST");
+        assert.equal(req.headers()["x-csrf-token"],"mock-csrf");
+        const payload=req.postDataJSON();
+        assert.equal(payload.entity_kind,"supplement");
+        assert.ok(payload.rows.length>=1&&payload.rows.length<=100);
+        assert.ok(payload.rows.every(r=>r.field_path.startsWith("prescriptions/")&&
+          !Object.hasOwn(r,"translated_text")&&!Object.hasOwn(r,"source_text")));
+        posted.push(payload.rows.length);
+        return route.fulfill(respond({approved:payload.rows.length,
+          entity_kind:"supplement",status:"approved"}));
+      }
+      throw Error("Unexpected API "+req.url());
+    });
+    await page.goto(origin+"/admin-translations.html?entity_kind=supplement",
+      {waitUntil:"domcontentloaded"});
+    await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
+    await page.locator("#i18n-bulk-open").click();
+    await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
+    assert.match(await page.locator("#i18n-bulk-title").innerText(),/Suplementação/);
+    assert.equal(await page.locator(".i18n-bulk-recipe-group").count(),2);
+    assert.equal(await page.locator(".i18n-bulk-row").count(),218);
+    assert.equal(posted.length,0);
+    await page.locator(".i18n-bulk-recipe-group").first()
+      .locator(".i18n-bulk-recipe-header button").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),110);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    await page.locator("#i18n-bulk-select-all").check();
+    await page.locator("#i18n-bulk-select-all").uncheck();
+    await page.locator("#i18n-bulk-filter").fill("Eletrólitos");
+    assert.equal(await page.locator(".i18n-bulk-recipe-group:not([hidden])").count(),1);
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),100);
+    await page.locator("#i18n-bulk-filter").fill("");
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),200);
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),218);
+    assert.equal(await page.locator("#i18n-bulk-select-100").isDisabled(),true);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    assert.equal(posted.length,0);
+    await page.locator("#i18n-bulk-reviewed").check();
+    assert.equal(await page.locator("#i18n-bulk-submit").isEnabled(),true);
+    await page.locator("#i18n-bulk-submit").click();
+    await page.getByText(/218 traduções de suplementos aprovadas/).waitFor();
+    assert.deepEqual(posted,[100,100,18]);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
+    await page.close();
+    process.stdout.write("Grouped supplement batch review "+device+" passed\n");
+  }
 }finally{
   await chromiumBrowser.close();
 }
