@@ -46,7 +46,11 @@
  };
  const queryString=(data)=>new URLSearchParams(Object.entries(data)
    .filter(([key,val])=>val!==undefined&&val!==null&&val!=="")).toString();
- const badge=(status)=>create("span","i18n-status-pill",translations[status]||status);
+ const badge=(status)=>{
+   const pill=create("span","i18n-status-pill",translations[status]||status);
+   pill.dataset.state=status;
+   return pill;
+ };
  const stats=(summary)=>{
    const container=$("i18n-stats");container.replaceChildren();
    for(const [key,label] of [
@@ -64,10 +68,12 @@
      const button=create(group.integrated||group.kind==="plan"?"button":"div","i18n-library");
      if(group.integrated||group.kind==="plan"){
        button.type="button";
+       button.dataset.kind=group.kind;
+       button.setAttribute("aria-pressed",String(group.kind===state.kind));
        button.addEventListener("click",()=>{
          state.kind=group.kind;state.status="all";state.query="";state.page=1;
-         $("i18n-status").value="all";$("i18n-search").value="";
-         loadCatalog();
+         resetStatusPicker();$("i18n-search").value="";
+         closeReview();loadCatalog();
          (state.kind==="plan"?$("i18n-plan-stage"):$("i18n-work-panel")).scrollIntoView({behavior:"smooth",block:"start"});
        });
      }
@@ -86,15 +92,24 @@
    }
    $("i18n-library-panel").hidden=false;
  };
+ const resetStatusPicker=()=>{
+   $("i18n-status").value="all";
+   // The Mile Select observes native change and retains the original select
+   // as the source of truth; the handler below avoids redundant API calls.
+   $("i18n-status").dispatchEvent(new Event("change",{bubbles:true}));
+ };
  const buildTabs=()=>{
    const tabs=$("i18n-tabs");tabs.replaceChildren();
+   for(const card of $("i18n-libraries").querySelectorAll("button.i18n-library")){
+     card.setAttribute("aria-pressed",String(card.dataset.kind===state.kind));
+   }
    for(const [key,label] of Object.entries(displayKind)){
      const b=create("button","",label);b.type="button";
      b.setAttribute("aria-pressed",String(state.kind===key));
      b.addEventListener("click",()=>{
        if(state.kind===key)return;
        state.kind=key;state.page=1;state.status="all";state.query="";
-       $("i18n-status").value="all";$("i18n-search").value="";
+       resetStatusPicker();$("i18n-search").value="";
        closeReview();loadCatalog();
      });tabs.append(b);
    }
@@ -141,7 +156,11 @@
        const fieldStates=new Set((entry.fields||[]).map(field=>field.state));
        const displayedState=state.status!=="all" ? state.status :
          (fieldStates.size>1 ? "mixed" : entry.state);
-       b.append(main,badge(displayedState),create("span","i18n-result-arrow","›"));
+       const arrow=create("span","i18n-result-arrow");
+       arrow.setAttribute("aria-hidden","true");
+       // Reuse the same chevron shape already used by the Admin navigation.
+       arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+       b.append(main,badge(displayedState),arrow);
        b.addEventListener("click",()=>openReview(entry));
        list.append(b);
      }
@@ -266,7 +285,7 @@
  const activate=async(kind)=>{
    if(Object.prototype.hasOwnProperty.call(displayKind,kind)&&kind!==state.kind){
      state.kind=kind;state.status="all";state.query="";state.page=1;
-     $("i18n-status").value="all";$("i18n-search").value="";
+     resetStatusPicker();$("i18n-search").value="";
      closeReview();
    }
    if(opening)return opening;
@@ -301,6 +320,7 @@
      else window.tmOpenAdminRecipeLibrary?.();
    });
    $("i18n-status").addEventListener("change",event=>{
+     if(state.status===event.target.value)return;
      state.status=event.target.value;state.page=1;loadCatalog();
    });
    $("i18n-search").addEventListener("input",event=>{
