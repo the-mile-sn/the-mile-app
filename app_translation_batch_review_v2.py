@@ -42,7 +42,7 @@ def preview(c, actor, entity_kind="food"):
     for item in catalog._entries(c):
         if item["entity_kind"]!=entity_kind:
             continue
-        for field in item["fields"]:
+        for field_index,field in enumerate(item["fields"]):
             state=field["state"]
             if ((field_path is not None and field["field_path"]!=field_path) or
                     (state!="pending" and
@@ -65,7 +65,7 @@ def preview(c, actor, entity_kind="food"):
             if entity_kind=="recipe":
                 pair["record_title"]=item["source_text"]
                 pair["field_label"]=field["field_label"]
-                pair["position"]=len(item["fields"])+len(pairs)
+                pair["position"]=field_index
             pairs.append(pair)
             if len(pairs)>(MAX_RECIPE_PREVIEW if entity_kind=="recipe" else MAX_PREVIEW):
                 raise BatchError(413,"translation_batch_too_large")
