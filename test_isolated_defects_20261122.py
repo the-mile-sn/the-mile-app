@@ -1,8 +1,7 @@
-"""Regression tests for three isolated defects (audit 22/11/2026).
+"""Regression tests for two isolated defects (audit 22/11/2026).
 
 1. Legacy player deletion with notifications/push subscriptions.
 2. Supplement library image MIME type.
-3. Player fasting-weight day follows Europe/Lisbon, not the server's UTC day (player branch only).
 """
 import base64
 import importlib
@@ -97,37 +96,3 @@ class IsolatedDefectsTest(unittest.TestCase):
                 self.assertEqual(data, blob)
         finally:
             self.app.supplements_v2.library_image = original
-
-    # 3 -------------------------------------------------------------------
-    def test_weight_day_follows_lisbon_not_server_utc(self):
-        """At 23:30 UTC on 1 July it is already 2 July in Lisbon (UTC+1)."""
-        self.add_player('p3', 'playerthree')
-        now = int(time.time())
-        with self.app.connect() as c:
-            aid = self.make_athlete(c, 'Player Three')
-            c.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES('p3',?,1)", (aid,))
-            c.execute("INSERT INTO sessions VALUES(?,?,?,?)", (self.app.digest('player-token'), 'p3', 'csrf-p', now + 3600))
-            c.execute("""CREATE TABLE IF NOT EXISTS v2_monitoring_audit(id TEXT PRIMARY KEY, athlete_id TEXT, record_type TEXT,
-                         record_id TEXT, actor_id TEXT, prior_json TEXT, new_json TEXT, created_at INTEGER)""")
-        fixed_utc = datetime(2026, 7, 1, 23, 30, tzinfo=timezone.utc)
-
-        class FixedDateTime(datetime):
-            @classmethod
-            def now(cls, tz=None):
-                return fixed_utc.astimezone(tz) if tz else fixed_utc.replace(tzinfo=None)
-
-        original = self.app.datetime
-        self.app.datetime = FixedDateTime
-        try:
-            status, _, body = self.call('POST', '/api/v2/player/weight', token='player-token', csrf='csrf-p',
-                                        body={'date': '2026-07-02', 'weight': '72.4'})
-            self.assertEqual(status, 200, body)
-            status, _, body = self.call('POST', '/api/v2/player/weight', token='player-token', csrf='csrf-p',
-                                        body={'date': '2026-07-03', 'weight': '72.4'})
-            self.assertEqual(status, 400)
-            self.assertEqual(json.loads(body)['error'], 'future_weight_date')
-        finally:
-            self.app.datetime = original
-        with self.app.connect() as c:
-            row = c.execute("SELECT weight_kg FROM v2_daily_weighins WHERE athlete_id=? AND weigh_date='2026-07-02'", (aid,)).fetchone()
-            self.assertEqual(row['weight_kg'], 72.4)

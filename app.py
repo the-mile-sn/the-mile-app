@@ -1633,8 +1633,7 @@ def application(env, start_response):
                 if not link:raise Problem(404,'player_not_linked')
                 aid=link['athlete_id']
                 from datetime import date as weight_date
-                # Same calendar day as events and menus, not the server's UTC day.
-                current=datetime.now(ZoneInfo('Europe/Lisbon')).date()
+                current=weight_date.today()
                 if method=='GET':
                     q=parse_qs(env.get('QUERY_STRING',''))
                     selected=(q.get('date') or [current.isoformat()])[0]
