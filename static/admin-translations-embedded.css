@@ -413,6 +413,8 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   .tm-admin-translations-page .i18n-section-heading{align-items:flex-start;gap:8px}
   .tm-admin-translations-page .i18n-section-heading>span{white-space:normal;text-align:right}
   .tm-admin-translations-page .i18n-toolbar{grid-template-columns:1fr;gap:9px}
+  /* iOS/Safari: focused editable inputs must not trigger viewport zoom. */
+  .tm-admin-translations-page .i18n-toolbar input{font-size:16px}
   .tm-admin-translations-page #i18n-tabs{grid-column:auto}
   .tm-admin-translations-page .i18n-work-heading{flex-direction:column}
   .tm-admin-translations-page .i18n-result{
