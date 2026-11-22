@@ -49,6 +49,13 @@ try{
       document.getElementById("admin-login-panel").hidden=true;
     });
     const nav=page.locator("#tm-admin-nav-translations");
+    await page.waitForFunction(()=>{
+      const button=document.getElementById("tm-admin-nav-translations");
+      return !!button&&!button.hidden;
+    },null,{timeout:15000});
+    // Traduções lives in the existing Biblioteca sub-navigation, which is
+    // collapsed until the parent area is selected (especially on mobile).
+    await page.locator("#tm-admin-nav-food-library").click();
     await nav.waitFor({state:"visible",timeout:15000});
     await nav.click();
     const view=page.locator("#tm-admin-translations-page");
