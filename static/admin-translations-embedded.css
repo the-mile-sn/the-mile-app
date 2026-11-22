@@ -25,11 +25,6 @@ html[data-admin-theme="light"] .tm-admin-translations-page{
   display:block;margin:0;max-width:none;padding:0 0 36px;min-width:0;
 }
 .tm-admin-translations-page :is(h1,h2,h3,p){overflow-wrap:break-word}
-.tm-admin-translations-page .i18n-intro{margin:2px 0 20px}
-.tm-admin-translations-page .i18n-intro h1{
-  font:650 clamp(27px,2.4vw,33px)/1.16 "Inter Tight","SF Pro Text",Arial,sans-serif;
-  letter-spacing:-.025em;margin:0;color:var(--tm-ui-text);
-}
 .tm-admin-translations-page .i18n-feedback{
   color:var(--tm-ui-muted);font-size:12px;min-height:0;margin:8px 0;line-height:1.55;
 }

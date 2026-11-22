@@ -75,7 +75,9 @@ try{
     assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
     assert.ok((await page.locator("#i18n-import-title").textContent()).includes("Importar"));
     assert.ok((await page.locator("#i18n-auto-title").textContent()).includes("automáticas"));
-    assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro p").count(),0);
+    assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro").count(),0);
+    assert.equal(await page.locator("#tm-admin-translations-page h1").count(),0);
+    assert.equal(await view.getAttribute("aria-label"),"Central de Traduções");
     assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro .i18n-eyebrow").count(),0);
     assert.equal(await page.locator("#i18n-library-panel .i18n-library small").count(),0);
     assert.equal(await page.locator("#i18n-work-help").count(),0);
