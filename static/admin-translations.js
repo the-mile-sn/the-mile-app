@@ -154,7 +154,8 @@
      $("i18n-bulk-title").textContent="Aprovação em lote · "+
        (kind==="food"?"Alimentos":kind==="dish"?"Pratos":"Receitas");
      $("i18n-bulk-all-label").textContent=kind==="food"?
-       "Selecionar todas as propostas pendentes":"Selecionar todos os textos por rever";
+       "Selecionar todas as propostas pendentes":kind==="dish"?
+       "Selecionar todas as traduções por rever":"Selecionar todos os textos por rever";
      bulkRows=data.items||[];
      const list=$("i18n-bulk-items");
      list.replaceChildren();
