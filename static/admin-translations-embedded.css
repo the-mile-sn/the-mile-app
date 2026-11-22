@@ -448,6 +448,27 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   padding:12px 14px;border:0;border-radius:12px;
   background:var(--tm-ui-card);cursor:pointer;min-width:0;
 }
+.tm-admin-translations-page .i18n-bulk-recipe-group{
+  display:grid;gap:7px;min-width:0;margin:4px 0 13px;
+}
+.tm-admin-translations-page .i18n-bulk-recipe-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;padding:10px 12px;
+  background:var(--tm-ui-card);border-radius:12px;min-width:0;
+}
+.tm-admin-translations-page .i18n-bulk-recipe-header>strong{
+  font:600 14px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+  color:var(--tm-ui-text);overflow-wrap:anywhere;
+}
+.tm-admin-translations-page .i18n-bulk-recipe-header button{
+  flex:0 0 auto;font-size:12px;min-height:36px;
+}
+.tm-admin-translations-page .i18n-bulk-entry{display:block;min-width:0;flex:1}
+.tm-admin-translations-page .i18n-bulk-field{
+  display:block;color:var(--tm-ui-muted);
+  font:500 11px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+  margin-bottom:5px;
+}
 .tm-admin-translations-page .i18n-bulk-pair{
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   column-gap:20px;row-gap:5px;align-items:start;width:100%;min-width:0;
