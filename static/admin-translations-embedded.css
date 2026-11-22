@@ -106,3 +106,12 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-plan-stage-grid p{margin:0;font-size:12px;line-height:1.6;color:var(--tm-ui-muted)}
 #i18n-plan-open-library{margin-top:18px}
 @media(max-width:900px){.i18n-plan-stage-grid{grid-template-columns:1fr}}
+
+
+/* Keep navigation tabs accessible in the global hub while Planos is read-only. */
+.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{display:block;margin-bottom:0}
+.i18n-work-panel[data-plan-mode="1"] .i18n-toolbar > label,
+.i18n-work-panel[data-plan-mode="1"] .i18n-results-count,
+.i18n-work-panel[data-plan-mode="1"] .i18n-results,
+.i18n-work-panel[data-plan-mode="1"] .i18n-pagination{display:none}
+.i18n-work-panel[data-plan-mode="1"] #i18n-tabs{display:flex}
