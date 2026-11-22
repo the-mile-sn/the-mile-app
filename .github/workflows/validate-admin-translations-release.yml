@@ -15,6 +15,10 @@ on:
       - "app_translation_sources_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
+      - "static/admin-microcycles.js"
+      - "static/admin-dashboard.js"
+      - "static/admin-nav-shell.js"
+      - "tests/admin_translations_embedded_browser.mjs"
       - "test_admin_translations_release_v2.py"
       - "test_admin_translation_import_v2.py"
       - "tests/admin_translations_browser.mjs"
@@ -30,6 +34,10 @@ on:
       - "app_translation_sources_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
+      - "static/admin-microcycles.js"
+      - "static/admin-dashboard.js"
+      - "static/admin-nav-shell.js"
+      - "tests/admin_translations_embedded_browser.mjs"
       - "test_admin_translations_release_v2.py"
       - "test_admin_translation_import_v2.py"
       - "tests/admin_translations_browser.mjs"
@@ -57,6 +65,10 @@ jobs:
           node --check static/admin-translations.js
           node --check static/admin-translations-import.js
           node --check static/admin-translations-shortcuts.js
+          node --check static/admin-dashboard.js
+          node --check static/admin-microcycles.js
+          node --check static/admin-nav-shell.js
+          node --check tests/admin_translations_embedded_browser.mjs
       - name: Run real WSGI tests (auth, CSRF, catalog, no app routes)
         run: python -m unittest -v test_admin_translations_release_v2 test_admin_translation_import_v2
 
@@ -80,7 +92,9 @@ jobs:
             sleep 1
           done
       - name: Exercise review flow at desktop and mobile widths
-        run: node tests/admin_translations_browser.mjs
+        run: |
+          node tests/admin_translations_browser.mjs
+          node tests/admin_translations_embedded_browser.mjs
       - name: Store mock-data layout evidence for visual review
         if: always()
         uses: actions/upload-artifact@v4
