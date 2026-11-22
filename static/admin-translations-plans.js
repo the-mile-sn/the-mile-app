@@ -100,18 +100,20 @@
     reviewed.append(checked,create("span","","Revisei esta tradução"));
     const approve=create("button","i18n-primary","Aprovar");
     approve.type="button";
+    let busy=false;
     const feedback=create("p","i18n-feedback");
     const notice=item.sensitive?create("p","i18n-plan-sensitive",
       "Texto individual ou clínico: revisão profissional obrigatória. Não exportar."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
-      save.disabled=!editor.value.trim()||!modified||loading;
-      approve.disabled=item.status!=="pending"||modified||!checked.checked||loading;
+      save.disabled=!editor.value.trim()||!modified||busy;
+      approve.disabled=item.status!=="pending"||modified||!checked.checked||busy;
     };
     editor.addEventListener("input",()=>{checked.checked=false;updateButtons();});
     checked.addEventListener("change",updateButtons);
     save.addEventListener("click",async()=>{
-      save.disabled=true;approve.disabled=true;
+      if(busy)return;
+      busy=true;updateButtons();
       error(feedback,"");
       try{
         await send("/api/v2/admin/i18n/plans/propose","POST",{
@@ -121,10 +123,11 @@
         await refreshField(public_ref,item.field_path,item,state);
         checked.checked=false;error(feedback,"Proposta guardada. Falta aprovação.");
       }catch(e){error(feedback,"Não foi possível guardar: "+e.message);}
-      finally{updateButtons();}
+      finally{busy=false;updateButtons();}
     });
     approve.addEventListener("click",async()=>{
-      approve.disabled=true;save.disabled=true;
+      if(busy)return;
+      busy=true;updateButtons();
       error(feedback,"");
       try{
         await send("/api/v2/admin/i18n/plans/approve","POST",{
@@ -135,7 +138,7 @@
         await refreshField(public_ref,item.field_path,item,state);
         checked.checked=false;error(feedback,"Tradução aprovada.");
       }catch(e){error(feedback,"Aprovação interrompida: "+e.message);}
-      finally{updateButtons();}
+      finally{busy=false;updateButtons();}
     });
     updateButtons();
     actions.append(save,reviewed,approve);
@@ -193,7 +196,7 @@
     const head=create("div","i18n-plan-detail-head");
     head.append(create("strong","","Planos publicados · revisão por versão"));
     const intro=create("p","i18n-plan-policy",
-      "Os alimentos aprovados são reutilizados por referência. "+
+      "As traduções aprovadas dos alimentos serão reutilizadas na integração com as apps. "+
       "Aqui revês apenas textos específicos dos planos publicados. "+
       "O nome do jogador é apresentado apenas na sessão privada do administrador.");
     const list=create("div","i18n-plan-list");list.id="i18n-plan-items";
