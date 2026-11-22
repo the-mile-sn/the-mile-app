@@ -134,6 +134,8 @@ try {
       snap.source);
     assert.equal(await page.locator("#i18n-approve").isDisabled(), true);
     assert.equal(await page.locator("#i18n-fields option").count(), 1);
+    assert.equal(await page.locator("#i18n-field-picker").isHidden(),true,
+      "Do not display a one-option field selector.");
     await page.waitForFunction(
       () => document.querySelector("#i18n-target-text")?.value === "Chicken and rice",
     );
@@ -202,6 +204,8 @@ try {
     await page.locator("#i18n-results .i18n-result").first().click();
     await page.locator("#i18n-fields option").nth(1).waitFor({ state: "attached" });
     assert.equal(await page.locator("#i18n-fields option").count(), 2, kind);
+    assert.equal(await page.locator("#i18n-field-picker").isVisible(),true,
+      "Keep field switching when a record has multiple translatable fields.");
     await page.locator("#i18n-fields").selectOption("note");
     await page.waitForFunction(text =>
       document.querySelector("#i18n-source-text")?.textContent === text, secondary);
