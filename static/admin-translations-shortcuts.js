@@ -7,9 +7,10 @@
   let checked=false;
   const add=(id,kind,label)=>{
     const target=document.getElementById(id);
-    if(!target || document.getElementById("tm-i18n-library-"+kind))return;
+    const slot=kind==="plan"&&id==="entry-create-mobile"?"plan-mobile":kind;
+    if(!target || document.getElementById("tm-i18n-library-"+slot))return;
     const a=document.createElement("a");
-    a.id="tm-i18n-library-"+kind;
+    a.id="tm-i18n-library-"+slot;
     a.className="tm-i18n-library-link tm-action-secondary";
     a.href="/?nav=translations&entity_kind="+encodeURIComponent(kind);
     a.addEventListener("click",event=>{
@@ -38,6 +39,7 @@
       add("recipe-add","recipe","Traduções");
       add("supp-library-new","supplement","Traduções · Suplementação");
       add("entry-create","plan","Traduções · Planos");
+      add("entry-create-mobile","plan","Traduções · Planos");
     }catch(_){/* An unavailable opt-in service must not change current UI. */}
   };
   new MutationObserver(activate).observe(workspace,{attributes:true,attributeFilter:["hidden"]});
