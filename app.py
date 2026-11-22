@@ -928,6 +928,8 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/plans/history',
                 '/api/v2/admin/i18n/plans/propose',
                 '/api/v2/admin/i18n/plans/approve',
+                '/api/v2/admin/i18n/plans/common',
+                '/api/v2/admin/i18n/plans/common/approve',
             ):
                 if (SITE_ROLE not in ('admin','both') or
                         os.environ.get('MILE_BACKOFFICE_TRANSLATIONS_ENABLED','0') != '1'):

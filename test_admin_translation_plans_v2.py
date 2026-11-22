@@ -265,6 +265,179 @@ class PlanTranslationsTests(unittest.TestCase):
             self.assertEqual(self.propose(ref,quantity,"2 units / 120 g")["status"],201)
             self.assertEqual(self.propose(ref,quantity,"2 units / 120 mg")["status"],400)
 
+
+    def _add_publication(self, index, *, meal_name=None, title=None):
+        copy=json.loads(self.original)
+        copy["id"]="shared-"+str(index)
+        copy["player_name"]="Fictício "+str(index)
+        if meal_name is not None:
+            copy["meals"][0]["name"]=meal_name
+        if title is not None:
+            copy["meals"][0]["options"][0]["title"]=title
+        with app.connect() as c:
+            c.execute("""INSERT INTO v2_food_plan_editor_publications
+                (draft_id,athlete_id,plan_type,snapshot_json,published_at,state)
+                VALUES(?,?,?,?,?,?)""",("shared-"+str(index),"fictitious-"+str(index),
+                "Plano azul",json.dumps(copy,ensure_ascii=False),100+index,"published"))
+            c.commit()
+        return copy
+
+    def _common(self):
+        return self.call(ROOT+"/common")
+
+    def test_common_preview_is_contextual_and_excludes_private_fields(self):
+        with patch.dict(os.environ,FLAG):
+            self._add_publication(2)
+            self._add_publication(3,meal_name="Almoço")
+            self._add_publication(4,title="Outra refeição")
+            result=self._common()
+            self.assertEqual(result["status"],200,result)
+            groups=result["body"]["items"]
+            titles=[g for g in groups if g["field_kind"]=="option_title"]
+            original=next(g for g in titles if g["source_text"]=="Opção 1"
+                          and g["meal_context"]=="Pequeno almoço")
+            self.assertEqual(original["missing_count"],2)
+            self.assertEqual(original["occurrences"],2)
+            self.assertEqual(next(g for g in titles if g["source_text"]=="Opção 1"
+                and g["meal_context"]=="Almoço")["missing_count"],1)
+            self.assertNotIn("Atleta de teste",str(result))
+            self.assertNotIn("Tomar 2 vezes",str(result))
+            self.assertNotIn("Arroz branco cozido",str(result))
+            self.assertNotIn("private-athlete",str(result))
+            self.assertTrue(all(g["field_kind"]=="option_title" for g in groups))
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                     v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],0)
+
+    def test_shared_review_requires_ack_and_preserves_snapshots_with_audit(self):
+        with patch.dict(os.environ,FLAG):
+            self._add_publication(2)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            body={
+                "group_id":group["group_id"],"source_hash":group["source_hash"],
+                "expected_group_hash":group["expected_group_hash"],
+                "translated_text":"Option 1","acknowledged":True
+            }
+            denied=self.call(ROOT+"/common/approve","POST",{**body,"acknowledged":False})
+            self.assertEqual(denied["status"],400,denied)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",body,csrf=False)["status"],403)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",{
+                **body,"translated_text":"Option 2"})["status"],400)
+            result=self.call(ROOT+"/common/approve","POST",body)
+            self.assertEqual(result["status"],200,result)
+            self.assertEqual(result["body"]["approved"],2)
+            self.assertEqual(result["body"]["remaining"],0)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",body)["status"],409)
+            self.assertFalse(any(x["field_kind"]=="option_title" for x
+                             in self._common()["body"]["items"]))
+            with app.connect() as c:
+                approved=c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE entity_kind='plan' AND status='approved'""").fetchone()[0]
+                self.assertEqual(approved,2)
+                actions=[r["action"] for r in c.execute("""
+                    SELECT action FROM v2_content_translation_history
+                    WHERE entity_kind='plan' ORDER BY action""").fetchall()]
+                self.assertEqual(actions,["approved","approved","submitted","submitted"])
+                snapshot=c.execute("""SELECT snapshot_json FROM
+                    v2_food_plan_editor_publications WHERE draft_id=?""",
+                    (self.draft_id,)).fetchone()["snapshot_json"]
+                self.assertEqual(snapshot,self.original)
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                     WHERE field_path LIKE ?""",("%/notes/%",)).fetchone()[0],0)
+
+
+    def test_common_approval_caps_each_transaction_at_100(self):
+        with patch.dict(os.environ,FLAG):
+            # 102 identical title occurrences, but only up to 100 are
+            # submitted and approved in a single, audited transaction.
+            for number in range(2,103):
+                self._add_publication(number)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            self.assertEqual(group["missing_count"],102)
+            def body(g):
+                return {"group_id":g["group_id"],"source_hash":g["source_hash"],
+                        "expected_group_hash":g["expected_group_hash"],
+                        "translated_text":"Option 1","acknowledged":True}
+            first=self.call(ROOT+"/common/approve","POST",body(group))
+            self.assertEqual(first["status"],200,first)
+            self.assertEqual(first["body"]["approved"],100)
+            self.assertEqual(first["body"]["remaining"],2)
+            refreshed=next(g for g in self._common()["body"]["items"]
+                           if g["field_kind"]=="option_title")
+            self.assertEqual(refreshed["missing_count"],2)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",body(group))["status"],409)
+            second=self.call(ROOT+"/common/approve","POST",body(refreshed))
+            self.assertEqual(second["status"],200,second)
+            self.assertEqual(second["body"]["approved"],2)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translations WHERE entity_kind='plan'
+                    AND status='approved'""").fetchone()[0],102)
+
+    def test_common_preview_conflict_does_not_approve_stale_group(self):
+        with patch.dict(os.environ,FLAG):
+            self._add_publication(2)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            updated=json.loads(self.original)
+            updated["meals"][0]["options"][0]["title"]="Outra opção"
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(updated,ensure_ascii=False),self.draft_id))
+                c.commit()
+            body={
+                "group_id":group["group_id"],"source_hash":group["source_hash"],
+                "expected_group_hash":group["expected_group_hash"],
+                "translated_text":"Option 1","acknowledged":True}
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",body)["status"],409)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                      WHERE entity_kind='plan'""").fetchone()[0],0)
+
+    def test_common_unit_rule_and_pending_cannot_be_overwritten(self):
+        with patch.dict(os.environ,FLAG):
+            updated=json.loads(self.original)
+            updated["meals"][0]["options"][0]["foods"][0]["display_quantity"]="2 un / 120 g"
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(updated,ensure_ascii=False),self.draft_id))
+                c.commit()
+            ref=self.index()["publication_ref"]
+            row=next(f for f in self.fields(ref)["body"]["fields"]
+                     if f["field_path"]=="meals/0/options/0/foods/0/display_quantity")
+            self.assertEqual(self.propose(ref,row,"2 units / 120 g")["status"],201)
+            groups=self._common()["body"]["items"]
+            self.assertFalse(any(g["field_kind"]=="display_quantity" for g in groups))
+            # Another publication has the identical unit but is still missing.
+            duplicate=json.loads(json.dumps(updated))
+            duplicate["id"]="shared-2"
+            with app.connect() as c:
+                c.execute("""INSERT INTO v2_food_plan_editor_publications
+                     (draft_id,athlete_id,plan_type,snapshot_json,published_at,state)
+                     VALUES(?,?,?,?,?,?)""",("shared-2","private-test-2","Plano azul",
+                      json.dumps(duplicate,ensure_ascii=False),101,"published"))
+                c.commit()
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="display_quantity")
+            self.assertEqual(group["missing_count"],1)
+            self.assertEqual(group["pending_count"],1)
+            self.assertEqual(group["suggestion"]["text"],"2 units / 120 g")
+            body={"group_id":group["group_id"],"source_hash":group["source_hash"],
+                  "expected_group_hash":group["expected_group_hash"],
+                  "translated_text":"2 units / 120 g","acknowledged":True}
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",{
+                **body,"translated_text":"2 units / 120 mg"})["status"],400)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",body)["status"],200)
+            with app.connect() as c:
+                statuses=[r["status"] for r in c.execute("""
+                    SELECT status FROM v2_content_translations
+                    WHERE entity_kind='plan' ORDER BY status""").fetchall()]
+                self.assertEqual(statuses,["approved","pending"])
+
     def test_republish_invalidates_old_version_without_affecting_audit(self):
         with patch.dict(os.environ,FLAG):
             ref=self.index()["publication_ref"]

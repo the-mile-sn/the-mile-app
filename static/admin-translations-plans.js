@@ -206,6 +206,130 @@
         create("p","i18n-feedback","Não foi possível consultar o plano: "+e.message));
     }
   };
+
+  const renderCommon=async panel=>{
+    const seq=generation;
+    panel.replaceChildren();
+    const header=create("div","i18n-plan-detail-head");
+    const heading=create("strong","","Traduções comuns · revisão por expressão");
+    header.append(heading);
+    const intro=create("p","i18n-plan-policy",
+      "Títulos idênticos na mesma refeição e unidades simples. "+
+      "Revê o inglês uma vez e aprova até 100 ocorrências em simultâneo. "+
+      "Notas individuais, alternativas e textos clínicos ficam de fora.");
+    const search=create("input","i18n-plan-common-search");
+    search.type="search";
+    search.placeholder="Pesquisar títulos e unidades…";
+    search.setAttribute("aria-label","Pesquisar traduções comuns");
+    const list=create("div","i18n-plan-common-list");
+    const detail=create("div","i18n-plan-common-detail");
+    panel.append(header,intro,search,list,detail);
+    let groups=[];
+    const refresh=async()=>{
+      const result=await send("/api/v2/admin/i18n/plans/common");
+      if(seq!==generation||host.hidden)return;
+      groups=result.items||[];
+      showList();
+    };
+    const openGroup=item=>{
+      detail.replaceChildren();
+      const groupHead=create("div","i18n-plan-detail-head");
+      groupHead.append(create("strong","",
+        item.field_kind==="option_title"?"Título de opção":"Unidade de apresentação"),
+        create("small","",item.missing_count+" ocorrências para aprovar"));
+      const context=create("p","i18n-plan-policy",item.field_kind==="option_title"?
+        "Contexto: "+item.meal_context:"Apenas expressões de unidade inequívocas");
+      const cols=create("div","i18n-plan-compare");
+      const pt=create("div","i18n-plan-pt");
+      pt.append(create("small","","Português · original"),
+                create("p","",item.source_text));
+      const en=create("label","i18n-plan-en");
+      en.append(create("small","","English · tradução revista"));
+      const editor=create("textarea","");
+      editor.rows=3;
+      editor.maxLength=10000;
+      editor.value=item.suggestion?.text||"";
+      en.append(editor);
+      cols.append(pt,en);
+      const acknowledge=create("label","i18n-bulk-attestation");
+      const check=create("input");check.type="checkbox";
+      acknowledge.append(check,create("span","",
+        "Revisei esta expressão e confirmei que se aplica ao contexto indicado"));
+      const actions=create("div","i18n-plan-field-actions");
+      const approve=create("button","i18n-primary",
+        "Aprovar até "+Math.min(100,item.missing_count)+" ocorrências");
+      approve.type="button";
+      const feedback=create("p","i18n-feedback");
+      let busy=false;
+      const update=()=>{approve.disabled=busy||!check.checked||!editor.value.trim();};
+      editor.addEventListener("input",()=>{check.checked=false;update();});
+      check.addEventListener("change",update);
+      approve.addEventListener("click",async()=>{
+        if(busy||!check.checked||!editor.value.trim())return;
+        busy=true;update();
+        feedback.textContent="";
+        try{
+          const result=await send("/api/v2/admin/i18n/plans/common/approve","POST",{
+            group_id:item.group_id,source_hash:item.source_hash,
+            expected_group_hash:item.expected_group_hash,
+            translated_text:editor.value.trim(),acknowledged:true
+          });
+          feedback.textContent=result.approved+
+            " ocorrências aprovadas com histórico individual.";
+          // Group tokens are versioned; obtain fresh eligible rows after any write.
+          await refresh();
+          const remaining=groups.find(g=>g.group_id===item.group_id);
+          if(remaining){
+            openGroup(remaining);
+            const msg=create("p","i18n-feedback",result.approved+
+              " ocorrências aprovadas. Ainda existem "+remaining.missing_count+
+              " sem tradução.");
+            detail.prepend(msg);
+          }else{
+            detail.replaceChildren(create("p","i18n-feedback",
+              result.approved+" ocorrências aprovadas. Grupo concluído."));
+          }
+        }catch(e){
+          feedback.textContent="Não foi possível aprovar: "+e.message+
+            ". Atualiza a lista antes de tentar novamente.";
+          busy=false;update();
+        }
+      });
+      actions.append(acknowledge,approve);
+      update();
+      detail.append(groupHead,context,cols,actions,feedback);
+    };
+    const showList=()=>{
+      list.replaceChildren();
+      const term=search.value.trim().toLocaleLowerCase("pt-PT");
+      const items=groups.filter(x=>
+        !term||[x.source_text,x.meal_context,x.field_kind].join(" ")
+          .toLocaleLowerCase("pt-PT").includes(term));
+      if(!items.length){
+        list.append(create("p","i18n-results-count",
+          "Não existem textos comuns para estes filtros."));
+        return;
+      }
+      for(const item of items){
+        const row=create("button","i18n-plan-common-item");
+        row.type="button";
+        row.append(create("strong","",item.source_text),
+          create("small","",item.missing_count+" por traduzir · "+
+            (item.field_kind==="option_title"?
+              "Título · "+item.meal_context:"Unidade simples")+
+            (item.missing_count>100?" · em grupos de 100":"")));
+        row.addEventListener("click",()=>openGroup(item));
+        list.append(row);
+      }
+    };
+    search.addEventListener("input",showList);
+    try{await refresh();}
+    catch(e){
+      if(seq===generation)list.replaceChildren(
+        create("p","i18n-feedback","Não foi possível carregar textos comuns: "+e.message));
+    }
+  };
+
   const load=async({csrfToken,status="all",query=""}={})=>{
     csrf=csrfToken||csrf;
     const seq=++generation;
@@ -219,7 +343,8 @@
     const list=create("div","i18n-plan-list");list.id="i18n-plan-items";
     const detail=create("div","i18n-plan-detail");detail.id="i18n-plan-detail";
     const auditPanel=create("div","i18n-plan-audit");
-    host.append(head,intro,auditPanel,list,detail);
+    const commonPanel=create("section","i18n-plan-common");
+    host.append(head,intro,auditPanel,commonPanel,list,detail);
     try{
       const result=await send("/api/v2/admin/i18n/plans");
       if(seq!==generation||host.hidden)return;
@@ -248,6 +373,7 @@
           "Nenhuma sugestão é guardada ou aprovada sem revisão."));
       }
       renderList(status,query);
+      await renderCommon(commonPanel);
     }catch(e){
       if(seq===generation)list.replaceChildren(
         create("p","i18n-feedback","Não foi possível consultar publicações: "+e.message));

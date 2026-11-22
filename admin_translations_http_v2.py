@@ -17,6 +17,7 @@ PATHS = frozenset((
     ROOT + "/batch/preview", ROOT + "/batch/approve",
     ROOT + "/plans", ROOT + "/plans/fields", ROOT + "/plans/history",
     ROOT + "/plans/propose", ROOT + "/plans/approve",
+    ROOT + "/plans/common", ROOT + "/plans/common/approve",
 ))
 
 
@@ -66,6 +67,10 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
         # Validate against the actual active admin row, not just a cookie value.
         review._admin(c, user)
         if method == "GET":
+            if path == ROOT + "/plans/common":
+                if query:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, plans.common_preview(c, user)
             if path == ROOT + "/plans":
                 if query:
                     raise APIError(400, "invalid_translation_query")
@@ -114,6 +119,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/plans/common/approve":
+                return 200, plans.approve_common(c, user, body)
             if path == ROOT + "/plans/propose":
                 return 201, plans.propose(c, user, body)
             if path == ROOT + "/plans/approve":

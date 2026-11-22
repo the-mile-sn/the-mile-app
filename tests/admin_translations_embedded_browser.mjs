@@ -24,7 +24,7 @@ try{
     let authenticated=false;
     const requests=[];
     const publicRef="a".repeat(64);
-    let planApproved=false,planPending=false,planSaveRequests=0;
+    let planApproved=false,planPending=false,planSaveRequests=0,commonApprovals=0;
     const makePlanField=()=>({field_path:"meals/0/options/0/title",
       field_label:"Título da opção",group:"Pequeno almoço · Opção 1",
       sensitive:false,source_text:"Opção 1",source_hash:"b".repeat(64),
@@ -52,6 +52,25 @@ try{
             repeated_option_title_occurrences:2,approved_library_food_references:1,
             alternative_overrides:1,individual_notes:1,simple_unit_suggestions:1},
           scope:"published_versions_only",csv_export:false}));
+      }else if(path==="/api/v2/admin/i18n/plans/common"){
+        await route.fulfill(fmt({total_groups:commonApprovals?0:1,
+          max_batch:100,items:commonApprovals?[]:[{
+            group_id:"d".repeat(64),source_hash:"e".repeat(64),
+            expected_group_hash:"f".repeat(64),field_kind:"display_quantity",
+            meal_context:"",source_text:"2 un / 120 g",
+            occurrences:2,missing_count:2,pending_count:0,approved_count:0,
+            outdated_count:0,batch_limit:100,
+            suggestion:{text:"2 units / 120 g",origin:"simple_unit_rule",
+              requires_review:true}
+          }]}));
+      }else if(path==="/api/v2/admin/i18n/plans/common/approve"){
+        const payload=route.request().postDataJSON();
+        assert.equal(payload.acknowledged,true);
+        assert.equal(payload.translated_text,"2 units / 120 g");
+        assert.equal(route.request().headers()["x-csrf-token"],"test-csrf");
+        commonApprovals++;
+        await route.fulfill(fmt({approved:2,remaining:0,status:"approved",
+          group_id:"d".repeat(64)}));
       }else if(path==="/api/v2/admin/i18n/plans/fields"){
         assert.equal(url.searchParams.get("publication_ref"),publicRef);
         await route.fulfill(fmt({publication:planPublication,fields:[makePlanField()],
@@ -163,6 +182,16 @@ try{
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
     assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),1);
+    await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
+    await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().click();
+    assert.equal(await page.locator(".i18n-plan-common-detail textarea").inputValue(),
+      "2 units / 120 g");
+    assert.equal(await page.locator(".i18n-plan-common-detail .i18n-primary").isDisabled(),true);
+    assert.equal(commonApprovals,0,"Suggestions cannot approve automatically");
+    await page.locator(".i18n-plan-common-detail input[type=checkbox]").check();
+    await page.locator(".i18n-plan-common-detail .i18n-primary").click();
+    await page.getByText("2 ocorrências aprovadas. Grupo concluído.").waitFor();
+    assert.equal(commonApprovals,1);
     await page.locator("#i18n-plan-items .i18n-plan-item").click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));

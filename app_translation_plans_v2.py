@@ -385,6 +385,190 @@ def approve(c, actor, body):
     return {**result, "publication_ref":public_ref, "field_path":field_path}
 
 
+
+# Shared plan text is strictly limited to visible option titles and
+# unambiguous presentation units. Alternative labels, notes, free-text
+# quantities and prescription labels never enter this cross-plan queue.
+_COMMON_KINDS = {"option_title", "display_quantity"}
+MAX_COMMON_BATCH = 100
+
+
+def _group_identity(field, plan):
+    kind = field["field_kind"]
+    if kind not in _COMMON_KINDS:
+        return None
+    if kind == "display_quantity" and _quantity_hint(field["source_text"]) is None:
+        return None
+    context = ""
+    if kind == "option_title":
+        match = re.match(r"^meals/(\d+)/options/\d+/title$", field["field_path"])
+        if match is None:
+            return None
+        meal_index = int(match.group(1))
+        try:
+            context = str(plan["meals"][meal_index].get("name") or "").strip()
+        except (IndexError, TypeError, AttributeError):
+            return None
+        if not context:
+            return None
+    key = _hash(kind + "\0" + context + "\0" + field["source_text"])
+    return key, kind, context
+
+
+def _common_groups(c):
+    """Admin-only, contextual groups. No athlete identifiers in the response."""
+    rows = _rows(c)
+    names = _name_map(c)
+    approved = _approved_titles(c)
+    groups = {}
+    for publication in rows:
+        try:
+            plan = json.loads(publication["snapshot_json"])
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(plan, dict) or not isinstance(plan.get("meals"), list):
+            continue
+        publication_ref = _ref(publication["draft_id"], publication["snapshot_json"])
+        fields, _, _ = _fields(plan, names)
+        existing = _existing(c, publication_ref)
+        for field in fields:
+            identity = _group_identity(field, plan)
+            if identity is None:
+                continue
+            key, kind, context = identity
+            group = groups.setdefault(key, {
+                "group_id": key, "field_kind":kind, "meal_context":context,
+                "source_hash":_hash(field["source_text"]),
+                "source_text":field["source_text"], "total":0,
+                "missing":[], "pending_count":0, "approved_count":0,
+                "outdated_count":0, "suggestion":None,
+            })
+            group["total"] += 1
+            state = _status(field, existing.get(field["field_path"]))
+            if state == "missing":
+                group["missing"].append({
+                    "publication_ref":publication_ref,
+                    "draft_id":publication["draft_id"],
+                    "field_path":field["field_path"],
+                    "source_hash":_hash(field["source_text"]),
+                })
+            else:
+                group[state + "_count"] += 1
+            if group["suggestion"] is None:
+                group["suggestion"] = _safe_suggestion(field, approved)
+    return groups
+
+
+def common_preview(c, actor):
+    admin._admin(c, actor)
+    groups = _common_groups(c)
+    items = []
+    for group in groups.values():
+        targets = sorted(group["missing"],
+                         key=lambda r:(r["publication_ref"],r["field_path"]))
+        if not targets:
+            continue
+        stamp = _hash(json.dumps(
+            [(r["publication_ref"],r["field_path"],r["source_hash"])
+             for r in targets], separators=(",", ":"), ensure_ascii=False))
+        items.append({
+            "group_id":group["group_id"], "field_kind":group["field_kind"],
+            "meal_context":group["meal_context"],
+            "source_hash":group["source_hash"],
+            "source_text":group["source_text"],
+            "occurrences":group["total"], "missing_count":len(targets),
+            "pending_count":group["pending_count"],
+            "approved_count":group["approved_count"],
+            "outdated_count":group["outdated_count"],
+            "expected_group_hash":stamp,
+            "suggestion":group["suggestion"], "batch_limit":MAX_COMMON_BATCH,
+        })
+    items.sort(key=lambda item:(-item["missing_count"],
+                                item["field_kind"],item["source_text"].casefold()))
+    return {"items":items, "total_groups":len(items),
+            "policy":"admin_private_identical_text_same_meal_no_clinical_auto",
+            "max_batch":MAX_COMMON_BATCH}
+
+
+def approve_common(c, actor, body):
+    """One explicit review of identical source+context approves <=100 positions.
+
+    Pre-existing pending/approved/outdated rows are never overwritten.
+    All newly created submissions and approvals share the same transaction.
+    The WSGI caller commits only after a successful response.
+    """
+    actor_id = admin._admin(c, actor)
+    expected = {"group_id", "source_hash", "expected_group_hash",
+                "translated_text", "acknowledged"}
+    if (not isinstance(body, dict) or set(body) != expected
+            or body.get("acknowledged") is not True
+            or not isinstance(body.get("group_id"), str)
+            or not _REF.fullmatch(body["group_id"])
+            or not isinstance(body.get("source_hash"), str)
+            or not _REF.fullmatch(body["source_hash"])
+            or not isinstance(body.get("expected_group_hash"), str)
+            or not _REF.fullmatch(body["expected_group_hash"])
+            or not isinstance(body.get("translated_text"), str)
+            or not 1 <= len(body["translated_text"].strip()) <= 10000):
+        raise PlanTranslationError(400,"invalid_common_review")
+    groups = _common_groups(c)
+    group = groups.get(body["group_id"])
+    if group is None or group["source_hash"] != body["source_hash"]:
+        raise PlanTranslationError(409,"common_translation_changed")
+    targets = sorted(group["missing"],
+                     key=lambda r:(r["publication_ref"],r["field_path"]))
+    stamp = _hash(json.dumps(
+        [(r["publication_ref"],r["field_path"],r["source_hash"])
+         for r in targets], separators=(",", ":"), ensure_ascii=False))
+    if not targets or stamp != body["expected_group_hash"]:
+        raise PlanTranslationError(409,"common_translation_changed")
+    candidate = body["translated_text"].strip()
+    source = group["source_text"]
+    if _numbers(candidate) != _numbers(source):
+        raise PlanTranslationError(400,"plan_translation_numbers_changed")
+    if _units(candidate) != _units(source):
+        raise PlanTranslationError(400,"plan_translation_units_changed")
+    try:
+        for target in targets[:MAX_COMMON_BATCH]:
+            # Fail closed if this publication was replaced after preview.
+            field = _source(c,target["publication_ref"],target["field_path"])
+            if (field["field_kind"] != group["field_kind"] or
+                    _hash(field["source_text"]) != group["source_hash"]):
+                raise PlanTranslationError(409,"common_translation_changed")
+            # Conditional insert prevents replacing an approval or pending
+            # translation created concurrently by another administrator.
+            key = ("plan", "pub:" + target["publication_ref"],
+                   target["field_path"], "en")
+            import time
+            now = int(time.time())
+            inserted = c.execute("""
+                INSERT INTO v2_content_translations
+                    (entity_kind,entity_id,field_path,language,source_hash,
+                     translated_text,status,updated_at,updated_by,approved_at,approved_by)
+                VALUES (?,?,?,?,?,?,'pending',?,?,NULL,NULL)
+                ON CONFLICT (entity_kind,entity_id,field_path,language) DO NOTHING
+                RETURNING entity_id
+            """, (*key, target["source_hash"], candidate, now, actor_id)).fetchone()
+            if inserted is None:
+                raise PlanTranslationError(409,"common_translation_changed")
+            store._history(c,key,target["source_hash"],candidate,
+                           "submitted",actor_id,now)
+            store.approve(c, entity_kind="plan",entity_id=key[1],
+                          field_path=key[2],source_text=field["source_text"],
+                          reviewer_id=actor_id,
+                          expected_candidate_hash=_hash(candidate))
+    except (PlanTranslationError,ValueError,LookupError,PermissionError):
+        c.rollback()
+        raise
+    except Exception:
+        c.rollback()
+        raise PlanTranslationError(503,"common_translation_unavailable") from None
+    return {"approved":min(len(targets),MAX_COMMON_BATCH),
+            "remaining":max(0,len(targets)-MAX_COMMON_BATCH),
+            "status":"approved", "group_id":body["group_id"]}
+
+
+
 def history(c, actor, public_ref, field_path):
     admin._admin(c, actor)
     if not isinstance(field_path, str) or not _PATH.fullmatch(field_path):
