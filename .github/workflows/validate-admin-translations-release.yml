@@ -14,6 +14,8 @@ on:
       - "app_translation_import_v2.py"
       - "app_translation_batch_review_v2.py"
       - "app_translation_sources_v2.py"
+      - "app_translation_plans_v2.py"
+      - "test_admin_translation_plans_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
       - "static/admin-microcycles.js"
@@ -36,6 +38,8 @@ on:
       - "app_translation_import_v2.py"
       - "app_translation_batch_review_v2.py"
       - "app_translation_sources_v2.py"
+      - "app_translation_plans_v2.py"
+      - "test_admin_translation_plans_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
       - "static/admin-microcycles.js"
@@ -67,8 +71,9 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile backend and validate browser scripts
         run: |
-          python -m py_compile app.py admin_translations_http_v2.py content_translations_v2.py app_translation_admin_v2.py app_translation_catalog_v2.py app_translation_sources_v2.py app_translation_import_v2.py app_translation_batch_review_v2.py
+          python -m py_compile app.py admin_translations_http_v2.py content_translations_v2.py app_translation_admin_v2.py app_translation_catalog_v2.py app_translation_sources_v2.py app_translation_import_v2.py app_translation_batch_review_v2.py app_translation_plans_v2.py test_admin_translation_plans_v2.py
           node --check static/admin-translations.js
+          node --check static/admin-translations-plans.js
           node --check static/admin-translations-import.js
           node --check static/admin-translations-shortcuts.js
           node --check static/admin-dashboard.js
@@ -77,7 +82,7 @@ jobs:
           node --check tests/admin_translations_embedded_browser.mjs
           node --check tests/admin_translations_batch_browser.mjs
       - name: Run real WSGI tests (auth, CSRF, catalog, no app routes)
-        run: python -m unittest -v test_admin_translations_release_v2 test_admin_translation_import_v2 test_admin_translation_batch_review_v2
+        run: python -m unittest -v test_admin_translations_release_v2 test_admin_translation_import_v2 test_admin_translation_batch_review_v2 test_admin_translation_plans_v2
 
   browser-mock:
     runs-on: ubuntu-24.04
