@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/admin-surface-palette.css?v=205">
 <link rel="stylesheet" href="/admin-translations.css">
 <script defer src="/admin-translations.js"></script>
+<script defer src="/admin-translations-import.js"></script>
 </head>
 <body>
 <main class="i18n-shell" id="i18n-app">
@@ -28,7 +29,7 @@
   </section>
   <section class="i18n-work-panel" id="i18n-work-panel" aria-labelledby="i18n-work-title" hidden>
     <div class="i18n-section-heading i18n-work-heading">
-      <div><h2 id="i18n-work-title">Revisão de conteúdos</h2><p>Seleciona um registo e revê os textos que aparecem nas apps.</p></div>
+      <div><h2 id="i18n-work-title">Revisão manual</h2><p>Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.</p></div>
       <a id="i18n-library-link" href="/?nav=food-library" class="i18n-link">Abrir biblioteca</a>
     </div>
     <div class="i18n-toolbar">
@@ -54,6 +55,30 @@
       <span id="i18n-page-indicator"></span>
       <button id="i18n-next" type="button">Seguinte</button>
     </div>
+  </section>
+  <section class="i18n-library-panel i18n-import-panel" aria-labelledby="i18n-import-title" id="i18n-import-panel">
+    <div class="i18n-section-heading">
+      <div><h2 id="i18n-import-title">Importar traduções</h2>
+        <p class="i18n-import-description">Sem API: descarrega um modelo da biblioteca selecionada, preenche apenas a coluna inglesa e importa propostas para revisão.</p>
+      </div>
+      <span>CSV · PT → EN</span>
+    </div>
+    <div class="i18n-import-controls">
+      <button type="button" id="i18n-export" class="i18n-secondary">Descarregar modelo CSV</button>
+      <label class="i18n-import-file" for="i18n-import-file">Escolher CSV
+        <input type="file" id="i18n-import-file" accept=".csv,text/csv">
+      </label>
+      <button type="button" id="i18n-import-check" class="i18n-secondary">Verificar importação</button>
+      <button type="button" id="i18n-import-commit" class="i18n-primary" disabled>Importar propostas</button>
+    </div>
+    <p id="i18n-import-feedback" class="i18n-feedback" role="status" aria-live="polite"></p>
+    <div id="i18n-import-preview" class="i18n-import-preview"></div>
+    <p class="i18n-import-disclaimer">Só são aceites textos que continuam iguais ao português original e ainda não têm uma tradução em revisão. A importação cria propostas pendentes: não substitui traduções anteriores nem aprova conteúdos.</p>
+  </section>
+  <section class="i18n-library-panel" aria-labelledby="i18n-auto-title">
+    <div class="i18n-section-heading"><h2 id="i18n-auto-title">Sugestões automáticas</h2>
+      <span>Não configuradas</span></div>
+    <p class="i18n-import-disclaimer">Esta opção será ligada à mesma revisão PT/EN quando existir uma API configurada e aprovada. Até lá, podes traduzir manualmente e importar CSV sem qualquer serviço externo ou custo de API.</p>
   </section>
   <section class="i18n-review" id="i18n-review" aria-labelledby="i18n-review-title" hidden>
     <div class="i18n-review-heading">

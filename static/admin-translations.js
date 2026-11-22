@@ -248,6 +248,9 @@
    }finally{state.busy=false;$("i18n-propose").disabled=false;}
  };
  const init=async()=>{
+   window.addEventListener("mile:translations-imported",()=>{
+     closeReview();loadOverview();loadCatalog();
+   });
    $("i18n-close").addEventListener("click",closeReview);
    $("i18n-status").addEventListener("change",event=>{
      state.status=event.target.value;state.page=1;loadCatalog();

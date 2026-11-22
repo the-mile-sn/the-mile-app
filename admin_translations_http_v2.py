@@ -5,11 +5,13 @@ caller authenticates, checks origin/CSRF and SITE_ROLE before dispatch.
 """
 import app_translation_admin_v2 as review
 import app_translation_catalog_v2 as catalog
+import app_translation_import_v2 as imports
 
 ROOT = "/api/v2/admin/i18n"
 PATHS = frozenset((
     ROOT, ROOT + "/propose", ROOT + "/approve", ROOT + "/history",
     ROOT + "/overview", ROOT + "/catalog",
+    ROOT + "/import/preview", ROOT + "/import/submit",
 ))
 
 
@@ -90,10 +92,16 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/import/preview":
+                return 200, imports.preview(c, user, body)
+            if path == ROOT + "/import/submit":
+                return 201, imports.submit(c, user, body)
             if path == ROOT + "/propose":
                 return 201, review.propose(c, user, body)
             if path == ROOT + "/approve":
                 return 200, review.approve(c, user, body)
+    except imports.ImportError as e:
+        raise APIError(e.status, e.code) from None
     except (PermissionError, LookupError, ValueError) as e:
         raise _map_error(e) from None
     raise APIError(404, "not_found")

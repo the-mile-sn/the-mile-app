@@ -13,7 +13,7 @@
     a.className="tm-i18n-library-link tm-action-secondary";
     a.href="/admin-translations?entity_kind="+encodeURIComponent(kind);
     a.textContent=label;
-    a.setAttribute("aria-label","Gerir traduções da biblioteca de "+(kind==="food"?"alimentos":"pratos"));
+    a.setAttribute("aria-label","Gerir traduções da biblioteca de "+({food:"alimentos",dish:"pratos",recipe:"receitas",supplement:"suplementação"}[kind]||"conteúdos"));
     target.parentElement.insertBefore(a,target);
   };
   const activate=async()=>{
@@ -25,6 +25,8 @@
       if(!response.ok)return; // Missing schema, disabled flag or lack of permission: inert.
       add("new","food","Traduções");
       add("dish-add-toggle","dish","Traduções");
+      add("recipe-add","recipe","Traduções");
+      add("supp-library-new","supplement","Traduções");
     }catch(_){/* An unavailable opt-in service must not change current UI. */}
   };
   new MutationObserver(activate).observe(workspace,{attributes:true,attributeFilter:["hidden"]});
