@@ -70,6 +70,23 @@ try{
     await page.locator("#i18n-bulk-filter").fill("Aveia");
     assert.equal(await page.locator("#i18n-bulk-items .i18n-bulk-row:not([hidden])").count(),1);
     await page.locator("#i18n-bulk-filter").fill("");
+    // The new action adds only the next 100 visible, unselected rows.
+    assert.equal(await page.locator("#i18n-bulk-select-100").isEnabled(),true);
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),2);
+    assert.equal(await page.locator("#i18n-bulk-select-100").isDisabled(),true);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    await page.locator("#i18n-bulk-reviewed").check();
+    assert.equal(await page.locator("#i18n-bulk-submit").isEnabled(),true);
+    await page.locator("#i18n-bulk-items input[type=checkbox]").first().uncheck();
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    await page.locator("#i18n-bulk-filter").fill("Aveia");
+    assert.equal(await page.locator("#i18n-bulk-select-100").isDisabled(),true,
+      "Filtered selection must not include rows hidden by search");
+    await page.locator("#i18n-bulk-filter").fill("");
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),2);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
     await page.locator("#i18n-bulk-select-all").check();
     assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
     await page.locator("#i18n-bulk-reviewed").check();
