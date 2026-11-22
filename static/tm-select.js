@@ -1,6 +1,6 @@
 /* The Mile Select — only dropdown implementation for the admin. */
 (()=>{'use strict';
-const IDS=['tm-players-access','category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule'];
+const IDS=['tm-players-access','category','tm-portion-category','dish-category-filter','new-dish-category','recipe-filter-category','recipe-filter-type','recipe-filter-status','recipe-category','recipe-type','recipe-pdf-category','library-player-filter','library-type-filter','search-plan-type','plan-player','plan-type','supp-lib-moment','supp-lib-rule','i18n-status','i18n-fields'];
 const instances=new Map();
 function setup(select){
  if(select.id==='dish-category-filter'&&select.closest('#dish-filter-parking'))return;

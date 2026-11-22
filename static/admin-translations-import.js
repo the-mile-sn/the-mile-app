@@ -116,6 +116,7 @@
  const readFile=async()=>{
    clear();
    const file=$("i18n-import-file").files[0];
+   $("i18n-import-filename").textContent=file?.name||"Nenhum ficheiro selecionado";
    if(!file){feedback("");return;}
    if(file.size>maxBytes){feedback("O CSV não pode ultrapassar 1 MB.",true);return;}
    try{
@@ -181,6 +182,7 @@
      }
      feedback(completed+" propostas importadas e pendentes de aprovação. Nenhuma foi aprovada automaticamente.");
      clear();$("i18n-import-file").value="";
+     $("i18n-import-filename").textContent="Nenhum ficheiro selecionado";
      window.dispatchEvent(new Event("mile:translations-imported"));
    }catch(e){
      feedback("Importação interrompida após "+completed+" propostas. Erro: "+e.message+

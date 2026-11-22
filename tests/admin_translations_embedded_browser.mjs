@@ -44,6 +44,10 @@ try{
     await page.goto(origin+"/admin-microcycles.html",{waitUntil:"domcontentloaded"});
     await startup;
     authenticated=true;
+    await page.evaluate((theme)=>{
+      localStorage.setItem("tm-admin-theme",theme);
+      document.documentElement.dataset.adminTheme=theme;
+    },name==="desktop"?"light":"dark");
     await page.evaluate(()=>{
       document.getElementById("admin-workspace").hidden=false;
       document.getElementById("admin-login-panel").hidden=true;
@@ -56,16 +60,46 @@ try{
     // Traduções must be a PRIMARY destination, never inside Biblioteca.
     assert.equal(await nav.evaluate(el=>!!el.closest("#tm-admin-food-subnav")),false);
     assert.equal(await nav.evaluate(el=>!!el.closest(".tm-admin-side-nav")),true);
+    // Last of the principal work areas: on mobile, account actions are
+    // relocated after that section by the existing mobile navigation.
+    assert.equal(await nav.evaluate(el=>el.previousElementSibling?.id),
+      "tm-admin-nav-appointments","Traduções must follow Agendamentos");
     assert.ok(await page.locator("#tm-i18n-library-plan").count());
     assert.ok(await page.locator("#tm-i18n-library-plan-mobile").count());
     await nav.waitFor({state:"visible",timeout:15000});
     await nav.click();
     const view=page.locator("#tm-admin-translations-page");
     await page.locator("#i18n-library-panel:not([hidden])").waitFor({timeout:15000});
+    await page.locator("#i18n-results .i18n-status-pill").first().waitFor({timeout:15000});
     assert.equal(await view.getAttribute("hidden"),null);
     assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
     assert.ok((await page.locator("#i18n-import-title").textContent()).includes("Importar"));
     assert.ok((await page.locator("#i18n-auto-title").textContent()).includes("automáticas"));
+    const visual=await page.evaluate(()=>{
+      const css=(sel)=>getComputedStyle(document.querySelector(sel));
+      return {
+        mainBg:css("#i18n-library-panel").backgroundColor,
+        subBg:css("#i18n-libraries .i18n-library").backgroundColor,
+        libraryBorder:css("#i18n-libraries .i18n-library").borderTopWidth,
+        sectionBorder:css("#i18n-library-panel").borderTopWidth,
+        pillFont:css(".i18n-status-pill").fontSize,
+        pillWeight:css(".i18n-status-pill").fontWeight,
+        pillHeight:css(".i18n-status-pill").height,
+        pillRadius:css(".i18n-status-pill").borderRadius,
+        csvInputOpacity:css("#i18n-import-file").opacity,
+        statusCustom:!!document.querySelector("#i18n-status + .tm-select-trigger")||
+          !!document.querySelector("#i18n-status ~ .tm-select-trigger"),
+      };
+    });
+    assert.notEqual(visual.mainBg,visual.subBg,"Guide: primary card and subcard differ");
+    assert.equal(visual.libraryBorder,"0px");
+    assert.equal(visual.sectionBorder,"0px");
+    assert.equal(visual.pillFont,"11px");
+    assert.equal(visual.pillWeight,"400");
+    assert.equal(visual.pillHeight,"26px");
+    assert.equal(visual.pillRadius,"999px");
+    assert.equal(visual.csvInputOpacity,"0");
+    assert.ok(visual.statusCustom,"Translation filter must use The Mile Select");
     assert.equal(new URL(page.url()).pathname,"/admin-microcycles.html");
     assert.equal(await page.locator("#tm-dashboard").getAttribute("hidden"),"");
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3),
