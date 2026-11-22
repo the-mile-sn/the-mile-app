@@ -1,16 +1,42 @@
-/* Translation quick actions use the approved secondary-action surface across sections.
-   They all navigate to the ONE central translation workspace. */
+/* The Mile: one approved translation quick action in every library.
+   Only Planos needs extra layout rules: the shared action had no gap before
+   the existing "Criar novo" button. Desktop and mobile both have two actions. */
 .tm-i18n-library-link.tm-action-secondary{
   display:inline-flex;align-items:center;justify-content:center;
-  width:42px;height:42px;min-width:42px;padding:0;flex:0 0 auto;
-  border-radius:var(--tm-action-radius,12px);
-  background:var(--tm-ui-subcard,#1e2025);color:var(--tm-ui-text,#f2f3f5);
-  border:1px solid var(--tm-ui-divider,rgba(155,168,185,.085));
+  width:40px;height:40px;min-width:40px;padding:0;flex:0 0 auto;
+  border:0;border-radius:12px;
+  background:var(--tm-ui-subcard);color:var(--tm-ui-text);
   text-decoration:none;white-space:nowrap;box-shadow:none;
 }
-.tm-i18n-library-link.tm-action-secondary:hover{background:var(--tm-ui-hover,#303239)}
-.tm-i18n-library-link.tm-action-secondary:focus-visible{outline:2px solid #87bce0;outline-offset:3px}
-.tm-i18n-library-link svg{display:block;flex:none}
+@media(hover:hover) and (pointer:fine){
+  .tm-i18n-library-link.tm-action-secondary:hover{background:var(--tm-ui-hover)}
+}
+.tm-i18n-library-link.tm-action-secondary:focus-visible{
+  outline:2px solid var(--tm-shell-focus,#7b9fbc);outline-offset:3px;
+}
+.tm-i18n-library-link svg{display:block;flex:none;width:18px;height:18px}
+.tm-i18n-library-link:active{transform:scale(.992)}
+/* Align actions at the same level. Never push or overlap the Create button. */
+#tm-plan-page #plan-entry .plan-library-actions:has(#tm-i18n-library-plan){
+  column-gap:12px!important;align-items:center!important;
+}
 #tm-food-library-page .food-library-top:has(.tm-i18n-library-link){gap:10px}
 #tm-menu-recipes-page .dish-catalog-filters:has(.tm-i18n-library-link){gap:10px}
-@media(max-width:580px){.tm-i18n-library-link.tm-action-secondary{width:40px;height:40px;min-width:40px}}
+@media(max-width:830px){
+  .tm-i18n-library-link.tm-action-secondary{
+    width:44px;height:44px;min-width:44px;max-width:44px;
+  }
+  html[data-admin-theme] #tm-plan-page #plan-entry
+    .plan-library-mobile-search-row:has(#tm-i18n-library-plan-mobile){
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 44px auto!important;
+    align-items:center!important;column-gap:10px!important;
+  }
+  #tm-plan-page #plan-entry #tm-i18n-library-plan-mobile{
+    grid-column:2;justify-self:center;
+  }
+  #tm-plan-page #plan-entry #entry-create-mobile{grid-column:3}
+}
+@media(prefers-reduced-motion:reduce){
+  .tm-i18n-library-link:active{transform:none}
+}
