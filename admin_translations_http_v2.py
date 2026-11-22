@@ -7,6 +7,7 @@ import app_translation_admin_v2 as review
 import app_translation_catalog_v2 as catalog
 import app_translation_import_v2 as imports
 import app_translation_batch_review_v2 as batch
+import app_translation_plans_v2 as plans
 
 ROOT = "/api/v2/admin/i18n"
 PATHS = frozenset((
@@ -14,6 +15,8 @@ PATHS = frozenset((
     ROOT + "/overview", ROOT + "/catalog",
     ROOT + "/import/preview", ROOT + "/import/submit",
     ROOT + "/batch/preview", ROOT + "/batch/approve",
+    ROOT + "/plans", ROOT + "/plans/fields", ROOT + "/plans/history",
+    ROOT + "/plans/propose", ROOT + "/plans/approve",
 ))
 
 
@@ -63,6 +66,20 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
         # Validate against the actual active admin row, not just a cookie value.
         review._admin(c, user)
         if method == "GET":
+            if path == ROOT + "/plans":
+                if query:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, plans.list_publications(c, user)
+            if path == ROOT + "/plans/fields":
+                q = _query(query or {}, ("publication_ref",))
+                if set(q) != {"publication_ref"}:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, plans.inspect(c, user, q["publication_ref"])
+            if path == ROOT + "/plans/history":
+                q = _query(query or {}, ("publication_ref", "field_path"))
+                if set(q) != {"publication_ref", "field_path"}:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, plans.history(c,user,q["publication_ref"],q["field_path"])
             if path == ROOT + "/batch/preview":
                 q=_query(query or {}, ("entity_kind",))
                 return 200,batch.preview(c,user,q.get("entity_kind","food"))
@@ -97,6 +114,10 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/plans/propose":
+                return 201, plans.propose(c, user, body)
+            if path == ROOT + "/plans/approve":
+                return 200, plans.approve(c, user, body)
             if path == ROOT + "/batch/approve":
                 return 200,batch.approve(c,user,body)
             if path == ROOT + "/import/preview":
@@ -107,6 +128,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                 return 201, review.propose(c, user, body)
             if path == ROOT + "/approve":
                 return 200, review.approve(c, user, body)
+    except plans.PlanTranslationError as e:
+        raise APIError(e.status, e.code) from None
     except batch.BatchError as e:
         raise APIError(e.status,e.code) from None
     except imports.ImportError as e:
