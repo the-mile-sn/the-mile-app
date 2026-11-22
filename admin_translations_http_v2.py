@@ -59,7 +59,7 @@ def _map_error(e):
 def dispatch(c, *, site_role, user, path, method, query=None, body=None):
     if path not in PATHS:
         raise APIError(404, "not_found")
-    if site_role == "player" or not isinstance(user, dict) or user.get("role") != "admin":
+    if site_role != "admin" or not isinstance(user, dict) or user.get("role") != "admin":
         raise APIError(403, "forbidden")
     _available(c)
     try:
