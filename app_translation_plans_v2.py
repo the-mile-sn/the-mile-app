@@ -14,6 +14,7 @@ import content_translations_v2 as store
 _REF = re.compile(r"^[a-f0-9]{64}$")
 _PATH = re.compile(r"^meals/[0-9]{1,3}/options/[0-9]{1,3}/(?:title|notes/[0-9]{1,3}|foods/[0-9]{1,3}/(?:display_name|display_quantity|label))$")
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
+_UNIT = re.compile(r"(?<![A-Za-z])(?:kg|mg|mcg|µg|g|ml|l|kcal)\b|%",re.I)
 MAX_PUBLICATIONS = 2000
 MAX_FIELDS = 4000
 
@@ -206,6 +207,10 @@ def _numbers(text):
     return [_n.replace(",", ".") for _n in _NUMBER.findall(text)]
 
 
+def _units(text):
+    return sorted(m.group().lower() for m in _UNIT.finditer(text))
+
+
 def propose(c, actor, body):
     actor_id = admin._admin(c, actor)
     public_ref, field_path = _check_body(body, (
@@ -217,6 +222,8 @@ def propose(c, actor, body):
         raise PlanTranslationError(409, "plan_translation_source_changed")
     if _numbers(field["source_text"]) != _numbers(translated):
         raise PlanTranslationError(400, "plan_translation_numbers_changed")
+    if _units(field["source_text"]) != _units(translated):
+        raise PlanTranslationError(400, "plan_translation_units_changed")
     result = store.submit(c, entity_kind="plan", entity_id="pub:" + public_ref,
                           field_path=field_path, source_text=field["source_text"],
                           translated_text=translated, actor_id=actor_id)
