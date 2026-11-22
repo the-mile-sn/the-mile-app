@@ -346,6 +346,36 @@ class PlanTranslationsTests(unittest.TestCase):
                 self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
                      WHERE field_path LIKE ?""",("%/notes/%",)).fetchone()[0],0)
 
+
+    def test_common_approval_caps_each_transaction_at_100(self):
+        with patch.dict(os.environ,FLAG):
+            # 102 identical title occurrences, but only up to 100 are
+            # submitted and approved in a single, audited transaction.
+            for number in range(2,103):
+                self._add_publication(number)
+            group=next(g for g in self._common()["body"]["items"]
+                       if g["field_kind"]=="option_title")
+            self.assertEqual(group["missing_count"],102)
+            def body(g):
+                return {"group_id":g["group_id"],"source_hash":g["source_hash"],
+                        "expected_group_hash":g["expected_group_hash"],
+                        "translated_text":"Option 1","acknowledged":True}
+            first=self.call(ROOT+"/common/approve","POST",body(group))
+            self.assertEqual(first["status"],200,first)
+            self.assertEqual(first["body"]["approved"],100)
+            self.assertEqual(first["body"]["remaining"],2)
+            refreshed=next(g for g in self._common()["body"]["items"]
+                           if g["field_kind"]=="option_title")
+            self.assertEqual(refreshed["missing_count"],2)
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",body(group))["status"],409)
+            second=self.call(ROOT+"/common/approve","POST",body(refreshed))
+            self.assertEqual(second["status"],200,second)
+            self.assertEqual(second["body"]["approved"],2)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translations WHERE entity_kind='plan'
+                    AND status='approved'""").fetchone()[0],102)
+
     def test_common_preview_conflict_does_not_approve_stale_group(self):
         with patch.dict(os.environ,FLAG):
             self._add_publication(2)
