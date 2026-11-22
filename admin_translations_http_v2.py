@@ -6,12 +6,14 @@ caller authenticates, checks origin/CSRF and SITE_ROLE before dispatch.
 import app_translation_admin_v2 as review
 import app_translation_catalog_v2 as catalog
 import app_translation_import_v2 as imports
+import app_translation_batch_review_v2 as batch
 
 ROOT = "/api/v2/admin/i18n"
 PATHS = frozenset((
     ROOT, ROOT + "/propose", ROOT + "/approve", ROOT + "/history",
     ROOT + "/overview", ROOT + "/catalog",
     ROOT + "/import/preview", ROOT + "/import/submit",
+    ROOT + "/batch/preview", ROOT + "/batch/approve",
 ))
 
 
@@ -61,6 +63,10 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
         # Validate against the actual active admin row, not just a cookie value.
         review._admin(c, user)
         if method == "GET":
+            if path == ROOT + "/batch/preview":
+                if query:
+                    raise APIError(400,"invalid_translation_query")
+                return 200,batch.preview(c,user)
             if path == ROOT + "/overview":
                 if query:
                     raise APIError(400, "invalid_translation_query")
@@ -92,6 +98,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/batch/approve":
+                return 200,batch.approve(c,user,body)
             if path == ROOT + "/import/preview":
                 return 200, imports.preview(c, user, body)
             if path == ROOT + "/import/submit":
@@ -100,6 +108,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                 return 201, review.propose(c, user, body)
             if path == ROOT + "/approve":
                 return 200, review.approve(c, user, body)
+    except batch.BatchError as e:
+        raise APIError(e.status,e.code) from None
     except imports.ImportError as e:
         raise APIError(e.status, e.code) from None
     except (PermissionError, LookupError, ValueError) as e:
