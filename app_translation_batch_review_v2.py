@@ -1,8 +1,8 @@
-"""Explicit food/dish name translation batch review with optimistic locking.
+"""Admin-reviewed batches for foods, dishes and visible recipe text.
 
-GET is read-only; the POST only accepts source/candidate hashes and IDs.
-Dishes support reviewed legacy English names as well as pending proposals.
-All original library rows, macros, and player/chef routes remain unchanged.
+GET previews canonical PT/EN pairs without writing. The POST accepts only
+identifiers and hashes, retains audit history and rolls back conflicted batches.
+No original library data, nutrition, or player/chef route is modified.
 """
 import hashlib
 import re
@@ -16,7 +16,9 @@ import content_translations_v2 as translations
 MAX_PREVIEW=1200
 MAX_BATCH=100
 HASH=re.compile(r"^[0-9a-f]{64}$")
-SCOPES={"food":"display_name","dish":"name_pt"}
+SCOPES={"food":"display_name","dish":"name_pt","recipe":None}
+MAX_RECIPE_PREVIEW=2500
+RECIPE_PATH=re.compile(r"(?:name|notes|steps/[0-9]{1,4}|sections/[a-zA-Z0-9_-]{1,64}/(?:title|ingredients/[a-zA-Z0-9_-]{1,64}/(?:name|unit)))$")
 
 
 class BatchError(Exception):
@@ -31,7 +33,7 @@ def _sha(value):
 
 
 def preview(c, actor, entity_kind="food"):
-    """Show only PT/EN names currently eligible for explicit batch review."""
+    """Show only canonical, permitted PT/EN text awaiting review."""
     review._admin(c,actor)
     if entity_kind not in SCOPES:
         raise BatchError(400,"invalid_translation_batch_library")
@@ -42,27 +44,38 @@ def preview(c, actor, entity_kind="food"):
             continue
         for field in item["fields"]:
             state=field["state"]
-            if (field["field_path"]!=field_path or
-                    state!="pending" and
-                    not (entity_kind=="dish" and state=="legacy_review")):
+            if ((field_path is not None and field["field_path"]!=field_path) or
+                    (state!="pending" and
+                     not (entity_kind=="dish" and state=="legacy_review"))):
                 continue
             portuguese=field["source_text"]
             english=(field["translation_text"] if state=="pending"
                      else field["legacy_candidate"])
             if not portuguese.strip() or not english.strip():
                 continue
-            pairs.append({
+            pair={
                 "entity_id":item["entity_id"],
-                "field_path":field_path,
+                "field_path":field["field_path"],
                 "source_text":portuguese,
                 "translated_text":english,
                 "review_state":state,
                 "expected_source_hash":_sha(portuguese),
                 "expected_candidate_hash":_sha(english),
-            })
-            if len(pairs)>MAX_PREVIEW:
+            }
+            if entity_kind=="recipe":
+                pair["record_title"]=item["source_text"]
+                pair["field_label"]=field["field_label"]
+                pair["position"]=len(item["fields"])+len(pairs)
+            pairs.append(pair)
+            if len(pairs)>(MAX_RECIPE_PREVIEW if entity_kind=="recipe" else MAX_PREVIEW):
                 raise BatchError(413,"translation_batch_too_large")
-    pairs.sort(key=lambda item:(item["source_text"].casefold(),item["entity_id"]))
+    if entity_kind=="recipe":
+        pairs.sort(key=lambda item:(item["record_title"].casefold(),
+                                    item["entity_id"],item["position"]))
+        for item in pairs:
+            del item["position"]
+    else:
+        pairs.sort(key=lambda item:(item["source_text"].casefold(),item["entity_id"]))
     return {"entity_kind":entity_kind,
             "status":"pending" if entity_kind=="food" else "awaiting_review",
             "total":len(pairs),
@@ -92,7 +105,7 @@ def _submit_legacy_if_missing(c, actor_id, ident, source, english):
 
 
 def approve(c, actor, body):
-    """Approve up to 100 explicitly chosen food/dish names as one transaction.
+    """Approve up to 100 explicitly chosen visible fields as one transaction.
 
     A legacy dish can be proposed and approved *only* after the administrator
     reviewed the pair in GET preview and confirmed the selection.
@@ -116,24 +129,26 @@ def approve(c, actor, body):
             row["entity_id"],row["field_path"],
             row["expected_source_hash"],row["expected_candidate_hash"])
         if (not isinstance(ident,str) or not 1<=len(ident)<=160
-                or field_path!=path
+                or not isinstance(field_path,str)
+                or (field_path!=path if path is not None else not RECIPE_PATH.fullmatch(field_path))
                 or not isinstance(source_hash,str) or not HASH.fullmatch(source_hash)
                 or not isinstance(candidate_hash,str) or not HASH.fullmatch(candidate_hash)
-                or ident in seen):
+                or (ident,field_path) in seen):
             raise BatchError(400,"invalid_translation_batch_row")
-        seen.add(ident)
+        seen.add((ident,field_path))
 
     try:
         actions=[]
         # Validate the WHOLE group against canonical values before writing.
         for row in body["rows"]:
             ident=row["entity_id"]
-            source=sources.canonical_field(c,entity_kind,ident,path)
+            field_path=row["field_path"]
+            source=sources.canonical_field(c,entity_kind,ident,field_path)
             if _sha(source)!=row["expected_source_hash"]:
                 raise BatchError(409,"translation_source_changed")
             detail=review.inspect(
                 c,actor,entity_kind=entity_kind,entity_id=ident,
-                field_path=path)
+                field_path=field_path)
             candidate=detail["candidate"]
             if candidate and candidate["status"]=="pending":
                 if candidate["candidate_hash"]!=row["expected_candidate_hash"]:
@@ -154,7 +169,7 @@ def approve(c, actor, body):
                 _submit_legacy_if_missing(c,actor_id,ident,source,legacy)
             review.approve(c,actor,{
                 "entity_kind":entity_kind,"entity_id":ident,
-                "field_path":path,"language":"en",
+                "field_path":row["field_path"],"language":"en",
                 "expected_source_hash":row["expected_source_hash"],
                 "expected_candidate_hash":row["expected_candidate_hash"],
             })
