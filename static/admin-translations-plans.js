@@ -91,6 +91,23 @@
     editor.value=item.translated_text||"";
     editor.setAttribute("spellcheck","true");
     en.append(editor);
+    if(item.suggestion&&item.status==="missing"){
+      const hint=create("div","i18n-plan-suggestion");
+      const origin=item.suggestion.origin==="approved_exact_title"?
+        "Título com tradução aprovada noutro plano":"Unidade de apresentação · regra conservadora";
+      hint.append(create("small","",origin+" · confirmar contexto"));
+      const candidate=create("p","",item.suggestion.text);
+      const use=create("button","i18n-secondary","Usar sugestão");
+      use.type="button";
+      use.addEventListener("click",()=>{
+        if(!item.suggestion?.requires_review)return;
+        editor.value=item.suggestion.text;
+        editor.dispatchEvent(new Event("input",{bubbles:true}));
+        editor.focus();
+      });
+      hint.append(candidate,use);
+      en.append(hint);
+    }
     cols.append(pt,en);
     const actions=create("div","i18n-plan-field-actions");
     const save=create("button","i18n-secondary","Guardar proposta");
@@ -201,11 +218,35 @@
       "O nome do jogador é apresentado apenas na sessão privada do administrador.");
     const list=create("div","i18n-plan-list");list.id="i18n-plan-items";
     const detail=create("div","i18n-plan-detail");detail.id="i18n-plan-detail";
-    host.append(head,intro,list,detail);
+    const auditPanel=create("div","i18n-plan-audit");
+    host.append(head,intro,auditPanel,list,detail);
     try{
       const result=await send("/api/v2/admin/i18n/plans");
       if(seq!==generation||host.hidden)return;
       publications=result.items||[];
+      const audit=result.reuse_audit;
+      if(audit){
+        auditPanel.append(create("strong","","Diagnóstico de reutilização — dados agregados"));
+        const stats=create("div","i18n-plan-audit-grid");
+        const numbers=[
+          ["Textos próprios",audit.visible_text_fields],
+          ["Títulos repetidos",audit.repeated_option_title_occurrences],
+          ["Alimentos com inglês aprovado",audit.approved_library_food_references],
+          ["Alternativas personalizadas",audit.alternative_overrides],
+          ["Notas individuais",audit.individual_notes],
+          ["Sugestões de unidades",audit.simple_unit_suggestions]
+        ];
+        for(const [label,count] of numbers){
+          const tile=create("div","i18n-plan-audit-stat");
+          tile.append(create("strong","",Number(count||0).toLocaleString("pt-PT")),
+                      create("small","",label));
+          stats.append(tile);
+        }
+        auditPanel.append(stats,create("p","",
+          "Os números não incluem nomes de jogadores nem textos clínicos. "+
+          "As alternativas não são associadas automaticamente a alimentos. "+
+          "Nenhuma sugestão é guardada ou aprovada sem revisão."));
+      }
       renderList(status,query);
     }catch(e){
       if(seq===generation)list.replaceChildren(
