@@ -342,18 +342,42 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 }
 .tm-admin-translations-page .i18n-auto-panel .i18n-section-heading{margin-bottom:8px}
 
-/* Planos: one compact read-only state, without a second explanatory card. */
-.tm-admin-translations-page .i18n-plan-stage{
-  display:flex;align-items:center;min-height:52px;
-  padding:12px 14px;margin:12px 0 0;
-  background:var(--tm-ui-subcard);border:0;border-radius:12px;
+
+/* Planos: version-bound private translation editor, reusing the neutral Admin cards. */
+.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar>label{display:grid}
+.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] > :is(.i18n-results-count,.i18n-results,.i18n-pagination){display:none}
+.tm-admin-translations-page .i18n-plan-stage{display:block;min-width:0;margin:12px 0 0;padding:16px;border:0;border-radius:12px;background:var(--tm-ui-subcard)}
+.tm-admin-translations-page .i18n-plan-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 10px}
+.tm-admin-translations-page .i18n-plan-detail-head strong{font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.tm-admin-translations-page .i18n-plan-detail-head small,.i18n-plan-policy{font-size:12px;line-height:1.55;color:var(--tm-ui-muted);margin:7px 0 14px}
+.tm-admin-translations-page .i18n-plan-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tm-admin-translations-page .i18n-plan-item{display:flex;flex-direction:column;gap:4px;align-items:flex-start;justify-content:center;width:100%;min-width:0}
+.tm-admin-translations-page .i18n-plan-item strong{overflow-wrap:anywhere}
+.tm-admin-translations-page .i18n-plan-detail{margin-top:16px;min-width:0}
+.tm-admin-translations-page .i18n-plan-option{margin-top:13px;padding:12px;border-radius:12px;background:var(--tm-ui-card);min-width:0}
+.tm-admin-translations-page .i18n-plan-option h3{font-size:13px;font-weight:600;margin:0 0 12px;overflow-wrap:anywhere}
+.tm-admin-translations-page .i18n-plan-field{padding:12px;margin-bottom:8px;border-radius:12px;background:var(--tm-ui-subcard);min-width:0}
+.tm-admin-translations-page .i18n-plan-field-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tm-admin-translations-page .i18n-plan-field-head strong{font-weight:600;font-size:13px}
+.tm-admin-translations-page .i18n-plan-field-state{font-size:11px;color:var(--tm-ui-muted)}
+.tm-admin-translations-page .i18n-plan-compare{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:9px 0}
+.tm-admin-translations-page .i18n-plan-pt,.i18n-plan-en{display:block;min-width:0;padding:12px;border-radius:10px;background:var(--tm-ui-card)}
+.tm-admin-translations-page .i18n-plan-pt small,.i18n-plan-en small{display:block;font-size:11px;color:var(--tm-ui-muted);margin:0 0 7px}
+.tm-admin-translations-page .i18n-plan-pt p{font-size:13px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap;margin:0}
+.tm-admin-translations-page .i18n-plan-en textarea{display:block;box-sizing:border-box;width:100%;max-width:100%;min-height:70px;resize:vertical;
+  padding:10px 12px;border:0;border-radius:9px;background:var(--tm-ui-search);color:var(--tm-ui-text);font:inherit;font-size:13px}
+.tm-admin-translations-page .i18n-plan-field-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.tm-admin-translations-page .i18n-plan-field-actions .i18n-bulk-attestation{margin:0 4px 0 0;font-size:12px}
+.tm-admin-translations-page .i18n-plan-sensitive{font-size:11px;color:var(--tm-ui-muted);line-height:1.5;margin:10px 0}
+.tm-admin-translations-page .i18n-plan-field .i18n-feedback{margin:6px 0 0;font-size:12px}
+@media(max-width:720px){
+  .i18n-plan-list{grid-template-columns:1fr}
+  .i18n-plan-compare{grid-template-columns:1fr}
+  .i18n-plan-field-actions{justify-content:flex-start}
+  .i18n-plan-field-actions button{min-height:40px}
+  .i18n-plan-stage{padding:12px}
 }
-.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar{
-  display:block;margin-bottom:0;
-}
-.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] .i18n-toolbar>label,
-.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] :is(.i18n-results-count,.i18n-results,.i18n-pagination){display:none}
-.tm-admin-translations-page .i18n-work-panel[data-plan-mode="1"] #i18n-tabs{display:flex}
 
 /* Small screens follow Início's fluid work area, without an extra page gutter. */
 @media(max-width:1000px){
