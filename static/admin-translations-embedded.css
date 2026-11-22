@@ -96,3 +96,13 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .tm-admin-translations-page .i18n-intro h1{font-size:clamp(26px,3vw,34px);margin:8px 0 12px}
 .tm-admin-translations-page .i18n-link{cursor:pointer;color:var(--tm-ui-text);border:1px solid var(--tm-ui-divider)}
 @media(max-width:620px){.tm-admin-translations-page .i18n-shell{padding:0 0 24px}.tm-admin-translations-page .i18n-intro{margin-top:7px}}
+
+
+/* Plan translations are planned as a separate, read-only source type.
+   Do not offer a misleading form or paid suggestions before source audit. */
+.i18n-plan-stage-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.i18n-plan-stage-grid>div{min-width:0;padding:18px;border:1px solid var(--tm-ui-divider);border-radius:12px;background:var(--tm-ui-subcard)}
+.i18n-plan-stage-grid h3{margin:0 0 9px;font-weight:650;font-size:13px;color:var(--tm-ui-text)}
+.i18n-plan-stage-grid p{margin:0;font-size:12px;line-height:1.6;color:var(--tm-ui-muted)}
+#i18n-plan-open-library{margin-top:18px}
+@media(max-width:900px){.i18n-plan-stage-grid{grid-template-columns:1fr}}
