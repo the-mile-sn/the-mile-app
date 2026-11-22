@@ -569,11 +569,6 @@ def start_renewal_notification_scheduler():
     return None
 
 
-def access_valid(row):
-    """Keep dates out of access decisions; sessions enforce users.active."""
-    return True
-
-
 def player_dict(row, include_private=True):
     data = {
         'id': row['id'], 'name': row['name'], 'username': row['username'], 'role': row['role'],
@@ -589,43 +584,6 @@ def player_dict(row, include_private=True):
         })
     return data
 
-
-
-def next_weekly_activation(now=None):
-    tz = ZoneInfo('Europe/Lisbon')
-    current = datetime.now(tz) if now is None else datetime.fromtimestamp(now, tz)
-    days = (7 - current.weekday()) % 7
-    target_date = current.date() + timedelta(days=days)
-    target = datetime(target_date.year, target_date.month, target_date.day, 0, 1, tzinfo=tz)
-    if target <= current:
-        target += timedelta(days=7)
-    return int(target.timestamp())
-
-
-def activate_due_weekly(c, uid=None, now=None):
-    now = int(time.time()) if now is None else int(now)
-    if uid:
-        users = c.execute("SELECT id,weekly_next_activate_at FROM users WHERE id=? AND role='player'", (uid,)).fetchall()
-    else:
-        users = c.execute("SELECT id,weekly_next_activate_at FROM users WHERE role='player' AND weekly_next_activate_at IS NOT NULL AND weekly_next_activate_at<=?", (now,)).fetchall()
-    changed = False
-    for row in users:
-        activate_at = row['weekly_next_activate_at']
-        if not activate_at or int(activate_at) > now:
-            continue
-        nxt = c.execute("SELECT id FROM documents WHERE user_id=? AND folder='weekly_next' ORDER BY updated DESC LIMIT 1", (row['id'],)).fetchone()
-        if not nxt:
-            c.execute("UPDATE users SET weekly_next_activate_at=NULL WHERE id=?", (row['id'],))
-            changed = True
-            continue
-        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly'", (row['id'],))
-        c.execute("UPDATE documents SET folder='weekly',updated=? WHERE id=?", (now, nxt['id']))
-        c.execute("DELETE FROM documents WHERE user_id=? AND folder='weekly_next' AND id<>?", (row['id'], nxt['id']))
-        c.execute("UPDATE users SET weekly_status='available',weekly_next_activate_at=NULL WHERE id=?", (row['id'],))
-        changed = True
-    if changed:
-        c.commit()
-    return changed
 
 
 def folder_allowed(player, folder):
