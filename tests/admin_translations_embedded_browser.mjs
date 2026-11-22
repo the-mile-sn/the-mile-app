@@ -182,8 +182,8 @@ try{
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
     assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),1);
-    await page.locator("#i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
-    await page.locator("#i18n-plan-common-list .i18n-plan-common-item").first().click();
+    await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
+    await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().click();
     assert.equal(await page.locator(".i18n-plan-common-detail textarea").inputValue(),
       "2 units / 120 g");
     assert.equal(await page.locator(".i18n-plan-common-detail .i18n-primary").isDisabled(),true);
