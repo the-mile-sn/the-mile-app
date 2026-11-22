@@ -220,7 +220,7 @@ class DishBatchReviewTests(unittest.TestCase):
                 self.assertEqual(c.execute("SELECT COUNT(*) FROM v2_content_translations"
                          ).fetchone()[0],0)
             self.assertEqual(self.admin.request(
-                ROOT+"/batch/preview?entity_kind=recipe")["status"],400)
+                ROOT+"/batch/preview?entity_kind=supplement")["status"],400)
             self.assertEqual(self.admin.request(
                 ROOT+"/batch/preview?entity_kind=dish&extra=1")["status"],400)
 
