@@ -56,6 +56,8 @@ try{
     // Traduções must be a PRIMARY destination, never inside Biblioteca.
     assert.equal(await nav.evaluate(el=>!!el.closest("#tm-admin-food-subnav")),false);
     assert.equal(await nav.evaluate(el=>!!el.closest(".tm-admin-side-nav")),true);
+    assert.ok(await page.locator("#tm-i18n-library-plan").count());
+    assert.ok(await page.locator("#tm-i18n-library-plan-mobile").count());
     await nav.waitFor({state:"visible",timeout:15000});
     await nav.click();
     const view=page.locator("#tm-admin-translations-page");
@@ -72,7 +74,10 @@ try{
     await plansCard.click();
     await page.locator("#i18n-plan-stage:not([hidden])").waitFor();
     assert.equal(await page.locator("#i18n-import-panel").getAttribute("hidden"),"");
-    assert.equal(await page.locator("#i18n-work-panel").getAttribute("hidden"),"");
+    assert.equal(await page.locator("#i18n-work-panel").getAttribute("hidden"),null);
+    assert.equal(await page.locator("#i18n-work-panel").getAttribute("data-plan-mode"),"1");
+    assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
+    assert.equal(requests.filter(p=>p.includes("/api/v2/admin/i18n/import/")).length,0);
     // The global hub still lets us return to an editable library without page navigation.
     await page.locator("#i18n-libraries button").first().click();
     await page.locator("#i18n-work-panel:not([hidden])").waitFor();
