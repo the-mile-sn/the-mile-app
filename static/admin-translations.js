@@ -73,7 +73,7 @@
        button.addEventListener("click",()=>{
          state.kind=group.kind;state.status="all";state.query="";state.page=1;
          resetStatusPicker();$("i18n-search").value="";
-         closeReview();loadCatalog();
+         closeReview();resetBulk();loadCatalog();
          (state.kind==="plan"?$("i18n-plan-stage"):$("i18n-work-panel")).scrollIntoView({behavior:"smooth",block:"start"});
        });
      }
@@ -103,13 +103,13 @@
        if(state.kind===key)return;
        state.kind=key;state.page=1;state.status="all";state.query="";
        resetStatusPicker();$("i18n-search").value="";
-       closeReview();loadCatalog();
+       closeReview();resetBulk();loadCatalog();
      });tabs.append(b);
    }
    $("i18n-library-link").dataset.libraryKind=state.kind;
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
- let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0;
+ let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0,bulkKind=null;
  const updateBulkActions=()=>{
    const count=bulkSelected.size;
    $("i18n-bulk-select-100").disabled=bulkBusy||
@@ -123,7 +123,7 @@
  const resetBulk=()=>{
    bulkSeq++;
    if(bulkBusy)return;
-   bulkRows=[];bulkSelected.clear();
+   bulkRows=[];bulkSelected.clear();bulkKind=null;
    $("i18n-bulk-select-100").disabled=true;
    $("i18n-bulk-review").hidden=true;
    $("i18n-bulk-items").replaceChildren();
@@ -133,14 +133,20 @@
    msg("",false,"i18n-bulk-feedback");
  };
  const openBulk=async()=>{
-   if(bulkBusy||state.kind!=="food")return;
+   if(bulkBusy||!["food","dish"].includes(state.kind))return;
    resetBulk();
+   const kind=state.kind;
+   const noun=kind==="food"?"alimentos":"pratos";
    const request=++bulkSeq;
    $("i18n-bulk-open").disabled=true;
-   msg("A preparar revisão das traduções de alimentos…",false);
+   msg("A preparar revisão das traduções de "+noun+"…",false);
    try{
-     const data=await send("/api/v2/admin/i18n/batch/preview");
-     if(request!==bulkSeq||state.kind!=="food")return;
+     const endpoint="/api/v2/admin/i18n/batch/preview"+
+       (kind==="dish"?"?entity_kind=dish":"");
+     const data=await send(endpoint);
+     if(request!==bulkSeq||state.kind!==kind)return;
+     bulkKind=kind;
+     $("i18n-bulk-title").textContent="Aprovação em lote · "+(kind==="food"?"Alimentos":"Pratos");
      bulkRows=data.items||[];
      const list=$("i18n-bulk-items");
      list.replaceChildren();
@@ -171,10 +177,13 @@
    }finally{$("i18n-bulk-open").disabled=false;}
  };
  const submitBulk=async()=>{
-   if(bulkBusy||state.kind!=="food"||!bulkSelected.size||
-       !$("i18n-bulk-reviewed").checked)return;
+   if(bulkBusy||bulkKind!==state.kind||!["food","dish"].includes(state.kind)||
+       !bulkSelected.size||!$("i18n-bulk-reviewed").checked)return;
+   const kind=bulkKind;
+   const noun=kind==="food"?"alimentos":"pratos";
+   const fieldPath=kind==="food"?"display_name":"name_pt";
    const chosen=[...bulkSelected].sort((a,b)=>a-b).map(i=>bulkRows[i]);
-   if(chosen.some(item=>!item||item.field_path!=="display_name"))return;
+   if(chosen.some(item=>!item||item.field_path!==fieldPath))return;
    bulkBusy=true;
    $("i18n-bulk-submit").disabled=true;
    $("i18n-bulk-select-100").disabled=true;
@@ -189,7 +198,7 @@
          expected_candidate_hash:item.expected_candidate_hash,
        }));
        const result=await send("/api/v2/admin/i18n/batch/approve",{
-         method:"POST",body:{entity_kind:"food",rows}});
+         method:"POST",body:{entity_kind:kind,rows}});
        approved+=result.approved;
        msg("Aprovadas "+approved+" de "+chosen.length+" traduções.",false,"i18n-bulk-feedback");
      }
@@ -197,7 +206,7 @@
      resetBulk();
      closeReview();
      await Promise.all([loadOverview(),loadCatalog()]);
-     msg(approved+" traduções de alimentos aprovadas. Os originais não foram alterados.");
+     msg(approved+" traduções de "+noun+" aprovadas. Os originais não foram alterados.");
    }catch(error){
      bulkBusy=false;
      resetBulk();
@@ -214,8 +223,9 @@
    const currentRequest=++catalogRequestSeq;
    buildTabs();
    const isPlan=state.kind==="plan";
-   $("i18n-bulk-tools").hidden=state.kind!=="food";
-   if(state.kind!=="food")resetBulk();
+   $("i18n-bulk-tools").hidden=!["food","dish"].includes(state.kind);
+   if(!["food","dish"].includes(state.kind)||
+       (bulkKind!==null&&bulkKind!==state.kind))resetBulk();
    $("i18n-plan-stage").hidden=!isPlan;
    $("i18n-import-panel").hidden=isPlan;
    $("i18n-work-panel").hidden=false;
@@ -380,7 +390,7 @@
    if(Object.prototype.hasOwnProperty.call(displayKind,kind)&&kind!==state.kind){
      state.kind=kind;state.status="all";state.query="";state.page=1;
      resetStatusPicker();$("i18n-search").value="";
-     closeReview();
+     closeReview();resetBulk();
    }
    if(opening)return opening;
    opening=(async()=>{
