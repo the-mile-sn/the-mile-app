@@ -14,7 +14,7 @@
  };
  const displayKind={
    food:"Alimentos",dish:"Pratos",recipe:"Receitas",
-   recipe_category:"Categorias",supplement:"Suplementação"
+   recipe_category:"Categorias",supplement:"Suplementação",plan:"Planos"
  };
  const embedded=!!document.getElementById("tm-admin-translations-page");
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
@@ -61,14 +61,14 @@
    container.hidden=false;
    const lib=$("i18n-libraries");lib.replaceChildren();
    for(const group of summary.libraries){
-     const button=create(group.integrated?"button":"div","i18n-library");
-     if(group.integrated){
+     const button=create(group.integrated||group.kind==="plan"?"button":"div","i18n-library");
+     if(group.integrated||group.kind==="plan"){
        button.type="button";
        button.addEventListener("click",()=>{
          state.kind=group.kind;state.status="all";state.query="";state.page=1;
          $("i18n-status").value="all";$("i18n-search").value="";
          loadCatalog();
-         $("i18n-work-panel").scrollIntoView({behavior:"smooth",block:"start"});
+         (state.kind==="plan"?$("i18n-plan-stage"):$("i18n-work-panel")).scrollIntoView({behavior:"smooth",block:"start"});
        });
      }
      button.append(create("strong","",group.label));
@@ -80,7 +80,7 @@
          group.statuses.approved+" aprovados · "+
          group.statuses.legacy_review+" traduções antigas por rever"));
      }else{
-       button.append(create("small","","Inventário inicial · Tradução ainda não integrada"));
+       button.append(create("small","","Tradução dos textos próprios do plano · em preparação"));
      }
      lib.append(button);
    }
@@ -99,10 +99,18 @@
      });tabs.append(b);
    }
    $("i18n-library-link").dataset.libraryKind=state.kind;
+   $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
  const loadCatalog=async()=>{
    const currentRequest=++catalogRequestSeq;
-   buildTabs();msg("A carregar conteúdos…");$("i18n-work-panel").hidden=false;
+   buildTabs();
+   const isPlan=state.kind==="plan";
+   $("i18n-plan-stage").hidden=!isPlan;
+   $("i18n-import-panel").hidden=isPlan;
+   $("i18n-work-panel").hidden=isPlan;
+   closeReview();
+   if(isPlan){msg("");return;}
+   msg("A carregar conteúdos…");$("i18n-work-panel").hidden=false;
    try{
      const params=queryString({
        entity_kind:state.kind,status:state.status,query:state.query,
@@ -280,6 +288,7 @@
      if(library==="food")window.tmOpenAdminFoodLibrary?.("foods");
      else if(library==="supplement")window.tmOpenAdminFoodLibrary?.("supplements");
      else if(library==="dish")window.tmOpenAdminMenusRecipes?.();
+     else if(library==="plan")window.tmOpenAdminPlans?.();
      else window.tmOpenAdminRecipeLibrary?.();
    });
    $("i18n-status").addEventListener("change",event=>{
