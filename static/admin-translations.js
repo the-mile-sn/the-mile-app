@@ -121,6 +121,7 @@
    $("i18n-bulk-submit").textContent="Aprovar "+count+" selecionada"+(count===1?"":"s");
    $("i18n-bulk-submit").disabled=bulkBusy||!count||!$("i18n-bulk-reviewed").checked;
    const label=bulkKind==="recipe"?"textos de receitas":
+     bulkKind==="supplement"?"textos de suplementos":
      bulkKind==="dish"?"traduções":"propostas";
    $("i18n-bulk-summary").textContent=bulkRows.length+" "+label+
      " por rever · "+count+" selecionadas";
@@ -138,10 +139,11 @@
    msg("",false,"i18n-bulk-feedback");
  };
  const openBulk=async()=>{
-   if(bulkBusy||!["food","dish","recipe"].includes(state.kind))return;
+   if(bulkBusy||!["food","dish","recipe","supplement"].includes(state.kind))return;
    resetBulk();
    const kind=state.kind;
-   const noun=kind==="food"?"alimentos":kind==="dish"?"pratos":"receitas";
+   const noun=kind==="food"?"alimentos":kind==="dish"?"pratos":
+     kind==="recipe"?"receitas":"suplementos";
    const request=++bulkSeq;
    $("i18n-bulk-open").disabled=true;
    msg("A preparar revisão das traduções de "+noun+"…",false);
@@ -152,7 +154,8 @@
      if(request!==bulkSeq||state.kind!==kind)return;
      bulkKind=kind;
      $("i18n-bulk-title").textContent="Aprovação em lote · "+
-       (kind==="food"?"Alimentos":kind==="dish"?"Pratos":"Receitas");
+       (kind==="food"?"Alimentos":kind==="dish"?"Pratos":
+        kind==="recipe"?"Receitas":"Suplementação");
      $("i18n-bulk-all-label").textContent=kind==="food"?
        "Selecionar todas as propostas pendentes":kind==="dish"?
        "Selecionar todas as traduções por rever":"Selecionar todos os textos por rever";
@@ -163,13 +166,14 @@
      for(let i=0;i<bulkRows.length;i++){
        const entry=bulkRows[i];
        let parent=list;
-       if(kind==="recipe"){
+       if(kind==="recipe"||kind==="supplement"){
          let group=recipeGroups.get(entry.entity_id);
          if(!group){
            group=create("section","i18n-bulk-recipe-group");
            group.dataset.recipeId=entry.entity_id;
            const header=create("div","i18n-bulk-recipe-header");
-           const heading=create("strong","",entry.record_title||"Receita");
+           const heading=create("strong","",entry.record_title||
+             (kind==="recipe"?"Receita":"Suplemento"));
            const selectRecipe=create("button","i18n-secondary","Selecionar textos visíveis");
            selectRecipe.type="button";
            selectRecipe.addEventListener("click",()=>{
@@ -200,7 +204,7 @@
        checkbox.value=entry.entity_id;
        checkbox.dataset.index=String(i);
        const details=create("span","i18n-bulk-entry");
-       if(kind==="recipe"){
+       if(kind==="recipe"||kind==="supplement"){
          details.append(create("small","i18n-bulk-field",entry.field_label||entry.field_path));
        }
        const pair=create("span","i18n-bulk-pair");
@@ -225,10 +229,11 @@
    }finally{$("i18n-bulk-open").disabled=false;}
  };
  const submitBulk=async()=>{
-   if(bulkBusy||bulkKind!==state.kind||!["food","dish","recipe"].includes(state.kind)||
+   if(bulkBusy||bulkKind!==state.kind||!["food","dish","recipe","supplement"].includes(state.kind)||
        !bulkSelected.size||!$("i18n-bulk-reviewed").checked)return;
    const kind=bulkKind;
-   const noun=kind==="food"?"alimentos":kind==="dish"?"pratos":"receitas";
+   const noun=kind==="food"?"alimentos":kind==="dish"?"pratos":
+     kind==="recipe"?"receitas":"suplementos";
    const fieldPath=kind==="food"?"display_name":kind==="dish"?"name_pt":null;
    const chosen=[...bulkSelected].sort((a,b)=>a-b).map(i=>bulkRows[i]);
    if(chosen.some(item=>!item||(fieldPath!==null&&item.field_path!==fieldPath)))return;
@@ -271,8 +276,8 @@
    const currentRequest=++catalogRequestSeq;
    buildTabs();
    const isPlan=state.kind==="plan";
-   $("i18n-bulk-tools").hidden=!["food","dish","recipe"].includes(state.kind);
-   if(!["food","dish","recipe"].includes(state.kind)||
+   $("i18n-bulk-tools").hidden=!["food","dish","recipe","supplement"].includes(state.kind);
+   if(!["food","dish","recipe","supplement"].includes(state.kind)||
        (bulkKind!==null&&bulkKind!==state.kind))resetBulk();
    $("i18n-plan-stage").hidden=!isPlan;
    $("i18n-import-panel").hidden=isPlan;

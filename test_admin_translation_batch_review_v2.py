@@ -220,7 +220,7 @@ class DishBatchReviewTests(unittest.TestCase):
                 self.assertEqual(c.execute("SELECT COUNT(*) FROM v2_content_translations"
                          ).fetchone()[0],0)
             self.assertEqual(self.admin.request(
-                ROOT+"/batch/preview?entity_kind=supplement")["status"],400)
+                ROOT+"/batch/preview?entity_kind=recipe_category")["status"],400)
             self.assertEqual(self.admin.request(
                 ROOT+"/batch/preview?entity_kind=dish&extra=1")["status"],400)
 
@@ -451,6 +451,143 @@ class RecipeBatchReviewTests(unittest.TestCase):
             with app.connect() as c:
                 self.assertEqual(c.execute("""SELECT COUNT(*) FROM
                     v2_content_translations WHERE status='approved'""").fetchone()[0],0)
+
+
+
+
+class SupplementBatchReviewTests(unittest.TestCase):
+    """Only pending, user-visible supplement text can be approved in a batch."""
+
+    def setUp(self):
+        test_app.PortalTest.setUp(self)
+        self.ident="supp-bulk-1"
+        self.prescriptions=[{"dose":"5 g","timing_text":"Antes do treino",
+                             "note":"Tomar diariamente","quantity":3}]
+        with app.connect() as c:
+            translations.initialize(c)
+            c.execute("""INSERT INTO v2_supplement_library
+                (id,name,dose,moment,rule,note,timing_text,prescriptions_json)
+                VALUES(?,?,?,?,?,?,?,?)""",
+                (self.ident,"Creatina","5 g","lunch","daily",
+                 "Misturar com água","Após o almoço",
+                 json.dumps(self.prescriptions,ensure_ascii=False)))
+            c.commit()
+        self.fields={
+            "name":("Creatina","Creatine"),
+            "dose":("5 g","5 g"),
+            "timing_text":("Após o almoço","After lunch"),
+            "note":("Misturar com água","Mix with water"),
+            "prescriptions/0/dose":("5 g","5 g"),
+            "prescriptions/0/timing_text":("Antes do treino","Before training"),
+            "prescriptions/0/note":("Tomar diariamente","Take daily"),
+        }
+
+    @staticmethod
+    def digest(text):
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+    def seed(self):
+        with patch.dict(os.environ,FLAG):
+            for path,(pt,en) in self.fields.items():
+                result=self.admin.request(ROOT+"/propose","POST",{
+                    "entity_kind":"supplement","entity_id":self.ident,
+                    "field_path":path,"language":"en",
+                    "expected_source_hash":self.digest(pt),
+                    "translated_text":en})
+                self.assertEqual(result["status"],201,result)
+
+    def preview(self):
+        return self.admin.request(ROOT+"/batch/preview?entity_kind=supplement")
+
+    @staticmethod
+    def rows(items):
+        return [{k:item[k] for k in ("entity_id","field_path",
+                   "expected_source_hash","expected_candidate_hash")}
+                for item in items]
+
+    def approve(self,rows,**kw):
+        return self.admin.request(ROOT+"/batch/approve","POST",
+            {"entity_kind":"supplement","rows":rows},**kw)
+
+    def test_preview_shows_named_supplement_fields_without_writes(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            response=self.preview()
+            self.assertEqual(response["status"],200,response)
+            self.assertEqual(response["body"]["entity_kind"],"supplement")
+            self.assertEqual(response["body"]["total"],7)
+            entries=response["body"]["items"]
+            self.assertEqual([row["field_path"] for row in entries],list(self.fields))
+            self.assertTrue(all(row["record_title"]=="Creatina" for row in entries))
+            self.assertTrue(all(row["field_label"] for row in entries))
+            self.assertTrue(all(row["review_state"]=="pending" for row in entries))
+            self.assertNotIn("quantity",str(entries))
+            with app.connect() as c:
+                count=c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                    WHERE status='approved'""").fetchone()[0]
+                self.assertEqual(count,0)
+
+    def test_approve_selected_fields_preserves_prescription_rules_and_values(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            rows=self.rows(self.preview()["body"]["items"])
+            result=self.approve(rows)
+            self.assertEqual(result["status"],200,result)
+            self.assertEqual(result["body"]["approved"],7)
+            self.assertEqual(self.preview()["body"]["total"],0)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translation_history WHERE action='approved'
+                    """).fetchone()[0],7)
+                original=c.execute("""SELECT name,dose,moment,rule,note,timing_text,
+                       prescriptions_json FROM v2_supplement_library WHERE id=?""",
+                       (self.ident,)).fetchone()
+                self.assertEqual(tuple(original)[:6],("Creatina","5 g","lunch",
+                     "daily","Misturar com água","Após o almoço"))
+                self.assertEqual(json.loads(original["prescriptions_json"]),
+                                 self.prescriptions)
+
+    def test_changed_source_candidate_and_duplicates_fail_closed(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            rows=self.rows(self.preview()["body"]["items"])
+            for invalid in (
+                [{**rows[0],"field_path":"rule"}],
+                [{**rows[0],"field_path":"moment"}],
+                [{**rows[0],"field_path":"prescriptions/0/quantity"}],
+                [{**rows[0],"expected_candidate_hash":"invalid"}],
+                [rows[0],rows[0]],
+                [rows[0]]*101,
+            ):
+                self.assertEqual(self.approve(invalid)["status"],400)
+            with app.connect() as c:
+                c.execute("""UPDATE v2_supplement_library SET timing_text=?
+                    WHERE id=?""",("De manhã",self.ident))
+                c.commit()
+            self.assertEqual(self.approve(rows)["status"],409)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translations
+                     WHERE status='approved'""").fetchone()[0],0)
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM v2_content_translation_history
+                     WHERE action='approved'""").fetchone()[0],0)
+
+    def test_pending_changed_during_review_and_admin_authority(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            rows=self.rows(self.preview()["body"]["items"])
+            edited=self.admin.request(ROOT+"/propose","POST",{
+                "entity_kind":"supplement","entity_id":self.ident,
+                "field_path":"note","language":"en",
+                "expected_source_hash":self.digest("Misturar com água"),
+                "translated_text":"Mix thoroughly with water"})
+            self.assertEqual(edited["status"],201,edited)
+            self.assertEqual(self.approve(rows)["status"],409)
+            self.assertEqual(self.approve([rows[0]],csrf=False)["status"],403)
+            self.assertEqual(self.approve([rows[0]],origin="https://evil.invalid")["status"],403)
+            self.assertEqual(test_app.Client().request(
+                ROOT+"/batch/preview?entity_kind=supplement")["status"],401)
+            self.assertEqual(self.admin.request(ROOT+"/batch/approve","POST",{
+                "entity_kind":"recipe_category","rows":rows[:1]})["status"],400)
 
 
 
