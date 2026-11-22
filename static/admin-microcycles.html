@@ -33,6 +33,28 @@
         <input type="search" id="i18n-search" maxlength="120" autocomplete="off" placeholder="Pesquisar conteúdos…">
       </label>
     </div>
+    <div class="i18n-bulk-tools" id="i18n-bulk-tools" hidden>
+      <button type="button" id="i18n-bulk-open" class="i18n-secondary">Rever e aprovar em lote</button>
+    </div>
+    <section id="i18n-bulk-review" class="i18n-bulk-review" aria-labelledby="i18n-bulk-title" hidden>
+      <div class="i18n-section-heading">
+        <h3 id="i18n-bulk-title">Aprovação em lote · Alimentos</h3>
+        <button type="button" id="i18n-bulk-close" class="i18n-quiet">Fechar</button>
+      </div>
+      <p id="i18n-bulk-summary" class="i18n-results-count" role="status" aria-live="polite"></p>
+      <div class="i18n-bulk-controls">
+        <label class="i18n-bulk-select-all"><input type="checkbox" id="i18n-bulk-select-all"> Selecionar todas as propostas pendentes</label>
+        <label class="i18n-bulk-filter">Pesquisar nesta revisão
+          <input type="search" id="i18n-bulk-filter" placeholder="Pesquisar português ou inglês…" autocomplete="off">
+        </label>
+      </div>
+      <div id="i18n-bulk-items" class="i18n-bulk-items" role="group" aria-label="Propostas PT e EN para aprovação"></div>
+      <label class="i18n-bulk-attestation"><input type="checkbox" id="i18n-bulk-reviewed"> Confirmei a revisão das traduções selecionadas.</label>
+      <div class="i18n-bulk-footer">
+        <button type="button" class="i18n-primary" id="i18n-bulk-submit" disabled>Aprovar selecionadas</button>
+      </div>
+      <p id="i18n-bulk-feedback" class="i18n-feedback" role="status" aria-live="polite"></p>
+    </section>
     <div id="i18n-plan-stage" class="i18n-plan-stage" role="status" hidden>
       <span class="i18n-status-pill" data-state="pending">Em preparação</span>
     </div>

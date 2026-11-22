@@ -955,6 +955,8 @@ def application(env, start_response):
                 '/api/v2/admin/i18n/history',
                 '/api/v2/admin/i18n/propose',
                 '/api/v2/admin/i18n/approve',
+                '/api/v2/admin/i18n/batch/preview',
+                '/api/v2/admin/i18n/batch/approve',
                 '/api/v2/admin/i18n/import/preview',
                 '/api/v2/admin/i18n/import/submit',
             ):

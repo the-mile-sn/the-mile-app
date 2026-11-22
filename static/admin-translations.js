@@ -109,10 +109,109 @@
    $("i18n-library-link").dataset.libraryKind=state.kind;
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
+ let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0;
+ const updateBulkActions=()=>{
+   const count=bulkSelected.size;
+   $("i18n-bulk-select-all").checked=bulkRows.length>0&&count===bulkRows.length;
+   $("i18n-bulk-select-all").indeterminate=count>0&&count<bulkRows.length;
+   $("i18n-bulk-submit").textContent="Aprovar "+count+" selecionada"+(count===1?"":"s");
+   $("i18n-bulk-submit").disabled=bulkBusy||!count||!$("i18n-bulk-reviewed").checked;
+   $("i18n-bulk-summary").textContent=bulkRows.length+" propostas por rever · "+count+" selecionadas";
+ };
+ const resetBulk=()=>{
+   bulkSeq++;
+   if(bulkBusy)return;
+   bulkRows=[];bulkSelected.clear();
+   $("i18n-bulk-review").hidden=true;
+   $("i18n-bulk-items").replaceChildren();
+   $("i18n-bulk-select-all").checked=false;
+   $("i18n-bulk-reviewed").checked=false;
+   $("i18n-bulk-filter").value="";
+   msg("",false,"i18n-bulk-feedback");
+ };
+ const openBulk=async()=>{
+   if(bulkBusy||state.kind!=="food")return;
+   resetBulk();
+   const request=++bulkSeq;
+   $("i18n-bulk-open").disabled=true;
+   msg("A preparar revisão das traduções de alimentos…",false);
+   try{
+     const data=await send("/api/v2/admin/i18n/batch/preview");
+     if(request!==bulkSeq||state.kind!=="food")return;
+     bulkRows=data.items||[];
+     const list=$("i18n-bulk-items");
+     list.replaceChildren();
+     for(let i=0;i<bulkRows.length;i++){
+       const entry=bulkRows[i];
+       const row=create("label","i18n-bulk-row");
+       const checkbox=create("input");checkbox.type="checkbox";
+       checkbox.value=entry.entity_id;
+       checkbox.dataset.index=String(i);
+       const pair=create("span","i18n-bulk-pair");
+       pair.append(create("strong","",entry.source_text),
+                   create("span","",entry.translated_text));
+       checkbox.addEventListener("change",()=>{
+         if(bulkBusy)return;
+         if(checkbox.checked)bulkSelected.add(i);else bulkSelected.delete(i);
+         $("i18n-bulk-reviewed").checked=false;
+         updateBulkActions();
+       });
+       row.append(checkbox,pair);list.append(row);
+     }
+     $("i18n-bulk-review").hidden=false;
+     $("i18n-bulk-reviewed").checked=false;
+     updateBulkActions();
+     msg("");
+     $("i18n-bulk-review").scrollIntoView({behavior:"smooth",block:"start"});
+   }catch(error){
+     if(request===bulkSeq)msg("Não foi possível preparar a revisão: "+error.message,true);
+   }finally{$("i18n-bulk-open").disabled=false;}
+ };
+ const submitBulk=async()=>{
+   if(bulkBusy||state.kind!=="food"||!bulkSelected.size||
+       !$("i18n-bulk-reviewed").checked)return;
+   const chosen=[...bulkSelected].sort((a,b)=>a-b).map(i=>bulkRows[i]);
+   if(chosen.some(item=>!item||item.field_path!=="display_name"))return;
+   bulkBusy=true;
+   $("i18n-bulk-submit").disabled=true;
+   $("i18n-bulk-open").disabled=true;
+   $("i18n-bulk-close").disabled=true;
+   let approved=0;
+   try{
+     for(let i=0;i<chosen.length;i+=100){
+       const rows=chosen.slice(i,i+100).map(item=>({
+         entity_id:item.entity_id,field_path:item.field_path,
+         expected_source_hash:item.expected_source_hash,
+         expected_candidate_hash:item.expected_candidate_hash,
+       }));
+       const result=await send("/api/v2/admin/i18n/batch/approve",{
+         method:"POST",body:{entity_kind:"food",rows}});
+       approved+=result.approved;
+       msg("Aprovadas "+approved+" de "+chosen.length+" traduções.",false,"i18n-bulk-feedback");
+     }
+     bulkBusy=false;
+     resetBulk();
+     closeReview();
+     await Promise.all([loadOverview(),loadCatalog()]);
+     msg(approved+" traduções de alimentos aprovadas. Os originais não foram alterados.");
+   }catch(error){
+     bulkBusy=false;
+     resetBulk();
+     await Promise.allSettled([loadOverview(),loadCatalog()]);
+     msg("Aprovação interrompida após "+approved+" traduções. "+
+       "As restantes continuam pendentes; abre uma nova revisão. "+error.message,true);
+   }finally{
+     bulkBusy=false;
+     $("i18n-bulk-open").disabled=false;
+     $("i18n-bulk-close").disabled=false;
+   }
+ };
  const loadCatalog=async()=>{
    const currentRequest=++catalogRequestSeq;
    buildTabs();
    const isPlan=state.kind==="plan";
+   $("i18n-bulk-tools").hidden=state.kind!=="food";
+   if(state.kind!=="food")resetBulk();
    $("i18n-plan-stage").hidden=!isPlan;
    $("i18n-import-panel").hidden=isPlan;
    $("i18n-work-panel").hidden=false;
@@ -296,6 +395,28 @@
    });
    if(embedded)window.addEventListener("mile:translations-open",event=>{
      activate(event.detail?.kind);
+   });
+   $("i18n-bulk-open").addEventListener("click",openBulk);
+   $("i18n-bulk-close").addEventListener("click",resetBulk);
+   $("i18n-bulk-submit").addEventListener("click",submitBulk);
+   $("i18n-bulk-select-all").addEventListener("change",event=>{
+     if(bulkBusy)return;
+     bulkSelected=event.target.checked?
+       new Set(bulkRows.map((_,i)=>i)):new Set();
+     for(const checkbox of $("i18n-bulk-items").querySelectorAll('input[type="checkbox"]')){
+       checkbox.checked=bulkSelected.has(Number(checkbox.dataset.index));
+     }
+     $("i18n-bulk-reviewed").checked=false;
+     updateBulkActions();
+   });
+   $("i18n-bulk-reviewed").addEventListener("change",updateBulkActions);
+   $("i18n-bulk-filter").addEventListener("input",event=>{
+     const search=event.target.value.trim().toLocaleLowerCase("pt-PT");
+     for(const [i,row] of [...$("i18n-bulk-items").children].entries()){
+       const entry=bulkRows[i];
+       row.hidden=!!search&&!((entry.source_text+" "+entry.translated_text)
+         .toLocaleLowerCase("pt-PT").includes(search));
+     }
    });
    $("i18n-close").addEventListener("click",closeReview);
    $("i18n-library-link").addEventListener("click",()=>{

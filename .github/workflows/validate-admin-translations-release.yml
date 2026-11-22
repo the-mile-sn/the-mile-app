@@ -12,6 +12,7 @@ on:
       - "app_translation_admin_v2.py"
       - "app_translation_catalog_v2.py"
       - "app_translation_import_v2.py"
+      - "app_translation_batch_review_v2.py"
       - "app_translation_sources_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
@@ -21,6 +22,8 @@ on:
       - "tests/admin_translations_embedded_browser.mjs"
       - "test_admin_translations_release_v2.py"
       - "test_admin_translation_import_v2.py"
+      - "test_admin_translation_batch_review_v2.py"
+      - "tests/admin_translations_batch_browser.mjs"
       - "tests/admin_translations_browser.mjs"
       - ".github/workflows/validate-admin-translations-release.yml"
   pull_request:
@@ -31,6 +34,7 @@ on:
       - "app_translation_admin_v2.py"
       - "app_translation_catalog_v2.py"
       - "app_translation_import_v2.py"
+      - "app_translation_batch_review_v2.py"
       - "app_translation_sources_v2.py"
       - "static/admin-translations*"
       - "static/admin-microcycles.html"
@@ -40,6 +44,8 @@ on:
       - "tests/admin_translations_embedded_browser.mjs"
       - "test_admin_translations_release_v2.py"
       - "test_admin_translation_import_v2.py"
+      - "test_admin_translation_batch_review_v2.py"
+      - "tests/admin_translations_batch_browser.mjs"
       - "tests/admin_translations_browser.mjs"
       - ".github/workflows/validate-admin-translations-release.yml"
 
@@ -61,7 +67,7 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile backend and validate browser scripts
         run: |
-          python -m py_compile app.py admin_translations_http_v2.py content_translations_v2.py app_translation_admin_v2.py app_translation_catalog_v2.py app_translation_sources_v2.py app_translation_import_v2.py
+          python -m py_compile app.py admin_translations_http_v2.py content_translations_v2.py app_translation_admin_v2.py app_translation_catalog_v2.py app_translation_sources_v2.py app_translation_import_v2.py app_translation_batch_review_v2.py
           node --check static/admin-translations.js
           node --check static/admin-translations-import.js
           node --check static/admin-translations-shortcuts.js
@@ -69,8 +75,9 @@ jobs:
           node --check static/admin-microcycles.js
           node --check static/admin-nav-shell.js
           node --check tests/admin_translations_embedded_browser.mjs
+          node --check tests/admin_translations_batch_browser.mjs
       - name: Run real WSGI tests (auth, CSRF, catalog, no app routes)
-        run: python -m unittest -v test_admin_translations_release_v2 test_admin_translation_import_v2
+        run: python -m unittest -v test_admin_translations_release_v2 test_admin_translation_import_v2 test_admin_translation_batch_review_v2
 
   browser-mock:
     runs-on: ubuntu-24.04
@@ -95,6 +102,7 @@ jobs:
         run: |
           node tests/admin_translations_browser.mjs
           node tests/admin_translations_embedded_browser.mjs
+          node tests/admin_translations_batch_browser.mjs
       - name: Store mock-data layout evidence for visual review
         if: always()
         uses: actions/upload-artifact@v4
