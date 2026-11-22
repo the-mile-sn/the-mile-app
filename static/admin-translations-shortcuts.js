@@ -11,7 +11,12 @@
     const a=document.createElement("a");
     a.id="tm-i18n-library-"+kind;
     a.className="tm-i18n-library-link tm-action-secondary";
-    a.href="/admin-translations?entity_kind="+encodeURIComponent(kind);
+    a.href="/?nav=translations&entity_kind="+encodeURIComponent(kind);
+    a.addEventListener("click",event=>{
+      if(typeof window.tmOpenAdminTranslations!=="function")return;
+      event.preventDefault();
+      window.tmOpenAdminTranslations(kind);
+    });
     a.textContent=label;
     a.setAttribute("aria-label","Gerir traduções da biblioteca de "+({food:"alimentos",dish:"pratos",recipe:"receitas",supplement:"suplementação"}[kind]||"conteúdos"));
     target.parentElement.insertBefore(a,target);
@@ -23,6 +28,8 @@
       const response=await fetch("/api/v2/admin/i18n/overview",{
         credentials:"same-origin",headers:{"Accept":"application/json"}});
       if(!response.ok)return; // Missing schema, disabled flag or lack of permission: inert.
+      const nav=document.getElementById("tm-admin-nav-translations");
+      if(nav)nav.hidden=false;
       add("new","food","Traduções");
       add("dish-add-toggle","dish","Traduções");
       add("recipe-add","recipe","Traduções");
