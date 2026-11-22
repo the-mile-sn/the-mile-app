@@ -18,9 +18,21 @@
       event.preventDefault();
       window.tmOpenAdminTranslations(kind);
     });
-    // Reuse one translation glyph across libraries and Planos.
-    // Native SVG, no new icon dependency or duplicate action handlers.
-    a.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h12M7 2v3M4 9l7 7M5 15l6-6M12 21l5-11 5 11M14 17h6"/></svg>';
+    // Use exactly the translation icon already rendered in the Admin sidebar.
+    // Avoid maintaining a second, slightly different hand-drawn SVG.
+    const navGlyph=document.querySelector("#tm-admin-nav-translations .tm-admin-nav-icon svg");
+    if(navGlyph){
+      const glyph=navGlyph.cloneNode(true);
+      glyph.setAttribute("width","18");
+      glyph.setAttribute("height","18");
+      glyph.setAttribute("aria-hidden","true");
+      a.append(glyph);
+    }else{
+      const fallback=document.createElement("span");
+      fallback.textContent="EN";
+      fallback.setAttribute("aria-hidden","true");
+      a.append(fallback);
+    }
     a.setAttribute("aria-label","Abrir Traduções · "+({food:"Alimentos",dish:"Pratos",recipe:"Receitas",supplement:"Suplementação",plan:"Planos"}[kind]||"Conteúdos"));
     a.title=label;
     target.parentElement.insertBefore(a,target);

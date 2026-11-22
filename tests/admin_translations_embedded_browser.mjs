@@ -75,6 +75,14 @@ try{
     assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
     assert.ok((await page.locator("#i18n-import-title").textContent()).includes("Importar"));
     assert.ok((await page.locator("#i18n-auto-title").textContent()).includes("automáticas"));
+    assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro p").count(),0);
+    assert.equal(await page.locator("#tm-admin-translations-page .i18n-intro .i18n-eyebrow").count(),0);
+    assert.equal(await page.locator("#i18n-library-panel .i18n-library small").count(),0);
+    assert.equal(await page.locator("#i18n-work-help").count(),0);
+    assert.equal(await page.locator("#i18n-import-panel .i18n-import-disclaimer").count(),0);
+    assert.equal(await page.locator("#tm-admin-translations-page footer").count(),0);
+    assert.equal(await page.locator("#i18n-auto-title").count(),1);
+    assert.equal(await page.locator("#i18n-auto-title").locator("..").locator("..").locator("p").count(),0);
     const visual=await page.evaluate(()=>{
       const css=(sel)=>getComputedStyle(document.querySelector(sel));
       return {
@@ -111,12 +119,46 @@ try{
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("hidden"),null);
     assert.equal(await page.locator("#i18n-work-panel").getAttribute("data-plan-mode"),"1");
     assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
+    assert.equal(await page.locator("#i18n-work-title").textContent(),"Planos");
+    assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
+    assert.equal(await page.locator("#i18n-plan-stage .i18n-status-pill").textContent(),"Em preparação");
+    assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-stage-grid").count(),0);
+    assert.equal(await page.locator("#i18n-library-link").textContent(),"Abrir Planos");
     assert.equal(requests.filter(p=>p.includes("/api/v2/admin/i18n/import/")).length,0);
     // The global hub still lets us return to an editable library without page navigation.
     await page.locator("#i18n-libraries button").first().click();
     await page.locator("#i18n-work-panel:not([hidden])").waitFor();
     await page.locator("#tm-admin-nav-food-library").click();
     assert.equal(await view.getAttribute("hidden"),"");
+    // Geometry of the real Planos action toolbar, in both responsive layouts.
+    await page.evaluate(()=>{
+      document.getElementById("tm-plan-page").hidden=false;
+      document.getElementById("plan-entry").hidden=false;
+    });
+    const gap=await page.evaluate((mobile)=>{
+      const icon=document.getElementById(mobile?
+        "tm-i18n-library-plan-mobile":"tm-i18n-library-plan");
+      const create=document.getElementById(mobile?
+        "entry-create-mobile":"entry-create");
+      const a=icon.getBoundingClientRect(),b=create.getBoundingClientRect();
+      const navIcon=document.querySelector("#tm-admin-nav-translations .tm-admin-nav-icon svg");
+      const quickIcon=icon.querySelector("svg");
+      return {
+        spacing:b.left-a.right,
+        aligned:Math.abs((a.top+a.height/2)-(b.top+b.height/2)),
+        visible:!!a.width&&!!a.height,
+        sameGlyph:!!navIcon&&!!quickIcon&&
+          [...navIcon.querySelectorAll("path")].map(p=>p.getAttribute("d")).join("|")===
+          [...quickIcon.querySelectorAll("path")].map(p=>p.getAttribute("d")).join("|"),
+        scrollWidth:document.documentElement.scrollWidth,
+        width:innerWidth,
+      };
+    },name==="mobile");
+    assert.ok(gap.visible,name+" plan translation icon must be visible");
+    assert.ok(gap.spacing>=8&&gap.spacing<=24,name+" gap near Criar novo: "+gap.spacing);
+    assert.ok(gap.aligned<=4,name+" plan icons are not vertically centred");
+    assert.ok(gap.sameGlyph,name+" must reuse official translation glyph");
+    assert.ok(gap.scrollWidth<=gap.width+3,name+" Planos has horizontal overflow");
     await page.close();
     process.stdout.write("Embedded admin translation navigation "+name+" passed\n");
   }
