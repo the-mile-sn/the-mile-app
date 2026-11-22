@@ -149,6 +149,7 @@ class PlanTranslationsTests(unittest.TestCase):
             fields=self.fields(ref)["body"]["fields"]
             quantity=next(f for f in fields if f["field_path"].endswith("display_quantity"))
             self.assertEqual(self.propose(ref,quantity,"200 g")["status"],400)
+            self.assertEqual(self.propose(ref,quantity,"100 mg")["status"],400)
             self.assertEqual(self.propose(ref,quantity,"100 g")["status"],201)
             missing=self.call(ROOT+"/propose","POST",{
                 "publication_ref":ref,"field_path":"meals/0/options/0/foods/0/grams",
