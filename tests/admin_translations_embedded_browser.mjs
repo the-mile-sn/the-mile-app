@@ -69,6 +69,7 @@ try{
     await nav.click();
     const view=page.locator("#tm-admin-translations-page");
     await page.locator("#i18n-library-panel:not([hidden])").waitFor({timeout:15000});
+    await page.locator("#i18n-results .i18n-status-pill").first().waitFor({timeout:15000});
     assert.equal(await view.getAttribute("hidden"),null);
     assert.ok((await page.locator("#i18n-work-title").textContent()).includes("Revisão"));
     assert.ok((await page.locator("#i18n-import-title").textContent()).includes("Importar"));
