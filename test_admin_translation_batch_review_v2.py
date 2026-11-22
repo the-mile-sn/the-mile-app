@@ -3,6 +3,7 @@
 No API key, Render deployment or production data is used.
 """
 import hashlib
+import json
 import os
 import unittest
 from unittest.mock import patch
@@ -219,7 +220,7 @@ class DishBatchReviewTests(unittest.TestCase):
                 self.assertEqual(c.execute("SELECT COUNT(*) FROM v2_content_translations"
                          ).fetchone()[0],0)
             self.assertEqual(self.admin.request(
-                ROOT+"/batch/preview?entity_kind=recipe")["status"],400)
+                ROOT+"/batch/preview?entity_kind=supplement")["status"],400)
             self.assertEqual(self.admin.request(
                 ROOT+"/batch/preview?entity_kind=dish&extra=1")["status"],400)
 
@@ -300,6 +301,156 @@ class DishBatchReviewTests(unittest.TestCase):
     @staticmethod
     def digest(value):
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+
+
+class RecipeBatchReviewTests(unittest.TestCase):
+    """Review all visible fields of published recipes, not clinical or numeric data."""
+
+    def setUp(self):
+        test_app.PortalTest.setUp(self)
+        self.recipe_id="c"*24
+        self.category_id="d"*24
+        self.section_id="a"*24
+        self.ingredient_id="b"*24
+        self.sections=[{
+            "id":self.section_id,"title":"Ingredientes principais",
+            "ingredients":[{
+                "id":self.ingredient_id,"name":"Arroz branco",
+                "quantity":"100","unit":"g","recipe_ref_id":None}]
+        }]
+        self.steps=["Cozer em agua.","Servir quente."]
+        with app.connect() as c:
+            translations.initialize(c)
+            c.execute("INSERT INTO v2_recipe_categories(id,name,created_at) VALUES (?,?,?)",
+                      (self.category_id,"Refeicoes",1))
+            c.execute("""INSERT INTO v2_recipe_library
+                (id,category_id,name,recipe_type,status,servings,
+                 sections_json,steps_json,notes,created_at,updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",(
+                    self.recipe_id,self.category_id,"Arroz cozido","standard",
+                    "published",2,json.dumps(self.sections),json.dumps(self.steps),
+                    "Servir de imediato.",1,1))
+            c.commit()
+
+    def preview(self):
+        return self.admin.request(ROOT+"/batch/preview?entity_kind=recipe")
+
+    def propose(self,field_path,text,english):
+        return self.admin.request(ROOT+"/propose","POST",{
+            "entity_kind":"recipe","entity_id":self.recipe_id,
+            "field_path":field_path,"language":"en",
+            "expected_source_hash":self.digest(text),
+            "translated_text":english
+        })
+
+    @staticmethod
+    def digest(value):
+        return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def rows(entries):
+        return [{k:e[k] for k in ("entity_id","field_path",
+                   "expected_source_hash","expected_candidate_hash")}
+                for e in entries]
+
+    def seed(self):
+        self.translations={
+            "name":("Arroz cozido","Cooked rice"),
+            "notes":("Servir de imediato.","Serve immediately."),
+            "sections/"+self.section_id+"/title":
+                ("Ingredientes principais","Main ingredients"),
+            "sections/"+self.section_id+"/ingredients/"+self.ingredient_id+"/name":
+                ("Arroz branco","White rice"),
+            "sections/"+self.section_id+"/ingredients/"+self.ingredient_id+"/unit":
+                ("g","g"),
+            "steps/0":("Cozer em agua.","Boil in water."),
+            "steps/1":("Servir quente.","Serve hot."),
+        }
+        with patch.dict(os.environ,FLAG):
+            for path,(pt,en) in self.translations.items():
+                result=self.propose(path,pt,en)
+                self.assertEqual(result["status"],201,result)
+
+    def test_preview_groups_recipe_fields_without_writing(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            result=self.preview()
+            self.assertEqual(result["status"],200,result)
+            self.assertEqual(result["body"]["entity_kind"],"recipe")
+            self.assertEqual(result["body"]["total"],7)
+            entries=result["body"]["items"]
+            self.assertEqual([e["field_path"] for e in entries],
+                list(self.translations))
+            self.assertTrue(all(e["record_title"]=="Arroz cozido" for e in entries))
+            self.assertTrue(all(e["field_label"] for e in entries))
+            self.assertTrue(all(e["review_state"]=="pending" for e in entries))
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                   v2_content_translations WHERE status='approved'""").fetchone()[0],0)
+
+    def test_approve_group_with_history_and_unchanged_canonical_recipe(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            entries=self.preview()["body"]["items"]
+            selected=self.rows(entries)
+            answer=self.admin.request(ROOT+"/batch/approve","POST",{
+                "entity_kind":"recipe","rows":selected})
+            self.assertEqual(answer["status"],200,answer)
+            self.assertEqual(answer["body"]["approved"],7)
+            self.assertEqual(self.preview()["body"]["total"],0)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translations WHERE status='approved'""").fetchone()[0],7)
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translation_history WHERE action='approved'""").fetchone()[0],7)
+                original=c.execute("""SELECT name,notes,servings,sections_json,steps_json
+                   FROM v2_recipe_library WHERE id=?""",(self.recipe_id,)).fetchone()
+                self.assertEqual(original["name"],"Arroz cozido")
+                self.assertEqual(original["notes"],"Servir de imediato.")
+                self.assertEqual(original["servings"],2)
+                self.assertEqual(json.loads(original["sections_json"]),self.sections)
+                self.assertEqual(json.loads(original["steps_json"]),self.steps)
+
+    def test_source_change_rolls_back_whole_recipe_group(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            selected=self.rows(self.preview()["body"]["items"])
+            with app.connect() as c:
+                c.execute("UPDATE v2_recipe_library SET steps_json=? WHERE id=?",
+                     (json.dumps(["Boil in water?","Servir quente."]),self.recipe_id))
+                c.commit()
+            result=self.admin.request(ROOT+"/batch/approve","POST",{
+                "entity_kind":"recipe","rows":selected})
+            self.assertEqual(result["status"],409,result)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translations WHERE status='approved'""").fetchone()[0],0)
+
+    def test_reject_numeric_fields_invalid_hashes_and_permission_errors(self):
+        self.seed()
+        with patch.dict(os.environ,FLAG):
+            first=self.rows(self.preview()["body"]["items"])[0]
+            for row in [
+                {**first,"field_path":"servings"},
+                {**first,"field_path":"sections/"+self.section_id+
+                     "/ingredients/"+self.ingredient_id+"/quantity"},
+                {**first,"expected_candidate_hash":"bad"},
+                {**first,"translated_text":"Untrusted browser input"},
+            ]:
+                result=self.admin.request(ROOT+"/batch/approve","POST",{
+                    "entity_kind":"recipe","rows":[row]})
+                self.assertEqual(result["status"],400,result)
+            self.assertEqual(self.admin.request(ROOT+"/batch/approve","POST",{
+                "entity_kind":"recipe","rows":[first,first]})["status"],400)
+            self.assertEqual(self.admin.request(ROOT+"/batch/approve","POST",{
+                "entity_kind":"recipe","rows":[first]},csrf=False)["status"],403)
+            self.assertEqual(test_app.Client().request(
+                ROOT+"/batch/preview?entity_kind=recipe")["status"],401)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translations WHERE status='approved'""").fetchone()[0],0)
 
 
 

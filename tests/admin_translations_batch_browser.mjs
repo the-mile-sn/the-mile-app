@@ -212,6 +212,71 @@ try{
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
     await page.close();
   }
+  // Recipe review displays all ingredients, units and steps grouped by recipe.
+  // Existing picker is not used for bulk review; all data is mocked.
+  for(const [device,width,height] of [["desktop",1400,900],["mobile",390,844]]){
+    const page=await chromiumBrowser.newPage({viewport:{width,height}});
+    const recipeRows=Array.from({length:205},(_,i)=>({
+      entity_id:i<120?"recipe-A":"recipe-B",
+      record_title:i<120?"Receita A":"Receita B",
+      field_label:i%3===0?"Nome do ingrediente":i%3===1?"Preparacao":"Unidade",
+      field_path:"steps/"+i,
+      source_text:"Texto PT "+i,translated_text:"English text "+i,
+      review_state:"pending",
+      expected_source_hash:"a".repeat(64),expected_candidate_hash:"b".repeat(64)
+    }));
+    let posted=0;
+    await page.route("**/api/**",async route=>{
+      const request=route.request(),url=new URL(request.url()),path=url.pathname;
+      if(path==="/api/me")
+        return route.fulfill(respond({user:{id:"admin",role:"admin"},csrf:"mock-csrf"}));
+      if(path==="/api/v2/admin/i18n/overview")
+        return route.fulfill(respond({language:"en",statuses:{...libraryStatus,pending:205},libraries}));
+      if(path==="/api/v2/admin/i18n/catalog")
+        return route.fulfill(respond({language:"en",library:"recipe",total:0,
+          page:1,page_size:25,items:[]}));
+      if(path==="/api/v2/admin/i18n/batch/preview"){
+        assert.equal(url.searchParams.get("entity_kind"),"recipe");
+        return route.fulfill(respond({entity_kind:"recipe",status:"pending",
+          total:205,items:recipeRows,approved:false}));
+      }
+      if(path==="/api/v2/admin/i18n/batch/approve"){
+        posted++;
+        return route.fulfill(respond({error:"mock prevents writes"},409));
+      }
+      throw Error("Unexpected API "+request.url());
+    });
+    await page.goto(origin+"/admin-translations.html?entity_kind=recipe",
+      {waitUntil:"domcontentloaded"});
+    await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
+    await page.locator("#i18n-bulk-open").click();
+    await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
+    assert.equal(await page.locator(".i18n-bulk-recipe-group").count(),2);
+    assert.equal(await page.locator(".i18n-bulk-row").count(),205);
+    assert.equal(await page.locator("#i18n-bulk-select-100").isEnabled(),true);
+    await page.locator(".i18n-bulk-recipe-group").first()
+      .locator(".i18n-bulk-recipe-header button").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),120);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    await page.locator("#i18n-bulk-select-all").check();
+    await page.locator("#i18n-bulk-select-all").uncheck();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),0);
+    await page.locator("#i18n-bulk-filter").fill("Receita B");
+    assert.equal(await page.locator(".i18n-bulk-recipe-group:not([hidden])").count(),1);
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),85);
+    assert.equal(await page.locator("#i18n-bulk-select-100").isDisabled(),true);
+    await page.locator("#i18n-bulk-filter").fill("");
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),185);
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator(".i18n-bulk-row input:checked").count(),205);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    assert.equal(posted,0);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
+    await page.close();
+    process.stdout.write("Grouped recipe batch review "+device+" passed\n");
+  }
 }finally{
   await chromiumBrowser.close();
 }
