@@ -107,10 +107,15 @@
    const isPlan=state.kind==="plan";
    $("i18n-plan-stage").hidden=!isPlan;
    $("i18n-import-panel").hidden=isPlan;
-   $("i18n-work-panel").hidden=isPlan;
+   $("i18n-work-panel").hidden=false;
+   $("i18n-work-panel").dataset.planMode=isPlan?"1":"0";
+   $("i18n-work-title").textContent=isPlan?"Planos · Traduções":"Revisão manual";
+   $("i18n-work-help").textContent=isPlan?
+     "Gestão central das traduções dos Planos. A integração de textos próprios está em preparação.":
+     "Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.";
    closeReview();
    if(isPlan){msg("");return;}
-   msg("A carregar conteúdos…");$("i18n-work-panel").hidden=false;
+   msg("A carregar conteúdos…");
    try{
      const params=queryString({
        entity_kind:state.kind,status:state.status,query:state.query,
