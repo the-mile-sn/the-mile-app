@@ -154,3 +154,18 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-work-panel[data-plan-mode="1"] .i18n-results,
 .i18n-work-panel[data-plan-mode="1"] .i18n-pagination{display:none}
 .i18n-work-panel[data-plan-mode="1"] #i18n-tabs{display:flex}
+
+
+/* Plan translation coverage audit: neutral information, never an approval state. */
+.i18n-plan-audit{padding:12px 14px;margin:10px 0 18px;background:var(--tm-ui-card);border-radius:12px;min-width:0}
+.i18n-plan-audit>strong{display:block;font-size:13px;font-weight:600;margin-bottom:10px}
+.i18n-plan-audit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.i18n-plan-audit-stat{background:var(--tm-ui-subcard);padding:10px 12px;border-radius:10px;min-width:0}
+.i18n-plan-audit-stat>strong{display:block;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.i18n-plan-audit-stat>small{display:block;color:var(--tm-ui-muted);font-size:11px;line-height:1.4;margin-top:3px}
+.i18n-plan-audit>p{color:var(--tm-ui-muted);font-size:11px;line-height:1.5;margin:11px 0 0}
+.i18n-plan-suggestion{margin-top:9px;padding:10px;border-radius:9px;background:var(--tm-ui-subcard)}
+.i18n-plan-suggestion small{display:block;color:var(--tm-ui-muted);font-size:11px;line-height:1.45}
+.i18n-plan-suggestion p{font-size:13px;line-height:1.5;margin:7px 0 9px;overflow-wrap:anywhere}
+.i18n-plan-suggestion button{font-size:12px;min-height:36px}
+@media(max-width:720px){.i18n-plan-audit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
