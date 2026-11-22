@@ -16,6 +16,7 @@
    food:"Alimentos",dish:"Pratos",recipe:"Receitas",
    recipe_category:"Categorias",supplement:"Suplementação"
  };
+ const embedded=!!document.getElementById("tm-admin-translations-page");
  const startKind=new URLSearchParams(window.location.search).get("entity_kind");
  let catalogRequestSeq=0;
  let csrf="",state={kind:(Object.prototype.hasOwnProperty.call(displayKind,startKind)?startKind:"food"),status:"all",query:"",page:1,pageSize:25,selected:null,
@@ -97,9 +98,7 @@
        closeReview();loadCatalog();
      });tabs.append(b);
    }
-   $("i18n-library-link").href=state.kind==="food"?"/?nav=food-library":
-     state.kind==="dish"?"/?nav=dishes":
-     state.kind==="supplement"?"/?nav=supplements":"/?nav=recipes";
+   $("i18n-library-link").dataset.libraryKind=state.kind;
  };
  const loadCatalog=async()=>{
    const currentRequest=++catalogRequestSeq;
@@ -247,11 +246,42 @@
      await refreshDetail();
    }finally{state.busy=false;$("i18n-propose").disabled=false;}
  };
- const init=async()=>{
+ let opening=null;
+ const activate=async(kind)=>{
+   if(Object.prototype.hasOwnProperty.call(displayKind,kind)&&kind!==state.kind){
+     state.kind=kind;state.status="all";state.query="";state.page=1;
+     $("i18n-status").value="all";$("i18n-search").value="";
+     closeReview();
+   }
+   if(opening)return opening;
+   opening=(async()=>{
+     const session=await send("/api/me");
+     if(session?.user?.role!=="admin")throw Error("acesso_restrito");
+     csrf=session.csrf||"";
+     await loadOverview();await loadCatalog();
+   })().catch(error=>msg(
+     "Não foi possível abrir a gestão de traduções: "+error.message+
+     ". Confirma a sessão de administrador e a ativação segura do módulo.",true))
+     .finally(()=>{opening=null;});
+   return opening;
+ };
+ const init=()=>{
    window.addEventListener("mile:translations-imported",()=>{
+     if(embedded&&document.getElementById("tm-admin-translations-page").hidden)return;
      closeReview();loadOverview();loadCatalog();
    });
+   if(embedded)window.addEventListener("mile:translations-open",event=>{
+     activate(event.detail?.kind);
+   });
    $("i18n-close").addEventListener("click",closeReview);
+   $("i18n-library-link").addEventListener("click",()=>{
+     if(!embedded)return;
+     const library=$("i18n-library-link").dataset.libraryKind;
+     if(library==="food")window.tmOpenAdminFoodLibrary?.("foods");
+     else if(library==="supplement")window.tmOpenAdminFoodLibrary?.("supplements");
+     else if(library==="dish")window.tmOpenAdminMenusRecipes?.();
+     else window.tmOpenAdminRecipeLibrary?.();
+   });
    $("i18n-status").addEventListener("change",event=>{
      state.status=event.target.value;state.page=1;loadCatalog();
    });
@@ -267,15 +297,7 @@
    });
    $("i18n-propose").addEventListener("click",()=>write("propose"));
    $("i18n-approve").addEventListener("click",()=>write("approve"));
-   try{
-     const session=await send("/api/me");
-     if(session?.user?.role!=="admin")throw Error("acesso_restrito");
-     csrf=session.csrf||"";
-     await loadOverview();await loadCatalog();
-   }catch(error){
-     msg("Não foi possível abrir a gestão de traduções: "+error.message+
-         ". Confirma a sessão de administrador e a ativação segura do módulo.",true);
-   }
+   if(!embedded)activate(startKind);
  };
  init();
 })();
