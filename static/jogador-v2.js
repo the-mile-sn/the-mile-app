@@ -1148,7 +1148,7 @@ function eventCard(event,compact=false){
      try{
        await api("/api/v2/player/events/"+encodeURIComponent(event.id),{method:"PUT",
          headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
-         body:JSON.stringify({event_date:date.value,session:session.value})});
+         body:JSON.stringify({event_date:date.value,session:session.value,local_date:iso(new Date())})});
        invalidatePlayerEventCalendarCache();
        await overview();
      }catch(e){warning.textContent=e.message;save.disabled=false;}
@@ -1163,7 +1163,7 @@ function eventCard(event,compact=false){
      if(!confirm("Remover "+event.title+" deste dia? As refeições peri-treino associadas deixam também de ser contabilizadas."))return;
      remove.disabled=true;
      try{
-       await api("/api/v2/player/events/"+encodeURIComponent(event.id),{method:"DELETE",
+       await api("/api/v2/player/events/"+encodeURIComponent(event.id)+"?local_date="+encodeURIComponent(iso(new Date())),{method:"DELETE",
          headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf}});
        invalidatePlayerEventCalendarCache();
        await overview();
@@ -1465,7 +1465,7 @@ async function renderWeightCard(root,date){
     const checked=form.querySelector('input[name="weight-menstruating"]:checked');
     const menstruating=checked?checked.value==="yes"?true:checked.value==="no"?false:null:null;
     await api("/api/v2/player/weight",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
-      body:JSON.stringify({date,weight:(Number(kg.value)+Number(grams.value)/1000).toFixed(1),menstruating})});
+      body:JSON.stringify({date,weight:(Number(kg.value)+Number(grams.value)/1000).toFixed(1),menstruating,local_date:iso(new Date())})});
     overviewReadCache.clear(); // The reference-weight values can change after saving.
     overviewSnapshot=null;
     await overview();
