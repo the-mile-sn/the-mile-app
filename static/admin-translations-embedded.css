@@ -399,3 +399,73 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
     transition:none!important;transform:none!important;
   }
 }
+
+
+/* Explicit food batch approval: same native card and subcard system as manual review. */
+.tm-admin-translations-page .i18n-bulk-tools{
+  display:flex;justify-content:flex-start;align-items:center;
+  margin:0 0 13px;gap:10px;
+}
+.tm-admin-translations-page .i18n-bulk-review{
+  margin:12px 0 20px;padding:18px;border:0;border-radius:14px;
+  background:var(--tm-ui-subcard);
+}
+.tm-admin-translations-page .i18n-bulk-review .i18n-section-heading h3{
+  margin:0;font:600 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
+  color:var(--tm-ui-text);
+}
+.tm-admin-translations-page .i18n-bulk-controls{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:12px;margin:12px 0;
+}
+.tm-admin-translations-page :is(.i18n-bulk-select-all,.i18n-bulk-attestation){
+  display:flex;align-items:center;gap:10px;
+  color:var(--tm-ui-text);cursor:pointer;
+  font:500 12px/1.5 "Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+.tm-admin-translations-page :is(.i18n-bulk-select-all,.i18n-bulk-attestation) input,
+.tm-admin-translations-page .i18n-bulk-row input{
+  flex:0 0 auto;width:18px;height:18px;accent-color:var(--tm-shell-focus,#7b9fbc);
+}
+.tm-admin-translations-page .i18n-bulk-filter{
+  display:flex;flex-direction:column;gap:5px;color:var(--tm-ui-muted);
+  font:500 11px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+.tm-admin-translations-page .i18n-bulk-filter input{
+  min-height:39px;min-width:200px;padding:8px 12px;border:0;border-radius:12px;
+  background:var(--tm-ui-search);color:var(--tm-ui-text);
+  font:400 16px/1.4 "Inter Tight","SF Pro Text",Arial,sans-serif;
+}
+.tm-admin-translations-page .i18n-bulk-items{
+  display:grid;gap:6px;max-height:490px;overflow-y:auto;overscroll-behavior:contain;
+  border-radius:12px;padding:4px 2px;
+}
+.tm-admin-translations-page .i18n-bulk-row{
+  display:flex;align-items:center;gap:13px;
+  padding:12px 14px;border:0;border-radius:12px;
+  background:var(--tm-ui-card);cursor:pointer;min-width:0;
+}
+.tm-admin-translations-page .i18n-bulk-pair{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  column-gap:20px;row-gap:5px;align-items:start;width:100%;min-width:0;
+}
+.tm-admin-translations-page .i18n-bulk-pair strong{
+  color:var(--tm-ui-text);font:600 13px/1.45 "Inter Tight","SF Pro Text",Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+.tm-admin-translations-page .i18n-bulk-pair span{
+  color:var(--tm-ui-text);font:400 13px/1.45 "Inter Tight","SF Pro Text",Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+.tm-admin-translations-page .i18n-bulk-attestation{
+  margin:17px 0 12px;padding:4px 0;font-weight:600;
+}
+.tm-admin-translations-page .i18n-bulk-footer{display:flex;justify-content:flex-end}
+@media(max-width:620px){
+  .tm-admin-translations-page .i18n-bulk-review{padding:13px}
+  .tm-admin-translations-page .i18n-bulk-filter{width:100%}
+  .tm-admin-translations-page .i18n-bulk-filter input{min-width:0;width:100%}
+  .tm-admin-translations-page .i18n-bulk-pair{grid-template-columns:1fr}
+  .tm-admin-translations-page .i18n-bulk-items{max-height:400px}
+  .tm-admin-translations-page .i18n-bulk-footer button{width:100%}
+}
