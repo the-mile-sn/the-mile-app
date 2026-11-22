@@ -95,18 +95,18 @@ class PlanTranslationsTests(unittest.TestCase):
 
         class GuardConnection:
             def execute(self, sql, params=()):
-                self_sql = sql.replace("?", "%s")
-                self_params = params
-                if "LIKE %s" not in self_sql:
+                self.sql = sql.replace("?", "%s")
+                self.params = params
+                if "LIKE %s" not in self.sql:
                     raise AssertionError("LIKE pattern must be parameterized")
-                if any(fragment in self_sql for fragment in
+                if any(fragment in self.sql for fragment in
                        ("meals/%/", "LIKE 'meals/", "%/options/%")):
                     raise AssertionError("Literal SQL percent breaks psycopg")
                 return Cursor()
 
         guarded = GuardConnection()
         self.assertEqual(plan_reviews._approved_titles(guarded), {})
-        self.assertEqual(guarded.self_params, ("meals/%/options/%/title",))
+        self.assertEqual(guarded.params, ("meals/%/options/%/title",))
 
     def test_only_authorized_admin_can_inspect_and_no_snapshot_is_exported(self):
         with patch.dict(os.environ,FLAG):
