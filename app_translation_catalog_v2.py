@@ -93,13 +93,19 @@ def overview(c,actor):
             "record_count":len(records),"field_count":len(fields),
             "statuses":statuses,
         })
-    plans=(int(c.execute("SELECT COUNT(*) AS n FROM v2_food_plan_editor_publications")
-               .fetchone()["n"]) if _table_exists(c,"v2_food_plan_editor_publications")
-           else None)
+    # Published plan fields use version-bound refs, separate from generic library IDs.
+    import app_translation_plans_v2 as plan_reviews
+    publications = plan_reviews.list_publications(c,actor)["items"]
+    plan_states = {name:0 for name in sorted(STATUSES)}
+    for item in publications:
+        for key, count in item["statuses"].items():
+            plan_states[key] += count
+            status_total[key] += count
     libraries.append({
         "kind":"plan","label":"Planos alimentares publicados",
-        "integrated":False,"record_count":plans,
-        "field_count":None,"statuses":None
+        "integrated":True,"record_count":len(publications),
+        "field_count":sum(p["field_count"] for p in publications),
+        "statuses":plan_states
     })
     return {
         "language":"en","libraries":libraries,"statuses":status_total,
