@@ -104,6 +104,69 @@ try{
     process.stdout.write("Explicit food batch approval "+device+" passed\n");
   }
   assert.equal(approvals,4);
+  // Dishes reuse the same 100-item UI, including legacy English names.
+  for(const [device,width,height] of [["desktop",1400,900],["mobile",390,844]]){
+    const page=await chromiumBrowser.newPage({viewport:{width,height}});
+    const dishes=[
+      {entity_id:"dish-legacy",field_path:"name_pt",
+        source_text:"Frango com arroz",translated_text:"Chicken and rice",
+        review_state:"legacy_review",expected_source_hash:"e".repeat(64),
+        expected_candidate_hash:"f".repeat(64)},
+      {entity_id:"dish-pending",field_path:"name_pt",
+        source_text:"Sopa de legumes",translated_text:"Vegetable soup",
+        review_state:"pending",expected_source_hash:"a".repeat(64),
+        expected_candidate_hash:"b".repeat(64)},
+    ];
+    let written=0;
+    await page.route("**/api/**",async route=>{
+      const request=route.request(),url=new URL(request.url()),path=url.pathname;
+      if(path==="/api/me")
+        return route.fulfill(respond({user:{id:"admin",role:"admin"},csrf:"mock-csrf"}));
+      if(path==="/api/v2/admin/i18n/overview")
+        return route.fulfill(respond({language:"en",statuses:{...libraryStatus,legacy_review:1},
+          libraries}));
+      if(path==="/api/v2/admin/i18n/catalog")
+        return route.fulfill(respond({library:"dish",total:0,page:1,page_size:25,items:[]}));
+      if(path==="/api/v2/admin/i18n/batch/preview"){
+        assert.equal(request.method(),"GET");
+        assert.equal(url.searchParams.get("entity_kind"),"dish");
+        return route.fulfill(respond({entity_kind:"dish",status:"awaiting_review",
+          total:2,items:dishes,approved:false}));
+      }
+      if(path==="/api/v2/admin/i18n/batch/approve"){
+        assert.equal(request.method(),"POST");
+        assert.equal(request.headers()["x-csrf-token"],"mock-csrf");
+        const payload=request.postDataJSON();
+        assert.equal(payload.entity_kind,"dish");
+        assert.deepEqual(payload.rows.map(x=>x.entity_id),
+          ["dish-legacy","dish-pending"]);
+        assert.ok(payload.rows.every(x=>x.field_path==="name_pt"&&
+          !Object.hasOwn(x,"source_text")&&!Object.hasOwn(x,"translated_text")));
+        written++;
+        return route.fulfill(respond({approved:2,entity_kind:"dish",status:"approved"}));
+      }
+      throw Error("Unexpected API "+request.url());
+    });
+    await page.goto(origin+"/admin-translations.html?entity_kind=dish",
+      {waitUntil:"domcontentloaded"});
+    await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
+    assert.equal(written,0);
+    await page.locator("#i18n-bulk-open").click();
+    await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
+    assert.match(await page.locator("#i18n-bulk-title").innerText(),/Pratos/);
+    assert.match(await page.locator("#i18n-bulk-all-label").innerText(),/traduções por rever/);
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),2);
+    assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    assert.equal(written,0);
+    await page.locator("#i18n-bulk-reviewed").check();
+    await page.locator("#i18n-bulk-submit").click();
+    await page.getByText("2 traduções de pratos aprovadas.",{exact:false}).waitFor();
+    assert.equal(written,1);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
+    await page.close();
+    process.stdout.write("Legacy/pending dish batch review "+device+" passed\n");
+  }
   // Regression with a realistic list: select 100, then another 100, then 5.
   // No approval request is sent by the selection controls.
   {
