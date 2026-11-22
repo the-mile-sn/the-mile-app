@@ -94,3 +94,13 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-import-preview p{margin:8px 0}
 .i18n-import-disclaimer{font-size:12px;line-height:1.6;color:var(--tm-ui-muted);margin:18px 0 0}
 @media(max-width:620px){.i18n-import-controls>*{max-width:100%}.i18n-import-file{width:100%;align-items:flex-start;flex-direction:column}.i18n-import-controls button{flex:1 1 auto}}
+
+
+/* Plan translations are planned as a separate, read-only source type.
+   Do not offer a misleading form or paid suggestions before source audit. */
+.i18n-plan-stage-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.i18n-plan-stage-grid>div{min-width:0;padding:18px;border:1px solid var(--tm-ui-divider);border-radius:12px;background:var(--tm-ui-subcard)}
+.i18n-plan-stage-grid h3{margin:0 0 9px;font-weight:650;font-size:13px;color:var(--tm-ui-text)}
+.i18n-plan-stage-grid p{margin:0;font-size:12px;line-height:1.6;color:var(--tm-ui-muted)}
+#i18n-plan-open-library{margin-top:18px}
+@media(max-width:900px){.i18n-plan-stage-grid{grid-template-columns:1fr}}
