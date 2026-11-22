@@ -413,7 +413,7 @@ class PlanTranslationsTests(unittest.TestCase):
             groups=self._common()["body"]["items"]
             self.assertFalse(any(g["field_kind"]=="display_quantity" for g in groups))
             # Another publication has the identical unit but is still missing.
-            duplicate=json.loads(updated)
+            duplicate=json.loads(json.dumps(updated))
             duplicate["id"]="shared-2"
             with app.connect() as c:
                 c.execute("""INSERT INTO v2_food_plan_editor_publications
