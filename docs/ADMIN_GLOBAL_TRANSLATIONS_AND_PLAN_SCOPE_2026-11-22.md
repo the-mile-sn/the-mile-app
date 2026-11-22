@@ -42,3 +42,31 @@ Este PR **não** implementa tradução completa de planos, nem ativa API, modelo
 ## QA
 
 Validar submenu Biblioteca intacto, Traduções como item de topo, estado ativo correto no desktop e mobile, atalhos das bibliotecas e Planos, seleção do âmbito Planos sem pedidos ao endpoint `/catalog?entity_kind=plan`, e retorno aos conteúdos já integrados.
+
+
+## Ordem aprovada de execução — decisão de 22/11/2026
+
+**Primeiro: Alimentos.** A biblioteca de alimentos é a única fonte canónica para os nomes visíveis dos alimentos: `v2_food_library.display_name` (somente `active=1`). A Central já suporta os nomes da biblioteca, revisão manual e CSV. A exportação produz `entity_kind,entity_id,field_path,source_text,translated_text` e apenas o último campo deve ser preenchido. A UI valida e importa em lotes até 100 propostas, sempre com estado `pending` e aprovação independente. Não introduzir qualquer tradução diretamente nas tabelas nutricionais.
+
+É necessário o **CSV exportado de Alimentos de uma sessão admin**, porque o inventário está na base de dados e não consta do repositório. A pessoa responsável pela revisão envia esse CSV à equipa de tradução; produzir o ficheiro PT/EN preenchido sem alterar `entity_id`, `field_path` ou `source_text`. Validar terminologia em português europeu/inglês britânico com contexto nutricional antes de importar. Não utilizar a API da OpenAI enquanto desligada.
+
+**Em seguida: tradução de Planos.** O editor `food_plan_drafts_v2.validate` usa `plan_type`, `meals[].name` e `applies_to` para correspondências de refeições; o `food_plan_calendar_bridge_v2` usa nomes canónicos das refeições para resolver os momentos alimentares e protocolos peri-jogo. **Nunca reescrever essas chaves**, mesmo quando existe tradução inglesa. A publicação `v2_food_plan_editor_publications.snapshot_json` conserva uma versão da prescrição; é necessário resolver traduções na leitura/apresentação, mantendo o snapshot original e a nutrição imutáveis.
+
+Inventário dos tipos de texto:
+
+| Texto | Origem | Abordagem proposta |
+|---|---|---|
+| Nome comum do alimento | `foods[].id` → `v2_food_library.display_name` | Reutilizar tradução aprovada da biblioteca pelo ID, sem duplicar |
+| Nome alternativo personalizado | `foods[].display_name` | Detetar sobreposição; se diferente do nome canónico, exigir tradução do texto específico do plano |
+| Nomes fixos de refeições/momentos/tipos de plano | `plan_type`, `meals[].name`, rótulos de interface | Traduzir só no apresentador (dicionário de interface); preservar código e nomes PT usados no agendamento |
+| Títulos de opções | `meals[].options[].title` | Proposta humana por publicação/caminho/versão |
+| Notas de uma opção | `meals[].options[].notes[]` | Classificação de privacidade e aprovação clínica; sem API externa |
+| Quantidade descrita em texto | `foods[].display_quantity` | Separar valores, unidade e texto; nunca alterar quantidade numérica ou dosagem |
+| Nome de suplemento no plano | `foods[].label` | Verificar equivalência com biblioteca; se instrução/dose específica, revisão clínica manual |
+| Nome do plano | `name` | Confirmar se aparece ao jogador; tradução somente quando for texto de apresentação |
+| Nutrição, gramas, `timing_splits`, `applies_to` | Campos estruturais | **Não traduzir nem modificar** |
+
+A identidade da tradução específica deve incluir `draft_id`, localização dentro da publicação e uma impressão digital do snapshot e do texto original. Uma nova publicação deve marcar como desatualizadas as propostas feitas para a versão anterior. Não presumir que índices de refeições ou opções permanecem estáveis entre versões; um índice só identifica uma posição dentro do mesmo snapshot.
+
+**Critérios para implementação posterior:** catálogo de Planos que leia snapshots completos apenas para os administradores autorizados, separação explícita de campos seguros/sensíveis, sem exposição de `athlete_id` ou `player_name` no CSV de tradução, fluxo proposta/revisão/aprovação, testes de alterações de versões e regressão nutricional, ligação de consumo pelas apps apenas num lançamento posterior e aprovado.
+
