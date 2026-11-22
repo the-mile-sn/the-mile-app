@@ -807,7 +807,7 @@ def application(env, start_response):
                 image=supplements_v2.library_image(c,ident)
                 if not image:raise Problem(404,'not_found')
                 binary=base64.b64decode(image)
-                mime='image/png' if binary.startswith(b'\\x89PNG') else 'image/jpeg' if binary.startswith(b'\\xff\\xd8') else 'image/webp'
+                mime='image/png' if binary.startswith(b'\x89PNG') else 'image/jpeg' if binary.startswith(b'\xff\xd8') else 'image/webp'
                 return respond(200,binary,mime)
             # Supplementation: published routine and calendar day exceptions.
             if path.startswith('/api/v2/athletes/') and path.endswith('/supplements') and method in ('GET','PUT'):
@@ -2314,6 +2314,12 @@ def application(env, start_response):
                         c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
                     c.commit()
                     return respond(200, {'ok': True})
+                # Legacy hard delete removes only legacy portal rows. Accounts
+                # linked to a v2 athlete are refused so that link is never broken.
+                if c.execute('SELECT 1 FROM v2_player_links WHERE user_id=?', (uid,)).fetchone():
+                    raise Problem(409, 'player_linked')
+                c.execute('DELETE FROM notifications WHERE user_id=?', (uid,))
+                c.execute('DELETE FROM push_subscriptions WHERE user_id=?', (uid,))
                 c.execute('DELETE FROM documents WHERE user_id=?', (uid,))
                 c.execute('DELETE FROM sessions WHERE user_id=?', (uid,))
                 c.execute('DELETE FROM activations WHERE user_id=?', (uid,))
