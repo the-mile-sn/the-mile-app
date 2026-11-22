@@ -27,23 +27,9 @@
     <div class="i18n-section-heading"><h2 id="i18n-lib-title">Bibliotecas</h2><span>EN · Gestão central</span></div>
     <div id="i18n-libraries" class="i18n-library-grid"></div>
   </section>
-  <section class="i18n-work-panel i18n-plan-stage" id="i18n-plan-stage" aria-labelledby="i18n-plan-stage-title" hidden>
-    <div class="i18n-section-heading">
-      <div><h2 id="i18n-plan-stage-title">Planos alimentares · Traduções</h2>
-      <p class="i18n-import-description">Área central de preparação. Os planos ainda não estão integrados no circuito de tradução e aprovação.</p></div>
-      <span>Em preparação</span>
-    </div>
-    <div class="i18n-plan-stage-grid">
-      <div><h3>Textos partilhados</h3><p>Nomes de alimentos, pratos e suplementos utilizam as traduções aprovadas nas respetivas bibliotecas, sempre que a apresentação do plano referenciar esses conteúdos.</p></div>
-      <div><h3>Textos próprios de cada plano</h3><p>Nome do plano, refeições, títulos de opções, descrições e notas visíveis exigem tradução associada à versão correta do plano e revisão humana.</p></div>
-      <div><h3>Dados que permanecem intactos</h3><p>Quantidades, nutrientes, prescrições, regras de consumo e conteúdos clínicos não são alterados. Não será enviada informação de jogadores para qualquer API externa.</p></div>
-    </div>
-    <p class="i18n-import-disclaimer">Ainda não é possível criar, importar ou aprovar traduções de planos aqui. O próximo trabalho é inventariar os campos publicados e ligar traduções versionadas ao mesmo fluxo de revisão, sem modificar os planos originais.</p>
-    <button type="button" id="i18n-plan-open-library" class="i18n-secondary">Abrir Planos</button>
-  </section>
   <section class="i18n-work-panel" id="i18n-work-panel" aria-labelledby="i18n-work-title" hidden>
     <div class="i18n-section-heading i18n-work-heading">
-      <div><h2 id="i18n-work-title">Revisão manual</h2><p>Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.</p></div>
+      <div><h2 id="i18n-work-title">Revisão manual</h2><p id="i18n-work-help">Escreve o inglês diretamente ou revê propostas importadas. Nada é aprovado automaticamente.</p></div>
       <a id="i18n-library-link" href="/?nav=food-library" class="i18n-link">Abrir biblioteca</a>
     </div>
     <div class="i18n-toolbar">
@@ -69,6 +55,20 @@
       <span id="i18n-page-indicator"></span>
       <button id="i18n-next" type="button">Seguinte</button>
     </div>
+  </section>
+  <section class="i18n-work-panel i18n-plan-stage" id="i18n-plan-stage" aria-labelledby="i18n-plan-stage-title" hidden>
+    <div class="i18n-section-heading">
+      <div><h2 id="i18n-plan-stage-title">Planos alimentares · Traduções</h2>
+      <p class="i18n-import-description">Área central de preparação. Os planos ainda não estão integrados no circuito de tradução e aprovação.</p></div>
+      <span>Em preparação</span>
+    </div>
+    <div class="i18n-plan-stage-grid">
+      <div><h3>Textos partilhados</h3><p>Nomes de alimentos, pratos e suplementos utilizam as traduções aprovadas nas respetivas bibliotecas, sempre que a apresentação do plano referenciar esses conteúdos.</p></div>
+      <div><h3>Textos próprios de cada plano</h3><p>Nome do plano, refeições, títulos de opções, descrições e notas visíveis exigem tradução associada à versão correta do plano e revisão humana.</p></div>
+      <div><h3>Dados que permanecem intactos</h3><p>Quantidades, nutrientes, prescrições, regras de consumo e conteúdos clínicos não são alterados. Não será enviada informação de jogadores para qualquer API externa.</p></div>
+    </div>
+    <p class="i18n-import-disclaimer">Ainda não é possível criar, importar ou aprovar traduções de planos aqui. O próximo trabalho é inventariar os campos publicados e ligar traduções versionadas ao mesmo fluxo de revisão, sem modificar os planos originais.</p>
+    <button type="button" id="i18n-plan-open-library" class="i18n-secondary">Abrir Planos</button>
   </section>
   <section class="i18n-library-panel i18n-import-panel" aria-labelledby="i18n-import-title" id="i18n-import-panel">
     <div class="i18n-section-heading">
