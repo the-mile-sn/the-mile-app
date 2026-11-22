@@ -414,6 +414,9 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   margin:0;font:600 15px/1.3 "Inter Tight","SF Pro Text",Arial,sans-serif;
   color:var(--tm-ui-text);
 }
+.tm-admin-translations-page .i18n-bulk-selection{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px;min-width:0;
+}
 .tm-admin-translations-page .i18n-bulk-controls{
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
   gap:12px;margin:12px 0;
