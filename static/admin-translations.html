@@ -56,7 +56,10 @@
       </div>
       <p id="i18n-bulk-summary" class="i18n-results-count" role="status" aria-live="polite"></p>
       <div class="i18n-bulk-controls">
-        <label class="i18n-bulk-select-all"><input type="checkbox" id="i18n-bulk-select-all"> Selecionar todas as propostas pendentes</label>
+        <div class="i18n-bulk-selection">
+          <button type="button" id="i18n-bulk-select-100" class="i18n-secondary">Selecionar 100</button>
+          <label class="i18n-bulk-select-all"><input type="checkbox" id="i18n-bulk-select-all"> Selecionar todas as propostas pendentes</label>
+        </div>
         <label class="i18n-bulk-filter">Pesquisar nesta revisão
           <input type="search" id="i18n-bulk-filter" placeholder="Pesquisar português ou inglês…" autocomplete="off">
         </label>
@@ -105,7 +108,7 @@
       <h2 id="i18n-review-title">Rever tradução</h2>
       <button type="button" id="i18n-close" class="i18n-quiet">Fechar</button>
     </div>
-    <label class="i18n-field-label" for="i18n-fields">Texto apresentado nas apps
+    <label class="i18n-field-label" id="i18n-field-picker" for="i18n-fields">Texto apresentado nas apps
       <select id="i18n-fields" aria-label="Texto a traduzir"></select>
     </label>
     <div class="i18n-compare">
