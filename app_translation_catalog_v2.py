@@ -95,7 +95,8 @@ def overview(c,actor):
         })
     # Published plan fields use version-bound refs, separate from generic library IDs.
     import app_translation_plans_v2 as plan_reviews
-    publications = plan_reviews.list_publications(c,actor)["items"]
+    publications = (plan_reviews.list_publications(c,actor)["items"]
+                    if _table_exists(c,"v2_food_plan_editor_publications") else [])
     plan_states = {name:0 for name in sorted(STATUSES)}
     for item in publications:
         for key, count in item["statuses"].items():
