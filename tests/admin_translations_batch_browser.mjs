@@ -104,6 +104,51 @@ try{
     process.stdout.write("Explicit food batch approval "+device+" passed\n");
   }
   assert.equal(approvals,4);
+  // Regression with a realistic list: select 100, then another 100, then 5.
+  // No approval request is sent by the selection controls.
+  {
+    const page=await chromiumBrowser.newPage({viewport:{width:390,height:844}});
+    const large=Array.from({length:205},(_,i)=>({
+      ...samples[i%2],entity_id:"food-"+i,
+      source_text:"Alimento "+String(i).padStart(3,"0"),
+      translated_text:"Food "+String(i).padStart(3,"0"),
+    }));
+    let postCount=0;
+    await page.route("**/api/**",async route=>{
+      const request=route.request(),path=new URL(request.url()).pathname;
+      if(path==="/api/me")return route.fulfill(respond({user:{role:"admin"},csrf:"mock-csrf"}));
+      if(path==="/api/v2/admin/i18n/overview")
+        return route.fulfill(respond({language:"en",statuses:{...libraryStatus,pending:205},libraries}));
+      if(path==="/api/v2/admin/i18n/catalog")
+        return route.fulfill(respond({library:"food",total:0,page:1,page_size:25,items:[]}));
+      if(path==="/api/v2/admin/i18n/batch/preview")
+        return route.fulfill(respond({entity_kind:"food",status:"pending",total:205,items:large,approved:false}));
+      if(path==="/api/v2/admin/i18n/batch/approve"){
+        postCount++;
+        return route.fulfill(respond({error:"no real writes"},409));
+      }
+      throw Error("Unexpected API path "+path);
+    });
+    await page.goto(origin+"/admin-translations.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#i18n-bulk-tools:not([hidden])").waitFor();
+    await page.locator("#i18n-bulk-open").click();
+    await page.locator("#i18n-bulk-review:not([hidden])").waitFor();
+    for(const expected of [100,200,205]){
+      await page.locator("#i18n-bulk-select-100").click();
+      assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),expected);
+      assert.equal(await page.locator("#i18n-bulk-submit").isDisabled(),true);
+    }
+    assert.equal(await page.locator("#i18n-bulk-select-100").isDisabled(),true);
+    await page.locator("#i18n-bulk-select-all").uncheck();
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),0);
+    await page.locator("#i18n-bulk-filter").fill("Alimento 204");
+    await page.locator("#i18n-bulk-select-100").click();
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").count(),1);
+    assert.equal(await page.locator("#i18n-bulk-items input:checked").first().getAttribute("value"),"food-204");
+    assert.equal(postCount,0);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
+    await page.close();
+  }
 }finally{
   await chromiumBrowser.close();
 }
