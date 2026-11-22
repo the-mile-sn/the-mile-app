@@ -148,8 +148,8 @@ def _approved_titles(c):
         SELECT field_path, source_hash, translated_text
         FROM v2_content_translations
         WHERE entity_kind='plan' AND language='en' AND status='approved'
-          AND field_path LIKE 'meals/%/options/%/title'
-    """).fetchall():
+          AND field_path LIKE ?
+    """, ("meals/%/options/%/title",)).fetchall():
         if not _PATH.fullmatch(row["field_path"]) or not row["field_path"].endswith("/title"):
             continue
         found.setdefault(row["source_hash"], set()).add(row["translated_text"])
