@@ -110,16 +110,20 @@
    $("i18n-library-link").textContent=state.kind==="plan"?"Abrir Planos":"Abrir biblioteca";
  };
  let bulkRows=[],bulkSelected=new Set(),bulkBusy=false,bulkSeq=0,bulkKind=null;
+ const bulkEntryRows=()=>[...$("i18n-bulk-items").querySelectorAll(".i18n-bulk-row")];
  const updateBulkActions=()=>{
    const count=bulkSelected.size;
    $("i18n-bulk-select-100").disabled=bulkBusy||
-     ![...$("i18n-bulk-items").children].some((row,i)=>!row.hidden&&!bulkSelected.has(i));
+     !bulkEntryRows().some(row=>!row.hidden&&
+       !bulkSelected.has(Number(row.dataset.index)));
    $("i18n-bulk-select-all").checked=bulkRows.length>0&&count===bulkRows.length;
    $("i18n-bulk-select-all").indeterminate=count>0&&count<bulkRows.length;
    $("i18n-bulk-submit").textContent="Aprovar "+count+" selecionada"+(count===1?"":"s");
    $("i18n-bulk-submit").disabled=bulkBusy||!count||!$("i18n-bulk-reviewed").checked;
-   $("i18n-bulk-summary").textContent=bulkRows.length+" "+
-     (bulkKind==="dish"?"traduções":"propostas")+" por rever · "+count+" selecionadas";
+   const label=bulkKind==="recipe"?"textos de receitas":
+     bulkKind==="dish"?"traduções":"propostas";
+   $("i18n-bulk-summary").textContent=bulkRows.length+" "+label+
+     " por rever · "+count+" selecionadas";
  };
  const resetBulk=()=>{
    bulkSeq++;
@@ -134,41 +138,81 @@
    msg("",false,"i18n-bulk-feedback");
  };
  const openBulk=async()=>{
-   if(bulkBusy||!["food","dish"].includes(state.kind))return;
+   if(bulkBusy||!["food","dish","recipe"].includes(state.kind))return;
    resetBulk();
    const kind=state.kind;
-   const noun=kind==="food"?"alimentos":"pratos";
+   const noun=kind==="food"?"alimentos":kind==="dish"?"pratos":"receitas";
    const request=++bulkSeq;
    $("i18n-bulk-open").disabled=true;
    msg("A preparar revisão das traduções de "+noun+"…",false);
    try{
      const endpoint="/api/v2/admin/i18n/batch/preview"+
-       (kind==="dish"?"?entity_kind=dish":"");
+       (kind==="food"?"":"?entity_kind="+kind);
      const data=await send(endpoint);
      if(request!==bulkSeq||state.kind!==kind)return;
      bulkKind=kind;
-     $("i18n-bulk-title").textContent="Aprovação em lote · "+(kind==="food"?"Alimentos":"Pratos");
-     $("i18n-bulk-all-label").textContent=kind==="dish"?
-       "Selecionar todas as traduções por rever":"Selecionar todas as propostas pendentes";
+     $("i18n-bulk-title").textContent="Aprovação em lote · "+
+       (kind==="food"?"Alimentos":kind==="dish"?"Pratos":"Receitas");
+     $("i18n-bulk-all-label").textContent=kind==="food"?
+       "Selecionar todas as propostas pendentes":"Selecionar todos os textos por rever";
      bulkRows=data.items||[];
      const list=$("i18n-bulk-items");
      list.replaceChildren();
+     const recipeGroups=new Map();
      for(let i=0;i<bulkRows.length;i++){
        const entry=bulkRows[i];
+       let parent=list;
+       if(kind==="recipe"){
+         let group=recipeGroups.get(entry.entity_id);
+         if(!group){
+           group=create("section","i18n-bulk-recipe-group");
+           group.dataset.recipeId=entry.entity_id;
+           const header=create("div","i18n-bulk-recipe-header");
+           const heading=create("strong","",entry.record_title||"Receita");
+           const selectRecipe=create("button","i18n-secondary","Selecionar textos visíveis");
+           selectRecipe.type="button";
+           selectRecipe.addEventListener("click",()=>{
+             if(bulkBusy)return;
+             let added=0;
+             for(const row of group.querySelectorAll(".i18n-bulk-row")){
+               const index=Number(row.dataset.index);
+               if(row.hidden||bulkSelected.has(index))continue;
+               bulkSelected.add(index);
+               row.querySelector('input[type="checkbox"]').checked=true;
+               added++;
+             }
+             if(added){
+               $("i18n-bulk-reviewed").checked=false;
+               updateBulkActions();
+             }
+           });
+           header.append(heading,selectRecipe);
+           group.append(header);
+           recipeGroups.set(entry.entity_id,group);
+           list.append(group);
+         }
+         parent=group;
+       }
        const row=create("label","i18n-bulk-row");
+       row.dataset.index=String(i);
        const checkbox=create("input");checkbox.type="checkbox";
        checkbox.value=entry.entity_id;
        checkbox.dataset.index=String(i);
+       const details=create("span","i18n-bulk-entry");
+       if(kind==="recipe"){
+         details.append(create("small","i18n-bulk-field",entry.field_label||entry.field_path));
+       }
        const pair=create("span","i18n-bulk-pair");
        pair.append(create("strong","",entry.source_text),
                    create("span","",entry.translated_text));
+       details.append(pair);
        checkbox.addEventListener("change",()=>{
          if(bulkBusy)return;
          if(checkbox.checked)bulkSelected.add(i);else bulkSelected.delete(i);
          $("i18n-bulk-reviewed").checked=false;
          updateBulkActions();
        });
-       row.append(checkbox,pair);list.append(row);
+       row.append(checkbox,details);parent.append(row);
      }
      $("i18n-bulk-review").hidden=false;
      $("i18n-bulk-reviewed").checked=false;
@@ -180,13 +224,13 @@
    }finally{$("i18n-bulk-open").disabled=false;}
  };
  const submitBulk=async()=>{
-   if(bulkBusy||bulkKind!==state.kind||!["food","dish"].includes(state.kind)||
+   if(bulkBusy||bulkKind!==state.kind||!["food","dish","recipe"].includes(state.kind)||
        !bulkSelected.size||!$("i18n-bulk-reviewed").checked)return;
    const kind=bulkKind;
-   const noun=kind==="food"?"alimentos":"pratos";
-   const fieldPath=kind==="food"?"display_name":"name_pt";
+   const noun=kind==="food"?"alimentos":kind==="dish"?"pratos":"receitas";
+   const fieldPath=kind==="food"?"display_name":kind==="dish"?"name_pt":null;
    const chosen=[...bulkSelected].sort((a,b)=>a-b).map(i=>bulkRows[i]);
-   if(chosen.some(item=>!item||item.field_path!==fieldPath))return;
+   if(chosen.some(item=>!item||(fieldPath!==null&&item.field_path!==fieldPath)))return;
    bulkBusy=true;
    $("i18n-bulk-submit").disabled=true;
    $("i18n-bulk-select-100").disabled=true;
@@ -226,8 +270,8 @@
    const currentRequest=++catalogRequestSeq;
    buildTabs();
    const isPlan=state.kind==="plan";
-   $("i18n-bulk-tools").hidden=!["food","dish"].includes(state.kind);
-   if(!["food","dish"].includes(state.kind)||
+   $("i18n-bulk-tools").hidden=!["food","dish","recipe"].includes(state.kind);
+   if(!["food","dish","recipe"].includes(state.kind)||
        (bulkKind!==null&&bulkKind!==state.kind))resetBulk();
    $("i18n-plan-stage").hidden=!isPlan;
    $("i18n-import-panel").hidden=isPlan;
@@ -420,12 +464,14 @@
    $("i18n-bulk-submit").addEventListener("click",submitBulk);
    $("i18n-bulk-select-100").addEventListener("click",()=>{
      if(bulkBusy)return;
-     const rows=$("i18n-bulk-items").children;
+     const rows=bulkEntryRows();
      let added=0;
-     for(let i=0;i<rows.length&&added<100;i++){
-       if(rows[i].hidden||bulkSelected.has(i))continue;
-       bulkSelected.add(i);
-       rows[i].querySelector('input[type="checkbox"]').checked=true;
+     for(const row of rows){
+       if(added>=100)break;
+       const index=Number(row.dataset.index);
+       if(row.hidden||bulkSelected.has(index))continue;
+       bulkSelected.add(index);
+       row.querySelector('input[type="checkbox"]').checked=true;
        added++;
      }
      if(added){
@@ -446,10 +492,14 @@
    $("i18n-bulk-reviewed").addEventListener("change",updateBulkActions);
    $("i18n-bulk-filter").addEventListener("input",event=>{
      const search=event.target.value.trim().toLocaleLowerCase("pt-PT");
-     for(const [i,row] of [...$("i18n-bulk-items").children].entries()){
-       const entry=bulkRows[i];
-       row.hidden=!!search&&!((entry.source_text+" "+entry.translated_text)
-         .toLocaleLowerCase("pt-PT").includes(search));
+     for(const row of bulkEntryRows()){
+       const entry=bulkRows[Number(row.dataset.index)];
+       const searchable=[entry.record_title||"",entry.field_label||"",
+         entry.source_text,entry.translated_text].join(" ");
+       row.hidden=!!search&&!searchable.toLocaleLowerCase("pt-PT").includes(search);
+     }
+     for(const group of $("i18n-bulk-items").querySelectorAll(".i18n-bulk-recipe-group")){
+       group.hidden=![...group.querySelectorAll(".i18n-bulk-row")].some(row=>!row.hidden);
      }
      updateBulkActions();
    });
