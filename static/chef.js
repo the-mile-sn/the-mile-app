@@ -510,7 +510,8 @@ function editMenuForm(date,meal,item,slot){
   try{
    if(mode==="proposal"){
     await request("/api/v2/chef/menu-proposals","POST",{
-     menu_date:date,meal,name:proposal.value.trim(),note:note.value.trim()
+     menu_date:date,meal,name:proposal.value.trim(),note:note.value.trim(),
+     local_date:dateKey(new Date())
     });
     feedback.textContent=pt?"Proposta enviada para validação. O menu atual mantém-se.":"Suggestion sent for review. The current menu is unchanged.";
     return;
@@ -518,7 +519,8 @@ function editMenuForm(date,meal,item,slot){
    await request("/api/v2/chef/menus","PUT",{
     menu_date:date,meal,kind:"dish",
     value:selectedDish.name,
-    dish_id:selectedDish.id
+    dish_id:selectedDish.id,
+    local_date:dateKey(new Date())
    });
    await loadWeek();
   }catch(err){feedback.textContent=txt().fail;}

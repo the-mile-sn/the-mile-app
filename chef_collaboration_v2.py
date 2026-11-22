@@ -74,11 +74,12 @@ def _menu(c, athlete_id, day, meal):
     return dict(row) if row else None
 
 
-def _validate_day(meal_date, meal, past_allowed=False):
+def _validate_day(meal_date, meal, past_allowed=False, today=None):
+    """today: the user's own calendar day (device clock), when known."""
     day = parse_day(meal_date).isoformat()
     if meal not in MEALS:
         raise ValueError("invalid_meal")
-    if not past_allowed and day < date.today().isoformat():
+    if not past_allowed and day < (today or date.today()).isoformat():
         raise ValueError("past_menu_locked")
     return day
 
@@ -136,13 +137,13 @@ def _record_menu_history(c, athlete_id, day, meal, kind, value, dish_id):
       (athlete_id,day,meal,kind,value,dish_id,int(time.time()),today))
 
 
-def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=None):
+def save_menu(c, athlete_id, actor_id, menu_date, meal, kind, value, dish_id=None, today=None):
     """Chef can plan approved library dishes/categories only.
 
     The existing menu table and history are updated in the same transaction
     as our immutable event. Other meals and future days are left untouched.
     """
-    day = _validate_day(menu_date,meal)
+    day = _validate_day(menu_date,meal,today=today)
     if kind not in ("dish","category"):
         raise ValueError("chef_requires_approved_dish")
     canonical, resolved_id = _resolve_menu_dish(c,kind,value,dish_id)
@@ -179,8 +180,8 @@ def record_admin_menu(c, athlete_id, actor_id, menu_date, meal, previous, curren
     _audit(c,athlete_id,day,meal,actor_id,action,previous,current,"recorded")
 
 
-def propose_dish(c, athlete_id, actor_id, menu_date, meal, dish_name, note=""):
-    day=_validate_day(menu_date,meal)
+def propose_dish(c, athlete_id, actor_id, menu_date, meal, dish_name, note="", today=None):
+    day=_validate_day(menu_date,meal,today=today)
     if not isinstance(dish_name,str) or not 2<=len(dish_name.strip())<=200:
         raise ValueError("invalid_dish_proposal")
     note=_validate_note(note)

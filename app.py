@@ -638,6 +638,24 @@ def folder_allowed(player, folder):
     return False
 
 
+def client_local_day(raw):
+    """The user's own calendar day, sent by the app from the device clock.
+
+    "Today" always follows the user's current time zone, including while
+    travelling. Accepted only within one day of UTC, which covers every time
+    zone (UTC-12 to UTC+14). Returns None when absent or out of range, so
+    older app versions keep the previous server-side behaviour.
+    """
+    if not isinstance(raw, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', raw):
+        return None
+    try:
+        day = datetime.strptime(raw, '%Y-%m-%d').date()
+    except ValueError:
+        return None
+    utc_today = datetime.now(ZoneInfo('UTC')).date()
+    return day if abs((day - utc_today).days) <= 1 else None
+
+
 class Problem(Exception):
     def __init__(self, status, code):
         self.status, self.code = status, code
@@ -797,13 +815,16 @@ def application(env, start_response):
                                    (event_id,link['athlete_id'])).fetchone()
                 if not existing: raise Problem(404,'not_found')
                 if existing['kind']=='match':raise Problem(403,'forbidden')
-                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                local_query=parse_qs(env.get('QUERY_STRING','')).get('local_date',[''])[0]
+                local_day=client_local_day(local_query)
+                today=(local_day or datetime.now(ZoneInfo('Europe/Lisbon')).date()).isoformat()
                 if method=='DELETE':
                     if existing['event_date']<today:raise Problem(400,'past_event_locked')
                     if not events_v2.delete_event(c,link['athlete_id'],event_id):raise Problem(404,'not_found')
                     return respond(200,{'ok':True})
                 body=read_json(env)
-                today=datetime.now(ZoneInfo('Europe/Lisbon')).date().isoformat()
+                local_day=client_local_day(body.get('local_date'))
+                today=(local_day or datetime.now(ZoneInfo('Europe/Lisbon')).date()).isoformat()
                 if existing['event_date']<today or body.get('event_date','')<today:
                     raise Problem(400,'past_event_locked')
                 try:
@@ -1444,7 +1465,8 @@ def application(env, start_response):
                     try:
                         result=chef_collaboration_v2.propose_dish(c,aid,user['id'],
                             body.get('menu_date'),body.get('meal'),
-                            body.get('name'),body.get('note',''))
+                            body.get('name'),body.get('note',''),
+                            today=client_local_day(body.get('local_date')))
                     except (ValueError,TypeError):
                         raise Problem(400,'invalid_proposal')
                     return respond(201,{'proposal':result})
@@ -1454,7 +1476,8 @@ def application(env, start_response):
                     try:
                         result=chef_collaboration_v2.save_menu(c,aid,user['id'],
                             body.get('menu_date'),body.get('meal'),
-                            body.get('kind'),body.get('value'),body.get('dish_id'))
+                            body.get('kind'),body.get('value'),body.get('dish_id'),
+                            today=client_local_day(body.get('local_date')))
                     except (ValueError,TypeError):
                         raise Problem(400,'invalid_menu')
                     return respond(200,{'menu':result})
@@ -1633,12 +1656,13 @@ def application(env, start_response):
                 if not link:raise Problem(404,'player_not_linked')
                 aid=link['athlete_id']
                 from datetime import date as weight_date
-                current=weight_date.today()
                 if method=='GET':
                     q=parse_qs(env.get('QUERY_STRING',''))
+                    current=client_local_day((q.get('local_date') or [''])[0]) or weight_date.today()
                     selected=(q.get('date') or [current.isoformat()])[0]
                 else:
                     payload=read_json(env)
+                    current=client_local_day(payload.get('local_date')) or weight_date.today()
                     selected=payload.get('date')
                 try:
                     target=weight_date.fromisoformat(selected)
