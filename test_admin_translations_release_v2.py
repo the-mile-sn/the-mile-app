@@ -73,10 +73,17 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
         with patch.dict(os.environ, FLAG):
             self.assertEqual(Client().request("/admin-translations")["status"],401)
             page = self.admin.request("/admin-translations")
-            self.assertEqual(page["status"],200,page)
-            self.assertIn(b"Tradu",page["body"])
+            self.assertEqual(page["status"],303,page)
+            self.assertEqual(page["headers"]["Location"],"/?nav=translations")
             self.assertEqual(page["headers"]["Cache-Control"],"no-store")
-            for path in ("/admin-translations.js","/admin-translations.css"):
+            self.assertEqual(self.admin.request(
+                "/admin-translations?entity_kind=food")["headers"]["Location"],
+                "/?nav=translations&entity_kind=food")
+            self.assertEqual(self.admin.request(
+                "/admin-translations?entity_kind=https://evil.invalid")["headers"]["Location"],
+                "/?nav=translations")
+            for path in ("/admin-translations.js","/admin-translations.css",
+                         "/admin-translations-embedded.css"):
                 self.assertEqual(self.admin.request(path)["status"],200)
             self.assertIn(self.admin.request("/api/v2/player/language")["status"],(403,404))
             self.assertIn(self.admin.request("/api/v2/chef/language")["status"],(403,404))
@@ -167,6 +174,10 @@ class AdminTranslationsReleaseTests(unittest.TestCase):
                 page=self.admin.request("/")
             self.assertEqual(page["status"],200,page)
             self.assertIn(b"admin-translations-shortcuts.js",page["body"])
+            self.assertIn(b'id="tm-admin-translations-page"',page["body"])
+            self.assertIn(b'id="i18n-import-file"',page["body"])
+            self.assertNotIn(b'/admin-translations.js?v=3"',page["body"])
+            self.assertIn(b'/admin-dashboard.js',page["body"])
             self.assertIn(b"admin-translations-shortcuts.css",page["body"])
             self.assertEqual(self.admin.request(
                 "/admin-translations-shortcuts.js")["status"],200)
