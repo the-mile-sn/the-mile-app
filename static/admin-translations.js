@@ -118,7 +118,8 @@
    $("i18n-bulk-select-all").indeterminate=count>0&&count<bulkRows.length;
    $("i18n-bulk-submit").textContent="Aprovar "+count+" selecionada"+(count===1?"":"s");
    $("i18n-bulk-submit").disabled=bulkBusy||!count||!$("i18n-bulk-reviewed").checked;
-   $("i18n-bulk-summary").textContent=bulkRows.length+" propostas por rever · "+count+" selecionadas";
+   $("i18n-bulk-summary").textContent=bulkRows.length+" "+
+     (bulkKind==="dish"?"traduções":"propostas")+" por rever · "+count+" selecionadas";
  };
  const resetBulk=()=>{
    bulkSeq++;
@@ -147,6 +148,8 @@
      if(request!==bulkSeq||state.kind!==kind)return;
      bulkKind=kind;
      $("i18n-bulk-title").textContent="Aprovação em lote · "+(kind==="food"?"Alimentos":"Pratos");
+     $("i18n-bulk-all-label").textContent=kind==="dish"?
+       "Selecionar todas as traduções por rever":"Selecionar todas as propostas pendentes";
      bulkRows=data.items||[];
      const list=$("i18n-bulk-items");
      list.replaceChildren();
