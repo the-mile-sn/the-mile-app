@@ -475,8 +475,8 @@ class SupplementBatchReviewTests(unittest.TestCase):
         self.fields={
             "name":("Creatina","Creatine"),
             "dose":("5 g","5 g"),
-            "note":("Misturar com água","Mix with water"),
             "timing_text":("Após o almoço","After lunch"),
+            "note":("Misturar com água","Mix with water"),
             "prescriptions/0/dose":("5 g","5 g"),
             "prescriptions/0/timing_text":("Antes do treino","Before training"),
             "prescriptions/0/note":("Tomar diariamente","Take daily"),
