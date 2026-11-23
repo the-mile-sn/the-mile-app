@@ -127,3 +127,36 @@ verificação visual de todos os estados PT/EN continuam pendentes.
   esta flag permanece desligada. Após testes finais, permite confirmar
   a ligação sem alterar a política de IP do PostgreSQL.
 - Após confirmação, a flag de diagnóstico deverá voltar a `0`.
+
+## Pesquisa bilingue e editor de consumos (lote seguinte)
+- A pesquisa de alimentos do jogador suporta termos PT e EN (por exemplo,
+  «arroz» e «rice») quando EN está ativo, sem alterar o motor de pesquisa
+  português. Apenas as traduções com `status='approved'` e hash do nome
+  canónico atual são usadas. Um nome EN pendente ou desatualizado não gera
+  correspondência. IDs, atributos, nutrientes e variantes mantêm-se.
+- O formulário do jogador para registar consumos recebe títulos, nomes
+  alimentares, quantidades textuais e rótulos de suplementos traduzidos a
+  partir da publicação já autorizada. `option_ref`, `draft_id`, `grams`,
+  `alternative_to` e códigos de horário não mudam; traduções ambíguas
+  são omitidas. A localização é aplicada antes de selecionar uma parte do
+  consumo em momentos peri-jogo.
+- A pesquisa de pratos da app Chef suporta igualmente PT e EN aprovados,
+  mantendo ID e categoria. O endpoint de gravação continua a resolver e
+  persistir o nome português canónico do prato pela sua identidade.
+- Foram traduzidos apenas os textos visíveis e acessíveis do editor atual:
+  pesquisa, sugestões, porções, botões de guardar e cancelar, feedback,
+  alterações de cor, caixas de seleção e controlos de gramas. Sem novos
+  componentes, cores, margens, gestos ou alterações aos estilos existentes.
+- A memória local de nomes de alimentos adicionais está separada por idioma,
+  evitando mostrar nomes portugueses antigos na apresentação inglesa.
+- As pesquisas e a localização do consumo continuam sob autenticação e
+  preferência persistente do próprio jogador; ambos os mecanismos são
+  desligados por defeito. Testes exercitam correspondências PT/EN,
+  traduções desatualizadas/não aprovadas, opções, nutrição e isolamento
+  por utilizador.
+
+## Estado de aprovação deste lote
+As 27 verificações automáticas da PR foram aprovadas após estas alterações.
+**Não existe publicação**, merge nem ativação das flags. O teste de
+comparação visual com a app real em desktop/mobile e a verificação interna
+da tabela de traduções em produção continuam necessários antes do release.
