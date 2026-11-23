@@ -780,7 +780,8 @@ class PlanTranslationsTests(unittest.TestCase):
                       json.dumps(duplicate,ensure_ascii=False),101,"published"))
                 c.commit()
             group=next(g for g in self._common()["body"]["items"]
-                       if g["field_kind"]=="display_quantity")
+                       if g["field_kind"]=="display_quantity"
+                       and g["source_text"]=="2 un / 120 g")
             self.assertEqual(group["missing_count"],1)
             self.assertEqual(group["pending_count"],1)
             self.assertEqual(group["suggestion"]["text"],"2 units / 120 g")
