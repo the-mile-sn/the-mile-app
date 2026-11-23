@@ -38,6 +38,52 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
                 self.assertEqual(self.players[0].request(path)["status"],404)
                 self.assertEqual(fixtures.Client().request(path)["status"],401)
 
+    def test_pilot_username_gate_keeps_other_players_in_portuguese(self):
+        first,second=self.players
+        with patch.dict(app.os.environ,{
+                "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
+                "MILE_APP_TRANSLATIONS_ENABLED":"1",
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":" LaNgUaGeOnE "}), \
+             patch("app_content_i18n_v2.translation_store_available",
+                   return_value=True):
+            self.assertEqual(first.request("/api/v2/player/preferences")["body"],
+                             {"language":"pt","enabled":True})
+            self.assertEqual(second.request("/api/v2/player/preferences")["body"],
+                             {"language":"pt","enabled":False})
+            self.assertEqual(second.request("/api/v2/player/preferences",
+                "PUT",{"language":"en"})["status"],404)
+            self.assertEqual(first.request("/api/v2/player/preferences",
+                "PUT",{"language":"en"})["status"],200)
+            self.assertEqual(first.request("/api/v2/player/me")["body"]
+                             ["player"]["language"],"en")
+            self.assertEqual(second.request("/api/v2/player/me")["body"]
+                             ["player"]["language"],"pt")
+        # Even a previously saved 'en' preference must fall back to PT if
+        # the account is later excluded from the allowed pilot.
+        with patch.dict(app.os.environ,{
+                "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
+                "MILE_APP_TRANSLATIONS_ENABLED":"1",
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":"languagetwo"}), \
+             patch("app_content_i18n_v2.translation_store_available",
+                   return_value=True):
+            self.assertEqual(first.request("/api/v2/player/me")["body"]
+                             ["player"]["language"],"pt")
+            self.assertEqual(first.request("/api/v2/player/preferences")["body"],
+                             {"language":"pt","enabled":False})
+            self.assertEqual(second.request("/api/v2/player/preferences")["body"],
+                             {"language":"pt","enabled":True})
+        with patch.dict(app.os.environ,{
+                "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED":"1",
+                "MILE_APP_TRANSLATIONS_ENABLED":"1",
+                "MILE_PLAYER_I18N_PILOT_USERNAMES":""}), \
+             patch("app_content_i18n_v2.translation_store_available",
+                   return_value=True):
+            for client in (first,second):
+                self.assertEqual(client.request("/api/v2/player/preferences")["body"],
+                                 {"language":"pt","enabled":False})
+                self.assertEqual(client.request("/api/v2/player/me")["body"]
+                                 ["player"]["language"],"pt")
+
     def test_english_food_search_is_authenticated_and_locale_scoped(self):
         first,second=self.players
         fake={"id":"food-test","display_name":"White rice","variant":"",

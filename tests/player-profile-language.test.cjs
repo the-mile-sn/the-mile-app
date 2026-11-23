@@ -52,6 +52,13 @@ test("existing Player HTML and CSS are byte-identical except for the authorised 
   const ancestor=execFileSync("git",["merge-base","HEAD",upstream],{encoding:"utf8"}).trim();
   const priorCss=execFileSync("git",["show",ancestor+":static/jogador-v2.css"],{encoding:"utf8"});
   const priorHtml=execFileSync("git",["show",ancestor+":static/jogador-v2.html"],{encoding:"utf8"});
+  // After the approved card is merged, subsequent translation-only PRs must
+  // preserve the entire existing HTML/CSS byte for byte, not insert it again.
+  if(priorHtml.includes(inserted)){
+    assert.equal(css,priorCss,"Existing Player CSS changed after language card approval");
+    assert.equal(html,priorHtml,"Existing Player HTML changed after language card approval");
+    return;
+  }
   assert.ok(css.startsWith(priorCss),
     "Existing Player CSS must not be changed or rearranged; only append the new card");
   assert.doesNotMatch(css.slice(priorCss.length),/#overview|#menus|#plans|#tabs|#login/);
