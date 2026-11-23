@@ -42,6 +42,23 @@ function playerDateLocale(){return playerUiLanguage==="en"?"en-GB":"pt-PT";}
 function playerClassification(name){
  return name==="Geral"?playerText("Geral","General"):name;
 }
+const playerAssessmentEnglish={
+ sum_8:"Sum of 8 skinfolds",weight:"Body weight",body_fat:"Body fat",
+ bmi:"BMI",muscle_index:"Muscle mass index",arm_muscle:"Arm muscle",
+ thigh_muscle:"Thigh muscle",calf_muscle:"Calf muscle",
+ sum_perimeters:"Sum of circumferences",
+ back:"Back",triceps:"Triceps",biceps:"Biceps",suprailiac:"Suprailiac",
+ supraspinal:"Supraspinal",abdominal_skin:"Abdomen",
+ thigh_skin:"Thigh",calf_skin:"Calf",
+ arm_right_relaxed:"Right arm (relaxed)",chest:"Chest",waist:"Waist",
+ abdominal_perimeter:"Abdomen",thigh_right:"Right thigh",thigh_left:"Left thigh",
+ calf_right:"Right calf",calf_left:"Left calf",
+ avg_skinfolds:"Average sum of skinfolds",avg_weight:"Average weight",
+ avg_body_fat:"Average body fat"
+};
+function playerAssessmentLabel(key,canonical){
+ return playerUiLanguage==="en"?(playerAssessmentEnglish[key]||canonical):canonical;
+}
 function playerPhaseLabel(value){
  if(playerUiLanguage!=="en")return value;
  return {"Pré-treino":"Pre-training","Pós-treino":"Post-training",
@@ -2959,7 +2976,7 @@ function playerSkinfoldCategory(value,fieldPosition="",sex="M"){
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
  const epoch=playerSessionEpoch;
- if(!assessmentRecords.length)$("assessment-measurements").textContent="A carregar avaliações…";
+ if(!assessmentRecords.length)$("assessment-measurements").textContent=playerText("A carregar avaliações…","Loading assessments…");
  const response=await cachedOverviewRead("/api/v2/player/assessments");
  if(epoch!==playerSessionEpoch)return;
  assessmentRecords=response.assessments||[];
@@ -2972,7 +2989,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const holder=document.createElement("div");holder.className="assessment-trend";
  if(points.length<2){
   const note=document.createElement("p");note.className="assessment-trend-note";
-  note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";
+  note.textContent=playerText("O gráfico ficará disponível após duas avaliações com este parâmetro.","Two assessments are needed to display this chart.");
   holder.append(note);return holder;
  }
  const visible=points,values=visible.map(p=>p.value);
@@ -2989,7 +3006,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  svg.setAttribute("viewBox","0 0 "+width+" 176");
  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
  svg.setAttribute("role","img");
- svg.setAttribute("aria-label","Evolução de todas as "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
+ svg.setAttribute("aria-label",playerText("Evolução de todas as ","Trend across all ")+visible.length+playerText(" avaliações. Média: "," assessments. Average: ")+assessNumber(mean)+(unit?" "+unit:""));
  svg.style.width=width>344?width+"px":"min(100%, 344px)";
  // Reserve space for the last numeric label so it never clips at the right edge.
  const left=27,right=width-40,top=22,bottom=148;
@@ -3021,7 +3038,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const guide=add("line",{x1:left,y1:top,x2:left,y2:bottom},"assessment-chart-guide");
  guide.style.display="none";
  const focus=document.createElement("div");focus.className="assessment-chart-focus";focus.setAttribute("aria-live","off");
- const avg=document.createElement("div");avg.className="assessment-chart-average";avg.textContent="— Média: "+assessNumber(mean)+(unit?" "+unit:"");
+ const avg=document.createElement("div");avg.className="assessment-chart-average";avg.textContent=playerText("— Média: ","— Average: ")+assessNumber(mean)+(unit?" "+unit:"");
  let active=-1;
  const highlight=index=>{
   active=index;
@@ -3065,21 +3082,22 @@ function renderPlayerAssessments(){
  for(const button of document.querySelectorAll("[data-assessment-tab]"))button.setAttribute("aria-pressed",String(button.dataset.assessmentTab===assessmentGroup));
  const target=$("assessment-measurements"),stamp=$("assessment-most-recent");target.replaceChildren();stamp.replaceChildren();
  if(!assessmentRecords.length){
-  const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem avaliações publicadas.";target.append(empty);return;
+  const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem avaliações publicadas.","No assessments published yet.");target.append(empty);return;
  }
  const recent=assessmentRecords[assessmentRecords.length-1];
- stamp.textContent="Última avaliação · "+assessmentDate(recent.assessed_on);
+ stamp.textContent=playerText("Última avaliação · ","Latest assessment · ")+assessmentDate(recent.assessed_on);
  for(const [key,label,unit] of assessmentFields[assessmentGroup]||[]){
   const readings=assessmentRecords.filter(r=>Number.isFinite(r.measurements?.[key])).map(r=>({date:r.assessed_on,value:Number(r.measurements[key])}));
   const current=readings.length?readings[readings.length-1]:null,prior=readings.length>1?readings[readings.length-2]:null;
   const details=document.createElement("details");details.className="assessment-measure-card";
   const summary=document.createElement("summary");
-  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=unit&&!label.endsWith("("+unit+")")?label+" ("+unit+")":label;
+  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=unit&&!label.endsWith("("+unit+")")?
+  playerAssessmentLabel(key,label)+" ("+unit+")":playerAssessmentLabel(key,label);
   const right=document.createElement("span");right.className="assessment-metric-right";
   const number=document.createElement("strong");number.textContent=current?assessNumber(current.value):"—";right.append(number);
   const change=document.createElement("small");change.className="assessment-change";
   if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta));}
-  else change.textContent=current?"Primeira medição":"Sem dados";
+  else change.textContent=current?playerText("Primeira medição","First reading"):playerText("Sem dados","No data");
   right.append(change);
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
   summary.append(left,right,arrow);
@@ -3089,18 +3107,18 @@ function renderPlayerAssessments(){
    const formula=playerBodyFatFormulaNote(source?.formula_note);
    if(formula){
     const note=document.createElement("p");note.className="assessment-formula";
-    note.textContent="Gordura corporal: "+formula;details.append(note);
+    note.textContent=playerText("Gordura corporal: ","Body fat: ")+formula;details.append(note);
    }
   }
   target.append(details);
  }
  if(assessmentGroup==="resumo"){
   const recentAverages=recent.averages||{},known=assessmentAverages.filter(([key])=>recentAverages[key]!==undefined);
-  if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent="Médias do relatório";averages.append(head);
-   for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=label;v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
+  if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent=playerText("Médias do relatório","Report averages");averages.append(head);
+   for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=playerAssessmentLabel(key,label);v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
 
  }
- if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem medições publicadas nesta categoria.";target.append(empty);}
+ if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem medições publicadas nesta categoria.","No measurements published in this category.");target.append(empty);}
 }
 for(const button of document.querySelectorAll("[data-assessment-tab]"))button.onclick=()=>{assessmentGroup=button.dataset.assessmentTab;renderPlayerAssessments();};
 
