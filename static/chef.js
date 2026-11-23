@@ -76,7 +76,8 @@ const chefDishCategoryEnglish={
  "Carne":"Meat","Carne branca":"White meat","Carne vermelha":"Red meat",
  "Aves":"Poultry","Marisco":"Seafood","Ovos":"Eggs",
  "Vegetariano":"Vegetarian","Vegetariana":"Vegetarian",
- "Pratos principais":"Main dishes","Pós-jogo":"Post-match"
+ "Pratos":"Dishes","Pratos principais":"Main dishes",
+ "Crustáceos / Moluscos":"Crustaceans / molluscs","Pós-jogo":"Post-match"
 };
 function chefDishCategoryLabel(value){
  return lang==="en"?(chefDishCategoryEnglish[String(value||"").trim()]||value):value;
