@@ -847,7 +847,10 @@ def application(env, start_response):
                 if not user or user['role']!='player':raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link:raise Problem(404,'player_not_linked')
-                return respond(200,{"plan":supplements_v2.read(c,link['athlete_id'])['plan']})
+                plan=supplements_v2.read(c,link['athlete_id'])['plan']
+                plan=app_content_i18n_v2.localise_supplement_plan(
+                    c,plan,language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{"plan":plan})
             # Peri-training and peri-match imports: draft review precedes publication.
             if path.startswith('/api/v2/athletes/') and '/peri-imports' in path:
                 if not user: raise Problem(401,'unauthorized')
