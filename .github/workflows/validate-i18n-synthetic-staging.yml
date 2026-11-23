@@ -37,3 +37,27 @@ jobs:
           test -z "${DATABASE_URL:-}"
           test "$MILE_SITE_ROLE" = player
           test "$MILE_I18N_SYNTHETIC_DATA" = 1
+      - name: Install headless Chromium for synthetic mobile/desktop checks
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Start isolated test server
+        run: |
+          gunicorn wsgi:application --bind 127.0.0.1:8941 > /tmp/the-mile-i18n-synthetic.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8941/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8941/ > /dev/null
+      - name: Validate PT/EN in real browser (synthetic data only)
+        env:
+          MILE_I18N_TEST_URL: http://127.0.0.1:8941
+        run: python tools/validate_i18n_visual.py
+      - name: Upload comparison screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: i18n-pten-synthetic-mobile-desktop
+          path: artifacts/i18n-visual/
+          retention-days: 7
+          if-no-files-found: ignore
