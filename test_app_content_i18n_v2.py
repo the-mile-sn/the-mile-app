@@ -260,6 +260,46 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(i18n.translation_readiness(self.c),
                          {"available":False,"approved_count":0,"kinds":{}})
 
+    def test_consumption_options_translate_display_only_keep_original_ref(self):
+        from meal_option_selection_v2 import option_ref
+        original=self.plan["meals"][0]["options"][0]
+        ref=option_ref(original)
+        source={
+            "draft_id":"draft-1","color":"blue","planned_color":"blue",
+            "options":[{"option_ref":ref,"title":"Arroz com peixe",
+                "foods":[
+                    {"kind":"food","id":"food-1","display_name":"Arroz branco",
+                     "display_quantity":"100 g","grams":100},
+                    {"kind":"food","id":"food-1","display_name":"Arroz branco",
+                     "alternative_to":0,"display_quantity":"2 unidades",
+                     "grams":100},
+                    {"kind":"supplement","label":"Suplemento de teste"}]}]
+        }
+        before=copy.deepcopy(source)
+        with patch.object(plans_api,"_approved",return_value=self.plans), \\
+             patch.object(plans_api,"_library",return_value=self.library), \\
+             patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            localized=i18n.localise_consumption_source(
+                self.c,"assigned-athlete",source,language="en")
+            self.assertEqual(localized["options"][0]["title"],"Rice with fish")
+            self.assertEqual(localized["options"][0]["option_ref"],ref)
+            self.assertEqual(localized["options"][0]["foods"][0]
+                             ["display_name"],"White rice")
+            self.assertEqual(localized["options"][0]["foods"][1]
+                             ["display_quantity"],"2 units")
+            self.assertEqual(localized["options"][0]["foods"][1]
+                             ["alternative_to"],0)
+            self.assertEqual(localized["options"][0]["foods"][2]
+                             ["label"],"Test supplement")
+            self.assertEqual(localized["options"][0]["foods"][0]["grams"],100)
+            self.assertEqual(source,before)
+            self.assertIs(i18n.localise_consumption_source(
+                self.c,"assigned-athlete",source,language="pt"),source)
+            self.assertIs(i18n.localise_consumption_source(
+                self.c,"assigned-athlete",dict(source,draft_id="other"),
+                language="en")["options"][0]["title"],
+                source["options"][0]["title"])
+
     def test_food_search_uses_pt_and_only_current_approved_en_names(self):
         self.c.execute("""CREATE TABLE v2_food_library (
             id TEXT PRIMARY KEY,display_name TEXT,variant TEXT,active INTEGER,
