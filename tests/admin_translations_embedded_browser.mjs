@@ -81,6 +81,19 @@ try{
               supplement_label:{approved:0,pending:0,missing:1,outdated:0}
             }},
           scope:"published_versions_only",csv_export:false}));
+      }else if(path==="/api/v2/admin/i18n/plans/recovery"){
+        const ref=url.searchParams.get("publication_ref");
+        assert.ok([publicRef,privateRef].includes(ref));
+        const candidates=(ref===publicRef&&!planPending)?[{
+          field_path:"meals/0/options/0/title",
+          group:"Pequeno almoço · Opção 1",field_label:"Título da opção",
+          field_kind:"option_title",sensitive:false,source_text:"Opção 1",
+          translated_text:"Option 1",expected_source_hash:"b".repeat(64),
+          candidate_hash:"c".repeat(64),origin:"approved_same_path"
+        }]:[];
+        await route.fulfill(fmt({publication_ref:ref,
+          publication:ref===publicRef?planPublication:privatePublication,
+          candidates,conflicts:0,policy:"explicit_admin_field_review"}));
       }else if(path==="/api/v2/admin/i18n/plans/common"){
         const unit={
           group_id:"d".repeat(64),source_hash:"e".repeat(64),
@@ -488,7 +501,12 @@ try{
     await page.locator("#i18n-plan-items .i18n-plan-item").first().click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
-    assert.equal(await page.locator("#i18n-plan-detail .i18n-primary").isDisabled(),true);
+    const recovery=page.locator("#i18n-plan-detail .i18n-plan-option").first();
+    assert.match(await recovery.innerText(),/Recuperar traduções já aprovadas/);
+    assert.match(await recovery.innerText(),/Option 1/);
+    assert.equal(await recovery.locator("button.i18n-primary").isDisabled(),true,
+      "Historical approvals require explicit review");
+    assert.equal(await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-primary").isDisabled(),true);
     assert.match(await page.locator("#i18n-plan-audit").count().then(String),/^0$/);
     assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-audit-stat").count(),6);
     assert.match(await page.locator("#i18n-plan-stage .i18n-plan-audit").innerText(),/Alternativas personalizadas/);
@@ -499,7 +517,7 @@ try{
     await page.getByText("Proposta guardada. Falta aprovação.").waitFor();
     assert.equal(planPending,true);
     await page.locator("#i18n-plan-detail .i18n-plan-field-actions input").check();
-    await page.locator("#i18n-plan-detail .i18n-primary").click();
+    await page.locator("#i18n-plan-detail .i18n-plan-field-actions .i18n-primary").click();
     await page.getByText("Tradução aprovada.").waitFor();
     assert.equal(planApproved,true);
     assert.equal(await page.locator("#i18n-plan-stage .i18n-plan-stage-grid").count(),0);
