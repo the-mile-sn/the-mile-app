@@ -23,6 +23,7 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
             login=user.request("/api/login","POST",
                 {"identifier":name,"password":"password-for-language-123"})
             self.assertEqual(login["status"],200,login)
+            self.assertEqual(user.request("/api/me")["status"],200)
             self.players.append(user)
 
     def tearDown(self):
