@@ -700,3 +700,15 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 .tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-unique-row span{
   white-space:pre-wrap;overflow-wrap:anywhere;
 }
+
+/* Final reviewed Planos food-name CSV, same visual hierarchy as other previews. */
+.tm-admin-translations-page .i18n-plan-food-preview .i18n-plan-food-stats{
+  margin:0 0 8px;color:var(--tm-ui-muted);font-size:11px;
+  line-height:1.5;overflow-wrap:anywhere;
+}
+.tm-admin-translations-page .i18n-plan-food-preview .i18n-plan-unique-row{
+  align-items:flex-start;min-height:38px;
+}
+.tm-admin-translations-page .i18n-plan-food-preview .i18n-plan-unique-row span{
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
