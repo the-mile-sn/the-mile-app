@@ -750,7 +750,13 @@ function chefMenuPhoto(item){
 }
 function appendChefMenuDish(host,item,emptyLabel){
  const wrap=node("div","chef-meal-dish");
- wrap.append(node("div",item?"chef-dish-name":"chef-dish-pending",item?asText(item.value):emptyLabel));
+ // Menu categories are canonical Portuguese values. Translate only their display
+ // in English, using the same dictionary as the approved-dish search.
+ // Dish IDs, free text (e.g. "Estágio") and the stored menu are unchanged.
+ const display=item?.kind==="category"
+  ?chefDishCategoryLabel(asText(item.value))
+  :item?asText(item.value):emptyLabel;
+ wrap.append(node("div",item?"chef-dish-name":"chef-dish-pending",display));
  const photo=chefMenuPhoto(item);if(photo)wrap.append(photo);
  host.append(wrap);
 }
