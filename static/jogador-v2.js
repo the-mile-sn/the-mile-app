@@ -1813,47 +1813,47 @@ async function openDailyMealInMenus(dateKey,meal){
 async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
- const status=document.createElement('p');status.className='hint';status.textContent='A carregar cores disponíveis…';panel.append(status);host.append(panel);
+ const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar cores disponíveis…','Loading available colours…');panel.append(status);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
   const data=await api('/api/v2/player/consumption-options?'+qs);
   if(!panel.isConnected)return;
   panel.replaceChildren();
-  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent='Que cor consumiste?';const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar seleção de cor');close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
+  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent=playerText('Que cor consumiste?','Which colour did you consume?');const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar seleção de cor');close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
   const colors=data.alternative_colors||[];
-  if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent='Não existem outras cores com opções publicadas.';panel.append(hint);}
+  if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem outras cores com opções publicadas.','No other colours have published options.');panel.append(hint);}
   for(const color of colors){
    const button=document.createElement('button');button.type='button';button.className='consumption-cancel';
    button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
    button.onclick=()=>openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color);
    panel.append(button);
   }
- }catch(e){if(panel.isConnected){status.textContent='Não foi possível carregar as cores.';}error(e);}
+ }catch(e){if(panel.isConnected){status.textContent=playerText('Não foi possível carregar as cores.','Could not load colours.');}error(e);}
 }
 
 async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
- const status=document.createElement('p');status.className='hint';status.textContent='A carregar opções…';panel.append(status);host.append(panel);
+ const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar opções…','Loading options…');panel.append(status);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId,consumed_color:color});
   const data=await api('/api/v2/player/consumption-options?'+qs);
   if(!panel.isConnected)return;
   panel.replaceChildren();
   const header=document.createElement('div');header.className='consumption-color-header';
-  const title=document.createElement('p');title.textContent='Qual foi a opção consumida?';
+  const title=document.createElement('p');title.textContent=playerText('Qual foi a opção consumida?','Which option did you consume?');
   const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar');close.onclick=()=>panel.remove();
   header.append(title,close);panel.append(header);
   const options=data.options||[];
-  if(!options.length){const hint=document.createElement('p');hint.className='hint';hint.textContent='Não existem opções publicadas nesta cor.';panel.append(hint);}
+  if(!options.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem opções publicadas nesta cor.','No options published for this colour.');panel.append(hint);}
   options.forEach((option,index)=>{
    const button=document.createElement('button');button.type='button';button.className='consumption-alternative-option';
    button.textContent=option.title||'Opção '+(index+1);
    button.onclick=()=>openConsumptionEditor(host,mealDate,mealKey,eventId,index,color);
    panel.append(button);
   });
-  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar às cores';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);panel.append(back);
- }catch(e){if(panel.isConnected)status.textContent='Não foi possível carregar as opções.';error(e);}
+  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar às cores','Back to colours');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);panel.append(back);
+ }catch(e){if(panel.isConnected)status.textContent=playerText('Não foi possível carregar as opções.','Could not load options.');error(e);}
 }
 
 async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null, extraTiming=false, onCancel=null){
@@ -1871,7 +1871,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const parent=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
   const previous=timing?parent?.timing_records?.find(x=>x.timing===timing):parent;
   if(!panel.isConnected)return;
-  if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
+  if(!data.options?.length){panel.textContent=playerText('Não existem opções publicadas disponíveis para registo.','No published options available to record.');return;}
   panel.replaceChildren();
 
   const select=document.createElement('select');
@@ -1916,7 +1916,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const sheet=document.createElement('section');sheet.className='consumption-grams-wheel-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Ajustar porção');
     const top=document.createElement('div');top.className='consumption-grams-wheel-top';
     const cancel=document.createElement('button');cancel.type='button';cancel.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';cancel.setAttribute('aria-label','Fechar');
-    const title=document.createElement('strong');title.textContent='Porção (g)';
+    const title=document.createElement('strong');title.textContent=playerText('Porção (g)','Portion (g)');
     const done=document.createElement('button');done.type='button';done.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';done.setAttribute('aria-label','Confirmar');top.append(cancel,title,done);
     const wrap=document.createElement('div');wrap.className='consumption-grams-wheel-wrap';
     const band=document.createElement('div');band.className='consumption-grams-wheel-band';
@@ -1990,11 +1990,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const handle=document.createElement('div');handle.className='consumption-food-sheet-handle';handle.setAttribute('aria-hidden','true');
    const header=document.createElement('div');header.className='consumption-food-sheet-header';
    const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='consumption-food-sheet-close';dismiss.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';dismiss.setAttribute('aria-label','Fechar');
-   const heading=document.createElement('h2');heading.textContent='Adicionar alimento';
+   const heading=document.createElement('h2');heading.textContent=playerText('Adicionar alimento','Add food');
    const confirm=document.createElement('button');confirm.type='button';confirm.className='consumption-food-sheet-confirm';confirm.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';confirm.setAttribute('aria-label','Confirmar alimento');
    header.append(dismiss,confirm);
    const foodNote=document.createElement('p');foodNote.className='consumption-food-sheet-note';foodNote.hidden=true;const portionStep=document.createElement('div');portionStep.className='consumption-food-sheet-portion';portionStep.hidden=true;
-   const portionLabel=document.createElement('label');portionLabel.textContent='Porção (g)';quantity.placeholder='';quantity.setAttribute('inputmode','decimal');portionLabel.append(quantity);
+   const portionLabel=document.createElement('label');portionLabel.textContent=playerText('Porção (g)','Portion (g)');quantity.placeholder='';quantity.setAttribute('inputmode','decimal');portionLabel.append(quantity);
    portionStep.append(portionLabel);
    inputRow.replaceChildren(searchWrap);inputRow.classList.add('consumption-food-sheet-search');
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,foodNote,portionStep,matches);
@@ -2118,7 +2118,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    });
    return allPlanned&&!additional.some(x=>x.consumed&&x.grams>0)?'all':'partial';
   };
-  const save=document.createElement('button');save.type='button';save.textContent='Guardar';if(extraTiming)save.disabled=true;
+  const save=document.createElement('button');save.type='button';save.textContent=playerText('Guardar','Save');if(extraTiming)save.disabled=true;
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(consumedColor)body.consumed_color=consumedColor;
@@ -2127,10 +2127,10 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
    if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent='Adiciona pelo menos um alimento da biblioteca.';return;}
-   try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
+   try{save.disabled=true;save.textContent=playerText('A guardar…','Saving…');feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
   };
   save.className='consumption-save';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent=playerText('Cancelar','Cancel');cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
@@ -2167,7 +2167,7 @@ async function overview(){
    pendingDailySwipeDirection=0;
    const target=overviewMode==="week"?$("weekly-view"):$("day-details");
    target.hidden=false;target.replaceChildren();
-   const note=document.createElement("p");note.className="hint";note.textContent="Não foi possível carregar esta semana. Tenta novamente.";
+   const note=document.createElement("p");note.className="hint";note.textContent=playerText("Não foi possível carregar esta semana. Tenta novamente.","Could not load this week. Please try again.");
    target.append(note);
    throw err;
   }
@@ -2250,7 +2250,7 @@ async function overview(){
  if(consumptionLoadError){
   const notice=document.createElement("p");
   notice.setAttribute("role","status");
-  notice.textContent="Não foi possível carregar os consumos. Atualiza a página para tentar novamente.";
+  notice.textContent=playerText("Não foi possível carregar os consumos. Atualiza a página para tentar novamente.","Could not load consumption records. Refresh the page to try again.");
   notice.style.cssText="color:var(--text-secondary,#a1a1aa);font-size:13px;padding:8px 12px;";
   root.append(notice);
  }
@@ -2258,7 +2258,7 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
   renderWeightCard(root,d).catch(()=>{});
-  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);
+  const note=document.createElement("p");note.textContent=playerText("Sem programação definida para este dia.","No schedule set for this day.");root.append(note);
   root.hidden=false;setOverviewLoading(false);animateDailySwipeEntry();return;
  }
 
@@ -2507,7 +2507,7 @@ async function overview(){
     footerActions.append(expand);footer.addEventListener("click",event=>{if(event.target.closest("button"))return;expand.click();});footer.append(footerLabel,footerActions);visual.append(footer);
    }else visual.append(expand);
    summary.append(weeklyCharts);
-  }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
+  }else{const note=document.createElement("p");note.className="hint";note.textContent=playerText("Resumo incompleto: existem refeições sem plano publicado.","Incomplete summary: some meals have no published plan.");summary.append(note);}
   root.append(summary);
  }
  renderWeightCard(root,d).catch(()=>{});
@@ -2545,7 +2545,7 @@ async function overview(){
      attachDailyDishPhoto(section,p,menu,epoch,requestId);
     }
    }
-   if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
+   if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent=playerText("Plano ainda não publicado.","Plan not yet published.");section.append(p);}
    const showOptionPortions=!!(color&&(meal==="lunch"||meal==="dinner")&&me?.visual_portions_enabled&&window.tmVisualPortions);
    const addOptionPortions=(card,option)=>{
     if(!showOptionPortions)return;
@@ -2611,7 +2611,7 @@ async function overview(){
   }
   if(consumptionEnabled&&color&&options.length){
    const change=document.createElement('button');change.type='button';change.className='consumption-cancel consumption-change-color';
-   change.textContent='Alterar cor';change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label','Registar consumo de outra cor');
+   change.textContent=playerText('Alterar cor','Change colour');change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label','Registar consumo de outra cor');
    
    change.onclick=()=>openAlternativeColorPicker(section,d,meal);
    section.append(change);
@@ -2817,7 +2817,7 @@ async function menusView(){
  }catch(err){
   if(epoch!==playerSessionEpoch||renderToken!==menuRenderToken||tab!=="menus")return;
   $("menu-loading").hidden=true;
-  const target=$("menu-days");target.hidden=false;target.textContent="Não foi possível carregar os menus. Tenta novamente.";
+  const target=$("menu-days");target.hidden=false;target.textContent=playerText("Não foi possível carregar os menus. Tenta novamente.","Could not load menus. Please try again.");
   throw err;
  }
  if(epoch!==playerSessionEpoch||renderToken!==menuRenderToken||tab!=="menus")return;
