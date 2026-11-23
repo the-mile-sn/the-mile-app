@@ -512,7 +512,7 @@ def _plan_note_candidate(group):
             and all(ch.isprintable() or ch in "\n\r\t" for ch in source)
             and all(ch.isprintable() for ch in context)
             and _SENSITIVE_SINGLE_TITLE.search(source + " " + context) is None
-            and re.search(r"\\b(?:tomar|dose|dosagem|comprimidos?|c[aá]psulas?)\\s*\\d",
+            and re.search(r"\b(?:tomar|dose|dosagem|comprimidos?|c[aá]psulas?)\s*\d",
                           source, re.I) is None)
 
 
