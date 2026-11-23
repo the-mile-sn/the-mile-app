@@ -349,3 +349,34 @@ button.i18n-library:hover:not(:disabled){background:var(--tm-ui-hover)}
 .i18n-plan-food-preview .i18n-plan-unique-row span{
   white-space:pre-wrap;overflow-wrap:anywhere;
 }
+
+/* Final private review: no export and no new approval endpoint. */
+.i18n-plan-private-queue{
+  min-width:0;margin:0 0 18px;padding:14px;border-radius:12px;
+  background:var(--tm-ui-card);
+}
+.i18n-plan-private-queue .i18n-plan-detail-head{margin-bottom:8px}
+.i18n-plan-private-queue .i18n-plan-policy{margin:6px 0 0}
+.i18n-plan-private-list{
+  display:grid;gap:12px;min-width:0;margin-top:12px;
+}
+.i18n-plan-private-publication{
+  min-width:0;padding:12px;border-radius:12px;
+  background:var(--tm-ui-subcard);
+}
+.i18n-plan-private-publication>.i18n-plan-detail-head{
+  padding:0 2px 8px;
+}
+.i18n-plan-private-publication>.i18n-plan-field{
+  background:var(--tm-ui-card);
+}
+.i18n-plan-private-queue .i18n-plan-en,
+.i18n-plan-private-queue .i18n-plan-pt{
+  background:var(--tm-ui-subcard);
+}
+@media(max-width:720px){
+  .i18n-plan-private-queue{padding:12px}
+  .i18n-plan-private-queue .i18n-plan-detail-head button{
+    min-height:40px;
+  }
+}
