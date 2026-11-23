@@ -1508,7 +1508,7 @@ def application(env, start_response):
                 linked=c.execute("SELECT 1 FROM v2_player_links WHERE user_id=?",
                                  (user['id'],)).fetchone()
                 if not linked:raise Problem(404,'player_not_linked')
-                allowed=os.environ.get('MILE_PLAYER_LANGUAGE_SELECTION_ENABLED')=='1'
+                allowed=player_language_v2.selection_available(c)
                 if method=='GET':
                     return respond(200,{'language':
                         player_language_v2.get(c,user['id']) if allowed else 'pt',
