@@ -345,7 +345,7 @@ function appendGroupedPeriItems(host,items,order=[]){
   group.append(lines);host.append(group);
  }
 }
-function periFoodText(food){const content=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";return (periTimingLabels[food.timing]?periTimingLabels[food.timing]+" — ":"")+content;}
+function periFoodText(food){const content=food.kind==="food"?[food.quantity,food.name].filter(Boolean).join(" · "):food.text||"";const timing=playerUiLanguage==='en'?periTimingEnglish[food.timing]:periTimingLabels[food.timing];return (timing?timing+" — ":"")+content;}
 function mealNoteCard(food){
  const note=document.createElement("details");note.className="meal-collapsible-note";
  const head=document.createElement("summary");head.textContent=food.title?.trim()||"Nota";note.append(head);
@@ -490,15 +490,15 @@ async function refreshAfterConsumption(host,meal,eventId){
  }
  await overview();
 }
-function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description='consumo',timing=null,optionRef=null,extraTiming=false}){
+function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null,consumedColor=null,description=playerText('consumo','consumption'),timing=null,optionRef=null,extraTiming=false}){
  const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--recorded';
  const registered=document.createElement('span');registered.className='action-pill action-pill--registered';
- consumptionActionLabel(registered,'CheckmarkCircle02Icon',' Registado');registered.setAttribute('aria-label','Registado: '+description);
+ consumptionActionLabel(registered,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));registered.setAttribute('aria-label',playerText('Registado: ','Recorded: ')+description);
  const edit=document.createElement('button');edit.type='button';edit.className='action-pill action-pill--secondary';
- consumptionActionLabel(edit,'Edit02Icon',' Editar');edit.setAttribute('aria-label','Editar '+description);
+ consumptionActionLabel(edit,'Edit02Icon',playerText(' Editar',' Edit'));edit.setAttribute('aria-label',playerText('Editar ','Edit ')+description);
  edit.onclick=()=>openConsumptionEditor(host,date,meal,eventId,optionIndex,consumedColor,timing,optionRef,extraTiming);
  const undo=document.createElement('button');undo.type='button';undo.className='action-pill action-pill--secondary';
- consumptionActionLabel(undo,'UndoIcon',' Anular');undo.setAttribute('aria-label','Anular '+description);
+ consumptionActionLabel(undo,'UndoIcon',playerText(' Anular',' Undo'));undo.setAttribute('aria-label',playerText('Anular ','Undo ')+description);
  const feedback=document.createElement('p');feedback.className='consumption-feedback';
  feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
  undo.onclick=async(event)=>{
@@ -516,7 +516,7 @@ function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null
  if(consumedColor){
   const names={green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'};
   const note=document.createElement('span');note.className='consumption-color-note';
-  note.textContent='Consumido: '+(names[consumedColor]||consumedColor);actions.append(note);
+  note.textContent=playerText('Consumido: ','Consumed: ')+(playerUiLanguage==='en'?(playerColourLanguages.en[consumedColor]||consumedColor):(names[consumedColor]||consumedColor));actions.append(note);
  }
  actions.append(feedback);
  return actions;
@@ -1060,7 +1060,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  if(previous&&!previous.timing_records?.length){
   const title=card.querySelector('.daily-meal-head > strong');
   if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
-  card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:'consumo anterior de Jogo'}));
+  card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:playerText('consumo anterior de Jogo','previous match consumption')}));
   return true;
  }
  const current=previous?.timing_records||[];
@@ -1073,7 +1073,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   const optionRef=options[index].option_ref;
   const saved=current.find(row=>row.timing===timing&&row.option_ref===optionRef);
   if(saved){
-   group.append(makeRecordedConsumptionTags({host:group,date,meal,eventId,optionIndex:index,optionRef,timing,description:'consumo de '+(periTimingLabels[timing]||timing)}));
+   group.append(makeRecordedConsumptionTags({host:group,date,meal,eventId,optionIndex:index,optionRef,timing,description:playerText('consumo de ','consumption at ')+((playerUiLanguage==='en'?periTimingEnglish[timing]:periTimingLabels[timing])||timing)}));
    continue;
   }
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
@@ -1082,13 +1082,13 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(group,date,meal,eventId,index,null,timing,optionRef).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
-   if(current.some(row=>row.timing===timing)&&!window.confirm('Já existe um registo neste momento. Substituir?'))return;
-   quick.disabled=true;edit.disabled=true;quick.textContent='A guardar…';feedback.textContent='';
+   if(current.some(row=>row.timing===timing)&&!window.confirm(playerText('Já existe um registo neste momento. Substituir?','A record already exists for this time. Replace it?')))return;
+   quick.disabled=true;edit.disabled=true;quick.textContent=playerText('A guardar…','Saving…');feedback.textContent='';
    try{
     const qs=new URLSearchParams({date,meal,event_id:eventId,timing});
     const source=await api('/api/v2/player/consumption-options?'+qs);
     const option=source.options?.find(row=>row.option_ref===optionRef);
-    if(!option)throw new Error('Opção ou timing publicado indisponível');
+    if(!option)throw new Error(playerText('Opção ou timing publicado indisponível','Published option or timing unavailable'));
     await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,timing,option_ref:option.option_ref,status:'all'})});
     showConsumptionSuccess(quick);feedback.textContent='';
     await new Promise(resolve=>setTimeout(resolve,900));await refreshAfterConsumption(group,meal,eventId);
@@ -1103,17 +1103,17 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   const group=document.createElement('div');group.className='peri-timing-group intra-added-timing';
   group.dataset.timing=saved.timing;
   const heading=document.createElement('div');heading.className='peri-timing-heading';
-  heading.textContent=periTimingLabels[saved.timing]||saved.timing;
-  const origin=document.createElement('small');origin.className='intra-added-origin';origin.textContent='Adicionado pelo jogador';
+  heading.textContent=(playerUiLanguage==='en'?periTimingEnglish[saved.timing]:periTimingLabels[saved.timing])||saved.timing;
+  const origin=document.createElement('small');origin.className='intra-added-origin';origin.textContent=playerText('Adicionado pelo jogador','Added by player');
   heading.append(origin);group.append(heading);
   for(const food of saved.consumed_foods||[]){
    const line=document.createElement('div');line.className='peri-timing-line';
    const grams=Number(food.grams);const quantity=Number.isFinite(grams)?String(Math.round(grams*10)/10)+' g ':'';
-   line.textContent=quantity+(food.display_name||food.library_name||food.name||'Alimento da biblioteca');
+   line.textContent=quantity+(food.display_name||food.library_name||food.name||playerText('Alimento da biblioteca','Library food'));
    group.append(line);
   }
   group.append(makeRecordedConsumptionTags({host:group,date,meal,eventId,timing:saved.timing,
-   optionRef:saved.option_ref,extraTiming:true,description:'consumo adicional de '+(periTimingLabels[saved.timing]||saved.timing)}));
+   optionRef:saved.option_ref,extraTiming:true,description:playerText('consumo adicional de ','additional consumption at ')+((playerUiLanguage==='en'?periTimingEnglish[saved.timing]:periTimingLabels[saved.timing])||saved.timing)}));
   card.append(group);
  }
  const reserved=new Set();
@@ -1125,21 +1125,21 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   for(const timing of option.timing_groups||[])reserved.add(timing);
  }
  for(const record of current)reserved.add(record.timing);
- const choices=Object.entries(periTimingLabels).filter(([timing])=>!reserved.has(timing));
+ const choices=Object.entries(periTimingLabels).filter(([timing])=>!reserved.has(timing)).map(([timing,label])=>[timing,playerUiLanguage==='en'?(periTimingEnglish[timing]||label):label]);
  if(choices.length){
   // Keep moment selection and the existing food editor in one inline flow.
   const group=document.createElement('div');group.className='peri-timing-group intra-add-moment-group';
   const addButton=document.createElement('button');addButton.type='button';
-  addButton.className='intra-add-moment-trigger';addButton.textContent='⊕ Adicionar';
+  addButton.className='intra-add-moment-trigger';addButton.textContent=playerText('⊕ Adicionar','⊕ Add');
   addButton.setAttribute('aria-expanded','false');
   const picker=document.createElement('div');picker.className='intra-add-moment-panel';picker.hidden=true;
   // Match the approved food-search option cards, not an iOS-native select.
   const label=document.createElement('div');label.className='intra-timing-select-label';
-  label.textContent='Momento do consumo';
+  label.textContent=playerText('Momento do consumo','Consumption time');
   const selector=document.createElement('div');selector.className='intra-timing-select';
   const trigger=document.createElement('button');trigger.type='button';
   trigger.className='intra-timing-select-trigger';
-  trigger.setAttribute('aria-label','Selecionar momento do consumo');
+  trigger.setAttribute('aria-label',playerText('Selecionar momento do consumo','Select consumption time'));
   trigger.setAttribute('aria-haspopup','listbox');
   trigger.setAttribute('aria-expanded','false');
   const selectedLabel=document.createElement('span');selectedLabel.className='intra-timing-selected-label';
@@ -1255,20 +1255,20 @@ function appendPeriConsumption(card,item,records){
  const selected=options.findIndex(option=>option.option_ref===previous?.option_ref);
  const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
  hosts.forEach((host,index)=>{
-  if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:'consumo de '+item.title}));return;}
+  if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:playerText('consumo de ','consumption of ')+playerPhaseLabel(item.title)}));return;}
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
   const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
   const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
-   if(previous&&!window.confirm('Já existe um registo para '+item.title+'. Substituir pela opção selecionada?'))return;
-   quick.disabled=true;edit.disabled=true;quick.textContent='A guardar…';feedback.textContent='';
+   if(previous&&!window.confirm(playerText('Já existe um registo para ','A record already exists for ')+playerPhaseLabel(item.title)+playerText('. Substituir pela opção selecionada?','. Replace it with the selected option?')))return;
+   quick.disabled=true;edit.disabled=true;quick.textContent=playerText('A guardar…','Saving…');feedback.textContent='';
    try{
     const qs=new URLSearchParams({date,meal,event_id:eventId});
     const source=await api('/api/v2/player/consumption-options?'+qs);
     const option=source.options?.find(row=>row.option_ref===options[index].option_ref);
-    if(!option)throw new Error('Opção publicada indisponível ou alterada');
+    if(!option)throw new Error(playerText('Opção publicada indisponível ou alterada','Published option unavailable or changed'));
     await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,option_ref:option.option_ref,status:'all'})});
     showConsumptionSuccess(quick);feedback.textContent='';
     await new Promise(resolve=>setTimeout(resolve,900));
@@ -1281,7 +1281,7 @@ function appendPeriConsumption(card,item,records){
   };
   actions.append(edit,quick);host.append(actions,feedback);
  });
- if(previous&&selected<0)card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:'consumo de '+item.title}));
+ if(previous&&selected<0)card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:playerText('consumo de ','consumption of ')+playerPhaseLabel(item.title)}));
 }
 function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRecords=[]){
  const opts=item.options||[],avg=average(opts);
@@ -1294,13 +1294,13 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
     weeklySelection=active?null:{date:item.event_date,periEventId:item.event_id,phase:item.phase,selectionPhase:item.selection_phase};
     if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);
   };
-  const title=document.createElement("span");title.textContent=item.title;
+  const title=document.createElement("span");title.textContent=playerPhaseLabel(item.title);
   section.append(title);
   if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmtKcal(avg.kcal);section.append(kcal);}
   return section;
  }
  const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
- const title=document.createElement("strong");title.textContent=item.title;head.append(title);decorateLabel(head,item.title);
+ const title=document.createElement("strong");title.textContent=playerPhaseLabel(item.title);head.append(title);decorateLabel(head,item.title);
  if(avg){const nutritionSummary=document.createElement("span");nutritionSummary.className="meal-average meal-average-inline";nutritionSummary.append(nutrition(avg));head.append(nutritionSummary);}
  section.append(head);
  if(opts.length===1){for(const food of opts[0].items||[]){const p=document.createElement("div");p.className="foods";p.textContent=periFoodText(food);section.append(p);}}
@@ -1312,14 +1312,14 @@ function eventCard(event,compact=false){
  const section=document.createElement("div");section.className=compact?"weekly-event-card":"daily-event-card tm-day-header"+(event.kind==="match"?" daily-match-card":"");
  const label=document.createElement("span");label.className=compact?"":"tm-day-title";label.textContent=playerEventTitle(event);section.append(label);if(!compact)decorateLabel(section,event.title||event.kind);
  if(!compact&&event.kind!=="match"&&event.event_date>=iso(new Date())){
-   const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label","Editar "+event.title);toggle.title="Editar "+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
+   const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label",playerText("Editar ","Edit ")+event.title);toggle.title=playerText("Editar ","Edit ")+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
-   const date=document.createElement("input");date.type="date";date.value=event.event_date;date.setAttribute("aria-label","Data");
+   const date=document.createElement("input");date.type="date";date.value=event.event_date;date.setAttribute("aria-label",playerText("Data","Date"));
    const session=document.createElement("select");session.setAttribute("aria-label",playerText("Período","Period"));
-   for(const [val,text] of [["morning","Manhã"],["afternoon","Tarde"]]){
+   for(const [val,text] of [["morning",playerText("Manhã","Morning")],["afternoon",playerText("Tarde","Afternoon")]]){
      const option=document.createElement("option");option.value=val;option.textContent=text;session.append(option);
    }session.value=event.session;
-   const save=document.createElement("button");save.type="button";save.textContent="Guardar";
+   const save=document.createElement("button");save.type="button";save.textContent=playerText("Guardar","Save");
    const warning=document.createElement("small");
    toggle.onclick=()=>{editor.hidden=!editor.hidden;};
    save.onclick=async()=>{
@@ -1336,10 +1336,10 @@ function eventCard(event,compact=false){
    const actions=document.createElement("div");actions.className="daily-event-actions";save.className="daily-event-save";actions.append(save);
    editor.append(fields,actions,warning);
    const remove=document.createElement("button");remove.type="button";remove.className="daily-event-remove";
-   remove.setAttribute("aria-label","Remover "+event.title);remove.title="Remover "+event.title;
+   remove.setAttribute("aria-label",playerText("Remover ","Remove ")+event.title);remove.title=playerText("Remover ","Remove ")+event.title;
    remove.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M19.5 5.5L18.8803 15.5251C18.7219 18.0864 18.6428 19.3671 18.0008 20.2879C17.6833 20.7431 17.2747 21.1273 16.8007 21.416C15.8421 22 14.559 22 11.9927 22C9.42312 22 8.1383 22 7.17905 21.4149C6.7048 21.1257 6.296 20.7408 5.97868 20.2848C5.33688 19.3626 5.25945 18.0801 5.10461 15.5152L4.5 5.5\"/><path d=\"M3 5.5H21M16.0557 5.5L15.3731 4.09173C14.9196 3.15626 14.6928 2.68852 14.3017 2.39681C14.215 2.3321 14.1231 2.27454 14.027 2.2247C13.5939 2 13.0741 2 12.0345 2C10.9688 2 10.436 2 9.99568 2.23412C9.8981 2.28601 9.80498 2.3459 9.71729 2.41317C9.32164 2.7167 9.10063 3.20155 8.65861 4.17126L8.05292 5.5\"/><path d=\"M9.5 16.5L9.5 10.5M14.5 16.5L14.5 10.5\"/></svg>";
    remove.onclick=async()=>{
-     if(!confirm("Remover "+event.title+" deste dia? As refeições peri-treino associadas deixam também de ser contabilizadas."))return;
+     if(!confirm(playerText("Remover ","Remove ")+event.title+playerText(" deste dia? As refeições peri-treino associadas deixam também de ser contabilizadas."," from this day? Associated peri-training meals will no longer be counted.")))return;
      remove.disabled=true;
      try{
        await api("/api/v2/player/events/"+encodeURIComponent(event.id)+"?local_date="+encodeURIComponent(iso(new Date())),{method:"DELETE",
@@ -2663,7 +2663,7 @@ async function overview(){
     const optionIndex=otherColor?-1:options.findIndex(option=>option.option_ref===previous.option_ref);
     const optionCard=optionIndex>=0?cards[optionIndex]:null;
     const target=optionCard?.tagName==='DETAILS'?(optionCard.querySelector('.option-body')||optionCard):(optionCard||section);
-    const tags=makeRecordedConsumptionTags({host:target,date:d,meal,eventId:'',optionIndex:optionIndex>=0?optionIndex:null,consumedColor:otherColor?previous.prescription.color:null,description:'consumo de '+names[meal]});
+    const tags=makeRecordedConsumptionTags({host:target,date:d,meal,eventId:'',optionIndex:optionIndex>=0?optionIndex:null,consumedColor:otherColor?previous.prescription.color:null,description:playerText('consumo de ','consumption of ')+names[meal]});
     if(optionCard&&options.length===1)target.prepend(tags);else target.append(tags);
     if(optionCard?.tagName==='DETAILS'){
      const summaryLabel=optionCard.querySelector('summary .plan-option-label');
@@ -2682,7 +2682,7 @@ async function overview(){
     quick.onclick=async()=>{
      if(isRecordedOption&&previous.status==='all')return;
      if(previous&&!isRecordedOption&&!window.confirm('Já existe um registo para esta refeição. Substituir pela opção selecionada?'))return;
-     quick.disabled=true;edit.disabled=true;quick.textContent='A guardar…';feedback.textContent='';
+     quick.disabled=true;edit.disabled=true;quick.textContent=playerText('A guardar…','Saving…');feedback.textContent='';
      try{
       const qs=new URLSearchParams({date:d,meal:meal,event_id:''});
       const source=await api('/api/v2/player/consumption-options?'+qs);
