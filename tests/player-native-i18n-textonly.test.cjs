@@ -56,3 +56,29 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(element.className,"mile-approved");
   assert.deepEqual(element.style,{});
 });
+
+test("Recipe and visual-portion labels follow language without changing markup",()=>{
+  function textOnlyHelpers(path,start,end,language,expression){
+    const source=fs.readFileSync(path,"utf8");
+    const begin=source.indexOf(start),finish=source.indexOf(end,begin);
+    assert.ok(begin>=0&&finish>begin,path+" helper markers");
+    const document={documentElement:{lang:language}};
+    return vm.runInNewContext(
+      source.slice(begin,finish)+"\n"+expression,{document});
+  }
+  assert.equal(textOnlyHelpers("static/player-recipes.js",
+    " const tr=(pt,en)=>"," const area=", "pt-PT",
+    'tr("Preparação","Method")'),"Preparação");
+  assert.equal(textOnlyHelpers("static/player-recipes.js",
+    " const tr=(pt,en)=>"," const area=", "en-GB",
+    'tr("Preparação","Method")'),"Method");
+  assert.equal(textOnlyHelpers("static/player-visual-portions.js",
+    " const tr=(pt,en)=>"," let layer=null;", "pt-PT",
+    'categoryText("Arroz + Batata")'),"Arroz + Batata");
+  assert.equal(textOnlyHelpers("static/player-visual-portions.js",
+    " const tr=(pt,en)=>"," let layer=null;", "en-GB",
+    'categoryText("Arroz + Batata")'),"Rice + potato");
+  assert.equal(textOnlyHelpers("static/player-visual-portions.js",
+    " const tr=(pt,en)=>"," let layer=null;", "en-GB",
+    'tr("Ver porções","View portions")'),"View portions");
+});
