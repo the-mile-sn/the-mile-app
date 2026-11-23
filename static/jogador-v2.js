@@ -25,6 +25,8 @@ const playerTextBindings=[
   ["#profile-main .profile-renewal-detail > span","Data de renovação","Renewal date"],
   ["#profile-notifications-open .profile-notification-label","Notificações","Notifications"],
   ["#profile-language-label","Idioma","Language"],
+  ["#menu-loading .loading-accessible-label","A carregar menus da semana","Loading this week's menus"],
+  ["#player-session-retry","Tentar novamente","Try again"],
   ["#profile-password-open > span:nth-child(2)","Alterar palavra-passe","Change password"],
   ["#profile-logout > span:last-child","Terminar sessão","Sign out"],
   ["#profile-notifications-title","Notificações","Notifications"],
@@ -293,6 +295,7 @@ function fmt(v,d=1){return Number(v).toLocaleString(playerDateLocale(),{minimumF
 function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
+const periTimingEnglish={pre_warmup:"Before warm-up",warmup:"Warm-up",pre_match:"Pre-match",post_warmup:"After warm-up",first_half:"First half",half_time:"Half-time",second_half:"Second half",post_match:"Post-match",throughout:"Throughout the match"};
 // Group the already prescribed intra-match items by their timing, keeping
 // the first-seen timing order and each item's original position within its group.
 function groupPeriItemsByTiming(items,order=[]){
@@ -309,7 +312,7 @@ function appendGroupedPeriItems(host,items,order=[]){
  for(const {timing,foods} of groupPeriItemsByTiming(items,order)){
   const group=document.createElement("div");group.className="peri-timing-group";group.dataset.timing=timing;
   const label=periTimingLabels[timing];
-  if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=label;group.append(heading);}
+  if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=playerUiLanguage==="en"?(periTimingEnglish[timing]||label):label;group.append(heading);}
   const lines=document.createElement("div");lines.className="peri-timing-lines";
   for(const food of foods){
    const line=document.createElement("div");line.className="peri-timing-line";
@@ -483,7 +486,7 @@ function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null
    await refreshAfterConsumption(host,meal,eventId);
   }catch(err){
    undo.disabled=false;edit.disabled=false;undo.removeAttribute('aria-busy');
-   feedback.textContent='Não foi possível anular. Tenta novamente.';error(err);
+   feedback.textContent=playerText('Não foi possível anular. Tenta novamente.','Could not undo. Please try again.');error(err);
   }
  };
  actions.append(registered,edit,undo);
@@ -692,7 +695,7 @@ async function session(){
  applyPlayerNativeLanguage(me?.language);
  syncPlayerLanguageSelector(preferences);
  const plan=String(me.followup_plan||"").trim();
- $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";
+ $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():playerText("Por definir","Not set");
  $("profile-renewal-date").textContent=displayPlayerRenewal(me.followup_renewal_date);
  $("player-name").textContent=me.name;
  const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
@@ -931,7 +934,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");markWeeklyColumn(b,dates[i]);
    const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq Alm.":names[meal]||meal;b.append(label);
    if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
-   b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
+   b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+playerText(" — abrir opções"," — open options"));b.setAttribute("aria-pressed",String(active));
    b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus,weeklyWeights);};grid.append(b);
   }
  }
@@ -1033,7 +1036,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  // before independent timing entries can be created, never silently migrated.
  if(previous&&!previous.timing_records?.length){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
   card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:'consumo anterior de Jogo'}));
   return true;
  }
@@ -1041,7 +1044,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  const available=new Set(entries.map(x=>x.timing));
  if(current.length&&[...available].every(t=>current.some(row=>row.timing===t))){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
  }
  for(const {group,index,timing} of entries){
   const optionRef=options[index].option_ref;
@@ -1052,7 +1055,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   }
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
   const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
-  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
+  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(group,date,meal,eventId,index,null,timing,optionRef).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
@@ -1066,7 +1069,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
     await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,timing,option_ref:option.option_ref,status:'all'})});
     showConsumptionSuccess(quick);feedback.textContent='';
     await new Promise(resolve=>setTimeout(resolve,900));await refreshAfterConsumption(group,meal,eventId);
-   }catch(err){feedback.textContent='Não foi possível registar este momento.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);}
+   }catch(err){feedback.textContent=playerText('Não foi possível registar este momento.','Could not record this moment.');quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(err);}
   };
   actions.append(edit,quick);group.append(actions,feedback);
  }
@@ -1121,7 +1124,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   arrow.setAttribute('aria-hidden','true');
   trigger.append(selectedLabel,arrow);
   const menu=document.createElement('div');menu.className='intra-timing-option-list';
-  menu.setAttribute('role','listbox');menu.setAttribute('aria-label','Momentos de consumo disponíveis');
+  menu.setAttribute('role','listbox');menu.setAttribute('aria-label',playerText('Momentos de consumo disponíveis','Available consumption times'));
   menu.hidden=true;
   const options=[];
   let selectedTiming=choices[0][0],selectedIndex=0;
@@ -1224,7 +1227,7 @@ function appendPeriConsumption(card,item,records){
  if(item.selection_phase==='intra_match'&&appendIntraTimingConsumption(card,item,previous,date,meal,eventId))return;
  if(previous){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
  }
  const selected=options.findIndex(option=>option.option_ref===previous?.option_ref);
  const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
@@ -1232,7 +1235,7 @@ function appendPeriConsumption(card,item,records){
   if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:'consumo de '+item.title}));return;}
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
   const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
-  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
+  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
@@ -1249,8 +1252,8 @@ function appendPeriConsumption(card,item,records){
     if(host.tagName==='DETAILS')host.open=false;
     await overview();
    }catch(err){
-    feedback.textContent='Não foi possível registar. Tenta novamente.';
-    quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);
+    feedback.textContent=playerText('Não foi possível registar. Tenta novamente.','Could not save the record. Please try again.');
+    quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(err);
    }
   };
   actions.append(edit,quick);host.append(actions,feedback);
@@ -1289,7 +1292,7 @@ function eventCard(event,compact=false){
    const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label","Editar "+event.title);toggle.title="Editar "+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
    const date=document.createElement("input");date.type="date";date.value=event.event_date;date.setAttribute("aria-label","Data");
-   const session=document.createElement("select");session.setAttribute("aria-label","Período");
+   const session=document.createElement("select");session.setAttribute("aria-label",playerText("Período","Period"));
    for(const [val,text] of [["morning","Manhã"],["afternoon","Tarde"]]){
      const option=document.createElement("option");option.value=val;option.textContent=text;session.append(option);
    }session.value=event.session;
@@ -2400,7 +2403,7 @@ async function overview(){
     const rings=document.createElement("div");rings.className="consumption-concentric-rings";
     const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");
     chart.setAttribute("viewBox","0 0 200 200");chart.setAttribute("role","img");
-    chart.setAttribute("aria-label","Progresso de calorias, proteína, hidratos e gordura consumidos face ao planeado");
+    chart.setAttribute("aria-label",playerText("Progresso de calorias, proteína, hidratos e gordura consumidos face ao planeado","Progress of calories, protein, carbohydrates and fat consumed compared with planned"));
     for(const [key,radius,color] of [["kcal",88,"#72ebbd"],["protein_g",66,"#45baff"],["carbs_g",44,"#ff9d70"],["fat_g",22,"#f4d778"]]){
      const circumference=2*Math.PI*radius;
      const ratio=total[key]>0?Math.max(0,Math.min(1,actual[key]/total[key])):0;
@@ -2541,7 +2544,7 @@ async function overview(){
     if(mean!==null){
      const line=document.createElement("div");line.className="nutrition-chart-average";
      line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
-     line.setAttribute("aria-label","Média semanal: "+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
+     line.setAttribute("aria-label",playerText("Média semanal: ","Weekly average: ")+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
      bars.append(line);
     }
     wrap.append(bars);return wrap;
@@ -2555,9 +2558,9 @@ async function overview(){
     const divisor=mode==="kg"?(hasWeight?weight:NaN):1;
     for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
    };
-   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
+   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?playerText("Valores por quilograma","Values per kilogram"):playerText("Peso do jogador indisponível no perfil","Player weight unavailable in profile");
    renderMacroMode("g");
-   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
+   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?playerText("Expandir resumo nutricional","Expand nutrition summary"):playerText("Fechar gráficos nutricionais","Close nutrition charts"));if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
    if(consumptionEnabled){
     const footer=document.createElement("div");footer.className="consumption-concentric-footer";
     const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent="Ver valores semanais e detalhes";
@@ -2583,7 +2586,7 @@ async function overview(){
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
    const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';
-   consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Refeição registada');
+   consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));badge.setAttribute('aria-label',playerText('Refeição registada','Meal recorded'));
    title.append(badge);
   }
   section.append(head);
@@ -2598,7 +2601,7 @@ async function overview(){
     if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish"){
      p.classList.add("meal-menu-link");
      p.setAttribute("role","button");p.tabIndex=0;
-     p.setAttribute("aria-label","Ver "+names[meal]+" nos Menus de "+new Date(d+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"}));
+     p.setAttribute("aria-label",playerText("Ver ","View ")+names[meal]+playerText(" nos Menus de "," in Menus for ")+new Date(d+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"}));
      p.addEventListener("click",()=>{openDailyMealInMenus(d,meal).catch(error);});
      p.addEventListener("keydown",event=>{
       if(event.key==="Enter"||event.key===" "){event.preventDefault();p.click();}
@@ -2641,7 +2644,7 @@ async function overview(){
     if(optionCard&&options.length===1)target.prepend(tags);else target.append(tags);
     if(optionCard?.tagName==='DETAILS'){
      const summaryLabel=optionCard.querySelector('summary .plan-option-label');
-     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',' Registado');closedBadge.setAttribute('aria-label','Opção registada');summaryLabel.append(closedBadge);}
+     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));closedBadge.setAttribute('aria-label',playerText('Opção registada','Option recorded'));summaryLabel.append(closedBadge);}
     }
    }
    cards.forEach((card,i)=>{
@@ -2664,7 +2667,7 @@ async function overview(){
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
       showConsumptionSuccess(quick);feedback.textContent='';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
-     }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(e);}
+     }catch(e){feedback.textContent=playerText('Não foi possível registar. Tenta novamente.','Could not save the record. Please try again.');quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
     if(!isRecordedOption&&!(previous?.prescription?.color&&previous.prescription.color!==color)){actions.append(edit,quick);target.append(actions,feedback);}
@@ -2690,7 +2693,7 @@ function openPlansSection(section){
  $("plans-landing").hidden=true;
  $("plans-prescriptions").hidden=section!=="prescriptions";
  $("plans-assessments").hidden=section!=="assessments";
- if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});
+ if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent=playerText("Não foi possível carregar as avaliações.","Could not load assessments.");});
  if(section==="prescriptions")renderPlans();
 }
 let plansCategory="todos",planPhase=null;
@@ -2774,7 +2777,7 @@ function renderPlans(){
  const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training",playerText("Treino","Training")]]:[]),...(hasPeri("match")?[["peri-match",playerText("Jogo","Match")]]:[]),["supplements",playerText("Suplementação","Supplements")]];
  for(const [key,label] of entries){
   const group=document.createElement("details");group.className="plans-all-group";
-  const heading=document.createElement("summary");heading.textContent=label;group.append(heading);
+  const heading=document.createElement("summary");heading.textContent=playerUiLanguage==="en"?(periTimingEnglish[timing]||label):label;group.append(heading);
   const content=document.createElement("div");content.className="plans-all-body";group.append(content);
   group.addEventListener("toggle",()=>{if(group.open&&!content.dataset.loaded){content.dataset.loaded="true";planPhase=null;renderPlanContent(key,content);}});
   detail.append(group);
@@ -2817,7 +2820,7 @@ function cachedDishPhoto(id,thumbnail=false){
 function openDishPhoto(src,alt){
  if(!src)return;
  const overlay=document.createElement("div");overlay.className="dish-photo-overlay";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label",alt||"Fotografia do prato");
- const close=document.createElement("button");close.type="button";close.className="dish-photo-close";close.textContent="×";close.setAttribute("aria-label","Fechar fotografia");
+ const close=document.createElement("button");close.type="button";close.className="dish-photo-close";close.textContent="×";close.setAttribute("aria-label",playerText("Fechar fotografia","Close photo"));
  const image=document.createElement("img");image.src=src;image.alt=alt||"Prato";
  const previous=document.activeElement;const dismiss=()=>{overlay.remove();document.removeEventListener("keydown",onKey);previous?.focus?.();};
  const onKey=e=>{if(e.key==="Escape")dismiss();};
@@ -2915,7 +2918,7 @@ async function menusView(){
  if(color&&color!=="none"){const dot=document.createElement("span");dot.className="color-dot "+color;title.append(dot);}
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
- const name=document.createElement("span");name.className="value";name.textContent=menu?.value||"Menu por atribuir";if(menu?.kind==="text")name.classList.add("menu-free-text-value");
+ const name=document.createElement("span");name.className="value";name.textContent=menu?.value||playerText("Menu por atribuir","Menu not assigned");if(menu?.kind==="text")name.classList.add("menu-free-text-value");
  const nameColumn=document.createElement("div");nameColumn.className="menu-dish-name-column";nameColumn.append(name);
  body.append(nameColumn);
  if(menu?.kind==="dish"){
@@ -2931,8 +2934,8 @@ async function menusView(){
    photoFrame.append(photo,zoom);body.append(photoFrame);photosToObserve.push(photo);
    if(Number(dish.recipe_count||0)>0){
     const recipeAction=document.createElement("button");recipeAction.type="button";recipeAction.className="menu-view-recipe";
-    recipeAction.textContent=Number(dish.recipe_count||0)>1?"Ver receitas":"Ver receita";
-    recipeAction.setAttribute("aria-label",recipeAction.textContent+" de "+menu.value);
+    recipeAction.textContent=Number(dish.recipe_count||0)>1?playerText("Ver receitas","View recipes"):playerText("Ver receita","View recipe");
+    recipeAction.setAttribute("aria-label",recipeAction.textContent+playerText(" de "," for ")+menu.value);
     const press=()=>recipeAction.classList.add("is-pressed");
     const clearPress=()=>{recipeAction.classList.remove("is-pressed");recipeAction.blur();};
     recipeAction.addEventListener("pointerdown",press);
@@ -2996,14 +2999,14 @@ $("profile-password-back").onclick=resetProfileSubpage;
 $("profile-password-form").onsubmit=async e=>{
  e.preventDefault();const feedback=$("profile-password-feedback"),button=e.currentTarget.querySelector('button[type="submit"]');
  const current=$("profile-current-password").value,next=$("profile-new-password").value,confirm=$("profile-confirm-password").value;
- if(next!==confirm){feedback.textContent="As novas palavras-passe não coincidem.";return;}
- if(next.length<8){feedback.textContent="Utiliza pelo menos 8 caracteres.";return;}
- if(!profileUsername){feedback.textContent="Não foi possível identificar a conta. Volta a iniciar sessão.";return;}
+ if(next!==confirm){feedback.textContent=playerText("As novas palavras-passe não coincidem.","The new passwords do not match.");return;}
+ if(next.length<8){feedback.textContent=playerText("Utiliza pelo menos 8 caracteres.","Use at least 8 characters.");return;}
+ if(!profileUsername){feedback.textContent=playerText("Não foi possível identificar a conta. Volta a iniciar sessão.","Could not identify the account. Please sign in again.");return;}
  button.disabled=true;feedback.textContent="";
  try{await api("/api/change-password",{method:"POST",body:JSON.stringify({identifier:profileUsername,current_password:current,new_password:next})});
  resetProfilePassword();
- revokePlayerView();$("status").textContent="Palavra-passe alterada. Inicia sessão novamente.";
- }catch(err){feedback.textContent="Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente.";}finally{button.disabled=false;}
+ const successMessage=playerText("Palavra-passe alterada. Inicia sessão novamente.","Password changed. Please sign in again.");revokePlayerView();$("status").textContent=successMessage;
+ }catch(err){feedback.textContent=playerText("Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente.","Could not change the password. Check your current password and try again.");}finally{button.disabled=false;}
 };
 for(const item of document.querySelectorAll("#profile .mile-icon")){const name=[...item.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)item.replaceWith(mealIcon(name));}
 
