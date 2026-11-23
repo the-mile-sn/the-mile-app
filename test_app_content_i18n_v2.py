@@ -69,6 +69,44 @@ class PresentationTranslationTests(unittest.TestCase):
             return i18n.localise_published_plans(
                 self.c,self.plans,self.library,language="en")
 
+    def test_dish_menu_names_follow_approved_content_without_mutation(self):
+        self.c.execute("""CREATE TABLE v2_dish_library (
+            id TEXT PRIMARY KEY,name_pt TEXT,active INTEGER)""")
+        self.c.execute("INSERT INTO v2_dish_library VALUES(?,?,?)",
+                       ("dish-1","Salmão grelhado",1))
+        self._put("dish","dish-1","name_pt",
+                  "Salmão grelhado","Grilled salmon")
+        menus=[
+            {"kind":"dish","dish_id":"dish-1","value":"Salmão grelhado",
+             "menu_date":"2026-11-23","meal":"lunch"},
+            {"kind":"text","dish_id":None,"value":"Salmão grelhado",
+             "menu_date":"2026-11-23","meal":"dinner"},
+            {"kind":"dish","dish_id":"absent","value":"Peixe",
+             "menu_date":"2026-11-24","meal":"lunch"}]
+        before=copy.deepcopy(menus)
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"0"}):
+            self.assertIs(i18n.localise_dish_menus(
+                self.c,menus,language="en"),menus)
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            local=i18n.localise_dish_menus(self.c,menus,language="en")
+            self.assertEqual(local[0]["value"],"Grilled salmon")
+            self.assertEqual(local[1]["value"],"Salmão grelhado")
+            self.assertEqual(local[2]["value"],"Peixe")
+            self.assertEqual([x["meal"] for x in local],
+                             [x["meal"] for x in menus])
+            self.assertEqual(menus,before)
+            self.assertEqual(i18n.localise_dish_menus(
+                self.c,menus,language="pt"),menus)
+            self.c.execute("""UPDATE v2_content_translations
+                SET status='pending' WHERE entity_kind='dish'""")
+            self.assertEqual(i18n.localise_dish_menus(
+                self.c,menus,language="en")[0]["value"],"Salmão grelhado")
+            self.c.execute("""UPDATE v2_content_translations
+                SET status='approved',source_hash=?
+                WHERE entity_kind='dish'""",(digest("outdated"),))
+            self.assertEqual(i18n.localise_dish_menus(
+                self.c,menus,language="en")[0]["value"],"Salmão grelhado")
+
     def test_flag_off_and_portuguese_are_identity_and_never_query(self):
         with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"0"}):
             p,l=i18n.localise_published_plans(
