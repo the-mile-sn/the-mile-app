@@ -164,7 +164,8 @@ def _quantity_hint(source):
     if match is None:
         return None
     number, weight, unit = match.groups()
-    suggestion = number + " units"
+    singular = float(number.replace(",", ".")) == 1.0
+    suggestion = number + (" unit" if singular else " units")
     if weight:
         suggestion += " / " + weight + " " + unit
     return suggestion if suggestion != source else None
