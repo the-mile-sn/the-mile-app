@@ -328,7 +328,8 @@ class PlanTranslationsTests(unittest.TestCase):
             self.assertNotIn("Tomar 2 vezes",str(result))
             self.assertNotIn("Arroz branco cozido",str(result))
             self.assertNotIn("private-athlete",str(result))
-            self.assertTrue(all(g["field_kind"]=="option_title" for g in groups))
+            self.assertTrue(all(g["field_kind"] in ("option_title",
+                        "display_quantity") for g in groups))
             with app.connect() as c:
                 self.assertEqual(c.execute("""SELECT COUNT(*) FROM
                      v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],0)
@@ -427,6 +428,93 @@ class PlanTranslationsTests(unittest.TestCase):
                 "expected_group_hash":group["expected_group_hash"],
                 "expected_stage_hash":group["expected_stage_hash"],
                 "translated_text":english}
+
+    def test_remaining_quantities_csv_is_reviewed_and_version_bound(self):
+        with patch.dict(os.environ,FLAG):
+            preview=self._common()
+            self.assertEqual(preview["status"],200,preview)
+            group=next(g for g in preview["body"]["items"]
+                       if g["field_kind"]=="display_quantity"
+                       and g["source_text"]=="100 g")
+            self.assertTrue(group["quantity_candidate"])
+            self.assertTrue(group["quantity_neutral"])
+            self.assertTrue(group["csv_eligible"])
+            self.assertEqual(group["suggestion"]["text"],"100 g")
+            self.assertEqual(group["suggestion"]["origin"],"language_neutral_quantity")
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(group,"200 g")]}
+                )["status"],400)
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(group,"100 g")]}
+                )["status"],201)
+            with app.connect() as c:
+                self.assertEqual(c.execute("""SELECT COUNT(*) FROM
+                    v2_content_translations WHERE entity_kind='plan'""").fetchone()[0],0)
+            reloaded=next(g for g in self._common()["body"]["items"]
+                if g["group_id"]==group["group_id"])
+            result=self.call(ROOT+"/common/approve","POST",{
+                "group_id":reloaded["group_id"],
+                "source_hash":reloaded["source_hash"],
+                "expected_group_hash":reloaded["expected_group_hash"],
+                "translated_text":reloaded["imported_text"],
+                "acknowledged":True})
+            self.assertEqual(result["status"],200,result)
+            with app.connect() as c:
+                row=c.execute("""SELECT translated_text,status FROM
+                    v2_content_translations WHERE entity_kind='plan'
+                    AND field_path='meals/0/options/0/foods/0/display_quantity'
+                """).fetchone()
+                self.assertEqual(row["status"],"approved")
+                self.assertEqual(row["translated_text"],"100 g")
+                snapshot=c.execute("""SELECT snapshot_json FROM
+                    v2_food_plan_editor_publications WHERE draft_id=?""",
+                    (self.draft_id,)).fetchone()["snapshot_json"]
+                self.assertEqual(snapshot,self.original)
+
+    def test_generic_quantity_is_eligible_and_sensitive_text_stays_private(self):
+        with patch.dict(os.environ,FLAG):
+            modified=json.loads(self.original)
+            foods=modified["meals"][0]["options"][0]["foods"]
+            foods[0]["display_quantity"]="1 colher de sopa"
+            foods[1]["display_quantity"]="Tomar 5 cápsulas"
+            foods[2]["display_quantity"]="1 dose de insulina"
+            with app.connect() as c:
+                c.execute("""UPDATE v2_food_plan_editor_publications
+                    SET snapshot_json=? WHERE draft_id=?""",
+                    (json.dumps(modified,ensure_ascii=False),self.draft_id))
+                c.commit()
+            result=self._common()
+            groups=result["body"]["items"]
+            self.assertNotIn("Tomar 5 cápsulas",str(result))
+            self.assertNotIn("insulina",str(result))
+            item=next(g for g in groups if g["field_kind"]=="display_quantity")
+            self.assertEqual(item["source_text"],"1 colher de sopa")
+            self.assertTrue(item["quantity_candidate"])
+            self.assertFalse(item["quantity_neutral"])
+            self.assertIsNone(item["suggestion"])
+            self.assertEqual(self.call(ROOT+"/common/import","POST",{
+                "rows":[self._csv_row(item,"1 tablespoon")]}
+                )["status"],201)
+            pending=next(g for g in self._common()["body"]["items"]
+                if g["group_id"]==item["group_id"])
+            self.assertEqual(self.call(ROOT+"/common/approve","POST",{
+                "group_id":pending["group_id"],
+                "source_hash":pending["source_hash"],
+                "expected_group_hash":pending["expected_group_hash"],
+                "translated_text":"1 tablespoon",
+                "acknowledged":True})["status"],200)
+            duplicate=json.loads(json.dumps(modified))
+            duplicate["id"]="pending-qty-second"
+            with app.connect() as c:
+                c.execute("""INSERT INTO v2_food_plan_editor_publications
+                    (draft_id,athlete_id,plan_type,snapshot_json,published_at,state)
+                    VALUES(?,?,?,?,?,?)""",("pending-qty-second","demo-2","Plano azul",
+                    json.dumps(duplicate,ensure_ascii=False),101,"published"))
+                c.commit()
+            reused=next(g for g in self._common()["body"]["items"]
+                if g["field_kind"]=="display_quantity")
+            self.assertEqual(reused["suggestion"]["text"],"1 tablespoon")
+            self.assertEqual(reused["suggestion"]["origin"],"approved_exact_quantity")
 
     def test_simple_unit_suggestions_agree_with_singular_and_plural(self):
         import app_translation_plans_v2 as plan_reviews
@@ -680,7 +768,8 @@ class PlanTranslationsTests(unittest.TestCase):
                      if f["field_path"]=="meals/0/options/0/foods/0/display_quantity")
             self.assertEqual(self.propose(ref,row,"2 units / 120 g")["status"],201)
             groups=self._common()["body"]["items"]
-            self.assertFalse(any(g["field_kind"]=="display_quantity" for g in groups))
+            self.assertFalse(any(g["field_kind"]=="display_quantity"
+                and g["source_text"]=="2 un / 120 g" for g in groups))
             # Another publication has the identical unit but is still missing.
             duplicate=json.loads(json.dumps(updated))
             duplicate["id"]="shared-2"
