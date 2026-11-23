@@ -183,11 +183,41 @@ def _hold_signature(identifier, variant_id, expiry):
     return hmac.new(secret, raw.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def signed_cart_line(hold):
+_PT_WEEKDAYS = ("segunda-feira", "terça-feira", "quarta-feira", "quinta-feira",
+                "sexta-feira", "sábado", "domingo")
+_PT_MONTHS = ("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+              "agosto", "setembro", "outubro", "novembro", "dezembro")
+_PT_MODES = {"presencial": "Presencial", "online": "Online"}
+
+
+def visible_booking_details(hold, professional_name=None):
+    """Customer-facing booking details shown in cart, checkout, order and emails.
+
+    Display only: these properties are never read back when a paid order is
+    processed. The booking itself is always taken from the server-side hold.
+    """
+    from datetime import date as _date
+    from appointments_availability_v2 import display_time
+    day = _date.fromisoformat(hold["day"])
+    details = {
+        "Data": "%s, %d de %s de %d" % (
+            _PT_WEEKDAYS[day.weekday()], day.day, _PT_MONTHS[day.month - 1], day.year),
+        "Hora": "%s – %s" % (display_time(hold["start_minute"]),
+                             display_time(hold["end_minute"])),
+        "Formato": _PT_MODES.get(hold["mode"], hold["mode"]),
+    }
+    if isinstance(professional_name, str) and professional_name.strip():
+        details["Nutricionista"] = professional_name.strip()[:80]
+    return details
+
+
+def signed_cart_line(hold, c=None):
     """Opaque hold marker to attach to Shopify's AJAX cart line properties.
 
     The price/quantity/professional still come from server-side records, never
-    from a cart property or browser input during webhook processing.
+    from a cart property or browser input during webhook processing. Visible
+    details (date, time, format, professional) are added after the private
+    markers for the customer's benefit only.
     """
     if hold["status"] != "held" or hold["expires_at"] <= int(time.time()):
         raise ShopifyBridgeError("checkout_hold_closed")
@@ -203,11 +233,20 @@ def signed_cart_line(hold):
             "_the_mile_proof": _hold_signature(
                 hold["id"], variant, hold["expires_at"]
             ),
+            **visible_booking_details(hold, _professional_name(c, hold)),
         },
         "expires_at": hold["expires_at"],
         "hold_id": hold["id"],
         "professional_id": hold["professional_id"],
     }
+
+
+def _professional_name(c, hold):
+    if c is None:
+        return None
+    row = c.execute("""SELECT name FROM appt_professionals
+        WHERE org_id=? AND id=?""", (ORG_ID, hold["professional_id"])).fetchone()
+    return row["name"] if row else None
 
 
 def create_checkout_hold(c, query, data, now=None):
@@ -224,7 +263,7 @@ def create_checkout_hold(c, query, data, now=None):
         (ORG_ID, data["idempotency_key"])).fetchone()
     if not saved:
         raise ShopifyBridgeError("checkout_hold_not_found")
-    return signed_cart_line(saved)
+    return signed_cart_line(saved, c)
 
 
 def _props(line):

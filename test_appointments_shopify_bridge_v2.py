@@ -110,6 +110,24 @@ class ShopifyPaymentBridgeTests(unittest.TestCase):
         result["body"]=json.loads(output)
         return result
 
+    def test_cart_line_shows_visible_booking_details_after_private_markers(self):
+        with app.connect() as c:
+            line=bridge.create_checkout_hold(c,self.signed_proxy(),self.payload("visible-details-key-0001"))
+        props=line["properties"]
+        # Private markers stay first, so existing order parsing is unchanged.
+        self.assertEqual(list(props)[:2],["_the_mile_hold","_the_mile_proof"])
+        self.assertEqual(props["Hora"],"09:00 – 10:30")
+        self.assertEqual(props["Formato"],"Presencial")
+        self.assertEqual(props["Nutricionista"],"Shopify Paid Webhook Test")
+        day=datetime.fromisoformat(self.day)
+        self.assertIn("%d de " % day.day, props["Data"])
+        self.assertTrue(props["Data"].endswith(str(day.year)))
+        # Visible details are display only and never affect confirmation.
+        details=bridge.visible_booking_details(
+            {"day":"2026-11-27","start_minute":600,"end_minute":690,"mode":"online"})
+        self.assertEqual(details,{"Data":"sexta-feira, 27 de novembro de 2026",
+                                  "Hora":"10:00 – 11:30","Formato":"Online"})
+
     def test_checkout_proxy_signed_request_and_idempotent_hold(self):
         with app.connect() as c:
             first=bridge.create_checkout_hold(c,self.signed_proxy(),self.payload())
