@@ -688,3 +688,15 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
   .tm-admin-translations-page .i18n-plan-coverage-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tm-admin-translations-page .i18n-plan-coverage-head button{width:auto}
 }
+
+/* Reviewed Planos quantity queue, reusing the established CSV preview rows. */
+.tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-quantity-stats{
+  margin:0 0 8px;color:var(--tm-ui-muted);
+  font-size:11px;line-height:1.5;overflow-wrap:anywhere;
+}
+.tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-unique-row{
+  align-items:flex-start;
+}
+.tm-admin-translations-page .i18n-plan-quantity-preview .i18n-plan-unique-row span{
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
