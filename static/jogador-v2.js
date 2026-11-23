@@ -218,7 +218,7 @@ async function api(path,opts={}){
  }
  return data;
 }
-function fmt(v,d=1){return Number(v).toLocaleString("pt-PT",{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmt(v,d=1){return Number(v).toLocaleString(playerDateLocale(),{minimumFractionDigits:d,maximumFractionDigits:d});}
 function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
@@ -2944,7 +2944,7 @@ $("player-session-retry").onclick();
 
 /* Player anthropometry data. Only clinician-published measurements are shown. */
 let assessmentRecords=[],assessmentFields={},assessmentAverages=[],assessmentGroup="resumo";
-const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+const assessNumber=value=>Number(value).toLocaleString(playerDateLocale(),{minimumFractionDigits:1,maximumFractionDigits:1});
 // Clinical sum-of-8 skinfold colours, matching the Backoffice.
 function playerSkinfoldCategory(value,fieldPosition="",sex="M"){
  const n=Number(value);if(value===null||value===""||!Number.isFinite(n))return null;
