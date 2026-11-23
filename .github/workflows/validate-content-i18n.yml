@@ -11,6 +11,8 @@ on:
       - test_app_content_i18n_v2.py
       - test_player_language_v2.py
       - static/jogador-v2.js
+      - static/player-recipes.js
+      - static/player-visual-portions.js
       - tests/player-native-i18n-textonly.test.cjs
       - .github/workflows/validate-content-i18n.yml
   workflow_dispatch:
@@ -21,6 +23,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -29,4 +33,13 @@ jobs:
       - run: python -m py_compile app_content_i18n_v2.py player_language_v2.py food_plan_player_v2.py app.py
       - run: node --check static/chef.js
       - run: node --check static/jogador-v2.js
+      - run: node --check static/player-recipes.js
+      - run: node --check static/player-visual-portions.js
+      - name: Reject any visual asset changes
+        run: |
+          if git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | grep -E '\.(css|html|svg)      - run: node --test tests/player-native-i18n-textonly.test.cjs
+; then
+            echo "Internationalisation must not modify CSS, HTML or SVG." >&2
+            exit 1
+          fi
       - run: node --test tests/player-native-i18n-textonly.test.cjs
