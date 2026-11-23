@@ -69,6 +69,25 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.deepEqual(element.style,{});
 });
 
+test("Energy values render as ungrouped kcal in both locales, without changing nutrient formatting",()=>{
+  const player=fs.readFileSync("static/jogador-v2.js","utf8");
+  const helper=player.match(/function fmtKcal\\(v\\)\\{[^\\n]+\\}/)?.[0];
+  assert.ok(helper,"kcal-specific formatter exists");
+  for(const locale of ["pt-PT","en-GB"]){
+    const displayed=vm.runInNewContext(
+      'function playerDateLocale(){return '+JSON.stringify(locale)+';}\\n'+helper+'\\nfmtKcal(1244.2)');
+    assert.equal(displayed,"1244",locale);
+    const rounded=vm.runInNewContext(
+      'function playerDateLocale(){return '+JSON.stringify(locale)+';}\\n'+helper+'\\nfmtKcal(999.6)');
+    assert.equal(rounded,"1000",locale);
+  }
+  assert.ok(player.includes('value.textContent=(key==="kcal"?fmtKcal(data[key]):fmt(data[key],0))'));
+  assert.ok(player.includes('current.textContent=fmtKcal(actual.kcal/divisor)'));
+  assert.ok(player.includes('planned.textContent=" / "+fmtKcal(total.kcal/divisor)'));
+  assert.ok(player.includes('n.textContent=item.found?(key==="kcal"?fmtKcal(item.total[key]/scale)'));
+  assert.ok(player.includes('span.append(document.createTextNode((Number.isFinite(n)?(key==="kcal"?fmtKcal(n):fmt(n,d))'));
+});
+
 test("Remaining Player and Chef UI labels use the selected language without visual changes",()=>{
   const player=fs.readFileSync("static/jogador-v2.js","utf8");
   const chef=fs.readFileSync("static/chef.js","utf8");
