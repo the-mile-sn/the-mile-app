@@ -232,15 +232,15 @@
       "occurrences","translated_text"];
     const csvCell=(value,protect=false)=>{
       let content=String(value??"");
-      if(protect&&/^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(content))content="'"+content;
+      if(protect&&/^[\s\u0000-\u001f]*[=+\-@]/.test(content))content="'"+content;
       return '"'+content.replaceAll('"','""')+'"';
     };
-    const createCsv=rows=>"\\uFEFF"+[csvHeaders,...rows.map(r=>
+    const createCsv=rows=>"\uFEFF"+[csvHeaders,...rows.map(r=>
       csvHeaders.map(k=>r[k]??""))].map((r,index)=>r.map((cell,j)=>
         csvCell(cell,index>0&&["source_text","meal_context","translated_text"].includes(
-          csvHeaders[j]))).join(";")).join("\\r\\n")+"\\r\\n";
+          csvHeaders[j]))).join(";")).join("\r\n")+"\r\n";
     const parseCsv=raw=>{
-      const input=raw.replace(/^\\uFEFF/,"");
+      const input=raw.replace(/^\uFEFF/,"");
       const rows=[];let current=[],value="",quoted=false,atStart=true;
       const cell=()=>{current.push(value);value="";atStart=true;};
       const next=()=>{cell();if(current.some(x=>x!==""))rows.push(current);current=[];};
@@ -252,8 +252,8 @@
           else value+=ch;
         }else if(ch==='"'&&atStart){quoted=true;atStart=false;}
         else if(ch===";")cell();
-        else if(ch==="\\n")next();
-        else if(ch==="\\r"&&input[i+1]==="\\n"){}
+        else if(ch==="\n")next();
+        else if(ch==="\r"&&input[i+1]==="\n"){}
         else if(ch==='"')throw Error("CSV com aspas inválidas.");
         else {value+=ch;atStart=false;}
       }
@@ -348,15 +348,15 @@
           if(!g||unique.has(row.group_id))throw Error(
             "Existe um grupo duplicado ou alterado. Descarrega um novo modelo.");
           unique.add(row.group_id);
-          const safeSource=String(row.source_text).replace(/^'(?=[=+\\-@])/,"");
-          const safeContext=String(row.meal_context).replace(/^'(?=[=+\\-@])/,"");
+          const safeSource=String(row.source_text).replace(/^'(?=[=+\-@])/,"");
+          const safeContext=String(row.meal_context).replace(/^'(?=[=+\-@])/,"");
           if(row.source_hash!==g.source_hash||
              row.expected_group_hash!==g.expected_group_hash||
              row.expected_stage_hash!==(g.expected_stage_hash||"")||
              row.field_kind!==g.field_kind||safeContext!==g.meal_context||
              safeSource!==g.source_text)
             throw Error("O plano mudou desde a exportação. Descarrega um CSV novo.");
-          const translated=row.translated_text.trim().replace(/^'(?=[=+\\-@])/,"");
+          const translated=row.translated_text.trim().replace(/^'(?=[=+\-@])/,"");
           if(!translated){blanks++;continue;}
           validated.push({group_id:g.group_id,source_hash:g.source_hash,
             expected_group_hash:g.expected_group_hash,
