@@ -179,6 +179,21 @@ class PresentationTranslationTests(unittest.TestCase):
             self.assertIs(i18n.localise_recipe_detail(
                 self.c,recipe,language="pt"),recipe)
 
+    def test_dish_summaries_keep_canonical_names_for_legacy_menu_links(self):
+        self._put("dish","dish-old","name_pt",
+                  "Salmão grelhado","Grilled salmon")
+        original=[{"id":"dish-old","name_pt":"Salmão grelhado",
+                   "recipe_count":2}]
+        with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"1"}):
+            result=i18n.localise_dish_summaries(
+                self.c,original,language="en")
+            self.assertEqual(result[0]["name_pt"],"Salmão grelhado")
+            self.assertEqual(result[0]["display_name"],"Grilled salmon")
+            self.assertEqual(result[0]["recipe_count"],2)
+            self.assertNotIn("display_name",original[0])
+            self.assertIs(i18n.localise_dish_summaries(
+                self.c,original,language="pt"),original)
+
     def test_dish_menu_names_follow_approved_content_without_mutation(self):
         self.c.execute("""CREATE TABLE v2_dish_library (
             id TEXT PRIMARY KEY,name_pt TEXT,active INTEGER)""")
