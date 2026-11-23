@@ -845,8 +845,81 @@
     const list=create("div","i18n-plan-list");list.id="i18n-plan-items";
     const detail=create("div","i18n-plan-detail");detail.id="i18n-plan-detail";
     const auditPanel=create("div","i18n-plan-audit");
+    const privatePanel=create("section","i18n-plan-private-queue");
     const commonPanel=create("section","i18n-plan-common");
-    host.append(head,intro,auditPanel,commonPanel,list,detail);
+    host.append(head,intro,auditPanel,privatePanel,commonPanel,list,detail);
+    const renderPrivateQueue=audit=>{
+      privatePanel.replaceChildren();
+      const counts=audit?.coverage_by_kind||{};
+      const kinds=["alternative_override","supplement_label"];
+      const count=kinds.reduce((sum,kind)=>sum+
+        Number(counts[kind]?.missing||0)+Number(counts[kind]?.pending||0)+
+        Number(counts[kind]?.outdated||0),0);
+      const head=create("div","i18n-plan-detail-head");
+      head.append(create("strong","","Revisão privada · últimos textos"));
+      const open=create("button","i18n-secondary",
+        count?"Abrir revisão privada · "+count+" textos":"Revisão privada concluída");
+      open.type="button";open.disabled=!count;
+      head.append(open);
+      const message=create("p","i18n-plan-policy",
+        count?"Alternativas alimentares e textos de suplementos ainda pendentes. "+
+          "As traduções são revistas dentro da sessão do administrador, sem CSV. "+
+          "Guarda cada proposta e aprova-a individualmente após confirmação.":
+          "Não existem alternativas ou suplementos pendentes nesta auditoria.");
+      const statusMessage=create("p","i18n-feedback");
+      statusMessage.setAttribute("role","status");
+      const rows=create("div","i18n-plan-private-list");
+      privatePanel.append(head,message,statusMessage,rows);
+      open.addEventListener("click",async()=>{
+        if(open.disabled)return;
+        open.disabled=true;
+        rows.replaceChildren();
+        statusMessage.textContent="A consultar apenas os planos com campos pendentes…";
+        const relevant=publications.filter(p=>
+          ["missing","pending","outdated"].some(kind=>
+            Number(p.statuses?.[kind]||0)>0));
+        let found=0,errors=0;
+        for(const publication of relevant){
+          if(seq!==generation||host.hidden)return;
+          try{
+            const url="/api/v2/admin/i18n/plans/fields?"+
+              new URLSearchParams({publication_ref:publication.publication_ref});
+            const result=await send(url);
+            if(seq!==generation||host.hidden)return;
+            const items=(result.fields||[]).filter(f=>
+              kinds.includes(f.field_kind)&&f.status!=="approved");
+            if(!items.length)continue;
+            const section=create("section","i18n-plan-private-publication");
+            const title=create("strong","",labelPlan(result.publication));
+            const label=create("small","",items.length+" textos a rever");
+            const groupHead=create("div","i18n-plan-detail-head");
+            groupHead.append(title,label);
+            section.append(groupHead);
+            for(const field of items){
+              section.append(renderField(field,publication.publication_ref));
+              found++;
+            }
+            rows.append(section);
+          }catch(e){
+            errors++;
+            statusMessage.textContent="Não foi possível consultar "+
+              errors+" plano(s). Reabre a revisão para tentar novamente.";
+          }
+        }
+        if(seq!==generation||host.hidden)return;
+        if(!found){
+          rows.append(create("p","i18n-results-count",
+            errors?"Revisão incompleta. Volta a tentar após atualizar a página.":
+              "Não existem alternativas ou suplementos por rever. "+
+              "Atualiza o diagnóstico para confirmar a cobertura."));
+        }
+        if(!errors)statusMessage.textContent=found+
+          " campos disponíveis para revisão privada. "+
+          "Depois de aprovar, utiliza «Atualizar diagnóstico» "+
+          "e «Abrir revisão privada» para atualizar esta lista.";
+        open.disabled=false;
+      });
+    };
     try{
       const result=await send("/api/v2/admin/i18n/plans");
       if(seq!==generation||host.hidden)return;
@@ -881,6 +954,7 @@
             if(seq!==generation||host.hidden)return;
             publications=fresh.items||[];
             renderAudit(fresh.reuse_audit);
+            renderPrivateQueue(fresh.reuse_audit);
             renderList(status,query);
           }catch(e){
             feedback.textContent="Não foi possível atualizar: "+e.message;
@@ -959,6 +1033,7 @@
         auditPanel.append(reuse);
       };
       renderAudit(result.reuse_audit);
+      renderPrivateQueue(result.reuse_audit);
       renderList(status,query);
       await renderCommon(commonPanel);
     }catch(e){
