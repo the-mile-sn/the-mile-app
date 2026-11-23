@@ -1360,9 +1360,9 @@ function injectPostMatchCard(){
   const icon=document.createElement("span");icon.className="post-match-inline-icon tm-day-icon";icon.append(mealIcon("football-pitch"));
   const title=document.createElement("span");title.className="post-match-inline-title tm-day-title";title.textContent=playerText("Questionário pós-jogo","Post-match questionnaire");
   const status=document.createElement("span");status.className="post-match-inline-status";
-  status.textContent=game.answered?"✓ Preenchido":"Por preencher";
+  status.textContent=game.answered?playerText("✓ Preenchido","✓ Completed"):playerText("Por preencher","Not completed");
   button.append(icon,title,status);
-  const action=document.createElement("button");action.type="button";action.className="post-match-edit";action.setAttribute("aria-label",game.answered?"Editar questionário pós-jogo":"Preencher questionário pós-jogo");
+  const action=document.createElement("button");action.type="button";action.className="post-match-edit";action.setAttribute("aria-label",game.answered?playerText("Editar questionário pós-jogo","Edit post-match questionnaire"):playerText("Preencher questionário pós-jogo","Complete post-match questionnaire"));
   action.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>';
   card.append(button,action);
   button.disabled=true;
@@ -1372,15 +1372,15 @@ function injectPostMatchCard(){
    const answers={...(game.answers||{})};
    const section=document.createElement("section");section.className="post-match-questionnaire";
    let step=0;
-   const steps=["Participação e bem-estar","Alimentação","Suplementação"];
+   const steps=[playerText("Participação e bem-estar","Participation and wellbeing"),playerText("Alimentação","Nutrition"),playerText("Suplementação","Supplements")];
    const heading=document.createElement("div");heading.className="post-match-progress";
    const content=document.createElement("div");content.className="post-match-questions";
    const nav=document.createElement("div");nav.className="post-match-navigation";
-   const back=document.createElement("button");back.type="button";back.textContent="‹";back.setAttribute("aria-label","Anterior");
+   const back=document.createElement("button");back.type="button";back.textContent="‹";back.setAttribute("aria-label",playerText("Anterior","Previous"));
    const next=document.createElement("button");next.type="button";
    const msg=document.createElement("p");msg.setAttribute("role","status");
    const select=document.createElement("select");select.required=true;
-   const start=document.createElement("option");start.value="";start.textContent="Selecionar";select.append(start);
+   const start=document.createElement("option");start.value="";start.textContent=playerText("Selecionar","Select");select.append(start);
    const none=document.createElement("option");none.value="not_played";none.textContent=playerText("Não joguei","Did not play");select.append(none);
    for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
    if(game.answered)select.value=game.minutes==null?"not_played":String(game.minutes);
@@ -1415,27 +1415,27 @@ function injectPostMatchCard(){
     const bars=document.createElement("div");bars.className="post-match-progress-bars";
     for(let i=0;i<3;i++){const bar=document.createElement("span");if(i<=step)bar.className="active";bars.append(bar);}heading.append(bars);
     if(step===0){
-     question("1. Quantos minutos jogaste?",select);
+     question(playerText("1. Quantos minutos jogaste?","1. How many minutes did you play?"),select);
      if(select.value!=="not_played"){
-      scale("feeling","2. Como te sentiste no jogo?","Horrível","Muito bem");
-      scale("effort","3. Perceção do esforço","Muito leve","Esforço máximo");
-      radio("gi_level","4. Como te sentiste a nível gastrointestinal?",[["none","Sem sintomas"],["mild","Desconforto ligeiro"],["moderate","Desconforto moderado"],["severe","Desconforto intenso"]]);
-      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms","Que sintomas tiveste?",[["nausea","Náuseas"],["abdominal_pain","Dor abdominal"],["bloating","Inchaço abdominal"],["reflux","Refluxo / azia"],["urgency","Urgência para evacuar / diarreia"],["vomiting","Vómitos"],["other","Outro"]]);
-      multiple("game_symptoms","Durante o jogo, tiveste algum destes sintomas?",[["none","Nenhum"],["cramps","Cãibras"],["muscle_pain","Dores musculares"],["injury","Lesão"],["weakness_dizziness","Sensação de fraqueza / tonturas"],["other","Outro"]],true);
+      scale("feeling",playerText("2. Como te sentiste no jogo?","2. How did you feel during the match?"),playerText("Horrível","Terrible"),playerText("Muito bem","Very good"));
+      scale("effort",playerText("3. Perceção do esforço","3. Perceived exertion"),playerText("Muito leve","Very light"),playerText("Esforço máximo","Maximum exertion"));
+      radio("gi_level",playerText("4. Como te sentiste a nível gastrointestinal?","4. How did you feel gastrointestinally?"),[["none",playerText("Sem sintomas","No symptoms")],["mild",playerText("Desconforto ligeiro","Mild discomfort")],["moderate",playerText("Desconforto moderado","Moderate discomfort")],["severe",playerText("Desconforto intenso","Severe discomfort")]]);
+      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms",playerText("Que sintomas tiveste?","Which symptoms did you experience?"),[["nausea",playerText("Náuseas","Nausea")],["abdominal_pain",playerText("Dor abdominal","Abdominal pain")],["bloating",playerText("Inchaço abdominal","Bloating")],["reflux",playerText("Refluxo / azia","Reflux / heartburn")],["urgency",playerText("Urgência para evacuar / diarreia","Urgency / diarrhoea")],["vomiting",playerText("Vómitos","Vomiting")],["other",playerText("Outro","Other")]]);
+      multiple("game_symptoms",playerText("Durante o jogo, tiveste algum destes sintomas?","During the match, did you experience any of these symptoms?"),[["none",playerText("Nenhum","None")],["cramps",playerText("Cãibras","Cramps")],["muscle_pain",playerText("Dores musculares","Muscle pain")],["injury",playerText("Lesão","Injury")],["weakness_dizziness",playerText("Sensação de fraqueza / tonturas","Weakness / dizziness")],["other",playerText("Outro","Other")]],true);
      }
     }else if(step===1){
-     for(const [name,title] of [["food_pre","O que comeste na refeição pré-jogo?"],["food_between","O que consumiste entre a última refeição e o início do jogo, incluindo o aquecimento?"],["food_during","O que consumiste durante o jogo, incluindo primeira parte, intervalo e segunda parte?"]]){
+     for(const [name,title] of [["food_pre",playerText("O que comeste na refeição pré-jogo?","What did you eat at your pre-match meal?")],["food_between",playerText("O que consumiste entre a última refeição e o início do jogo, incluindo o aquecimento?","What did you consume between your last meal and kick-off, including the warm-up?")],["food_during",playerText("O que consumiste durante o jogo, incluindo primeira parte, intervalo e segunda parte?","What did you consume during the match, including both halves and half-time?")]]){
       const field=document.createElement("textarea");field.rows=3;field.maxLength=2000;field.value=answers[name]||"";field.oninput=()=>answers[name]=field.value;question(title,field);
      }
     }else{
-     for(const [name,title] of [["caffeine_pre","Tomaste cafeína (cápsula ou shot) antes do jogo?"],["caffeine_half","Tomaste cafeína (cápsula ou shot) no intervalo?"],["nitrates_pre","Tomaste nitratos antes do jogo?"],["recovery_shake","Tomaste um batido recovery após o jogo?"]])radio(name,title,[[true,"Sim"],[false,"Não"]]);
+     for(const [name,title] of [["caffeine_pre",playerText("Tomaste cafeína (cápsula ou shot) antes do jogo?","Did you take caffeine (capsule or shot) before the match?")],["caffeine_half",playerText("Tomaste cafeína (cápsula ou shot) no intervalo?","Did you take caffeine (capsule or shot) at half-time?")],["nitrates_pre",playerText("Tomaste nitratos antes do jogo?","Did you take nitrates before the match?")],["recovery_shake",playerText("Tomaste um batido recovery após o jogo?","Did you have a recovery shake after the match?")]])radio(name,title,[[true,playerText("Sim","Yes")],[false,playerText("Não","No")]]);
     }
     back.hidden=step===0;
-    next.textContent=select.value==="not_played"||step===2?"✓":"›";next.setAttribute("aria-label",select.value==="not_played"||step===2?(game.answered?"Guardar alteração":"Concluir e enviar"):"Continuar");
+    next.textContent=select.value==="not_played"||step===2?"✓":"›";next.setAttribute("aria-label",select.value==="not_played"||step===2?(game.answered?playerText("Guardar alteração","Save changes"):playerText("Concluir e enviar","Finish and submit")):playerText("Continuar","Continue"));
    }
    select.onchange=()=>draw();
    back.onclick=()=>{step=Math.max(0,step-1);draw();};
-   next.onclick=()=>{if(!select.value){msg.textContent="Seleciona os minutos jogados.";return;}if(step<2&&select.value!=="not_played"){step++;draw();}else form.requestSubmit();};
+   next.onclick=()=>{if(!select.value){msg.textContent=playerText("Seleciona os minutos jogados.","Select the minutes played.");return;}if(step<2&&select.value!=="not_played"){step++;draw();}else form.requestSubmit();};
    nav.append(back,next);section.append(heading,content,nav,msg);form.append(section);card.append(form);draw();
    action.setAttribute("aria-expanded","false");
    action.onclick=()=>{form.hidden=!form.hidden;action.setAttribute("aria-expanded",String(!form.hidden));};
@@ -1447,7 +1447,7 @@ function injectPostMatchCard(){
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
      overviewReadCache.delete("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
      await overview();
-    }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
+    }catch(err){msg.textContent=playerText("Não foi possível guardar: ","Could not save: ")+err.message;next.disabled=false;}
    };
   }
   if(anchor){anchor.after(card);}else root.append(card);
