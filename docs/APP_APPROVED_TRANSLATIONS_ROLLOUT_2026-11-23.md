@@ -115,19 +115,35 @@ pesquisa em inglês de alimentos, mensagens menos frequentes e
 verificação visual de todos os estados PT/EN continuam pendentes.
 **Não publicar nem ativar esta PR até concluir e testar estes pontos.**
 
-## Diagnóstico interno seguro da fonte de traduções
-- Foi preparado o endpoint `GET /api/v2/admin/translation-readiness` no
-  serviço público, exclusivamente para uma sessão `admin` e com a flag
-  `MILE_APP_TRANSLATION_DIAGNOSTIC=1`. Por defeito responde 404.
-- A leitura utiliza a mesma ligação de base de dados da app, devolvendo
-  apenas disponibilidade da tabela e contagens de traduções aprovadas por
-  tipo. Nunca revela nomes, conteúdo de planos, traduções, dados clínicos
-  nem URL de ligação à base de dados.
-- **Ainda não foi executado na produção**: a PR continua sem merge e
-  esta flag permanece desligada. Após testes finais, permite confirmar
-  a ligação sem alterar a política de IP do PostgreSQL.
-- Após confirmação, a flag de diagnóstico deverá voltar a `0`.
+## Diagnóstico interno seguro da fonte de traduções — revisão final
+- O endpoint previamente planeado, `GET /api/v2/admin/translation-readiness`,
+  foi retirado: o serviço público `MILE_SITE_ROLE=player` bloqueia sessões
+  `admin`, tornando essa rota inacessível no ambiente pretendido.
+- O diagnóstico passou a ser **interno**, no arranque do serviço público,
+  apenas se `MILE_APP_TRANSLATION_DIAGNOSTIC=1` e
+  `MILE_SITE_ROLE=player`. Lê a tabela com a própria ligação da app.
+- Regista exclusivamente nos logs privados do Render a existência da tabela,
+  a contagem de traduções EN aprovadas e a distribuição por tipo de conteúdo.
+  Não revela nomes, dados clínicos, traduções, hashes ou credenciais.
+- O diagnóstico não executa escritas nem interrompe o serviço em caso de erro.
+  Permanece desligado por defeito e deverá voltar a `0` após a verificação.
+- O PostgreSQL de produção não autoriza ligações externas; não alterar a
+  allowlist para verificar traduções. **Ainda falta executar este diagnóstico
+  na app pública com a ligação real**, após a autorização do plano de release.
 
+## Validação isolada com dados fictícios
+- A app de testes `the-mile-i18n-pten-20261123` utiliza SQLite independente
+  e conteúdos sintéticos, nunca dados de clientes.
+- Os testes automatizados da PR cobrem PT/EN, regressões de interface, cálculo,
+  autenticação e identificação das publicações. O browser test no ramo
+  `validation/i18n-pten-20261123` captura os fluxos Dia/Semana de jogadores
+  PT/EN e de Chef EN em mobile e desktop, sem mudar o design.
+- Uma execução bem-sucedida não comprova a leitura real do PostgreSQL nem
+  substitui a revisão manual do conjunto de ecrãs e estados.
+- **Merge em `main` provoca deploy automático da app pública**.
+  Antes de o fazer, manter `MILE_APP_TRANSLATIONS_ENABLED=0` e
+  `MILE_PLAYER_LANGUAGE_SELECTION_ENABLED=0`, confirmar o plano de
+  rollback e obter aprovação explícita para a publicação.
 ## Pesquisa bilingue e editor de consumos (lote seguinte)
 - A pesquisa de alimentos do jogador suporta termos PT e EN (por exemplo,
   «arroz» e «rice») quando EN está ativo, sem alterar o motor de pesquisa
