@@ -1,0 +1,39 @@
+name: Validate isolated synthetic i18n staging
+on:
+  push:
+    branches: [validation/i18n-pten-20261123]
+  workflow_dispatch:
+jobs:
+  synthetic-readiness:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      MILE_DATA_DIR: /tmp/the-mile-i18n-pten-20261123
+      MILE_SITE_ROLE: player
+      MILE_I18N_SYNTHETIC_DATA: "1"
+      MILE_APP_TRANSLATIONS_ENABLED: "1"
+      MILE_PLAYER_LANGUAGE_SELECTION_ENABLED: "1"
+      MILE_APP_TRANSLATION_DIAGNOSTIC: "0"
+      MILE_I18N_VALIDATION_PASSWORD: "only-fake-github-ci-validation-password-1234"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - run: python -m py_compile app.py tools/seed_i18n_validation.py
+      - name: Seed and verify synthetic bilingual app data
+        run: |
+          python tools/seed_i18n_validation.py
+          python tools/seed_i18n_validation.py --verify
+      - name: Validate JavaScript remains syntactically correct
+        run: |
+          node --check static/jogador-v2.js
+          node --check static/chef.js
+          node --check static/player-recipes.js
+      - name: Verify production DB is never configured in staging
+        run: |
+          test -z "${DATABASE_URL:-}"
+          test "$MILE_SITE_ROLE" = player
+          test "$MILE_I18N_SYNTHETIC_DATA" = 1
