@@ -16,6 +16,7 @@ on:
       - test_app_content_i18n_v2.py
       - test_player_language_v2.py
       - test_player_i18n_rollout_preflight.py
+      - test_player_i18n_final_acceptance.py
       - tools/player_i18n_rollout_preflight.py
       - tests/test_i18n_private_diagnostic.py
       - tests/player-native-i18n-textonly.test.cjs
@@ -35,7 +36,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install -r requirements.txt
-      - run: python -m unittest -v test_app_content_i18n_v2 test_player_language_v2 test_player_i18n_rollout_preflight tests.test_food_plan_player_v2 test_chef_player_integration
+      - run: python -m unittest -v test_app_content_i18n_v2 test_player_language_v2 test_player_i18n_rollout_preflight test_player_i18n_final_acceptance tests.test_food_plan_player_v2 test_chef_player_integration
       - run: python -m py_compile app_content_i18n_v2.py player_language_v2.py food_plan_player_v2.py tools/player_i18n_rollout_preflight.py app.py
       - run: python -m unittest discover -s tests -p test_i18n_private_diagnostic.py -v
       - run: node --check static/chef.js
