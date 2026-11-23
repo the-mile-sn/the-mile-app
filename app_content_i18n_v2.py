@@ -273,3 +273,9 @@ def localise_supplement_days(c, by_day, *, language="pt"):
             result.append(display)
         output[day]=result
     return output
+
+def localise_supplement_plan(c, items, *, language="pt"):
+    """Translate published plan presentation only; no athlete schedule writes."""
+    if not enabled(language) or not items:
+        return items
+    return localise_supplement_days(c, {"plan":items},language=language)["plan"]
