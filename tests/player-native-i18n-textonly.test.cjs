@@ -57,6 +57,27 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.deepEqual(element.style,{});
 });
 
+test("Remaining Player and Chef UI labels use the selected language without visual changes",()=>{
+  const player=fs.readFileSync("static/jogador-v2.js","utf8");
+  const chef=fs.readFileSync("static/chef.js","utf8");
+  const portions=fs.readFileSync("static/player-visual-portions.js","utf8");
+  for(const phrase of [
+    'playerText("Ver receitas","View recipes")',
+    'playerText("Ver receita","View recipe")',
+    'playerText("As novas palavras-passe não coincidem.","The new passwords do not match.")',
+    'playerText("Refeição registada","Meal recorded")',
+    'playerText("Fechar fotografia","Close photo")',
+    'playerText("Média semanal: ","Weekly average: ")',
+    'playerText("Momento',
+    'periTimingEnglish[timing]'
+  ])assert.ok(player.includes(phrase),phrase);
+  assert.ok(chef.includes('lang==="pt"?"Fechar fotografia":"Close photo"'));
+  assert.ok(chef.includes('lang==="pt"?"abrir detalhes":"open details"'));
+  assert.ok(portions.includes('tr("Reduzir painel","Collapse panel")'));
+  assert.ok(portions.includes('tr("Expandir painel","Expand panel")'));
+  // Text-only changes: no CSS, HTML or new visual control is required.
+});
+
 test("Recipe and visual-portion labels follow language without changing markup",()=>{
   function textOnlyHelpers(path,start,end,language,expression){
     const source=fs.readFileSync(path,"utf8");
