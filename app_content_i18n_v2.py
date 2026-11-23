@@ -43,10 +43,13 @@ def _approved_rows(c, kind, entity_id=None):
     return c.execute(sql, params).fetchall()
 
 
-def _current_english(row, original):
+def _current_english(row, original, *, trim_source=False):
     if not isinstance(original, str) or not original.strip():
         return original
-    if (row is None or row["source_hash"] != _sha(original.strip())
+    # Library approvals hash their exact canonical source. Plan approvals
+    # deliberately trim source text in their private review inventory.
+    canonical=original.strip() if trim_source else original
+    if (row is None or row["source_hash"] != _sha(canonical)
             or not isinstance(row["translated_text"], str)
             or not row["translated_text"].strip()):
         return original
@@ -100,32 +103,38 @@ def localise_published_plans(c, plans, library, *, language="pt"):
                     continue
                 prefix = f"meals/{mi}/options/{oi}"
                 option["title"] = _current_english(
-                    rows.get(prefix + "/title"), option.get("title"))
+                    rows.get(prefix + "/title"), option.get("title"),
+                    trim_source=True)
                 for ni, note in enumerate(option.get("notes") or []):
                     option["notes"][ni] = _current_english(
-                        rows.get(prefix + f"/notes/{ni}"), note)
+                        rows.get(prefix + f"/notes/{ni}"), note,
+                        trim_source=True)
                 for fi, food in enumerate(option.get("foods") or []):
                     if not isinstance(food, dict):
                         continue
                     fpath = prefix + f"/foods/{fi}"
                     if food.get("kind") == "supplement":
                         food["label"] = _current_english(
-                            rows.get(fpath + "/label"), food.get("label"))
+                            rows.get(fpath + "/label"), food.get("label"),
+                            trim_source=True)
                         continue
                     food["display_quantity"] = _current_english(
                         rows.get(fpath + "/display_quantity"),
-                        food.get("display_quantity"))
+                        food.get("display_quantity"),trim_source=True)
                     text = food.get("display_name")
                     if not isinstance(text, str) or not text.strip():
                         continue
                     food_id = str(food.get("id") or "")
                     canonical = pt_names.get(food_id)
                     if canonical is not None and text.strip() == canonical.strip():
-                        food["display_name"] = _current_english(
-                            food_rows.get(food_id), text)
+                        result=_current_english(food_rows.get(food_id),canonical)
+                        # Without a valid approval keep precisely the published
+                        # Portuguese display name (including its whitespace).
+                        if result!=canonical:food["display_name"]=result
                     else:
                         food["display_name"] = _current_english(
-                            rows.get(fpath + "/display_name"), text)
+                            rows.get(fpath + "/display_name"), text,
+                            trim_source=True)
         copied["content"] = snapshot
         localised[plan_type] = copied
     return localised, en_library
