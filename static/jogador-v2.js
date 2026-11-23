@@ -308,7 +308,9 @@ async function api(path,opts={}){
  return data;
 }
 function fmt(v,d=1){return Number(v).toLocaleString(playerDateLocale(),{minimumFractionDigits:d,maximumFractionDigits:d});}
-function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g",playerMacroAbbreviation("protein_g")+" ","protein",0],["carbs_g",playerMacroAbbreviation("carbs_g")+" ","carbs",0],["fat_g",playerMacroAbbreviation("fat_g")+" ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
+// kcal are displayed without thousands separators; nutrient quantities keep their existing formatting.
+function fmtKcal(v){return Number(v).toLocaleString(playerDateLocale(),{useGrouping:false,minimumFractionDigits:0,maximumFractionDigits:0});}
+function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g",playerMacroAbbreviation("protein_g")+" ","protein",0],["carbs_g",playerMacroAbbreviation("carbs_g")+" ","carbs",0],["fat_g",playerMacroAbbreviation("fat_g")+" ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?(key==="kcal"?fmtKcal(n):fmt(n,d)):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
 const periTimingEnglish={pre_warmup:"Before warm-up",warmup:"Warm-up",pre_match:"Pre-match",post_warmup:"After warm-up",first_half:"First half",half_time:"Half-time",second_half:"Second half",post_match:"Post-match",throughout:"Throughout the match"};
@@ -915,9 +917,9 @@ function weeklySummary(data,relativeMeans={}){
  for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
-  const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?"":" g");
+  const value=document.createElement("strong");value.textContent=(key==="kcal"?fmtKcal(data[key]):fmt(data[key],0))+(key==="kcal"?"":" g");
   item.append(title,value);
-  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(relativeMeans[key],key==="kcal"?0:1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
+  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=(key==="kcal"?fmtKcal(relativeMeans[key]):fmt(relativeMeans[key],1))+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
   section.append(item);
  }
  return section;
@@ -949,7 +951,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");markWeeklyColumn(b,dates[i]);
    const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?playerText("Peq Alm.","Breakfast"):names[meal]||meal;b.append(label);
-   if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
+   if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmtKcal(avg.kcal);b.append(value);}
    b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+playerText(" — abrir opções"," — open options"));b.setAttribute("aria-pressed",String(active));
    b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus,weeklyWeights);};grid.append(b);
   }
@@ -957,7 +959,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  for(let i=0;i<7;i++){
   const box=document.createElement("div");box.className="weekly-day-total";markWeeklyColumn(box,dates[i]);const total=totals[i];
   if(!total){box.textContent="—";grid.append(box);continue;}
-  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmt(total.kcal,0);energy.setAttribute("aria-label",playerText("Energia ","Energy ")+fmt(total.kcal,0)+" kcal");box.append(energy);
+  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmtKcal(total.kcal);energy.setAttribute("aria-label",playerText("Energia ","Energy ")+fmtKcal(total.kcal)+" kcal");box.append(energy);
   const line=document.createElement("div");line.className="weekly-total-macros";
   for(const k of ["protein_g","carbs_g","fat_g"]){const v=document.createElement("span");v.className=k==="protein_g"?"protein":k==="carbs_g"?"carbs":"fat";v.textContent=fmt(total[k],0);line.append(v);}
   box.append(line);grid.append(box);
@@ -1289,7 +1291,7 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
   };
   const title=document.createElement("span");title.textContent=item.title;
   section.append(title);
-  if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmt(avg.kcal,0);section.append(kcal);}
+  if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmtKcal(avg.kcal);section.append(kcal);}
   return section;
  }
  const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
@@ -1412,7 +1414,7 @@ function appendWeeklyEvents(host,dates,session){
     button.setAttribute("role","button");button.tabIndex=0;
     const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.selectionPhase==="intra_match"&&weeklySelection?.date===date;
     button.setAttribute("aria-pressed",String(active));
-    if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0);button.append(kcal);}
+    if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmtKcal(avg.kcal);button.append(kcal);}
     const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre",selectionPhase:"intra_match"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);};
     button.onclick=select;button.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}};
     slot.append(button);
@@ -2353,10 +2355,10 @@ async function overview(){
    const hero=document.createElement("div");hero.className="nutrition-hero";
    const energy=document.createElement("div");energy.className="nutrition-energy";
    const label=document.createElement("small");label.textContent="kcal";
-   const value=document.createElement("strong");value.textContent=fmt(total.kcal,0);
+   const value=document.createElement("strong");value.textContent=fmtKcal(total.kcal);
    energy.append(label,value);
    const weight=dailyReferenceWeight,hasWeight=Number.isFinite(weight)&&weight>0;
-   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,0)+" kcal/kg";energy.append(ratio);}
+   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmtKcal(total.kcal/weight)+" kcal/kg";energy.append(ratio);}
    hero.append(energy);summary.append(hero);
    const actual={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
    if(consumptionEnabled){
@@ -2409,9 +2411,9 @@ async function overview(){
    paintRings();
    gauge.append(svg);
    const center=document.createElement("div");center.className="nutrition-comparison-center";
-   const number=document.createElement("strong");number.textContent=fmt(total.kcal,0);
+   const number=document.createElement("strong");number.textContent=fmtKcal(total.kcal);
    center.append(number);
-   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,0)+" /kg";center.append(per);}
+   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmtKcal(total.kcal/weight)+" /kg";center.append(per);}
    gauge.append(center);visual.append(gauge);
    if(consumptionEnabled){
     // The pilot is permission-gated server-side: only Jorge receives consumption data.
@@ -2458,8 +2460,8 @@ async function overview(){
      unitArrow.setAttribute("aria-label",perKg?playerText("Mostrar valores em gramas","Show values in grams"):playerText("Mostrar valores por kg","Show values per kg"));unitArrow.title=perKg?playerText("Voltar a g e kcal","Back to g and kcal"):playerText("Ver g/kg e kcal/kg","View g/kg and kcal/kg");
      gramsButton.setAttribute("aria-pressed",String(!perKg));kgButton.setAttribute("aria-pressed",String(perKg));
      const divisor=perKg&&hasWeight?weight:1;
-     current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
-     planned.textContent=" / "+fmt(total.kcal/divisor,0);
+     current.textContent=fmtKcal(actual.kcal/divisor);
+     planned.textContent=" / "+fmtKcal(total.kcal/divisor);
      suffix.textContent="";energyLabel.textContent=perKg?"kcal/kg":"kcal";
      for(const item of macroValues){
       item.consumedValue.textContent=fmt(actual[item.key]/divisor,perKg?1:0);
@@ -2552,7 +2554,7 @@ async function overview(){
     for(const item of weekDays){
      const column=document.createElement("div");column.className="nutrition-chart-column";
      if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
-     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";n.style.color=color;
+     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?(key==="kcal"?fmtKcal(item.total[key]/scale):fmt(item.total[key]/scale,decimals)):"–";n.style.color=color;
      const track=document.createElement("div");track.className="nutrition-chart-track";
      const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
      const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
@@ -2560,7 +2562,7 @@ async function overview(){
     if(mean!==null){
      const line=document.createElement("div");line.className="nutrition-chart-average";
      line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
-     line.setAttribute("aria-label",playerText("Média semanal: ","Weekly average: ")+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
+     line.setAttribute("aria-label",playerText("Média semanal: ","Weekly average: ")+(key==="kcal"?fmtKcal(mean):fmt(mean,decimals))+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
      bars.append(line);
     }
     wrap.append(bars);return wrap;
