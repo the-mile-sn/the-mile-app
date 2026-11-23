@@ -269,8 +269,8 @@ try{
     await page.locator(".i18n-plan-csv-tools > button.i18n-primary").click();
     await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
     assert.equal(importApprovals,1);
-    await page.locator(".i18n-plan-unique-preview summary").waitFor();
-    const unique=page.locator(".i18n-plan-unique-preview");
+    await page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview) summary").waitFor();
+    const unique=page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview)");
     await unique.locator("summary").click();
     assert.match(await unique.locator("summary").innerText(),/1 títulos únicos/);
     const uniqueButton=unique.locator("button");
