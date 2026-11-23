@@ -81,6 +81,17 @@ def localise_published_plans(c, plans, library, *, language="pt"):
         rows = {row["field_path"]: row for row in _approved_rows(c, "plan", ident)}
         copied = dict(plan)
         snapshot = copy.deepcopy(plan["content"])
+        # The option identity is a SHA256 of the *raw Portuguese option*.
+        # Persisted choices and consumption refer to this identifier, so it
+        # must never change when only the display language changes.
+        from meal_option_selection_v2 import option_ref
+        for mi, meal in enumerate(snapshot.get("meals") or []):
+            if not isinstance(meal,dict):continue
+            original_meal=plan["content"]["meals"][mi]
+            for oi, option in enumerate(meal.get("options") or []):
+                if isinstance(option,dict):
+                    option["__tm_canonical_option_ref"]=option_ref(
+                        original_meal["options"][oi])
         for mi, meal in enumerate(snapshot.get("meals") or []):
             if not isinstance(meal, dict):
                 continue
