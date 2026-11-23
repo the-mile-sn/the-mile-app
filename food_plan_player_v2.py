@@ -78,7 +78,9 @@ def _approved(c,athlete_id):
         name=row["plan_type"]
         if name not in tuple(COLORS.values())+tuple(PERI_KINDS.values()):
             continue
-        plans[name]={"content":plan,"published_at":row["published_at"],"draft_id":row["draft_id"]}
+        plans[name]={"content":plan,"published_at":row["published_at"],
+                     "draft_id":row["draft_id"],
+                     "snapshot_json":row["snapshot_json"]}
     return plans
 
 
@@ -230,9 +232,15 @@ def _peri_plans(plans,library):
     return result
 
 
-def player_plans(c,athlete_id):
+def player_plans(c,athlete_id,language="pt"):
     plans=_approved(c,athlete_id)
     library=_library(c)
+    # Presentation-only translations are off by default; sources and nutrition
+    # remain exactly as published, with no writes and no new API scope.
+    if language=="en":
+        import app_content_i18n_v2
+        plans,library=app_content_i18n_v2.localise_published_plans(
+            c,plans,library,language=language)
     return {"options_by_color":_colors(plans,library),
             "peri_plans":_peri_plans(plans,library),
             "source":"published_planos"}
