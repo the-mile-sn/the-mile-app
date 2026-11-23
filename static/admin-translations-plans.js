@@ -120,7 +120,11 @@
     let busy=false;
     const feedback=create("p","i18n-feedback");
     const notice=item.sensitive?create("p","i18n-plan-sensitive",
-      "Texto individual ou clínico: revisão profissional obrigatória. Não exportar."):null;
+      item.field_kind==="individual_note"?
+        "Nota de consumo do plano. Revê o conteúdo antes de partilhar; "+
+        "a exportação CSV está disponível apenas para notas elegíveis.":
+        "Texto personalizado ou potencialmente sensível: revisão profissional "+
+        "obrigatória. Não exportar."):null;
     const updateButtons=()=>{
       const modified=editor.value.trim()!==(item.translated_text||"").trim();
       save.disabled=!editor.value.trim()||!modified||busy;
