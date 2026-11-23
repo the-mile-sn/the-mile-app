@@ -946,8 +946,6 @@
           ["Alimentos com inglês aprovado",audit.approved_library_food_references],
           ["Alternativas personalizadas",audit.alternative_overrides],
           ["Notas de planos",audit.individual_notes],
-          ["Sugestões de alimentos reutilizáveis",
-           audit.approved_library_name_suggestions],
           ["Sugestões de unidades",audit.simple_unit_suggestions]
         ];
         for(const [label,count] of numbers){
