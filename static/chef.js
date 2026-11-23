@@ -1169,12 +1169,14 @@ function renderProfile(root){
    try{
     await request("/api/v2/chef/preferences","PUT",{language:code});
     lang=code;chef.language=code;
-    // Refresh display-only published Planos after a successful language change.
-    // A read failure keeps the current plan visible and does not undo the
-    // persisted language preference or interfere with menu/recipe permissions.
+    // Refresh published Planos, then reload the current week's Menus.
+    // Dish names are translated by /api/v2/chef/menus using the newly
+    // persisted Chef language. Re-rendering the old menus cache here would
+    // show Portuguese dish names beneath English buttons until a full reload.
+    // Neither request changes menu assignments or nutritional prescriptions.
     const updated=await request("/api/v2/chef/plans").catch(()=>null);
     if(updated?.options_by_color)prescriptions=updated.options_by_color;
-    render();
+    await loadWeek();
    }catch(error){button.disabled=false;languageFeedback.textContent=txt().fail;}
   };
   segment.append(button);

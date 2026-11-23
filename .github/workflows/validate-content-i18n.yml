@@ -40,6 +40,7 @@ jobs:
       - run: python -m py_compile app_content_i18n_v2.py player_language_v2.py food_plan_player_v2.py tools/player_i18n_rollout_preflight.py app.py
       - run: python -m unittest discover -s tests -p test_i18n_private_diagnostic.py -v
       - run: node --check static/chef.js
+      - run: node --test tests/chef-language-menu-refresh.test.cjs
       - run: node --check static/jogador-v2.js
       - run: node --check static/player-recipes.js
       - run: node --check static/player-visual-portions.js
