@@ -38,6 +38,11 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(nodes.get("#profile-password-open > span:nth-child(2)")
                    .textContent,"Change password");
   assert.equal(vm.runInContext("names.breakfast",ctx),"Breakfast");
+  assert.equal(vm.runInContext('playerMacroLabel("protein_g")',ctx),"Protein");
+  assert.equal(vm.runInContext('playerMacroLabel("carbs_g")',ctx),"Carbohydrates");
+  assert.equal(vm.runInContext('playerMacroLabel("fat_g")',ctx),"Fat");
+  assert.equal(vm.runInContext('playerMacroAbbreviation("carbs_g")',ctx),"C");
+  assert.equal(vm.runInContext('playerMacroAbbreviation("fat_g")',ctx),"F");
   assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"General");
   assert.equal(vm.runInContext('playerClassification("Jogo personalizado")',ctx),"Jogo personalizado");
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Lunch");
@@ -55,6 +60,8 @@ test("Player native locale changes approved text only, preserving DOM and style"
   assert.equal(nodes.get("#tabs [data-tab='overview'] > span:last-child")
                    .textContent,"Início");
   assert.equal(vm.runInContext("names.breakfast",ctx),"Pequeno-almoço");
+  assert.equal(vm.runInContext('playerMacroLabel("carbs_g")',ctx),"Hidratos");
+  assert.equal(vm.runInContext('playerMacroAbbreviation("carbs_g")',ctx),"HC");
   assert.equal(vm.runInContext('playerClassification("Geral")',ctx),"Geral");
   assert.equal(vm.runInContext('playerSupplementMomentLabel("Almoço")',ctx),"Almoço");
   assert.equal(vm.runInContext("colorNames.blue",ctx),"Azul");
@@ -83,6 +90,33 @@ test("Remaining Player and Chef UI labels use the selected language without visu
   assert.ok(portions.includes('tr("Reduzir painel","Collapse panel")'));
   assert.ok(portions.includes('tr("Expandir painel","Expand panel")'));
   // Text-only changes: no CSS, HTML or new visual control is required.
+});
+
+test("Chef dish category search renders English without changing canonical categories",()=>{
+  const source=fs.readFileSync("static/chef.js","utf8");
+  const start=source.indexOf("const chefDishCategoryEnglish=");
+  const method=source.indexOf("function chefDishCategoryLabel(value){",start);
+  const end=source.indexOf("\n}",method)+2;
+  assert.ok(start>0&&method>start&&end>method);
+  const helper=source.slice(start,end);
+  const evaluate=(locale,value)=>vm.runInNewContext(
+    'const lang='+JSON.stringify(locale)+';'+helper+';chefDishCategoryLabel('+JSON.stringify(value)+')');
+  assert.equal(evaluate("en","Peixe"),"Fish");
+  assert.equal(evaluate("en","Peixe gordo"),"Oily fish");
+  assert.equal(evaluate("pt","Peixe"),"Peixe");
+  assert.equal(evaluate("en","Categoria personalizada"),"Categoria personalizada");
+  assert.ok(source.includes('node("small","",chefDishCategoryLabel(dish.category))'));
+});
+
+test("Remaining consumption and nutrition labels use selected locale",()=>{
+  const source=fs.readFileSync("static/jogador-v2.js","utf8");
+  assert.ok(source.includes("playerText('Editar consumo','Edit consumption')"));
+  assert.ok(source.includes("playerText('⊕ Adicionar alimento','⊕ Add food')"));
+  assert.ok(source.includes('playerText("Peq Alm.","Breakfast")'));
+  assert.ok(source.includes('playerText("ontem","yesterday")'));
+  assert.ok(source.includes('playerText("média","average")'));
+  assert.ok(source.includes('playerText("Ver valores semanais e detalhes","View weekly values and details")'));
+  assert.ok(source.includes('playerMacroAbbreviation(\'carbs_g\')'));
 });
 
 test("Recipe and visual-portion labels follow language without changing markup",()=>{
