@@ -1029,7 +1029,7 @@ class PlanTranslationsTests(unittest.TestCase):
             same_raw=json.dumps(same,ensure_ascii=False)
             self.assertEqual(recovery.carry_forward_unchanged(
                 c,self.draft_id,self.original,same_raw),2)
-            same_ref="pub:"+p._ref(self.draft_id,same_raw)
+            same_ref=p._ref(self.draft_id,same_raw)
             self.assertEqual(len(p._existing(c,same_ref)),2)
             # Meal name reclassified: preserve title but not clinical note.
             changed=json.loads(self.original)
@@ -1037,7 +1037,7 @@ class PlanTranslationsTests(unittest.TestCase):
             changed_raw=json.dumps(changed,ensure_ascii=False)
             self.assertEqual(recovery.carry_forward_unchanged(
                 c,self.draft_id,self.original,changed_raw),1)
-            next_ref="pub:"+p._ref(self.draft_id,changed_raw)
+            next_ref=p._ref(self.draft_id,changed_raw)
             self.assertIn("meals/0/options/0/title",p._existing(c,next_ref))
             self.assertNotIn("meals/0/options/0/notes/0",p._existing(c,next_ref))
             changed["meals"][0]["options"][0]["title"]="Outra opção"
