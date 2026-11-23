@@ -2611,7 +2611,7 @@ function renderPlanContent(key,target){
    const opts=published[phase]||[];if(!opts.length)continue;
    const section=document.createElement("section");section.className="meal plan-meal";
    const header=document.createElement("div");header.className="option";
-   const heading=document.createElement("h3");heading.textContent=label;header.append(heading);
+   const heading=document.createElement("h3");heading.textContent=playerPhaseLabel(label);header.append(heading);
    const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);
    // A single published option is the meal itself, as in colour plans and Dia.
    // Multiple options keep their independent expandable cards.
@@ -2642,7 +2642,9 @@ function renderPlans(){
  nav.replaceChildren();sub.replaceChildren();detail.replaceChildren();
  const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
  const hasPeri=kind=>Object.values(periPlans[kind]?.options||{}).some(options=>options?.length);
- const categories=[["todos","Todos"],["cores","Cores"],["treino","Treino"],["jogo","Jogo"],["suplementacao","Suplementação"]];
+ const categories=[["todos",playerText("Todos","All")],["cores",playerText("Cores","Colours")],
+  ["treino",playerText("Treino","Training")],["jogo",playerText("Jogo","Match")],
+  ["suplementacao",playerText("Suplementação","Supplements")]];
  for(const [id,label] of categories){
   const b=document.createElement("button");b.type="button";b.textContent=label;
   b.className="plans-filter"+(plansCategory===id?" selected":"");
@@ -2658,7 +2660,7 @@ function renderPlans(){
  };
  if(plansCategory==="cores"){
   for(const color of available)addSub(color,colorNames[color]||color,()=>{selectedColor=color;renderPlans();});
-  if(!available.length){detail.textContent="Ainda não existem planos alimentares publicados.";return;}
+  if(!available.length){detail.textContent=playerText("Ainda não existem planos alimentares publicados.","No meal plans have been published yet.");return;}
   if(!available.includes(selectedColor))selectedColor=available[0];
   // Update the active subfilter after picking the default.
   for(const b of sub.children){b.classList.toggle("selected",b.textContent===(colorNames[selectedColor]||selectedColor));b.setAttribute("aria-pressed",String(b.classList.contains("selected")));}
@@ -2667,8 +2669,8 @@ function renderPlans(){
  }
  if(plansCategory==="treino"||plansCategory==="jogo"){
   const kind=plansCategory==="treino"?"training":"match";
-  if(!hasPeri(kind)){detail.textContent="Ainda não existem planos publicados nesta categoria.";return;}
-  const phases=[["pre",periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino")],["post",periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino")]];
+  if(!hasPeri(kind)){detail.textContent=playerText("Ainda não existem planos publicados nesta categoria.","No plans have been published in this category.");return;}
+  const phases=[["pre",playerPhaseLabel(periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino"))],["post",playerPhaseLabel(periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino"))]];
   if(!planPhase)planPhase=phases.find(([p])=>(periPlans[kind]?.options?.[p]||[]).length)?.[0]||"pre";
   for(const [phase,label] of phases){if(!(periPlans[kind]?.options?.[phase]||[]).length)continue;addSub("peri-"+kind+":"+phase,label,()=>{planPhase=phase;renderPlans();});}
   sub.querySelectorAll("button").forEach(b=>{const match=b.textContent===phases.find(([p])=>p===planPhase)?.[1];b.classList.toggle("selected",match);b.setAttribute("aria-pressed",String(match));});
@@ -2677,7 +2679,7 @@ function renderPlans(){
  }
  if(plansCategory==="suplementacao"){renderPlanContent("supplements",detail);return;}
  // Todos: a compact list of published plan categories, each expandable on demand.
- const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training","Treino"]]:[]),...(hasPeri("match")?[["peri-match","Jogo"]]:[]),["supplements","Suplementação"]];
+ const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training",playerText("Treino","Training")]]:[]),...(hasPeri("match")?[["peri-match",playerText("Jogo","Match")]]:[]),["supplements",playerText("Suplementação","Supplements")]];
  for(const [key,label] of entries){
   const group=document.createElement("details");group.className="plans-all-group";
   const heading=document.createElement("summary");heading.textContent=label;group.append(heading);
