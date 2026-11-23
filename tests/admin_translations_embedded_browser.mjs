@@ -485,7 +485,7 @@ try{
       "Opening the final queue must not save or approve anything");
     assert.equal(await privateQueue.locator("a[download]").count(),0);
     assert.equal(await privateQueue.locator('input[type="file"]').count(),0);
-    await page.locator("#i18n-plan-items .i18n-plan-item").click();
+    await page.locator("#i18n-plan-items .i18n-plan-item").first().click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
     assert.equal(await page.locator("#i18n-plan-detail .i18n-primary").isDisabled(),true);
