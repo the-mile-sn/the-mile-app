@@ -227,7 +227,9 @@ def localise_dish_summaries(c, dishes, *, language="pt"):
     result=[]
     for dish in dishes:
         display=dict(dish)
-        display["name_pt"]=_current_english(
+        # Keep name_pt canonical for legacy ID-less menu resolution.
+        # Presentation can use display_name without changing any lookup key.
+        display["display_name"]=_current_english(
             translated.get((str(dish.get("id") or ""),"name_pt")),
             dish.get("name_pt"))
         result.append(display)
