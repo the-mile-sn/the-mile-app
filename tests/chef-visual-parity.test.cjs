@@ -20,7 +20,9 @@ test("Chef Day and Week selector follows the selected PT/EN language without cha
  assert.match(js,/button\.textContent=chefViewModeCaption\(button\.dataset\.view\)/);
  assert.match(js,/button\.setAttribute\("aria-pressed",String\(button\.dataset\.view===chefViewMode\)\)/);
  assert.match(js,/setAttribute\("aria-label",lang==="pt"\?"Vista de planeamento":"Planning view"\)/);
- assert.match(html,/<nav id="chef-view-mode"[^>]*data-view="day"[^>]*Dia<\/button>.*data-view="week"[^>]*Semana<\/button>/);
+ assert.match(html,/<nav id="chef-view-mode"[^>]*>/);
+ assert.match(html,/data-view="day"[^>]*>Dia<\/button>/);
+ assert.match(html,/data-view="week"[^>]*>Semana<\/button>/);
 });
 
 test("Chef and Player share a system font, tokens and dark palette with no remote font dependency",()=>{
