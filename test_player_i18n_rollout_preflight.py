@@ -4,7 +4,11 @@ import hashlib
 import json
 import os
 import sqlite3
+import subprocess
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from tools import player_i18n_rollout_preflight as gate
@@ -43,6 +47,38 @@ class RolloutPreflightTests(unittest.TestCase):
         self.c.execute("""INSERT INTO v2_content_translations
             VALUES(?,?,?,?,?,?,?)""",
             (kind,entity_id,path,"en",digest(source),english,status))
+
+    def test_shell_direct_invocation_imports_project_root_without_pythonpath(self):
+        # Isolated synthetic project: no production DB, network or ENV required.
+        # Python -I deliberately excludes cwd and PYTHONPATH, matching the
+        # original missing-app error when a tools/*.py script runs directly.
+        source = Path(__file__).parent / "tools" / "player_i18n_rollout_preflight.py"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools").mkdir()
+            (root / "tools" / source.name).write_text(
+                source.read_text(encoding="utf-8"), encoding="utf-8")
+            (root / "app.py").write_text(
+                "class Connection:\\n"
+                "    def __enter__(self): return self\\n"
+                "    def __exit__(self, *a): return False\\n"
+                "    def execute(self, sql):\\n"
+                "        if sql == 'PRAGMA query_only=ON': return None\\n"
+                "        raise AssertionError('Read-only disabled gate should not query DB')\\n"
+                "def connect(): return Connection()\\n", encoding="utf-8")
+            for module in ("app_content_i18n_v2.py", "food_plan_player_v2.py"):
+                (root / module).write_text("# Stub used for import-only test\\n",
+                                           encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, "-I", str(root / "tools" / source.name)],
+                cwd=root,
+                env={"PATH": os.environ.get("PATH", ""), "PYTHONPATH": "",
+                     "MILE_PLAYER_LANGUAGE_SELECTION_ENABLED": "0",
+                     "MILE_APP_TRANSLATIONS_ENABLED": "0"},
+                capture_output=True, text=True, timeout=15)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["status"], "gate_not_ready")
+            self.assertNotIn("ModuleNotFoundError", result.stderr)
 
     def test_missing_and_pending_never_count_as_approved(self):
         self.approve("plan",self.ref,"meals/0/options/0/title",
