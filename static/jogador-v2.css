@@ -1518,8 +1518,8 @@ header{padding:10px 0 24px}
 .nutrition-donut-summary .nutrition-hero{flex:1 1 24%!important;min-width:0!important}
 .nutrition-donut-summary .nutrition-macro-row{flex:3 1 65%!important;min-width:0!important}
 .nutrition-energy>strong{white-space:nowrap;font-size:clamp(17px,4vw,25px)!important}
-.nutrition-expand{position:absolute!important;top:50%!important;right:8px!important;transform:translateY(-50%)!important;border:none!important;background:rgba(255,255,255,.09)!important;color:#ddd!important;border-radius:50%!important;padding:0!important;width:30px!important;height:30px!important;font-size:23px!important;display:grid!important;place-items:center!important}
-.nutrition-expand[aria-expanded=true]{top:23px!important;transform:none!important}
+
+
 .nutrition-weekly-charts{flex:0 0 100%!important;width:100%!important;border-top:1px solid rgba(255,255,255,.12);margin-top:14px;padding:19px 3px 5px}
 .nutrition-weekly-charts[hidden]{display:none!important}
 .nutrition-chart-section{margin-bottom:18px}
@@ -1562,13 +1562,9 @@ header{padding:10px 0 24px}
 #overview #day-details .nutrition-donut-summary .nutrition-macro-row{
  grid-column:2!important;grid-row:1!important;width:100%!important;min-width:0!important;flex:none!important;
 }
-#overview #day-details .nutrition-donut-summary .nutrition-weekly-charts{
- grid-column:1/-1!important;grid-row:2!important;width:100%!important;box-sizing:border-box!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-expand{
- position:absolute!important;right:7px!important;top:50%!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded=true]{top:12px!important}
+
+
+
 #weekly-view .meal-leading-icon,#weekly-view .mile-icon{display:none!important}
 
 
@@ -1579,19 +1575,9 @@ header{padding:10px 0 24px}
 
 
 /* Nutrition expansion arrow matches the small triangular meal card chevrons. */
-#overview .nutrition-donut-summary .nutrition-expand{
- display:flex!important;align-items:center!important;justify-content:center!important;
- font-size:0!important;color:#c9c9cf!important;
-}
-#overview .nutrition-donut-summary .nutrition-expand:after{
- content:""!important;display:block!important;width:0!important;height:0!important;
- border-left:5px solid transparent!important;border-right:5px solid transparent!important;
- border-top:6px solid currentColor!important;border-bottom:0!important;
- transition:transform .16s ease!important;
-}
-#overview .nutrition-donut-summary .nutrition-expand[aria-expanded=true]:after{
- transform:rotate(180deg)!important;
-}
+
+
+
 
 
 /* Latest compact player refinements. */
@@ -1729,10 +1715,7 @@ header{padding:10px 0 24px}
 /* Reduce the gap beneath the avatar only on the home view. */
 #player-panel:has(#overview:not([hidden])){margin-top:-9px!important}
 /* Stable kcal chevron: same button coordinates in both states. */
-#overview #day-details .nutrition-donut-summary .nutrition-expand,
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]{
- top:50%!important;right:7px!important;transform:translateY(-50%)!important;
-}
+
 /* Macro title and segmented control aligned on a single header row. */
 #overview .nutrition-weekly-charts .macro-chart-header{
  display:flex!important;justify-content:space-between!important;align-items:center!important;
@@ -1756,13 +1739,9 @@ header{padding:10px 0 24px}
 
 
 /* Keep kcal expand/retract control at the same top-right coordinates. */
-#overview #day-details .nutrition-donut-summary .nutrition-expand,
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]{
- top:14px!important;right:8px!important;bottom:auto!important;
- transform:none!important;position:absolute!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-expand:after{transform:none!important}
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]:after{transform:rotate(180deg)!important}
+
+
+
 #overview .peri-meal>.daily-meal-head{align-items:center!important}
 
 
@@ -2059,29 +2038,29 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
  flex:0 0 auto!important;margin-left:0!important;
 }
 /* Weekly energy and macro charts use matching 7-column full-width grids. */
-#overview #day-details .nutrition-weekly-charts{
+#overview #weekly-view .nutrition-weekly-charts{
  width:100%!important;max-width:none!important;min-width:0!important;
  box-sizing:border-box!important;padding-left:0!important;padding-right:0!important;
 }
-#overview #day-details .nutrition-weekly-charts .nutrition-chart-section,
-#overview #day-details .nutrition-weekly-charts .nutrition-chart-bars,
-#overview #day-details .nutrition-weekly-charts .macro-chart-header{
+#overview #weekly-view .nutrition-weekly-charts .nutrition-chart-section,
+#overview #weekly-view .nutrition-weekly-charts .nutrition-chart-bars,
+#overview #weekly-view .nutrition-weekly-charts .macro-chart-header{
  width:100%!important;max-width:none!important;min-width:0!important;
  box-sizing:border-box!important;
 }
-#overview #day-details .nutrition-chart-bars{
+#overview #weekly-view .nutrition-chart-bars{
  display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;
  gap:0!important;padding:0!important;margin-left:0!important;margin-right:0!important;
 }
-#overview #day-details .nutrition-chart-column{
+#overview #weekly-view .nutrition-chart-column{
  display:flex!important;flex-direction:column!important;align-items:center!important;
  min-width:0!important;width:100%!important;
 }
-#overview #day-details .nutrition-chart-track{
+#overview #weekly-view .nutrition-chart-track{
  width:clamp(16px,70%,44px)!important;max-width:none!important;
 }
-#overview #day-details .nutrition-chart-number,
-#overview #day-details .nutrition-chart-column small{
+#overview #weekly-view .nutrition-chart-number,
+#overview #weekly-view .nutrition-chart-column small{
  width:100%!important;text-align:center!important;
 }
 /* Assessment metric rows are denser without losing label/delta hierarchy. */
@@ -2097,23 +2076,10 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 }
 /* The chart area was capped by the 43px right padding reserved for the
    kcal arrow. Expand charts into that unused space, without shifting top macros. */
-#overview #day-details .nutrition-donut-summary > .nutrition-weekly-charts{
- width:calc(100% + 31px)!important;max-width:none!important;
- justify-self:start!important;align-self:stretch!important;
- margin-right:-31px!important;padding-left:0!important;padding-right:0!important;
- grid-column:1/-1!important;box-sizing:border-box!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-chart-bars{
- width:100%!important;display:grid!important;
- grid-template-columns:repeat(7,minmax(0,1fr))!important;
- column-gap:0!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-chart-track{
- width:min(75%,40px)!important;max-width:none!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-chart-column{
- flex:1 1 0!important;min-width:0!important;padding:0!important;
-}
+
+
+
+
 /* Avaliações — universal unit-card geometry.
    Preserve the existing metric values, change labels, histories and charts. */
 #plans #plans-assessments details.assessment-measure-card{
@@ -2143,10 +2109,7 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 
 /* Kcal arrow centered against the closed card summary (fixed on expansion). */
-#overview #day-details .nutrition-donut-summary .nutrition-expand,
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]{
- top:25px!important;right:8px!important;transform:none!important;
-}
+
 /* Align the Menus page's first row closer to the avatar, as on the daily tab. */
 #player-panel #menus:not([hidden]){
  position:relative!important;top:-12px!important;
@@ -2154,16 +2117,16 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 
 /* Nutritional weekly charts: subtle current-day emphasis and neutral mean. */
-#overview #day-details .nutrition-chart-bars{position:relative!important}
+#overview #weekly-view .nutrition-chart-bars{position:relative!important}
 
 
-#overview #day-details .nutrition-chart-average{
+#overview #weekly-view .nutrition-chart-average{
  position:absolute!important;left:0!important;right:0!important;
  bottom:calc(16px + var(--avg-offset))!important;
  height:0!important;border-top:1px dashed rgba(200,201,209,.55)!important;
  z-index:4!important;pointer-events:none!important;
 }
-#overview #day-details .nutrition-chart-average>span{
+#overview #weekly-view .nutrition-chart-average>span{
  position:absolute!important;right:0!important;bottom:3px!important;
  font-size:10px!important;line-height:1.15!important;font-weight:400!important;
  color:#b7b7c0!important;background:#1b1b20!important;
@@ -2172,27 +2135,27 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 /* Weekly nutrition charts: keep the mean guide, without numeric labels;
    distinguish the current day only through fill opacity. */
-#overview #day-details .nutrition-chart-average > span,
-#overview #day-details .nutrition-chart-average::before,
-#overview #day-details .nutrition-chart-average::after{
+#overview #weekly-view .nutrition-chart-average > span,
+#overview #weekly-view .nutrition-chart-average::before,
+#overview #weekly-view .nutrition-chart-average::after{
  display:none!important;
  content:none!important;
 }
-#overview #day-details .nutrition-chart-fill{
+#overview #weekly-view .nutrition-chart-fill{
  opacity:.78!important;
  border:0!important;
  outline:0!important;
  box-shadow:none!important;
  filter:none!important;
 }
-#overview #day-details .nutrition-chart-today .nutrition-chart-fill{
+#overview #weekly-view .nutrition-chart-today .nutrition-chart-fill{
  opacity:.94!important;
  border:0!important;
  outline:0!important;
  box-shadow:none!important;
  filter:none!important;
 }
-#overview #day-details .nutrition-chart-today .nutrition-chart-track{
+#overview #weekly-view .nutrition-chart-today .nutrition-chart-track{
  border:0!important;
  outline:0!important;
  box-shadow:none!important;
@@ -2200,17 +2163,17 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 /* Chart values use the matching nutrient hue; dates remain neutral.
    A lower baseline opacity makes today's fill visibly distinct without outlines. */
-#overview #day-details .nutrition-chart-column .nutrition-chart-number{
+#overview #weekly-view .nutrition-chart-column .nutrition-chart-number{
  color:inherit;
 }
-#overview #day-details .nutrition-chart-column > small{
+#overview #weekly-view .nutrition-chart-column > small{
  color:#bbb!important;
 }
-#overview #day-details .nutrition-chart-column .nutrition-chart-fill{
+#overview #weekly-view .nutrition-chart-column .nutrition-chart-fill{
  opacity:.22!important;
  border:0!important;outline:0!important;box-shadow:none!important;
 }
-#overview #day-details .nutrition-chart-column.nutrition-chart-today .nutrition-chart-fill{
+#overview #weekly-view .nutrition-chart-column.nutrition-chart-today .nutrition-chart-fill{
  opacity:1!important;
  border:0!important;outline:0!important;box-shadow:none!important;
 }
@@ -2453,7 +2416,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #weekly-view details > summary.daily-meal-head::after,
 #overview .daily-supplements > summary::after,
 #weekly-view .weekly-supplement-summary > summary::after,
-#overview .nutrition-donut-summary .nutrition-expand::after,
 #plans #plan-detail .plan-meal details.plan-option-card > summary .option::after,
 .meal-collapsible-note > summary::after,
 #overview .meal-collapsible-note > summary::after{
@@ -2475,7 +2437,6 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #weekly-view details[open] > summary.daily-meal-head::after,
 #overview .daily-supplements[open] > summary::after,
 #weekly-view .weekly-supplement-summary[open] > summary::after,
-#overview .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]::after,
 #plans #plan-detail .plan-meal details.plan-option-card[open] > summary .option::after,
 .meal-collapsible-note[open] > summary::after,
 #overview .meal-collapsible-note[open] > summary::after{
@@ -2550,21 +2511,8 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 }
 /* The kcal expand control uses the same unfilled chevron as other daily cards.
    Override the legacy filled-triangle rules with more specific selectors. */
-#overview #day-details .nutrition-donut-summary .nutrition-expand::after,
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="false"]::after{
- content:""!important;display:block!important;box-sizing:border-box!important;
- width:9px!important;height:9px!important;
- border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
- background:none!important;clip-path:none!important;border-radius:0!important;
- transform:rotate(45deg)!important;transition:transform .16s ease!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"]::after{
- content:""!important;display:block!important;box-sizing:border-box!important;
- width:9px!important;height:9px!important;
- border:solid #c9c9cf!important;border-width:0 2px 2px 0!important;
- background:none!important;clip-path:none!important;border-radius:0!important;
- transform:rotate(225deg)!important;
-}
+
+
 
 
 #menus .day-menu{transition:background-color .2s ease}
@@ -3518,30 +3466,30 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 
 /* Weekly nutrition typography, the sole expanded-chart source.
    Main headings 16/600; macro labels 12/400. Do not affect the collapsed panel. */
-#overview #day-details .nutrition-weekly-charts:not([hidden]) > .nutrition-chart-section>strong,
-#overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-heading{
+#overview #weekly-view .nutrition-weekly-charts > .nutrition-chart-section>strong,
+#overview #weekly-view .nutrition-weekly-charts .macro-chart-heading{
  font-size:16px!important;
  font-weight:var(--mile-type-semibold,600)!important;
  line-height:1.35!important;
 }
-#overview #day-details .nutrition-weekly-charts:not([hidden]) .macro-chart-header+div>.nutrition-chart-section>strong{
+#overview #weekly-view .nutrition-weekly-charts .macro-chart-header+div>.nutrition-chart-section>strong{
  font-size:12px!important;
  font-weight:var(--mile-type-regular,400)!important;
  line-height:1.35!important;
 }
 
 /* Dual comparison halo is a closed-card preview only. Expanded card keeps original charts and g/kg. */
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]){
+#overview #day-details .nutrition-donut-summary{
  display:grid!important;grid-template-columns:1fr!important;
  padding:15px 12px 14px!important;gap:0!important;
 }
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden])>.nutrition-hero,
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden])>.nutrition-macro-row{display:none!important}
+#overview #day-details .nutrition-donut-summary>.nutrition-hero,
+#overview #day-details .nutrition-donut-summary>.nutrition-macro-row{display:none!important}
 #overview #day-details .nutrition-donut-summary .nutrition-comparison{
  display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);
  align-items:center;gap:8px 12px;width:100%;color:#f1f2f4;
 }
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])) .nutrition-comparison{display:none!important}
+
 #overview #day-details .nutrition-comparison-gauge{position:relative;width:min(100%,166px);aspect-ratio:1;margin:auto}
 #overview #day-details .nutrition-comparison-gauge>svg{display:block;width:100%;height:100%}
 #overview #day-details .nutrition-comparison-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
@@ -3565,38 +3513,25 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #overview #day-details .nutrition-comparison-macro.carbs strong{color:#f0a177}
 #overview #day-details .nutrition-comparison-macro.fat strong{color:#efd27c}
 #overview #day-details .nutrition-comparison-macro .per-kg{font-size:10px;white-space:nowrap;color:#a1a4ac}
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-expand{top:9px!important;right:8px!important}
+
 @media(max-width:360px){
  #overview #day-details .nutrition-comparison-stat small{font-size:9px}
  #overview #day-details .nutrition-comparison-stats{padding-right:15px;gap:6px}
 }
 
 /* Keep the approved dual halo as the permanent header in both states. */
-#overview #day-details .nutrition-donut-summary,
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]),
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])){
+#overview #day-details .nutrition-donut-summary{
  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
  padding:15px 12px 14px!important;gap:0!important;align-items:stretch!important;
 }
 #overview #day-details .nutrition-donut-summary>.nutrition-hero,
 #overview #day-details .nutrition-donut-summary>.nutrition-macro-row{display:none!important}
-#overview #day-details .nutrition-donut-summary .nutrition-comparison,
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])) .nutrition-comparison{
+#overview #day-details .nutrition-donut-summary .nutrition-comparison{
  display:grid!important;grid-column:1!important;grid-row:1!important;
  grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)!important;
 }
-#overview #day-details .nutrition-donut-summary>.nutrition-weekly-charts{
- grid-column:1!important;grid-row:2!important;
- width:100%!important;max-width:100%!important;margin-right:0!important;
- padding:19px 3px 5px!important;
-}
-#overview #day-details .nutrition-donut-summary .nutrition-expand,
-#overview #day-details .nutrition-donut-summary .nutrition-expand[aria-expanded="true"],
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-expand{
- position:absolute!important;top:auto!important;bottom:18px!important;right:7px!important;
- transform:none!important;width:28px!important;height:28px!important;
- background:transparent!important;border:none!important;box-shadow:none!important;
-}
+
+
 #overview #day-details .nutrition-comparison-macro:last-child{padding-right:22px}
 /* Energy heading and stable chevron: controls stay anchored to the halo preview
    whether the weekly chart section is open or closed. */
@@ -3612,13 +3547,7 @@ label.mile-floating-field > input.mile-floating-input:not(:placeholder-shown) + 
 #overview #day-details .nutrition-comparison-center .per-kg{
  font-size:12px!important;color:#a6a8ae!important;
 }
-#overview #day-details .nutrition-comparison>.nutrition-expand,
-#overview #day-details .nutrition-comparison>.nutrition-expand[aria-expanded="true"],
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-comparison>.nutrition-expand{
- position:absolute!important;top:auto!important;bottom:0!important;right:0!important;
- transform:none!important;width:28px!important;height:28px!important;
- background:transparent!important;border:0!important;box-shadow:none!important;
-}
+
 
 /* Seven full-width day columns; week navigation now uses native touch swipes. */
 :is(#week-strip,#menu-week-strip).week{
@@ -4494,7 +4423,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;
  border-top:1px solid rgba(255,255,255,.15);padding-top:12px!important;
 }
-#overview #day-details .nutrition-comparison.has-consumption-ring>.nutrition-expand{grid-column:2!important}
+
 @media(max-width:390px){#overview #day-details .nutrition-comparison.has-consumption-ring{column-gap:8px!important}}
 
 /* Keep the two rings stationary when expanding weekly charts; comparison stays in the ring. */
@@ -4517,8 +4446,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  margin:0!important;width:min(100%,166px)!important;
  transform:none!important;
 }
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts:not([hidden])) .nutrition-comparison.has-consumption-ring,
-#overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-comparison.has-consumption-ring{
+#overview #day-details .nutrition-donut-summary .nutrition-comparison.has-consumption-ring{
  grid-column:1!important;grid-row:1!important;
  grid-template-columns:repeat(2,minmax(0,1fr))!important;
 }
@@ -5075,9 +5003,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .consumption-concentric-macro.protein .consumption-concentric-actual{color:#45baff!important}
 #overview #day-details .consumption-concentric-macro.carbs .consumption-concentric-actual{color:#ff9d70!important}
 #overview #day-details .consumption-concentric-macro.fat .consumption-concentric-actual{color:#f4d778!important}
-#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
- grid-column:2!important;grid-row:2!important;justify-self:end!important;
-}
+
 @media(max-width:520px){
  #overview #day-details .nutrition-comparison.consumption-concentric{
   grid-template-columns:minmax(0,.75fr) minmax(0,1.65fr)!important;column-gap:9px!important;
@@ -5103,20 +5029,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 
 
 /* Jorge mobile polish: smaller rings and an independent, accessible chevron. */
-@media(max-width:520px){
- 
- 
- 
- #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand,
- #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand[aria-expanded="true"],
- #overview #day-details .nutrition-donut-summary:has(.nutrition-weekly-charts[hidden]) .nutrition-comparison.consumption-concentric>.nutrition-expand{
-  position:absolute!important;grid-column:auto!important;grid-row:auto!important;
-  right:0!important;bottom:-7px!important;top:auto!important;
-  width:34px!important;height:34px!important;
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  margin:0!important;padding:0!important;z-index:2!important;
- }
-}
+
 
 
 /* Jorge mobile refinement: optical spacing and one-pixel legibility increase. */
@@ -5199,10 +5112,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
   max-width:none!important;align-self:center!important;
   margin:0!important;
  }
- #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
-  position:absolute!important;
-  flex:none!important;
- }
+ 
 }
 
 
@@ -5275,7 +5185,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .consumption-concentric-macro>strong{font-size:14px!important}
  #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{bottom:0!important}
  #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch button{font-size:13px!important;padding:6px 9px!important;min-height:32px!important}
- #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:0!important}
+ 
 }
 
 
@@ -5304,7 +5214,7 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  #overview #day-details .consumption-concentric-energy-row .consumption-concentric-energy{font-size:clamp(20px,4.1vw,30px)!important}
  #overview #day-details .consumption-concentric-macro>span{font-size:16px!important}
  #overview #day-details .consumption-concentric-macro>strong{font-size:17px!important}
- #overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:calc(18px + 2px)!important}
+ 
 }
 
 
@@ -5429,58 +5339,36 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  display:flex!important;align-items:center!important;justify-content:center!important;background:transparent!important;border:0!important;
 }
 #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch svg{width:20px!important;height:20px!important;display:block!important}
-#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{bottom:7px!important;right:0!important}
+
 #overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-trends{padding-right:0!important}
 @media(max-width:520px){#overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:42px!important}}
 
 /* Center both footer actions on the exact same horizontal axis. */
-#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch,
-#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
  top:auto!important;bottom:8px!important;height:28px!important;min-height:28px!important;
  transform:none!important;margin:0!important;
 }
 #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
  right:38px!important;display:flex!important;align-items:center!important;justify-content:center!important;
 }
-#overview #day-details .nutrition-comparison.consumption-concentric>.nutrition-expand{
- right:0!important;width:28px!important;display:flex!important;align-items:center!important;justify-content:center!important;
-}
+
 
 /* Nutrition card footer: controls no longer add visual weight below the rings/text block. */
 #overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:0!important}
-#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-footer{
- width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
- gap:12px;border-top:1px solid rgba(160,160,170,.17);margin-top:18px;padding:12px 0 2px;
- grid-column:1/-1;position:relative;min-width:0;
-}
-#overview #day-details .consumption-concentric-footer-label{
- appearance:none;background:none;border:0;color:inherit;font:inherit;font-size:14px;
- text-align:left;padding:6px 0;min-width:0;cursor:pointer;
-}
-#overview #day-details .consumption-concentric-footer-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-shrink:0}
-#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer .consumption-concentric-unit-switch,
-#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer .nutrition-expand{
- position:static!important;inset:auto!important;transform:none!important;margin:0!important;
- width:28px!important;height:28px!important;min-height:28px!important;display:flex!important;
- align-items:center!important;justify-content:center!important;padding:0!important;
- background:transparent!important;border:0!important;
-}
-#overview #day-details .consumption-concentric-footer .consumption-concentric-unit-arrow{width:28px!important;height:28px!important;padding:0!important}
+
+
+
+
+
 @media(max-width:520px){
  #overview #day-details .nutrition-comparison.consumption-concentric{padding-bottom:0!important}
- #overview #day-details .consumption-concentric-footer-label{font-size:13px}
+ 
 }
 
 /* Fine alignment of nutrition summary footer and ring (Nov 14). */
-#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer-label{
- padding-left:12px!important;
-}
-#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer-actions{
- align-items:center!important;
-}
-#overview #day-details .nutrition-comparison.consumption-concentric .consumption-concentric-footer-actions .consumption-concentric-unit-switch{
- transform:translateY(3px)!important;
-}
+
+
+
 #overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-rings{
  position:relative!important;top:18px!important;
 }
@@ -5491,13 +5379,12 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 }
 
 /* Weekly nutrition detail: one unit control in the footer only. */
-#overview #day-details .nutrition-comparison.consumption-concentric + .nutrition-weekly-charts,
-#overview #day-details .nutrition-weekly-charts{border-top:0!important}
-#overview #day-details .nutrition-weekly-charts .nutrition-macro-modes,
-#overview #day-details .nutrition-weekly-charts .macro-modes{display:none!important}
-#overview #day-details .nutrition-comparison.consumption-concentric:not(.nutrition-details-open) .consumption-concentric-footer-actions .consumption-concentric-unit-switch{display:none!important}
+#overview #weekly-view .nutrition-weekly-charts{border-top:0!important}
+#overview #weekly-view .nutrition-weekly-charts .nutrition-macro-modes,
+#overview #weekly-view .nutrition-weekly-charts .macro-modes{display:none!important}
 
-#overview #day-details .nutrition-weekly-charts .macro-chart-switch{display:none!important}
+
+
 
 /* Alternative consumed colour — player mobile and desktop */
 #overview #day-details .consumption-change-color{display:block!important;margin:14px auto 0!important;border:0!important;background:rgba(255,255,255,.12)!important;color:inherit!important;border-radius:999px!important;padding:10px 22px!important;font-size:13px!important;font-weight:500!important;opacity:.9!important}
@@ -5640,3 +5527,131 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
  font-size:12px;line-height:1.45;
 }
 #profile .profile-language-feedback:empty{display:none}
+
+/* ===== Início — cabeçalho "Hoje" + menu Dia/Semana (2026-11-23) =====
+   Replaces the logo, the Dia/Semana segmented control and the 7-day strip on Início.
+   Day navigation stays: swipe, the "Hoje" button, the Semana day headers and the Semana widget. */
+body.overview-active:has(#player-panel:not([hidden])) .player-top{display:none!important}
+#overview #week-strip,#overview #week-strip[hidden]{display:none!important}
+#overview .overview-heading{
+ position:relative!important;display:flex!important;align-items:flex-end!important;justify-content:space-between!important;
+ gap:12px!important;padding:14px 2px 14px!important;margin:0!important;
+}
+#overview .overview-heading-text{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important}
+#overview .overview-kicker{
+ margin:0!important;font-size:12px!important;font-weight:600!important;letter-spacing:.03em!important;
+ text-transform:uppercase!important;color:#aaaab4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#overview .overview-title{margin:0!important;font-size:32px!important;font-weight:720!important;line-height:1.1!important;color:#f4f4f7!important}
+#overview .overview-heading-actions{display:flex!important;align-items:center!important;gap:6px!important;flex:none!important;margin-bottom:3px!important}
+#overview .overview-heading-actions button{
+ appearance:none!important;display:inline-flex!important;align-items:center!important;gap:4px!important;
+ height:32px!important;min-height:32px!important;padding:0 12px!important;border:0!important;border-radius:999px!important;
+ background:#202024!important;color:#f2f2f5!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important;
+}
+#overview .overview-heading-actions button[hidden]{display:none!important}
+#overview .overview-view-button{padding:0 10px 0 14px!important}
+#overview .overview-view-button svg{width:14px!important;height:14px!important;color:#aaaab4!important}
+/* The Dia/Semana buttons become the menu that opens from "Dia ⌄". */
+#overview #overview-heading #overview-mode{
+ position:absolute!important;top:calc(100% - 6px)!important;right:2px!important;z-index:40!important;
+ display:none!important;grid-template-columns:none!important;gap:0!important;
+ left:auto!important;width:190px!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;
+ padding:5px!important;margin:0!important;overflow:hidden!important;
+ border-radius:14px!important;background:#2a2a30!important;box-shadow:0 12px 32px rgba(0,0,0,.5)!important;
+}
+#overview #overview-heading #overview-mode.open{display:grid!important}
+#overview #overview-heading #overview-mode button,
+#overview #overview-heading #overview-mode button[aria-pressed="true"]{
+ display:flex!important;justify-content:flex-start!important;align-items:center!important;width:100%!important;
+ min-height:44px!important;padding:0 12px!important;border-radius:10px!important;
+ background:transparent!important;box-shadow:none!important;font-size:16px!important;font-weight:500!important;color:#f2f2f5!important;
+}
+#overview #overview-heading #overview-mode button[aria-pressed="true"]{background:rgba(255,255,255,.08)!important}
+#overview #overview-heading #overview-mode>.mile-segment-indicator{display:none!important}
+/* Semana: the weekly calories/macros block (moved from the Dia ring card) sits in its own card. */
+#overview #weekly-view .nutrition-weekly-charts{
+ margin:18px 0 0!important;padding:16px 14px 4px!important;border-radius:20px!important;background:#1b1b20!important;
+}
+/* The ring card's g ↔ g/kg switch stays visible on the "kcal" label line (the card footer is gone). */
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch{
+ position:absolute!important;top:-12px!important;right:0!important;bottom:auto!important;left:auto!important;
+ transform:none!important;margin:0!important;display:inline-flex!important;z-index:2!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch .consumption-concentric-unit-arrow{
+ width:24px!important;height:24px!important;min-height:24px!important;padding:0!important;background:transparent!important;
+}
+#overview #day-details .nutrition-comparison.consumption-concentric>.consumption-concentric-unit-switch svg{width:18px!important;height:18px!important}
+
+/* ===== Início — widgets Peso e Semana (2026-11-23) — same surface, radius and type as the day cards ===== */
+#overview #day-details > .day-widgets{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0 0 10px!important}
+#overview #day-details .day-widget{
+ display:flex!important;flex-direction:column!important;gap:6px!important;min-width:0!important;box-sizing:border-box!important;
+ margin:0!important;padding:12px 12px 12px 14px!important;border-radius:13px!important;background:#25262b!important;color:#f1f1f4!important;
+ cursor:pointer;min-height:0!important;height:auto!important;overflow:hidden!important;
+}
+#overview #day-details .day-widget-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:30px!important}
+#overview #day-details .day-widget-icon{display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;width:30px!important;height:30px!important;border-radius:9px!important;background:rgba(0,0,0,.16)!important}
+#overview #day-details .day-widget-icon svg{width:19px!important;height:19px!important}
+#overview #day-details .day-widget-label{flex:1 1 auto!important;min-width:0!important;font-size:15px!important}
+#overview #day-details .day-widget-action{
+ appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;
+ width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;border:0!important;border-radius:999px!important;
+ background:transparent!important;box-shadow:none!important;color:#aaaab4!important;
+}
+#overview #day-details .day-widget-action svg{width:18px!important;height:18px!important}
+#overview #day-details .day-widget-value{display:block!important;font-size:26px!important;font-weight:720!important;line-height:1.05!important;white-space:nowrap!important}
+#overview #day-details .day-widget-value strong{font:inherit!important}
+#overview #day-details .day-widget-unit{font-size:15px!important;font-weight:500!important;color:#aaaab4!important}
+#overview #day-details .day-widget-value small{font-size:13px!important;font-weight:400!important;color:#aaaab4!important}
+#overview #day-details .day-widget-foot{display:block!important;font-size:12px!important;color:#aaaab4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#overview #day-details .day-weight-widget-spark{height:30px!important;color:rgba(241,241,244,.55)!important}
+#overview #day-details .day-weight-widget-spark svg{display:block!important;width:100%!important;height:30px!important}
+#overview #day-details .day-week-widget-days{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:2px!important;height:30px!important;align-items:center!important}
+#overview #day-details .day-week-widget-day{
+ appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ height:22px!important;min-height:22px!important;min-width:0!important;padding:0!important;border:0!important;border-radius:999px!important;
+ background:transparent!important;box-shadow:none!important;color:#aaaab4!important;font-size:11px!important;font-weight:600!important;
+}
+#overview #day-details .day-week-widget-day.match{background:#45464c!important;color:#f1f1f4!important}
+#overview #day-details .day-week-widget-day.selected{background:#f3f3f5!important;color:#2070bb!important}
+#overview #day-details .day-week-widget-day svg,#overview #day-details .day-week-widget-day .mile-icon{width:12px!important;height:12px!important}
+#overview #day-details > .day-weight-editor{margin:0 0 10px!important}
+#overview #day-details > .day-weight-editor[hidden]{display:none!important}
+
+/* ===== Peso em jejum (Semana / Mês) ===== */
+#overview.weight-detail-open > :not(#weight-detail){display:none!important}
+#overview .weight-detail[hidden]{display:none!important}
+#overview .weight-detail{display:flex;flex-direction:column;padding:6px 0 24px}
+#overview .weight-detail-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:44px;margin-bottom:6px}
+#overview .weight-detail-bar strong{font-size:16px;font-weight:600}
+#overview .weight-detail-bar button{appearance:none;border:0;background:transparent;box-shadow:none;padding:8px 2px;color:#f1f1f4;font-size:16px;min-height:0}
+#overview .weight-detail-back{justify-self:start}
+#overview .weight-detail-back::before{content:"‹";font-size:26px;line-height:16px;margin-right:4px;vertical-align:-3px}
+#overview .weight-detail-edit{justify-self:end}
+#overview .weight-detail-range{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border-radius:999px;background:#202024}
+#overview .weight-detail-range button{appearance:none;border:0;box-shadow:none;min-height:32px;padding:4px 8px;border-radius:999px;background:transparent;color:#f2f2f5;font-size:13px;font-weight:500}
+#overview .weight-detail-range button[aria-pressed="true"]{background:#55555b;color:#fff}
+#overview .weight-detail-summary{display:flex;flex-direction:column;gap:2px;padding:18px 2px 10px}
+#overview .weight-detail-summary small{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#aaaab4}
+#overview .weight-detail-summary strong{font-size:34px;font-weight:720;line-height:1.1}
+#overview .weight-detail-summary strong span{font-size:17px;font-weight:500;color:#aaaab4}
+#overview .weight-detail-period{font-size:13px;color:#aaaab4}
+#overview .weight-detail-chart{padding:14px 14px 6px;border-radius:13px;background:#25262b}
+#overview .weight-detail-chart svg{display:block;width:100%;height:auto}
+#overview .weight-detail-grid{stroke:rgba(255,255,255,.08);stroke-width:1}
+#overview .weight-detail-tick{font-size:11px;fill:#aaaab4}
+#overview .weight-detail-line{fill:none;stroke:rgba(241,241,244,.6);stroke-width:2;stroke-linejoin:round}
+#overview .weight-detail-dot{fill:#0d0d10;stroke:#f1f1f4;stroke-width:2}
+#overview .weight-detail-dot.last{fill:#f1f1f4}
+#overview .weight-detail-point{min-height:18px;margin:4px 0 0;font-size:13px;color:#d6d6dc}
+#overview .weight-detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;padding:13px 17px;border-radius:13px;background:#25262b}
+#overview .weight-detail-stats small{display:block;font-size:12px;color:#aaaab4}
+#overview .weight-detail-stats strong{font-size:17px;font-weight:650}
+#overview .weight-detail-heading{margin:22px 2px 8px;font-size:17px;font-weight:650}
+#overview .weight-detail-list{border-radius:13px;overflow:hidden;background:#25262b}
+#overview .weight-detail-row{display:grid;grid-template-columns:1fr auto 84px;align-items:center;gap:8px;min-height:48px;padding:0 17px;border-top:1px solid rgba(255,255,255,.08)}
+#overview .weight-detail-row:first-child{border-top:0}
+#overview .weight-detail-row small{font-size:13px;color:#aaaab4;text-align:right}
+#overview .weight-detail-row strong{font-size:16px;font-weight:600;text-align:right}
+#overview #day-details .day-widget-value.empty{color:#6c6c76!important}

@@ -56,12 +56,12 @@ test("intra-match groups all products by first-seen ingestion timing without los
 test("approved expanded nutrition typography uses one rule for each role",()=>{
  const css=fs.readFileSync("static/jogador-v2.css","utf8");
  const guide=fs.readFileSync("docs/GUIA_VISUAL_APP_JOGADORES.md","utf8");
- assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) > \.nutrition-chart-section>strong,\s*#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-heading\{\s*font-size:16px!important;\s*font-weight:var\(--mile-type-semibold,600\)!important;/);
- assert.match(css,/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{\s*font-size:12px!important;\s*font-weight:var\(--mile-type-regular,400\)!important;/);
- assert.equal((css.match(/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/g)||[]).length,1);
+ assert.match(css,/#overview #weekly-view \.nutrition-weekly-charts > \.nutrition-chart-section>strong,\s*#overview #weekly-view \.nutrition-weekly-charts \.macro-chart-heading\{\s*font-size:16px!important;\s*font-weight:var\(--mile-type-semibold,600\)!important;/);
+ assert.match(css,/#overview #weekly-view \.nutrition-weekly-charts \.macro-chart-header\+div>\.nutrition-chart-section>strong\{\s*font-size:12px!important;\s*font-weight:var\(--mile-type-regular,400\)!important;/);
+ assert.equal((css.match(/#overview #weekly-view \.nutrition-weekly-charts \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/g)||[]).length,1);
  assert.match(guide,/Painel nutricional aberto — títulos semanais/);
  assert.match(guide,/Painel nutricional aberto — etiquetas de macros/);
- assert.match(js,/weeklyCharts\.append\(buildBars\(playerText\("Calorias da semana","Weekly calories"\)/);
+ assert.match(js,/charts\.append\(buildBars\(playerText\("Calorias da semana","Weekly calories"\)/);
  assert.match(js,/macroTitle\.textContent=playerText\("Macros da semana","Weekly macros"\)/);
  assert.doesNotMatch(js,/n\.style\.color=color;n\.style\.color=color/);
  assert.doesNotMatch(js,/footer\.append\(footerLabel,footerActions\);footer\.addEventListener/);
