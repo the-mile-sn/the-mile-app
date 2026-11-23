@@ -40,6 +40,9 @@ with connect() as db:
  db.execute("CREATE TABLE IF NOT EXISTS v2_player_links(user_id TEXT,athlete_id TEXT)")
  db.execute("INSERT INTO v2_athletes(id,name,created_at) VALUES (?,?,?)",("pilot-athlete","Synthetic Athlete",int(time.time())))
  db.execute("INSERT INTO v2_player_links(user_id,athlete_id,linked_at) VALUES (?,?,?)",("synthetic","pilot-athlete",int(time.time())))
+ # Minimal isolated food catalogue for the authenticated search endpoint.
+ db.execute("CREATE TABLE IF NOT EXISTS v2_food_library (id TEXT PRIMARY KEY, display_name TEXT, variant TEXT, kcal REAL, protein_g REAL, carbs_g REAL, fat_g REAL, active INTEGER)")
+ db.execute("INSERT INTO v2_food_library(id,display_name,variant,kcal,protein_g,carbs_g,fat_g,active) VALUES (?,?,?,?,?,?,?,?)",("rice","Arroz","net",100,2,20,1,1))
 import app
 from unittest.mock import patch
 published={"draft_id":"published-test","color":"green","planned_color":"green","options":[{"option_ref":"option-test","foods":[{"id":"rice","grams":100}]}]}
