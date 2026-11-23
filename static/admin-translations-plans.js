@@ -285,8 +285,13 @@
     const ackCheck=create("input");ackCheck.type="checkbox";
     ackLabel.append(ackCheck,create("span","",
       "Confirmei a revisão das traduções importadas que vou aprovar"));
-    const bulkButton=create("button","i18n-primary","Aprovar traduções importadas em lote");
+    const bulkButton=create("button","i18n-primary","Aprovar em massa");
     bulkButton.type="button";bulkButton.disabled=true;
+    const approvalPanel=create("section","i18n-plan-bulk-approval");
+    const approvalHeading=create("strong","","Aprovação em massa");
+    const approvalCount=create("p","i18n-plan-bulk-count");
+    const approvalHint=create("p","i18n-plan-bulk-hint");
+    approvalPanel.append(approvalHeading,approvalCount,ackLabel,bulkButton,approvalHint);
     const csvFeedback=create("p","i18n-feedback");
     const csvActions=create("div","i18n-plan-csv-actions");
     csvActions.append(exportButton,uploadLabel,previewButton,importButton);
@@ -329,7 +334,7 @@
         " dados pessoais, alternativas nem prescrições. As notas dos planos"+
         " têm um terceiro CSV com revisão. Preenche apenas translated_text;"+
         " importar não aprova automaticamente."),
-      csvActions,uniquePreview,notesPreview,ackLabel,bulkButton,csvFeedback);
+      csvActions,uniquePreview,notesPreview,approvalPanel,csvFeedback);
     const csvEntry=g=>({
       group_id:g.group_id,source_hash:g.source_hash,
       expected_group_hash:g.expected_group_hash,
@@ -431,11 +436,23 @@
     });
     const updateCsvButtons=()=>{
       importButton.disabled=csvBusy||!validated.length;
-      const n=matchingGroups().filter(g=>g.csv_eligible&&
-        (g.imported_status==="pending"||g.imported_status==="approved")).length;
-      bulkButton.disabled=csvBusy||!ackCheck.checked||!n;
-      bulkButton.textContent="Aprovar até "+Math.min(100,n)+
-        " expressões importadas (máx. 100 ocorrências por expressão)";
+      const ready=matchingGroups().filter(g=>g.csv_eligible&&g.imported_text&&
+        (g.imported_status==="pending"||g.imported_status==="approved"));
+      const count=ready.length,occurrences=ready.reduce((total,g)=>total+g.missing_count,0);
+      bulkButton.disabled=csvBusy||!ackCheck.checked||!count;
+      bulkButton.textContent=csvBusy?"A processar…":
+        "Aprovar em massa · até "+Math.min(100,count)+" expressões";
+      approvalCount.textContent=count?
+        count+" expressões importadas prontas para aprovação · "+
+          occurrences+" ocorrências por traduzir":
+        "Não existem traduções importadas por aprovar neste filtro.";
+      approvalHint.textContent=csvBusy?"A aprovação está em curso.":
+        !count?"Importa as traduções para ativar a aprovação em massa.":
+        !ackCheck.checked?
+          "Assinala a confirmação acima para ativar o botão. "+
+          "Cada expressão é aprovada em grupos de até 100 ocorrências.":
+          "Pronto para aprovar. Cada expressão é aprovada em grupos de "+
+          "até 100 ocorrências, com histórico de revisão.";
     };
     exportButton.addEventListener("click",()=>{
       const rows=groups.filter(g=>g.csv_eligible&&!g.single_title_candidate)

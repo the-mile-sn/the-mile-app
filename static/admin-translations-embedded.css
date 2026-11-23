@@ -556,7 +556,37 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 .tm-admin-translations-page .i18n-plan-csv-actions button{min-height:38px}
 .tm-admin-translations-page .i18n-plan-csv-upload{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-size:12px;color:var(--tm-ui-text);min-height:40px}
 .tm-admin-translations-page .i18n-plan-csv-upload input{max-width:235px;min-width:0;font-size:11px}
-.tm-admin-translations-page .i18n-plan-csv-tools>.i18n-bulk-attestation{font-size:12px;margin:3px 0 0;display:flex;align-items:start;gap:8px}
+/* One explicit approval zone; the button stays legible even before confirmation. */
+.tm-admin-translations-page .i18n-plan-bulk-approval{
+  display:grid;gap:10px;justify-items:start;min-width:0;
+  margin-top:5px;padding:15px 16px;border-radius:12px;background:var(--tm-ui-card);
+}
+.tm-admin-translations-page .i18n-plan-bulk-approval>strong{
+  color:var(--tm-ui-text);font-size:14px;font-weight:600;
+}
+.tm-admin-translations-page .i18n-plan-bulk-count{
+  margin:0;color:var(--tm-ui-text);font-size:12px;line-height:1.45;
+}
+.tm-admin-translations-page .i18n-plan-bulk-approval>.i18n-bulk-attestation{
+  display:flex;align-items:flex-start;gap:8px;font-size:12px;
+  line-height:1.45;margin:2px 0 0;
+}
+.tm-admin-translations-page .i18n-plan-bulk-approval>button.i18n-primary{
+  min-height:43px;max-width:100%;padding:11px 18px;
+  font-size:13px;font-weight:600;white-space:normal;text-align:center;
+  background:var(--tm-ui-text);color:var(--tm-ui-card);
+}
+.tm-admin-translations-page .i18n-plan-bulk-approval>button.i18n-primary:disabled{
+  opacity:1;background:var(--tm-ui-search);color:var(--tm-ui-muted);
+  cursor:not-allowed;
+}
+.tm-admin-translations-page .i18n-plan-bulk-hint{
+  margin:0;color:var(--tm-ui-muted);font-size:11px;line-height:1.5;
+}
+@media(max-width:720px){
+  .tm-admin-translations-page .i18n-plan-bulk-approval{padding:13px}
+  .tm-admin-translations-page .i18n-plan-bulk-approval>button.i18n-primary{width:100%}
+}
 .tm-admin-translations-page .i18n-plan-csv-tools>button{justify-self:start;min-height:38px}
 .tm-admin-translations-page .i18n-plan-csv-tools>.i18n-feedback{font-size:12px;line-height:1.5;margin:0}
 @media(max-width:720px){.tm-admin-translations-page .i18n-plan-csv-actions{align-items:stretch;flex-direction:column}.tm-admin-translations-page .i18n-plan-csv-actions button,.i18n-plan-csv-tools>button{width:100%}.tm-admin-translations-page .i18n-plan-csv-upload{width:100%}}
