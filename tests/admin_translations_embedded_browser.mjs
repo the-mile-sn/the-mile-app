@@ -78,7 +78,16 @@ try{
           suggestion:{text:"Yoghurt bowl",origin:"approved_exact_title",
             requires_review:true}
         };
-        const items=!commonApprovals?[unit]:!importApprovals?[title]:[];
+        const single={
+          group_id:"9".repeat(64),source_hash:"8".repeat(64),
+          expected_group_hash:"7".repeat(64),expected_stage_hash:"",
+          field_kind:"option_title",meal_context:"Pequeno almoço / lanche",
+          source_text:"Panquecas caseiras",occurrences:1,missing_count:1,
+          pending_count:0,approved_count:0,outdated_count:0,batch_limit:100,
+          csv_eligible:true,single_title_candidate:true,
+          imported_status:null,imported_text:null,suggestion:null
+        };
+        const items=!commonApprovals?[unit]:!importApprovals?[title]:[single];
         await route.fulfill(fmt({total_groups:items.length,max_batch:100,items}));
       }else if(path==="/api/v2/admin/i18n/plans/common/import"){
         const payload=route.request().postDataJSON();
@@ -250,6 +259,33 @@ try{
     await page.locator(".i18n-plan-csv-tools > button.i18n-primary").click();
     await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
     assert.equal(importApprovals,1);
+    await page.locator(".i18n-plan-unique-preview summary").waitFor();
+    const unique=page.locator(".i18n-plan-unique-preview");
+    await unique.locator("summary").click();
+    assert.match(await unique.locator("summary").innerText(),/1 títulos únicos/);
+    const uniqueButton=unique.locator("button");
+    assert.equal(await uniqueButton.isDisabled(),true);
+    assert.equal(await unique.locator(".i18n-plan-unique-row").count(),1);
+    const uniqueRow=unique.locator(".i18n-plan-unique-row input");
+    await uniqueRow.uncheck();
+    await unique.locator(".i18n-bulk-attestation input").check();
+    assert.equal(await uniqueButton.isDisabled(),true);
+    await uniqueRow.check();
+    assert.equal(await uniqueButton.isDisabled(),true,
+      "Changing privacy selection requires a fresh acknowledgement");
+    await unique.locator(".i18n-bulk-attestation input").check();
+    assert.equal(await uniqueButton.isEnabled(),true);
+    const uniqueDownload=page.waitForEvent("download");
+    await uniqueButton.click();
+    const uniqueFile=await uniqueDownload;
+    assert.equal(uniqueFile.suggestedFilename(),
+      "the-mile-traducoes-planos-titulos-unicos.csv");
+    const csvUnique=await fs.readFile(await uniqueFile.path(),"utf8");
+    assert.ok(csvUnique.includes("Panquecas caseiras"));
+    assert.ok(csvUnique.includes("Pequeno almoço / lanche"));
+    assert.equal(csvUnique.includes("Bowl de iogurte"),false);
+    assert.equal(csvUnique.includes("Atleta fictício"),false);
+    assert.equal(csvUnique.includes("Tomar 2 vezes"),false);
     await page.locator("#i18n-plan-items .i18n-plan-item").click();
     await page.locator("#i18n-plan-detail .i18n-plan-field").first().waitFor();
     assert.ok((await page.locator("#i18n-plan-detail").innerText()).includes("Opção 1"));
