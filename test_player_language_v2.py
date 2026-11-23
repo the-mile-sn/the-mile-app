@@ -36,7 +36,7 @@ class PlayerLanguageSecurityTests(unittest.TestCase):
             with patch.dict(app.os.environ,{"MILE_APP_TRANSLATION_DIAGNOSTIC":value}):
                 self.assertEqual(self.admin.request(path)["status"],404)
                 self.assertEqual(self.players[0].request(path)["status"],404)
-                self.assertEqual(fixtures.Client().request(path)["status"],404)
+                self.assertEqual(fixtures.Client().request(path)["status"],401)
 
     def test_english_food_search_is_authenticated_and_locale_scoped(self):
         first,second=self.players
