@@ -560,3 +560,15 @@ html[data-admin-theme] body #admin-workspace .tm-admin-translations-page .tm-sel
 .tm-admin-translations-page .i18n-plan-csv-tools>button{justify-self:start;min-height:38px}
 .tm-admin-translations-page .i18n-plan-csv-tools>.i18n-feedback{font-size:12px;line-height:1.5;margin:0}
 @media(max-width:720px){.tm-admin-translations-page .i18n-plan-csv-actions{align-items:stretch;flex-direction:column}.tm-admin-translations-page .i18n-plan-csv-actions button,.i18n-plan-csv-tools>button{width:100%}.tm-admin-translations-page .i18n-plan-csv-upload{width:100%}}
+
+
+/* Planos: second CSV only after private review of individually authored titles. */
+.tm-admin-translations-page .i18n-plan-unique-preview{margin:8px 0;padding:12px;border-radius:10px;background:var(--tm-ui-card);min-width:0}
+.tm-admin-translations-page .i18n-plan-unique-preview summary{cursor:pointer;list-style-position:inside;font-size:13px;font-weight:600;line-height:1.45}
+.tm-admin-translations-page .i18n-plan-unique-preview .i18n-plan-policy{margin:10px 0;font-size:12px}
+.tm-admin-translations-page .i18n-plan-unique-list{max-height:270px;overflow-y:auto;overscroll-behavior:contain;display:grid;gap:5px;margin:10px 0}
+.tm-admin-translations-page .i18n-plan-unique-row{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border-radius:9px;background:var(--tm-ui-subcard);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.tm-admin-translations-page .i18n-plan-unique-row input{flex:none;margin-top:2px}
+.tm-admin-translations-page .i18n-plan-unique-preview>.i18n-bulk-attestation{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5}
+.tm-admin-translations-page .i18n-plan-unique-preview>button{margin-top:10px;min-height:38px}
+@media(max-width:720px){.tm-admin-translations-page .i18n-plan-unique-preview>button{width:100%}}
