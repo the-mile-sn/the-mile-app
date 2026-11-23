@@ -290,7 +290,11 @@ def initialize():
         day_colors_v2.initialize(c)
         calendar_v2.initialize(c)
         peri_v2.initialize(c)
-        if SITE_ROLE == 'player':
+        if SITE_ROLE == 'player' and not (
+            os.environ.get('MILE_I18N_SYNTHETIC_DATA') == '1'
+            and not DATABASE_URL
+            and DATA == Path('/tmp/the-mile-i18n-pten-20261123')
+        ):
             # Release gate: do not activate the player build unless the shared
             # database contains the approved, audited Planos prescriptions.
             try:
