@@ -265,8 +265,19 @@ try{
     await page.getByText(/1 propostas importadas/).waitFor();
     assert.equal(importRequests,1);
     assert.equal(importApprovals,0,"CSV import cannot automatically approve plans");
-    await page.locator(".i18n-plan-csv-tools > .i18n-bulk-attestation input").check();
-    await page.locator(".i18n-plan-csv-tools > button.i18n-primary").click();
+    const approval=page.locator(".i18n-plan-bulk-approval");
+    const approvalButton=approval.locator("button.i18n-primary");
+    assert.equal(await approval.locator("strong").innerText(),"Aprovação em massa");
+    assert.match(await approval.locator(".i18n-plan-bulk-count").innerText(),
+      /1 expressões importadas prontas/);
+    assert.match(await approvalButton.innerText(),/Aprovar em massa/);
+    assert.equal(await approvalButton.isDisabled(),true,
+      "Approval must require explicit review acknowledgement");
+    assert.match(await approval.locator(".i18n-plan-bulk-hint").innerText(),
+      /Assinala a confirmação/);
+    await approval.locator(".i18n-bulk-attestation input").check();
+    assert.equal(await approvalButton.isEnabled(),true);
+    await approvalButton.click();
     await page.getByText(/Aprovadas 2 ocorrências de 1 expressões/).waitFor();
     assert.equal(importApprovals,1);
     await page.locator(".i18n-plan-unique-preview:not(.i18n-plan-notes-preview) summary").waitFor();
