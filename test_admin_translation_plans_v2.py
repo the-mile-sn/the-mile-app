@@ -155,6 +155,30 @@ class PlanTranslationsTests(unittest.TestCase):
         with patch.dict(os.environ,{"MILE_BACKOFFICE_TRANSLATIONS_ENABLED":"0"}):
             self.assertEqual(self.call()["status"],404)
 
+    def test_final_coverage_audit_reconciles_all_statuses(self):
+        with patch.dict(os.environ, FLAG):
+            audit=self.call()["body"]["reuse_audit"]
+            totals=audit["coverage_totals"]
+            kinds=audit["coverage_by_kind"]
+            self.assertEqual(totals["missing"],7)
+            self.assertEqual(totals["approved"],0)
+            self.assertEqual(kinds["option_title"]["missing"],1)
+            self.assertEqual(kinds["individual_note"]["missing"],1)
+            self.assertEqual(kinds["display_quantity"]["missing"],3)
+            self.assertEqual(sum(totals.values()),audit["visible_text_fields"])
+            self.assertEqual(sum(sum(v.values()) for v in kinds.values()),
+                             audit["visible_text_fields"])
+            ref=self.index()["publication_ref"]
+            title=self.fields(ref)["body"]["fields"][0]
+            self.assertEqual(self.propose(ref,title,"Option 1")["status"],201)
+            self.assertEqual(self.call()["body"]["reuse_audit"][
+                "coverage_totals"]["pending"],1)
+            pending=self.fields(ref)["body"]["fields"][0]
+            self.assertEqual(self.approve(ref,pending)["status"],200)
+            updated=self.call()["body"]["reuse_audit"]["coverage_totals"]
+            self.assertEqual(updated["approved"],1)
+            self.assertEqual(updated["missing"],6)
+
     def test_proposal_approval_audit_and_original_plan_unchanged(self):
         with patch.dict(os.environ,FLAG):
             ref=self.index()["publication_ref"]
