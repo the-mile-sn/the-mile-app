@@ -68,7 +68,7 @@ test("Remaining Player and Chef UI labels use the selected language without visu
     'playerText("Refeição registada","Meal recorded")',
     'playerText("Fechar fotografia","Close photo")',
     'playerText("Média semanal: ","Weekly average: ")',
-    'playerText("Momento',
+    "playerText('Momentos de consumo disponíveis','Available consumption times')",
     'periTimingEnglish[timing]'
   ])assert.ok(player.includes(phrase),phrase);
   assert.ok(chef.includes('lang==="pt"?"Fechar fotografia":"Close photo"'));
