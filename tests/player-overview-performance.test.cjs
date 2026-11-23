@@ -61,7 +61,7 @@ test("approved expanded nutrition typography uses one rule for each role",()=>{
  assert.equal((css.match(/#overview #day-details \.nutrition-weekly-charts:not\(\[hidden\]\) \.macro-chart-header\+div>\.nutrition-chart-section>strong\{/g)||[]).length,1);
  assert.match(guide,/Painel nutricional aberto — títulos semanais/);
  assert.match(guide,/Painel nutricional aberto — etiquetas de macros/);
- assert.match(js,/weeklyCharts\.append\(buildBars\("Calorias da semana"/);
+ assert.match(js,/weeklyCharts\.append\(buildBars\(playerText\("Calorias da semana","Weekly calories"\)/);
  assert.match(js,/macroTitle\.textContent="Macros da semana"/);
  assert.doesNotMatch(js,/n\.style\.color=color;n\.style\.color=color/);
  assert.doesNotMatch(js,/footer\.append\(footerLabel,footerActions\);footer\.addEventListener/);
