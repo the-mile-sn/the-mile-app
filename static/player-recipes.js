@@ -1,6 +1,8 @@
 "use strict";
 /* Recipe interface is deliberately isolated from the existing player UI. */
 (function(){
+ // Language follows the player's authenticated locale; no new DOM or style.
+ const tr=(pt,en)=>document.documentElement.lang==="en-GB"?en:pt;
  const area=document.getElementById("player-recipes-area");
  const menuContent=document.getElementById("menu-content");
  const switcher=document.getElementById("menus-recipe-switch");
@@ -117,7 +119,7 @@
  }
  async function renderCategories(){
   const render=++token;
-  syncMode();message("A carregar receitas…");
+  syncMode();message(tr("A carregar receitas…","Loading recipes…"));
   try{
    const recipes=await getLibrary();
    if(render!==token||mode!=="recipes"||screen.kind!=="categories")return;
@@ -127,12 +129,12 @@
     groups.get(recipe.category_id).items.push(recipe);
    }
    const root=node("div","recipe-list");
-   if(!groups.size){message("Ainda não existem receitas publicadas nas categorias disponíveis.");return;}
+   if(!groups.size){message(tr("Ainda não existem receitas publicadas nas categorias disponíveis.","No published recipes are available in these categories."));return;}
    for(const group of groups.values()){
     const preferred=group.items.find(x=>x.id===group.items[0]?.category_cover_recipe_id&&x.has_photo);
     const representative=preferred||group.items.find(x=>x.has_photo);
     root.append(card(group.name,
-     group.items.length===1?"1 receita":group.items.length+" receitas",
+     group.items.length===1?tr("1 receita","1 recipe"):group.items.length+" "+tr("receitas","recipes"),
      representative?.id,()=>{
       categoryScroll=position();
       screen={kind:"list",group};renderList();scrollTop();
@@ -141,7 +143,7 @@
    showRecipePage(root);
   }catch(err){
    if(render!==token)return;
-   message("Não foi possível carregar as receitas. Tenta novamente.");
+   message(tr("Não foi possível carregar as receitas. Tenta novamente.","Could not load recipes. Please try again."));
   }
  }
  function renderList(){
@@ -174,7 +176,7 @@
    parent.append(ingredients);
   }
  }
- const portions=value=>Number(value)===1?"1 porção":String(value)+" porções";
+ const portions=value=>Number(value)===1?tr("1 porção","1 serving"):String(value)+" "+tr("porções","servings");
  // Keep the 1.5px rounded outline style used by the rest of The Mile.
  // Ingredients reuse the app's existing official meal icon.
  function sectionIcon(kind){
@@ -228,11 +230,11 @@
    root.append(identity);
   }
   const ingredients=node("section","recipe-content-section");
-  ingredients.append(sectionTitle("Ingredientes","ingredients"));
+  ingredients.append(sectionTitle(tr("Ingredientes","Ingredients"),"ingredients"));
   ingredientList(ingredients,recipe.sections);
   root.append(ingredients);
   const preparation=node("section","recipe-content-section");
-  preparation.append(sectionTitle("Preparação","preparation"));
+  preparation.append(sectionTitle(tr("Preparação","Method"),"preparation"));
   (recipe.steps||[]).forEach((step,i)=>{
    const row=node("div","recipe-step");
    row.append(node("span","recipe-step-number",i+1),node("span","",step));
@@ -241,7 +243,7 @@
   root.append(preparation);
   if(recipe.notes&&recipe.notes.trim()){
    const tips=node("section","recipe-content-section");
-   tips.append(sectionTitle("Dicas úteis","tips"));
+   tips.append(sectionTitle(tr("Dicas úteis","Useful tips"),"tips"));
    tips.append(node("p","recipe-notes",recipe.notes));
    root.append(tips);
   }
@@ -254,7 +256,7 @@
    if(epoch!==current()||!shouldRender())return;
    root.replaceChildren(detail(response.recipe,options));
   }catch(err){
-   if(epoch===current()&&shouldRender())root.replaceChildren(node("p","recipe-message","Receita indisponível."));
+   if(epoch===current()&&shouldRender())root.replaceChildren(node("p","recipe-message",tr("Receita indisponível.","Recipe unavailable.")));
   }
  }
  function renderDetail(){
@@ -265,14 +267,14 @@
    screen={kind:"list",group:r.group};renderList();restoreScroll(listScroll);
   }));
   const content=node("div","");
-  content.append(node("p","recipe-message","A carregar receita…"));
+  content.append(node("p","recipe-message",tr("A carregar receita…","Loading recipe…")));
   root.append(content);showRecipePage(root);
   loadDetail(r.recipeId,content,()=>render===token&&screen.kind==="detail");
  }
  async function openDish(dishId,dishName){
   returnScroll=position();
   mode="menus";screen={kind:"dish",dishId,dishName};
-  const render=++token;syncMode();scrollTop();message("A carregar receitas…");
+  const render=++token;syncMode();scrollTop();message(tr("A carregar receitas…","Loading recipes…"));
   try{
    const data=await request("/api/v2/player/dish-recipes/"+encodeURIComponent(dishId));
    if(render!==token||screen.kind!=="dish")return;
@@ -302,7 +304,7 @@
    root.append(list);
    showRecipePage(root);
   }catch(err){
-   if(render===token&&screen.kind==="dish")message("Não foi possível abrir as receitas deste prato.");
+   if(render===token&&screen.kind==="dish")message(tr("Não foi possível abrir as receitas deste prato.","Could not open the recipes for this dish."));
   }
  }
  function renderDishDetail(){
@@ -316,7 +318,7 @@
    restoreScroll(dishListScroll);
   }));
   const content=node("div","");
-  content.append(node("p","recipe-message","A carregar receita…"));
+  content.append(node("p","recipe-message",tr("A carregar receita…","Loading recipe…")));
   root.append(content);showRecipePage(root);
   loadDetail(state.recipeId,content,()=>render===token&&screen.kind==="dish-detail"&&screen.recipeId===state.recipeId,
    {includePhoto:false});
