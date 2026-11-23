@@ -74,3 +74,34 @@ A ausência desta confirmação impede a ativação em produção.
 - **Nenhum .html ou .css está incluído nesta PR.**
 
 Esta PR é base técnica, **não uma ativação de inglês em produção**.
+
+## Progresso adicional da internacionalização nativa
+- As etiquetas da interface existentes nas áreas de consumo, Mensagens/estados de Menus
+  e o formulário pós-jogo foram associadas ao idioma da sessão. Não foram
+  adicionados controlos nem alterados códigos de respostas, limites ou escalas.
+- A UI de Receitas reutiliza a função bilingue de texto que já existia
+  no ramo de trabalho; os testes antigos foram atualizados para preservar
+  explicitamente os títulos PT e EN, as dimensões e as interações.
+- A deteção do cartão de jogo usada para posicionar o questionário também
+  reconhece o texto localizado sem alterar a posição do cartão.
+- O teste de interface dos sliders continua a exigir o mesmo CSS e os
+  mesmos valores de 1 a 10. O teste de UI de Receitas continua a exigir
+  os mesmos ícones, cards, separadores, fotografia e navegação.
+- Foi confirmado que a PR não altera ficheiros HTML ou CSS. A tradução de
+  cadeias não autoriza modificar a estrutura DOM.
+
+## Validação do armazenamento e lançamento
+A leitura externa de `the-mile-db` via Render está bloqueada pela própria
+política de acesso da base de produção; **não alterar essa política apenas
+para executar testes**. Os registos do serviço público confirmam que a app
+consegue ler a tabela de Planos publicados (63 prescrições / 13 jogadores
+nos arranques inspecionados em 21/11), mas isso **não comprova** o acesso
+à tabela `v2_content_translations`. A confirmação deve ser feita por
+uma verificação read-only dentro do serviço autenticado, sem conteúdo
+individual e com acesso restrito, antes de ativar o idioma EN.
+
+## Ainda não concluído
+A internacionalização completa das opções do editor de consumos,
+pesquisa em inglês de alimentos, mensagens menos frequentes e
+verificação visual de todos os estados PT/EN continuam pendentes.
+**Não publicar nem ativar esta PR até concluir e testar estes pontos.**
