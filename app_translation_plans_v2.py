@@ -474,11 +474,11 @@ def _common_stage_map(c):
 # It is not a guarantee of anonymisation: the private UI REQUIRES explicit
 # human screening of every candidate before any unique-title CSV is saved.
 _SENSITIVE_SINGLE_TITLE = re.compile(
-    r"(?:https?://|www\\.|@|\\b\\d{8,}\\b|"
-    r"\\b(?:alergia|intoler[aâ]ncia|diabet\\w*|insulina|medica[çc][aã]o|"
-    r"medicamento\\w*|doen[çc]a\\w*|hipertens\\w*|les[aã]o|"
-    r"diagn[oó]stico\\w*|patologia\\w*|prescri[çc][aã]o|"
-    r"confidencial|paciente|atleta|jogador\\w*)\\b)", re.I)
+    r"(?:https?://|www\.|@|\b\d{8,}\b|"
+    r"\b(?:alergia|intoler[aâ]ncia|diabet\w*|insulina|medica[çc][aã]o|"
+    r"medicamento\w*|doen[çc]a\w*|hipertens\w*|les[aã]o|"
+    r"diagn[oó]stico\w*|patologia\w*|prescri[çc][aã]o|"
+    r"confidencial|paciente|atleta|jogador\w*)\b)", re.I)
 
 
 def _single_title_candidate(group):
