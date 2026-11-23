@@ -7,6 +7,7 @@ The separate admin HTTP boundary enforces session, origin and CSRF.
 import hashlib
 import json
 import re
+import time
 from collections import Counter
 
 import app_translation_admin_v2 as admin
@@ -572,12 +573,35 @@ def import_common(c, actor, body):
         if stage is not None and translated == stage["translated_text"]:
             skipped += 1
             continue
-        pending.append((group_id, group["source_text"], translated))
+        pending.append((group_id, group["source_text"], translated, stage))
     try:
-        for group_id, original, translated in pending:
-            store.submit(c, entity_kind="plan_common", entity_id=group_id,
-                         field_path="text", source_text=original,
-                         translated_text=translated, actor_id=actor_id)
+        for group_id, original, translated, stage in pending:
+            now = int(time.time())
+            source_hash = _hash(original)
+            if stage is None:
+                inserted = c.execute("""
+                    INSERT INTO v2_content_translations
+                        (entity_kind,entity_id,field_path,language,source_hash,
+                         translated_text,status,updated_at,updated_by,approved_at,approved_by)
+                    VALUES('plan_common',?,'text','en',?,?,'pending',?,?,NULL,NULL)
+                    ON CONFLICT (entity_kind,entity_id,field_path,language) DO NOTHING
+                    RETURNING entity_id
+                """, (group_id,source_hash,translated,now,actor_id)).fetchone()
+            else:
+                inserted = c.execute("""
+                    UPDATE v2_content_translations
+                    SET translated_text=?,status='pending',updated_at=?,updated_by=?,
+                        approved_at=NULL,approved_by=NULL
+                    WHERE entity_kind='plan_common' AND entity_id=?
+                      AND field_path='text' AND language='en'
+                      AND status='pending' AND source_hash=? AND translated_text=?
+                    RETURNING entity_id
+                """, (translated,now,actor_id,group_id,
+                      source_hash,stage["translated_text"])).fetchone()
+            if inserted is None:
+                raise PlanTranslationError(409, "common_import_proposal_changed")
+            store._history(c,("plan_common",group_id,"text","en"),source_hash,
+                           translated,"submitted",actor_id,now)
     except Exception:
         c.rollback()
         raise
