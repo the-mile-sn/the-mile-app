@@ -260,7 +260,8 @@ class PresentationTranslationTests(unittest.TestCase):
              patch.object(plans_api,"_option_items",return_value=[]):
             portuguese_view=plans_api._options(self.plan["meals"][0],self.library)
             english_view=plans_api._options(
-                translated["Plano azul"]["content"]["meals"][0],english_library)
+                translated["Plano azul"]["content"]["meals"][0],english_library,
+                language="en")
         self.assertEqual(portuguese_view[0]["option_ref"],
                          english_view[0]["option_ref"])
         self.assertEqual(portuguese_view[0]["option_ref"],option_ref(original))
