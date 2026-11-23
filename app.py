@@ -1450,11 +1450,16 @@ def application(env, start_response):
                     search=(q.get('q') or [''])[0]
                     if not isinstance(search,str) or len(search)>90:
                         raise Problem(400,'invalid_search')
-                    rows=c.execute("""SELECT id,name_pt,category
-                      FROM v2_dish_library WHERE active=1
-                        AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
-                        ('%'+search+'%',)).fetchall()
-                    return respond(200,{'dishes':[dict(row) for row in rows]})
+                    if app_content_i18n_v2.enabled(athlete['language']) and (
+                            app_content_i18n_v2.translation_store_available(c)):
+                        dishes=app_content_i18n_v2.search_approved_dishes(c,search)
+                    else:
+                        rows=c.execute("""SELECT id,name_pt,category
+                          FROM v2_dish_library WHERE active=1
+                            AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
+                            ('%'+search+'%',)).fetchall()
+                        dishes=[dict(row) for row in rows]
+                    return respond(200,{'dishes':dishes})
                 if path == '/api/v2/chef/menus' and method == 'GET':
                     query=parse_qs(env.get('QUERY_STRING',''))
                     try:
