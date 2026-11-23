@@ -52,7 +52,16 @@ try{
         await route.fulfill(fmt({language:"en",items:[planPublication],total:1,
           reuse_audit:{published_versions:1,visible_text_fields:7,
             repeated_option_title_occurrences:2,approved_library_food_references:1,
-            alternative_overrides:1,individual_notes:1,simple_unit_suggestions:1},
+            alternative_overrides:1,individual_notes:1,simple_unit_suggestions:1,
+            coverage_totals:{approved:1,pending:1,missing:5,outdated:0},
+            coverage_by_kind:{
+              option_title:{approved:0,pending:0,missing:1,outdated:0},
+              individual_note:{approved:0,pending:0,missing:1,outdated:0},
+              display_quantity:{approved:1,pending:1,missing:1,outdated:0},
+              alternative_override:{approved:0,pending:0,missing:1,outdated:0},
+              food_override:{approved:0,pending:0,missing:0,outdated:0},
+              supplement_label:{approved:0,pending:0,missing:1,outdated:0}
+            }},
           scope:"published_versions_only",csv_export:false}));
       }else if(path==="/api/v2/admin/i18n/plans/common"){
         const unit={
@@ -232,6 +241,21 @@ try{
     assert.equal(await page.locator("#i18n-work-panel #i18n-tabs button").count(),6);
     assert.equal(await page.locator("#i18n-work-title").textContent(),"Planos");
     assert.equal(await page.locator("#i18n-plan-open-library").count(),0);
+    const coverage=page.locator(".i18n-plan-audit");
+    await coverage.locator(".i18n-plan-coverage-table").waitFor();
+    assert.equal(await coverage.locator(".i18n-plan-coverage-stat").count(),4);
+    assert.match(await coverage.locator(".i18n-plan-coverage-intro").first().innerText(),
+      /Total: 7 campos próprios/);
+    assert.match(await coverage.locator(".i18n-plan-coverage-table").innerText(),
+      /Notas de consumo dos planos/);
+    assert.match(await coverage.locator(".i18n-plan-coverage-table").innerText(),
+      /Textos de suplementos/);
+    assert.equal(await coverage.locator(".i18n-plan-coverage-table tbody tr").count(),7);
+    assert.equal(await coverage.locator(".i18n-plan-reuse-details").isVisible(),true);
+    assert.equal(await coverage.locator(".i18n-plan-coverage-head button").isEnabled(),true);
+    await coverage.locator(".i18n-plan-coverage-head button").click();
+    await coverage.locator(".i18n-plan-coverage-table").waitFor();
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+3));
     await page.locator("#i18n-plan-items .i18n-plan-item").first().waitFor();
     assert.equal(await page.locator("#i18n-plan-items .i18n-plan-item").count(),1);
     await page.locator(".i18n-plan-common-list .i18n-plan-common-item").first().waitFor();
