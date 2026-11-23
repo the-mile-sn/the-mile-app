@@ -59,15 +59,15 @@ class RolloutPreflightTests(unittest.TestCase):
             (root / "tools" / source.name).write_text(
                 source.read_text(encoding="utf-8"), encoding="utf-8")
             (root / "app.py").write_text(
-                "class Connection:\\n"
-                "    def __enter__(self): return self\\n"
-                "    def __exit__(self, *a): return False\\n"
-                "    def execute(self, sql):\\n"
-                "        if sql == 'PRAGMA query_only=ON': return None\\n"
-                "        raise AssertionError('Read-only disabled gate should not query DB')\\n"
-                "def connect(): return Connection()\\n", encoding="utf-8")
+                "class Connection:\n"
+                "    def __enter__(self): return self\n"
+                "    def __exit__(self, *a): return False\n"
+                "    def execute(self, sql):\n"
+                "        if sql == 'PRAGMA query_only=ON': return None\n"
+                "        raise AssertionError('Read-only disabled gate should not query DB')\n"
+                "def connect(): return Connection()\n", encoding="utf-8")
             for module in ("app_content_i18n_v2.py", "food_plan_player_v2.py"):
-                (root / module).write_text("# Stub used for import-only test\\n",
+                (root / module).write_text("# Stub used for import-only test\n",
                                            encoding="utf-8")
             result = subprocess.run(
                 [sys.executable, "-I", str(root / "tools" / source.name)],
