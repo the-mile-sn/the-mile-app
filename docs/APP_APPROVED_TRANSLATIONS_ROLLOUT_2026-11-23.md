@@ -114,3 +114,16 @@ A internacionalização completa das opções do editor de consumos,
 pesquisa em inglês de alimentos, mensagens menos frequentes e
 verificação visual de todos os estados PT/EN continuam pendentes.
 **Não publicar nem ativar esta PR até concluir e testar estes pontos.**
+
+## Diagnóstico interno seguro da fonte de traduções
+- Foi preparado o endpoint `GET /api/v2/admin/translation-readiness` no
+  serviço público, exclusivamente para uma sessão `admin` e com a flag
+  `MILE_APP_TRANSLATION_DIAGNOSTIC=1`. Por defeito responde 404.
+- A leitura utiliza a mesma ligação de base de dados da app, devolvendo
+  apenas disponibilidade da tabela e contagens de traduções aprovadas por
+  tipo. Nunca revela nomes, conteúdo de planos, traduções, dados clínicos
+  nem URL de ligação à base de dados.
+- **Ainda não foi executado na produção**: a PR continua sem merge e
+  esta flag permanece desligada. Após testes finais, permite confirmar
+  a ligação sem alterar a política de IP do PostgreSQL.
+- Após confirmação, a flag de diagnóstico deverá voltar a `0`.
