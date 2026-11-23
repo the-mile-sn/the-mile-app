@@ -1,6 +1,156 @@
 "use strict";
 const $=id=>document.getElementById(id),names={breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},colorNames={orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"};
+// Native translations replace text only; never alter HTML/CSS or interactions.
+let playerUiLanguage="pt";
+const playerMealLanguages={
+  pt:{breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",supper:"Ceia"},
+  en:{breakfast:"Breakfast",lunch:"Lunch",snack:"Snack",dinner:"Dinner",supper:"Supper"}
+};
+const playerColourLanguages={
+  pt:{orange:"Laranja",yellow:"Amarelo",blue:"Azul",green:"Verde",vp:"Verde preparação"},
+  en:{orange:"Orange",yellow:"Yellow",blue:"Blue",green:"Green",vp:"Preparation green"}
+};
+const playerTextBindings=[
+  ["#tabs [data-tab='overview'] > span:last-child","Início","Home"],
+  ["#tabs [data-tab='plans'] > span:last-child","Planos","Plans"],
+  ["#tabs [data-tab='assessments'] > span:last-child","Avaliações","Assessments"],
+  ["#tabs [data-tab='menus'] > span:last-child","Menus","Menus"],
+  ["#tabs [data-tab='profile'] > span:last-child","Perfil","Profile"],
+  ["#overview-mode [data-view='day']","Dia","Day"],
+  ["#overview-mode [data-view='week']","Semana","Week"],
+  ["#menus-recipe-switch [data-menu-mode='recipes']","Receitas","Recipes"],
+  ["#plans-open-prescriptions span:not(.plans-entry-arrow)","Planos","Plans"],
+  ["#player-panel .welcome p","Planeamento nutricional","Nutrition planning"],
+  ["#profile-main .profile-plan-detail:first-child > span","Plano de acompanhamento","Support plan"],
+  ["#profile-main .profile-renewal-detail > span","Data de renovação","Renewal date"],
+  ["#profile-notifications-open .profile-notification-label","Notificações","Notifications"],
+  ["#profile-language-label","Idioma","Language"],
+  ["#menu-loading .loading-accessible-label","A carregar menus da semana","Loading this week's menus"],
+  ["#player-session-retry","Tentar novamente","Try again"],
+  ["#profile-password-open > span:nth-child(2)","Alterar palavra-passe","Change password"],
+  ["#profile-logout > span:last-child","Terminar sessão","Sign out"],
+  ["#profile-notifications-title","Notificações","Notifications"],
+  ["#profile-notifications-page .profile-notifications-empty p","Ainda não existem notificações.","No notifications yet."],
+  ["#profile-password-title","Alterar palavra-passe","Change password"],
+  ["#profile-current-password + .mile-floating-label","Palavra-passe atual","Current password"],
+  ["#profile-new-password + .mile-floating-label","Nova palavra-passe","New password"],
+  ["#profile-confirm-password + .mile-floating-label","Confirmar nova palavra-passe","Confirm new password"],
+  ["#profile-password-form .profile-password-save","Guardar nova palavra-passe","Save new password"],
+  ["#plans-assessments [data-assessment-tab='resumo']","Resumo","Summary"],
+  ["#plans-assessments [data-assessment-tab='pregas']","Pregas","Skinfolds"],
+  ["#plans-assessments [data-assessment-tab='perimetros']","Perímetros","Circumferences"]
+];
+function playerText(pt,en){return playerUiLanguage==="en"?en:pt;}
+function playerMacroLabel(key){
+ const pt={protein_g:"Proteína",carbs_g:"Hidratos",fat_g:"Gordura"};
+ const en={protein_g:"Protein",carbs_g:"Carbohydrates",fat_g:"Fat"};
+ return (playerUiLanguage==="en"?en:pt)[key]||key;
+}
+function playerMacroAbbreviation(key){
+ const pt={protein_g:"P",carbs_g:"HC",fat_g:"G"};
+ const en={protein_g:"P",carbs_g:"C",fat_g:"F"};
+ return (playerUiLanguage==="en"?en:pt)[key]||key;
+}
+function playerDateLocale(){return playerUiLanguage==="en"?"en-GB":"pt-PT";}
+function playerClassification(name){
+ return name==="Geral"?playerText("Geral","General"):name;
+}
+const playerAssessmentEnglish={
+ sum_8:"Sum of 8 skinfolds",weight:"Body weight",body_fat:"Body fat",
+ bmi:"BMI",muscle_index:"Muscle mass index",arm_muscle:"Arm muscle",
+ thigh_muscle:"Thigh muscle",calf_muscle:"Calf muscle",
+ sum_perimeters:"Sum of circumferences",
+ back:"Back",triceps:"Triceps",biceps:"Biceps",suprailiac:"Suprailiac",
+ supraspinal:"Supraspinal",abdominal_skin:"Abdomen",
+ thigh_skin:"Thigh",calf_skin:"Calf",
+ arm_right_relaxed:"Right arm (relaxed)",chest:"Chest",waist:"Waist",
+ abdominal_perimeter:"Abdomen",thigh_right:"Right thigh",thigh_left:"Left thigh",
+ calf_right:"Right calf",calf_left:"Left calf",
+ avg_skinfolds:"Average sum of skinfolds",avg_weight:"Average weight",
+ avg_body_fat:"Average body fat"
+};
+function playerAssessmentLabel(key,canonical){
+ return playerUiLanguage==="en"?(playerAssessmentEnglish[key]||canonical):canonical;
+}
+function playerSupplementMomentLabel(value){
+ if(playerUiLanguage!=="en")return value;
+ return {"Pequeno-almoço":"Breakfast","Almoço":"Lunch","Lanche":"Snack",
+         "Jantar":"Dinner","Ceia":"Supper","Treino":"Training",
+         "Jogo":"Match","Almoço ou jantar":"Lunch or dinner"}[value]||value;
+}
+function playerPhaseLabel(value){
+ if(playerUiLanguage!=="en")return value;
+ return {"Pré-treino":"Pre-training","Pós-treino":"Post-training",
+         "Pré-jogo":"Pre-match","Intra-jogo":"During match",
+         "Pós-jogo":"Post-match"}[value]||value;
+}
+function applyPlayerNativeLanguage(language){
+ playerUiLanguage=language==="en"?"en":"pt";
+ Object.assign(names,playerMealLanguages[playerUiLanguage]);
+ Object.assign(colorNames,playerColourLanguages[playerUiLanguage]);
+ document.documentElement.lang=playerUiLanguage==="en"?"en-GB":"pt-PT";
+ for(const [selector,pt,en] of playerTextBindings){
+  const element=document.querySelector(selector);
+  if(element)element.textContent=playerUiLanguage==="en"?en:pt;
+ }
+ const assessments=document.querySelector("#tabs [data-tab='assessments']");
+ if(assessments){
+  const label=playerText("Avaliações","Assessments");
+  assessments.setAttribute("aria-label",label);assessments.title=label;
+ }
+}
 let playerSessionEpoch=0;
+let playerLanguageSaving=false;
+function syncPlayerLanguageSelector(preferences){
+ const card=$("profile-language-card");
+ if(!card)return;
+ const ready=preferences?.enabled===true;
+ card.hidden=!ready;
+ const label=playerText("Idioma","Language");
+ card.setAttribute("aria-label",label);
+ $("profile-language-selector").setAttribute("aria-label",label);
+ for(const button of card.querySelectorAll("button[data-language]")){
+  const selected=button.dataset.language===playerUiLanguage;
+  button.classList.toggle("active",selected);
+  button.setAttribute("aria-pressed",String(selected));
+  button.disabled=playerLanguageSaving;
+ }
+ if(!ready)$("profile-language-feedback").textContent="";
+}
+async function updatePlayerLanguageChoice(code){
+ if(!["pt","en"].includes(code)||playerLanguageSaving||!me||
+    $("profile-language-card").hidden||code===playerUiLanguage)return;
+ const epoch=playerSessionEpoch;
+ const feedback=$("profile-language-feedback");
+ playerLanguageSaving=true;
+ syncPlayerLanguageSelector({enabled:true});
+ feedback.textContent="";
+ try{
+  await api("/api/v2/player/preferences",{
+   method:"PUT",
+   headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},
+   body:JSON.stringify({language:code})
+  });
+  if(epoch!==playerSessionEpoch)return;
+  // Reload the authenticated data through the normal existing session path:
+  // this also refreshes cached Planos, menus, daily supplements and recipes.
+  overviewReadCache.clear();overviewSnapshot=null;
+  lastOverviewPresentation=null;lastMenuPresentationWeek=null;
+  window.themileRecipes?.reset();
+  await session();
+ }catch(err){
+  if(epoch===playerSessionEpoch&&!err.stale){
+   feedback.textContent=playerText(
+    "Não foi possível alterar o idioma. Tenta novamente.",
+    "Could not change language. Please try again.");
+  }
+ }finally{
+  playerLanguageSaving=false;
+  if(epoch===playerSessionEpoch)
+   syncPlayerLanguageSelector({enabled:!$("profile-language-card").hidden});
+ }
+}
+
 let visualPortionsByColor={};
 let pendingIntraMatchExpansion=null;
 let playerCsrf='',me=null,plans={},periPlans={},model=[],meals=[],calendarEvents=[],periMeals=[],publishedMealChoices={},dayColorOverrides={},weeklyContext=null,day=new Date(),menuWeek=new Date(),menuSelectedDate=null,selectedColor=null,tab="overview",dishIndex=[],overviewMode="day",weeklySelection=null;
@@ -122,6 +272,9 @@ function revokePlayerView(){
  dishPhotoCache.clear();document.body.classList.remove("profile-active");
  if(window.tmVisualPortions)window.tmVisualPortions.close();visualPortionsByColor={};
  me=null;playerCsrf='';profileUsername='';plans={};periPlans={};model=[];meals=[];
+ playerLanguageSaving=false;
+ applyPlayerNativeLanguage("pt");
+ syncPlayerLanguageSelector({enabled:false});
  calendarEvents=[];periMeals=[];publishedMealChoices={};dayColorOverrides={};supplementsByDay={};playerPostMatchRecords=[];
  effectiveScenarioColorsByDay={};scenarioNutritionPreviewByDay={};scenarioNutritionParityByDay={};
  assessmentRecords=[];assessmentFields={};assessmentAverages=[];assessmentGroup="resumo";
@@ -154,10 +307,13 @@ async function api(path,opts={}){
  }
  return data;
 }
-function fmt(v,d=1){return Number(v).toLocaleString("pt-PT",{minimumFractionDigits:d,maximumFractionDigits:d});}
-function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g","P ","protein",0],["carbs_g","HC ","carbs",0],["fat_g","G ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?fmt(n,d):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
+function fmt(v,d=1){return Number(v).toLocaleString(playerDateLocale(),{minimumFractionDigits:d,maximumFractionDigits:d});}
+// kcal are displayed without thousands separators; nutrient quantities keep their existing formatting.
+function fmtKcal(v){return Number(v).toLocaleString(playerDateLocale(),{useGrouping:false,minimumFractionDigits:0,maximumFractionDigits:0});}
+function nutrition(values){const el=document.createElement("span");el.className="macro";for(const [key,prefix,cls,d] of [["kcal","","kcal",0],["protein_g",playerMacroAbbreviation("protein_g")+" ","protein",0],["carbs_g",playerMacroAbbreviation("carbs_g")+" ","carbs",0],["fat_g",playerMacroAbbreviation("fat_g")+" ","fat",0]]){const n=Number(String(values[key]??"").replace(",","."));const span=document.createElement("span");span.className=cls;if(key!=="kcal"){const dot=document.createElement("i");dot.className="macro-dot";dot.setAttribute("aria-hidden","true");span.append(dot);span.setAttribute("aria-label",prefix.trim()+" "+(Number.isFinite(n)?fmt(n,d):"—")+" g");}span.append(document.createTextNode((Number.isFinite(n)?(key==="kcal"?fmtKcal(n):fmt(n,d)):"—")+(key==="kcal"?" kcal":" g")));el.append(span);}return el;}
 function average(options){if(!options.length)return null;const out={kcal:0,protein_g:0,carbs_g:0,fat_g:0};for(const o of options){if(!o.totals)return null;for(const k in out){const raw=o.totals[k];if(raw===undefined||raw===null||String(raw).trim()==="")return null;const n=Number(String(raw).replace(",","."));if(!Number.isFinite(n)||n<0)return null;out[k]+=n/options.length;}}return out;}
 const periTimingLabels={pre_warmup:"Pré-aquecimento",warmup:"Aquecimento",pre_match:"Pré-jogo",post_warmup:"Pós-aquecimento",first_half:"Durante a 1.ª parte",half_time:"Intervalo",second_half:"Durante a 2.ª parte",post_match:"Pós-jogo",throughout:"Ao longo do jogo"};
+const periTimingEnglish={pre_warmup:"Before warm-up",warmup:"Warm-up",pre_match:"Pre-match",post_warmup:"After warm-up",first_half:"First half",half_time:"Half-time",second_half:"Second half",post_match:"Post-match",throughout:"Throughout the match"};
 // Group the already prescribed intra-match items by their timing, keeping
 // the first-seen timing order and each item's original position within its group.
 function groupPeriItemsByTiming(items,order=[]){
@@ -174,7 +330,7 @@ function appendGroupedPeriItems(host,items,order=[]){
  for(const {timing,foods} of groupPeriItemsByTiming(items,order)){
   const group=document.createElement("div");group.className="peri-timing-group";group.dataset.timing=timing;
   const label=periTimingLabels[timing];
-  if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=label;group.append(heading);}
+  if(label){const heading=document.createElement("div");heading.className="peri-timing-heading";heading.textContent=playerUiLanguage==="en"?(periTimingEnglish[timing]||label):label;group.append(heading);}
   const lines=document.createElement("div");lines.className="peri-timing-lines";
   for(const food of foods){
    const line=document.createElement("div");line.className="peri-timing-line";
@@ -199,7 +355,7 @@ function optionEl(o,i,planView=false,groupPeriTiming=false){
  const details=document.createElement("details"),summary=document.createElement("summary"),line=document.createElement("div");
  line.className="option"+(planView?"":" day-option");
  const label=document.createElement("span");label.className="plan-option-label";
- const number=document.createElement("small");number.textContent="Opção "+(o.number||i+1);label.append(number);
+ const number=document.createElement("small");number.textContent=playerText("Opção ","Option ")+(o.number||i+1);label.append(number);
  if(o.title){const name=document.createElement("strong");name.textContent=o.title;label.append(name);}
  line.append(label);summary.append(line);details.append(summary);
  if(o.totals){const value=document.createElement("div");value.className="option-expanded-macros";value.append(nutrition(o.totals));details.append(value);}
@@ -348,7 +504,7 @@ function makeRecordedConsumptionTags({host,date,meal,eventId='',optionIndex=null
    await refreshAfterConsumption(host,meal,eventId);
   }catch(err){
    undo.disabled=false;edit.disabled=false;undo.removeAttribute('aria-busy');
-   feedback.textContent='Não foi possível anular. Tenta novamente.';error(err);
+   feedback.textContent=playerText('Não foi possível anular. Tenta novamente.','Could not undo. Please try again.');error(err);
   }
  };
  actions.append(registered,edit,undo);
@@ -415,7 +571,7 @@ function paintPlayerPhoto(hasPhoto,initials,epoch){
   }).catch(()=>{});
 }
 function displayPlayerRenewal(value){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return "Por definir";
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||"")))return playerText("Por definir","Not set");
  return value.slice(8,10)+"/"+value.slice(5,7)+"/"+value.slice(0,4);
 }
 let playerLoadingPhotoController=null;
@@ -534,6 +690,11 @@ async function session(){
  // reads a head start before background navigation prefetch can occupy them.
  const profilePromise=api("/api/v2/player/me");
  const plansPromise=api("/api/v2/player/plans");
+ // The control is only shown once both approved-data gates are available.
+ // Run the preference read after the core identity fetch starts to avoid
+ // blocking the existing published-plan loading order.
+ const preferencesPromise=profilePromise.then(()=>
+  api("/api/v2/player/preferences")).catch(()=>({enabled:false,language:"pt"}));
  if(sessionData.user?.role==="player"){
   const weekStart=monday(day),weekEnd=new Date(weekStart);
   weekEnd.setDate(weekStart.getDate()+6);
@@ -546,10 +707,13 @@ async function session(){
   ])cachedOverviewRead(path).catch(()=>{});
  }
  const [r,p]=await Promise.all([profilePromise,plansPromise]);
+ const preferences=await preferencesPromise;
  me=r.player;
  if(epoch!==playerSessionEpoch)return;
+ applyPlayerNativeLanguage(me?.language);
+ syncPlayerLanguageSelector(preferences);
  const plan=String(me.followup_plan||"").trim();
- $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():"Por definir";
+ $("profile-plan-value").textContent=/^(elite|pro)$/i.test(plan)?plan.charAt(0).toUpperCase()+plan.slice(1).toLowerCase():playerText("Por definir","Not set");
  $("profile-renewal-date").textContent=displayPlayerRenewal(me.followup_renewal_date);
  $("player-name").textContent=me.name;
  const initials=String(me.name||"TM").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
@@ -633,13 +797,23 @@ async function show(t){
 
 async function renderSupplementPlan(target){
  const data=await api("/api/v2/player/supplements"),root=target||$("plan-detail");if(!root.isConnected)return;root.replaceChildren();
- if(!data.plan.length){root.textContent="Ainda não existe plano de suplementação publicado.";return;}
+ if(!data.plan.length){root.textContent=playerText("Ainda não existe plano de suplementação publicado.","No supplement plan published yet.");return;}
  const labels={daily:"Todos os dias",training:"Dias de treino",match:"MD","md-1":"MD-1","md+1":"MD+1"};
  for(const item of data.plan){
   const box=document.createElement("div");box.className="supplement-entry";
   if(item.library_id){const img=document.createElement("img");img.className="supplement-product-image";img.src="/api/v2/supplement-library/"+encodeURIComponent(item.library_id)+"/image";img.alt=item.name;img.loading="lazy";img.onerror=()=>img.remove();box.append(img);}
   const title=document.createElement("strong");title.textContent=item.name+" · "+item.dose;
-  const meta=document.createElement("small");meta.textContent=(labels[item.rule]||item.rule)+" · "+(item.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[item.moment]||"Sem associação");
+  const ruleLabel=playerUiLanguage==="en"?
+   ({daily:"Every day",training:"Training days",match:"Match day",
+      "md-1":"MD-1","md+1":"MD+1"}[item.rule]||item.rule):
+   (labels[item.rule]||item.rule);
+  const momentLabels=playerUiLanguage==="en"?
+   ({breakfast:"Breakfast",lunch:"Lunch",snack:"Snack",dinner:"Dinner",supper:"Supper",
+     training:"Training",match:"Match",lunch_or_dinner:"Lunch or dinner"}):
+   ({breakfast:"Pequeno-almoço",lunch:"Almoço",snack:"Lanche",dinner:"Jantar",
+     supper:"Ceia",training:"Treino",match:"Jogo",lunch_or_dinner:"Almoço ou jantar"});
+  const meta=document.createElement("small");meta.textContent=ruleLabel+" · "+
+    (item.timing_text||momentLabels[item.moment]||playerText("Sem associação","Not assigned"));
   box.append(title,meta);if(item.note){const note=document.createElement("small");note.textContent=item.note;box.append(note);}root.append(box);
  }
 }
@@ -740,12 +914,12 @@ function summarizeWeekNutrition(dates,totals,referenceWeights={}){
 }
 function weeklySummary(data,relativeMeans={}){
  const section=document.createElement("section");section.className="weekly-average-summary";
- for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+ for(const [key,label,cls] of [["kcal","kcal","kcal"],["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
   const item=document.createElement("div");item.className="weekly-average-metric "+cls;
   const title=document.createElement("small");title.textContent=label;
-  const value=document.createElement("strong");value.textContent=fmt(data[key],0)+(key==="kcal"?"":" g");
+  const value=document.createElement("strong");value.textContent=(key==="kcal"?fmtKcal(data[key]):fmt(data[key],0))+(key==="kcal"?"":" g");
   item.append(title,value);
-  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(relativeMeans[key],key==="kcal"?0:1)+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
+  if(Number.isFinite(relativeMeans[key])){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=(key==="kcal"?fmtKcal(relativeMeans[key]):fmt(relativeMeans[key],1))+(key==="kcal"?" kcal/kg":" g/kg");item.append(ratio);}
   section.append(item);
  }
  return section;
@@ -762,8 +936,8 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  for(let i=0;i<7;i++){
   const dt=new Date(mon);dt.setDate(mon.getDate()+i);const key=iso(dt),entry=r.days.find(x=>x.date===key);
   dates.push(key);classes.push(model.find(c=>c.name===entry?.classification));totals.push(weeklyDayTotal(entry||{date:key,classification:null}));
-  const header=document.createElement("button");header.type="button";header.className="weekly-day-header week-day"+(key===iso(day)?" selected":"")+(key===iso(new Date())?" today":"");header.setAttribute("aria-pressed",String(key===iso(day)));header.setAttribute("aria-label","Abrir vista diária: "+dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
-  for(const [cls,val] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",entry?.classification||"Geral"]]){
+  const header=document.createElement("button");header.type="button";header.className="weekly-day-header week-day"+(key===iso(day)?" selected":"")+(key===iso(new Date())?" today":"");header.setAttribute("aria-pressed",String(key===iso(day)));header.setAttribute("aria-label",playerText("Abrir vista diária: ","Open day view: ")+dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"}));
+  for(const [cls,val] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",playerClassification(entry?.classification||"Geral")]]){
    const span=document.createElement("span");span.className=cls;span.textContent=val;header.append(span);
   }
   markWeeklyColumn(header,key);header.onclick=()=>{day=dt;overviewMode="day";weeklySelection=null;overview().catch(error);};grid.append(header);
@@ -776,16 +950,16 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    if(!color){const empty=document.createElement("div");empty.className="weekly-empty";markWeeklyColumn(empty,dates[i]);grid.append(empty);continue;}
    const active=weeklySelection?.date===dates[i]&&weeklySelection?.meal===meal;
    const b=document.createElement("button");b.type="button";b.className="weekly-meal tone-"+color+(active?" is-active":"");markWeeklyColumn(b,dates[i]);
-   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?"Peq Alm.":names[meal]||meal;b.append(label);
-   if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmt(avg.kcal,0);b.append(value);}
-   b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+" — abrir opções");b.setAttribute("aria-pressed",String(active));
+   const label=document.createElement("span");label.className="weekly-meal-name";label.textContent=meal==="breakfast"?playerText("Peq Alm.","Breakfast"):names[meal]||meal;b.append(label);
+   if(avg){const value=document.createElement("span");value.className="weekly-meal-kcal";value.textContent=fmtKcal(avg.kcal);b.append(value);}
+   b.setAttribute("aria-label",(names[meal]||meal)+" "+dates[i]+playerText(" — abrir opções"," — open options"));b.setAttribute("aria-pressed",String(active));
    b.onclick=()=>{weeklySelection=active?null:{date:dates[i],meal,color};renderWeekly(mon,r,weekMenus,weeklyWeights);};grid.append(b);
   }
  }
  for(let i=0;i<7;i++){
   const box=document.createElement("div");box.className="weekly-day-total";markWeeklyColumn(box,dates[i]);const total=totals[i];
   if(!total){box.textContent="—";grid.append(box);continue;}
-  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmt(total.kcal,0);energy.setAttribute("aria-label","Energia "+fmt(total.kcal,0)+" kcal");box.append(energy);
+  const energy=document.createElement("div");energy.className="weekly-total-kcal";energy.textContent=fmtKcal(total.kcal);energy.setAttribute("aria-label",playerText("Energia ","Energy ")+fmtKcal(total.kcal)+" kcal");box.append(energy);
   const line=document.createElement("div");line.className="weekly-total-macros";
   for(const k of ["protein_g","carbs_g","fat_g"]){const v=document.createElement("span");v.className=k==="protein_g"?"protein":k==="carbs_g"?"carbs":"fat";v.textContent=fmt(total[k],0);line.append(v);}
   box.append(line);grid.append(box);
@@ -796,9 +970,9 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
   const section=document.createElement("section");section.className="weekly-detail weekly-color-detail tone-"+color;
   const dayData=r.days.find(x=>x.date===date);
   const top=document.createElement("div");top.className="weekly-detail-heading";
-  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+(dayData?.classification||"Geral");
+  const caption=document.createElement("small");caption.textContent=new Date(date+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")+" · "+playerClassification(dayData?.classification||"Geral");
   const title=document.createElement("strong");title.textContent=names[meal]||meal;
-  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
+  const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label",playerText("Fechar refeição","Close meal"));close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
   const titleGroup=document.createElement("div");titleGroup.className="weekly-detail-titles";titleGroup.append(caption,title);top.append(titleGroup,close);section.append(top);
   const options=datedPlanOptions(date,meal,color),avg=average(options);
   if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
@@ -806,7 +980,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    const menu=weekMenus.find(x=>x.menu_date===date&&x.meal===meal);
    if(menu){const line=document.createElement("div");line.className="weekly-menu-line";line.textContent=menu.value;section.append(line);}
   }
-  if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent="Plano ainda não publicado.";section.append(note);}
+  if(!options.length){const note=document.createElement("p");note.className="hint";note.textContent=playerText("Plano ainda não publicado.","Plan not yet published.");section.append(note);}
   else if(options.length===1){
    appendMealItems(section,options[0].items);
   }else options.forEach((o,i)=>{const item=optionEl(o,i,true);item.classList.add("weekly-option-card");section.append(item);});
@@ -818,9 +992,9 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    if(item){
     const section=document.createElement("section");section.className="weekly-detail peri-weekly-detail";
     const top=document.createElement("div");top.className="weekly-detail-heading";
-    const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"});
-    const title=document.createElement("strong");title.textContent=item.selection_phase==="intra_match"?"Jogo":item.title;
-    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Fechar refeição");close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
+    const caption=document.createElement("small");caption.textContent=new Date(item.event_date+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"short",day:"2-digit",month:"2-digit"});
+    const title=document.createElement("strong");title.textContent=item.selection_phase==="intra_match"?playerText("Jogo","Match"):item.title;
+    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label",playerText("Fechar refeição","Close meal"));close.onclick=()=>{weeklySelection=null;renderWeekly(mon,r,weekMenus,weeklyWeights);};
     const group=document.createElement("div");group.className="weekly-detail-titles";group.append(caption,title);top.append(group,close);section.append(top);
     const opts=item.options||[],avg=average(opts);
     if(avg){const line=document.createElement("div");line.className="weekly-meal-average";line.append(nutrition(avg));section.append(line);}
@@ -830,17 +1004,17 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
    }
   }
 
- const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent="Média diária";heading.append(h);root.append(heading);
+ const heading=document.createElement("div");heading.className="weekly-summary-heading";const h=document.createElement("h2");h.textContent=playerText("Média diária","Daily average");heading.append(h);root.append(heading);
  const weeklyNutrition=summarizeWeekNutrition(dates,totals,weeklyWeights);
  if(!weeklyNutrition.complete){
   const hint=document.createElement("p");hint.className="hint";
-  hint.textContent="Média semanal indisponível · "+weeklyNutrition.completeDays+"/7 dias com prescrição nutricional completa.";
+  hint.textContent=playerText("Média semanal indisponível · ","Weekly average unavailable · ")+weeklyNutrition.completeDays+playerText("/7 dias com prescrição nutricional completa.","/7 days with a complete meal plan.");
   root.append(hint);
  }else{
   root.append(weeklySummary(weeklyNutrition.means,weeklyNutrition.perKg));
   if(!weeklyNutrition.hasAllReferenceWeights){
    const hint=document.createElement("p");hint.className="hint";
-   hint.textContent="Rácios por kg indisponíveis: falta o Peso de referência de um ou mais dias.";
+   hint.textContent=playerText("Rácios por kg indisponíveis: falta o Peso de referência de um ou mais dias.","Per-kg ratios unavailable: reference weight missing for one or more days.");
    root.append(hint);
   }
  }
@@ -855,7 +1029,7 @@ function renderWeekly(mon,r,weekMenus=[],weeklyWeights={}){
  }
  if(weeklySupplements.size){
   const summary=document.createElement("details");summary.className="weekly-supplement-summary";
-  const header=document.createElement("summary");header.textContent="Suplementação";header.prepend(mealIcon("pill"));summary.append(header);
+  const header=document.createElement("summary");header.textContent=playerText("Suplementação","Supplements");header.prepend(mealIcon("pill"));summary.append(header);
   for(const group of ["Diariamente","Treino","MD-1","MD","MD+1","Outros"]){
    const items=[...weeklySupplements.values()].filter(x=>x.group===group);
    if(!items.length)continue;
@@ -880,7 +1054,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  // before independent timing entries can be created, never silently migrated.
  if(previous&&!previous.timing_records?.length){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
   card.append(makeRecordedConsumptionTags({host:card,date,meal,eventId,description:'consumo anterior de Jogo'}));
   return true;
  }
@@ -888,7 +1062,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
  const available=new Set(entries.map(x=>x.timing));
  if(current.length&&[...available].every(t=>current.some(row=>row.timing===t))){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
  }
  for(const {group,index,timing} of entries){
   const optionRef=options[index].option_ref;
@@ -898,8 +1072,8 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
    continue;
   }
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
-  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
-  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
+  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
+  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(group,date,meal,eventId,index,null,timing,optionRef).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
@@ -913,7 +1087,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
     await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date,meal,event_id:eventId,timing,option_ref:option.option_ref,status:'all'})});
     showConsumptionSuccess(quick);feedback.textContent='';
     await new Promise(resolve=>setTimeout(resolve,900));await refreshAfterConsumption(group,meal,eventId);
-   }catch(err){feedback.textContent='Não foi possível registar este momento.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);}
+   }catch(err){feedback.textContent=playerText('Não foi possível registar este momento.','Could not record this moment.');quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(err);}
   };
   actions.append(edit,quick);group.append(actions,feedback);
  }
@@ -968,7 +1142,7 @@ function appendIntraTimingConsumption(card,item,previous,date,meal,eventId){
   arrow.setAttribute('aria-hidden','true');
   trigger.append(selectedLabel,arrow);
   const menu=document.createElement('div');menu.className='intra-timing-option-list';
-  menu.setAttribute('role','listbox');menu.setAttribute('aria-label','Momentos de consumo disponíveis');
+  menu.setAttribute('role','listbox');menu.setAttribute('aria-label',playerText('Momentos de consumo disponíveis','Available consumption times'));
   menu.hidden=true;
   const options=[];
   let selectedTiming=choices[0][0],selectedIndex=0;
@@ -1071,15 +1245,15 @@ function appendPeriConsumption(card,item,records){
  if(item.selection_phase==='intra_match'&&appendIntraTimingConsumption(card,item,previous,date,meal,eventId))return;
  if(previous){
   const title=card.querySelector('.daily-meal-head > strong');
-  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');title.append(badge);}
+  if(title){const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));title.append(badge);}
  }
  const selected=options.findIndex(option=>option.option_ref===previous?.option_ref);
  const hosts=options.length===1?[card]:[...card.children].filter(child=>child.tagName==='DETAILS');
  hosts.forEach((host,index)=>{
   if(previous&&index===selected){host.append(makeRecordedConsumptionTags({host,date,meal,eventId,optionIndex:index,description:'consumo de '+item.title}));return;}
   const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
-  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
-  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');
+  const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
+  const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));
   const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
   edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(host,date,meal,eventId,index).finally(()=>{edit.disabled=false;});};
   quick.onclick=async()=>{
@@ -1096,8 +1270,8 @@ function appendPeriConsumption(card,item,records){
     if(host.tagName==='DETAILS')host.open=false;
     await overview();
    }catch(err){
-    feedback.textContent='Não foi possível registar. Tenta novamente.';
-    quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(err);
+    feedback.textContent=playerText('Não foi possível registar. Tenta novamente.','Could not save the record. Please try again.');
+    quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(err);
    }
   };
   actions.append(edit,quick);host.append(actions,feedback);
@@ -1117,7 +1291,7 @@ function makePeriCard(item,compact=false,consumptionEnabled=false,consumptionRec
   };
   const title=document.createElement("span");title.textContent=item.title;
   section.append(title);
-  if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmt(avg.kcal,0);section.append(kcal);}
+  if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal";kcal.textContent=fmtKcal(avg.kcal);section.append(kcal);}
   return section;
  }
  const head=document.createElement("summary");head.className="daily-meal-head tm-day-header";
@@ -1136,7 +1310,7 @@ function eventCard(event,compact=false){
    const toggle=document.createElement("button");toggle.type="button";toggle.className="daily-event-edit";toggle.setAttribute("aria-label","Editar "+event.title);toggle.title="Editar "+event.title;toggle.innerHTML="<svg class=\"hugeicon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15.2141 5.98239L16.6158 4.58063C17.39 3.80646 18.6452 3.80646 19.4194 4.58063C20.1935 5.3548 20.1935 6.60998 19.4194 7.38415L18.0176 8.78591M15.2141 5.98239L6.98023 14.2163C5.93493 15.2616 5.41226 15.7842 5.05637 16.4211C4.70047 17.058 4.3424 18.5619 4 20C5.43809 19.6576 6.94199 19.2995 7.57889 18.9436C8.21579 18.5877 8.73844 18.0651 9.78375 17.0198L18.0176 8.78591M15.2141 5.98239L18.0176 8.78591\"/><path d=\"M11 20H17\"/></svg>";
    const editor=document.createElement("div");editor.hidden=true;editor.className="daily-event-editor";
    const date=document.createElement("input");date.type="date";date.value=event.event_date;date.setAttribute("aria-label","Data");
-   const session=document.createElement("select");session.setAttribute("aria-label","Período");
+   const session=document.createElement("select");session.setAttribute("aria-label",playerText("Período","Period"));
    for(const [val,text] of [["morning","Manhã"],["afternoon","Tarde"]]){
      const option=document.createElement("option");option.value=val;option.textContent=text;session.append(option);
    }session.value=event.session;
@@ -1196,11 +1370,11 @@ function matchWithIntraCard(event,item,consumptionEnabled=false,consumptionRecor
 let supplementsByDay={};
 function supplementsCard(items){
  const box=document.createElement("details");box.className="daily-supplements";
- const title=document.createElement("summary");title.className="tm-day-header";box.append(title);const iconBox=document.createElement("span");iconBox.className="meal-leading-icon supplement-leading-icon tm-day-icon";iconBox.append(mealIcon("pill"));const heading=document.createElement("strong");heading.className="tm-day-title";heading.textContent="Suplementação";title.append(iconBox,heading);
+ const title=document.createElement("summary");title.className="tm-day-header";box.append(title);const iconBox=document.createElement("span");iconBox.className="meal-leading-icon supplement-leading-icon tm-day-icon";iconBox.append(mealIcon("pill"));const heading=document.createElement("strong");heading.className="tm-day-title";heading.textContent=playerText("Suplementação","Supplements");title.append(iconBox,heading);
  for(const x of items){
   const line=document.createElement("div");line.className="supplement-entry";
   const name=document.createElement("strong");name.textContent=x.name+" · "+x.dose;
-  const moment=document.createElement("small");moment.textContent=x.display_moment||x.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[x.moment]||"Sem associação";
+  const moment=document.createElement("small");moment.textContent=playerSupplementMomentLabel(x.display_moment||x.timing_text||({"breakfast":"Pequeno-almoço","lunch":"Almoço","snack":"Lanche","dinner":"Jantar","supper":"Ceia","training":"Treino","match":"Jogo","lunch_or_dinner":"Almoço ou jantar"})[x.moment]||playerText("Sem associação","Not assigned"));
   line.append(name,moment);if(x.note){const note=document.createElement("small");note.textContent=x.note;line.append(note);}box.append(line);
  }
  return box;
@@ -1208,7 +1382,7 @@ function supplementsCard(items){
 function attachSupplements(card,items){
  if(!items.length)return;
  const area=document.createElement("div");area.className="supplement-in-meal";
- const label=document.createElement("strong");label.textContent="Suplementação";area.append(label);
+ const label=document.createElement("strong");label.textContent=playerText("Suplementação","Supplements");area.append(label);
  for(const x of items){const line=document.createElement("div");line.textContent=x.name+" · "+x.dose;area.append(line);}
  card.append(area);
 }
@@ -1240,7 +1414,7 @@ function appendWeeklyEvents(host,dates,session){
     button.setAttribute("role","button");button.tabIndex=0;
     const active=weeklySelection?.periEventId===intra.event_id&&weeklySelection?.selectionPhase==="intra_match"&&weeklySelection?.date===date;
     button.setAttribute("aria-pressed",String(active));
-    if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmt(avg.kcal,0);button.append(kcal);}
+    if(avg){const kcal=document.createElement("span");kcal.className="weekly-meal-kcal weekly-match-kcal";kcal.textContent=fmtKcal(avg.kcal);button.append(kcal);}
     const select=()=>{weeklySelection=active?null:{date,periEventId:intra.event_id,phase:"pre",selectionPhase:"intra_match"};if(weeklyContext)renderWeekly(weeklyContext.mon,weeklyContext.r,weeklyContext.weekMenus,weeklyContext.weeklyWeights);};
     button.onclick=select;button.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select();}};
     slot.append(button);
@@ -1260,17 +1434,17 @@ function injectPostMatchCard(){
  const date=iso(day);
  const games=playerPostMatchRecords.filter(m=>m.date===date&&m.can_answer);
  if(!games.length)return;
- const matchCards=Array.from(root.querySelectorAll(".daily-event-card,.daily-match-with-intra,details")).filter(n=>n.textContent?.includes("Jogo"));
+ const matchCards=Array.from(root.querySelectorAll(".daily-event-card,.daily-match-with-intra,details")).filter(n=>n.textContent?.includes(playerText("Jogo","Match")) || n.textContent?.includes("Jogo"));
  let anchor=matchCards[matchCards.length-1]||null;
  for(const game of games){
   const card=document.createElement("div");card.className="post-match-inline";card.dataset.matchId=game.id;
   const button=document.createElement("button");button.type="button";button.className="post-match-inline-trigger tm-day-header";
   const icon=document.createElement("span");icon.className="post-match-inline-icon tm-day-icon";icon.append(mealIcon("football-pitch"));
-  const title=document.createElement("span");title.className="post-match-inline-title tm-day-title";title.textContent="Questionário pós-jogo";
+  const title=document.createElement("span");title.className="post-match-inline-title tm-day-title";title.textContent=playerText("Questionário pós-jogo","Post-match questionnaire");
   const status=document.createElement("span");status.className="post-match-inline-status";
-  status.textContent=game.answered?"✓ Preenchido":"Por preencher";
+  status.textContent=game.answered?playerText("✓ Preenchido","✓ Completed"):playerText("Por preencher","Not completed");
   button.append(icon,title,status);
-  const action=document.createElement("button");action.type="button";action.className="post-match-edit";action.setAttribute("aria-label",game.answered?"Editar questionário pós-jogo":"Preencher questionário pós-jogo");
+  const action=document.createElement("button");action.type="button";action.className="post-match-edit";action.setAttribute("aria-label",game.answered?playerText("Editar questionário pós-jogo","Edit post-match questionnaire"):playerText("Preencher questionário pós-jogo","Complete post-match questionnaire"));
   action.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M15.5 5.5a2.12 2.12 0 0 1 3 3L8 19l-4 1 1-4Z"/></svg>';
   card.append(button,action);
   button.disabled=true;
@@ -1280,16 +1454,16 @@ function injectPostMatchCard(){
    const answers={...(game.answers||{})};
    const section=document.createElement("section");section.className="post-match-questionnaire";
    let step=0;
-   const steps=["Participação e bem-estar","Alimentação","Suplementação"];
+   const steps=[playerText("Participação e bem-estar","Participation and wellbeing"),playerText("Alimentação","Nutrition"),playerText("Suplementação","Supplements")];
    const heading=document.createElement("div");heading.className="post-match-progress";
    const content=document.createElement("div");content.className="post-match-questions";
    const nav=document.createElement("div");nav.className="post-match-navigation";
-   const back=document.createElement("button");back.type="button";back.textContent="‹";back.setAttribute("aria-label","Anterior");
+   const back=document.createElement("button");back.type="button";back.textContent="‹";back.setAttribute("aria-label",playerText("Anterior","Previous"));
    const next=document.createElement("button");next.type="button";
    const msg=document.createElement("p");msg.setAttribute("role","status");
    const select=document.createElement("select");select.required=true;
-   const start=document.createElement("option");start.value="";start.textContent="Selecionar";select.append(start);
-   const none=document.createElement("option");none.value="not_played";none.textContent="Não joguei";select.append(none);
+   const start=document.createElement("option");start.value="";start.textContent=playerText("Selecionar","Select");select.append(start);
+   const none=document.createElement("option");none.value="not_played";none.textContent=playerText("Não joguei","Did not play");select.append(none);
    for(let n=5;n<=120;n+=5){const o=document.createElement("option");o.value=String(n);o.textContent=n+" min";select.append(o);}
    if(game.answered)select.value=game.minutes==null?"not_played":String(game.minutes);
    function question(title,control){const wrap=document.createElement("div");wrap.className="post-match-question";const h=document.createElement("label");h.textContent=title;wrap.append(h,control);content.append(wrap);return wrap;}
@@ -1323,27 +1497,27 @@ function injectPostMatchCard(){
     const bars=document.createElement("div");bars.className="post-match-progress-bars";
     for(let i=0;i<3;i++){const bar=document.createElement("span");if(i<=step)bar.className="active";bars.append(bar);}heading.append(bars);
     if(step===0){
-     question("1. Quantos minutos jogaste?",select);
+     question(playerText("1. Quantos minutos jogaste?","1. How many minutes did you play?"),select);
      if(select.value!=="not_played"){
-      scale("feeling","2. Como te sentiste no jogo?","Horrível","Muito bem");
-      scale("effort","3. Perceção do esforço","Muito leve","Esforço máximo");
-      radio("gi_level","4. Como te sentiste a nível gastrointestinal?",[["none","Sem sintomas"],["mild","Desconforto ligeiro"],["moderate","Desconforto moderado"],["severe","Desconforto intenso"]]);
-      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms","Que sintomas tiveste?",[["nausea","Náuseas"],["abdominal_pain","Dor abdominal"],["bloating","Inchaço abdominal"],["reflux","Refluxo / azia"],["urgency","Urgência para evacuar / diarreia"],["vomiting","Vómitos"],["other","Outro"]]);
-      multiple("game_symptoms","Durante o jogo, tiveste algum destes sintomas?",[["none","Nenhum"],["cramps","Cãibras"],["muscle_pain","Dores musculares"],["injury","Lesão"],["weakness_dizziness","Sensação de fraqueza / tonturas"],["other","Outro"]],true);
+      scale("feeling",playerText("2. Como te sentiste no jogo?","2. How did you feel during the match?"),playerText("Horrível","Terrible"),playerText("Muito bem","Very good"));
+      scale("effort",playerText("3. Perceção do esforço","3. Perceived exertion"),playerText("Muito leve","Very light"),playerText("Esforço máximo","Maximum exertion"));
+      radio("gi_level",playerText("4. Como te sentiste a nível gastrointestinal?","4. How did you feel gastrointestinally?"),[["none",playerText("Sem sintomas","No symptoms")],["mild",playerText("Desconforto ligeiro","Mild discomfort")],["moderate",playerText("Desconforto moderado","Moderate discomfort")],["severe",playerText("Desconforto intenso","Severe discomfort")]]);
+      if(["mild","moderate","severe"].includes(answers.gi_level))multiple("gi_symptoms",playerText("Que sintomas tiveste?","Which symptoms did you experience?"),[["nausea",playerText("Náuseas","Nausea")],["abdominal_pain",playerText("Dor abdominal","Abdominal pain")],["bloating",playerText("Inchaço abdominal","Bloating")],["reflux",playerText("Refluxo / azia","Reflux / heartburn")],["urgency",playerText("Urgência para evacuar / diarreia","Urgency / diarrhoea")],["vomiting",playerText("Vómitos","Vomiting")],["other",playerText("Outro","Other")]]);
+      multiple("game_symptoms",playerText("Durante o jogo, tiveste algum destes sintomas?","During the match, did you experience any of these symptoms?"),[["none",playerText("Nenhum","None")],["cramps",playerText("Cãibras","Cramps")],["muscle_pain",playerText("Dores musculares","Muscle pain")],["injury",playerText("Lesão","Injury")],["weakness_dizziness",playerText("Sensação de fraqueza / tonturas","Weakness / dizziness")],["other",playerText("Outro","Other")]],true);
      }
     }else if(step===1){
-     for(const [name,title] of [["food_pre","O que comeste na refeição pré-jogo?"],["food_between","O que consumiste entre a última refeição e o início do jogo, incluindo o aquecimento?"],["food_during","O que consumiste durante o jogo, incluindo primeira parte, intervalo e segunda parte?"]]){
+     for(const [name,title] of [["food_pre",playerText("O que comeste na refeição pré-jogo?","What did you eat at your pre-match meal?")],["food_between",playerText("O que consumiste entre a última refeição e o início do jogo, incluindo o aquecimento?","What did you consume between your last meal and kick-off, including the warm-up?")],["food_during",playerText("O que consumiste durante o jogo, incluindo primeira parte, intervalo e segunda parte?","What did you consume during the match, including both halves and half-time?")]]){
       const field=document.createElement("textarea");field.rows=3;field.maxLength=2000;field.value=answers[name]||"";field.oninput=()=>answers[name]=field.value;question(title,field);
      }
     }else{
-     for(const [name,title] of [["caffeine_pre","Tomaste cafeína (cápsula ou shot) antes do jogo?"],["caffeine_half","Tomaste cafeína (cápsula ou shot) no intervalo?"],["nitrates_pre","Tomaste nitratos antes do jogo?"],["recovery_shake","Tomaste um batido recovery após o jogo?"]])radio(name,title,[[true,"Sim"],[false,"Não"]]);
+     for(const [name,title] of [["caffeine_pre",playerText("Tomaste cafeína (cápsula ou shot) antes do jogo?","Did you take caffeine (capsule or shot) before the match?")],["caffeine_half",playerText("Tomaste cafeína (cápsula ou shot) no intervalo?","Did you take caffeine (capsule or shot) at half-time?")],["nitrates_pre",playerText("Tomaste nitratos antes do jogo?","Did you take nitrates before the match?")],["recovery_shake",playerText("Tomaste um batido recovery após o jogo?","Did you have a recovery shake after the match?")]])radio(name,title,[[true,playerText("Sim","Yes")],[false,playerText("Não","No")]]);
     }
     back.hidden=step===0;
-    next.textContent=select.value==="not_played"||step===2?"✓":"›";next.setAttribute("aria-label",select.value==="not_played"||step===2?(game.answered?"Guardar alteração":"Concluir e enviar"):"Continuar");
+    next.textContent=select.value==="not_played"||step===2?"✓":"›";next.setAttribute("aria-label",select.value==="not_played"||step===2?(game.answered?playerText("Guardar alteração","Save changes"):playerText("Concluir e enviar","Finish and submit")):playerText("Continuar","Continue"));
    }
    select.onchange=()=>draw();
    back.onclick=()=>{step=Math.max(0,step-1);draw();};
-   next.onclick=()=>{if(!select.value){msg.textContent="Seleciona os minutos jogados.";return;}if(step<2&&select.value!=="not_played"){step++;draw();}else form.requestSubmit();};
+   next.onclick=()=>{if(!select.value){msg.textContent=playerText("Seleciona os minutos jogados.","Select the minutes played.");return;}if(step<2&&select.value!=="not_played"){step++;draw();}else form.requestSubmit();};
    nav.append(back,next);section.append(heading,content,nav,msg);form.append(section);card.append(form);draw();
    action.setAttribute("aria-expanded","false");
    action.onclick=()=>{form.hidden=!form.hidden;action.setAttribute("aria-expanded",String(!form.hidden));};
@@ -1355,7 +1529,7 @@ function injectPostMatchCard(){
       body:JSON.stringify({match_id:game.id,minutes:select.value,answers:select.value==="not_played"?{}:answers,local_date:iso(new Date())})});
      overviewReadCache.delete("/api/v2/player/post-match?local_date="+encodeURIComponent(iso(new Date())));
      await overview();
-    }catch(err){msg.textContent="Não foi possível guardar: "+err.message;next.disabled=false;}
+    }catch(err){msg.textContent=playerText("Não foi possível guardar: ","Could not save: ")+err.message;next.disabled=false;}
    };
   }
   if(anchor){anchor.after(card);}else root.append(card);
@@ -1377,7 +1551,7 @@ async function renderWeightCard(root,date){
  const card=document.createElement("section");card.className="daily-weight-card";
  const header=document.createElement("div");header.className="daily-weight-header tm-day-header";
  const glyph=document.createElement("span");glyph.className="daily-weight-icon tm-day-icon";glyph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M9 5V3h6v2M8 12a4 4 0 0 1 8 0M12 12l2-2"/></svg>';
- const label=document.createElement("span");label.className="daily-weight-label tm-day-title";label.textContent="Peso em jejum";
+ const label=document.createElement("span");label.className="daily-weight-label tm-day-title";label.textContent=playerText("Peso em jejum","Fasting weight");
  const value=document.createElement("span");value.className="daily-weight-value";
  const action=document.createElement("button");action.type="button";action.className="daily-weight-action";
  header.append(glyph,label,value,action);card.append(header);
@@ -1391,27 +1565,27 @@ async function renderWeightCard(root,date){
  }
  // Render the + immediately; only enable interaction once the weight data is confirmed.
  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
- action.setAttribute("aria-label","A carregar peso em jejum");
+ action.setAttribute("aria-label",playerText("A carregar peso em jejum","Loading fasting weight"));
  action.disabled=true;
  let data;
  try{data=await cachedOverviewRead("/api/v2/player/weight?date="+date);}catch{
-  if(card.isConnected){const notice=document.createElement("small");notice.textContent="Peso indisponível";value.append(notice);action.remove();}
+  if(card.isConnected){const notice=document.createElement("small");notice.textContent=playerText("Peso indisponível","Weight unavailable");value.append(notice);action.remove();}
   return;
  }
  if(iso(day)!==date||overviewMode!=="day"||!card.isConnected){card.remove();return;}
  action.disabled=false;
  const current=data.entries?.find(x=>x.weigh_date===date);
  const previous=data.previous;
- const format=x=>Number(x).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+ const format=x=>Number(x).toLocaleString(playerDateLocale(),{minimumFractionDigits:1,maximumFractionDigits:1});
  const existing=!!current;
  if(existing){
   action.classList.add("daily-weight-chevron-action");
   const top=document.createElement("strong");top.textContent=format(current.weight_kg)+" kg";value.append(top);
   if(previous){const difference=Number(current.weight_kg)-Number(previous.weight_kg);const small=document.createElement("small");small.textContent=(difference>0?"+":"")+format(difference)+" kg";value.append(small);}
   action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-  action.setAttribute("aria-label","Ver evolução do peso");
+  action.setAttribute("aria-label",playerText("Ver evolução do peso","View weight trend"));
  }else{
-  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';action.setAttribute("aria-label","Registar peso em jejum");
+  action.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';action.setAttribute("aria-label",playerText("Registar peso em jejum","Record fasting weight"));
  }
  function editor(){
   panel.replaceChildren();
@@ -1448,13 +1622,13 @@ async function renderWeightCard(root,date){
   };
   const kg=makeWheel("kg",Array.from({length:61},(_,i)=>50+i),Math.floor(initial));
   const grams=makeWheel("g",Array.from({length:10},(_,i)=>i*100),Math.round((initial-Math.floor(initial))*10)*100);
-  const save=document.createElement("button");save.type="submit";save.textContent="✓";save.setAttribute("aria-label","Guardar peso");save.className="daily-weight-save";
+  const save=document.createElement("button");save.type="submit";save.textContent="✓";save.setAttribute("aria-label",playerText("Guardar peso","Save weight"));save.className="daily-weight-save";
   const errorText=document.createElement("p");errorText.setAttribute("role","alert");
   form.append(picker);
   if(String(me?.sex||"").toUpperCase()==="F"){
    const questionCard=document.createElement("div");questionCard.className="daily-weight-menstruation-card";
-   const group=document.createElement("fieldset");group.className="daily-weight-menstruation";const legend=document.createElement("legend");legend.textContent="Menstruação (opcional)";group.append(legend);
-   for(const [v,t] of [["","Não responder"],["yes","Sim"],["no","Não"]]){
+   const group=document.createElement("fieldset");group.className="daily-weight-menstruation";const legend=document.createElement("legend");legend.textContent=playerText("Menstruação (opcional)","Menstruation (optional)");group.append(legend);
+   for(const [v,t] of [["",playerText("Não responder","Skip")],["yes",playerText("Sim","Yes")],["no",playerText("Não","No")]]){
     const l=document.createElement("label"),input=document.createElement("input");input.type="radio";input.name="weight-menstruating";input.value=v;input.checked=current?(current.menstruating===null?v==="":current.menstruating?v==="yes":v==="no"):v==="";const caption=document.createElement("span");caption.className="daily-weight-radio-label";caption.textContent=t;l.append(input,caption);group.append(l);
    }questionCard.append(group);form.append(questionCard);
   }
@@ -1469,14 +1643,14 @@ async function renderWeightCard(root,date){
     overviewReadCache.clear(); // The reference-weight values can change after saving.
     overviewSnapshot=null;
     await overview();
-   }catch(err){errorText.textContent="Não foi possível guardar: "+err.message;save.disabled=false;}
+   }catch(err){errorText.textContent=playerText("Não foi possível guardar: ","Could not save: ")+err.message;save.disabled=false;}
   };
  }
  function chart(){
   panel.replaceChildren();
-  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label","Editar peso");edit.title="Editar peso";edit.onclick=editor;
+  const edit=document.createElement("button");edit.type="button";edit.className="daily-weight-edit-icon";edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';edit.setAttribute("aria-label",playerText("Editar peso","Edit weight"));edit.title=playerText("Editar peso","Edit weight");edit.onclick=editor;
   const items=(data.entries||[]).filter(x=>x.weigh_date<=date);
-  if(items.length<2){const p=document.createElement("p");p.textContent="São necessários dois registos para apresentar a evolução.";panel.append(edit,p);return;}
+  if(items.length<2){const p=document.createElement("p");p.textContent=playerText("São necessários dois registos para apresentar a evolução.","Two measurements are needed to show a trend.");panel.append(edit,p);return;}
   const values=items.map(x=>Number(x.weight_kg));
   const low=Math.floor(Math.min(...values)-.5),high=Math.ceil(Math.max(...values)+.5);
   const n=items.length,range=Math.max(1,high-low);
@@ -1485,7 +1659,7 @@ async function renderWeightCard(root,date){
   const surface=document.createElement("div");surface.className="daily-weight-chart-surface";surface.append(edit);
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("viewBox","0 0 340 205");svg.setAttribute("role","img");
-  svg.setAttribute("aria-label","Evolução do peso nos últimos dez dias");
+  svg.setAttribute("aria-label",playerText("Evolução do peso nos últimos dez dias","Weight over the last ten days"));
   const ns=svg.namespaceURI;
   const element=(tag,attrs,parent=svg)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([key,value])=>el.setAttribute(key,String(value)));parent.append(el);return el;};
   const left=25,right=315,top=38,bottom=143;
@@ -1495,7 +1669,7 @@ async function renderWeightCard(root,date){
   const meanY=yFor(mean);element("line",{x1:left,y1:meanY,x2:right,y2:meanY,class:"assessment-chart-mean"});
   element("polyline",{points:coords.map(p=>p.join(",")).join(" "),class:"assessment-chart-line"});
   const detail=document.createElement("p");detail.className="daily-weight-chart-detail";detail.setAttribute("aria-live","polite");
-  const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?" · Menstruação":"");};
+  const showDetail=i=>{const row=items[i];detail.textContent=row.weigh_date.slice(8,10)+"/"+row.weigh_date.slice(5,7)+" · "+format(row.weight_kg)+" kg"+(female&&(row.menstruating===1||row.menstruating===true)?playerText(" · Menstruação"," · Menstruation"):"");};
   coords.forEach((p,i)=>{
    const valueLabel=element("text",{x:p[0],y:Math.max(15,p[1]-12),"text-anchor":"middle",class:"assessment-chart-value"});
    valueLabel.textContent=format(items[i].weight_kg);
@@ -1503,16 +1677,16 @@ async function renderWeightCard(root,date){
    if(female&&(items[i].menstruating===1||items[i].menstruating===true)){
     element("circle",{cx:p[0],cy:p[1]+11,r:3,fill:"#d6a7bc","aria-hidden":"true"});
    }
-   const touch=element("circle",{cx:p[0],cy:p[1],r:13,fill:"transparent",tabindex:0,role:"button","aria-label":items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?" · Menstruação":"")});
+   const touch=element("circle",{cx:p[0],cy:p[1],r:13,fill:"transparent",tabindex:0,role:"button","aria-label":items[i].weigh_date+" · "+format(items[i].weight_kg)+" kg"+(female&&(items[i].menstruating===1||items[i].menstruating===true)?playerText(" · Menstruação"," · Menstruation"):"")});
    touch.addEventListener("click",()=>showDetail(i));touch.addEventListener("focus",()=>showDetail(i));
    touch.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showDetail(i);}});
    const dayLabel=element("text",{x:p[0],y:169,"text-anchor":"middle",class:"assessment-chart-tick"});
    dayLabel.textContent=items[i].weigh_date.slice(-2);
   });
   surface.append(svg);
-  const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent="— Média: "+format(mean)+" kg";
+  const average=document.createElement("p");average.className="daily-weight-chart-average";average.textContent=playerText("— Média: ","— Average: ")+format(mean)+" kg";
   const footer=document.createElement("div");footer.className="daily-weight-chart-footer";
-  const period=document.createElement("span");period.className="daily-weight-chart-period";period.textContent="Últimos 10 dias";
+  const period=document.createElement("span");period.className="daily-weight-chart-period";period.textContent=playerText("Últimos 10 dias","Last 10 days");
   footer.append(period,average);surface.append(footer);panel.append(surface,detail);
  }
  // Preserve the original + or chevron while collapsed; X indicates that the panel can be closed.
@@ -1527,7 +1701,7 @@ async function renderWeightCard(root,date){
   panel.hidden=!panel.hidden;
   const expanded=!panel.hidden;
   action.innerHTML=expanded?closeIcon:collapsedIcon;
-  action.setAttribute("aria-label",expanded?(existing?"Fechar evolução do peso":"Fechar registo de peso"):collapsedLabel);
+  action.setAttribute("aria-label",expanded?(existing?playerText("Fechar evolução do peso","Close weight trend"):playerText("Fechar registo de peso","Close weight entry")):collapsedLabel);
   action.setAttribute("aria-expanded",String(expanded));
   if(expanded){existing?chart():editor();}
  };
@@ -1582,15 +1756,15 @@ function renderPendingCalendar(mon,dateKey){
   const key=iso(dt),b=document.createElement("button");b.type="button";
   b.className="week-day"+(key===dateKey?" selected":"")+(key===iso(new Date())?" today":"");
   b.setAttribute("aria-pressed",String(key===dateKey));
-  b.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
+  b.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"}));
   for(const [cls,label] of [
-   ["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,c=>c.toLocaleUpperCase("pt-PT"))],
+   ["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,c=>c.toLocaleUpperCase(playerDateLocale()))],
    ["day-number",String(dt.getDate())],["day-classification",""]
   ]){const span=document.createElement("span");span.className=cls;span.textContent=label;b.append(span);}
   b.onclick=()=>{day=new Date(dt);overview().catch(error);};strip.append(b);
  }
  animateCalendarSelection(strip,dateKey);
- $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
+ $("date-title").textContent=day.toLocaleDateString(playerDateLocale(),{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
 }
 /* Neutral placeholder for the existing seven-column weekly calendar.
    Meal count follows the loaded player's meal configuration when available;
@@ -1721,53 +1895,53 @@ async function openDailyMealInMenus(dateKey,meal){
 async function openAlternativeColorPicker(host,mealDate,mealKey,eventId=''){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
- const status=document.createElement('p');status.className='hint';status.textContent='A carregar cores disponíveis…';panel.append(status);host.append(panel);
+ const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar cores disponíveis…','Loading available colours…');panel.append(status);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
   const data=await api('/api/v2/player/consumption-options?'+qs);
   if(!panel.isConnected)return;
   panel.replaceChildren();
-  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent='Que cor consumiste?';const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar seleção de cor');close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
+  const header=document.createElement('div');header.className='consumption-color-header';const title=document.createElement('p');title.textContent=playerText('Que cor consumiste?','Which colour did you consume?');const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label',playerText('Fechar seleção de cor','Close colour selection'));close.onclick=()=>panel.remove();header.append(title,close);panel.append(header);panel.classList.add('consumption-color-picker');
   const colors=data.alternative_colors||[];
-  if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent='Não existem outras cores com opções publicadas.';panel.append(hint);}
+  if(!colors.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem outras cores com opções publicadas.','No other colours have published options.');panel.append(hint);}
   for(const color of colors){
    const button=document.createElement('button');button.type='button';button.className='consumption-cancel';
-   button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
+   button.classList.add('consumption-color-option','consumption-color-'+color);button.textContent=playerUiLanguage==='en'?({green:'Green',yellow:'Yellow',orange:'Orange',blue:'Blue',red:'Red',vp:'Preparation green'})[color]||color:({green:'Verde',yellow:'Amarelo',orange:'Laranja',blue:'Azul',red:'Vermelho',vp:'Verde preparação'})[color]||color;
    button.onclick=()=>openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color);
    panel.append(button);
   }
- }catch(e){if(panel.isConnected){status.textContent='Não foi possível carregar as cores.';}error(e);}
+ }catch(e){if(panel.isConnected){status.textContent=playerText('Não foi possível carregar as cores.','Could not load colours.');}error(e);}
 }
 
 async function openAlternativeOptionPicker(host,mealDate,mealKey,eventId,color){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor consumption-color-picker';
- const status=document.createElement('p');status.className='hint';status.textContent='A carregar opções…';panel.append(status);host.append(panel);
+ const status=document.createElement('p');status.className='hint';status.textContent=playerText('A carregar opções…','Loading options…');panel.append(status);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId,consumed_color:color});
   const data=await api('/api/v2/player/consumption-options?'+qs);
   if(!panel.isConnected)return;
   panel.replaceChildren();
   const header=document.createElement('div');header.className='consumption-color-header';
-  const title=document.createElement('p');title.textContent='Qual foi a opção consumida?';
-  const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label','Fechar');close.onclick=()=>panel.remove();
+  const title=document.createElement('p');title.textContent=playerText('Qual foi a opção consumida?','Which option did you consume?');
+  const close=document.createElement('button');close.type='button';close.className='consumption-color-close';close.textContent='×';close.setAttribute('aria-label',playerText('Fechar','Close'));close.onclick=()=>panel.remove();
   header.append(title,close);panel.append(header);
   const options=data.options||[];
-  if(!options.length){const hint=document.createElement('p');hint.className='hint';hint.textContent='Não existem opções publicadas nesta cor.';panel.append(hint);}
+  if(!options.length){const hint=document.createElement('p');hint.className='hint';hint.textContent=playerText('Não existem opções publicadas nesta cor.','No options published for this colour.');panel.append(hint);}
   options.forEach((option,index)=>{
    const button=document.createElement('button');button.type='button';button.className='consumption-alternative-option';
-   button.textContent=option.title||'Opção '+(index+1);
+   button.textContent=option.title||playerText('Opção ','Option ')+(index+1);
    button.onclick=()=>openConsumptionEditor(host,mealDate,mealKey,eventId,index,color);
    panel.append(button);
   });
-  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar às cores';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);panel.append(back);
- }catch(e){if(panel.isConnected)status.textContent='Não foi possível carregar as opções.';error(e);}
+  const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar às cores','Back to colours');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);panel.append(back);
+ }catch(e){if(panel.isConnected)status.textContent=playerText('Não foi possível carregar as opções.','Could not load options.');error(e);}
 }
 
 async function openConsumptionEditor(host, mealDate, mealKey, eventId='', preferredOptionIndex=null, consumedColor=null, timing=null, preferredOptionRef=null, extraTiming=false, onCancel=null){
  for(const existing of host.querySelectorAll('.consumption-editor'))existing.remove();
  const panel=document.createElement('div');panel.className='consumption-editor';
- const message=document.createElement('p');message.className='hint';message.textContent=extraTiming?'A preparar registo de consumo…':'A carregar opções publicadas…';
+ const message=document.createElement('p');message.className='hint';message.textContent=extraTiming?playerText('A preparar registo de consumo…','Preparing consumption record…'):playerText('A carregar opções publicadas…','Loading published options…');
  panel.append(message);host.append(panel);
  try{
   const qs=new URLSearchParams({date:mealDate,meal:mealKey,event_id:eventId});
@@ -1779,11 +1953,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
   const parent=(existing.records||[]).find(x=>x.meal_key===mealKey&&x.event_id===eventId);
   const previous=timing?parent?.timing_records?.find(x=>x.timing===timing):parent;
   if(!panel.isConnected)return;
-  if(!data.options?.length){panel.textContent='Não existem opções publicadas disponíveis para registo.';return;}
+  if(!data.options?.length){panel.textContent=playerText('Não existem opções publicadas disponíveis para registo.','No published options available to record.');return;}
   panel.replaceChildren();
 
   const select=document.createElement('select');
-  data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||'Opção '+(i+1);select.append(item);});
+  data.options.forEach((option,i)=>{const item=document.createElement('option');item.value=option.option_ref;item.textContent=option.title||playerText('Opção ','Option ')+(i+1);select.append(item);});
   if(previous&&data.options.some(x=>x.option_ref===previous.option_ref))select.value=previous.option_ref;
   if(Number.isInteger(preferredOptionIndex)&&data.options[preferredOptionIndex])select.value=data.options[preferredOptionIndex].option_ref;
   if(preferredOptionRef&&data.options.some(x=>x.option_ref===preferredOptionRef))select.value=preferredOptionRef;
@@ -1805,8 +1979,8 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
      if(food.kind==='supplement')continue;
      const check=document.createElement('input');check.type='checkbox';check.dataset.index=String(i);check.checked=initial&&previous?.status==='none'?false:initial&&previous?.status==='partial'?previousFoods.some(f=>!f.additional&&f.option_index===i):i===indices[0];
      check.onchange=()=>{if(check.checked&&indices.length>1){for(const other of group.querySelectorAll('input[type=checkbox]'))if(other!==check){other.checked=false;const otherGrams=other.closest('label')?.querySelector('input[type=number]');if(otherGrams){otherGrams.value='0';otherGrams.disabled=true;}}}grams.value=check.checked?String(food.grams??0):'0';grams.disabled=!check.checked;};
-     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||'Alimento';name.append(label);
-     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label','Quantidade consumida em gramas');grams.readOnly=true;grams.tabIndex=-1;grams.setAttribute('inputmode','none');grams.style.fontSize='16px';let portionTouchStart=null,portionTouchMoved=false,portionTouchEndedAt=0;
+     const name=document.createElement('span');name.className='consumption-food-name';const label=document.createElement('span');label.textContent=food.display_name||food.library_name||food.name||playerText('Alimento','Food');name.append(label);
+     const grams=document.createElement('input');grams.type='number';grams.min='0';grams.step='any';grams.value=String((initial?previousFoods.find(f=>!f.additional&&f.option_index===i)?.grams:null)??food.grams??0);grams.dataset.grams=String(i);grams.setAttribute('aria-label',playerText('Quantidade consumida em gramas','Amount consumed in grams'));grams.readOnly=true;grams.tabIndex=-1;grams.setAttribute('inputmode','none');grams.style.fontSize='16px';let portionTouchStart=null,portionTouchMoved=false,portionTouchEndedAt=0;
      grams.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;portionTouchStart={x:t.clientX,y:t.clientY};portionTouchMoved=false;},{passive:true});
      grams.addEventListener('touchmove',e=>{const t=e.touches[0];if(t&&portionTouchStart&&Math.hypot(t.clientX-portionTouchStart.x,t.clientY-portionTouchStart.y)>8)portionTouchMoved=true;},{passive:true});
      grams.addEventListener('touchend',()=>{portionTouchEndedAt=Date.now();portionTouchStart=null;},{passive:true});
@@ -1821,19 +1995,19 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     const current=Math.max(0,Math.round(Number(input.value)||0));
     const max=Math.max(2000,current+500);
     const overlay=document.createElement('div');overlay.className='consumption-grams-wheel-backdrop';
-    const sheet=document.createElement('section');sheet.className='consumption-grams-wheel-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Ajustar porção');
+    const sheet=document.createElement('section');sheet.className='consumption-grams-wheel-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',playerText('Ajustar porção','Adjust portion'));
     const top=document.createElement('div');top.className='consumption-grams-wheel-top';
-    const cancel=document.createElement('button');cancel.type='button';cancel.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';cancel.setAttribute('aria-label','Fechar');
-    const title=document.createElement('strong');title.textContent='Porção (g)';
-    const done=document.createElement('button');done.type='button';done.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';done.setAttribute('aria-label','Confirmar');top.append(cancel,title,done);
+    const cancel=document.createElement('button');cancel.type='button';cancel.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';cancel.setAttribute('aria-label',playerText('Fechar','Close'));
+    const title=document.createElement('strong');title.textContent=playerText('Porção (g)','Portion (g)');
+    const done=document.createElement('button');done.type='button';done.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';done.setAttribute('aria-label',playerText('Confirmar','Confirm'));top.append(cancel,title,done);
     const wrap=document.createElement('div');wrap.className='consumption-grams-wheel-wrap';
     const band=document.createElement('div');band.className='consumption-grams-wheel-band';
-    const viewport=document.createElement('div');viewport.className='consumption-grams-wheel';viewport.setAttribute('role','listbox');viewport.setAttribute('aria-label','Gramas');
+    const viewport=document.createElement('div');viewport.className='consumption-grams-wheel';viewport.setAttribute('role','listbox');viewport.setAttribute('aria-label',playerText('Gramas','Grams'));
     const rail=document.createElement('div');rail.className='consumption-grams-wheel-rail';
     const pad=()=>{const p=document.createElement('div');p.className='consumption-grams-wheel-pad';rail.append(p);};pad();
     for(let v=0;v<=max;v++){const el=document.createElement('div');el.className='consumption-grams-wheel-option';el.textContent=String(v);rail.append(el);}
     pad();viewport.append(rail);wrap.append(band,viewport);
-    const manual=document.createElement('button');manual.type='button';manual.className='consumption-grams-wheel-manual';manual.textContent='Introduzir valor manualmente';
+    const manual=document.createElement('button');manual.type='button';manual.className='consumption-grams-wheel-manual';manual.textContent=playerText('Introduzir valor manualmente','Enter value manually');
     sheet.append(top,wrap,manual);overlay.append(sheet);document.body.append(overlay);
     let selected=current,previous=null;
     const update=()=>{selected=Math.max(0,Math.min(max,Math.round(viewport.scrollTop/44)));if(previous!==null)rail.children[previous+1]?.classList.remove('selected');rail.children[selected+1]?.classList.add('selected');previous=selected;};
@@ -1852,7 +2026,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const removeAll=document.createElement('button');removeAll.type='button';removeAll.className='consumption-remove-all';
    const syncRemoveAll=()=>{
     const checks=[...foodsRoot.querySelectorAll('.consumption-food-line input[type=checkbox]')];
-    removeAll.textContent=checks.length&&checks.every(c=>!c.checked)?'Selecionar todos':'Remover todos';
+    removeAll.textContent=checks.length&&checks.every(c=>!c.checked)?playerText('Selecionar todos','Select all'):playerText('Remover todos','Remove all');
     if(extraTiming)removeAll.hidden=!checks.length;
    };
    removeAll.onclick=()=>{
@@ -1871,17 +2045,17 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    foodsRoot.append(removeAll);
    foodsRoot.addEventListener('change',syncRemoveAll,{once:true});
    syncRemoveAll();
-   const search=document.createElement('input');search.type='search';search.placeholder='Inserir alimento';search.setAttribute('aria-label','Pesquisar alimento adicional');
-   const matches=document.createElement('select');matches.setAttribute('aria-label','Alimento da biblioteca');
-   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder='Porção';quantity.setAttribute('aria-label','Inserir porção em gramas');quantity.style.fontSize='16px';
-   const add=document.createElement('button');add.type='button';add.textContent='✓';add.title='Confirmar alimento';add.setAttribute('aria-label','Confirmar alimento');add.className='consumption-add-confirm';add.style.cssText='width:38px;height:38px;flex:0 0 38px;border-radius:50%;padding:0;background:#b9e2cf;color:#174e3d;font-size:20px;border:0;';;
+   const search=document.createElement('input');search.type='search';search.placeholder=playerText('Inserir alimento','Add food');search.setAttribute('aria-label',playerText('Pesquisar alimento adicional','Search for another food'));
+   const matches=document.createElement('select');matches.setAttribute('aria-label',playerText('Alimento da biblioteca','Food from library'));
+   const quantity=document.createElement('input');quantity.type='number';quantity.min='0.01';quantity.step='any';quantity.placeholder=playerText('Porção','Portion');quantity.setAttribute('aria-label',playerText('Inserir porção em gramas','Enter portion in grams'));quantity.style.fontSize='16px';
+   const add=document.createElement('button');add.type='button';add.textContent='✓';add.title=playerText('Confirmar alimento','Confirm food');add.setAttribute('aria-label',playerText('Confirmar alimento','Confirm food'));add.className='consumption-add-confirm';add.style.cssText='width:38px;height:38px;flex:0 0 38px;border-radius:50%;padding:0;background:#b9e2cf;color:#174e3d;font-size:20px;border:0;';;
    const added=document.createElement('div');added.className='consumption-added-list';const foodNotes=new Map();
-   let request=0;const foodNames=new Map();const foodNameCacheKey='themile-consumption-food-names';try{for(const [id,name] of Object.entries(JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}')))foodNames.set(id,name);}catch(_){}const rememberFoodName=(id,name)=>{if(!id||!name)return;foodNames.set(String(id),name);try{const cached=JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}');cached[String(id)]=name;localStorage.setItem(foodNameCacheKey,JSON.stringify(cached));}catch(_){}};
+   let request=0;const foodNames=new Map();const foodNameCacheKey='themile-consumption-food-names-'+playerUiLanguage;try{for(const [id,name] of Object.entries(JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}')))foodNames.set(id,name);}catch(_){}const rememberFoodName=(id,name)=>{if(!id||!name)return;foodNames.set(String(id),name);try{const cached=JSON.parse(localStorage.getItem(foodNameCacheKey)||'{}');cached[String(id)]=name;localStorage.setItem(foodNameCacheKey,JSON.stringify(cached));}catch(_){}};
    const renderSuggestions=()=>{suggestions.replaceChildren();for(const opt of matches.options){const b=document.createElement('button');b.type='button';b.textContent=opt.textContent;b.onclick=()=>{choose(opt);updateAddState();confirm.disabled=false;};suggestions.append(b);}suggestions.hidden=!suggestions.childElementCount;};
    search.oninput=async()=>{const q=search.value.trim(),id=++request;matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;if(q.length<2)return;try{const result=await api('/api/v2/player/consumption-foods?q='+encodeURIComponent(q));if(id!==request)return;for(const food of result.foods||[]){const opt=document.createElement('option');opt.value=food.id;opt.textContent=food.display_name;rememberFoodName(food.id,food.display_name);foodNotes.set(String(food.id),String(food.note||''));matches.append(opt);}renderSuggestions();}catch(e){if(id===request)error(e);}};
-   const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-line consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const visual=document.createElement('span');visual.className='consumption-check-visual';visual.setAttribute('aria-hidden','true');checkWrap.append(check,visual);const title=document.createElement('span');title.className='consumption-food-name';title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.setAttribute('aria-label','Quantidade consumida em gramas');const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(checkWrap,title,amount,unit);added.append(row);};
+   const renderAdditional=(entry,name)=>{const row=document.createElement('label');row.className='consumption-food-line consumption-added-food';const check=document.createElement('input');check.type='checkbox';check.checked=entry.consumed!==false;const checkWrap=document.createElement('span');checkWrap.className='consumption-check-wrap';const visual=document.createElement('span');visual.className='consumption-check-visual';visual.setAttribute('aria-hidden','true');checkWrap.append(check,visual);const title=document.createElement('span');title.className='consumption-food-name';title.textContent=name;const amount=document.createElement('input');amount.type='number';amount.min='0';amount.step='any';amount.value=String(entry.grams);amount.setAttribute('aria-label',playerText('Quantidade consumida em gramas','Amount consumed in grams'));const unit=document.createElement('span');unit.className='consumption-grams-unit';unit.textContent='g';check.onchange=()=>{entry.consumed=check.checked;amount.disabled=!check.checked;queuePreview();};amount.oninput=()=>{entry.grams=Number(amount.value)||0;queuePreview();};amount.disabled=!check.checked;row.append(checkWrap,title,amount,unit);added.append(row);};
    add.onclick=()=>{const id=matches.value,grams=Number(quantity.value);if(!id||!Number.isFinite(grams)||grams<=0)return;const entry={id,grams,consumed:true,name:matches.selectedOptions[0]?.textContent||search.value};rememberFoodName(id,entry.name);additional.push(entry);renderAdditional(entry,entry.name);quantity.value='';search.value='';matches.replaceChildren();suggestions.replaceChildren();suggestions.hidden=true;closeFoodSheet();syncRemoveAll();queuePreview();};
-   if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){const entry={id:f.id,grams:f.grams,consumed:f.consumed!==false};additional.push(entry);renderAdditional(entry,f.display_name||f.library_name||f.name||foodNames.get(String(f.id))||'Alimento adicional');if(!(f.display_name||f.library_name||f.name)){const title=added.lastElementChild?.querySelector('.consumption-food-name');api('/api/v2/player/consumption-foods?q='+encodeURIComponent(String(f.id))).then(result=>{const found=(result.foods||[]).find(food=>String(food.id)===String(f.id));if(found&&title){title.textContent=found.display_name;rememberFoodName(f.id,found.display_name);}}).catch(()=>{});}}}
+   if(initial&&previousFoods.length){for(const f of previousFoods.filter(x=>x.additional)){const entry={id:f.id,grams:f.grams,consumed:f.consumed!==false};additional.push(entry);renderAdditional(entry,f.display_name||f.library_name||f.name||foodNames.get(String(f.id))||playerText('Alimento adicional','Additional food'));if(!(f.display_name||f.library_name||f.name)){const title=added.lastElementChild?.querySelector('.consumption-food-name');api('/api/v2/player/consumption-foods?q='+encodeURIComponent(String(f.id))).then(result=>{const found=(result.foods||[]).find(food=>String(food.id)===String(f.id));if(found&&title){title.textContent=found.display_name;rememberFoodName(f.id,found.display_name);}}).catch(()=>{});}}}
    const extra=document.createElement('div');extra.className='consumption-extra';
    
    const fields=document.createElement('div');fields.className='consumption-add-fields';fields.hidden=true;fields.style.display='none';
@@ -1892,17 +2066,17 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const searchWrap=document.createElement('div');searchWrap.className='consumption-search-wrap';
     const searchIcon=document.createElement('span');searchIcon.className='consumption-search-symbol';searchIcon.setAttribute('aria-hidden','true');
     searchIcon.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>';
-    searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.style.cssText='display:flex;align-items:center;gap:8px;min-width:0';quantity.style.setProperty('flex','0 0 88px','important');quantity.style.setProperty('width','88px','important');quantity.style.setProperty('min-width','0','important');quantity.style.setProperty('max-width','88px','important');quantity.style.setProperty('padding','10px 8px','important');quantity.style.setProperty('font-size','16px','important');inputRow.append(searchWrap,quantity,add);inputRow.style.width='100%';add.style.setProperty('flex','0 0 38px','important');quantity.style.setProperty('background','rgba(255,255,255,.035)','important');quantity.style.borderRadius='14px';quantity.style.border='0';quantity.style.setProperty('color','var(--text-muted, #b7b3a9)','important');const updateAddState=()=>{add.disabled=!(matches.value&&Number(quantity.value)>0);add.style.opacity=add.disabled?'.4':'1';};quantity.addEventListener('input',updateAddState);search.addEventListener('input',updateAddState);const originalChoose=choose;const chooseWithState=(option)=>{originalChoose(option);updateAddState();};const addTrigger=document.createElement('button');addTrigger.type='button';addTrigger.className='consumption-add-trigger';addTrigger.textContent='⊕ Adicionar alimento';addTrigger.style.cssText='appearance:none;background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:inherit!important;padding:4px 0!important;width:auto!important;max-width:max-content!important;min-height:0!important;font:inherit;font-size:14px!important;font-weight:400!important;white-space:nowrap;cursor:pointer';
+    searchWrap.append(search,searchIcon);const inputRow=document.createElement('div');inputRow.className='consumption-add-row';inputRow.style.cssText='display:flex;align-items:center;gap:8px;min-width:0';quantity.style.setProperty('flex','0 0 88px','important');quantity.style.setProperty('width','88px','important');quantity.style.setProperty('min-width','0','important');quantity.style.setProperty('max-width','88px','important');quantity.style.setProperty('padding','10px 8px','important');quantity.style.setProperty('font-size','16px','important');inputRow.append(searchWrap,quantity,add);inputRow.style.width='100%';add.style.setProperty('flex','0 0 38px','important');quantity.style.setProperty('background','rgba(255,255,255,.035)','important');quantity.style.borderRadius='14px';quantity.style.border='0';quantity.style.setProperty('color','var(--text-muted, #b7b3a9)','important');const updateAddState=()=>{add.disabled=!(matches.value&&Number(quantity.value)>0);add.style.opacity=add.disabled?'.4':'1';};quantity.addEventListener('input',updateAddState);search.addEventListener('input',updateAddState);const originalChoose=choose;const chooseWithState=(option)=>{originalChoose(option);updateAddState();};const addTrigger=document.createElement('button');addTrigger.type='button';addTrigger.className='consumption-add-trigger';addTrigger.textContent=playerText('⊕ Adicionar alimento','⊕ Add food');addTrigger.style.cssText='appearance:none;background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;color:inherit!important;padding:4px 0!important;width:auto!important;max-width:max-content!important;min-height:0!important;font:inherit;font-size:14px!important;font-weight:400!important;white-space:nowrap;cursor:pointer';
    const backdrop=document.createElement('div');backdrop.className='consumption-food-sheet-backdrop';backdrop.hidden=true;
-   const sheet=document.createElement('section');sheet.className='consumption-food-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Adicionar alimento');sheet.hidden=true;
+   const sheet=document.createElement('section');sheet.className='consumption-food-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',playerText('Adicionar alimento','Add food'));sheet.hidden=true;
    const handle=document.createElement('div');handle.className='consumption-food-sheet-handle';handle.setAttribute('aria-hidden','true');
    const header=document.createElement('div');header.className='consumption-food-sheet-header';
-   const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='consumption-food-sheet-close';dismiss.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';dismiss.setAttribute('aria-label','Fechar');
-   const heading=document.createElement('h2');heading.textContent='Adicionar alimento';
-   const confirm=document.createElement('button');confirm.type='button';confirm.className='consumption-food-sheet-confirm';confirm.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';confirm.setAttribute('aria-label','Confirmar alimento');
+   const dismiss=document.createElement('button');dismiss.type='button';dismiss.className='consumption-food-sheet-close';dismiss.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';dismiss.setAttribute('aria-label',playerText('Fechar','Close'));
+   const heading=document.createElement('h2');heading.textContent=playerText('Adicionar alimento','Add food');
+   const confirm=document.createElement('button');confirm.type='button';confirm.className='consumption-food-sheet-confirm';confirm.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>';confirm.setAttribute('aria-label',playerText('Confirmar alimento','Confirm food'));
    header.append(dismiss,confirm);
    const foodNote=document.createElement('p');foodNote.className='consumption-food-sheet-note';foodNote.hidden=true;const portionStep=document.createElement('div');portionStep.className='consumption-food-sheet-portion';portionStep.hidden=true;
-   const portionLabel=document.createElement('label');portionLabel.textContent='Porção (g)';quantity.placeholder='';quantity.setAttribute('inputmode','decimal');portionLabel.append(quantity);
+   const portionLabel=document.createElement('label');portionLabel.textContent=playerText('Porção (g)','Portion (g)');quantity.placeholder='';quantity.setAttribute('inputmode','decimal');portionLabel.append(quantity);
    portionStep.append(portionLabel);
    inputRow.replaceChildren(searchWrap);inputRow.classList.add('consumption-food-sheet-search');
    fields.replaceChildren(handle,header,heading,inputRow,suggestions,foodNote,portionStep,matches);
@@ -1978,7 +2152,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    const controls=document.createElement('div');controls.className='consumption-secondary-actions';controls.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;width:100%';controls.append(addTrigger);if(removeAll.isConnected){removeAll.style.setProperty('margin','0 0 0 auto','important');removeAll.style.setProperty('align-self','center','important');removeAll.style.setProperty('position','static','important');removeAll.style.setProperty('text-align','right','important');removeAll.style.setProperty('white-space','nowrap','important');controls.append(removeAll);}foodsRoot.append(added,controls);updateAddState();
   }
   const progress=document.createElement('div');progress.className='consumption-energy-progress';
-  progress.innerHTML='<div class="consumption-energy-values"><strong class="consumption-energy-ratio">A calcular…</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-macro-values"><span data-macro="protein"></span><span data-macro="carbs"></span><span data-macro="fat"></span></div>';
+  progress.innerHTML='<div class="consumption-energy-values"><strong class="consumption-energy-ratio">'+playerText('A calcular…','Calculating…')+'</strong></div><div class="consumption-energy-track"><span class="consumption-energy-fill"></span></div><div class="consumption-macro-values"><span data-macro="protein"></span><span data-macro="carbs"></span><span data-macro="fat"></span></div>';
   panel.append(progress);
   let previewSeq=0,previewTimer;
   const updatePreview=async()=>{
@@ -2003,9 +2177,9 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
     if(seq!==previewSeq||!panel.isConnected)return;
     const actual=Number(result.nutrition?.kcal||0),planned=Number(result.planned?.kcal||0),pct=planned>0?actual/planned*100:0;
     progress.querySelector('.consumption-energy-fill').style.width=Math.min(100,Math.max(0,pct))+'%';
-    progress.querySelector('.consumption-energy-ratio').textContent=extraTiming?Math.round(actual)+' kcal':Math.round(actual)+'/'+Math.round(planned)+' kcal';const fmt=v=>Math.round(Number(v||0));const nutrition=result.nutrition||{},target=result.planned||{};for(const [key,aliases,label] of [['protein',['protein','protein_g','proteins'],'P'],['carbs',['carbs','carbs_g','carbohydrates'],'HC'],['fat',['fat','fat_g','fats'],'G']]){const read=obj=>aliases.map(k=>obj[k]).find(v=>v!==undefined);const node=progress.querySelector('[data-macro="'+key+'"]');node.textContent=extraTiming?fmt(read(nutrition))+'g '+label:fmt(read(nutrition))+'/'+fmt(read(target))+'g '+label;}
+    progress.querySelector('.consumption-energy-ratio').textContent=extraTiming?Math.round(actual)+' kcal':Math.round(actual)+'/'+Math.round(planned)+' kcal';const fmt=v=>Math.round(Number(v||0));const nutrition=result.nutrition||{},target=result.planned||{};for(const [key,aliases,label] of [['protein',['protein','protein_g','proteins'],'P'],['carbs',['carbs','carbs_g','carbohydrates'],playerMacroAbbreviation('carbs_g')],['fat',['fat','fat_g','fats'],playerMacroAbbreviation('fat_g')]]){const read=obj=>aliases.map(k=>obj[k]).find(v=>v!==undefined);const node=progress.querySelector('[data-macro="'+key+'"]');node.textContent=extraTiming?fmt(read(nutrition))+'g '+label:fmt(read(nutrition))+'/'+fmt(read(target))+'g '+label;}
     
-   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-ratio').textContent='Não foi possível calcular as kcal';console.warn('Consumption preview failed',e);}
+   }catch(e){if(seq===previewSeq)progress.querySelector('.consumption-energy-ratio').textContent=playerText('Não foi possível calcular as kcal','Could not calculate kcal');console.warn('Consumption preview failed',e);}
   };
   const queuePreview=()=>{clearTimeout(previewTimer);previewTimer=setTimeout(updatePreview,280);};
   foodsRoot.addEventListener('input',queuePreview);foodsRoot.addEventListener('change',queuePreview);
@@ -2026,7 +2200,7 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    });
    return allPlanned&&!additional.some(x=>x.consumed&&x.grams>0)?'all':'partial';
   };
-  const save=document.createElement('button');save.type='button';save.textContent='Guardar';if(extraTiming)save.disabled=true;
+  const save=document.createElement('button');save.type='button';save.textContent=playerText('Guardar','Save');if(extraTiming)save.disabled=true;
   const feedback=document.createElement('p');feedback.className='consumption-save-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');panel.append(feedback);
   save.onclick=async()=>{if(!panel.isConnected)return;const option=data.options.find(x=>x.option_ref===select.value);const body={date:mealDate,meal:mealKey,event_id:eventId,option_ref:select.value,status:getConsumptionStatus()};
    if(consumedColor)body.consumed_color=consumedColor;
@@ -2034,11 +2208,11 @@ async function openConsumptionEditor(host, mealDate, mealKey, eventId='', prefer
    if(extraTiming)body.extra_timing=true;
    if(body.status==='partial')body.edits=(option.foods||[]).map((food,i)=>({index:i,consumed:!!foodsRoot.querySelector('input[type=checkbox][data-index="'+i+'"]')?.checked,grams:Number(foodsRoot.querySelector('input[data-grams="'+i+'"]')?.value??food.grams)}));
    if(body.status==='partial')body.additional=additional.filter(x=>x.consumed&&x.grams>0).map(({id,grams})=>({id,grams}));
-   if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent='Adiciona pelo menos um alimento da biblioteca.';return;}
-   try{save.disabled=true;save.textContent='A guardar…';feedback.textContent='A guardar o consumo…';await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent='Registo guardado.';panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent='Não foi possível guardar: '+(e.message||'erro desconhecido');error(e);save.disabled=false;save.textContent='Tentar guardar novamente';}
+   if(extraTiming&&(!Array.isArray(body.additional)||!body.additional.length)){feedback.textContent=playerText('Adiciona pelo menos um alimento da biblioteca.','Add at least one food from the library.');return;}
+   try{save.disabled=true;save.textContent=playerText('A guardar…','Saving…');feedback.textContent=playerText('A guardar o consumo…','Saving consumption…');await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify(body)});feedback.textContent=playerText('Registo guardado.','Record saved.');panel.remove();await refreshAfterConsumption(host,mealKey,eventId);}catch(e){feedback.textContent=playerText('Não foi possível guardar: ','Could not save: ')+(e.message||playerText('erro desconhecido','unknown error'));error(e);save.disabled=false;save.textContent=playerText('Tentar guardar novamente','Try saving again');}
   };
   save.className='consumption-save';
-  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent='Cancelar';cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent='Voltar';back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='consumption-cancel';cancel.textContent=playerText('Cancelar','Cancel');cancel.onclick=()=>{if(typeof onCancel==='function')onCancel();else panel.remove();};const actions=document.createElement('div');actions.className='consumption-actions';if(consumedColor){const back=document.createElement('button');back.type='button';back.className='consumption-cancel';back.textContent=playerText('Voltar','Back');back.onclick=()=>openAlternativeColorPicker(host,mealDate,mealKey,eventId);actions.append(back);}if(!consumedColor)actions.append(cancel);actions.append(save);if(consumedColor)actions.classList.add('consumption-actions-two');panel.append(actions);
  }catch(e){panel.remove();error(e);}
 }
 
@@ -2075,7 +2249,7 @@ async function overview(){
    pendingDailySwipeDirection=0;
    const target=overviewMode==="week"?$("weekly-view"):$("day-details");
    target.hidden=false;target.replaceChildren();
-   const note=document.createElement("p");note.className="hint";note.textContent="Não foi possível carregar esta semana. Tenta novamente.";
+   const note=document.createElement("p");note.className="hint";note.textContent=playerText("Não foi possível carregar esta semana. Tenta novamente.","Could not load this week. Please try again.");
    target.append(note);
    throw err;
   }
@@ -2124,7 +2298,7 @@ async function overview(){
  if(isWeek){pendingDailySwipeDirection=0;renderWeekly(mon,r,weekMenus.menus||[],weekWeights.weights_by_date||{});return;}
  const dailyReferenceRaw=weekWeights.weights_by_date?.[d]?.weight_kg;
  const dailyReferenceWeight=dailyReferenceRaw==null?NaN:Number(dailyReferenceRaw);
- $("date-title").textContent=day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
+ $("date-title").textContent=day.toLocaleDateString(playerDateLocale(),{weekday:"short",day:"numeric",month:"numeric",year:"numeric"});
  const strip=$("week-strip");strip.replaceChildren();
  // Shared full-view swipe also covers the calendar, including during loading.
  for(let i=0;i<7;i++){
@@ -2132,8 +2306,8 @@ async function overview(){
   const dayInfo=r.days.find(x=>x.date===iso(dt));
   const button=document.createElement("button");button.type="button";button.className="week-day"+(iso(dt)===d?" selected":"")+(iso(dt)===iso(new Date())?" today":"");
   button.setAttribute("aria-pressed",String(iso(dt)===d));
-  button.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+dayInfo.classification:""));
-  for(const [cls,text] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",dayInfo?.classification||"Geral"]]){
+  button.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+(dayInfo?.classification?" · "+playerClassification(dayInfo.classification):""));
+  for(const [cls,text] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",playerClassification(dayInfo?.classification||"Geral")]]){
    const span=document.createElement("span");span.className=cls;span.textContent=text;button.append(span);
   }
   button.onclick=()=>{pendingDailySwipeDirection=0;day=dt;overview().catch(error);};strip.append(button);
@@ -2158,7 +2332,7 @@ async function overview(){
  if(consumptionLoadError){
   const notice=document.createElement("p");
   notice.setAttribute("role","status");
-  notice.textContent="Não foi possível carregar os consumos. Atualiza a página para tentar novamente.";
+  notice.textContent=playerText("Não foi possível carregar os consumos. Atualiza a página para tentar novamente.","Could not load consumption records. Refresh the page to try again.");
   notice.style.cssText="color:var(--text-secondary,#a1a1aa);font-size:13px;padding:8px 12px;";
   root.append(notice);
  }
@@ -2166,7 +2340,7 @@ async function overview(){
  const entry=r.days.find(x=>x.date===d);
  if(!entry?.classification&&!calendarEvents.some(e=>e.event_date===d)&&!meals.some(meal=>assignedColor(d,meal,entry?.classification))&&!(supplementsByDay[d]||[]).length&&!periMeals.some(item=>item.event_date===d)){
   renderWeightCard(root,d).catch(()=>{});
-  const note=document.createElement("p");note.textContent="Sem programação definida para este dia.";root.append(note);
+  const note=document.createElement("p");note.textContent=playerText("Sem programação definida para este dia.","No schedule set for this day.");root.append(note);
   root.hidden=false;setOverviewLoading(false);animateDailySwipeEntry();return;
  }
 
@@ -2181,10 +2355,10 @@ async function overview(){
    const hero=document.createElement("div");hero.className="nutrition-hero";
    const energy=document.createElement("div");energy.className="nutrition-energy";
    const label=document.createElement("small");label.textContent="kcal";
-   const value=document.createElement("strong");value.textContent=fmt(total.kcal,0);
+   const value=document.createElement("strong");value.textContent=fmtKcal(total.kcal);
    energy.append(label,value);
    const weight=dailyReferenceWeight,hasWeight=Number.isFinite(weight)&&weight>0;
-   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmt(total.kcal/weight,0)+" kcal/kg";energy.append(ratio);}
+   if(hasWeight){const ratio=document.createElement("small");ratio.className="per-kg";ratio.textContent=fmtKcal(total.kcal/weight)+" kcal/kg";energy.append(ratio);}
    hero.append(energy);summary.append(hero);
    const actual={kcal:0,protein_g:0,carbs_g:0,fat_g:0};
    if(consumptionEnabled){
@@ -2192,7 +2366,7 @@ async function overview(){
    }
 
    const macros=document.createElement("div");macros.className="nutrition-macro-row";
-   for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+   for(const [key,title,cls] of [["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-macro "+cls;
     const name=document.createElement("small");name.textContent=title;
     const grams=document.createElement("strong");grams.textContent=(consumptionEnabled?fmt(actual[key],0)+" / ":"")+fmt(total[key],0)+" g";
@@ -2201,7 +2375,7 @@ async function overview(){
     macros.append(cell);
    }
    summary.append(macros);
-   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expandir resumo nutricional");expand.textContent="";
+   const expand=document.createElement("button");expand.type="button";expand.className="nutrition-expand";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label",playerText("Expandir resumo nutricional","Expand nutrition summary"));expand.textContent="";
    const weeklyCharts=document.createElement("div");weeklyCharts.className="nutrition-weekly-charts";weeklyCharts.hidden=true;
    const weekDays=[];
    for(let offset=0;offset<7;offset++){
@@ -2218,7 +2392,7 @@ async function overview(){
    const change=reference=>reference>0?100*(total.kcal-reference)/reference:null;
    const deviationMean=change(mean);let deviationPrevious=change(previous?.total.kcal);
    const visual=document.createElement("div");visual.className="nutrition-comparison";
-   const heading=document.createElement("h3");heading.className="nutrition-comparison-heading";heading.textContent="Energia (kcal)";visual.append(heading);
+   const heading=document.createElement("h3");heading.className="nutrition-comparison-heading";heading.textContent=playerText("Energia (kcal)","Energy (kcal)");visual.append(heading);
    const gauge=document.createElement("div");gauge.className="nutrition-comparison-gauge";
    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 160 160");svg.setAttribute("aria-hidden","true");
    const ring=(radius,delta,pos,neg)=>{
@@ -2237,9 +2411,9 @@ async function overview(){
    paintRings();
    gauge.append(svg);
    const center=document.createElement("div");center.className="nutrition-comparison-center";
-   const number=document.createElement("strong");number.textContent=fmt(total.kcal,0);
+   const number=document.createElement("strong");number.textContent=fmtKcal(total.kcal);
    center.append(number);
-   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmt(total.kcal/weight,0)+" /kg";center.append(per);}
+   if(hasWeight){const per=document.createElement("small");per.className="per-kg";per.textContent=fmtKcal(total.kcal/weight)+" /kg";center.append(per);}
    gauge.append(center);visual.append(gauge);
    if(consumptionEnabled){
     // The pilot is permission-gated server-side: only Jorge receives consumption data.
@@ -2247,7 +2421,7 @@ async function overview(){
     const rings=document.createElement("div");rings.className="consumption-concentric-rings";
     const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");
     chart.setAttribute("viewBox","0 0 200 200");chart.setAttribute("role","img");
-    chart.setAttribute("aria-label","Progresso de calorias, proteína, hidratos e gordura consumidos face ao planeado");
+    chart.setAttribute("aria-label",playerText("Progresso de calorias, proteína, hidratos e gordura consumidos face ao planeado","Progress of calories, protein, carbohydrates and fat consumed compared with planned"));
     for(const [key,radius,color] of [["kcal",88,"#72ebbd"],["protein_g",66,"#45baff"],["carbs_g",44,"#ff9d70"],["fat_g",22,"#f4d778"]]){
      const circumference=2*Math.PI*radius;
      const ratio=total[key]>0?Math.max(0,Math.min(1,actual[key]/total[key])):0;
@@ -2265,13 +2439,13 @@ async function overview(){
     const planned=document.createElement("span");
     const suffix=document.createElement("span");suffix.className="consumption-concentric-unit";
     const energyLabel=document.createElement("span");energyLabel.className="consumption-concentric-energy-label";energyLabel.textContent="kcal";energyRow.append(energyLabel);energyLine.append(current,planned,suffix);
-    const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label","Unidades nutricionais");
+    const mode=document.createElement("div");mode.className="consumption-concentric-unit-switch";mode.setAttribute("role","group");mode.setAttribute("aria-label",playerText("Unidades nutricionais","Nutrition units"));
     const gramsButton=document.createElement("button");gramsButton.type="button";gramsButton.textContent="g";
     const kgButton=document.createElement("button");kgButton.type="button";kgButton.textContent="g/kg";
-    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M20.5 5.5h-11C5.787 5.5 3 8.185 3 12m.5 6.5h11c3.713 0 6.5-2.685 6.5-6.5"/><path d="M18.5 3S21 4.841 21 5.5S18.5 8 18.5 8m-13 8S3 17.841 3 18.5S5.5 21 5.5 21"/></g></svg>';unitArrow.setAttribute("aria-label","Mostrar valores por kg");mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);
+    const unitArrow=document.createElement("button");unitArrow.type="button";unitArrow.className="consumption-concentric-unit-arrow";unitArrow.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M20.5 5.5h-11C5.787 5.5 3 8.185 3 12m.5 6.5h11c3.713 0 6.5-2.685 6.5-6.5"/><path d="M18.5 3S21 4.841 21 5.5S18.5 8 18.5 8m-13 8S3 17.841 3 18.5S5.5 21 5.5 21"/></g></svg>';unitArrow.setAttribute("aria-label",playerText("Mostrar valores por kg","Show values per kg"));mode.append(unitArrow);energyRow.append(energyLine);figures.append(energyRow);
     const details=document.createElement("div");details.className="consumption-concentric-macros";
     const macroValues=[];
-    for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+    for(const [key,title,cls] of [["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
      const line=document.createElement("div");line.className="consumption-concentric-macro "+cls;
      const name=document.createElement("span");name.textContent=title;
      const amount=document.createElement("strong");amount.className="consumption-concentric-amount";
@@ -2283,11 +2457,11 @@ async function overview(){
      macroValues.push({key,consumedValue,prescribedValue,grams});
     }
     const updateUnits=(perKg)=>{
-     unitArrow.setAttribute("aria-label",perKg?"Mostrar valores em gramas":"Mostrar valores por kg");unitArrow.title=perKg?"Voltar a g e kcal":"Ver g/kg e kcal/kg";
+     unitArrow.setAttribute("aria-label",perKg?playerText("Mostrar valores em gramas","Show values in grams"):playerText("Mostrar valores por kg","Show values per kg"));unitArrow.title=perKg?playerText("Voltar a g e kcal","Back to g and kcal"):playerText("Ver g/kg e kcal/kg","View g/kg and kcal/kg");
      gramsButton.setAttribute("aria-pressed",String(!perKg));kgButton.setAttribute("aria-pressed",String(perKg));
      const divisor=perKg&&hasWeight?weight:1;
-     current.textContent=fmt(actual.kcal/divisor,perKg?0:0);
-     planned.textContent=" / "+fmt(total.kcal/divisor,0);
+     current.textContent=fmtKcal(actual.kcal/divisor);
+     planned.textContent=" / "+fmtKcal(total.kcal/divisor);
      suffix.textContent="";energyLabel.textContent=perKg?"kcal/kg":"kcal";
      for(const item of macroValues){
       item.consumedValue.textContent=fmt(actual[item.key]/divisor,perKg?1:0);
@@ -2300,7 +2474,7 @@ async function overview(){
     unitArrow.disabled=!hasWeight;
     updateUnits(false);
     const trends=document.createElement("div");trends.className="consumption-concentric-trends";
-    for(const [name,delta,cls] of [["ontem",deviationPrevious,"prior"],["média",deviationMean,"mean"]]){
+    for(const [name,delta,cls] of [[playerText("ontem","yesterday"),deviationPrevious,"prior"],[playerText("média","average"),deviationMean,"mean"]]){
      const pill=document.createElement("div");pill.className="consumption-concentric-trend "+cls;
      const caption=document.createElement("span");caption.textContent=name;
      const value=document.createElement("strong");value.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
@@ -2311,7 +2485,7 @@ async function overview(){
     visual.append(rings,figures,mode);
    }
    const comparisons=document.createElement("div");comparisons.className="nutrition-comparison-stats";
-   for(const [name,delta,cls] of [["vs média semanal",deviationMean,"mean"],["vs dia anterior",deviationPrevious,"prior"]]){
+   for(const [name,delta,cls] of [[playerText("vs média semanal","vs weekly average"),deviationMean,"mean"],[playerText("vs dia anterior","vs previous day"),deviationPrevious,"prior"]]){
     const stat=document.createElement("div");stat.className="nutrition-comparison-stat "+cls;
     const figure=document.createElement("strong");figure.textContent=delta===null?"—":(Math.round(delta)>0?"+":"")+fmt(delta,0)+"%";
     if(delta!==null)stat.classList.add(delta>0?"above":delta<0?"below":"neutral");
@@ -2320,7 +2494,7 @@ async function overview(){
    }
    visual.append(comparisons);
    const compactMacros=document.createElement("div");compactMacros.className="nutrition-comparison-macros";
-   for(const [key,title,cls] of [["protein_g","Proteína","protein"],["carbs_g","Hidratos","carbs"],["fat_g","Gordura","fat"]]){
+   for(const [key,title,cls] of [["protein_g",playerMacroLabel("protein_g"),"protein"],["carbs_g",playerMacroLabel("carbs_g"),"carbs"],["fat_g",playerMacroLabel("fat_g"),"fat"]]){
     const cell=document.createElement("div");cell.className="nutrition-comparison-macro "+cls;
     const label=document.createElement("small");label.textContent=title;
     const value=document.createElement("strong");value.textContent=(consumptionEnabled?fmt(actual[key],0)+" / ":"")+fmt(total[key],0)+" g";
@@ -2380,7 +2554,7 @@ async function overview(){
     for(const item of weekDays){
      const column=document.createElement("div");column.className="nutrition-chart-column";
      if(item.key===iso(new Date()))column.classList.add("nutrition-chart-today");
-     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?fmt(item.total[key]/scale,decimals):"–";n.style.color=color;
+     const n=document.createElement("span");n.className="nutrition-chart-number";n.textContent=item.found?(key==="kcal"?fmtKcal(item.total[key]/scale):fmt(item.total[key]/scale,decimals)):"–";n.style.color=color;
      const track=document.createElement("div");track.className="nutrition-chart-track";
      const fill=document.createElement("div");fill.className="nutrition-chart-fill";fill.style.height=(item.found?Math.max(4,item.total[key]/scale/max*100):0)+"%";fill.style.background=color;track.append(fill);
      const dayLabel=document.createElement("small");dayLabel.textContent=String(new Date(item.key+"T12:00:00").getDate());column.append(n,track,dayLabel);bars.append(column);
@@ -2388,26 +2562,26 @@ async function overview(){
     if(mean!==null){
      const line=document.createElement("div");line.className="nutrition-chart-average";
      line.style.setProperty("--avg-offset",String(72*Math.min(1,mean/max))+"px");
-     line.setAttribute("aria-label","Média semanal: "+fmt(mean,decimals)+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
+     line.setAttribute("aria-label",playerText("Média semanal: ","Weekly average: ")+(key==="kcal"?fmtKcal(mean):fmt(mean,decimals))+(key==="kcal"?" kcal":scale===1?" g":" g/kg"));
      bars.append(line);
     }
     wrap.append(bars);return wrap;
    }
-   weeklyCharts.append(buildBars("Calorias da semana","kcal","#82d4a4",1));
-   const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent="Macros da semana";macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);weeklyCharts.append(macroHeader);
+   weeklyCharts.append(buildBars(playerText("Calorias da semana","Weekly calories"),"kcal","#82d4a4",1));
+   const macroHeader=document.createElement("div");macroHeader.className="macro-chart-header";const macroTitle=document.createElement("strong");macroTitle.textContent=playerText("Macros da semana","Weekly macros");macroTitle.className="macro-chart-heading";macroHeader.append(macroTitle);weeklyCharts.append(macroHeader);
    const modes=document.createElement("div");modes.className="macro-chart-switch";const gramsMode=document.createElement("button");gramsMode.textContent="g";const kgMode=document.createElement("button");kgMode.textContent="g/kg";modes.append(gramsMode,kgMode);macroHeader.append(modes);
    const macArea=document.createElement("div");weeklyCharts.append(macArea);
    const renderMacroMode=mode=>{
-    macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent="Para consultar g/kg, adiciona o peso do jogador ao perfil.";macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
+    macArea.replaceChildren();if(mode==="kg"&&!hasWeight){const info=document.createElement("p");info.className="hint";info.textContent=playerText("Para consultar g/kg, adiciona o peso do jogador ao perfil.","Add the player's weight to the profile to view g/kg.");macArea.append(info);return;}gramsMode.classList.toggle("selected",mode==="g");kgMode.classList.toggle("selected",mode==="kg");
     const divisor=mode==="kg"?(hasWeight?weight:NaN):1;
-    for(const [key,title,color] of [["protein_g","Proteína","#64b4f7"],["carbs_g","Hidratos","#f0a077"],["fat_g","Gordura","#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
+    for(const [key,title,color] of [["protein_g",playerMacroLabel("protein_g"),"#64b4f7"],["carbs_g",playerMacroLabel("carbs_g"),"#f0a077"],["fat_g",playerMacroLabel("fat_g"),"#eed076"]])macArea.append(buildBars(title,key,color,divisor,mode==="kg"?1:0));
    };
-   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?"Valores por quilograma":"Peso do jogador indisponível no perfil";
+   gramsMode.onclick=e=>{e.stopPropagation();renderMacroMode("g");};kgMode.onclick=e=>{e.stopPropagation();renderMacroMode("kg");};kgMode.disabled=false;kgMode.title=hasWeight?playerText("Valores por quilograma","Values per kilogram"):playerText("Peso do jogador indisponível no perfil","Player weight unavailable in profile");
    renderMacroMode("g");
-   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?"Expandir resumo nutricional":"Fechar gráficos nutricionais");if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
+   expand.onclick=()=>{weeklyCharts.hidden=!weeklyCharts.hidden;expand.setAttribute("aria-expanded",String(!weeklyCharts.hidden));expand.setAttribute("aria-label",weeklyCharts.hidden?playerText("Expandir resumo nutricional","Expand nutrition summary"):playerText("Fechar gráficos nutricionais","Close nutrition charts"));if(consumptionEnabled){visual.classList.toggle("nutrition-details-open",!weeklyCharts.hidden);const unit=visual.querySelector(".consumption-concentric-footer-actions .consumption-concentric-unit-switch");if(unit)unit.style.setProperty("display",weeklyCharts.hidden?"none":"flex","important");}};
    if(consumptionEnabled){
     const footer=document.createElement("div");footer.className="consumption-concentric-footer";
-    const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent="Ver valores semanais e detalhes";
+    const footerLabel=document.createElement("button");footerLabel.type="button";footerLabel.className="consumption-concentric-footer-label";footerLabel.textContent=playerText("Ver valores semanais e detalhes","View weekly values and details");
     footerLabel.addEventListener("click",()=>expand.click());
     const footerActions=document.createElement("div");footerActions.className="consumption-concentric-footer-actions";
     const unitControl=visual.querySelector(".consumption-concentric-unit-switch");
@@ -2415,7 +2589,7 @@ async function overview(){
     footerActions.append(expand);footer.addEventListener("click",event=>{if(event.target.closest("button"))return;expand.click();});footer.append(footerLabel,footerActions);visual.append(footer);
    }else visual.append(expand);
    summary.append(weeklyCharts);
-  }else{const note=document.createElement("p");note.className="hint";note.textContent="Resumo incompleto: existem refeições sem plano publicado.";summary.append(note);}
+  }else{const note=document.createElement("p");note.className="hint";note.textContent=playerText("Resumo incompleto: existem refeições sem plano publicado.","Incomplete summary: some meals have no published plan.");summary.append(note);}
   root.append(summary);
  }
  renderWeightCard(root,d).catch(()=>{});
@@ -2430,7 +2604,7 @@ async function overview(){
   if(color){const indicator=document.createElement("span");indicator.className="daily-meal-indicator "+color;indicator.setAttribute("aria-label",colorNames[color]||color);head.append(indicator);}
   if(consumptionEnabled&&consumptionRecords.some(record=>record.meal_key===meal&&record.meal_date===d&&!record.event_id)){
    const badge=document.createElement('span');badge.className='meal-registered-badge meal-registered-meal-badge';
-   consumptionActionLabel(badge,'CheckmarkCircle02Icon',' Registado');badge.setAttribute('aria-label','Refeição registada');
+   consumptionActionLabel(badge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));badge.setAttribute('aria-label',playerText('Refeição registada','Meal recorded'));
    title.append(badge);
   }
   section.append(head);
@@ -2445,7 +2619,7 @@ async function overview(){
     if((meal==="lunch"||meal==="dinner")&&menu.kind==="dish"){
      p.classList.add("meal-menu-link");
      p.setAttribute("role","button");p.tabIndex=0;
-     p.setAttribute("aria-label","Ver "+names[meal]+" nos Menus de "+new Date(d+"T12:00:00").toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}));
+     p.setAttribute("aria-label",playerText("Ver ","View ")+names[meal]+playerText(" nos Menus de "," in Menus for ")+new Date(d+"T12:00:00").toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"}));
      p.addEventListener("click",()=>{openDailyMealInMenus(d,meal).catch(error);});
      p.addEventListener("keydown",event=>{
       if(event.key==="Enter"||event.key===" "){event.preventDefault();p.click();}
@@ -2453,7 +2627,7 @@ async function overview(){
      attachDailyDishPhoto(section,p,menu,epoch,requestId);
     }
    }
-   if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent="Plano ainda não publicado.";section.append(p);}
+   if(color&&!options.length){const p=document.createElement("p");p.className="hint";p.textContent=playerText("Plano ainda não publicado.","Plan not yet published.");section.append(p);}
    const showOptionPortions=!!(color&&(meal==="lunch"||meal==="dinner")&&me?.visual_portions_enabled&&window.tmVisualPortions);
    const addOptionPortions=(card,option)=>{
     if(!showOptionPortions)return;
@@ -2488,7 +2662,7 @@ async function overview(){
     if(optionCard&&options.length===1)target.prepend(tags);else target.append(tags);
     if(optionCard?.tagName==='DETAILS'){
      const summaryLabel=optionCard.querySelector('summary .plan-option-label');
-     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',' Registado');closedBadge.setAttribute('aria-label','Opção registada');summaryLabel.append(closedBadge);}
+     if(summaryLabel){const closedBadge=document.createElement('span');closedBadge.className='meal-registered-badge meal-registered-badge-closed';consumptionActionLabel(closedBadge,'CheckmarkCircle02Icon',playerText(' Registado',' Recorded'));closedBadge.setAttribute('aria-label',playerText('Opção registada','Option recorded'));summaryLabel.append(closedBadge);}
     }
    }
    cards.forEach((card,i)=>{
@@ -2497,8 +2671,8 @@ async function overview(){
     const isRecordedOption=!!previous&&previous.prescription?.color===color&&previous.option_ref===options[i]?.option_ref;
     const actions=document.createElement('div');actions.className='consumption-actions consumption-actions--pending consumption-quick-actions';
     const quick=document.createElement('button');quick.type='button';quick.className='consumption-quick-confirm';
-    consumptionActionLabel(quick,'CheckmarkCircle02Icon',isRecordedOption&&previous.status==='all'?' Consumido':' Cumpri');quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
-    const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent='Editar consumo';
+    consumptionActionLabel(quick,'CheckmarkCircle02Icon',isRecordedOption&&previous.status==='all'?playerText(' Consumido',' Consumed'):playerText(' Cumpri',' Done'));quick.classList.toggle('is-consumed',isRecordedOption&&previous.status==='all');
+    const edit=document.createElement('button');edit.type='button';edit.className='consumption-quick-edit';edit.textContent=playerText('Editar consumo','Edit consumption');
     const feedback=document.createElement('p');feedback.className='consumption-feedback consumption-quick-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     quick.onclick=async()=>{
      if(isRecordedOption&&previous.status==='all')return;
@@ -2511,7 +2685,7 @@ async function overview(){
       if(!selected?.option_ref)throw new Error('Opção indisponível');
       await api('/api/v2/player/consumption-records',{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':playerCsrf},body:JSON.stringify({date:d,meal:meal,event_id:'',option_ref:selected.option_ref,status:'all'})});
       showConsumptionSuccess(quick);feedback.textContent='';await new Promise(resolve=>setTimeout(resolve,900));if(card.tagName==='DETAILS')card.open=false;await overview();
-     }catch(e){feedback.textContent='Não foi possível registar. Tenta novamente.';quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',' Cumpri');error(e);}
+     }catch(e){feedback.textContent=playerText('Não foi possível registar. Tenta novamente.','Could not save the record. Please try again.');quick.disabled=false;edit.disabled=false;consumptionActionLabel(quick,'CheckmarkCircle02Icon',playerText(' Cumpri',' Done'));error(e);}
     };
     edit.onclick=()=>{edit.disabled=true;openConsumptionEditor(target,d,meal,'',i).finally(()=>{edit.disabled=false;});};
     if(!isRecordedOption&&!(previous?.prescription?.color&&previous.prescription.color!==color)){actions.append(edit,quick);target.append(actions,feedback);}
@@ -2519,7 +2693,7 @@ async function overview(){
   }
   if(consumptionEnabled&&color&&options.length){
    const change=document.createElement('button');change.type='button';change.className='consumption-cancel consumption-change-color';
-   change.textContent='Alterar cor';change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label','Registar consumo de outra cor');
+   change.textContent=playerText('Alterar cor','Change colour');change.appendChild((()=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('consumption-link-chevron');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','m9 18 6-6-6-6');path.setAttribute('fill','none');path.setAttribute('stroke','currentColor');path.setAttribute('stroke-width','1.8');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');svg.append(path);return svg;})());change.setAttribute('aria-label','Registar consumo de outra cor');
    
    change.onclick=()=>openAlternativeColorPicker(section,d,meal);
    section.append(change);
@@ -2537,7 +2711,7 @@ function openPlansSection(section){
  $("plans-landing").hidden=true;
  $("plans-prescriptions").hidden=section!=="prescriptions";
  $("plans-assessments").hidden=section!=="assessments";
- if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent="Não foi possível carregar as avaliações.";});
+ if(section==="assessments")loadPlayerAssessments().catch(err=>{$("assessment-measurements").textContent=playerText("Não foi possível carregar as avaliações.","Could not load assessments.");});
  if(section==="prescriptions")renderPlans();
 }
 let plansCategory="todos",planPhase=null;
@@ -2550,7 +2724,7 @@ function renderPlanContent(key,target){
    const opts=published[phase]||[];if(!opts.length)continue;
    const section=document.createElement("section");section.className="meal plan-meal";
    const header=document.createElement("div");header.className="option";
-   const heading=document.createElement("h3");heading.textContent=label;header.append(heading);
+   const heading=document.createElement("h3");heading.textContent=playerPhaseLabel(label);header.append(heading);
    const avg=average(opts);if(avg)header.append(nutrition(avg));section.append(header);
    // A single published option is the meal itself, as in colour plans and Dia.
    // Multiple options keep their independent expandable cards.
@@ -2581,7 +2755,9 @@ function renderPlans(){
  nav.replaceChildren();sub.replaceChildren();detail.replaceChildren();
  const available=Object.keys(plans).filter(c=>Object.values(plans[c]).some(a=>a.length));
  const hasPeri=kind=>Object.values(periPlans[kind]?.options||{}).some(options=>options?.length);
- const categories=[["todos","Todos"],["cores","Cores"],["treino","Treino"],["jogo","Jogo"],["suplementacao","Suplementação"]];
+ const categories=[["todos",playerText("Todos","All")],["cores",playerText("Cores","Colours")],
+  ["treino",playerText("Treino","Training")],["jogo",playerText("Jogo","Match")],
+  ["suplementacao",playerText("Suplementação","Supplements")]];
  for(const [id,label] of categories){
   const b=document.createElement("button");b.type="button";b.textContent=label;
   b.className="plans-filter"+(plansCategory===id?" selected":"");
@@ -2597,7 +2773,7 @@ function renderPlans(){
  };
  if(plansCategory==="cores"){
   for(const color of available)addSub(color,colorNames[color]||color,()=>{selectedColor=color;renderPlans();});
-  if(!available.length){detail.textContent="Ainda não existem planos alimentares publicados.";return;}
+  if(!available.length){detail.textContent=playerText("Ainda não existem planos alimentares publicados.","No meal plans have been published yet.");return;}
   if(!available.includes(selectedColor))selectedColor=available[0];
   // Update the active subfilter after picking the default.
   for(const b of sub.children){b.classList.toggle("selected",b.textContent===(colorNames[selectedColor]||selectedColor));b.setAttribute("aria-pressed",String(b.classList.contains("selected")));}
@@ -2606,8 +2782,8 @@ function renderPlans(){
  }
  if(plansCategory==="treino"||plansCategory==="jogo"){
   const kind=plansCategory==="treino"?"training":"match";
-  if(!hasPeri(kind)){detail.textContent="Ainda não existem planos publicados nesta categoria.";return;}
-  const phases=[["pre",periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino")],["post",periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino")]];
+  if(!hasPeri(kind)){detail.textContent=playerText("Ainda não existem planos publicados nesta categoria.","No plans have been published in this category.");return;}
+  const phases=[["pre",playerPhaseLabel(periPlans[kind]?.phase_labels?.pre||(kind==="match"?"Intra-jogo":"Pré-treino"))],["post",playerPhaseLabel(periPlans[kind]?.phase_labels?.post||(kind==="match"?"Pós-jogo":"Pós-treino"))]];
   if(!planPhase)planPhase=phases.find(([p])=>(periPlans[kind]?.options?.[p]||[]).length)?.[0]||"pre";
   for(const [phase,label] of phases){if(!(periPlans[kind]?.options?.[phase]||[]).length)continue;addSub("peri-"+kind+":"+phase,label,()=>{planPhase=phase;renderPlans();});}
   sub.querySelectorAll("button").forEach(b=>{const match=b.textContent===phases.find(([p])=>p===planPhase)?.[1];b.classList.toggle("selected",match);b.setAttribute("aria-pressed",String(match));});
@@ -2616,10 +2792,10 @@ function renderPlans(){
  }
  if(plansCategory==="suplementacao"){renderPlanContent("supplements",detail);return;}
  // Todos: a compact list of published plan categories, each expandable on demand.
- const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training","Treino"]]:[]),...(hasPeri("match")?[["peri-match","Jogo"]]:[]),["supplements","Suplementação"]];
+ const entries=[...available.map(c=>[c,colorNames[c]||c]),...(hasPeri("training")?[["peri-training",playerText("Treino","Training")]]:[]),...(hasPeri("match")?[["peri-match",playerText("Jogo","Match")]]:[]),["supplements",playerText("Suplementação","Supplements")]];
  for(const [key,label] of entries){
   const group=document.createElement("details");group.className="plans-all-group";
-  const heading=document.createElement("summary");heading.textContent=label;group.append(heading);
+  const heading=document.createElement("summary");heading.textContent=playerUiLanguage==="en"?(periTimingEnglish[timing]||label):label;group.append(heading);
   const content=document.createElement("div");content.className="plans-all-body";group.append(content);
   group.addEventListener("toggle",()=>{if(group.open&&!content.dataset.loaded){content.dataset.loaded="true";planPhase=null;renderPlanContent(key,content);}});
   detail.append(group);
@@ -2662,7 +2838,7 @@ function cachedDishPhoto(id,thumbnail=false){
 function openDishPhoto(src,alt){
  if(!src)return;
  const overlay=document.createElement("div");overlay.className="dish-photo-overlay";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label",alt||"Fotografia do prato");
- const close=document.createElement("button");close.type="button";close.className="dish-photo-close";close.textContent="×";close.setAttribute("aria-label","Fechar fotografia");
+ const close=document.createElement("button");close.type="button";close.className="dish-photo-close";close.textContent="×";close.setAttribute("aria-label",playerText("Fechar fotografia","Close photo"));
  const image=document.createElement("img");image.src=src;image.alt=alt||"Prato";
  const previous=document.activeElement;const dismiss=()=>{overlay.remove();document.removeEventListener("keydown",onKey);previous?.focus?.();};
  const onKey=e=>{if(e.key==="Escape")dismiss();};
@@ -2710,7 +2886,7 @@ async function menusView(){
  const pending=lastMenuPresentationWeek!==startKey;
  if(pending){
   $("menu-loading").hidden=false;$("menu-days").hidden=true;
-  $("menu-loading-week").textContent=start.toLocaleDateString("pt-PT",{day:"numeric",month:"short"})+" – "+end.toLocaleDateString("pt-PT",{day:"numeric",month:"short"});
+  $("menu-loading-week").textContent=start.toLocaleDateString(playerDateLocale(),{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(playerDateLocale(),{day:"numeric",month:"short"});
   $("menu-week-strip").querySelectorAll(".week-day").forEach(el=>el.remove());
  }
  let m,c,dishResponse;
@@ -2723,7 +2899,7 @@ async function menusView(){
  }catch(err){
   if(epoch!==playerSessionEpoch||renderToken!==menuRenderToken||tab!=="menus")return;
   $("menu-loading").hidden=true;
-  const target=$("menu-days");target.hidden=false;target.textContent="Não foi possível carregar os menus. Tenta novamente.";
+  const target=$("menu-days");target.hidden=false;target.textContent=playerText("Não foi possível carregar os menus. Tenta novamente.","Could not load menus. Please try again.");
   throw err;
  }
  if(epoch!==playerSessionEpoch||renderToken!==menuRenderToken||tab!=="menus")return;
@@ -2745,22 +2921,22 @@ async function menusView(){
   const key=iso(dt),classification=c.days.find(x=>x.date===key)?.classification||"Geral";
   const button=document.createElement("button");button.type="button";button.className="week-day"+(key===menuSelectedDate?" selected":"")+(key===todayKey?" today":"");button.dataset.date=key;
   button.setAttribute("aria-pressed",String(key===menuSelectedDate));
-  button.setAttribute("aria-label",dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})+" · "+classification);
-  for(const [cls,value] of [["weekday",dt.toLocaleDateString("pt-PT",{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase("pt-PT"))],["day-number",String(dt.getDate())],["day-classification",classification]]){
+  button.setAttribute("aria-label",dt.toLocaleDateString(playerDateLocale(),{weekday:"long",day:"numeric",month:"long"})+" · "+playerClassification(classification));
+  for(const [cls,value] of [["weekday",dt.toLocaleDateString(playerDateLocale(),{weekday:"short"}).replace(".","").replace(/^./,letter=>letter.toLocaleUpperCase(playerDateLocale()))],["day-number",String(dt.getDate())],["day-classification",playerClassification(classification)]]){
    const span=document.createElement("span");span.className=cls;span.textContent=value;button.append(span);
   }
   button.onclick=()=>{selectMenuDay(key);animateCalendarSelection(strip,key);document.querySelector("#menu-days .day-menu[data-date=\""+key+"\"]")?.scrollIntoView({behavior:"smooth",block:"start"});};
   strip.append(button);
  }
  animateCalendarSelection(strip,menuSelectedDate);
- const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString("pt-PT",{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString("pt-PT",{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=dayClass?.classification||"Geral";h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);const isUnassigned=!menu;const div=document.createElement("div");div.className="row menu-entry"+(isUnassigned?" menu-entry--unassigned":"");div.dataset.meal=meal;
+ const root=$("menu-days");const fragment=document.createDocumentFragment(),photosToObserve=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=iso(d),dayClass=c.days.find(x=>x.date===key);const section=document.createElement("section");section.className="day-menu"+(key===menuSelectedDate?" is-selected":"");section.dataset.date=key;const h=document.createElement("div");h.className="menu-day-heading";const title=document.createElement("h3");title.textContent=d.toLocaleDateString(playerDateLocale(),{weekday:"long"}).replace(/-feira$/,"")+", "+d.getDate()+" "+d.toLocaleDateString(playerDateLocale(),{month:"long"})+" "+d.getFullYear();title.textContent=title.textContent.charAt(0).toUpperCase()+title.textContent.slice(1);const sub=document.createElement("span");sub.className="menu-day-subtitle";sub.textContent=playerClassification(dayClass?.classification||"Geral");h.append(title,sub);section.append(h);for(const meal of ["lunch","dinner"]){const menu=m.menus.find(x=>x.menu_date===key&&x.meal===meal);const isUnassigned=!menu;const div=document.createElement("div");div.className="row menu-entry"+(isUnassigned?" menu-entry--unassigned":"");div.dataset.meal=meal;
  const label=document.createElement("strong");label.textContent=names[meal];
  const rowClass=c.classifications.find(x=>x.name===(dayClass?.classification||"Geral"));const override=(c.meal_color_overrides||[]).find(x=>x.meal_date===key&&x.meal===meal);const color=menu?(Object.prototype.hasOwnProperty.call(menu,"effective_color")?menu.effective_color:(override?override.color:rowClass?.meals?.[meal])):null;
  div.classList.add(color&&color!=="none"?"tone-"+color:"tone-neutral");const title=document.createElement("div");title.className="menu-entry-heading";
  if(color&&color!=="none"){const dot=document.createElement("span");dot.className="color-dot "+color;title.append(dot);}
  title.append(label);
  const body=document.createElement("div");body.className="menu-entry-body";
- const name=document.createElement("span");name.className="value";name.textContent=menu?.value||"Menu por atribuir";if(menu?.kind==="text")name.classList.add("menu-free-text-value");
+ const name=document.createElement("span");name.className="value";name.textContent=menu?.value||playerText("Menu por atribuir","Menu not assigned");if(menu?.kind==="text")name.classList.add("menu-free-text-value");
  const nameColumn=document.createElement("div");nameColumn.className="menu-dish-name-column";nameColumn.append(name);
  body.append(nameColumn);
  if(menu?.kind==="dish"){
@@ -2776,8 +2952,8 @@ async function menusView(){
    photoFrame.append(photo,zoom);body.append(photoFrame);photosToObserve.push(photo);
    if(Number(dish.recipe_count||0)>0){
     const recipeAction=document.createElement("button");recipeAction.type="button";recipeAction.className="menu-view-recipe";
-    recipeAction.textContent=Number(dish.recipe_count||0)>1?"Ver receitas":"Ver receita";
-    recipeAction.setAttribute("aria-label",recipeAction.textContent+" de "+menu.value);
+    recipeAction.textContent=Number(dish.recipe_count||0)>1?playerText("Ver receitas","View recipes"):playerText("Ver receita","View recipe");
+    recipeAction.setAttribute("aria-label",recipeAction.textContent+playerText(" de "," for ")+menu.value);
     const press=()=>recipeAction.classList.add("is-pressed");
     const clearPress=()=>{recipeAction.classList.remove("is-pressed");recipeAction.blur();};
     recipeAction.addEventListener("pointerdown",press);
@@ -2814,6 +2990,9 @@ async function menusView(){
 }
 function error(e){if(e.stale||e.status===401)return;$("status").textContent=e.message||String(e);}
 $("login-form").onsubmit=async e=>{e.preventDefault();$("login-error").textContent="";try{const identifier=$("username").value.trim().toLowerCase(),password=$("password").value;revokePlayerView();$("status").textContent="";await api("/api/login",{method:"POST",body:JSON.stringify({identifier,password})});$("password").value="";await session();}catch(err){$("login-error").textContent="Não foi possível entrar. Verifica as credenciais e tenta novamente.";}};$("logout").onclick=async()=>{const button=$("logout");button.disabled=true;try{await api("/api/logout",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":playerCsrf},body:"{}"});playerCsrf="";revokePlayerView();$("status").textContent="";$("login-error").textContent="";}catch(err){$("status").textContent="Não foi possível terminar a sessão. Tenta novamente.";}finally{button.disabled=false;}};for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>show(b.dataset.tab).catch(error);enableWeekSwipe($("menu-week-strip"),offset=>{menuWeek=swipeWeekBoundary(menuWeek,offset);menuSelectedDate=iso(menuWeek);menusView().catch(error);});enableOverviewDaySwipe($("overview"));for(const b of document.querySelectorAll("#overview-mode button"))b.onclick=()=>{overviewMode=b.dataset.view;weeklySelection=null;overview().catch(error);};$("profile-logout").onclick=()=>$("logout").click();
+for(const button of document.querySelectorAll("#profile-language-selector button[data-language]")){
+ button.onclick=()=>updatePlayerLanguageChoice(button.dataset.language);
+}
 function resetProfilePassword(){
  $("profile-password-form").reset();
  $("profile-password-feedback").textContent="";
@@ -2838,14 +3017,14 @@ $("profile-password-back").onclick=resetProfileSubpage;
 $("profile-password-form").onsubmit=async e=>{
  e.preventDefault();const feedback=$("profile-password-feedback"),button=e.currentTarget.querySelector('button[type="submit"]');
  const current=$("profile-current-password").value,next=$("profile-new-password").value,confirm=$("profile-confirm-password").value;
- if(next!==confirm){feedback.textContent="As novas palavras-passe não coincidem.";return;}
- if(next.length<8){feedback.textContent="Utiliza pelo menos 8 caracteres.";return;}
- if(!profileUsername){feedback.textContent="Não foi possível identificar a conta. Volta a iniciar sessão.";return;}
+ if(next!==confirm){feedback.textContent=playerText("As novas palavras-passe não coincidem.","The new passwords do not match.");return;}
+ if(next.length<8){feedback.textContent=playerText("Utiliza pelo menos 8 caracteres.","Use at least 8 characters.");return;}
+ if(!profileUsername){feedback.textContent=playerText("Não foi possível identificar a conta. Volta a iniciar sessão.","Could not identify the account. Please sign in again.");return;}
  button.disabled=true;feedback.textContent="";
  try{await api("/api/change-password",{method:"POST",body:JSON.stringify({identifier:profileUsername,current_password:current,new_password:next})});
  resetProfilePassword();
- revokePlayerView();$("status").textContent="Palavra-passe alterada. Inicia sessão novamente.";
- }catch(err){feedback.textContent="Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente.";}finally{button.disabled=false;}
+ const successMessage=playerText("Palavra-passe alterada. Inicia sessão novamente.","Password changed. Please sign in again.");revokePlayerView();$("status").textContent=successMessage;
+ }catch(err){feedback.textContent=playerText("Não foi possível alterar a palavra-passe. Confirma a palavra-passe atual e tenta novamente.","Could not change the password. Check your current password and try again.");}finally{button.disabled=false;}
 };
 for(const item of document.querySelectorAll("#profile .mile-icon")){const name=[...item.classList].find(x=>x.startsWith("icon-"))?.slice(5);if(name)item.replaceWith(mealIcon(name));}
 
@@ -2867,7 +3046,7 @@ $("player-session-retry").onclick();
 
 /* Player anthropometry data. Only clinician-published measurements are shown. */
 let assessmentRecords=[],assessmentFields={},assessmentAverages=[],assessmentGroup="resumo";
-const assessNumber=value=>Number(value).toLocaleString("pt-PT",{minimumFractionDigits:1,maximumFractionDigits:1});
+const assessNumber=value=>Number(value).toLocaleString(playerDateLocale(),{minimumFractionDigits:1,maximumFractionDigits:1});
 // Clinical sum-of-8 skinfold colours, matching the Backoffice.
 function playerSkinfoldCategory(value,fieldPosition="",sex="M"){
  const n=Number(value);if(value===null||value===""||!Number.isFinite(n))return null;
@@ -2882,7 +3061,7 @@ function playerSkinfoldCategory(value,fieldPosition="",sex="M"){
 function assessmentDate(iso){if(!iso)return"";const parts=iso.split("-");return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:iso;}
 async function loadPlayerAssessments(){
  const epoch=playerSessionEpoch;
- if(!assessmentRecords.length)$("assessment-measurements").textContent="A carregar avaliações…";
+ if(!assessmentRecords.length)$("assessment-measurements").textContent=playerText("A carregar avaliações…","Loading assessments…");
  const response=await cachedOverviewRead("/api/v2/player/assessments");
  if(epoch!==playerSessionEpoch)return;
  assessmentRecords=response.assessments||[];
@@ -2895,7 +3074,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const holder=document.createElement("div");holder.className="assessment-trend";
  if(points.length<2){
   const note=document.createElement("p");note.className="assessment-trend-note";
-  note.textContent="O gráfico ficará disponível após duas avaliações com este parâmetro.";
+  note.textContent=playerText("O gráfico ficará disponível após duas avaliações com este parâmetro.","Two assessments are needed to display this chart.");
   holder.append(note);return holder;
  }
  const visible=points,values=visible.map(p=>p.value);
@@ -2912,7 +3091,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  svg.setAttribute("viewBox","0 0 "+width+" 176");
  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
  svg.setAttribute("role","img");
- svg.setAttribute("aria-label","Evolução de todas as "+visible.length+" avaliações. Média: "+assessNumber(mean)+(unit?" "+unit:""));
+ svg.setAttribute("aria-label",playerText("Evolução de todas as ","Trend across all ")+visible.length+playerText(" avaliações. Média: "," assessments. Average: ")+assessNumber(mean)+(unit?" "+unit:""));
  svg.style.width=width>344?width+"px":"min(100%, 344px)";
  // Reserve space for the last numeric label so it never clips at the right edge.
  const left=27,right=width-40,top=22,bottom=148;
@@ -2944,7 +3123,7 @@ function buildAssessmentTrend(points,unit,axisStep,isSkinfoldSum=false){
  const guide=add("line",{x1:left,y1:top,x2:left,y2:bottom},"assessment-chart-guide");
  guide.style.display="none";
  const focus=document.createElement("div");focus.className="assessment-chart-focus";focus.setAttribute("aria-live","off");
- const avg=document.createElement("div");avg.className="assessment-chart-average";avg.textContent="— Média: "+assessNumber(mean)+(unit?" "+unit:"");
+ const avg=document.createElement("div");avg.className="assessment-chart-average";avg.textContent=playerText("— Média: ","— Average: ")+assessNumber(mean)+(unit?" "+unit:"");
  let active=-1;
  const highlight=index=>{
   active=index;
@@ -2988,21 +3167,22 @@ function renderPlayerAssessments(){
  for(const button of document.querySelectorAll("[data-assessment-tab]"))button.setAttribute("aria-pressed",String(button.dataset.assessmentTab===assessmentGroup));
  const target=$("assessment-measurements"),stamp=$("assessment-most-recent");target.replaceChildren();stamp.replaceChildren();
  if(!assessmentRecords.length){
-  const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem avaliações publicadas.";target.append(empty);return;
+  const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem avaliações publicadas.","No assessments published yet.");target.append(empty);return;
  }
  const recent=assessmentRecords[assessmentRecords.length-1];
- stamp.textContent="Última avaliação · "+assessmentDate(recent.assessed_on);
+ stamp.textContent=playerText("Última avaliação · ","Latest assessment · ")+assessmentDate(recent.assessed_on);
  for(const [key,label,unit] of assessmentFields[assessmentGroup]||[]){
   const readings=assessmentRecords.filter(r=>Number.isFinite(r.measurements?.[key])).map(r=>({date:r.assessed_on,value:Number(r.measurements[key])}));
   const current=readings.length?readings[readings.length-1]:null,prior=readings.length>1?readings[readings.length-2]:null;
   const details=document.createElement("details");details.className="assessment-measure-card";
   const summary=document.createElement("summary");
-  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=unit&&!label.endsWith("("+unit+")")?label+" ("+unit+")":label;
+  const left=document.createElement("span");left.className="assessment-metric-name";left.textContent=unit&&!label.endsWith("("+unit+")")?
+  playerAssessmentLabel(key,label)+" ("+unit+")":playerAssessmentLabel(key,label);
   const right=document.createElement("span");right.className="assessment-metric-right";
   const number=document.createElement("strong");number.textContent=current?assessNumber(current.value):"—";right.append(number);
   const change=document.createElement("small");change.className="assessment-change";
   if(prior&&current){let delta=Math.round((current.value-prior.value)*1000)/1000;change.textContent=(delta>0?"+":delta<0?"−":"")+assessNumber(Math.abs(delta));}
-  else change.textContent=current?"Primeira medição":"Sem dados";
+  else change.textContent=current?playerText("Primeira medição","First reading"):playerText("Sem dados","No data");
   right.append(change);
   const arrow=document.createElement("span");arrow.className="assessment-expander";arrow.setAttribute("aria-hidden","true");
   summary.append(left,right,arrow);
@@ -3012,18 +3192,18 @@ function renderPlayerAssessments(){
    const formula=playerBodyFatFormulaNote(source?.formula_note);
    if(formula){
     const note=document.createElement("p");note.className="assessment-formula";
-    note.textContent="Gordura corporal: "+formula;details.append(note);
+    note.textContent=playerText("Gordura corporal: ","Body fat: ")+formula;details.append(note);
    }
   }
   target.append(details);
  }
  if(assessmentGroup==="resumo"){
   const recentAverages=recent.averages||{},known=assessmentAverages.filter(([key])=>recentAverages[key]!==undefined);
-  if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent="Médias do relatório";averages.append(head);
-   for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=label;v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
+  if(known.length){const averages=document.createElement("div");averages.className="assessment-averages";const head=document.createElement("h3");head.textContent=playerText("Médias do relatório","Report averages");averages.append(head);
+   for(const [key,label,unit] of known){const row=document.createElement("div"),l=document.createElement("span"),v=document.createElement("strong");l.textContent=playerAssessmentLabel(key,label);v.textContent=assessNumber(recentAverages[key])+(unit?" "+unit:"");row.append(l,v);averages.append(row);}target.append(averages);}
 
  }
- if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent="Ainda não existem medições publicadas nesta categoria.";target.append(empty);}
+ if(!target.children.length){const empty=document.createElement("p");empty.className="assessment-empty-state";empty.textContent=playerText("Ainda não existem medições publicadas nesta categoria.","No measurements published in this category.");target.append(empty);}
 }
 for(const button of document.querySelectorAll("[data-assessment-tab]"))button.onclick=()=>{assessmentGroup=button.dataset.assessmentTab;renderPlayerAssessments();};
 

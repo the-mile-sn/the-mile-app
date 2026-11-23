@@ -76,9 +76,9 @@ test("library recipe displays a 170-190px hero above the full-width page title",
  assert.match(html,/player-recipes\.js\?v=\d+/);
 });
 test("recipe sections have subtle cards and separated ingredients",()=>{
- assert.match(js,/sectionTitle\("Ingredientes","ingredients"\)/);
- assert.match(js,/sectionTitle\("Preparação","preparation"\)/);
- assert.match(js,/sectionTitle\("Dicas úteis","tips"\)/);
+ assert.match(js,/sectionTitle\(tr\("Ingredientes","Ingredients"\),"ingredients"\)/);
+ assert.match(js,/sectionTitle\(tr\("Preparação","Method"\),"preparation"\)/);
+ assert.match(js,/sectionTitle\(tr\("Dicas úteis","Useful tips"\),"tips"\)/);
  assert.match(js,/if\(recipe\.notes&&recipe\.notes\.trim\(\)\)/);
  assert.match(css,/#menus \.recipe-content-section \.recipe-ingredient\{/);
  assert.match(css,/border-bottom:1px solid rgba\(255,255,255,\.09\)/);
@@ -141,7 +141,7 @@ test("hero replaces the previous inline photo offset without altering recipe bod
  assert.match(js,/if\(showHero\)\{\s*root\.classList\.add\("recipe-detail--hero"\);\s*const hero=thumb\(recipe\.id,true\)/);
  assert.match(js,/if\(includePhoto&&recipe\.has_photo&&!showHero\)identity\.append\(thumb\(recipe\.id,true\)\)/);
  assert.match(js,/ingredientList\(ingredients,recipe\.sections\)/);
- assert.match(js,/sectionTitle\("Preparação","preparation"\)/);
+ assert.match(js,/sectionTitle\(tr\("Preparação","Method"\),"preparation"\)/);
 });
 test("menu dish photos always open the same zoom, independent of recipes",()=>{
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
@@ -152,7 +152,7 @@ test("menu dish photos always open the same zoom, independent of recipes",()=>{
 test("only dishes with linked recipes get a separate recipe action",()=>{
  const player=fs.readFileSync("static/jogador-v2.js","utf8");
  assert.match(player,/if\(Number\(dish\.recipe_count\|\|0\)>0\)/);
- assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?"Ver receitas":"Ver receita"/);
+ assert.match(player,/recipeAction\.textContent=Number\(dish\.recipe_count\|\|0\)>1\?playerText\("Ver receitas","View recipes"\):playerText\("Ver receita","View recipe"\)/);
  assert.match(player,/window\.themileRecipes\.openDish\(dish.id,menu.value\)/);
  assert.match(player,/dish-photo-zoom/);
 });

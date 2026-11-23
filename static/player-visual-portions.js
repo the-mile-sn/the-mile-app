@@ -2,10 +2,18 @@
 /* The Mile — photos supplied by the nutrition team. No photo is generated here.
    Only photos of the selected, currently published meal option are shown. */
 (()=>{
+ // Existing visual-portion panels are unchanged: only text is localised.
+ const tr=(pt,en)=>document.documentElement.lang==="en-GB"?en:pt;
+ const portionLocale=()=>document.documentElement.lang==="en-GB"?"en-GB":"pt-PT";
+ const categoryText=pt=>document.documentElement.lang!=="en-GB"?pt:({
+  "Arroz":"Rice","Arroz com leguminosas":"Rice with pulses","Massa":"Pasta",
+  "Batata":"Potato","Arroz + Batata":"Rice + potato","Carne / Peixe":"Meat / fish",
+  "Acompanhamentos":"Side dishes","Carne branca":"White meat"
+ })[pt]||pt;
  let layer=null;
  function grams(value){
   const n=Number(value);
-  return Number.isFinite(n)?n.toLocaleString("pt-PT",{maximumFractionDigits:2})+" g":"—";
+  return Number.isFinite(n)?n.toLocaleString(portionLocale(),{maximumFractionDigits:2})+" g":"—";
  }
  // Render actual inline SVG strokes rather than CSS masks: Safari/iOS web
  // previews can drop the mask and leave invisible action/close icons.
@@ -49,7 +57,7 @@
    sheet.classList.toggle("is-expanded",expanded);
    sheet.style.height="";
    handle.setAttribute("aria-expanded",String(expanded));
-   handle.setAttribute("aria-label",expanded?"Reduzir painel":"Expandir painel");
+   handle.setAttribute("aria-label",expanded?tr("Reduzir painel","Collapse panel"):tr("Expandir painel","Expand panel"));
   };
   function start(event){
    if(event.button!=null&&event.button!==0)return;
@@ -111,15 +119,15 @@
   const grip=document.createElement("span");grip.className="tm-portion-sheet-grip";
   grip.setAttribute("aria-hidden","true");resizeHandle.append(grip);
   sheet.append(resizeHandle);
-  sheet.setAttribute("aria-label","Porções visuais — "+mealTitle);
+  sheet.setAttribute("aria-label",tr("Porções visuais — ","Visual portions — ")+mealTitle);
   const header=document.createElement("header");header.className="tm-portion-sheet-header";
   const headCopy=document.createElement("div");
   const title=document.createElement("h2");title.textContent=mealTitle;
   const dateText=document.createElement("p");
-  dateText.textContent=new Date(date+"T12:00:00").toLocaleDateString("pt-PT",{day:"numeric",month:"long"});
+  dateText.textContent=new Date(date+"T12:00:00").toLocaleDateString(portionLocale(),{day:"numeric",month:"long"});
   headCopy.append(title,dateText);
   const closeButton=document.createElement("button");closeButton.type="button";closeButton.className="tm-portion-sheet-close";
-  closeButton.setAttribute("aria-label","Fechar porções visuais");
+  closeButton.setAttribute("aria-label",tr("Fechar porções visuais","Close visual portions"));
   closeButton.append(icon(["M18 6 6 18","M6 6l12 12"],"tm-portion-close-icon"));
   closeButton.addEventListener("click",close);
   header.append(headCopy,closeButton);sheet.append(header);
@@ -130,8 +138,8 @@
    if(!photos.length)continue;
    const section=document.createElement("section");section.className="tm-portion-photo-group";
    const heading=document.createElement("h3");
-   const groupName=group.visual_examples?"Acompanhamentos":
-    (photos.length>1?"Alternativas":photos[0].category);
+   const groupName=group.visual_examples?tr("Acompanhamentos","Side dishes"):
+    (photos.length>1?tr("Alternativas","Alternatives"):categoryText(photos[0].category));
    const quantity=photos[0].prescribed_g;
    heading.textContent=groupName+(Number.isFinite(Number(quantity))?" · "+grams(quantity):"");
    section.append(heading);
@@ -142,17 +150,18 @@
     const photo=document.createElement("img");photo.loading="lazy";photo.decoding="async";
     photo.src="/api/v2/player/visual-portions/image/"+encodeURIComponent(ref.photo_id);
     photo.alt=ref.photo_subject==="Carne branca"?
-     "Fotografia de carne branca como orientação visual para Carne/Peixe, "+grams(ref.reference_g):
-     "Fotografia de "+ref.category+", "+grams(ref.reference_g);
+     tr("Fotografia de carne branca como orientação visual para Carne/Peixe, ",
+        "White meat reference photo for meat/fish, ")+grams(ref.reference_g):
+     tr("Fotografia de ","Photo of ")+categoryText(ref.category)+", "+grams(ref.reference_g);
     const details=document.createElement("div");details.className="tm-portion-photo-description";
-    const category=document.createElement("strong");category.textContent=ref.category;
+    const category=document.createElement("strong");category.textContent=categoryText(ref.category);
     details.append(category);
     // Exact quantities need no repetitive labels; for a near photo,
     // disclose its actual weight briefly instead of suggesting an exact match.
     if(Math.abs(Number(ref.reference_g)-Number(ref.prescribed_g))>.01||
        (ref.match==="near"&&ref.category==="Arroz + Batata")){
      const near=document.createElement("small");near.className="tm-portion-approximate";
-     near.textContent="Foto de "+grams(ref.reference_g);
+     near.textContent=tr("Foto de ","Photo: ")+grams(ref.reference_g);
      details.append(near);
     }
     card.append(photo,details);carousel.append(card);
@@ -178,9 +187,9 @@
   if(!card||!matchingOption(option,index,color,meal))return;
   const button=document.createElement("button");button.type="button";button.className="tm-daily-portions-action";
   
-  const label=document.createElement("span");label.textContent="Ver porções";button.append(label);
+  const label=document.createElement("span");label.textContent=tr("Ver porções","View portions");button.append(label);
   button.append(icon(["m9 18 6-6-6-6"],"tm-portion-arrow-icon"));
-  button.setAttribute("aria-label","Ver porções de "+(option.title||"Opção "+option.number)+" — "+mealTitle);
+  button.setAttribute("aria-label",tr("Ver porções de ","View portions for ")+(option.title||tr("Opção ","Option ")+option.number)+" — "+mealTitle);
   // The button is appended after the option's foods and notes, never inside
   // <summary>. Native <details> hides it until this specific option opens.
   button.addEventListener("click",async event=>{
@@ -197,11 +206,11 @@
     else{
      button.remove();
      const status=document.getElementById("status");
-     if(status)status.textContent="O plano foi atualizado. Atualiza o dia para consultar as novas porções.";
+     if(status)status.textContent=tr("O plano foi atualizado. Atualiza o dia para consultar as novas porções.","The plan has changed. Refresh the day to view updated portions.");
     }
    }catch(err){
     const status=document.getElementById("status");
-    if(status)status.textContent="Não foi possível abrir as porções. Tenta novamente.";
+    if(status)status.textContent=tr("Não foi possível abrir as porções. Tenta novamente.","Could not open portions. Please try again.");
    }finally{button.disabled=false;}
   });
   card.append(button);

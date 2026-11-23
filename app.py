@@ -15,6 +15,7 @@ import secrets
 import sqlite3
 import microcycles_v2
 import chef_accounts_v2
+import player_language_v2
 import chef_collaboration_v2
 import chat_api_v2
 import player_recipes_v2
@@ -28,6 +29,7 @@ import assessments_v2
 import weight_reference_v2
 import plan_import_v2
 import food_plan_player_v2
+import app_content_i18n_v2
 import player_visual_portions_v2
 import meal_option_selection_v2
 import consumption_records_v2
@@ -207,6 +209,19 @@ class PgConnection:
         self.conn.commit()
 
 
+def report_internal_translation_readiness(c):
+    """Emit counts only to private startup logs; never expose an HTTP endpoint."""
+    if SITE_ROLE != 'player' or os.environ.get('MILE_APP_TRANSLATION_DIAGNOSTIC') != '1':
+        return
+    try:
+        status = app_content_i18n_v2.translation_readiness(c)
+        logging.warning('TM translation readiness: available=%s approved_count=%s kinds=%s',
+                        status['available'], status['approved_count'], status['kinds'])
+    except Exception:
+        # This probe must not affect normal service availability.
+        logging.exception('TM translation readiness diagnostic unavailable')
+
+
 def initialize():
     DATA.mkdir(parents=True, exist_ok=True, mode=0o700)
     with connect() as c:
@@ -278,6 +293,7 @@ def initialize():
         chef_accounts_v2.enable_role(c)
         microcycles_v2.initialize(c)
         chef_accounts_v2.initialize(c)
+        player_language_v2.initialize(c)
         chef_collaboration_v2.initialize(c)
         meal_option_selection_v2.initialize(c)
         consumption_records_v2.initialize(c)
@@ -319,6 +335,7 @@ def initialize():
                 logging.error('Player Planos conversion test failures: %s',
                               output.getvalue()[:1800])
                 raise RuntimeError('Player Planos conversion tests failed')
+        report_internal_translation_readiness(c)
         supplements_v2.initialize(c)
         assessments_v2.initialize(c)
         weight_reference_v2.ensure_weighins_table(c)
@@ -844,7 +861,10 @@ def application(env, start_response):
                 if not user or user['role']!='player':raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link:raise Problem(404,'player_not_linked')
-                return respond(200,{"plan":supplements_v2.read(c,link['athlete_id'])['plan']})
+                plan=supplements_v2.read(c,link['athlete_id'])['plan']
+                plan=app_content_i18n_v2.localise_supplement_plan(
+                    c,plan,language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{"plan":plan})
             # Peri-training and peri-match imports: draft review precedes publication.
             if path.startswith('/api/v2/athletes/') and '/peri-imports' in path:
                 if not user: raise Problem(401,'unauthorized')
@@ -1444,17 +1464,24 @@ def application(env, start_response):
                     search=(q.get('q') or [''])[0]
                     if not isinstance(search,str) or len(search)>90:
                         raise Problem(400,'invalid_search')
-                    rows=c.execute("""SELECT id,name_pt,category
-                      FROM v2_dish_library WHERE active=1
-                        AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
-                        ('%'+search+'%',)).fetchall()
-                    return respond(200,{'dishes':[dict(row) for row in rows]})
+                    if app_content_i18n_v2.enabled(athlete['language']) and (
+                            app_content_i18n_v2.translation_store_available(c)):
+                        dishes=app_content_i18n_v2.search_approved_dishes(c,search)
+                    else:
+                        rows=c.execute("""SELECT id,name_pt,category
+                          FROM v2_dish_library WHERE active=1
+                            AND LOWER(name_pt) LIKE LOWER(?) ORDER BY name_pt LIMIT 100""",
+                            ('%'+search+'%',)).fetchall()
+                        dishes=[dict(row) for row in rows]
+                    return respond(200,{'dishes':dishes})
                 if path == '/api/v2/chef/menus' and method == 'GET':
                     query=parse_qs(env.get('QUERY_STRING',''))
                     try:
                         items=chef_collaboration_v2.list_menus(c,aid,(query.get('start') or [''])[0],(query.get('end') or [''])[0])
                     except (ValueError,TypeError):
                         raise Problem(400,'invalid_menu_range')
+                    items=app_content_i18n_v2.localise_dish_menus(
+                        c,items,language=athlete['language'])
                     return respond(200,{'menus':items})
                 if method != 'GET': raise Problem(403,'forbidden')
                 if path == '/api/v2/chef/calendar':
@@ -1486,8 +1513,34 @@ def application(env, start_response):
                     # Chef's existing athlete/assigned-dish access gates are unchanged.
                     return respond(200,player_menu_photo(image),'image/webp')
                 if path == '/api/v2/chef/plans':
-                    return respond(200,{'options_by_color':food_plan_player_v2.player_plans(c,aid)['options_by_color']})
+                    # Language belongs to the authenticated chef, never a client
+                    # supplied athlete id; the presentation gate defaults OFF.
+                    language=athlete['language'] if athlete['language'] in ('pt','en') else 'pt'
+                    return respond(200,{'options_by_color':food_plan_player_v2.player_plans(
+                        c,aid,language=language)['options_by_color']})
                 raise Problem(404,'not_found')
+            if path == '/api/v2/player/preferences' and method in ('GET','PUT'):
+                # The preference is strictly bound to the authenticated user;
+                # there is no client-provided athlete or user identifier.
+                if not user: raise Problem(401,'unauthorized')
+                if user['role']!='player':raise Problem(403,'forbidden')
+                linked=c.execute("SELECT 1 FROM v2_player_links WHERE user_id=?",
+                                 (user['id'],)).fetchone()
+                if not linked:raise Problem(404,'player_not_linked')
+                allowed=player_language_v2.selection_available(c)
+                if method=='GET':
+                    return respond(200,{'language':
+                        player_language_v2.get(c,user['id']) if allowed else 'pt',
+                        'enabled':allowed})
+                if not allowed:raise Problem(404,'not_found')
+                body=read_json(env)
+                if not isinstance(body,dict) or set(body)!={'language'} or (
+                        type(body['language'])!=str or
+                        body['language'] not in ('pt','en')):
+                    raise Problem(400,'invalid_language')
+                value=player_language_v2.set_language(c,user['id'],body['language'])
+                c.commit()
+                return respond(200,{'language':value})
             if path == '/api/v2/player/me' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
@@ -1499,6 +1552,9 @@ def application(env, start_response):
                 player['visual_portions_enabled']=bool(link['visual_portions_enabled']) and (
                     PLAYER_VISUAL_PORTIONS_RELEASE or bool(preview_session))
                 player['sex']=user['sex']
+                # Only a language code, never a new UI element, is added.
+                player['language']=player_language_v2.presentation_language(
+                    c,user['id'])
                 return respond(200, {'player': player})
             if path == '/api/v2/player/reference-weights' and method == 'GET':
                 if not user: raise Problem(401, 'unauthorized')
@@ -1799,6 +1855,10 @@ def application(env, start_response):
                 except ValueError:
                     raise Problem(400, 'invalid_meal_key')
                 if not source: raise Problem(404, 'published_meal_unavailable')
+                display_language=player_language_v2.presentation_language(
+                    c,user['id'])
+                source=app_content_i18n_v2.localise_consumption_source(
+                    c,link['athlete_id'],source,language=display_language)
                 timing=(query.get('timing') or [None])[0]
                 if timing is not None:
                     if meal_key != 'intra_match': raise Problem(400, 'invalid_timing')
@@ -1814,6 +1874,12 @@ def application(env, start_response):
                     except ValueError as exc:
                         raise Problem(400, str(exc))
                     if not source['options']: raise Problem(404, 'published_timing_unavailable')
+                if display_language=='en':
+                    for option in source['options']:
+                        if (str(option.get('option_ref') or '').startswith(
+                                'player-added:') and
+                                option.get('title')=='Adicionado pelo jogador'):
+                            option['title']='Added by player'
                 return respond(200, {'date': meal_date, 'meal': meal_key,
                     'event_id': event_id, 'options': source['options'],
                     'color': source['color'], 'planned_color': source['planned_color'],
@@ -1997,7 +2063,13 @@ def application(env, start_response):
                     columns={row['name'] for row in c.execute("PRAGMA table_info(v2_food_library)").fetchall()}
                 note_column=next((name for name in ('note','notes','observation','observations','description','preparation_notes') if name in columns), None)
                 selected="id, display_name, variant, kcal, protein_g, carbs_g, fat_g"+((", "+note_column) if note_column else "")
-                matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
+                if player_language_v2.presentation_language(c,user['id'])=='en':
+                    matches=app_content_i18n_v2.search_approved_food_names(
+                        c,search,['id','display_name','variant','kcal',
+                                  'protein_g','carbs_g','fat_g']+
+                        ([note_column] if note_column else []))
+                else:
+                    matches=c.execute("SELECT "+selected+" FROM v2_food_library WHERE active=1 AND lower(display_name) LIKE ? ORDER BY display_name LIMIT 30", ('%'+search.lower()+'%',)).fetchall()
                 return respond(200, {'foods': [{**{k: f[k] for k in ('id','display_name','variant','kcal','protein_g','carbs_g','fat_g')}, 'note': (f[note_column] or '') if note_column else ''} for f in matches]})
 
             # V2 player access: self-only, no athlete id supplied by the client.
@@ -2022,6 +2094,9 @@ def application(env, start_response):
                             key=(menu['menu_date'],menu['meal'])
                             base=class_meals.get(class_by_day.get(menu['menu_date']) or 'Geral',{}).get(menu['meal'])
                             menu['effective_color']=effective.get(menu['menu_date'],{}).get(menu['meal'],{}).get('color')
+                        menus=app_content_i18n_v2.localise_dish_menus(
+                            c,menus,language=player_language_v2.presentation_language(
+                                c,user['id']))
                         return respond(200,{'menus':menus})
                     days = calendar_v2.effective_days(c,link['athlete_id'],calendar_v2.classify_range(first, last, [m['match_date'] for m in microcycles_v2.list_matches(c, link['athlete_id'])]))
                 except ValueError: raise Problem(400, 'invalid_calendar_range')
@@ -2042,13 +2117,19 @@ def application(env, start_response):
                     if row:
                         peri['options']=meal_option_selection_v2.visible_options(
                             peri.get('options') or [],row,None)
-                return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':supplements_v2.days(c,link['athlete_id'],first,last,microcycles_v2.list_matches(c,link['athlete_id']),event_data)})
+                return respond(200, {'meal_option_selections': published_choices, 'days': days, 'classifications': model_data['classifications'], 'meals':model_data['meals'], 'events':event_data, 'matches':matches, 'peri_meals':peri_meals, 'meal_color_overrides':day_colors_v2.list_colors(c,link['athlete_id'],first,last), 'effective_colors':calendar_v2.effective_colors(c,link['athlete_id'],days,model_data), 'supplements_by_day':app_content_i18n_v2.localise_supplement_days(
+                    c,supplements_v2.days(c,link['athlete_id'],first,last,
+                    microcycles_v2.list_matches(c,link['athlete_id']),event_data),
+                    language=player_language_v2.presentation_language(c,user['id']))})
             if path == '/api/v2/player/recipes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
                 link=c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?",(user['id'],)).fetchone()
                 if not link: raise Problem(404,'player_not_linked')
-                return respond(200,{'recipes':player_recipes_v2.library_for_athlete(c,link['athlete_id'])})
+                items=player_recipes_v2.library_for_athlete(c,link['athlete_id'])
+                items=app_content_i18n_v2.localise_recipe_summaries(c,items,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'recipes':items})
             if path.startswith('/api/v2/player/recipe-photo/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
@@ -2069,6 +2150,8 @@ def application(env, start_response):
                 if not recipe: raise Problem(404,'not_found')
                 recipe.pop('photo_key',None)
                 recipe['has_photo']=bool(c.execute("SELECT photo_key FROM v2_recipe_library WHERE id=? AND photo_key IS NOT NULL",(recipe['id'],)).fetchone())
+                recipe=app_content_i18n_v2.localise_recipe_detail(c,recipe,
+                    language=player_language_v2.presentation_language(c,user['id']))
                 return respond(200,{'recipe':recipe})
             if path.startswith('/api/v2/player/dish-recipes/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
@@ -2077,6 +2160,8 @@ def application(env, start_response):
                 if not link: raise Problem(404,'player_not_linked')
                 recipes=player_recipes_v2.published_for_dish(c,link['athlete_id'],path.rsplit('/',1)[-1])
                 if recipes is None: raise Problem(404,'not_found')
+                recipes=app_content_i18n_v2.localise_recipe_summaries(c,recipes,
+                    language=player_language_v2.presentation_language(c,user['id']))
                 return respond(200,{'recipes':recipes})
             if path == '/api/v2/player/dishes' and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
@@ -2091,8 +2176,11 @@ def application(env, start_response):
                         WHERE matches.name_pt=m.value)=1))
                   WHERE d.active=1""",(link['athlete_id'],)).fetchall()
                 counts=player_recipes_v2.dish_recipe_counts(c,link['athlete_id'])
-                return respond(200,{'dishes':[{'id':row['id'],'name_pt':row['name_pt'],
-                    'recipe_count':counts.get(row['id'],0)} for row in rows]})
+                dishes=[{'id':row['id'],'name_pt':row['name_pt'],
+                    'recipe_count':counts.get(row['id'],0)} for row in rows]
+                dishes=app_content_i18n_v2.localise_dish_summaries(c,dishes,
+                    language=player_language_v2.presentation_language(c,user['id']))
+                return respond(200,{'dishes':dishes})
             if path.startswith('/api/v2/player/dish-photo/') and method == 'GET':
                 if not user: raise Problem(401,'unauthorized')
                 if user['role']!='player': raise Problem(403,'forbidden')
@@ -2139,7 +2227,12 @@ def application(env, start_response):
                 if user['role'] != 'player': raise Problem(403, 'forbidden')
                 link = c.execute("SELECT athlete_id FROM v2_player_links WHERE user_id=?", (user['id'],)).fetchone()
                 if not link: raise Problem(404, 'player_not_linked')
-                return respond(200, food_plan_player_v2.player_plans(c, link['athlete_id']))
+                # Never trust a query parameter to override the player's
+                # authenticated, persisted language preference.
+                language=player_language_v2.presentation_language(
+                    c,user['id'])
+                return respond(200, food_plan_player_v2.player_plans(
+                    c, link['athlete_id'],language=language))
             if path == '/api/me' and method == 'GET':
                 # Player PWA: keep the HttpOnly cookie alive across app restarts.
                 # Renew only when the existing session is nearing expiry. Admin

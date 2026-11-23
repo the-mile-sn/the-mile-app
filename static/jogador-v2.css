@@ -5612,3 +5612,31 @@ body:has(#player-session-loading:not([hidden])){background:#09090b!important}
 #overview #day-details .daily-meal > .consumption-editor.consumption-color-picker .consumption-cancel:not(.consumption-color-option){
  color:inherit!important;border-color:color-mix(in srgb,currentColor 25%,transparent)!important;
 }
+
+/* Player Profile language: same approved Chef selector/card geometry.
+   New component only; no changes to any existing layout, card or gesture. */
+#profile .profile-language-card{
+ display:flex;align-items:center;flex-wrap:wrap;gap:10px 13px;
+ width:100%;min-height:61px;margin:0 0 16px;padding:14px 19px;
+ border-radius:13px;background:#242429;color:#f1f1f3;
+}
+#profile .profile-language-label{
+ flex:1;min-width:0;font-size:16px;line-height:1.35;
+ font-weight:var(--mile-type-regular,400);
+}
+#profile .profile-language-selector{
+ display:flex;gap:2px;border-radius:999px;padding:3px;
+ background:#29292e;min-height:32px;
+}
+#profile .profile-language-selector button{
+ border:0;border-radius:999px;background:transparent;color:#f5f5f7;
+ min-width:34px;min-height:28px;padding:4px 7px;
+ font-size:12px;font-weight:400;cursor:pointer;
+}
+#profile .profile-language-selector button.active{background:#55555b}
+#profile .profile-language-selector button:disabled{cursor:default}
+#profile .profile-language-feedback{
+ flex:0 0 100%;margin:0;color:#e8b48b;
+ font-size:12px;line-height:1.45;
+}
+#profile .profile-language-feedback:empty{display:none}

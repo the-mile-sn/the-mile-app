@@ -22,7 +22,8 @@ test('password form retains real backend validation and clears secrets on naviga
  assert.match(js,/await api\("\/api\/change-password"/);
  assert.match(js,/if\(next!==confirm\)/);
  assert.match(js,/if\(next.length<8\)/);
- assert.match(js,/revokePlayerView\(\);\$\("status"\)\.textContent="Palavra-passe alterada/);
+ assert.match(js,/const successMessage=playerText\("Palavra-passe alterada\. Inicia sessão novamente\.","Password changed\. Please sign in again\."\)/);
+ assert.match(js,/revokePlayerView\(\);\$\("status"\)\.textContent=successMessage/);
  assert.match(js,/function resetProfilePassword\(\)/);
  assert.match(js,/\$\("profile-password-form"\)\.reset\(\)/);
  assert.match(js,/if\(t!=="profile"\)resetProfileSubpage\(\)/);

@@ -66,6 +66,21 @@ let chefWeekRequestId=0,chefSkeletonTimer=null,chefSkeletonVisible=false;
 let chefSwipeEntryDirection=0,chefSwipeEntryAnimation=null;
 let chefProfileSubpage=null;
 const txt = () => labels[lang];
+// Only the text of the existing Day/Week selector changes with the Chef language.
+function chefViewModeCaption(view){
+ return (lang==="pt"?{day:"Dia",week:"Semana"}:{day:"Day",week:"Week"})[view]||view;
+}
+// Localise presentation only: the dish's original category and ID stay unchanged.
+const chefDishCategoryEnglish={
+ "Peixe":"Fish","Peixe magro":"Lean fish","Peixe gordo":"Oily fish",
+ "Carne":"Meat","Carne branca":"White meat","Carne vermelha":"Red meat",
+ "Aves":"Poultry","Marisco":"Seafood","Ovos":"Eggs",
+ "Vegetariano":"Vegetarian","Vegetariana":"Vegetarian",
+ "Pratos principais":"Main dishes","Pós-jogo":"Post-match"
+};
+function chefDishCategoryLabel(value){
+ return lang==="en"?(chefDishCategoryEnglish[String(value||"").trim()]||value):value;
+}
 
 function dateKey(date){
   return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),
@@ -476,7 +491,7 @@ function editMenuForm(date,meal,item,slot){
    for(const dish of data.dishes||[]){
     const button=node("button","chef-menu-dish-result");button.type="button";
     button.append(node("span","",dish.name_pt));
-    if(dish.category)button.append(node("small","",dish.category));
+    if(dish.category)button.append(node("small","",chefDishCategoryLabel(dish.category)));
     button.onclick=()=>{
      selectedDish={id:dish.id,name:dish.name_pt};
      search.value=dish.name_pt;showSelected();results.hidden=true;
@@ -638,6 +653,7 @@ function chefCompactDate(date){
    .replace(/-feira/gi,"").replace(/\s+de\s+/gi," ").replace(/\s+/g," ").trim();
 }
 function classificationFor(key){return days.find(item=>item.date===key)?.classification||"";}
+function chefClassificationLabel(value){return lang==="en"&&value==="Geral"?"General":value;}
 function mealAvailable(date,meal){return !!colorFor(date,meal)||!!plannedMenu(date,meal);}
 function chefNutrition(totals){
  if(!totals||typeof totals!=="object")return null;
@@ -716,11 +732,11 @@ function chefMenuPhoto(item){
  frame.append(zoom);
  photo.onerror=()=>frame.remove();
  frame.setAttribute("role","button");frame.tabIndex=0;
- frame.setAttribute("aria-label","Ampliar fotografia do prato");
+ frame.setAttribute("aria-label",lang==="pt"?"Ampliar fotografia do prato":"Enlarge dish photo");
  const open=()=>{
   const overlay=node("div","chef-photo-overlay");
   const close=node("button","chef-photo-close","×");close.type="button";
-  close.setAttribute("aria-label","Fechar fotografia");
+  close.setAttribute("aria-label",lang==="pt"?"Fechar fotografia":"Close photo");
   const large=node("img","chef-photo-large");large.src=photo.src;large.alt=photo.alt;
   const dismiss=()=>{document.removeEventListener("keydown",onKey);overlay.remove();};
   const onKey=event=>{if(event.key==="Escape")dismiss();};
@@ -801,7 +817,7 @@ function renderChefDaily(root){
  const summary=node("section","chef-daily-summary");
  const header=node("div","chef-summary-header");
  header.append(node("strong","",chefCompactDate(selectedDay)));
- if(classification)header.append(node("span","chef-microcycle",classification));
+ if(classification)header.append(node("span","chef-microcycle",chefClassificationLabel(classification)));
  summary.append(header);
  const strip=node("div","chef-day-colors");
  for(const meal of mealOrder){
@@ -823,7 +839,7 @@ function chefWeekDetailLabel(date){
  const d=String(date.getDate()).padStart(2,"0");
  const m=String(date.getMonth()+1).padStart(2,"0");
  const datePart=lang==="pt"?d+"/"+m:m+"/"+d;
- const microcycle=classificationFor(dateKey(date));
+ const microcycle=chefClassificationLabel(classificationFor(dateKey(date)));
  return weekday+", "+datePart+(microcycle?" · "+microcycle:"");
 }
 /* Player's 460ms adjacent-date moving circle, adapted to Chef's
@@ -878,7 +894,7 @@ function renderChefWeekly(root){
   dayHead.type="button";dayHead.setAttribute("aria-label",dateDescription(date));
   dayHead.setAttribute("aria-pressed",String(dateKey(selectedDay)===key));
   dayHead.append(node("small","",format(date,{weekday:"short"}).replace(".","").replace(/^./,c=>c.toUpperCase())),
-    node("strong","",String(date.getDate())),node("span","",classificationFor(key)));
+    node("strong","",String(date.getDate())),node("span","",chefClassificationLabel(classificationFor(key))));
   dayHead.onclick=()=>selectChefWeekDay(date);
   grid.append(dayHead);
  }
@@ -890,7 +906,7 @@ function renderChefWeekly(root){
    const cell=node("button","chef-week-cell tone-"+color+(available?"":" unavailable")+(active?" selected":""));
    cell.type="button";cell.disabled=!available;
    cell.append(iconForMeal(meal));
-   cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?"abrir detalhes":"não prevista"));
+   cell.setAttribute("aria-label",mealNames[lang][meal]+", "+key+"; "+(available?(lang==="pt"?"abrir detalhes":"open details"):(lang==="pt"?"não prevista":"not scheduled")));
    if(available)cell.onclick=()=>{
     selectChefWeekDay(new Date(key+"T12:00:00"),active?null:{date:key,meal});
    };
@@ -1020,7 +1036,7 @@ function renderChefMenuDay(root,key){
  const weekday=node("strong","",chefMenuWeekday(date));
  weekday.title=dateDescription(date);
  head.append(weekday);
- const micro=classificationFor(key);if(micro)head.append(node("span","",micro));
+ const micro=chefClassificationLabel(classificationFor(key));if(micro)head.append(node("span","",micro));
  card.append(head);
  for(const meal of ["lunch","dinner"]){
   const item=plannedMenu(key,meal),color=mealTone(key,meal);
@@ -1152,7 +1168,13 @@ function renderProfile(root){
    button.disabled=true;languageFeedback.textContent="";
    try{
     await request("/api/v2/chef/preferences","PUT",{language:code});
-    lang=code;chef.language=code;render();
+    lang=code;chef.language=code;
+    // Refresh display-only published Planos after a successful language change.
+    // A read failure keeps the current plan visible and does not undo the
+    // persisted language preference or interfere with menu/recipe permissions.
+    const updated=await request("/api/v2/chef/plans").catch(()=>null);
+    if(updated?.options_by_color)prescriptions=updated.options_by_color;
+    render();
    }catch(error){button.disabled=false;languageFeedback.textContent=txt().fail;}
   };
   segment.append(button);
@@ -1251,7 +1273,11 @@ function render(){
     button.setAttribute("aria-current",activeTab===tab?"page":"false");
   }
   el("chef-view-mode").hidden=activeTab!=="home";
-  for(const button of el("chef-view-mode").querySelectorAll("[data-view]"))button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
+  el("chef-view-mode").setAttribute("aria-label",lang==="pt"?"Vista de planeamento":"Planning view");
+  for(const button of el("chef-view-mode").querySelectorAll("[data-view]")){
+    button.textContent=chefViewModeCaption(button.dataset.view);
+    button.setAttribute("aria-pressed",String(button.dataset.view===chefViewMode));
+  }
   const screen=el("screen");screen.className="chef-screen-"+activeTab;screen.replaceChildren();screen.removeAttribute("aria-busy");
   if(activeTab==="home")renderHome(screen);
   if(activeTab==="plans")renderPlan(screen);
