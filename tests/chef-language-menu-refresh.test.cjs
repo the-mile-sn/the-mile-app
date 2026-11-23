@@ -75,3 +75,29 @@ test("Existing Chef week loader updates Home and Menus PT → EN → PT without 
  assert.equal(urls.length,9);
  assert.ok(urls.every(url=>url.includes("start=2026-11-23&end=2026-11-29")));
 });
+
+test("Chef approved-dish list localises only category labels, retaining canonical saved values",()=>{
+ const start=chef.indexOf("const chefDishCategoryEnglish={");
+ const end=chef.indexOf("\nfunction dateKey(",start);
+ assert.ok(start>=0&&end>start);
+ const source=chef.slice(start,end);
+ for(const [locale,expected] of [
+   ["pt",["Pratos","Crustáceos / Moluscos","Peixe magro"]],
+   ["en",["Dishes","Crustaceans / molluscs","Lean fish"]]
+ ]){
+   const context=vm.createContext({lang:locale});
+   vm.runInContext(source,context);
+   const original=["Pratos","Crustáceos / Moluscos","Peixe magro"];
+   const result=original.map(value=>vm.runInContext(
+      "chefDishCategoryLabel("+JSON.stringify(value)+")",context));
+   assert.deepEqual(result,expected);
+   assert.deepEqual(original,["Pratos","Crustáceos / Moluscos","Peixe magro"]);
+   assert.equal(vm.runInContext('chefDishCategoryLabel("Unknown category")',context),
+                "Unknown category");
+ }
+ assert.match(chef,/button\.append\(node\("span","",dish\.name_pt\)\)/);
+ assert.match(chef,/chefDishCategoryLabel\(dish\.category\)/);
+ assert.match(chef,/selectedDish=\{id:dish\.id,name:dish\.name_pt\}/);
+ assert.match(chef,/dish_id:selectedDish\.id/);
+});
+
