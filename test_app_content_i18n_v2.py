@@ -260,6 +260,52 @@ class PresentationTranslationTests(unittest.TestCase):
         self.assertEqual(i18n.translation_readiness(self.c),
                          {"available":False,"approved_count":0,"kinds":{}})
 
+    def test_food_search_uses_pt_and_only_current_approved_en_names(self):
+        self.c.execute("""CREATE TABLE v2_food_library (
+            id TEXT PRIMARY KEY,display_name TEXT,variant TEXT,active INTEGER,
+            kcal REAL,protein_g REAL,carbs_g REAL,fat_g REAL,note TEXT)""")
+        self.c.executemany("""INSERT INTO v2_food_library
+            VALUES (?,?,?,?,?,?,?,?,?)""",[
+            ("salmon","Salmão grelhado","caseiro",1,175,24,0,8,
+             "Nota nutricional privada"),
+            ("rice","Arroz branco","cozido",1,130,2.7,28,0.3,""),
+            ("stale","Peixe assado","caseiro",1,155,23,0,6,""),
+            ("unapproved","Maçã","fruta",1,52,0,14,0,""),
+            ("inactive","Bife","grelhado",0,200,28,0,10,"")
+        ])
+        self._put("food","salmon","display_name",
+                  "Salmão grelhado","Grilled salmon")
+        self._put("food","rice","display_name",
+                  "Arroz branco","White rice")
+        self._put("food","stale","display_name",
+                  "Nome anterior","Old fish")
+        self._put("food","unapproved","display_name",
+                  "Maçã","Apple",status="pending")
+        self._put("food","inactive","display_name",
+                  "Bife","Grilled steak")
+        cols=["id","display_name","variant","kcal","protein_g",
+              "carbs_g","fat_g","note"]
+        english=i18n.search_approved_food_names(self.c,"grilled salmon",cols)
+        self.assertEqual([r["id"] for r in english],["salmon"])
+        self.assertEqual(english[0]["display_name"],"Grilled salmon")
+        self.assertEqual(english[0]["kcal"],175)
+        self.assertEqual(english[0]["protein_g"],24)
+        self.assertEqual(english[0]["variant"],"caseiro")
+        self.assertEqual(english[0]["note"],"Nota nutricional privada")
+        portuguese=i18n.search_approved_food_names(self.c,"salmão",cols)
+        self.assertEqual(portuguese[0]["id"],"salmon")
+        self.assertEqual(portuguese[0]["display_name"],"Grilled salmon")
+        self.assertEqual(i18n.search_approved_food_names(
+            self.c,"old fish",cols),[])
+        self.assertEqual(i18n.search_approved_food_names(
+            self.c,"apple",cols),[])
+        self.assertEqual(i18n.search_approved_food_names(
+            self.c,"grilled steak",cols),[])
+        self.assertEqual(i18n.search_approved_food_names(
+            self.c,"arroz",cols)[0]["display_name"],"White rice")
+        with self.assertRaises(ValueError):
+            i18n.search_approved_food_names(self.c,"salmon",["password"])
+
     def test_flag_off_and_portuguese_are_identity_and_never_query(self):
         with patch.dict(os.environ,{"MILE_APP_TRANSLATIONS_ENABLED":"0"}):
             p,l=i18n.localise_published_plans(
