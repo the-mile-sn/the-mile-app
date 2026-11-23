@@ -8,6 +8,7 @@ import app_translation_catalog_v2 as catalog
 import app_translation_import_v2 as imports
 import app_translation_batch_review_v2 as batch
 import app_translation_plans_v2 as plans
+import app_translation_recovery_v2 as recovery
 
 ROOT = "/api/v2/admin/i18n"
 PATHS = frozenset((
@@ -19,6 +20,7 @@ PATHS = frozenset((
     ROOT + "/plans/propose", ROOT + "/plans/approve",
     ROOT + "/plans/common", ROOT + "/plans/common/approve",
     ROOT + "/plans/common/import",
+    ROOT + "/plans/recovery", ROOT + "/plans/recovery/approve",
 ))
 
 
@@ -68,6 +70,11 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
         # Validate against the actual active admin row, not just a cookie value.
         review._admin(c, user)
         if method == "GET":
+            if path == ROOT + "/plans/recovery":
+                q = _query(query or {}, ("publication_ref",))
+                if set(q) != {"publication_ref"}:
+                    raise APIError(400, "invalid_translation_query")
+                return 200, recovery.preview(c, user, q["publication_ref"])
             if path == ROOT + "/plans/common":
                 if query:
                     raise APIError(400, "invalid_translation_query")
@@ -120,6 +127,8 @@ def dispatch(c, *, site_role, user, path, method, query=None, body=None):
                         raise APIError(400, "invalid_translation_limit") from None
                 return 200, {"history": review.audit(c, user, **q)}
         if method == "POST":
+            if path == ROOT + "/plans/recovery/approve":
+                return 200, recovery.approve_reviewed(c, user, body)
             if path == ROOT + "/plans/common/import":
                 return 201, plans.import_common(c, user, body)
             if path == ROOT + "/plans/common/approve":
